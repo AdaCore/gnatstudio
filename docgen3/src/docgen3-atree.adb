@@ -19,13 +19,20 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 
 with Docgen3.Utils;               use Docgen3.Utils;
-with Language;                    use Language;
+with Language.Ada;
+with Language.C;
+with Language.Cpp;
 with Language.Tree;               use Language.Tree;
 with Language.Tree.Database;      use Language.Tree.Database;
 with Traces;                      use Traces;
-with GNAT.IO;
+
+with GNAT.IO; --  For output of debugging routines
 
 package body Docgen3.Atree is
+
+   Unique_Id : Natural := 0;
+   --  Internal counter used to associate an unique identifier to all the
+   --  nodes.
 
    -----------------------
    -- Local Subprograms --
@@ -33,11 +40,14 @@ package body Docgen3.Atree is
 
    function Internal_New_Entity
      (Context : access constant Docgen_Context;
+      Lang    : Language_Access;
       E       : General_Entity;
       Loc     : General_Location;
       Name    : String := "") return Entity_Id;
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
+
+   procedure LL_Set_Full_View (E : Entity_Id; Value : General_Entity);
 
    procedure Set_Is_Incomplete_Or_Private_Type (E : Entity_Id);
    --  Set to true field E.Is_Incomplete_Or_Private_Type
@@ -56,7 +66,27 @@ package body Docgen3.Atree is
    -------------------
 
    procedure Append_Entity (E : Entity_Id; Value : Entity_Id) is
+
+      function Check_Unique return Boolean;
+      --  Check that Value is not added twice to the list of entities of E
+
+      function Check_Unique return Boolean is
+         Cursor : EInfo_List.Cursor;
+      begin
+         Cursor := Get_Entities (E).First;
+         while EInfo_List.Has_Element (Cursor) loop
+            if EInfo_List.Element (Cursor) = E then
+               return False;
+            end if;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+
+         return True;
+      end Check_Unique;
+
    begin
+      pragma Assert (Check_Unique);
       E.Entities.Append (Value);
    end Append_Entity;
 
@@ -179,14 +209,32 @@ package body Docgen3.Atree is
       return Get (E.Full_Name).all;
    end Get_Full_Name;
 
-   -------------------
-   -- Get_Full_View --
-   -------------------
+   ---------------------------
+   -- Get_Full_View_Comment --
+   ---------------------------
 
-   function Get_Full_View (E : Entity_Id) return Entity_Id is
+   function Get_Full_View_Comment (E : Entity_Id) return Structured_Comment is
    begin
-      return E.Full_View;
-   end Get_Full_View;
+      return E.Full_View_Comment;
+   end Get_Full_View_Comment;
+
+   -----------------------
+   -- Get_Full_View_Doc --
+   -----------------------
+
+   function Get_Full_View_Doc (E : Entity_Id) return Comment_Result is
+   begin
+      return E.Full_View_Doc;
+   end Get_Full_View_Doc;
+
+   -----------------------
+   -- Get_Full_View_Src --
+   -----------------------
+
+   function Get_Full_View_Src (E : Entity_Id) return Unbounded_String is
+   begin
+      return E.Full_View_Src;
+   end Get_Full_View_Src;
 
    --------------
    -- Get_Kind --
@@ -197,6 +245,15 @@ package body Docgen3.Atree is
       return E.Kind;
    end Get_Kind;
 
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   function Get_Language (E : Entity_Id) return Language_Access is
+   begin
+      return E.Language;
+   end Get_Language;
+
    -----------------
    -- Get_Methods --
    -----------------
@@ -206,14 +263,15 @@ package body Docgen3.Atree is
       return E.Methods'Access;
    end Get_Methods;
 
-   ----------------------
-   -- Get_Partial_View --
-   ----------------------
+   ------------------
+   -- Get_Ref_File --
+   ------------------
 
-   function Get_Partial_View (E : Entity_Id) return Entity_Id is
+   function Get_Ref_File
+     (E : Entity_Id) return Virtual_File is
    begin
-      return E.Partial_View;
-   end Get_Partial_View;
+      return E.Ref_File;
+   end Get_Ref_File;
 
    ---------------
    -- Get_Scope --
@@ -242,6 +300,15 @@ package body Docgen3.Atree is
       return E.Src;
    end Get_Src;
 
+   -------------------
+   -- Get_Unique_Id --
+   -------------------
+
+   function Get_Unique_Id (E : Entity_Id) return Natural is
+   begin
+      return E.Id;
+   end Get_Unique_Id;
+
    -----------------
    -- Has_Formals --
    -----------------
@@ -260,14 +327,88 @@ package body Docgen3.Atree is
         or else E.Kind = E_Entry;
    end Has_Formals;
 
+   ---------------------
+   -- In_Ada_Language --
+   ---------------------
+
+   function In_Ada_Language
+     (E : Entity_Id) return Boolean is
+   begin
+      return Get_Language (E).all in Language.Ada.Ada_Language'Class;
+   end In_Ada_Language;
+
+   -------------------
+   -- In_C_Language --
+   -------------------
+
+   function In_C_Language
+     (E : Entity_Id) return Boolean is
+   begin
+      return Get_Language (E).all in Language.C.C_Language'Class
+               and then
+             Get_Language (E).all not in Language.Cpp.Cpp_Language'Class;
+   end In_C_Language;
+
+   ---------------------
+   -- In_CPP_Language --
+   ---------------------
+
+   function In_CPP_Language
+     (E : Entity_Id) return Boolean is
+   begin
+      return Get_Language (E).all in Language.Cpp.Cpp_Language'Class;
+   end In_CPP_Language;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize is
+   begin
+      Unique_Id := 0;
+   end Initialize;
+
+   --  Initialize internal state
+
    -------------------------
    -- Internal_New_Entity --
    -------------------------
 
-   Unique_Id : Natural := 0;
+   --  (Debugging) Suppose you find that entity 12345 is messed up. You might
+   --  want to find the code that created that entity. The ways to do this is
+   --  to set a conditional breakpoint:
+   --     (gdb) break neb if id = 12345
+   --  and run GPS again from the beginning.
+
+   procedure neb (Id : Natural);
+   pragma Export (Ada, neb);
+
+   procedure nee (Id : Natural);
+   pragma Export (Ada, nee);
+
+   procedure neb (Id : Natural) is
+      pragma Unreferenced (Id);
+   begin
+      null;
+   end neb;
+
+   procedure nee (Id : Natural) is
+      pragma Unreferenced (Id);
+   begin
+      null;
+   end nee;
+
+   procedure New_Entity_Begin (Id : Natural) renames neb;
+   --  (gdb) Routine called at the beginning of the construction of the new
+   --  entity with unique identifier Id
+
+   procedure New_Entity_End (Id : Natural) renames nee;
+   --  (gdb) Routine called at the end of the construction of the new entity
+   --  with unique identifier Id
 
    function Internal_New_Entity
      (Context : access constant Docgen_Context;
+      Lang    : Language_Access;
       E       : General_Entity;
       Loc     : General_Location;
       Name    : String := "") return Entity_Id
@@ -275,31 +416,44 @@ package body Docgen3.Atree is
       Db : General_Xref_Database renames Context.Database;
 
       procedure Complete_Decoration (New_E : Entity_Id);
+      --  Complete the decoration of the Xref components. The decoration of
+      --  other high-level components is done while traversing the tree since
+      --  they require context information.
 
-      --------------
-      -- Decorate --
-      --------------
+      ----------------------------
+      -- Complete_Decoration --
+      ----------------------------
 
       procedure Complete_Decoration
         (New_E : Entity_Id)
       is
-         E      : General_Entity renames New_E.Xref.Entity;
-         E_Type : General_Entity;
+         E : General_Entity renames New_E.Xref.Entity;
 
       begin
+         --  Stage 1: Complete decoration of low-level attributes.
+
          New_E.Xref.Scope_E      := Caller_At_Declaration (Db, E);
+         New_E.Xref.Scope_Loc    := Get_Location (Db, New_E.Xref.Scope_E);
+
          New_E.Xref.Etype        := Get_Type_Of (Db, E);
          New_E.Xref.Body_Loc     := Get_Body (Db, E);
 
          New_E.Xref.Is_Type      := Xref.Is_Type (Db, E);
+
+         --  (Ada) Interfaces are NOT decorated as types by Xref???
+
+         if In_Ada_Language (New_E)
+           and then not New_E.Xref.Is_Type
+           and then Get_Kind (New_E) = E_Interface
+         then
+            New_E.Xref.Is_Type := True;
+         end if;
+
          New_E.Xref.Is_Global    := Xref.Is_Global (Db, E);
          New_E.Xref.Is_Container := Xref.Is_Container (Db, E);
+         New_E.Xref.Is_Abstract  := Xref.Is_Abstract (Db, E);
 
-         if not New_E.Xref.Is_Type then
-            New_E.Xref.Is_Subprogram := Is_Subprogram (Db, E);
-
-         else
-            New_E.Xref.Is_Abstract   := Xref.Is_Abstract (Db, E);
+         if New_E.Xref.Is_Type then
             New_E.Xref.Is_Array      := Xref.Is_Array (Db, E);
             New_E.Xref.Is_Predef     := Xref.Is_Predefined_Entity (Db, E);
             New_E.Xref.Is_Access     := Xref.Is_Access (Db, E);
@@ -311,59 +465,93 @@ package body Docgen3.Atree is
                --  pragma Assert
                --    (New_E.Xref.Pointed_Type /= No_General_Type);
             end if;
+         else
+            New_E.Xref.Is_Generic    := Is_Generic (Db, E);
+            New_E.Xref.Is_Subprogram := Is_Subprogram (Db, E);
 
-            if New_E.Xref.Is_Type
-              and then E_Type = No_General_Entity
+            if New_E.Xref.Is_Subprogram then
+               New_E.Xref.Is_Abstract := Xref.Is_Abstract (Db, E);
+
+               if Is_Primitive_Of (Db, E) /= No_General_Entity then
+                  New_E.Xref.Is_Primitive := True;
+               end if;
+            end if;
+         end if;
+
+         --  Stage 2: Add decoration of a few high-level components. The
+         --  decoration of other high-level components is done while
+         --  traversing the tree since they require context information.
+
+         if New_E.Xref.Is_Type then
+
+            if New_E.Xref.Etype = No_General_Entity
               and then New_E.Xref.Body_Loc /= No_Location
             --  and then Get_Name (Db, E) = Get_Name (Db, E_Scope)
             then
                Set_Is_Incomplete_Or_Private_Type (New_E);
             end if;
-         end if;
 
-         --  Complete decoration
+            if Is_Class_Or_Record_Type (New_E) then
+               New_E.Xref.Has_Methods := Db.Has_Methods (E);
 
-         if New_E.Xref.Ekind = E_Package
-           or else New_E.Xref.Ekind = E_Generic_Package
-         then
-            New_E.Is_Package := True;
-            New_E.Xref.Is_Generic := Is_Generic (Db, E);
+               if In_Ada_Language (New_E) then
+                  if Get_Kind (New_E) = E_Interface then
+                     New_E.Is_Tagged := True;
 
-         elsif New_E.Xref.Is_Subprogram then
-            New_E.Xref.Is_Abstract := Xref.Is_Abstract (Db, E);
-            New_E.Xref.Is_Generic := Is_Generic (Db, E);
+                  elsif New_E.Xref.Has_Methods then
+                     declare
+                        All_Methods : constant Xref.Entity_Array :=
+                          Methods (Db, E, Include_Inherited => True);
+                     begin
+                        --  Xref-bug: At least for Incomplete_Types I have
+                        --  found that Xref reports Has_Methods()=True for
+                        --  types that have no methods. Hence this is NOT a
+                        --  reliable Xref service. A bug in Xref????
 
-            if Is_Primitive_Of (Db, E) /= No_General_Entity then
-               New_E.Xref.Is_Primitive := True;
+                        --  pragma Assert (All_Methods'Length > 0);
+
+                        if All_Methods'Length > 0 then
+                           Set_Is_Tagged (New_E);
+                        end if;
+                     end;
+
+                  else
+                     declare
+                        Parents : constant Xref.Entity_Array :=
+                          Parent_Types (Db, E, Recursive => False);
+                     begin
+                        if Parents'Length > 0 then
+                           Set_Is_Tagged (New_E);
+                        end if;
+                     end;
+                  end if;
+               end if;
             end if;
 
-         elsif Is_Record_Type (New_E) then
-            if Has_Methods (Db, E) then
-               declare
-                  All_Methods : constant Xref.Entity_Array :=
-                    Methods (Db, E, Include_Inherited => True);
-               begin
-                  --  Xref-bug: At least for Incomplete_Types I have found that
-                  --  Xref reports Has_Methods()=True for types that have no
-                  --  methods. Hence this is NOT a reliable Xref service. A
-                  --  bug in Xref????
+         elsif New_E.Xref.Is_Subprogram then
 
-                  --  pragma Assert (All_Methods'Length > 0);
+            --  (Xref): The value available through Xref.Get_Type is the same
+            --  value returned by Xref.Returned_Type
 
-                  if All_Methods'Length > 0 then
-                     Set_Is_Tagged (New_E);
-                  end if;
-               end;
+            if Present (New_E.Xref.Etype) then
+               Set_Kind (New_E, E_Function);
+            end if;
+         end if;
 
-            else
-               declare
-                  Parents : constant Xref.Entity_Array :=
-                    Parent_Types (Db, E, Recursive => False);
-               begin
-                  if Parents'Length > 0 then
-                     Set_Is_Tagged (New_E);
-                  end if;
-               end;
+         if Present (LL.Get_Body_Loc (New_E))
+           and then (LL.Is_Type (New_E) or else Get_Kind (New_E) = E_Variable)
+         then
+            if (LL.Get_Body_Loc (New_E).File
+                  = LL.Get_Location (New_E).File)
+              and then (LL.Get_Body_Loc (New_E).Line
+                          > LL.Get_Location (New_E).Line)
+            then
+               Set_Is_Partial_View (New_E);
+               LL_Set_Full_View (New_E,
+                 Xref.Get_Entity
+                   (Db   => Context.Database,
+                    Name => Get_Short_Name (New_E),
+                    Loc  => LL.Get_Body_Loc (New_E)));
             end if;
          end if;
 
@@ -376,34 +564,45 @@ package body Docgen3.Atree is
       --  Local variables
 
       Q_Name : constant String :=
-        (if Name /= "" then Name else Qualified_Name (Db, E));
+                 (if Name /= "" then Name else Qualified_Name (Db, E));
       S_Name : constant String :=
-        (if Name /= "" then Name else Get_Name (Db, E));
+                 (if Name /= "" then Name else Get_Name (Db, E));
       Kind   : constant Entity_Kind :=
-        (if Present (E) then LL.Get_Ekind (Db, E) else E_Unknown);
+                 (if Present (E) then LL.Get_Ekind (Db, E) else E_Unknown);
+      New_E  : Entity_Id;
 
-      --  Start of processing for New_Entity
+   --  Start of processing for New_Entity
 
-      New_E : Entity_Id;
    begin
       Unique_Id := Unique_Id + 1;
+      New_Entity_Begin (Unique_Id);
 
       --  Initially E.Kind and E.Xref.Ekind are initialized with the same
       --  values. However, E.Kind may be decorated with other values at later
       --  stages based on the context. For example, an E_Variable may be
       --  redecorated as E_Formal (see docgen-frontend.adb)
 
+      --  Similarly, E.File and E.Xref.Loc.File are initialized with the same
+      --  values. However, for C/C++ entities defined in header files, E.File
+      --  is updated to reference the corresponding .c (or .cpp) file.
+
       New_E :=
         new Entity_Info_Record'
-          (Id   => Unique_Id,
+          (Id       => Unique_Id,
+           Language => Lang,
+           Ref_File => Loc.File,
            Xref => Xref_Info'(
              Entity        => E,
+             Full_View     => No_General_Entity,
              Loc           => Loc,
              Body_Loc      => No_Location,
              Ekind         => Kind,
              Scope_E       => No_General_Entity,
+             Scope_Loc     => No_Location,
              Etype         => No_General_Entity,
              Pointed_Type  => No_General_Entity,
+
+             Has_Methods   => False,
 
              Is_Abstract   => False,
              Is_Access     => False,
@@ -420,56 +619,38 @@ package body Docgen3.Atree is
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
            Scope           => null,
            Kind            => Kind,
-           Partial_View    => null,
-           Full_View       => null,
 
            Is_Incomplete_Or_Private_Type => False,
 
-           Is_Package      => False,
            Is_Tagged       => False,
            Is_Private      => False,
            Is_Partial_View => False,
-           Is_Full_View    => False,
-           Is_Frozen       => False,
 
            Doc             => No_Comment_Result,
-           Src             => Null_Unbounded_String,
-
            Comment         => No_Structured_Comment,
+
+           Full_View_Doc     => No_Comment_Result,
+           Full_View_Comment => No_Structured_Comment,
+
+           Src             => Null_Unbounded_String,
+           Full_View_Src   => Null_Unbounded_String,
+
            Discriminants   => <>,
            Entities        => <>,
            Methods         => <>,
            Error_Msg       => Null_Unbounded_String);
 
+      --  Do not perform the full decoration of the entity for auxiliary
+      --  entities created by the frontend (for example, the "standard"
+      --  entity).
+
       if Present (E) then
          Complete_Decoration (New_E);
-
-         if Present (LL.Get_Body_Loc (New_E))
-           and then (LL.Is_Type (New_E) or else Get_Kind (New_E) = E_Variable)
-         then -- restrict the above to Is_Record_Type???
-            if (LL.Get_Body_Loc (New_E).File
-                  = LL.Get_Location (New_E).File)
-              and then (LL.Get_Body_Loc (New_E).Line
-                          > LL.Get_Location (New_E).Line)
-            then
-               Set_Is_Partial_View (New_E);
-            else
-               Set_Is_Full_View (New_E);
-            end if;
-         end if;
       end if;
 
+      New_Entity_End (New_E.Id);
       return New_E;
    end Internal_New_Entity;
-
-   ------------------
-   -- Is_Full_View --
-   ------------------
-
-   function Is_Full_View (E : Entity_Id) return Boolean is
-   begin
-      return E.Is_Full_View;
-   end Is_Full_View;
 
    -----------------------------------
    -- Is_Incomplete_Or_Private_Type --
@@ -486,7 +667,8 @@ package body Docgen3.Atree is
 
    function Is_Package (E : Entity_Id) return Boolean is
    begin
-      return E.Is_Package;
+      return Kind_In (LL.Get_Kind (E), E_Package,
+                                       E_Generic_Package);
    end Is_Package;
 
    ---------------------
@@ -511,15 +693,17 @@ package body Docgen3.Atree is
    -- Is_Record_Type --
    --------------------
 
-   function Is_Record_Type (E : Entity_Id) return Boolean is
+   function Is_Class_Or_Record_Type (E : Entity_Id) return Boolean is
    begin
       pragma Assert (Present (E)
         and then Get_Kind (E) /= E_Unknown);
 
       return E.Xref.Ekind = E_Abstract_Record_Type
         or else E.Xref.Ekind = E_Record_Type
-        or else E.Kind = E_Tagged_Record_Type;
-   end Is_Record_Type;
+        or else E.Kind = E_Tagged_Record_Type
+        or else E.Kind = E_Interface
+        or else E.Kind = E_Class;
+   end Is_Class_Or_Record_Type;
 
    ---------------
    -- Is_Tagged --
@@ -594,18 +778,31 @@ package body Docgen3.Atree is
       end if;
    end Less_Than_Loc;
 
+   ----------------------
+   -- LL_Set_Full_View --
+   ----------------------
+
+   procedure LL_Set_Full_View (E : Entity_Id; Value : General_Entity) is
+   begin
+      pragma Assert (Is_Partial_View (E));
+      pragma Assert (E.Xref.Full_View = No_General_Entity);
+      E.Xref.Full_View := Value;
+   end LL_Set_Full_View;
+
    ----------------
    -- New_Entity --
    ----------------
 
    function New_Entity
-     (Context : access constant Docgen_Context;
-      E       : General_Entity;
-      Loc     : General_Location) return Entity_Id is
+     (Context  : access constant Docgen_Context;
+      Language : Language_Access;
+      E        : General_Entity;
+      Loc      : General_Location) return Entity_Id is
    begin
       return
         Internal_New_Entity
           (Context => Context,
+           Lang    => Language,
            E       => E,
            Loc     => Loc);
    end New_Entity;
@@ -615,12 +812,14 @@ package body Docgen3.Atree is
    -------------------------
 
    function New_Internal_Entity
-     (Context : access constant Docgen_Context;
-      Name    : String) return Entity_Id is
+     (Context  : access constant Docgen_Context;
+      Language : Language_Access;
+      Name     : String) return Entity_Id is
    begin
       return
         Internal_New_Entity
           (Context => Context,
+           Lang    => Language,
            E       => No_General_Entity,
            Loc     => No_Location,
            Name    => Name);
@@ -674,16 +873,37 @@ package body Docgen3.Atree is
       E.Error_Msg := Value;
    end Set_Error_Msg;
 
-   -------------------
-   -- Set_Full_View --
-   -------------------
+   ---------------------------
+   -- Set_Full_View_Comment --
+   ---------------------------
 
-   procedure Set_Full_View (E : Entity_Id; Value : Entity_Id) is
+   procedure Set_Full_View_Comment
+     (E : Entity_Id; Value : Structured_Comment) is
    begin
-      pragma Assert (Is_Record_Type (E));
-      pragma Assert (No (E.Full_View));
-      E.Full_View := Value;
-   end Set_Full_View;
+      E.Full_View_Comment := Value;
+   end Set_Full_View_Comment;
+
+   -----------------------
+   -- Set_Full_View_Doc --
+   -----------------------
+
+   procedure Set_Full_View_Doc (E : Entity_Id; Value : Comment_Result) is
+   begin
+      pragma Assert
+        (E.Full_View_Doc = No_Comment_Result
+           or else Value = No_Comment_Result);
+      E.Full_View_Doc := Value;
+   end Set_Full_View_Doc;
+
+   -----------------------
+   -- Set_Full_View_Src --
+   -----------------------
+
+   procedure Set_Full_View_Src (E : Entity_Id; Value : Unbounded_String) is
+   begin
+      pragma Assert (E.Full_View_Src = Null_Unbounded_String);
+      E.Full_View_Src := Value;
+   end Set_Full_View_Src;
 
    ---------------------------------------
    -- Set_Is_Incomplete_Or_Private_Type --
@@ -695,16 +915,6 @@ package body Docgen3.Atree is
       E.Is_Incomplete_Or_Private_Type := True;
    end Set_Is_Incomplete_Or_Private_Type;
 
-   --------------------
-   -- Set_Is_Package --
-   --------------------
-
-   procedure Set_Is_Package (E : Entity_Id) is
-   begin
-      pragma Assert (not (E.Is_Package));
-      E.Is_Package := True;
-   end Set_Is_Package;
-
    -------------------------
    -- Set_Is_Partial_View --
    -------------------------
@@ -712,7 +922,6 @@ package body Docgen3.Atree is
    procedure Set_Is_Partial_View (E : Entity_Id) is
    begin
       pragma Assert (not (E.Is_Partial_View));
-      pragma Assert (not (E.Is_Full_View));
       E.Is_Partial_View := True;
    end Set_Is_Partial_View;
 
@@ -733,21 +942,10 @@ package body Docgen3.Atree is
    procedure Set_Is_Tagged (E : Entity_Id) is
    begin
       pragma Assert (not (E.Is_Tagged));
-      pragma Assert (Is_Record_Type (E));
+      pragma Assert (Is_Class_Or_Record_Type (E));
       E.Is_Tagged := True;
       E.Kind := E_Tagged_Record_Type;
    end Set_Is_Tagged;
-
-   ----------------------
-   -- Set_Is_Full_View --
-   ----------------------
-
-   procedure Set_Is_Full_View (E : Entity_Id) is
-   begin
-      pragma Assert (not (E.Is_Partial_View));
-      pragma Assert (not (E.Is_Full_View));
-      E.Is_Full_View := True;
-   end Set_Is_Full_View;
 
    --------------
    -- Set_Kind --
@@ -758,15 +956,15 @@ package body Docgen3.Atree is
       E.Kind := Value;
    end Set_Kind;
 
-   ----------------------
-   -- Set_Partial_View --
-   ----------------------
+   ------------------
+   -- Set_Ref_File --
+   ------------------
 
-   procedure Set_Partial_View (E : Entity_Id; Value : Entity_Id) is
+   procedure Set_Ref_File
+     (E : Entity_Id; Value : Virtual_File) is
    begin
-      pragma Assert (No (E.Partial_View));
-      E.Partial_View := Value;
-   end Set_Partial_View;
+      E.Ref_File := Value;
+   end Set_Ref_File;
 
    ---------------
    -- Set_Scope --
@@ -807,7 +1005,7 @@ package body Docgen3.Atree is
          Result := Process (E_Info, Scope_Level);
 
          if Result = OK then
-            if Is_Record_Type (E_Info) then
+            if Is_Class_Or_Record_Type (E_Info) then
                Cursor := Get_Discriminants (E_Info).First;
                while EInfo_List.Has_Element (Cursor) loop
                   Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);
@@ -823,13 +1021,19 @@ package body Docgen3.Atree is
                EInfo_List.Next (Cursor);
             end loop;
 
-            if Is_Tagged (E_Info) then
-               Cursor := Get_Methods (E_Info).First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);
+            --  (Ada) Do not process primitives of tagged types since they are
+            --  defined in the scope of the tagged type (and hence they would
+            --  be erroneously processed twice!)
 
-                  EInfo_List.Next (Cursor);
-               end loop;
+            if In_Ada_Language (E_Info) then
+               if Get_Kind (E_Info) = E_Class then
+                  Cursor := Get_Methods (E_Info).First;
+                  while EInfo_List.Has_Element (Cursor) loop
+                     Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);
+
+                     EInfo_List.Next (Cursor);
+                  end loop;
+               end if;
             end if;
          end if;
 
@@ -855,6 +1059,11 @@ package body Docgen3.Atree is
          return E.Xref.Entity;
       end Get_Entity;
 
+      function Get_Full_View (E : Entity_Id) return General_Entity is
+      begin
+         return E.Xref.Full_View;
+      end Get_Full_View;
+
       function Get_Kind (E : Entity_Id) return Entity_Kind is
       begin
          return E.Xref.Ekind;
@@ -875,10 +1084,20 @@ package body Docgen3.Atree is
          return E.Xref.Scope_E;
       end Get_Scope;
 
+      function Get_Scope_Loc (E : Entity_Id) return General_Location is
+      begin
+         return E.Xref.Scope_Loc;
+      end Get_Scope_Loc;
+
       function Get_Type (E : Entity_Id) return General_Entity is
       begin
          return E.Xref.Etype;
       end Get_Type;
+
+      function Has_Methods (E : Entity_Id) return Boolean is
+      begin
+         return E.Xref.Has_Methods;
+      end Has_Methods;
 
       function Is_Abstract (E : Entity_Id) return Boolean is
       begin
@@ -1108,6 +1327,7 @@ package body Docgen3.Atree is
      (E             : Entity_Id;
       Prefix        : String := "";
       With_Full_Loc : Boolean := False;
+      With_Src      : Boolean := False;
       With_Doc      : Boolean := False;
       With_Errors   : Boolean := False) return String
    is
@@ -1157,9 +1377,14 @@ package body Docgen3.Atree is
             E_Info := EInfo_List.Element (Cursor);
             Append_Line
               (Prefix
+               & "["
+               & To_String (E_Info.Id)
+               & "] "
+               & Get_Short_Name (E_Info)
+               & " ["
                & Image (LL.Get_Location (E_Info))
-               & ":"
-               & Get_Short_Name (E_Info));
+               & "]"
+              );
             EInfo_List.Next (Cursor);
          end loop;
       end Print_Entities;
@@ -1188,21 +1413,14 @@ package body Docgen3.Atree is
 
       if Present (E.Scope) then
          Append_Line
-           ("Scope: " & Get (E.Scope.Short_Name).all);
+           ("Scope: ["
+            & To_String (E.Scope.Id)
+            & "] "
+            & Get (E.Scope.Short_Name).all);
       end if;
 
       if E.Is_Incomplete_Or_Private_Type then
          Append_Line (" Is_Incomplete_Or_Private_Type");
-      end if;
-
-      if Present (E.Partial_View) then
-         Append_Line
-           ("Partial_View: " & Get (E.Partial_View.Short_Name).all);
-      end if;
-
-      if Present (E.Full_View) then
-         Append_Line
-           ("Full_View: " & Get (E.Full_View.Short_Name).all);
       end if;
 
       if E.Is_Private then
@@ -1211,14 +1429,6 @@ package body Docgen3.Atree is
 
       if E.Is_Partial_View then
          Append_Line ("Is_Partial_View");
-      end if;
-
-      if E.Is_Full_View then
-         Append_Line ("Is_Full_View");
-      end if;
-
-      if E.Is_Package then
-         Append_Line ("Is_Package");
       end if;
 
       if E.Is_Tagged then
@@ -1254,7 +1464,11 @@ package body Docgen3.Atree is
       if E.Xref.Scope_E /= No_General_Entity then
          Append_Line
            (LL_Prefix
-            & "Scope: " & Get_Name (Db, E.Xref.Scope_E));
+            & "Scope: "
+            & Get_Name (Db, E.Xref.Scope_E)
+            & " ["
+            & Image (E.Xref.Scope_Loc)
+            & "]");
       else
          Append_Line
            (LL_Prefix
@@ -1319,7 +1533,9 @@ package body Docgen3.Atree is
 
       --  Display record type components
 
-      if Is_Record_Type (E) then
+      if Is_Class_Or_Record_Type (E)
+        or else Get_Kind (E) = E_Class
+      then
          Print_Entities
            (Vector => Get_Entities (E),
             Header => LL_Prefix & " Components:",
@@ -1370,6 +1586,18 @@ package body Docgen3.Atree is
             & " Is_Generic");
       end if;
 
+      if With_Src then
+         if E.Full_View_Src = Null_Unbounded_String then
+            Append_Line ("Src:");
+            Append_Line (To_String (Get_Src (E)));
+         else
+            Append_Line ("Partial View Src:");
+            Append_Line (To_String (Get_Src (E)));
+            Append_Line ("Full View Src:");
+            Append_Line (To_String (Get_Full_View_Src (E)));
+         end if;
+      end if;
+
       if With_Doc then
          if E.Doc /= No_Comment_Result then
             Append_Line ("Doc.Line:" & E.Doc.Start_Line'Img);
@@ -1386,11 +1614,28 @@ package body Docgen3.Atree is
               (Ada.Strings.Unbounded.To_String
                  (To_Unbounded_String (Get_Comment (E), Prefix => Prefix)));
          end if;
-      end if;
 
-      --           Src           : Ada.Strings.Unbounded.Unbounded_String;
-      --           Entities      : EInfo_List.Vector;
-      --           Methods       : EInfo_List.Vector;
+         if Is_Partial_View (E) then
+            if E.Full_View_Doc /= No_Comment_Result then
+               Append_Line
+                 ("Full_View.Doc.Line:" & E.Full_View_Doc.Start_Line'Img);
+               Append_Line
+                 ("Full_View.Doc.Text: " & To_String (E.Full_View_Doc.Text));
+            end if;
+
+            if E.Full_View_Comment /= No_Structured_Comment then
+               Append_Line ("Full_View.Structured Comment:");
+
+               --  Append the comment avoiding the duplicate addition of the
+               --  prefix to the output
+
+               Append_Line_Without_Prefix
+                 (Ada.Strings.Unbounded.To_String
+                    (To_Unbounded_String
+                       (Get_Full_View_Comment (E), Prefix => Prefix)));
+            end if;
+         end if;
+      end if;
 
       if With_Errors
         and then E.Error_Msg /= Null_Unbounded_String
@@ -1402,12 +1647,42 @@ package body Docgen3.Atree is
    end To_String;
 
    --------
+   -- pl --
+   --------
+
+   procedure pl (E : Entity_Id) is
+      Cursor : EInfo_List.Cursor;
+   begin
+      GNAT.IO.Put ("List of entities of ");
+      pns (E);
+
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         pns (EInfo_List.Element (Cursor));
+         EInfo_List.Next (Cursor);
+      end loop;
+   end pl;
+
+   --------
    -- pn --
    --------
 
    procedure pn (E : Entity_Id) is
    begin
-      GNAT.IO.Put_Line (To_String (E));
+      GNAT.IO.Put_Line
+        (To_String (E, With_Src => True, With_Doc => True));
    end pn;
+
+   ---------
+   -- pns --
+   ---------
+
+   procedure pns (E : Entity_Id) is
+   begin
+      GNAT.IO.Put_Line
+        (Get_Unique_Id (E)'Img & ":"
+         & Get_Short_Name (E) & " "
+         & Image (LL.Get_Location (E)));
+   end pns;
 
 end Docgen3.Atree;

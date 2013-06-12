@@ -70,6 +70,13 @@ package Xref.Docgen is
       Entity  : General_Entity) return Comment_Result;
    --  Retrieve the documentation associated with Entity
 
+   function Get_Docgen_Documentation
+     (Self     : access General_Xref_Database_Record;
+      Handler  : Language_Handlers.Language_Handler;
+      Buffer   : GNAT.Strings.String_Access;
+      Location : General_Location) return Comment_Result;
+   --  Retrieve the documentation associated with Entity
+
    function Get_Docgen_Src
      (Self    : access General_Xref_Database_Record;
       Handler : Language_Handlers.Language_Handler;

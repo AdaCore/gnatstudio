@@ -89,6 +89,16 @@ package body Xref.Docgen is
       --  This is looked for just before or just after the declaration of the
       --  entity.
 
+      function Comment
+        (Self     : Xref_Database;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Language : Language_Syntax;
+         Format   : Formatting := Text) return Comment_Result;
+      --  Returns the comment (extracted from the source file) for the entity.
+      --  This is looked for just before or just after the declaration of the
+      --  entity.
+
       function Comment_Src
         (Self     : Xref_Database;
          Buffer   : GNAT.Strings.String_Access;
@@ -892,6 +902,64 @@ package body Xref.Docgen is
                                 Start_Line => -1);
       end Comment;
 
+      -------------
+      -- Comment --
+      -------------
+
+      function Comment
+        (Self     : Xref_Database;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Language : Language_Syntax;
+         Format   : Formatting := Text) return Comment_Result
+      is
+         pragma Unreferenced (Self);
+
+         Load_Buffer : constant Boolean := Buffer = null;
+         Aux_Buffer  : GNAT.Strings.String_Access;
+
+         procedure Free_Buffer;
+         procedure Free_Buffer is
+         begin
+            if Load_Buffer then
+               Free (Aux_Buffer);
+            end if;
+         end Free_Buffer;
+
+      begin
+         if Location = No_Location then
+            return Comment_Result'(Text       => Null_Unbounded_String,
+                                   Start_Line => -1);
+         end if;
+
+         if Load_Buffer then
+            Aux_Buffer := Location.File.Read_File;
+         else
+            Aux_Buffer := Buffer;
+         end if;
+
+         if Aux_Buffer /= null then
+            declare
+               Result : constant Comment_Result := Extract_Comment  -- JM???
+                 (Buffer            => Aux_Buffer.all,
+                  Decl_Start_Line   => Location.Line,
+                  Decl_Start_Column => Integer (Location.Column),
+                  Language          => Language,
+                  Format            => Format);
+            begin
+               if Result.Text /= "" then
+                  Free_Buffer;
+                  return Result;
+               end if;
+            end;
+
+            Free_Buffer;
+         end if;
+
+         return Comment_Result'(Text       => Null_Unbounded_String,
+                                Start_Line => -1);
+      end Comment;
+
       -----------------
       -- Comment_Src --
       -----------------
@@ -1138,6 +1206,14 @@ package body Xref.Docgen is
       Form           : Formatting;
       With_Text_Decl : Boolean := True) return Comment_Result;
 
+   function Doc_From_LI
+     (Self           : access General_Xref_Database_Record;
+      Handler        : Language_Handlers.Language_Handler;
+      Buffer         : GNAT.Strings.String_Access;
+      Location       : General_Location;
+      Form           : Formatting;
+      With_Text_Decl : Boolean := True) return Comment_Result;
+
    function Doc_From_LI_Src
      (Self    : access General_Xref_Database_Record;
       Handler : Language_Handlers.Language_Handler;
@@ -1258,6 +1334,66 @@ package body Xref.Docgen is
       return No_Comment_Result;
    end Doc_From_LI;
 
+   -----------------
+   -- Doc_From_LI --
+   -----------------
+
+   function Doc_From_LI
+     (Self           : access General_Xref_Database_Record;
+      Handler        : Language_Handlers.Language_Handler;
+      Buffer         : GNAT.Strings.String_Access;
+      Location       : General_Location;
+      Form           : Formatting;
+      With_Text_Decl : Boolean := True) return Comment_Result
+   is
+      pragma Unreferenced (With_Text_Decl);
+
+      Context : constant Language.Language_Context_Access :=
+        Language.Get_Language_Context
+          (Get_Language_From_File (Handler, Source_Filename => Location.File));
+      Result  : Unbounded_String;
+
+      use type Old_Entities.Entity_Information;
+      use type Old_Entities.File_Location;
+
+   begin
+      pragma Assert (Active (SQLITE));
+
+      if Active (SQLITE) then
+         if Location /= No_Location then
+            declare
+               C_Result : Comment_Result :=
+                 GNATCOLL.Comment
+                   (Self     => Xref_Database (Self.Xref.all),
+                    Buffer   => Buffer,
+                    Location => Location,
+                    Language => Context.Syntax,
+                    Format   => Form);
+
+               --  This call will be replaced by:
+               --   Self.Xref.Comment
+               --     (Buffer, Entity.Entity, Context.Syntax, Form);
+
+               S1 : constant String := -- JM: This one has the comment!
+                 Glib.Convert.Escape_Text (To_String (C_Result.Text));
+            begin
+               Append (Result, S1 & ASCII.LF);
+
+               C_Result.Text :=
+                 Ada.Strings.Unbounded.Trim
+                   (Result,
+                    Left => Ada.Strings.Maps.Null_Set,
+                    Right => Ada.Strings.Maps.To_Set
+                      (' ' & ASCII.HT & ASCII.LF & ASCII.CR));
+
+               return C_Result;
+            end;
+         end if;
+      end if;
+
+      return No_Comment_Result;
+   end Doc_From_LI;
+
    ------------------------------
    -- Get_Docgen_Documentation --
    ------------------------------
@@ -1272,6 +1408,19 @@ package body Xref.Docgen is
       return
         Doc_From_LI
           (Self, Handler, Buffer, Entity,
+           Form => Text, With_Text_Decl => False);
+   end Get_Docgen_Documentation;
+
+   function Get_Docgen_Documentation
+     (Self     : access General_Xref_Database_Record;
+      Handler  : Language_Handlers.Language_Handler;
+      Buffer   : GNAT.Strings.String_Access;
+      Location : General_Location) return Comment_Result
+   is
+   begin
+      return
+        Doc_From_LI
+          (Self, Handler, Buffer, Location,
            Form => Text, With_Text_Decl => False);
    end Get_Docgen_Documentation;
 

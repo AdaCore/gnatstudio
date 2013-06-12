@@ -34,9 +34,16 @@ private package Docgen3.Frontend is
 
       File : Virtual_File;
       --  File of this tree
+
+      Header_File : Virtual_File;
+      --  (C/C+): Header file (.h) associated with File
    end record;
 
-   No_Tree : constant Tree_Type := (null, EInfo_List.Empty_Vector, No_File);
+   No_Tree : constant Tree_Type :=
+               (Tree_Root    => null,
+                All_Entities => EInfo_List.Empty_Vector,
+                File         => No_File,
+                Header_File  => No_File);
 
    function Build_Tree
      (Context : access constant Docgen_Context;
