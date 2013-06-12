@@ -113,19 +113,12 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
-   Recursive_Cst : aliased constant String := "recursive";
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
    Src_Path_Cst  : aliased constant String := "sources";
    Obj_Path_Cst  : aliased constant String := "objects";
    Name_Cst      : aliased constant String := "name";
    Path_Cst      : aliased constant String := "path";
-   Sources_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
-   Source_Dirs_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
-   Languages_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
    Add_Source_Dir_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Directory_Cst'Access);
    Remove_Dep_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
@@ -1258,15 +1251,6 @@ package body Project_Viewers is
             end if;
          end;
 
-      elsif Command = "get_executable_name" then
-         declare
-            Main : constant Virtual_File := Nth_Arg (Data, 2);
-
-         begin
-            Set_Return_Value
-              (Data, Project.Executable_Name (Main.Full_Name.all));
-         end;
-
       elsif Command = "rename" then
          Name_Parameters (Data, Rename_Cmd_Parameters);
          declare
@@ -1319,64 +1303,6 @@ package body Project_Viewers is
                   Use_Base_Name      => False,
                   Use_Relative_Path  => Relative);
             end if;
-         end;
-
-      elsif Command = "sources" then
-         Name_Parameters (Data, Sources_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Sources   : File_Array_Access := Project.Source_Files
-              (Recursive  => Recursive);
-         begin
-            Set_Return_Value_As_List (Data);
-            for S in Sources'Range loop
-               Set_Return_Value
-                 (Data, Create_File (Get_Script (Data), Sources (S)));
-            end loop;
-            Unchecked_Free (Sources);
-         end;
-
-      elsif Command = "languages" then
-         Name_Parameters (Data, Languages_Cmd_Parameters);
-         declare
-            Langs : GNAT.Strings.String_List := Project.Languages
-              (Recursive => Nth_Arg (Data, 2, False));
-         begin
-            Set_Return_Value_As_List (Data);
-            for L in Langs'Range loop
-               Set_Return_Value (Data, Langs (L).all);
-            end loop;
-            Free (Langs);
-         end;
-
-      elsif Command = "source_dirs" then
-         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Dirs      : constant File_Array := Project.Source_Dirs
-              (Recursive => Recursive);
-         begin
-            Set_Return_Value_As_List (Data);
-
-            for D in Dirs'Range loop
-               --  ??? We should return the Virtual_File object instead
-               Set_Return_Value (Data, Dirs (D).Full_Name);
-            end loop;
-         end;
-
-      elsif Command = "object_dirs" then
-         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Object    : constant File_Array :=
-              Object_Path (Project, Recursive, False);
-         begin
-            Set_Return_Value_As_List (Data);
-
-            for J in Object'Range loop
-               --  ??? Shouldn't we return a list of files instead ?
-               Set_Return_Value (Data, Object (J).Full_Name);
-            end loop;
          end;
 
       elsif Command = "add_source_dir" then
@@ -1832,29 +1758,6 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "sources",
-         Maximum_Args => Sources_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "source_dirs",
-         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
-         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_executable_name",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "languages",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
         (Kernel, "rename",
          Minimum_Args => 1,
          Maximum_Args => 2,
@@ -1866,12 +1769,6 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler      => Project_Static_Command_Handler'Access);
-      Register_Command
-        (Kernel, "object_dirs",
-         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
-         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
       Register_Command
         (Kernel, "add_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
