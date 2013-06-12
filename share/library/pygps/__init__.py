@@ -25,6 +25,7 @@ depends on it should use the statement:
 import GPS
 import time
 import os
+import sys
 
 # List of modules to import when user does "from pygps import *"
 # Do not use, since otherwise the functions defined in this module are
@@ -339,6 +340,13 @@ try:
     GDK_ESCAPE = 65307
     GDK_CONTROL_L = 65507
 
+    if os.name == 'nt':
+        GDK_BACKSPACE_HARDWARE_KEYCODE = 8
+    elif sys.platform == 'darwin':
+        GDK_BACKSPACE_HARDWARE_KEYCODE = 51
+    else:
+        GDK_BACKSPACE_HARDWARE_KEYCODE = 59
+
 
     def send_key_event(keyval, control=0, alt=0, shift=0, window=None,
                        process_events=True):
@@ -362,6 +370,9 @@ try:
             event.group = 0
             event.state = Gdk.ModifierType(0)
             # event.device = None    # No device for key events
+
+            if keyval == GDK_BACKSPACE:
+                event.hardware_keycode = GDK_BACKSPACE_HARDWARE_KEYCODE
 
             # Can't set string in some versions of pygobject
             # hardware_keycode is OS and keyboard specific.

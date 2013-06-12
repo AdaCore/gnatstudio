@@ -1016,6 +1016,7 @@ package body KeyManager_Module is
 
       if Active (Me) then
          Trace (Me, "Key=" & Key'Img & " Modif=" & Modifier'Img
+                & " Code=" & Event.Key.Hardware_Keycode'Img
                 & " => " & Image (Key, Modifier)
                 & " / "
                 & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
