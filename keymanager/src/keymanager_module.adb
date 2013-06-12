@@ -1057,6 +1057,7 @@ package body KeyManager_Module is
       Context          : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action     : Boolean := False;
+      Count            : Natural;
 
       procedure Compute_Context;
       --  Compute the current context if not done already
@@ -1205,14 +1206,18 @@ package body KeyManager_Module is
             --  No need to create an undo group, since these events are
             --  processed asynchronously anyway. The editor will properly merge
             --  editing actions into a single undo command anyway.
-            for R in 2 .. Keymanager_Module.Repeat_Count loop
+
+            Count := Keymanager_Module.Repeat_Count;
+            Keymanager_Module.Repeat_Count := 1;
+            for R in 2 .. Count loop
                declare
                   Ev : constant Gdk_Event := Copy (Event);
                begin
-                  Put (Ev);
+                  --  Process the event immediately
+                  General_Event_Handler (Ev, Kernel_Handle (Kernel));
+                  Free (Ev);
                end;
             end loop;
-            Keymanager_Module.Repeat_Count := 1;
          end if;
 
       elsif Get_Event_Type (Event) = Key_Release then

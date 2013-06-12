@@ -3749,6 +3749,7 @@ package body Src_Editor_Buffer is
       end New_Line;
 
    begin
+      Trace (Me, "Save_To_File " & Filename.Display_Full_Name);
       Success := True;
 
       if not Internal then
