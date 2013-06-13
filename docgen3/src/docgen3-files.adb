@@ -81,7 +81,7 @@ package body Docgen3.Files is
       if Output = Invalid_File then
          Context.Kernel.Messages_Window.Insert
            ("Could not create " & Name.Display_Full_Name,
-            Mode => Error);
+            Mode => GPS.Messages_Windows.Error);
          return;
       end if;
 
@@ -113,7 +113,7 @@ package body Docgen3.Files is
       if Output = Invalid_File then
          Context.Kernel.Messages_Window.Insert
            ("Could not create " & Name.Display_Full_Name,
-            Mode => Error);
+            Mode => GPS.Messages_Windows.Error);
          return;
       end if;
 

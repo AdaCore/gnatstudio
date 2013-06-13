@@ -93,7 +93,7 @@ package body Docgen3 is
                     Display_Full_Name
                     (Files_List.Element (File_Index)) &
                   (-" cannot be found. It will be skipped."),
-                  Mode => Info);
+                  Mode => GPS.Messages_Windows.Info);
 
                return True;
             end if;
@@ -111,7 +111,7 @@ package body Docgen3 is
                  (-("info: Documentation not generated for ") &
                     Display_Base_Name (File) &
                   (-" since this language is not supported."),
-                  Mode => Info);
+                  Mode => GPS.Messages_Windows.Info);
 
                return True;
             end if;
@@ -123,7 +123,7 @@ package body Docgen3 is
                  (-("warning: cross references for file ") &
                     Display_Base_Name (File) &
                   (-" are not up-to-date. Documentation not generated."),
-                  Mode => Error);
+                  Mode => GPS.Messages_Windows.Error);
 
                return True;
             end if;
