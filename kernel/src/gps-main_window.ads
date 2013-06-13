@@ -40,7 +40,6 @@ package GPS.Main_Window is
       Icon_Factory      : Gtk_Icon_Factory;
       --  The icon factory specific to GPS
 
-      Menu_Box          : Gtk.Box.Gtk_Hbox;
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Toolbar_Box       : Gtk_Box;
       Toolbar           : Gtk_Toolbar;

@@ -176,9 +176,7 @@ package body Tooltips is
          Gtk.Window.Initialize (Global_Tooltip, Window_Popup);
 
          Global_Tooltip.Set_Border_Width (10);
-
          Global_Tooltip.Set_Type_Hint (Window_Type_Hint_Tooltip);
-         Global_Tooltip.Set_App_Paintable (True);
          Global_Tooltip.Set_Resizable (False);
          Global_Tooltip.Set_Name ("gtk-tooltip");
          Get_Style_Context (Global_Tooltip).Add_Class ("tooltip");
