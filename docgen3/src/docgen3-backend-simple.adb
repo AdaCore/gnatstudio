@@ -700,7 +700,7 @@ package body Docgen3.Backend.Simple is
       Context : Docgen_Context)
    is
       procedure Generate_Support_Files
-        (Kernel : Kernel_Handle);
+        (Kernel : Core_Kernel);
       --  Generate support files in destination directory
 
       ----------------------------
@@ -708,7 +708,7 @@ package body Docgen3.Backend.Simple is
       ----------------------------
 
       procedure Generate_Support_Files
-        (Kernel : Kernel_Handle)
+        (Kernel : Core_Kernel)
       is
          Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
            Create_From_Dir
@@ -745,8 +745,6 @@ package body Docgen3.Backend.Simple is
                   Get_Template
                    (Get_System_Dir (Backend.Context.Kernel), Tmpl_Src);
       Translation : Translate_Set;
-
-      use Comment;
 
       procedure For_All
         (Vector   : in out EInfo_List.Vector;

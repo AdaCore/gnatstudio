@@ -91,7 +91,7 @@ package body Docgen3.Utils is
    ------------------
 
    function Is_Spec_File
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
       return Kernel.Registry.Tree.Info (File).Unit_Part = Unit_Spec;

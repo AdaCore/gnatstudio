@@ -22,10 +22,8 @@
 --  For details on sphynx read:
 --    http://sphinx-doc.org
 
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Docgen3.Atree;     use Docgen3.Atree;
 with Docgen3.Files;     use Docgen3.Files;
-with Docgen3.Frontend;  use Docgen3.Frontend;
 
 private package Docgen3.Backend.Simple is
 

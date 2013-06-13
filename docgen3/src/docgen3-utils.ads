@@ -38,7 +38,7 @@ private package Docgen3.Utils is
    --  returned string.
 
    function Is_Spec_File
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether File is a spec file
 

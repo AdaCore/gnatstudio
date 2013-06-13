@@ -41,7 +41,7 @@ package body Docgen3.Treepr is
    --  Append the extension associated with tree output files
 
    function Get_Listing_Directory
-     (Kernel : Kernel_Handle) return Virtual_File;
+     (Kernel : Core_Kernel) return Virtual_File;
    --  Return the directory where the tree output must be generated
 
    ---------------------------
@@ -49,7 +49,7 @@ package body Docgen3.Treepr is
    ---------------------------
 
    function Get_Listing_Directory
-     (Kernel : Kernel_Handle) return Virtual_File
+     (Kernel : Core_Kernel) return Virtual_File
    is
       Base_Dir : constant Virtual_File := Get_Doc_Directory (Kernel);
    begin

@@ -1,5 +1,5 @@
 with "../shared";
-with "../kernel/kernel";
+with "../kernel/kernel_core";
 with "../templates_parser/templates_parser";
 with "docgen_resources";
 

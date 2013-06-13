@@ -18,9 +18,6 @@
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Docgen3.Atree;           use Docgen3.Atree;
 with Docgen3.Backend;         use Docgen3.Backend;
 with Docgen3.Files;           use Docgen3.Files;
@@ -46,7 +43,7 @@ package body Docgen3 is
    -----------------------
 
    procedure Process_Files
-     (Kernel              : Kernel_Handle;
+     (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
       Src_Files           : in out Files_List.Vector;
       Update_Global_Index : Boolean);
@@ -59,7 +56,7 @@ package body Docgen3 is
    -------------------
 
    procedure Process_Files
-     (Kernel              : Kernel_Handle;
+     (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
       Src_Files           : in out Files_List.Vector;
       Update_Global_Index : Boolean)
@@ -283,26 +280,19 @@ package body Docgen3 is
    ---------------------------
 
    procedure Process_Project_Files
-     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options   : Docgen_Options;
       Project   : Project_Type;
       Recursive : Boolean := False)
    is
       P         : Project_Type := Project;
-      Context   : Selection_Context;
       Src_Files : Files_List.Vector;
 
    begin
       Trace (Me, "Process_Project_Files");
 
       if P = No_Project then
-         Context := Get_Current_Context (Kernel);
-
-         if Has_Project_Information (Context) then
-            P := Project_Information (Context);
-         else
-            P := Get_Project (Kernel);
-         end if;
+         P := Kernel.Registry.Tree.Root_Project;
       end if;
 
       declare
@@ -316,7 +306,7 @@ package body Docgen3 is
       end;
 
       Process_Files
-        (Kernel    => Kernel_Handle (Kernel),
+        (Kernel    => Core_Kernel (Kernel),
          Options   => Options,
          Src_Files => Src_Files,
          Update_Global_Index => True);
@@ -329,7 +319,7 @@ package body Docgen3 is
    -------------------------
 
    procedure Process_Single_File
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options : Docgen_Options;
       File    : GNATCOLL.VFS.Virtual_File)
    is
@@ -347,7 +337,7 @@ package body Docgen3 is
       end if;
 
       Process_Files
-        (Kernel    => Kernel_Handle (Kernel),
+        (Kernel    => Core_Kernel (Kernel),
          Options   => Options,
          Src_Files => Src_Files,
          Update_Global_Index => False);

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Docgen3.Backend.Simple;  use Docgen3.Backend.Simple;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
 
 package body Docgen3.Backend is
 
@@ -25,7 +24,7 @@ package body Docgen3.Backend is
    -----------------------
 
    function Get_Doc_Directory
-     (Kernel : Kernel_Handle) return Virtual_File
+     (Kernel : Core_Kernel) return Virtual_File
    is
       Project  : Project_Type renames Kernel.Registry.Tree.Root_Project;
       Attr     : constant String :=
