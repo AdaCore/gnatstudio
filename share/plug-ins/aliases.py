@@ -29,7 +29,7 @@ def get_paragraph_color():
     c = Color(
         pref_string.split("@")[2]
     )
-    return c.shade_or_lighten(0.1).to_hex()
+    return c.to_hex(), c.shade_or_lighten(0.1).to_hex()
 
 
 def get_comments_colors():
@@ -61,6 +61,11 @@ def exit_alias_expand(editor):
         editor.aliases_background_overlay,
         editor.alias_begin_mark.location().beginning_of_line(),
         editor.alias_end_mark.location()
+    )
+    editor.remove_overlay(
+        editor.aliases_background_overlay_1,
+        editor.beginning_of_buffer(),
+        editor.end_of_buffer()
     )
     editor.current_alias_mark_index = None
     editor.alias_marks = None
@@ -98,6 +103,12 @@ def toggle_next_field(editor=None):
 
     try:
         reset_overlay(editor)
+
+        editor.apply_overlay(
+            editor.aliases_background_overlay_1,
+            editor.beginning_of_buffer(),
+            editor.end_of_buffer()
+        )
 
         editor.apply_overlay(
             editor.aliases_background_overlay,
@@ -204,11 +215,18 @@ def expand_alias(editor, alias):
         "background", Preference(color_pref_name).get()
     )
 
+    color, color1 = get_paragraph_color()
+    editor.aliases_background_overlay_1 = editor.create_overlay(
+        "aliases_background_overlay_1"
+    )
+    editor.aliases_background_overlay_1.set_property(
+        "paragraph-background", color1
+    )
     editor.aliases_background_overlay = editor.create_overlay(
         "aliases_background_overlay"
     )
     editor.aliases_background_overlay.set_property(
-        "paragraph-background", get_paragraph_color()
+        "paragraph-background", color
     )
 
     editor.aliases_overlay_next = editor.create_overlay("aliases_overlay_next")
