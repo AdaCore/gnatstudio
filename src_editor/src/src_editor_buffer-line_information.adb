@@ -34,6 +34,7 @@ with Pango.Cairo;              use Pango.Cairo;
 with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
@@ -968,7 +969,7 @@ package body Src_Editor_Buffer.Line_Information is
       View        : Gtk_Text_View;
       Color       : Gdk_RGBA;
       Layout      : Pango_Layout;
-      Drawable    : Cairo.Cairo_Surface)
+      Cr          : Cairo.Cairo_Context)
    is
       Current_Line    : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;
@@ -979,7 +980,6 @@ package body Src_Editor_Buffer.Line_Information is
       Dummy_Gint      : Gint;
       Dummy_Boolean   : Boolean;
       Line_Info       : Line_Info_Width;
-      Cr              : Cairo_Context;
 
       Line_Char_Width : constant Gint := Line_Number_Character_Width;
 
@@ -1016,7 +1016,7 @@ package body Src_Editor_Buffer.Line_Information is
             return;
          end if;
 
-         Set_Markup (Layout, Editable_Line'Img);
+         Set_Markup (Layout, Image (Integer (Editable_Line), Min_Width => 0));
          Get_Pixel_Size (Layout, Width, Height);
 
          Move_To (Cr,
@@ -1060,7 +1060,6 @@ package body Src_Editor_Buffer.Line_Information is
       Current_Line := Top_Line;
       Get_Iter_At_Line (Buffer, Iter, Gint (Current_Line - 1));
 
-      Cr := Create (Drawable);
       Set_Source_RGBA (Cr, Color);
 
       Drawing_Loop :
@@ -1104,8 +1103,6 @@ package body Src_Editor_Buffer.Line_Information is
 
          Current_Line := Current_Line + 1;
       end loop Drawing_Loop;
-
-      Destroy (Cr);
    end Draw_Line_Info;
 
    ----------------

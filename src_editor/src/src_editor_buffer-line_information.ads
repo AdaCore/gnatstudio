@@ -92,7 +92,7 @@ package Src_Editor_Buffer.Line_Information is
       View        : Gtk_Text_View;
       Color       : Gdk.RGBA.Gdk_RGBA;
       Layout      : Pango_Layout;
-      Drawable    : Cairo.Cairo_Surface);
+      Cr          : Cairo.Cairo_Context);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.
    --  Layout should be used to draw text.
 

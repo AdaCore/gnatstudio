@@ -282,11 +282,6 @@ package body Src_Editor_View is
    procedure Register_Idle_Column_Redraw (View : Source_View);
    --  Register an idle redrawing of the side columns
 
-   procedure Invalidate_Side_Column_Cache
-     (View : access Source_View_Record'Class);
-   pragma Inline (Invalidate_Side_Column_Cache);
-   --  Factorizes code
-
    -------------------
    -- As_Is_Enabled --
    -------------------
@@ -432,8 +427,6 @@ package body Src_Editor_View is
    procedure Delete (View : access Source_View_Record) is
    begin
       View.Area := null;
-
-      Invalidate_Side_Column_Cache (View);
 
       if View.Speed_Column_Buffer /= Null_Surface then
          Destroy (View.Speed_Column_Buffer);
@@ -631,12 +624,6 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      --  Clear the side columns cache
-
-      User.Buffer_Top_Line := 0;
-
-      Invalidate_Side_Column_Cache (User);
-
       Register_Idle_Column_Redraw (User);
 
    exception
@@ -655,11 +642,6 @@ package body Src_Editor_View is
       pragma Unreferenced (Buffer, Params);
    begin
       User.Side_Columns_Up_To_Date := False;
-
-      Invalidate_Side_Column_Cache (User);
-
-      User.Buffer_Top_Line := 0;
-
       Register_Idle_Column_Redraw (User);
 
    exception
@@ -672,8 +654,6 @@ package body Src_Editor_View is
 
    function Idle_Column_Redraw (View : Source_View) return Boolean is
    begin
-      Invalidate_Side_Column_Cache (View);
-
       if View.Speed_Column_Buffer /= Null_Surface then
          Destroy (View.Speed_Column_Buffer);
          View.Speed_Column_Buffer := Null_Surface;
@@ -1619,7 +1599,6 @@ package body Src_Editor_View is
       Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
       Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
 
-      Invalidate_Side_Column_Cache (Self);
       Redraw_Columns (Self);  --  update color of the side panes
    end Set_Background_Color;
 
@@ -2220,16 +2199,12 @@ package body Src_Editor_View is
 
       if Total_Width = 0 then
          Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
-         View.Buffer_Column_Size := 1;
          return;
       end if;
 
       if Total_Width /= View.Buffer_Column_Size then
          View.Buffer_Column_Size := Total_Width;
          Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
-
-         --  Force the redraw
-         Invalidate_Side_Column_Cache (View);
       end if;
 
       --  Create the graphical elements
@@ -2240,51 +2215,21 @@ package body Src_Editor_View is
          return;
       end if;
 
-      if View.Side_Column_Buffer /= Null_Surface
-        and then View.Top_Line = View.Buffer_Top_Line
-        and then View.Bottom_Line = View.Buffer_Bottom_Line
-      then
-         --  If the cache corresponds to the lines, redraw it
+      Layout := Create_Pango_Layout (View);
+      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
 
-         Cr := Create (Left_Window);
-         Set_Source_Surface (Cr, View.Side_Column_Buffer, 0.0, 0.0);
-         Paint (Cr);
-         Destroy (Cr);
+      Get_Geometry (Left_Window, X, Y, Width, Height);
 
-      else
-         --  The lines have changed or the cache is not created: create it
+      Cr := Create (Left_Window);
+      Set_Source_Color (Cr, View.Background_Color_Other);
+      Cairo.Paint (Cr);
+      Draw_Line_Info
+        (Src_Buffer, View.Top_Line, View.Bottom_Line,
+         Gtk_Text_View (View), View.Text_Color,
+         Layout, Cr);
+      Destroy (Cr);
 
-         Invalidate_Side_Column_Cache (View);
-
-         View.Buffer_Top_Line    := View.Top_Line;
-         View.Buffer_Bottom_Line := View.Bottom_Line;
-
-         Layout := Create_Pango_Layout (View);
-         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-
-         Get_Geometry (Left_Window, X, Y, Width, Height);
-
-         View.Side_Column_Buffer := Gdk.Window.Create_Similar_Surface
-           (Left_Window, Cairo_Content_Color_Alpha,
-            Total_Width, Height);
-
-         Cr := Create (View.Side_Column_Buffer);
-         Set_Source_Color (Cr, View.Background_Color_Other);
-         Cairo.Paint (Cr);
-         Destroy (Cr);
-
-         Draw_Line_Info
-           (Src_Buffer, View.Top_Line, View.Bottom_Line,
-            Gtk_Text_View (View), View.Text_Color,
-            Layout, View.Side_Column_Buffer);
-
-         Cr := Create (Left_Window);
-         Set_Source_Surface (Cr, View.Side_Column_Buffer, 0.0, 0.0);
-         Paint (Cr);
-         Destroy (Cr);
-
-         Unref (Layout);
-      end if;
+      Unref (Layout);
    end Redraw_Columns;
 
    -------------------------
@@ -2522,19 +2467,6 @@ package body Src_Editor_View is
    begin
       return In_Completion (Source_Buffer (Get_Buffer (View)));
    end In_Completion;
-
-   ----------------------------------
-   -- Invalidate_Side_Column_Cache --
-   ----------------------------------
-
-   procedure Invalidate_Side_Column_Cache
-     (View : access Source_View_Record'Class) is
-   begin
-      if View.Side_Column_Buffer /= Null_Surface then
-         Destroy (View.Side_Column_Buffer);
-         View.Side_Column_Buffer := Null_Surface;
-      end if;
-   end Invalidate_Side_Column_Cache;
 
    ------------------------------
    -- Position_Set_Explicitely --

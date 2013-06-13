@@ -215,11 +215,7 @@ private
       Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;
 
-      Buffer_Top_Line     : Src_Editor_Buffer.Buffer_Line_Type := 1;
-      Buffer_Bottom_Line  : Src_Editor_Buffer.Buffer_Line_Type := 0;
       Buffer_Column_Size  : Gint := 1;
-      Side_Column_Buffer  : Cairo_Surface := Null_Surface;
-      --  Cache for avoiding to redraw the side columns too often
 
       Side_Columns_Up_To_Date : Boolean := False;
 
