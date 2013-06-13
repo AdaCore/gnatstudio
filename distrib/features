@@ -44,6 +44,14 @@ NF-53-M315-025 WB: enable DFW_ENABLE_ADA_SYMBOL_CHECK at startup (2013-05-17)
   and arrays variables.
   This feature can be disabled using Ada General preferences page.
 
+NF-53-M301-031 New review classification of CodePeer messages (2013-06-13)
+
+  When doing a manual review of a CodePeer message, the user can
+  no longer change the message ranking, but instead specify a review
+  classification and the name of the reviewer. New message review dialog is
+  added and new filter was added for CodePeer Report view to manage visibility
+  of messages by review status.
+
 NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
 
   When navigation functions, such as hyperlinks and goto-spec/body, encounter
