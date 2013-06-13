@@ -486,7 +486,6 @@ package body Docgen3.Atree is
 
             if New_E.Xref.Etype = No_General_Entity
               and then New_E.Xref.Body_Loc /= No_Location
-            --  and then Get_Name (Db, E) = Get_Name (Db, E_Scope)
             then
                Set_Is_Incomplete_Or_Private_Type (New_E);
             end if;
@@ -563,12 +562,15 @@ package body Docgen3.Atree is
 
       --  Local variables
 
+      In_Ada_Lang : constant Boolean :=
+                      Lang.all in Language.Ada.Ada_Language'Class;
       Q_Name : constant String :=
                  (if Name /= "" then Name else Qualified_Name (Db, E));
       S_Name : constant String :=
                  (if Name /= "" then Name else Get_Name (Db, E));
       Kind   : constant Entity_Kind :=
-                 (if Present (E) then LL.Get_Ekind (Db, E) else E_Unknown);
+                 (if Present (E) then LL.Get_Ekind (Db, E, In_Ada_Lang)
+                                 else E_Unknown);
       New_E  : Entity_Id;
 
    --  Start of processing for New_Entity
@@ -652,6 +654,17 @@ package body Docgen3.Atree is
       return New_E;
    end Internal_New_Entity;
 
+   ------------------
+   -- Is_Full_View --
+   ------------------
+
+   function Is_Full_View (E : Entity_Id) return Boolean is
+   begin
+      return Present (LL.Get_Body_Loc (E))
+        and then LL.Get_Body_Loc (E).Line
+                   < LL.Get_Location (E).Line;
+   end Is_Full_View;
+
    -----------------------------------
    -- Is_Incomplete_Or_Private_Type --
    -----------------------------------
@@ -675,7 +688,7 @@ package body Docgen3.Atree is
    -- Is_Partial_View --
    ---------------------
 
-   function Is_Partial_View  (E : Entity_Id) return Boolean is
+   function Is_Partial_View (E : Entity_Id) return Boolean is
    begin
       return E.Is_Partial_View;
    end Is_Partial_View;
@@ -1156,8 +1169,9 @@ package body Docgen3.Atree is
       --       at gnatlib/src/generated
 
       function Get_Ekind
-        (Db : General_Xref_Database;
-         E  : General_Entity) return Entity_Kind
+        (Db          : General_Xref_Database;
+         E           : General_Entity;
+         In_Ada_Lang : Boolean) return Entity_Kind
       is
          Kind : constant String := Get_Display_Kind (Db, E);
 
@@ -1287,13 +1301,18 @@ package body Docgen3.Atree is
          elsif Kind = "include file" then
             return E_Include_File;
 
-            --  Should not be found???
          elsif Kind = "loop label"
            or else Kind = "block label"
            or else Kind = "statement label"
            or else Kind = "statement"
          then
-            pragma Assert (False);
+            --  Should not be found in Ada since we are processing only
+            --  specifications (bodies are not handled yet???)
+
+            if In_Ada_Lang then
+               pragma Assert (False);
+            end if;
+
             return E_Unknown;
 
          else
@@ -1670,7 +1689,8 @@ package body Docgen3.Atree is
    procedure pn (E : Entity_Id) is
    begin
       GNAT.IO.Put_Line
-        (To_String (E, With_Src => True, With_Doc => True));
+        (To_String (E, With_Src => True, With_Doc => True,
+                       With_Full_Loc => True));
    end pn;
 
    ---------

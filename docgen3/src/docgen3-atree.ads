@@ -219,6 +219,8 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Partial_View
      (E : Entity_Id) return Boolean;
+   function Is_Full_View
+     (E : Entity_Id) return Boolean;
    function Is_Private
      (E : Entity_Id) return Boolean;
    function Is_Class_Or_Record_Type
@@ -307,8 +309,11 @@ private package Docgen3.Atree is
       function Get_Type         (E : Entity_Id) return General_Entity;
 
       function Get_Ekind
-        (Db : General_Xref_Database;
-         E  : General_Entity) return Entity_Kind;
+        (Db          : General_Xref_Database;
+         E           : General_Entity;
+         In_Ada_Lang : Boolean) return Entity_Kind;
+      --  In_Ada_Lang is used to enable an assertion since in Ada we are not
+      --  processing bodies yet???
 
       function Has_Methods      (E : Entity_Id) return Boolean;
 

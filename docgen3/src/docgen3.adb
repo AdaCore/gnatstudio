@@ -116,14 +116,24 @@ package body Docgen3 is
                return True;
             end if;
 
-            --  Verify that we have the .ali file for this source file.
+            --  Verify that we have the LI file for this source file.
 
             if not Database.Is_Up_To_Date (File) then
-               Kernel.Messages_Window.Insert
-                 (-("warning: cross references for file ") &
-                    Display_Base_Name (File) &
-                  (-" are not up-to-date. Documentation not generated."),
-                  Mode => Error);
+
+               --  (C/C++) Do not report error on header files since the
+               --  compiler does not generate their LI file.
+
+               if Lang.all in Language.C.C_Language'Class
+                 and then Is_Spec_File (Kernel, File)
+               then
+                  null;
+               else
+                  Kernel.Messages_Window.Insert
+                    (-("warning: cross references for file ") &
+                       Display_Base_Name (File) &
+                     (-" are not up-to-date. Documentation not generated."),
+                     Mode => Error);
+               end if;
 
                return True;
             end if;
