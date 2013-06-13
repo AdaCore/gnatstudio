@@ -38,6 +38,7 @@ with Traces;                  use Traces;
 with UTF8_Utils;              use UTF8_Utils;
 with Xref.Docgen;             use Xref.Docgen;
 with Xref;
+with GNAT.IO;
 
 package body Docgen3.Frontend is
    Me : constant Debug_Handle := Create ("Docgen3.1-Frontend");
@@ -59,6 +60,8 @@ package body Docgen3.Frontend is
       C_Header_File : Virtual_File;
       --  (C/C++): Corrresponding header file (.h)
    end record;
+
+   No_Tree_Type : constant Built_Tree_Type := (null, No_File);
 
    function Build_File_Tree
      (Context       : access constant Docgen_Context;
@@ -193,6 +196,13 @@ package body Docgen3.Frontend is
 
       procedure Ada_Get_Doc (E : Entity_Id) is
       begin
+         --  Skip processing entities defined in other files (for example,
+         --  primitives inherited from the parent type).
+
+         if LL.Get_Location (E).File /= File then
+            return;
+         end if;
+
          Set_Doc (E,
            Xref.Docgen.Get_Docgen_Documentation
              (Self =>
@@ -250,8 +260,6 @@ package body Docgen3.Frontend is
             Lines_Skipped : Natural;
 
          begin
-            Trace (Me, "Ada_Get_Declaration_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the declaration
             Index := Buffer'First;
             GNATCOLL.Utils.Skip_Lines
@@ -389,8 +397,6 @@ package body Docgen3.Frontend is
          --  Start of processing for Get_Record_Type_Source
 
          begin
-            Trace (Me, "Ada_Get_Record_Type_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the record type
             --  declaration
 
@@ -426,13 +432,13 @@ package body Docgen3.Frontend is
             --  the ';'
 
             if Get_Kind (E) = E_Interface
-              or else
-                (Is_Incomplete_Or_Private_Type (E) and then not Is_Full_View)
+              or else (Is_Incomplete_Or_Private_Type (E)
+                         and then not Is_Full_View)
             then
                declare
                   Idx : Natural := Entity_Index - 1;
                begin
-                  while Idx > 0
+                  while Idx > Buffer'First
                     and then Buffer (Idx) /= ';'
                   loop
                      Idx := Idx + 1;
@@ -535,8 +541,6 @@ package body Docgen3.Frontend is
          --  Start of processing for Get_Subprogram_Source
 
          begin
-            Trace (Me, "Ada_Get_Subprogram_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the subprogram
             Index := Buffer'First;
             GNATCOLL.Utils.Skip_Lines
@@ -564,9 +568,6 @@ package body Docgen3.Frontend is
             Lines_Skipped : Natural;
 
          begin
-            Trace
-              (Me, "Ada_Get_Type_Declaration_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the declaration
             Index := Buffer'First;
             GNATCOLL.Utils.Skip_Lines
@@ -612,6 +613,13 @@ package body Docgen3.Frontend is
       --  Start of processing for Ada_Get_Source
 
       begin
+         --  Skip processing entities defined in other files (for example,
+         --  primitives inherited of the parent type).
+
+         if LL.Get_Location (E).File /= File then
+            return;
+         end if;
+
          if LL.Is_Subprogram (E) then
             Set_Src (E, Get_Subprogram_Source);
 
@@ -634,7 +642,6 @@ package body Docgen3.Frontend is
             Set_Src (E,
               To_Unbounded_String
                 ("<<Get_Source under development for this kind of entity>>"));
-            return;
          end if;
       end Ada_Get_Source;
 
@@ -768,8 +775,6 @@ package body Docgen3.Frontend is
          --  Start of processing for Get_Class_Type_Source
 
          begin
-            Trace (Me, "Get_Class_Type_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the record type
             --  declaration
 
@@ -789,7 +794,7 @@ package body Docgen3.Frontend is
             declare
                Idx : Natural := Entity_Index - 1;
             begin
-               while Idx > 0
+               while Idx > Buffer'First
                  and then (Buffer (Idx) = ' '
                            or else Buffer (Idx) = ASCII.LF)
                loop
@@ -797,7 +802,7 @@ package body Docgen3.Frontend is
                end loop;
                Prev_Word_End := Idx;
 
-               while Idx > 0
+               while Idx > Buffer'First
                  and then (Buffer (Idx) /= ' '
                              and then Buffer (Idx) /= ASCII.LF)
                loop
@@ -900,8 +905,6 @@ package body Docgen3.Frontend is
          --  Start of processing for Get_Struct_Type_Source
 
          begin
-            Trace (Me, "Get_Struct_Type_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the record type
             --  declaration
 
@@ -917,19 +920,39 @@ package body Docgen3.Frontend is
                Columns       => Natural (LL.Get_Location (E).Column),
                Index         => Entity_Index);
 
-            Previous_Word (Entity_Index, Prev_Word_Begin, Prev_Word_End);
+            --  Supported cases of C structs:
+
+            --     struct Foo                 --  [1]
+            --     | typedef struct ...       --  [2]
+            --     | static const struct ...  --  [3]
+
+            --  For [1] Entity_Index references Foo; for [2] and [3] it points
+            --  to the first letter of the word "struct"
 
             declare
-               Prev_Word : constant String :=
-                 To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End));
-            begin
-               pragma Assert
-                 (Prev_Word = "typedef" or else Prev_Word = "struct");
-            end;
+               Index : Natural := Entity_Index;
 
-            Parse_Entities
-              (Lang, Buffer.all (Prev_Word_Begin .. Buffer'Last),
-               CB'Unrestricted_Access);
+            begin
+               loop
+                  Previous_Word (Index, Prev_Word_Begin, Prev_Word_End);
+
+                  declare
+                     Prev_Word : constant String :=
+                                   To_Lower (Buffer.all
+                                     (Prev_Word_Begin .. Prev_Word_End));
+                  begin
+                     exit when  Prev_Word /= "struct"
+                       and then Prev_Word /= "const"
+                       and then Prev_Word /= "static";
+
+                     Index := Prev_Word_Begin;
+                  end;
+               end loop;
+
+               Parse_Entities
+                 (Lang, Buffer.all (Index .. Buffer'Last),
+                  CB'Unrestricted_Access);
+            end;
 
             return Printout;
          end Get_Struct_Type_Source;
@@ -1013,8 +1036,6 @@ package body Docgen3.Frontend is
          --  Start of processing for Get_Subprogram_Source
 
          begin
-            Trace (Me, "CPP_Get_Subprogram_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the subprogram
             Index := Buffer'First;
             GNATCOLL.Utils.Skip_Lines
@@ -1042,8 +1063,6 @@ package body Docgen3.Frontend is
             Prev_Word_Begin : Natural;
             Prev_Word_End   : Natural;
          begin
-            Trace (Me, "CPP_Get_Declaration_Source of " & (+File.Base_Name));
-
             --  Displace the pointer to the beginning of the declaration
             Index := Buffer'First;
             GNATCOLL.Utils.Skip_Lines
@@ -1057,7 +1076,7 @@ package body Docgen3.Frontend is
                Columns       => Natural (LL.Get_Location (E).Column),
                Index         => Index);
 
-            if Index > 0 then
+            if Index > Buffer'First then
                Previous_Word (Index - 1, Prev_Word_Begin, Prev_Word_End);
             else
                Prev_Word_Begin := Index;
@@ -1165,7 +1184,7 @@ package body Docgen3.Frontend is
          Idx : Natural := Index;
       begin
          --  Skip current word
-         while Idx > 0
+         while Idx > Buffer'First
            and then (Buffer (Idx) /= ' '
                      and then Buffer (Idx) /= ASCII.LF)
          loop
@@ -1174,7 +1193,7 @@ package body Docgen3.Frontend is
 
          --  Skip spaces and line terminators
 
-         while Idx > 0
+         while Idx > Buffer'First
            and then (Buffer (Idx) = ' '
                      or else Buffer (Idx) = ASCII.LF)
          loop
@@ -1182,7 +1201,7 @@ package body Docgen3.Frontend is
          end loop;
          Prev_Word_End := Idx;
 
-         while Idx > 0
+         while Idx > Buffer'First
            and then (Buffer (Idx) /= ' '
                      and then Buffer (Idx) /= ASCII.LF)
          loop
@@ -1260,7 +1279,7 @@ package body Docgen3.Frontend is
       function Skip_Blanks_Backward (Index : Natural) return Natural is
          Idx : Natural := Index;
       begin
-         while Idx > 0
+         while Idx > Buffer'First
            and then Buffer (Idx) = ' '
          loop
             Idx := Idx - 1;
@@ -1345,9 +1364,6 @@ package body Docgen3.Frontend is
       procedure Append_To_Scope (Scope : Entity_Id; E : Entity_Id);
       --  Append E to the list of entities of Scope
 
-      procedure Check (New_E : Entity_Id);
-      --  Check that New_E has not been added previously to the tree
-
       procedure Complete_Decoration (E : Entity_Id);
       --  Complete the decoration of entity E
 
@@ -1379,39 +1395,10 @@ package body Docgen3.Frontend is
 
       procedure Append_To_Scope (Scope : Entity_Id; E : Entity_Id) is
       begin
-         Check (E);
-
          Append_Entity (Scope, E);
          Set_Scope (E, Scope);
          Append_To_Map (E);
       end Append_To_Scope;
-
-      -----------
-      -- Check --
-      -----------
-
-      procedure Check (New_E : Entity_Id) is
-         procedure Check (Entity : Entity_Id);
-         function Check
-           (Entity      : Entity_Id;
-            Scope_Level : Natural) return Traverse_Result;
-         procedure Check (Entity : Entity_Id) is
-         begin
-            pragma Assert (Entity /= New_E);
-         end Check;
-         function Check
-           (Entity      : Entity_Id;
-            Scope_Level : Natural) return Traverse_Result
-         is
-            pragma Unreferenced (Scope_Level);
-         begin
-            pragma Assert (Entity /= New_E);
-            return OK;
-         end Check;
-      begin
-         For_All (File_Entities.All_Entities, Check'Access);
-         Traverse_Tree (Std_Entity, Check'Access);
-      end Check;
 
       -------------------------
       -- Complete_Decoration --
@@ -1582,7 +1569,8 @@ package body Docgen3.Frontend is
 
          elsif In_CPP_Lang then
             declare
-               Kind   : constant Entity_Kind := LL.Get_Ekind (Db, E);
+               Kind   : constant Entity_Kind :=
+                          LL.Get_Ekind (Db, E, In_Ada_Lang => False);
                New_E  : Entity_Id;
 
             begin
@@ -1622,11 +1610,14 @@ package body Docgen3.Frontend is
          else
             declare
                E_Body_Loc : constant General_Location := Get_Body (Db, E);
-               Kind       : constant Entity_Kind := LL.Get_Ekind (Db, E);
+               Kind       : constant Entity_Kind :=
+                              LL.Get_Ekind (Db, E, In_Ada_Lang => False);
                New_E      : Entity_Id;
 
             begin
-               if Kind = E_Include_File then
+               if Kind = E_Include_File
+                 or else Kind = E_Unknown
+               then
                   return null;
 
                elsif E_Loc.File /= File then
@@ -1742,7 +1733,10 @@ package body Docgen3.Frontend is
       Skip_This_Entity     : Boolean := False;
       File_Entities_Cursor : Entities_In_File_Cursor;
 
-   --  Start of processing for Build_Tree
+      Total_Entities_Count : Natural := 0;
+      Entities_Count       : Natural := 0;
+
+   --  Start of processing for Build_File_Tree
 
    begin
       C_Header_File := No_File;
@@ -1750,6 +1744,27 @@ package body Docgen3.Frontend is
       Set_Kind (Std_Entity, E_Package);
       Register_Std_Entity (Std_Entity);
       Enter_Scope (Std_Entity);
+
+      File_Entities_Cursor := Context.Database.Entities_In_File (File);
+      while not At_End (File_Entities_Cursor) loop
+         Total_Entities_Count := Total_Entities_Count + 1;
+         File_Entities_Cursor.Next;
+      end loop;
+
+      --  Temporarily disable construction of large trees (until we improve
+      --  the performance!). For example, sqlite3.c has 14860 entities and
+      --  requires 46 minutes to build the tree in my virtual machine???
+
+      if Total_Entities_Count > 3000 then
+         Trace (Me,
+           ">> Build_File_Tree (skipped): "
+           & Total_Entities_Count'Img
+           & " entities");
+
+         EInfo_Map.Clear (Entities_Map);
+         Scopes_Stack.Clear;
+         return No_Tree_Type;
+      end if;
 
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
 
@@ -1779,6 +1794,17 @@ package body Docgen3.Frontend is
       --  Process all its entities
 
       while not At_End (File_Entities_Cursor) loop
+         Entities_Count := Entities_Count + 1;
+
+         if Entities_Count mod 50 = 0 then
+            GNAT.IO.Put_Line
+              (+File.Base_Name
+               & ":"
+               & To_String (Entities_Count)
+               & "/"
+               & To_String (Total_Entities_Count));
+         end if;
+
          Skip_This_Entity := False;
          New_E := New_Entity (File_Entities_Cursor.Get);
 
@@ -1790,7 +1816,17 @@ package body Docgen3.Frontend is
             if In_Ada_Lang
               and then Present (LL.Get_Scope (New_E))
             then
-               Update_Scopes_Stack (New_E);
+               --  Skip the full view of incomplete or private types because
+               --  their Xref.Scope references the partial view (instead of
+               --  referencing its syntax scope)
+
+               if Is_Incomplete_Or_Private_Type (New_E)
+                 and then Is_Full_View (New_E)
+               then
+                  null;
+               else
+                  Update_Scopes_Stack (New_E);
+               end if;
             end if;
 
             --  (C/C++): Replace virtual primitives by their class entity. Done
@@ -1861,25 +1897,38 @@ package body Docgen3.Frontend is
                pragma Assert
                  (not Entities_Map.Contains (LL.Get_Location (New_E)));
 
+               --  Skip processing the full-view of a private or incomplete
+               --  type since its components are retrieved from Xref when
+               --  we process its partial view.
+
+               if Is_Incomplete_Or_Private_Type (New_E)
+                 and then Is_Full_View (New_E)
+               then
+                  Skip_This_Entity := True;
+               end if;
+
             --  Skip methods since they are entered in the tree as part of
             --  processing its class/tagged type
 
             elsif LL.Is_Primitive (New_E) then
                Skip_This_Entity := True;
 
-            --  An E_Variable may be in fact a component of an incomplete
-            --  or private type
-
             elsif In_Ada_Lang then
-               declare
-                  Map_Cursor : constant EInfo_Map.Cursor :=
-                                 Entities_Map.Find (LL.Get_Location (New_E));
-                  Prev_E     : Entity_Id;
-                  use type EInfo_Map.Cursor;
-               begin
-                  if Map_Cursor /= EInfo_Map.No_Element then
-                     Prev_E := EInfo_Map.Element (Map_Cursor);
-                     case Get_Kind (Prev_E) is
+
+               --  An E_Variable may be in fact a component of an incomplete
+               --  or private type
+
+               if LL.Get_Kind (New_E) = E_Variable then
+                  declare
+                     Map_Cursor : constant EInfo_Map.Cursor :=
+                       Entities_Map.Find (LL.Get_Location (New_E));
+                     Prev_E     : Entity_Id;
+                     use type EInfo_Map.Cursor;
+                  begin
+                     if Map_Cursor /= EInfo_Map.No_Element then
+                        Prev_E := EInfo_Map.Element (Map_Cursor);
+
+                        case Get_Kind (Prev_E) is
                         when E_Discriminant |
                              E_Component    |
                              E_Formal       =>
@@ -1887,11 +1936,12 @@ package body Docgen3.Frontend is
 
                         when others =>
                            pragma Assert (False);
-                     end case;
+                        end case;
 
-                     Skip_This_Entity := True;
-                  end if;
-               end;
+                        Skip_This_Entity := True;
+                     end if;
+                  end;
+               end if;
 
             elsif In_C_Lang
               and then Present (LL.Get_Scope (New_E))
@@ -1935,7 +1985,9 @@ package body Docgen3.Frontend is
                      if Context.Database.Is_Type (Scope_Id) then
                         declare
                            Kind : constant Entity_Kind :=
-                             LL.Get_Ekind (Context.Database, Scope_Id);
+                                    LL.Get_Ekind (Context.Database,
+                                                  Scope_Id,
+                                                  In_Ada_Lang => False);
                         begin
                            pragma Assert (Kind_In (Kind, E_Record_Type,
                                                          E_Class));
@@ -2520,6 +2572,7 @@ package body Docgen3.Frontend is
       Tree_Time     : Delay_Time;
       Doc_Time      : Delay_Time;
       Comments_Time : Delay_Time;
+
    begin
       Trace (Me, "Build_Tree " & (+File.Base_Name));
       Start (My_Time);
@@ -2529,6 +2582,14 @@ package body Docgen3.Frontend is
       Start (Tree_Time);
 
       Built_Tree := Build_File_Tree (Context, File, Tree'Access);
+
+      --  ??? Until we improve the performance Build_File_Tree does not
+      --  generate the tree associated with large files.
+
+      if Built_Tree = No_Tree_Type then
+         return No_Tree;
+      end if;
+
       Tree.Tree_Root   := Built_Tree.Root;
       Tree.File        := File;
       Tree.Header_File := Built_Tree.C_Header_File;

@@ -90,6 +90,14 @@ NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
   before (in particular, you can strike through or underline specific text
   in your editors with just a few lines of code).
 
+NF-53-M301-031 New review classification of CodePeer messages (2013-06-13)
+
+  When doing a manual review of a CodePeer message, the user can
+  no longer change the message ranking, but instead specify a review
+  classification and the name of the reviewer. New message review dialog is
+  added and new filter was added for CodePeer Report view to manage visibility
+  of messages by review status.
+
 NF-60-M218-036: GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
 
   The python function GPS.MDI.add now has additional parameters to specify

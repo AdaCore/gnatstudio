@@ -104,6 +104,11 @@ package body Docgen3.Backend.Simple is
          Text     : String);
       --  Append Text to Printout plus ASCII.LF
 
+      procedure ReST_Append_Record_Type_Declaration
+        (Printout : access Unbounded_String;
+         E        : Entity_Id);
+      --  Append to Printout the reStructured output of a record type
+
       procedure ReST_Append_Simple_Declaration
         (Printout : access Unbounded_String;
          E        : Entity_Id);
@@ -262,11 +267,11 @@ package body Docgen3.Backend.Simple is
          Append_Line (Printout, "");
       end ReST_Append_List;
 
-      ----------------------
-      -- ReST_Append_Type --
-      ----------------------
+      -----------------------------------------
+      -- ReST_Append_Record_Type_Declaration --
+      -----------------------------------------
 
-      procedure ReST_Append_Simple_Declaration
+      procedure ReST_Append_Record_Type_Declaration
         (Printout : access Unbounded_String;
          E        : Entity_Id)
       is
@@ -293,7 +298,6 @@ package body Docgen3.Backend.Simple is
             Append_Line (Printout, "**Full View:**");
             Append_Line (Printout, "");
             Append_Line (Printout, ".. code-block:: ada");
-            --            Append_Line ("::");
             Append_Line (Printout, "");
             Append_Line (Printout,
                          To_String (Append_Tab (Get_Full_View_Src (E))));
@@ -309,6 +313,37 @@ package body Docgen3.Backend.Simple is
                end if;
             end;
          end if;
+
+         if In_Ada_Language (E)
+           and then LL.Has_Methods (E)
+         then
+            ReST_Append_List
+              (Printout => Printout,
+               List     => Get_Methods (E).all,
+               Header   => "Dispatching subprograms");
+         end if;
+      end ReST_Append_Record_Type_Declaration;
+
+      ------------------------------------
+      -- ReST_Append_Simple_Declaration --
+      ------------------------------------
+
+      procedure ReST_Append_Simple_Declaration
+        (Printout : access Unbounded_String;
+         E        : Entity_Id)
+      is
+         Name   : constant String := Get_Short_Name (E);
+         Header : constant String (Name'Range) := (others => '=');
+
+      begin
+         ReST_Append_Label (Printout, E);
+
+         Append_Line (Printout, Name);
+         Append_Line (Printout, Header);
+         Append_Line (Printout, "");
+
+         ReST_Append_Src (Printout, E);
+         ReST_Append_Comment (Printout, E);
       end ReST_Append_Simple_Declaration;
 
       ---------------------
@@ -790,6 +825,16 @@ package body Docgen3.Backend.Simple is
                      Entities.Methods.Append (E);
                      Backend.Entities.Methods.Append (E);
                   end if;
+
+               elsif In_Ada_Language (E) then
+                  if LL.Is_Primitive (E) then
+                     Entities.Methods.Append (E);
+                     Backend.Entities.Methods.Append (E);
+                  else
+                     Entities.Subprgs.Append (E);
+                     Backend.Entities.Subprgs.Append (E);
+                  end if;
+
                else
                   Entities.Subprgs.Append (E);
                   Backend.Entities.Subprgs.Append (E);
@@ -851,19 +896,22 @@ package body Docgen3.Backend.Simple is
            (Printout'Access, Entities.CPP_Classes, "C++ Classes");
          ReST_Append_List
            (Printout'Access, Entities.Subprgs, "Subprograms");
-         ReST_Append_List
-           (Printout'Access, Entities.CPP_Constructors, "Constructors");
-         ReST_Append_List
-           (Printout'Access, Entities.Methods, "Methods");
+
+         if In_Ada_Language (Entity) then
+            ReST_Append_List
+              (Printout'Access, Entities.Methods, "Dispatching subprograms");
+         elsif In_CPP_Language (Entity) then
+            ReST_Append_List
+              (Printout'Access, Entities.CPP_Constructors, "Constructors");
+            ReST_Append_List
+              (Printout'Access, Entities.Methods, "Methods");
+         end if;
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
               (Printout'Access, Entities.Pkgs, "Nested packages",
                With_Full_Name => True);
          end if;
-
-         --        ReST_Append_List
-         --          (Printout, File_Entities.Methods, "Methods");
 
          --  Generate full documentation
 
@@ -882,17 +930,21 @@ package body Docgen3.Backend.Simple is
          For_All
            (Entities.Record_Types,
             Printout'Access,
-            ReST_Append_Simple_Declaration'Access);
+            ReST_Append_Record_Type_Declaration'Access);
 
          if In_Ada_Language (Entity) then
             For_All
               (Entities.Interface_Types,
                Printout'Access,
-               ReST_Append_Simple_Declaration'Access);
+               ReST_Append_Record_Type_Declaration'Access);
             For_All
               (Entities.Tagged_Types,
                Printout'Access,
-               ReST_Append_Simple_Declaration'Access);
+               ReST_Append_Record_Type_Declaration'Access);
+            For_All
+              (Entities.Methods,
+               Printout'Access,
+               ReST_Append_Subprogram'Access);
 
          elsif In_CPP_Language (Entity) then
             For_All
