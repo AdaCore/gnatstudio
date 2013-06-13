@@ -1608,7 +1608,7 @@ package body KeyManager_Module is
                (The_Type    => Gdk.Event.Key_Press,
                 Window      => Window,
                 Keyval      => Keyval,
-                Send_Event  => 0,
+                Send_Event  => 1,
                 Time        => 0, --  CURRENT_TIME
                 Is_Modifier => 0,
                 Group       => 0,
