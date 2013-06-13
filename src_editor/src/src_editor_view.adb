@@ -2225,7 +2225,8 @@ package body Src_Editor_View is
       Cairo.Paint (Cr);
       Draw_Line_Info
         (Src_Buffer, View.Top_Line, View.Bottom_Line,
-         Gtk_Text_View (View), View.Text_Color,
+         Gtk_Text_View (View),
+         Shade_Or_Lighten (View.Background_Color_Other, 0.4),
          Layout, Cr);
       Destroy (Cr);
 
