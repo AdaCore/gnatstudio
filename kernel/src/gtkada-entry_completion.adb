@@ -684,6 +684,7 @@ package body Gtkada.Entry_Completion is
       Val   : GValue;
       Score : Gint;
    begin
+      Self.Completion.Count := Self.Completion.Count + 1;
       Self.Completions.Append (Iter);
 
       Score := Gint (Result.Score);
@@ -1155,6 +1156,7 @@ package body Gtkada.Entry_Completion is
          Case_Sensitive => S.Settings_Case_Sensitive.Get_Active,
          Whole_Word     => S.Settings_Whole_Word.Get_Active,
          Kind          => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
+      S.Completion.Count := 0;
       S.Completion.Set_Pattern (S.Pattern);
 
       --  Since the list of completions will change shortly, give up on
