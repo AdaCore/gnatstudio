@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Messages_Windows;        use GPS.Messages_Windows;
 
 package body Docgen3.Files is
 
@@ -79,9 +79,8 @@ package body Docgen3.Files is
       Output := Name.Write_File;
 
       if Output = Invalid_File then
-         Insert
-           (Context.Kernel,
-            "Could not create " & Name.Display_Full_Name,
+         Context.Kernel.Messages_Window.Insert
+           ("Could not create " & Name.Display_Full_Name,
             Mode => Error);
          return;
       end if;
@@ -112,9 +111,8 @@ package body Docgen3.Files is
       Output := Name.Write_File;
 
       if Output = Invalid_File then
-         Insert
-           (Context.Kernel,
-            "Could not create " & Name.Display_Full_Name,
+         Context.Kernel.Messages_Window.Insert
+           ("Could not create " & Name.Display_Full_Name,
             Mode => Error);
          return;
       end if;
