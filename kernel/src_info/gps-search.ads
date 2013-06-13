@@ -150,7 +150,8 @@ package GPS.Search is
    ------------
 
    type Search_Provider is abstract tagged record
-      Rank : Positive := 100;
+      Rank  : Positive := 100;
+      Count : Natural := 0;
    end record;
    type Search_Provider_Access is access all Search_Provider'Class;
    --  Instances of this type will look for matches of a given pattern, in a
@@ -162,6 +163,9 @@ package GPS.Search is
    --  when the pattern is augmented.
    --  Rank is the order in which the user wants to sort the result (1 appears
    --  first,...)
+   --  Count is the number of matches (non-null result) since the last call to
+   --  Set_Pattern. It must set by the caller to Set_Pattern and Next, not by
+   --  each provider, if the caller intends to use it.
 
    type Search_Result is abstract tagged record
       Score    : Integer := 100;

@@ -57,6 +57,7 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Search_Entry;        use Gtkada.Search_Entry;
 with Gtkada.Style;               use Gtkada.Style;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
@@ -263,24 +264,26 @@ package body Gtkada.Entry_Completion is
       Child  : constant Gtk_Tree_Model := Filter.Get_Model;
       Child_It : Gtk_Tree_Iter;
       Prev     : Gtk_Tree_Iter;
+      Res, Prev_Res : Search_Result_Access;
    begin
       Filter.Convert_Iter_To_Child_Iter (Child_It, Filter_Iter => Iter);
 
       if Column = Column_Provider then
          Prev := Child_It;
          Previous (Child, Prev);
+         Res := Convert (Get_Address (Child, Child_It, Column_Data));
 
          if Prev = Null_Iter then
-            Set_String (Value, Get_String (Child, Child_It, Column));
+            Set_String
+              (Value, Res.Provider.Display_Name & " ("
+               & Image (Res.Provider.Count, Min_Width => 0) & ")");
          else
-            declare
-               Prev_Prov : constant String := Get_String (Child, Prev, Column);
-               Prov : constant String := Get_String (Child, Child_It, Column);
-            begin
-               if Prev_Prov /= Prov then
-                  Set_String (Value, Prov);
-               end if;
-            end;
+            Prev_Res := Convert (Get_Address (Child, Prev, Column_Data));
+            if Res.Provider /= Prev_Res.Provider then
+               Set_String
+                 (Value, Res.Provider.Display_Name & " ("
+                  & Image (Res.Provider.Count, Min_Width => 0) & ")");
+            end if;
          end if;
 
       elsif Column = Column_Label then
@@ -705,8 +708,6 @@ package body Gtkada.Entry_Completion is
       Set_Address (Val, Result.all'Address);
       Self.Completions.Set_Value (Iter, Column_Data, Val);
       Unset (Val);
-
-      Resize_Popup (Self, Height_Only => True);
    end Insert_Proposal;
 
    ------------------
@@ -893,6 +894,7 @@ package body Gtkada.Entry_Completion is
       Result   : Search_Result_Access;
       Start    : Time;
       Count    : Natural := 0;
+      Inserted : Boolean := False;
    begin
       Self.Completion.Next (Result => Result, Has_Next => Has_Next);
 
@@ -913,6 +915,7 @@ package body Gtkada.Entry_Completion is
 
          if Result /= null then
             Insert_Proposal (Self, Result);
+            Inserted := True;
          end if;
 
          exit when Clock - Start > Max_Idle_Duration;
@@ -921,6 +924,11 @@ package body Gtkada.Entry_Completion is
       end loop;
 
       Trace (Me, "Inserted" & Count'Img & " matches");
+
+      if Inserted then
+         Resize_Popup (Self, Height_Only => True);
+      end if;
+
       return True;
    end On_Idle;
 

@@ -126,6 +126,7 @@ package body GPS.Search.GUI is
       Self.Provider := Registry.Get (Self.Current_Provider);
 
       if Self.Provider /= null then
+         Self.Provider.Count := 0;
          Self.Provider.Set_Pattern
             (Self.Pattern,
              Limit => Natural'Min (Limit, Proposals_Per_Provider));
@@ -158,6 +159,8 @@ package body GPS.Search.GUI is
          Self.Provider.Next (Result, Has_Next);
 
          if Result /= null then
+            Result.Provider.Count := Result.Provider.Count + 1;
+
             --  Make sure the primary sort key is the provider
             --  ??? Should disconnect the sorting for the display from the
             --  order in which we process the providers, since the former is
@@ -216,6 +219,7 @@ package body GPS.Search.GUI is
       Self.Provider := Registry.Get (Self.Current_Provider);
 
       if Self.Provider /= null then
+         Self.Provider.Count := 0;
          Self.Provider.Set_Pattern
             (Self.Pattern, Limit => Proposals_Per_Provider);
       end if;
