@@ -1007,7 +1007,7 @@ package body GPS.Kernel is
    -- Get_System_Dir --
    --------------------
 
-   function Get_System_Dir
+   overriding function Get_System_Dir
      (Handle : access Kernel_Handle_Record) return Virtual_File is
    begin
       return Handle.Prefix;

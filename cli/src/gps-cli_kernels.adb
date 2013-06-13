@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
+with GNATCOLL.Utils;
 
 package body GPS.CLI_Kernels is
 
@@ -48,6 +49,26 @@ package body GPS.CLI_Kernels is
       Result := Projects.Create (Tree => Tree);
       Tree.Load_Empty_Project;
    end Create_Registry;
+
+   --------------------
+   -- Get_System_Dir --
+   --------------------
+
+   overriding function Get_System_Dir
+     (Self : not null access CLI_Kernel_Record)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      pragma Unreferenced (Self);
+
+      Dir : GNATCOLL.VFS.Virtual_File :=
+        Create (+GNATCOLL.Utils.Executable_Location);
+   begin
+      if Dir.Base_Dir_Name = "obj" then
+         Dir := Dir.Get_Parent;
+      end if;
+
+      return Dir;
+   end Get_System_Dir;
 
    ---------------------
    -- Messages_Window --

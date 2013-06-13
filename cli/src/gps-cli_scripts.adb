@@ -45,7 +45,10 @@ package body GPS.CLI_Scripts is
    is
       Kernel : constant Core_Kernel := Get_Kernel (Data);
    begin
-      if Command = "parse_xml" then
+      if Command = "get_system_dir" then
+         Set_Return_Value (Data, +Kernel.Get_System_Dir.Full_Name);
+
+      elsif Command = "parse_xml" then
          Name_Parameters (Data, Xml_Custom_Parameters);
 
          declare
@@ -85,6 +88,9 @@ package body GPS.CLI_Scripts is
 
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
    begin
+      Register_Command
+        (Kernel.Scripts, "get_system_dir",
+         Handler => Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "parse_xml",
          Minimum_Args => 1,

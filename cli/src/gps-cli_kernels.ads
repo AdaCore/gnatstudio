@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 --  Kernel for CLI
 
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with Projects;
 with Xref;
@@ -52,5 +54,9 @@ private
       Launcher        : aliased CLI_Process_Launcher_Record;
       Messages_Window : aliased GPS.CLI_Messages_Windows.Messages_Window;
    end record;
+
+   overriding function Get_System_Dir
+     (Self : not null access CLI_Kernel_Record)
+      return Virtual_File;
 
 end GPS.CLI_Kernels;
