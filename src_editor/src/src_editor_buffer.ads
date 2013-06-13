@@ -628,6 +628,11 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Gint;
    --  Get column memory for the main cursor of the buffer
 
+   function Is_Inserting_Internally
+     (Buffer  : access Source_Buffer_Record) return Boolean;
+   --  Predicate to know if the buffer is in the middle of an internal
+   --  insertion.
+
    -------------------
    -- Buffer Status --
    -------------------

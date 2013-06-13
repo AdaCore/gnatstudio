@@ -1289,6 +1289,7 @@ package body Completion_Module is
          View   := Source_View (Widget);
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
+
       if Get_Multi_Cursors (Buffer).Is_Empty then
          Ignore := Smart_Complete
            (Get_Kernel (Completion_Module.all),
@@ -1413,7 +1414,6 @@ package body Completion_Module is
 
       --  Local variables
 
-      pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
                        File_Edition_Hooks_Args (Data.all);
       Buffer       : Glib.UTF8_String (1 .. 6);
@@ -1459,7 +1459,22 @@ package body Completion_Module is
       end if;
 
       if Smart_Completion_Pref = Dynamic then
-         Dummy := Trigger_Timeout_Callback;
+         declare
+            Widget        : constant Gtk_Widget :=
+              Get_Current_Focus_Widget (Kernel);
+            View   : Source_View;
+            Buffer : Source_Buffer;
+         begin
+            if Widget /= null
+              and then Widget.all in Source_View_Record'Class
+            then
+               View   := Source_View (Widget);
+               Buffer := Source_Buffer (Get_Buffer (View));
+               if not Buffer.Is_Inserting_Internally then
+                  Dummy := Trigger_Timeout_Callback;
+               end if;
+            end if;
+         end;
       end if;
 
    exception

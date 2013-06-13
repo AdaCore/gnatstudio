@@ -8026,6 +8026,14 @@ package body Src_Editor_Buffer is
       return Buffer.Inserting_Count >= 1;
    end Inserting;
 
+   -----------------------------
+   -- Is_Inserting_Internally --
+   -----------------------------
+
+   function Is_Inserting_Internally
+     (Buffer  : access Source_Buffer_Record) return Boolean
+   is (Buffer.Inserting);
+
    ---------------------
    -- Start_Inserting --
    ---------------------
