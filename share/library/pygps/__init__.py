@@ -350,7 +350,7 @@ try:
 
 
     def send_key_event(keyval, control=0, alt=0, shift=0, window=None,
-                       process_events=True):
+                       process_events=True, bypass_keymanager=False):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
@@ -358,12 +358,16 @@ try:
            keyval is generally the result of calling  ord("x").
            Sending letters to an editor doesn't seem to work at the moment,
            except for special characters like GDK_RETURN.
+           If bypass_keymanager is True, do not use the Ada function which
+           passes the event to the key manager, but synthesize the event
+           in Python directly.
         """
 
-        if hasattr(GPS, "send_key_event"):
-            GPS.send_key_event(keyval, window=window,
-                               control=control, alt=alt, shift=shift)
-            return
+        if not bypass_keymanager:
+            if hasattr(GPS, "send_key_event"):
+                GPS.send_key_event(keyval, window=window,
+                                   control=control, alt=alt, shift=shift)
+                return
 
         def _synthesize(type, keyval):
             event = Gdk.EventKey()
