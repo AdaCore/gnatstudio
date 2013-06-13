@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Messages_Windows;  use GPS.Messages_Windows;
+
 package body Docgen3.Errout is
 
    -----------------------
@@ -72,7 +74,7 @@ package body Docgen3.Errout is
                Line (Line'First + 1 .. Line'Last) & ":" &
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin
-      Insert (Context.Kernel, Err, Mode => Mode);
+       Context.Kernel.Messages_Window.Insert (Err, Mode => Mode);
    end Output_Message;
 
    -------------

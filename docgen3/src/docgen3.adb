@@ -17,6 +17,7 @@
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Messages_Windows;    use GPS.Messages_Windows;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
@@ -87,9 +88,8 @@ package body Docgen3 is
             Lang : Language_Access;
          begin
             if not Files_List.Element (File_Index).Is_Regular_File then
-               Insert
-                 (Kernel,
-                  (-"warning: the file ") &
+               Kernel.Messages_Window.Insert
+                 ((-"warning: the file ") &
                     Display_Full_Name
                     (Files_List.Element (File_Index)) &
                   (-" cannot be found. It will be skipped."),
@@ -107,9 +107,8 @@ package body Docgen3 is
             if Lang.all not in Language.Ada.Ada_Language'Class
               and then Lang.all not in Language.C.C_Language'Class
             then
-               Insert
-                 (Kernel,
-                  -("info: Documentation not generated for ") &
+               Kernel.Messages_Window.Insert
+                 (-("info: Documentation not generated for ") &
                     Display_Base_Name (File) &
                   (-" since this language is not supported."),
                   Mode => Info);
@@ -120,9 +119,8 @@ package body Docgen3 is
             --  Verify that we have the .ali file for this source file.
 
             if not Database.Is_Up_To_Date (File) then
-               Insert
-                 (Kernel,
-                  -("warning: cross references for file ") &
+               Kernel.Messages_Window.Insert
+                 (-("warning: cross references for file ") &
                     Display_Base_Name (File) &
                   (-" are not up-to-date. Documentation not generated."),
                   Mode => Error);
