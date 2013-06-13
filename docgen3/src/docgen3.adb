@@ -131,7 +131,7 @@ package body Docgen3 is
                     (-("warning: cross references for file ") &
                        Display_Base_Name (File) &
                      (-" are not up-to-date. Documentation not generated."),
-                     Mode => Error);
+                     Mode => GPS.Messages_Windows.Error);
                end if;
 
                return True;
