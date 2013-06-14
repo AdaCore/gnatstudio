@@ -1367,8 +1367,11 @@ package body Docgen3.Frontend is
       procedure Complete_Decoration (E : Entity_Id);
       --  Complete the decoration of entity E
 
-      function New_Entity (E : General_Entity) return Entity_Id;
-      --  Build a new entity for the Xref entity E
+      function New_Entity
+        (E      : General_Entity;
+         Forced : Boolean := False) return Entity_Id;
+      --  Build a new entity for the Xref entity E. If Forced is True then the
+      --  entity is built even if it is defined in another file.
 
       -----------------------------
       -- Append_To_File_Entities --
@@ -1463,7 +1466,7 @@ package body Docgen3.Frontend is
                   for J in All_Methods'Range loop
                      Meth_E := New_Entity (All_Methods (J));
 
-                     --  Fails with inherited primtivives of package
+                     --  Fails with inherited primitives of package
                      --  Ada.Finalization???
                      --  pragma Assert (LL.Is_Primitive (Meth_E));
 
@@ -1485,6 +1488,34 @@ package body Docgen3.Frontend is
                   end loop;
                end;
             end if;
+
+            declare
+               Parents  : constant Xref.Entity_Array :=
+                            Parent_Types
+                              (Context.Database, LL.Get_Entity (E),
+                               Recursive => True);
+               Parent_E : Entity_Id;
+
+            begin
+               for J in Parents'Range loop
+                  Parent_E := New_Entity (Parents (J), Forced => True);
+                  Append_Parent_Type (E, Parent_E);
+               end loop;
+            end;
+
+            declare
+               Childs : constant Xref.Entity_Array :=
+                          Child_Types
+                           (Context.Database, LL.Get_Entity (E),
+                            Recursive => True);
+               Child_E : Entity_Id;
+
+            begin
+               for J in Childs'Range loop
+                  Child_E := New_Entity (Childs (J), Forced => True);
+                  Append_Child_Type (E, Child_E);
+               end loop;
+            end;
          end Decorate_Record_Type;
 
          -------------------------
@@ -1545,7 +1576,8 @@ package body Docgen3.Frontend is
       ----------------
 
       function New_Entity
-        (E : General_Entity) return Entity_Id
+        (E      : General_Entity;
+         Forced : Boolean := False) return Entity_Id
       is
          Db      : General_Xref_Database renames Context.Database;
          E_Loc   : constant General_Location := Get_Location (Db, E);
@@ -1559,6 +1591,7 @@ package body Docgen3.Frontend is
 
             if E_Loc.File /= File
               and then not Is_Prim
+              and then not Forced
             then
                return null;
             else

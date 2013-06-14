@@ -52,6 +52,15 @@ package body Docgen3.Atree is
    procedure Set_Is_Incomplete_Or_Private_Type (E : Entity_Id);
    --  Set to true field E.Is_Incomplete_Or_Private_Type
 
+   -----------------------
+   -- Append_Child_Type --
+   -----------------------
+
+   procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
+   begin
+      E.Child_Types.Append (Value);
+   end Append_Child_Type;
+
    -------------------------
    -- Append_Discriminant --
    -------------------------
@@ -98,6 +107,15 @@ package body Docgen3.Atree is
    begin
       E.Methods.Append (Value);
    end Append_Method;
+
+   ------------------------
+   -- Append_Parent_Type --
+   ------------------------
+
+   procedure Append_Parent_Type (E : Entity_Id; Value : Entity_Id) is
+   begin
+      E.Parent_Types.Append (Value);
+   end Append_Parent_Type;
 
    -------------
    -- For_All --
@@ -153,6 +171,15 @@ package body Docgen3.Atree is
 
       List.Clear;
    end Free;
+
+   ---------------------
+   -- Get_Child_Types --
+   ---------------------
+
+   function Get_Child_Types (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      return E.Child_Types'Access;
+   end Get_Child_Types;
 
    -----------------
    -- Get_Comment --
@@ -262,6 +289,15 @@ package body Docgen3.Atree is
    begin
       return E.Methods'Access;
    end Get_Methods;
+
+   ----------------------
+   -- Get_Parent_Types --
+   ----------------------
+
+   function Get_Parent_Types (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      return E.Parent_Types'Access;
+   end Get_Parent_Types;
 
    ------------------
    -- Get_Ref_File --
@@ -640,6 +676,8 @@ package body Docgen3.Atree is
            Discriminants   => <>,
            Entities        => <>,
            Methods         => <>,
+           Parent_Types    => <>,
+           Child_Types     => <>,
            Error_Msg       => Null_Unbounded_String);
 
       --  Do not perform the full decoration of the entity for auxiliary
@@ -1555,6 +1593,16 @@ package body Docgen3.Atree is
       if Is_Class_Or_Record_Type (E)
         or else Get_Kind (E) = E_Class
       then
+         Print_Entities
+           (Vector => Get_Parent_Types (E),
+            Header => LL_Prefix & " Parent types",
+            Prefix => LL_Prefix & " - ");
+
+         Print_Entities
+           (Vector => Get_Child_Types (E),
+            Header => LL_Prefix & " Child types",
+            Prefix => LL_Prefix & " - ");
+
          Print_Entities
            (Vector => Get_Entities (E),
             Header => LL_Prefix & " Components:",

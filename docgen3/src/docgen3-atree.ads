@@ -160,6 +160,8 @@ private package Docgen3.Atree is
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
 
+   procedure Append_Child_Type
+     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Entity
      (E : Entity_Id; Value : Entity_Id);
    --  Append Value to the list of entities in the scope of E
@@ -167,7 +169,11 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
      (E : Entity_Id; Value : Entity_Id);
+   procedure Append_Parent_Type
+     (E : Entity_Id; Value : Entity_Id);
 
+   function Get_Child_Types
+     (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
    function Get_Discriminants
@@ -191,6 +197,8 @@ private package Docgen3.Atree is
    function Get_Language
      (E : Entity_Id) return Language_Access;
    function Get_Methods
+     (E : Entity_Id) return access EInfo_List.Vector;
+   function Get_Parent_Types
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Ref_File
      (E : Entity_Id) return Virtual_File;
@@ -492,10 +500,22 @@ private
          Methods         : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
 
+         Parent_Types    : aliased EInfo_List.Vector;
+         --  Parent types of tagged types (or base classes of C++ classes)
+
+         Child_Types     : aliased EInfo_List.Vector;
+         --  Derivations of tagged types (or C++ classes)
+
          Error_Msg       : Unbounded_String;
          --  Errors reported on this entity
       end record;
 
+   pragma Inline (Append_Child_Type);
+   pragma Inline (Append_Discriminant);
+   pragma Inline (Append_Entity);
+   pragma Inline (Append_Method);
+   pragma Inline (Append_Parent_Type);
+   pragma Inline (Get_Child_Types);
    pragma Inline (Get_Comment);
    pragma Inline (Get_Discriminants);
    pragma Inline (Get_Doc);
@@ -506,13 +526,22 @@ private
    pragma Inline (Get_Full_View_Doc);
    pragma Inline (Get_Full_View_Src);
    pragma Inline (Get_Kind);
+   pragma Inline (Get_Language);
    pragma Inline (Get_Methods);
+   pragma Inline (Get_Parent_Types);
+   pragma Inline (Get_Ref_File);
    pragma Inline (Get_Scope);
    pragma Inline (Get_Short_Name);
    pragma Inline (Get_Src);
+   pragma Inline (Get_Unique_Id);
    pragma Inline (Has_Formals);
+   pragma Inline (In_Ada_Language);
+   pragma Inline (In_C_Language);
+   pragma Inline (In_CPP_Language);
    pragma Inline (Is_Incomplete_Or_Private_Type);
+   pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
+   pragma Inline (Is_Full_View);
    pragma Inline (Is_Private);
    pragma Inline (Is_Class_Or_Record_Type);
    pragma Inline (Is_Tagged);
@@ -529,6 +558,7 @@ private
    pragma Inline (Set_Is_Private);
    pragma Inline (Set_Is_Tagged);
    pragma Inline (Set_Kind);
+   pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Src);
 end Docgen3.Atree;
