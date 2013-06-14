@@ -33,9 +33,7 @@ with Language.Ada;
 with Language.Cpp;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
-with UTF8_Utils;              use UTF8_Utils;
 with Xref.Docgen;             use Xref.Docgen;
 with Xref;
 with GNAT.IO;
@@ -165,11 +163,6 @@ package body Docgen3.Frontend is
 
       procedure CPP_Get_Source (E : Entity_Id);
       --  Retrieve the C/C++ source associated with E
-
-      procedure Load
-        (File   : Virtual_File;
-         Buffer : in out GNAT.Strings.String_Access);
-      --  Read File and store its contents in Buffer
 
       procedure Previous_Word
         (Index           : Natural;
@@ -658,7 +651,7 @@ package body Docgen3.Frontend is
                return;
             else
                if C_Headers_Buffer = null then
-                  Load (LL.Get_Location (E).File, C_Headers_Buffer);
+                  C_Headers_Buffer := LL.Get_Location (E).File.Read_File;
                end if;
 
                Swap_Buffers;
@@ -1104,7 +1097,7 @@ package body Docgen3.Frontend is
                return;
             else
                if C_Headers_Buffer = null then
-                  Load (LL.Get_Location (E).File, C_Headers_Buffer);
+                  C_Headers_Buffer := LL.Get_Location (E).File.Read_File;
                end if;
 
                Swap_Buffers;
@@ -1141,36 +1134,6 @@ package body Docgen3.Frontend is
             Swap_Buffers;
          end if;
       end CPP_Get_Source;
-
-      -----------
-      --  Load --
-      -----------
-
-      procedure Load
-        (File   : Virtual_File;
-         Buffer : in out GNAT.Strings.String_Access)
-      is
-         Last    : Natural;
-         Striped : Boolean;
-         pragma Unreferenced (Striped);
-      begin
-         Buffer := File.Read_File;
-         Strip_CR (Buffer.all, Last, Striped);
-
-         declare
-            Old_Buff : GNAT.Strings.String_Access := Buffer;
-            Success  : aliased Boolean;
-            N_String : constant String :=
-                         Unknown_To_UTF8
-                           (Old_Buff (Old_Buff'First .. Last),
-                            Success'Access);
-         begin
-            if Success then
-               Buffer := new String'(N_String);
-               Free (Old_Buff);
-            end if;
-         end;
-      end Load;
 
       -------------------
       -- Previous_Word --
@@ -1306,7 +1269,7 @@ package body Docgen3.Frontend is
    begin
       EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
 
-      Load (File, Buffer);
+      Buffer := File.Read_File;
 
       if False then
          if Present (File_Entities.Tree_Root) then
