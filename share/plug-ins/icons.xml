@@ -12,65 +12,19 @@
 
     <!-- General-purpose icons -->
 
-    <icon id="gtk-paste"              label="Paste"
-                                      file="../icons/24px/clipboard_24.png" >
-       <alternate                     file="../icons/16px/clipboard_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/clipboard_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-copy"               label="Copy"
-                                      file="../icons/24px/copy_24.png" >
-       <alternate                     file="../icons/16px/copy_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/copy_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-cut"                label="Cut"
-                                      file="../icons/24px/cut_24.png" >
-       <alternate                     file="../icons/16px/cut_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/cut_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gps-navigate-forward"   label="Forward"
-                                      file="../icons/24px/goto_next_24.png" >
-       <alternate                     file="../icons/16px/goto_next_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/goto_next_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gps-navigate-back"      label="Back"
-                                      file="../icons/24px/goto_previous_24.png" >
-       <alternate                     file="../icons/16px/goto_previous_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/goto_previous_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-new"                label="New"
-                                      file="../icons/24px/newfile_24.png" >
-       <alternate                     file="../icons/16px/newfile_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/newfile_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-open"               label="Open"
-                                      file="../icons/24px/open_24.png" >
-       <alternate                     file="../icons/16px/open_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/open_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-redo"               label="Redo"
-                                      file="../icons/24px/redo_24.png" >
-       <alternate                     file="../icons/16px/redo_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/redo_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-save"               label="Save"
-                                      file="../icons/24px/save_24.png" >
-       <alternate                     file="../icons/16px/save_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/save_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gtk-undo"               label="Undo"
-                                      file="../icons/24px/undo_24.png" >
-       <alternate                     file="../icons/16px/undo_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/undo_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
+    <icon id="gtk-paste"              label="Paste" file="../icons/svg/paste.svg" />
+    <icon id="gtk-copy"               label="Copy" file="../icons/svg/copy.svg" />
+    <icon id="gtk-cut"                label="Cut" file="../icons/svg/cut.svg" />
+    <icon id="gps-navigate-forward"   label="Forward" file="../icons/svg/right.svg" />
+    <icon id="gps-navigate-back"      label="Back" file="../icons/svg/left.svg" />
+    <icon id="gtk-new"                label="New" file="../icons/svg/document.svg" />
+    <icon id="gtk-open"               label="Open" file="../icons/svg/folder.svg" />
+    <icon id="gtk-redo"               label="Redo" file="../icons/svg/redo.svg" />
+    <icon id="gtk-save"               label="Save" file="../icons/svg/save.svg" />
+    <icon id="gtk-undo"               label="Undo" file="../icons/svg/undo.svg" />
+    <icon id="gtk-preferences"        label="Preferences" file="../icons/svg/settings.svg" />
+    <icon id="gtk-close"              label="Close" file="../icons/svg/close.svg" />
+    <icon id="gtk-print"              label="Print" file="../icons/svg/print.svg" />
 
     <!-- Debugger icons -->
 
@@ -271,11 +225,7 @@
 
     <!--  Builder icons -->
 
-    <icon id="gps-build-all"       label="Build all"
-                                      file="../icons/24px/build_all_24.png" >
-       <alternate                     file="../icons/16px/build_all_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/build_all_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
+    <icon id="gps-build-all"       label="Build all" file="../icons/svg/build.svg" />
 
      <icon id="gps-build-main"       label="Build main"
                                       file="../icons/24px/build_main_24.png" >

@@ -68,8 +68,10 @@ package body GPS.Stock_Icons is
 
                Gtk_New (Set);
                Set.Add_Source (Source);
+               Factory.Add (Stock, Set);
 
             else
+               --  The fallback for the icon
                Gdk_New_From_File (Pixbuf, +P.Full_Name.all, Error);
 
                if Error /= null then
@@ -77,10 +79,9 @@ package body GPS.Stock_Icons is
                          & Get_Message (Error));
                else
                   Gtk_New_From_Pixbuf (Set, Pixbuf);
+                  Factory.Add (Stock, Set);
                end if;
             end if;
-
-            Factory.Add (Stock, Set);
          end if;
 
          if Label /= "" then
@@ -101,26 +102,35 @@ package body GPS.Stock_Icons is
          Icon_Size_Lookup (Icon_Size_Action_Button, W, H, Result);
          Trace (Me, "Icon size Action =>" & W'Img & "x" & H'Img);
 
+         Icon_Size_Lookup (Icon_Size_Local_Toolbar, W, H, Result);
+         Trace (Me, "Icon size Local Toolbar =>" & W'Img & "x" & H'Img);
+
          Icon_Size_Lookup (Icon_Size_Menu, W, H, Result);
          Trace (Me, "Icon size Menu =>" & W'Img & "x" & H'Img);
 
          Icon_Size_Lookup (Icon_Size_Small_Toolbar, W, H, Result);
          Trace (Me, "Icon size Small_Toolbar =>" & W'Img & "x" & H'Img);
+
+         Icon_Size_Lookup (Icon_Size_Large_Toolbar, W, H, Result);
+         Trace (Me, "Icon size Large_Toolbar =>" & W'Img & "x" & H'Img);
+
+         Icon_Size_Lookup (Icon_Size_Button, W, H, Result);
+         Trace (Me, "Icon size Button =>" & W'Img & "x" & H'Img);
       end if;
 
       Gtk_New (Factory);
       Add_Default (Factory);
 
-      Icon (GPS_Stock_Config_Menu, -"Configuration", "20px/menu_20.png");
-      Icon (GPS_Stop_Task, -"Close", "9px/close_8.png");
+      Icon (GPS_Stock_Config_Menu, -"Configuration", "svg/menu.svg");
+      Icon (GPS_Stop_Task, -"Close", "svg/close.svg");
       Icon (GPS_Expand_All, -"Expand all", "9px/expand_12.png");
       Icon (GPS_Collapse_All, "-Collapse all", "9px/collapse_12.png");
       Icon (GPS_Clear_Entry, -"Clear", "16px/clear_entry_16.png");
       Icon (GPS_Toggle_Links, -"Hide/Show links", "9px/toggle_links_12.png");
       Icon (GPS_Remove_Unselected, -"Remove unselected",
             "9px/remove_unselected_12.png");
-      Icon (GPS_Read_Only, -"Read only", "16px/lock_16.png");
-      Icon (GPS_Writable, -"Writable", "16px/unlock_16.png");
+      Icon (GPS_Read_Only, -"Read only", "svg/lock.svg");
+      Icon (GPS_Writable, -"Writable", "svg/unlock.svg");
       Icon (GPS_Regexp, -"Regexp", "16px/regexp.png");
       Icon (GPS_Negate_Search, -"Invert search", "16px/negate.png");
    end Register_Stock_Icons;
