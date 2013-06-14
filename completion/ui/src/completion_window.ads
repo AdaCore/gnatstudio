@@ -140,7 +140,7 @@ package Completion_Window is
 
 private
 
-   Minimal_Items_To_Show : constant := 10;
+   Minimal_Items_To_Show : constant := 2;
 
    procedure Expand_Selection
      (Explorer : access Completion_Explorer_Record'Class);

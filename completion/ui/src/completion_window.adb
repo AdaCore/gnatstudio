@@ -449,21 +449,22 @@ package body Completion_Window is
       --  Give ourselves Number * 2 chances to get Number items without having
       --  to resort to an idle computation.
 
-      loop
-         --  Call Idle_Expand, and exit the loop if the function returns False
+      if not Explorer.Completion_Window.Volatile then
+         loop
 
-         if (not Idle_Expand (Completion_Explorer_Access (Explorer)))
-           or else Explorer.Shown >= Explorer.Number_To_Show
-         then
-            return;
-         end if;
+            if (not Idle_Expand (Completion_Explorer_Access (Explorer)))
+              or else Explorer.Shown >= Explorer.Number_To_Show
+            then
+               return;
+            end if;
 
-         Count := Count + 1;
+            Count := Count + 1;
 
-         --  Exit when we have found the number of items we wanted
+            --  Exit when we have found the number of items we wanted
 
-         exit when Count >= Minimal_Items_To_Show * 2;
-      end loop;
+            exit when Count >= Minimal_Items_To_Show * 2;
+         end loop;
+      end if;
 
       --  If we failed to get Number items, register an idle computation to
       --  fill the data.
