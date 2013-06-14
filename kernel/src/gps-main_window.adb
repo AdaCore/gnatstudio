@@ -371,7 +371,7 @@ package body GPS.Main_Window is
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
-            Set_Icon_Size (Win.Toolbar, Icon_Size_Small_Toolbar);
+            Set_Icon_Size (Win.Toolbar, Icon_Size_Menu);
 
          when Large_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
