@@ -49,11 +49,8 @@ package body Docgen3.Backend.Simple is
    procedure Clear (Entities : in out Collected_Entities);
    --  Clear all the lists used to classify the tree nodes in categories
 
-   function Get_Unique_Name
-     (E                  : Entity_Id;
-      With_Full_Name     : Boolean := True;
-      With_C_Header_File : Virtual_File := No_File) return String;
-   --  Return the name of E concatenated with the Unique_Id of E
+   function Get_Unique_Name (E : Entity_Id) return String;
+   --  Return the full name of E concatenated with the Unique_Id of E
 
    function Get_Template
      (System_Dir : Virtual_File;
@@ -81,11 +78,9 @@ package body Docgen3.Backend.Simple is
       --  Append to Printout the reStructured output of a label for E
 
       procedure ReST_Append_List
-        (Printout            : access Unbounded_String;
-         List                : EInfo_List.Vector;
-         Header              : String;
-         With_C_Headers_File : Virtual_File := No_File;
-         With_Full_Name      : Boolean      := True);
+        (Printout : access Unbounded_String;
+         List     : EInfo_List.Vector;
+         Header   : String);
       --  Append to Printout the Header plus the reStructured Text of all the
       --  elements of List.
       --
@@ -227,11 +222,9 @@ package body Docgen3.Backend.Simple is
       ----------------------
 
       procedure ReST_Append_List
-        (Printout            : access Unbounded_String;
-         List                : EInfo_List.Vector;
-         Header              : String;
-         With_C_Headers_File : Virtual_File := No_File;
-         With_Full_Name      : Boolean      := True)
+        (Printout : access Unbounded_String;
+         List     : EInfo_List.Vector;
+         Header   : String)
       is
          Cursor : EInfo_List.Cursor;
          E      : Entity_Id;
@@ -257,7 +250,7 @@ package body Docgen3.Backend.Simple is
 
             Append_Line (Printout,
               " <"
-              & Get_Unique_Name (E, With_Full_Name, With_C_Headers_File)
+              & Get_Unique_Name (E)
               & ">` "
               & Image (LL.Get_Location (E)));
 
@@ -313,6 +306,16 @@ package body Docgen3.Backend.Simple is
                end if;
             end;
          end if;
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Get_Parent_Types (E).all,
+            Header   => "Parent types");
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Get_Child_Types (E).all,
+            Header   => "Child types");
 
          if In_Ada_Language (E)
            and then LL.Has_Methods (E)
@@ -478,7 +481,7 @@ package body Docgen3.Backend.Simple is
       function ReST_Label
         (E : Entity_Id) return String is
       begin
-         return ".. _" & Get_Unique_Name (E, With_Full_Name => True) & ":";
+         return ".. _" & Get_Unique_Name (E) & ":";
       end ReST_Label;
 
       ----------------
@@ -553,8 +556,7 @@ package body Docgen3.Backend.Simple is
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Pkgs,
-               "Packages",
-               With_Full_Name => True);
+               "Packages");
 
             ReST_Append_List
               (Printout'Access,
@@ -656,17 +658,13 @@ package body Docgen3.Backend.Simple is
    -- Get_Unique_Name --
    ---------------------
 
-   function Get_Unique_Name
-     (E                  : Entity_Id;
-      With_Full_Name     : Boolean := True;
-      With_C_Header_File : Virtual_File := No_File) return String
-   is
-      pragma Unreferenced (With_C_Header_File);
+   function Get_Unique_Name (E : Entity_Id) return String is
    begin
-      if With_Full_Name then
-         return To_Lower (Get_Full_Name (E) & To_String (Get_Unique_Id (E)));
+      if LL.Is_Type (E) then
+         return To_Lower (Get_Full_Name (E));
       else
-         return To_Lower (Get_Short_Name (E) & To_String (Get_Unique_Id (E)));
+         return
+           To_Lower (Get_Full_Name (E) & To_String (Get_Unique_Id (E)));
       end if;
    end Get_Unique_Name;
 
@@ -907,8 +905,7 @@ package body Docgen3.Backend.Simple is
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Pkgs, "Nested packages",
-               With_Full_Name => True);
+              (Printout'Access, Entities.Pkgs, "Nested packages");
          end if;
 
          --  Generate full documentation
@@ -984,16 +981,18 @@ package body Docgen3.Backend.Simple is
             Labels      : Unbounded_String;
             Header      : aliased Unbounded_String;
          begin
-            Labels :=
-              To_Unbounded_String (ReST_Label (Filename)) & ASCII.LF;
+            if In_Ada_Language (Entity) then
+               Labels :=
+                 To_Unbounded_String (ReST_Label (Filename))
+                 & ASCII.LF
+                 & ReST_Label (Entity)
+                 & ASCII.LF;
 
-            if In_Ada_Language (Entity)
-              or else (In_CPP_Language (Entity)
-                       and then Get_Kind (Entity) = E_Class)
+            elsif In_CPP_Language (Entity)
+              and then Get_Kind (Entity) = E_Class
             then
                Labels :=
-                 Labels
-                 & ReST_Label (Entity) & ASCII.LF;
+                 To_Unbounded_String (ReST_Label (Entity)) & ASCII.LF;
             end if;
 
             Header :=
