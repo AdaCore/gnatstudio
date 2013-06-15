@@ -315,9 +315,30 @@ package body Docgen3.Frontend is
             Par_Count : Natural := 0;
             Last_Idx  : Natural := 0;
 
-            Private_Found    : Boolean := False;
-            End_Found        : Boolean := False;
             End_Record_Found : Boolean := False;
+            Tagged_Null      : Boolean := False;
+            With_Null        : Boolean := False;
+
+            type Tokens is
+              (Tok_Unknown,
+               Tok_Abstract,
+               Tok_Aliased,
+               Tok_Case,
+               Tok_End,
+               Tok_Is,
+               Tok_Limited,
+               Tok_New,
+               Tok_Null,
+               Tok_Others,
+               Tok_Private,
+               Tok_Record,
+               Tok_Tagged,
+               Tok_Type,
+               Tok_When,
+               Tok_With);
+
+            Prev_Token : Tokens := Tok_Unknown;
+            Token      : Tokens := Tok_Unknown;
 
             function CB
               (Entity         : Language_Entity;
@@ -330,6 +351,48 @@ package body Docgen3.Frontend is
                S : String renames
                      Buffer (Sloc_Start.Index .. Sloc_End.Index);
 
+               function Get_Token return Tokens;
+               --  Return the token associated with S
+
+               function Get_Token return Tokens is
+                  Keyword : constant String := To_Lower (S);
+
+               begin
+                  if Keyword = "abstract" then
+                     return Tok_Abstract;
+                  elsif Keyword = "aliased" then
+                     return Tok_Aliased;
+                  elsif Keyword = "case" then
+                     return Tok_Case;
+                  elsif Keyword = "end" then
+                     return Tok_End;
+                  elsif Keyword = "is" then
+                     return Tok_Is;
+                  elsif Keyword = "limited" then
+                     return Tok_Limited;
+                  elsif Keyword = "new" then
+                     return Tok_New;
+                  elsif Keyword = "null" then
+                     return Tok_Null;
+                  elsif Keyword = "others" then
+                     return Tok_Others;
+                  elsif Keyword = "private" then
+                     return Tok_Private;
+                  elsif Keyword = "record" then
+                     return Tok_Record;
+                  elsif Keyword = "tagged" then
+                     return Tok_Tagged;
+                  elsif Keyword = "type" then
+                     return Tok_Type;
+                  elsif Keyword = "when" then
+                     return Tok_When;
+                  elsif Keyword = "with" then
+                     return Tok_With;
+                  else
+                     return Tok_Unknown;
+                  end if;
+               end Get_Token;
+
             begin
                --  Print all text between previous call and current one
 
@@ -340,26 +403,31 @@ package body Docgen3.Frontend is
                Last_Idx := Sloc_End.Index;
                Append (S);
 
-               --  if Entity = Block_Text then  --  identifier???
-               --     return False; --  continue
-
                if Entity = Comment_Text then
                   return False; --  continue
 
                elsif Entity = Keyword_Text then
-                  declare
-                     Keyword : constant String := To_Lower (S);
-                  begin
-                     if Keyword  = "private" then
-                        Private_Found := True;
-                     elsif Keyword = "end" then
-                        End_Found := True;
-                     elsif End_Found and then Keyword = "record" then
-                        End_Record_Found := True;
-                     else
-                        End_Found := False;
-                     end if;
-                  end;
+                  Prev_Token := Token;
+                  Token      := Get_Token;
+
+                  if Prev_Token = Tok_Tagged
+                    and then Token = Tok_Null
+                  then
+                     Tagged_Null := True;
+
+                  elsif Prev_Token = Tok_With
+                    and then Token = Tok_Null
+                  then
+                     With_Null := True;
+
+                  elsif (Tagged_Null
+                           or else With_Null
+                           or else Prev_Token = Tok_End)
+                    and then Token = Tok_Record
+                  then
+                     End_Record_Found := True;
+                  end if;
+
                elsif Entity = Operator_Text then
                   if S = "(" then
                      Par_Count := Par_Count + 1;
@@ -367,7 +435,7 @@ package body Docgen3.Frontend is
                      Par_Count := Par_Count - 1;
                   elsif S = ";" then
                      if Par_Count = 0 then
-                        return Private_Found
+                        return Prev_Token = Tok_Private
                           or else End_Record_Found;
                      end if;
                   end if;
