@@ -29,12 +29,12 @@ with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
@@ -105,6 +105,24 @@ package body Completion_Module is
 
    use String_List_Utils.String_List;
 
+   type Update_Lock_Access is access all Update_Lock;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Update_Lock, Update_Lock_Access);
+
+   type Smart_Completion_Data is record
+      Manager             : Completion_Manager_Access;
+      Constructs_Resolver : Completion_Resolver_Access;
+      Result              : Completion_List;
+      Start_Mark          : Gtk_Text_Mark := null;
+      End_Mark            : Gtk_Text_Mark := null;
+      Buffer              : Source_Buffer;
+      The_Text            : GNAT.Strings.String_Access;
+
+      --  We need to lock the update of the file during the completion process
+      --  in order to keep valid information in the trees.
+      Lock                : Update_Lock_Access;
+   end record;
+
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.Strings.String_Access;
       --  The current prefix for the search.
@@ -172,6 +190,16 @@ package body Completion_Module is
       --  The current completion window. This is only valid when
       --  Has_Smart_Completion is True.
 
+      Data : Smart_Completion_Data;
+      --  The data to use for the smart completion window. This is only valid
+      --  when Has_Smart_Completion is True. It used to be passed as a callback
+      --  parameter for Signal_Destroy on the completion window, but this does
+      --  not work when GPS is terminated while the completion window is opened
+      --  since gtk+ is terminated first, then the GPS (and this module). Even
+      --  if Module.Destroy is destroying the completion window, no more gtk+
+      --  signals are propagated, and this data is never properly finalized as
+      --  it must.
+
       Completion_Triggers_Callback    : Function_With_Args_Access;
       --  The hook callback corresponding to character triggers
 
@@ -187,28 +215,6 @@ package body Completion_Module is
       Completion_Aliases  : Completion_Aliases_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
-
-   type Update_Lock_Access is access all Update_Lock;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Update_Lock, Update_Lock_Access);
-
-   type Smart_Completion_Data is record
-      Manager             : Completion_Manager_Access;
-      Constructs_Resolver : Completion_Resolver_Access;
-      Result              : Completion_List;
-      Start_Mark          : Gtk_Text_Mark := null;
-      End_Mark            : Gtk_Text_Mark := null;
-      Buffer              : Source_Buffer;
-      The_Text            : GNAT.Strings.String_Access;
-
-      --  We need to lock the update of the file during the completion process
-      --  in order to keep valid information in the trees.
-      Lock                : Update_Lock_Access;
-   end record;
-
-   package Smart_Completion_Callback is new
-     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Smart_Completion_Data);
-   use Smart_Completion_Callback;
 
    Completion_Module : Completion_Module_Access;
 
@@ -237,9 +243,7 @@ package body Completion_Module is
    --  Move to the start of the next or previous word. This correctly takes
    --  into account '_' as part of a word.
 
-   procedure On_Completion_Destroy
-     (Win  : access Gtk_Widget_Record'Class;
-      Data : Smart_Completion_Data);
+   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
@@ -368,40 +372,40 @@ package body Completion_Module is
    -- On_Completion_Destroy --
    ---------------------------
 
-   procedure On_Completion_Destroy
-     (Win  : access Gtk_Widget_Record'Class;
-      Data : Smart_Completion_Data)
-   is
-      D           : Smart_Completion_Data := Data;
+   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class) is
+      D           : Smart_Completion_Data renames Completion_Module.Data;
       First, Last : Gtk_Text_Iter;
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      Unlock (D.Lock.all);
+      if Completion_Module.Has_Smart_Completion then
+         Completion_Module.Has_Smart_Completion := False;
+         Free (D.Lock);
 
-      Free (D.Manager);
-      Free (D.Constructs_Resolver);
-      Free (D.Result);
-      Free (D.The_Text);
-      Free (D.Lock);
+         Free (D.Manager);
+         Free (D.Constructs_Resolver);
+         Free (D.Result);
+         Free (D.The_Text);
 
-      Completion_Module.Has_Smart_Completion := False;
-      Completion_Module.Smart_Completion := null;
+         Completion_Module.Smart_Completion := null;
 
-      End_Completion (Source_View (Win));
+         if Win /= null then
+            End_Completion (Source_View (Win));
 
-      if D.Start_Mark /= null then
-         Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
-         Delete_Mark (D.Buffer, D.Start_Mark);
+            if D.Start_Mark /= null then
+               Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
+               Delete_Mark (D.Buffer, D.Start_Mark);
 
-         Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
-         Delete_Mark (D.Buffer, D.End_Mark);
+               Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
+               Delete_Mark (D.Buffer, D.End_Mark);
 
-         --  If we did complete on multiple lines, indent the resulting lines
-         --  using the user preferences.
+               --  If we did complete on multiple lines, indent the resulting
+               --  lines using the user preferences.
 
-         if Get_Line (First) < Get_Line (Last) then
-            Dummy := Do_Indentation (D.Buffer, First, Last, False);
+               if Get_Line (First) < Get_Line (Last) then
+                  Dummy := Do_Indentation (D.Buffer, First, Last, False);
+               end if;
+            end if;
          end if;
       end if;
 
@@ -430,21 +434,16 @@ package body Completion_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Completion_Module_Record) is
-      pragma Unreferenced (Module);
    begin
-      if Completion_Module /= null then
-         Kill_File_Iteration
-           (Get_Kernel (Completion_Module.all), Db_Loading_Queue);
-         Free
-           (Completion_Resolver_Access (Completion_Module.Completion_History));
-         Free (Completion_Resolver_Access
-               (Completion_Module.Completion_Keywords));
-         Free (Completion_Resolver_Access
-                 (Completion_Module.Completion_Aliases));
+      On_Completion_Destroy (Win => null);
 
-         Reset_Completion_Data;
-         Completion_Module := null;
-      end if;
+      Kill_File_Iteration (Get_Kernel (Module), Db_Loading_Queue);
+      Free (Completion_Resolver_Access (Module.Completion_History));
+      Free (Completion_Resolver_Access (Module.Completion_Keywords));
+      Free (Completion_Resolver_Access (Module.Completion_Aliases));
+
+      Reset_Completion_Data;
+      Completion_Module := null;
    end Destroy;
 
    -----------------------
@@ -806,9 +805,9 @@ package body Completion_Module is
                                       Smart_Completion.Get_Pref;
 
             Lang : constant Language_Access := Get_Language (Buffer);
-            Win  : Completion_Window_Access
-                     renames Completion_Module.Smart_Completion;
-            Data : Smart_Completion_Data;
+            Win  : Completion_Window_Access;
+            Data : Smart_Completion_Data renames
+              Completion_Module.Data;
             It   : Gtk_Text_Iter;
 
          begin
@@ -891,12 +890,13 @@ package body Completion_Module is
 
                if At_End (First (Data.Result, Kernel.Databases)) then
                   Trace (Me_Adv, "No completions found");
-                  On_Completion_Destroy (View, Data);
+                  On_Completion_Destroy (View);
                   Kernel.Pop_State;
                   return Commands.Success;
                end if;
 
                Gtk_New (Win, Kernel);
+               Completion_Module.Smart_Completion := Win;
 
                Data.Buffer := Buffer;
 
@@ -922,10 +922,10 @@ package body Completion_Module is
 
                Completion_Module.Has_Smart_Completion := True;
 
-               Object_Connect
+               Widget_Callback.Object_Connect
                  (Win, Signal_Destroy,
-                  To_Marshaller (On_Completion_Destroy'Access),
-                  View, Data, After => True);
+                  Widget_Callback.To_Marshaller (On_Completion_Destroy'Access),
+                  View, After => True);
 
                Set_Iterator
                  (Win, new Comp_Iterator'
