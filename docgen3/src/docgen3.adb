@@ -264,6 +264,13 @@ package body Docgen3 is
 
             Files_List.Next (File_Index);
          end loop;
+
+         if Num_Files > 0 then
+            Kernel.Messages_Window.Insert
+              (-("info: Documentation generated in ") &
+                 Get_Doc_Directory (Kernel).Display_Full_Name,
+               Mode => Info);
+         end if;
       end;
 
       Backend.Finalize (Update_Global_Index);
