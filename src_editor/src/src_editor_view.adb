@@ -546,7 +546,6 @@ package body Src_Editor_View is
 
       Get_Geometry (Win, X, Y, W, H);
       Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
-      Register_Idle_Column_Redraw (User);
    end Invalidate_Window;
 
    ---------------------------
