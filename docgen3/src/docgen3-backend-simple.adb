@@ -389,14 +389,16 @@ package body Docgen3.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
-         ReST_Append_Label (Printout, E);
+         if Get_Src (E) /= Null_Unbounded_String then
+            ReST_Append_Label (Printout, E);
 
-         Append_Line (Printout, Name);
-         Append_Line (Printout, Header);
-         Append_Line (Printout, "");
+            Append_Line (Printout, Name);
+            Append_Line (Printout, Header);
+            Append_Line (Printout, "");
 
-         ReST_Append_Src (Printout, E);
-         ReST_Append_Comment (Printout, E);
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+         end if;
       end ReST_Append_Subprogram;
 
       -------------
@@ -866,7 +868,12 @@ package body Docgen3.Backend.Simple is
             end if;
          end Classify_Entity;
 
+         --  Local variable
+
          Printout : aliased Unbounded_String;
+
+      --  Start of processing for Process_Node
+
       begin
          --  Classify the tree nodes in categories
 
@@ -885,7 +892,7 @@ package body Docgen3.Backend.Simple is
          ReST_Append_List
            (Printout'Access, Entities.Record_Types, "Record Types");
          ReST_Append_List
-           (Printout'Access, Entities.Tagged_Types, "Interface types");
+           (Printout'Access, Entities.Interface_Types, "Interface types");
          ReST_Append_List
            (Printout'Access, Entities.Tagged_Types, "Tagged types");
          ReST_Append_List
@@ -976,8 +983,12 @@ package body Docgen3.Backend.Simple is
                end if;
             end Get_Filename;
 
+            Doc_Dir     : constant Virtual_File :=
+                            Get_Doc_Directory (Backend.Context.Kernel);
             Filename    : constant String := Get_Filename;
             ReST_Header : constant String (Filename'Range) := (others => '*');
+            ReST_File   : constant Filesystem_String :=
+                            To_Destination_Name (Filesystem_String (Filename));
             Labels      : Unbounded_String;
             Header      : aliased Unbounded_String;
          begin
@@ -1024,10 +1035,22 @@ package body Docgen3.Backend.Simple is
 
             Write_To_File
               (Context   => Backend.Context'Access,
-               Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Directory => Doc_Dir,
+               Filename  => ReST_File,
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
+
+            --  Append files of nested Ada packages and C++ classes to the
+            --  list of files of the global index
+
+            if Scope_Level > 0 then
+               declare
+                  File : constant Virtual_File :=
+                           Create_From_Dir (Doc_Dir, ReST_File);
+               begin
+                  Backend.Src_Files.Append (File);
+               end;
+            end if;
          end;
 
          --  (Ada) Handle nested packages

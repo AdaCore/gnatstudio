@@ -1599,6 +1599,9 @@ package body Docgen3.Frontend is
             elsif LL.Is_Subprogram (E) then
                Decorate_Subprogram (E);
             end if;
+
+         elsif Get_Kind (E) = E_Interface then
+            Decorate_Record_Type (E);
          end if;
       end Complete_Decoration;
 

@@ -38,6 +38,12 @@ package body Docgen3.Atree is
    -- Local Subprograms --
    -----------------------
 
+   function Contains
+     (Container : EInfo_List.Vector;
+      Entity    : Entity_Id) return Boolean;
+   --  Return True if the container has an Entity whose location matches the
+   --  location of Entity.
+
    function Internal_New_Entity
      (Context : access constant Docgen_Context;
       Lang    : Language_Access;
@@ -58,7 +64,9 @@ package body Docgen3.Atree is
 
    procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
    begin
-      E.Child_Types.Append (Value);
+      if not Contains (E.Child_Types, Value) then
+         E.Child_Types.Append (Value);
+      end if;
    end Append_Child_Type;
 
    -------------------------
@@ -116,6 +124,32 @@ package body Docgen3.Atree is
    begin
       E.Parent_Types.Append (Value);
    end Append_Parent_Type;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Container : EInfo_List.Vector;
+      Entity    : Entity_Id) return Boolean
+   is
+      Loc     : constant General_Location := LL.Get_Location (Entity);
+      Cursor  : EInfo_List.Cursor;
+
+   begin
+      if Loc /= No_Location then
+         Cursor := Container.First;
+         while EInfo_List.Has_Element (Cursor) loop
+            if LL.Get_Location (EInfo_List.Element (Cursor)) = Loc then
+               return True;
+            end if;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+      end if;
+
+      return False;
+   end Contains;
 
    -------------
    -- For_All --
@@ -531,32 +565,35 @@ package body Docgen3.Atree is
 
                if In_Ada_Language (New_E) then
                   if Get_Kind (New_E) = E_Interface then
-                     New_E.Is_Tagged := True;
+                     Set_Is_Tagged (New_E);
 
-                  elsif New_E.Xref.Has_Methods then
+                  else
+                     --  Xref-bug: Xref.Has_Methods() is not reliable:
+                     --  for Incomplete_Types I found that Xref reports
+                     --  Has_Methods()=True for types that have no methods.
+                     --  Similarly, for tagged limited records with primitives
+                     --  it Xref.Has_Methods() returns False???
+
                      declare
                         All_Methods : constant Xref.Entity_Array :=
                           Methods (Db, E, Include_Inherited => True);
                      begin
-                        --  Xref-bug: At least for Incomplete_Types I have
-                        --  found that Xref reports Has_Methods()=True for
-                        --  types that have no methods. Hence this is NOT a
-                        --  reliable Xref service. A bug in Xref????
-
-                        --  pragma Assert (All_Methods'Length > 0);
-
                         if All_Methods'Length > 0 then
                            Set_Is_Tagged (New_E);
-                        end if;
-                     end;
+                           Set_Kind (New_E, E_Tagged_Record_Type);
 
-                  else
-                     declare
-                        Parents : constant Xref.Entity_Array :=
-                          Parent_Types (Db, E, Recursive => False);
-                     begin
-                        if Parents'Length > 0 then
-                           Set_Is_Tagged (New_E);
+                        --  last try
+
+                        else
+                           declare
+                              Parents : constant Xref.Entity_Array :=
+                                Parent_Types (Db, E, Recursive => False);
+                           begin
+                              if Parents'Length > 0 then
+                                 Set_Is_Tagged (New_E);
+                                 Set_Kind (New_E, E_Tagged_Record_Type);
+                              end if;
+                           end;
                         end if;
                      end;
                   end if;
@@ -995,7 +1032,6 @@ package body Docgen3.Atree is
       pragma Assert (not (E.Is_Tagged));
       pragma Assert (Is_Class_Or_Record_Type (E));
       E.Is_Tagged := True;
-      E.Kind := E_Tagged_Record_Type;
    end Set_Is_Tagged;
 
    --------------
@@ -1586,6 +1622,12 @@ package body Docgen3.Atree is
          Append_Line
            (LL_Prefix
             & " Is_Type");
+      end if;
+
+      if E.Xref.Has_Methods then
+         Append_Line
+           (LL_Prefix
+            & " Has_Methods");
       end if;
 
       --  Display record type components
