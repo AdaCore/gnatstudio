@@ -28,6 +28,15 @@ package GPS.Kernel.Preferences is
      with private;
    type GPS_Preferences is access GPS_Preferences_Record'Class;
 
+   overriding procedure On_Pref_Changed
+     (Self : not null access GPS_Preferences_Record;
+      Pref : not null access Preference_Record'Class);
+
+   procedure Set_Kernel
+     (Self   : not null access GPS_Preferences_Record;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Set the kernel
+
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Graphically edit the preferences
 
@@ -63,8 +72,12 @@ package GPS.Kernel.Preferences is
 
    procedure Set_Font_And_Colors
      (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean);
-   --  Change the style of the widget based on the preferences
+      Fixed_Font : Boolean;
+      Pref       : Default_Preferences.Preference := null);
+   --  Change the style of the widget based on the preferences.
+   --  If Pref is specified, nothing will be done unless that
+   --  preference has an impact on the fonts and colors. This is used to limit
+   --  the amount of work done when the user changes preferences.
 
    --------------------------------
    -- Specific preferences pages --
@@ -265,6 +278,7 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
 private
-   type GPS_Preferences_Record is new Preferences_Manager_Record
-     with null record;
+   type GPS_Preferences_Record is new Preferences_Manager_Record with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+   end record;
 end GPS.Kernel.Preferences;

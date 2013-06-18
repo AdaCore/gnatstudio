@@ -226,7 +226,8 @@ package body KeyManager_Module is
    pragma Warnings (On);
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Keymanager_Command_Handler
@@ -1856,7 +1857,7 @@ package body KeyManager_Module is
          Category => -"General");
       Bind_Default_Key (Kernel, "Repeat Next", "control-u");
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "key_manager.preferences_changed");
 
@@ -1868,9 +1869,10 @@ package body KeyManager_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Keymanager_Module.Menus_Created := True;
    end Preferences_Changed;

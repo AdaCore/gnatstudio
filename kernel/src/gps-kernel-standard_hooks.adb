@@ -86,6 +86,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_File_Location
      (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Preference
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_File_Status_Changed
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert some shell arguments into suitable hooks_data
@@ -764,6 +766,41 @@ package body GPS.Kernel.Standard_Hooks is
    overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
+      Data   : access Preference_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      pragma Unreferenced (Data);
+      D : constant Callback_Data_Access :=
+            new Callback_Data'Class'(Create (Script, 1));
+   begin
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
+
+      --  For backward compatibility, do not send the hook name
+      --  Set_Nth_Arg (D.all, 2, Data.Pref.Get_Name);
+      return D;
+   end Create_Callback_Data;
+
+   -----------------------------------
+   -- From_Callback_Data_Preference --
+   -----------------------------------
+
+   function From_Callback_Data_Preference
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      pragma Unreferenced (Data);
+   begin
+      return Preference_Hooks_Args'
+        (Hooks_Data with
+           Pref => null);
+   end From_Callback_Data_Preference;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
       Data   : access Compilation_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access
    is
@@ -1158,8 +1195,27 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, File_Location_Hook_Type,
          Args_Creator => From_Callback_Data_File_Location'Access);
+      Register_Hook_Data_Type
+        (Kernel, Preference_Hook_Type,
+         Args_Creator => From_Callback_Data_Preference'Access);
 
       Register_Hook_No_Args (Kernel, Stop_Macro_Action_Hook);
    end Register_Action_Hooks;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Data : access Hooks_Data'Class) return Default_Preferences.Preference is
+   begin
+      if Data /= null
+        and then Data.all in Preference_Hooks_Args'Class
+      then
+         return Preference_Hooks_Args (Data.all).Pref;
+      else
+         return null;
+      end if;
+   end Get_Pref;
 
 end GPS.Kernel.Standard_Hooks;

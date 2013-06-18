@@ -744,7 +744,7 @@ package GPS.Kernel is
      renames To_Unbounded_String;
 
    --  Hooks with no arguments
-   Preferences_Changed_Hook      : constant Hook_Name :=
+   Preference_Changed_Hook      : constant Hook_Name :=
                                      To_Hook_Name ("preferences_changed");
    Search_Reset_Hook             : constant Hook_Name :=
                                      To_Hook_Name ("search_reset");

@@ -46,6 +46,7 @@ package body Default_Preferences.Enums is
       C     : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
       Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (C));
+      Data.Manager.On_Pref_Changed (Data.Pref);
    end Enum_Changed;
 
    ------------------
@@ -157,7 +158,7 @@ package body Default_Preferences.Enums is
       for C in Pref.Choices'Range loop
          if Equal (Pref.Choices (C).all, Value, Case_Sensitive => False) then
             Pref.Enum_Value := C - Pref.Choices'First;
-            Emit_Pref_Changed (Manager);
+            Manager.On_Pref_Changed (Pref);
             exit;
          end if;
       end loop;
@@ -179,9 +180,28 @@ package body Default_Preferences.Enums is
          Default                   : Enumeration)
          return Preference
       is
+         P : constant Default_Preferences.Preference := Get_Pref_From_Name
+           (Manager, Name, Create_If_Necessary => False);
          Result : constant Preference := new Preference_Record;
       begin
-         Enum_Preference (Result).Enum_Value := Enumeration'Pos (Default);
+         if P /= null then
+            --  Might already have been created implicitly when loading the
+            --  preferences file, but likely with the wrong type
+
+            begin
+               Enum_Preference (Result).Enum_Value :=
+                 Enumeration'Pos
+                   (Enumeration'Value (String'(Get_Pref (P))));
+            exception
+               when Constraint_Error =>
+                  Enum_Preference (Result).Enum_Value :=
+                    Enumeration'Pos (Default);
+            end;
+
+         else
+            Enum_Preference (Result).Enum_Value := Enumeration'Pos (Default);
+         end if;
+
          Register (Manager, Name, Label, Page, Doc, Result);
          return Result;
       end Create;
@@ -268,14 +288,13 @@ package body Default_Preferences.Enums is
          --  Test if we have a string representation of the enumeration value
          Enum_Preference (Pref).Enum_Value :=
            Enumeration'Pos (Enumeration'Value (Value));
-         Emit_Pref_Changed (Manager);
+         Manager.On_Pref_Changed (Pref);
 
       exception
          when Constraint_Error =>
             --  Else we might have an integer representing the Pos
             Set_Pref (Enum_Preference_Record (Pref.all)'Access,
                       Manager, Value);
-            Emit_Pref_Changed (Manager);
       end Set_Pref;
    end Generics;
 

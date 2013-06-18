@@ -354,7 +354,10 @@ package body GPS.Kernel.MDI is
    -- Configure_MDI --
    -------------------
 
-   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Configure_MDI
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference := null)
+   is
       Pos    : Gtk_Position_Type;
       Policy : Show_Tabs_Policy_Enum;
    begin
@@ -371,23 +374,44 @@ package body GPS.Kernel.MDI is
          when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
-      Configure
-        (Get_MDI (Kernel),
-         Opaque_Resize             => MDI_Opaque.Get_Pref,
-         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
-           and not MDI_Editors_Floating.Get_Pref,
-         Title_Font                => Default_Font.Get_Pref_Font,
-         Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
-         Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
-         Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
-         Show_Tabs_Policy          => Policy,
-         Tabs_Position             => Pos,
-         Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (MDI_Opaque)
+        or else Pref = Preference (MDI_Destroy_Floats)
+        or else Pref = Preference (MDI_Editors_Floating)
+        or else Pref = Preference (Default_Font)
+        or else Pref = Preference (MDI_Title_Bar_Color)
+        or else Pref = Preference (MDI_Focus_Title_Color)
+        or else Pref = Preference (Pref_Titles_Policy)
+        or else Pref = Preference (Pref_Tabs_Position)
+        or else Pref = Preference (Pref_Tabs_Policy)
+        or else Pref = Preference (MDI_Homogeneous_Tabs)
+      then
+         Configure
+           (Get_MDI (Kernel),
+            Opaque_Resize             => MDI_Opaque.Get_Pref,
+            Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
+            and not MDI_Editors_Floating.Get_Pref,
+            Title_Font                => Default_Font.Get_Pref_Font,
+            Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
+            Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
+            Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
+            Show_Tabs_Policy          => Policy,
+            Tabs_Position             => Pos,
+            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
+      end if;
 
-      Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (MDI_All_Floating)
+      then
+         Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
+      end if;
 
-      Use_Short_Titles_For_Floats
-        (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (MDI_Float_Short_Title)
+      then
+         Use_Short_Titles_For_Floats
+           (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+      end if;
    end Configure_MDI;
 
    -----------------------

@@ -71,7 +71,9 @@ package body GPS.Kernel.Clipboard is
    procedure Append_To_Clipboard (Clipboard : access Clipboard_Record);
    --  Add the contents of the Gtk.Clipboard to Clipboard
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Clipboard_Handler
@@ -83,8 +85,10 @@ package body GPS.Kernel.Clipboard is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Size      : constant Integer := Clipboard_Size_Pref.Get_Pref;
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
@@ -163,7 +167,7 @@ package body GPS.Kernel.Clipboard is
       Destroy_Clipboard (Kernel);
       Kernel.Clipboard := Convert (Clipboard);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "clipboard.preferences_changed");
    end Create_Clipboard;

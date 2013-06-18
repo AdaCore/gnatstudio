@@ -142,7 +142,8 @@ package body Scenario_Views is
    --  view.
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure On_Build_Mode_Changed
@@ -179,12 +180,14 @@ package body Scenario_Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Set_Font_And_Colors (View.View, Fixed_Font => False);
+         Set_Font_And_Colors
+           (View.View, Fixed_Font => False, Pref => Get_Pref (Data));
       end if;
    end On_Preferences_Changed;
 
@@ -305,7 +308,7 @@ package body Scenario_Views is
          Watch => GObject (View));
       Add_Hook (View.Kernel, Variable_Changed_Hook, Hook,
                 Name => "scenario.variable_changed", Watch => GObject (View));
-      Add_Hook (View.Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "scenario_views.preferences_changed",
                 Watch => GObject (View));

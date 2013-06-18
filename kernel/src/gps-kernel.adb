@@ -107,7 +107,8 @@ package body GPS.Kernel is
    --  Free the list of registered tools
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
    procedure On_Main_Window_Destroyed
@@ -337,6 +338,8 @@ package body GPS.Kernel is
       --  We need to load now so that for instance the splash screen is
       --  correctly taken into account.
       Handle.Preferences := new GPS_Preferences_Record;
+      GPS_Preferences_Record (Handle.Preferences.all).Set_Kernel (Handle);
+
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
@@ -345,7 +348,7 @@ package body GPS.Kernel is
       --  Create the message container
       Handle.Messages_Container := Create_Messages_Container (Handle);
 
-      On_Preferences_Changed (Handle);
+      On_Preferences_Changed (Handle, Data => null);
 
       Handle.History := new History_Record;
       Load (Handle.History.all,
@@ -357,7 +360,7 @@ package body GPS.Kernel is
       Create_Clipboard (Handle);
 
       Add_Hook
-        (Handle, Preferences_Changed_Hook,
+        (Handle, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "kernel.preferences_changed");
    end Gtk_New;
@@ -367,23 +370,34 @@ package body GPS.Kernel is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      P : constant Preference := Get_Pref (Data);
    begin
-      if Kernel.Hidden_File_Matcher /= null then
-         Unchecked_Free (Kernel.Hidden_File_Matcher);
+      if P = null
+        or else P = Preference (Hidden_Directories_Pattern)
+      then
+         if Kernel.Hidden_File_Matcher /= null then
+            Unchecked_Free (Kernel.Hidden_File_Matcher);
+         end if;
+
+         declare
+            Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
+         begin
+            if Pattern /= "" then
+               Kernel.Hidden_File_Matcher :=
+                 new Pattern_Matcher'(Compile (Pattern));
+            end if;
+         end;
       end if;
 
-      declare
-         Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
-      begin
-         if Pattern /= "" then
-            Kernel.Hidden_File_Matcher :=
-              new Pattern_Matcher'(Compile (Pattern));
-         end if;
-      end;
-
-      Get_Registry (Kernel).Environment.Set_Trusted_Mode
-        (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+      if P = null
+        or else P = Preference (GPS.Kernel.Preferences.Trusted_Mode)
+      then
+         Get_Registry (Kernel).Environment.Set_Trusted_Mode
+           (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+      end if;
    end On_Preferences_Changed;
 
    ----------------------------

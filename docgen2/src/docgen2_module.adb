@@ -84,7 +84,8 @@ package body Docgen2_Module is
    overriding procedure Destroy (Module : in out Docgen_Module_Record);
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Hook called when Preferences changed
 
    --------------
@@ -163,7 +164,8 @@ package body Docgen2_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       function Get_Filter (Regx : String) return Pattern_Matcher_Access;
       --  Return an access to a pattern, or null if the string is empty
@@ -182,7 +184,7 @@ package body Docgen2_Module is
          end if;
       end Get_Filter;
 
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Docgen_Module (Docgen_Module_Id).Options :=
         (Process_Body_Files      =>
@@ -517,10 +519,10 @@ package body Docgen2_Module is
          Label   => -"Find xrefs in comments");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Kernel, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "docgen.on_preferences_changed");
-      On_Preferences_Changed (Kernel);
+      On_Preferences_Changed (Kernel, Data => null);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu

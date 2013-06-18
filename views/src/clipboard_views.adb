@@ -37,10 +37,12 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -79,7 +81,8 @@ package body Clipboard_Views is
    --  Called when the contents of the clipboard has changed
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Refresh (View : access Clipboard_View_Record'Class);
@@ -306,12 +309,14 @@ package body Clipboard_Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Clipboard_View_Access :=
-               Generic_View.Get_Or_Create_View (Kernel, Focus => False);
+        Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+      Set_Font_And_Colors
+        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
    end On_Preferences_Changed;
 
    -------------
@@ -447,7 +452,7 @@ package body Clipboard_Views is
                 Wrapper (On_Clipboard_Changed'Access),
                 Name => "clipboard_views.on_clipboard_changed",
                 Watch => GObject (View));
-      Add_Hook (View.Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "clipboard_views.preferences_changed",
                 Watch => GObject (View));

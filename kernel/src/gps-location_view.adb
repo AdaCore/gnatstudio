@@ -344,7 +344,8 @@ package body GPS.Location_View is
    --  Callback for the activation of the sort contextual menu item
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Goto_Location (Self : access Location_View_Record'Class);
@@ -1022,7 +1023,7 @@ package body GPS.Location_View is
          ID              => Location_Views.Get_Module,
          Context_Func    => Context_Func'Access);
 
-      Add_Hook (Self.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Self.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "location_view.preferences_changed",
                 Watch => GObject (Self));
@@ -1110,12 +1111,14 @@ package body GPS.Location_View is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View  : constant Location_View := Location_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Set_Font_And_Colors (View.View, Fixed_Font => True);
+         Set_Font_And_Colors
+           (View.View, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
 

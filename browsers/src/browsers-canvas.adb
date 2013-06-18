@@ -71,12 +71,14 @@ with Gtkada.Style;                      use Gtkada.Style;
 
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
+with Default_Preferences;               use Default_Preferences;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Layouts;                           use Layouts;
@@ -195,12 +197,14 @@ package body Browsers.Canvas is
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       Browser : General_Browser;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   overriding procedure Execute (Hook : Preferences_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class);
+   overriding procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Compute_Parents
@@ -368,9 +372,9 @@ package body Browsers.Canvas is
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
       Add_Hook
-        (Browser.Kernel, Preferences_Changed_Hook, Hook,
+        (Browser.Kernel, Preference_Changed_Hook, Hook,
          Name => "browsers.preferences_changed", Watch => GObject (Browser));
-      Execute (Hook.all, Browser.Kernel);
+      Execute (Hook.all, Browser.Kernel, Data => null);
 
       Change_Align_On_Grid (Browser);
    end Initialize;
@@ -417,58 +421,19 @@ package body Browsers.Canvas is
    -------------
 
    overriding procedure Execute
-     (Hook : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
       Error           : GError;
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
---      Style           : Gtk_Style;
       Need_Refresh    : Boolean := False;
+      Pref   : constant Preference := Get_Pref (Data);
 
       use type Gdk.Gdk_GC;
    begin
---        if Hook.Browser.Item_Style /= null then
---           Hook.Browser.Selected_Link_Color :=
---             Selected_Link_Color.Get_Pref;
---           Hook.Browser.Unselected_Link_Color :=
---             Unselected_Link_Color.Get_Pref;
---
---           Style := Hook.Browser.Item_Style;
-
---           Set_Bg (Style, State_Normal,
---                   Gdk_RGBA'(Get_Light (Get_Default_Style, State_Normal)));
---           Set_Bg (Style, State_Selected,
---                   Gdk_RGBA'(Get_Light (Get_Default_Style, State_Normal)));
---
---           Set_Text (Style, State_Active,
---                     Browsers_Hyper_Link_Color.Get_Pref);
---
---           Set_Base (Style, State_Normal,
---                     Title_Color.Get_Pref);
---           Set_Base (Style, State_Selected,
---                     GPS.Kernel.Preferences.Selected_Item_Color.Get_Pref);
---
---           if Hook.Browser.Item_Style_Parent_Linked /= null then
---              Unref (Hook.Browser.Item_Style_Parent_Linked);
---              Unref (Hook.Browser.Item_Style_Child_Linked);
---           end if;
---
---           Hook.Browser.Item_Style_Parent_Linked := Gtk.Style.Copy (Style);
---           Hook.Browser.Item_Style_Child_Linked := Gtk.Style.Copy (Style);
---
---           Set_Base
---             (Hook.Browser.Item_Style_Parent_Linked, State_Normal,
---              Parent_Linked_Item_Color.Get_Pref);
---           Set_Base
---             (Hook.Browser.Item_Style_Child_Linked, State_Normal,
---              Child_Linked_Item_Color.Get_Pref);
---
---           Set_Bg (Get_Style (Hook.Browser.Canvas), State_Normal,
---                   Browsers_Bg_Color.Get_Pref);
---        end if;
-
       Annotation_Font := Copy (Default_Font.Get_Pref_Font);
       Set_Size
         (Annotation_Font,
@@ -483,13 +448,17 @@ package body Browsers.Canvas is
          Unref (Image_Canvas (Hook.Browser.Canvas).Background);
       end if;
 
-      if Browsers_Bg_Image.Get_Pref /= "" then
-         Gdk_New_From_File
-           (Image_Canvas (Hook.Browser.Canvas).Background,
-            Filename => Browsers_Bg_Image.Get_Pref,
-            Error    => Error);
-      else
-         Image_Canvas (Hook.Browser.Canvas).Background := null;
+      if Pref = null
+        or else Pref = Preference (Browsers_Bg_Image)
+      then
+         if Browsers_Bg_Image.Get_Pref /= "" then
+            Gdk_New_From_File
+              (Image_Canvas (Hook.Browser.Canvas).Background,
+               Filename => Browsers_Bg_Image.Get_Pref,
+               Error    => Error);
+         else
+            Image_Canvas (Hook.Browser.Canvas).Background := null;
+         end if;
       end if;
 
       Refresh_Layout_Orientation (Hook.Browser);
@@ -569,7 +538,7 @@ package body Browsers.Canvas is
 
          B.Item_Style := Copy (Get_Style (B.Canvas));
          Hook.Browser := B;
-         Hook.Execute (null);
+         Hook.Execute (null, Data => null);
       end if;
    end Realized;
 

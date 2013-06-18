@@ -246,7 +246,9 @@ package body Completion_Module is
    procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure File_Saved
@@ -290,8 +292,10 @@ package body Completion_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Smart_Completion_Pref : constant Smart_Completion_Type :=
                                 Smart_Completion.Get_Pref;
    begin
@@ -1246,7 +1250,7 @@ package body Completion_Module is
                      Action     => Action,
                      Filter     => Src_Action_Context);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "completion_module.preferences_changed");
       Add_Hook

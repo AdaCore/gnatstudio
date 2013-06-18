@@ -386,7 +386,8 @@ package body Vsearch is
    --  The floating state of the search widget has changed
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed.
 
    procedure Store_Position (Vsearch : Vsearch_Access);
@@ -2582,7 +2583,7 @@ package body Vsearch is
 
       Register_Default_Search (Kernel);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "vsearch.preferences_changed");
 
@@ -2644,9 +2645,10 @@ package body Vsearch is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Vsearch_Module_Id.Tab_Width := Tab_Width;
    end Preferences_Changed;

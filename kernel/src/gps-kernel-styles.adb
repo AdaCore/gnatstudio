@@ -19,9 +19,11 @@ with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 
 with Gtk.Widget;             use Gtk.Widget;
 
+with Default_Preferences;    use Default_Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body GPS.Kernel.Styles is
 
@@ -33,7 +35,8 @@ package body GPS.Kernel.Styles is
    -----------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed.
 
    procedure Initialize_Predefined_Styles (Kernel : Kernel_Handle);
@@ -123,7 +126,7 @@ package body GPS.Kernel.Styles is
             "",
             Bg => "", Speedbar => True);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "styles.preferences_changed");
    end Initialize_Predefined_Styles;
@@ -133,23 +136,31 @@ package body GPS.Kernel.Styles is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+      P : constant Preference := Get_Pref (Data);
    begin
-      Set_Background (Search_Results_Style,   Search_Results_Color.Get_Pref);
-      Set_Background
-        (Builder_Styles (Errors),
-         Error_Src_Highlight.Get_Pref);
-      Set_Background
-        (Builder_Styles (Warnings),
-         Warning_Src_Highlight.Get_Pref);
-      Set_Background
-        (Builder_Styles (Style),
-         Style_Src_Highlight.Get_Pref);
-      Set_Background
-        (Builder_Styles (Info),
-         Info_Src_Highlight.Get_Pref);
+      if P = Preference (Search_Results_Color) then
+         Set_Background (Search_Results_Style, Search_Results_Color.Get_Pref);
+      elsif P = Preference (Error_Src_Highlight) then
+         Set_Background
+           (Builder_Styles (Errors),
+            Error_Src_Highlight.Get_Pref);
+      elsif P = Preference (Warning_Src_Highlight) then
+         Set_Background
+           (Builder_Styles (Warnings),
+            Warning_Src_Highlight.Get_Pref);
+      elsif P = Preference (Style_Src_Highlight) then
+         Set_Background
+           (Builder_Styles (Style),
+            Style_Src_Highlight.Get_Pref);
+      elsif P = Preference (Info_Src_Highlight) then
+         Set_Background
+           (Builder_Styles (Info),
+            Info_Src_Highlight.Get_Pref);
+      end if;
    end Preferences_Changed;
 
    -----------

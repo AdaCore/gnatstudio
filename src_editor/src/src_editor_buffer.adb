@@ -67,6 +67,7 @@ with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
 with Commands.Controls;                   use Commands.Controls;
 with Completion_Module;                   use Completion_Module;
+with Default_Preferences;                 use Default_Preferences;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Kernel;                          use GPS.Kernel;
 with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
@@ -299,13 +300,14 @@ package body Src_Editor_Buffer is
    --  If Internal is True, do not emit kernel signals. This is used notably
    --  for automatic saves.
 
-   type Preferences_Changed_Hook_Record is new Function_No_Args with record
+   type Preferences_Changed_Hook_Record is new Function_With_Args with record
       Buffer : Source_Buffer;
    end record;
    type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    type Project_Changed_Hook_Record is new Function_No_Args with record
@@ -2992,12 +2994,12 @@ package body Src_Editor_Buffer is
       --  Preference changed hook
 
       P_Hook := new Preferences_Changed_Hook_Record'
-        (Function_No_Args with Buffer => Source_Buffer (Buffer));
+        (Function_With_Args with Buffer => Source_Buffer (Buffer));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, P_Hook,
+        (Kernel, Preference_Changed_Hook, P_Hook,
          Name => "src_editor_buffer.preferences_changed",
          Watch => GObject (Buffer));
-      Execute (P_Hook.all, Kernel);
+      Execute (P_Hook.all, Kernel, Data => null);
 
       --  Project recomputed hook
       Prj_Hook := new Project_Changed_Hook_Record'
@@ -3242,12 +3244,14 @@ package body Src_Editor_Buffer is
 
    overriding procedure Execute
      (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
       B       : constant Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
+      Pref    : constant Preference := Get_Pref (Data);
 
       Keyword_Font           : constant Pango.Font.Pango_Font_Description :=
                                  Keywords_Style.Get_Pref_Font;
@@ -3266,31 +3270,43 @@ package body Src_Editor_Buffer is
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
 
-      Create_Syntax_Tags
-        (B.Syntax_Tags,
-         Type_Color                  => Type_Style.Get_Pref_Fg,
-         Type_Color_Bg               => Type_Style.Get_Pref_Bg,
-         Type_Font_Desc              => Type_Font,
-         Block_Color                 => Block_Style.Get_Pref_Fg,
-         Block_Color_Bg              => Block_Style.Get_Pref_Bg,
-         Block_Font_Desc             => Block_Font,
-         Keyword_Color               => Keywords_Style.Get_Pref_Fg,
-         Keyword_Color_Bg            => Keywords_Style.Get_Pref_Bg,
-         Keyword_Font_Desc           => Keyword_Font,
-         Comment_Color               => Comments_Style.Get_Pref_Fg,
-         Comment_Color_Bg            => Comments_Style.Get_Pref_Bg,
-         Comment_Font_Desc           => Comment_Font,
-         Annotated_Comment_Color     => Annotated_Comments_Style.Get_Pref_Fg,
-         Annotated_Comment_Color_Bg  => Annotated_Comments_Style.Get_Pref_Bg,
-         Annotated_Comment_Font_Desc => Annotated_Comment_Font,
-         Character_Color             => Strings_Style.Get_Pref_Fg,
-         Character_Color_Bg          => Strings_Style.Get_Pref_Bg,
-         Character_Font_Desc         => String_Font,
-         String_Color                => Strings_Style.Get_Pref_Fg,
-         String_Color_Bg             => Strings_Style.Get_Pref_Bg,
-         String_Font_Desc            => String_Font);
+      if Pref = null
+        or else Pref = Preference (Type_Style)
+        or else Pref = Preference (Block_Style)
+        or else Pref = Preference (Keywords_Style)
+        or else Pref = Preference (Comments_Style)
+        or else Pref = Preference (Annotated_Comments_Style)
+        or else Pref = Preference (Strings_Style)
+      then
+         Create_Syntax_Tags
+           (B.Syntax_Tags,
+            Type_Color                  => Type_Style.Get_Pref_Fg,
+            Type_Color_Bg               => Type_Style.Get_Pref_Bg,
+            Type_Font_Desc              => Type_Font,
+            Block_Color                 => Block_Style.Get_Pref_Fg,
+            Block_Color_Bg              => Block_Style.Get_Pref_Bg,
+            Block_Font_Desc             => Block_Font,
+            Keyword_Color               => Keywords_Style.Get_Pref_Fg,
+            Keyword_Color_Bg            => Keywords_Style.Get_Pref_Bg,
+            Keyword_Font_Desc           => Keyword_Font,
+            Comment_Color               => Comments_Style.Get_Pref_Fg,
+            Comment_Color_Bg            => Comments_Style.Get_Pref_Bg,
+            Comment_Font_Desc           => Comment_Font,
+            Annotated_Comment_Color    => Annotated_Comments_Style.Get_Pref_Fg,
+            Annotated_Comment_Color_Bg => Annotated_Comments_Style.Get_Pref_Bg,
+            Annotated_Comment_Font_Desc => Annotated_Comment_Font,
+            Character_Color             => Strings_Style.Get_Pref_Fg,
+            Character_Color_Bg          => Strings_Style.Get_Pref_Bg,
+            Character_Font_Desc         => String_Font,
+            String_Color                => Strings_Style.Get_Pref_Fg,
+            String_Color_Bg             => Strings_Style.Get_Pref_Bg,
+            String_Font_Desc            => String_Font);
+      end if;
 
-      if B.Delimiter_Tag /= null then
+      if B.Delimiter_Tag /= null
+        and then (Pref = null
+                  or else Pref = Preference (Delimiter_Color))
+      then
          Set_Property
            (B.Delimiter_Tag,
             Background_Rgba_Property,

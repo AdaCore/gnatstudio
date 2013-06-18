@@ -46,6 +46,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
@@ -97,7 +98,8 @@ package body GPS.Kernel.Console is
    subtype GPS_Message is Messages_Views.View_Access;
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    type Kernel_Messages_Window is new Abstract_Messages_Window with record
@@ -410,12 +412,14 @@ package body GPS.Kernel.Console is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
-         Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
+         Set_Font_And_Colors
+           (Get_View (Console), Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end On_Preferences_Changed;
 
@@ -462,7 +466,7 @@ package body GPS.Kernel.Console is
       Console.Enable_Prompt_Display (False);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
 
-      Add_Hook (Console.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Console.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));

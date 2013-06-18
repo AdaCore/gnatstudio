@@ -79,6 +79,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
@@ -288,7 +289,8 @@ package body Project_Explorers is
    --  Search the next occurrence in the explorer
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    function Sort_Func
@@ -801,7 +803,7 @@ package body Project_Explorers is
         (Explorer.Kernel, Project_Changed_Hook, H2,
          Name => "explorer.project_changed", Watch => GObject (Explorer));
 
-      Add_Hook (Explorer.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Explorer.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "project_Explorer.preferences_changed",
                 Watch => GObject (Explorer));
@@ -969,7 +971,8 @@ package body Project_Explorers is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Child    : constant MDI_Child :=
                    Find_MDI_Child_By_Tag
@@ -978,7 +981,8 @@ package body Project_Explorers is
    begin
       if Child /= null then
          Explorer := Project_Explorer (Get_Widget (Child));
-         Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
+         Set_Font_And_Colors
+           (Explorer.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
 

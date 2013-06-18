@@ -110,7 +110,8 @@ package body Task_Manager.GUI is
      (Task_Manager_Interface);
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
    type Task_Manager_Widget_Record is new Generic_Views.View_Record with record
@@ -658,13 +659,15 @@ package body Task_Manager.GUI is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Task_Manager_Widget_Access :=
         TM_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Set_Font_And_Colors (View.Tree, Fixed_Font => False);
+         Set_Font_And_Colors
+           (View.Tree, Fixed_Font => False, Pref => Get_Pref (Data));
       end if;
    end On_Preferences_Changed;
 
@@ -703,7 +706,7 @@ package body Task_Manager.GUI is
 
       Add (View, Scrolled);
 
-      Add_Hook (View.Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "task_manager.preferences_changed",
                 Watch => GObject (View));

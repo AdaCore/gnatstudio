@@ -492,8 +492,10 @@ package body Vdiff2_Module.Callback is
    ------------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Diff      : Diff_Head_Access;
       Curr_Node : Diff_Head_List.List_Node :=
                     First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
@@ -501,7 +503,7 @@ package body Vdiff2_Module.Callback is
       Register_Highlighting (Kernel);
 
       while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node);
+         Diff := Diff_Head_List.Data (Curr_Node);
          Hide_Differences (Kernel, Diff);
          Show_Differences3 (Kernel, Diff);
          Curr_Node := Next (Curr_Node);

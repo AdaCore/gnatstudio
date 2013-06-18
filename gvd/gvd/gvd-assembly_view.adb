@@ -41,6 +41,7 @@ with Pango.Font;              use Pango.Font;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Debugger;                use Debugger;
+with Default_Preferences;     use Default_Preferences;
 with Generic_Views;           use Generic_Views;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
@@ -49,6 +50,7 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Code_Editors;        use GVD.Code_Editors;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
@@ -244,13 +246,14 @@ package body GVD.Assembly_View is
      (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       View : Assembly_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -1156,9 +1159,9 @@ package body GVD.Assembly_View is
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with View => Assembly_View (Widget));
+        (Function_With_Args with View => Assembly_View (Widget));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Kernel, Preference_Changed_Hook, Hook,
          Name => "gvd.assembly_view.preferences_changed",
          Watch => GObject (Widget));
 
@@ -1171,19 +1174,35 @@ package body GVD.Assembly_View is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+      Pref : constant Preference := Get_Pref (Data);
    begin
-      Set_Property
-        (Hook.View.Highlight_Tag,
-         Foreground_Rgba_Property,
-         Asm_Highlight_Color.Get_Pref);
-      Set_Property
-        (Hook.View.Breakpoint_Tag,
-         Background_Rgba_Property,
-         Asm_Breakpoint_Color.Get_Pref);
-      Set_Font (Hook.View, Default_Style.Get_Pref_Font);
+      if Pref = null
+        or else Pref = Preference (Asm_Highlight_Color)
+      then
+         Set_Property
+           (Hook.View.Highlight_Tag,
+            Foreground_Rgba_Property,
+            Asm_Highlight_Color.Get_Pref);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Asm_Breakpoint_Color)
+      then
+         Set_Property
+           (Hook.View.Breakpoint_Tag,
+            Background_Rgba_Property,
+            Asm_Breakpoint_Color.Get_Pref);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Default_Style)
+      then
+         Set_Font (Hook.View, Default_Style.Get_Pref_Font);
+      end if;
 
       Update (Hook.View);
 

@@ -21,6 +21,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Commands;
+with Default_Preferences;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Glib.Main;
 with Gtk.Accel_Group;
@@ -160,8 +161,13 @@ package GPS.Kernel.MDI is
    --  Change the current perspective to another one.
    --  Nothing is done if Name does not exist
 
-   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class);
-   --  Configure the MDI based on the preferences
+   procedure Configure_MDI
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference := null);
+   --  Configure the MDI based on the preferences.
+   --  If specified, Pref is used to find out whether any reconfiguration needs
+   --  to be done. It is intended to be used when the user has changed a
+   --  preference.
 
    procedure Create_MDI_Preferences
      (Kernel : access Kernel_Handle_Record'Class);

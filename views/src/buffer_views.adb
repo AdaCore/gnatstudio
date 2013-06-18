@@ -38,6 +38,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -45,6 +46,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Search;             use GPS.Search;
@@ -99,7 +101,8 @@ package body Buffer_Views is
    --  Called when a new child is selected
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
@@ -651,7 +654,7 @@ package body Buffer_Views is
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (View.Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "windows view.preferences_changed",
                 Watch => GObject (View));
@@ -782,7 +785,8 @@ package body Buffer_Views is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Child : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Buffer_View_Record'Tag);
@@ -790,7 +794,8 @@ package body Buffer_Views is
    begin
       if Child /= null then
          View := Buffer_View_Access (Get_Widget (Child));
-         Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+         Set_Font_And_Colors
+           (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
 

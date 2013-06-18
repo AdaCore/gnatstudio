@@ -131,7 +131,8 @@ package body GPS.Main_Window is
    --  Callback for the delete event
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
@@ -339,31 +340,39 @@ package body GPS.Main_Window is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Win   : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Theme : constant String :=
-                Glib.Properties.Get_Property
-                  (Gtk.Settings.Get_Default,
-                   Gtk.Settings.Gtk_Theme_Name_Property);
+      P     : constant Preference := Get_Pref (Data);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
 
    begin
-      if Theme /= Get_Pref (Gtk_Theme) then
+      if P = null
+        or else P = Preference (Gtk_Theme)
+      then
          Glib.Properties.Set_Property
            (Gtk.Settings.Get_Default,
             Gtk.Settings.Gtk_Theme_Name_Property,
             Get_Pref (Gtk_Theme));
       end if;
 
-      --  ??? This creates a new css_provider every time prefs are changed.
-      Gtkada.Style.Load_Css_String
-        ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
-         Priority => Gtk.Style_Provider.Priority_Theme);
+      if P = null
+        or else P = Preference (Default_Font)
+      then
+         --  ??? This creates a new css_provider every time prefs are changed.
+         Gtkada.Style.Load_Css_String
+           ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
+            Priority => Gtk.Style_Provider.Priority_Theme);
+      end if;
 
-      case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
+      if P = null
+        or else P = Preference (Pref_Toolbar_Style)
+      then
+         case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>
+            Set_Size_Request (Win.Toolbar_Box, -1, 0);
             Set_Child_Visible (Win.Toolbar_Box, False);
             Hide (Win.Toolbar_Box);
 
@@ -378,15 +387,20 @@ package body GPS.Main_Window is
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
             Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
-      end case;
-
-      if Toolbar_Show_Text.Get_Pref then
-         Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
-      else
-         Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
+         end case;
       end if;
 
-      Configure_MDI (Kernel);
+      if P = null
+        or else P = Preference (Toolbar_Show_Text)
+      then
+         if Toolbar_Show_Text.Get_Pref then
+            Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
+         else
+            Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
+         end if;
+      end if;
+
+      Configure_MDI (Kernel, P);
    end Preferences_Changed;
 
    ----------------
@@ -524,17 +538,18 @@ package body GPS.Main_Window is
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
-      Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Main_Window.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "main_window.preferences_changed");
-      Preferences_Changed (Main_Window.Kernel);
 
       --  Make sure we don't display the toolbar until we have actually loaded
       --  the preferences and checked whether the user wants it or not. This is
       --  to avoid flickering
-      Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
-      Set_Child_Visible (Main_Window.Toolbar_Box, False);
-      Hide (Main_Window.Toolbar_Box);
+--        Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
+--        Set_Child_Visible (Main_Window.Toolbar_Box, False);
+--        Hide (Main_Window.Toolbar_Box);
+
+--        Preferences_Changed (Main_Window.Kernel, Data => null);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),

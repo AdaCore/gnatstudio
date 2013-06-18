@@ -50,6 +50,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -149,7 +150,8 @@ package body Bookmark_Views is
    --  in List.
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    function Button_Press
@@ -691,12 +693,14 @@ package body Bookmark_Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Bookmark_View_Access :=
                Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+      Set_Font_And_Colors
+        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
    end On_Preferences_Changed;
 
    ----------------
@@ -759,7 +763,7 @@ package body Bookmark_Views is
          ID              => Module_ID (Bookmark_Views_Module),
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (View.Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "bookmark_views.preferences_changed",
                 Watch => GObject (View));

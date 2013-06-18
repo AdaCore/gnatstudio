@@ -1868,7 +1868,8 @@ package body GPS.Kernel.Hooks is
         (Kernel, "general",
          General_From_Callback_Data'Access);
 
-      Register_Hook_No_Args (Kernel, Preferences_Changed_Hook);
+      Register_Hook_No_Return
+        (Kernel, Preference_Changed_Hook, Preference_Hook_Type);
       Register_Hook_No_Args (Kernel, Contextual_Menu_Open_Hook);
       Register_Hook_No_Args (Kernel, Contextual_Menu_Close_Hook);
       Register_Hook_No_Args (Kernel, Search_Reset_Hook);

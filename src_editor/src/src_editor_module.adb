@@ -317,7 +317,8 @@ package body Src_Editor_Module is
    --  Callback for the "cursor_stopped" hook
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Add_To_Recent_Menu
@@ -3068,7 +3069,7 @@ package body Src_Editor_Module is
 
       Kernel.Set_Undo_Redo (UR);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "src_editor.preferences_changed");
       Add_Hook (Kernel, File_Edited_Hook,
@@ -3177,8 +3178,10 @@ package body Src_Editor_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref;
       Pref_Display_Subprogram_Names : constant Boolean :=

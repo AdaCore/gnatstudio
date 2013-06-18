@@ -52,13 +52,29 @@ package Default_Preferences is
    --  Free the memory used by Manager, including all the registered
    --  preferences. Get_Pref mustn't be used afterwards.
 
+   type Preference_Record is abstract tagged private;
+   type Preference is access all Preference_Record'Class;
+
+   procedure On_Pref_Changed
+     (Self : not null access Preferences_Manager_Record;
+      Pref : not null access Preference_Record'Class) is null;
+   --  Called when a preference is changed.
+   --  If the Preference dialog is displayed, emits the preferences_changed
+   --  signal to invite all widgets to refresh themselves. This is only useful
+   --  when writing your own type of preference and overriding Set_Pref.
+
+   procedure Set_Is_Loading_Prefs
+     (Self : not null access Preferences_Manager_Record'Class;
+      Loading : Boolean);
+   function Is_Loading_Preferences
+     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
+   --  True while we are loading the preferences. This is used to disable
+   --  saving the preferences when we are setting their initial value.
+
    ----------------
    -- Preference --
    ----------------
    --  This type represents a preference (type + value)
-
-   type Preference_Record is abstract tagged private;
-   type Preference is access all Preference_Record'Class;
 
    function Get_Pref
      (Pref : access Preference_Record) return String is abstract;
@@ -139,8 +155,8 @@ package Default_Preferences is
    --  See for instance GPS.Kernel.Charsets for more examples.
 
    type Manager_Preference is record
-      Manager : Preferences_Manager;
-      Pref    : Preference;
+      Manager   : Preferences_Manager;
+      Pref      : Preference;
    end record;
    package Preference_Handlers is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Manager_Preference);
@@ -317,12 +333,6 @@ package Default_Preferences is
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
 
-   procedure Emit_Pref_Changed
-     (Manager : access Preferences_Manager_Record'Class);
-   --  If the Preference dialog is displayed, emit the preferences_changed
-   --  signal to invite all widgets to refresh themselves. This is only useful
-   --  when writing your own type of preference and overriding Set_Pref.
-
    ---------------------------------------------
    -- Loading and saving preferences to files --
    ---------------------------------------------
@@ -387,14 +397,9 @@ package Default_Preferences is
    --  This might be called even if Validate has not previously been called for
    --  this page.
 
-   type Action_Callback is access procedure
-     (Manager : access Preferences_Manager_Record'Class);
-
    procedure Edit_Preferences
      (Manager            : access Preferences_Manager_Record;
-      Parent             : access Gtk.Window.Gtk_Window_Record'Class;
-      On_Changed         : Action_Callback;
-      Custom_Pages       : Preferences_Page_Array);
+      Parent             : access Gtk.Window.Gtk_Window_Record'Class);
    --  Open a dialog to edit the registered preferences.
    --  When OK is clicked, the preferences in Manager are changed, the dialog
    --  is destroyed, and On_Changed is called.
@@ -423,11 +428,6 @@ package Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Saved   : out Default_Preferences.Saved_Prefs_Data);
    --  Save the current value of the preferences
-
-   procedure Restore_Preferences
-     (Saved   : Default_Preferences.Saved_Prefs_Data);
-   --  Restore the previous value of the preferences.
-   --  Saved must not be destroyed afterwards
 
    procedure Destroy (Data : in out Saved_Prefs_Data);
    --  Free the memory occupied by Data
@@ -605,6 +605,10 @@ private
       Pref_Editor   : Gtk.Widget.Gtk_Widget;
       --  The current preferences editor. This is set to null if there is no
       --  editor open currently
+
+      Loading_Prefs : Boolean := False;
+      --  True while we are loading the preferences. This is used to disable
+      --  saving the preferences when we are setting their initial value.
    end record;
 
    type Saved_Prefs_Data_Record;

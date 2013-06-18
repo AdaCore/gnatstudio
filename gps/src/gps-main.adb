@@ -1744,15 +1744,19 @@ procedure GPS.Main is
          Set_Pref (Tip_Of_The_Day, GPS_Main.Kernel, False);
       end if;
 
-      --  Load the preferences set when creating the kernel.
-      --  This needs to be done after all the graphical elements have been
+      --  Load the preferences set when creating the kernel
+      --  This needs to be done after all the graphical eleents have been
       --  created, to be sure they are realized and will take the preferences
       --  into account.
 
-      Run_Hook (GPS_Main.Kernel, Preferences_Changed_Hook);
+      declare
+         D : aliased Preference_Hooks_Args :=
+           (Hooks_Data with Pref => null);
+      begin
+         Run_Hook (GPS_Main.Kernel, Preference_Changed_Hook, D'Access);
+      end;
 
       if not Hide_GPS then
-         --  Show (GPS_Main);
          GPS_Main.Present;
       end if;
 

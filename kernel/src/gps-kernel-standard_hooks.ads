@@ -22,7 +22,7 @@ with Gtkada.MDI;
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Basic_Types;
-
+with Default_Preferences;
 with GPS.Editors;        use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
@@ -147,6 +147,21 @@ package GPS.Kernel.Standard_Hooks is
       Context : GPS.Kernel.Selection_Context;
    end record;
    --  Base type for hooks that take a single context in parameter
+
+   Preference_Hook_Type : constant Hook_Type := "preference_hooks";
+   type Preference_Hooks_Args is new Hooks_Data with record
+      Pref : Default_Preferences.Preference;
+   end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Preference_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  Hooks that take a preference in parameter
+
+   function Get_Pref
+     (Data : access Hooks_Data'Class) return Default_Preferences.Preference;
+   --  If Data is a Preference_Hooks_Args, returns the preference, else null.
 
    ------------------
    -- Marker_Hooks --

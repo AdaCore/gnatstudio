@@ -183,7 +183,9 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, remove them for all files.
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences are changed in the GPS kernel
 
    procedure Create_Debugger_Columns
@@ -2300,8 +2302,10 @@ package body GVD_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Window : constant Gtk_Window := Get_Main_Window (Kernel);
       Top    : constant GPS_Window := GPS_Window (Window);
       Prev   : Boolean;
@@ -2539,7 +2543,7 @@ package body GVD_Module is
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "gvd.preferences_changed");
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,

@@ -15,29 +15,25 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;          use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with Default_Preferences;           use Default_Preferences;
 with GPS.Editors.Line_Information;
-with GPS.Intl;
-with GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks;
+use GPS.Editors, GPS.Editors.Line_Information;
+with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 
 package body GNATStack.Module.Editors is
 
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
-   use Ada.Strings.Unbounded;
-   use GPS.Editors;
-   use GPS.Intl;
    use GNATCOLL.VFS;
    use GNATStack.Data_Model;
    use GNATStack.Data_Model.Object_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Information_Sets;
    use GNATStack.Data_Model.Subprogram_Location_Sets;
-   use GPS.Editors.Line_Information;
 
    procedure Free is
      new Ada.Unchecked_Deallocation
@@ -58,7 +54,8 @@ package body GNATStack.Module.Editors is
    --  Hides subprogram's stack usage information in source editor.
 
    procedure On_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed.
 
    procedure On_File_Closed_Hook
@@ -229,15 +226,26 @@ package body GNATStack.Module.Editors is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+      Pref : constant Preference := Get_Pref (Data);
 
    begin
-      Module.Annotations_Style.Set_Background
-        (Module.Annotations_Background.Get_Pref);
-      Module.Annotations_Style.Set_Foreground
-        (Module.Annotations_Foreground.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (Module.Annotations_Background)
+      then
+         Module.Annotations_Style.Set_Background
+           (Module.Annotations_Background.Get_Pref);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Module.Annotations_Foreground)
+      then
+         Module.Annotations_Style.Set_Foreground
+           (Module.Annotations_Foreground.Get_Pref);
+      end if;
    end On_Preferences_Changed;
 
    ---------------------
@@ -272,7 +280,7 @@ package body GNATStack.Module.Editors is
         (Module.Annotations_Background.Get_Pref);
 
       GPS.Kernel.Hooks.Add_Hook
-        (Module.Kernel, GPS.Kernel.Preferences_Changed_Hook,
+        (Module.Kernel, GPS.Kernel.Preference_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
          "gnatstack.preferences_changed");
       GPS.Kernel.Hooks.Add_Hook

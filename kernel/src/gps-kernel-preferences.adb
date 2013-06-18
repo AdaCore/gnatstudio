@@ -27,6 +27,7 @@ with Gdk.RGBA;                  use Gdk.RGBA;
 with Pango.Font;                use Pango.Font;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
@@ -36,6 +37,7 @@ with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Traces;
@@ -62,6 +64,52 @@ package body GPS.Kernel.Preferences is
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
+
+   ----------------
+   -- Set_Kernel --
+   ----------------
+
+   procedure Set_Kernel
+     (Self   : not null access GPS_Preferences_Record;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Self.Kernel := Kernel_Handle (Kernel);
+   end Set_Kernel;
+
+   ---------------------
+   -- On_Pref_Changed --
+   ---------------------
+
+   overriding procedure On_Pref_Changed
+     (Self : not null access GPS_Preferences_Record;
+      Pref : not null access Preference_Record'Class)
+   is
+      Font : Pango_Font_Description;
+      Data : aliased Preference_Hooks_Args;
+   begin
+      if Pref = Default_Font then
+         Font := Copy (Default_Font.Get_Pref_Font);
+         Set_Size (Font, Gint (Float (Get_Size (Font)) * 0.8));
+         Default_Preferences.Set_Pref
+           (Small_Font, Self.Kernel.Preferences, Font);
+         Free (Font);
+      end if;
+
+      if not Self.Is_Loading_Preferences then
+         Trace (Me, "Preference changed: " & Pref.Get_Name);
+         Save_Preferences
+           (Self.Kernel,
+            Create_From_Dir (Get_Home_Dir (Self.Kernel), "preferences"));
+
+         Data.Pref := Default_Preferences.Preference (Pref);
+         Run_Hook (Self.Kernel, Preference_Changed_Hook, Data'Access);
+      end if;
+
+      if Self.Get_Editor /= null then
+         Widget_Callback.Emit_By_Name
+           (Self.Get_Editor, Signal_Preferences_Changed);
+      end if;
+   end On_Pref_Changed;
 
    -------------------------
    -- Get_Command_Handler --
@@ -116,24 +164,19 @@ package body GPS.Kernel.Preferences is
             Name : constant String     := Get_Data (Inst, Class);
             Pref : constant Preference :=
                      Get_Pref_From_Name (Kernel.Preferences, Name, False);
-            Done : Boolean := True;
          begin
             if Pref = null then
                Set_Error_Msg (Data, -"Unknown preference " & Name);
-               Done := False;
-
             elsif Pref.all in Integer_Preference_Record'Class then
                Set_Pref
                  (Integer_Preference (Pref),
                   Kernel.Preferences,
                   Integer'(Nth_Arg (Data, 2)));
-
             elsif Pref.all in Boolean_Preference_Record'Class then
                Set_Pref
                  (Boolean_Preference (Pref),
                   Kernel.Preferences,
                   Boolean'(Nth_Arg (Data, 2)));
-
             elsif Pref.all in String_Preference_Record'Class
               or else Pref.all in Font_Preference_Record'Class
               or else Pref.all in Color_Preference_Record'Class
@@ -143,15 +186,7 @@ package body GPS.Kernel.Preferences is
                Set_Pref (Pref, Kernel.Preferences, String'(Nth_Arg (Data, 2)));
 
             else
-               Done := False;
                Set_Error_Msg (Data, -"Preference not supported");
-            end if;
-
-            if Done and then Nth_Arg (Data, 3, True) then
-               Save_Preferences
-                 (Kernel,
-                  Create_From_Dir (Get_Home_Dir (Kernel), "preferences"));
-               Run_Hook (Kernel, Preferences_Changed_Hook);
             end if;
 
          exception
@@ -262,6 +297,8 @@ package body GPS.Kernel.Preferences is
    procedure Register_Global_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Kernel.Preferences.Set_Is_Loading_Prefs (True);
+
       -- General --
       Gtk_Theme := Create
         (Kernel.Preferences,
@@ -1285,6 +1322,8 @@ package body GPS.Kernel.Preferences is
          Maximum => Integer'Last,
          Default => 10_000_000,
          Page    => "");
+
+      Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;
 
    ---------------
@@ -1525,37 +1564,10 @@ package body GPS.Kernel.Preferences is
    ----------------------
 
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class) is
-      procedure On_Changed (Manager : access Preferences_Manager_Record'Class);
-      --  Called when the preferences have been changed
-
-      ----------------
-      -- On_Changed --
-      ----------------
-
-      procedure On_Changed
-        (Manager : access Preferences_Manager_Record'Class)
-      is
-         Font : Pango_Font_Description := Copy (Default_Font.Get_Pref_Font);
-      begin
-         Set_Size (Font, Gint (Float (Get_Size (Font)) * 0.8));
-         Default_Preferences.Set_Pref (Small_Font, Manager, Font);
-         Free (Font);
-         Run_Hook (Kernel, Preferences_Changed_Hook);
-      end On_Changed;
-
    begin
-      if Preferences_Pages = null then
-         Preferences_Pages := new Preferences_Page_Array (1 .. 0);
-      end if;
-
       Edit_Preferences
         (Manager      => Kernel.Preferences,
-         Parent       => Get_Main_Window (Kernel),
-         On_Changed   => On_Changed'Unrestricted_Access,
-         Custom_Pages => Preferences_Pages.all);
-
-      Save_Preferences
-        (Kernel, Create_From_Dir (Get_Home_Dir (Kernel), "preferences"));
+         Parent       => Get_Main_Window (Kernel));
    end Edit_Preferences;
 
    ----------------------
@@ -1652,25 +1664,34 @@ package body GPS.Kernel.Preferences is
 
    procedure Set_Font_And_Colors
      (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean)
+      Fixed_Font : Boolean;
+      Pref       : Default_Preferences.Preference := null)
    is
-      Active_Bg : constant Gdk_RGBA := Darken_Or_Lighten
-        (Default_Font.Get_Pref_Bg);
+      Active_Bg : Gdk_RGBA;
    begin
-      if Fixed_Font then
-         Modify_Font (Widget, View_Fixed_Font.Get_Pref);
-      else
-         Modify_Font (Widget, Default_Font.Get_Pref_Font);
+      if Pref = null
+        or else Pref = Preference (Default_Font)
+        or else (Fixed_Font and then Pref = Preference (View_Fixed_Font))
+      then
+         Active_Bg := Darken_Or_Lighten (Default_Font.Get_Pref_Bg);
+
+         if Fixed_Font then
+            Modify_Font (Widget, View_Fixed_Font.Get_Pref);
+         else
+            Modify_Font (Widget, Default_Font.Get_Pref_Font);
+         end if;
+
+         Override_Color
+           (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
+         Override_Color
+           (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
+
+         Override_Background_Color
+           (Widget, Gtk_State_Flag_Normal,
+            Default_Font.Get_Pref_Bg);
+         Override_Background_Color
+           (Widget, Gtk_State_Flag_Active, Active_Bg);
       end if;
-
-      Override_Color (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
-      Override_Color (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
-
-      Override_Background_Color
-        (Widget, Gtk_State_Flag_Normal,
-         Default_Font.Get_Pref_Bg);
-      Override_Background_Color
-        (Widget, Gtk_State_Flag_Active, Active_Bg);
    end Set_Font_And_Colors;
 
 end GPS.Kernel.Preferences;

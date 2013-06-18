@@ -177,7 +177,8 @@ package body Outline_View is
    --  Called every time a row is clicked
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  React to changes in the preferences
 
    function Get_Filter_Record
@@ -332,13 +333,15 @@ package body Outline_View is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null then
-         Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
+         Set_Font_And_Colors
+           (Outline.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
 
@@ -792,7 +795,7 @@ package body Outline_View is
                 Wrapper (On_Context_Changed'Access),
                 Name => "outline.context_changed",
                 Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Outline.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "outline.preferences_changed",
                 Watch => GObject (Outline));

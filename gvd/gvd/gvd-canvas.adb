@@ -137,13 +137,14 @@ package body GVD.Canvas is
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       Canvas : GVD_Canvas;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed, to refresh the GVD canvas
    --  appropriately.
 
@@ -360,9 +361,10 @@ package body GVD.Canvas is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Preferences_Changed (Hook.Canvas);
    end Execute;
@@ -1003,9 +1005,9 @@ package body GVD.Canvas is
          Canvas);
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with Canvas => GVD_Canvas (Canvas));
+        (Function_With_Args with Canvas => GVD_Canvas (Canvas));
       Add_Hook
-        (Canvas.Kernel, Preferences_Changed_Hook, Hook,
+        (Canvas.Kernel, Preference_Changed_Hook, Hook,
          Name  => "canvas.preferences_changed",
          Watch => GObject (Canvas));
 

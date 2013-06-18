@@ -274,13 +274,14 @@ package body Project_Viewers is
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       Viewer : Project_Viewer;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Hook called when the preferences change
 
    type Project_View_Hook_Record is new Function_No_Args with record
@@ -702,10 +703,10 @@ package body Project_Viewers is
          Watch => GObject (Viewer));
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with Viewer => Project_Viewer (Viewer));
-      Execute (Hook.all, Viewer.Kernel);
+        (Function_With_Args with Viewer => Project_Viewer (Viewer));
+      Execute (Hook.all, Viewer.Kernel, Data => null);
       Add_Hook
-        (Viewer.Kernel, Preferences_Changed_Hook,
+        (Viewer.Kernel, Preference_Changed_Hook,
          Hook,
          Name => "project_viewer.preferences_changed",
          Watch => GObject (Viewer));
@@ -730,9 +731,10 @@ package body Project_Viewers is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Hook.Viewer.Default_Switches_Color :=
         Default_Switches_Color.Get_Pref;

@@ -60,6 +60,7 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
+with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
@@ -222,13 +223,14 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       View : Source_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -1385,10 +1387,10 @@ package body Src_Editor_View is
       end if;
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with View => Source_View (View));
-      Execute (Hook.all, Kernel);
+        (Function_With_Args with View => Source_View (View));
+      Execute (Hook.all, Kernel, Data => null);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Kernel, Preference_Changed_Hook, Hook,
          Name  => "src_editor_view.preferences_changed",
          Watch => GObject (View));
 
@@ -1495,7 +1497,8 @@ package body Src_Editor_View is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
       Source : constant Source_View := Hook.View;
@@ -1503,16 +1506,29 @@ package body Src_Editor_View is
       Color  : Gdk_RGBA;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
+      Pref : constant Preference := Get_Pref (Data);
    begin
       --  Recompute the width of one character
 
-      Layout := Create_Pango_Layout (Source);
-      Set_Attributes (Layout, Null_Pango_Attr_List);
-      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-      Set_Text (Layout, (1 .. 256 => '0'));
-      Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);
-      Source.Width_Of_256_Chars := Ink_Rect.Width;
-      Unref (Layout);
+      if Pref = null
+        or else Pref = Preference (Default_Style)
+      then
+         Layout := Create_Pango_Layout (Source);
+         Set_Attributes (Layout, Null_Pango_Attr_List);
+         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
+         Set_Text (Layout, (1 .. 256 => '0'));
+         Get_Pixel_Extents (Layout, Ink_Rect, Logical_Rect);
+         Source.Width_Of_256_Chars := Ink_Rect.Width;
+         Unref (Layout);
+
+         --  Modify the text background, color and font
+
+         if Source.Get_Realized then
+            Modify_Font (Source, Default_Style.Get_Pref_Font);
+         end if;
+
+         Source.Set_Background_Color;
+      end if;
 
       --  Reset the color of the current line.
       --  This procedure might be called before the Map_Cb has been called,
@@ -1521,9 +1537,7 @@ package body Src_Editor_View is
 
       Source.Current_Block_Color := Current_Block_Color.Get_Pref;
       Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
-
       Source.Highlight_As_Line := Current_Line_Thin.Get_Pref;
-
       Source.Speed_Column_Mode := Speed_Column_Policy.Get_Pref;
 
       if Source.Speed_Column_Mode /= Mode then
@@ -1543,14 +1557,6 @@ package body Src_Editor_View is
             Redraw_Speed_Column (Source);
          end if;
       end if;
-
-      --  Modify the text background, color and font
-
-      if Source.Get_Realized then
-         Modify_Font (Source, Default_Style.Get_Pref_Font);
-      end if;
-
-      Source.Set_Background_Color;
 
       Color := Default_Style.Get_Pref_Fg;
 
