@@ -188,9 +188,9 @@ package body Commands.Builder is
 
       procedure Expand_Command_Line (Result : in out Build_Information) is
          Mode    : constant String := To_String (Result.Mode);
-         CL      : Argument_List :=
+         CL      : constant Argument_List :=
            Get_Command_Line_Unexpanded (Builder.Registry, Result.Target);
-         CL_Mode : constant Argument_List_Access :=
+         CL_Mode : Argument_List_Access :=
            Apply_Mode_Args (Builder.Registry, Get_Model (Result.Target),
                             Mode, CL);
          Subdir  : constant Filesystem_String :=
@@ -201,7 +201,7 @@ package body Commands.Builder is
             Server, Result.Force_File, Result.Main, Subdir, Result.Background,
             False);
 
-         Free (CL);
+         Free (CL_Mode);
       end Expand_Command_Line;
 
       Result   : Build_Information;
