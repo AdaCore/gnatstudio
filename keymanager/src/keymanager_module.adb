@@ -30,9 +30,7 @@ with Interfaces.C.Strings;
 with System.Assertions;       use System.Assertions;
 
 with Gdk.Device;              use Gdk.Device;
-with Gdk.Device_Manager;      use Gdk.Device_Manager;
 with Gdk.Event;               use Gdk.Event;
-with Gdk.Screen;              use Gdk.Screen;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Window;              use Gdk.Window;
@@ -47,6 +45,7 @@ with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.Style;            use Gtkada.Style;
 
 with Config;                  use Config;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -1581,6 +1580,59 @@ package body KeyManager_Module is
             end loop;
          end;
 
+      elsif Command = "send_button_event" then
+         declare
+            use type Gdk.Gdk_Window;
+            use Widget_List;
+
+            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 1);
+            Typ     : constant Gdk_Event_Type :=
+              Gdk_Event_Type'Val
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press)));
+            Button  : constant Integer := Nth_Arg (Data, 3, 1);
+            X       : constant Integer := Nth_Arg (Data, 4, 1);
+            Y       : constant Integer := Nth_Arg (Data, 5, 1);
+            Event   : Gdk_Event;
+            List    : Widget_List.Glist;
+            Win     : Gtk_Widget;
+            Device  : Gdk_Device;
+         begin
+            if Window = null then
+               List := List_Toplevels;
+               Win := Get_Data (List);
+               Window := Get_Window (Win);
+               Free (List);
+            end if;
+
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Mouse);
+
+            Gdk_New (Event, Typ);
+            Event.Button :=
+               (The_Type    => Typ,
+                Window      => Window,
+                Send_Event  => 1,
+                Time        => 0, --  CURRENT_TIME
+                X           => Gdouble (X),
+                Y           => Gdouble (Y),
+                Axes        => null,
+                State       => 0,
+                Button      => Guint (Button),
+                Device      => System.Null_Address,
+                X_Root      => 0.0,
+                Y_Root      => 0.0);
+            Ref (Event.Button.Window);
+
+            Device.Ref;
+            Set_Device (Event, Device);
+            Device.Ref;
+            Set_Source_Device (Event, Device);
+
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
+            Gdk.Event.Free (Event);
+         end;
+
       elsif Command = "send_key_event" then
          declare
             use type Gdk.Gdk_Window;
@@ -1595,6 +1647,7 @@ package body KeyManager_Module is
             Event   : Gdk_Event;
             List    : Widget_List.Glist;
             Win     : Gtk_Widget;
+            Device  : Gdk_Device;
          begin
             if Window = null then
                List := List_Toplevels;
@@ -1639,29 +1692,13 @@ package body KeyManager_Module is
                end if;
             end if;
 
-            declare
-               use Device_List;
-               Screen : constant Gdk_Screen :=
-                  Get_Kernel (Data).Get_Main_Window.Get_Screen;
-               Mgr : constant Gdk_Device_Manager :=
-                  Get_Device_Manager (Screen.Get_Display);
-               L : Device_List.Glist :=
-                  Mgr.List_Devices (Gdk_Device_Type_Master);
-               L2 : Device_List.Glist := L;
-               Device : Gdk_Device;
-            begin
-               while L2 /= Device_List.Null_List loop
-                  Device := Device_List.Get_Data (L2);
-                  exit when Device.Get_Source = Source_Keyboard;
-                  L2 := Device_List.Next (L2);
-               end loop;
-
-               Device_List.Free (L);
-               Device.Ref;
-               Set_Device (Event, Device);
-               Device.Ref;
-               Set_Source_Device (Event, Device);
-            end;
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Keyboard);
+            Device.Ref;
+            Set_Device (Event, Device);
+            Device.Ref;
+            Set_Source_Device (Event, Device);
 
             General_Event_Handler (Event, Kernel => Get_Kernel (Data));
             Gdk.Event.Free (Event);
@@ -1797,6 +1834,14 @@ package body KeyManager_Module is
              Param ("control", Optional => True),
              Param ("alt", Optional => True),
              Param ("shift", Optional => True)),
+            Keymanager_Command_Handler'Access);
+         Register_Command
+           (Get_Scripts (Kernel), "send_button_event",
+            (Param ("window", Optional => True),
+             Param ("type", Optional => True),
+             Param ("button", Optional => True),
+             Param ("x", Optional => True),
+             Param ("y", Optional => True)),
             Keymanager_Command_Handler'Access);
       end if;
 
