@@ -50,7 +50,10 @@ package body Docgen3.Backend.Simple is
    --  Clear all the lists used to classify the tree nodes in categories
 
    function Get_Unique_Name (E : Entity_Id) return String;
-   --  Return the full name of E concatenated with the Unique_Id of E
+   --  For types return the full name of E; for subprograms return the full
+   --  name of E concatenated with the line where E is defined (to handle
+   --  overloaded entities defined in other files ---for example, entities
+   --  inherited from a parent type defined in another file).
 
    function Get_Template
      (System_Dir : Virtual_File;
@@ -307,10 +310,14 @@ package body Docgen3.Backend.Simple is
             end;
          end if;
 
+         EInfo_Vector_Sort_Short.Sort (Get_Parent_Types (E).all);
+
          ReST_Append_List
            (Printout => Printout,
             List     => Get_Parent_Types (E).all,
             Header   => "Parent types");
+
+         EInfo_Vector_Sort_Short.Sort (Get_Child_Types (E).all);
 
          ReST_Append_List
            (Printout => Printout,
@@ -320,6 +327,8 @@ package body Docgen3.Backend.Simple is
          if In_Ada_Language (E)
            and then LL.Has_Methods (E)
          then
+            EInfo_Vector_Sort_Short.Sort (Get_Methods (E).all);
+
             ReST_Append_List
               (Printout => Printout,
                List     => Get_Methods (E).all,
@@ -555,35 +564,49 @@ package body Docgen3.Backend.Simple is
               & "============" & ASCII.LF
               & ASCII.LF;
 
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Pkgs);
+
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Pkgs,
                "Packages");
+
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Variables);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Variables,
                "Constants & variables");
 
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Simple_Types);
+
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Simple_Types,
                "Types");
+
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Record_Types);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Record_Types,
                "Records");
 
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Subprgs);
+
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Subprgs,
                "Subprograms");
 
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Tagged_Types);
+
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tagged_Types,
                "Tagged types");
+
+            EInfo_Vector_Sort_Short.Sort (Backend.Entities.CPP_Classes);
 
             ReST_Append_List
               (Printout'Access,
@@ -666,7 +689,7 @@ package body Docgen3.Backend.Simple is
          return To_Lower (Get_Full_Name (E));
       else
          return
-           To_Lower (Get_Full_Name (E) & To_String (Get_Unique_Id (E)));
+           To_Lower (Get_Full_Name (E) & To_String (LL.Get_Location (E).Line));
       end if;
    end Get_Unique_Name;
 
@@ -820,14 +843,14 @@ package body Docgen3.Backend.Simple is
                      Entities.CPP_Constructors.Append (E);
                      Backend.Entities.CPP_Constructors.Append (E);
                   else
-                     Entities.Methods.Append (E);
-                     Backend.Entities.Methods.Append (E);
+                     Append_Unique_Elmt (Entities.Methods, E);
+                     Append_Unique_Elmt (Backend.Entities.Methods, E);
                   end if;
 
                elsif In_Ada_Language (E) then
                   if LL.Is_Primitive (E) then
-                     Entities.Methods.Append (E);
-                     Backend.Entities.Methods.Append (E);
+                     Append_Unique_Elmt (Entities.Methods, E);
+                     Append_Unique_Elmt (Backend.Entities.Methods, E);
                   else
                      Entities.Subprgs.Append (E);
                      Backend.Entities.Subprgs.Append (E);
