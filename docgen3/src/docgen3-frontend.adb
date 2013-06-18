@@ -1468,7 +1468,7 @@ package body Docgen3.Frontend is
                end;
             end if;
 
-            --  Check_Record_Components;
+            --  Check_Record_Components
 
             declare
                Components : constant Xref.Entity_Array :=
@@ -1543,8 +1543,21 @@ package body Docgen3.Frontend is
 
             begin
                for J in Childs'Range loop
-                  Child_E := New_Entity (Childs (J), Forced => True);
-                  Append_Child_Type (E, Child_E);
+
+                  --  Do not add as a child type the second entity generated
+                  --  by the compiler for named typedef structs (the compiler
+                  --  generates two entites in the LI file with the same name)
+
+                  if In_Ada_Language (E)
+                    or else not
+                      LL.Is_Self_Referenced_Type
+                        (Db   => Context.Database,
+                         E    => Childs (J),
+                         Lang => Get_Language (E))
+                  then
+                     Child_E := New_Entity (Childs (J), Forced => True);
+                     Append_Child_Type (E, Child_E);
+                  end if;
                end loop;
             end;
          end Decorate_Record_Type;
@@ -2031,11 +2044,11 @@ package body Docgen3.Frontend is
                         Free (New_E);
                         New_E :=
                           New_Entity
-                            (Context => Context,
-                             Language    => Lang,
-                             E       => Scope_Id,
-                             Loc     => Get_Location
-                                          (Context.Database, Scope_Id));
+                            (Context  => Context,
+                             Language => Lang,
+                             E        => Scope_Id,
+                             Loc      => Get_Location
+                                           (Context.Database, Scope_Id));
                      end if;
                   end;
 

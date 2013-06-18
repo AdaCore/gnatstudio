@@ -125,6 +125,19 @@ package body Docgen3.Atree is
       E.Parent_Types.Append (Value);
    end Append_Parent_Type;
 
+   ------------------------
+   -- Append_Unique_Elmt --
+   ------------------------
+
+   procedure Append_Unique_Elmt
+     (Container : in out EInfo_List.Vector;
+      Entity    : Entity_Id) is
+   begin
+      if not Contains (Container, Entity) then
+         Container.Append (Entity);
+      end if;
+   end Append_Unique_Elmt;
+
    --------------
    -- Contains --
    --------------
@@ -1225,6 +1238,30 @@ package body Docgen3.Atree is
       begin
          return E.Xref.Is_Primitive;
       end Is_Primitive;
+
+      ------------------------
+      -- Is_Self_Referenced --
+      ------------------------
+
+      function Is_Self_Referenced_Type
+        (Db   : General_Xref_Database;
+         E    : General_Entity;
+         Lang : Language_Access) return Boolean
+      is
+         In_C_Or_CPP_Lang : constant Boolean :=
+                              Lang.all in Language.C.C_Language'Class;
+      begin
+         return
+           In_C_Or_CPP_Lang
+             and then E /= No_General_Entity
+             and then Db.Is_Type (E)
+             and then Db.Is_Container (E)
+             and then Db.Is_Global (E)
+             and then LL.Get_Ekind (Db, E, In_Ada_Lang => False)
+                        = E_Record_Type
+             and then Db.Get_Name (Db.Caller_At_Declaration (E))
+                        = Db.Get_Name (E);
+      end Is_Self_Referenced_Type;
 
       function Is_Subprogram (E : Entity_Id) return Boolean is
       begin
