@@ -35,7 +35,6 @@ with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Widget;
-with Gtk.Window;
 with Pango.Font;
 
 package Default_Preferences is
@@ -248,6 +247,7 @@ package Default_Preferences is
    function Get_Name  (Pref : access Preference_Record'Class) return String;
    function Get_Label (Pref : access Preference_Record'Class) return String;
    function Get_Doc   (Pref : access Preference_Record'Class) return String;
+   function Get_Page  (Pref : access Preference_Record'Class) return String;
 
    overriding function Get_Pref
      (Pref : access String_Preference_Record) return String;
@@ -350,6 +350,21 @@ package Default_Preferences is
       Success   : out Boolean);
    --  Save the default preferences to File_Name
 
+   ---------------
+   -- iterators --
+   ---------------
+
+   type Cursor is private;
+
+   function Get_First_Reference
+     (Manager : not null access Preferences_Manager_Record)
+      return Cursor;
+   procedure Next
+     (Manager : not null access Preferences_Manager_Record;
+      C       : in out Cursor);
+   function Get_Pref (Self : Cursor) return Preference;
+   --  Iterate over all registered preferences
+
    -------------------------
    -- Editing preferences --
    -------------------------
@@ -397,40 +412,13 @@ package Default_Preferences is
    --  This might be called even if Validate has not previously been called for
    --  this page.
 
-   procedure Edit_Preferences
-     (Manager            : access Preferences_Manager_Record;
-      Parent             : access Gtk.Window.Gtk_Window_Record'Class);
-   --  Open a dialog to edit the registered preferences.
-   --  When OK is clicked, the preferences in Manager are changed, the dialog
-   --  is destroyed, and On_Changed is called.
-   --  When Apply is clicked, the preferences in Manager are changed, the
-   --  dialog is not destroyed, and On_Changed is called.
-   --  When Cancel is clicked, the preferences are restored as they were before
-   --  Manager was displayed, the dialog is destroyed, and On_Changed is called
-   --  if at least one apply was emitted before (since we need to restore the
-   --  widgets to their appropriate state).
-
    function Get_Editor
      (Manager : access Preferences_Manager_Record)
       return Gtk.Widget.Gtk_Widget;
-   --  Return the Preferences dialog if it is currently open
-
-   --------------------------
-   -- Saving and restoring --
-   --------------------------
-   --  The following subprograms can be used to temporarily save the value of
-   --  the registered preferences. This is used mostly to implemented the
-   --  Apply/Cancel buttons.
-
-   type Saved_Prefs_Data is private;
-
-   procedure Save_Preferences
+   procedure Set_Editor
      (Manager : access Preferences_Manager_Record;
-      Saved   : out Default_Preferences.Saved_Prefs_Data);
-   --  Save the current value of the preferences
-
-   procedure Destroy (Data : in out Saved_Prefs_Data);
-   --  Free the memory occupied by Data
+      Editor  : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Return the Preferences dialog if it is currently open
 
    Signal_Preferences_Changed : constant Glib.Signal_Name :=
                                   "preferences_changed";
@@ -600,8 +588,13 @@ private
    package Preferences_Maps is new Ada.Containers.Doubly_Linked_Lists
      (Preference);
 
+   type Cursor is record
+      C : Preferences_Maps.Cursor;
+   end record;
+
    type Preferences_Manager_Record is tagged record
       Preferences   : Preferences_Maps.List;
+
       Pref_Editor   : Gtk.Widget.Gtk_Widget;
       --  The current preferences editor. This is set to null if there is no
       --  editor open currently
@@ -610,8 +603,5 @@ private
       --  True while we are loading the preferences. This is used to disable
       --  saving the preferences when we are setting their initial value.
    end record;
-
-   type Saved_Prefs_Data_Record;
-   type Saved_Prefs_Data is access Saved_Prefs_Data_Record;
 
 end Default_Preferences;

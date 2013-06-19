@@ -20,7 +20,6 @@ with Ada.Containers.Vectors;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
@@ -32,7 +31,6 @@ with XML_Utils;                use XML_Utils;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Button;         use Gtk.Color_Button;
 with Gtk.Combo_Box;
@@ -42,25 +40,19 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
-with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Settings;             use Gtk.Settings;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Table;                use Gtk.Table;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
@@ -92,21 +84,9 @@ package body Default_Preferences is
      (String, String, Ada.Strings.Hash, "=");
    use Str_Maps;
 
-   type Saved_Prefs_Data_Record is record
-      Preferences : Str_Maps.Map;
-      Manager     : Preferences_Manager;
-   end record;
-
    -------------------------
    --  Preferences Editor --
    -------------------------
-
-   type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
-   type Preferences_Editor is access all Preferences_Editor_Record'Class;
-   Preferences_Editor_Class_Record : Glib.Object.Ada_GObject_Class :=
-     Glib.Object.Uninitialized_Class;
-   Preferences_Editor_Signals : constant chars_ptr_array :=
-                       (1 => New_String (String (Signal_Preferences_Changed)));
 
    procedure Create_Color_Buttons
      (Box     : Gtk_Box;
@@ -253,6 +233,19 @@ package body Default_Preferences is
    begin
       return Pref.Label.all;
    end Get_Label;
+
+   --------------
+   -- Get_Page --
+   --------------
+
+   function Get_Page (Pref : access Preference_Record'Class) return String is
+   begin
+      if Pref.Page = null then
+         return "";
+      else
+         return Pref.Page.all;
+      end if;
+   end Get_Page;
 
    -------------
    -- Get_Doc --
@@ -2019,260 +2012,6 @@ package body Default_Preferences is
       Free (Preference_Record (Pref));
    end Free;
 
-   ----------------------
-   -- Edit_Preferences --
-   ----------------------
-
-   procedure Edit_Preferences
-     (Manager      : access Preferences_Manager_Record;
-      Parent       : access Gtk.Window.Gtk_Window_Record'Class)
-   is
-      Model             : Gtk_Tree_Store;
-      Main_Table        : Gtk_Table;
-      Current_Selection : Gtk_Widget;
-      Title             : Gtk_Label;
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
-      --  Return the iterator in Model matching Name.
-      --  If no such page already exists, then eithe Widget (if non null) is
-      --  inserted for it, or a new table is created and inserted
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
-      --  Called when the selected page has changed.
-
-      -------------------------
-      -- Find_Or_Create_Page --
-      -------------------------
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget
-      is
-         Current     : Gtk_Tree_Iter := Null_Iter;
-         Child       : Gtk_Tree_Iter;
-         First, Last : Integer := Name'First;
-         Table       : Gtk_Table;
-         W           : Gtk_Widget;
-
-      begin
-         while First <= Name'Last loop
-            Last := First;
-
-            while Last <= Name'Last
-              and then Name (Last) /= '/'
-            loop
-               Last := Last + 1;
-            end loop;
-
-            if Current = Null_Iter then
-               Child := Get_Iter_First (Model);
-            else
-               Child := Children (Model, Current);
-            end if;
-
-            while Child /= Null_Iter
-              and then Get_String (Model, Child, 0) /= Name (First .. Last - 1)
-            loop
-               Next (Model, Child);
-            end loop;
-
-            if Child = Null_Iter then
-               if Widget = null then
-                  Gtk_New (Table, Rows => 0, Columns => 2,
-                           Homogeneous => False);
-                  Set_Row_Spacings (Table, 1);
-                  Set_Col_Spacings (Table, 5);
-                  W := Gtk_Widget (Table);
-
-               else
-                  W := Widget;
-               end if;
-
-               Append (Model, Child, Current);
-               Set (Model, Child, 0, Name (First .. Last - 1));
-               Set (Model, Child, 1, GObject (W));
-
-               Attach (Main_Table, W, 1, 2, 2, 3,
-                       Ypadding => 0, Xpadding => 10);
-               Set_Child_Visible (W, False);
-            end if;
-
-            Current := Child;
-
-            First := Last + 1;
-         end loop;
-
-         return Gtk_Widget (Get_Object (Model, Current, 1));
-      end Find_Or_Create_Page;
-
-      -----------------------
-      -- Selection_Changed --
-      -----------------------
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class) is
-         Iter : Gtk_Tree_Iter;
-         M    : Gtk_Tree_Model;
-      begin
-         if Current_Selection /= null then
-            Set_Child_Visible (Current_Selection, False);
-            Current_Selection := null;
-         end if;
-
-         Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
-
-         if Iter /= Null_Iter then
-            Current_Selection := Gtk_Widget (Get_Object (Model, Iter, 1));
-            Set_Child_Visible (Current_Selection, True);
-            Set_Text (Title, Get_String (Model, Iter, 0));
-         end if;
-      end Selection_Changed;
-
-      Dialog     : Preferences_Editor;
-      Frame      : Gtk_Frame;
-      Table      : Gtk_Table;
-      View       : Gtk_Tree_View;
-      Col        : Gtk_Tree_View_Column;
-      Render     : Gtk_Cell_Renderer_Text;
-      Num        : Gint;
-      Scrolled   : Gtk_Scrolled_Window;
-      Pref       : Preference;
-      Row        : Guint;
-      Widget     : Gtk_Widget;
-      Event      : Gtk_Event_Box;
-      Label      : Gtk_Label;
-      Separator  : Gtk_Separator;
-      Resp       : Gtk_Response_Type;
-      C          : Preferences_Maps.Cursor;
-      Tmp        : Gtk_Widget;
-
-      Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-        (1 => (1 => GType_None));
-
-      pragma Unreferenced (Tmp, Num, Resp);
-
-   begin
-      Glib.Object.Initialize_Class_Record
-        (Ancestor     => Gtk.Dialog.Get_Type,
-         Signals      => Preferences_Editor_Signals,
-         Class_Record => Preferences_Editor_Class_Record,
-         Type_Name    => "PreferencesEditor",
-         Parameters   => Signal_Parameters);
-
-      Dialog := new Preferences_Editor_Record;
-      G_New (Dialog, Preferences_Editor_Class_Record.The_Type);
-
-      Dialog.Set_Title (-"Preferences");
-      Dialog.Set_Transient_For (Gtk_Window (Parent));
-      Dialog.Set_Destroy_With_Parent (True);
-      Dialog.Set_Modal (True);
-      Dialog.Set_Name ("Preferences");  --  for the testsuite
-      Dialog.Set_Position (Win_Pos_Mouse);
-      Dialog.Set_Default_Size (620, 400);
-
-      Manager.Pref_Editor := Gtk_Widget (Dialog);
-
-      Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
-      Dialog.Get_Content_Area.Pack_Start (Main_Table);
-
-      Gtk_New (Frame);
-      Main_Table.Attach (Frame, 0, 1, 0, 3);
-
-      Create_Blue_Label (Title, Event);
-      Main_Table.Attach (Event, 1, 2, 0, 1, Yoptions => 0);
-
-      Gtk_New_Hseparator (Separator);
-      Main_Table.Attach (Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
-
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-      Frame.Add (Scrolled);
-
-      Gtk_New (Model, (0 => GType_String, 1 => GType_Object));
-      Gtk_New (View, Model);
-      Scrolled.Add (View);
-      Unref (Model);
-      View.Set_Headers_Visible (False);
-
-      Gtk_New (Col);
-      Num := View.Append_Column (Col);
-      Gtk_New (Render);
-      Col.Pack_Start (Render, Expand => True);
-      Col.Add_Attribute (Render, "text", 0);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (View), Gtk.Tree_Selection.Signal_Changed,
-         Selection_Changed'Unrestricted_Access,
-         View);
-
-      C := First (Manager.Preferences);
-      while Has_Element (C) loop
-         Pref := Element (C);
-
-         if Pref.Page /= null then
-            Table := Gtk_Table (Find_Or_Create_Page (Pref.Page.all, null));
-            Row := Get_Property (Table, N_Rows_Property);
-            Resize (Table, Rows => Row + 1, Columns => 2);
-
-            Gtk_New (Event);
-            Gtk_New (Label, Pref.Label.all);
-            Event.Add (Label);
-            Event.Set_Tooltip_Text (Pref.Doc.all);
-            Label.Set_Alignment (0.0, 0.5);
-            Table.Attach (Event, 0, 1, Row, Row + 1,
-                          Xoptions => Fill, Yoptions => 0);
-
-            Widget := Edit
-              (Pref      => Pref,
-               Manager   => Manager);
-
-            if Widget /= null then
-               Table.Attach (Widget, 1, 2, Row, Row + 1, Yoptions => 0);
-            end if;
-         end if;
-
-         Next (C);
-      end loop;
-
-      Dialog.Show_All;
-      Resp := Dialog.Run;
-      Dialog.Destroy;
-   end Edit_Preferences;
-
-   ----------------------
-   -- Save_Preferences --
-   ----------------------
-
-   procedure Save_Preferences
-     (Manager : access Preferences_Manager_Record;
-      Saved   : out Saved_Prefs_Data)
-   is
-      C    : Preferences_Maps.Cursor := First (Manager.Preferences);
-      Pref : Preference;
-   begin
-      Saved := new Saved_Prefs_Data_Record;
-      Saved.Manager := Preferences_Manager (Manager);
-
-      while Has_Element (C) loop
-         Pref := Element (C);
-         Include
-           (Saved.Preferences,
-            Pref.Name.all,
-            String'(Get_Pref (Pref)));
-         Next (C);
-      end loop;
-   end Save_Preferences;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Data : in out Saved_Prefs_Data) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Saved_Prefs_Data_Record, Saved_Prefs_Data);
-   begin
-      Unchecked_Free (Data);
-   end Destroy;
-
    ----------
    -- Undo --
    ----------
@@ -2285,6 +2024,17 @@ package body Default_Preferences is
    begin
       null;
    end Undo;
+
+   ----------------
+   -- Set_Editor --
+   ----------------
+
+   procedure Set_Editor
+     (Manager : access Preferences_Manager_Record;
+      Editor  : access Gtk.Widget.Gtk_Widget_Record'Class) is
+   begin
+      Manager.Pref_Editor := Gtk_Widget (Editor);
+   end Set_Editor;
 
    ----------------
    -- Get_Editor --
@@ -2352,5 +2102,43 @@ package body Default_Preferences is
    begin
       Self.Loading_Prefs := Loading;
    end Set_Is_Loading_Prefs;
+
+   -------------------------
+   -- Get_First_Reference --
+   -------------------------
+
+   function Get_First_Reference
+     (Manager : not null access Preferences_Manager_Record)
+      return Cursor
+   is
+   begin
+      return (C => First (Manager.Preferences));
+   end Get_First_Reference;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Manager : not null access Preferences_Manager_Record;
+      C       : in out Cursor)
+   is
+      pragma Unreferenced (Manager);
+   begin
+      Next (C.C);
+   end Next;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref (Self : Cursor) return Preference is
+   begin
+      if not Has_Element (Self.C) then
+         return null;
+      else
+         return Element (Self.C);
+      end if;
+   end Get_Pref;
 
 end Default_Preferences;

@@ -412,13 +412,24 @@ package body GPS.Kernel is
    end Get_Construct_Database;
 
    ----------------------
+   -- Preferences_File --
+   ----------------------
+
+   function Preferences_File
+     (Self : access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File
+   is
+   begin
+      return Create_From_Dir (Self.Home_Dir, "preferences");
+   end Preferences_File;
+
+   ----------------------
    -- Load_Preferences --
    ----------------------
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
    begin
-      Load_Preferences
-        (Handle.Preferences, Create_From_Dir (Handle.Home_Dir, "preferences"));
+      Load_Preferences (Handle.Preferences, Handle.Preferences_File);
    end Load_Preferences;
 
    ---------------------

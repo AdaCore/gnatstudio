@@ -26,7 +26,7 @@ package GPS.Kernel.Preferences is
 
    type GPS_Preferences_Record is new Preferences_Manager_Record
      with private;
-   type GPS_Preferences is access GPS_Preferences_Record'Class;
+   type GPS_Preferences is access all GPS_Preferences_Record'Class;
 
    overriding procedure On_Pref_Changed
      (Self : not null access GPS_Preferences_Record;
@@ -51,9 +51,7 @@ package GPS.Kernel.Preferences is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the preference module
 
-   procedure Save_Preferences
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : Virtual_File);
+   procedure Save_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  See Default_Preferences.Save_Preferences
 
    procedure Set_Pref
@@ -89,16 +87,6 @@ package GPS.Kernel.Preferences is
    --  Register a new pasge to display in the preferences dialog.
    --  This page will be put first on the list of preference pages in the
    --  dialog.
-
-   --------------------------
-   -- Saving and Restoring --
-   --------------------------
-
-   procedure Save_Preferences
-     (Kernel : access Kernel_Handle_Record'Class;
-      Saved  : out Default_Preferences.Saved_Prefs_Data);
-   --  Save the current value of the preferences.
-   --  Saved must be freed by the user
 
    ------------------
    -- Enumerations --

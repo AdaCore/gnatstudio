@@ -95,6 +95,14 @@ package GPS.Kernel is
       return Default_Preferences.Preferences_Manager;
    --  Return the preference manager associated with Handle
 
+   function Preferences_File
+     (Self : access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return the name of the preferences file.
+   --  This is the file that GPS will modify when the user modifies the
+   --  preferences. But the default value for preferences could be set from any
+   --  plug-in.
+
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel
