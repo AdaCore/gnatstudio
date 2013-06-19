@@ -2234,6 +2234,8 @@ package body Default_Preferences is
       end loop;
 
       Dialog.Show_All;
+      Resp := Dialog.Run;
+      Dialog.Destroy;
    end Edit_Preferences;
 
    ----------------------
