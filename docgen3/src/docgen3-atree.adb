@@ -107,6 +107,17 @@ package body Docgen3.Atree is
       E.Entities.Append (Value);
    end Append_Entity;
 
+   -----------------------------
+   -- Append_Inherited_Method --
+   -----------------------------
+
+   procedure Append_Inherited_Method
+     (E : Entity_Id; Value : Entity_Id) is
+   begin
+      pragma Assert (not Contains (E.Methods, Value));
+      E.Inherited_Methods.Append (Value);
+   end Append_Inherited_Method;
+
    -------------------
    -- Append_Method --
    -------------------
@@ -309,6 +320,16 @@ package body Docgen3.Atree is
    begin
       return E.Full_View_Src;
    end Get_Full_View_Src;
+
+   ---------------------------
+   -- Get_Inherited_Methods --
+   ---------------------------
+
+   function Get_Inherited_Methods
+     (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      return E.Inherited_Methods'Access;
+   end Get_Inherited_Methods;
 
    --------------
    -- Get_Kind --
@@ -710,25 +731,26 @@ package body Docgen3.Atree is
 
            Is_Incomplete_Or_Private_Type => False,
 
-           Is_Tagged       => False,
-           Is_Private      => False,
-           Is_Partial_View => False,
+           Is_Tagged         => False,
+           Is_Private        => False,
+           Is_Partial_View   => False,
 
-           Doc             => No_Comment_Result,
-           Comment         => No_Structured_Comment,
+           Doc               => No_Comment_Result,
+           Comment           => No_Structured_Comment,
 
            Full_View_Doc     => No_Comment_Result,
            Full_View_Comment => No_Structured_Comment,
 
-           Src             => Null_Unbounded_String,
-           Full_View_Src   => Null_Unbounded_String,
+           Src               => Null_Unbounded_String,
+           Full_View_Src     => Null_Unbounded_String,
 
-           Discriminants   => <>,
-           Entities        => <>,
-           Methods         => <>,
-           Parent_Types    => <>,
-           Child_Types     => <>,
-           Error_Msg       => Null_Unbounded_String);
+           Discriminants     => <>,
+           Entities          => <>,
+           Inherited_Methods => <>,
+           Methods           => <>,
+           Parent_Types      => <>,
+           Child_Types       => <>,
+           Error_Msg         => Null_Unbounded_String);
 
       --  Do not perform the full decoration of the entity for auxiliary
       --  entities created by the frontend (for example, the "standard"
@@ -1667,7 +1689,7 @@ package body Docgen3.Atree is
             & " Has_Methods");
       end if;
 
-      --  Display record type components
+      --  Display record type components and dispatching primitives (methods)
 
       if Is_Class_Or_Record_Type (E)
         or else Get_Kind (E) = E_Class
@@ -1685,6 +1707,11 @@ package body Docgen3.Atree is
          Print_Entities
            (Vector => Get_Entities (E),
             Header => LL_Prefix & " Components:",
+            Prefix => LL_Prefix & " - ");
+
+         Print_Entities
+           (Vector => Get_Inherited_Methods (E),
+            Header => LL_Prefix & " Inherited methods:",
             Prefix => LL_Prefix & " - ");
 
          Print_Entities
@@ -1734,8 +1761,10 @@ package body Docgen3.Atree is
 
       if With_Src then
          if E.Full_View_Src = Null_Unbounded_String then
-            Append_Line ("Src:");
-            Append_Line (To_String (Get_Src (E)));
+            if Get_Src (E) /= Null_Unbounded_String then
+               Append_Line ("Src:");
+               Append_Line (To_String (Get_Src (E)));
+            end if;
          else
             Append_Line ("Partial View Src:");
             Append_Line (To_String (Get_Src (E)));
@@ -1832,4 +1861,37 @@ package body Docgen3.Atree is
          & Image (LL.Get_Location (E)));
    end pns;
 
+   procedure pns (Db : General_Xref_Database; E : General_Entity) is
+   begin
+      if Present (E) then
+         declare
+            Loc  : constant General_Location := Get_Location (Db, E);
+            Name : constant String := Get_Name (Db, E);
+         begin
+            GNAT.IO.Put_Line (Name & " " & Image (Loc));
+         end;
+      end if;
+   end pns;
+
+   --------
+   -- pv --
+   --------
+
+   procedure pv (V : EInfo_List.Vector) is
+      Cursor  : EInfo_List.Cursor;
+
+   begin
+      Cursor := V.First;
+      while EInfo_List.Has_Element (Cursor) loop
+         pns (EInfo_List.Element (Cursor));
+         EInfo_List.Next (Cursor);
+      end loop;
+   end pv;
+
+   procedure pv (Db : General_Xref_Database; V : Xref.Entity_Array) is
+   begin
+      for J in V'Range loop
+         pns (Db, V (J));
+      end loop;
+   end pv;
 end Docgen3.Atree;
