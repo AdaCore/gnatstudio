@@ -1487,6 +1487,10 @@ package body Docgen3.Frontend is
             if Is_Tagged (E)
               or else (In_CPP_Lang and then Get_Kind (E) = E_Class)
             then
+               --  ??? Xref bug (Xref.Methods): Include_Inherited returns
+               --  the same array when set to True or False (that is, False
+               --  has no effect).
+
                declare
                   All_Methods : constant Xref.Entity_Array :=
                                   Methods
@@ -1495,26 +1499,43 @@ package body Docgen3.Frontend is
                   Meth_E : Entity_Id;
                begin
                   for J in All_Methods'Range loop
-                     Meth_E := New_Entity (All_Methods (J));
+                     Meth_E :=
+                       New_Entity (All_Methods (J), Forced => True);
 
-                     --  Fails with inherited primitives of package
-                     --  Ada.Finalization???
-                     --  pragma Assert (LL.Is_Primitive (Meth_E));
+                     if In_Ada_Language (Meth_E) then
 
-                     if No (Meth_E) then
-                        --  Inherited routine of other package??? Fails with
-                        --  inherited primitives of Ada.Finalization???
-                        null;
-                        pragma Assert (False);
-                     else
-                        if In_Ada_Language (Meth_E) then
+                        --  For derivations of Ada.Finalization.Controlled
+                        --  we don't have available their Scope???. As a
+                        --  workaround LL.Get_Scope(E) has been replaced
+                        --  by LL.Get_Entity (Get_Scope (E))
+
+                        if LL.Get_Scope (Meth_E)
+                          = LL.Get_Entity (Get_Scope (E))
+                        then
                            Append_To_Scope (Get_Scope (E), Meth_E);
-                        else
-                           Append_To_Scope (E, Meth_E);
-                        end if;
+                           Decorate_Subprogram (Meth_E);
+                           Append_Method (E, Meth_E);
 
-                        Decorate_Subprogram (Meth_E);
-                        Append_Method (E, Meth_E);
+                        --  For inherited primitives defined in other
+                        --  files/scopes we cannot set their scope.
+
+                        else
+                           Decorate_Subprogram (Meth_E);
+                           Append_Inherited_Method (E, Meth_E);
+                        end if;
+                     else
+                        if LL.Get_Scope (Meth_E) = LL.Get_Entity (E) then
+                           Append_To_Scope (E, Meth_E);
+                           Decorate_Subprogram (Meth_E);
+                           Append_Method (E, Meth_E);
+
+                        --  For inherited primitives defined in other
+                        --  scopes we cannot set their scope.
+
+                        else
+                           Decorate_Subprogram (Meth_E);
+                           Append_Inherited_Method (E, Meth_E);
+                        end if;
                      end if;
                   end loop;
                end;

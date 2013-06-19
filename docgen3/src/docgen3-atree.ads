@@ -173,6 +173,8 @@ private package Docgen3.Atree is
    --  Append Value to the list of entities in the scope of E
    procedure Append_Discriminant
      (E : Entity_Id; Value : Entity_Id);
+   procedure Append_Inherited_Method
+     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Parent_Type
@@ -198,6 +200,8 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Comment_Result;
    function Get_Full_View_Src
      (E : Entity_Id) return Unbounded_String;
+   function Get_Inherited_Methods
+     (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Kind
      (E : Entity_Id) return Entity_Kind;
    function Get_Language
@@ -390,8 +394,13 @@ private package Docgen3.Atree is
    --  descendants.
 
    procedure pns (E : Entity_Id);
+   procedure pns (Db : General_Xref_Database; E : General_Entity);
    --  (gdb) Print a single tree node (short output), without printing
    --  descendants.
+
+   procedure pv (V : EInfo_List.Vector);
+   procedure pv (Db : General_Xref_Database; V : Xref.Entity_Array);
+   --  (gdb) Using pns print all the elements of V
 
    function To_String
      (E             : Entity_Id;
@@ -512,7 +521,8 @@ private
          --  the entities defined in the scope of a package, all the components
          --  of a record, etc.
 
-         Methods         : aliased EInfo_List.Vector;
+         Methods           : aliased EInfo_List.Vector;
+         Inherited_Methods : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
 
          Parent_Types    : aliased EInfo_List.Vector;
@@ -528,6 +538,7 @@ private
    pragma Inline (Append_Child_Type);
    pragma Inline (Append_Discriminant);
    pragma Inline (Append_Entity);
+   pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
    pragma Inline (Append_Parent_Type);
    pragma Inline (Get_Child_Types);
@@ -540,6 +551,7 @@ private
    pragma Inline (Get_Full_View_Comment);
    pragma Inline (Get_Full_View_Doc);
    pragma Inline (Get_Full_View_Src);
+   pragma Inline (Get_Inherited_Methods);
    pragma Inline (Get_Kind);
    pragma Inline (Get_Language);
    pragma Inline (Get_Methods);

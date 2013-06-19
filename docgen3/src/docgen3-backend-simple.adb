@@ -327,12 +327,19 @@ package body Docgen3.Backend.Simple is
          if In_Ada_Language (E)
            and then LL.Has_Methods (E)
          then
+            EInfo_Vector_Sort_Short.Sort (Get_Inherited_Methods (E).all);
+
+            ReST_Append_List
+              (Printout => Printout,
+               List     => Get_Inherited_Methods (E).all,
+               Header   => "Inherited dispatching subprograms");
+
             EInfo_Vector_Sort_Short.Sort (Get_Methods (E).all);
 
             ReST_Append_List
               (Printout => Printout,
                List     => Get_Methods (E).all,
-               Header   => "Dispatching subprograms");
+               Header   => "New and overridden dispatching subprograms");
          end if;
       end ReST_Append_Record_Type_Declaration;
 
