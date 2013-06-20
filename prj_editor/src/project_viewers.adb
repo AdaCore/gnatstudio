@@ -179,6 +179,7 @@ package body Project_Viewers is
       Group              => Group_Default,
       Position           => Position_Automatic);
    subtype Project_Viewer is File_Views.View_Access;
+   use File_Views;
 
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record'Class;
@@ -734,11 +735,16 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel, Data);
+      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
    begin
       Hook.Viewer.Default_Switches_Color :=
         Default_Switches_Color.Get_Pref;
       --  ??? Do we need to change the model to reflect this change
+
+      if View /= null then
+         Set_Font_And_Colors
+           (View, Fixed_Font => True, Pref => Get_Pref (Data));
+      end if;
    end Execute;
 
    ------------------

@@ -24,7 +24,6 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with XML_Utils;                 use XML_Utils;
 
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Pango.Font;                use Pango.Font;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
@@ -1924,30 +1923,16 @@ package body GPS.Kernel.Preferences is
       Fixed_Font : Boolean;
       Pref       : Default_Preferences.Preference := null)
    is
-      Active_Bg : Gdk_RGBA;
    begin
       if Pref = null
         or else Pref = Preference (Default_Font)
         or else (Fixed_Font and then Pref = Preference (View_Fixed_Font))
       then
-         Active_Bg := Darken_Or_Lighten (Default_Font.Get_Pref_Bg);
-
          if Fixed_Font then
             Modify_Font (Widget, View_Fixed_Font.Get_Pref);
          else
             Modify_Font (Widget, Default_Font.Get_Pref_Font);
          end if;
-
-         Override_Color
-           (Widget, Gtk_State_Flag_Normal, Default_Font.Get_Pref_Fg);
-         Override_Color
-           (Widget, Gtk_State_Flag_Active, Default_Font.Get_Pref_Fg);
-
-         Override_Background_Color
-           (Widget, Gtk_State_Flag_Normal,
-            Default_Font.Get_Pref_Bg);
-         Override_Background_Color
-           (Widget, Gtk_State_Flag_Active, Active_Bg);
       end if;
    end Set_Font_And_Colors;
 

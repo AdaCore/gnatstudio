@@ -21,7 +21,7 @@ themes = [
     #"@editor_bg_selection": None,      # background for selection in editors
     #"@editor_fg_selection": None,      # foreground for selection in editors
     "General-Default-Style":                 ("${font}", "black", "white"),
-    "Src-Editor-Current-Line-Color":         "rgba(209,220,252,0.5)",
+    "Src-Editor-Current-Line-Color":         "#D1DCFC",
     "Src-Editor-Reference-Style":            ("${editorfont}", "black", "transparent"),
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
     "Src-Editor-Strings-Variant":            ("DEFAULT", "brown",   "transparent"),

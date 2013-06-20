@@ -743,7 +743,6 @@ package body Project_Explorers is
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
       Scrolled.Add (Explorer.Tree);
-      Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True);
 
       Register_Contextual_Menu
         (Kernel          => Explorer.Kernel,
@@ -803,11 +802,6 @@ package body Project_Explorers is
         (Explorer.Kernel, Project_Changed_Hook, H2,
          Name => "explorer.project_changed", Watch => GObject (Explorer));
 
-      Add_Hook (Explorer.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "project_Explorer.preferences_changed",
-                Watch => GObject (Explorer));
-
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.
 
@@ -838,6 +832,12 @@ package body Project_Explorers is
       Tooltip.Set_Tooltip (Explorer.Tree);
 
       Refresh (Explorer);
+
+      Add_Hook (Explorer.Kernel, Preference_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "project_Explorer.preferences_changed",
+                Watch => GObject (Explorer));
+      Preferences_Changed (Explorer.Kernel, null);
 
       return Gtk.Widget.Gtk_Widget (Explorer.Tree);
    end Initialize;
