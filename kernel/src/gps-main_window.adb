@@ -356,6 +356,12 @@ package body GPS.Main_Window is
            (Gtk.Settings.Get_Default,
             Gtk.Settings.Gtk_Theme_Name_Property,
             Get_Pref (Gtk_Theme));
+
+         --  Leave the following settings to the color schemes module
+--           Glib.Properties.Set_Property
+--             (Gtk.Settings.Get_Default,
+--              Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
+--              True);
       end if;
 
       if P = null

@@ -885,7 +885,6 @@ package body Default_Preferences is
         (Style_Preference (Pref),
          Manager, Pref.Base_Font.Style_Font.all, Fg, Bg);
       Pref.Variant := Variant;
-      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref

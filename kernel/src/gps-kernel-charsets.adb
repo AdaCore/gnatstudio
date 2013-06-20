@@ -30,7 +30,6 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 
 package body GPS.Kernel.Charsets is
-
    CHARSET : constant String_Access := Getenv ("CHARSET");
 
    Default_Charset : Charset_Preference;

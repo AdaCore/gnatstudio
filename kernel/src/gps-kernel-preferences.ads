@@ -268,5 +268,9 @@ package GPS.Kernel.Preferences is
 private
    type GPS_Preferences_Record is new Preferences_Manager_Record with record
       Kernel : GPS.Kernel.Kernel_Handle;
+
+      Nested_Pref_Changed : Natural := 0;
+      --  Monitor the nested calls to On_Pref_Changed to avoid saving the
+      --  preferences file too often.
    end record;
 end GPS.Kernel.Preferences;

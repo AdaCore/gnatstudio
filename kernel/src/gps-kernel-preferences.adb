@@ -110,6 +110,7 @@ package body GPS.Kernel.Preferences is
       Font : Pango_Font_Description;
       Data : aliased Preference_Hooks_Args;
    begin
+      Self.Nested_Pref_Changed := Self.Nested_Pref_Changed + 1;
       if Pref = Default_Font then
          Font := Copy (Default_Font.Get_Pref_Font);
          Set_Size (Font, Gint (Float (Get_Size (Font)) * 0.8));
@@ -120,8 +121,6 @@ package body GPS.Kernel.Preferences is
 
       if not Self.Is_Loading_Preferences then
          Trace (Me, "Preference changed: " & Pref.Get_Name);
-         Save_Preferences (Self.Kernel);
-
          Data.Pref := Default_Preferences.Preference (Pref);
          Run_Hook (Self.Kernel, Preference_Changed_Hook, Data'Access);
       end if;
@@ -130,6 +129,18 @@ package body GPS.Kernel.Preferences is
          Widget_Callback.Emit_By_Name
            (Self.Get_Editor, Signal_Preferences_Changed);
       end if;
+
+      if not Self.Is_Loading_Preferences
+        and then Self.Nested_Pref_Changed = 1
+      then
+         Save_Preferences (Self.Kernel);
+      end if;
+
+      Self.Nested_Pref_Changed := Self.Nested_Pref_Changed - 1;
+
+   exception
+      when others =>
+         Self.Nested_Pref_Changed := Self.Nested_Pref_Changed - 1;
    end On_Pref_Changed;
 
    -------------------------
@@ -213,7 +224,8 @@ package body GPS.Kernel.Preferences is
          exception
             when E : Invalid_Parameter =>
                Set_Error_Msg (Data, Exception_Message (E));
-            when E : others => Trace (Traces.Exception_Handle, E);
+            when E : others =>
+               Trace (Traces.Exception_Handle, E);
          end;
 
       elsif Command = "create" then
