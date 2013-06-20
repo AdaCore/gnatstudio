@@ -31,6 +31,8 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.CLI_Utils;     use GPS.CLI_Utils;
 with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 
+with Xref;              use Xref;
+
 procedure GPS.CLI is
    procedure Execute_Batch
      (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
@@ -131,7 +133,10 @@ begin
       --  Load project
       Kernel.Registry.Tree.Load
         (Root_Project_Path => Project_File,
-         Env => Kernel.Registry.Environment);
+         Env               => Kernel.Registry.Environment);
+
+      Project_Changed (Kernel.Databases);
+      Project_View_Changed (Kernel.Databases, Kernel.Registry.Tree);
    end;
 
    if Script_Name.all /= "" then
