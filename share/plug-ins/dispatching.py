@@ -28,6 +28,8 @@ GPS.Preference("Plugins/dispatching/context").create(
 class Dispatching_Highlighter(Location_Highlighter):
     def __init__(self):
         Location_Highlighter.__init__(self, style=None)
+        self.background_color = None
+        self.context = None
         self.__on_preferences_changed(hook=None)
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         GPS.Hook("file_edited").add(self.__on_file_edited)
@@ -50,12 +52,21 @@ class Dispatching_Highlighter(Location_Highlighter):
             GPS.Hook("compilation_finished").remove(self.__on_compilation_finished)
 
     def __on_preferences_changed(self, hook):
-        self.stop_highlight()
-        self.context = GPS.Preference("Plugins/dispatching/context").get()
-        self.set_style(OverlayStyle(
-            name="dispatchcalls",
-            background=GPS.Preference("Plugins/dispatching/color").get()))
-        self.__on_compilation_finished()
+        changed = False
+        v = GPS.Preference("Plugins/dispatching/context").get()
+        if v != self.context:
+            self.context = v
+            changed = True
+
+        v = GPS.Preference("Plugins/dispatching/color").get()
+        if v != self.background_color:
+            self.background_color = v
+            self.set_style(OverlayStyle(name="dispatchcalls", background=v))
+            changed = True
+
+        if changed:
+            self.stop_highlight()
+            self.__on_compilation_finished()
 
     def __on_file_edited(self, hook, file):
         self.start_highlight(GPS.EditorBuffer.get(file, open=False))

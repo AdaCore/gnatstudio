@@ -25,7 +25,7 @@ New features in GPS 6.0.0 / GNATbench 2.8.0
 
 NF-60-M617-030 GPS: apply preferences on the fly (2013-06-17)
 
-  The OK, Apply and Cancel buttons were removed from the preferenes dialog.
+  The Apply button was removed from the preferenes dialog.
   Instead, GPS will be refreshed every time any of the settings is modified.
 
 NF-60-M606-028 GPS: remove Open From Project dialog (2013-06-07)

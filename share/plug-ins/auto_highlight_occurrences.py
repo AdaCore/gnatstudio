@@ -95,6 +95,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.entity = None
         self.word = None
         self.styles = {} # dict of OverlayStyle
+        self.speedbar = None
+        self.pref_cache = {}
 
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         GPS.Hook("location_changed").add(self.highlight)
@@ -104,25 +106,48 @@ class Current_Entity_Highlighter(Location_Highlighter):
         Called whenever one of the preferences has changed.
         """
 
-        speedbar = GPS.Preference(
-            "Plugins/auto_highlight_occurrences/speedbar").get()
+        changed = False
+
+        v = GPS.Preference("Plugins/auto_highlight_occurrences/speedbar").get()
+        if v != self.speedbar:
+            self.speedbar = v
+            changed = True
 
         for k in default_colors:
             pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
-            self.styles[k] = OverlayStyle(
-                name="dynamic occurrences " + k,
-                background=GPS.Preference(pref_name).get(),
-                speedbar=speedbar)
+            v = GPS.Preference(pref_name).get()
+            if (pref_name not in self.pref_cache
+                or self.pref_cache[pref_name] != v
+                or changed):   # take speedbar changes into account
 
-        self.highlight_entities = GPS.Preference(
+                self.pref_cache[pref_name] = v
+                changed = True
+                self.styles[k] = OverlayStyle(
+                    name="dynamic occurrences " + k,
+                    background=v,
+                    speedbar=self.speedbar)
+
+        v = GPS.Preference(
             "Plugins/auto_highlight_occurrences/highlight_entities").get()
-        self.highlight_selection = GPS.Preference(
-            "Plugins/auto_highlight_occurrences/highlight_selection").get()
-        self.highlight_word = GPS.Preference(
-            "Plugins/auto_highlight_occurrences/highlight_word").get()
+        if v != self.highlight_entities:
+            self.highlight_entities = v
+            changed = True
 
-        self.remove_highlight()
-        self.highlight()
+        v = GPS.Preference(
+            "Plugins/auto_highlight_occurrences/highlight_selection").get()
+        if v != self.highlight_selection:
+            self.highlight_selection = v
+            changed = True
+
+        v = GPS.Preference(
+            "Plugins/auto_highlight_occurrences/highlight_word").get()
+        if v != self.highlight_word:
+            self.highlight_word = v
+            changed = True
+
+        if changed:
+            self.remove_highlight()
+            self.highlight()
 
     def recompute_refs(self, buffer):
         if self.entity:

@@ -7458,6 +7458,9 @@ the preference, and doc will appear as a tooltip to explain the preference to
 users. The type describes the type of preference, and therefore how it should
 be edited by users.
 
+The parameters to this function cannot be named (since it uses a variable
+number of parameters, see the documentation below).
+
 The additional parameters depend on the type of preference you are creating:
 
 - For an "integer", the default value is 0, and the two additional parameters
@@ -7505,13 +7508,10 @@ The additional parameters depend on the type of preference you are creating:
     def set(self, value, save=True):
         """
         Set value for the given preference. The type of the parameter depends
-        on the type of the preference. If the save parameter is true, the new
-        value is immediately saved for future GPS sessions, and the new value
-        is taken into account by GPS itself. Otherwise, if set to false, you
-        will need to call the hook "preferences_changed" to force it
-
+        on the type of the preference.
+        
         :param value: A string, boolean or integer
-        :param save: A boolean
+        :param save: no longer used, kept for backward compatibility only.
         """
         pass  # implemented in Ada
 
