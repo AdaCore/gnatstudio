@@ -155,12 +155,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     navigated through the menu `Edit->Paste` and `Edit->Paste Previous`, as
     described earlier in this guide.
 
-  *Tool bar style*
-    .. index:: tool bar
-
-    How the tool bar should be displayed: not at all, with small icons or with
-    large icons
-
   *Show status bar*
     .. index:: status bar
 
