@@ -89,11 +89,23 @@
 
     <!-- General-purpose icons -->
 
-    <icon id="gps-file"               file="../icons/16px/file.png" />
-    <icon id="gps-file-modified"      file="../icons/16px/file_pencil.png" />
+    <icon id="gps-file"              file="../icons/16px/file.png" />
+    <icon id="gps-file-modified"     file="../icons/16px/file_pencil.png" />
 
-    <icon id="gps-folder-closed"      file="../icons/16px/folder_closed.png" />
-    <icon id="gps-folder-open"        file="../icons/16px/folder_open.png" />
+    <icon id="gps-configMenu"        file="../icons/svg/menu.svg"/>
+    <icon id="gps-stopTask"          file="../icons/svg/close.svg"/>
+    <icon id="gps-expandAll"         file="../icons/9px/expand_12.png"/>
+    <icon id="gps-collapseAll"       file="../icons/9px/collapse_12.png"/>
+    <icon id="gps-clear-entry"       file="../icons/16px/clear_entry_16.png"/>
+    <icon id="gps-toggle-links"      file="../icons/9px/toggle_links_12.png"/>
+    <icon id="gps-remove-unselected" file="../icons/9px/remove_unselected_12.png"/>
+    <icon id="gps-read-only"         file="../icons/svg/lock.svg"/>
+    <icon id="gps-writable"          file="../icons/svg/unlock.svg"/>
+    <icon id="gps-regexp"            file="../icons/16px/regexp.png"/>
+    <icon id="gps-negate"            file="../icons/16px/negate.png"/>
+
+    <icon id="gps-folder-closed"     file="../icons/16px/folder_closed.png" />
+    <icon id="gps-folder-open"       file="../icons/16px/folder_open.png" />
 
     <icon id="gps-folder-exec-closed" file="../icons/16px/folder_e_closed.png" />
     <icon id="gps-folder-exec-open"   file="../icons/16px/folder_e_open.png" />
