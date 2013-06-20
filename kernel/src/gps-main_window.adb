@@ -541,15 +541,7 @@ package body GPS.Main_Window is
       Add_Hook (Main_Window.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "main_window.preferences_changed");
-
-      --  Make sure we don't display the toolbar until we have actually loaded
-      --  the preferences and checked whether the user wants it or not. This is
-      --  to avoid flickering
---        Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
---        Set_Child_Visible (Main_Window.Toolbar_Box, False);
---        Hide (Main_Window.Toolbar_Box);
-
---        Preferences_Changed (Main_Window.Kernel, Data => null);
+      Preferences_Changed (Main_Window.Kernel, Data => null);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),
