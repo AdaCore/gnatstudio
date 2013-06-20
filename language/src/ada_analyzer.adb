@@ -1266,50 +1266,72 @@ package body Ada_Analyzer is
                end if;
             end if;
 
-            return (Prev_Token = Tok_Is and then In_Generic)
+            if Prev_Token = Tok_Is and then In_Generic then
+               return True;
+            end if;
+
+            if Top_Tok = No_Token then
+               return False;
+            end if;
+
+            --  Special case for variable (Tok_Colon) or type (only case when
+            --  Tok_Is is passed to this subprogram) declarations.
+            --  In these cases, and if the Indent_Decl preference is set to 0
+            --  then this is not a continuation line, e.g:
+            --     Var
+            --     : Integer;
+            --     type T
+            --     is new Integer;
+            --  Note that we reuse Indent_Decl for now to avoid introducing
+            --  a new preference.
+
+            if (Top_Tok = Tok_Colon and then Token = Tok_Colon)
+              or else Token = Tok_Is
+            then
+               return Indent_Decl /= 0;
+            end if;
+
+            return
+              (Token not in Reserved_Token_Type
+               and then Prev_Token not in Token_Class_No_Cont
+               and then
+                 (Prev_Token /= Tok_Arrow
+                  or else (not Top (Tokens).In_Declaration
+                           and then Top_Tok not in
+                             Tok_Case | Tok_When | Tok_Select
+                             | Tok_Exception)))
+              or else (Prev_Token = Tok_Is
+                       and then (Token in Tok_New | Tok_Access
+                                  | Tok_Separate | Tok_Abstract
+                                 or else
+                                   (Top_Tok = Tok_Subtype
+                                    and then Token /= Tok_Subtype)))
+              or else Token in Tok_Array | Tok_Of
+              or else (Token = Tok_Not
+                       and then (Prev_Token in Tok_And | Tok_Or
+                                   | Tok_Then | Tok_Else))
+              or else (Prev_Token = Tok_With
+                       and then (Token = Tok_String_Literal
+                                 or else Token = Tok_Private
+                                 or else Top_Tok = Tok_Procedure
+                                 or else Top_Tok = Tok_Function))
+              or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
+              or else (Prev_Token = Tok_Protected
+                       and then Prev_Prev_Token = Tok_Access)
+              or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+              or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+              or else (Prev_Prev_Token = Tok_And
+                       and then Prev_Token = Tok_Then
+                       and then Num_Parens = 0)
+              or else (Prev_Prev_Token = Tok_Or
+                       and then Prev_Token = Tok_Else
+                       and then Num_Parens = 0)
+              or else (Prev_Prev_Token = Tok_Raise
+                       and then Token = Tok_With)
               or else
-                (Top_Tok /= No_Token
-                 and then
-                   ((Token not in Reserved_Token_Type
-                     and then Prev_Token not in Token_Class_No_Cont
-                     and then
-                       (Prev_Token /= Tok_Arrow
-                        or else (not Top (Tokens).In_Declaration
-                                 and then Top_Tok not in
-                                   Tok_Case | Tok_When | Tok_Select
-                                   | Tok_Exception)))
-                    or else (Prev_Token = Tok_Is
-                             and then (Token in Tok_New | Tok_Access
-                                         | Tok_Separate | Tok_Abstract
-                                       or else
-                                         (Top_Tok = Tok_Subtype
-                                          and then Token /= Tok_Subtype)))
-                    or else Token in Tok_Array | Tok_Of
-                    or else (Token = Tok_Not
-                             and then (Prev_Token in Tok_And | Tok_Or
-                                         | Tok_Then | Tok_Else))
-                    or else (Prev_Token = Tok_With
-                             and then (Token = Tok_String_Literal
-                                       or else Token = Tok_Private
-                                       or else Top_Tok = Tok_Procedure
-                                       or else Top_Tok = Tok_Function))
-                    or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
-                    or else (Prev_Token = Tok_Protected
-                             and then Prev_Prev_Token = Tok_Access)
-                    or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-                    or else (Prev_Token = Tok_Null and then Token = Tok_Record)
-                    or else (Prev_Prev_Token = Tok_And
-                             and then Prev_Token = Tok_Then
-                             and then Num_Parens = 0)
-                    or else (Prev_Prev_Token = Tok_Or
-                             and then Prev_Token = Tok_Else
-                             and then Num_Parens = 0)
-                    or else (Prev_Prev_Token = Tok_Raise
-                             and then Token = Tok_With)
-                    or else
-                      (Top_Tok = Tok_Type
-                       and then (Token = Tok_Null or else Token = Tok_Tagged))
-                    or else (Token = Tok_When and then Top_Tok = Tok_Entry)));
+                (Top_Tok = Tok_Type
+                 and then (Token = Tok_Null or else Token = Tok_Tagged))
+              or else (Token = Tok_When and then Top_Tok = Tok_Entry);
          end Is_Continuation_Line;
 
       begin
@@ -3751,7 +3773,7 @@ package body Ada_Analyzer is
                   --  indent as for continuation lines.
 
                   declare
-                     Level : Integer;
+                     Level, Tmp_Index : Integer;
                   begin
                      if Top (Paren_Stack).all = Conditional then
                         Level := P - Start_Of_Line + Padding
@@ -3764,7 +3786,13 @@ package body Ada_Analyzer is
                                 (Num_Parens = 1
                                  or else Find_Arrow (P + 1) /= 0))
                      then
-                        Level := P - Start_Of_Line + Padding + 1;
+                        Tmp_Index := P + 1;
+
+                        while Buffer (Tmp_Index) = ' ' loop
+                           Tmp_Index := Tmp_Index + 1;
+                        end loop;
+
+                        Level := Tmp_Index - Start_Of_Line + Padding;
                      else
                         if Top (Indents).Level = None then
                            Level := Num_Spaces + Adjust;
@@ -4632,9 +4660,12 @@ package body Ada_Analyzer is
             end case;
          end if;
 
-         --  'is' is handled specially, so nothing is needed here
+         --  'is' is handled specially, so nothing is needed here except
+         --  for type declarations, e.g:
+         --     type T
+         --       is ...
 
-         if Token /= Tok_Is then
+         if Token /= Tok_Is or else Top_Token.Token = Tok_Type then
             Compute_Indentation
               (Token, Prev_Token, Prev_Prev_Token,
                Current, Line_Count, Num_Spaces);
