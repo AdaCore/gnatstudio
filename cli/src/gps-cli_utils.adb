@@ -29,6 +29,8 @@ with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
 with Build_Command_Utils;
 with Build_Configurations;                     use Build_Configurations;
+with Language.Ada;
+with Ada_Semantic_Tree.Lang;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
@@ -101,6 +103,9 @@ package body GPS.CLI_Utils is
       Register_Classes (Kernel);
       Register_Output_Parsers (Builder.all);
       Kernel.Register_Module (Target_Loader);
+      Kernel.Lang_Handler.Register_Language
+        (Lang      => Language.Ada.Ada_Lang,
+         Tree_Lang => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
 
       --  Set GNAT version
       Kernel.Registry.Environment.Set_Path_From_Gnatls

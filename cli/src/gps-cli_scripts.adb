@@ -20,6 +20,8 @@ with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
+with Docgen3;
+
 with XML_Utils;                       use XML_Utils;
 with XML_Parsers;
 
@@ -79,6 +81,21 @@ package body GPS.CLI_Scripts is
                when others =>
                   Set_Error_Msg (Data, "Error while executing parse_xml()");
          end;
+      elsif Command = "process_project_with_docgen" then
+         declare
+            Options : constant Docgen3.Docgen_Options :=
+              (Comments_Filter => null,
+               Report_Errors   => Docgen3.None,
+               Skip_C_Files    => True,
+               Tree_Output     => (Docgen3.None, False),
+               Display_Time    => False);
+         begin
+            Docgen3.Process_Project_Files
+              (Kernel    => Kernel,
+               Options   => Options,
+               Project   => Kernel.Registry.Tree.Root_Project,
+               Recursive => False);
+         end;
       end if;
    end Command_Handler;
 
@@ -96,6 +113,9 @@ package body GPS.CLI_Scripts is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "process_project_with_docgen",
+         Handler => Command_Handler'Access);
    end Register_Commands;
 
 end GPS.CLI_Scripts;
