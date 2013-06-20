@@ -23,9 +23,7 @@ with GPS.Editors.GtkAda;          use GPS.Editors.GtkAda;
 with GPS.Location_View.Listener;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-with Gdk.RGBA;                    use Gdk.RGBA;
 with Glib;                        use Glib;
-with Glib.Generic_Properties;
 with Glib.Values;                 use Glib.Values;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;       use Gtk.Tree_Model_Filter;
@@ -163,15 +161,6 @@ package body GPS.Location_View_Filter is
             else
                Set_String (Value, Get_String (V));
             end if;
-
-         when GPS.Location_View.Listener.Node_Foreground_Column =>
-            begin
-               Set_Value (Value, Get_Value (V));
-
-            exception
-               when Glib.Generic_Properties.Unset_Value =>
-                  Set_Value (Value, Null_RGBA);
-            end;
 
          when GPS.Location_View.Listener.Node_Tooltip_Column =>
             Set_String (Value, Get_String (V));

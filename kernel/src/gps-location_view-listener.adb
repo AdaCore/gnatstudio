@@ -86,13 +86,6 @@ package body GPS.Location_View.Listener is
      (Self   : not null access Classic_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
-      To     : Gdk.RGBA.Gdk_RGBA);
-   --  Sets value of underling model's cell
-
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
       To     : GPS.Editors.Editor_Mark'Class);
    --  Sets value of underling model's cell
 
@@ -136,7 +129,6 @@ package body GPS.Location_View.Listener is
       Self.Model.Set
         (Iter, Node_Icon_Column, Glib.Object.GObject (Self.Category_Pixbuf));
       Self.Model.Set (Iter, Node_Markup_Column, To_String (Category));
-      Self.Model.Set (Iter, Node_Foreground_Column, Self.Non_Leaf_Color);
       Self.Model.Set (Iter, Node_Tooltip_Column, To_String (Category));
       Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
       Self.Model.Set (Iter, Action_Pixbuf_Column, Glib.Object.GObject'(null));
@@ -221,7 +213,6 @@ package body GPS.Location_View.Listener is
          Self.Model.Set (Iter, Node_Markup_Column, "&lt;unknown&gt;");
       end if;
 
-      Self.Model.Set (Iter, Node_Foreground_Column, Self.Non_Leaf_Color);
       Self.Model.Set (Iter, Node_Tooltip_Column, String (File.Base_Name));
       Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
       Self.Model.Set (Iter, Action_Pixbuf_Column, Glib.Object.GObject'(null));
@@ -379,7 +370,6 @@ package body GPS.Location_View.Listener is
          Glib.Guint (Text_Column)               => Glib.GType_String,
          Glib.Guint (Node_Icon_Column)          => Gdk.Pixbuf.Get_Type,
          Glib.Guint (Node_Markup_Column)        => Glib.GType_String,
-         Glib.Guint (Node_Foreground_Column)    => Gdk.RGBA.Get_Type,
          Glib.Guint (Node_Tooltip_Column)       => Glib.GType_String,
          Glib.Guint (Node_Mark_Column)          =>
            GPS.Editors.GtkAda.Get_Editor_Mark_Type,
@@ -478,8 +468,6 @@ package body GPS.Location_View.Listener is
                Node_Markup_Column,
                (Location_Padding * ' ') & To_String (Message.Get_Markup));
       end if;
-
-      Self.Model.Set (Iter, Node_Foreground_Column, Gdk.RGBA.Null_RGBA);
 
       declare
          Markup : Unbounded_String;
@@ -693,25 +681,6 @@ package body GPS.Location_View.Listener is
    begin
       Glib.Values.Init (Value, GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type);
       GNATCOLL.VFS.GtkAda.Set_File (Value, To);
-      Self.Set_Value (Iter, Column, Value);
-      Glib.Values.Unset (Value);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      To     : Gdk.RGBA.Gdk_RGBA)
-   is
-      Value : Glib.Values.GValue;
-
-   begin
-      Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value (Value, To);
       Self.Set_Value (Iter, Column, Value);
       Glib.Values.Unset (Value);
    end Set;

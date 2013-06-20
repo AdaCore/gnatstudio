@@ -20,7 +20,6 @@ with Interfaces.C.Strings;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
-with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Rectangle;            use Gdk.Rectangle;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
@@ -178,10 +177,6 @@ package body GPS.Tree_View.Locations is
         (Self.Text_Renderer,
          Property_Name (Markup_Property),
          Node_Markup_Column);
-      Self.Location_Column.Add_Attribute
-        (Self.Text_Renderer,
-         Property_Name (Foreground_Rgba_Property),
-         Node_Foreground_Column);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);
 

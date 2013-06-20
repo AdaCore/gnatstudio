@@ -78,27 +78,25 @@ package GPS.Location_View.Listener is
    --  and text of the message with potential highlighting of some parts
    --  (secondary locations for example) for messages nodes, basename of the
    --  file for file nodes and category's name for category node.
-   Node_Foreground_Column    : constant Glib.Gint  := 8;
-   --  Contains Gdk color for the foreground of the node.
-   Node_Tooltip_Column       : constant Glib.Gint  := 9;
+   Node_Tooltip_Column       : constant Glib.Gint  := 8;
    --  Contains tooltip text for the node.
-   Node_Mark_Column          : constant Glib.Gint  := 10;
+   Node_Mark_Column          : constant Glib.Gint  := 9;
    --  Contains editor's mark of the current position of the location in the
    --  source file.
-   Action_Pixbuf_Column      : constant Glib.Gint  := 11;
+   Action_Pixbuf_Column      : constant Glib.Gint  := 10;
    --  Contains pixmuf object of the associated action.
-   Action_Command_Column     : constant Glib.Gint  := 12;
+   Action_Command_Column     : constant Glib.Gint  := 11;
    --  Contains command to be executed on action.
-   Action_Tooltip_Column     : constant Glib.Gint  := 13;
+   Action_Tooltip_Column     : constant Glib.Gint  := 12;
    --  Contains tooltip text for the action of the node.
-   Number_Of_Children_Column : constant Glib.Gint  := 14;
+   Number_Of_Children_Column : constant Glib.Gint  := 13;
    --  Contains number of children items. This number is useful for filtering
    --  purpose because it contains unmodified number of children items.
-   Sort_Order_Hint_Column    : constant Glib.Gint  := 15;
+   Sort_Order_Hint_Column    : constant Glib.Gint  := 14;
    --  Hint to the view how file level nodes must be sorted by default.
-   Message_Column            : constant Glib.Gint  := 16;
+   Message_Column            : constant Glib.Gint  := 15;
    --  Access to message converted to address.
-   Total_Columns             : constant Glib.Gint  := 17;
+   Total_Columns             : constant Glib.Gint  := 16;
    --  Total number of columns.
 
 private
