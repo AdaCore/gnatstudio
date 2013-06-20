@@ -53,6 +53,11 @@ NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
   keyboard. This behavior is now directly available via the new global search
   box in the GPS toolbar.
 
+NF-53-M524-041 Improved indentation of parenthesized expressions (2013-06-20)
+
+  Extra spaces following an open parenthesis is now taken into account
+  when indenting Ada code.
+
 NF-60-M523-031 GPS: add search field in the global toolbar (2013-05-27)
 
   A search field is now provided, which will look simultaneously in various
