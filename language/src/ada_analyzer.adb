@@ -4665,7 +4665,9 @@ package body Ada_Analyzer is
          --     type T
          --       is ...
 
-         if Token /= Tok_Is or else Top_Token.Token = Tok_Type then
+         if Token /= Tok_Is
+           or else (Top_Token /= null and then Top_Token.Token = Tok_Type)
+         then
             Compute_Indentation
               (Token, Prev_Token, Prev_Prev_Token,
                Current, Line_Count, Num_Spaces);
