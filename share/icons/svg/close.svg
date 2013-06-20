@@ -4,7 +4,13 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
 <g>
-	<path d="M8,0C3.583,0,0,3.583,0,8s3.583,8,8,8s8-3.583,8-8S12.417,0,8,0z M9.648,8l2.911,2.916l-1.644,1.644L8,9.648L5.083,12.56
-		L3.44,10.916L6.356,8L3.44,5.088L5.083,3.44L8,6.352l2.916-2.912l1.644,1.643L9.648,8z"/>
+	
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="306" y1="-371" x2="306" y2="-385.0005" gradientTransform="matrix(1 0 0 -1 -298 -370)">
+		<stop  offset="0" style="stop-color:#000000;stop-opacity:0.7"/>
+		<stop  offset="1" style="stop-color:#000000;stop-opacity:0.6"/>
+	</linearGradient>
+	<path fill="url(#SVGID_1_)" d="M8,1C4.135,1,1,4.135,1,8c0,3.865,3.135,7,7,7c3.865,0,7-3.135,7-7C15,4.135,11.865,1,8,1z M9.442,8
+		l2.547,2.551L10.55,11.99L8,9.442L5.448,11.99L4.01,10.551L6.561,8L4.01,5.452L5.448,4.01L8,6.558l2.551-2.548l1.439,1.438L9.442,8
+		z"/>
 </g>
 </svg>
