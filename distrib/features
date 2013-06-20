@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 5.3.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-53-M524-041 Improved indentation of parenthesized expressions (2013-06-20)
+
+  Extra spaces following an open parenthesis is now taken into account
+  when indenting Ada code.
+
 NF-53-M424-019 Improved indentation of conditional expressions (2013-05-17)
 
   Ada 2012 If-expressions and case-expressions are better handled by the
