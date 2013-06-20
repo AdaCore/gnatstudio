@@ -436,11 +436,11 @@ package body GPS.Main_Window is
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
-         Name    => "General-Toolbar-Style",
+         Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Tool bar style",
-         Page    => -"General",
+         Page    => -"",
          Doc     => -("Indicates how the tool bar should be displayed"),
-         Default => Large_Icons);
+         Default => Small_Icons);
 
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
