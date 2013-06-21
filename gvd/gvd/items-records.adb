@@ -412,7 +412,7 @@ package body Items.Records is
          Set_Text (Context.Text_Layout,
                    Item.Fields (F).Name.all & ASCII.HT & " => ");
          Draw_Layout
-           (Cr, To_Cairo (Context.Foreground),
+           (Cr, Context.Foreground,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
             Layout   => Context.Text_Layout);
@@ -441,7 +441,7 @@ package body Items.Records is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Selection_Color),
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -454,7 +454,7 @@ package body Items.Records is
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Cr, To_Cairo (Context.Foreground),
+           (Cr, Context.Foreground,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
             Layout   => Context.Type_Layout);
@@ -499,7 +499,7 @@ package body Items.Records is
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Foreground),
+           (Cr, Context.Foreground,
             Filled => False,
             X      => X,
             Y      => Y,

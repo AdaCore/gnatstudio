@@ -192,7 +192,7 @@ package body Items.Simples is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Selection_Color),
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y2,
@@ -208,7 +208,7 @@ package body Items.Simples is
         and then Item.Type_Name /= null
       then
          Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Set_Source_Color (Cr, To_Cairo (Text_Color));
+         Set_Source_Color (Cr, Text_Color);
          Move_To (Cr, Gdouble (X), Gdouble (Y2));
          Pango.Cairo.Show_Layout (Cr, Context.Type_Layout);
          Get_Pixel_Size (Context.Type_Layout, W, H);
@@ -217,7 +217,7 @@ package body Items.Simples is
 
       if Show_Value (Mode) then
          Set_Text (Context.Text_Layout, Item.Value.all);
-         Set_Source_Color (Cr, To_Cairo (Text_Color));
+         Set_Source_Color (Cr, Text_Color);
          Move_To (Cr, Gdouble (X), Gdouble (Y2));
          Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
       end if;
@@ -582,7 +582,7 @@ package body Items.Simples is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Selection_Color),
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -602,7 +602,7 @@ package body Items.Simples is
 
             Set_Text
               (Context.Text_Layout, Item.Value (Line_Start + 1 .. J - 1));
-            Set_Source_Color (Cr, To_Cairo (Text_Color));
+            Set_Source_Color (Cr, Text_Color);
             Move_To (Cr, Gdouble (X), Gdouble (Line));
             Show_Layout (Cr, Context.Text_Layout);
             Get_Pixel_Size (Context.Text_Layout, W, H);
@@ -619,7 +619,7 @@ package body Items.Simples is
 
       Set_Text
         (Context.Text_Layout, Item.Value (Line_Start + 1 .. Item.Value'Last));
-      Set_Source_Color (Cr, To_Cairo (Text_Color));
+      Set_Source_Color (Cr, Text_Color);
       Move_To (Cr, Gdouble (X), Gdouble (Line));
       Show_Layout (Cr, Context.Text_Layout);
    end Paint;

@@ -1179,9 +1179,9 @@ package body Browsers.Canvas is
          if not Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
            and then not Is_Selected (Canvas, Canvas_Item (Get_Dest (Link)))
          then
-            Set_Source_Color (Cr, To_Cairo (Browser.Unselected_Link_Color));
+            Set_Source_Color (Cr, Browser.Unselected_Link_Color);
          else
-            Set_Source_Color (Cr, To_Cairo (Browser.Selected_Link_Color));
+            Set_Source_Color (Cr, Browser.Selected_Link_Color);
          end if;
 
          Draw_Link
@@ -1350,14 +1350,7 @@ package body Browsers.Canvas is
       Ptrn := Cairo.Pattern.Create_Linear
         (0.0, Gdouble (Y), 0.0, Gdouble (Y + Button_Height - 1));
 
---        if Is_Selected (Canvas (Item), Item) then
---           State := State_Selected;
---        else
---           State := State_Normal;
---        end if;
---
---      Base := To_Cairo (Get_Base (Style, State));
-      Base := To_Cairo (White_RGBA);
+      Base := White_RGBA;
 
       Color := Shade (Base, 1.3);
       Cairo.Pattern.Add_Color_Stop_Rgb
@@ -1441,7 +1434,7 @@ package body Browsers.Canvas is
       Ptrn := Create_Linear
         (0.0, Gdouble (Item.Title_Coord.Y), 0.0,
          Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height - 1));
-      Base := To_Cairo (White_RGBA);
+      Base := White_RGBA;
 
       Color := Shade (Base, 1.15);
       Add_Color_Stop_Rgb (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
@@ -1461,7 +1454,7 @@ package body Browsers.Canvas is
 
       Draw_Layout
         (Cr     => Cr,
-         Color  => To_Cairo (Black_RGBA),
+         Color  => Black_RGBA,
          X      => Margin + Item.Title_Coord.X - Gint (Border.Left),
          Y      => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
          Layout => Item.Title_Layout);
@@ -1479,7 +1472,7 @@ package body Browsers.Canvas is
 --           X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
 --           Y2     => Item.Title_Coord.Y + Item.Title_Coord.Height);
       Draw_Line
-        (Cr, To_Cairo (Black_RGBA),
+        (Cr, Black_RGBA,
          X1     => Item.Title_Coord.X,
          Y1     => Item.Title_Coord.Y + Item.Title_Coord.Height,
          X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
@@ -1640,7 +1633,7 @@ package body Browsers.Canvas is
 --           Height => H - Layout_H - Height_Offset,
 --           Corner_Radius => Gdouble (Margin - X_Thickness (Style)));
       Draw_Rectangle
-        (Cr, To_Cairo (Black_RGBA),
+        (Cr, Black_RGBA,
          Filled => True,
          X      => Xoffset,
          Y      => Layout_H + Yoffset,
@@ -2419,7 +2412,7 @@ package body Browsers.Canvas is
 --           end if;
          Color := White_RGBA;
 
-         Set_Source_Color (Cr, To_Cairo (Color));
+         Set_Source_Color (Cr, Color);
          Move_To (Cr, Gdouble (X2), Gdouble (Y));
          Pango.Cairo.Show_Layout (Cr, Pango_Layout (Layout));
 

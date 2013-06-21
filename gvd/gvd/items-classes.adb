@@ -204,7 +204,7 @@ package body Items.Classes is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Selection_Color),
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -232,7 +232,7 @@ package body Items.Classes is
                Set_Dash (Cr, (1 .. 2 => 2.0), 0.0);
                Set_Line_Cap (Cr, Cairo_Line_Cap_Butt);
                Set_Line_Join (Cr, Cairo_Line_Join_Miter);
-               Draw_Line (Cr, To_Cairo (Context.Foreground),
+               Draw_Line (Cr, Context.Foreground,
                           X + Item.Border_Spacing,
                           Current_Y,
                           X + Item.Width - Item.Border_Spacing,
@@ -252,7 +252,7 @@ package body Items.Classes is
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Foreground),
+           (Cr, Context.Foreground,
             Filled => False,
             X      => X,
             Y      => Y,

@@ -1113,7 +1113,7 @@ package body Src_Editor_View is
 
             Save (Cr);
             Set_Line_Width (Cr, 1.0);
-            Tmp_Color := To_HSV (To_Cairo (View.Text_Color));
+            Tmp_Color := To_HSV (View.Text_Color);
 
             if Tmp_Color.V > 0.5 then
                --  Light color: let's reduce its luminance by 2
@@ -2307,7 +2307,7 @@ package body Src_Editor_View is
             if Color /= Null_RGBA then
                Set_Source_Color (Cr, Color);
                Draw_Line
-                 (Cr, To_Cairo (Color),
+                 (Cr, Color,
                   0,
                   (Height * J) / Total_Lines,
                   Speed_Column_Width,

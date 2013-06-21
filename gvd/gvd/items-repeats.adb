@@ -155,7 +155,7 @@ package body Items.Repeats is
 
       if Item.Selected then
          Draw_Rectangle
-           (Cr, To_Cairo (Context.Selection_Color),
+           (Cr, Context.Selection_Color,
             Filled => True,
             X      => X,
             Y      => Y,
@@ -165,7 +165,7 @@ package body Items.Repeats is
 
       Set_Text (Context.Text_Layout, Str);
       Draw_Layout
-        (Cr, To_Cairo (Context.Foreground),
+        (Cr, Context.Foreground,
          X        => X + Border_Spacing,
          Y        => Y + Border_Spacing,
          Layout   => Context.Text_Layout);
@@ -175,7 +175,7 @@ package body Items.Repeats is
 
       --  Draw a border
       Draw_Rectangle
-        (Cr, To_Cairo (Context.Foreground),
+        (Cr, Context.Foreground,
          Filled => False,
          X      => X,
          Y      => Y,

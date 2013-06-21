@@ -1450,7 +1450,7 @@ package body Browsers.Entities is
          Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
          Draw_Line
            (Cr,
-            Color    => To_Cairo (Color),
+            Color    => Color,
             X1       => Gint (Border.Bottom),
             Y1       => Y,
             X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
@@ -1710,7 +1710,7 @@ package body Browsers.Entities is
         (Get_Style_Context (Browser), Gtk_State_Flag_Normal, Color);
       Draw_Rectangle
         (Cr,
-         Color  => To_Cairo (Color),
+         Color  => Color,
          Filled => True,
          X      => Get_Coord (Item).Width - Generic_Item_Box_Width + 1,
          Y      => 1,

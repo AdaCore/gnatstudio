@@ -553,7 +553,7 @@ package body Display_Items is
 
       if Item.Auto_Refresh then
          Draw_Rectangle
-           (Cr, To_Cairo (Box_Context.Thaw_Bg_Color),
+           (Cr, Box_Context.Thaw_Bg_Color,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -562,7 +562,7 @@ package body Display_Items is
 
       else
          Draw_Rectangle
-           (Cr, To_Cairo (Box_Context.Freeze_Bg_Color),
+           (Cr, Box_Context.Freeze_Bg_Color,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -571,7 +571,7 @@ package body Display_Items is
       end if;
 
       Draw_Rectangle
-        (Cr, To_Cairo (Box_Context.Grey_Color),
+        (Cr, Box_Context.Grey_Color,
          Filled => True,
          X      => 0,
          Y      => 0,
@@ -587,13 +587,13 @@ package body Display_Items is
          Height      => Alloc_Height + 1);
 
       Draw_Line
-        (Cr, To_Cairo (Box_Context.Black_Color),
+        (Cr, Box_Context.Black_Color,
          X1     => 0,
          Y1     => Title_Height,
          X2     => Alloc_Width - 1,
          Y2     => Title_Height);
 
-      Set_Source_Color (Cr, To_Cairo (Box_Context.Black_Color));
+      Set_Source_Color (Cr, Box_Context.Black_Color);
       Move_To (Cr, Gdouble (Spacing), Gdouble (Spacing));
       Pango.Cairo.Show_Layout (Cr, Layout);
 
@@ -616,7 +616,7 @@ package body Display_Items is
             X      => Border_Spacing,
             Y      => Title_Height + Border_Spacing);
       else
-         Set_Source_Color (Cr, To_Cairo (Context.Foreground));
+         Set_Source_Color (Cr, Context.Foreground);
          Move_To
            (Cr, Gdouble (Border_Spacing),
             Gdouble (Title_Height + Border_Spacing));
@@ -645,7 +645,7 @@ package body Display_Items is
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
             Draw_Rectangle
-              (Cr, To_Cairo (Box_Context.Thaw_Bg_Color),
+              (Cr, Box_Context.Thaw_Bg_Color,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -654,7 +654,7 @@ package body Display_Items is
 
          else
             Draw_Rectangle
-              (Cr, To_Cairo (Box_Context.Freeze_Bg_Color),
+              (Cr, Box_Context.Freeze_Bg_Color,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -1208,7 +1208,7 @@ package body Display_Items is
       Item.Auto_Refresh := Auto_Refresh;
 
       Draw_Rectangle
-        (Cr, To_Cairo (Context.Grey_Color),
+        (Cr, Context.Grey_Color,
          Filled => True,
          X      => Width - 2 * Buttons_Size - 2 * Spacing,
          Y      => Spacing,
