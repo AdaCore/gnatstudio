@@ -1580,24 +1580,18 @@ package body Src_Editor_View is
      (Self : not null access Source_View_Record'Class)
    is
       Color : constant Gdk_RGBA := Default_Style.Get_Pref_Bg;
-      C     : Cairo_Color := To_Cairo (Color);
+      C     : Cairo_Color := Color;
       Select_Color : Gdk_RGBA;
    begin
       Get_Style_Context (Self).Get_Background_Color
         (Gtk_State_Flag_Selected, Select_Color);
 
       if not Self.Get_Editable then
-         C.Green := C.Green * 0.9;
-         C.Red   := C.Red * 0.9;
-         C.Blue  := C.Blue * 0.9;
+         C := Shade_Or_Lighten (C, Amount => 0.1);
       end if;
 
       Self.Background_Color := C;
-
-      Self.Background_Color_Other.Green := C.Green * 0.97;
-      Self.Background_Color_Other.Red   := C.Red * 0.97;
-      Self.Background_Color_Other.Blue  := C.Blue * 0.97;
-      Self.Background_Color_Other.Alpha := 1.0;
+      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.1);
 
       --  Overridding background color also seems to set the selected color, so
       --  that selected text becomes invisible. So we have to reset it as well.

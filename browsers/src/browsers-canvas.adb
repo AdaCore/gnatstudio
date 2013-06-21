@@ -1352,10 +1352,10 @@ package body Browsers.Canvas is
 
       Base := White_RGBA;
 
-      Color := Shade (Base, 1.3);
+      Color := Lighten (Base, 0.3);
       Cairo.Pattern.Add_Color_Stop_Rgb
         (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
-      Color := Shade (Base, 0.95);
+      Color := Shade (Base, 0.05);
       Cairo.Pattern.Add_Color_Stop_Rgb
         (Ptrn, 1.0, Color.Red, Color.Green, Color.Blue);
       Set_Source (Cr, Ptrn);
@@ -1436,10 +1436,10 @@ package body Browsers.Canvas is
          Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height - 1));
       Base := White_RGBA;
 
-      Color := Shade (Base, 1.15);
+      Color := Lighten (Base, 0.15);
       Add_Color_Stop_Rgb (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
 
-      Color := Shade (Base, 0.85);
+      Color := Shade (Base, 0.15);
       Add_Color_Stop_Rgb (Ptrn, 1.0, Color.Red, Color.Green, Color.Blue);
 
       Set_Source (Cr, Ptrn);
