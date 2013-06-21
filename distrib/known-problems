@@ -99,6 +99,12 @@ Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
   Workaround: Ignore this incorrect indentation, fix the indentation manually,
               or put the comment before the separate.
 
+- M227-013: Incorrect outline view on abstract subprograms with aspects
+  Problem:    When using abstract subprograms with Ada 2012 aspects (e.g. a
+              pre or postcondition), the outline view may get confused and
+              incorrectly display the contents of the file.
+  Workaround: Use pragmas instead of aspects.
+
 - M119-001: GPS: crash when loading an erroneous project template
   Problem:    If you write a custom project template (.gpt) file, GPS will
               crash if the "Category" field is blank.
