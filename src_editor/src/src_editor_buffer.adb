@@ -59,7 +59,6 @@ with Gtkada.Dialogs;                      use Gtkada.Dialogs;
 with Gtkada.MDI;                          use Gtkada.MDI;
 with Gtkada.Types;                        use Gtkada.Types;
 
-with Pango.Font;                          use Pango.Font;
 with Pango.Enums;                         use Pango.Enums;
 
 with Casing_Exceptions;                   use Casing_Exceptions;
@@ -3252,55 +3251,86 @@ package body Src_Editor_Buffer is
       Timeout : Gint;
       Prev    : Boolean;
       Pref    : constant Preference := Get_Pref (Data);
-
-      Keyword_Font           : constant Pango.Font.Pango_Font_Description :=
-                                 Keywords_Style.Get_Pref_Font;
-      Block_Font             : constant Pango.Font.Pango_Font_Description :=
-                                 Block_Style.Get_Pref_Font;
-      Type_Font              : constant Pango.Font.Pango_Font_Description :=
-                                 Type_Style.Get_Pref_Font;
-      Comment_Font           : constant Pango.Font.Pango_Font_Description :=
-                                 Comments_Style.Get_Pref_Font;
-      Annotated_Comment_Font : constant Pango.Font.Pango_Font_Description :=
-                                 Annotated_Comments_Style.Get_Pref_Font;
-      String_Font            : constant Pango.Font.Pango_Font_Description :=
-                                 Strings_Style.Get_Pref_Font;
-
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
 
       if Pref = null
         or else Pref = Preference (Type_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Type_Text),
+            Type_Color_Tag_Name,
+            Fore_Color => Type_Style.Get_Pref_Fg,
+            Back_Color => Type_Style.Get_Pref_Bg,
+            Font_Desc  => Type_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Block_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Block_Text),
+            Block_Color_Tag_Name,
+            Fore_Color => Block_Style.Get_Pref_Fg,
+            Back_Color => Block_Style.Get_Pref_Bg,
+            Font_Desc  => Block_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Keywords_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Keyword_Text),
+            Keyword_Color_Tag_Name,
+            Fore_Color => Keywords_Style.Get_Pref_Fg,
+            Back_Color => Keywords_Style.Get_Pref_Bg,
+            Font_Desc  => Keywords_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Comments_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Comment_Text),
+            Comment_Color_Tag_Name,
+            Fore_Color => Comments_Style.Get_Pref_Fg,
+            Back_Color => Comments_Style.Get_Pref_Bg,
+            Font_Desc  => Comments_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Annotated_Comments_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Annotated_Comment_Text),
+            Annotated_Comment_Color_Tag_Name,
+            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
+            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
+            Font_Desc  => Annotated_Comments_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Annotated_Keyword_Text),
+            Annotated_Keyword_Color_Tag_Name,
+            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
+            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
+            Font_Desc  => Annotated_Comments_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Strings_Style)
       then
-         Create_Syntax_Tags
-           (B.Syntax_Tags,
-            Type_Color                  => Type_Style.Get_Pref_Fg,
-            Type_Color_Bg               => Type_Style.Get_Pref_Bg,
-            Type_Font_Desc              => Type_Font,
-            Block_Color                 => Block_Style.Get_Pref_Fg,
-            Block_Color_Bg              => Block_Style.Get_Pref_Bg,
-            Block_Font_Desc             => Block_Font,
-            Keyword_Color               => Keywords_Style.Get_Pref_Fg,
-            Keyword_Color_Bg            => Keywords_Style.Get_Pref_Bg,
-            Keyword_Font_Desc           => Keyword_Font,
-            Comment_Color               => Comments_Style.Get_Pref_Fg,
-            Comment_Color_Bg            => Comments_Style.Get_Pref_Bg,
-            Comment_Font_Desc           => Comment_Font,
-            Annotated_Comment_Color    => Annotated_Comments_Style.Get_Pref_Fg,
-            Annotated_Comment_Color_Bg => Annotated_Comments_Style.Get_Pref_Bg,
-            Annotated_Comment_Font_Desc => Annotated_Comment_Font,
-            Character_Color             => Strings_Style.Get_Pref_Fg,
-            Character_Color_Bg          => Strings_Style.Get_Pref_Bg,
-            Character_Font_Desc         => String_Font,
-            String_Color                => Strings_Style.Get_Pref_Fg,
-            String_Color_Bg             => Strings_Style.Get_Pref_Bg,
-            String_Font_Desc            => String_Font);
+         New_Tag
+           (B.Syntax_Tags (String_Text),
+            String_Color_Tag_Name,
+            Fore_Color => Strings_Style.Get_Pref_Fg,
+            Back_Color => Strings_Style.Get_Pref_Bg,
+            Font_Desc  => Strings_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Character_Text),
+            Character_Color_Tag_Name,
+            Fore_Color => Strings_Style.Get_Pref_Fg,
+            Back_Color => Strings_Style.Get_Pref_Bg,
+            Font_Desc  => Strings_Style.Get_Pref_Font);
       end if;
 
       if B.Delimiter_Tag /= null

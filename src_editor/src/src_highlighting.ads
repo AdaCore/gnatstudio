@@ -59,32 +59,14 @@ package Src_Highlighting is
    procedure Unref (Tags : in out Highlighting_Tags);
    --  Free memory
 
-   procedure Create_Syntax_Tags
-     (Result                      : in out Highlighting_Tags;
-      Type_Color                  : Gdk.RGBA.Gdk_RGBA;
-      Type_Color_Bg               : Gdk.RGBA.Gdk_RGBA;
-      Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
-      Block_Color                 : Gdk.RGBA.Gdk_RGBA;
-      Block_Color_Bg              : Gdk.RGBA.Gdk_RGBA;
-      Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
-      Keyword_Color               : Gdk.RGBA.Gdk_RGBA;
-      Keyword_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
-      Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Comment_Color               : Gdk.RGBA.Gdk_RGBA;
-      Comment_Color_Bg            : Gdk.RGBA.Gdk_RGBA;
-      Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Annotated_Comment_Color     : Gdk.RGBA.Gdk_RGBA;
-      Annotated_Comment_Color_Bg  : Gdk.RGBA.Gdk_RGBA;
-      Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      Character_Color             : Gdk.RGBA.Gdk_RGBA;
-      Character_Color_Bg          : Gdk.RGBA.Gdk_RGBA;
-      Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
-      String_Color                : Gdk.RGBA.Gdk_RGBA;
-      String_Color_Bg             : Gdk.RGBA.Gdk_RGBA;
-      String_Font_Desc            : Pango.Font.Pango_Font_Description := null);
-   --  Create or update a Highlighting_Tags object using the given color names.
-   --  If some colors name can not be parsed, then no special color will be
-   --  used to highlight the associated source parts.
+   procedure New_Tag
+     (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name   : String;
+      Fore_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Back_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Font_Desc  : Pango.Font.Pango_Font_Description := null);
+   --  Create a new Gtk_Text_Tag with the given name.
+   --  If the tag already exists, its properties are changed accordingly.
 
    procedure Create_Highlight_Line_Tag
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
