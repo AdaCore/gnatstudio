@@ -15,11 +15,11 @@ from gi.repository import Gtk, Gdk
 themes = [
    {"name": "Default",
     "@dark": False,
-    #"@theme_bg_color": None,           # the background color for windows
-    #"@theme_fg_color": None,           # default color for the text
-    #"@theme_selected_bg_color": None,  # selection in trees or menus
-    #"@editor_bg_selection": None,      # background for selection in editors
-    #"@editor_fg_selection": None,      # foreground for selection in editors
+    "@theme_bg_color": None,           # the background color for windows
+    "@theme_fg_color": None,           # default color for the text
+    "@theme_selected_bg_color": None,  # selection in trees or menus
+    "@editor_bg_selection": None,      # background for selection in editors
+    "@editor_fg_selection": None,      # foreground for selection in editors
     "General-Default-Style":                 ("${font}", "black", "white"),
     "Src-Editor-Current-Line-Color":         "#D1DCFC",
     "Src-Editor-Reference-Style":            ("${editorfont}", "black", "white"),
@@ -81,6 +81,8 @@ themes = [
 class Color_Theme_Switcher(object):
 
     pref_name = "General/ColorTheme"
+    gtkpref_name = "/ColorTheme gtk+"
+    pref_dark_name = "/ColorTheme dark"
     
     def __init__(self):
         args = ["Custom"] + [t["name"] for t in themes]
@@ -94,14 +96,30 @@ class Color_Theme_Switcher(object):
             *args)
         self.current = p.get()
 
+        GPS.Preference(self.gtkpref_name).create("", "string", "", "")
+        GPS.Preference(self.pref_dark_name).create("", "boolean", "", False)
+
         self.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
         Gtk.StyleContext.add_provider_for_screen(screen, self.provider, 901)
 
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
 
+        self.__set_gtk_properties()
+
     def __del__(self):
         GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
+
+    def __set_gtk_properties(self):
+        Gtk.Settings.get_default().set_property(
+            'gtk-application-prefer-dark-theme',
+            GPS.Preference(self.pref_dark_name).get())
+
+        c = GPS.Preference(self.gtkpref_name).get()
+        if c == "":
+            self.provider.load_from_data("*{}")  # Clear contents
+        else:
+            self.provider.load_from_data(c)
 
     def __on_preferences_changed(self, hook):
         v = GPS.Preference(self.pref_name).get()
@@ -117,8 +135,6 @@ class Color_Theme_Switcher(object):
             GPS.Preference(self.pref_name).set("Custom")
 
     def apply_theme(self, theme):
-        s = Gtk.Settings.get_default()
-
         colors = ""
 
         v = theme.get("@theme_bg_color")
@@ -141,15 +157,9 @@ class Color_Theme_Switcher(object):
         if v:
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
-        # ??? Disable overriding aspects from the theme, since the user would
-        # not be able to set his own easily, and in addition they would not be
-        # reset correctly on startup
-        #
-        # self.provider.load_from_data(colors)
+        GPS.Preference(self.gtkpref_name).set(colors)
+        GPS.Preference(self.pref_dark_name).set(theme.get("@dark", False))
 
-        s.set_property(
-            'gtk-application-prefer-dark-theme', theme.get("@dark", False))
-   
         default = GPS.Preference("General-Default-Style").get().split("@")[0]
         font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
     
@@ -167,5 +177,6 @@ class Color_Theme_Switcher(object):
                 GPS.Preference(key).set(
                     "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
     
+        self.__set_gtk_properties()
 
 Color_Theme_Switcher()

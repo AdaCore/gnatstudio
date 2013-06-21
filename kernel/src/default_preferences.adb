@@ -327,11 +327,27 @@ package body Default_Preferences is
       Default                   : Boolean)
       return Boolean_Preference
    is
-      Result : constant Boolean_Preference := new Boolean_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
+      Val : Boolean;
    begin
-      Result.Bool_Value := Default;
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      if Pref = null
+        or else Pref.all not in Boolean_Preference_Record'Class
+      then
+         if Pref /= null
+           and then Pref.all in String_Preference_Record'Class
+         then
+            Val := Boolean'Value (String_Preference (Pref).Get_Pref);
+         else
+            Val := Default;
+         end if;
+
+         Pref := new Boolean_Preference_Record;
+         Boolean_Preference (Pref).Bool_Value := Val;
+      end if;
+
+      Register (Manager, Name, Label, Page, Doc, Pref);
+      return Boolean_Preference (Pref);
    end Create;
 
    ------------
@@ -345,12 +361,19 @@ package body Default_Preferences is
       Multi_Line                : Boolean := False)
       return String_Preference
    is
-      Result : constant String_Preference := new String_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
    begin
-      Result.Str_Value := new String'(Default);
-      Result.Multi_Line := Multi_Line;
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      if Pref = null
+        or else Pref.all not in String_Preference_Record'Class
+      then
+         Pref := new String_Preference_Record;
+         String_Preference (Pref).Str_Value := new String'(Default);
+      end if;
+
+      String_Preference (Pref).Multi_Line := Multi_Line;
+      Register (Manager, Name, Label, Page, Doc, Pref);  --  override previous
+      return String_Preference (Pref);
    end Create;
 
    ------------
@@ -532,13 +555,18 @@ package body Default_Preferences is
 
       if Has_Element (Old) then
          Old_Pref := Element (Old);
-         Delete (Manager.Preferences, Old);
-         Free (Old_Pref);
+         if Old_Pref /= Preference (Pref) then
+            Delete (Manager.Preferences, Old);
+            Free (Old_Pref);
+            Append
+              (Container => Manager.Preferences,
+               New_Item  => Preference (Pref));
+         end if;
+      else
+         Append
+           (Container => Manager.Preferences,
+            New_Item  => Preference (Pref));
       end if;
-
-      Append
-        (Container => Manager.Preferences,
-         New_Item  => Preference (Pref));
    end Register;
 
    --------------
