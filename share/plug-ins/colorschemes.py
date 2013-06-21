@@ -34,7 +34,7 @@ themes = [
    {"name": "Darkside",
     "@dark": True,
     "@theme_bg_color": "#222324",
-    "General-Default-Style":                 ("${font}", "#BABABA", "transparent"),
+    "General-Default-Style":                 ("${font}", "#BABABA", "#222324"),
     "Src-Editor-Current-Line-Color":         "#303333",
     "Src-Editor-Reference-Style":            ("${editorfont}", "#BABABA", "#222324"),
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
