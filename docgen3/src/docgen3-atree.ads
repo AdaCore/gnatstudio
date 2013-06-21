@@ -386,6 +386,11 @@ private package Docgen3.Atree is
    --  Routine called by docgen3.adb to register in this package the database
    --  and thus simplify the use of subprogram "pn" from gdb.
 
+   function name
+     (Db : General_Xref_Database;
+      E  : General_Entity) return String;
+   --  (gdb) Returns the short name of E
+
    procedure pl (E : Entity_Id);
    --  (gdb) Prints the list of entities defined in the scope of E
 

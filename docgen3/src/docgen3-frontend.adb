@@ -1504,24 +1504,26 @@ package body Docgen3.Frontend is
 
                      if In_Ada_Language (Meth_E) then
 
-                        --  For derivations of Ada.Finalization.Controlled
-                        --  we don't have available their Scope???. As a
-                        --  workaround LL.Get_Scope(E) has been replaced
-                        --  by LL.Get_Entity (Get_Scope (E))
+                        --  If Xref does not have available the scope of this
+                        --  method it means that it is a primitive defined in
+                        --  a file which is not directly part of this project
+                        --  (that is, an entity defined in the runtime of the
+                        --  compiler or in a library). In such case we consider
+                        --  that it is an inherited primitive.
 
-                        if LL.Get_Scope (Meth_E)
-                          = LL.Get_Entity (Get_Scope (E))
+                        if LL.Get_Scope (Meth_E) = No_General_Entity
+                          or else LL.Get_Scope (Meth_E) /= LL.Get_Scope (E)
                         then
+                           --  For inherited primitives defined in other
+                           --  files/scopes we cannot set their scope.
+
+                           Decorate_Subprogram (Meth_E);
+                           Append_Inherited_Method (E, Meth_E);
+
+                        else
                            Append_To_Scope (Get_Scope (E), Meth_E);
                            Decorate_Subprogram (Meth_E);
                            Append_Method (E, Meth_E);
-
-                        --  For inherited primitives defined in other
-                        --  files/scopes we cannot set their scope.
-
-                        else
-                           Decorate_Subprogram (Meth_E);
-                           Append_Inherited_Method (E, Meth_E);
                         end if;
                      else
                         if LL.Get_Scope (Meth_E) = LL.Get_Entity (E) then

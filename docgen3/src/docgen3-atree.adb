@@ -680,7 +680,7 @@ package body Docgen3.Atree is
                                  else E_Unknown);
       New_E  : Entity_Id;
 
-   --  Start of processing for New_Entity
+   --  Start of processing for Internal_New_Entity
 
    begin
       Unique_Id := Unique_Id + 1;
@@ -1821,6 +1821,21 @@ package body Docgen3.Atree is
       return To_String (Printout);
    end To_String;
 
+   --  **************************************************************
+   --                         Debugging Routines
+   --  **************************************************************
+
+   ----------
+   -- name --
+   ----------
+
+   function name
+     (Db : General_Xref_Database;
+      E  : General_Entity) return String is
+   begin
+      return Get_Name (Db, E);
+   end name;
+
    --------
    -- pl --
    --------
@@ -1894,4 +1909,5 @@ package body Docgen3.Atree is
          pns (Db, V (J));
       end loop;
    end pv;
+
 end Docgen3.Atree;
