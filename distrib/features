@@ -23,7 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
-BF-60-M620-018 GPS: color schemes (2013-06-20)
+NF-60-M621-005 GPS: new plugin formatfile.py (2013-06-21)
+
+  This plugin, when loaded, adds a new menu /Edit/Format Whole File
+  which reformats the whole file while preserving the current cursor
+  location.
+
+NF-60-M620-018 GPS: color schemes (2013-06-20)
 
   A new preference is available to select color schemes. This effects other
   preferences and can be used to set dark colors for the background of
