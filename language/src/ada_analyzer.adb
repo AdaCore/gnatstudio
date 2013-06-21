@@ -4605,7 +4605,9 @@ package body Ada_Analyzer is
                --  Set Aspect_Clause
 
                if Token = Tok_With
-                 and then Top (Tokens).Token = Tok_Type
+                 and then
+                   (Top (Tokens).Token = Tok_Type
+                    or else Top (Tokens).Token in Tok_Function | Tok_Procedure)
                  and then Prev_Prev_Token /= Tok_New
                  and then Prev_Prev_Token /= Tok_And
                then
