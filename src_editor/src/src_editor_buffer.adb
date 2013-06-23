@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -89,7 +90,7 @@ with Src_Editor_Box;                      use Src_Editor_Box;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Multi_Cursors;     use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
@@ -1880,7 +1881,7 @@ package body Src_Editor_Buffer is
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
-      --  Move mark of start of re-highlight area into insertion position.
+      --  Move mark of start of re-highlight area into insertion position
 
       Move_Mark (Buffer, Buffer.First_Highlight_Mark, Pos);
 
@@ -2034,7 +2035,7 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
 
-      --  Move mark of start of re-highlight area into insertion position.
+      --  Move mark of start of re-highlight area into insertion position
 
       Move_Mark (Buffer, Buffer.First_Highlight_Mark, Start_Iter);
 
@@ -2528,17 +2529,17 @@ package body Src_Editor_Buffer is
       end if;
    end Generic_Valid_Position;
 
+   ------------------
+   -- Is_Valid_Pos --
+   ------------------
+
+   procedure Is_Valid_Pos is new
+     Generic_Valid_Position (Get_Chars_In_Line, Set_Line_Offset);
+   --  Column should be given in characters, not in bytes
+
    -----------------------
    -- Is_Valid_Position --
    -----------------------
-
-   procedure Is_Valid_Index is new
-     Generic_Valid_Position (Get_Bytes_In_Line, Set_Line_Index);
-   --  Column should be given in bytes, not characters
-
-   procedure Is_Valid_Pos   is new
-     Generic_Valid_Position (Get_Chars_In_Line, Set_Line_Offset);
-   --  Column should be given in characters, not in bytes
 
    function Is_Valid_Position
      (Buffer : access Source_Buffer_Record;
@@ -2598,20 +2599,9 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
-      Highlight_Complete : Boolean := False;
-      Entity_Start       : Gtk_Text_Iter;
-      Entity_End         : Gtk_Text_Iter;
-      Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset_Line  : Buffer_Line_Type;
-      --  Offset between the beginning of the Source_Buffer and the beginning
-      --  of the string slice passed to Parse_Entities.
-
-      Slice_Offset_Column : Gint;
-      Result              : Boolean;
-      Ignored             : Boolean;
-      Entity_Kind         : Language_Entity;
-      Slice               : Unchecked_String_Access;
-      pragma Suppress (Access_Check, Slice);
+      procedure Is_Valid_Index is new
+        Generic_Valid_Position (Get_Bytes_In_Line, Set_Line_Index);
+      --  Column should be given in bytes, not characters
 
       function Highlight_Cb
         (Entity         : Language_Entity;
@@ -2629,6 +2619,21 @@ package body Src_Editor_Buffer is
       --      the given region, or to Normal_Text if all entities were complete
       --    - Entity_Start is set to the begining of the incomplete region
       --      found in the given buffer slice, if any.
+
+      Highlight_Complete : Boolean := False;
+      Entity_Start       : Gtk_Text_Iter;
+      Entity_End         : Gtk_Text_Iter;
+      Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
+      Slice_Offset_Line  : Buffer_Line_Type;
+      --  Offset between the beginning of the Source_Buffer and the beginning
+      --  of the string slice passed to Parse_Entities.
+
+      Slice_Offset_Column : Gint;
+      Result              : Boolean;
+      Ignored             : Boolean;
+      Entity_Kind         : Language_Entity;
+      Slice               : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
 
       ------------------
       -- Highlight_Cb --
@@ -5695,7 +5700,7 @@ package body Src_Editor_Buffer is
         (Data     : in out Highlighting_Data_Record;
          Category : Natural;
          Enabled  : Boolean);
-      --  Sets highligting state and recompute activw highlighting.
+      --  Sets highligting state and recompute activw highlighting
 
       ----------------------
       -- Set_Highlighting --
@@ -6502,6 +6507,10 @@ package body Src_Editor_Buffer is
          function Only_Spaces return Boolean;
          --  Return True is Line contains only spaces or HT
 
+         -----------------
+         -- Only_Spaces --
+         -----------------
+
          function Only_Spaces return Boolean is
             Result : Boolean := True;
 
@@ -7214,10 +7223,10 @@ package body Src_Editor_Buffer is
 
       function Is_Comment_Line (Line : Editable_Line_Type) return Boolean;
       --  Whether Pos is anywhere on a comment line (not necessarily within the
-      --  comment itself)
+      --  comment itself).
 
       function Is_Boundary (Line : Editable_Line_Type) return Boolean;
-      --  Whether Line is a boundary for a pagraph.
+      --  Whether Line is a boundary for a pagraph
 
       ---------------------
       -- Is_Comment_Line --
