@@ -18,9 +18,93 @@ This aspect is equivalent to the one argument form of pragma `Ada_2012'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "2/3" name = "Address" origin = "Ada RM" category = "unknown">
+      <DOC>
+Machine address of an entity. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "3/3" name = "Alignment" origin = "Ada RM" category = "object">
+      <DOC>
+Alignment of an object. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "4/3" name = "Alignment" origin = "Ada RM" category = "subtype">
+      <DOC>
+Alignment of a subtype. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "5/3" name = "All_Calls_Remote" origin = "Ada RM" category = "unknown">
+      <DOC>
+All remote procedure calls should use the Partition
+Communication Subsystem, even if they are local. See E.2.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "6/3" name = "Asynchronous" origin = "Ada RM" category = "unknown">
+      <DOC>
+Remote procedure calls are asynchronous; the caller continues
+without waiting for the call to return. See E.4.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "7/3" name = "Atomic" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that a type, object, or component is atomic. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "8/3" name = "Atomic_Components" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that the components of an array type or object are
+atomic. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "9/3" name = "Attach_Handler" origin = "Ada RM" category = "unknown">
+      <DOC>
+Protected procedure is attached to an interrupt. See C.3.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "10/3" name = "Bit_Order" origin = "Ada RM" category = "unknown">
+      <DOC>
+Order of bit numbering in a record_representation_clause. See
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "15/3" name = "CPU" origin = "Ada RM" category = "unknown">
+      <DOC>
+Processor on which a given task should run. See D.16.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "11/3" name = "Coding" origin = "Ada RM" category = "unknown">
+      <DOC>
+Internal representation of enumeration literals. Specified by
+an enumeration_representation_clause, not by an
+aspect_specification. See 13.4.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Compiler_Unit" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Compiler_Unit'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "12/3" name = "Component_Size" origin = "Ada RM" category = "unknown">
+      <DOC>
+Size in bits of a component of an array type. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "13/3" name = "Constant_Indexing" origin = "Ada RM" category = "unknown">
+      <DOC>
+Defines function(s) to implement user-defined
+indexed_components. See 4.1.6.
       </DOC>
    </ASPECT>
 
@@ -29,6 +113,38 @@ This aspect is equivalent to pragma `Compiler_Unit'.
 This aspect is equivalent to pragma `Contract_Cases', the sequence of
 clauses being enclosed in parentheses so that syntactically it is an
 aggregate.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "14/3" name = "Convention" origin = "Ada RM" category = "unknown">
+      <DOC>
+Calling convention or other convention used for interfacing to
+other languages. See B.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "16/3" name = "Default_Component_Value" origin = "Ada RM" category = "unknown">
+      <DOC>
+Default value for the components of an array-of-scalar
+subtype. See 3.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "17/3" name = "Default_Iterator" origin = "Ada RM" category = "unknown">
+      <DOC>
+Default iterator to be used in for loops. See 5.5.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "18/3" name = "Default_Storage_Pool" origin = "Ada RM" category = "unknown">
+      <DOC>
+Default storage pool for a generic instance. See 13.11.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "19/3" name = "Default_Value" origin = "Ada RM" category = "unknown">
+      <DOC>
+Default value for a scalar subtype. See 3.5.
       </DOC>
    </ASPECT>
 
@@ -119,6 +235,46 @@ Users Guide for detailed examples of use of the dimension system.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "20/3" name = "Dispatching_Domain" origin = "Ada RM" category = "unknown">
+      <DOC>
+Domain (group of processors) on which a given task should run.
+See D.16.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "21/3" name = "Dynamic_Predicate" origin = "Ada RM" category = "unknown">
+      <DOC>
+Condition that must hold true for objects of a given subtype;
+the subtype is not static. See 3.2.4.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "22/3" name = "Elaborate_Body" origin = "Ada RM" category = "unknown">
+      <DOC>
+A given package must have a body, and that body is elaborated
+immediately after the declaration. See 10.2.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "23/3" name = "Export" origin = "Ada RM" category = "unknown">
+      <DOC>
+Entity is exported to another language. See B.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "24/3" name = "External_Name" origin = "Ada RM" category = "unknown">
+      <DOC>
+Name used to identify an imported or exported entity. See
+B.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "25/3" name = "External_Tag" origin = "Ada RM" category = "unknown">
+      <DOC>
+Unique identifier for a tagged type in streams. See 13.3.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Favor_Top_Level" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Favor_Top_Level'.
@@ -131,9 +287,63 @@ This aspect is equivalent pragma `Global'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "26/3" name = "Implicit_Dereference" origin = "Ada RM" category = "unknown">
+      <DOC>
+Mechanism for user-defined implicit .all. See 4.1.5.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "27/3" name = "Import" origin = "Ada RM" category = "unknown">
+      <DOC>
+Entity is imported from another language. See B.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "28/3" name = "Independent" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that a type, object, or component is independently
+addressable. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "29/3" name = "Independent_Components" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that the components of an array or record type, or an
+array object, are independently addressable. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "30/3" name = "Inline" origin = "Ada RM" category = "unknown">
+      <DOC>
+For efficiency, Inline calls are requested for a subprogram.
+See 6.3.2.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Inline_Always" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Inline_Always'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "31/3" name = "Input" origin = "Ada RM" category = "unknown">
+      <DOC>
+Function to read a value from a stream for a given type,
+including any bounds and discriminants. See 13.13.2.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "32/3" name = "Interrupt_Handler" origin = "Ada RM" category = "unknown">
+      <DOC>
+Protected procedure may be attached to interrupts. See C.3.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "33/3" name = "Interrupt_Priority" origin = "Ada RM" category = "unknown">
+      <DOC>
+Priority of a task object or type, or priority of a protected
+object or type; the priority is in the interrupt range. See
+D.1.
       </DOC>
    </ASPECT>
 
@@ -145,9 +355,43 @@ separately controllable using pragma `Assertion_Policy'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "34/3" name = "Iterator_Element" origin = "Ada RM" category = "unknown">
+      <DOC>
+Element type to be used for user-defined iterators. See
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "35/3" name = "Layout" origin = "Ada RM" category = "record">
+      <DOC>
+Layout of record components. Specified by a
+record_representation_clause, not by an aspect_specification.
+See 13.5.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "36/3" name = "Link_Name" origin = "Ada RM" category = "unknown">
+      <DOC>
+Linker symbol used to identify an imported or exported entity.
+See B.1.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Lock_Free" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Lock_Free'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "37/3" name = "Machine_Radix" origin = "Ada RM" category = "unknown">
+      <DOC>
+Radix (2 or 10) that is used to represent a decimal fixed
+point type. See F.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "38/3" name = "No_Return" origin = "Ada RM" category = "unknown">
+      <DOC>
+A procedure will not return normally. See 6.5.1.
       </DOC>
    </ASPECT>
 
@@ -158,9 +402,48 @@ clause.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "39/3" name = "Output" origin = "Ada RM" category = "unknown">
+      <DOC>
+Procedure to write a value to a stream for a given type,
+including any bounds and discriminants. See 13.13.2.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "40/3" name = "Pack" origin = "Ada RM" category = "unknown">
+      <DOC>
+Minimize storage when laying out records and arrays. See
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Persistent_BSS" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Persistent_BSS'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "41/3" name = "Post" origin = "Ada RM" category = "unknown">
+      <DOC>
+Postcondition; a condition that must hold true after a call.
+See 6.1.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "42/3" name = "Post'Class" origin = "Ada RM" category = "unknown">
+      <DOC>
+Postcondition inherited on type derivation. See 6.1.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "43/3" name = "Pre" origin = "Ada RM" category = "unknown">
+      <DOC>
+Precondition; a condition that must hold true before a call.
+See 6.1.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "44/3" name = "Pre'Class" origin = "Ada RM" category = "unknown">
+      <DOC>
+Precondition inherited on type derivation. See 6.1.1.
       </DOC>
    </ASPECT>
 
@@ -174,9 +457,31 @@ controllable using pragma `Assertion_Policy'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "45/3" name = "Preelaborate" origin = "Ada RM" category = "unknown">
+      <DOC>
+Code execution during elaboration is avoided for a given
+package. See 10.2.1.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Preelaborate_05" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Preelaborate_05'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "46/3" name = "Priority" origin = "Ada RM" category = "unknown">
+      <DOC>
+Priority of a task object or type, or priority of a protected
+object or type; the priority is not in the interrupt range.
+See D.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "47/3" name = "Pure" origin = "Ada RM" category = "unknown">
+      <DOC>
+Side effects are avoided in the subprograms of a given
+package. See 10.2.1.
       </DOC>
    </ASPECT>
 
@@ -198,9 +503,44 @@ This aspect is equivalent to pragma `Pure_Function'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "48/3" name = "Read" origin = "Ada RM" category = "unknown">
+      <DOC>
+Procedure to read a value from a stream for a given type. See
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "49/3" name = "Record" origin = "Ada RM" category = "unknown">
+      <DOC>
+layout
+
+See Layout. See 13.5.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "50/3" name = "Relative_Deadline" origin = "Ada RM" category = "unknown">
+      <DOC>
+Task parameter used in Earliest Deadline First Dispatching.
+See D.2.6.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Remote_Access_Type" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Remote_Access_Type'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "51/3" name = "Remote_Call_Interface" origin = "Ada RM" category = "unknown">
+      <DOC>
+Subprograms in a given package may be used in remote procedure
+calls. See E.2.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "52/3" name = "Remote_Types" origin = "Ada RM" category = "unknown">
+      <DOC>
+Types in a given package may be used in remote procedure
+calls. See E.2.2.
       </DOC>
    </ASPECT>
 
@@ -224,6 +564,13 @@ aspect `Atomic'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "53/3" name = "Shared_Passive" origin = "Ada RM" category = "unknown">
+      <DOC>
+A given package is used to represent shared memory in a
+distributed system. See E.2.1.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Simple_Storage_Pool" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to a `Simple_Storage_Pool' attribute
@@ -237,15 +584,103 @@ This aspect is equivalent to pragma `Simple_Storage_Pool_Type'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "54/3" name = "Size" origin = "Ada RM" category = "object">
+      <DOC>
+Size in bits of an object. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "55/3" name = "Size" origin = "Ada RM" category = "subtype">
+      <DOC>
+Size in bits of a subtype. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "56/3" name = "Small" origin = "Ada RM" category = "unknown">
+      <DOC>
+Scale factor for a fixed point type. See 3.5.10.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "57/3" name = "Static_Predicate" origin = "Ada RM" category = "unknown">
+      <DOC>
+Condition that must hold true for objects of a given subtype;
+the subtype may be static. See 3.2.4.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "58/3" name = "Storage_Pool" origin = "Ada RM" category = "unknown">
+      <DOC>
+Pool of memory from which new will allocate for a given access
+type. See 13.11.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "59/3" name = "Storage_Size" origin = "Ada RM" category = "access">
+      <DOC>
+Sets memory size for allocations for an access type. See
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "60/3" name = "Storage_Size" origin = "Ada RM" category = "task">
+      <DOC>
+Size in storage elements reserved for a task type or single
+task object. See 13.3.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "61/3" name = "Stream_Size" origin = "Ada RM" category = "unknown">
+      <DOC>
+Size in bits used to represent elementary objects in a stream.
+See 13.13.2.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Suppress_Debug_Info" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Suppress_Debug_Info'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "62/3" name = "Synchronization" origin = "Ada RM" category = "unknown">
+      <DOC>
+Defines whether a given primitive operation of a synchronized
+interface must be implemented by an entry or protected
+procedure. See 9.5.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Test_Case" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Test_Case'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "1/3" name = "This" origin = "Ada RM" category = "unknown">
+      <DOC>
+subclause summarizes the definitions given elsewhere of the
+language-defined aspects. Aspects are properties of entities that can be
+specified by the Ada program; unless otherwise specified below, aspects can be
+specified using an aspect_specification.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "63/3" name = "Type_Invariant" origin = "Ada RM" category = "unknown">
+      <DOC>
+A condition that must hold true for all objects of a type. See
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "64/3" name = "Type_Invariant'Class" origin = "Ada RM" category = "unknown">
+      <DOC>
+A condition that must hold true for all objects in a class of
+types. See 7.3.2.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "65/3" name = "Unchecked_Union" origin = "Ada RM" category = "unknown">
+      <DOC>
+Type is used to interface to a C union type. See B.3.3.
       </DOC>
    </ASPECT>
 
@@ -285,6 +720,33 @@ This aspect is equivalent to a `Value_Size' attribute definition clause.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "66/3" name = "Variable_Indexing" origin = "Ada RM" category = "unknown">
+      <DOC>
+Defines function(s) to implement user-defined
+indexed_components. See 4.1.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "67/3" name = "Volatile" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that a type, object, or component is volatile. See
+C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "68/3" name = "Volatile_Components" origin = "Ada RM" category = "unknown">
+      <DOC>
+Declare that the components of an array type or object are
+volatile. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "69/3" name = "Write" origin = "Ada RM" category = "unknown">
+      <DOC>
+Procedure to write a value to a stream for a given type. See
+      </DOC>
+   </ASPECT>
+
    <ATTRIBUTE id = "0" name = "AST_Entry" origin = "GNAT RM" category = "variable">
       <DOC>
 This attribute is implemented only in OpenVMS versions of GNAT.
@@ -312,6 +774,7 @@ intercept the abort exception).
       <DOC>
 For a prefix P that denotes a subprogram:
 
+
 P'Access yields an access value that designates the subprogram
 denoted by P. The type of P'Access is an access-to-subprogram
 type (S), as determined by the expected type. See 3.10.2.
@@ -322,16 +785,18 @@ type (S), as determined by the expected type. See 3.10.2.
       <DOC>
 For a prefix X that denotes an aliased view of an object:
 
+
 X'Access yields an access value that designates the object
-denoted by X. The type of X'Access is an access-to-object type,
-as determined by the expected type. The expected type shall be a
-general access type. See 3.10.2.
+denoted by X. The type of X'Access is an access-to-object
+type, as determined by the expected type. The expected type
+shall be a general access type. See 3.10.2.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "6/1" name = "Address" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix X that denotes an object, program unit, or label:
+
 
 Denotes the address of the first of the storage elements
 allocated to X. For a program unit or label, this value refers
@@ -355,18 +820,22 @@ because Address is a private type.
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Adjacent denotes a function with the following specification:
+
+S'Adjacent denotes a function with the following
+specification:
+
 
 function S'Adjacent (X, Towards : T)
 return T
 
-If Towards = X, the function yields X; otherwise, it yields the
-machine number of the type T adjacent to X in the direction of
-Towards, if that machine number exists. If the result would be
-outside the base range of S, Constraint_Error is raised. When
-T'Signed_Zeros is True, a zero result has the sign of X. When
-Towards is zero, its sign has no bearing on the result. See
-A.5.3.
+
+If Towards = X, the function yields X; otherwise, it yields
+the machine number of the type T adjacent to X in the
+direction of Towards, if that machine number exists. If the
+result would be outside the base range of S, Constraint_Error
+is raised. When T'Signed_Zeros is True, a zero result has the
+sign of X. When Towards is zero, its sign has no bearing on
+the result. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -374,13 +843,14 @@ A.5.3.
       <DOC>
 For every fixed point subtype S:
 
+
 S'Aft yields the number of decimal digits needed after the
-decimal point to accommodate the delta of the subtype S, unless
-the delta of the subtype S is greater than 0.1, in which case
-the attribute yields the value one. (S'Aft is the smallest
-positive integer N for which (10**N)*S'Delta is greater than or
-equal to one.) The value of this attribute is of the type
-universal_integer. See 3.5.10.
+decimal point to accommodate the delta of the subtype S,
+unless the delta of the subtype S is greater than 0.1, in
+which case the attribute yields the value one. (S'Aft is the
+smallest positive integer N for which (10**N)*S'Delta is
+greater than or equal to one.) The value of this attribute is
+of the type universal_integer. See 3.5.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -388,12 +858,14 @@ universal_integer. See 3.5.10.
       <DOC>
 For every subtype S:
 
+
 The value of this attribute is of type universal_integer, and
 nonnegative.
 
+
 For an object X of subtype S, if S'Alignment is not zero, then
-X'Alignment is a nonzero integral multiple of S'Alignment unless
-specified otherwise by a representation item. See 13.3.
+X'Alignment is a nonzero integral multiple of S'Alignment
+unless specified otherwise by a representation item. See
       </DOC>
    </ATTRIBUTE>
 
@@ -401,14 +873,13 @@ specified otherwise by a representation item. See 13.3.
       <DOC>
 For a prefix X that denotes an object:
 
+
 The value of this attribute is of type universal_integer, and
 nonnegative; zero means that the object is not necessarily
 aligned on a storage element boundary. If X'Alignment is not
-zero, then X is aligned on a storage unit boundary and X'Address
-is an integral multiple of X'Alignment (that is, the Address
-modulo the Alignment is zero).
-
-16/2  This paragraph was deleted. See 13.3.
+zero, then X is aligned on a storage unit boundary and
+X'Address is an integral multiple of X'Alignment (that is, the
+Address modulo the Alignment is zero).
       </DOC>
    </ATTRIBUTE>
 
@@ -446,6 +917,7 @@ Code Insertions::
       <DOC>
 For every scalar subtype S:
 
+
 S'Base denotes an unconstrained subtype of the type of S. This
 unconstrained subtype is called the base subtype of the type.
 See 3.5.
@@ -482,6 +954,7 @@ definition and implementation of the `Bit' attribute.
       <DOC>
 For every specific record subtype S:
 
+
 Denotes the bit ordering for the type of S. The value of this
 attribute is of type System.Bit_Order. See 13.5.3.
       </DOC>
@@ -502,9 +975,10 @@ containing record R.
       <DOC>
 For a prefix P that statically denotes a program unit:
 
-Yields a value of the predefined type String that identifies the
-version of the compilation unit that contains the body (but not
-any subunits) of the program unit. See E.3.
+
+Yields a value of the predefined type String that identifies
+the version of the compilation unit that contains the body
+(but not any subunits) of the program unit. See E.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -512,6 +986,7 @@ any subunits) of the program unit. See E.3.
       <DOC>
 For a prefix T that is of a task type (after any implicit
 dereference):
+
 
 Yields the value True when the task denoted by T is callable,
 and False otherwise; See 9.9.
@@ -522,10 +997,12 @@ and False otherwise; See 9.9.
       <DOC>
 For a prefix E that denotes an entry_declaration:
 
+
 Yields a value of the type Task_Id that identifies the task
 whose call is now being serviced. Use of this attribute is
-allowed only inside an entry_body or accept_statement
-corresponding to the entry_declaration denoted by E. See C.7.1.
+allowed only inside an accept_statement, or entry_body after
+the entry_barrier, corresponding to the entry_declaration
+denoted by E. See C.7.1.
       </DOC>
    </ATTRIBUTE>
 
@@ -533,28 +1010,37 @@ corresponding to the entry_declaration denoted by E. See C.7.1.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Ceiling denotes a function with the following specification:
+
 
 function S'Ceiling (X : T)
 return T
 
+
 The function yields the value Ceiling(X), i.e., the smallest
-(most negative) integral value greater than or equal to X. When
-X is zero, the result has the sign of X; a zero result otherwise
-has a negative sign when S'Signed_Zeros is True. See A.5.3.
+(most negative) integral value greater than or equal to X.
+When X is zero, the result has the sign of X; a zero result
+otherwise has a negative sign when S'Signed_Zeros is True. See
+A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "31" name = "Class" origin = "Ada RM" category = "type">
       <DOC>
-For every subtype S of an untagged private type whose full view
-is tagged:
+For every subtype S of a tagged type T (specific or
+class-wide):
 
-Denotes the class-wide subtype corresponding to the full view of
-S. This attribute is allowed only from the beginning of the
-private part in which the full view is declared, until the
-declaration of the full view. After the full view, the Class
-attribute of the full view can be used. See 7.3.1.
+
+S'Class denotes a subtype of the class-wide type (called
+T'Class in this International Standard) for the class rooted
+at T (or if S already denotes a class-wide subtype, then
+S'Class is the same as S).
+
+
+S'Class is unconstrained. However, if S is constrained, then
+the values of S'Class are only those that when converted to
+the type T belong to S. See 3.9.
       </DOC>
    </ATTRIBUTE>
 
@@ -573,25 +1059,42 @@ T belong to S. See 3.9.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "34" name = "Class" origin = "Ada RM" category = "unknown">
+      <DOC>
+For every subtype S of an untagged private type whose full
+view is tagged:
+
+
+Denotes the class-wide subtype corresponding to the full view
+of S. This attribute is allowed only from the beginning of the
+private part in which the full view is declared, until the
+declaration of the full view. After the full view, the Class
+attribute of the full view can be used. See 7.3.1.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "92" name = "Class'Input" origin = "Ada RM" category = "function">
       <DOC>
 For every subtype S'Class of a class-wide type T'Class:
 
+
 S'Class'Input denotes a function with the following
 specification:
+
 
 function S'Class'Input(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class)
 return T'Class
 
+
 First reads the external tag from Stream and determines the
 corresponding internal tag (by calling
 Tags.Descendant_Tag(String'Input(Stream), S'Tag) which might
-raise Tag_Error - see 3.9) and then dispatches to the subprogram
-denoted by the Input attribute of the specific type identified
-by the internal tag; returns that result. If the specific type
-identified by the internal tag is not covered by T'Class or is
-abstract, Constraint_Error is raised. See 13.13.2.
+raise Tag_Error - see 3.9) and then dispatches to the
+subprogram denoted by the Input attribute of the specific type
+identified by the internal tag; returns that result. If the
+specific type identified by the internal tag is abstract,
+Constraint_Error is raised. See 13.13.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -599,19 +1102,22 @@ abstract, Constraint_Error is raised. See 13.13.2.
       <DOC>
 For every subtype S'Class of a class-wide type T'Class:
 
+
 S'Class'Output denotes a procedure with the following
 specification:
+
 
 procedure S'Class'Output(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item   : in T'Class)
 
+
 First writes the external tag of Item to Stream (by calling
 String'Output(Stream, Tags.External_Tag(Item'Tag)) - see 3.9)
 and then dispatches to the subprogram denoted by the Output
-attribute of the specific type identified by the tag. Tag_Error
-is raised if the tag of Item identifies a type declared at an
-accessibility level deeper than that of S. See 13.13.2.
+attribute of the specific type identified by the tag.
+Tag_Error is raised if the tag of Item identifies a type
+declared at an accessibility level deeper than that of S. See
       </DOC>
    </ATTRIBUTE>
 
@@ -619,12 +1125,15 @@ accessibility level deeper than that of S. See 13.13.2.
       <DOC>
 For every subtype S'Class of a class-wide type T'Class:
 
+
 S'Class'Read denotes a procedure with the following
 specification:
+
 
 procedure S'Class'Read(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item : out T'Class)
+
 
 Dispatches to the subprogram denoted by the Read attribute of
 the specific type identified by the tag of Item. See 13.13.2.
@@ -635,12 +1144,15 @@ the specific type identified by the tag of Item. See 13.13.2.
       <DOC>
 For every subtype S'Class of a class-wide type T'Class:
 
+
 S'Class'Write denotes a procedure with the following
 specification:
+
 
 procedure S'Class'Write(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item   : in T'Class)
+
 
 Dispatches to the subprogram denoted by the Write attribute of
 the specific type identified by the tag of Item. See 13.13.2.
@@ -693,8 +1205,9 @@ result would be something like "GNAT Pro 7.2.0w (20090221)".
 For a prefix X that denotes an array subtype or array object
 (after any implicit dereference):
 
+
 Denotes the size in bits of components of the type of X. The
-value of this attribute is of type universal_integer. See 13.3.
+value of this attribute is of type universal_integer. See
       </DOC>
    </ATTRIBUTE>
 
@@ -702,19 +1215,23 @@ value of this attribute is of type universal_integer. See 13.3.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Compose denotes a function with the following specification:
+
 
 function S'Compose (Fraction : T;
 Exponent : universal_integer)
 return T
 
-Let v be the value Fraction x T'Machine_Radix(Exponent-k), where
-k is the normalized exponent of Fraction. If v is a machine
-number of the type T, or if |v| &gt;= T'Model_Small, the function
-yields v; otherwise, it yields either one of the machine numbers
-of the type T adjacent to v. Constraint_Error is optionally
-raised if v is outside the base range of S. A zero result has
-the sign of Fraction when S'Signed_Zeros is True. See A.5.3.
+
+Let v be the value Fraction x T'Machine_Radix(Exponent-k),
+where k is the normalized exponent of Fraction. If v is a
+machine number of the type T, or if |v| &gt;= T'Model_Small, the
+function yields v; otherwise, it yields either one of the
+machine numbers of the type T adjacent to v. Constraint_Error
+is optionally raised if v is outside the base range of S. A
+zero result has the sign of Fraction when S'Signed_Zeros is
+True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -723,8 +1240,10 @@ the sign of Fraction when S'Signed_Zeros is True. See A.5.3.
 For a prefix A that is of a discriminated type (after any
 implicit dereference):
 
-Yields the value True if A denotes a constant, a value, or a
-constrained variable, and False otherwise. See 3.7.2.
+
+Yields the value True if A denotes a constant, a value, a
+tagged object, or a constrained variable, and False otherwise.
+See 3.7.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -732,27 +1251,33 @@ constrained variable, and False otherwise. See 3.7.2.
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Copy_Sign denotes a function with the following specification:
+
+S'Copy_Sign denotes a function with the following
+specification:
+
 
 function S'Copy_Sign (Value, Sign : T)
 return T
 
+
 If the value of Value is nonzero, the function yields a result
-whose magnitude is that of Value and whose sign is that of Sign;
-otherwise, it yields the value zero. Constraint_Error is
-optionally raised if the result is outside the base range of S.
-A zero result has the sign of Sign when S'Signed_Zeros is True.
-See A.5.3.
+whose magnitude is that of Value and whose sign is that of
+Sign; otherwise, it yields the value zero. Constraint_Error is
+optionally raised if the result is outside the base range of
+S. A zero result has the sign of Sign when S'Signed_Zeros is
+True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "48" name = "Count" origin = "Ada RM" category = "variable">
       <DOC>
-For a prefix E that denotes an entry of a task or protected unit:
+For a prefix E that denotes an entry of a task or protected
+unit:
+
 
 Yields the number of calls presently queued on the entry E of
-the current instance of the unit. The value of this attribute is
-of the type universal_integer. See 9.9.
+the current instance of the unit. The value of this attribute
+is of the type universal_integer. See 9.9.
       </DOC>
    </ATTRIBUTE>
 
@@ -769,8 +1294,9 @@ construct the definition of `Default_Bit_Order' in package `System'.
       <DOC>
 For a prefix S that denotes a formal indefinite subtype:
 
-S'Definite yields True if the actual subtype corresponding to S
-is definite; otherwise it yields False. The value of this
+
+S'Definite yields True if the actual subtype corresponding to
+S is definite; otherwise, it yields False. The value of this
 attribute is of the predefined type Boolean. See 12.5.1.
       </DOC>
    </ATTRIBUTE>
@@ -778,6 +1304,7 @@ attribute is of the predefined type Boolean. See 12.5.1.
    <ATTRIBUTE id = "52" name = "Delta" origin = "Ada RM" category = "variable">
       <DOC>
 For every fixed point subtype S:
+
 
 S'Delta denotes the delta of the fixed point subtype S. The
 value of this attribute is of the type universal_real. See
@@ -788,13 +1315,14 @@ value of this attribute is of the type universal_real. See
       <DOC>
 For every subtype S of a floating point type T:
 
+
 Yields the value True if every value expressible in the form
 +- mantissa x T'Machine_Radix(T'Machine_Emin)
-where mantissa is a nonzero T'Machine_Mantissa-digit fraction in
-the number base T'Machine_Radix, the first digit of which is
-zero, is a machine number (see 3.5.7) of the type T; yields the
-value False otherwise. The value of this attribute is of the
-predefined type Boolean. See A.5.3.
+where mantissa is a nonzero T'Machine_Mantissa-digit fraction
+in the number base T'Machine_Radix, the first digit of which
+is zero, is a machine number (see 3.5.7) of the type T; yields
+the value False otherwise. The value of this attribute is of
+the predefined type Boolean. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -819,22 +1347,24 @@ Positive'Size + 2' or 64 bits.
 
    <ATTRIBUTE id = "56" name = "Digits" origin = "Ada RM" category = "variable">
       <DOC>
-For every decimal fixed point subtype S:
+For every floating point subtype S:
 
-S'Digits denotes the digits of the decimal fixed point subtype
-S, which corresponds to the number of decimal digits that are
-representable in objects of the subtype. The value of this
-attribute is of the type universal_integer. See 3.5.10.
+
+S'Digits denotes the requested decimal precision for the
+subtype S. The value of this attribute is of the type
+universal_integer. See 3.5.8.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "58" name = "Digits" origin = "Ada RM" category = "variable">
       <DOC>
-For every floating point subtype S:
+For every decimal fixed point subtype S:
 
-S'Digits denotes the requested decimal precision for the subtype
-S. The value of this attribute is of the type universal_integer.
-See 3.5.8.
+
+S'Digits denotes the digits of the decimal fixed point subtype
+S, which corresponds to the number of decimal digits that are
+representable in objects of the subtype. The value of this
+attribute is of the type universal_integer. See 3.5.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -976,10 +1506,14 @@ this attribute.
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Exponent denotes a function with the following specification:
+
+S'Exponent denotes a function with the following
+specification:
+
 
 function S'Exponent (X : T)
 return universal_integer
+
 
 The function yields the normalized exponent of X. See A.5.3.
       </DOC>
@@ -987,14 +1521,16 @@ The function yields the normalized exponent of X. See A.5.3.
 
    <ATTRIBUTE id = "64" name = "External_Tag" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a tagged type T (specific or class-wide):
+For every subtype S of a tagged type T (specific or
+class-wide):
+
 
 S'External_Tag denotes an external string representation for
-S'Tag; it is of the predefined type String. External_Tag may be
-specified for a specific tagged type via an
+S'Tag; it is of the predefined type String. External_Tag may
+be specified for a specific tagged type via an
 attribute_definition_clause; the expression of such a clause
 shall be static. The default external tag representation is
-implementation defined. See 3.9.2 and 13.13.2. See 13.3.
+implementation defined. See 13.13.2. See 13.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1002,6 +1538,7 @@ implementation defined. See 3.9.2 and 13.13.2. See 13.3.
       <DOC>
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
+
 
 A'First denotes the lower bound of the first index range; its
 type is the corresponding index type. See 3.6.2.
@@ -1012,8 +1549,9 @@ type is the corresponding index type. See 3.6.2.
       <DOC>
 For every scalar subtype S:
 
-S'First denotes the lower bound of the range of S. The value of
-this attribute is of the type of S. See 3.5.
+
+S'First denotes the lower bound of the range of S. The value
+of this attribute is of the type of S. See 3.5.
       </DOC>
    </ATTRIBUTE>
 
@@ -1022,8 +1560,9 @@ this attribute is of the type of S. See 3.5.
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
 
-A'First(N) denotes the lower bound of the N-th index range; its
-type is the corresponding index type. See 3.6.2.
+
+A'First(N) denotes the lower bound of the N-th index range;
+its type is the corresponding index type. See 3.6.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -1031,14 +1570,28 @@ type is the corresponding index type. See 3.6.2.
       <DOC>
 For a component C of a composite, non-array object R:
 
+
 If the nondefault bit ordering applies to the composite type,
-and if a component_clause specifies the placement of C, denotes
-the value given for the first_bit of the component_clause;
-otherwise, denotes the offset, from the start of the first of
-the storage elements occupied by C, of the first bit occupied by
-C. This offset is measured in bits. The first bit of a storage
-element is numbered zero. The value of this attribute is of the
-type universal_integer. See 13.5.2.
+and if a component_clause specifies the placement of C,
+denotes the value given for the first_bit of the
+component_clause; otherwise, denotes the offset, from the
+start of the first of the storage elements occupied by C, of
+the first bit occupied by C. This offset is measured in bits.
+The first bit of a storage element is numbered zero. The value
+of this attribute is of the type universal_integer. See
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "73.1/3" name = "First_Valid" origin = "Ada RM" category = "unknown">
+      <DOC>
+For every static discrete subtype S for which there exists at
+least one value belonging to S that satisfies any predicate of
+S:
+
+
+S'First_Valid denotes the smallest value that belongs to S and
+satisfies the predicate of S. The value of this attribute is
+of the type of S. See 3.5.5.
       </DOC>
    </ATTRIBUTE>
 
@@ -1067,15 +1620,18 @@ input-output functions for fixed-point values.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Floor denotes a function with the following specification:
+
 
 function S'Floor (X : T)
 return T
 
-The function yields the value Floor(X), i.e., the largest (most
-positive) integral value less than or equal to X. When X is
-zero, the result has the sign of X; a zero result otherwise has
-a positive sign. See A.5.3.
+
+The function yields the value Floor(X), i.e., the largest
+(most positive) integral value less than or equal to X. When X
+is zero, the result has the sign of X; a zero result otherwise
+has a positive sign. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1083,13 +1639,15 @@ a positive sign. See A.5.3.
       <DOC>
 For every fixed point subtype S:
 
-S'Fore yields the minimum number of characters needed before the
-decimal point for the decimal representation of any value of the
-subtype S, assuming that the representation does not include an
-exponent, but includes a one-character prefix that is either a
-minus sign or a space. (This minimum number does not include
-superfluous zeros or underlines, and is at least 2.) The value
-of this attribute is of the type universal_integer. See 3.5.10.
+
+S'Fore yields the minimum number of characters needed before
+the decimal point for the decimal representation of any value
+of the subtype S, assuming that the representation does not
+include an exponent, but includes a one-character prefix that
+is either a minus sign or a space. (This minimum number does
+not include superfluous zeros or underlines, and is at least
+) The value of this attribute is of the type
+universal_integer. See 3.5.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -1097,10 +1655,14 @@ of this attribute is of the type universal_integer. See 3.5.10.
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Fraction denotes a function with the following specification:
+
+S'Fraction denotes a function with the following
+specification:
+
 
 function S'Fraction (X : T)
 return T
+
 
 The function yields the value X x T'Machine_Radix(-k), where k
 is the normalized exponent of X. A zero result, which can only
@@ -1131,10 +1693,54 @@ has discriminants.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "83.1/3" name = "Has_Same_Storage" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix X that denotes an object:
+
+
+X'Has_Same_Storage denotes a function with the following
+specification:
+
+
+function X'Has_Same_Storage (Arg : any_type)
+return Boolean
+
+
+The actual parameter shall be a name that denotes an object.
+The object denoted by the actual parameter can be of any type.
+This function evaluates the names of the objects involved and
+returns True if the representation of the object denoted by
+the actual parameter occupies exactly the same bits as the
+representation of the object denoted by X; otherwise, it
+returns False. See 13.3.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "84" name = "Identity" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix T that is of a task type (after any implicit
 dereference):
+
+Yields a value of the type Task_Id that identifies the task
+denoted by T. See C.7.1.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "84/1" name = "Identity" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix E that denotes an exception:
+
+
+E'Identity returns the unique identity of the exception. The
+type of this attribute is Exception_Id. See 11.4.1.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "86" name = "Identity" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix T that is of a task type (after any implicit
+dereference):
+
 
 Yields a value of the type Task_Id that identifies the task
 denoted by T. See C.7.1.
@@ -1154,10 +1760,13 @@ type of this attribute is Exception_Id. See 11.4.1.
       <DOC>
 For every scalar subtype S:
 
+
 S'Image denotes a function with the following specification:
+
 
 function S'Image(Arg : S'Base)
 return String
+
 
 The function returns an image of the value of Arg as a String.
 See 3.5.
@@ -1189,11 +1798,14 @@ or used in an instantiation as a function parameter.
       <DOC>
 For every subtype S of a specific type T:
 
+
 S'Input denotes a function with the following specification:
+
 
 function S'Input(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class)
 return T
+
 
 S'Input reads and returns one value from Stream, using any
 bounds or discriminants written by a corresponding S'Output to
@@ -1248,6 +1860,7 @@ this attribute.
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
 
+
 A'Last denotes the upper bound of the first index range; its
 type is the corresponding index type. See 3.6.2.
       </DOC>
@@ -1256,6 +1869,7 @@ type is the corresponding index type. See 3.6.2.
    <ATTRIBUTE id = "102" name = "Last" origin = "Ada RM" category = "variable">
       <DOC>
 For every scalar subtype S:
+
 
 S'Last denotes the upper bound of the range of S. The value of
 this attribute is of the type of S. See 3.5.
@@ -1267,6 +1881,7 @@ this attribute is of the type of S. See 3.5.
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
 
+
 A'Last(N) denotes the upper bound of the N-th index range; its
 type is the corresponding index type. See 3.6.2.
       </DOC>
@@ -1276,13 +1891,28 @@ type is the corresponding index type. See 3.6.2.
       <DOC>
 For a component C of a composite, non-array object R:
 
+
 If the nondefault bit ordering applies to the composite type,
-and if a component_clause specifies the placement of C, denotes
-the value given for the last_bit of the component_clause;
-otherwise, denotes the offset, from the start of the first of
-the storage elements occupied by C, of the last bit occupied by
-C. This offset is measured in bits. The value of this attribute
-is of the type universal_integer. See 13.5.2.
+and if a component_clause specifies the placement of C,
+denotes the value given for the last_bit of the
+component_clause; otherwise, denotes the offset, from the
+start of the first of the storage elements occupied by C, of
+the last bit occupied by C. This offset is measured in bits.
+The value of this attribute is of the type universal_integer.
+See 13.5.2.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "107.1/3" name = "Last_Valid" origin = "Ada RM" category = "unknown">
+      <DOC>
+For every static discrete subtype S for which there exists at
+least one value belonging to S that satisfies any predicate of
+S:
+
+
+S'Last_Valid denotes the largest value that belongs to S and
+satisfies the predicate of S. The value of this attribute is
+of the type of S. See 3.5.5.
       </DOC>
    </ATTRIBUTE>
 
@@ -1290,21 +1920,27 @@ is of the type universal_integer. See 13.5.2.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Leading_Part denotes a function with the following
 specification:
+
 
 function S'Leading_Part (X : T;
 Radix_Digits : universal_integer)
 return T
 
+
 Let v be the value T'Machine_Radix(k-Radix_Digits), where k is
 the normalized exponent of X. The function yields the value
 
-Floor(X/v) x v, when X is nonnegative and Radix_Digits is
+
+* Floor(X/v) x v, when X is nonnegative and Radix_Digits is
 positive;
 
-Ceiling(X/v) x v, when X is negative and Radix_Digits is
+
+* Ceiling(X/v) x v, when X is negative and Radix_Digits is
 positive.
+
 
 Constraint_Error is raised when Radix_Digits is zero or
 negative. A zero result, which can only occur when X is zero,
@@ -1317,6 +1953,7 @@ has the sign of X. See A.5.3.
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
 
+
 A'Length denotes the number of values of the first index range
 (zero for a null range); its type is universal_integer. See
       </DOC>
@@ -1327,8 +1964,10 @@ A'Length denotes the number of values of the first index range
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
 
-A'Length(N) denotes the number of values of the N-th index range
-(zero for a null range); its type is universal_integer. See
+
+A'Length(N) denotes the number of values of the N-th index
+range (zero for a null range); its type is universal_integer.
+See 3.6.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -1382,18 +2021,21 @@ pragmas are ignored or disabled.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Machine denotes a function with the following specification:
+
 
 function S'Machine (X : T)
 return T
 
+
 If X is a machine number of the type T, the function yields X;
 otherwise, it yields the value obtained by rounding or
 truncating X to either one of the adjacent machine numbers of
-the type T. Constraint_Error is raised if rounding or truncating
-X to the precision of the machine numbers results in a value
-outside the base range of S. A zero result has the sign of X
-when S'Signed_Zeros is True. See A.5.3.
+the type T. Constraint_Error is raised if rounding or
+truncating X to the precision of the machine numbers results
+in a value outside the base range of S. A zero result has the
+sign of X when S'Signed_Zeros is True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1401,11 +2043,12 @@ when S'Signed_Zeros is True. See A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 Yields the largest (most positive) value of exponent such that
-every value expressible in the canonical form (for the type T),
-having a mantissa of T'Machine_Mantissa digits, is a machine
-number (see 3.5.7) of the type T. This attribute yields a value
-of the type universal_integer. See A.5.3.
+every value expressible in the canonical form (for the type
+T), having a mantissa of T'Machine_Mantissa digits, is a
+machine number (see 3.5.7) of the type T. This attribute
+yields a value of the type universal_integer. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1413,11 +2056,12 @@ of the type universal_integer. See A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
-Yields the smallest (most negative) value of exponent such that
-every value expressible in the canonical form (for the type T),
-having a mantissa of T'Machine_Mantissa digits, is a machine
-number (see 3.5.7) of the type T. This attribute yields a value
-of the type universal_integer. See A.5.3.
+
+Yields the smallest (most negative) value of exponent such
+that every value expressible in the canonical form (for the
+type T), having a mantissa of T'Machine_Mantissa digits, is a
+machine number (see 3.5.7) of the type T. This attribute
+yields a value of the type universal_integer. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1425,52 +2069,46 @@ of the type universal_integer. See A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
-Yields the largest value of p such that every value expressible
-in the canonical form (for the type T), having a p-digit
-mantissa and an exponent between T'Machine_Emin and
+
+Yields the largest value of p such that every value
+expressible in the canonical form (for the type T), having a
+p-digit mantissa and an exponent between T'Machine_Emin and
 T'Machine_Emax, is a machine number (see 3.5.7) of the type T.
-This attribute yields a value of the type universal_integer. See
-A.5.3.
+This attribute yields a value of the type universal_integer.
+See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "129" name = "Machine_Overflows" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a fixed point type T:
+For every subtype S of a floating point type T:
+
 
 Yields the value True if overflow and divide-by-zero are
 detected and reported by raising Constraint_Error for every
-predefined operation that yields a result of the type T; yields
-the value False otherwise. The value of this attribute is of the
-predefined type Boolean. See A.5.4.
+predefined operation that yields a result of the type T;
+yields the value False otherwise. The value of this attribute
+is of the predefined type Boolean. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "131" name = "Machine_Overflows" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a floating point type T:
+For every subtype S of a fixed point type T:
+
 
 Yields the value True if overflow and divide-by-zero are
 detected and reported by raising Constraint_Error for every
-predefined operation that yields a result of the type T; yields
-the value False otherwise. The value of this attribute is of the
-predefined type Boolean. See A.5.3.
+predefined operation that yields a result of the type T;
+yields the value False otherwise. The value of this attribute
+is of the predefined type Boolean. See A.5.4.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "133" name = "Machine_Radix" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a fixed point type T:
-
-Yields the radix of the hardware representation of the type T.
-The value of this attribute is of the type universal_integer.
-See A.5.4.
-      </DOC>
-   </ATTRIBUTE>
-
-   <ATTRIBUTE id = "135" name = "Machine_Radix" origin = "Ada RM" category = "variable">
-      <DOC>
 For every subtype S of a floating point type T:
+
 
 Yields the radix of the hardware representation of the type T.
 The value of this attribute is of the type universal_integer.
@@ -1478,44 +2116,60 @@ See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "135" name = "Machine_Radix" origin = "Ada RM" category = "variable">
+      <DOC>
+For every subtype S of a fixed point type T:
+
+
+Yields the radix of the hardware representation of the type T.
+The value of this attribute is of the type universal_integer.
+See A.5.4.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "136.1/2" name = "Machine_Rounding" origin = "Ada RM" category = "function">
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Machine_Rounding denotes a function with the following
 specification:
 
+
 function S'Machine_Rounding (X : T)
 return T
+
 
 The function yields the integral value nearest to X. If X lies
 exactly halfway between two integers, one of those integers is
 returned, but which of them is returned is unspecified. A zero
 result has the sign of X when S'Signed_Zeros is True. This
-function provides access to the rounding behavior which is most
-efficient on the target processor. See A.5.3.
+function provides access to the rounding behavior which is
+most efficient on the target processor. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "137" name = "Machine_Rounds" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a fixed point type T:
+For every subtype S of a floating point type T:
+
 
 Yields the value True if rounding is performed on inexact
 results of every predefined operation that yields a result of
-the type T; yields the value False otherwise. The value of this
-attribute is of the predefined type Boolean. See A.5.4.
+the type T; yields the value False otherwise. The value of
+this attribute is of the predefined type Boolean. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "139" name = "Machine_Rounds" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a floating point type T:
+For every subtype S of a fixed point type T:
+
 
 Yields the value True if rounding is performed on inexact
 results of every predefined operation that yields a result of
-the type T; yields the value False otherwise. The value of this
-attribute is of the predefined type Boolean. See A.5.3.
+the type T; yields the value False otherwise. The value of
+this attribute is of the predefined type Boolean. See A.5.4.
       </DOC>
    </ATTRIBUTE>
 
@@ -1538,13 +2192,28 @@ this attribute.
       <DOC>
 For every scalar subtype S:
 
+
 S'Max denotes a function with the following specification:
+
 
 function S'Max(Left, Right : S'Base)
 return S'Base
 
+
 The function returns the greater of the values of the two
 parameters. See 3.5.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "144.1/3" name = "Max_Alignment_For_Allocation" origin = "Ada RM" category = "unknown">
+      <DOC>
+For every subtype S:
+
+
+Denotes the maximum value for Alignment that could be
+requested by the implementation via Allocate for an access
+type whose designated subtype is S. The value of this
+attribute is of type universal_integer. See 13.11.1.
       </DOC>
    </ATTRIBUTE>
 
@@ -1566,15 +2235,11 @@ provides the same value as `System.Max_Priority'.
       <DOC>
 For every subtype S:
 
+
 Denotes the maximum value for Size_In_Storage_Elements that
 could be requested by the implementation via Allocate for an
-access type whose designated subtype is S. For a type with
-access discriminants, if the implementation allocates space for
-a coextension in the same pool as that of the object having the
-access discriminant, then this accounts for any calls on
-Allocate that could be performed to provide space for such
-coextensions. The value of this attribute is of type
-universal_integer. See 13.11.1.
+access type whose designated subtype is S. The value of this
+attribute is of type universal_integer. See 13.11.1.
       </DOC>
    </ATTRIBUTE>
 
@@ -1624,10 +2289,13 @@ implementations.
       <DOC>
 For every scalar subtype S:
 
+
 S'Min denotes a function with the following specification:
+
 
 function S'Min(Left, Right : S'Base)
 return S'Base
+
 
 The function returns the lesser of the values of the two
 parameters. See 3.5.
@@ -1638,10 +2306,13 @@ parameters. See 3.5.
       <DOC>
 For every modular subtype S:
 
+
 S'Mod denotes a function with the following specification:
+
 
 function S'Mod (Arg : universal_integer)
 return S'Base
+
 
 This function returns Arg mod S'Modulus, as a value of the
 type of S. See 3.5.4.
@@ -1652,10 +2323,13 @@ type of S. See 3.5.4.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Model denotes a function with the following specification:
+
 
 function S'Model (X : T)
 return T
+
 
 If the Numerics Annex is not supported, the meaning of this
 attribute is implementation defined; see G.2.2 for the
@@ -1668,18 +2342,20 @@ Numerics Annex. See A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
-If the Numerics Annex is not supported, this attribute yields an
-implementation defined value that is greater than or equal to
-the value of T'Machine_Emin. See G.2.2 for further requirements
-that apply to implementations supporting the Numerics Annex. The
-value of this attribute is of the type universal_integer. See
-A.5.3.
+
+If the Numerics Annex is not supported, this attribute yields
+an implementation defined value that is greater than or equal
+to the value of T'Machine_Emin. See G.2.2 for further
+requirements that apply to implementations supporting the
+Numerics Annex. The value of this attribute is of the type
+universal_integer. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "157" name = "Model_Epsilon" origin = "Ada RM" category = "variable">
       <DOC>
 For every subtype S of a floating point type T:
+
 
 Yields the value T'Machine_Radix(1 - T'Model_Mantissa). The
 value of this attribute is of the type universal_real. See
@@ -1691,14 +2367,15 @@ A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
-If the Numerics Annex is not supported, this attribute yields an
-implementation defined value that is greater than or equal to
-Ceiling(d x log(10) / log(T'Machine_Radix)) + 1, where d is the
-requested decimal precision of T, and less than or equal to the
-value of T'Machine_Mantissa. See G.2.2 for further requirements
-that apply to implementations supporting the Numerics Annex. The
-value of this attribute is of the type universal_integer. See
-A.5.3.
+
+If the Numerics Annex is not supported, this attribute yields
+an implementation defined value that is greater than or equal
+to Ceiling(d x log(10) / log(T'Machine_Radix)) + 1, where d is
+the requested decimal precision of T, and less than or equal
+to the value of T'Machine_Mantissa. See G.2.2 for further
+requirements that apply to implementations supporting the
+Numerics Annex. The value of this attribute is of the type
+universal_integer. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1706,8 +2383,9 @@ A.5.3.
       <DOC>
 For every subtype S of a floating point type T:
 
-Yields the value T'Machine_Radix(T'Model_Emin - 1). The value of
-this attribute is of the type universal_real. See A.5.3.
+
+Yields the value T'Machine_Radix(T'Model_Emin - 1). The value
+of this attribute is of the type universal_real. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1715,8 +2393,9 @@ this attribute is of the type universal_real. See A.5.3.
       <DOC>
 For every modular subtype S:
 
-S'Modulus yields the modulus of the type of S, as a value of the
-type universal_integer. See 3.5.4.
+
+S'Modulus yields the modulus of the type of S, as a value of
+the type universal_integer. See 3.5.4.
       </DOC>
    </ATTRIBUTE>
 
@@ -1802,18 +2481,60 @@ the same.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "164.1/3" name = "Old" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix X that denotes an object of a nonlimited type:
+
+
+For each X'Old in a postcondition expression that is enabled,
+a constant is implicitly declared at the beginning of the
+subprogram or entry. The constant is of the type of X and is
+initialized to the result of evaluating X (as an expression)
+at the point of the constant declaration. The value of X'Old
+in the postcondition expression is the value of this constant;
+the type of X'Old is the type of X. These implicit constant
+declarations occur in an arbitrary order. See 6.1.1.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "169" name = "Output" origin = "Ada RM" category = "procedure">
       <DOC>
 For every subtype S of a specific type T:
 
+
 S'Output denotes a procedure with the following specification:
+
 
 procedure S'Output(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item : in T)
 
+
 S'Output writes the value of Item to Stream, including any
 bounds or discriminants. See 13.13.2.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "172.1/3" name = "Overlaps_Storage" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix X that denotes an object:
+
+
+X'Overlaps_Storage denotes a function with the following
+specification:
+
+
+function X'Overlaps_Storage (Arg : any_type)
+return Boolean
+
+
+The actual parameter shall be a name that denotes an object.
+The object denoted by the actual parameter can be of any type.
+This function evaluates the names of the objects involved and
+returns True if the representation of the object denoted by
+the actual parameter shares at least one bit with the
+representation of the object denoted by X; otherwise, it
+returns False. See 13.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -1823,10 +2544,11 @@ For a prefix D that denotes a library-level declaration,
 excepting a declaration of or within a declared-pure library
 unit:
 
+
 Denotes a value of the type universal_integer that identifies
 the partition in which D was elaborated. If D denotes the
-declaration of a remote call interface library unit (see E.2.3)
-the given partition is the one where the body of D was
+declaration of a remote call interface library unit (see
+E.2.3) the given partition is the one where the body of D was
 elaborated. See E.1.
       </DOC>
    </ATTRIBUTE>
@@ -1861,10 +2583,13 @@ object created by `new', `PTR.ALL'Pool_Address' is what is passed to
       <DOC>
 For every discrete subtype S:
 
+
 S'Pos denotes a function with the following specification:
+
 
 function S'Pos(Arg : S'Base)
 return universal_integer
+
 
 This function returns the position number of the value of Arg,
 as a value of type universal_integer. See 3.5.5.
@@ -1875,12 +2600,13 @@ as a value of type universal_integer. See 3.5.5.
       <DOC>
 For a component C of a composite, non-array object R:
 
+
 If the nondefault bit ordering applies to the composite type,
-and if a component_clause specifies the placement of C, denotes
-the value given for the position of the component_clause;
-otherwise, denotes the same value as R.C'Address - R'Address.
-The value of this attribute is of the type universal_integer.
-See 13.5.2.
+and if a component_clause specifies the placement of C,
+denotes the value given for the position of the
+component_clause; otherwise, denotes the same value as
+R.C'Address - R'Address. The value of this attribute is of the
+type universal_integer. See 13.5.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -1888,10 +2614,13 @@ See 13.5.2.
       <DOC>
 For every scalar subtype S:
 
+
 S'Pred denotes a function with the following specification:
+
 
 function S'Pred(Arg : S'Base)
 return S'Base
+
 
 For an enumeration type, the function returns the value whose
 position number is one less than that of the value of Arg;
@@ -1910,11 +2639,12 @@ machine number. See 3.5.
       <DOC>
 For a prefix P that denotes a protected object:
 
+
 Denotes a non-aliased component of the protected object P.
 This component is of type System.Any_Priority and its value is
-the priority of P. P'Priority denotes a variable if and only if
-P denotes a variable. A reference to this attribute shall appear
-only within the body of P. See D.5.2.
+the priority of P. P'Priority denotes a variable if and only
+if P denotes a variable. A reference to this attribute shall
+appear only within the body of P. See D.5.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -1922,6 +2652,7 @@ only within the body of P. See D.5.2.
       <DOC>
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
+
 
 A'Range is equivalent to the range A'First .. A'Last, except
 that the prefix A is only evaluated once. See 3.6.2.
@@ -1932,7 +2663,8 @@ that the prefix A is only evaluated once. See 3.6.2.
       <DOC>
 For every scalar subtype S:
 
-S'Range is equivalent to the range S'First .. S'Last. See 3.5.
+
+S'Range is equivalent to the range S'First .. S'Last. See
       </DOC>
    </ATTRIBUTE>
 
@@ -1940,6 +2672,7 @@ S'Range is equivalent to the range S'First .. S'Last. See 3.5.
       <DOC>
 For a prefix A that is of an array type (after any implicit
 dereference), or denotes a constrained array subtype:
+
 
 A'Range(N) is equivalent to the range A'First(N) .. A'Last(N),
 except that the prefix A is only evaluated once. See 3.6.2.
@@ -1960,11 +2693,14 @@ subtype of a one dimensional array always gives the same result as
       <DOC>
 For every subtype S of a specific type T:
 
+
 S'Read denotes a procedure with the following specification:
+
 
 procedure S'Read(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item : out T)
+
 
 S'Read reads the value of Item from Stream. See 13.13.2.
       </DOC>
@@ -1979,10 +2715,14 @@ S'Read reads the value of Item from Stream. See 13.13.2.
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Remainder denotes a function with the following specification:
+
+S'Remainder denotes a function with the following
+specification:
+
 
 function S'Remainder (X, Y : T)
 return T
+
 
 For nonzero Y, let v be the value X - n x Y, where n is the
 integer nearest to the exact value of X/Y; if |n - X/Y| = 1/2,
@@ -2061,17 +2801,39 @@ Postcondition.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "202.1/3" name = "Result" origin = "Ada RM" category = "unknown">
+      <DOC>
+For a prefix F that denotes a function declaration:
+
+
+Within a postcondition expression for function F, denotes the
+result object of the function. The type of this attribute is
+that of the function result except within a Post'Class
+postcondition expression for a function with a controlling
+result or with a controlling access result. For a controlling
+result, the type of the attribute is T'Class, where T is the
+function result type. For a controlling access result, the
+type of the attribute is an anonymous access type whose
+designated type is T'Class, where T is the designated type of
+the function result type. See 6.1.1.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "203" name = "Round" origin = "Ada RM" category = "function">
       <DOC>
 For every decimal fixed point subtype S:
 
+
 S'Round denotes a function with the following specification:
+
 
 function S'Round(X : universal_real)
 return S'Base
 
-The function returns the value obtained by rounding X (away from
-, if X is midway between two values of the type of S). See
+
+The function returns the value obtained by rounding X (away
+from 0, if X is midway between two values of the type of S).
+See 3.5.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -2079,15 +2841,19 @@ The function returns the value obtained by rounding X (away from
       <DOC>
 For every subtype S of a floating point type T:
 
-S'Rounding denotes a function with the following specification:
+
+S'Rounding denotes a function with the following
+specification:
+
 
 function S'Rounding (X : T)
 return T
 
+
 The function yields the integral value nearest to X, rounding
-away from zero if X lies exactly halfway between two integers. A
-zero result has the sign of X when S'Signed_Zeros is True. See
-A.5.3.
+away from zero if X lies exactly halfway between two integers.
+A zero result has the sign of X when S'Signed_Zeros is True.
+See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -2103,9 +2869,10 @@ semantics of this attribute.
       <DOC>
 For every subtype S of a floating point type T:
 
-Yields the lower bound of the safe range (see 3.5.7) of the type
-T. If the Numerics Annex is not supported, the value of this
-attribute is implementation defined; see G.2.2 for the
+
+Yields the lower bound of the safe range (see 3.5.7) of the
+type T. If the Numerics Annex is not supported, the value of
+this attribute is implementation defined; see G.2.2 for the
 definition that applies to implementations supporting the
 Numerics Annex. The value of this attribute is of the type
 universal_real. See A.5.3.
@@ -2124,9 +2891,10 @@ semantics of this attribute.
       <DOC>
 For every subtype S of a floating point type T:
 
-Yields the upper bound of the safe range (see 3.5.7) of the type
-T. If the Numerics Annex is not supported, the value of this
-attribute is implementation defined; see G.2.2 for the
+
+Yields the upper bound of the safe range (see 3.5.7) of the
+type T. If the Numerics Annex is not supported, the value of
+this attribute is implementation defined; see G.2.2 for the
 definition that applies to implementations supporting the
 Numerics Annex. The value of this attribute is of the type
 universal_real. See A.5.3.
@@ -2227,11 +2995,12 @@ machine  scalar.
       <DOC>
 For every decimal fixed point subtype S:
 
-S'Scale denotes the scale of the subtype S, defined as the value
-N such that S'Delta = 10.0**(-N). The scale indicates the
-position of the point relative to the rightmost significant
-digits of values of subtype S. The value of this attribute is of
-the type universal_integer. See 3.5.10.
+
+S'Scale denotes the scale of the subtype S, defined as the
+value N such that S'Delta = 10.0**(-N). The scale indicates
+the position of the point relative to the rightmost
+significant digits of values of subtype S. The value of this
+attribute is of the type universal_integer. See 3.5.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -2239,18 +3008,21 @@ the type universal_integer. See 3.5.10.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Scaling denotes a function with the following specification:
+
 
 function S'Scaling (X : T;
 Adjustment : universal_integer)
 return T
 
+
 Let v be the value X x T'Machine_Radix(Adjustment). If v is a
 machine number of the type T, or if |v| &gt;= T'Model_Small, the
 function yields v; otherwise, it yields either one of the
-machine numbers of the type T adjacent to v. Constraint_Error is
-optionally raised if v is outside the base range of S. A zero
-result has the sign of X when S'Signed_Zeros is True. See
+machine numbers of the type T adjacent to v. Constraint_Error
+is optionally raised if v is outside the base range of S. A
+zero result has the sign of X when S'Signed_Zeros is True. See
 A.5.3.
       </DOC>
    </ATTRIBUTE>
@@ -2258,6 +3030,7 @@ A.5.3.
    <ATTRIBUTE id = "221" name = "Signed_Zeros" origin = "Ada RM" category = "variable">
       <DOC>
 For every subtype S of a floating point type T:
+
 
 Yields the value True if the hardware representation for the
 type T has the capability of representing both positively and
@@ -2327,15 +3100,20 @@ section 13.11.2 of the Ada Reference Manual, except that the term
       <DOC>
 For every subtype S:
 
-If S is definite, denotes the size (in bits) that the
-implementation would choose for the following objects of subtype
-S:
 
-A record component of subtype S when the record type is
+If S is definite, denotes the size (in bits) that the
+implementation would choose for the following objects of
+subtype S:
+
+
+* A record component of subtype S when the record type is
 packed.
 
-The formal parameter of an instance of Unchecked_Conversion
-that converts from subtype S to some other subtype.
+
+* The formal parameter of an instance of
+Unchecked_Conversion that converts from subtype S to some
+other subtype.
+
 
 If S is indefinite, the meaning is implementation defined. The
 value of this attribute is of the type universal_integer. See
@@ -2345,6 +3123,7 @@ value of this attribute is of the type universal_integer. See
    <ATTRIBUTE id = "228/1" name = "Size" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix X that denotes an object:
+
 
 Denotes the size in bits of the representation of the object.
 The value of this attribute is of the type universal_integer.
@@ -2366,6 +3145,7 @@ attribute when applied to floating-point types.
       <DOC>
 For every fixed point subtype S:
 
+
 S'Small denotes the small of the type of S. The value of this
 attribute is of the type universal_real. See 3.5.10.
       </DOC>
@@ -2374,6 +3154,7 @@ attribute is of the type universal_real. See 3.5.10.
    <ATTRIBUTE id = "232" name = "Storage_Pool" origin = "Ada RM" category = "variable">
       <DOC>
 For every access-to-object subtype S:
+
 
 Denotes the storage pool of the type of S. The type of this
 attribute is Root_Storage_Pool'Class. See 13.11.
@@ -2384,9 +3165,10 @@ attribute is Root_Storage_Pool'Class. See 13.11.
       <DOC>
 For every access-to-object subtype S:
 
-Yields the result of calling Storage_Size(S'Storage_Pool), which
-is intended to be a measure of the number of storage elements
-reserved for the pool. The type of this attribute is
+
+Yields the result of calling Storage_Size(S'Storage_Pool),
+which is intended to be a measure of the number of storage
+elements reserved for the pool. The type of this attribute is
 universal_integer. See 13.11.
       </DOC>
    </ATTRIBUTE>
@@ -2396,12 +3178,13 @@ universal_integer. See 13.11.
 For a prefix T that denotes a task object (after any implicit
 dereference):
 
+
 Denotes the number of storage elements reserved for the task.
 The value of this attribute is of the type universal_integer.
-The Storage_Size includes the size of the task's stack, if any.
-The language does not specify whether or not it includes other
-storage associated with the task (such as the "task control
-block" used by some implementations.) See 13.3.
+The Storage_Size includes the size of the task's stack, if
+any. The language does not specify whether or not it includes
+other storage associated with the task (such as the "task
+control block" used by some implementations.) See 13.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -2421,6 +3204,25 @@ subtype S. Hence, the number of stream elements required per
 item of elementary type T is:
 
 T'Stream_Size / Ada.Streams.Stream_Element'Size
+
+The value of this attribute is of type universal_integer and
+is a multiple of Stream_Element'Size. See 13.13.2.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "237.1/3" name = "Stream_Size" origin = "Ada RM" category = "unknown">
+      <DOC>
+For every subtype S of an elementary type T:
+
+
+Denotes the number of bits read from or written to a stream by
+the default implementations of S'Read and S'Write. Hence, the
+number of stream elements required per item of elementary type
+T is:
+
+
+T'Stream_Size / Ada.Streams.Stream_Element'Size
+
 
 The value of this attribute is of type universal_integer and
 is a multiple of Stream_Element'Size. See 13.13.2.
@@ -2452,21 +3254,24 @@ implicit dependency on this unit.
       <DOC>
 For every scalar subtype S:
 
+
 S'Succ denotes a function with the following specification:
+
 
 function S'Succ(Arg : S'Base)
 return S'Base
+
 
 For an enumeration type, the function returns the value whose
 position number is one more than that of the value of Arg;
 Constraint_Error is raised if there is no such value of the
 type. For an integer type, the function returns the result of
 adding one to the value of Arg. For a fixed point type, the
-function returns the result of adding small to the value of Arg.
-For a floating point type, the function returns the machine
-number (as defined in 3.5.7) immediately above the value of Arg;
-Constraint_Error is raised if there is no such machine number.
-See 3.5.
+function returns the result of adding small to the value of
+Arg. For a floating point type, the function returns the
+machine number (as defined in 3.5.7) immediately above the
+value of Arg; Constraint_Error is raised if there is no such
+machine number. See 3.5.
       </DOC>
    </ATTRIBUTE>
 
@@ -2483,21 +3288,24 @@ alignment request is larger than this value.
 
    <ATTRIBUTE id = "242" name = "Tag" origin = "Ada RM" category = "variable">
       <DOC>
-For a prefix X that is of a class-wide tagged type (after any
-implicit dereference):
+For every subtype S of a tagged type T (specific or
+class-wide):
 
-X'Tag denotes the tag of X. The value of this attribute is of
-type Tag. See 3.9.
+
+S'Tag denotes the tag of the type T (or if T is class-wide,
+the tag of the root type of the corresponding class). The
+value of this attribute is of type Tag. See 3.9.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "244" name = "Tag" origin = "Ada RM" category = "variable">
       <DOC>
-For every subtype S of a tagged type T (specific or class-wide):
+For a prefix X that is of a class-wide tagged type (after any
+implicit dereference):
 
-S'Tag denotes the tag of the type T (or if T is class-wide, the
-tag of the root type of the corresponding class). The value of
-this attribute is of type Tag. See 3.9.
+
+X'Tag denotes the tag of X. The value of this attribute is of
+type Tag. See 3.9.
       </DOC>
    </ATTRIBUTE>
 
@@ -2515,6 +3323,7 @@ windows yields "i586-pc-mingw32msv").
       <DOC>
 For a prefix T that is of a task type (after any implicit
 dereference):
+
 
 Yields the value True if the task denoted by T is terminated,
 and False otherwise. The value of this attribute is of the
@@ -2549,14 +3358,17 @@ manner (e.g. -1 means the same as 16#FFFF_FFFF# on a 32 bits machine).
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Truncation denotes a function with the following
 specification:
+
 
 function S'Truncation (X : T)
 return T
 
-The function yields the value Ceiling(X) when X is negative, and
-Floor(X) otherwise. A zero result has the sign of X when
+
+The function yields the value Ceiling(X) when X is negative,
+and Floor(X) otherwise. A zero result has the sign of X when
 S'Signed_Zeros is True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
@@ -2601,16 +3413,19 @@ on how this attribute is used in the implementation.
       <DOC>
 For every subtype S of a floating point type T:
 
+
 S'Unbiased_Rounding denotes a function with the following
 specification:
+
 
 function S'Unbiased_Rounding (X : T)
 return T
 
+
 The function yields the integral value nearest to X, rounding
 toward the even integer if X lies exactly halfway between two
-integers. A zero result has the sign of X when S'Signed_Zeros is
-True. See A.5.3.
+integers. A zero result has the sign of X when S'Signed_Zeros
+is True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -2618,10 +3433,11 @@ True. See A.5.3.
       <DOC>
 For a prefix X that denotes an aliased view of an object:
 
+
 All rules and semantics that apply to X'Access (see 3.10.2)
-apply also to X'Unchecked_Access, except that, for the purposes
-of accessibility rules and checks, it is as if X were declared
-immediately within a library package. See 13.10.
+apply also to X'Unchecked_Access, except that, for the
+purposes of accessibility rules and checks, it is as if X were
+declared immediately within a library package. See 13.10.
       </DOC>
    </ATTRIBUTE>
 
@@ -2754,10 +3570,13 @@ corresponding type.
       <DOC>
 For every discrete subtype S:
 
+
 S'Val denotes a function with the following specification:
+
 
 function S'Val(Arg : universal_integer)
 return S'Base
+
 
 This function returns a value of the type of S whose position
 number equals the value of Arg. See 3.5.5.
@@ -2766,12 +3585,14 @@ number equals the value of Arg. See 3.5.5.
 
    <ATTRIBUTE id = "262" name = "Valid" origin = "Ada RM" category = "variable">
       <DOC>
-For a prefix X that denotes a scalar object (after any implicit
-dereference):
+For a prefix X that denotes a scalar object (after any
+implicit dereference):
 
-Yields True if and only if the object denoted by X is normal and
-has a valid representation. The value of this attribute is of
-the predefined type Boolean. See 13.9.2.
+
+Yields True if and only if the object denoted by X is normal,
+has a valid representation, and the predicate of the nominal
+subtype of X evaluates to True. The value of this attribute is
+of the predefined type Boolean. See 13.9.2.
       </DOC>
    </ATTRIBUTE>
 
@@ -2801,10 +3622,13 @@ undiscriminated protected type).
       <DOC>
 For every scalar subtype S:
 
+
 S'Value denotes a function with the following specification:
+
 
 function S'Value(Arg : String)
 return S'Base
+
 
 This function returns a value given an image of the value as a
 String, ignoring any leading or trailing spaces. See 3.5.
@@ -2823,9 +3647,10 @@ of the given subtype.  It is the same as `TYPE'Size', but, unlike
       <DOC>
 For a prefix P that statically denotes a program unit:
 
-Yields a value of the predefined type String that identifies the
-version of the compilation unit that contains the declaration of
-the program unit. See E.3.
+
+Yields a value of the predefined type String that identifies
+the version of the compilation unit that contains the
+declaration of the program unit. See E.3.
       </DOC>
    </ATTRIBUTE>
 
@@ -2841,11 +3666,14 @@ constructing the definition of this type in package `Interfaces.C'.
       <DOC>
 For every scalar subtype S:
 
+
 S'Wide_Image denotes a function with the following
 specification:
 
+
 function S'Wide_Image(Arg : S'Base)
 return Wide_String
+
 
 The function returns an image of the value of Arg as a
 Wide_String. See 3.5.
@@ -2856,14 +3684,17 @@ Wide_String. See 3.5.
       <DOC>
 For every scalar subtype S:
 
+
 S'Wide_Value denotes a function with the following
 specification:
+
 
 function S'Wide_Value(Arg : Wide_String)
 return S'Base
 
+
 This function returns a value given an image of the value as a
-Wide_String, ignoring any leading or trailing spaces. See 3.5.
+Wide_String, ignoring any leading or trailing spaces. See
       </DOC>
    </ATTRIBUTE>
 
@@ -2871,11 +3702,14 @@ Wide_String, ignoring any leading or trailing spaces. See 3.5.
       <DOC>
 For every scalar subtype S:
 
+
 S'Wide_Wide_Image denotes a function with the following
 specification:
 
+
 function S'Wide_Wide_Image(Arg : S'Base)
 return Wide_Wide_String
+
 
 The function returns an image of the value of Arg, that is, a
 sequence of characters representing the value in display form.
@@ -2887,11 +3721,14 @@ See 3.5.
       <DOC>
 For every scalar subtype S:
 
+
 S'Wide_Wide_Value denotes a function with the following
 specification:
 
+
 function S'Wide_Wide_Value(Arg : Wide_Wide_String)
 return S'Base
+
 
 This function returns a value given an image of the value as a
 Wide_Wide_String, ignoring any leading or trailing spaces. See
@@ -2902,16 +3739,18 @@ Wide_Wide_String, ignoring any leading or trailing spaces. See
       <DOC>
 For every scalar subtype S:
 
+
 S'Wide_Wide_Width denotes the maximum length of a
 Wide_Wide_String returned by S'Wide_Wide_Image over all values
-of the subtype S. It denotes zero for a subtype that has a null
-range. Its type is universal_integer. See 3.5.
+of the subtype S. It denotes zero for a subtype that has a
+null range. Its type is universal_integer. See 3.5.
       </DOC>
    </ATTRIBUTE>
 
    <ATTRIBUTE id = "278" name = "Wide_Width" origin = "Ada RM" category = "variable">
       <DOC>
 For every scalar subtype S:
+
 
 S'Wide_Width denotes the maximum length of a Wide_String
 returned by S'Wide_Image over all values of the subtype S. It
@@ -2924,10 +3763,11 @@ universal_integer. See 3.5.
       <DOC>
 For every scalar subtype S:
 
+
 S'Width denotes the maximum length of a String returned by
-S'Image over all values of the subtype S. It denotes zero for a
-subtype that has a null range. Its type is universal_integer.
-See 3.5.
+S'Image over all values of the subtype S. It denotes zero for
+a subtype that has a null range. Its type is
+universal_integer. See 3.5.
       </DOC>
    </ATTRIBUTE>
 
@@ -2942,11 +3782,14 @@ provides the value `System.Word_Size'.
       <DOC>
 For every subtype S of a specific type T:
 
+
 S'Write denotes a procedure with the following specification:
+
 
 procedure S'Write(
 Stream : not null access Ada.Streams.Root_Stream_Type'Class;
 Item : in T)
+
 
 S'Write writes the value of Item to Stream. See 13.13.2.
       </DOC>
@@ -3344,7 +4187,7 @@ this pragma, see the DEC Ada Language Reference Manual, section 9.12a.
       <DOC>
 Syntax:
 
-pragma Asynchronous (local_name);
+pragma Asynchronous;
       </DOC>
    </PRAGMA>
 
@@ -3352,7 +4195,7 @@ pragma Asynchronous (local_name);
       <DOC>
 Syntax:
 
-pragma Atomic (local_name);
+pragma Atomic;
       </DOC>
    </PRAGMA>
 
@@ -3360,7 +4203,7 @@ pragma Atomic (local_name);
       <DOC>
 Syntax:
 
-pragma Atomic_Components (array_local_name);
+pragma Atomic_Components;
       </DOC>
    </PRAGMA>
 
@@ -3368,7 +4211,7 @@ pragma Atomic_Components (array_local_name);
       <DOC>
 Syntax:
 
-pragma Attach_Handler (handler_name, expression);
+pragma Attach_Handler;
       </DOC>
    </PRAGMA>
 
@@ -3506,7 +4349,7 @@ See *note Interfacing to C++:: for related information.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "CPU" origin = "GNAT RM">
+   <PRAGMA id = "0" name = "CPU" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4067,7 +4910,7 @@ compatibility reasons.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Default_Storage_Pool" origin = "GNAT RM">
+   <PRAGMA id = "0" name = "Default_Storage_Pool" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -4123,7 +4966,7 @@ pragma Discard_Names [([On =&gt; ] local_name)];
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Dispatching_Domain" origin = "GNAT RM">
+   <PRAGMA id = "0" name = "Dispatching_Domain" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5147,7 +5990,7 @@ what is required.
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Independent" origin = "GNAT RM">
+   <PRAGMA id = "0" name = "Independent" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5165,7 +6008,7 @@ prohibiting tight packing).
       </DOC>
    </PRAGMA>
 
-   <PRAGMA id = "0" name = "Independent_Components" origin = "GNAT RM">
+   <PRAGMA id = "0" name = "Independent_Components" origin = "Ada RM">
       <DOC>
 Syntax:
 
@@ -5244,7 +6087,7 @@ this pragma.
       <DOC>
 Syntax:
 
-pragma Inline (name {, name});
+pragma Inline;
       </DOC>
    </PRAGMA>
 
@@ -5344,7 +6187,7 @@ instruction.
       <DOC>
 Syntax:
 
-pragma Interrupt_Priority [(expression)];
+pragma Interrupt_Priority;
       </DOC>
    </PRAGMA>
 
@@ -6406,7 +7249,7 @@ not visible within the declaration of the overriding operation.
       <DOC>
 Syntax:
 
-pragma Pack (first_subtype_local_name);
+pragma Pack;
       </DOC>
    </PRAGMA>
 
@@ -6875,7 +7718,7 @@ in Ada 2005.
       <DOC>
 Syntax:
 
-pragma Priority (expression);
+pragma Priority;
       </DOC>
    </PRAGMA>
 
@@ -7856,7 +8699,7 @@ aggregates with static components that include an others choice.)
       <DOC>
 Syntax:
 
-pragma Storage_Size (expression);
+pragma Storage_Size;
       </DOC>
    </PRAGMA>
 
@@ -8646,7 +9489,7 @@ the implementation in DEC Ada 83.
       <DOC>
 Syntax:
 
-pragma Volatile_Components (array_local_name);
+pragma Volatile_Components;
       </DOC>
    </PRAGMA>
 
