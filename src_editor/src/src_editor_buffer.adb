@@ -3148,11 +3148,23 @@ package body Src_Editor_Buffer is
 
    function Is_In_Comment
      (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter) return Boolean is
+      Iter   : Gtk_Text_Iter) return Boolean
+   is
+      Pos     : Gtk_Text_Iter;
+      Success : Boolean;
    begin
-      return Has_Tag (Iter, Buffer.Syntax_Tags (Comment_Text))
-        or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Comment_Text))
-        or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Keyword_Text));
+      Copy (Iter, Pos);
+
+      --  If the position is past the end of buffer move backward one char
+      --  otherwise the Has_Tag check won't work properly.
+
+      if Is_End (Pos) and not Is_Start (Pos) then
+         Backward_Char (Pos, Success);
+      end if;
+
+      return Has_Tag (Pos, Buffer.Syntax_Tags (Comment_Text))
+        or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Comment_Text))
+        or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Keyword_Text));
    end Is_In_Comment;
 
    ------------------

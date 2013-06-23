@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M604-029: GPS: wrong casing in comments when at end of buffer
+  Problem:    Comments entered when the cursor is at the end of the buffer
+              are incorrectly cased.
+  Workaround: Enter a space just before the cursor.
+
 - M521-020: GPS: Unwanted scrolling in the editors when switching perspectives
   Problem:    When switching perspectives, for instance when entering or
               leaving a debug session, editors scroll and lose the current
