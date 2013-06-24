@@ -1941,7 +1941,6 @@ package body Default_Preferences is
       --  available themes.
       if Config.Host = Config.Windows then
          Ret.Themes (Num) := new String'("gtk-win32");
-         Win_Default := Num;
 
          if Default = "gtk-win32" then
             Ret.Current := Num;
@@ -1965,6 +1964,9 @@ package body Default_Preferences is
          if Ret.Themes (Num).all = "Adwaita" then
             --  Fallback in the unix case
             Unx_Default := Num;
+
+            --  Also fallback in the Windows case
+            Win_Default := Num;
 
          elsif Ret.Themes (Num).all = Default then
             --  We found the active theme, and it's not a
