@@ -334,7 +334,7 @@ package body GPS.Kernel.Preferences is
       -- General --
       Gtk_Theme := Create
         (Kernel.Preferences,
-         Name  => "Gtk-Theme-Name",
+         Name  => "GPS6-Gtk-Theme-Name",
          Label => -"Theme",
          Page  => -"General",
          Doc   => -("Select a theme from the list to change the general "
