@@ -1672,7 +1672,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "cont", Mode => Mode);
+      Send (Debugger, "continue", Mode => Mode);
    end Continue;
 
    ---------------
