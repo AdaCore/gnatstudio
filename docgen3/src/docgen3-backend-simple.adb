@@ -36,8 +36,11 @@ package body Docgen3.Backend.Simple is
    type Template_Kind is
      (Tmpl_Entities,
       --  Public entities documentation
-      Tmpl_Index,
+      Tmpl_Global_Index,
       --  Packages, source files and entities Index
+      Tmpl_Files_Index,
+      --  Files index
+
       Tmpl_Src
       --  Source code
      );
@@ -70,6 +73,16 @@ package body Docgen3.Backend.Simple is
 
    package ReST is
 
+      procedure Append
+        (Printout : access Unbounded_String;
+         Text     : String);
+      --  Append Text to Printout
+
+      procedure Append_Line
+        (Printout : access Unbounded_String;
+         Text     : String);
+      --  Append Text to Printout plus ASCII.LF
+
       procedure ReST_Append_Comment
         (Printout : access Unbounded_String;
          E        : Entity_Id);
@@ -92,20 +105,16 @@ package body Docgen3.Backend.Simple is
       --  it is used to identify references to entities defined in the .h file
       --  since the compiler does NOT generate gli files for .h files.
 
-      procedure Append
-        (Printout : access Unbounded_String;
-         Text     : String);
-      --  Append Text to Printout
-
-      procedure Append_Line
-        (Printout : access Unbounded_String;
-         Text     : String);
-      --  Append Text to Printout plus ASCII.LF
-
       procedure ReST_Append_Record_Type_Declaration
         (Printout : access Unbounded_String;
          E        : Entity_Id);
       --  Append to Printout the reStructured output of a record type
+
+      procedure ReST_Append_Reference
+        (Printout : access Unbounded_String;
+         Entity   : Entity_Id;
+         Header   : String);
+      --  Append to Printout a reference to entity E
 
       procedure ReST_Append_Simple_Declaration
         (Printout : access Unbounded_String;
@@ -144,6 +153,28 @@ package body Docgen3.Backend.Simple is
 
       function Append_Tab (Text : Unbounded_String) return Unbounded_String;
       --  Append spaces after each ASCII.LF
+
+      ------------
+      -- Append --
+      ------------
+
+      procedure Append
+        (Printout : access Unbounded_String;
+         Text     : String) is
+      begin
+         Printout.all := Printout.all & Text;
+      end Append;
+
+      -----------------
+      -- Append_Line --
+      -----------------
+
+      procedure Append_Line
+        (Printout : access Unbounded_String;
+         Text     : String) is
+      begin
+         Append (Printout, Text & ASCII.LF);
+      end Append_Line;
 
       ----------------
       -- Append_Tab --
@@ -197,28 +228,6 @@ package body Docgen3.Backend.Simple is
          Append_Line (Printout, ReST_Label (E));
          Append_Line (Printout, "");
       end ReST_Append_Label;
-
-      ------------
-      -- Append --
-      ------------
-
-      procedure Append
-        (Printout : access Unbounded_String;
-         Text     : String) is
-      begin
-         Printout.all := Printout.all & Text;
-      end Append;
-
-      -----------------
-      -- Append_Line --
-      -----------------
-
-      procedure Append_Line
-        (Printout : access Unbounded_String;
-         Text     : String) is
-      begin
-         Append (Printout, Text & ASCII.LF);
-      end Append_Line;
 
       ----------------------
       -- ReST_Append_List --
@@ -310,18 +319,37 @@ package body Docgen3.Backend.Simple is
             end;
          end if;
 
-         EInfo_Vector_Sort_Short.Sort (Get_Parent_Types (E).all);
+         if Is_Tagged_Type (E)
+           or else Get_Kind (E) = E_Class
+         then
+            if In_Ada_Language (E) then
+               if Present (Get_Parent (E)) then
+                  Append_Line (Printout, "- Parent");
+
+                  ReST_Append_Reference
+                    (Printout => Printout,
+                     Entity   => Get_Parent (E),
+                     Header   => "   * ");
+
+                  Append_Line (Printout, "");
+               end if;
+
+               ReST_Append_List
+                 (Printout => Printout,
+                  List     => Get_Progenitors (E).all,
+                  Header   => "Progenitors");
+
+            else
+               ReST_Append_List
+                 (Printout => Printout,
+                  List     => LL.Get_Parent_Types (E).all,
+                  Header   => "Parent types");
+            end if;
+         end if;
 
          ReST_Append_List
            (Printout => Printout,
-            List     => Get_Parent_Types (E).all,
-            Header   => "Parent types");
-
-         EInfo_Vector_Sort_Short.Sort (Get_Child_Types (E).all);
-
-         ReST_Append_List
-           (Printout => Printout,
-            List     => Get_Child_Types (E).all,
+            List     => LL.Get_Child_Types (E).all,
             Header   => "Child types");
 
          if In_Ada_Language (E)
@@ -342,6 +370,30 @@ package body Docgen3.Backend.Simple is
                Header   => "New and overridden dispatching subprograms");
          end if;
       end ReST_Append_Record_Type_Declaration;
+
+      ---------------------------
+      -- ReST_Append_Reference --
+      ---------------------------
+
+      procedure ReST_Append_Reference
+        (Printout : access Unbounded_String;
+         Entity   : Entity_Id;
+         Header   : String) is
+      begin
+         Append (Printout, Header & " :ref:`");
+
+         if Get_Language (Entity).all in Language.Cpp.Cpp_Language'Class then
+            Append (Printout, Get_Full_Name (Entity));
+         else
+            Append (Printout, Get_Short_Name (Entity));
+         end if;
+
+         Append_Line (Printout,
+           " <"
+           & Get_Unique_Name (Entity)
+           & ">` "
+           & Image (LL.Get_Location (Entity)));
+      end ReST_Append_Reference;
 
       ------------------------------------
       -- ReST_Append_Simple_Declaration --
@@ -552,6 +604,7 @@ package body Docgen3.Backend.Simple is
       procedure Generate_Global_Index is
 
          procedure Generate_Entities;
+         procedure Generate_Files;
 
          -----------------------
          -- Generate_Entities --
@@ -631,6 +684,44 @@ package body Docgen3.Backend.Simple is
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Entities;
 
+         --------------------
+         -- Generate_Files --
+         --------------------
+
+         procedure Generate_Files is
+            Printout    : aliased Unbounded_String;
+            Translation : Translate_Set;
+            Tmpl        : constant Virtual_File :=
+              Get_Template
+                (Get_System_Dir (Backend.Context.Kernel), Tmpl_Files_Index);
+            File        : GNATCOLL.VFS.Virtual_File;
+            File_Index  : Files_List.Cursor;
+
+         begin
+            Files_Vector_Sort.Sort (Backend.Src_Files);
+
+            File_Index := Backend.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+
+               Printout :=
+                 Printout
+                 & "   " & (+File.Base_Name) & ASCII.LF;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context'Access,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_Destination_Name ("files"),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Files;
+
          --  Local variables
 
          Printout    : Unbounded_String;
@@ -638,9 +729,7 @@ package body Docgen3.Backend.Simple is
          Tmpl        : constant Virtual_File :=
                          Get_Template
                            (Get_System_Dir (Backend.Context.Kernel),
-                            Tmpl_Index);
-         File        : GNATCOLL.VFS.Virtual_File;
-         File_Index  : Files_List.Cursor;
+                            Tmpl_Global_Index);
          My_Delay    : Delay_Time;
 
          --  Start of processing for Generate_Global_Index
@@ -650,19 +739,7 @@ package body Docgen3.Backend.Simple is
          Trace (Me, "Generate_Global_Index");
 
          Generate_Entities;
-
-         Files_Vector_Sort.Sort (Backend.Src_Files);
-
-         File_Index := Backend.Src_Files.First;
-         while Files_List.Has_Element (File_Index) loop
-            File := Files_List.Element (File_Index);
-
-            Printout :=
-              Printout
-              & "   " & (+File.Base_Name) & ASCII.LF;
-
-            Files_List.Next (File_Index);
-         end loop;
+         Generate_Files;
 
          Insert (Translation, Assoc ("PRINTOUT", Printout));
 
@@ -712,7 +789,10 @@ package body Docgen3.Backend.Simple is
          when Tmpl_Entities =>
             return Create_From_Dir
               (System_Dir, "share/gps/docgen3/entities.tmpl");
-         when Tmpl_Index =>
+         when Tmpl_Files_Index =>
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen3/files_index.tmpl");
+         when Tmpl_Global_Index =>
             return Create_From_Dir
               (System_Dir, "share/gps/docgen3/index.tmpl");
          when Tmpl_Src =>
@@ -873,7 +953,7 @@ package body Docgen3.Backend.Simple is
                   Entities.CPP_Classes.Append (E);
                   Backend.Entities.CPP_Classes.Append (E);
 
-               elsif Is_Tagged (E) then
+               elsif Is_Tagged_Type (E) then
                   if Get_Kind (E) = E_Interface then
                      Entities.Interface_Types.Append (E);
                      Backend.Entities.Interface_Types.Append (E);

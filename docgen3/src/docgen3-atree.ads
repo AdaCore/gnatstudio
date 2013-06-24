@@ -49,6 +49,7 @@ private package Docgen3.Atree is
 
    type Entity_Info_Record is private;
    type Entity_Id is access all Entity_Info_Record;
+   No_Entity : constant Entity_Id := null;
 
    procedure Initialize;
    --  Initialize internal state used to associate unique identifiers to all
@@ -143,10 +144,29 @@ private package Docgen3.Atree is
    --  Append Entity to the Container only if the container has no entity
    --  whose location matches the location of Entity.
 
+   procedure Delete_Entity
+     (List   : in out EInfo_List.Vector;
+      Entity : General_Entity);
+   procedure Delete_Entity
+     (List   : in out EInfo_List.Vector;
+      Entity : Entity_Id);
+   --  Raise Not_Found if Entity is not found in List
+
+   function Find_Entity
+     (List   : EInfo_List.Vector;
+      Entity : General_Entity) return Entity_Id;
+   function Find_Entity
+     (List : EInfo_List.Vector;
+      Name : String) return Entity_Id;
+   --  Find the entity with Name in List. Name may be a short name or an
+   --  expanded name. If not found then return No_Entity.
+
    procedure For_All
      (Vector  : in out EInfo_List.Vector;
       Process : access procedure (E_Info : Entity_Id));
    --  Call subprogram Process for all the elements of Vector
+
+   Not_Found : exception;
 
    ---------------------------
    -- Entity_Id subprograms --
@@ -166,8 +186,6 @@ private package Docgen3.Atree is
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
 
-   procedure Append_Child_Type
-     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Entity
      (E : Entity_Id; Value : Entity_Id);
    --  Append Value to the list of entities in the scope of E
@@ -177,11 +195,9 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
      (E : Entity_Id; Value : Entity_Id);
-   procedure Append_Parent_Type
+   procedure Append_Progenitor
      (E : Entity_Id; Value : Entity_Id);
 
-   function Get_Child_Types
-     (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
    function Get_Discriminants
@@ -208,7 +224,9 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Language_Access;
    function Get_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
-   function Get_Parent_Types
+   function Get_Parent
+     (E : Entity_Id) return Entity_Id;
+   function Get_Progenitors
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Ref_File
      (E : Entity_Id) return Virtual_File;
@@ -243,9 +261,9 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Class_Or_Record_Type
      (E : Entity_Id) return Boolean;
-   --  Return True for Ada record types (including tagged types), C structs
-   --  and C++ classes
-   function Is_Tagged
+   --  Return True for Ada record types (including tagged types and interface
+   --  types), C structs and C++ classes
+   function Is_Tagged_Type
      (E : Entity_Id) return Boolean;
 
    function Kind_In
@@ -274,10 +292,12 @@ private package Docgen3.Atree is
      (E : Entity_Id);
    procedure Set_Is_Private
      (E : Entity_Id);
-   procedure Set_Is_Tagged
+   procedure Set_Is_Tagged_Type
      (E : Entity_Id);
    procedure Set_Kind
      (E : Entity_Id; Value : Entity_Kind);
+   procedure Set_Parent
+     (E : Entity_Id; Value : Entity_Id);
    procedure Set_Ref_File
      (E : Entity_Id; Value : Virtual_File);
    procedure Set_Scope
@@ -316,15 +336,33 @@ private package Docgen3.Atree is
    --  named Xref (the other packages are Xref and GNATCOLL.Xref).
 
    package LL is
-      function Get_Body_Loc     (E : Entity_Id) return General_Location;
-      function Get_Entity       (E : Entity_Id) return General_Entity;
-      function Get_Full_View    (E : Entity_Id) return General_Entity;
-      function Get_Kind         (E : Entity_Id) return Entity_Kind;
-      function Get_Location     (E : Entity_Id) return General_Location;
-      function Get_Pointed_Type (E : Entity_Id) return General_Entity;
-      function Get_Scope        (E : Entity_Id) return General_Entity;
-      function Get_Scope_Loc    (E : Entity_Id) return General_Location;
-      function Get_Type         (E : Entity_Id) return General_Entity;
+      procedure Append_Child_Type
+        (E : Entity_Id; Value : Entity_Id);
+      procedure Append_Parent_Type
+        (E : Entity_Id; Value : Entity_Id);
+
+      function Get_Body_Loc
+        (E : Entity_Id) return General_Location;
+      function Get_Child_Types
+        (E : Entity_Id) return access EInfo_List.Vector;
+      function Get_Entity
+        (E : Entity_Id) return General_Entity;
+      function Get_Full_View
+        (E : Entity_Id) return General_Entity;
+      function Get_Kind
+        (E : Entity_Id) return Entity_Kind;
+      function Get_Location
+        (E : Entity_Id) return General_Location;
+      function Get_Parent_Types
+        (E : Entity_Id) return access EInfo_List.Vector;
+      function Get_Pointed_Type
+        (E : Entity_Id) return General_Entity;
+      function Get_Scope
+        (E : Entity_Id) return General_Entity;
+      function Get_Scope_Loc
+        (E : Entity_Id) return General_Location;
+      function Get_Type
+        (E : Entity_Id) return General_Entity;
 
       function Get_Ekind
         (Db          : General_Xref_Database;
@@ -356,12 +394,16 @@ private package Docgen3.Atree is
       --  file with the same name).
 
    private
+      pragma Inline (Append_Child_Type);
+      pragma Inline (Append_Parent_Type);
 
       pragma Inline (Get_Body_Loc);
+      pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
       pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
+      pragma Inline (Get_Parent_Types);
       pragma Inline (Get_Pointed_Type);
       pragma Inline (Get_Scope);
       pragma Inline (Get_Type);
@@ -438,6 +480,12 @@ private
 
          Has_Methods   : Boolean;
 
+         Parent_Types  : aliased EInfo_List.Vector;
+         --  Parent types of tagged types (or base classes of C++ classes)
+
+         Child_Types   : aliased EInfo_List.Vector;
+         --  Derivations of tagged types (or C++ classes)
+
          Is_Abstract   : Boolean;
          Is_Access     : Boolean;
          Is_Array      : Boolean;
@@ -500,7 +548,7 @@ private
          Is_Incomplete_Or_Private_Type : Boolean;
          Is_Partial_View : Boolean;
          Is_Private      : Boolean;
-         Is_Tagged       : Boolean;
+         Is_Tagged_Type  : Boolean;
 
          Doc               : Comment_Result;
          Comment           : aliased Structured_Comment;
@@ -530,23 +578,19 @@ private
          Inherited_Methods : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
 
-         Parent_Types    : aliased EInfo_List.Vector;
-         --  Parent types of tagged types (or base classes of C++ classes)
-
-         Child_Types     : aliased EInfo_List.Vector;
-         --  Derivations of tagged types (or C++ classes)
+         Parent          : Entity_Id;
+         Progenitors     : aliased EInfo_List.Vector;
 
          Error_Msg       : Unbounded_String;
          --  Errors reported on this entity
       end record;
 
-   pragma Inline (Append_Child_Type);
    pragma Inline (Append_Discriminant);
    pragma Inline (Append_Entity);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
-   pragma Inline (Append_Parent_Type);
-   pragma Inline (Get_Child_Types);
+   pragma Inline (Append_Progenitor);
+
    pragma Inline (Get_Comment);
    pragma Inline (Get_Discriminants);
    pragma Inline (Get_Doc);
@@ -560,7 +604,8 @@ private
    pragma Inline (Get_Kind);
    pragma Inline (Get_Language);
    pragma Inline (Get_Methods);
-   pragma Inline (Get_Parent_Types);
+   pragma Inline (Get_Parent);
+   pragma Inline (Get_Progenitors);
    pragma Inline (Get_Ref_File);
    pragma Inline (Get_Scope);
    pragma Inline (Get_Short_Name);
@@ -576,7 +621,7 @@ private
    pragma Inline (Is_Full_View);
    pragma Inline (Is_Private);
    pragma Inline (Is_Class_Or_Record_Type);
-   pragma Inline (Is_Tagged);
+   pragma Inline (Is_Tagged_Type);
    pragma Inline (Kind_In);
    pragma Inline (No);
    pragma Inline (Present);
@@ -588,8 +633,9 @@ private
    pragma Inline (Set_Full_View_Src);
    pragma Inline (Set_Is_Partial_View);
    pragma Inline (Set_Is_Private);
-   pragma Inline (Set_Is_Tagged);
+   pragma Inline (Set_Is_Tagged_Type);
    pragma Inline (Set_Kind);
+   pragma Inline (Set_Parent);
    pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Src);

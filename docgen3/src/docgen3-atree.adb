@@ -58,17 +58,6 @@ package body Docgen3.Atree is
    procedure Set_Is_Incomplete_Or_Private_Type (E : Entity_Id);
    --  Set to true field E.Is_Incomplete_Or_Private_Type
 
-   -----------------------
-   -- Append_Child_Type --
-   -----------------------
-
-   procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
-   begin
-      if not Contains (E.Child_Types, Value) then
-         E.Child_Types.Append (Value);
-      end if;
-   end Append_Child_Type;
-
    -------------------------
    -- Append_Discriminant --
    -------------------------
@@ -127,14 +116,14 @@ package body Docgen3.Atree is
       E.Methods.Append (Value);
    end Append_Method;
 
-   ------------------------
-   -- Append_Parent_Type --
-   ------------------------
+   -----------------------
+   -- Append_Progenitor --
+   -----------------------
 
-   procedure Append_Parent_Type (E : Entity_Id; Value : Entity_Id) is
+   procedure Append_Progenitor (E : Entity_Id; Value : Entity_Id) is
    begin
-      E.Parent_Types.Append (Value);
-   end Append_Parent_Type;
+      E.Progenitors.Append (Value);
+   end Append_Progenitor;
 
    ------------------------
    -- Append_Unique_Elmt --
@@ -174,6 +163,165 @@ package body Docgen3.Atree is
 
       return False;
    end Contains;
+
+   -------------------
+   -- Delete_Entity --
+   -------------------
+
+   procedure Delete_Entity
+     (List   : in out EInfo_List.Vector;
+      Entity : General_Entity)
+   is
+      Cursor : EInfo_List.Cursor;
+      E      : Entity_Id;
+
+   begin
+      if not EInfo_List.Has_Element (List.First) then
+         return;
+      end if;
+
+      Cursor := List.First;
+      while EInfo_List.Has_Element (Cursor) loop
+         E := EInfo_List.Element (Cursor);
+
+         if LL.Get_Entity (E) = Entity then
+            EInfo_List.Delete (List, Cursor);
+            return;
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      raise Not_Found;
+   end Delete_Entity;
+
+   -------------------
+   -- Delete_Entity --
+   -------------------
+
+   procedure Delete_Entity
+     (List   : in out EInfo_List.Vector;
+      Entity : Entity_Id)
+   is
+      Cursor : EInfo_List.Cursor;
+      E      : Entity_Id;
+
+   begin
+      if not EInfo_List.Has_Element (List.First) then
+         return;
+      end if;
+
+      Cursor := List.First;
+      while EInfo_List.Has_Element (Cursor) loop
+         E := EInfo_List.Element (Cursor);
+
+         if E = Entity then
+            EInfo_List.Delete (List, Cursor);
+            return;
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      raise Not_Found;
+   end Delete_Entity;
+
+   -----------------
+   -- Find_Entity --
+   -----------------
+
+   function Find_Entity
+     (List   : EInfo_List.Vector;
+      Entity : General_Entity) return Entity_Id
+   is
+      Cursor : EInfo_List.Cursor;
+      E      : Entity_Id;
+
+   begin
+      if not EInfo_List.Has_Element (List.First) then
+         return No_Entity;
+      end if;
+
+      Cursor := List.First;
+      while EInfo_List.Has_Element (Cursor) loop
+         E := EInfo_List.Element (Cursor);
+
+         if LL.Get_Entity (E) = Entity then
+            return E;
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return No_Entity;
+   end Find_Entity;
+
+   -----------------
+   -- Find_Entity --
+   -----------------
+
+   function Find_Entity
+     (List      : EInfo_List.Vector;
+      Name : String) return Entity_Id
+   is
+      Cursor : EInfo_List.Cursor;
+      E      : Entity_Id;
+
+      Is_Expanded_Name : Boolean := False;
+
+   begin
+      if not EInfo_List.Has_Element (List.First) then
+         return null;
+      end if;
+
+      for J in Name'Range loop
+         if Name (J) = '.' then
+            Is_Expanded_Name := True;
+            exit;
+         end if;
+      end loop;
+
+      Cursor := List.First;
+
+      if Is_Expanded_Name then
+         while EInfo_List.Has_Element (Cursor) loop
+            E := EInfo_List.Element (Cursor);
+
+            --  We use substrings to match the name since Name may not be
+            --  the full name of the entity but a partial name. For example,
+            --  we may have available the Name "b.c" for an entity with full
+            --  name "a.b.c" in an scope that has an use-clause for "a".
+
+            declare
+               Full_Name : constant String := Get_Full_Name (E);
+               Last  : constant Natural := Full_Name'Last;
+               First : constant Integer := Full_Name'Last - Name'Length + 1;
+
+            begin
+               if First in Full_Name'Range
+                 and then Full_Name (First .. Last) = Name
+               then
+                  return E;
+               end if;
+            end;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+
+      else
+         while EInfo_List.Has_Element (Cursor) loop
+            E := EInfo_List.Element (Cursor);
+
+            if Get_Short_Name (E) = Name then
+               return E;
+            end if;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+      end if;
+
+      return No_Entity;
+   end Find_Entity;
 
    -------------
    -- For_All --
@@ -229,15 +377,6 @@ package body Docgen3.Atree is
 
       List.Clear;
    end Free;
-
-   ---------------------
-   -- Get_Child_Types --
-   ---------------------
-
-   function Get_Child_Types (E : Entity_Id) return access EInfo_List.Vector is
-   begin
-      return E.Child_Types'Access;
-   end Get_Child_Types;
 
    -----------------
    -- Get_Comment --
@@ -358,14 +497,25 @@ package body Docgen3.Atree is
       return E.Methods'Access;
    end Get_Methods;
 
-   ----------------------
-   -- Get_Parent_Types --
-   ----------------------
+   ----------------
+   -- Get_Parent --
+   ----------------
 
-   function Get_Parent_Types (E : Entity_Id) return access EInfo_List.Vector is
+   function Get_Parent
+     (E : Entity_Id) return Entity_Id is
    begin
-      return E.Parent_Types'Access;
-   end Get_Parent_Types;
+      return E.Parent;
+   end Get_Parent;
+
+   ---------------------
+   -- Get_Progenitors --
+   ---------------------
+
+   function Get_Progenitors
+     (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      return E.Progenitors'Access;
+   end Get_Progenitors;
 
    ------------------
    -- Get_Ref_File --
@@ -599,7 +749,7 @@ package body Docgen3.Atree is
 
                if In_Ada_Language (New_E) then
                   if Get_Kind (New_E) = E_Interface then
-                     Set_Is_Tagged (New_E);
+                     Set_Is_Tagged_Type (New_E);
 
                   else
                      --  Xref-bug: Xref.Has_Methods() is not reliable:
@@ -613,7 +763,7 @@ package body Docgen3.Atree is
                           Methods (Db, E, Include_Inherited => True);
                      begin
                         if All_Methods'Length > 0 then
-                           Set_Is_Tagged (New_E);
+                           Set_Is_Tagged_Type (New_E);
                            Set_Kind (New_E, E_Tagged_Record_Type);
 
                         --  last try
@@ -624,7 +774,7 @@ package body Docgen3.Atree is
                                 Parent_Types (Db, E, Recursive => False);
                            begin
                               if Parents'Length > 0 then
-                                 Set_Is_Tagged (New_E);
+                                 Set_Is_Tagged_Type (New_E);
                                  Set_Kind (New_E, E_Tagged_Record_Type);
                               end if;
                            end;
@@ -722,7 +872,10 @@ package body Docgen3.Atree is
              Is_Primitive  => False,
              Is_Subprogram => False,
              Is_Type       => False,
-             Is_Generic    => False),
+             Is_Generic    => False,
+
+             Parent_Types  => <>,
+             Child_Types   => <>),
 
            Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
@@ -731,7 +884,7 @@ package body Docgen3.Atree is
 
            Is_Incomplete_Or_Private_Type => False,
 
-           Is_Tagged         => False,
+           Is_Tagged_Type    => False,
            Is_Private        => False,
            Is_Partial_View   => False,
 
@@ -748,8 +901,8 @@ package body Docgen3.Atree is
            Entities          => <>,
            Inherited_Methods => <>,
            Methods           => <>,
-           Parent_Types      => <>,
-           Child_Types       => <>,
+           Parent            => null,
+           Progenitors       => <>,
            Error_Msg         => Null_Unbounded_String);
 
       --  Do not perform the full decoration of the entity for auxiliary
@@ -832,10 +985,10 @@ package body Docgen3.Atree is
    -- Is_Tagged --
    ---------------
 
-   function Is_Tagged (E : Entity_Id) return Boolean is
+   function Is_Tagged_Type (E : Entity_Id) return Boolean is
    begin
-      return E.Is_Tagged;
-   end Is_Tagged;
+      return E.Is_Tagged_Type;
+   end Is_Tagged_Type;
 
    -------------
    -- Kind_In --
@@ -1062,12 +1215,12 @@ package body Docgen3.Atree is
    -- Set_Is_Tagged --
    -------------------
 
-   procedure Set_Is_Tagged (E : Entity_Id) is
+   procedure Set_Is_Tagged_Type (E : Entity_Id) is
    begin
-      pragma Assert (not (E.Is_Tagged));
+      pragma Assert (not (E.Is_Tagged_Type));
       pragma Assert (Is_Class_Or_Record_Type (E));
-      E.Is_Tagged := True;
-   end Set_Is_Tagged;
+      E.Is_Tagged_Type := True;
+   end Set_Is_Tagged_Type;
 
    --------------
    -- Set_Kind --
@@ -1077,6 +1230,18 @@ package body Docgen3.Atree is
    begin
       E.Kind := Value;
    end Set_Kind;
+
+   ----------------
+   -- Set_Parent --
+   ----------------
+
+   procedure Set_Parent
+     (E : Entity_Id; Value : Entity_Id) is
+   begin
+      pragma Assert (No (E.Parent));
+      pragma Assert (Value /= E); --  Avoid circularity
+      E.Parent := Value;
+   end Set_Parent;
 
    ------------------
    -- Set_Ref_File --
@@ -1171,10 +1336,28 @@ package body Docgen3.Atree is
 
    package body LL is
 
+      procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
+      begin
+         if not Contains (E.Xref.Child_Types, Value) then
+            E.Xref.Child_Types.Append (Value);
+         end if;
+      end Append_Child_Type;
+
+      procedure Append_Parent_Type (E : Entity_Id; Value : Entity_Id) is
+      begin
+         E.Xref.Parent_Types.Append (Value);
+      end Append_Parent_Type;
+
       function Get_Body_Loc (E : Entity_Id) return General_Location is
       begin
          return E.Xref.Body_Loc;
       end Get_Body_Loc;
+
+      function Get_Child_Types
+        (E : Entity_Id) return access EInfo_List.Vector is
+      begin
+         return E.Xref.Child_Types'Access;
+      end Get_Child_Types;
 
       function Get_Entity (E : Entity_Id) return General_Entity is
       begin
@@ -1195,6 +1378,12 @@ package body Docgen3.Atree is
       begin
          return E.Xref.Loc;
       end Get_Location;
+
+      function Get_Parent_Types
+        (E : Entity_Id) return access EInfo_List.Vector is
+      begin
+         return E.Xref.Parent_Types'Access;
+      end Get_Parent_Types;
 
       function Get_Pointed_Type (E : Entity_Id) return General_Entity is
       begin
@@ -1532,7 +1721,7 @@ package body Docgen3.Atree is
                & "["
                & To_String (E_Info.Id)
                & "] "
-               & Get_Short_Name (E_Info)
+               & Get_Full_Name (E_Info)
                & " ["
                & Image (LL.Get_Location (E_Info))
                & "]"
@@ -1571,6 +1760,23 @@ package body Docgen3.Atree is
             & Get (E.Scope.Short_Name).all);
       end if;
 
+      if Present (Get_Parent (E)) then
+         Append_Line
+           ("Parent: ["
+            & To_String (Get_Unique_Id (Get_Parent (E)))
+            & "] "
+            & Get_Short_Name (Get_Parent (E)));
+      end if;
+
+      if (Is_Class_Or_Record_Type (E) and then Is_Tagged_Type (E))
+        or else Get_Kind (E) = E_Class
+      then
+         Print_Entities
+           (Vector => Get_Progenitors (E),
+            Header => "Progenitors",
+            Prefix => " - ");
+      end if;
+
       if E.Is_Incomplete_Or_Private_Type then
          Append_Line (" Is_Incomplete_Or_Private_Type");
       end if;
@@ -1583,7 +1789,7 @@ package body Docgen3.Atree is
          Append_Line ("Is_Partial_View");
       end if;
 
-      if E.Is_Tagged then
+      if E.Is_Tagged_Type then
          Append_Line ("Is_Tagged");
       end if;
 
@@ -1695,12 +1901,12 @@ package body Docgen3.Atree is
         or else Get_Kind (E) = E_Class
       then
          Print_Entities
-           (Vector => Get_Parent_Types (E),
+           (Vector => LL.Get_Parent_Types (E),
             Header => LL_Prefix & " Parent types",
             Prefix => LL_Prefix & " - ");
 
          Print_Entities
-           (Vector => Get_Child_Types (E),
+           (Vector => LL.Get_Child_Types (E),
             Header => LL_Prefix & " Child types",
             Prefix => LL_Prefix & " - ");
 
