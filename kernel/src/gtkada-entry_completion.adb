@@ -43,6 +43,7 @@ with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
@@ -814,10 +815,14 @@ package body Gtkada.Entry_Completion is
             if Result.all in Kernel_Search_Result'Class then
                F := Kernel_Search_Result'Class (Result.all).Full;
                if F /= null then
-                  Gtk_New (Align, 0.0, 0.0, 0.0, 0.0);
-                  Align.Add (F);
+                  if F.all in Gtk_Label_Record'Class then
+                     Gtk_New (Align, 0.0, 0.0, 0.0, 0.0);
+                     Align.Add (F);
+                     Self.Notes_Scroll.Add (Align);
+                  else
+                     Self.Notes_Scroll.Add (F);
+                  end if;
 
-                  Self.Notes_Scroll.Add (Align);
                   Self.Notes_Scroll.Show_All;
 
                   if Self.Notes_Popup /= null then

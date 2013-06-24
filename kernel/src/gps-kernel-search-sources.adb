@@ -20,12 +20,18 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Cairo.Region;              use Cairo.Region;
+with Gdk.RGBA;                  use Gdk.RGBA;
+with Gdk.Window;                use Gdk.Window;
+with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
+with Pango.Enums;               use Pango.Enums;
+with Pango.Font;                use Pango.Font;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -49,6 +55,11 @@ package body GPS.Kernel.Search.Sources is
      (Self : not null access Source_Search_Result)
       return Gtk.Widget.Gtk_Widget;
 
+   type Result_View is new Gtk_Text_View_Record with record
+      Result : Source_Search_Result_Access;
+   end record;
+   type Result_View_Access is access all Result_View'Class;
+
    type Hook_Project_View_Changed is new Function_No_Args with record
       Provider : access Sources_Search_Provider;
       --  The provider to refresh (do not free)
@@ -58,9 +69,10 @@ package body GPS.Kernel.Search.Sources is
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
-   procedure Do_Scroll
-     (View : access Gtk_Widget_Record'Class);
-   --  Called when the overview widget is resized.
+   procedure On_Size_Allocate
+     (View       : access Gtk_Widget_Record'Class;
+      Allocation : Cairo_Rectangle_Int);
+   --  Called when the preview widget is resized.
 
    -------------
    -- Execute --
@@ -356,38 +368,29 @@ package body GPS.Kernel.Search.Sources is
          Column            => Visible_Column (Self.Column));
    end Execute;
 
-   type Result_View is new Gtk_Text_View_Record with record
-      Result : Source_Search_Result_Access;
-   end record;
-   type Result_View_Access is access all Result_View'Class;
+   ----------------------
+   -- On_Size_Allocate --
+   ----------------------
 
-   ---------------
-   -- Do_Scroll --
-   ---------------
-
-   procedure Do_Scroll
-     (View : access Gtk_Widget_Record'Class)
+   procedure On_Size_Allocate
+     (View       : access Gtk_Widget_Record'Class;
+      Allocation : Cairo_Rectangle_Int)
    is
+      pragma Unreferenced (Allocation);
       V : constant Result_View_Access := Result_View_Access (View);
       Buffer : constant Gtk_Text_Buffer := V.Get_Buffer;
-      First, Last : Gtk_Text_Iter;
-      Mark : Gtk_Text_Mark;
+      First : Gtk_Text_Iter;
    begin
       Buffer.Get_Iter_At_Line_Offset
         (First, Gint (V.Result.Line - 1), Gint (V.Result.Column - 1));
-      Buffer.Get_Iter_At_Line_Offset
-        (Last, Gint (V.Result.Line_End - 1), Gint (V.Result.Column_End - 1));
-
-      Buffer.Select_Range (First, Last);
-      Mark := Buffer.Create_Mark (Where => First);
 
       V.Scroll_To_Mark
-        (Mark,
+        (Buffer.Create_Mark (Where => First),
          Within_Margin => 0.0,
          Use_Align     => True,
-         Xalign        => 0.0,
+         Xalign        => 1.0,
          Yalign        => 0.5);
-   end Do_Scroll;
+   end On_Size_Allocate;
 
    ----------
    -- Full --
@@ -400,7 +403,8 @@ package body GPS.Kernel.Search.Sources is
       Tmp    : GNAT.Strings.String_Access;
       View   : Result_View_Access;
       Buffer : Gtk_Text_Buffer;
-      First  : Gtk_Text_Iter;
+      Tag    : Gtk_Text_Tag;
+      First, Last : Gtk_Text_Iter;
    begin
       Tmp := Self.File.Read_File;
 
@@ -411,18 +415,39 @@ package body GPS.Kernel.Search.Sources is
          View := new Result_View;
          View.Result := Source_Search_Result_Access (Self);
          Initialize (View, Buffer);
+
          Unref (Buffer);
 
          View.Set_Editable (False);
          View.Set_Wrap_Mode (Wrap_None);
-         View.Modify_Font (View_Fixed_Font.Get_Pref);
+         View.Modify_Font (Default_Style.Get_Pref_Font);
 
          --  ??? Need to convert to UTF8
          Buffer.Get_End_Iter (First);
          Buffer.Insert (First, Tmp.all);
          GNAT.Strings.Free (Tmp);
 
-         View.On_Show (Do_Scroll'Access, After => True);
+         Buffer.Get_Iter_At_Line_Offset
+           (First, Gint (Self.Line - 1), Gint (Self.Column - 1));
+         Buffer.Get_Iter_At_Line_Offset
+           (Last, Gint (Self.Line_End - 1), Gint (Self.Column_End - 1));
+
+         Tag := Buffer.Create_Tag;
+         Set_Property
+           (Tag, Gtk.Text_Tag.Font_Desc_Property,
+            Keywords_Style.Get_Pref_Font);
+         Set_Property
+           (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
+            Keywords_Style.Get_Pref_Fg);
+         Set_Property
+           (Tag, Gtk.Text_Tag.Background_Rgba_Property,
+            Keywords_Style.Get_Pref_Bg);
+         Set_Property
+           (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+
+         Buffer.Apply_Tag (Tag, First, Last);
+
+         View.On_Size_Allocate (On_Size_Allocate'Access, After => False);
 
          return Gtk.Widget.Gtk_Widget (View);
       end if;
