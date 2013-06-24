@@ -22,7 +22,7 @@ with GNAT.HTable;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;
 with GNATCOLL.Xref;
-with Basic_Types;
+with Basic_Types;             use Basic_Types;
 with Docgen3.Comment;         use Docgen3.Comment;
 with Docgen3.Files;           use Docgen3.Files;
 with Docgen3.Utils;           use Docgen3.Utils;
@@ -316,15 +316,24 @@ package body Docgen3.Frontend is
             Last_Idx  : Natural := 0;
 
             End_Record_Found : Boolean := False;
-            Tagged_Null      : Boolean := False;
-            With_Null        : Boolean := False;
+            In_Parent_Part   : Boolean := False;
+            --  In_Parent_Part is set when we identify the sequence "is new"
+            --  or the sequence "interface and" which indicate that the next
+            --  token corresponds with the parent type of a tagged type or an
+            --  interface type.
+
+            Is_Interface : Boolean := False;
+            Tagged_Null  : Boolean := False;
+            With_Null    : Boolean := False;
 
             type Tokens is
               (Tok_Unknown,
                Tok_Abstract,
+               Tok_And,
                Tok_Aliased,
                Tok_Case,
                Tok_End,
+               Tok_Interface,
                Tok_Is,
                Tok_Limited,
                Tok_New,
@@ -362,12 +371,16 @@ package body Docgen3.Frontend is
                      return Tok_Abstract;
                   elsif Keyword = "aliased" then
                      return Tok_Aliased;
+                  elsif Keyword = "and" then
+                     return Tok_And;
                   elsif Keyword = "case" then
                      return Tok_Case;
                   elsif Keyword = "end" then
                      return Tok_End;
                   elsif Keyword = "is" then
                      return Tok_Is;
+                  elsif Keyword = "interface" then
+                     return Tok_Interface;
                   elsif Keyword = "limited" then
                      return Tok_Limited;
                   elsif Keyword = "new" then
@@ -403,14 +416,59 @@ package body Docgen3.Frontend is
                Last_Idx := Sloc_End.Index;
                Append (S);
 
-               if Entity = Comment_Text then
-                  return False; --  continue
+               if Entity = Identifier_Text then
+
+                  --  No action needed if we already know the parent type
+
+                  if In_Parent_Part
+                    and then No (Get_Parent (E))
+                  then
+                     pragma Assert (Is_Tagged_Type (E));
+
+                     declare
+                        Parent : Entity_Id;
+                     begin
+                        Parent :=
+                          Find_Entity (Get_Progenitors (E).all, Name => S);
+                        pragma Assert (Present (Parent));
+
+                        Set_Parent (E, Parent);
+                        Delete_Entity (Get_Progenitors (E).all, Parent);
+                     end;
+
+                     In_Parent_Part := False;
+                  end if;
 
                elsif Entity = Keyword_Text then
                   Prev_Token := Token;
                   Token      := Get_Token;
 
-                  if Prev_Token = Tok_Tagged
+                  if Prev_Token = Tok_Is then
+                     if Token = Tok_New then
+                        In_Parent_Part := True;
+                     elsif Token = Tok_Interface then
+                        Is_Interface := True;
+                     end if;
+
+                  elsif (Prev_Token = Tok_Is or else Prev_Token = Tok_Abstract)
+                    and then Token = Tok_Tagged
+                  then
+                     --  Complete the decoration of this type since Xref does
+                     --  not facilitate decorating well tagged types that
+                     --  have no primitives (for example, a root of derivation
+                     --  defined as abstract tagged null record without
+                     --  primitives)
+
+                     if not Is_Tagged_Type (E) then
+                        Set_Is_Tagged_Type (E);
+                     end if;
+
+                  elsif Prev_Token = Tok_Interface
+                    and then Token = Tok_And
+                  then
+                     In_Parent_Part := True;
+
+                  elsif Prev_Token = Tok_Tagged
                     and then Token = Tok_Null
                   then
                      Tagged_Null := True;
@@ -436,12 +494,13 @@ package body Docgen3.Frontend is
                   elsif S = ";" then
                      if Par_Count = 0 then
                         return Prev_Token = Tok_Private
-                          or else End_Record_Found;
+                          or else End_Record_Found
+                          or else Is_Interface;
                      end if;
                   end if;
                end if;
 
-               return False;
+               return False; --  Continue
             exception
                when E : others =>
                   Trace (Exception_Handle, E);
@@ -492,9 +551,8 @@ package body Docgen3.Frontend is
             --  there is no need to use the Ada parser. We just need to locate
             --  the ';'
 
-            if Get_Kind (E) = E_Interface
-              or else (Is_Incomplete_Or_Private_Type (E)
-                         and then not Is_Full_View)
+            if Is_Incomplete_Or_Private_Type (E)
+              and then not Is_Full_View
             then
                declare
                   Idx : Natural := Entity_Index - 1;
@@ -1484,7 +1542,7 @@ package body Docgen3.Frontend is
                end loop;
             end;
 
-            if Is_Tagged (E)
+            if Is_Tagged_Type (E)
               or else (In_CPP_Lang and then Get_Kind (E) = E_Class)
             then
                --  ??? Xref bug (Xref.Methods): Include_Inherited returns
@@ -1547,14 +1605,41 @@ package body Docgen3.Frontend is
                Parents  : constant Xref.Entity_Array :=
                             Parent_Types
                               (Context.Database, LL.Get_Entity (E),
-                               Recursive => True);
+                               Recursive => False);
                Parent_E : Entity_Id;
 
             begin
+               --  Identify the parent and the progenitors of the type. When
+               --  the parent of a type T is an interface type and it T covers
+               --  also several interfaces then Xref does not provide us with
+               --  enough information to know which interface is the parent
+               --  type. The best we can do for now is to catch the parent
+               --  as part of processing the corresponding source file (see
+               --  Get_Record_Type_Source).
+
                for J in Parents'Range loop
                   Parent_E := New_Entity (Parents (J), Forced => True);
-                  Append_Parent_Type (E, Parent_E);
+                  LL.Append_Parent_Type (E, Parent_E);
+
+                  --  The list of parents returned by Xref does not help to
+                  --  differentiate the parent type from the progenitors.
+
+                  if In_Ada_Lang then
+                     if Get_Kind (Parent_E) /= E_Interface then
+                        Set_Parent (E, Parent_E);
+                     else
+                        Append_Progenitor (E, Parent_E);
+                     end if;
+                  end if;
                end loop;
+
+               if In_Ada_Language (E)
+                 and then No (Get_Parent (E))
+                 and then Parents'Length = 1
+               then
+                  Set_Parent (E, Parent_E);
+                  Delete_Entity (Get_Progenitors (E).all, Parent_E);
+               end if;
             end;
 
             declare
@@ -1579,7 +1664,7 @@ package body Docgen3.Frontend is
                          Lang => Get_Language (E))
                   then
                      Child_E := New_Entity (Childs (J), Forced => True);
-                     Append_Child_Type (E, Child_E);
+                     LL.Append_Child_Type (E, Child_E);
                   end if;
                end loop;
             end;
