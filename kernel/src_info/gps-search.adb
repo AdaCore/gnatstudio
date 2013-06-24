@@ -466,11 +466,11 @@ package body GPS.Search is
       B := Integer'Max (Context.Buffer_Start, Buffer'First);
       F := Integer'Min (Context.Buffer_End, Buffer'Last);
 
-      return Buffer (B .. Context.Start - 1)
+      return Glib.Convert.Escape_Text (Buffer (B .. Context.Start - 1))
          & "<b>"
-         & Buffer (Context.Start .. Context.Finish)
+         & Glib.Convert.Escape_Text (Buffer (Context.Start .. Context.Finish))
          & "</b>"
-         & Buffer (Context.Finish + 1 .. F);
+         & Glib.Convert.Escape_Text (Buffer (Context.Finish + 1 .. F));
    end Highlight_Match;
 
    ----------
