@@ -1536,7 +1536,7 @@ package body C_Analyzer is
       Push (Tokens, Default_Extended);
 
       --  Push a dummy indentation so that stack will never be empty.
-      Push (Indents, (None, 0, 0));
+      Push (Indents, (None, 0, 0, 0));
 
       while Index <= Buffer'Last loop
          Start_Char  := Char_In_Line;
@@ -1581,7 +1581,7 @@ package body C_Analyzer is
                         Paren_Index := Indent + Indent_Continue;
                      end if;
 
-                     Push (Indents, (Paren_Index, 0, Line));
+                     Push (Indents, (Paren_Index, 0, Line, 0));
                      Do_Indent (Index, Indent);
 
                   else
@@ -1737,7 +1737,7 @@ package body C_Analyzer is
 
                --  ??? Could optimize by caching Line_Start
 
-               Push (Indents, (Paren_Index, 0, Line));
+               Push (Indents, (Paren_Index, 0, Line, 0));
                Do_Indent (Index, Indent);
                Paren_Level := Paren_Level + 1;
 
