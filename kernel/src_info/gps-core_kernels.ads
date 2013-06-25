@@ -75,11 +75,11 @@ package GPS.Core_Kernels is
      return GPS.Process_Launchers.Process_Launcher is abstract;
    --  Process launcher service
 
-   function Get_System_Dir
+   function Get_Share_Dir
      (Self : not null access Core_Kernel_Record)
      return GNATCOLL.VFS.Virtual_File is abstract;
-   --  Return the installation directory for GPS. This always ends up with a
-   --  directory separator.
+   --  Return share/gps/ in installation directory for GPS.
+   --  This always ends up with a directory separator.
 
    function Create_From_Base
      (Kernel : access Core_Kernel_Record'Class;

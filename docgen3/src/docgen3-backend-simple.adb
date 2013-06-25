@@ -615,7 +615,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
               Get_Template
-                (Get_System_Dir (Backend.Context.Kernel), Tmpl_Entities);
+                (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Entities);
 
          begin
             Printout :=
@@ -693,7 +693,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
               Get_Template
-                (Get_System_Dir (Backend.Context.Kernel), Tmpl_Files_Index);
+                (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Files_Index);
             File        : GNATCOLL.VFS.Virtual_File;
             File_Index  : Files_List.Cursor;
 
@@ -728,7 +728,7 @@ package body Docgen3.Backend.Simple is
          Translation : Translate_Set;
          Tmpl        : constant Virtual_File :=
                          Get_Template
-                           (Get_System_Dir (Backend.Context.Kernel),
+                           (Get_Share_Dir (Backend.Context.Kernel),
                             Tmpl_Global_Index);
          My_Delay    : Delay_Time;
 
@@ -788,16 +788,16 @@ package body Docgen3.Backend.Simple is
       case Kind is
          when Tmpl_Entities =>
             return Create_From_Dir
-              (System_Dir, "share/gps/docgen3/entities.tmpl");
+              (System_Dir, "docgen3/entities.tmpl");
          when Tmpl_Files_Index =>
             return Create_From_Dir
-              (System_Dir, "share/gps/docgen3/files_index.tmpl");
+              (System_Dir, "docgen3/files_index.tmpl");
          when Tmpl_Global_Index =>
             return Create_From_Dir
-              (System_Dir, "share/gps/docgen3/index.tmpl");
+              (System_Dir, "docgen3/index.tmpl");
          when Tmpl_Src =>
             return Create_From_Dir
-              (System_Dir, "share/gps/docgen3/src.tmpl");
+              (System_Dir, "docgen3/src.tmpl");
       end case;
    end Get_Template;
 
@@ -822,7 +822,7 @@ package body Docgen3.Backend.Simple is
       is
          Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
            Create_From_Dir
-             (Get_System_Dir (Kernel), "share/gps/docgen3/support/");
+             (Get_Share_Dir (Kernel), "docgen3/support/");
          Dst_Dir : constant GNATCOLL.VFS.Virtual_File :=
            Get_Doc_Directory (Kernel);
          Success : Boolean;
@@ -853,7 +853,7 @@ package body Docgen3.Backend.Simple is
    is
       Tmpl    : constant Virtual_File :=
                   Get_Template
-                   (Get_System_Dir (Backend.Context.Kernel), Tmpl_Src);
+                   (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Src);
       Translation : Translate_Set;
 
       procedure For_All

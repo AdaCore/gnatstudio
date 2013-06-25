@@ -1032,11 +1032,22 @@ package body GPS.Kernel is
    -- Get_System_Dir --
    --------------------
 
-   overriding function Get_System_Dir
+   function Get_System_Dir
      (Handle : access Kernel_Handle_Record) return Virtual_File is
    begin
       return Handle.Prefix;
    end Get_System_Dir;
+
+   -------------------
+   -- Get_Share_Dir --
+   -------------------
+
+   overriding function Get_Share_Dir
+     (Self : not null access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Create_From_Dir (Self.Get_System_Dir, "share/gps/");
+   end Get_Share_Dir;
 
    ---------------------
    -- Get_Logs_Mapper --

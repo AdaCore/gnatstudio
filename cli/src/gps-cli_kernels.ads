@@ -55,7 +55,7 @@ private
       Messages_Window : aliased GPS.CLI_Messages_Windows.Messages_Window;
    end record;
 
-   overriding function Get_System_Dir
+   overriding function Get_Share_Dir
      (Self : not null access CLI_Kernel_Record)
       return Virtual_File;
 

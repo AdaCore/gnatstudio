@@ -154,11 +154,17 @@ package GPS.Kernel is
    --  Return the Home directory. (eg ~/.gps/).
    --  The directory ends with a directory separator
 
-   overriding function Get_System_Dir
+   function Get_System_Dir
      (Handle : access Kernel_Handle_Record)
      return Virtual_File;
    --  Return the installation directory for GPS. This always ends up with a
    --  directory separator.
+
+   overriding function Get_Share_Dir
+     (Self : not null access Kernel_Handle_Record)
+     return GNATCOLL.VFS.Virtual_File;
+   --  Return share/gps/ in Get_System_Dir directory. This always ends up with
+   --  a directory separator.
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)

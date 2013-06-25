@@ -93,7 +93,7 @@ package body GPS.CLI_Utils is
 
       GNAT_Version       : GNAT.Strings.String_Access;
       Std_Entities_Files : constant Virtual_File := Create_From_Dir
-        (Kernel.Get_System_Dir, "share/gps/predefined_ada.xml");
+        (Kernel.Get_Share_Dir, "predefined_ada.xml");
       Registry           : Build_Config_Registry_Access;
       Builder            : constant Build_Command_Utils.Builder_Context :=
         new Build_Command_Utils.Builder_Context_Record;

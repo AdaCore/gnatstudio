@@ -50,11 +50,11 @@ package body GPS.CLI_Kernels is
       Tree.Load_Empty_Project;
    end Create_Registry;
 
-   --------------------
-   -- Get_System_Dir --
-   --------------------
+   -------------------
+   -- Get_Share_Dir --
+   -------------------
 
-   overriding function Get_System_Dir
+   overriding function Get_Share_Dir
      (Self : not null access CLI_Kernel_Record)
       return GNATCOLL.VFS.Virtual_File
    is
@@ -64,11 +64,13 @@ package body GPS.CLI_Kernels is
         Create (+GNATCOLL.Utils.Executable_Location);
    begin
       if Dir.Base_Dir_Name = "obj" then
-         Dir := Dir.Get_Parent;
+         Dir := Create_From_Dir (Dir.Get_Parent.Get_Parent, "share/");
+      else
+         Dir := Create_From_Dir (Dir, "share/gps/");
       end if;
 
       return Dir;
-   end Get_System_Dir;
+   end Get_Share_Dir;
 
    ---------------------
    -- Messages_Window --
