@@ -26,14 +26,22 @@ private with Ada.Containers.Doubly_Linked_Lists;
 package GPS.Search is
    use type GNATCOLL.Xref.Visible_Column;
 
-   type Search_Kind is (Full_Text, Regexp, Fuzzy);
+   type Search_Kind is (Full_Text, Regexp, Fuzzy, Approximate);
    --  A Full_Text match searches the pattern exactly in the contents.
    --
    --  A regexp parses the pattern as a regular expression.
    --
    --  A fuzzy match will search for some contents that contains all the
    --  characters of the pattern, in the same order, but possibly with
-   --  other characters in-between.
+   --  other characters in-between. The number of characters in-between is not
+   --  limited, so this mode really only makes sense when matching short text
+   --  (and not, for instance, in text editors).
+   --
+   --  Approximate allows one or two errors to appear in the match (character
+   --  insertion, deletion or substitution). This is mostly suitable when
+   --  matching in long texts. The implementation of this algorithm is
+   --  optimized so that characters are matched only once, but the total length
+   --  of the pattern is limited to 64 characters.
 
    -------------
    -- Matcher --

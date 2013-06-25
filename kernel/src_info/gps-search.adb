@@ -23,6 +23,7 @@ with GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with Glib.Convert;
+with Interfaces;                  use Interfaces;
 
 package body GPS.Search is
 
@@ -39,9 +40,55 @@ package body GPS.Search is
       Matches : Match_Array_Access;
    end record;
 
-   type Fuzzy_Search is new Search_Pattern with record
-      null;
+   type Fuzzy_Search is new Search_Pattern with null record;
+
+   Approximate_Max_Errors        : constant := 2;
+   Approximate_Insertion_Cost    : constant := 1;
+   Approximate_Substitution_Cost : constant := 1;
+   Approximate_Deletion_Cost     : constant := 1;
+   --  The cost for character insertion, substitution or deletion. Set any of
+   --  these to Integer'Last to disable this type of errors.
+
+   Approximate_Max_Cost : constant :=
+     Integer'Max
+       (Integer'Max
+            (Integer'Max
+                 (Approximate_Insertion_Cost,
+                  Approximate_Substitution_Cost),
+             Approximate_Deletion_Cost),
+        Approximate_Max_Errors);
+
+   subtype Mask is Interfaces.Unsigned_64;
+   --  We only consider the 1..Pattern'Length
+
+   type Character_Mask_Array is array (Character) of Mask;
+   type Approximate_Status is
+     array (-Approximate_Max_Cost .. Approximate_Max_Errors) of Mask;
+   type Approximate_Status_Access is access all Approximate_Status;
+
+   type Approximate_Search is new Search_Pattern with record
+      Pattern : Character_Mask_Array;
+      --  Precomputed info about the pattern
+      --  ??? We only need entries for the characters in the Pattern, so we
+      --  are wasting space here. This would also allow working with UTF8
+      --  characters.
+
+      Result : Approximate_Status_Access;
+      --  ??? This would be better part of the search context
+
+      Matched : Mask;
+      --  Value in Result that indicates when the character matches
    end record;
+   type Approximate_Search_Access is access all Approximate_Search'Class;
+   --  An approximate matcher. The algorithm is from:
+   --    http://en.wikipedia.org/wiki/Bitap_algorithm
+   --    from Wu and Manber "Fast Text Searching With Errors"
+
+   function Compile_Approximate
+     (Pattern        : String;
+      Case_Sensitive : Boolean;
+      Whole_Word     : Boolean) return Approximate_Search_Access;
+   --  Compile the pattern
 
    overriding function Start
      (Self        : Full_Text_Search;
@@ -70,6 +117,15 @@ package body GPS.Search is
       Ref_Line    : Natural := 1;
       Ref_Column  : Character_Offset_Type := 1;
       Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context;
+   overriding function Start
+     (Self        : Approximate_Search;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Integer := -1;
+      Ref_Index   : Integer := -1;
+      Ref_Line    : Natural := 1;
+      Ref_Column  : Character_Offset_Type := 1;
+      Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context;
    overriding procedure Next
      (Self    : Full_Text_Search;
       Buffer  : String;
@@ -82,7 +138,12 @@ package body GPS.Search is
      (Self    : Fuzzy_Search;
       Buffer  : String;
       Context : in out Search_Context);
+   overriding procedure Next
+     (Self    : Approximate_Search;
+      Buffer  : String;
+      Context : in out Search_Context);
    overriding procedure Free (Self : in out Full_Text_Search);
+   overriding procedure Free (Self : in out Approximate_Search);
    overriding procedure Free (Self : in out Regexp_Search);
    overriding function Highlight_Match
       (Self    : Fuzzy_Search;
@@ -334,6 +395,122 @@ package body GPS.Search is
       return GPS.Search.No_Match;
    end Start;
 
+   -----------
+   -- Start --
+   -----------
+
+   overriding function Start
+     (Self        : Approximate_Search;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Integer := -1;
+      Ref_Index   : Integer := -1;
+      Ref_Line    : Natural := 1;
+      Ref_Column  : Character_Offset_Type := 1;
+      Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context
+   is
+      S : constant Integer :=
+        (if Start_Index = -1 then Buffer'First else Start_Index);
+      F : constant Integer :=
+        (if End_Index = -1 then Buffer'Last else End_Index);
+      R : constant Integer :=
+        (if Ref_Index = -1 then Buffer'First else Ref_Index);
+      Context : Search_Context :=
+        (Start             => S,
+         Finish            => S - 1,
+         Line_Start        => 1,
+         Line_End          => 1,
+         Col_Start         => 1,
+         Col_End           => 1,
+         Col_Visible_Start => 1,
+         Col_Visible_End   => 1,
+         Score             => 100,
+         Buffer_Start      => S,
+         Buffer_End        => F,
+         Ref_Index         => R,
+         Ref_Line          => Ref_Line,
+         Ref_Column        => Ref_Column,
+         Ref_Visible_Column =>
+           (if Ref_Visible_Column = -1
+            then Visible_Column_Type (Ref_Column)
+            else Ref_Visible_Column));
+   begin
+      --  Initialize the pattern with K ones
+      Self.Result.all := (others => 0);
+      for K in 1 .. Approximate_Max_Errors loop
+         Self.Result (K) := Shift_Left (Self.Result (K - 1), 1) or 1;
+      end loop;
+
+      Next (Self, Buffer, Context);
+      return Context;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self    : Approximate_Search;
+      Buffer  : String;
+      Context : in out Search_Context)
+   is
+      C : Character;
+      Tmp_R : Approximate_Status;
+
+      --  We want at least one character of the pattern to match, otherwise it
+      --  doesn't make sense.
+      Max_K : constant Natural :=
+        Integer'Min (Approximate_Max_Errors, Self.Text'Length - 1);
+
+   begin
+      for P in Context.Finish + 1 .. Context.Buffer_End loop
+         C := Buffer (P);
+         if not Self.Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         Tmp_R := Self.Result.all;
+         Self.Result (0) :=
+           (Shift_Left (Tmp_R (0), 1) or 1) and Self.Pattern (C);
+
+         for K in 1 .. Max_K loop
+            Self.Result (K) :=
+              ((Shift_Left (Tmp_R (K), 1) or 1) and Self.Pattern (C))
+              or (Shift_Left (Tmp_R (K - Approximate_Substitution_Cost)
+                              or Self.Result (K - Approximate_Deletion_Cost),
+                              1) or 1)
+              or Tmp_R (K - Approximate_Insertion_Cost);
+         end loop;
+
+         for K in Self.Result'First .. Max_K loop
+            if P - Self.Text'Length - K + 1 >= Buffer'First
+              and then (Self.Result (K) and Self.Matched) /= 0
+            then
+               Context.Start := Integer'Max
+                 (Context.Buffer_Start, P - Self.Text'Length - K + 1);
+               Context.Finish := P;
+
+               Context.Score := 100 - K;
+               Update_Location (Context, Buffer);
+               return;
+            end if;
+         end loop;
+      end loop;
+
+      Context := No_Match;
+   end Next;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Approximate_Search) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Approximate_Status, Approximate_Status_Access);
+   begin
+      Unchecked_Free (Self.Result);
+   end Free;
+
    ----------
    -- Next --
    ----------
@@ -461,16 +638,18 @@ package body GPS.Search is
        Context : Search_Context) return String
    is
       pragma Unreferenced (Self);
-      B, F : Natural;
+      B, F, S, E : Natural;
    begin
       B := Integer'Max (Context.Buffer_Start, Buffer'First);
       F := Integer'Min (Context.Buffer_End, Buffer'Last);
+      S := Integer'Max (Context.Start, Buffer'First);
+      E := Integer'Min (Context.Finish, Buffer'Last);
 
-      return Glib.Convert.Escape_Text (Buffer (B .. Context.Start - 1))
+      return Glib.Convert.Escape_Text (Buffer (B .. S - 1))
          & "<b>"
-         & Glib.Convert.Escape_Text (Buffer (Context.Start .. Context.Finish))
+         & Glib.Convert.Escape_Text (Buffer (S .. E))
          & "</b>"
-         & Glib.Convert.Escape_Text (Buffer (Context.Finish + 1 .. F));
+         & Glib.Convert.Escape_Text (Buffer (E + 1 .. F));
    end Highlight_Match;
 
    ----------
@@ -619,6 +798,40 @@ package body GPS.Search is
       end if;
    end Free;
 
+   -------------------------
+   -- Compile_Approximate --
+   -------------------------
+
+   function Compile_Approximate
+     (Pattern        : String;
+      Case_Sensitive : Boolean;
+      Whole_Word     : Boolean) return Approximate_Search_Access
+   is
+      Result : constant Approximate_Search_Access := new Approximate_Search'
+        (Text           => new String'(Pattern),
+         Case_Sensitive => Case_Sensitive,
+         Whole_Word     => Whole_Word,
+         Kind           => Approximate,
+         Pattern        => (others => 0),
+         Result         => new Approximate_Status,
+         Matched        =>  2 ** (Pattern'Length - 1));
+
+      C : Character;
+   begin
+      --  Compared to the paper, we revert the bit ordering in S
+      for P in Pattern'Range loop
+         C := Pattern (P);
+
+         if not Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         Result.Pattern (C) := Result.Pattern (C) or 2 ** (P - Pattern'First);
+      end loop;
+
+      return Result;
+   end Compile_Approximate;
+
    -----------
    -- Build --
    -----------
@@ -653,6 +866,26 @@ package body GPS.Search is
                Case_Sensitive => Case_Sensitive,
                Whole_Word     => Whole_Word,
                Kind           => Kind);
+
+         when Approximate =>
+            if Pattern'Length > 64 then
+               --  Fallback to Full_Text, pattern is too long
+               BM := new GNATCOLL.Boyer_Moore.Pattern;
+               Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
+               return new Full_Text_Search'
+                 (Pattern        => BM,
+                  Text           => new String'(Pattern),
+                  Case_Sensitive => Case_Sensitive,
+                  Whole_Word     => Whole_Word,
+                  Kind           => Kind,
+                  Length         => Pattern'Length);
+
+            else
+               return Search_Pattern_Access (Compile_Approximate
+                 (Pattern,
+                  Case_Sensitive => Case_Sensitive,
+                  Whole_Word     => Whole_Word));
+            end if;
 
          when Regexp =>
             if not Case_Sensitive then

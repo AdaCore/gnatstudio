@@ -177,9 +177,8 @@ package body GPS.Kernel.Search.Sources is
          when Full_Text | Regexp =>
             Self.Pattern := Search_Pattern_Access (Pattern);
             Self.Pattern_Needs_Free := False;
-         when Fuzzy =>
-            --  Fuzzy does not make sense in sources, would match too much
-            Self.Pattern := Pattern.Build (Kind => Full_Text);
+         when Fuzzy | Approximate =>
+            Self.Pattern := Pattern.Build (Kind => Approximate);
             Self.Pattern_Needs_Free := True;
       end case;
 
@@ -214,9 +213,8 @@ package body GPS.Kernel.Search.Sources is
          when Full_Text | Regexp =>
             Self.Pattern := Search_Pattern_Access (Pattern);
             Self.Pattern_Needs_Free := False;
-         when Fuzzy =>
-            --  Fuzzy does not make sense in sources, would match too much
-            Self.Pattern := Pattern.Build (Kind => Full_Text);
+         when Fuzzy | Approximate =>
+            Self.Pattern := Pattern.Build (Kind => Approximate);
             Self.Pattern_Needs_Free := True;
       end case;
 

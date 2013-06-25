@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M625-005 GPS: approximate search (2013-06-25)
+
+  GPS is now able to do approximate search. For instance, searching for
+  "saerch" will also match "search" when this mode is activated.
+
 NF-60-M621-005 GPS: new plugin formatfile.py (2013-06-21)
 
   This plugin, when loaded, adds a new menu /Edit/Format Whole File
