@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.CLI_Buffer_Providers;
 with GPS.CLI_Target_Loaders;
 with GPS.CLI_Scripts;
 
@@ -25,12 +26,15 @@ with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
 with GPS.Scripts.Projects;
 with GPS.Tools_Output;                         use GPS.Tools_Output;
+
+with Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Assistants;
 with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
 with Build_Command_Utils;
 with Build_Configurations;                     use Build_Configurations;
+with Language.Tree.Database;
 with Language.Ada;
-with Ada_Semantic_Tree.Lang;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
@@ -84,17 +88,29 @@ package body GPS.CLI_Utils is
 
    procedure Create_Kernel_Context
      (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record) is
+
       use Commands.Builder;
-      GNAT_Version : GNAT.Strings.String_Access;
-      Registry              : Build_Config_Registry_Access;
-      Builder               : constant Build_Command_Utils.Builder_Context :=
+
+      GNAT_Version       : GNAT.Strings.String_Access;
+      Std_Entities_Files : constant Virtual_File := Create_From_Dir
+        (Kernel.Get_System_Dir, "share/gps/predefined_ada.xml");
+      Registry           : Build_Config_Registry_Access;
+      Builder            : constant Build_Command_Utils.Builder_Context :=
         new Build_Command_Utils.Builder_Context_Record;
-      Target_Loader         : constant GPS.Core_Kernels.Abstract_Module :=
+      Target_Loader      : constant GPS.Core_Kernels.Abstract_Module :=
         new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
 
    begin
       --  Initialize
       GPS.Core_Kernels.Initialize (Kernel);
+
+      Language.Tree.Database.Set_Provider
+        (Kernel.Databases.Constructs,
+         new GPS.CLI_Buffer_Providers.CLI_Buffer_Provider);
+
+      Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
+        (Kernel.Databases.Constructs, Std_Entities_Files);
+
       GPS.Python_Core.Register_Python (Kernel);
       Registry := Create;
       Builder.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel), Registry);
