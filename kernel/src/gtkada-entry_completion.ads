@@ -46,7 +46,6 @@ package Gtkada.Entry_Completion is
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
       Case_Sensitive : Boolean := False;
-      Preview        : Boolean := True;
       Completion_In_Popup : Boolean := True);
    procedure Initialize
      (Self           : not null access Gtkada_Entry_Record'Class;
@@ -54,7 +53,6 @@ package Gtkada.Entry_Completion is
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
       Case_Sensitive : Boolean := False;
-      Preview        : Boolean := True;
       Completion_In_Popup : Boolean := True);
    --  Create a new entry.
    --
@@ -74,10 +72,6 @@ package Gtkada.Entry_Completion is
    --  dialog, since the latter will grab all events and the list of
    --  completions will not receive the mouse events. The layout is configured
    --  via Completion_In_Popup.
-   --
-   --  Preview indicates whether we want to show the previous window by
-   --  default. Like Completion_In_Popup, it is only relevant the first time
-   --  the entry is displayed.
 
    function Get_Type return Glib.GType;
    --  The internal gtk+ type
@@ -142,7 +136,6 @@ private
       Settings                : Gtk.Box.Gtk_Box;
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
-      Settings_Preview        : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
 
       Completions      : Gtk.List_Store.Gtk_List_Store;

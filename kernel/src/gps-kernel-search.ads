@@ -18,6 +18,8 @@
 --  The root for all the search providers in GPS
 
 with GPS.Search;
+with Glib.Object;
+with Gtk.Box;
 with Gtk.Widget;
 
 package GPS.Kernel.Search is
@@ -40,6 +42,17 @@ package GPS.Kernel.Search is
    end record;
    type Kernel_Search_Provider_Access is
       access all Kernel_Search_Provider'Class;
+
+   procedure Edit_Settings
+     (Self : not null access Kernel_Search_Provider;
+      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data : not null access Glib.Object.GObject_Record'Class;
+      On_Change : not null access procedure
+        (Data : access Glib.Object.GObject_Record'Class)) is null;
+   --  Add settings edition widgets to the box. Any change to the settings
+   --  should result in a call to On_Change and pass Data as a parameter.
+   --  For instance, each widget would connect its change callback to this, to
+   --  ensure proper refresh of the completion entry.
 
    procedure Adjust_Score
       (Self   : not null access Kernel_Search_Provider;

@@ -35,6 +35,7 @@ with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
 with Gtk.Alignment;              use Gtk.Alignment;
 with Gtk.Box;                    use Gtk.Box;
+with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
@@ -44,10 +45,12 @@ with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
+with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
@@ -155,6 +158,15 @@ package body Gtkada.Entry_Completion is
    procedure Show_Preview (Self : access Gtkada_Entry_Record'Class);
    --  Show the preview pane if there is a current selection
 
+   function Need_Preview
+     (Self : access Gtkada_Entry_Record'Class) return Boolean;
+   --  Whether the preview should be displayed.
+
+   function Auto_Resize_Popup
+     (Self : access Gtkada_Entry_Record'Class) return Boolean;
+   --  Whether the popup window should be automatically resized (True) or
+   --  occupy the whole height.
+
    procedure Resize_Popup
       (Self : not null access Gtkada_Entry_Record'Class;
        Height_Only : Boolean);
@@ -192,6 +204,9 @@ package body Gtkada.Entry_Completion is
        return Provider_Column_Role;
    --  The role for the provider column on the given row.
    --  Model and Iter apply to the filter model.
+
+   procedure Show_Settings (Self : access GObject_Record'Class);
+   --  Display the settings dialog
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Search_Result_Access);
@@ -401,12 +416,11 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive   : Boolean := False;
-      Preview          : Boolean := True;
       Completion_In_Popup : Boolean := True) is
    begin
       Self := new Gtkada_Entry_Record;
       Initialize
-         (Self, Kernel, Completion, Name, Case_Sensitive, Preview,
+         (Self, Kernel, Completion, Name, Case_Sensitive,
           Completion_In_Popup);
    end Gtk_New;
 
@@ -420,7 +434,6 @@ package body Gtkada.Entry_Completion is
       Completion       : not null access GPS.Search.Search_Provider'Class;
       Name             : Histories.History_Key;
       Case_Sensitive      : Boolean := False;
-      Preview          : Boolean := True;
       Completion_In_Popup : Boolean := True)
    is
       Scrolled : Gtk_Scrolled_Window;
@@ -431,6 +444,8 @@ package body Gtkada.Entry_Completion is
       Dummy  : Boolean;
       Color  : Gdk_RGBA;
       Filter : Comp_Filter_Model;
+      Button : Gtk_Button;
+      Image  : Gtk_Image;
       Frame  : Gtk_Frame;
       Popup  : Gtk_Window;
       pragma Unreferenced (Col, Dummy);
@@ -586,13 +601,6 @@ package body Gtkada.Entry_Completion is
                  Default => False);
       Self.Settings.Pack_Start (Self.Settings_Whole_Word, Expand => False);
 
-      Gtk_New (Self.Settings_Preview, -"Preview");
-      Associate (Get_History (Kernel).all,
-                 Name & "-preview",
-                 Self.Settings_Preview,
-                 Default => Preview);
-      Self.Settings.Pack_Start (Self.Settings_Preview, Expand => False);
-
       Gtk_New (Self.Settings_Kind);
       Self.Settings_Kind.Set_Name ("global-search-kind");
       Self.Settings_Kind.Append
@@ -610,10 +618,22 @@ package body Gtkada.Entry_Completion is
          (Most_Recent (Get_History (Kernel), Name & "-kind",
                        Search_Kind'Image (Fuzzy)));
 
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "global-search-auto-resize",
+         Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Name & "-preview",
+         Default_Value => True);
+
+      Gtk_New (Image, Stock_Id => Stock_Preferences, Size => Icon_Size_Menu);
+      Gtk_New (Button);
+      Button.Add (Image);
+      Self.Settings.Pack_Start (Button, Expand => False);
+      Button.On_Clicked (Show_Settings'Access, Self);
+
       Self.Settings_Case_Sensitive.On_Toggled
          (On_Settings_Changed'Access, Self);
       Self.Settings_Whole_Word.On_Toggled (On_Settings_Changed'Access, Self);
-      Self.Settings_Preview.On_Toggled (On_Settings_Changed'Access, Self);
       Self.Settings_Kind.On_Changed (On_Settings_Changed'Access, Self);
 
       Self.On_Destroy (On_Entry_Destroy'Access);
@@ -899,12 +919,34 @@ package body Gtkada.Entry_Completion is
    end On_Key_Press;
 
    ------------------
+   -- Need_Preview --
+   ------------------
+
+   function Need_Preview
+     (Self : access Gtkada_Entry_Record'Class) return Boolean is
+   begin
+      return Get_History
+        (Get_History (Self.Kernel).all, Self.Name.all & "-preview");
+   end Need_Preview;
+
+   -----------------------
+   -- Auto_Resize_Popup --
+   -----------------------
+
+   function Auto_Resize_Popup
+     (Self : access Gtkada_Entry_Record'Class) return Boolean is
+   begin
+      return Get_History
+        (Get_History (Self.Kernel).all, "global-search-auto-resize");
+   end Auto_Resize_Popup;
+
+   ------------------
    -- Show_Preview --
    ------------------
 
    procedure Show_Preview (Self : access Gtkada_Entry_Record'Class) is
    begin
-      if Self.Settings_Preview.Get_Active
+      if Need_Preview (Self)
          and then Self.Notes_Idle = No_Source_Id
       then
          Self.Notes_Idle := Completion_Sources.Idle_Add
@@ -923,7 +965,7 @@ package body Gtkada.Entry_Completion is
       F      : Gtk_Widget;
       Align  : Gtk_Alignment;
    begin
-      if Self.Settings_Preview.Get_Active then
+      if Need_Preview (Self) then
          Self.View.Get_Selection.Get_Selected (M, Iter);
          Remove_All_Children (Self.Notes_Scroll);
 
@@ -1083,50 +1125,57 @@ package body Gtkada.Entry_Completion is
          MaxX := Root_X + Toplevel.Get_Allocated_Width;
          MaxY := Root_Y + Toplevel.Get_Allocated_Height;
 
-         --  Compute the ideal height. We do not compute the ideal width, since
-         --  we don't want to have to move the window around and want it
-         --  aligned on the GPS right side.
+         --  Compute the ideal height. We do not compute the ideal width,
+         --  since we don't want to have to move the window around and want
+         --  it aligned on the GPS right side.
 
          Width := Result_Width + Provider_Label_Width;
          X := Gint'Min (Gdk_X, MaxX - Width);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
 
-         --  Unfortunately, there doesn't seem to be a convenient way to
-         --  compute the ideal height for a GtkTreeView (using the upper value
-         --  of the vadjustment doesn't work either since it never decreases),
-         --  and Get_Preferred_Height always returns 0 unless we are using
-         --  Fixed_Height mode, but in our case the rows do not all have the
-         --  same height.
-         --  Self.View.Get_Cell_Area returns the height of a row, but only if
-         --  it is visible which is not the case yet).
+         if Auto_Resize_Popup (Self) then
+            --  Unfortunately, there doesn't seem to be a convenient way to
+            --  compute the ideal height for a GtkTreeView (using the upper
+            --  value of the vadjustment doesn't work either since it never
+            --  decreases), and Get_Preferred_Height always returns 0 unless
+            --  we are using Fixed_Height mode, but in our case the rows do not
+            --  all have the same height. Self.View.Get_Cell_Area returns the
+            --  height of a row, but only if it is visible which is not the
+            --  case yet).
 
-         Layout := Create_Pango_Layout (Self.View);
-         Layout.Set_Text ("0mp");
-         Layout.Get_Pixel_Size (W, H);
-         Unref (Layout);
+            Layout := Create_Pango_Layout (Self.View);
+            Layout.Set_Text ("0mp");
+            Layout.Get_Pixel_Size (W, H);
+            Unref (Layout);
 
-         --  '3' is the height of the separator. Should be computed from the
-         --  widget itself perhaps
-         Height := Self.Settings.Get_Allocated_Height + 3;
+            --  '3' is the height of the separator. Should be computed from the
+            --  widget itself perhaps
+            Height := Self.Settings.Get_Allocated_Height + 3;
 
-         Iter := Self.Completions.Get_Iter_First;
-         while Iter /= Null_Iter loop
-            Result := Convert
-               (Get_Address (+Self.Completions, Iter, Column_Data));
+            Iter := Self.Completions.Get_Iter_First;
+            while Iter /= Null_Iter loop
+               Result := Convert
+                 (Get_Address (+Self.Completions, Iter, Column_Data));
 
-            --  5 is the height of separators between rows. It comes from
-            --  the theme, though, so this is only an approximation. At worse
-            --  the popup window will be too high
-            Height := Height + H + 5;
+               --  5 is the height of separators between rows. It comes from
+               --  the theme, though, so this is only an approximation. At
+               --  worse the popup window will be too high
+               Height := Height + H + 5;
 
-            if Result.Long /= null then
-               Height := Height + H;
-            end if;
+               if Result.Long /= null then
+                  Height := Height + H;
+               end if;
 
-            exit when Height > MaxY - Y;  --  no need to go further
+               exit when Height > MaxY - Y;  --  no need to go further
 
-            Next (Self.Completions, Iter);
-         end loop;
+               Next (Self.Completions, Iter);
+            end loop;
+
+            Height := Gint'Min (Height, MaxY - Y);
+
+         else
+            Height := MaxY - Y;
+         end if;
 
          if not Height_Only then
             Self.Popup.Move (X, Y);
@@ -1135,7 +1184,6 @@ package body Gtkada.Entry_Completion is
             Popup.Move (X - Preview_Width - Preview_Right_Margin, Y);
          end if;
 
-         Height := Gint'Min (Height, MaxY - Y);
          Self.Popup.Set_Size_Request (Width, Height);
          Self.Popup.Queue_Resize;
       end if;
@@ -1372,5 +1420,49 @@ package body Gtkada.Entry_Completion is
       Free (Self.Pattern);
       Free (Root_Command (Self));  --  inherited
    end Free;
+
+   -------------------
+   -- Show_Settings --
+   -------------------
+
+   procedure Show_Settings (Self : access GObject_Record'Class) is
+      S      : constant Gtkada_Entry := Gtkada_Entry (Self);
+      Win    : Gtk_Dialog;
+      Resp   : Gtk_Response_Type;
+      Button : Gtk_Widget;
+      pragma Unreferenced (Resp, Button);
+      Preview : Gtk_Check_Button;
+      Resize  : Gtk_Check_Button;
+   begin
+      Gtk_New (Win,
+               Title  => -"Search settings",
+               Parent => Get_Main_Window (S.Kernel),
+               Flags  => Modal or Destroy_With_Parent or No_Separator);
+
+      Gtk_New (Preview, -"Preview");
+      Associate (Get_History (S.Kernel).all,
+                 S.Name.all & "-preview",
+                 Preview,
+                 Default => True);
+      Win.Get_Content_Area.Pack_Start (Preview, Expand => False);
+      Preview.On_Toggled (On_Settings_Changed'Access, Self);
+
+      Gtk_New (Resize, -"Auto-resize popup");
+      Associate (Get_History (S.Kernel).all,
+                 "global-search-auto-resize",
+                 Resize,
+                 Default => True);
+      Win.Get_Content_Area.Pack_Start (Resize, Expand => False);
+      Resize.On_Toggled (On_Settings_Changed'Access, Self);
+
+      Kernel_Search_Provider_Access (S.Completion).Edit_Settings
+        (Win.Get_Content_Area, Self, On_Settings_Changed'Access);
+
+      Button := Win.Add_Button (Stock_Ok, Gtk_Response_OK);
+
+      Win.Show_All;
+      Resp := Win.Run;
+      Win.Destroy;
+   end Show_Settings;
 
 end Gtkada.Entry_Completion;

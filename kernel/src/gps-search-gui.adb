@@ -15,14 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Commands.Interactive;     use Commands, Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
 with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
-with Glib.Object;              use Glib.Object;
+with Glib.Object;              use Glib, Glib.Object;
 with Gtk.Alignment;            use Gtk.Alignment;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -41,8 +45,8 @@ with Histories;                use Histories;
 
 package body GPS.Search.GUI is
 
-   Proposals_Per_Provider : constant := 5;
-   --  Number of proposals from each provider in the Overall_Search_Provider
+   Pref_Proposals_Per_Provider : Integer_Preference;
+   --  Preference for the number of proposals per provider
 
    type Global_Search_Module_Record is new Module_ID_Record with record
       Search          : Gtkada_Entry;
@@ -64,19 +68,24 @@ package body GPS.Search.GUI is
    Module : Global_Search_Module;
 
    type Result_Array is array (Natural range <>) of Search_Result_Access;
+   type Result_Array_Access is access all Result_Array;
+
+   procedure Free (Self : in out Result_Array_Access);
+   --  Free self and the search results
 
    type Overall_Search_Provider is new Kernel_Search_Provider with record
       Pattern : Search_Pattern_Access;
       Provider : Search_Provider_Access;  --  the current one
       Current_Provider : Integer := -1;   --  index of current one
 
-      Current : Result_Array (1 .. Proposals_Per_Provider);
+      Current : Result_Array_Access;
       Current_Returned : Natural;
       Current_Index : Natural;
       --  The best proposals for the current provider.
    end record;
    type Overall_Search_Provider_Access
-      is access all Overall_Search_Provider'Class;
+     is access all Overall_Search_Provider'Class;
+   overriding procedure Free (Self : in out Overall_Search_Provider);
    overriding procedure Set_Pattern
      (Self    : not null access Overall_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
@@ -89,6 +98,12 @@ package body GPS.Search.GUI is
      (Self     : not null access Overall_Search_Provider) return String;
    overriding function Documentation
      (Self : not null access Overall_Search_Provider) return String;
+   overriding procedure Edit_Settings
+     (Self : not null access Overall_Search_Provider;
+      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data : not null access Glib.Object.GObject_Record'Class;
+      On_Change : not null access procedure
+        (Data : access Glib.Object.GObject_Record'Class));
 
    procedure On_Escape (Self : access Gtk_Widget_Record'Class);
    --  Called when "<escape>" has been called
@@ -98,6 +113,12 @@ package body GPS.Search.GUI is
 
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
+
+   procedure Change_Proposals_Per_Provider
+     (Spin : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called when the user changes the number of proposals per provider
+   --  through the settings.
 
    -------------------
    -- Documentation --
@@ -114,6 +135,31 @@ package body GPS.Search.GUI is
         & " in that context.";
    end Documentation;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Result_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Result_Array, Result_Array_Access);
+   begin
+      if Self /= null then
+         for S in Self'Range loop
+            Free (Self (S));
+         end loop;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Overall_Search_Provider) is
+   begin
+      Free (Self.Current);
+   end Free;
+
    -----------------
    -- Set_Pattern --
    -----------------
@@ -128,11 +174,16 @@ package body GPS.Search.GUI is
       Self.Current_Provider := 1;
       Self.Provider := Registry.Get (Self.Current_Provider);
 
+      Free (Self.Current);
+
+      Self.Current := new Result_Array
+        (1 .. Pref_Proposals_Per_Provider.Get_Pref);
+
       if Self.Provider /= null then
          Self.Provider.Count := 0;
          Self.Provider.Set_Pattern
             (Self.Pattern,
-             Limit => Natural'Min (Limit, Proposals_Per_Provider));
+             Limit => Natural'Min (Limit, Self.Current'Last));
       end if;
 
       Self.Current_Returned := Self.Current'First - 1;
@@ -212,6 +263,7 @@ package body GPS.Search.GUI is
 
       if Self.Current_Returned <= Self.Current_Index then
          Result := Self.Current (Self.Current_Returned);
+         Self.Current (Self.Current_Returned) := null;  --  belongs to caller
          Self.Current_Returned := Self.Current_Returned + 1;
          Has_Next := True;
          return;
@@ -223,8 +275,7 @@ package body GPS.Search.GUI is
 
       if Self.Provider /= null then
          Self.Provider.Count := 0;
-         Self.Provider.Set_Pattern
-            (Self.Pattern, Limit => Proposals_Per_Provider);
+         Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Current'Last);
       end if;
 
       Self.Current_Index := Self.Current'First - 1;
@@ -337,6 +388,69 @@ package body GPS.Search.GUI is
       return Commands.Success;
    end Execute;
 
+   -----------------------------------
+   -- Change_Proposals_Per_Provider --
+   -----------------------------------
+
+   procedure Change_Proposals_Per_Provider
+     (Spin : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      S : constant Gtk_Spin_Button := Gtk_Spin_Button (Spin);
+   begin
+      if S = null then
+         raise Program_Error with "no spin button";
+      end if;
+      if Kernel = null then
+         raise Program_Error with "no kernel";
+      end if;
+      Set_Pref
+        (Pref_Proposals_Per_Provider,
+         Get_Preferences (Kernel), Integer (S.Get_Value));
+   end Change_Proposals_Per_Provider;
+
+   -------------------
+   -- Edit_Settings --
+   -------------------
+
+   overriding procedure Edit_Settings
+     (Self : not null access Overall_Search_Provider;
+      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data : not null access Glib.Object.GObject_Record'Class;
+      On_Change : not null access procedure
+        (Data : access Glib.Object.GObject_Record'Class))
+   is
+      Spin  : Gtk_Spin_Button;
+      Label : Gtk_Label;
+      B     : Gtk_Box;
+      P     : Integer;
+      Provider : Kernel_Search_Provider_Access;
+   begin
+      Gtk_New_Hbox (B, Homogeneous => False);
+      Box.Pack_Start (B, Expand => False);
+
+      Gtk_New (Label, -"Proposals per context:");
+      B.Pack_Start (Label, Expand => False);
+
+      Gtk_New (Spin, Min => 2.0, Max => 20.0, Step => 1.0);
+      Spin.Set_Value (Gdouble (Pref_Proposals_Per_Provider.Get_Pref));
+      B.Pack_Start (Spin, Expand => False);
+
+      Kernel_Callback.Connect
+        (Spin, Signal_Value_Changed,
+         Change_Proposals_Per_Provider'Access, Self.Kernel);
+      Spin.On_Value_Changed (On_Change, Data, After => True);
+
+      --  Ask the settings for each of the providers.
+      P := 1;
+      loop
+         Provider := Kernel_Search_Provider_Access (Registry.Get (P));
+         exit when Provider = null;
+         Provider.Edit_Settings (Box, Data, On_Change);
+         P := P + 1;
+      end loop;
+   end Edit_Settings;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -359,6 +473,8 @@ package body GPS.Search.GUI is
           Kernel      => Kernel,
           Module_Name => "Global_Search");
 
+      Overall.Kernel := Kernel_Handle (Kernel);
+
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Overall);
       Command.History := new History_Key'("global-search-entry");
@@ -368,6 +484,16 @@ package body GPS.Search.GUI is
           Description =>
              "Activate the global search field in the main toolbar",
           Category => "Search");
+
+      Pref_Proposals_Per_Provider := Create
+        (Get_Preferences (Kernel),
+         Name    => "Proposals_Per_Context",
+         Label   => "",
+         Page    => "",
+         Doc     => "Number of proposals per context in the global search",
+         Minimum => 2,
+         Maximum => 20,
+         Default => 5);
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action (Kernel, P, Provider_Filenames);
@@ -390,7 +516,6 @@ package body GPS.Search.GUI is
           Name                => "global_search",
           Completion_In_Popup => True,
           Case_Sensitive      => True,
-          Preview             => False,
           Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
 
