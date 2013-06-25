@@ -3810,6 +3810,11 @@ package body Ada_Analyzer is
                      Val := Top (Indents).Continuation_Val;
                      Push (Indents, (Level, Align, L, Continuation_Val));
 
+                     --  If Align_Decl_On_Colon is set and Colon_Col is set
+                     --  then ignore Val and continue indenting based on
+                     --  the current Continuation_Val since the saved value
+                     --  does not take Colon_Col into account.
+
                      if Local_Top_Token.Colon_Col /= 0 then
                         if Continuation_Val > 0 then
                            Continuation_Val :=
