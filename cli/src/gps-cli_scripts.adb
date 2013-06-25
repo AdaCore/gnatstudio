@@ -140,7 +140,7 @@ package body GPS.CLI_Scripts is
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
    begin
       Register_Command
-        (Kernel.Scripts, "get_system_dir",
+        (Kernel.Scripts, "get_share_dir",
          Handler => Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "parse_xml",
