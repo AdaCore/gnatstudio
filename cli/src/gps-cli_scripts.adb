@@ -32,10 +32,21 @@ package body GPS.CLI_Scripts is
 
    Xml_Cst               : aliased constant String := "xml";
    Xml_Custom_Parameters : constant Cst_Argument_List := (1 => Xml_Cst'Access);
+   Docgen_Class_Name     : constant String := "Docgen";
 
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
+   --  Hanler for misc GPS.* commands
+
+   function Get_Docgen_Class
+     (Kernel : access Core_Kernel_Record'Class) return Class_Type;
+   --  Return class for Docgen
+
+   procedure Docgen_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Hanler for GPS.Docgen.process_project command
 
    ---------------------
    -- Command_Handler --
@@ -81,7 +92,20 @@ package body GPS.CLI_Scripts is
                when others =>
                   Set_Error_Msg (Data, "Error while executing parse_xml()");
          end;
-      elsif Command = "process_project_with_docgen" then
+      end if;
+   end Command_Handler;
+
+   ----------------------------
+   -- Docgen_Command_Handler --
+   ----------------------------
+
+   procedure Docgen_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Core_Kernel := Get_Kernel (Data);
+   begin
+      if Command = "process_project" then
          declare
             Options : constant Docgen3.Docgen_Options :=
               (Comments_Filter => null,
@@ -97,7 +121,17 @@ package body GPS.CLI_Scripts is
                Recursive => False);
          end;
       end if;
-   end Command_Handler;
+   end Docgen_Command_Handler;
+
+   ----------------------
+   -- Get_Docgen_Class --
+   ----------------------
+
+   function Get_Docgen_Class
+     (Kernel : access Core_Kernel_Record'Class) return Class_Type is
+   begin
+      return New_Class (Kernel.Scripts, Docgen_Class_Name);
+   end Get_Docgen_Class;
 
    -----------------------
    -- Register_Commands --
@@ -114,8 +148,10 @@ package body GPS.CLI_Scripts is
          Maximum_Args => 1,
          Handler      => Command_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "process_project_with_docgen",
-         Handler => Command_Handler'Access);
+        (Kernel.Scripts, "process_project",
+         Class         => Get_Docgen_Class (Kernel),
+         Static_Method => True,
+         Handler       => Docgen_Command_Handler'Access);
    end Register_Commands;
 
 end GPS.CLI_Scripts;
