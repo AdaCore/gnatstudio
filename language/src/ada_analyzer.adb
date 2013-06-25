@@ -2955,11 +2955,11 @@ package body Ada_Analyzer is
 
                   Top (Indents).Level := Top (Indents).Level - 1;
                   Do_Indent (P, L, Num_Spaces);
+                  Continuation_Val := Top (Indents).Continuation_Val;
                end if;
 
-               Pop (Indents);
                Num_Parens := Num_Parens - 1;
-
+               Pop (Indents);
                Local_Top_Token := Top (Tokens);
 
                if Num_Parens = 0 then
@@ -3042,7 +3042,9 @@ package body Ada_Analyzer is
 
                if Char in '0' .. '9' or else Char = ';' then
                   --  Special case 16:12: obsolete format (equivalent to
-                  --  16#12#).
+                  --  16#12#), e.g:
+                  --     X : Integer := 16:12:;
+
                   Insert_Spaces := False;
                end if;
             end if;
@@ -3773,7 +3775,7 @@ package body Ada_Analyzer is
                   --  indent as for continuation lines.
 
                   declare
-                     Level, Tmp_Index : Integer;
+                     Level, Tmp_Index, Val : Integer;
                   begin
                      if Top (Paren_Stack).all = Conditional then
                         Level := P - Start_Of_Line + Padding
@@ -3805,12 +3807,19 @@ package body Ada_Analyzer is
                         end if;
                      end if;
 
-                     Push (Indents, (Level, Align, L));
-                  end;
+                     Val := Top (Indents).Continuation_Val;
+                     Push (Indents, (Level, Align, L, Continuation_Val));
 
-                  if Continuation_Val > 0 then
-                     Continuation_Val := Continuation_Val - Indent_Continue;
-                  end if;
+                     if Local_Top_Token.Colon_Col /= 0 then
+                        if Continuation_Val > 0 then
+                           Continuation_Val :=
+                             Continuation_Val - Indent_Continue;
+                        end if;
+
+                     else
+                        Continuation_Val := Val;
+                     end if;
+                  end;
 
                when ')' =>
                   if (Local_Top_Token.Token = Tok_Colon
@@ -4344,7 +4353,7 @@ package body Ada_Analyzer is
 
       --  Push a dummy indentation so that stack will never be empty
 
-      Push (Indents, (None, 0, 0));
+      Push (Indents, (None, 0, 0, 0));
 
       Next_Word (Prec, Line_Count, Terminated, End_Reached);
 
