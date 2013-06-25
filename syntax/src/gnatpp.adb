@@ -76,9 +76,22 @@ begin
       Analyze_Ada_Source
         (Buffer.all, Symbols,
          Indent_Params =>
-           (3, 2, 2, 1, 3, Automatic, End_Of_Line,
-            Lower, Smart_Mixed, True, False, True, True,
-            True, True, False),
+           (Indent_Level        => 3,
+            Indent_Continue     => 2,
+            Indent_Decl         => 2,
+            Indent_Conditional  => 1,
+            Indent_Record       => 3,
+            Indent_Case_Extra   => Automatic,
+            Casing_Policy       => End_Of_Line,
+            Reserved_Casing     => Lower,
+            Ident_Casing        => Smart_Mixed,
+            Format_Operators    => True,
+            Use_Tabs            => False,
+            Align_On_Colons     => True,
+            Align_On_Arrows     => True,
+            Align_Decl_On_Colon => True,
+            Indent_Comments     => True,
+            Stick_Comments      => False),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 
