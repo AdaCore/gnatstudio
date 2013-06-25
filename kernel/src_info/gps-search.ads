@@ -219,6 +219,10 @@ package GPS.Search is
    procedure Free (Self : in out Search_Result_Access);
    --  Free the memory used by Self.
 
+   function Can_Display_In_Locations
+     (Self : not null access Search_Result) return Boolean is (False);
+   --  Whether this result can be displayed in the Locations window.
+
    procedure To_Message (Self : not null access Search_Result) is null;
    --  Insert Self in the locations window, by creating a message.
    --  It could for instance call

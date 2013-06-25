@@ -20,6 +20,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
+with Commands;                   use Commands;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
@@ -62,6 +63,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
@@ -106,10 +108,22 @@ package body Gtkada.Entry_Completion is
    function On_Preview_Idle (Self : Gtkada_Entry) return Boolean;
    --  Called on idle to display the preview of the current selection
 
+   package Completion_Sources is new Glib.Main.Generic_Sources (Gtkada_Entry);
+
    procedure Clear (Self : access Gtkada_Entry_Record'Class);
    --  Clear the list of completions, and free the memory
 
-   package Completion_Sources is new Glib.Main.Generic_Sources (Gtkada_Entry);
+   type Command_To_Locations is new Commands.Root_Command with record
+      Completion : Gtkada_Entry;
+      Provider   : Search_Provider_Access;
+      Pattern    : Search_Pattern_Access;
+   end record;
+   type Command_To_Locations_Access is access all Command_To_Locations'Class;
+   overriding function Name
+     (Self : access Command_To_Locations) return String is ("search");
+   overriding function Execute
+     (Self : access Command_To_Locations) return Command_Return_Type;
+   overriding procedure Free (Self : in out Command_To_Locations);
 
    procedure Insert_Proposal
      (Self : not null access Gtkada_Entry_Record'Class;
@@ -168,8 +182,26 @@ package body Gtkada.Entry_Completion is
    --  This is a filter function applied to the list of completions, and is
    --  used to avoid duplicating the name of the provider on each row.
 
+   type Provider_Column_Role is
+     (Role_Provider, Role_To_Locations, Role_Unknown);
+   --  The role of a specific line in the providers column
+
+   function Get_Provider_Column_Role
+      (Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter)
+       return Provider_Column_Role;
+   --  The role for the provider column on the given row.
+   --  Model and Iter apply to the filter model.
+
    function Convert is new Ada.Unchecked_Conversion
-      (System.Address, Search_Result_Access);
+     (System.Address, Search_Result_Access);
+
+   type Comp_Filter_Model_Record is new Gtk_Tree_Model_Filter_Record
+     with record
+       View : Gtkada_Entry;
+     end record;
+   type Comp_Filter_Model is access all Comp_Filter_Model_Record'Class;
+   --  A filter model that has a pointer to the completion entry.
 
    Column_Label    : constant := 0;
    Column_Score    : constant := 1;
@@ -251,6 +283,47 @@ package body Gtkada.Entry_Completion is
       Activate_Proposal (Gtkada_Entry (Self), Force => True);
    end On_Entry_Activate;
 
+   ------------------------------
+   -- Get_Provider_Column_Role --
+   ------------------------------
+
+   function Get_Provider_Column_Role
+      (Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter)
+     return Provider_Column_Role
+   is
+      Filter : constant Gtk_Tree_Model_Filter := -Model;
+      Child  : constant Gtk_Tree_Model := Filter.Get_Model;
+      Child_It : Gtk_Tree_Iter;
+      Prev, Prev2   : Gtk_Tree_Iter;
+      Res : Search_Result_Access;
+   begin
+      Filter.Convert_Iter_To_Child_Iter (Child_It, Filter_Iter => Iter);
+
+      Prev := Child_It;
+      Previous (Child, Prev);
+      Res := Convert (Get_Address (Child, Child_It, Column_Data));
+
+      if Prev = Null_Iter
+        or else Res.Provider /=
+          Convert (Get_Address (Child, Prev, Column_Data)).Provider
+      then
+         return Role_Provider;
+
+      elsif Res.Can_Display_In_Locations then
+         Prev2 := Prev;
+         Previous (Child, Prev2);
+         if Prev2 = Null_Iter
+           or else Res.Provider /=
+             Convert (Get_Address (Child, Prev2, Column_Data)).Provider
+         then
+            return Role_To_Locations;
+         end if;
+      end if;
+
+      return Role_Unknown;
+   end Get_Provider_Column_Role;
+
    -----------------------
    -- Model_Modify_Func --
    -----------------------
@@ -261,31 +334,34 @@ package body Gtkada.Entry_Completion is
        Value  : in out Glib.Values.GValue;
        Column : Gint)
    is
-      Filter : constant Gtk_Tree_Model_Filter := -Model;
+      Filter : constant Comp_Filter_Model :=
+        Comp_Filter_Model (Gtk_Tree_Model_Filter'(-Model));
       Child  : constant Gtk_Tree_Model := Filter.Get_Model;
       Child_It : Gtk_Tree_Iter;
-      Prev     : Gtk_Tree_Iter;
-      Res, Prev_Res : Search_Result_Access;
+      Res : Search_Result_Access;
    begin
       Filter.Convert_Iter_To_Child_Iter (Child_It, Filter_Iter => Iter);
 
       if Column = Column_Provider then
-         Prev := Child_It;
-         Previous (Child, Prev);
-         Res := Convert (Get_Address (Child, Child_It, Column_Data));
-
-         if Prev = Null_Iter then
-            Set_String
-              (Value, Res.Provider.Display_Name & " ("
-               & Image (Res.Provider.Count, Min_Width => 0) & ")");
-         else
-            Prev_Res := Convert (Get_Address (Child, Prev, Column_Data));
-            if Res.Provider /= Prev_Res.Provider then
+         case Get_Provider_Column_Role (Model, Iter) is
+            when Role_Provider =>
+               Res := Convert (Get_Address (Child, Child_It, Column_Data));
                Set_String
                  (Value, Res.Provider.Display_Name & " ("
                   & Image (Res.Provider.Count, Min_Width => 0) & ")");
-            end if;
-         end if;
+            when Role_To_Locations =>
+               Set_String (Value,
+                           --  encoding for U+21D2 (right arrow)
+                           "<span foreground='"
+                           & To_Hex (Filter.View.Color_To_Locations)
+                           & "'><small>"
+                           & Character'Val (16#E2#)
+                           & Character'Val (16#87#)
+                           & Character'Val (16#92#)
+                           & " Locations</small></span>");
+            when Role_Unknown =>
+               null;
+         end case;
 
       elsif Column = Column_Label then
          Set_String (Value, Get_String (Child, Child_It, Column));
@@ -354,7 +430,7 @@ package body Gtkada.Entry_Completion is
       Render : Gtk_Cell_Renderer_Text;
       Dummy  : Boolean;
       Color  : Gdk_RGBA;
-      Filter : Gtk_Tree_Model_Filter;
+      Filter : Comp_Filter_Model;
       Frame  : Gtk_Frame;
       Popup  : Gtk_Window;
       pragma Unreferenced (Col, Dummy);
@@ -424,7 +500,9 @@ package body Gtkada.Entry_Completion is
       Self.Completion_Box.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Self.Completions, Col_Types);
-      Gtk_New (Filter, +Self.Completions);
+      Filter := new Comp_Filter_Model_Record;
+      Filter.View := Gtkada_Entry (Self);
+      Initialize (Filter, +Self.Completions);
       Unref (Self.Completions);
       Filter.Set_Modify_Func (Col_Types, Model_Modify_Func'Access);
 
@@ -447,17 +525,21 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Render);
       Self.Column_Provider.Pack_Start (Render, False);
       Self.Column_Provider.Add_Attribute
-         (Render, "text", Column_Provider);
+        (Render, "markup", Column_Provider);
 
+      --  ??? Should onnect to preferences_changed for the color
       Get_Style_Context (Self.View).Get_Background_Color
-         (Gtk_State_Flag_Normal, Color);
+        (Gtk_State_Flag_Normal, Color);
       Set_Property
-         (Render, Gtk.Cell_Renderer_Text.Foreground_Property, "gray");
+        (Render, Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
+         Shade_Or_Lighten (Color, 0.3));
       Set_Property
-         (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
-          Shade_Or_Lighten (Color, 0.05));
+        (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
+         Shade_Or_Lighten (Color, 0.05));
       Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
+
+      Self.Color_To_Locations := Shade_Or_Lighten (Color, 0.3);
 
       Gtk_New (Self.Column_Match);
       Self.Column_Match.Set_Sort_Column_Id (Column_Score);
@@ -640,6 +722,7 @@ package body Gtkada.Entry_Completion is
       M    : Gtk_Tree_Model;
       Iter : Gtk_Tree_Iter;
       Result : Search_Result_Access;
+      Command  : Command_To_Locations_Access;
    begin
       if Event.Button = 1 then
          Self.View.Get_Path_At_Pos
@@ -650,7 +733,7 @@ package body Gtkada.Entry_Completion is
              Cell_X => Cell_X,
              Cell_Y => Cell_Y,
              Row_Found => Found);
-         M := Self.View.Get_Model;
+         M := Self.View.Get_Model;  --  the filter model
 
          if Found then
             Iter := Get_Iter (M, Path);
@@ -661,8 +744,43 @@ package body Gtkada.Entry_Completion is
 
             elsif Column = Self.Column_Provider then
                Result := Convert (Get_Address (+M, Iter, Column_Data));
-               Self.Set_Completion (Result.Provider);
-               On_Entry_Changed (Self);
+
+               case Get_Provider_Column_Role (M, Iter) is
+                  when Role_Provider =>
+                     Self.Set_Completion (Result.Provider);
+                     On_Entry_Changed (Self);
+
+                  when Role_To_Locations =>
+                     --  Work on a copy of the pattern, since the user might
+                     --  be using the completion entry while we are adding to
+                     --  the locations window.
+                     Command := new Command_To_Locations'
+                       (Root_Command with
+                        Completion => Self,
+                        Provider   => Search_Provider_Access (Result.Provider),
+                        Pattern    => Build
+                          (Self.Pattern, Kind => Self.Pattern.Get_Kind));
+
+                     --  ??? Since we are reusing an existing provider, this
+                     --  will be impacted if the user starts a new completion
+                     --  entry while we are inserting in the locations.
+                     Command.Provider.Set_Pattern (Command.Pattern);
+
+                     --  Hides the popdown and kills the idles. This also
+                     --  destroys Result, which should therefore not be
+                     --  accessed anymore
+                     Popdown (Self);
+
+                     Launch_Background_Command
+                       (Self.Kernel,
+                        Command    => Command,
+                        Active     => True,
+                        Show_Bar   => True,
+                        Block_Exit => False);
+
+                  when Role_Unknown =>
+                     null;
+               end case;
             end if;
          end if;
 
@@ -850,15 +968,7 @@ package body Gtkada.Entry_Completion is
          (History_Key, History_Key_Access);
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
-      if S.Idle /= No_Source_Id then
-         Remove (S.Idle);
-         S.Idle := No_Source_Id;
-      end if;
-
-      if S.Notes_Idle /= No_Source_Id then
-         Remove (S.Notes_Idle);
-         S.Notes_Idle := No_Source_Id;
-      end if;
+      Popdown (S);  --  destroy the idle events
 
       S.Clear;
 
@@ -1120,6 +1230,16 @@ package body Gtkada.Entry_Completion is
 
    procedure Popdown (Self : not null access Gtkada_Entry_Record) is
    begin
+      if Self.Idle /= No_Source_Id then
+         Remove (Self.Idle);
+         Self.Idle := No_Source_Id;
+      end if;
+
+      if Self.Notes_Idle /= No_Source_Id then
+         Remove (Self.Notes_Idle);
+         Self.Notes_Idle := No_Source_Id;
+      end if;
+
       if Self.Popup /= null then
          if Do_Grabs and then Self.Grab_Device /= null then
             Self.Grab_Device.Ungrab (0);
@@ -1172,11 +1292,6 @@ package body Gtkada.Entry_Completion is
       end if;
 
       if Text = "" then
-         if S.Idle /= No_Source_Id then
-            Remove (S.Idle);
-            S.Idle := No_Source_Id;
-         end if;
-
          S.Clear;
          Popdown (S);
 
@@ -1223,4 +1338,39 @@ package body Gtkada.Entry_Completion is
    begin
       return Self.GEntry.Get_Text;
    end Get_Text;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self : access Command_To_Locations) return Command_Return_Type
+   is
+      Result   : Search_Result_Access;
+      Has_Next : Boolean;
+   begin
+      Self.Provider.Next (Result, Has_Next);
+
+      if Result /= null then
+         Result.To_Message;
+         Free (Result);
+      end if;
+
+      if Has_Next then
+         return Commands.Execute_Again;
+      else
+         return Commands.Success;
+      end if;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Command_To_Locations) is
+   begin
+      Free (Self.Pattern);
+      Free (Root_Command (Self));  --  inherited
+   end Free;
+
 end Gtkada.Entry_Completion;

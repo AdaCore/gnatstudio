@@ -19,6 +19,7 @@
 --  This completion is provided by a GPS.Search.Search_Provider.
 
 with Gdk.Device;
+with Gdk.RGBA;
 with Glib.Main;
 with Gtk.Box;
 with Gtk.Check_Button;
@@ -134,6 +135,9 @@ private
 
       Column_Provider  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Column_Match     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+
+      Color_To_Locations : Gdk.RGBA.Gdk_RGBA;
+      --  Color to use for the "=> Locations" text
 
       Settings                : Gtk.Box.Gtk_Box;
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;

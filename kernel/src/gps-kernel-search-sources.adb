@@ -15,30 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Cairo.Region;              use Cairo.Region;
-with Gdk.RGBA;                  use Gdk.RGBA;
-with Gdk.Window;                use Gdk.Window;
-with Glib.Object;               use Glib.Object;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Widget;                use Gtk.Widget;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
+with Cairo.Region;               use Cairo.Region;
+with Gdk.RGBA;                   use Gdk.RGBA;
+with Gdk.Window;                 use Gdk.Window;
+with Glib.Object;                use Glib.Object;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Text_Tag;               use Gtk.Text_Tag;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Widget;                 use Gtk.Widget;
+with Pango.Enums;                use Pango.Enums;
+with Pango.Font;                 use Pango.Font;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Search;                use GPS.Search;
+with Basic_Types;                use Basic_Types;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
 
@@ -54,6 +57,10 @@ package body GPS.Kernel.Search.Sources is
    overriding function Full
      (Self : not null access Source_Search_Result)
       return Gtk.Widget.Gtk_Widget;
+   overriding procedure To_Message
+     (Self : not null access Source_Search_Result);
+   overriding function Can_Display_In_Locations
+     (Self : not null access Source_Search_Result) return Boolean is (True);
 
    type Result_View is new Gtk_Text_View_Record with record
       Result : Source_Search_Result_Access;
@@ -450,5 +457,28 @@ package body GPS.Kernel.Search.Sources is
          return Gtk.Widget.Gtk_Widget (View);
       end if;
    end Full;
+
+   ----------------
+   -- To_Message --
+   ----------------
+
+   overriding procedure To_Message
+     (Self : not null access Source_Search_Result)
+   is
+      Msg : Markup_Message_Access;
+      pragma Unreferenced (Msg);
+   begin
+      Msg := GPS.Kernel.Messages.Markup.Create_Markup_Message
+        (Container                => Get_Messages_Container (Self.Kernel),
+         Category                 => Self.Provider.Display_Name,
+         File                     => Self.File,
+         Line                     => Self.Line,
+         Column                   => Visible_Column_Type (Self.Column),
+         Text                     => Self.Short.all,
+         Weight                   => 1,
+         Flags                    => (Editor_Side => True,
+                                      Locations   => True),
+         Allow_Auto_Jump_To_First => True);
+   end To_Message;
 
 end GPS.Kernel.Search.Sources;

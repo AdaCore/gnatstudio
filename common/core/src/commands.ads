@@ -68,7 +68,7 @@ package Commands is
    --  Set the progress of Command
 
    procedure Interrupt (Command : in out Root_Command);
-   --  Called when the Command is explicitely interupted
+   --  Called when the Command is explicitely interrupted
 
    type Command_Return_Type is
      (Success,
