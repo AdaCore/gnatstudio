@@ -384,6 +384,7 @@ package body Completion_Module is
    begin
       if Completion_Module.Has_Smart_Completion then
          Completion_Module.Has_Smart_Completion := False;
+         D.Lock.Unlock;
          Free (D.Lock);
 
          Free (D.Manager);
