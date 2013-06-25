@@ -10,7 +10,11 @@ def locate_exec_on_path (prog):
   """Utility function to locate an executable on path."""
 
   if os.name == 'nt':
-    extensions = string.split(os.getenv('PATHEXT'), os.pathsep)
+    pathext = os.getenv('PATHEXT')
+    if pathext:
+      extensions = string.split(pathext, os.pathsep)
+    else:
+      extensions = [".exe", ".cmd", ".bat"]
   else:
     extensions = [""]
 
