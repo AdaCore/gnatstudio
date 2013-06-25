@@ -24,13 +24,13 @@ Machine address of an entity. See 13.3.
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "3/3" name = "Alignment" origin = "Ada RM" category = "object">
+   <ASPECT id = "3/3" name = "Alignment" origin = "Ada RM" category = "unknown">
       <DOC>
 Alignment of an object. See 13.3.
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "4/3" name = "Alignment" origin = "Ada RM" category = "subtype">
+   <ASPECT id = "4/3" name = "Alignment" origin = "Ada RM" category = "unknown">
       <DOC>
 Alignment of a subtype. See 13.3.
       </DOC>
@@ -361,7 +361,7 @@ Element type to be used for user-defined iterators. See
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "35/3" name = "Layout" origin = "Ada RM" category = "record">
+   <ASPECT id = "35/3" name = "Layout" origin = "Ada RM" category = "unknown">
       <DOC>
 Layout of record components. Specified by a
 record_representation_clause, not by an aspect_specification.
@@ -584,13 +584,13 @@ This aspect is equivalent to pragma `Simple_Storage_Pool_Type'.
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "54/3" name = "Size" origin = "Ada RM" category = "object">
+   <ASPECT id = "54/3" name = "Size" origin = "Ada RM" category = "unknown">
       <DOC>
 Size in bits of an object. See 13.3.
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "55/3" name = "Size" origin = "Ada RM" category = "subtype">
+   <ASPECT id = "55/3" name = "Size" origin = "Ada RM" category = "unknown">
       <DOC>
 Size in bits of a subtype. See 13.3.
       </DOC>
@@ -616,13 +616,13 @@ type. See 13.11.
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "59/3" name = "Storage_Size" origin = "Ada RM" category = "access">
+   <ASPECT id = "59/3" name = "Storage_Size" origin = "Ada RM" category = "unknown">
       <DOC>
 Sets memory size for allocations for an access type. See
       </DOC>
    </ASPECT>
 
-   <ASPECT id = "60/3" name = "Storage_Size" origin = "Ada RM" category = "task">
+   <ASPECT id = "60/3" name = "Storage_Size" origin = "Ada RM" category = "unknown">
       <DOC>
 Size in storage elements reserved for a task type or single
 task object. See 13.3.
