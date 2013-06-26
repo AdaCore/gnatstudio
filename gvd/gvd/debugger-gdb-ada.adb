@@ -160,7 +160,7 @@ package body Debugger.Gdb.Ada is
    end Record_Field_Name;
 
    ---------------------
-   -- Break Exception --
+   -- Break_Exception --
    ---------------------
 
    overriding function Break_Exception
