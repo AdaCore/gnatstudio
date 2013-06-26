@@ -27,12 +27,14 @@ with GNAT.Strings;      use GNAT.Strings;
 package GPS.CLI_Utils is
 
    procedure Create_Kernel_Context
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);
+     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Install_Semantic_Parser : Boolean := True);
    --  Build kernel context.
    --
    --  When kernel context is no longer needed, a call to
    --  Destroy_Kernel_Context procedure has to be done in order
    --  to free all allocated memory.
+   --  Add support for semantic parsers if Install_Semantic_Parser is True.
 
    procedure Destroy_Kernel_Context
      (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);

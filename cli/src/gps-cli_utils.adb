@@ -87,7 +87,8 @@ package body GPS.CLI_Utils is
    ----------------------------
 
    procedure Create_Kernel_Context
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record) is
+     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Install_Semantic_Parser : Boolean := True) is
 
       use Commands.Builder;
 
@@ -108,8 +109,10 @@ package body GPS.CLI_Utils is
         (Kernel.Databases.Constructs,
          new GPS.CLI_Buffer_Providers.CLI_Buffer_Provider);
 
-      Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
-        (Kernel.Databases.Constructs, Std_Entities_Files);
+      if Install_Semantic_Parser then
+         Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
+           (Kernel.Databases.Constructs, Std_Entities_Files);
+      end if;
 
       GPS.Python_Core.Register_Python (Kernel);
       Registry := Create;
