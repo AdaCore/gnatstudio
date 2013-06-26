@@ -35,6 +35,14 @@ package Ada_Semantic_Tree.Std_Entities is
    type Context_Of_Use_Array is array (Context_Of_Use) of Boolean;
    pragma Pack (Context_Of_Use_Array);
 
+   procedure Get_Possible_Aspects
+     (Db      : Construct_Database_Access;
+      Prefix  : String;
+      Context : Context_Of_Use_Array;
+      Result  : in out Entity_List);
+   --  Add to the entity list the list of apects matching the context of use
+   --  and the prefix given in parameter.
+
    procedure Get_Possible_Pragmas
      (Db      : Construct_Database_Access;
       Prefix  : String;

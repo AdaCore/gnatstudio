@@ -439,6 +439,7 @@ package body Ada_Semantic_Tree is
       Last_Non_Blank_Token : Token_Record := Null_Token;
       In_Found : Boolean := False;
       All_Found : Boolean := False;
+      With_Token_Found : Token_Record := Null_Token;
 
       procedure Handle_Token (Token : Token_Record; Stop : in out Boolean);
 
@@ -452,6 +453,27 @@ package body Ada_Semantic_Tree is
 
          if Expression_Depth = 0 then
             if Token.Tok_Type /= Tok_Blank then
+
+               if With_Token_Found /= Null_Token then
+                  --  If token before "with" not a semicolon then
+                  --  "with" token is for an aspect or for a record definition
+                  --  for new type. "type T_Child is new T with null record;"
+                  --  Result contains Tok_Aspect
+                  --  take into account limited private with clause.
+                  case Token.Tok_Type is
+                     when Tok_Limited | Tok_Private =>
+                        return;
+                     when Tok_Semicolon =>
+                        null;
+                     when others =>
+                        With_Token_Found.Tok_Type := Tok_Aspect;
+                  end case;
+                  Prepend (Result.Tokens, With_Token_Found);
+                  With_Token_Found := Null_Token;
+                  Stop := True;
+                  return;
+               end if;
+
                if In_Found then
                   --  If the 'in' keyword is found, we need to make sure that
                   --  we're on a variable declaration, e.g.:
@@ -490,8 +512,7 @@ package body Ada_Semantic_Tree is
             end if;
 
             case Token.Tok_Type is
-               when Tok_With
-                  | Tok_Use
+               when Tok_Use
                   | Tok_Pragma
                   | Tok_Colon
                   | Tok_Accept
@@ -510,6 +531,9 @@ package body Ada_Semantic_Tree is
                   else
                      Prepend (Result.Tokens, Token);
                   end if;
+
+               when Tok_With =>
+                  With_Token_Found := Token;
 
                when Tok_Tick
                   | Tok_Arrow
@@ -641,6 +665,11 @@ package body Ada_Semantic_Tree is
          Start_Offset => Start_Offset,
          End_Offset   => End_Offset,
          Callback     => Handle_Token'Access);
+
+      if With_Token_Found /= Null_Token then
+         Prepend (Result.Tokens, With_Token_Found);
+         With_Token_Found := Null_Token;
+      end if;
 
       return Result;
    end Parse_Expression_Backward;
