@@ -19,7 +19,7 @@ Aliases can now be completed and expanded by the regular smart-completion
 mechanism.
 
 .. figure:: completion_on_alias.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Smart completion for aliases
@@ -63,7 +63,7 @@ of the current paragraph to reformat (instead of only applying to the
 current line).
 
 .. figure:: refill.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Refill computes the bounds of the paragraph

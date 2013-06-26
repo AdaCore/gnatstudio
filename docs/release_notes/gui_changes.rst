@@ -19,8 +19,8 @@ configuration settings in a local menu rather than in the :file:`Preferences`
 dialog or the contextual menu.
 
 .. figure:: locations_toolbar.png
-   :width: 400pt
    :class: screenshot
+   :scale: 100%
 
    Local toolbar in the Locations window
 
@@ -58,7 +58,7 @@ to do approximate search. For instance, searching for "saerch" will also
 match "search" when this mode is activated.
 
 .. figure:: search.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Search in all contexts
@@ -72,13 +72,13 @@ preferences and can be used to set dark colors for the background of
 editors and windows.
 
 .. figure:: color_scheme_pref.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Setting the color scheme preference
 
 .. figure:: color_scheme_dark.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Switching GPS to a dark theme
@@ -91,7 +91,7 @@ The right-click menu on notebook tabs now shows the list of all windows open
 in that tabs, to ease navigation.
 
 .. figure:: tab_menu.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Menu when right-clicking on tabs
@@ -106,7 +106,7 @@ key, a caret sign for the control key, and the special symbols for
 Mac keyboards.
 
 .. figure:: keyshortcuts_dialog.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Key shortcuts display machine-specific symbols for keys
@@ -122,7 +122,7 @@ using most of the notebook widths, thus hidding the others. This behavior
 is controlled by a new preference `Window/Homogeneous Tabs`.
 
 .. figure:: homogeneous_tabs.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Ellipsis in window titles
@@ -137,7 +137,7 @@ these names is clickable to easily jump to the beginning of the enclosing
 block.
 
 .. figure:: qualified_names.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Clickable qualified names in editor status bar
@@ -154,7 +154,7 @@ Protected and task types/objects and their entries are now visible in
 types` is used to show/hide these items (in the local configuration menu).
 
 .. figure:: outline_config.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    New configuration menu for the outline view
@@ -171,7 +171,7 @@ instead. It is also possible to click on either of the two icons to jump
 directory to the spec or the body.
 
 .. figure:: outline_group.png
-   :width: 400pt
+   :scale: 100%
    :class: screenshot
 
    Grouping spec and body on the same line in Outline
@@ -197,6 +197,7 @@ Scenario view displays a tree :feature:`(GPS -- 2013-01-08 -- LC21-017)`
 The :file:`Scenario view` has been updated to a more usable tree rendering.
 
 .. figure:: scenarios.png
+   :scale: 100%
    :class: screenshot
 
    Scenario variables are editable in-place
@@ -216,6 +217,7 @@ Tooltips added to views to help navigation when windows are narrow. They also pr
 additional information in some cases.
 
 .. figure:: project_tooltip.png
+   :scale: 100%
    :class: screenshot
 
    Tooltips in the Project view

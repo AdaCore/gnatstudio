@@ -11,14 +11,16 @@
 h1, h2, h3, h4 {color: #369}
 h2 { margin-top: 60px; }
 
-.screenshot {
+img.screenshot {
+   height: auto !important;
    max-width: 300px;
    margin: 15px;
    margin-bottom: 4px;
+   border: 1px solid #bbb;
 
-   -moz-box-shadow:    3px 3px 5px 6px #ddd;
-   -webkit-box-shadow: 3px 3px 5px 6px #ddd;
-   box-shadow:         3px 3px 5px 6px #ddd;
+   -moz-box-shadow:    2px 2px 2px 3px #eee;
+   -webkit-box-shadow: 2px 2px 2px 3px #eee;
+   box-shadow:         2px 2px 2px 3px #eee;
 }
 
 div.figure {
