@@ -8,11 +8,14 @@ GPS |version| Release Notes
 
 Release date: |today|
 
+.. image:: gps6.png
+
 .. toctree::
    :numbered:
-   :maxdepth: 2
+   :maxdepth: 3
 
    gui_changes
-   searching
-   autocompletion
+   xref
+   editors
    plugins
+   misc
