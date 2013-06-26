@@ -613,6 +613,14 @@ package body Ada_Semantic_Tree.Declarations is
                   Tmp);
 
             elsif Previous_Token /= Token_List.Null_Node
+              and then Data (Previous_Token).Tok_Type = Tok_Aspect
+            then
+               Get_Possible_Aspects
+                 (Db      => Db,
+                  Prefix  => Get (Id).all,
+                  Context => (others => True),
+                  Result  => Tmp);
+            elsif Previous_Token /= Token_List.Null_Node
               and then Data (Previous_Token).Tok_Type = Tok_Pragma
             then
                Get_Possible_Pragmas
@@ -1000,6 +1008,24 @@ package body Ada_Semantic_Tree.Declarations is
 
                      return;
                   end if;
+               end if;
+
+            when Tok_Aspect =>
+               pragma Assert (Token = First_Token);
+
+               if Next (Token) /= Token_List.Null_Node then
+                  Analyze_Token
+                    (Token,
+                     Next (Token),
+                     Previous_Declaration,
+                     Filter,
+                     Result);
+               else
+                  Get_Possible_Aspects
+                    (Db      => Db,
+                     Prefix  => "",
+                     Context => (others => True),
+                     Result  => Result);
                end if;
 
             when Tok_Use =>

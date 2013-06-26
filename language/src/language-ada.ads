@@ -241,27 +241,28 @@ package Language.Ada is
    Tok_When              : constant Token_Type := 70;
    Tok_While             : constant Token_Type := 71;
    Tok_With              : constant Token_Type := 72;
-   Tok_Xor               : constant Token_Type := 73;
+   Tok_Aspect            : constant Token_Type := 73;
+   Tok_Xor               : constant Token_Type := 74;
 
    --  Separators
-   Tok_Dot               : constant Token_Type := 74;
-   Tok_Open_Parenthesis  : constant Token_Type := 75;
-   Tok_Close_Parenthesis : constant Token_Type := 76;
-   Tok_Colon             : constant Token_Type := 77;
-   Tok_Arrow             : constant Token_Type := 78;
-   Tok_Operator          : constant Token_Type := 79;
-   Tok_Comma             : constant Token_Type := 80;
-   Tok_Semicolon         : constant Token_Type := 81;
-   Tok_Blank             : constant Token_Type := 82;
-   Tok_Tick              : constant Token_Type := 83;
-   Tok_Dot_Dot           : constant Token_Type := 84;
+   Tok_Dot               : constant Token_Type := 75;
+   Tok_Open_Parenthesis  : constant Token_Type := 76;
+   Tok_Close_Parenthesis : constant Token_Type := 77;
+   Tok_Colon             : constant Token_Type := 78;
+   Tok_Arrow             : constant Token_Type := 79;
+   Tok_Operator          : constant Token_Type := 80;
+   Tok_Comma             : constant Token_Type := 81;
+   Tok_Semicolon         : constant Token_Type := 82;
+   Tok_Blank             : constant Token_Type := 83;
+   Tok_Tick              : constant Token_Type := 84;
+   Tok_Dot_Dot           : constant Token_Type := 85;
 
    --  Words
-   Tok_Identifier        : constant Token_Type := 85;
-   Tok_String            : constant Token_Type := 86;
+   Tok_Identifier        : constant Token_Type := 86;
+   Tok_String            : constant Token_Type := 87;
 
    --  Unparsed parts
-   Tok_Expression        : constant Token_Type := 87;
+   Tok_Expression        : constant Token_Type := 88;
 
    subtype Ada_Token          is Token_Type range No_Token .. Tok_Expression;
    subtype Ada_Reserved_Token is Token_Type range Tok_Abort .. Tok_Xor;

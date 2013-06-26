@@ -38,6 +38,7 @@ package body Ada_Semantic_Tree.Std_Entities is
      (Std_Description, null, Get_Index);
 
    type Std_Entities_Db is new Database_Assistant with record
+      Aspects_Trie    : Std_Description_Tries.Trie_Tree_Access;
       Attributes_Trie : Std_Description_Tries.Trie_Tree_Access;
       Pragmas_Trie    : Std_Description_Tries.Trie_Tree_Access;
       Standard_Trie   : Std_Description_Tries.Trie_Tree_Access;
@@ -81,7 +82,8 @@ package body Ada_Semantic_Tree.Std_Entities is
    -----------------------------
 
    type Std_Mode_Type is
-     (Pragma_Mode, Attribute_Mode, Standard_Mode, ASCII_Mode, Exceptions_Mode);
+     (Aspect_Mode, Pragma_Mode, Attribute_Mode, Standard_Mode, ASCII_Mode,
+      Exceptions_Mode);
 
    type Std_List is new Entity_List_Pckg.Virtual_List_Component
    with record
@@ -130,7 +132,8 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_Assistant : constant Std_Entities_Db_Assistant :=
         new Std_Entities_Db;
 
-      type Element_Kind is (A_Pragma, An_Attribute, A_Standard_Component);
+      type Element_Kind is (An_Aspect, A_Pragma, An_Attribute,
+                            A_Standard_Component);
 
       procedure Analyze_Element
         (Node :  XML_Utils.Node_Ptr; Kind : Element_Kind);
@@ -171,7 +174,8 @@ package body Ada_Semantic_Tree.Std_Entities is
             Current := Current.Next;
          end loop;
 
-         if Kind = A_Pragma or else Kind = An_Attribute then
+         if Kind = A_Pragma or else Kind = An_Attribute
+           or else Kind = An_Aspect then
             if Is_Standard_Ada then
                New_Element.Documentation :=
                  new String'
@@ -184,6 +188,12 @@ package body Ada_Semantic_Tree.Std_Entities is
          end if;
 
          case Kind is
+            when An_Aspect =>
+               New_Element.Category := Cat_With;
+
+               Std_Description_Tries.Insert
+                 (New_Assistant.Aspects_Trie.all, New_Element);
+
             when A_Pragma =>
                New_Element.Category := Cat_Pragma;
 
@@ -211,6 +221,8 @@ package body Ada_Semantic_Tree.Std_Entities is
       Current : XML_Utils.Node_Ptr;
 
    begin
+      New_Assistant.Aspects_Trie :=
+        new Std_Description_Tries.Trie_Tree (True);
       New_Assistant.Attributes_Trie :=
         new Std_Description_Tries.Trie_Tree (True);
       New_Assistant.Pragmas_Trie :=
@@ -236,6 +248,8 @@ package body Ada_Semantic_Tree.Std_Entities is
       while Current /= null loop
          if Current.Tag.all = "ATTRIBUTE" then
             Analyze_Element (Current, An_Attribute);
+         elsif Current.Tag.all = "ASPECT" then
+            Analyze_Element (Current, An_Aspect);
          elsif Current.Tag.all = "PRAGMA" then
             Analyze_Element (Current, A_Pragma);
          elsif Current.Tag.all = "STANDARD" then
@@ -334,6 +348,16 @@ package body Ada_Semantic_Tree.Std_Entities is
       It : Std_Iterator;
    begin
       case List.Mode is
+         when Aspect_Mode =>
+            It := Std_Iterator'
+              (It => Std_Description_Tries.Start
+                 (Assistant.Aspects_Trie, List.Prefix.all),
+               Db => List.Db,
+               Exclude_Standard_Package => List.Exclude_Standard_Package,
+               Lowercased_Name => new String'(To_Lower (List.Prefix.all)),
+               Is_Partial => List.Is_Partial,
+               Exceptions_Only => False);
+
          when Pragma_Mode =>
             It := Std_Iterator'
               (It => Std_Description_Tries.Start
@@ -463,6 +487,27 @@ package body Ada_Semantic_Tree.Std_Entities is
          end;
       end if;
    end Is_Valid;
+
+   --------------------------
+   -- Get_Possible_Aspects --
+   --------------------------
+
+   procedure Get_Possible_Aspects
+     (Db      : Construct_Database_Access;
+      Prefix  : String;
+      Context : Context_Of_Use_Array;
+      Result  : in out Entity_List)
+   is
+      New_List : Std_List;
+   begin
+      New_List.Db := Db;
+      New_List.Prefix := new String'(Prefix);
+      New_List.Context := Context;
+      New_List.Mode := Aspect_Mode;
+      New_List.Is_Partial := True;
+
+      Entity_List_Pckg.Append (Result.Contents, New_List);
+   end Get_Possible_Aspects;
 
    --------------------------
    -- Get_Possible_Pragmas --
@@ -628,6 +673,7 @@ package body Ada_Semantic_Tree.Std_Entities is
         (Std_Description_Tries.Trie_Tree,
          Std_Description_Tries.Trie_Tree_Access);
    begin
+      Std_Description_Tries.Clear (Assistant.Aspects_Trie.all);
       Std_Description_Tries.Clear (Assistant.Attributes_Trie.all);
       Std_Description_Tries.Clear (Assistant.Pragmas_Trie.all);
       Std_Description_Tries.Clear (Assistant.Standard_Trie.all);
