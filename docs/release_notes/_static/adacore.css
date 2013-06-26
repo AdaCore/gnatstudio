@@ -1,0 +1,41 @@
+@import "sphinxdoc.css";
+
+.feature {
+   font-size: 60%;
+   font-style: italic;
+}
+.toctree-l1 .feature {
+   display: none;
+}
+
+h1 {color: #369}
+h2 {color: #369}
+h3 {color: #369}
+h4 {color: #369}
+
+.screenshot {
+   max-width: 400px;
+   margin: 15px;
+   margin-bottom: 4px;
+
+   -moz-box-shadow:    3px 3px 5px 6px #ddd;
+   -webkit-box-shadow: 3px 3px 5px 6px #ddd;
+   box-shadow:         3px 3px 5px 6px #ddd;
+}
+
+div.figure {
+   display: inline-block;
+   vertical-align: middle;
+}
+
+div.figure p.caption {
+   /* display: inline; */
+   margin: 0 0 0 20px;
+   font-size: 80%;
+}
+
+div.bodywrapper {
+   /* Limit width to make more readable */
+   max-width: 1000px;
+}
+

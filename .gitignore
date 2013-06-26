@@ -201,6 +201,7 @@ docs/Makefile
 docs/programers_guide/_build/
 docs/users_guide/_build/
 docs/tutorial/_build/
+docs/release_notes/build/
 docs/gps
 docs/gps.aux
 docs/gps.cp
