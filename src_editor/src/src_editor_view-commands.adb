@@ -83,6 +83,9 @@ package body Src_Editor_View.Commands is
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             else
+               if Get_Line (Iter) = 0 then
+                  return;
+               end if;
                Backward_Lines (Iter, -Gint (Step), Ignored);
                Forward_Cursor_Positions
                  (Iter, Gint'Min
@@ -90,17 +93,8 @@ package body Src_Editor_View.Commands is
             end if;
 
          when Page =>
-            null;
---  ??? why is this code commented out
---              if Step > 0 then
---                 for S in 1 .. Step loop
---                    Forward_Display_Line (View, Iter, Ignored);
---                 end loop;
---              else
---                 for S in 1 .. -Step loop
---                    Backward_Display_Line (View, Iter, Ignored);
---                 end loop;
---              end if;
+            --  The page case is never handled by move iter
+            raise Program_Error with "Should not be here";
       end case;
    end Move_Iter;
 
