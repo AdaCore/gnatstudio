@@ -18,7 +18,7 @@ Smart-completion on aliases :feature:`(GPS -- 2013-04-11 -- H603-006)`
 Aliases can now be completed and expanded by the regular smart-completion
 mechanism.
 
-.. figure:: completion_on_alias.*
+.. figure:: completion_on_alias.png
    :width: 400pt
    :class: screenshot
 
@@ -62,7 +62,7 @@ selection if it exists (as before), or automatically compute the extents
 of the current paragraph to reformat (instead of only applying to the
 current line).
 
-.. figure:: refill.*
+.. figure:: refill.png
    :width: 400pt
    :class: screenshot
 

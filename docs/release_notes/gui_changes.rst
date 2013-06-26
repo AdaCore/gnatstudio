@@ -18,7 +18,7 @@ A number of views now have a local toolbar. They also display their
 configuration settings in a local menu rather than in the :file:`Preferences`
 dialog or the contextual menu.
 
-.. figure:: locations_toolbar.*
+.. figure:: locations_toolbar.png
    :width: 400pt
    :class: screenshot
 
@@ -57,7 +57,7 @@ fuzzy matches. In particular, when searching in source code, GPS is able
 to do approximate search. For instance, searching for "saerch" will also
 match "search" when this mode is activated.
 
-.. figure:: search.*
+.. figure:: search.png
    :width: 400pt
    :class: screenshot
 
@@ -71,13 +71,13 @@ A new preference is available to select color schemes. This effects other
 preferences and can be used to set dark colors for the background of
 editors and windows.
 
-.. figure:: color_scheme_pref.*
+.. figure:: color_scheme_pref.png
    :width: 400pt
    :class: screenshot
 
    Setting the color scheme preference
 
-.. figure:: color_scheme_dark.*
+.. figure:: color_scheme_dark.png
    :width: 400pt
    :class: screenshot
 
@@ -90,7 +90,7 @@ Tab menu allows easy selection of open tabs :feature:`(GPS -- 2012-12-17 -- LC06
 The right-click menu on notebook tabs now shows the list of all windows open
 in that tabs, to ease navigation.
 
-.. figure:: tab_menu.*
+.. figure:: tab_menu.png
    :width: 400pt
    :class: screenshot
 
@@ -105,7 +105,7 @@ done for the toplevel menus, using symbols like up arrow for the shift
 key, a caret sign for the control key, and the special symbols for
 Mac keyboards.
 
-.. figure:: keyshortcuts_dialog.*
+.. figure:: keyshortcuts_dialog.png
    :width: 400pt
    :class: screenshot
 
@@ -121,7 +121,7 @@ of notebook tabs is also limited so that we do not end up with a single tab
 using most of the notebook widths, thus hidding the others. This behavior
 is controlled by a new preference `Window/Homogeneous Tabs`.
 
-.. figure:: homogeneous_tabs.*
+.. figure:: homogeneous_tabs.png
    :width: 400pt
    :class: screenshot
 
@@ -136,7 +136,7 @@ now includes the name of the enclosing subprograms and packages. Each of
 these names is clickable to easily jump to the beginning of the enclosing
 block.
 
-.. figure:: qualified_names.*
+.. figure:: qualified_names.png
    :width: 400pt
    :class: screenshot
 
@@ -153,7 +153,7 @@ Protected and task types/objects and their entries are now visible in
 :file:`Outline View`. A new filter in `Show tasks, entries, and protected
 types` is used to show/hide these items (in the local configuration menu).
 
-.. figure:: outline_config.*
+.. figure:: outline_config.png
    :width: 400pt
    :class: screenshot
 
@@ -170,7 +170,7 @@ but if this is already the current location in the editor will jump to its body
 instead. It is also possible to click on either of the two icons to jump
 directory to the spec or the body.
 
-.. figure:: outline_group.*
+.. figure:: outline_group.png
    :width: 400pt
    :class: screenshot
 
@@ -196,7 +196,7 @@ Scenario view displays a tree :feature:`(GPS -- 2013-01-08 -- LC21-017)`
 
 The :file:`Scenario view` has been updated to a more usable tree rendering.
 
-.. figure:: scenarios.*
+.. figure:: scenarios.png
    :class: screenshot
 
    Scenario variables are editable in-place
@@ -215,7 +215,7 @@ Tooltips in Project, Files and Windows views :feature:`(GPS -- 2012-11-13 -- L92
 Tooltips added to views to help navigation when windows are narrow. They also provide
 additional information in some cases.
 
-.. figure:: project_tooltip.*
+.. figure:: project_tooltip.png
    :class: screenshot
 
    Tooltips in the Project view
