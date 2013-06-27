@@ -27,6 +27,7 @@ with Language.Unknown;       use Language.Unknown;
 with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Language.Tree.Database is
 
@@ -914,6 +915,7 @@ package body Language.Tree.Database is
    is
       Last_Lock_Kind : constant Lock_Kind_Type := File.Lock_Kind;
    begin
+      Put_Line ("<<<< LOCKING");
       if File /= null then
          File.Lock_Depth := File.Lock_Depth + 1;
          File.Lock_Kind := Kind;
@@ -931,6 +933,7 @@ package body Language.Tree.Database is
 
    procedure Unlock (This : in out Update_Lock) is
    begin
+      Put_Line (">>>> UNLOCKING");
       if This.File_Locked /= null then
          This.File_Locked.Lock_Depth := This.File_Locked.Lock_Depth - 1;
 
