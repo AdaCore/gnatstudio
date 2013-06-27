@@ -835,6 +835,8 @@ package body Completion_Module is
 
                Data.The_Text := Get_String (Buffer);
 
+               Completion_Module.Has_Smart_Completion := True;
+
                Data.Lock :=
                  new Update_Lock'(Lock_Updates
                                    (Get_Or_Create
@@ -924,8 +926,6 @@ package body Completion_Module is
                end if;
 
                Start_Completion (View, Win);
-
-               Completion_Module.Has_Smart_Completion := True;
 
                Widget_Callback.Object_Connect
                  (Win, Signal_Destroy,
