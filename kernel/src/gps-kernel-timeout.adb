@@ -312,6 +312,9 @@ package body GPS.Kernel.Timeout is
       end if;
 
       Close (Data.D.Descriptor.all, Status);
+      if Data.Interrupted then
+         Status := -1;
+      end if;
 
       --  So that next call to Cleanup does nothing
       Free (Data.D.Descriptor);
