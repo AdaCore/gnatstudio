@@ -741,6 +741,14 @@ volatile. See C.6.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Warnings" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to the two argument form of pragma `Warnings',
+where the first argument is `ON' or `OFF' and the second argument is
+the entity.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "69/3" name = "Write" origin = "Ada RM" category = "unknown">
       <DOC>
 Procedure to write a value to a stream for a given type. See
