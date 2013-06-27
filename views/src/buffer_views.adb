@@ -154,7 +154,7 @@ package body Buffer_Views is
        Has_Next : out Boolean);
    overriding function Display_Name
       (Self     : not null access Opened_Windows_Search) return String
-      is ("Opened");
+      is (Provider_Opened_Win);
    overriding function Documentation
       (Self     : not null access Opened_Windows_Search) return String;
 
@@ -824,7 +824,7 @@ package body Buffer_Views is
          Label  => -"Close selected windows");
 
       P := new Opened_Windows_Search;
-      Register_Provider_And_Action (Kernel, P, Provider_Opened_Win);
+      Register_Provider_And_Action (Kernel, P);
    end Register_Module;
 
 end Buffer_Views;

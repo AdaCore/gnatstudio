@@ -76,37 +76,20 @@ package body GPS.Kernel.Search is
 
    procedure Register_Provider_And_Action
       (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider : not null access Kernel_Search_Provider'Class;
-       Name     : String)
+       Provider : not null access Kernel_Search_Provider'Class)
    is
       Command : Global_Search_Command_Access;
    begin
       Provider.Kernel := Kernel_Handle (Kernel);
 
-      --  ??? Should come from user preferences, not hard-coded
-
-      if Name = Provider_Filenames then
-         Provider.Rank := 2;
-      elsif Name = Provider_Actions then
-         Provider.Rank := 4;
-      elsif Name = Provider_Builds then
-         Provider.Rank := 5;
-      elsif Name = Provider_Opened_Win then
-         Provider.Rank := 1;
-      elsif Name = Provider_Entities then
-         Provider.Rank := 3;
-      elsif Name = Provider_Sources then
-         Provider.Rank := 6;
-      end if;
-
-      GPS.Kernel.Search.Registry.Register (Name, Provider);
+      GPS.Kernel.Search.Registry.Register (Provider);
 
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Provider);
       Command.History := new History_Key'
-         ("global-search-entry-" & History_Key (Name));
+         ("global-search-entry-" & History_Key (Provider.Display_Name));
       Register_Action
-         (Kernel, Action_Name_Prefix & Name, Command,
+         (Kernel, Action_Name_Prefix & Provider.Display_Name, Command,
           Description => Command.Provider.Documentation,
           Category => "Search");
    end Register_Provider_And_Action;

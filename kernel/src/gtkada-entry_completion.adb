@@ -1434,10 +1434,12 @@ package body Gtkada.Entry_Completion is
       Preview : Gtk_Check_Button;
       Resize  : Gtk_Check_Button;
    begin
-      Gtk_New (Win,
-               Title  => -"Search settings",
-               Parent => Get_Main_Window (S.Kernel),
-               Flags  => Modal or Destroy_With_Parent or No_Separator);
+      Gtk_New
+        (Win,
+         Title  => -"Search settings",
+         Parent => Get_Main_Window (S.Kernel),
+         Flags  => Modal or Destroy_With_Parent or No_Separator);
+      Win.Set_Default_Size (500, 480);
 
       Gtk_New (Preview, -"Preview");
       Associate (Get_History (S.Kernel).all,

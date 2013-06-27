@@ -38,7 +38,7 @@ package GPS.Kernel.Search.Filenames is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Filenames_Search_Provider) return String
-     is ("File names");
+     is (Provider_Filenames);
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 

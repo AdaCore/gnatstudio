@@ -41,14 +41,16 @@ package GPS.Kernel.Search is
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
    type Kernel_Search_Provider_Access is
-      access all Kernel_Search_Provider'Class;
+     access all Kernel_Search_Provider'Class;
+
+   type On_Settings_Changed_Callback is access procedure
+     (Data : access Glib.Object.GObject_Record'Class);
 
    procedure Edit_Settings
      (Self : not null access Kernel_Search_Provider;
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
       Data : not null access Glib.Object.GObject_Record'Class;
-      On_Change : not null access procedure
-        (Data : access Glib.Object.GObject_Record'Class)) is null;
+      On_Change : On_Settings_Changed_Callback) is null;
    --  Add settings edition widgets to the box. Any change to the settings
    --  should result in a call to On_Change and pass Data as a parameter.
    --  For instance, each widget would connect its change callback to this, to
@@ -67,12 +69,12 @@ package GPS.Kernel.Search is
    --  Change the list of recent items, after Result has been selected
    --  by the user.
 
-   Provider_Filenames : constant String := "file names";
-   Provider_Actions   : constant String := "actions";
-   Provider_Builds    : constant String := "builds";
-   Provider_Opened_Win : constant String := "opened windows";
-   Provider_Entities   : constant String := "entities";
-   Provider_Sources    : constant String := "sources";
+   Provider_Filenames  : constant String := "File names";
+   Provider_Actions    : constant String := "actions";
+   Provider_Builds     : constant String := "Build";
+   Provider_Opened_Win : constant String := "Opened";
+   Provider_Entities   : constant String := "Entities";
+   Provider_Sources    : constant String := "Sources";
 
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider
@@ -83,8 +85,7 @@ package GPS.Kernel.Search is
 
    procedure Register_Provider_And_Action
       (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider : not null access Kernel_Search_Provider'Class;
-       Name     : String);
+       Provider : not null access Kernel_Search_Provider'Class);
    --  Register the provider (and sets its Kernel field).
    --  Creates an action for it so that users can do key bindings.
 

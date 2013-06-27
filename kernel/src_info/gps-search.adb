@@ -700,17 +700,22 @@ package body GPS.Search is
 
    procedure Register
      (Self     : in out Search_Provider_Registry;
-      Name     : String;
       Template : not null access Search_Provider'Class)
    is
    begin
-      --  For now, we sort on the rank, so that we can have minimal
-      --  control over which provider is run last.
       Self.Providers.Append
-         ((Name     => new String'(Name),
-           Provider => Search_Provider_Access (Template)));
-      Sorting_By_Rank.Sort (Self.Providers);
+         ((Provider => Search_Provider_Access (Template)));
+      Search_Provider_Registry'Class (Self).Sort_Providers;
    end Register;
+
+   --------------------
+   -- Sort_Providers --
+   --------------------
+
+   procedure Sort_Providers (Self : in out Search_Provider_Registry) is
+   begin
+      Sorting_By_Rank.Sort (Self.Providers);
+   end Sort_Providers;
 
    ---------
    -- Get --
@@ -752,7 +757,7 @@ package body GPS.Search is
       Name : String) return Search_Provider_Access is
    begin
       for P of Self.Providers loop
-         if P.Name.all = Name then
+         if P.Provider.Display_Name = Name then
             return P.Provider;
          end if;
       end loop;

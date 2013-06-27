@@ -224,7 +224,7 @@ package body Builder_Facility_Module is
        Has_Next : out Boolean);
    overriding function Display_Name
       (Self     : not null access Builder_Search_Provider) return String
-      is ("Build");
+      is (Provider_Builds);
    overriding function Documentation
       (Self     : not null access Builder_Search_Provider) return String;
 
@@ -1761,7 +1761,7 @@ package body Builder_Facility_Module is
          Module_Name => "Builder Facility");
 
       P := new Builder_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Builds);
+      Register_Provider_And_Action (Kernel, P);
       if P.Kernel = null then
          raise Program_Error;
       end if;
@@ -2034,7 +2034,6 @@ package body Builder_Facility_Module is
                        Target  => T);
                   Self.Adjust_Score (Result);
                end if;
-
             end;
          end if;
 
@@ -2043,6 +2042,8 @@ package body Builder_Facility_Module is
             Next (Self.Iter.all);
             Setup (Self);
             Has_Next := Get_Target (Self.Iter.all) /= null;
+         else
+            Has_Next := True;
          end if;
       end if;
    end Next;

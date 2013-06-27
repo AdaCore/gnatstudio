@@ -15,38 +15,61 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
 with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Object;              use Glib, Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
 with Gtk.Alignment;            use Gtk.Alignment;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
+
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Search.Sources;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Histories;                use Histories;
+with System;
 
 package body GPS.Search.GUI is
+   Me : constant Trace_Handle := Create ("SEARCH");
 
    Pref_Proposals_Per_Provider : Integer_Preference;
    --  Preference for the number of proposals per provider
+
+   Pref_Provider_Order : String_Preference;
+   --  The preferred order of providers
 
    type Global_Search_Module_Record is new Module_ID_Record with record
       Search          : Gtkada_Entry;
@@ -102,8 +125,34 @@ package body GPS.Search.GUI is
      (Self : not null access Overall_Search_Provider;
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
       Data : not null access Glib.Object.GObject_Record'Class;
-      On_Change : not null access procedure
-        (Data : access Glib.Object.GObject_Record'Class));
+      On_Change : On_Settings_Changed_Callback);
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Search_Provider_Access);
+
+   type Settings_Toggle_Record is new Gtk_Cell_Renderer_Toggle_Record
+     with record
+       Kernel    : Kernel_Handle;
+       Model     : Gtk_List_Store;
+       Data      : access Glib.Object.GObject_Record'Class;
+       On_Change : On_Settings_Changed_Callback;
+     end record;
+   type Settings_Toggle is access all Settings_Toggle_Record'Class;
+
+   procedure On_Toggle_Provider
+     (Self : access Gtk_Cell_Renderer_Toggle_Record'Class;
+      Path : UTF8_String);
+   --  Called when a provider is enabled or disabled in the settings
+
+   procedure On_Reorder_Provider
+     (Toggle : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk_Tree_Path);
+   --  Called when rows are reordered in the settings dialog
+
+   procedure Update_Provider_Order
+     (Self : access Settings_Toggle_Record'Class);
+   --  Update the preference that lists the order of providers, based on the
+   --  settings dialog.
 
    procedure On_Escape (Self : access Gtk_Widget_Record'Class);
    --  Called when "<escape>" has been called
@@ -119,6 +168,11 @@ package body GPS.Search.GUI is
       Kernel : Kernel_Handle);
    --  Called when the user changes the number of proposals per provider
    --  through the settings.
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the preferences change
 
    -------------------
    -- Documentation --
@@ -184,6 +238,7 @@ package body GPS.Search.GUI is
          Self.Provider.Set_Pattern
             (Self.Pattern,
              Limit => Natural'Min (Limit, Self.Current'Last));
+         Trace (Me, "Switching to provider: " & Self.Provider.Display_Name);
       end if;
 
       Self.Current_Returned := Self.Current'First - 1;
@@ -209,7 +264,9 @@ package body GPS.Search.GUI is
 
       --  If we are in the process of processing the current provider
 
-      if Self.Current_Returned < Self.Current'First then
+      if Self.Provider.Enabled
+        and then Self.Current_Returned < Self.Current'First
+      then
          Self.Provider.Next (Result, Has_Next);
 
          if Result /= null then
@@ -261,7 +318,9 @@ package body GPS.Search.GUI is
          Self.Current_Returned := Self.Current'First;
       end if;
 
-      if Self.Current_Returned <= Self.Current_Index then
+      if Self.Provider.Enabled
+        and then Self.Current_Returned <= Self.Current_Index
+      then
          Result := Self.Current (Self.Current_Returned);
          Self.Current (Self.Current_Returned) := null;  --  belongs to caller
          Self.Current_Returned := Self.Current_Returned + 1;
@@ -276,6 +335,7 @@ package body GPS.Search.GUI is
       if Self.Provider /= null then
          Self.Provider.Count := 0;
          Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Current'Last);
+         Trace (Me, "Switching to provider: " & Self.Provider.Display_Name);
       end if;
 
       Self.Current_Index := Self.Current'First - 1;
@@ -409,6 +469,77 @@ package body GPS.Search.GUI is
          Get_Preferences (Kernel), Integer (S.Get_Value));
    end Change_Proposals_Per_Provider;
 
+   ---------------------------
+   -- Update_Provider_Order --
+   ---------------------------
+
+   procedure Update_Provider_Order
+     (Self : access Settings_Toggle_Record'Class)
+   is
+      Iter     : Gtk_Tree_Iter := Self.Model.Get_Iter_First;
+      Provider : Search_Provider_Access;
+      Pref     : Unbounded_String;
+   begin
+      while Iter /= Null_Iter loop
+         Provider := Convert (Get_Address (Self.Model, Iter, 2));
+         if Provider /= null then
+            if not Provider.Enabled then
+               Append (Pref, "-");
+            end if;
+
+            Append (Pref, Provider.Display_Name & ";");
+         end if;
+
+         Self.Model.Next (Iter);
+      end loop;
+
+      Trace (Me, "Providers order changed: " & To_String (Pref));
+
+      Set_Pref
+        (Pref_Provider_Order, Get_Preferences (Self.Kernel), To_String (Pref));
+   end Update_Provider_Order;
+
+   -------------------------
+   -- On_Reorder_Provider --
+   -------------------------
+
+   procedure On_Reorder_Provider
+     (Toggle : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk_Tree_Path)
+   is
+      pragma Unreferenced (Path);
+      T : constant Settings_Toggle := Settings_Toggle (Toggle);
+   begin
+      Update_Provider_Order (T);
+      T.On_Change (T.Data);
+   end On_Reorder_Provider;
+
+   ------------------------
+   -- On_Toggle_Provider --
+   ------------------------
+
+   procedure On_Toggle_Provider
+     (Self : access Gtk_Cell_Renderer_Toggle_Record'Class;
+      Path : UTF8_String)
+   is
+      T        : constant Settings_Toggle := Settings_Toggle (Self);
+      Iter     : Gtk_Tree_Iter;
+      Provider : Search_Provider_Access;
+   begin
+      Iter := Get_Iter_From_String (T.Model, Path);
+
+      if Iter /= Null_Iter then
+         Provider := Convert (Get_Address (T.Model, Iter, 2));
+         Provider.Enabled := not Provider.Enabled;
+
+         --  Do the actual toggling
+         T.Model.Set (Iter, 0, Provider.Enabled);
+
+         Update_Provider_Order (T);
+         T.On_Change (T.Data);
+      end if;
+   end On_Toggle_Provider;
+
    -------------------
    -- Edit_Settings --
    -------------------
@@ -417,14 +548,23 @@ package body GPS.Search.GUI is
      (Self : not null access Overall_Search_Provider;
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
       Data : not null access Glib.Object.GObject_Record'Class;
-      On_Change : not null access procedure
-        (Data : access Glib.Object.GObject_Record'Class))
+      On_Change : On_Settings_Changed_Callback)
    is
-      Spin  : Gtk_Spin_Button;
-      Label : Gtk_Label;
-      B     : Gtk_Box;
-      P     : Integer;
+      Spin     : Gtk_Spin_Button;
+      Label    : Gtk_Label;
+      B        : Gtk_Box;
+      P        : Integer;
       Provider : Kernel_Search_Provider_Access;
+      Colnum   : Gint;
+      Model    : Gtk_List_Store;
+      Frame    : Gtk_Frame;
+      View     : Gtk_Tree_View;
+      Col      : Gtk_Tree_View_Column;
+      Toggle   : Settings_Toggle;
+      Text     : Gtk_Cell_Renderer_Text;
+      Iter     : Gtk_Tree_Iter;
+      Val      : GValue;
+      pragma Unreferenced (Colnum);
    begin
       Gtk_New_Hbox (B, Homogeneous => False);
       Box.Pack_Start (B, Expand => False);
@@ -439,7 +579,74 @@ package body GPS.Search.GUI is
       Kernel_Callback.Connect
         (Spin, Signal_Value_Changed,
          Change_Proposals_Per_Provider'Access, Self.Kernel);
-      Spin.On_Value_Changed (On_Change, Data, After => True);
+      Spin.On_Value_Changed
+        (Gtk.Spin_Button.Cb_GObject_Void (On_Change),
+         Data, After => True);
+
+      Gtk_New (Frame);
+      Frame.Set_Label (-"Categories");
+      Box.Pack_Start (Frame, Expand => True, Fill => True);
+
+      Gtk_New_Vbox (B, Homogeneous => False);
+      Frame.Add (B);
+
+      Gtk_New
+        (Label, "Drag categories to change the order in which results appear");
+      Label.Set_Padding (5, 10);
+      Label.Set_Alignment (0.0, 0.5);
+      B.Pack_Start (Label, Expand => False);
+
+      Gtk_New (Model,
+               (0 => GType_Boolean,
+                1 => GType_String,
+                2 => GType_Pointer));
+      Gtk_New (View, Model);
+      View.Set_Headers_Visible (False);
+      View.Set_Reorderable (True);
+      B.Pack_Start (View, Expand => True, Fill => True);
+      Unref (Model);
+
+      Gtk_New (Col);
+      Colnum := View.Append_Column (Col);
+      Toggle := new Settings_Toggle_Record;
+      Toggle.Model := Model;
+      Toggle.Data := Data;
+      Toggle.Kernel := Self.Kernel;
+      Toggle.On_Change := On_Change;
+      Gtk.Cell_Renderer_Toggle.Initialize (Toggle);
+      Col.Pack_Start (Toggle, False);
+      Col.Add_Attribute (Toggle, "active", 0);
+      Set_Property
+        (Toggle, Gtk.Cell_Renderer_Toggle.Activatable_Property, True);
+      Toggle.On_Toggled (On_Toggle_Provider'Access);
+
+      Gtk_New (Col);
+      Colnum := View.Append_Column (Col);
+      Gtk_New (Text);
+      Col.Pack_Start (Text, True);
+      Col.Add_Attribute (Text, "text", 1);
+
+      P := 1;
+      loop
+         Provider := Kernel_Search_Provider_Access (Get (Registry, P));
+         exit when Provider = null;
+
+         Model.Append (Iter);
+         Model.Set (Iter, 0, Provider.Enabled);
+         Model.Set (Iter, 1, Provider.Display_Name);
+
+         Init (Val, GType_Pointer);
+         Set_Address (Val, Provider.all'Address);
+         Model.Set_Value (Iter, 2, Val);
+         Unset (Val);
+
+         P := P + 1;
+      end loop;
+
+      --  Monitor drag-and-drop event. Do this after we have filled the tree.
+
+      On_Row_Deleted
+        (+Model, On_Reorder_Provider'Access, Toggle, After => True);
 
       --  Ask the settings for each of the providers.
       P := 1;
@@ -450,6 +657,77 @@ package body GPS.Search.GUI is
          P := P + 1;
       end loop;
    end Edit_Settings;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Pref : constant Preference := Get_Pref (Data);
+   begin
+      if Pref = null
+        or else Pref = Preference (Pref_Provider_Order)
+      then
+         declare
+            Vals : String_List_Access := GNATCOLL.Utils.Split
+              (Pref_Provider_Order.Get_Pref, On => ';');
+            Rank : Positive := 1;
+            P    : Positive;
+            Provider : Search_Provider_Access;
+            Enabled : Boolean;
+         begin
+            --  Reset all ranks
+
+            P := 1;
+            loop
+               Provider := Get (Registry, P);
+               exit when Provider = null;
+               Provider.Rank := Positive'Last;
+               P := P + 1;
+            end loop;
+
+            --  Then set the new values
+
+            for V in Vals'Range loop
+               if Vals (V)(Vals (V)'First) = '-' then
+                  Provider := Get (Registry, Vals (V)
+                                   (Vals (V)'First + 1 .. Vals (V)'Last));
+                  Enabled := False;
+               else
+                  Provider := Get (Registry, Vals (V).all);
+                  Enabled := True;
+               end if;
+
+               if Provider /= null then
+                  Provider.Rank := Rank;
+                  Provider.Enabled := Enabled;
+                  Rank := Rank + 1;
+               end if;
+            end loop;
+
+            --  And finally assign values for the providers when unset.
+
+            P := 1;
+            loop
+               Provider := Get (Registry, P);
+               exit when Provider = null;
+               if Provider.Rank = Positive'Last then
+                  Provider.Rank := Rank;
+                  Rank := Rank + 1;
+               end if;
+               P := P + 1;
+            end loop;
+
+            Free (Vals);
+
+            Registry.Sort_Providers;
+         end;
+      end if;
+   end On_Preferences_Changed;
 
    ---------------------
    -- Register_Module --
@@ -495,14 +773,29 @@ package body GPS.Search.GUI is
          Maximum => 20,
          Default => 5);
 
+      Pref_Provider_Order := Create
+        (Get_Preferences (Kernel),
+         Name    => "Providers_Order",
+         Label   => "",
+         Page    => "",
+         Doc     => "Order in which the search contexts are displayed in the"
+         & " global search",
+         Default =>
+           Provider_Opened_Win & ";"
+           & Provider_Filenames & ";"
+           & Provider_Entities & ";"
+           & Provider_Actions & ";"
+           & Provider_Builds & ";"
+           & Provider_Sources & ";");
+
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Filenames);
+      Register_Provider_And_Action (Kernel, P);
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Actions);
+      Register_Provider_And_Action (Kernel, P);
 
       P := new GPS.Kernel.Search.Sources.Sources_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Sources);
+      Register_Provider_And_Action (Kernel, P);
 
       Gtk_New (Item);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
@@ -535,6 +828,10 @@ package body GPS.Search.GUI is
            Lookup_Action (Kernel, Action_Name_Prefix & Provider_Filenames),
          Accel_Key => GDK_F3, Accel_Mods => Shift_Mask,
          Ref_Item => -"Open...", Add_Before => False);
+
+      Add_Hook (Kernel, Preference_Changed_Hook,
+                Wrapper (On_Preferences_Changed'Access),
+                Name => "search.preferences_changed");
    end Register_Module;
 
 end GPS.Search.GUI;

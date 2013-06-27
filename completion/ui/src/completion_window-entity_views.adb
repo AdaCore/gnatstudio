@@ -33,7 +33,7 @@ package body Completion_Window.Entity_Views is
       P : Kernel_Search_Provider_Access;
    begin
       P := new Entities_Search_Provider;
-      Register_Provider_And_Action (Kernel, P, Provider_Entities);
+      Register_Provider_And_Action (Kernel, P);
 
       Register_Menu
         (Kernel, "/_Navigate/", "Goto _Entity...",
@@ -42,7 +42,7 @@ package body Completion_Window.Entity_Views is
          Accel_Mods => Control_Mask,
          Callback => null,
          Action =>
-           Lookup_Action (Kernel, Action_Name_Prefix & Provider_Entities));
+           Lookup_Action (Kernel, Action_Name_Prefix & P.Display_Name));
    end Register_Module;
 
 end Completion_Window.Entity_Views;

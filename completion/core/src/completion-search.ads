@@ -39,7 +39,7 @@ package Completion.Search is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Entities_Search_Provider) return String
-     is ("Entities");
+     is (Provider_Entities);
 
 private
 

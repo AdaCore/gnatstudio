@@ -160,6 +160,7 @@ package GPS.Search is
    type Search_Provider is abstract tagged record
       Rank  : Positive := 100;
       Count : Natural := 0;
+      Enabled : Boolean := True;
    end record;
    type Search_Provider_Access is access all Search_Provider'Class;
    --  Instances of this type will look for matches of a given pattern, in a
@@ -174,6 +175,9 @@ package GPS.Search is
    --  Count is the number of matches (non-null result) since the last call to
    --  Set_Pattern. It must set by the caller to Set_Pattern and Next, not by
    --  each provider, if the caller intends to use it.
+   --
+   --  Enabled is only relevant for the global search field, and indicates
+   --  whether this provider should be used.
 
    type Search_Result is abstract tagged record
       Score    : Integer := 100;
@@ -354,12 +358,16 @@ package GPS.Search is
 
    procedure Register
      (Self     : in out Search_Provider_Registry;
-      Name     : String;
       Template : not null access Search_Provider'Class);
    --  Register a type of search provider.
    --  Name can be used to retrieve it later (in which case, a copy of Template
    --  will be returned).
    --  It is valid to override a predefined provider.
+
+   procedure Sort_Providers (Self : in out Search_Provider_Registry);
+   --  Sort the providers depending on their user-assigned rank. This is done
+   --  by default every time Register is called, but should be called when the
+   --  ranks are edited.
 
    function Get
      (Self : Search_Provider_Registry;
@@ -391,7 +399,6 @@ private
       Ref_Visible_Column => -1);
 
    type Provider_Info is record
-      Name     : GNAT.Strings.String_Access;
       Provider : Search_Provider_Access;
    end record;
 
