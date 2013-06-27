@@ -857,6 +857,13 @@ package body Ada_Analyzer is
       procedure Indent_Function_Return (Prec : Natural);
       --  Perform special indentation for function return/rename statements
 
+      function Is_Continuation_Line
+        (Token           : Token_Type;
+         Prev_Token      : Token_Type;
+         Prev_Prev_Token : Token_Type;
+         Prec            : Natural) return Boolean;
+      --  Return True if we are indenting a continuation line
+
       procedure Compute_Indentation
         (Token           : Token_Type;
          Prev_Token      : Token_Type;
@@ -1217,6 +1224,112 @@ package body Ada_Analyzer is
          return Alignment;
       end Compute_Alignment;
 
+      --------------------------
+      -- Is_Continuation_Line --
+      --------------------------
+
+      function Is_Continuation_Line
+        (Token           : Token_Type;
+         Prev_Token      : Token_Type;
+         Prev_Prev_Token : Token_Type;
+         Prec            : Natural) return Boolean
+      is
+         Top_Tok : constant Token_Type := Top (Tokens).Token;
+         Tmp_Index : Natural := Prec + 1;
+      begin
+         if Prev_Token = Tok_With and then Token = Tok_Identifier then
+            Skip_Blanks (Buffer, Tmp_Index);
+
+            if Look_For (Tmp_Index, "=>") then
+               --  We have an aspect clause, e.g:
+               --  procedure G with
+               --    Pre => F
+
+               return True;
+            else
+               return False;
+            end if;
+         elsif Token = Tok_With and then Top_Tok = Tok_Type then
+            Skip_Blanks (Buffer, Tmp_Index);
+
+            if not Look_For (Tmp_Index, "record") then
+               --  We have an aspect clause, e.g:
+               --  type T is new Integer
+               --    with ...
+               return True;
+            else
+               return False;
+            end if;
+         end if;
+
+         if Prev_Token = Tok_Is and then In_Generic then
+            return True;
+         end if;
+
+         if Top_Tok = No_Token then
+            return False;
+         end if;
+
+         --  Special case for variable (Tok_Colon) or type (only case when
+         --  Tok_Is is passed to this subprogram) declarations.
+         --  In these cases, and if the Indent_Decl preference is set to 0
+         --  then this is not a continuation line, e.g:
+         --     Var
+         --     : Integer;
+         --     type T
+         --     is new Integer;
+         --  Note that we reuse Indent_Decl for now to avoid introducing
+         --  a new preference.
+
+         if (Top_Tok = Tok_Colon and then Token = Tok_Colon)
+           or else Token = Tok_Is
+         then
+            return Indent_Decl /= 0;
+         end if;
+
+         return
+           (Token not in Reserved_Token_Type
+            and then Prev_Token not in Token_Class_No_Cont
+            and then
+              (Prev_Token /= Tok_Arrow
+               or else (not Top (Tokens).In_Declaration
+                        and then Top_Tok not in
+                          Tok_Case | Tok_When | Tok_Select
+                          | Tok_Exception)))
+           or else (Prev_Token = Tok_Is
+                    and then (Token in Tok_New | Tok_Access
+                               | Tok_Separate | Tok_Abstract
+                              or else
+                                (Top_Tok = Tok_Subtype
+                                 and then Token /= Tok_Subtype)))
+           or else Token in Tok_Array | Tok_Of
+           or else (Token = Tok_Not
+                    and then (Prev_Token in Tok_And | Tok_Or
+                                | Tok_Then | Tok_Else))
+           or else (Prev_Token = Tok_With
+                    and then (Token = Tok_String_Literal
+                              or else Token = Tok_Private
+                              or else Top_Tok = Tok_Procedure
+                              or else Top_Tok = Tok_Function))
+           or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
+           or else (Prev_Token = Tok_Protected
+                    and then Prev_Prev_Token = Tok_Access)
+           or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+           or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+           or else (Prev_Prev_Token = Tok_And
+                    and then Prev_Token = Tok_Then
+                    and then Num_Parens = 0)
+           or else (Prev_Prev_Token = Tok_Or
+                    and then Prev_Token = Tok_Else
+                    and then Num_Parens = 0)
+           or else (Prev_Prev_Token = Tok_Raise
+                    and then Token = Tok_With)
+           or else
+             (Top_Tok = Tok_Type
+              and then (Token = Tok_Null or else Token = Tok_Tagged))
+           or else (Token = Tok_When and then Top_Tok = Tok_Entry);
+      end Is_Continuation_Line;
+
       -------------------------
       -- Compute_Indentation --
       -------------------------
@@ -1230,110 +1343,6 @@ package body Ada_Analyzer is
          Num_Spaces      : Integer)
       is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
-
-         function Is_Continuation_Line return Boolean;
-         --  Return True if we are indenting a continuation line
-
-         --------------------------
-         -- Is_Continuation_Line --
-         --------------------------
-
-         function Is_Continuation_Line return Boolean is
-            Tmp_Index : Natural := Prec + 1;
-         begin
-            if Prev_Token = Tok_With and then Token = Tok_Identifier then
-               Skip_Blanks (Buffer, Tmp_Index);
-
-               if Look_For (Tmp_Index, "=>") then
-                  --  We have an aspect clause, e.g:
-                  --  procedure G with
-                  --    Pre => F
-
-                  return True;
-               else
-                  return False;
-               end if;
-            elsif Token = Tok_With and then Top_Tok = Tok_Type then
-               Skip_Blanks (Buffer, Tmp_Index);
-
-               if not Look_For (Tmp_Index, "record") then
-                  --  We have an aspect clause, e.g:
-                  --  type T is new Integer
-                  --    with ...
-                  return True;
-               else
-                  return False;
-               end if;
-            end if;
-
-            if Prev_Token = Tok_Is and then In_Generic then
-               return True;
-            end if;
-
-            if Top_Tok = No_Token then
-               return False;
-            end if;
-
-            --  Special case for variable (Tok_Colon) or type (only case when
-            --  Tok_Is is passed to this subprogram) declarations.
-            --  In these cases, and if the Indent_Decl preference is set to 0
-            --  then this is not a continuation line, e.g:
-            --     Var
-            --     : Integer;
-            --     type T
-            --     is new Integer;
-            --  Note that we reuse Indent_Decl for now to avoid introducing
-            --  a new preference.
-
-            if (Top_Tok = Tok_Colon and then Token = Tok_Colon)
-              or else Token = Tok_Is
-            then
-               return Indent_Decl /= 0;
-            end if;
-
-            return
-              (Token not in Reserved_Token_Type
-               and then Prev_Token not in Token_Class_No_Cont
-               and then
-                 (Prev_Token /= Tok_Arrow
-                  or else (not Top (Tokens).In_Declaration
-                           and then Top_Tok not in
-                             Tok_Case | Tok_When | Tok_Select
-                             | Tok_Exception)))
-              or else (Prev_Token = Tok_Is
-                       and then (Token in Tok_New | Tok_Access
-                                  | Tok_Separate | Tok_Abstract
-                                 or else
-                                   (Top_Tok = Tok_Subtype
-                                    and then Token /= Tok_Subtype)))
-              or else Token in Tok_Array | Tok_Of
-              or else (Token = Tok_Not
-                       and then (Prev_Token in Tok_And | Tok_Or
-                                   | Tok_Then | Tok_Else))
-              or else (Prev_Token = Tok_With
-                       and then (Token = Tok_String_Literal
-                                 or else Token = Tok_Private
-                                 or else Top_Tok = Tok_Procedure
-                                 or else Top_Tok = Tok_Function))
-              or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
-              or else (Prev_Token = Tok_Protected
-                       and then Prev_Prev_Token = Tok_Access)
-              or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-              or else (Prev_Token = Tok_Null and then Token = Tok_Record)
-              or else (Prev_Prev_Token = Tok_And
-                       and then Prev_Token = Tok_Then
-                       and then Num_Parens = 0)
-              or else (Prev_Prev_Token = Tok_Or
-                       and then Prev_Token = Tok_Else
-                       and then Num_Parens = 0)
-              or else (Prev_Prev_Token = Tok_Raise
-                       and then Token = Tok_With)
-              or else
-                (Top_Tok = Tok_Type
-                 and then (Token = Tok_Null or else Token = Tok_Tagged))
-              or else (Token = Tok_When and then Top_Tok = Tok_Entry);
-         end Is_Continuation_Line;
-
       begin
          if Indent_Done or not Format then
             return;
@@ -1423,7 +1432,9 @@ package body Ada_Analyzer is
             Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
             Continuation_Val := 0;
 
-         elsif Is_Continuation_Line then
+         elsif Is_Continuation_Line
+           (Token, Prev_Token, Prev_Prev_Token, Prec)
+         then
             Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
 
             if Is_Operator (Token) then
