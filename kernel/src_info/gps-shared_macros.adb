@@ -48,30 +48,25 @@ package body GPS.Shared_Macros is
    begin
       Done.all := True;
 
-      if Param = "f"
-        or else Param = "F"
-        or else Param = "fk"
-      then
-         if Param = "f" then
+      if Param = "f" then
             return String_Utils.Protect
               (+File_Information.Base_Name,
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
-         elsif Param = "fk" then
-            return String_Utils.Protect
-              (Krunch (+File_Information.Base_Name),
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
+      elsif Param = "fk" then
+         return String_Utils.Protect
+           (Krunch (+File_Information.Base_Name),
+            Protect_Quotes      => Quoted,
+            Protect_Backslashes => For_Shell);
 
-         else
-            return String_Utils.Protect
-              (+To_Remote
-                 (File_Information,
-                  Get_Nickname (Server)).Full_Name,
-               Protect_Quotes      => Quoted,
-               Protect_Backslashes => For_Shell);
-         end if;
+      elsif Param = "F" then
+         return String_Utils.Protect
+           (+To_Remote
+              (File_Information,
+               Get_Nickname (Server)).Full_Name,
+            Protect_Quotes      => Quoted,
+            Protect_Backslashes => For_Shell);
 
       elsif Param = "gnatmake" then
          return Project_From_Kernel.Attribute_Value
