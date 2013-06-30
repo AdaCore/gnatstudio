@@ -209,10 +209,6 @@ package body Src_Editor_Buffer is
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
 
-   procedure Line_Highlights_Changed
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "Line_Highlights_Changed" signal
-
    procedure Mark_Set_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);

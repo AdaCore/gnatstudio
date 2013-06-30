@@ -1161,6 +1161,10 @@ private
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "buffer_information_changed" signal
 
+   procedure Line_Highlights_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "Line_Highlights_Changed" signal
+
    procedure Register_Edit_Timeout
      (Buffer : access Source_Buffer_Record'Class);
    --  Indicate that the text has been edited, and that a timeout should be

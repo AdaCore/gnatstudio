@@ -1488,6 +1488,8 @@ package body Src_Editor_Buffer.Line_Information is
                Highlight_In =>
                  (Highlight_Speedbar => Style.In_Speedbar,
                   Highlight_Editor   => True));
+
+            Line_Highlights_Changed (Buffer);
          else
             if Style.In_Speedbar then
                Compute_BL;
@@ -1500,6 +1502,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Highlight_In =>
                     (Highlight_Speedbar => Style.In_Speedbar,
                      Highlight_Editor   => False));
+
+               Line_Highlights_Changed (Buffer);
             end if;
 
             Compute_EL;
