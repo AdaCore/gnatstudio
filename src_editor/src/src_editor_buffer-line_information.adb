@@ -1070,7 +1070,7 @@ package body Src_Editor_Buffer.Line_Information is
          --  Convert the buffer coords back to window coords
 
          Buffer_To_Window_Coords
-           (View, Text_Window_Left,
+           (View, Text_Window_Text,
             Buffer_X => 0, Buffer_Y => Y_In_Buffer,
             Window_X => Dummy_Gint, Window_Y => Y_Pix_In_Window);
 

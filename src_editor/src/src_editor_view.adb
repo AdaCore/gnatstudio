@@ -75,6 +75,17 @@ with Traces;                     use Traces;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 
+--  Drawing the side info is organized this way:
+--
+--     <----  side area (View.Area)   ----><----  editor (View)      --->
+--      |             ||                  |
+--      | drawing of  || drawing of       |
+--      | speed bar   || side info data   |
+--      |             ||                  |
+--
+--  Both the speed bar and the side info data are drawn on the drawing area
+--  next to the editor view.
+
 package body Src_Editor_View is
 
    Me : constant Debug_Handle := Create ("Editor_View");
@@ -86,7 +97,7 @@ package body Src_Editor_View is
    --  also copies the syntax highlighting which is unwanted if for instance we
    --  copy a highlighting on an entity.
 
-   Speed_Column_Width : constant := 10;
+   Speed_Bar_Default_Width : constant := 10;
    --  The width of the speed column
 
    Speed_Column_Timeout : constant Guint := 1000;
@@ -194,7 +205,7 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "side_columns_configuration_changed" signal
 
-   procedure Invalidate_Window (User : Source_View);
+   procedure Invalidate_Window (User : access Source_View_Record'Class);
    --  Redraw the buffer window
 
    procedure Line_Highlight_Change_Handler
@@ -203,10 +214,14 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "line_highlight_change" signal
 
-   procedure Redraw_Columns (View : access Source_View_Record'Class);
+   procedure Redraw_Columns
+     (View : access Source_View_Record'Class;
+      Cr   : Cairo_Context);
    --  Redraw the left area
 
-   procedure Redraw_Speed_Column (View : access Source_View_Record'Class);
+   procedure Redraw_Speed_Column
+     (View : access Source_View_Record'Class;
+      Cr    : Cairo_Context);
    --  Redraw the speed column
 
    function On_Delete
@@ -272,9 +287,9 @@ package body Src_Editor_View is
    function Hide_Speed_Column_Timeout (View : Source_View) return Boolean;
    --  Hide the speed column
 
-   function Speed_Bar_Expose_Event_Cb
+   function Side_Area_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+      Cr     : Cairo_Context) return Boolean;
    --  Callback for an "expose" event on the speed bar
 
    procedure Speed_Bar_Size_Allocate_Cb
@@ -283,6 +298,22 @@ package body Src_Editor_View is
 
    procedure Register_Idle_Column_Redraw (View : Source_View);
    --  Register an idle redrawing of the side columns
+
+   procedure Recompute_Visible_Area (View : access Source_View_Record'Class);
+   --  Recompute the currently visible area in the view
+
+   procedure Size_Side_Column (View : access Source_View_Record'Class);
+   --  Resize the side column area
+
+   ----------------------
+   -- Size_Side_Column --
+   ----------------------
+
+   procedure Size_Side_Column (View : access Source_View_Record'Class) is
+   begin
+      Set_Size_Request
+        (View.Area, View.Speed_Bar_Width + 1 + View.Side_Info_Width, -1);
+   end Size_Side_Column;
 
    -------------------
    -- As_Is_Enabled --
@@ -337,7 +368,8 @@ package body Src_Editor_View is
 
    function Hide_Speed_Column_Timeout (View : Source_View) return Boolean is
    begin
-      Set_Size_Request (View.Area, 1, -1);
+      View.Speed_Bar_Width := 0;
+      Size_Side_Column (View);
       View.Speed_Column_Hide_Registered := False;
       return False;
    end Hide_Speed_Column_Timeout;
@@ -527,9 +559,9 @@ package body Src_Editor_View is
    -- Invalidate_Window --
    -----------------------
 
-   procedure Invalidate_Window (User : Source_View) is
-      Win           : Gdk.Gdk_Window :=
-                        Get_Window (User, Text_Window_Text);
+   procedure Invalidate_Window (User : access Source_View_Record'Class) is
+      Win        : Gdk.Gdk_Window :=
+                     Get_Window (User, Text_Window_Text);
       X, Y, W, H : Gint;
 
    begin
@@ -556,6 +588,36 @@ package body Src_Editor_View is
 
    function Line_Highlight_Redraw (User : Source_View) return Boolean is
    begin
+      case User.Speed_Column_Mode is
+         when Never =>
+            User.Speed_Bar_Width := 0;
+         when Always =>
+            User.Speed_Bar_Width := Speed_Bar_Default_Width;
+         when Automatic =>
+            declare
+               Buffer : constant Source_Buffer := Source_Buffer
+                 (Get_Buffer (User));
+               Color  : Gdk_RGBA;
+            begin
+               User.Speed_Bar_Width := 0;
+
+               --  Change the size if there is new info
+
+               for J in 1 .. Get_Line_Count (Buffer) loop
+                  Color := Get_Highlight_Color
+                    (Buffer, Buffer_Line_Type (J),
+                     Context => Highlight_Speedbar);
+
+                  if Color /= Null_RGBA then
+                     User.Speed_Bar_Width := Speed_Bar_Default_Width;
+                     exit;
+                  end if;
+               end loop;
+            end;
+      end case;
+
+      Size_Side_Column (User);
+
       User.Redraw_Registered := False;
 
       if User.Speed_Column_Buffer /= Null_Surface then
@@ -604,8 +666,11 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      pragma Unreferenced (Params, Buffer);
+      pragma Unreferenced (Params);
    begin
+      User.Side_Info_Width := Gint (Get_Total_Column_Width (Buffer));
+      Size_Side_Column (User);
+
       --  Invalidate the window so that the columns and line and
       --  block highlightings are redrawn.
       Invalidate_Window (User);
@@ -660,10 +725,7 @@ package body Src_Editor_View is
          View.Speed_Column_Buffer := Null_Surface;
       end if;
 
-      if View.Get_Realized then
-         Redraw_Columns (View);
-         Redraw_Speed_Column (View);
-      end if;
+      Invalidate_Window (View);
 
       View.Idle_Redraw_Registered := False;
       return False;
@@ -740,6 +802,9 @@ package body Src_Editor_View is
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
       V      : constant Source_View := Source_View (View);
    begin
+      --  Recompute the lines currently displayed
+      Recompute_Visible_Area (V);
+
       --  Keep the cursor on screen when the editor is resized.
       --  Do not do this if the editor is synchronized with another editor.
 
@@ -787,19 +852,100 @@ package body Src_Editor_View is
       when E : others => Trace (Exception_Handle, E);
    end Speed_Bar_Size_Allocate_Cb;
 
+   ----------------------------
+   -- Recompute_Visible_Area --
+   ----------------------------
+
+   procedure Recompute_Visible_Area (View : access Source_View_Record'Class) is
+      Top_In_Buffer    : Gint;
+      Bottom_In_Buffer : Gint;
+      Dummy_Gint       : Gint;
+      Iter             : Gtk_Text_Iter;
+      Top_Line         : Buffer_Line_Type;
+      Bottom_Line      : Buffer_Line_Type;
+
+      Text_Window : constant Gdk.Gdk_Window :=
+                           View.Get_Window (Text_Window_Text);
+
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+
+      X, Y, Width, Height : Gint;
+   begin
+      --  Figure out the top and bottom line
+
+      Get_Geometry (Text_Window, X, Y, Width, Height);
+
+      Window_To_Buffer_Coords
+        (View, Text_Window_Text,
+         Window_X => 0, Window_Y => Y,
+         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+      Window_To_Buffer_Coords
+        (View, Text_Window_Text,
+         Window_X => 0, Window_Y => Y + Height,
+         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+
+      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+      Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+      Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      --  If one of the values hadn't been initialized, display the
+      --  whole range of lines.
+      View.Top_Line    := Top_Line;
+      View.Bottom_Line := Bottom_Line;
+
+      --  Compute the smallest connected area that needs refresh
+
+      if View.Side_Columns_Up_To_Date then
+         Find_Top_Line :
+         while Top_Line <= Bottom_Line loop
+            exit Find_Top_Line when
+              Line_Needs_Refresh (Buffer, Top_Line);
+
+            Top_Line := Top_Line + 1;
+         end loop Find_Top_Line;
+
+         Find_Bottom_Line :
+         while Bottom_Line >= Top_Line loop
+            exit Find_Bottom_Line when
+              Line_Needs_Refresh (Buffer, Bottom_Line);
+
+            Bottom_Line := Bottom_Line - 1;
+         end loop Find_Bottom_Line;
+      else
+         View.Side_Columns_Up_To_Date := True;
+      end if;
+      --  If necessary, emit the Source_Lines_Revealed signal
+
+      if Bottom_Line >= Top_Line then
+         Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+      end if;
+   end Recompute_Visible_Area;
+
    -------------------------------
    -- Speed_Bar_Expose_Event_Cb --
    -------------------------------
 
-   function Speed_Bar_Expose_Event_Cb
+   function Side_Area_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+      Cr     : Cairo_Context) return Boolean
    is
       View : constant Source_View := Source_View (Widget);
-      pragma Unreferenced (Event);
 
    begin
-      Redraw_Speed_Column (View);
+      --  Paint the background, common to both the speed column and the side
+      --  info column
+
+      Set_Source_Color (Cr, View.Background_Color_Other);
+      Cairo.Paint (Cr);
+
+      if View.Speed_Bar_Width > 0 then
+         Redraw_Speed_Column (View, Cr);
+         Translate (Cr, Gdouble (View.Speed_Bar_Width), 0.0);
+      end if;
+
+      Redraw_Columns (View, Cr);
 
       return True;
 
@@ -807,7 +953,7 @@ package body Src_Editor_View is
       when E : others =>
          Trace (Exception_Handle, E);
          return True;
-   end Speed_Bar_Expose_Event_Cb;
+   end Side_Area_Expose_Event_Cb;
 
    ---------------------
    -- Expose_Event_Cb --
@@ -822,78 +968,9 @@ package body Src_Editor_View is
 
       X, Y, Width, Height : Gint;
 
-      procedure Redraw_Side_Info;
-      --  Redraw the side window information
-
       procedure Highlight_Text;
       --  Highlight the current text, in particular the current line and
       --  current block, if needed.
-
-      ----------------------
-      -- Redraw_Side_Info --
-      ----------------------
-
-      procedure Redraw_Side_Info is
-         Top_In_Buffer    : Gint;
-         Bottom_In_Buffer : Gint;
-         Dummy_Gint       : Gint;
-         Iter             : Gtk_Text_Iter;
-         Top_Line         : Buffer_Line_Type;
-         Bottom_Line      : Buffer_Line_Type;
-
-         Window : constant Gdk.Gdk_Window :=
-           View.Get_Window (Text_Window_Left);
-      begin
-         Get_Geometry (Window, X, Y, Width, Height);
-
-         Window_To_Buffer_Coords
-           (View, Text_Window_Left,
-            Window_X => 0, Window_Y => Y,
-            Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-         Window_To_Buffer_Coords
-           (View, Text_Window_Left,
-            Window_X => 0, Window_Y => Y + Height,
-            Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
-         Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-         Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-
-         Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-         Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-
-         --  If one of the values hadn't been initialized, display the
-         --  whole range of lines.
-         View.Top_Line    := Top_Line;
-         View.Bottom_Line := Bottom_Line;
-
-         --  Compute the smallest connected area that needs refresh
-
-         if View.Side_Columns_Up_To_Date then
-            Find_Top_Line :
-            while Top_Line <= Bottom_Line loop
-               exit Find_Top_Line when
-                 Line_Needs_Refresh (Buffer, Top_Line);
-
-               Top_Line := Top_Line + 1;
-            end loop Find_Top_Line;
-
-            Find_Bottom_Line :
-            while Bottom_Line >= Top_Line loop
-               exit Find_Bottom_Line when
-                 Line_Needs_Refresh (Buffer, Bottom_Line);
-
-               Bottom_Line := Bottom_Line - 1;
-            end loop Find_Bottom_Line;
-         else
-            View.Side_Columns_Up_To_Date := True;
-         end if;
-         --  If necessary, emit the Source_Lines_Revealed signal
-
-         if Bottom_Line >= Top_Line then
-            Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
-         end if;
-
-         Redraw_Columns (View);
-      end Redraw_Side_Info;
 
       --------------------
       -- Highlight_Text --
@@ -1018,7 +1095,6 @@ package body Src_Editor_View is
          Set_Line_Width (Cr, 1.0);
          Set_Antialias (Cr, Cairo_Antialias_None);
          Save (Cr);
-         Translate (Cr, Gdouble (Width), 0.0);
 
          Buffer_To_Window_Coords
            (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
@@ -1132,7 +1208,6 @@ package body Src_Editor_View is
       end Highlight_Text;
 
    begin  -- Expose_Event_Cb
-      Redraw_Side_Info;
       Highlight_Text;
 
       --  Return false, so that the signal is not blocked, and other
@@ -1282,7 +1357,7 @@ package body Src_Editor_View is
       Return_Callback.Object_Connect
         (View.Area, Signal_Draw,
          Marsh       => Return_Callback.To_Marshaller
-           (Speed_Bar_Expose_Event_Cb'Access),
+           (Side_Area_Expose_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
 
@@ -1293,7 +1368,6 @@ package body Src_Editor_View is
          After       => False,
          Slot_Object => View);
 
-      Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
@@ -1423,15 +1497,7 @@ package body Src_Editor_View is
    --------------------
 
    function Connect_Expose (View : Source_View) return Boolean is
-      Win           : constant Gdk.Gdk_Window :=
-                        Get_Window (View, Text_Window_Left);
-      X, Y, W, H : Gint;
-
    begin
-      --  ??? if View.Get_Realized then
-      --  When will we connect Expose_Event_Cb in case the View isn't
-      --  realized ???
-
       Return_Callback.Connect
         (View, Signal_Draw,
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
@@ -1451,11 +1517,7 @@ package body Src_Editor_View is
          After       => True,
          Slot_Object => View);
 
-      if Win /= null then
-         Get_Geometry (Win, X, Y, W, H);
-         Invalidate_Rect (Win, (X, Y, W, H), False); --  ??? Was Clear_Area_E
-         Invalidate_Window (View);
-      end if;
+      Invalidate_Window (View);
 
       View.Connect_Expose_Registered := False;
 
@@ -1542,21 +1604,21 @@ package body Src_Editor_View is
 
       if Source.Speed_Column_Mode /= Mode then
          if Source.Speed_Column_Mode = Never then
-            Set_Size_Request (Source.Area, 1, -1);
+            Source.Speed_Bar_Width := 0;
 
          elsif Source.Speed_Column_Mode = Always then
-            Set_Size_Request (Source.Area, Speed_Column_Width, -1);
+            Source.Speed_Bar_Width := Speed_Bar_Default_Width;
          end if;
 
          if Source.Speed_Column_Buffer /= Null_Surface then
             Destroy (Source.Speed_Column_Buffer);
             Source.Speed_Column_Buffer := Null_Surface;
          end if;
-
-         if Source.Area.Get_Realized then
-            Redraw_Speed_Column (Source);
-         end if;
       end if;
+
+      Size_Side_Column (Source);
+
+      Invalidate_Window (Source);
 
       Color := Default_Style.Get_Pref_Fg;
 
@@ -1598,7 +1660,7 @@ package body Src_Editor_View is
       Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
       Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
 
-      Redraw_Columns (Self);  --  update color of the side panes
+      Invalidate_Window (Self);
    end Set_Background_Color;
 
    -------------
@@ -1610,19 +1672,9 @@ package body Src_Editor_View is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
-      D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Buffer : constant Source_Buffer :=
-                 Source_Buffer (Get_Buffer (Hook.View));
-      File   : GNATCOLL.VFS.Virtual_File := Get_Filename (Buffer);
+      pragma Unreferenced (Kernel, Data);
    begin
-      if File = GNATCOLL.VFS.No_File then
-         File := Get_File_Identifier (Buffer);
-      end if;
-
-      if File = D.File then
-         Redraw_Columns (Hook.View);
-      end if;
+      Invalidate_Window (Hook.View);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Execute;
@@ -1790,18 +1842,52 @@ package body Src_Editor_View is
       Lower, Upper     : Gdouble;
       Adj              : Gtk_Adjustment;
       X, Y         : Gdouble;
-   begin
-      if (Get_Event_Type (Event) = Button_Release
-          and then Get_Button (Event) = 1)
-        or else Get_Event_Type (Event) = Motion_Notify
-      then
-         if View.Scrolling
-           or else View.Area = null
-         then
-            return False;
-         end if;
 
-         Get_Coords (Event, X, Y);
+      procedure Handle_Press_On_Side_Info;
+      --  Handle a click on the "side info" area
+
+      procedure Handle_Press_On_Speed_Bar;
+      --  Handle a click on the speed bar
+
+      -------------------------------
+      -- Handle_Press_On_Side_Info --
+      -------------------------------
+
+      procedure Handle_Press_On_Side_Info is
+         Dummy_Gint         : Gint;
+         Iter               : Gtk_Text_Iter;
+         Line               : Buffer_Line_Type;
+         Button_X, Button_Y : Gint;
+         X, Y               : Gint;
+
+         Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      begin
+         --  Get the coordinates of the click
+
+         Button_X := Gint (Event.Button.X);
+         Button_Y := Gint (Event.Button.Y);
+
+         --  Find the line number
+
+         Window_To_Buffer_Coords
+           (View, Text_Window_Text,
+            Window_X => Button_X, Window_Y => Button_Y,
+            Buffer_X => X, Buffer_Y => Y);
+
+         Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
+         Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+         Set_Focus_Child (View.Child);
+         On_Click (Buffer, Line, Button_X - View.Speed_Bar_Width);
+      end Handle_Press_On_Side_Info;
+
+      -------------------------------
+      -- Handle_Press_On_Speed_Bar --
+      -------------------------------
+
+      procedure Handle_Press_On_Speed_Bar is
+      begin
+
          Button_Y := Gint (Y);
 
          Get_Geometry (Get_Window (View.Area), Dummy_X, Dummy_Y, W, H);
@@ -1822,6 +1908,33 @@ package body Src_Editor_View is
             View.Scroll_Timeout := Source_View_Timeout.Timeout_Add
               (10, Scroll_Timeout'Access, View);
          end if;
+      end Handle_Press_On_Speed_Bar;
+
+      Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
+   begin
+      if View.Scrolling
+        or else View.Area = null
+      then
+         return False;
+      end if;
+
+      Get_Coords (Event, X, Y);
+
+      if Gint (X) <= View.Speed_Bar_Width
+        and then
+          ((Event_Type = Button_Release and then Get_Button (Event) = 1)
+           or else Event_Type = Motion_Notify)
+      then
+         --  This is  a click or a drag on the speed bar
+
+         Handle_Press_On_Speed_Bar;
+
+      elsif Event_Type = Button_Release
+        and then Get_Button (Event) = 1
+      then
+         --  This is a click on the side info area
+
+         Handle_Press_On_Side_Info;
       end if;
 
       return False;
@@ -1857,13 +1970,10 @@ package body Src_Editor_View is
       Event  : Gdk_Event) return Boolean
    is
       View        : constant Source_View := Source_View (Widget);
-      Left_Window : constant Gdk.Gdk_Window :=
-                      Get_Window (View, Text_Window_Left);
 
    begin
       if Get_Event_Type (Event) = Button_Release
         and then Get_Button (Event) = 1
-        and then Get_Window (Event) /= Left_Window
       then
          if View.Button_Pressed then
             View.Button_Pressed := False;
@@ -1894,55 +2004,17 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-
-      Left_Window : constant Gdk.Gdk_Window :=
-                      Get_Window (View, Text_Window_Left);
-
-      Window : Gdk.Gdk_Window;
-
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
       External_End_Action (Buffer);
 
-      Window := Get_Window (Event);
-
       case Get_Event_Type (Event) is
          when Button_Press =>
             if Get_Button (Event) = 1 then
-               if Window = Left_Window then
-                  declare
-                     Dummy_Gint         : Gint;
-                     Iter               : Gtk_Text_Iter;
-                     Line               : Buffer_Line_Type;
-                     Button_X, Button_Y : Gint;
-                     X, Y               : Gint;
-
-                  begin
-                     --  Get the coordinates of the click
-
-                     Button_X := Gint (Event.Button.X);
-                     Button_Y := Gint (Event.Button.Y);
-
-                     --  Find the line number
-
-                     Window_To_Buffer_Coords
-                       (View, Text_Window_Left,
-                        Window_X => Button_X, Window_Y => Button_Y,
-                        Buffer_X => X, Buffer_Y => Y);
-
-                     Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
-                     Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-
-                     Set_Focus_Child (View.Child);
-                     On_Click (Buffer, Line, Button_X);
-                  end;
-
-               else
-                  if not View.Button_Pressed then
-                     View.Button_Pressed := True;
-                     View.Button_Event := Copy (Event);
-                  end if;
+               if not View.Button_Pressed then
+                  View.Button_Pressed := True;
+                  View.Button_Event := Copy (Event);
                end if;
 
             elsif Get_Button (Event) = 2 then
@@ -1988,7 +2060,7 @@ package body Src_Editor_View is
             end if;
 
          when Gdk_2button_Press =>
-            if Window /= Left_Window and then Get_Button (Event) = 1 then
+            if Get_Button (Event) = 1 then
                View.Double_Click := True;
                --  ??? This is a tweak necessary to implement the feature
                --  "select an entire word containing '_' when double-clicking".
@@ -2181,53 +2253,46 @@ package body Src_Editor_View is
    -- Redraw_Columns --
    --------------------
 
-   procedure Redraw_Columns (View : access Source_View_Record'Class) is
-      Left_Window : Gdk.Gdk_Window;
-
-      X, Y, Width, Height        : Gint;
-      Layout                     : Pango_Layout;
-
+   procedure Redraw_Columns
+     (View : access Source_View_Record'Class;
+      Cr   : Cairo_Context)
+   is
+      Layout      : Pango_Layout;
       Src_Buffer  : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
 
-      Total_Width : Gint;
-      Cr          : Cairo_Context;
-
+      Prev_Side_Info_Width : constant Gint := View.Side_Info_Width;
    begin
-      Total_Width := Gint (Get_Total_Column_Width (Src_Buffer));
+      --  Compute the size of the info to draw
 
-      if Total_Width = 0 then
-         Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
+      View.Side_Info_Width := Gint (Get_Total_Column_Width (Src_Buffer));
+
+      --  If the size has changed, resize the window. We can return immediately
+      --  since the
+      if View.Side_Info_Width /= Prev_Side_Info_Width then
+         Size_Side_Column (View);
+
          return;
       end if;
 
-      if Total_Width /= View.Buffer_Column_Size then
-         View.Buffer_Column_Size := Total_Width;
-         Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
+      if View.Side_Info_Width = 0 then
+         return;
+      end if;
+
+      if View.Side_Info_Width /= View.Buffer_Column_Size then
+         View.Buffer_Column_Size := View.Side_Info_Width;
       end if;
 
       --  Create the graphical elements
 
-      Left_Window := Get_Window (View, Text_Window_Left);
-
-      if Left_Window = null then
-         return;
-      end if;
-
       Layout := Create_Pango_Layout (View);
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
 
-      Get_Geometry (Left_Window, X, Y, Width, Height);
-
-      Cr := Create (Left_Window);
-      Set_Source_Color (Cr, View.Background_Color_Other);
-      Cairo.Paint (Cr);
       Draw_Line_Info
         (Src_Buffer, View.Top_Line, View.Bottom_Line,
          Gtk_Text_View (View),
          Shade_Or_Lighten (View.Background_Color_Other, 0.4),
          Layout, Cr);
-      Destroy (Cr);
 
       Unref (Layout);
    end Redraw_Columns;
@@ -2236,7 +2301,10 @@ package body Src_Editor_View is
    -- Redraw_Speed_Column --
    -------------------------
 
-   procedure Redraw_Speed_Column (View : access Source_View_Record'Class) is
+   procedure Redraw_Speed_Column
+     (View : access Source_View_Record'Class;
+      Cr   : Cairo_Context)
+   is
       Right_Window : Gdk.Gdk_Window;
 
       X, Y, Width, Height : Gint;
@@ -2249,8 +2317,8 @@ package body Src_Editor_View is
       Total_Lines  : Gint;
 
       Info_Exists  : Boolean := False;
-      Cr           : Cairo_Context;
 
+      Buffer_Context : Cairo_Context;
    begin
       if View.Area = null
         or else View.Speed_Column_Mode = Never
@@ -2272,13 +2340,13 @@ package body Src_Editor_View is
          View.Speed_Column_Buffer :=
            Create_Similar_Surface
            (Right_Window, Cairo_Content_Color_Alpha,
-            Speed_Column_Width,
+            View.Speed_Bar_Width,
             Height);
 
-         Cr := Create (View.Speed_Column_Buffer);
+         Buffer_Context := Create (View.Speed_Column_Buffer);
 
-         Set_Source_Color (Cr, View.Background_Color_Other);
-         Cairo.Paint (Cr);
+         Set_Source_Color (Buffer_Context, View.Background_Color_Other);
+         Cairo.Paint (Buffer_Context);
 
          Line_Height := Gdouble (Height) / Gdouble (Total_Lines + 1);
 
@@ -2288,8 +2356,8 @@ package body Src_Editor_View is
             Line_Height := 1.0;
          end if;
 
-         Set_Line_Width (Cr, Line_Height);
-         Set_Line_Cap (Cr, Cairo_Line_Cap_Square);
+         Set_Line_Width (Buffer_Context, Line_Height);
+         Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
 
          Info_Exists := False;
 
@@ -2299,34 +2367,31 @@ package body Src_Editor_View is
                Context => Highlight_Speedbar);
 
             if Color /= Null_RGBA then
-               Set_Source_Color (Cr, Color);
+               Set_Source_Color (Buffer_Context, Color);
                Draw_Line
-                 (Cr, Color,
+                 (Buffer_Context, Color,
                   0,
                   (Height * J) / Total_Lines,
-                  Speed_Column_Width,
+                  View.Speed_Bar_Width,
                   (Height * J) / Total_Lines);
 
                Info_Exists := True;
             end if;
          end loop;
 
-         Destroy (Cr);
+         Destroy (Buffer_Context);
 
          if Info_Exists then
+            View.Speed_Bar_Width := Speed_Bar_Default_Width;
+
             if View.Speed_Column_Hide_Registered then
                View.Speed_Column_Hide_Registered := False;
                Glib.Main.Remove (View.Speed_Column_Hide_Timeout);
             end if;
 
-            if Width = 1
-              and then View.Speed_Column_Mode /= Never
-            then
-               Set_Size_Request (View.Area, Speed_Column_Width, -1);
-            end if;
+            Size_Side_Column (View);
 
-         elsif Width = Speed_Column_Width
-           and then View.Speed_Column_Mode /= Always
+         elsif View.Speed_Column_Mode /= Always
            and then not View.Speed_Column_Hide_Registered
          then
             View.Speed_Column_Hide_Registered := True;
@@ -2336,25 +2401,18 @@ package body Src_Editor_View is
          end if;
       end if;
 
-      Cr := Create (Right_Window);
       Set_Source_Surface (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
       Paint (Cr);
-
-      if Width = 1 then
-         Destroy (Cr);
-         return;
-      end if;
 
       Set_Line_Width (Cr, 0.5);
       Draw_Rectangle
         (Cr, (0.0, 0.0, 0.0, Alpha => 0.1), True,
          1,
          (Height * Gint (View.Top_Line - 1)) / Total_Lines,
-         Speed_Column_Width - 2,
+         View.Speed_Bar_Width - 2,
          (Height * Gint (View.Bottom_Line - View.Top_Line + 1)) / Total_Lines,
          2.0);
-
-      Destroy (Cr);
+      Cairo.Fill (Cr);
    end Redraw_Speed_Column;
 
    -----------------------------
@@ -2399,6 +2457,8 @@ package body Src_Editor_View is
       Src_View : constant Source_View := Source_View (View);
 
    begin
+      Recompute_Visible_Area (Src_View);
+
       Invalidate_Window (Src_View);
 
       if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then

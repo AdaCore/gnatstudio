@@ -192,6 +192,12 @@ private
       Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
       --  The drawing area used for the speed column
 
+      Side_Info_Width     : Gint := 0;
+      --  The width of the side info
+
+      Speed_Bar_Width     : Gint := 0;
+      --  The width of the speed bar
+
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
