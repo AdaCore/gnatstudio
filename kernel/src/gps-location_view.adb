@@ -637,9 +637,30 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      K : constant Kernel_Handle := Get_Kernel (Context.Context);
-      V : constant Location_View := Location_Views.Retrieve_View (K);
+      K     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V     : constant Location_View := Location_Views.Retrieve_View (K);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
+
    begin
+      --  When Locations view doesn't have focus it just clear selection on
+      --  collapse all action. Selection is moved to category row to workaround
+      --  this.
+
+      V.View.Get_Selection.Get_Selected (Model, Iter);
+
+      if Iter /= Null_Iter then
+         Path := Get_Path (Model, Iter);
+
+         while Path.Get_Depth > 1 and then Up (Path) loop
+            null;
+         end loop;
+
+         V.View.Get_Selection.Select_Path (Path);
+         Path_Free (Path);
+      end if;
+
       V.View.Collapse_All;
       return Commands.Success;
    end Execute;
