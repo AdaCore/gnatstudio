@@ -1984,6 +1984,8 @@ package body Default_Preferences is
       --  available themes.
       if Config.Host = Config.Windows then
          Add_Theme ("gtk-win32", Dark => False);
+         Add_Theme ("gtk-win32-xp", Dark => False);
+         Add_Theme ("gtk-win32-classic", Dark => False);
       end if;
 
       Add_Theme ("Raleigh", Dark => False);
