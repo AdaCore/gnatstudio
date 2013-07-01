@@ -7499,7 +7499,9 @@ package body Src_Editor_Buffer is
          Get_End_Iter (Buffer, End_Iter);
       end if;
 
-      if not Lines_Are_Real (Buffer) then
+      if Start_Line /= End_Line
+        and then not Lines_Are_Real (Buffer)
+      then
          --  If we are getting multiple lines of text, we need to get the
          --  potential hidden lines.
 
