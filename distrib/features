@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M625-035 GPS: style for build buttons in the toolbar (2013-07-01)
+
+  The rendering has been modified for the build buttons in the toolbar,
+  so that they occupy less space, while making it clearer that they have
+  a popdown menu to select their build target.
+
 NF-60-M625-005 GPS: approximate search (2013-06-25)
 
   GPS is now able to do approximate search. For instance, searching for
