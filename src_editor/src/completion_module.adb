@@ -400,9 +400,11 @@ package body Completion_Module is
             if D.Start_Mark /= null then
                Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
                Delete_Mark (D.Buffer, D.Start_Mark);
+               D.Start_Mark := null;
 
                Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
                Delete_Mark (D.Buffer, D.End_Mark);
+               D.End_Mark := null;
 
                --  If we did complete on multiple lines, indent the resulting
                --  lines using the user preferences.
