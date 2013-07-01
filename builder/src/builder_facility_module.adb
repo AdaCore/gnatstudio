@@ -1259,7 +1259,7 @@ package body Builder_Facility_Module is
                Set_Name (Widget, "toolbar_button_" & Name);
 
                String_Callback.Connect
-                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
+                 (Widget, Gtk.Tool_Button.Signal_Clicked,
                   On_Button_Or_Menu_Click'Access,
                   (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
@@ -1269,6 +1269,7 @@ package body Builder_Facility_Module is
                Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
             begin
                Gtk_New (Widget, Get_Icon (Target));
+
                --  Connect to this signal to automatically update the tooltips
                --  when a new main file is selected
                Combo_Callback.Connect
@@ -1284,7 +1285,7 @@ package body Builder_Facility_Module is
                end loop;
 
                Combo_Callback.Connect
-                 (Widget, "clicked",
+                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
                   On_Combo_Click'Access);
                Button := Gtk_Tool_Item (Widget);
             end;
