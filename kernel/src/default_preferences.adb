@@ -540,7 +540,7 @@ package body Default_Preferences is
       Pref.Label := new String'(Label);
 
       Free (Pref.Page);
-      if Page /= "" then
+      if Page /= "" and then Page /= "/" then
          Pref.Page := new String'(Page);
       end if;
 

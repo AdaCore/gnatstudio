@@ -7443,7 +7443,10 @@ class Preference(object):
         found in the $HOME/.gps/preferences file. When you are creating a new
         preference, this name can include '/' characters, which will result in
         subpages created in the Preferences dialog. The name after the last '/'
-        should only include letters and '-' characters.
+        should only include letters and '-' characters. If the name starts
+        with '/' and contains no other '/', then the preference will not be
+        visible in the Preferences dialog, although it can be manipulated as
+        usual and will be loaded automatically by GPS on startup.
 
         :param name: A string
         """
