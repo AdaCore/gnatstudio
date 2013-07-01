@@ -296,6 +296,19 @@ package Default_Preferences is
    --  The Font_Description must not be freed by the caller
    --  For enumeration, it returns the 'Pos of the enumeration value.
 
+   type Theme_Descr is record
+      Name : GNAT.Strings.String_Access;
+      --  Display name for the theme, including the variant
+
+      Directory : GNAT.Strings.String_Access;
+      --  Name for the theme (not including the variant name)
+
+      Dark    : Boolean := False;
+      --  Whether to use a dark variant
+   end record;
+   function Get_Pref
+     (Pref : access Theme_Preference_Record) return Theme_Descr;
+
    --------------------------------------
    -- Setting the value of preferences --
    --------------------------------------
@@ -569,8 +582,11 @@ private
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
 
+   type Theme_Descr_Array is array (Natural range <>) of Theme_Descr;
+   type Theme_Descr_Array_Access is access all Theme_Descr_Array;
+
    type Theme_Preference_Record is new Preference_Record with record
-      Themes  : GNAT.Strings.String_List_Access;
+      Themes  : Theme_Descr_Array_Access;
       Current : Natural := 0;
    end record;
    overriding function Get_Pref

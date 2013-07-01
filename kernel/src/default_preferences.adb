@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Containers.Vectors;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -87,6 +86,9 @@ package body Default_Preferences is
    -------------------------
    --  Preferences Editor --
    -------------------------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Theme_Descr_Array, Theme_Descr_Array_Access);
 
    procedure Create_Color_Buttons
      (Box     : Gtk_Box;
@@ -1829,7 +1831,24 @@ package body Default_Preferences is
       then
          return "";
       else
-         return Pref.Themes (Pref.Current).all;
+         return Pref.Themes (Pref.Current).Name.all;
+      end if;
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Pref : access Theme_Preference_Record) return Theme_Descr is
+   begin
+      if Pref = null
+        or else Pref.Themes = null
+        or else Pref.Current not in Pref.Themes'Range
+      then
+         return (null, null, False);
+      else
+         return Pref.Themes (Pref.Current);
       end if;
    end Get_Pref;
 
@@ -1847,7 +1866,7 @@ package body Default_Preferences is
       end if;
 
       for J in Pref.Themes'Range loop
-         if Pref.Themes (J).all = Value then
+         if Pref.Themes (J).Name.all = Value then
             Pref.Current := J;
             Manager.On_Pref_Changed (Pref);
             return;
@@ -1874,26 +1893,54 @@ package body Default_Preferences is
                       Glib.Properties.Get_Property
                         (Gtk.Settings.Get_Default,
                          Gtk.Settings.Gtk_Theme_Name_Property);
-      Gtk_Default : Natural := 0;
-      Win_Default : Natural := 0;
-      Unx_Default : Natural := 0;
-      N_Themes    : Natural := 0;
-      Num         : Positive;
-
-      package Dir_Vectors is new Ada.Containers.Vectors
-        (Positive, GNATCOLL.VFS.Virtual_File);
       Dirs       : constant File_Array := From_Path (Search_Path);
       Dir        : GNATCOLL.VFS.Virtual_File;
       Subdirs    : GNATCOLL.VFS.File_Array_Access;
-      Theme_Dirs : Dir_Vectors.Vector;
       Rc_File    : Virtual_File;
       use type Config.Host_Type;
+
+      procedure Add_Theme (Name : String; Dark : Boolean);
+      --  Register a new theme
+
+      procedure Add_Theme (Name : String; Dark : Boolean) is
+         Tmp : Theme_Descr_Array_Access := Ret.Themes;
+      begin
+         if Tmp = null then
+            Ret.Themes := new Theme_Descr_Array (1 .. 1);
+         else
+            Ret.Themes := new Theme_Descr_Array (Tmp'First .. Tmp'Last + 1);
+            Ret.Themes (Tmp'Range) := Tmp.all;
+            Unchecked_Free (Tmp);
+         end if;
+
+         if Dark then
+            Ret.Themes (Ret.Themes'Last) :=
+              (Name      => new String'(Name & " (Dark)"),
+               Directory => new String'(Name),
+               Dark      => Dark);
+         else
+            Ret.Themes (Ret.Themes'Last) :=
+              (Name      => new String'(Name),
+               Directory => new String'(Name),
+               Dark      => Dark);
+         end if;
+
+         if Default = Ret.Themes (Ret.Themes'Last).Name.all
+           or else (Ret.Current = Natural'Last
+                    and then Ret.Themes (Ret.Themes'Last).Name.all = "Adwaita")
+         then
+            Ret.Current := Ret.Themes'Last;
+         end if;
+      end Add_Theme;
 
    begin
       if Active (Me) then
          Trace (Me, "Theme search path is " & (+Search_Path));
          Trace (Me, "Active theme is " & Default);
       end if;
+
+      Ret.Current := Natural'Last;
+      Ret.Themes  := null;
 
       for D in Dirs'Range loop
          Dir := Dirs (D);
@@ -1905,8 +1952,19 @@ package body Default_Preferences is
                Rc_File := Subdir.Create_From_Dir ("gtk-3.0/gtk.css");
 
                if Rc_File.Is_Regular_File then
-                  Theme_Dirs.Append (Subdir);
-                  N_Themes := N_Themes + 1;
+                  Add_Theme (+Base_Dir_Name (Subdir), Dark => False);
+               end if;
+
+               --  Check for a "dark" variant. We cannot unfortunately guess
+               --  the possible variants of a theme just by looking at the
+               --  file names, since many themes for instance provide a
+               --  "gtk-widgets.css", where "widgets" is not a variant. In any
+               --  case, the only variant supported by GSettings is "dark"...
+
+               Rc_File := Subdir.Create_From_Dir ("gtk-3.0/gtk-dark.css");
+
+               if Rc_File.Is_Regular_File then
+                  Add_Theme (+Base_Dir_Name (Subdir), Dark => True);
                end if;
             end loop;
 
@@ -1918,76 +1976,21 @@ package body Default_Preferences is
                       & Dir.Display_Full_Name);
             end if;
          end if;
-
       end loop;
-
-      if Config.Host = Config.Windows then
-         --  +2 for the windows theme + Raleigh
-         N_Themes := N_Themes + 2;
-      else
-         --  +1 for the Raleigh theme
-         N_Themes := N_Themes + 1;
-      end if;
-
-      Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
-      Ret.Current := 0;
-
-      --  Fill the list of themes
-      Num := Ret.Themes'First;
 
       --  The 'gtk-win32' and 'Raleigh' themes are now directly embedded inside
       --  the gtk library, so exist event without any directory in the themes
       --  directories. We thus need to add them manually to the list of
       --  available themes.
       if Config.Host = Config.Windows then
-         Ret.Themes (Num) := new String'("gtk-win32");
-
-         if Default = "gtk-win32" then
-            Ret.Current := Num;
-         end if;
-
-         Num := Num + 1;
+         Add_Theme ("gtk-win32", Dark => False);
       end if;
 
-      Ret.Themes (Num) := new String'("Raleigh");
-      Gtk_Default := Num;
+      Add_Theme ("Raleigh", Dark => False);
 
-      if Default = "Raleigh" then
-         Ret.Current := Num;
-      end if;
-
-      Num := Num + 1;
-
-      for Theme_Dir of Theme_Dirs loop
-         Ret.Themes (Num) := new String'(+Base_Dir_Name (Theme_Dir));
-
-         if Ret.Themes (Num).all = "Adwaita" then
-            --  Fallback in the unix case
-            Unx_Default := Num;
-
-            --  Also fallback in the Windows case
-            Win_Default := Num;
-
-         elsif Ret.Themes (Num).all = Default then
-            --  We found the active theme, and it's not a
-            --  default.  This must then come from
-            --  user-specified gtkrc file.  Let's keep this
-            --  value.
-            Ret.Current := Num;
-
-         end if;
-
-         Num := Num + 1;
-      end loop;
-
-      if Ret.Current = 0 then
-         if Win_Default > 0 then
-            Ret.Current := Win_Default;
-         elsif Unx_Default > 0 then
-            Ret.Current := Unx_Default;
-         elsif Gtk_Default > 0 then
-            Ret.Current := Gtk_Default;
-         end if;
+      if Ret.Current = Natural'Last then
+         --  Should not happen
+         Ret.Current := Ret.Themes'First;
       end if;
 
       Register (Manager, Name, Label, Page, Doc, Ret);
@@ -2012,7 +2015,7 @@ package body Default_Preferences is
       Set_Tooltip_Text (Theme_Combo, -"Theme list");
 
       for J in Pref.Themes'Range loop
-         Append_Text (Theme_Combo, Pref.Themes (J).all);
+         Append_Text (Theme_Combo, Pref.Themes (J).Name.all);
 
          if J = Pref.Current then
             Theme_Combo.Set_Active (Gint (J) - Gint (Pref.Themes'First));
@@ -2035,7 +2038,11 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Theme_Preference_Record) is
    begin
       if Pref.Themes /= null then
-         Free (Pref.Themes);
+         for T in Pref.Themes'Range loop
+            Free (Pref.Themes (T).Name);
+            Free (Pref.Themes (T).Directory);
+         end loop;
+         Unchecked_Free (Pref.Themes);
       end if;
 
       Free (Preference_Record (Pref));

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -347,21 +348,25 @@ package body GPS.Main_Window is
       P     : constant Preference := Get_Pref (Data);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
+      Theme : Theme_Descr;
 
    begin
       if P = null
         or else P = Preference (Gtk_Theme)
       then
+         Theme := Gtk_Theme.Get_Pref;
+
+         if Theme.Directory /= null then
+            Glib.Properties.Set_Property
+              (Gtk.Settings.Get_Default,
+               Gtk.Settings.Gtk_Theme_Name_Property,
+               Theme.Directory.all);
+         end if;
+
          Glib.Properties.Set_Property
            (Gtk.Settings.Get_Default,
-            Gtk.Settings.Gtk_Theme_Name_Property,
-            Get_Pref (Gtk_Theme));
-
-         --  Leave the following settings to the color schemes module
---           Glib.Properties.Set_Property
---             (Gtk.Settings.Get_Default,
---              Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
---              True);
+            Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
+            Theme.Dark);
       end if;
 
       if P = null
