@@ -1324,13 +1324,16 @@ package body Gtkada.Entry_Completion is
       Text : constant String := S.GEntry.Get_Text;
    begin
       Free (S.Pattern);
-      S.Pattern := GPS.Search.Build
-        (Pattern        => Text,
-         Case_Sensitive => S.Settings_Case_Sensitive.Get_Active,
-         Whole_Word     => S.Settings_Whole_Word.Get_Active,
-         Kind          => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
       S.Completion.Count := 0;
-      S.Completion.Set_Pattern (S.Pattern);
+
+      if Text /= "" then
+         S.Pattern := GPS.Search.Build
+           (Pattern        => Text,
+            Case_Sensitive => S.Settings_Case_Sensitive.Get_Active,
+            Whole_Word     => S.Settings_Whole_Word.Get_Active,
+            Kind        => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
+         S.Completion.Set_Pattern (S.Pattern);
+      end if;
 
       --  Since the list of completions will change shortly, give up on
       --  loading the preview.

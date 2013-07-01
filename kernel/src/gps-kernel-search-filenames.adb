@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
@@ -23,8 +24,10 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gtk.Label;                 use Gtk.Label;
+with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -314,8 +317,18 @@ package body GPS.Kernel.Search.Filenames is
    is
       Tmp   : GNAT.Strings.String_Access;
       Label : Gtk_Label;
+      UTF8   : Gtkada.Types.Chars_Ptr;
+      Length : Natural;
+      Props  : File_Props;
+      pragma Unreferenced (Props);
    begin
-      Tmp := Self.File.Read_File;
+      Read_File_With_Charset
+        (Self.File,
+         UTF8     => UTF8,
+         UTF8_Len => Length,
+         Props    => Props);
+      Tmp := new String'(Value (UTF8, size_t (Length)));
+      Free (UTF8);
 
       if Tmp = null then
          return null;

@@ -3426,6 +3426,10 @@ package body Src_Editor_Buffer is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
+      UTF8          : Gtkada.Types.Chars_Ptr;
+      Length        : Natural;
+      Props         : File_Props;
+
       procedure Reset_Buffer (Buffer : access Source_Buffer_Record);
       --  Reset all data associated with Buffer
 
@@ -3437,8 +3441,7 @@ package body Src_Editor_Buffer is
 
       procedure Set_Trailing_Lines_Policy
         (Buffer  : access Source_Buffer_Record;
-         File    : GNATCOLL.VFS.Virtual_File;
-         Content : String);
+         File    : GNATCOLL.VFS.Virtual_File);
       --  Detect and set strip trailing empty lines policy for Buffer
 
       ------------------
@@ -3544,14 +3547,12 @@ package body Src_Editor_Buffer is
 
       procedure Set_Trailing_Lines_Policy
         (Buffer  : access Source_Buffer_Record;
-         File    : GNATCOLL.VFS.Virtual_File;
-         Content : String)
+         File    : GNATCOLL.VFS.Virtual_File)
       is
          Found   : Boolean;
          Prop    : GPS.Properties.String_Property;
          Default : constant Strip_Trailing_Blanks_Policy :=
            Strip_Lines.Get_Pref;
-         Trailing_Lines_Found : Boolean := False;
       begin
          if File /= GNATCOLL.VFS.No_File then
             GPS.Properties.Get_Property
@@ -3560,7 +3561,6 @@ package body Src_Editor_Buffer is
             if Found then
                Buffer.Strip_Trailing_Blanks :=
                  Boolean'Value (Prop.Value.all);
-
                return;
             end if;
 
@@ -3570,37 +3570,16 @@ package body Src_Editor_Buffer is
                when Never =>
                   Set_Strip_Trailing_Lines (Buffer, False);
                when Autodetect =>
-                  for J in reverse Content'Range loop
-                     if Content (J) = ASCII.LF then
-                        if J /= Content'Last then
-                           Trailing_Lines_Found := True;
-                           exit;
-                        end if;
-                     elsif Content (J) /= ' ' and Content (J) /= ASCII.HT then
-                        exit;
-                     end if;
-                  end loop;
-
-                  Set_Strip_Trailing_Lines (Buffer, not Trailing_Lines_Found);
+                  Set_Strip_Trailing_Lines
+                    (Buffer, not Props.Trailing_Lines_Found);
             end case;
          end if;
       end Set_Trailing_Lines_Policy;
 
-      Contents      : GNAT.Strings.String_Access;
-      UTF8          : Gtkada.Types.Chars_Ptr;
-      Ignore        : aliased Natural;
-      Length        : aliased Natural;
-      Last          : Natural;
-      CR_Found      : Boolean := False;
-      NUL_Found     : Boolean := False;
       F, L          : Gtk_Text_Iter;
-      Valid         : Boolean;
       Recovering    : Boolean := False;
-      First_Invalid : Natural;
       Buttons       : Message_Dialog_Buttons;
       File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
-
-      Trailing_Spaces_Found : Boolean;
    begin
       Success := True;
 
@@ -3624,17 +3603,25 @@ package body Src_Editor_Buffer is
                Parent         => Get_Current_Window (Buffer.Kernel));
 
             if Buttons = Button_Yes then
-               Contents   := Read_File (Autosaved_File (Filename));
+               Read_File_With_Charset
+                 (File                  => Autosaved_File (Filename),
+                  UTF8                  => UTF8,
+                  UTF8_Len              => Length,
+                  Props                 => Props);
                Recovering := True;
             end if;
          end if;
       end if;
 
       if not Recovering then
-         Contents := Read_File (Filename);
+         Read_File_With_Charset
+           (File                  => Filename,
+            UTF8                  => UTF8,
+            UTF8_Len              => Length,
+            Props                 => Props);
       end if;
 
-      if Contents = null then
+      if UTF8 = Gtkada.Types.Null_Ptr then
          Trace (Me, "Load_File: Couldn't read contents of "
                 & Filename.Display_Full_Name);
          --  The file does not exist on disk, this is a new file that has never
@@ -3661,43 +3648,18 @@ package body Src_Editor_Buffer is
                  (Get_Language_Handler (Buffer.Kernel), Filename));
          end if;
 
-         Strip_CR_And_NUL
-           (Contents.all, Last, CR_Found, NUL_Found, Trailing_Spaces_Found);
-
          Set_Charset (Buffer, Get_File_Charset (Filename));
+         Set_Trailing_Space_Policy
+           (Buffer, Filename, Props.Trailing_Spaces_Found);
+         Set_Trailing_Lines_Policy (Buffer, Filename);
 
-         Set_Trailing_Space_Policy (Buffer, Filename, Trailing_Spaces_Found);
-
-         Set_Trailing_Lines_Policy
-           (Buffer, Filename, Contents (Contents'First .. Last));
-
-         if NUL_Found then
+         if Props.NUL_Found then
             Buffer.Kernel.Insert
               ((-"Warning: NUL characters stripped from ")
                & Display_Full_Name (Filename), Mode => GPS.Kernel.Error);
          end if;
 
-         UTF8 := Glib.Convert.Convert
-           (Contents (Contents'First .. Last), "UTF-8",
-            Buffer.Charset.all,
-            Ignore'Unchecked_Access, Length'Unchecked_Access);
-
-         if UTF8 = Gtkada.Types.Null_Ptr then
-            --  In case conversion failed, use a default encoding so that we
-            --  can at least show something in the editor
-            Set_Charset (Buffer, "ISO-8859-1");
-            UTF8 := Glib.Convert.Convert
-              (Contents (Contents'First .. Last), "UTF-8",
-               Buffer.Charset.all,
-               Ignore'Unchecked_Access, Length'Unchecked_Access);
-         end if;
-
-         GNAT.Strings.Free (Contents);
-         UTF8_Validate
-           (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
-
-         if not Valid then
-            Length := First_Invalid - 1;
+         if Props.Invalid_UTF8 then
             Buffer.Kernel.Insert
               ((-"Warning: invalid characters stripped from ")
                & Display_Full_Name (Filename), Mode => GPS.Kernel.Error);
@@ -3716,7 +3678,7 @@ package body Src_Editor_Buffer is
             Process_Highlight_Region (Source_Buffer (Buffer));
          end if;
 
-         if CR_Found then
+         if Props.CR_Found then
             Buffer.Line_Terminator := CR_LF;
          else
             Buffer.Line_Terminator := LF;

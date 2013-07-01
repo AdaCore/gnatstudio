@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interfaces.C.Strings;       use Interfaces.C, Interfaces.C.Strings;
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -24,6 +25,7 @@ with Cairo.Region;               use Cairo.Region;
 with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Window;                 use Gdk.Window;
 with Glib.Object;                use Glib.Object;
+with Gtkada.Types;               use Gtkada.Types;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
@@ -35,6 +37,7 @@ with Pango.Font;                 use Pango.Font;
 
 with Basic_Types;                use Basic_Types;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
@@ -158,11 +161,26 @@ package body GPS.Kernel.Search.Sources is
      (Self : in out Single_Source_Search_Provider;
       File : GNATCOLL.VFS.Virtual_File)
    is
+      UTF8   : Gtkada.Types.Chars_Ptr;
+      Length : Natural;
+      Props  : File_Props;
+      pragma Unreferenced (Props);
    begin
       if File /= Self.File then
          Free (Self.Text);
          Self.File    := File;
-         Self.Text    := Self.File.Read_File;
+
+         --  ??? This requires a lot of copies of the file text, but
+         --  unfortunately the conversion-to-utf8 routines are written in C.
+
+         Read_File_With_Charset
+           (Self.File,
+            UTF8     => UTF8,
+            UTF8_Len => Length,
+            Props    => Props);
+
+         Self.Text := new String'(Value (UTF8, size_t (Length)));
+         Free (UTF8);
       end if;
 
       Self.Restart := True;
@@ -410,8 +428,19 @@ package body GPS.Kernel.Search.Sources is
       Buffer : Gtk_Text_Buffer;
       Tag    : Gtk_Text_Tag;
       First, Last : Gtk_Text_Iter;
+
+      UTF8   : Gtkada.Types.Chars_Ptr;
+      Length : Natural;
+      Props  : File_Props;
+      pragma Unreferenced (Props);
    begin
-      Tmp := Self.File.Read_File;
+      Read_File_With_Charset
+        (Self.File,
+         UTF8     => UTF8,
+         UTF8_Len => Length,
+         Props    => Props);
+      Tmp := new String'(Value (UTF8, size_t (Length)));
+      Free (UTF8);
 
       if Tmp = null then
          return null;

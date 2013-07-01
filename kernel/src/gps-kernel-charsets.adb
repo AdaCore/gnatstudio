@@ -15,19 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
+with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with Basic_Types;                use Basic_Types;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
+with String_Utils;               use String_Utils;
 
 package body GPS.Kernel.Charsets is
    CHARSET : constant String_Access := Getenv ("CHARSET");
@@ -307,5 +312,76 @@ package body GPS.Kernel.Charsets is
          Set_Property (Kernel, File, "charset", Prop, Persistent => True);
       end if;
    end Set_File_Charset;
+
+   ----------------------------
+   -- Read_File_With_Charset --
+   ----------------------------
+
+   procedure Read_File_With_Charset
+     (File     : GNATCOLL.VFS.Virtual_File;
+      UTF8     : out Gtkada.Types.Chars_Ptr;
+      UTF8_Len : out Natural;
+      Props    : out File_Props)
+   is
+      Contents      : GNAT.Strings.String_Access;
+      Last          : Natural;
+      Ignore        : aliased Natural;
+      Length        : aliased Natural;
+      Valid         : Boolean;
+      First_Invalid : Natural;
+      Charset : constant String := Get_File_Charset (File);
+   begin
+      Props := (Invalid_UTF8          => False,
+                CR_Found              => False,
+                NUL_Found             => False,
+                Trailing_Spaces_Found => False,
+                Trailing_Lines_Found  => False);
+
+      Contents := File.Read_File;
+      if Contents = null then
+         UTF8 := Null_Ptr;
+         UTF8_Len := 0;
+         return;
+      end if;
+
+      Strip_CR_And_NUL
+        (Contents.all, Last,
+         Props.CR_Found, Props.NUL_Found, Props.Trailing_Spaces_Found);
+
+      UTF8 := Glib.Convert.Convert
+        (Contents (Contents'First .. Last), "UTF-8", Charset,
+         Ignore'Unchecked_Access, Length'Unchecked_Access);
+
+      if UTF8 = Gtkada.Types.Null_Ptr then
+         --  In case conversion failed, use a default encoding so that we
+         --  can at least show something in the editor
+         UTF8 := Glib.Convert.Convert
+           (Contents (Contents'First .. Last), "UTF-8", Charset,
+            Ignore'Unchecked_Access, Length'Unchecked_Access);
+      end if;
+
+      for J in reverse Contents'Range loop
+         if Contents (J) = ASCII.LF then
+            if J /= Length - 1 then
+               Props.Trailing_Lines_Found := True;
+               exit;
+            end if;
+         elsif Contents (J) /= ' ' and then Contents (J) /= ASCII.HT then
+            exit;
+         end if;
+      end loop;
+
+      GNAT.Strings.Free (Contents);
+
+      UTF8_Validate
+        (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+
+      if not Valid then
+         UTF8_Len := First_Invalid - 1;
+         Props.Invalid_UTF8 := True;
+      else
+         UTF8_Len := Length;
+      end if;
+   end Read_File_With_Charset;
 
 end GPS.Kernel.Charsets;
