@@ -142,6 +142,13 @@ NF-53-L530-025 New cross-reference engine based on sqlite (2013-01-24)
    This engine is currently disabled by default, but can be enabled by adding
    a line "ENTITIES.SQLITES=yes" in $HOME/.gps/traces.cfg .
 
+NF-53-L510-040 GPS: search in the current selection (2013-01-31)
+
+   GPS can now limit Find and replace operations to the currently selected
+   text. This is done by selecting the scope "Current Selection" in the
+   Search dialog; this scope is automatically selected when launching the
+   dialog while a selection exists in the current editor.
+
 NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
   The project wizard now optionally uses gnatname to search for Ada units in
