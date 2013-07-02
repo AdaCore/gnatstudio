@@ -913,6 +913,7 @@ package body Old_Entities.Queries is
       Iter.Start_Line           := Start;
       Iter.Last_Line            := Last;
       Iter.Filter               := Filter;
+      Iter.Decl_Returned        := False;
       Iter.Include_Overriding   := Include_Overriding;
       Iter.Include_Overridden   := Include_Overridden;
       Iter.Extra_Entities       := Entity_Information_Arrays.Empty_Instance;
