@@ -101,7 +101,7 @@ project_support_xml = """
 
   </project_attribute>
 
-  <project_attributes
+  <project_attribute
     name="Switches_Run"
     label="Extra switches"
     package="IDE_Coverage"
