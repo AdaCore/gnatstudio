@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M702-019: GPS: issue jumping to body when an entity has multiple bodies
+  Problem:    When an entity has multiple bodies (for instance a subprogram
+              whose body is a "is separate"), there is no way to jump to the
+              second body (in this case the actual implementation of the
+              subprogram).
+  Workaround: Use "Find All References", and look for "[Body]" references.
+
 - M604-029: GPS: wrong casing in comments when at end of buffer
   Problem:    Comments entered when the cursor is at the end of the buffer
               are incorrectly cased.
