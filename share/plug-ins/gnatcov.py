@@ -124,7 +124,7 @@ project_support_xml = """
       <choice>branch</choice>
       <choice>insn</choice>
       <choice default="true">stmt</choice>
-      <choice>stmt+decision</choice>s
+      <choice>stmt+decision</choice>
       <choice>stmt+mcdc</choice>
 
   </project_attribute>
