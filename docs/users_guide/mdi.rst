@@ -271,7 +271,7 @@ windows are opened, their location,...), so that when you are going back to the
 same perspective you find the same layout.
 
 Likewise, when GPS exits, it will save the layout of all perspectives into a
-file called :file:`perspectives.xml`, so that it can restore them when you
+file called :file:`perspectives6.xml`, so that it can restore them when you
 restart GPS. This behavior is controlled by the "Save desktop on exit"
 preference, and can be disabled.
 

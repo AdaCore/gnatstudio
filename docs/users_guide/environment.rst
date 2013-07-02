@@ -219,7 +219,7 @@ Files
   graphical interface. This is loaded last, and overrides all actions defined
   elsewhere.
 
-*$HOME/.gps/perspectives.xml*
+*$HOME/.gps/perspectives6.xml*
   Desktop file in XML format (using the menu `File->Save More->Desktop`),
   loaded automatically if found.
 
@@ -327,7 +327,7 @@ Files
 
   Splash screen displayed by default when GPS is started.
 
-*prefix*/share/gps/perspectives.xml
+*prefix*/share/gps/perspectives6.xml
   .. index:: default desktop
   .. index:: desktop, default
 
@@ -335,7 +335,7 @@ Files
   hasn't defined his own default desktop and no project specific desktop
   exists.  You can modify this file if you want, knowing that this will impact
   all users of GPS sharing this installation.  The format of this file is the
-  same as $HOME/.gps/perspectives.xml, which can be copied from your own
+  same as $HOME/.gps/perspectives6.xml, which can be copied from your own
   directory if you wish.
 
 *prefix*/share/gps/default.gpr

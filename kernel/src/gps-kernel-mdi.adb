@@ -100,7 +100,7 @@ package body GPS.Kernel.MDI is
    MDI_Editors_Floating  : Boolean_Preference;
    MDI_Homogeneous_Tabs  : Boolean_Preference;
 
-   Desktop_Name : constant Filesystem_String := "perspectives.xml";
+   Desktop_Name : constant Filesystem_String := "perspectives6.xml";
 
    -----------------------
    -- Local subprograms --
