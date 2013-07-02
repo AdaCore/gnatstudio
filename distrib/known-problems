@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 5.3.0 / GNATbench 2.8.0
 
+- M702-019: GPS: issue jumping to body when an entity has multiple bodies
+  Problem:    When an entity has multiple bodies (for instance a subprogram
+              whose body is a "is separate"), there is no way to jump to the
+              second body (in this case the actual implementation of the
+              subprogram).
+  Workaround: Use "Find All References", and look for "[Body]" references.
+
 - M521-020: GPS: Unwanted scrolling in the editors when switching perspectives
   Problem:    When switching perspectives, for instance when entering or
               leaving a debug session, editors scroll and lose the current
