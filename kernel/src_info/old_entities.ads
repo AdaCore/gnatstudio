@@ -1250,7 +1250,7 @@ private
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
 
-      Kind                  : E_Kind;
+      Kind                  : E_Kind := Unresolved_Entity_Kind;
       Attributes            : Entity_Attributes;
 
       Is_Valid              : Boolean := True;
