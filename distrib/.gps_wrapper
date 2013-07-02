@@ -20,7 +20,7 @@ GPS_STARTUP_PATH=$PATH
 export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 
 LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
-XDG_DATA_DIRS=$root/lib/gps/share
+XDG_DATA_DIRS=$root/share
 GTK_DATA_PREFIX=$root
 GTK_EXE_PREFIX=$root
 GI_TYPELIB_PATH=$root/lib/girepository-1.0
