@@ -234,8 +234,6 @@ package body Welcome_Page is
       Image       : Gtk_Image;
       Scroll      : Gtk_Scrolled_Window;
       Box         : Gtk_Event_Box;
-      Requisition : Gtk_Requisition;
-      Natural_Size : Gtk_Requisition;
       Win         : Gtk_Window;
 
    begin
@@ -265,70 +263,66 @@ package body Welcome_Page is
           & " streamlines your software development process"
           & " from the initial coding stage through testing,"
           & " debugging, system integration, and maintenance."));
+      Label.Set_Alignment (0.0, 0.0);
+      Label.Set_Padding (60, 0);
+      Label.Override_Color (Gtk_State_Flag_Normal, Black_RGBA);
       Set_Line_Wrap (Label, True);
-      Pack_Start (Main_Vbox, Label, True, True, 3);
-      Image.Get_Preferred_Size (Requisition, Natural_Size);
-      Set_Size_Request (Label, Requisition.Width, -1);
+      Main_Vbox.Pack_Start (Label, True, True, 3);
 
       Gtk_New_Vbox (Vbox);
-      Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
       Pack_Start (Main_Vbox, Vbox, True, True, 3);
-      Pack_Start (Vbox, Hbox, False, False, 3);
-      Set_Size_Request (Hbox, Requisition.Width, -1);
-      Set_Size_Request (Vbox, Requisition.Width, -1);
 
+      Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
+      Pack_Start (Vbox, Hbox, False, False, 3);
+
+      Gtk_New_Vbox (Vbox);
+      Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
         (Win, "button-overview", "button-overview-over");
-      Gtk_New_Vbox (Vbox);
-      Pack_Start (Vbox, Box, False, False, 3);
+      Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,
          To_Marshaller (On_Overview'Access), Kernel);
-      Pack_Start (Hbox, Vbox, False, False, 3);
 
+      Gtk_New_Vbox (Vbox);
+      Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
         (Win, "button-guide", "button-guide-over");
-      Gtk_New_Vbox (Vbox);
-      Pack_Start (Vbox, Box, False, False, 3);
+      Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,
          To_Marshaller (On_UG'Access), Kernel);
-      Pack_Start (Hbox, Vbox, False, False, 3);
 
+      Gtk_New_Vbox (Vbox);
+      Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
         (Win, "button-tutorial", "button-tutorial-over");
-      Gtk_New_Vbox (Vbox);
-      Pack_Start (Vbox, Box, False, False, 3);
+      Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,
          To_Marshaller (On_Tutorial'Access), Kernel);
-      Pack_Start (Hbox, Vbox, False, False, 3);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
-      Pack_Start (Main_Vbox, Hbox, True, True, 3);
       Gtk_New (Label);
-      Set_Use_Markup (Label, True);
-
-      Set_Markup
-        (Label, -("<span color=""dark grey"">Note the overview, "
+      Label.Set_Markup
+        (-("<span color=""dark grey"">Note the overview, "
          & "tutorial and user's guide require an HTML browser. If you are "
          & "having difficulties viewing under UNIX systems you can configure "
          & "your browser by going to the menu Edit&gt;Preferences and "
          & "visiting the section 'External Commands'</span>"));
       Set_Line_Wrap (Label, True);
-      Pack_Start (Hbox, Label, False, False, 3);
-      Set_Size_Request (Label, Requisition.Width, -1);
+      Label.Set_Alignment (0.0, 0.0);
+      Label.Set_Padding (60, 0);
+      Label.Override_Color (Gtk_State_Flag_Normal, Black_RGBA);
+      Main_Vbox.Pack_Start (Label, True, True, 3);
 
       Show_All (Scroll);
 
-      Set_Size_Request (Scroll, -1, 500);
       Gtk_New (Child, Scroll, Module => null, Desktop_Independent => False);
       Set_Title (Child, -"Welcome to GPS");
       Put (Get_MDI (Kernel), Child);
 
       Override_Background_Color
-        (Get_Parent (Main_Box),
-         Gtk_State_Flag_Normal, White_RGBA);
+        (Get_Parent (Main_Box), Gtk_State_Flag_Normal, White_RGBA);
 
       return MDI_Child (Child);
    end Create_Welcome_Page;
