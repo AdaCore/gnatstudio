@@ -516,7 +516,7 @@ package body GPS.Kernel.Console is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Save_As,
+         Stock_Id => Stock_Save,
          Action   => Command_Save_Name,
          Tooltip  => Command_Save_Tip);
       Add_Button

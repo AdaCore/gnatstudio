@@ -1169,7 +1169,7 @@ package body GPS.Location_View is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Save_As,
+         Stock_Id => Stock_Save,
          Action   => Command_Export_Name,
          Tooltip  => Command_Export_Tip);
 

@@ -25,6 +25,7 @@
     <icon id="gtk-preferences"        label="Preferences" file="../icons/svg/settings.svg" />
     <icon id="gtk-close"              label="Close" file="../icons/svg/close.svg" />
     <icon id="gtk-print"              label="Print" file="../icons/svg/print.svg" />
+    <icon id="gtk-clear"              label="Clean" file="../icons/svg/clean.svg" />
 
     <!-- Debugger icons -->
 
@@ -237,25 +238,10 @@
 
     <!--  Builder icons -->
 
-    <icon id="gps-build-all"       label="Build all" file="../icons/svg/build.svg" />
-
-     <icon id="gps-build-main"       label="Build main"
-                                      file="../icons/24px/build_main_24.png" >
-       <alternate                     file="../icons/16px/build_main_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/build_main_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gps-clean"       label="Clean"
-                                      file="../icons/24px/cleanup_24.png" >
-       <alternate                     file="../icons/16px/cleanup_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/cleanup_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
-
-    <icon id="gps-compile"       label="Compile"
-                                      file="../icons/24px/compile_24.png" >
-       <alternate                     file="../icons/16px/compile_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="../icons/18px/compile_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
+    <icon id="gps-clean"              label="Clean" file="../icons/svg/clean.svg" />
+    <icon id="gps-build-all"          label="Build all" file="../icons/svg/buildall.svg" />
+    <icon id="gps-compile"            label="Build main" file="../icons/svg/build.svg" />
+    <icon id="gps-build-main"         label="Build main" file="../icons/svg/buildmain.svg" />
 
     <icon id="gps-compute-xref"       label="Compute Xref"
                                       file="../icons/24px/compute_xref_24.png" >
