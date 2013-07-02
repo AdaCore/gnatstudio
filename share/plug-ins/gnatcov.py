@@ -96,12 +96,12 @@ project_support_xml = """
       <choice>branch</choice>
       <choice>insn</choice>
       <choice default="true">stmt</choice>
-      <choice>stmt+decisison</choice>
+      <choice>stmt+decision</choice>
       <choice>stmt+mcdc</choice>
 
   </project_attribute>
 
-  <project_attribute
+  <project_attributes
     name="Switches_Run"
     label="Extra switches"
     package="IDE_Coverage"
@@ -124,7 +124,7 @@ project_support_xml = """
       <choice>branch</choice>
       <choice>insn</choice>
       <choice default="true">stmt</choice>
-      <choice>stmt+decisison</choice>
+      <choice>stmt+decision</choice>s
       <choice>stmt+mcdc</choice>
 
   </project_attribute>
