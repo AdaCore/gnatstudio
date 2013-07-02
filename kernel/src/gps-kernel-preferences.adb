@@ -626,7 +626,7 @@ package body GPS.Kernel.Preferences is
            & " color of all editors."),
          Default_Font => Config.Default_Fixed_Font,
          Default_Fg   => "black",
-         Default_Bg   => "rgba(255,255,255,0)",
+         Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Block_Style := Create
