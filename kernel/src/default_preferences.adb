@@ -24,7 +24,6 @@ with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
 with XML_Utils;                use XML_Utils;
 
 with Gtk.Adjustment;           use Gtk.Adjustment;
@@ -44,7 +43,6 @@ with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Settings;             use Gtk.Settings;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -1889,10 +1887,15 @@ package body Default_Preferences is
          & Path_Separator
          & (+Gtk.Rc.Get_Theme_Dir);
 
-      Default     : constant String :=
-                      Glib.Properties.Get_Property
-                        (Gtk.Settings.Get_Default,
-                         Gtk.Settings.Gtk_Theme_Name_Property);
+      --  Do not attempt to use the system default for gtk+. On most systems,
+      --  it will be Raleigh because gtk+ is not standard. On linux, since we
+      --  are using our own gtk+, chances are that the user's theme is not
+      --  available with our own gtk+ anyway.
+      Default     : constant String := "<unknown>";
+--                        Glib.Properties.Get_Property
+--                          (Gtk.Settings.Get_Default,
+--                           Gtk.Settings.Gtk_Theme_Name_Property);
+
       Dirs       : constant File_Array := From_Path (Search_Path);
       Dir        : GNATCOLL.VFS.Virtual_File;
       Subdirs    : GNATCOLL.VFS.File_Array_Access;
