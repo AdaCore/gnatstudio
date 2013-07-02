@@ -47,7 +47,8 @@ package Xref is
    ---------------
 
    type General_Entity is private;
-   No_General_Entity : constant General_Entity;
+   No_General_Entity : aliased constant General_Entity;
+   --  aliased is added to let AJIS make it accessible to GNATbench
 
    overriding function "=" (E1, E2 : General_Entity) return Boolean;
    --  Whether the two entities are the same
@@ -132,8 +133,9 @@ package Xref is
       Line   : Integer := 0;
       Column : Visible_Column_Type := 0;
    end record;
-   No_Location : constant General_Location := (No_File, 0, 0);
+   No_Location : aliased constant General_Location := (No_File, 0, 0);
    --  ??? Should we also cache the Old_Entities.Source_File ?
+   --  aliased is added to let AJIS make it accessible to GNATbench
 
    type General_Entity_Declaration is record
       Loc  : aliased General_Location;
@@ -148,7 +150,8 @@ package Xref is
    --  Entity references
 
    type General_Entity_Reference is private;
-   No_General_Entity_Reference : constant General_Entity_Reference;
+   No_General_Entity_Reference : aliased constant General_Entity_Reference;
+   --  aliased is added to let AJIS make it accessible to GNATbench
 
    overriding function "="
      (Ref1, Ref2 : General_Entity_Reference) return Boolean;
@@ -813,7 +816,7 @@ private
       --  fall back on the Constructs database if Entity and Old_Entity are
       --  null.
    end record;
-   No_General_Entity : constant General_Entity :=
+   No_General_Entity : aliased constant General_Entity :=
      (Old_Entity => null,
       Is_Fuzzy   => False,
       Loc        => No_Location,
@@ -827,7 +830,7 @@ private
         Old_Entities.No_Entity_Reference;
       Ref : Entity_Reference := No_Entity_Reference;
    end record;
-   No_General_Entity_Reference : constant General_Entity_Reference :=
+   No_General_Entity_Reference : aliased constant General_Entity_Reference :=
      (Old_Ref => Old_Entities.No_Entity_Reference,
       Ref     => No_Entity_Reference);
 
