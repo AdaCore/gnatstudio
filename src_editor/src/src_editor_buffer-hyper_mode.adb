@@ -362,10 +362,14 @@ package body Src_Editor_Buffer.Hyper_Mode is
       then
          --  We asked for the alternate behavior, or we are already on
          --  the spec: in this case, go to the body
-         Current := Location;
-         Location := Buffer.Kernel.Databases.Get_Body (Entity);
+         Current :=
+            (File   => Buffer.Filename,
+             Line   => Integer (Line),
+             Column => Column);
+         Location := Buffer.Kernel.Databases.Get_Body
+            (Entity, After => Current);
          if Location = No_Location then
-            Location := Current;
+            Location := Decl.Loc;
          end if;
       end if;
 

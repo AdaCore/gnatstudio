@@ -320,6 +320,7 @@ package body Src_Editor_Box is
    is
       Entity   : General_Entity;
       Location : General_Location;
+      Current  : General_Location;
 
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
@@ -358,7 +359,10 @@ package body Src_Editor_Box is
       --  Get the declaration/body
 
       if To_Body then
-         Location := Get_Body (Kernel.Databases, Entity);
+         Current := (File => File_Information (Context),
+                     Line => GPS.Kernel.Contexts.Line_Information (Context),
+                     Column => Entity_Column_Information (Context));
+         Location := Get_Body (Kernel.Databases, Entity, After => Current);
       else
          Location := Kernel.Databases.Get_Declaration (Entity).Loc;
       end if;

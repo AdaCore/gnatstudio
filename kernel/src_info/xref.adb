@@ -1059,12 +1059,21 @@ package body Xref is
                C   : References_Cursor;
                Ref : Entity_Reference;
                Matches : Boolean := After = No_Location;
+               First  : General_Location := No_Location;
+               Is_First : Boolean := True;
             begin
                Bodies (Db.Xref.all, Entity.Entity, Cursor => C);
                while Has_Element (C) loop
                   Ref := Element (C);
 
                   if Ref /= No_Entity_Reference then
+                     if Is_First then
+                        Is_First := False;
+                        First := (File => Ref.File,
+                                  Line => Ref.Line,
+                                  Column => Visible_Column_Type (Ref.Column));
+                     end if;
+
                      if Matches then
                         Candidate :=
                           (File => Ref.File,
@@ -1080,6 +1089,11 @@ package body Xref is
 
                   Next (C);
                end loop;
+
+               if Candidate = No_Location then
+                  --  The "After" parameter did not correspond to a body
+                  Candidate := First;
+               end if;
             end;
          end if;
 
@@ -1388,6 +1402,8 @@ package body Xref is
       if Active (SQLITE) then
          Self.Xref.References
             (File => File, Cursor => Iter.Iter, Kind => Kind, Sort => Sort);
+      else
+         Iter.Old_Iter := No_Entity_Reference_Iterator;
       end if;
    end Find_All_References;
 

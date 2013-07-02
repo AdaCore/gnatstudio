@@ -156,6 +156,8 @@ package Old_Entities.Queries is
    type Entity_Reference_Iterator_Access is
      access all Entity_Reference_Iterator;
 
+   No_Entity_Reference_Iterator : constant Entity_Reference_Iterator;
+
    type Reference_Filter_Function is access function
      (R : Entity_Reference) return Boolean;
 
@@ -733,5 +735,26 @@ private
       Line_Info     : Entity_Info_Array (1 .. Line_Max);
       Info_For_Decl : Entity_Info_Array (1 .. Line_Max);
    end record;
+
+   No_Dependency_Iterator : constant Dependency_Iterator :=
+      (Single_Source_File => True,
+       Dep_Index          => Dependency_Arrays.Index_Type'Last,
+       others             => <>);
+
+   No_Entity_Reference_Iterator : constant Entity_Reference_Iterator :=
+      (Decl_Returned        => True,
+       Include_Overriding   => False,
+       Include_Overridden   => False,
+       Extra_Entities       => <>,
+       Extra_Entities_Index => <>,
+       Deps                 => No_Dependency_Iterator,
+       Entity_It            => Entities_In_File_Sets.No_Element,
+       Files_It             => Entity_File_Maps.No_Element,
+       Entity               => null,
+       In_File              => null,
+       Start_Line           => 1,
+       Last_Line            => 0,
+       Filter               => <>,
+       Files_Analyzed       => null);
 
 end Old_Entities.Queries;
