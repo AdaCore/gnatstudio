@@ -3270,6 +3270,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Type_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (Type_Text),
@@ -3281,6 +3282,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Block_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (Block_Text),
@@ -3292,6 +3294,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Keywords_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (Keyword_Text),
@@ -3303,6 +3306,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Comments_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (Comment_Text),
@@ -3314,6 +3318,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Annotated_Comments_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (Annotated_Comment_Text),
@@ -3331,6 +3336,7 @@ package body Src_Editor_Buffer is
 
       if Pref = null
         or else Pref = Preference (Strings_Style)
+        or else Pref = Preference (Default_Style)
       then
          New_Tag
            (B.Syntax_Tags (String_Text),
