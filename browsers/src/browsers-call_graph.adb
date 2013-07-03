@@ -204,6 +204,7 @@ package body Browsers.Call_Graph is
    end record;
    function Is_Valid
      (Self : Custom_Filter; Ref : General_Entity_Reference) return Boolean;
+   procedure Free (Self : in out Custom_Filter);
 
    --------------
    -- Commands --
@@ -421,23 +422,25 @@ package body Browsers.Call_Graph is
       Local_File         : GNATCOLL.VFS.Virtual_File;
       All_From_Same_File : Boolean;
       Show_Caller        : Boolean;
-      Filter             : Custom_Filter;
+      Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False);
    --  Internal implementation of find_all_references.
    --  If All_From_Same_File is True, then all entities imported from the same
    --  file as Entity and referenced in Local_File, as Entity are
    --  displayed.
+   --  This procedure will free Filter.
 
    procedure Find_All_References_Internal
      (Kernel             : access Kernel_Handle_Record'Class;
       Info               : General_Entity;
       Category_Title     : String;
       Show_Caller        : Boolean;
-      Filter             : Custom_Filter;
+      Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
    --  Starts a background search for all references.
+   --  This procedure will free Filter.
 
    procedure Find_Next_Reference
      (Data    : in out Entity_Idle_Data;
@@ -510,6 +513,15 @@ package body Browsers.Call_Graph is
    procedure Unselect_All_Filters (Dialog : access Gtk_Widget_Record'Class);
    procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class);
    --  Select or unselect all filters in "Find references..."
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Custom_Filter) is
+   begin
+      GNAT.Strings.Free (Self.Ref_Kinds);  --  also frees All_Refs
+   end Free;
 
    -----------------------
    -- All_Refs_Category --
@@ -1093,6 +1105,7 @@ package body Browsers.Call_Graph is
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data) is
    begin
+      Free (Data.Filter);
       Destroy (Data.Iter);
       Unref (Data.Entity);
       Free (Data.Category);
@@ -1236,7 +1249,7 @@ package body Browsers.Call_Graph is
       Info               : General_Entity;
       Category_Title     : String;
       Show_Caller        : Boolean;
-      Filter             : Custom_Filter;
+      Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False)
    is
       Data : Entity_Idle_Data;
@@ -1258,7 +1271,7 @@ package body Browsers.Call_Graph is
                      Include_Overriding => Include_Overriding,
                      Entity             => Info);
 
-            Xref_Commands.Create
+            Xref_Commands.Create  --  Will destroy Data when done
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
             Launch_Background_Command
               (Kernel, Command_Access (C), True, True, "xrefs");
@@ -1268,6 +1281,8 @@ package body Browsers.Call_Graph is
                Trace (Traces.Exception_Handle, E);
                Destroy (Data.Iter);
          end;
+      else
+         Free (Filter);
       end if;
 
    exception
@@ -1339,11 +1354,17 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context := Get_Current_Context (Kernel);
       Entity  : General_Entity;
+      Filter  : Custom_Filter;
 
    begin
       if Context /= No_Context then
          Entity := Get_Entity (Context);
          if Entity /= No_General_Entity then
+            Filter := Custom_Filter'
+               (Db        => Kernel.Databases,
+                Ref_Kinds => null,
+                Filter    => Is_Read_Or_Write_Reference'Access);
+
             Find_All_References_Internal
               (Kernel,
                Entity,
@@ -1353,10 +1374,7 @@ package body Browsers.Call_Graph is
                   Local_Only         => False,
                   Local_File         => GNATCOLL.VFS.No_File,
                   All_From_Same_File => False),
-               Filter           => Custom_Filter'
-                 (Db        => Kernel.Databases,
-                  Ref_Kinds => null,
-                  Filter    => Is_Read_Or_Write_Reference'Access),
+               Filter           => Filter,
                Show_Caller      => False);
          end if;
 
@@ -1865,7 +1883,7 @@ package body Browsers.Call_Graph is
       Local_File         : Virtual_File;
       All_From_Same_File : Boolean;
       Show_Caller        : Boolean;
-      Filter             : Custom_Filter;
+      Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False)
    is
       Title       : constant String := All_Refs_Category
@@ -1958,6 +1976,8 @@ package body Browsers.Call_Graph is
             Next (Iter2);
          end loop;
 
+         Free (Filter);
+
       elsif Locals_Only then
          --  Print the declaration of the entity, but only if it is in the
          --  current file, as expected by users.
@@ -1991,9 +2011,10 @@ package body Browsers.Call_Graph is
          end;
 
          Destroy (Iter);
+         Free (Filter);
 
       else
-         Find_All_References_Internal
+         Find_All_References_Internal   --  will destroy filter
            (Kernel,
             Entity,
             Category_Title     => Title,
@@ -2252,7 +2273,7 @@ package body Browsers.Call_Graph is
                Ref_Kinds => new GNAT.Strings.String_List'(All_Refs),
                Filter    => null);
          begin
-            Parse_All_Refs
+            Parse_All_Refs  --  will destroy filter
               (Kernel             => Kernel,
                Entity             => Entity,
                Locals_Only        => Get_Active (File_Only),
@@ -2261,8 +2282,6 @@ package body Browsers.Call_Graph is
                Filter             => Filter,
                Show_Caller        => Get_Active (Show_Caller),
                Include_Overriding => Get_Active (Include_Overriding));
-
-            GNAT.Strings.Free (Filter.Ref_Kinds);  --  also frees All_Refs
          end;
 
          Unchecked_Free (Dialog.Filters);

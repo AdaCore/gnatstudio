@@ -228,6 +228,7 @@ gnatlib/src/gnatcoll_python.gpr
 gnatlib/src/lib
 gnatlib/src/obj
 gnatlib/testsuite/obj
+gnatlib/testsuite/scripts/M701-028-dict-iter/bin
 gps/gmon.out*
 po/Makefile
 scripts/sortxml
