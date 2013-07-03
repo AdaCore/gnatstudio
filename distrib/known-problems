@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M703-034: GPS unexpected Align contextual menu in Bookmarks view
+  Problem:    When clicking on a bookmark in the Bookmarks view, there are
+              two unexpected contextual menu entries ("Align" and
+              "Expanded Code") that appear.
+  Workaround: They can simply be ignored (or you can disable the align.py
+              and expanded_code.py plugins)
+
 - M702-019: GPS: issue jumping to body when an entity has multiple bodies
   Problem:    When an entity has multiple bodies (for instance a subprogram
               whose body is a "is separate"), there is no way to jump to the

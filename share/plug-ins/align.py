@@ -229,7 +229,9 @@ def max_min (e1, e2):
    return res
 
 def in_rw_ada_file (context):
-   return in_ada_file(context) and is_writable (context)
+   return (context.module_name == "Source_Editor"
+           and in_ada_file(context)
+           and is_writable (context))
 
 @interactive ("Ada", in_rw_ada_file, contextual="Align/Colons",
               name="Align colons")

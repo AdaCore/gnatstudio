@@ -212,9 +212,11 @@ def in_ada_file(context):
    """Returns True if the focus is currently inside an Ada editor"""
    if not hasattr(context, "in_ada_file"):
       buffer = EditorBuffer.get(open=False)
-      context.in_ada_file =  buffer \
-         and MDI.current() == MDI.get_by_child(buffer.current_view()) \
-         and buffer.file().language().lower() == "ada"
+      context.in_ada_file = (
+          context.module_name == "Source_Editor"
+          and buffer
+          # and MDI.current() == MDI.get_by_child(buffer.current_view())
+          and buffer.file().language().lower() == "ada")
    return context.in_ada_file
 
 
