@@ -34,7 +34,7 @@ with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Widget;
-with Pango.Font;
+with Pango.Font;      use Pango.Font;
 
 package Default_Preferences is
 
@@ -512,8 +512,7 @@ private
      is (Self.Default = Self.Color);
 
    type Font_Preference_Record is new Preference_Record with record
-      Font_Value    : GNAT.Strings.String_Access;
-      Default       : GNAT.Strings.String_Access;
+      Default       : Pango.Font.Pango_Font_Description;
       Descr         : Pango.Font.Pango_Font_Description;
    end record;
    overriding procedure Set_Pref
@@ -527,12 +526,10 @@ private
    overriding procedure Free (Pref : in out Font_Preference_Record);
    overriding function Is_Default
      (Self : not null access Font_Preference_Record) return Boolean
-     is (Self.Default /= null
-         and then Self.Default.all = Self.Font_Value.all);
+     is (Equal (Self.Default, Self.Descr));
 
    type Style_Preference_Record is new Preference_Record with record
-      Style_Font    : GNAT.Strings.String_Access;
-      Font_Default  : GNAT.Strings.String_Access;
+      Font_Default  : Pango.Font.Pango_Font_Description;
       Font_Descr    : Pango.Font.Pango_Font_Description;
 
       Fg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
@@ -552,8 +549,7 @@ private
    overriding procedure Free (Pref : in out Style_Preference_Record);
    overriding function Is_Default
      (Self : not null access Style_Preference_Record) return Boolean
-     is (Self.Font_Default /= null
-         and then Self.Font_Default.all = Self.Style_Font.all
+     is (Equal (Self.Font_Default, Self.Font_Descr)
          and then Self.Fg_Default = Self.Fg_Color
          and then Self.Bg_Default = Self.Bg_Color);
 

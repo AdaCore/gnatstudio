@@ -55,7 +55,6 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Pango.Context;
 with Pango.Enums;              use Pango.Enums;
-with Pango.Font;               use Pango.Font;
 
 with Config;
 with GPS.Intl;                 use GPS.Intl;
@@ -427,8 +426,8 @@ package body Default_Preferences is
    is
       Result : constant Font_Preference := new Font_Preference_Record;
    begin
-      Result.Font_Value := new String'(Default);
-      Result.Default := new String'(Default);   --  could share pointer
+      Result.Descr := From_String (Default);
+      Result.Default := Copy (Result.Descr);
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -453,8 +452,8 @@ package body Default_Preferences is
       Result.Bg_Color := From_String (Default_Bg);
       Result.Bg_Default := Result.Bg_Color;
 
-      Result.Style_Font := new String'(Default_Font);
-      Result.Font_Default := new String'(Default_Font);
+      Result.Font_Descr := From_String (Default_Font);
+      Result.Font_Default := Copy (Result.Font_Descr);
 
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
@@ -646,16 +645,13 @@ package body Default_Preferences is
    overriding function Get_Pref
      (Pref : access Font_Preference_Record) return String is
    begin
-      return Pref.Font_Value.all;
+      return To_String (Pref.Descr);
    end Get_Pref;
 
    function Get_Pref
      (Pref    : access Font_Preference_Record)
       return Pango.Font.Pango_Font_Description is
    begin
-      if Pref.Descr = null then
-         Pref.Descr := From_String (Pref.Font_Value.all);
-      end if;
       return Pref.Descr;
    end Get_Pref;
 
@@ -663,7 +659,7 @@ package body Default_Preferences is
      (Pref : access Style_Preference_Record) return String is
    begin
       return To_String
-        (Pref.Style_Font.all, Pref.Fg_Color, Pref.Bg_Color);
+        (To_String (Pref.Font_Descr), Pref.Fg_Color, Pref.Bg_Color);
    end Get_Pref;
 
    overriding function Get_Pref
@@ -676,9 +672,6 @@ package body Default_Preferences is
    function Get_Pref_Font
      (Pref : access Style_Preference_Record) return Pango_Font_Description is
    begin
-      if Pref.Font_Descr = null then
-         Pref.Font_Descr := From_String (Pref.Style_Font.all);
-      end if;
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
@@ -799,9 +792,8 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
    begin
-      Free (Pref.Font_Value);
       Free (Pref.Descr);
-      Pref.Font_Value := new String'(Value);
+      Pref.Descr := From_String (Value);
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
@@ -832,13 +824,11 @@ package body Default_Preferences is
       Manager      : access Preferences_Manager_Record'Class;
       Font, Fg, Bg : String) is
    begin
-      Free (Pref.Style_Font);
       Free (Pref.Font_Descr);
 
       Pref.Fg_Color := From_String (Fg);
       Pref.Bg_Color := From_String (Bg);
-
-      Pref.Style_Font := new String'(Font);
+      Pref.Font_Descr := From_String (Font);
 
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
@@ -849,9 +839,6 @@ package body Default_Preferences is
       Font         : Pango_Font_Description) is
    begin
       Free (Pref.Descr);
-      Free (Pref.Font_Value);
-
-      Pref.Font_Value := new String'(Pango.Font.To_String (Font));
       Pref.Descr := Copy (Font);
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
@@ -1156,9 +1143,8 @@ package body Default_Preferences is
          Set_Pref (Font_Preference (Data.Pref), Data.Manager, Get_Text (E));
 
       else
-         Free (Style_Preference (Data.Pref).Style_Font);
          Free (Style_Preference (Data.Pref).Font_Descr);
-         Style_Preference (Data.Pref).Style_Font := new String'(Get_Text (E));
+         Style_Preference (Data.Pref).Font_Descr := From_String (E.Get_Text);
          Data.Manager.On_Pref_Changed (Data.Pref);
       end if;
 
@@ -1215,10 +1201,10 @@ package body Default_Preferences is
    begin
       if Data.Pref.all in Font_Preference_Record'Class then
          Set_Text (Gtk_Entry (Ent),
-                   Font_Preference (Data.Pref).Font_Value.all);
+                   To_String (Font_Preference (Data.Pref).Descr));
       else
          Set_Text (Gtk_Entry (Ent),
-                   Style_Preference (Data.Pref).Style_Font.all);
+                   To_String (Style_Preference (Data.Pref).Font_Descr));
       end if;
    end Update_Font_Entry;
 
@@ -1355,16 +1341,13 @@ package body Default_Preferences is
          Set_Text (E, Get_Font_Name (F));
 
          if Data.Pref.all in Font_Preference_Record'Class then
-            Free (Font_Preference (Data.Pref).Font_Value);
             Free (Font_Preference (Data.Pref).Descr);
-            Font_Preference (Data.Pref).Font_Value :=
-              new String'(Get_Text (E));
+            Font_Preference (Data.Pref).Descr := From_String (E.Get_Text);
 
          else
-            Free (Style_Preference (Data.Pref).Style_Font);
             Free (Style_Preference (Data.Pref).Font_Descr);
-            Style_Preference (Data.Pref).Style_Font :=
-              new String'(Get_Text (E));
+            Style_Preference (Data.Pref).Font_Descr :=
+              From_String (E.Get_Text);
          end if;
          Data.Manager.On_Pref_Changed (Data.Pref);
          Reset_Font (E);
@@ -1589,7 +1572,6 @@ package body Default_Preferences is
 
    overriding procedure Free (Pref : in out Font_Preference_Record) is
    begin
-      Free (Pref.Font_Value);
       Free (Pref.Default);
       Free (Pref.Descr);
       Free (Preference_Record (Pref));
