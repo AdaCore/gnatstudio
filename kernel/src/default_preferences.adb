@@ -20,8 +20,6 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;
 
-with Gdk.RGBA;                 use Gdk.RGBA;
-
 with Glib.Object;              use Glib.Object;
 with XML_Utils;                use XML_Utils;
 
@@ -99,6 +97,9 @@ package body Default_Preferences is
    procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class);
    --  Called when a toggle button has changed, to display the appropriate text
    --  in it.
+
+   function From_String (Color : String) return Gdk_RGBA;
+   --  Parse the name of the color, and default to black if color is not found
 
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
@@ -196,7 +197,7 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class; Data : Manager_Preference);
    --  Open a dialog to select a new font
 
-   function To_String (Font, Fg, Bg : String) return String;
+   function To_String (Font : String; Fg, Bg : Gdk_RGBA) return String;
    function Style_Token (Value : String; Num : Positive) return String;
    --  Handling of Param_Spec_Style
 
@@ -380,6 +381,21 @@ package body Default_Preferences is
       return String_Preference (Pref);
    end Create;
 
+   -----------------
+   -- From_String --
+   -----------------
+
+   function From_String (Color : String) return Gdk_RGBA is
+      Success : Boolean;
+      Result  : Gdk_RGBA;
+   begin
+      Parse (Result, Color, Success);
+      if not Success then
+         return Black_RGBA;
+      end if;
+      return Result;
+   end From_String;
+
    ------------
    -- Create --
    ------------
@@ -392,8 +408,9 @@ package body Default_Preferences is
    is
       Result : constant Color_Preference := new Color_Preference_Record;
    begin
-      Result.Color_Value := new String'(Default);
-      Result.Default := new String'(Default);  --  could share pointer
+      Result.Color := From_String (Default);
+      Result.Default := Result.Color;
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -430,13 +447,14 @@ package body Default_Preferences is
    is
       Result : constant Style_Preference := new Style_Preference_Record;
    begin
-      Result.Style_Font := new String'(Default_Font);
-      Result.Style_Fg   := new String'(Default_Fg);
-      Result.Style_Bg   := new String'(Default_Bg);
+      Result.Fg_Color := From_String (Default_Fg);
+      Result.Fg_Default := Result.Fg_Color;
 
+      Result.Bg_Color := From_String (Default_Bg);
+      Result.Bg_Default := Result.Bg_Color;
+
+      Result.Style_Font := new String'(Default_Font);
       Result.Font_Default := new String'(Default_Font);
-      Result.Fg_Default   := new String'(Default_Fg);
-      Result.Bg_Default   := new String'(Default_Bg);
 
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
@@ -457,14 +475,15 @@ package body Default_Preferences is
    is
       Result : constant Variant_Preference := new Variant_Preference_Record;
    begin
+      Result.Fg_Color := From_String (Default_Fg);
+      Result.Fg_Default := Result.Fg_Color;
+
+      Result.Bg_Color := From_String (Default_Bg);
+      Result.Bg_Default := Result.Bg_Color;
+
       Result.Variant := Default_Variant;
       Result.Default_Variant := Default_Variant;
       Result.Base_Font := Base;
-      Result.Style_Fg   := new String'(Default_Fg);
-      Result.Style_Bg   := new String'(Default_Bg);
-
-      Result.Fg_Default   := new String'(Default_Fg);
-      Result.Bg_Default   := new String'(Default_Bg);
 
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
@@ -603,20 +622,12 @@ package body Default_Preferences is
    overriding function Get_Pref
      (Pref : access Color_Preference_Record) return String is
    begin
-      return Pref.Color_Value.all;
+      return To_String (Pref.Color);
    end Get_Pref;
 
    function Get_Pref
-     (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA
-   is
-      Success : Boolean;
+     (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Color = Gdk.RGBA.Null_RGBA then
-         Parse (Pref.Color, Pref.Color_Value.all, Success);
-         if not Success then
-            Pref.Color := Black_RGBA;
-         end if;
-      end if;
       return Pref.Color;
    end Get_Pref;
 
@@ -652,14 +663,14 @@ package body Default_Preferences is
      (Pref : access Style_Preference_Record) return String is
    begin
       return To_String
-        (Pref.Style_Font.all, Pref.Style_Fg.all, Pref.Style_Bg.all);
+        (Pref.Style_Font.all, Pref.Fg_Color, Pref.Bg_Color);
    end Get_Pref;
 
    overriding function Get_Pref
      (Pref : access Variant_Preference_Record) return String is
    begin
       return To_String
-        (Pref.Variant'Img, Pref.Style_Fg.all, Pref.Style_Bg.all);
+        (Pref.Variant'Img, Pref.Fg_Color, Pref.Bg_Color);
    end Get_Pref;
 
    function Get_Pref_Font
@@ -702,33 +713,25 @@ package body Default_Preferences is
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
+   -----------------
+   -- Get_Pref_Fg --
+   -----------------
+
    function Get_Pref_Fg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.RGBA.Gdk_RGBA
-   is
-      Success : Boolean;
+      return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Fg_Color = Gdk.RGBA.Null_RGBA then
-         Parse (Pref.Fg_Color, Pref.Style_Fg.all, Success);
-         if not Success then
-            Pref.Fg_Color := Black_RGBA;
-         end if;
-      end if;
       return Pref.Fg_Color;
    end Get_Pref_Fg;
 
+   -----------------
+   -- Get_Pref_Bg --
+   -----------------
+
    function Get_Pref_Bg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.RGBA.Gdk_RGBA
-   is
-      Success : Boolean;
+      return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Bg_Color = Gdk.RGBA.Null_RGBA then
-         Parse (Pref.Bg_Color, Pref.Style_Bg.all, Success);
-         if not Success then
-            Pref.Bg_Color := Black_RGBA;
-         end if;
-      end if;
       return Pref.Bg_Color;
    end Get_Pref_Bg;
 
@@ -787,13 +790,7 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
    begin
-      Free (Pref.Color_Value);
-      Pref.Color_Value := new String'(Value);
-
-      if Pref.Color /= Null_RGBA then
-         Pref.Color := Null_RGBA;
-      end if;
-
+      Pref.Color := From_String (Value);
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
@@ -837,15 +834,11 @@ package body Default_Preferences is
    begin
       Free (Pref.Style_Font);
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
 
-      Pref.Fg_Color := Null_RGBA;
-      Pref.Bg_Color := Null_RGBA;
+      Pref.Fg_Color := From_String (Fg);
+      Pref.Bg_Color := From_String (Bg);
 
       Pref.Style_Font := new String'(Font);
-      Pref.Style_Fg   := new String'(Fg);
-      Pref.Style_Bg   := new String'(Bg);
 
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
@@ -870,15 +863,9 @@ package body Default_Preferences is
       Fg, Bg       : String) is
    begin
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
-
-      Pref.Fg_Color := Null_RGBA;
-      Pref.Bg_Color := Null_RGBA;
-
+      Pref.Fg_Color := From_String (Fg);
+      Pref.Bg_Color := From_String (Bg);
       Pref.Variant    := Variant;
-      Pref.Style_Fg   := new String'(Fg);
-      Pref.Style_Bg   := new String'(Bg);
 
       Manager.On_Pref_Changed (Pref);
    end Set_Pref;
@@ -1263,10 +1250,7 @@ package body Default_Preferences is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
       R : Gdk_RGBA;
    begin
-      Free (Style_Preference (Data.Pref).Style_Fg);
       C.Get_Rgba (R);
-      Style_Preference (Data.Pref).Style_Fg :=
-        new String'(To_String (R));
       Style_Preference (Data.Pref).Fg_Color := R;
       Data.Manager.On_Pref_Changed (Data.Pref);
    end Fg_Color_Changed;
@@ -1296,9 +1280,7 @@ package body Default_Preferences is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
       R : Gdk_RGBA;
    begin
-      Free (Style_Preference (Data.Pref).Style_Bg);
       C.Get_Rgba (R);
-      Style_Preference (Data.Pref).Style_Bg := new String'(To_String (R));
       Style_Preference (Data.Pref).Bg_Color := R;
       Data.Manager.On_Pref_Changed (Data.Pref);
    end Bg_Color_Changed;
@@ -1307,9 +1289,9 @@ package body Default_Preferences is
    -- To_String --
    ---------------
 
-   function To_String (Font, Fg, Bg : String) return String is
+   function To_String (Font : String; Fg, Bg : Gdk_RGBA) return String is
    begin
-      return Font & '@' & Fg & '@' & Bg;
+      return Font & '@' & To_String (Fg) & '@' & To_String (Bg);
    end To_String;
 
    -----------------
@@ -1586,17 +1568,6 @@ package body Default_Preferences is
    end Edit;
 
    ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Pref : in out Color_Preference_Record) is
-   begin
-      Free (Pref.Color_Value);
-      Free (Pref.Default);
-      Free (Preference_Record (Pref));
-   end Free;
-
-   ----------
    -- Edit --
    ----------
 
@@ -1728,10 +1699,6 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Variant_Preference_Record) is
    begin
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
-      Free (Pref.Fg_Default);
-      Free (Pref.Bg_Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1742,11 +1709,7 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Style_Preference_Record) is
    begin
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
       Free (Pref.Font_Default);
-      Free (Pref.Fg_Default);
-      Free (Pref.Bg_Default);
       Free (Preference_Record (Pref));
    end Free;
 

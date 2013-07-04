@@ -29,7 +29,7 @@ with GNAT.Strings;    use GNAT.Strings;
 
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Gdk.RGBA;
+with Gdk.RGBA;        use Gdk.RGBA;
 with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
@@ -496,8 +496,7 @@ private
      is (Self.Default /= null and then Self.Default.all = Self.Str_Value.all);
 
    type Color_Preference_Record is new Preference_Record with record
-      Color_Value   : GNAT.Strings.String_Access;
-      Default       : GNAT.Strings.String_Access;
+      Default       : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       Color         : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    overriding procedure Set_Pref
@@ -508,11 +507,9 @@ private
      (Pref               : access Color_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure Free (Pref : in out Color_Preference_Record);
    overriding function Is_Default
      (Self : not null access Color_Preference_Record) return Boolean
-     is (Self.Default /= null
-         and then Self.Default.all = Self.Color_Value.all);
+     is (Self.Default = Self.Color);
 
    type Font_Preference_Record is new Preference_Record with record
       Font_Value    : GNAT.Strings.String_Access;
@@ -538,13 +535,11 @@ private
       Font_Default  : GNAT.Strings.String_Access;
       Font_Descr    : Pango.Font.Pango_Font_Description;
 
-      Style_Fg      : GNAT.Strings.String_Access;
       Fg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Fg_Default    : GNAT.Strings.String_Access;
+      Fg_Default    : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
 
-      Style_Bg      : GNAT.Strings.String_Access;
       Bg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Bg_Default    : GNAT.Strings.String_Access;
+      Bg_Default    : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Style_Preference_Record;
@@ -559,10 +554,8 @@ private
      (Self : not null access Style_Preference_Record) return Boolean
      is (Self.Font_Default /= null
          and then Self.Font_Default.all = Self.Style_Font.all
-         and then Self.Fg_Default /= null
-         and then Self.Fg_Default.all = Self.Style_Fg.all
-         and then Self.Bg_Default /= null
-         and then Self.Bg_Default.all = Self.Style_Bg.all);
+         and then Self.Fg_Default = Self.Fg_Color
+         and then Self.Bg_Default = Self.Bg_Color);
 
    type Variant_Preference_Record is new Style_Preference_Record with record
       Base_Font     : Style_Preference;
@@ -583,10 +576,8 @@ private
    overriding function Is_Default
      (Self : not null access Variant_Preference_Record) return Boolean
      is (Self.Variant = Self.Default_Variant
-         and then Self.Fg_Default /= null
-         and then Self.Fg_Default.all = Self.Style_Fg.all
-         and then Self.Bg_Default /= null
-         and then Self.Bg_Default.all = Self.Style_Bg.all);
+         and then Self.Fg_Default = Self.Fg_Color
+         and then Self.Bg_Default = Self.Bg_Color);
 
    type Enum_Preference_Record is abstract new Preference_Record with record
       Enum_Value    : Integer;
