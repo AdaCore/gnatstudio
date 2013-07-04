@@ -1,6 +1,6 @@
 """This file provides SPARK support in GPS.
 
-Copyright (c) 2004-2010 Altran Praxis Limited
+Copyright (c) 2004-2010 Altran UK Limited
 Copyright (c) 2005-2011 AdaCore
 """
 
@@ -279,7 +279,7 @@ def do_pogs_xref (context, siv, dpc, zlg):
   if zlg:
      (frm,to) = loc.search ("^@@@@@@@@@@  VC: (procedure|function)_\S+_" + number + "\.", regexp=True)
   else:
-     (frm,to) = loc.search ("^(procedure|function)_\S+_" + number + "\.$", regexp=True)
+     (frm,to) = loc.search ("^(procedure|function|package_spec|package_body)_\S+_" + number + "\.$", regexp=True)
 
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
@@ -711,6 +711,9 @@ xml_spark = """<?xml version="1.0"?>
       <check line="2" label="Ignore Dates"
        tip="Prevent checking of date and time stamps of VCs and Proof Log files"
        switch="-i" />
+      <check line="2" label="Ignore Missing Simplifier Logs"
+       tip="Do not raise errors if Simplifier log files are not present"
+       switch="-l" />
 
       <title line="3">Output</title>
       <radio line="3">
