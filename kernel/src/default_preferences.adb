@@ -18,10 +18,9 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.OS_Lib;
 
 with Gdk.RGBA;                 use Gdk.RGBA;
-with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
 with XML_Utils;                use XML_Utils;
@@ -197,9 +196,6 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class; Data : Manager_Preference);
    --  Open a dialog to select a new font
 
-   procedure Key_Grab (Ent : access Gtk_Widget_Record'Class);
-   --  Callback for the "grab" button when editing a key preference
-
    function To_String (Font, Fg, Bg : String) return String;
    function Style_Token (Value : String; Num : Positive) return String;
    --  Handling of Param_Spec_Style
@@ -313,6 +309,7 @@ package body Default_Preferences is
       Result.Int_Min_Value := Minimum;
       Result.Int_Max_Value := Maximum;
       Result.Int_Value     := Default;
+      Result.Default       := Default;
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -331,6 +328,8 @@ package body Default_Preferences is
         Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
       Val : Boolean;
    begin
+      --  Preference might have been created from loading the XML files before
+      --  we actually registered it.
       if Pref = null
         or else Pref.all not in Boolean_Preference_Record'Class
       then
@@ -346,6 +345,7 @@ package body Default_Preferences is
          Boolean_Preference (Pref).Bool_Value := Val;
       end if;
 
+      Boolean_Preference (Pref).Default := Default;
       Register (Manager, Name, Label, Page, Doc, Pref);
       return Boolean_Preference (Pref);
    end Create;
@@ -371,6 +371,10 @@ package body Default_Preferences is
          String_Preference (Pref).Str_Value := new String'(Default);
       end if;
 
+      if String_Preference (Pref).Default = null then
+         String_Preference (Pref).Default := new String'(Default);
+      end if;
+
       String_Preference (Pref).Multi_Line := Multi_Line;
       Register (Manager, Name, Label, Page, Doc, Pref);  --  override previous
       return String_Preference (Pref);
@@ -389,6 +393,7 @@ package body Default_Preferences is
       Result : constant Color_Preference := new Color_Preference_Record;
    begin
       Result.Color_Value := new String'(Default);
+      Result.Default := new String'(Default);  --  could share pointer
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -406,25 +411,7 @@ package body Default_Preferences is
       Result : constant Font_Preference := new Font_Preference_Record;
    begin
       Result.Font_Value := new String'(Default);
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
-   end Create;
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
-      Default_Modifier          : Gdk.Types.Gdk_Modifier_Type;
-      Default_Key               : Gdk.Types.Gdk_Key_Type)
-      return Key_Preference
-   is
-      Result : constant Key_Preference := new Key_Preference_Record;
-   begin
-      Result.Key_Modifier := Default_Modifier;
-      Result.Key_Value    := Default_Key;
+      Result.Default := new String'(Default);   --  could share pointer
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -446,6 +433,11 @@ package body Default_Preferences is
       Result.Style_Font := new String'(Default_Font);
       Result.Style_Fg   := new String'(Default_Fg);
       Result.Style_Bg   := new String'(Default_Bg);
+
+      Result.Font_Default := new String'(Default_Font);
+      Result.Fg_Default   := new String'(Default_Fg);
+      Result.Bg_Default   := new String'(Default_Bg);
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -466,9 +458,14 @@ package body Default_Preferences is
       Result : constant Variant_Preference := new Variant_Preference_Record;
    begin
       Result.Variant := Default_Variant;
+      Result.Default_Variant := Default_Variant;
       Result.Base_Font := Base;
       Result.Style_Fg   := new String'(Default_Fg);
       Result.Style_Bg   := new String'(Default_Bg);
+
+      Result.Fg_Default   := new String'(Default_Fg);
+      Result.Bg_Default   := new String'(Default_Bg);
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -624,21 +621,6 @@ package body Default_Preferences is
    end Get_Pref;
 
    overriding function Get_Pref
-     (Pref : access Key_Preference_Record) return String is
-   begin
-      return Image (Pref.Key_Value, Pref.Key_Modifier);
-   end Get_Pref;
-
-   procedure Get_Pref
-     (Pref     : access Key_Preference_Record;
-      Modifier : out Gdk_Modifier_Type;
-      Key      : out Gdk_Key_Type) is
-   begin
-      Modifier := Pref.Key_Modifier;
-      Key      := Pref.Key_Value;
-   end Get_Pref;
-
-   overriding function Get_Pref
      (Pref : access Enum_Preference_Record) return String is
    begin
       return Integer'Image (Pref.Enum_Value);
@@ -755,26 +737,6 @@ package body Default_Preferences is
    --------------
 
    overriding procedure Set_Pref
-     (Pref    : access Key_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
-   begin
-      GUI_Utils.Value (Value, Pref.Key_Value, Pref.Key_Modifier);
-      Manager.On_Pref_Changed (Pref);
-   end Set_Pref;
-
-   procedure Set_Pref
-     (Pref     : Key_Preference;
-      Manager  : access Preferences_Manager_Record'Class;
-      Modifier : Gdk.Types.Gdk_Modifier_Type;
-      Key      : Gdk.Types.Gdk_Key_Type) is
-   begin
-      Pref.Key_Value := Key;
-      Pref.Key_Modifier := Modifier;
-      Manager.On_Pref_Changed (Pref);
-   end Set_Pref;
-
-   overriding procedure Set_Pref
      (Pref    : access Integer_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
@@ -878,10 +840,8 @@ package body Default_Preferences is
       Free (Pref.Style_Fg);
       Free (Pref.Style_Bg);
 
-      if Pref.Fg_Color /= Null_RGBA then
-         Pref.Fg_Color := Null_RGBA;
-         Pref.Bg_Color := Null_RGBA;
-      end if;
+      Pref.Fg_Color := Null_RGBA;
+      Pref.Bg_Color := Null_RGBA;
 
       Pref.Style_Font := new String'(Font);
       Pref.Style_Fg   := new String'(Fg);
@@ -909,10 +869,18 @@ package body Default_Preferences is
       Variant      : Variant_Enum;
       Fg, Bg       : String) is
    begin
-      Set_Pref
-        (Style_Preference (Pref),
-         Manager, Pref.Base_Font.Style_Font.all, Fg, Bg);
-      Pref.Variant := Variant;
+      Free (Pref.Font_Descr);
+      Free (Pref.Style_Fg);
+      Free (Pref.Style_Bg);
+
+      Pref.Fg_Color := Null_RGBA;
+      Pref.Bg_Color := Null_RGBA;
+
+      Pref.Variant    := Variant;
+      Pref.Style_Fg   := new String'(Fg);
+      Pref.Style_Bg   := new String'(Bg);
+
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -1003,11 +971,14 @@ package body Default_Preferences is
 
       while Has_Element (C) loop
          P := Element (C);
-         Node     := new XML_Utils.Node;
-         Node.Tag := new String'("pref");
-         Set_Attribute (Node, "name", Get_Name (P));
-         Node.Value := new String'(Get_Pref (P));
-         Add_Child (File, Node);
+         if not P.Is_Default then
+            Node     := new XML_Utils.Node;
+            Node.Tag := new String'("pref");
+            Set_Attribute (Node, "name", Get_Name (P));
+            Node.Value := new String'(Get_Pref (P));
+            Add_Child (File, Node);
+         end if;
+
          Next (C);
       end loop;
 
@@ -1207,19 +1178,6 @@ package body Default_Preferences is
       Reset_Font (E);
       return False;
    end Font_Entry_Changed;
-
-   --------------
-   -- Key_Grab --
-   --------------
-
-   procedure Key_Grab (Ent : access Gtk_Widget_Record'Class) is
-      E    : constant Gtk_Entry := Gtk_Entry (Ent);
-      Key  : Gdk.Types.Gdk_Key_Type;
-      Mods : Gdk.Types.Gdk_Modifier_Type;
-   begin
-      GUI_Utils.Key_Grab (E, Key, Mods);
-      Set_Text (E, Image (Key, Mods));
-   end Key_Grab;
 
    -------------------
    -- Color_Changed --
@@ -1599,6 +1557,7 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out String_Preference_Record) is
    begin
       Free (Pref.Str_Value);
+      Free (Pref.Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1633,6 +1592,7 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Color_Preference_Record) is
    begin
       Free (Pref.Color_Value);
+      Free (Pref.Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1659,52 +1619,10 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Font_Preference_Record) is
    begin
       Free (Pref.Font_Value);
+      Free (Pref.Default);
       Free (Pref.Descr);
       Free (Preference_Record (Pref));
    end Free;
-
-   ----------
-   -- Edit --
-   ----------
-
-   overriding function Edit
-     (Pref               : access Key_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
-      return Gtk.Widget.Gtk_Widget
-   is
-      Ent    : Gtk_Entry;
-      Modif  : Gdk_Modifier_Type;
-      Key    : Gdk_Key_Type;
-      Button : Gtk_Button;
-      Box    : Gtk_Box;
-      P : constant Manager_Preference :=
-        (Preferences_Manager (Manager), Preference (Pref));
-   begin
-      Gtk_New_Hbox (Box);
-      Gtk_New (Ent);
-      Set_Editable (Ent, False);
-      Pack_Start (Box, Ent, Expand => True, Fill => True);
-
-      Gtk_New (Button, -"Grab...");
-      Pack_Start (Box, Button, Expand => False);
-
-      Get_Pref (Key_Preference (Pref), Modif, Key);
-
-      Ent.Set_Text (Ent.Get_Text & Image (Key, Modif));
-
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
-         Slot_Object => Ent);
-      Preference_Handlers.Connect
-        (Ent, Gtk.Editable.Signal_Insert_Text, Entry_Changed'Access, P,
-         After       => True);
-      Preference_Handlers.Object_Connect
-        (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Entry'Access,
-         Ent, User_Data => P);
-
-      return Gtk_Widget (Box);
-   end Edit;
 
    --------------------------
    -- Create_Color_Buttons --
@@ -1807,12 +1725,28 @@ package body Default_Preferences is
    -- Free --
    ----------
 
-   overriding procedure Free (Pref : in out Style_Preference_Record) is
+   overriding procedure Free (Pref : in out Variant_Preference_Record) is
    begin
-      Free (Pref.Style_Font);
       Free (Pref.Font_Descr);
       Free (Pref.Style_Fg);
       Free (Pref.Style_Bg);
+      Free (Pref.Fg_Default);
+      Free (Pref.Bg_Default);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Pref : in out Style_Preference_Record) is
+   begin
+      Free (Pref.Font_Descr);
+      Free (Pref.Style_Fg);
+      Free (Pref.Style_Bg);
+      Free (Pref.Font_Default);
+      Free (Pref.Fg_Default);
+      Free (Pref.Bg_Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1881,6 +1815,7 @@ package body Default_Preferences is
       Name, Label, Page, Doc : String)
       return Theme_Preference
    is
+      use GNAT.OS_Lib;
       Ret         : constant Theme_Preference := new Theme_Preference_Record;
       Search_Path : constant Filesystem_String :=
          (Get_Home_Directory.Full_Name.all & Directory_Separator & ".themes")

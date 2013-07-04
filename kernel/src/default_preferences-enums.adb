@@ -202,6 +202,7 @@ package body Default_Preferences.Enums is
             Enum_Preference (Result).Enum_Value := Enumeration'Pos (Default);
          end if;
 
+         Enum_Preference (Result).Default := Enumeration'Pos (Default);
          Register (Manager, Name, Label, Page, Doc, Result);
          return Result;
       end Create;

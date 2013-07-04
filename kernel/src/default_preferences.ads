@@ -25,12 +25,11 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
+with GNAT.Strings;    use GNAT.Strings;
 
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with Gdk.RGBA;
-with Gdk.Types;
 with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
@@ -89,6 +88,10 @@ package Default_Preferences is
    --  that the preferences dialog is refreshed appropriately if it is open.
    --  Manager could be null if we never want to refresh the dialog
 
+   function Is_Default
+     (Pref    : not null access Preference_Record) return Boolean is (False);
+   --  Whether the current value of the preference is also the default value.
+
    function Edit
      (Pref               : access Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
@@ -118,7 +121,6 @@ package Default_Preferences is
    type String_Preference_Record  is new Preference_Record with private;
    type Color_Preference_Record   is new Preference_Record with private;
    type Font_Preference_Record    is new Preference_Record with private;
-   type Key_Preference_Record     is new Preference_Record with private;
    type Style_Preference_Record   is new Preference_Record with private;
    type Variant_Preference_Record is new Style_Preference_Record with private;
    type Enum_Preference_Record  is abstract new Preference_Record with private;
@@ -129,7 +131,6 @@ package Default_Preferences is
    type String_Preference  is access all String_Preference_Record'Class;
    type Color_Preference   is access all Color_Preference_Record'Class;
    type Font_Preference    is access all Font_Preference_Record'Class;
-   type Key_Preference     is access all Key_Preference_Record'Class;
    type Style_Preference   is access all Style_Preference_Record'Class;
    type Variant_Preference is access all Variant_Preference_Record'Class;
    type Enum_Preference    is access all Enum_Preference_Record'Class;
@@ -192,12 +193,6 @@ package Default_Preferences is
       Name, Label, Page, Doc    : String;
       Default                   : String)
       return Font_Preference;
-   function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
-      Default_Modifier          : Gdk.Types.Gdk_Modifier_Type;
-      Default_Key               : Gdk.Types.Gdk_Key_Type)
-      return Key_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
@@ -266,11 +261,6 @@ package Default_Preferences is
      (Pref : access Font_Preference_Record)
       return Pango.Font.Pango_Font_Description;
 
-   procedure Get_Pref
-     (Pref     : access Key_Preference_Record;
-      Modifier : out Gdk.Types.Gdk_Modifier_Type;
-      Key      : out Gdk.Types.Gdk_Key_Type);
-
    overriding function Get_Pref
      (Pref : access Style_Preference_Record) return String;
    function Get_Pref_Font
@@ -325,11 +315,6 @@ package Default_Preferences is
      (Pref    : Boolean_Preference;
       Manager : access Preferences_Manager_Record'Class;
       Value   : Boolean);
-   procedure Set_Pref
-     (Pref     : Key_Preference;
-      Manager  : access Preferences_Manager_Record'Class;
-      Modifier : Gdk.Types.Gdk_Modifier_Type;
-      Key      : Gdk.Types.Gdk_Key_Type);
    procedure Set_Pref
      (Pref         : Style_Preference;
       Manager      : access Preferences_Manager_Record'Class;
@@ -458,6 +443,7 @@ private
       Int_Value     : Integer;
       Int_Min_Value : Integer;
       Int_Max_Value : Integer;
+      Default       : Integer;
    end record;
    overriding function Get_Pref
      (Pref : access Integer_Preference_Record) return String;
@@ -469,9 +455,13 @@ private
      (Pref               : access Integer_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
+   overriding function Is_Default
+     (Self : not null access Integer_Preference_Record) return Boolean
+     is (Self.Default = Self.Int_Value);
 
    type Boolean_Preference_Record is new Preference_Record with record
       Bool_Value    : Boolean;
+      Default       : Boolean;
    end record;
    overriding function Get_Pref
      (Pref : access Boolean_Preference_Record) return String;
@@ -483,9 +473,13 @@ private
      (Pref               : access Boolean_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
+   overriding function Is_Default
+     (Self : not null access Boolean_Preference_Record) return Boolean
+     is (Self.Default = Self.Bool_Value);
 
    type String_Preference_Record is new Preference_Record with record
       Str_Value     : GNAT.Strings.String_Access;
+      Default       : GNAT.Strings.String_Access;
       Multi_Line    : Boolean := False;
    end record;
    overriding procedure Set_Pref
@@ -497,9 +491,13 @@ private
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out String_Preference_Record);
+   overriding function Is_Default
+     (Self : not null access String_Preference_Record) return Boolean
+     is (Self.Default /= null and then Self.Default.all = Self.Str_Value.all);
 
    type Color_Preference_Record is new Preference_Record with record
       Color_Value   : GNAT.Strings.String_Access;
+      Default       : GNAT.Strings.String_Access;
       Color         : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
    overriding procedure Set_Pref
@@ -511,9 +509,14 @@ private
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Color_Preference_Record);
+   overriding function Is_Default
+     (Self : not null access Color_Preference_Record) return Boolean
+     is (Self.Default /= null
+         and then Self.Default.all = Self.Color_Value.all);
 
    type Font_Preference_Record is new Preference_Record with record
       Font_Value    : GNAT.Strings.String_Access;
+      Default       : GNAT.Strings.String_Access;
       Descr         : Pango.Font.Pango_Font_Description;
    end record;
    overriding procedure Set_Pref
@@ -525,29 +528,23 @@ private
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Font_Preference_Record);
-
-   type Key_Preference_Record is new Preference_Record with record
-      Key_Modifier  : Gdk.Types.Gdk_Modifier_Type;
-      Key_Value     : Gdk.Types.Gdk_Key_Type;
-   end record;
-   overriding function Get_Pref
-     (Pref : access Key_Preference_Record) return String;
-   overriding procedure Set_Pref
-     (Pref    : access Key_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class;
-      Value   : String);
-   overriding function Edit
-     (Pref               : access Key_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
-      return Gtk.Widget.Gtk_Widget;
+   overriding function Is_Default
+     (Self : not null access Font_Preference_Record) return Boolean
+     is (Self.Default /= null
+         and then Self.Default.all = Self.Font_Value.all);
 
    type Style_Preference_Record is new Preference_Record with record
       Style_Font    : GNAT.Strings.String_Access;
+      Font_Default  : GNAT.Strings.String_Access;
       Font_Descr    : Pango.Font.Pango_Font_Description;
+
       Style_Fg      : GNAT.Strings.String_Access;
       Fg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Fg_Default    : GNAT.Strings.String_Access;
+
       Style_Bg      : GNAT.Strings.String_Access;
       Bg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Bg_Default    : GNAT.Strings.String_Access;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Style_Preference_Record;
@@ -558,10 +555,21 @@ private
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Style_Preference_Record);
+   overriding function Is_Default
+     (Self : not null access Style_Preference_Record) return Boolean
+     is (Self.Font_Default /= null
+         and then Self.Font_Default.all = Self.Style_Font.all
+         and then Self.Fg_Default /= null
+         and then Self.Fg_Default.all = Self.Style_Fg.all
+         and then Self.Bg_Default /= null
+         and then Self.Bg_Default.all = Self.Style_Bg.all);
 
    type Variant_Preference_Record is new Style_Preference_Record with record
       Base_Font     : Style_Preference;
       Variant       : Variant_Enum;
+      Default_Variant : Variant_Enum;
+
+      --  never sets the Style_Font and Font_Default fields
    end record;
    overriding procedure Set_Pref
      (Pref    : access Variant_Preference_Record;
@@ -571,9 +579,18 @@ private
      (Pref               : access Variant_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
+   overriding procedure Free (Pref : in out Variant_Preference_Record);
+   overriding function Is_Default
+     (Self : not null access Variant_Preference_Record) return Boolean
+     is (Self.Variant = Self.Default_Variant
+         and then Self.Fg_Default /= null
+         and then Self.Fg_Default.all = Self.Style_Fg.all
+         and then Self.Bg_Default /= null
+         and then Self.Bg_Default.all = Self.Style_Bg.all);
 
    type Enum_Preference_Record is abstract new Preference_Record with record
       Enum_Value    : Integer;
+      Default       : Integer := -1;
    end record;
    overriding function Get_Pref
      (Pref : access Enum_Preference_Record) return String;
@@ -581,6 +598,9 @@ private
      (Pref    : access Enum_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
+   overriding function Is_Default
+     (Self : not null access Enum_Preference_Record) return Boolean
+     is (Self.Enum_Value = Self.Default);
 
    type Theme_Descr_Array is array (Natural range <>) of Theme_Descr;
    type Theme_Descr_Array_Access is access all Theme_Descr_Array;

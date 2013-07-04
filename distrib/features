@@ -64,6 +64,13 @@ NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
   view was also removed since its features are now available through the
   global search field.
 
+NF-60-M530-024 GPS: only save changed preferences (2013-07-04)
+
+  GPS will now only save those preferences that have been modified into
+  its HOME/.gps/preferences file. This change should be mostly invisible
+  to users, except when changing versions of GPS where the new default
+  will be picked up automatically.
+
 NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
 
   This plugin allows one to easily execute any of the GPS commands via the
