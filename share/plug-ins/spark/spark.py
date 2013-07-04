@@ -1,7 +1,7 @@
 """This file provides SPARK support in GPS.
 
-Copyright (c) 2004-2010 Altran UK Limited
-Copyright (c) 2005-2011 AdaCore
+Copyright (c) 2004-2013 Altran UK Limited
+Copyright (c) 2005-2013 AdaCore
 """
 
 
