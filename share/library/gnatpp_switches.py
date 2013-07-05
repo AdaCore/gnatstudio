@@ -1,11 +1,12 @@
-"""If this plug-in is enabled, provides automatic setting of Ada reformatting
-   preferences based on gnatpp switches as set in the project file.
+"""
+If this plug-in is enabled, provides automatic setting of Ada reformatting
+preferences based on gnatpp switches as set in the project file.
 
-   For example, if gnatpp switch -i4 is set, then the
-   Editor/Ada/Default indentation preference is set to 4
+For example, if gnatpp switch -i4 is set, then the
+Editor/Ada/Default indentation preference is set to 4
 
-   Note that some gnatpp switches have no direct equivalence (and vice-versa),
-   in which case they are ignored.
+Note that some gnatpp switches have no direct equivalence (and vice-versa),
+in which case they are ignored.
 """
 
 

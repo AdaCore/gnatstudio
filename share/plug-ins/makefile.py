@@ -1,47 +1,48 @@
-"""Provides support for building through make or ant make using the GPS
-   Build Manager.
+"""
+Provides support for building through make or ant make using the GPS
+Build Manager.
 
-   This script defines the following new project attributes in the "make"
-   package of a .gpr file. They can be edited graphically through
-   the project properties editor.
-       "make.makefile": name of the Makefile to use. This can be an absolute
-                    name, or a name relative to the directory containing the
-                    root project file (ie the one loaded in GPS). This
-                    attribute is optional. If unspecified, GPS will look for
-                    either "Makefile" or "makefile" in the directory
-                    containing the root project.
+This script defines the following new project attributes in the "make"
+package of a .gpr file. They can be edited graphically through
+the project properties editor.
+    "make.makefile": name of the Makefile to use. This can be an absolute
+                 name, or a name relative to the directory containing the
+                 root project file (ie the one loaded in GPS). This
+                 attribute is optional. If unspecified, GPS will look for
+                 either "Makefile" or "makefile" in the directory
+                 containing the root project.
 
-   This script defines the following new project attributes in the "ant"
-   package of a .gpr file:
-       "ant.antfile": name of the Antfile to use. This can be an absolute
-                    name, or a name relative to the directory containing the
-                    root project file (ie the one loaded in GPS). This
-                    attribute is optional. If unspecified, GPS will look for
-                    "build.xml" in the directory containing the root project.
+This script defines the following new project attributes in the "ant"
+package of a .gpr file:
+    "ant.antfile": name of the Antfile to use. This can be an absolute
+                 name, or a name relative to the directory containing the
+                 root project file (ie the one loaded in GPS). This
+                 attribute is optional. If unspecified, GPS will look for
+                 "build.xml" in the directory containing the root project.
 
-   GPS will systematically compile the application by passing the scenario
-   variables (see the menu /Tools/Views/Scenario). For instance, this
-   will result in calling
-       make -f Makefile VARIABLE1=VALUE target
-   or
-       ant -buildfile build.xml -DVARIABLE1=VALUE target
+GPS will systematically compile the application by passing the scenario
+variables (see the menu /Tools/Views/Scenario). For instance, this
+will result in calling
+    make -f Makefile VARIABLE1=VALUE target
+or
+    ant -buildfile build.xml -DVARIABLE1=VALUE target
 
-   These scenario variables are defined in the project file, and should have
-   the same name as in the Makefile or the AntFile.
+These scenario variables are defined in the project file, and should have
+the same name as in the Makefile or the AntFile.
 
-   By default, the name in the menu will be the name of the targets found in
-   the build file.
-   As a special case, when the comment is "IGNORE", as in:
+By default, the name in the menu will be the name of the targets found in
+the build file.
+As a special case, when the comment is "IGNORE", as in:
 
-      target: dependency1 dependency2 # IGNORE
+   target: dependency1 dependency2 # IGNORE
 
-   then that target is not displayed in the menu
+then that target is not displayed in the menu
 
-   A similar behavior is applied for build.xml files for ant, where the
-   "description" attribute of the <target> node is taken into account.
+A similar behavior is applied for build.xml files for ant, where the
+"description" attribute of the <target> node is taken into account.
 
-   When you select one of the new menus, GPS will run ant or make, and parse
-   error messages to display them in the locations window as usual.
+When you select one of the new menus, GPS will run ant or make, and parse
+error messages to display them in the locations window as usual.
 """
 
 

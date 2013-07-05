@@ -1,5 +1,7 @@
-"""This script saves the cursor location when an editor is closed, and
-   restore it when the editor is reopened later on"""
+"""
+This script saves the cursor location when an editor is closed, and
+restore it when the editor is reopened later on.
+"""
 
 
 ############################################################################

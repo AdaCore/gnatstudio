@@ -1,3 +1,8 @@
+"""
+Provides support for gnatmetrics.
+"""
+
+
 import re
 import GPS
 

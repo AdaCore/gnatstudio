@@ -1,4 +1,5 @@
-""" This plugin adds support for the ParaSail language.
+"""
+This plugin adds support for the ParaSail language.
 
 The following features are provided:
 
@@ -16,15 +17,14 @@ The following features are provided:
      - the default naming scheme is set to .psi, .psl.
 
   * Syntax highlighting:
-
      - detection of ParaSail keywords
      - detection of strings
 
   * Outline:
-
      - top level functions, classes and interfaces are shown in the Outline
-
 """
+
+
 
 import GPS
 

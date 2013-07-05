@@ -1,11 +1,5 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-#############################################################################
-## No user customization below this line
-#############################################################################
-
-"""This script adds an incremental-search capability to GPS
+"""
+This script adds an incremental-search capability to GPS
 
 This is similar to what Emacs does
 When you select the menu /Navigate/Find Incremental (or bind a key
@@ -61,6 +55,8 @@ immediately. The highlighting of the next matches is done in the background
 if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
+
+
 
 from GPS import *
 

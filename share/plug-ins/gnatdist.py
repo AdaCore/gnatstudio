@@ -1,9 +1,10 @@
-"""This file provides support for using the gnatdist/po_gnatdist tool
+"""
+This file provides support for using the gnatdist/po_gnatdist tool
 
-   gnatdist/po_gnatdist is a partitioning tool for distributed applications
-   which use features of the Distrbiuted System Annex.
-   This package provides syntax highlighting for partition configuration
-   language, and allows to run tool from GPS.
+gnatdist/po_gnatdist is a partitioning tool for distributed applications
+which use features of the Distrbiuted System Annex.
+This package provides syntax highlighting for partition configuration
+language, and allows to run tool from GPS.
 """
 
 
