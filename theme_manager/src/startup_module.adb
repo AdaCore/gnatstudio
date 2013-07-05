@@ -52,7 +52,9 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
 with GUI_Utils;                use GUI_Utils;
 with Pango.Enums;              use Pango.Enums;
+with String_Utils;             use String_Utils;
 with System;                   use System;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 
@@ -140,6 +142,7 @@ package body Startup_Module is
       End_Of_Descr : Integer;
       Contents   : String_Access;
       File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      First, Last : Integer;
    begin
       Get_Selected (Selection, Model, Iter);
       if Iter /= Null_Iter then
@@ -201,10 +204,30 @@ package body Startup_Module is
 
             Insert_With_Tags
               (Ed.Description, Text_Iter,
-               (-"Description and script:") & ASCII.LF,
+               ASCII.LF & ASCII.LF & (-"Description and script:")
+               & ASCII.LF & ASCII.LF,
                Bold);
-            Insert (Ed.Description, Text_Iter,
-                    Contents (Contents'First .. End_Of_Descr));
+
+            First := Contents'First;
+            Skip_Blanks (Contents.all, First);
+            if Looking_At (Contents.all, First, """""""")
+              or else Looking_At (Contents.all, First, "'''")
+            then
+               First := First + 3;
+            end if;
+            Skip_Blanks (Contents.all, First);
+
+            Last := End_Of_Descr;
+            Skip_Blanks_Backward (Contents.all, Last);
+            if Last - 2 >= Contents'First
+              and then (Looking_At (Contents.all, Last - 2, """""""")
+                        or else Looking_At (Contents.all, Last - 2, "'''"))
+            then
+               Last := Last - 3;
+            end if;
+            Skip_Blanks_Backward (Contents.all, Last);
+
+            Insert (Ed.Description, Text_Iter, Contents (First .. Last));
 
             if End_Of_Descr < Contents'Last then
                Set_Text (Ed.Implementation,
@@ -335,8 +358,6 @@ package body Startup_Module is
       Label       : Gtk_Label;
       pragma Unreferenced (Button);
 
-      Load_Cst : aliased String := -"Load";
-      Name_Cst : aliased String := -"Script name";
    begin
       Editor := new Startup_Editor_Record;
       Editor.Kernel := Kernel_Handle (Kernel);
@@ -364,9 +385,9 @@ package body Startup_Module is
                           Column_File       => Get_Virtual_File_Type,
                           Column_Modified   => GType_Boolean,
                           Column_Background => GType_String),
-         Column_Names => (Column_Load + 1 => Load_Cst'Unchecked_Access,
-                          Column_Name + 1 => Name_Cst'Unchecked_Access),
-         Show_Column_Titles => True,
+         Column_Names => (Column_Load + 1 => null,
+                          Column_Name + 1 => null),
+         Show_Column_Titles => False,
          Initial_Sort_On    => Column_Name + 1);
       Add (Scrolled, Editor.Tree);
 
