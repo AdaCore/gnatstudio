@@ -152,6 +152,7 @@ package body Startup_Module is
       End_Of_Descr : Integer;
       Contents   : String_Access;
       File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      F2         : Virtual_File;
       First, Last : Integer;
 
       function Is_Loaded return String;
@@ -182,6 +183,14 @@ package body Startup_Module is
          Get_End_Iter (Ed.Description, Text_Iter);
 
          File := Get_File (Ed.Model, Iter, Column_File);
+
+         if File.Is_Directory then
+            F2 := Create_From_Dir (File, "__init__.py");
+            if F2.Is_Regular_File then
+               File := F2;
+            end if;
+         end if;
+
          Ed.File_Link.Set_Label (File.Display_Full_Name);
          Ed.File_Link.Set_Uri ("file://" & File.Display_Full_Name);
 
