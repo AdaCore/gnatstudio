@@ -6,38 +6,41 @@ This external tool creates the Ada body from an Ada spec.
 
 
 import GPS
+import gps_utils
+import os
 
-XML = r'''<?xml version="1.0" ?>
-<GPS>
-   <action name="Generate body" output="none" category="Editor">
-      <description>Generate the body for an Ada spec file</description>
-      <!-- This action only applies to Ada files -->
-      <filter language="ada"
-              error="Body generation for non Ada files not yet supported" />
 
-      <!-- Generate and load the body -->
-      <shell>MDI.save_all</shell>
-      <shell>Project.scenario_variables_cmd_line -X</shell>
-      <shell>Project.root</shell>
-      <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
-      <external show-command="true"
-                output=""
-                server="tools_server">%1 stub "%pps" %3 "%F" "%d"</external>
-      <on-failure><shell>Locations.parse """%1 """ gnatstub</shell></on-failure>
-      <shell>Project.recompute</shell>
-      <shell>File "%F"</shell>
-      <shell>File.other_file "%1"</shell>
-      <shell>File.name "%1"</shell>
-      <shell>Editor.edit "%1"</shell>
-   </action>
+class OnExit(object):
+    def __init__(self, file):
+        self.file = file
 
-   <submenu>
-     <title>Edit</title>
-     <menu action="Generate body" before="Aliases" >
-        <title>_Generate Body</title>
-     </menu>
-   </submenu>
-</GPS>
-'''
+    def on_exit(self, proc, status, output):
+        # ??? For some reason, status is always "0"
+        GPS.Project.recompute()
+        f2 = self.file.other_file()
 
-GPS.parse_xml(XML)
+        if os.path.isfile(f2.name()):
+            GPS.EditorBuffer.get(f2)
+        else:
+            GPS.Locations.parse(output, "gnatstub")
+
+@gps_utils.interactive(
+    category="Editor",
+    filter=gps_utils.in_ada_file,
+    menu="/Edit/_Generate body",
+    before="Aliases",
+    name="Generate body")
+def generate_body():
+    GPS.MDI.save_all()
+    proj = GPS.current_context().project()
+    file = GPS.current_context().file()
+    command='"%s" stub "%s" %s "%s" "%s"' % (
+        proj.get_attribute_as_string("gnat", "ide"),
+        "-P%s" % proj.file().name() if proj else "",
+        GPS.Project.scenario_variables_cmd_line("-X"),
+        file.name(),
+        file.directory())
+ 
+    proc = GPS.Process(
+        command, task_manager=True, on_exit=OnExit(file).on_exit)
+    proc.wait()

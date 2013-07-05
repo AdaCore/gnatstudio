@@ -153,8 +153,8 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
         callback = do
 
     a = Action(name or callback.__name__)
-    a. create(callback, filter=filter, category=category,
-              description=callback.__doc__)
+    a.create(callback, filter=filter, category=category,
+             description=callback.__doc__)
     if menu:
        if before:
           a.menu(menu, add_before=True, ref=before)
