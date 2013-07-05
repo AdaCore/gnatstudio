@@ -25,6 +25,11 @@ private package Docgen3.Utils is
    --  Returns an string without the spaces and line terminators at the
    --  beginning/end of the string.
 
+   function Get_Short_Name (Ada_Expanded_Name : String) return String;
+   --  Return the short name associated with Ada_Expanded_Name (for example,
+   --  for name "A.B.C" returns "C"). For simple names returns the same name
+   --  (for example, for "C" returns "C");
+
    function Image
      (Db     : General_Xref_Database;
       Entity : General_Entity) return String;

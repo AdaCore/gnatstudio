@@ -18,6 +18,7 @@
 --  This package implements the frontend of docgen3 which builds the tree
 --  associated with a single file.
 
+with Ada.Containers.Vectors;
 with Docgen3;           use Docgen3;
 with Docgen3.Atree;     use Docgen3.Atree;
 
@@ -50,5 +51,13 @@ private package Docgen3.Frontend is
       File    : Virtual_File) return Tree_Type;
    --  Analyze all the entities defined in File and build the corresponding
    --  tree.
+
+   procedure Initialize;
+   --  Initialize (or clear) internal data structures
+
+   procedure Finalize;
+
+   package Tree_List is new Ada.Containers.Vectors
+     (Index_Type => Natural, Element_Type => Tree_Type);
 
 end Docgen3.Frontend;

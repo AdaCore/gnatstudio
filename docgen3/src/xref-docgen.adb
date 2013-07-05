@@ -40,6 +40,20 @@ package body Xref.Docgen is
    -- Present --
    -------------
 
+   function No (E : General_Entity) return Boolean is
+   begin
+      return E = No_General_Entity;
+   end No;
+
+   function No (L : General_Location) return Boolean is
+   begin
+      return L = No_Location;
+   end No;
+
+   -------------
+   -- Present --
+   -------------
+
    function Present (E : General_Entity) return Boolean is
    begin
       return E /= No_General_Entity;
