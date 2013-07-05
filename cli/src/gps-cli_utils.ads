@@ -71,7 +71,7 @@ package GPS.CLI_Utils is
    --
    --  Lang_Name: Scription language
    --  Script_Name: script to execute
-   --  Return: False if could not execute scrit because lscripting language
+   --  Return: False if could not execute script because scripting language
    --          is unknown. True otherwises
 
 end GPS.CLI_Utils;
