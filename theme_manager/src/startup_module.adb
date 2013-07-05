@@ -69,6 +69,7 @@ package body Startup_Module is
    Column_File       : constant := 3;
    Column_Modified   : constant := 4;
    Column_Background : constant := 5;
+   Column_Name_With_Ext : constant := 6;
 
    type Kernel_Link_Button_Record is new Gtk_Link_Button_Record with record
       Kernel : Kernel_Handle;
@@ -276,7 +277,8 @@ package body Startup_Module is
 
             Override_Startup_Script
               (Kernel    => Editor.Kernel,
-               Base_Name => Get_String (Editor.Model, Iter, Column_Name),
+               Base_Name =>
+                 Get_String (Editor.Model, Iter, Column_Name_With_Ext),
                Load      => Get_Boolean (Editor.Model, Iter, Column_Load));
          end if;
 
@@ -339,6 +341,7 @@ package body Startup_Module is
          Set (Editor.Model, Iter, Column_Explicit, Explicit);
          Set_File (Editor.Model, Iter, Column_File, File);
          Set (Editor.Model, Iter, Column_Modified, False);
+         Set (Editor.Model, Iter, Column_Name_With_Ext, Name);
       end Add_Script;
 
       Button      : Gtk_Widget;
@@ -377,7 +380,8 @@ package body Startup_Module is
                           Column_Explicit   => GType_Boolean,
                           Column_File       => Get_Virtual_File_Type,
                           Column_Modified   => GType_Boolean,
-                          Column_Background => GType_String),
+                          Column_Background => GType_String,
+                          Column_Name_With_Ext => GType_String),
          Column_Names => (Column_Load + 1 => null,
                           Column_Name + 1 => null),
          Show_Column_Titles => False,
