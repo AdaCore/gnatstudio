@@ -38,8 +38,10 @@ with Language.Ada;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
+with GNATCOLL.Scripts;                         use GNATCOLL.Scripts;
 with GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;
+with GNAT.OS_Lib;
 
 package body GPS.CLI_Utils is
 
@@ -219,5 +221,32 @@ package body GPS.CLI_Utils is
 
       return GNATCOLL.VFS_Utils.Is_Regular_File (Filesystem_String (Path.all));
    end Project_File_Path_Exists;
+
+   --------------------
+   -- Execute_Batch --
+   --------------------
+
+   function Execute_Batch
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Lang_Name   : String;
+      Script_Name : String) return Boolean
+   is
+      Script : Scripting_Language;
+      Errors : Boolean;
+   begin
+      Script := Kernel.Scripts.Lookup_Scripting_Language (Lang_Name);
+
+      if Script = null then
+         return False;
+      else
+         Execute_File
+           (Script   => Script,
+            Filename => GNAT.OS_Lib.Normalize_Pathname
+                          (Script_Name, Get_Current_Dir.Display_Full_Name),
+            Show_Command => False,
+            Errors   => Errors);
+         return True;
+      end if;
+   end Execute_Batch;
 
 end GPS.CLI_Utils;

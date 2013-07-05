@@ -63,4 +63,15 @@ package GPS.CLI_Utils is
    --
    --  Return: Wheter the file exists or not.
 
+   function Execute_Batch
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Lang_Name   : String;
+      Script_Name : String) return Boolean;
+   --  Execute a batch Script_Name in Lang_Name language.
+   --
+   --  Lang_Name: Scription language
+   --  Script_Name: script to execute
+   --  Return: False if could not execute scrit because lscripting language
+   --          is unknown. True otherwises
+
 end GPS.CLI_Utils;

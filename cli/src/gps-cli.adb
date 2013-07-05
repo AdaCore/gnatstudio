@@ -21,10 +21,8 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;       use Ada.Text_IO;
 
 with GNAT.Command_Line; use GNAT.Command_Line;
-with GNAT.OS_Lib;
 with GNAT.Strings;      use GNAT.Strings;
 
-with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
@@ -34,38 +32,9 @@ with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 with Xref;              use Xref;
 
 procedure GPS.CLI is
-   procedure Execute_Batch
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
-      Lang_Name   : String;
-      Script_Name : String);
-   --  Execute a batch command file Script_Name in Lang_Name language.
-
    -------------------
    -- Execute_Batch --
    -------------------
-
-   procedure Execute_Batch
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
-      Lang_Name   : String;
-      Script_Name : String)
-   is
-      Script : Scripting_Language;
-      Errors : Boolean;
-   begin
-      Script := Kernel.Scripts.Lookup_Scripting_Language (Lang_Name);
-
-      if Script = null then
-         Put_Line
-           ("Language unknown for --load command line switch: " & Lang_Name);
-      else
-         Execute_File
-           (Script   => Script,
-            Filename => GNAT.OS_Lib.Normalize_Pathname
-                          (Script_Name, Get_Current_Dir.Display_Full_Name),
-            Show_Command => False,
-            Errors   => Errors);
-      end if;
-   end Execute_Batch;
 
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
@@ -145,10 +114,17 @@ begin
            Ada.Strings.Fixed.Index (Script_Name.all, ":");
       begin
          if Colon /= 0 then
-            Execute_Batch
+
+            if not Execute_Batch
               (Kernel,
                Lang_Name   => Script_Name (Script_Name'First .. Colon - 1),
-               Script_Name => Script_Name (Colon + 1 .. Script_Name'Last));
+               Script_Name => Script_Name (Colon + 1 .. Script_Name'Last))
+            then
+               Put_Line
+                 ("Language unknown for --load command line switch: " &
+                    Script_Name (Script_Name'First .. Colon - 1));
+            end if;
+
          else
             Put_Line ("No lang in --load=" & Script_Name.all);
          end if;
