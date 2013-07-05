@@ -34,8 +34,14 @@ with Xref;                use Xref;
 
 package Xref.Docgen is
 
-   function Present (E : General_Entity)   return Boolean;
-   --  Return true if E /= null
+   function No (E : General_Entity) return Boolean;
+   --  Return true if E = No_General_Entity
+
+   function No (L : General_Location) return Boolean;
+   --  Return true if L = No_Location
+
+   function Present (E : General_Entity) return Boolean;
+   --  Return true if E /= No_General_Entity
 
    function Present (L : General_Location) return Boolean;
    --  Return true if L /= No_Location

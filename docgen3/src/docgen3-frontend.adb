@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Unchecked_Deallocation;
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.HTable;
@@ -76,17 +78,493 @@ package body Docgen3.Frontend is
    --  Traverse the Tree of entities and replace blocks of comments by
    --  structured comments.
 
-   ---------------
-   -- EInfo_Map --
-   ---------------
+   -----------------------------
+   -- Unique_Entity_Allocator --
+   -----------------------------
 
-   function Hash (Key : General_Location) return Ada.Containers.Hash_Type;
-   function Equivalent_Keys (Left, Right : General_Location) return Boolean;
-   package EInfo_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => General_Location,
-      Element_Type    => Entity_Id,
-      Hash            => Hash,
-      Equivalent_Keys => Equivalent_Keys);
+   --  This package gives support to unique allocation of tree entities (that
+   --  is, it ensures no entity is duplicated in the trees composing a full
+   --  project). This is required to ensure consistency and also to facilitate
+   --  to the backend the generation of entity dependency graphs.
+
+   package Unique_Entity_Allocator is
+
+      type Unique_Entity_Info is private;
+      type Unique_Entity_Id is access all Unique_Entity_Info;
+      No_Entity : constant Unique_Entity_Id := null;
+
+      function Get_Entity (Entity : Unique_Entity_Id) return Entity_Id;
+      --  Return the entity
+
+      procedure Get_Unique_Entity
+        (Entity  : out Unique_Entity_Id;
+         Context : access constant Docgen_Context;
+         File    : Virtual_File;
+         E       : General_Entity;
+         Forced  : Boolean := False;
+         C_Header_File : Virtual_File := No_File);
+      --  Searchs for E in a hash table containing all the project entities.
+      --  If found then return such entity; if not found then allocates a new
+      --  entity for E. If Forced is True then the entity is searched and built
+      --  even if it is defined in another file.
+
+      function Is_New (Entity : Unique_Entity_Id) return Boolean;
+      --  True if the tree entity was allocated when this unique Entity was
+      --  built
+
+      function New_Internal_Entity
+        (Context  : access constant Docgen_Context;
+         Language : Language_Access;
+         Name     : String) return Unique_Entity_Id;
+      --  Allocate an internal entity. Used to build the standard entity.
+
+      function Present (Entity : Unique_Entity_Id) return Boolean;
+      --  Return True if Entity /= No_Entity
+
+      procedure Update_Entity
+        (Entity : in out Unique_Entity_Id;
+         E      : General_Entity;
+         Forced : Boolean := False);
+      --  Free the previous entity associated with Entity and associate it E
+
+      procedure Free (Entity : in out Unique_Entity_Id);
+      --  If this is a new entity the remove it; otherwise no action is
+      --  performed since there are references to it in the tree.
+
+      ----------------
+      -- Hash_Table --
+      ----------------
+
+      --  Hash table containing all the entities of the project. Used to avoid
+      --  generating duplicate entities.
+
+      package Hash_Table is
+
+         function Hash
+           (Key : General_Location) return Ada.Containers.Hash_Type;
+
+         function Equivalent_Keys
+           (Left, Right : General_Location) return Boolean;
+
+         package EInfo_Map is new Ada.Containers.Indefinite_Hashed_Maps
+           (Key_Type        => General_Location,
+            Element_Type    => Entity_Id,
+            Hash            => Hash,
+            Equivalent_Keys => Equivalent_Keys);
+
+         Entities_Map : EInfo_Map.Map;
+
+         procedure Append_To_Map (E : Unique_Entity_Id);
+         --  Append the entity of E to Entities_Map
+
+      end Hash_Table;
+      use Hash_Table;
+
+      ------------------------------------------
+      --  Debugging routines (for use in gdb) --
+      ------------------------------------------
+
+      procedure pn (E : Unique_Entity_Id);
+      --  (gdb) Prints a single tree node (full output), without printing
+      --  descendants.
+
+      procedure pnid (Unique_Id : Natural);
+      --  (gdb) Search for and entity in the hash-table with Unique_Id and
+      --  prints its contents. No output generated if the entity is not found.
+
+   private
+      type Unique_Entity_Info is record
+         Context       : access constant Docgen_Context;
+         Entity        : Entity_Id    := Atree.No_Entity;
+         File          : Virtual_File := No_File;
+         C_Header_File : Virtual_File := No_File;
+         Is_New        : Boolean      := False;
+      end record;
+
+      pragma Inline (Get_Entity);
+
+      pragma Export (Ada, pn);
+      pragma Export (Ada, pnid);
+   end Unique_Entity_Allocator;
+
+   use Unique_Entity_Allocator;
+   use Unique_Entity_Allocator.Hash_Table;
+
+   ----------------------
+   -- Entity_Allocator --
+   ----------------------
+
+   package body Unique_Entity_Allocator is
+
+      ----------------
+      -- Hash_Table --
+      ----------------
+
+      package body Hash_Table is
+
+         -------------------
+         -- Append_To_Map --
+         -------------------
+
+         procedure Append_To_Map (E : Unique_Entity_Id) is
+         begin
+            Entities_Map.Include
+              (LL.Get_Location (Get_Entity (E)), Get_Entity (E));
+         end Append_To_Map;
+
+         ---------------------
+         -- Equivalent_Keys --
+         ---------------------
+
+         function Equivalent_Keys
+           (Left, Right : General_Location) return Boolean
+         is
+            use type GNATCOLL.Xref.Visible_Column;
+         begin
+            return Left.File = Right.File
+              and then Left.Line = Right.Line
+              and then Left.Column = Right.Column;
+         end Equivalent_Keys;
+
+         ----------
+         -- Hash --
+         ----------
+
+         function Hash (Key : General_Location) return Ada.Containers.Hash_Type
+         is
+            type Internal_Hash_Type is range 0 .. 2 ** 31 - 1;
+            function Internal is new GNAT.HTable.Hash
+              (Header_Num => Internal_Hash_Type);
+         begin
+            return Ada.Containers.Hash_Type
+              (Internal
+                 (+Key.File.Full_Name
+                  & Natural'Image (Key.Line)
+                  & Basic_Types.Visible_Column_Type'Image (Key.Column)));
+         end Hash;
+
+      end Hash_Table;
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Entity : in out Unique_Entity_Id) is
+         procedure Internal_Free is
+           new Ada.Unchecked_Deallocation
+                (Unique_Entity_Info, Unique_Entity_Id);
+      begin
+         if Entity /= null then
+            if Entity.Is_New then
+               Free (Entity.Entity);
+            end if;
+
+            Internal_Free (Entity);
+         end if;
+      end Free;
+
+      ----------------
+      -- Get_Entity --
+      ----------------
+
+      function Get_Entity (Entity : Unique_Entity_Id) return Entity_Id is
+      begin
+         pragma Assert (Present (Entity));
+         return Entity.Entity;
+      end Get_Entity;
+
+      ------------
+      -- Is_New --
+      ------------
+
+      function Is_New (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Entity.Is_New;
+      end Is_New;
+
+      ----------------
+      -- New_Entity --
+      ----------------
+
+      procedure Get_Unique_Entity
+        (Entity  : out Unique_Entity_Id;
+         Context : access constant Docgen_Context;
+         File    : Virtual_File;
+         E       : General_Entity;
+         Forced  : Boolean := False;
+         C_Header_File : Virtual_File := No_File)
+
+      is
+         Db    : General_Xref_Database renames Context.Database;
+         E_Loc : constant General_Location := Get_Location (Db, E);
+
+         Lang        : constant Language_Access :=
+                         Get_Language_From_File (Context.Lang_Handler, File);
+         In_Ada_Lang : constant Boolean :=
+                         Lang.all in Language.Ada.Ada_Language'Class;
+         In_CPP_Lang : constant Boolean :=
+                         Lang.all in Language.Cpp.Cpp_Language'Class;
+
+         procedure Build_New_Entity;
+         procedure Build_New_Entity (Ref_File : Virtual_File);
+         --  Local routines which factorize code used to allocate a new
+         --  entity
+
+         procedure Build_New_Entity is
+         begin
+            Entity :=
+              new Unique_Entity_Info'
+                    (Context       => Context,
+                     Entity        => New_Entity (Context, Lang, E, E_Loc),
+                     File          => File,
+                     C_Header_File => C_Header_File,
+                     Is_New        => True);
+         end Build_New_Entity;
+
+         procedure Build_New_Entity (Ref_File : Virtual_File) is
+         begin
+            Entity :=
+              new Unique_Entity_Info'
+                    (Context       => Context,
+                     Entity        => New_Entity (Context, Lang, E, E_Loc),
+                     File          => File,
+                     C_Header_File => C_Header_File,
+                     Is_New        => True);
+            Set_Ref_File (Entity.Entity, Ref_File);
+         end Build_New_Entity;
+
+         --  Local variables
+
+         Is_Prim : constant Boolean := Present (Is_Primitive_Of (Db, E));
+         --  Avoid calling twice this service???
+
+      begin
+         Entity := null;
+
+         --  Case 1: Entities defined in other packages/files
+
+         if In_Ada_Lang then
+
+            if E_Loc.File /= File
+              and then not Is_Prim
+              and then not Forced
+            then
+               return;
+            end if;
+
+            --  Before creating the entity we search for it in the hash
+            --  table (to avoid duplicating it!)
+
+            declare
+               Map_Cursor : constant EInfo_Map.Cursor :=
+                 Entities_Map.Find (E_Loc);
+               use type EInfo_Map.Cursor;
+            begin
+               if Map_Cursor /= EInfo_Map.No_Element then
+                  Entity :=
+                    new Unique_Entity_Info'
+                      (Context       => Context,
+                       Entity        => EInfo_Map.Element (Map_Cursor),
+                       File          => File,
+                       C_Header_File => C_Header_File,
+                       Is_New        => False);
+               else
+                  Build_New_Entity;
+               end if;
+
+               return;
+            end;
+
+         --  C++
+
+         elsif In_CPP_Lang then
+            declare
+               Kind : constant Entity_Kind :=
+                        LL.Get_Ekind (Db, E, In_Ada_Lang => False);
+               Map_Cursor : EInfo_Map.Cursor;
+
+               use type EInfo_Map.Cursor;
+
+            begin
+               if Kind = E_Include_File then
+                  return;
+               end if;
+
+               --  Before creating the entity we search for it in the hash
+               --  table (to avoid duplicating it!)
+
+               Map_Cursor := Entities_Map.Find (E_Loc);
+
+               if Map_Cursor /= EInfo_Map.No_Element then
+                  Entity :=
+                    new Unique_Entity_Info'
+                      (Context       => Context,
+                       Entity        => EInfo_Map.Element (Map_Cursor),
+                       File          => File,
+                       C_Header_File => C_Header_File,
+                       Is_New        => False);
+               else
+                  Build_New_Entity;
+
+                  if LL.Get_Location (Get_Entity (Entity)).File /= File then
+                     Set_Ref_File (Get_Entity (Entity), File);
+                  end if;
+               end if;
+
+               return;
+            end;
+
+         --  C
+
+         else
+            declare
+               E_Body_Loc : constant General_Location := Get_Body (Db, E);
+               Kind       : constant Entity_Kind :=
+                              LL.Get_Ekind (Db, E, In_Ada_Lang => False);
+
+            begin
+               if Kind = E_Include_File
+                 or else Kind = E_Unknown
+               then
+                  return;
+
+               elsif E_Loc.File /= File then
+
+                  --  Handle entities defined in the header file (.h)
+
+                  --  If we already know the associated header file we can
+                  --  safely take a decision
+
+                  if C_Header_File /= No_File then
+                     if E_Loc.File /= No_File
+                       and then E_Loc.File = C_Header_File
+                     then
+                        Build_New_Entity (Ref_File => File);
+                        return;
+                     else
+                        return;
+                     end if;
+
+                     --  Otherwise this works only if the first entity
+                     --  referenced from the header file is a subprogram.
+                     --  More work needed here to handle other entities???
+
+                  elsif Present (E_Body_Loc)
+                    and then E_Body_Loc.File = File
+                  then
+                     Build_New_Entity (Ref_File => File);
+                     return;
+
+                     --  We assume that there is only a header file
+                     --  associated with each .c or .cpp file. We also
+                     --  assume that the name of the header file and the
+                     --  name of the .c/.cpp files (without their extension)
+                     --  matches. Otherwise more work is needed here to
+                     --  handle these entities???
+
+                  elsif Filename (E_Loc.File) = Filename (File) then
+                     Build_New_Entity (Ref_File => File);
+                     return;
+
+                  else
+                     return;
+                  end if;
+               end if;
+
+               Build_New_Entity;
+               return;
+            end;
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, E);
+            return;
+      end Get_Unique_Entity;
+
+      -------------------------
+      -- New_Internal_Entity --
+      -------------------------
+
+      function New_Internal_Entity
+        (Context  : access constant Docgen_Context;
+         Language : Language_Access;
+         Name     : String) return Unique_Entity_Id
+      is
+      begin
+         return
+           new Unique_Entity_Info'
+                 (Context       => Context,
+                  Entity        => New_Internal_Entity
+                                     (Context  => Context,
+                                      Language => Language,
+                                      Name     => Name),
+                  File          => No_File,
+                  C_Header_File => No_File,
+                  Is_New        => True);
+      end New_Internal_Entity;
+
+      -------------
+      -- Present --
+      -------------
+
+      function Present (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Entity /= No_Entity;
+      end Present;
+
+      -------------------
+      -- Update_Entity --
+      -------------------
+
+      procedure Update_Entity
+        (Entity : in out Unique_Entity_Id;
+         E      : General_Entity;
+         Forced : Boolean := False)
+      is
+         Context  : constant access constant Docgen_Context := Entity.Context;
+         File     : constant Virtual_File := Entity.File;
+         C_Header : constant Virtual_File := Entity.C_Header_File;
+
+      begin
+         Free (Entity);
+         Get_Unique_Entity
+           (Entity, Context, File, E, Forced, C_Header);
+      end Update_Entity;
+
+      --------
+      -- pn --
+      --------
+
+      procedure pn (E : Unique_Entity_Id) is
+      begin
+         if Present (Get_Entity (E)) then
+            Atree.pn (Get_Entity (E));
+         end if;
+      end pn;
+
+      ----------
+      -- pnid --
+      ----------
+
+      procedure pnid (Unique_Id : Natural) is
+         Cursor : EInfo_Map.Cursor;
+         E      : Entity_Id;
+      begin
+         Cursor := Entities_Map.First;
+         while EInfo_Map.Has_Element (Cursor) loop
+            E := EInfo_Map.Element (Cursor);
+
+            if Get_Unique_Id (E) = Unique_Id then
+               pn (E);
+               exit;
+            end if;
+
+            EInfo_Map.Next (Cursor);
+         end loop;
+      end pnid;
+
+   end Unique_Entity_Allocator;
 
    -----------------
    -- Scope_Stack --
@@ -100,20 +578,20 @@ package body Docgen3.Frontend is
       --  Clear the contents of the Scope Stack and unregister the entity
       --  which represents the standard entity.
 
-      function Current_Scope return Entity_Id;
+      function Current_Scope return Unique_Entity_Id;
       --  Return the entity in the top of the stack
 
       function Current_Scope_Depth return Natural;
       --  Return the depth of the stack
 
-      procedure Enter_Scope (Scope : Entity_Id);
+      procedure Enter_Scope (Scope : Unique_Entity_Id);
       --  Push Scope
 
       procedure Exit_Scope;
       --  Pop an entity from the stack
 
       function Find_Entity
-        (Scope : Entity_Id;
+        (Scope : Unique_Entity_Id;
          Loc   : General_Location) return Entity_Id;
       --  Search for the entity at Loc in all the enclosing scopes of
       --  Scope.
@@ -125,12 +603,10 @@ package body Docgen3.Frontend is
       function In_Generic_Scope return Boolean;
       --  Return true if some enclosing scopes is generic
 
-      procedure Register_Std_Entity (E : Entity_Id);
+      procedure Register_Std_Entity (E : Unique_Entity_Id);
       --  Register in the package the entity used to represent the standard
       --  entity. Needed internally to identify the outermost scope.
 
-   private
-      pragma Unreferenced (In_Generic_Scope);
    end Scopes_Stack;
 
    ---------------------------------
@@ -323,6 +799,7 @@ package body Docgen3.Frontend is
             --  interface type.
 
             Is_Interface : Boolean := False;
+            Is_Null      : Boolean := False;
             Tagged_Null  : Boolean := False;
             With_Null    : Boolean := False;
 
@@ -423,18 +900,75 @@ package body Docgen3.Frontend is
                   if In_Parent_Part
                     and then No (Get_Parent (E))
                   then
-                     pragma Assert (Is_Tagged_Type (E));
+                     --  In the partial view Xref returns the parent in the
+                     --  list of parents (and hence, at current stage it is
+                     --  stored in the list of progenitors). We localize it
+                     --  and remove it from the list of progenitors.
 
-                     declare
-                        Parent : Entity_Id;
-                     begin
-                        Parent :=
-                          Find_Entity (Get_Progenitors (E).all, Name => S);
-                        pragma Assert (Present (Parent));
+                     if not Is_Full_View
+                       and then Is_Tagged_Type (E)
+                     then
+                        declare
+                           Parent : Entity_Id;
+                        begin
+                           Parent :=
+                             Find_Entity (Get_Progenitors (E).all, Name => S);
+                           pragma Assert (Present (Parent));
 
-                        Set_Parent (E, Parent);
-                        Delete_Entity (Get_Progenitors (E).all, Parent);
-                     end;
+                           Set_Parent (E, Parent);
+                           Delete_Entity (Get_Progenitors (E).all, Parent);
+                        end;
+
+                     --  Derivation of untagged type. For instance:
+                     --     type Rec_A is record ...
+                     --     subtype Rec_B is Rec_A;
+
+                     elsif not Is_Full_View
+                       and then not Is_Tagged_Type (E)
+                     then
+                        --  Unhandled yet???
+                        null;
+
+                     --  If the parent of a private type is only specified
+                     --  in its full view, then Xref cannot locate it because
+                     --  currently the compiler does not generate such
+                     --  information in the ALI file (see comment in
+                     --  docgen3-atree.adb).
+
+                     else
+                        if not Is_Tagged_Type (E) then
+                           Set_Is_Tagged_Type (E);
+                        end if;
+
+                        declare
+                           Tok_Loc   : General_Location;
+                           LL_Parent : General_Entity;
+                           Entity    : Unique_Entity_Id;
+
+                        begin
+                           Tok_Loc :=
+                             General_Location'
+                               (File   => File,
+                                Line   => Loc.Line + Sloc_Start.Line - 1,
+                                Column =>
+                                  Visible_Column_Type (Sloc_Start.Column));
+
+                           LL_Parent :=
+                             Xref.Get_Entity
+                               (Db   => Context.Database,
+                                Name => Get_Short_Name (S),
+                                Loc  => Tok_Loc);
+                           pragma Assert (Present (LL_Parent));
+
+                           Get_Unique_Entity
+                             (Entity  => Entity,
+                              Context => Context,
+                              File    => File,
+                              E       => LL_Parent,
+                              Forced  => True);
+                           Set_Parent (E, Get_Entity (Entity));
+                        end;
+                     end if;
 
                      In_Parent_Part := False;
                   end if;
@@ -448,6 +982,8 @@ package body Docgen3.Frontend is
                         In_Parent_Part := True;
                      elsif Token = Tok_Interface then
                         Is_Interface := True;
+                     elsif Token = Tok_Null then
+                        Is_Null := True;
                      end if;
 
                   elsif (Prev_Token = Tok_Is or else Prev_Token = Tok_Abstract)
@@ -478,7 +1014,8 @@ package body Docgen3.Frontend is
                   then
                      With_Null := True;
 
-                  elsif (Tagged_Null
+                  elsif (Is_Null
+                           or else Tagged_Null
                            or else With_Null
                            or else Prev_Token = Tok_End)
                     and then Token = Tok_Record
@@ -544,7 +1081,14 @@ package body Docgen3.Frontend is
 
             if Buffer (Prev_Word_Begin - 1) = ' ' then
                From := Skip_Blanks_Backward (Prev_Word_Begin - 1);
+
+               if Buffer.all (From) = ASCII.LF then
+                  From := From + 1;
+               end if;
+
                Append (Buffer.all (From .. Prev_Word_Begin - 1));
+            else
+               From := Prev_Word_Begin;
             end if;
 
             --  For simple cases (interfaces, incomplete and private types)
@@ -568,7 +1112,7 @@ package body Docgen3.Frontend is
 
             else
                Parse_Entities
-                 (Lang, Buffer.all (Prev_Word_Begin .. Buffer'Last),
+                 (Lang, Buffer.all (From .. Buffer'Last),
                   CB'Unrestricted_Access);
             end if;
 
@@ -1213,6 +1757,9 @@ package body Docgen3.Frontend is
             return Printout;
          end Get_Variable_Declaration_Source;
 
+         Under_Development_Text : constant String :=
+           "<<Get_Source under development for this kind of entity>>";
+
       --  Start of processing for CPP_Get_Source
 
       begin
@@ -1248,10 +1795,18 @@ package body Docgen3.Frontend is
             pragma Assert (False);
             Set_Src (E, Get_Variable_Declaration_Source);
 
+         --  Do not add any message to a C/C++ entity which already has the
+         --  "under development" text
+
+         elsif not In_Ada_Language (E)
+           and then Get_Src (E) /= Null_Unbounded_String
+           and then Get_Src (E) = Under_Development_Text
+         then
+            null;
+
          else
             Set_Src (E,
-              To_Unbounded_String
-                ("<<Get_Source under development for this kind of entity>>"));
+              To_Unbounded_String (Under_Development_Text));
          end if;
 
          --  Restore original contents of buffers
@@ -1433,10 +1988,9 @@ package body Docgen3.Frontend is
       In_CPP_Lang    : constant Boolean :=
                          Lang.all in Language.Cpp.Cpp_Language'Class;
       In_C_Lang      : constant Boolean := not In_Ada_Lang;
-      Entities_Map   : EInfo_Map.Map;
       C_Header_File  : Virtual_File;
 
-      Std_Entity     : constant Entity_Id :=
+      Std_Entity     : constant Unique_Entity_Id :=
                          New_Internal_Entity
                            (Context  => Context,
                             Language => Lang,
@@ -1444,169 +1998,64 @@ package body Docgen3.Frontend is
 
       use Scopes_Stack;
 
-      procedure Append_To_File_Entities (E : Entity_Id);
+      procedure Append_To_File_Entities (E : Unique_Entity_Id);
       --  Append E to File_Entities.All_Entities
 
-      procedure Append_To_Map (E : Entity_Id);
-      --  Append E to Entities_Map
-
-      procedure Append_To_Scope (Scope : Entity_Id; E : Entity_Id);
+      procedure Append_To_Scope (Scope : Entity_Id; E : Unique_Entity_Id);
       --  Append E to the list of entities of Scope
 
-      procedure Complete_Decoration (E : Entity_Id);
+      procedure Complete_Decoration (E : Unique_Entity_Id);
       --  Complete the decoration of entity E
 
-      function New_Entity
-        (E      : General_Entity;
-         Forced : Boolean := False) return Entity_Id;
-      --  Build a new entity for the Xref entity E. If Forced is True then the
-      --  entity is built even if it is defined in another file.
+      procedure Update_Scopes_Stack (New_E : Unique_Entity_Id);
+      --  Update the contents of the scope stack trusting on the Scope provided
+      --  by Xref (if available)
 
       -----------------------------
       -- Append_To_File_Entities --
       -----------------------------
 
-      procedure Append_To_File_Entities (E : Entity_Id) is
+      procedure Append_To_File_Entities (E : Unique_Entity_Id) is
       begin
-         File_Entities.All_Entities.Append (E);
+         File_Entities.All_Entities.Append (Get_Entity (E));
       end Append_To_File_Entities;
-
-      -------------------
-      -- Append_To_Map --
-      -------------------
-
-      procedure Append_To_Map (E : Entity_Id) is
-      begin
-         Entities_Map.Include (LL.Get_Location (E), E);
-         Append_To_File_Entities (E);
-      end Append_To_Map;
 
       ---------------------
       -- Append_To_Scope --
       ---------------------
 
-      procedure Append_To_Scope (Scope : Entity_Id; E : Entity_Id) is
+      procedure Append_To_Scope (Scope : Entity_Id; E : Unique_Entity_Id) is
       begin
-         Append_Entity (Scope, E);
-         Set_Scope (E, Scope);
-         Append_To_Map (E);
+         Append_Entity (Scope, Get_Entity (E));
+         Set_Scope (Get_Entity (E), Scope);
+         Append_To_File_Entities (E);
       end Append_To_Scope;
 
       -------------------------
       -- Complete_Decoration --
       -------------------------
 
-      procedure Complete_Decoration (E : Entity_Id) is
+      procedure Complete_Decoration (E : Unique_Entity_Id) is
 
-         procedure Decorate_Record_Type (E : Entity_Id);
+         procedure Decorate_Record_Type (E : Unique_Entity_Id);
          --  Complete the decoration of a record type entity
 
-         procedure Decorate_Subprogram (E : Entity_Id);
+         procedure Decorate_Subprogram (E : Unique_Entity_Id);
          --  Complete the decoration of a subprogram entity
 
          --------------------------
          -- Decorate_Record_Type --
          --------------------------
 
-         procedure Decorate_Record_Type (E : Entity_Id) is
-         begin
-            if In_Ada_Lang then
-               declare
-                  Discrim : constant Xref.Entity_Array :=
-                              Discriminants
-                                (Context.Database, LL.Get_Entity (E));
-                  D : Entity_Id;
-               begin
-                  for J in Discrim'Range loop
-                     D := New_Entity (Discrim (J));
-                     Set_Kind (D, E_Discriminant);
-                     Entities_Map.Include (LL.Get_Location (D), D);
-                     Append_Discriminant (E, D);
-                  end loop;
-               end;
-            end if;
+         procedure Decorate_Record_Type (E : Unique_Entity_Id) is
 
-            --  Check_Record_Components
+            procedure Append_Parent_And_Progenitors
+              (Parents  : Xref.Entity_Array);
 
-            declare
-               Components : constant Xref.Entity_Array :=
-                              Fields (Context.Database, LL.Get_Entity (E));
-               Comp_E : Entity_Id;
-
-            begin
-               for J in Components'Range loop
-                  Comp_E := New_Entity (Components (J));
-                  --  In C++ we have here formals of primitives???
-                  Set_Kind (Comp_E, E_Component);
-                  Append_To_Scope (E, Comp_E);
-               end loop;
-            end;
-
-            if Is_Tagged_Type (E)
-              or else (In_CPP_Lang and then Get_Kind (E) = E_Class)
-            then
-               --  ??? Xref bug (Xref.Methods): Include_Inherited returns
-               --  the same array when set to True or False (that is, False
-               --  has no effect).
-
-               declare
-                  All_Methods : constant Xref.Entity_Array :=
-                                  Methods
-                                    (Context.Database, LL.Get_Entity (E),
-                                     Include_Inherited => True);
-                  Meth_E : Entity_Id;
-               begin
-                  for J in All_Methods'Range loop
-                     Meth_E :=
-                       New_Entity (All_Methods (J), Forced => True);
-
-                     if In_Ada_Language (Meth_E) then
-
-                        --  If Xref does not have available the scope of this
-                        --  method it means that it is a primitive defined in
-                        --  a file which is not directly part of this project
-                        --  (that is, an entity defined in the runtime of the
-                        --  compiler or in a library). In such case we consider
-                        --  that it is an inherited primitive.
-
-                        if LL.Get_Scope (Meth_E) = No_General_Entity
-                          or else LL.Get_Scope (Meth_E) /= LL.Get_Scope (E)
-                        then
-                           --  For inherited primitives defined in other
-                           --  files/scopes we cannot set their scope.
-
-                           Decorate_Subprogram (Meth_E);
-                           Append_Inherited_Method (E, Meth_E);
-
-                        else
-                           Append_To_Scope (Get_Scope (E), Meth_E);
-                           Decorate_Subprogram (Meth_E);
-                           Append_Method (E, Meth_E);
-                        end if;
-                     else
-                        if LL.Get_Scope (Meth_E) = LL.Get_Entity (E) then
-                           Append_To_Scope (E, Meth_E);
-                           Decorate_Subprogram (Meth_E);
-                           Append_Method (E, Meth_E);
-
-                        --  For inherited primitives defined in other
-                        --  scopes we cannot set their scope.
-
-                        else
-                           Decorate_Subprogram (Meth_E);
-                           Append_Inherited_Method (E, Meth_E);
-                        end if;
-                     end if;
-                  end loop;
-               end;
-            end if;
-
-            declare
-               Parents  : constant Xref.Entity_Array :=
-                            Parent_Types
-                              (Context.Database, LL.Get_Entity (E),
-                               Recursive => False);
-               Parent_E : Entity_Id;
+            procedure Append_Parent_And_Progenitors
+              (Parents : Xref.Entity_Array)
+            is
+               Parent : Unique_Entity_Id;
 
             begin
                --  Identify the parent and the progenitors of the type. When
@@ -1618,36 +2067,183 @@ package body Docgen3.Frontend is
                --  Get_Record_Type_Source).
 
                for J in Parents'Range loop
-                  Parent_E := New_Entity (Parents (J), Forced => True);
-                  LL.Append_Parent_Type (E, Parent_E);
+                  Get_Unique_Entity
+                    (Parent, Context, File, Parents (J), Forced => True);
+                  LL.Append_Parent_Type (Get_Entity (E), Get_Entity (Parent));
 
                   --  The list of parents returned by Xref does not help to
                   --  differentiate the parent type from the progenitors.
 
                   if In_Ada_Lang then
-                     if Get_Kind (Parent_E) /= E_Interface then
-                        Set_Parent (E, Parent_E);
+                     if Get_Kind (Get_Entity (Parent)) /= E_Interface then
+                        Set_Parent (Get_Entity (E), Get_Entity (Parent));
                      else
-                        Append_Progenitor (E, Parent_E);
+                        Append_Progenitor
+                          (Get_Entity (E), Get_Entity (Parent));
                      end if;
                   end if;
-               end loop;
 
-               if In_Ada_Language (E)
-                 and then No (Get_Parent (E))
-                 and then Parents'Length = 1
-               then
-                  Set_Parent (E, Parent_E);
-                  Delete_Entity (Get_Progenitors (E).all, Parent_E);
-               end if;
+                  if Is_New (Parent) then
+                     Append_To_Map (Parent);
+                  end if;
+               end loop;
+            end Append_Parent_And_Progenitors;
+
+         begin
+            if In_Ada_Lang then
+               declare
+                  Discrim : constant Xref.Entity_Array :=
+                              Discriminants
+                                (Context.Database,
+                                 LL.Get_Entity (Get_Entity (E)));
+                  Entity  : Unique_Entity_Id;
+               begin
+                  for J in Discrim'Range loop
+                     Get_Unique_Entity (Entity, Context, File, Discrim (J));
+                     Set_Kind (Get_Entity (Entity), E_Discriminant);
+                     Append_To_Map (Entity);
+                     Append_Discriminant (Get_Entity (E), Get_Entity (Entity));
+                     pragma Assert (Is_New (Entity));
+                     Append_To_Map (Entity);
+                  end loop;
+               end;
+            end if;
+
+            --  Check_Record_Components
+
+            declare
+               Components : constant Xref.Entity_Array :=
+                              Fields (Context.Database,
+                                      LL.Get_Entity (Get_Entity (E)));
+               Entity     : Unique_Entity_Id;
+
+            begin
+               for J in Components'Range loop
+                  Get_Unique_Entity (Entity, Context, File, Components (J));
+                  --  In C++ we have here formals of primitives???
+                  Set_Kind (Get_Entity (Entity), E_Component);
+                  Append_To_Scope (Get_Entity (E), Entity);
+                  pragma Assert (Is_New (Entity));
+                  Append_To_Map (Entity);
+               end loop;
             end;
+
+            if Is_Tagged_Type (Get_Entity (E))
+              or else (In_CPP_Lang
+                         and then Get_Kind (Get_Entity (E)) = E_Class)
+            then
+               --  ??? Xref bug (Xref.Methods): Include_Inherited returns
+               --  the same array when set to True or False (that is, False
+               --  has no effect).
+
+               declare
+                  All_Methods : constant Xref.Entity_Array :=
+                                  Methods
+                                    (Context.Database,
+                                     LL.Get_Entity (Get_Entity (E)),
+                                     Include_Inherited => True);
+                  Method : Unique_Entity_Id;
+
+               begin
+                  for J in All_Methods'Range loop
+                     Get_Unique_Entity
+                       (Method, Context, File, All_Methods (J),
+                        Forced => True);
+
+                     if not Is_New (Method) then
+                        Append_Inherited_Method
+                          (Get_Entity (E), Get_Entity (Method));
+
+                     elsif In_Ada_Language (Get_Entity (Method)) then
+
+                        --  If Xref does not have available the scope of this
+                        --  method it means that it is a primitive defined in
+                        --  a file which is not directly part of this project
+                        --  (that is, an entity defined in the runtime of the
+                        --  compiler or in a library). In such case we consider
+                        --  that it is an inherited primitive.
+
+                        if No (LL.Get_Scope (Get_Entity (Method)))
+                          or else LL.Get_Scope (Get_Entity (Method))
+                                    /= LL.Get_Scope (Get_Entity (E))
+                        then
+                           --  For inherited primitives defined in other
+                           --  files/scopes we cannot set their scope.
+
+                           Decorate_Subprogram (Method);
+                           Append_Inherited_Method
+                             (Get_Entity (E), Get_Entity (Method));
+
+                        else
+                           Append_To_Scope
+                             (Get_Scope (Get_Entity (E)), Method);
+                           Decorate_Subprogram (Method);
+                           Append_Method (Get_Entity (E), Get_Entity (Method));
+                        end if;
+
+                        Append_To_Map (Method);
+                     else
+                        if LL.Get_Scope (Get_Entity (Method))
+                          = LL.Get_Entity (Get_Entity (E))
+                        then
+                           Append_To_Scope (Get_Entity (E), Method);
+                           Decorate_Subprogram (Method);
+                           Append_Method
+                             (Get_Entity (E), Get_Entity (Method));
+
+                        --  For inherited primitives defined in other
+                        --  scopes we cannot set their scope.
+
+                        else
+                           Decorate_Subprogram (Method);
+                           Append_Inherited_Method
+                             (Get_Entity (E), Get_Entity (Method));
+                        end if;
+
+                        Append_To_Map (Method);
+                     end if;
+                  end loop;
+               end;
+            end if;
+
+            Append_Parent_And_Progenitors
+              (Xref.Parent_Types
+                 (Self      => Context.Database,
+                  Entity    => LL.Get_Entity (Get_Entity (E)),
+                  Recursive => False));
+
+            if In_Ada_Language (Get_Entity (E)) then
+
+               --  Add information available in the full view (if the entity
+               --  of its full view is available; see the comment describing
+               --  this problem in docgen3-atree.adb???)
+
+               if Is_Incomplete_Or_Private_Type (Get_Entity (E))
+                 and then Present (LL.Get_Full_View (Get_Entity (E)))
+               then
+                  Append_Parent_And_Progenitors
+                    (Parent_Types
+                       (Context.Database, LL.Get_Full_View (Get_Entity (E)),
+                        Recursive => False));
+               end if;
+
+               if No (Get_Parent (Get_Entity (E)))
+                 and then Natural (Get_Progenitors (Get_Entity (E)).all.Length)
+                            = 1
+               then
+                  Set_Parent
+                    (Get_Entity (E),
+                     Get_Progenitors (Get_Entity (E)).First_Element);
+                  Get_Progenitors (Get_Entity (E)).Delete_First;
+               end if;
+            end if;
 
             declare
                Childs : constant Xref.Entity_Array :=
                           Child_Types
-                           (Context.Database, LL.Get_Entity (E),
-                            Recursive => True);
-               Child_E : Entity_Id;
+                           (Context.Database, LL.Get_Entity (Get_Entity (E)),
+                            Recursive => False);
+               Child  : Unique_Entity_Id;
 
             begin
                for J in Childs'Range loop
@@ -1656,15 +2252,31 @@ package body Docgen3.Frontend is
                   --  by the compiler for named typedef structs (the compiler
                   --  generates two entites in the LI file with the same name)
 
-                  if In_Ada_Language (E)
+                  if In_Ada_Language (Get_Entity (E))
                     or else not
                       LL.Is_Self_Referenced_Type
                         (Db   => Context.Database,
                          E    => Childs (J),
-                         Lang => Get_Language (E))
+                         Lang => Get_Language (Get_Entity (E)))
                   then
-                     Child_E := New_Entity (Childs (J), Forced => True);
-                     LL.Append_Child_Type (E, Child_E);
+                     Get_Unique_Entity
+                       (Child, Context, File, Childs (J), Forced => True);
+
+                     --  Avoid problems with wrong Xref decoration that I can
+                     --  reproduces with gnatcoll-refcount-weakref.ads. To
+                     --  be investigated???
+
+                     if not Is_Class_Or_Record_Type (Get_Entity (Child)) then
+                        Free (Child);
+
+                     else
+                        LL.Append_Child_Type
+                          (Get_Entity (E), Get_Entity (Child));
+
+                        if Is_New (Child) then
+                           Append_To_Map (Child);
+                        end if;
+                     end if;
                   end if;
                end loop;
             end;
@@ -1674,25 +2286,32 @@ package body Docgen3.Frontend is
          -- Decorate_Subprogram --
          -------------------------
 
-         procedure Decorate_Subprogram (E : Entity_Id) is
-            Formals  : constant Xref.Parameter_Array :=
-                         Parameters (Context.Database, LL.Get_Entity (E));
-            Formal_E : Entity_Id;
+         procedure Decorate_Subprogram (E : Unique_Entity_Id) is
+            Formals : constant Xref.Parameter_Array :=
+                        Parameters
+                          (Context.Database, LL.Get_Entity (Get_Entity (E)));
+            Formal  : Unique_Entity_Id;
 
          begin
             Enter_Scope (E);
 
             for J in Formals'Range loop
+               Get_Unique_Entity
+                 (Formal, Context, File, Formals (J).Parameter);
 
-               Formal_E := New_Entity (Formals (J).Parameter);
                --  Formals (J).Kind ???
                --  Is_Full_View is erroneusly set in formals ???
-               if Present (Formal_E) then
-                  Set_Kind (Formal_E, E_Formal);
-                  Set_Scope (Formal_E, E);
+               if Present (Formal) then
+                  Set_Kind (Get_Entity (Formal), E_Formal);
+                  Set_Scope (Get_Entity (Formal), Get_Entity (E));
 
-                  Append_To_Scope (Current_Scope, Formal_E);
+                  Append_To_Scope (Get_Entity (Current_Scope), Formal);
+                  pragma Assert (Is_New (Formal)
+                                 or else In_Generic_Scope);
+                  --  For generic formals we probably should force the
+                  --  generation of a new entity???
 
+                  Append_To_Map (Formal);
                   --  Local variables defined in the body of this
                   --  subprogram.
 
@@ -1707,8 +2326,8 @@ package body Docgen3.Frontend is
       --  Start of processing for Complete_Decoration
 
       begin
-         if LL.Is_Container (E) then
-            if Is_Class_Or_Record_Type (E) then
+         if LL.Is_Container (Get_Entity (E)) then
+            if Is_Class_Or_Record_Type (Get_Entity (E)) then
                Decorate_Record_Type (E);
 
                --  Although formals are available in the list of
@@ -1717,163 +2336,25 @@ package body Docgen3.Frontend is
                --  traversing these entities since some entities do
                --  not have its Xref.Scope entity available.
 
-            elsif LL.Is_Subprogram (E) then
+            elsif LL.Is_Subprogram (Get_Entity (E)) then
                Decorate_Subprogram (E);
             end if;
 
-         elsif Get_Kind (E) = E_Interface then
+         elsif Get_Kind (Get_Entity (E)) = E_Interface then
             Decorate_Record_Type (E);
          end if;
       end Complete_Decoration;
 
-      ----------------
-      -- New_Entity --
-      ----------------
-
-      function New_Entity
-        (E      : General_Entity;
-         Forced : Boolean := False) return Entity_Id
-      is
-         Db      : General_Xref_Database renames Context.Database;
-         E_Loc   : constant General_Location := Get_Location (Db, E);
-         Is_Prim : constant Boolean := Present (Is_Primitive_Of (Db, E));
-         --  Avoid calling twice this service???
-
-      begin
-         --  Case 1: Entities defined in other packages/files
-
-         if In_Ada_Lang then
-
-            if E_Loc.File /= File
-              and then not Is_Prim
-              and then not Forced
-            then
-               return null;
-            else
-               return Atree.New_Entity (Context, Lang, E, E_Loc);
-            end if;
-
-         --  C++
-
-         elsif In_CPP_Lang then
-            declare
-               Kind   : constant Entity_Kind :=
-                          LL.Get_Ekind (Db, E, In_Ada_Lang => False);
-               New_E  : Entity_Id;
-
-            begin
-               if Kind = E_Include_File then
-                  return null;
-
-               elsif E_Loc.File = File then
-                  return Atree.New_Entity (Context, Lang, E, E_Loc);
-
-               elsif C_Header_File /= No_File then
-                  if E_Loc.File = C_Header_File then
-                     return Atree.New_Entity (Context, Lang, E, E_Loc);
-                  else
-                     return null;
-                  end if;
-
-               elsif E_Loc.File /= File then
-                  New_E := Atree.New_Entity (Context, Lang, E, E_Loc);
-
-                  if LL.Is_Subprogram (New_E)
-                    and then LL.Is_Primitive (New_E)
-                    and then Present (LL.Get_Scope (New_E))
-                  then
-                     return New_E;
-                  end if;
-
-                  Free (New_E);
-                  return null;
-
-               else
-                  return Atree.New_Entity (Context, Lang, E, E_Loc);
-               end if;
-            end;
-
-         --  C
-
-         else
-            declare
-               E_Body_Loc : constant General_Location := Get_Body (Db, E);
-               Kind       : constant Entity_Kind :=
-                              LL.Get_Ekind (Db, E, In_Ada_Lang => False);
-               New_E      : Entity_Id;
-
-            begin
-               if Kind = E_Include_File
-                 or else Kind = E_Unknown
-               then
-                  return null;
-
-               elsif E_Loc.File /= File then
-
-                  --  Handle entities defined in the header file (.h)
-
-                  --  If we already know the associated header file we can
-                  --  safely take a decision
-
-                  if C_Header_File /= No_File then
-                     if E_Loc.File /= No_File
-                       and then E_Loc.File = C_Header_File
-                     then
-                        New_E := Atree.New_Entity (Context, Lang, E, E_Loc);
-                        Set_Ref_File (New_E, File);
-                        return New_E;
-                     else
-                        return null;
-                     end if;
-
-                  --  Otherwise this works only if the first entity referenced
-                  --  from the header file is a subprogram. More work needed
-                  --  here to handle other entities???
-
-                  elsif Present (E_Body_Loc)
-                    and then E_Body_Loc.File = File
-                  then
-                     New_E := Atree.New_Entity (Context, Lang, E, E_Loc);
-                     Set_Ref_File (New_E, File);
-                     return New_E;
-
-                  --  We assume that there is only a header file associated
-                  --  with each .c or .cpp file. We also assume that the
-                  --  name of the header file and the name of the .c/.cpp
-                  --  files (without their extension) matches. Otherwise
-                  --  more work is needed here to handle these entities???
-
-                  elsif Filename (E_Loc.File) = Filename (File) then
-                     New_E := Atree.New_Entity (Context, Lang, E, E_Loc);
-                     Set_Ref_File (New_E, File);
-                     return New_E;
-
-                  else
-                     return null;
-                  end if;
-               end if;
-
-               return Atree.New_Entity (Context, Lang, E, E_Loc);
-            end;
-         end if;
-
-      exception
-         when E : others =>
-            Trace (Exception_Handle, E);
-            return null;
-      end New_Entity;
-
       -------------------------
       -- Update_Scopes_Stack --
       -------------------------
-      procedure Update_Scopes_Stack (New_E : Entity_Id); --  ???
 
-      procedure Update_Scopes_Stack (New_E : Entity_Id) is
+      procedure Update_Scopes_Stack (New_E : Unique_Entity_Id) is
          Scope_Id : Entity_Id;
 
       begin
-         if LL.Get_Scope (New_E) = No_General_Entity then
-            Set_Scope (New_E, Current_Scope);
+         if LL.Get_Scope (Get_Entity (New_E)) = No_General_Entity then
+            Set_Scope (Get_Entity (New_E), Get_Entity (Current_Scope));
 
             --  More work needed with generic types since in some cases
             --  the scope is set???
@@ -1886,26 +2367,28 @@ package body Docgen3.Frontend is
             --   or else New_E.Kind = E_Access_Type);
 
          else
-            if In_Open_Scopes (LL.Get_Scope (New_E)) then
-               while LL.Get_Scope (New_E)
-                 /= LL.Get_Entity (Current_Scope)
+            if In_Open_Scopes (LL.Get_Scope (Get_Entity (New_E))) then
+               while LL.Get_Scope (Get_Entity (New_E))
+                 /= LL.Get_Entity (Get_Entity (Current_Scope))
                loop
                   Exit_Scope;
                end loop;
 
-            elsif LL.Is_Type (New_E) then
+            elsif LL.Is_Type (Get_Entity (New_E)) then
                Scope_Id :=
                  Find_Entity
                    (Current_Scope,
-                    Get_Location (Context.Database, LL.Get_Scope (New_E)));
+                    Get_Location
+                      (Context.Database, LL.Get_Scope (Get_Entity (New_E))));
 
-               Set_Scope (New_E, Scope_Id);
+               Set_Scope (Get_Entity (New_E), Scope_Id);
 
                --  pragma Assert (Get_Scope (New_E) /= null);
 
-               if No (Get_Scope (New_E)) then
-                  pragma Assert (Get_Kind (New_E) = E_Access_Type);
-                  Set_Scope (New_E, Current_Scope);
+               if No (Get_Scope (Get_Entity (New_E))) then
+                  pragma Assert
+                    (Get_Kind (Get_Entity (New_E)) = E_Access_Type);
+                  Set_Scope (Get_Entity (New_E), Get_Entity (Current_Scope));
                end if;
             end if;
          end if;
@@ -1917,7 +2400,7 @@ package body Docgen3.Frontend is
       --  It is needed to associate some scope to generic formals of library
       --  level units.
 
-      New_E                : Entity_Id;
+      New_E                : Unique_Entity_Id;
       Skip_This_Entity     : Boolean := False;
       File_Entities_Cursor : Entities_In_File_Cursor;
 
@@ -1929,7 +2412,7 @@ package body Docgen3.Frontend is
    begin
       C_Header_File := No_File;
 
-      Set_Kind (Std_Entity, E_Package);
+      Set_Kind (Get_Entity (Std_Entity), E_Package);
       Register_Std_Entity (Std_Entity);
       Enter_Scope (Std_Entity);
 
@@ -1949,7 +2432,6 @@ package body Docgen3.Frontend is
            & Total_Entities_Count'Img
            & " entities");
 
-         EInfo_Map.Clear (Entities_Map);
          Scopes_Stack.Clear;
          return No_Tree_Type;
       end if;
@@ -1960,17 +2442,33 @@ package body Docgen3.Frontend is
 
       if In_Ada_Lang then
          while not At_End (File_Entities_Cursor) loop
-            New_E := New_Entity (File_Entities_Cursor.Get);
+            Get_Unique_Entity
+              (New_E, Context, File, File_Entities_Cursor.Get);
             File_Entities_Cursor.Next;
 
             if Present (New_E) then
+               if Is_New (New_E) then
+                  Append_To_Map (New_E);
+               end if;
+
                Complete_Decoration (New_E);
-               Append_To_Scope (Current_Scope, New_E);
+
+               --  Do not set again the scope of formals which are already
+               --  decorated. For instance:
+
+               --     generic
+               --        with procedure Error (Msg : String);
+               --     ...
+
+               if Get_Kind (Get_Entity (New_E)) /= E_Formal then
+                  Append_To_Scope (Get_Entity (Current_Scope), New_E);
+                  Append_To_Map (New_E);
+               end if;
 
                --  Avoid spurious entity GNATCOLL.Any_Types (procedure???)
 
-               if LL.Is_Container (New_E)
-                 and then LL.Is_Global (New_E)
+               if LL.Is_Container (Get_Entity (New_E))
+                 and then LL.Is_Global (Get_Entity (New_E))
                then
                   Enter_Scope (New_E);
                   exit;
@@ -1984,7 +2482,7 @@ package body Docgen3.Frontend is
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
-         if Entities_Count mod 50 = 0 then
+         if Entities_Count mod 75 = 0 then
             GNAT.IO.Put_Line
               (+File.Base_Name
                & ":"
@@ -1994,7 +2492,9 @@ package body Docgen3.Frontend is
          end if;
 
          Skip_This_Entity := False;
-         New_E := New_Entity (File_Entities_Cursor.Get);
+         Get_Unique_Entity
+           (New_E, Context, File, File_Entities_Cursor.Get,
+            C_Header_File => C_Header_File);
 
          if Present (New_E) then
 
@@ -2002,14 +2502,14 @@ package body Docgen3.Frontend is
             --  the low level (ie. Xref).
 
             if In_Ada_Lang
-              and then Present (LL.Get_Scope (New_E))
+              and then Present (LL.Get_Scope (Get_Entity (New_E)))
             then
                --  Skip the full view of incomplete or private types because
                --  their Xref.Scope references the partial view (instead of
                --  referencing its syntax scope)
 
-               if Is_Incomplete_Or_Private_Type (New_E)
-                 and then Is_Full_View (New_E)
+               if Is_Incomplete_Or_Private_Type (Get_Entity (New_E))
+                 and then Is_Full_View (Get_Entity (New_E))
                then
                   null;
                else
@@ -2022,23 +2522,14 @@ package body Docgen3.Frontend is
             --  class in the LI file.
 
             if In_CPP_Lang
-              and then LL.Get_Location (New_E).File /= File
-              and then LL.Is_Subprogram (New_E)
-              and then LL.Is_Primitive (New_E)
-              and then Present (LL.Get_Scope (New_E))
+              and then LL.Get_Location (Get_Entity (New_E)).File /= File
+              and then LL.Is_Subprogram (Get_Entity (New_E))
+              and then LL.Is_Primitive (Get_Entity (New_E))
+              and then Present (LL.Get_Scope (Get_Entity (New_E)))
             then
-               declare
-                  Prev_E : Entity_Id := New_E;
-
-               begin
-                  New_E :=
-                    Atree.New_Entity
-                      (Context  => Context,
-                       Language => Lang,
-                       E        => LL.Get_Scope (New_E),
-                       Loc      => LL.Get_Scope_Loc (New_E));
-                  Free (Prev_E);
-               end;
+               Update_Entity
+                 (New_E, LL.Get_Scope (Get_Entity (New_E)), Forced => True);
+               pragma Assert (Present (New_E));
             end if;
 
             --  (C/C++) Locate the associated header file (if any). Currently
@@ -2046,51 +2537,53 @@ package body Docgen3.Frontend is
             --  header file.
 
             if In_CPP_Lang
-              and then Get_Kind (New_E) = E_Class
-              and then LL.Get_Location (New_E).File /= File
+              and then Get_Kind (Get_Entity (New_E)) = E_Class
+              and then LL.Get_Location (Get_Entity (New_E)).File /= File
             then
                pragma Assert (C_Header_File = No_File
-                  or else C_Header_File = LL.Get_Location (New_E).File);
-               C_Header_File := LL.Get_Location (New_E).File;
+                 or else C_Header_File
+                           = LL.Get_Location (Get_Entity (New_E)).File);
+               C_Header_File := LL.Get_Location (Get_Entity (New_E)).File;
 
             elsif In_C_Lang
-              and then LL.Get_Location (New_E).File /= File
+              and then LL.Get_Location (Get_Entity (New_E)).File /= File
             then
                pragma Assert (C_Header_File = No_File
-                 or else C_Header_File = LL.Get_Location (New_E).File);
-               C_Header_File := LL.Get_Location (New_E).File;
+                 or else C_Header_File
+                           = LL.Get_Location (Get_Entity (New_E)).File);
+               C_Header_File := LL.Get_Location (Get_Entity (New_E)).File;
             end if;
 
             --  Decorate the new entity
 
             if In_CPP_Lang
-              and then Get_Kind (New_E) = E_Class
-              and then Entities_Map.Contains (LL.Get_Location (New_E))
+              and then Get_Kind (Get_Entity (New_E)) = E_Class
+              and then Entities_Map.Contains
+                         (LL.Get_Location (Get_Entity (New_E)))
             then
                --  No need to handle twice the same class
                Skip_This_Entity := True;
 
             elsif In_C_Lang
-              and then Get_Kind (New_E) = E_Variable
-              and then not LL.Is_Global (New_E)
+              and then Get_Kind (Get_Entity (New_E)) = E_Variable
+              and then not LL.Is_Global (Get_Entity (New_E))
             then
                Skip_This_Entity := True;
 
             elsif In_Ada_Lang
-              and then not Kind_In (Get_Kind (New_E), E_Variable,
-                                                      E_Discriminant,
-                                                      E_Component)
-              and then not LL.Is_Primitive (New_E)
+              and then not
+                Kind_In (Get_Kind (Get_Entity (New_E)), E_Variable,
+                                                          E_Formal,
+                                                          E_Discriminant,
+                                                          E_Component)
+              and then not LL.Is_Primitive (Get_Entity (New_E))
             then
-               pragma Assert
-                 (not Entities_Map.Contains (LL.Get_Location (New_E)));
-
                --  Skip processing the full-view of a private or incomplete
                --  type since its components are retrieved from Xref when
                --  we process its partial view.
 
-               if Is_Incomplete_Or_Private_Type (New_E)
-                 and then Is_Full_View (New_E)
+               if Is_Incomplete_Or_Private_Type (Get_Entity (New_E))
+                 and then Is_Full_View (Get_Entity (New_E))
                then
                   Skip_This_Entity := True;
                end if;
@@ -2098,7 +2591,7 @@ package body Docgen3.Frontend is
             --  Skip methods since they are entered in the tree as part of
             --  processing its class/tagged type
 
-            elsif LL.Is_Primitive (New_E) then
+            elsif LL.Is_Primitive (Get_Entity (New_E)) then
                Skip_This_Entity := True;
 
             elsif In_Ada_Lang then
@@ -2106,10 +2599,11 @@ package body Docgen3.Frontend is
                --  An E_Variable may be in fact a component of an incomplete
                --  or private type
 
-               if LL.Get_Kind (New_E) = E_Variable then
+               if LL.Get_Kind (Get_Entity (New_E)) = E_Variable then
                   declare
                      Map_Cursor : constant EInfo_Map.Cursor :=
-                       Entities_Map.Find (LL.Get_Location (New_E));
+                                    Entities_Map.Find
+                                      (LL.Get_Location (Get_Entity (New_E)));
                      Prev_E     : Entity_Id;
                      use type EInfo_Map.Cursor;
                   begin
@@ -2132,11 +2626,11 @@ package body Docgen3.Frontend is
                end if;
 
             elsif In_C_Lang
-              and then Present (LL.Get_Scope (New_E))
-              and then LL.Is_Global (New_E)
+              and then Present (LL.Get_Scope (Get_Entity (New_E)))
+              and then LL.Is_Global (Get_Entity (New_E))
             then
-               if Is_Class_Or_Record_Type (New_E)
-                 and then Get_Kind (New_E) /= E_Class
+               if Is_Class_Or_Record_Type (Get_Entity (New_E))
+                 and then Get_Kind (Get_Entity (New_E)) /= E_Class
                then
                   --  Handle named typedef structs since the compiler
                   --  generates two entites in the LI file with the
@@ -2144,26 +2638,20 @@ package body Docgen3.Frontend is
 
                   declare
                      Scope_Id : constant General_Entity :=
-                                  LL.Get_Scope (New_E);
+                                  LL.Get_Scope (Get_Entity (New_E));
                   begin
-                     if Context.Database.Get_Name (LL.Get_Entity (New_E))
+                     if Context.Database.Get_Name
+                          (LL.Get_Entity (Get_Entity (New_E)))
                        = Context.Database.Get_Name (Scope_Id)
                      then
-                        Free (New_E);
-                        New_E :=
-                          New_Entity
-                            (Context  => Context,
-                             Language => Lang,
-                             E        => Scope_Id,
-                             Loc      => Get_Location
-                                           (Context.Database, Scope_Id));
+                        Update_Entity (New_E, Scope_Id);
                      end if;
                   end;
 
-               elsif Get_Kind (New_E) = E_Variable then
+               elsif Get_Kind (Get_Entity (New_E)) = E_Variable then
                   declare
                      Scope_Id   : constant General_Entity :=
-                                    LL.Get_Scope (New_E);
+                                    LL.Get_Scope (Get_Entity (New_E));
                      use type EInfo_Map.Cursor;
                   begin
                      --  Handle fields of structs. Must use the Xref support
@@ -2190,14 +2678,32 @@ package body Docgen3.Frontend is
                Free (New_E);
 
             else
-               Append_To_Scope (Current_Scope, New_E);
-               Complete_Decoration (New_E);
+               if Is_New (New_E) then
+                  Append_To_Map (New_E);
+               end if;
 
-               if Get_Kind (New_E) = E_Enumeration_Type then
-                  Enter_Scope (New_E);
+               if In_Ada_Lang then
+                  Append_To_Scope (Get_Entity (Current_Scope), New_E);
 
-               elsif Is_Package (New_E) then
-                  Enter_Scope (New_E);
+                  Complete_Decoration (New_E);
+
+                  if Get_Kind (Get_Entity (New_E)) = E_Enumeration_Type then
+                     Enter_Scope (New_E);
+
+                  elsif Is_Package (Get_Entity (New_E)) then
+                     Enter_Scope (New_E);
+                  end if;
+
+               --  C/C++
+
+               else
+                  if LL.Get_Location (Get_Entity (New_E)).File /= File then
+                     Append_To_Scope (Get_Entity (Std_Entity), New_E);
+                  else
+                     Append_To_Scope (Get_Entity (Current_Scope), New_E);
+                  end if;
+
+                  Complete_Decoration (New_E);
                end if;
             end if;
          end if;
@@ -2205,10 +2711,9 @@ package body Docgen3.Frontend is
          File_Entities_Cursor.Next;
       end loop;
 
-      EInfo_Map.Clear (Entities_Map);
       Scopes_Stack.Clear;
 
-      return Built_Tree_Type'(Std_Entity, C_Header_File);
+      return Built_Tree_Type'(Get_Entity (Std_Entity), C_Header_File);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -2804,51 +3309,44 @@ package body Docgen3.Frontend is
          return No_Tree;
    end Build_Tree;
 
-   ----------
-   -- Hash --
-   ----------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Hash (Key : General_Location) return Ada.Containers.Hash_Type is
-      type Internal_Hash_Type is range 0 .. 2 ** 31 - 1;
-      function Internal is new GNAT.HTable.Hash
-        (Header_Num => Internal_Hash_Type);
+   procedure Initialize is
    begin
-      return Ada.Containers.Hash_Type
-        (Internal
-           (+Key.File.Full_Name
-            & Natural'Image (Key.Line)
-            & Basic_Types.Visible_Column_Type'Image (Key.Column)));
-   end Hash;
+      EInfo_Map.Clear (Entities_Map);
+   end Initialize;
 
-   ---------------------
-   -- Equivalent_Keys --
-   ---------------------
+   --------------
+   -- Finalize --
+   --------------
 
-   function Equivalent_Keys
-     (Left, Right : General_Location) return Boolean
-   is
-      use type GNATCOLL.Xref.Visible_Column;
+   procedure Finalize is
    begin
-      return Left.File = Right.File
-        and then Left.Line = Right.Line
-        and then Left.Column = Right.Column;
-   end Equivalent_Keys;
+      null;
+   end Finalize;
 
    -----------------
    -- Scope_Stack --
    -----------------
 
    package body Scopes_Stack is
-      Std_Entity : Entity_Id;
-      Stack      : EInfo_List.Vector;
+
+      package Alloc_Entity_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => Unique_Entity_Id);
+      --  procedure Free (List : in out Alloc_Entity_List.Vector);
+
+      Std_Entity : Unique_Entity_Id;
+      Stack      : Alloc_Entity_List.Vector;
 
       procedure Clear is
       begin
          Stack.Clear;
-         Std_Entity := null;
+         Std_Entity := Unique_Entity_Allocator.No_Entity;
       end Clear;
 
-      function Current_Scope return Entity_Id is
+      function Current_Scope return Unique_Entity_Id is
       begin
          return Stack.Element (0);
       end Current_Scope;
@@ -2858,7 +3356,7 @@ package body Docgen3.Frontend is
          return Natural (Stack.Length);
       end Current_Scope_Depth;
 
-      procedure Enter_Scope (Scope : Entity_Id) is
+      procedure Enter_Scope (Scope : Unique_Entity_Id) is
       begin
          Stack.Prepend (Scope);
       end Enter_Scope;
@@ -2869,12 +3367,12 @@ package body Docgen3.Frontend is
       end Exit_Scope;
 
       function Find_Entity
-        (Scope : Entity_Id;
+        (Scope : Unique_Entity_Id;
          Loc   : General_Location) return Entity_Id
       is
          Cursor : EInfo_List.Cursor;
          E      : Entity_Id;
-         S      : Entity_Id := Scope;
+         S      : Entity_Id := Get_Entity (Scope);
 
       begin
          loop
@@ -2889,7 +3387,7 @@ package body Docgen3.Frontend is
                EInfo_List.Next (Cursor);
             end loop;
 
-            exit when Get_Scope (S) = Std_Entity;
+            exit when Get_Scope (S) = Get_Entity (Std_Entity);
             S := Get_Scope (S);
          end loop;
 
@@ -2900,12 +3398,12 @@ package body Docgen3.Frontend is
          Last : constant Integer :=
            Current_Scope_Depth - 2; -- Skip standard
          use type Ada.Containers.Count_Type;
-         S : Entity_Id;
+         S : Unique_Entity_Id;
       begin
          for J in 0 .. Last loop
             S := Stack.Element (Natural (J));
 
-            if LL.Is_Generic (S) then
+            if LL.Is_Generic (Get_Entity (S)) then
                return True;
             end if;
          end loop;
@@ -2918,12 +3416,12 @@ package body Docgen3.Frontend is
            Current_Scope_Depth - 2; -- Skip standard
 
          use type Ada.Containers.Count_Type;
-         S : Entity_Id;
+         S : Unique_Entity_Id;
       begin
          for J in 0 .. Last loop
             S := Stack.Element (Natural (J));
 
-            if LL.Get_Entity (S) = E then
+            if LL.Get_Entity (Get_Entity (S)) = E then
                return True;
             end if;
          end loop;
@@ -2931,9 +3429,9 @@ package body Docgen3.Frontend is
          return False;
       end In_Open_Scopes;
 
-      procedure Register_Std_Entity (E : Entity_Id) is
+      procedure Register_Std_Entity (E : Unique_Entity_Id) is
       begin
-         pragma Assert (No (Std_Entity));
+         pragma Assert (Std_Entity = Unique_Entity_Allocator.No_Entity);
          Std_Entity := E;
       end Register_Std_Entity;
 

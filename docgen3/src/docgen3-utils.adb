@@ -36,6 +36,26 @@ package body Docgen3.Utils is
       return S (F .. L);
    end Filter;
 
+   --------------------
+   -- Get_Short_Name --
+   --------------------
+
+   function Get_Short_Name (Ada_Expanded_Name : String) return String is
+      Index : Integer := Ada_Expanded_Name'Last;
+   begin
+      while Index > Ada_Expanded_Name'First
+        and then Ada_Expanded_Name (Index) /= '.'
+      loop
+         Index := Index - 1;
+      end loop;
+
+      if Ada_Expanded_Name (Index) = '.' then
+         return Ada_Expanded_Name (Index + 1 .. Ada_Expanded_Name'Last);
+      else
+         return Ada_Expanded_Name;
+      end if;
+   end Get_Short_Name;
+
    -----------
    -- Image --
    -----------

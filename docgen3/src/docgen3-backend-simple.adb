@@ -34,15 +34,9 @@ package body Docgen3.Backend.Simple is
    Me : constant Debug_Handle := Create ("Docgen3.1-Backend");
 
    type Template_Kind is
-     (Tmpl_Entities,
-      --  Public entities documentation
-      Tmpl_Global_Index,
-      --  Packages, source files and entities Index
-      Tmpl_Files_Index,
-      --  Files index
-
-      Tmpl_Src
-      --  Source code
+     (Tmpl_Entities,        --  Entities index
+      Tmpl_Files_Index,     --  Files index
+      Tmpl_Global_Index     --  Global index
      );
 
    -----------------------
@@ -113,7 +107,8 @@ package body Docgen3.Backend.Simple is
       procedure ReST_Append_Reference
         (Printout : access Unbounded_String;
          Entity   : Entity_Id;
-         Header   : String);
+         Prefix   : String;
+         Suffix   : String := "");
       --  Append to Printout a reference to entity E
 
       procedure ReST_Append_Simple_Declaration
@@ -329,7 +324,7 @@ package body Docgen3.Backend.Simple is
                   ReST_Append_Reference
                     (Printout => Printout,
                      Entity   => Get_Parent (E),
-                     Header   => "   * ");
+                     Prefix   => "   * ");
 
                   Append_Line (Printout, "");
                end if;
@@ -378,9 +373,10 @@ package body Docgen3.Backend.Simple is
       procedure ReST_Append_Reference
         (Printout : access Unbounded_String;
          Entity   : Entity_Id;
-         Header   : String) is
+         Prefix   : String;
+         Suffix   : String := "") is
       begin
-         Append (Printout, Header & " :ref:`");
+         Append (Printout, Prefix & " :ref:`");
 
          if Get_Language (Entity).all in Language.Cpp.Cpp_Language'Class then
             Append (Printout, Get_Full_Name (Entity));
@@ -392,7 +388,8 @@ package body Docgen3.Backend.Simple is
            " <"
            & Get_Unique_Name (Entity)
            & ">` "
-           & Image (LL.Get_Location (Entity)));
+           & Image (LL.Get_Location (Entity))
+           & Suffix);
       end ReST_Append_Reference;
 
       ------------------------------------
@@ -605,6 +602,7 @@ package body Docgen3.Backend.Simple is
 
          procedure Generate_Entities;
          procedure Generate_Files;
+         procedure Generate_Tagged_Types_Tree;
 
          -----------------------
          -- Generate_Entities --
@@ -677,7 +675,7 @@ package body Docgen3.Backend.Simple is
               (Translation, Assoc ("PRINTOUT", Printout));
 
             Write_To_File
-              (Context   => Backend.Context'Access,
+              (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
                Filename  => To_Destination_Name ("entities"),
                Text =>
@@ -711,16 +709,200 @@ package body Docgen3.Backend.Simple is
                Files_List.Next (File_Index);
             end loop;
 
+            File_Index := Backend.Extra_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+
+               Printout :=
+                 Printout
+                 & "   " & (+File.Base_Name) & ASCII.LF;
+
+               Files_List.Next (File_Index);
+            end loop;
+
             Insert
               (Translation, Assoc ("PRINTOUT", Printout));
 
             Write_To_File
-              (Context   => Backend.Context'Access,
+              (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
                Filename  => To_Destination_Name ("files"),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Files;
+
+         --------------------------------
+         -- Generate_Tagged_Types_Tree --
+         --------------------------------
+
+         procedure Generate_Tagged_Types_Tree is
+            Printout : aliased Unbounded_String;
+
+            function Collect_Tagged_Types_And_Interfaces
+              return EInfo_List.Vector;
+            --  Returns a list containing all the tagged types and interfaces
+            --  of the project
+
+            function Get_Root_Types
+              (List : EInfo_List.Vector) return EInfo_List.Vector;
+            --  Return the root types of this list of tagged types
+
+            procedure ReST_Append (E : Entity_Id; Prefix : String);
+            --  Append to Printout the Prefix followed by E
+
+            ---------------------------
+            -- Get_Tagged_Type_Roots --
+            ---------------------------
+
+            function Collect_Tagged_Types_And_Interfaces
+              return EInfo_List.Vector
+            is
+               Result : EInfo_List.Vector;
+               Cursor : EInfo_List.Cursor;
+
+            begin
+               Cursor := Backend.Entities.Tagged_Types.First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Result.Append (EInfo_List.Element (Cursor));
+                  EInfo_List.Next (Cursor);
+               end loop;
+
+               Cursor := Backend.Entities.Interface_Types.First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Result.Append (EInfo_List.Element (Cursor));
+                  EInfo_List.Next (Cursor);
+               end loop;
+
+               pragma Assert (not Has_Duplicated_Entities (Result));
+               return Result;
+            end Collect_Tagged_Types_And_Interfaces;
+
+            --------------------
+            -- Get_Root_Types --
+            --------------------
+
+            function Get_Root_Types
+              (List : EInfo_List.Vector) return EInfo_List.Vector
+            is
+               Root_Level : constant Natural := 0;
+               Root_Types : EInfo_List.Vector;
+               Cursor : EInfo_List.Cursor;
+               E      : Entity_Id;
+
+            begin
+               --  First round: Collect root types available in the input list
+
+               Cursor := List.First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  E := EInfo_List.Element (Cursor);
+                  pragma Assert (Is_Tagged_Type (E));
+
+                  if Get_IDepth_Level (E) = Root_Level then
+                     Root_Types.Append (E);
+                  end if;
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+
+               --  Second round: Collect root types of other list components
+
+               Cursor := List.First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  E := EInfo_List.Element (Cursor);
+
+                  if Get_IDepth_Level (E) /= Root_Level then
+                     while Present (Get_Parent (E)) loop
+                        E := Get_Parent (E);
+                     end loop;
+
+                     if not Root_Types.Contains (E) then
+                        Root_Types.Append (E);
+                     end if;
+                  end if;
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+
+               return Root_Types;
+            end Get_Root_Types;
+
+            -----------------
+            -- ReST_Append --
+            -----------------
+
+            procedure ReST_Append (E : Entity_Id; Prefix : String) is
+
+               function Gen_Suffix return String;
+               function Gen_Suffix return String is
+               begin
+                  if Get_Kind (E) = E_Interface then
+                     return " *(Interface)*";
+                  elsif LL.Is_Abstract (E) then
+                     return " *(abstract)*";
+                  else
+                     return "";
+                  end if;
+               end Gen_Suffix;
+
+               --  Local variables
+
+               Suffix : constant String := Gen_Suffix;
+               Cursor : EInfo_List.Cursor;
+               Entity : Entity_Id;
+            begin
+               ReST_Append_Reference
+                 (Printout => Printout'Access,
+                  Entity   => E,
+                  Prefix   => Prefix,
+                  Suffix   => Suffix);
+
+               Cursor := Get_Derivations (E).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Entity := EInfo_List.Element (Cursor);
+                  ReST_Append (Entity, "  " & Prefix);
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+            end ReST_Append;
+
+            --  Local variables
+
+            Tmpl   : constant Virtual_File :=
+                       Get_Template
+                         (Get_System_Dir (Backend.Context.Kernel),
+                          Tmpl_Entities);
+
+            Cursor      : EInfo_List.Cursor;
+            E           : Entity_Id;
+            Root_Types  : EInfo_List.Vector;
+            Translation : Translate_Set;
+
+         begin
+            Append_Line (Printout'Access, "Tagged type derivations tree");
+            Append_Line (Printout'Access, "============================");
+            Append_Line (Printout'Access, "");
+
+            Root_Types := Get_Root_Types (Collect_Tagged_Types_And_Interfaces);
+
+            EInfo_Vector_Sort_Short.Sort (Root_Types);
+
+            Cursor := Root_Types.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               E := EInfo_List.Element (Cursor);
+               ReST_Append (E, "- ");
+               EInfo_List.Next (Cursor);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_Destination_Name ("dep_tree"),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Tagged_Types_Tree;
 
          --  Local variables
 
@@ -741,10 +923,16 @@ package body Docgen3.Backend.Simple is
          Generate_Entities;
          Generate_Files;
 
+         if EInfo_List.Has_Element (Backend.Entities.Tagged_Types.First) then
+            Generate_Tagged_Types_Tree;
+            Printout := Printout
+              & "   dep_tree" & ASCII.LF;
+         end if;
+
          Insert (Translation, Assoc ("PRINTOUT", Printout));
 
          Write_To_File
-           (Context   => Backend.Context'Access,
+           (Context   => Backend.Context,
             Directory => Get_Doc_Directory (Backend.Context.Kernel),
             Filename  => To_Destination_Name ("index"),
             Text =>
@@ -759,8 +947,6 @@ package body Docgen3.Backend.Simple is
       if Update_Global_Index then
          Generate_Global_Index;
       end if;
-
-      Clear (Backend.Entities);
    end Finalize;
 
    ---------------------
@@ -795,9 +981,6 @@ package body Docgen3.Backend.Simple is
          when Tmpl_Global_Index =>
             return Create_From_Dir
               (System_Dir, "share/gps/docgen3/index.tmpl");
-         when Tmpl_Src =>
-            return Create_From_Dir
-              (System_Dir, "share/gps/docgen3/src.tmpl");
       end case;
    end Get_Template;
 
@@ -807,7 +990,7 @@ package body Docgen3.Backend.Simple is
 
    overriding procedure Initialize
      (Backend : in out Simple_Backend;
-      Context : Docgen_Context)
+      Context : access constant Docgen_Context)
    is
       procedure Generate_Support_Files
         (Kernel : Kernel_Handle);
@@ -853,7 +1036,7 @@ package body Docgen3.Backend.Simple is
    is
       Tmpl    : constant Virtual_File :=
                   Get_Template
-                   (Get_System_Dir (Backend.Context.Kernel), Tmpl_Src);
+                   (Get_System_Dir (Backend.Context.Kernel), Tmpl_Entities);
       Translation : Translate_Set;
 
       use Comment;
@@ -888,6 +1071,8 @@ package body Docgen3.Backend.Simple is
       ------------------
       -- Process_Node --
       ------------------
+
+      Root_Level : constant Natural := 0;
 
       procedure Process_Node
         (Entity      : Entity_Id;
@@ -1146,7 +1331,7 @@ package body Docgen3.Backend.Simple is
             Insert (Translation, Assoc ("PRINTOUT", Printout));
 
             Write_To_File
-              (Context   => Backend.Context'Access,
+              (Context   => Backend.Context,
                Directory => Doc_Dir,
                Filename  => ReST_File,
                Text =>
@@ -1155,12 +1340,12 @@ package body Docgen3.Backend.Simple is
             --  Append files of nested Ada packages and C++ classes to the
             --  list of files of the global index
 
-            if Scope_Level > 0 then
+            if Scope_Level > Root_Level then
                declare
                   File : constant Virtual_File :=
                            Create_From_Dir (Doc_Dir, ReST_File);
                begin
-                  Backend.Src_Files.Append (File);
+                  Backend.Extra_Files.Append (File);
                end;
             end if;
          end;
@@ -1212,13 +1397,13 @@ package body Docgen3.Backend.Simple is
    --  Start of processing for Process_File
 
    begin
-      Trace (Me, "Process_File " & (+Tree.File.Base_Name));
-
       if No (Root_Id) then
          return;
       elsif In_C_Lang and then Backend.Context.Options.Skip_C_Files then
          return;
       end if;
+
+      Trace (Me, "Process_File " & (+Tree.File.Base_Name));
 
       if In_Ada_Lang then
          Current_Unit := Get_Entities (Tree.Tree_Root).First_Element;
@@ -1228,7 +1413,7 @@ package body Docgen3.Backend.Simple is
 
       Start (My_Delay);
 
-      Process_Node (Current_Unit, Scope_Level => 0);
+      Process_Node (Current_Unit, Scope_Level => Root_Level);
       Backend.Src_Files.Append (Tree.File);
 
       Stop (My_Delay, Generate_Doc_Time);

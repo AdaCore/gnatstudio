@@ -100,4 +100,6 @@ private
       Options      : Docgen_Options;
    end record;
 
+   type Docgen_Context_Ptr is access Docgen_Context;
+
 end Docgen3;

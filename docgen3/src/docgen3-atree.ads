@@ -166,6 +166,10 @@ private package Docgen3.Atree is
       Process : access procedure (E_Info : Entity_Id));
    --  Call subprogram Process for all the elements of Vector
 
+   function Has_Duplicated_Entities
+     (List : EInfo_List.Vector) return Boolean;
+   --  Return True if List has duplicated entities. Used in assertions.
+
    Not_Found : exception;
 
    ---------------------------
@@ -186,6 +190,8 @@ private package Docgen3.Atree is
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
 
+   procedure Append_Derivation
+     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Entity
      (E : Entity_Id; Value : Entity_Id);
    --  Append Value to the list of entities in the scope of E
@@ -200,10 +206,14 @@ private package Docgen3.Atree is
 
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
+   function Get_Derivations
+     (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Discriminants
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Doc
      (E : Entity_Id) return Comment_Result;
+   function Get_IDepth_Level
+     (E : Entity_Id) return Natural;
    function Get_Entities
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Error_Msg
@@ -275,11 +285,19 @@ private package Docgen3.Atree is
       V1 : Entity_Kind;
       V2 : Entity_Kind;
       V3 : Entity_Kind) return Boolean;
+   function Kind_In
+     (K  : Entity_Kind;
+      V1 : Entity_Kind;
+      V2 : Entity_Kind;
+      V3 : Entity_Kind;
+      V4 : Entity_Kind) return Boolean;
 
    procedure Set_Comment
      (E : Entity_Id; Value : Structured_Comment);
    procedure Set_Doc
      (E : Entity_Id; Value : Comment_Result);
+   procedure Set_IDepth_Level
+     (E : Entity_Id);
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
    procedure Set_Full_View_Comment
@@ -341,6 +359,8 @@ private package Docgen3.Atree is
       procedure Append_Parent_Type
         (E : Entity_Id; Value : Entity_Id);
 
+      function Get_Alias
+        (E : Entity_Id) return General_Entity;
       function Get_Body_Loc
         (E : Entity_Id) return General_Location;
       function Get_Child_Types
@@ -397,6 +417,7 @@ private package Docgen3.Atree is
       pragma Inline (Append_Child_Type);
       pragma Inline (Append_Parent_Type);
 
+      pragma Inline (Get_Alias);
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
@@ -477,6 +498,7 @@ private
          Scope_Loc     : General_Location;
          Etype         : General_Entity;
          Pointed_Type  : General_Entity;
+         Alias         : General_Entity;
 
          Has_Methods   : Boolean;
 
@@ -549,6 +571,8 @@ private
          Is_Partial_View : Boolean;
          Is_Private      : Boolean;
          Is_Tagged_Type  : Boolean;
+         Idepth_Level    : Natural;
+         --  Inheritance depth level of a tagged type
 
          Doc               : Comment_Result;
          Comment           : aliased Structured_Comment;
@@ -580,11 +604,13 @@ private
 
          Parent          : Entity_Id;
          Progenitors     : aliased EInfo_List.Vector;
+         Derivations     : aliased EInfo_List.Vector;
 
          Error_Msg       : Unbounded_String;
          --  Errors reported on this entity
       end record;
 
+   pragma Inline (Append_Derivation);
    pragma Inline (Append_Discriminant);
    pragma Inline (Append_Entity);
    pragma Inline (Append_Inherited_Method);
@@ -592,8 +618,10 @@ private
    pragma Inline (Append_Progenitor);
 
    pragma Inline (Get_Comment);
+   pragma Inline (Get_Derivations);
    pragma Inline (Get_Discriminants);
    pragma Inline (Get_Doc);
+   pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Full_Name);
@@ -626,6 +654,7 @@ private
    pragma Inline (No);
    pragma Inline (Present);
    pragma Inline (Set_Comment);
+   pragma Inline (Set_IDepth_Level);
    pragma Inline (Set_Doc);
    pragma Inline (Set_Error_Msg);
    pragma Inline (Set_Full_View_Comment);

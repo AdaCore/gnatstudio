@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
@@ -174,12 +176,20 @@ package body Docgen3 is
          Trace (Me, "Number of files to process: " & Num_Files'Img);
       end Check_Files;
 
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Docgen_Context, Docgen_Context_Ptr);
+
       --  Local variables
 
       Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
       Backend      : Docgen3_Backend'Class := New_Backend;
-      Context      : aliased Docgen_Context :=
-                       (Kernel, Database, Lang_Handler, Options);
+      Context      : aliased Docgen_Context_Ptr :=
+                       new Docgen_Context'
+                             (Kernel, Database, Lang_Handler, Options);
 
    --  Start of processing for Process_Files
 
@@ -220,6 +230,7 @@ package body Docgen3 is
          Num_Files  : constant Natural := Natural (Src_Files.Length);
          Count      : Natural := 0;
          File_Index : Files_List.Cursor;
+         All_Trees  : Frontend.Tree_List.Vector;
 
       begin
          File_Index := Src_Files.First;
@@ -242,34 +253,66 @@ package body Docgen3 is
 
                Tree :=
                  Frontend.Build_Tree
-                   (Context => Context'Access,
+                   (Context => Context,
                     File    => Current_File);
 
                if Options.Tree_Output.Kind /= None then
                   if Options.Tree_Output.Kind = Short then
                      Treepr.Print_Short_Tree
-                       (Context     => Context'Access,
+                       (Context     => Context,
                         Tree        => Tree'Access,
                         With_Scopes => True);
                   else
                      Treepr.Print_Full_Tree
-                       (Context     => Context'Access,
+                       (Context     => Context,
                         Tree        => Tree'Access,
                         With_Scopes => True);
                   end if;
                end if;
 
-               Backend.Process_File (Tree'Access);
+               All_Trees.Append (Tree);
             end;
 
             Files_List.Next (File_Index);
          end loop;
 
-         if Num_Files > 0 then
-            Kernel.Messages_Window.Insert
-              (-("info: Documentation generated in ") &
-                 Get_Doc_Directory (Kernel).Display_Full_Name,
-               Mode => Info);
+         if Tree_List.Has_Element (All_Trees.First) then
+
+            --  Set the inheritance depth level of tagged types. This cannot
+            --  be done before because files are not processed following their
+            --  order of dependencies (and thus a file containing a child type
+            --  may be processed by the frontend before the file containing
+            --  its parent type).
+
+            declare
+               procedure Set_Idepth (E : Entity_Id);
+               procedure Set_Idepth (E : Entity_Id) is
+               begin
+                  if Is_Tagged_Type (E) then
+                     Set_IDepth_Level (E);
+                  end if;
+               end Set_Idepth;
+
+               Cursor : Tree_List.Cursor;
+               Tree   : aliased Tree_Type;
+
+            begin
+               Cursor := All_Trees.First;
+               while Tree_List.Has_Element (Cursor) loop
+                  Tree := Tree_List.Element (Cursor);
+
+                  For_All (Tree.All_Entities, Set_Idepth'Access);
+
+                  Backend.Process_File (Tree'Access);
+
+                  Tree_List.Next (Cursor);
+               end loop;
+
+               Kernel.Messages_Window.Insert
+                 (-("info: Documentation generated in ") &
+                    Get_Doc_Directory (Kernel).Display_Full_Name,
+                  Mode => Info);
+            end;
          end if;
       end;
 
@@ -278,11 +321,14 @@ package body Docgen3 is
       Templates_Parser.Release_Cache;
 
       if Options.Display_Time then
-         Time.Print_Time (Context'Access);
+         Time.Print_Time (Context);
       end if;
+
+      Free (Context);
 
    exception
       when E : others =>
+         Free (Context);
          Trace (Traces.Exception_Handle, E);
    end Process_Files;
 
@@ -322,6 +368,9 @@ package body Docgen3 is
 
          Unchecked_Free (Source_Files);
       end;
+
+      --  Clear the internal structures of the frontend
+      Frontend.Initialize;
 
       Process_Files
         (Kernel    => Kernel_Handle (Kernel),
