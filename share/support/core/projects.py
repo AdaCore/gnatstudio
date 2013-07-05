@@ -1,14 +1,19 @@
-<?xml version="1.0" ?>
-<!--  Defines the standard project attributes.
+"""
+Defines the standard project attributes.
 
-      THIS PLUG-IN MUST BE LOADED.
+THIS PLUG-IN MUST BE LOADED.
 
-      This plug-in defines the standard project attributes, and how they should
-      be edited graphically in the project properties editor. If you do not
-      load this script, GPS will display a number of warnings in its Messages
-      window when a project is loaded
--->
+This plug-in defines the standard project attributes, and how they should
+be edited graphically in the project properties editor. If you do not
+load this script, GPS will display a number of warnings in its Messages
+window when a project is loaded
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
    <project_attribute
        name="languages"
@@ -398,3 +403,6 @@ available, apart of course for the spec files and the bodies of generic packages
        <string type="directory" />
    </project_attribute>
 </GPS>
+"""
+
+GPS.parse_xml(XML)

@@ -1,8 +1,13 @@
-<?xml version="1.0" ?>
+"""
+This file adds support for the gnatstub utility.
+This external tool creates the Ada body from an Ada spec.
+"""
 
-<!--  This file adds support for the gnatstub utility.
-      This external tool creates the Ada body from an Ada spec -->
+
 
+import GPS
+
+XML = r'''<?xml version="1.0" ?>
 <GPS>
    <action name="Generate body" output="none" category="Editor">
       <description>Generate the body for an Ada spec file</description>
@@ -33,3 +38,6 @@
      </menu>
    </submenu>
 </GPS>
+'''
+
+GPS.parse_xml(XML)

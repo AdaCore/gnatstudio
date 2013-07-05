@@ -1,12 +1,17 @@
-<?xml version="1.0"?>
-<!--  Defines the protocols used when communicating with remote hosts.
+"""
+Defines the protocols used when communicating with remote hosts.
 
-      The GPS remote facility (/Tools/View/Remote) allows you to easily
-      work (eg build and compile) on remote hosts. The communication with
-      these remote hosts can be done through a number of protocols, which
-      are defined in this package.
--->
+The GPS remote facility (/Tools/View/Remote) allows you to easily
+work (eg build and compile) on remote hosts. The communication with
+these remote hosts can be done through a number of protocols, which
+are defined in this package.
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0"?>
 <GPS>
 
   <!-- SSH -->
@@ -181,5 +186,7 @@
   <rsync_configuration>
     <arguments>-az --delete --progress --exclude *.o --exclude *.a --exclude .xrefs</arguments>
   </rsync_configuration>
-
 </GPS>
+"""
+
+GPS.parse_xml(XML)

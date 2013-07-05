@@ -52,7 +52,8 @@ package body GPS.Kernel.Custom is
      (Kernel           : access Kernel_Handle_Record'Class;
       Directory        : Virtual_File;
       Level            : Customization_Level;
-      Default_Autoload : Boolean);
+      Default_Autoload : Boolean;
+      Force_Load       : Boolean);
    --  Parse and process all the XML files in the directory. Only those files
    --  that should be automatically loaded according to ~/.gps/startup.xml and
    --  Default_Autoload are loaded.
@@ -94,6 +95,39 @@ package body GPS.Kernel.Custom is
       return Dir;
    end Autoload_User_Dir;
 
+   ----------------------
+   -- Support_Core_Dir --
+   ----------------------
+
+   function Support_Core_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+   begin
+      return Create_From_Dir
+         (Get_System_Dir (Kernel), "share/gps/support/core");
+   end Support_Core_Dir;
+
+   --------------------
+   -- Support_UI_Dir --
+   --------------------
+
+   function Support_UI_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+   begin
+      return Create_From_Dir
+         (Get_System_Dir (Kernel), "share/gps/support/ui");
+   end Support_UI_Dir;
+
+   -----------------------------
+   -- Support_No_Autoload_Dir --
+   -----------------------------
+
+   function Support_No_Autoload_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+   begin
+      return Create_From_Dir
+         (Get_System_Dir (Kernel), "share/gps/support/noload");
+   end Support_No_Autoload_Dir;
+
    ---------------------
    -- Get_Custom_Path --
    ---------------------
@@ -115,7 +149,8 @@ package body GPS.Kernel.Custom is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : Virtual_File;
       Level     : Customization_Level;
-      Default_Autoload : Boolean)
+      Default_Autoload : Boolean;
+      Force_Load       : Boolean)
    is
       Files : File_Array_Access;
       File_Node : Node_Ptr;
@@ -133,8 +168,10 @@ package body GPS.Kernel.Custom is
                if File_Extension (F) = XML_Extension
                  and then Is_Regular_File (F)
                then
-                  if Load_File_At_Startup
-                    (Kernel, F, Default => Default_Autoload)
+                  if Force_Load
+                    or else Load_File_At_Startup
+                      (Kernel, F,
+                       Default        => Default_Autoload)
                   then
                      Trace (Me, "Loading " & Display_Full_Name (F));
 
@@ -215,10 +252,10 @@ package body GPS.Kernel.Custom is
       --  be overriden locally by the user
       Parse_Custom_Dir
         (Kernel, Autoload_System_Dir (Kernel), System_Wide,
-         Default_Autoload => True);
+         Default_Autoload => True, Force_Load => False);
       Parse_Custom_Dir
         (Kernel, No_Autoload_System_Dir (Kernel), System_Wide,
-         Default_Autoload => False);
+         Default_Autoload => False, Force_Load => False);
 
       for J in Env_Path'Range loop
          if Env_Path (J) /= No_File then
@@ -226,7 +263,7 @@ package body GPS.Kernel.Custom is
                 & Env_Path (J).Display_Full_Name);
             Parse_Custom_Dir
               (Kernel, Env_Path (J), Project_Wide,
-               Default_Autoload => True);
+               Default_Autoload => True, Force_Load => False);
          end if;
       end loop;
    end Load_System_Custom_Files;
@@ -263,7 +300,7 @@ package body GPS.Kernel.Custom is
 
       Parse_Custom_Dir
         (Kernel, Autoload_User_Dir (Kernel), User_Specific,
-         Default_Autoload => True);
+         Default_Autoload => True, Force_Load => False);
    end Load_User_Custom_Files;
 
    ------------------------------
@@ -378,6 +415,8 @@ package body GPS.Kernel.Custom is
                   Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       Err     : String_Access;
       Node, N : Node_Ptr;
+      Script  : Script_Description_Access;
+      Mode    : Load_Mode;
    begin
       Kernel.Startup_Scripts := new Scripts_Htable_Record;
 
@@ -399,19 +438,27 @@ package body GPS.Kernel.Custom is
             while N /= null loop
                if N.Tag.all = "startup" then
                   begin
-                     Set
-                       (Scripts_Htable_Access
-                          (Kernel.Startup_Scripts).Table,
-                        K => Get_Attribute (N, "file"),
-                        E => new Script_Description'
-                          (Initialization => Deep_Copy (N.Child),
-                           Explicit => True,
-                           Load => Boolean'Value (Get_Attribute (N, "load")),
-                           File => GNATCOLL.VFS.No_File));
+                     if Boolean'Value (Get_Attribute (N, "load")) then
+                        Mode := Explicit_On;
+                     else
+                        Mode := Explicit_Off;
+                     end if;
                   exception
                      when Constraint_Error =>
-                        null;
+                        Mode := Explicit_On;
                   end;
+
+                  Script := new Script_Description'
+                    (Initialization => Deep_Copy (N.Child),
+                     Mode           => Mode,
+                     Loaded         => False,
+                     File           => GNATCOLL.VFS.No_File);
+
+                  Set
+                    (Scripts_Htable_Access
+                       (Kernel.Startup_Scripts).Table,
+                     K => Get_Attribute (N, "file"),
+                     E => Script);
                end if;
                N := N.Next;
             end loop;
@@ -445,18 +492,25 @@ package body GPS.Kernel.Custom is
          Script := Get_Element (Iter);
          exit when Script = null;
 
-         if Script.Explicit then
-            Child := new Node;
-            Child.Tag := new String'("startup");
-            Set_Attribute (Child, "load", Boolean'Image (Script.Load));
-            Set_Attribute (Child, "file", Get_Key (Iter));
-            if Script.Initialization /= null then
-               Add_Child (Child, Deep_Copy (Script.Initialization),
-                          Append => True);
-               --  Append in case Initialization has several siblings
-            end if;
-            Add_Child (File, Child);
-         end if;
+         case Script.Mode is
+            when Automatic =>
+               null;
+
+            when Explicit_On | Explicit_Off =>
+               Child := new Node;
+               Child.Tag := new String'("startup");
+
+               Set_Attribute
+                 (Child, "load", Boolean'Image (Script.Mode = Explicit_On));
+               Set_Attribute (Child, "file", Get_Key (Iter));
+
+               if Script.Initialization /= null then
+                  Add_Child (Child, Deep_Copy (Script.Initialization),
+                             Append => True);
+                  --  Append in case Initialization has several siblings
+               end if;
+               Add_Child (File, Child);
+         end case;
 
          Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
       end loop;
@@ -470,91 +524,42 @@ package body GPS.Kernel.Custom is
       end if;
    end Save_Startup_Scripts_List;
 
-   ------------------------------
-   -- Get_First_Startup_Script --
-   ------------------------------
+   -----------------------------
+   -- For_All_Startup_Scripts --
+   -----------------------------
 
-   procedure Get_First_Startup_Script
+   procedure For_All_Startup_Scripts
      (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : out Script_Iterator) is
+      Callback : not null access procedure
+        (Name     : String;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Loaded   : Boolean;
+         Explicit : Boolean;
+         Init     : XML_Utils.Node_Ptr))
+   is
+      Iter : Scripts_Hash.String_Hash_Table.Cursor;
+      S    : Script_Description_Access;
    begin
-      Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                 Iter.Iter);
-      Iter.Kernel := Kernel_Handle (Kernel);
-   end Get_First_Startup_Script;
+      Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
 
-   ----------
-   -- Next --
-   ----------
+      loop
+         S := Get_Element (Iter);
+         exit when S = null;
 
-   procedure Next  (Iter : in out Script_Iterator) is
-   begin
-      Get_Next (Scripts_Htable_Access (Iter.Kernel.Startup_Scripts).Table,
-                Iter.Iter);
-   end Next;
+         --  If we have a source file
 
-   ------------
-   -- At_End --
-   ------------
+         if S.File /= GNATCOLL.VFS.No_File then
+            Callback
+              (Name     => Get_Key (Iter),
+               File     => S.File,
+               Loaded   => S.Loaded,
+               Explicit => S.Mode /= Automatic,
+               Init     => S.Initialization);
+         end if;
 
-   function At_End (Iter : Script_Iterator) return Boolean is
-   begin
-      return Get_Element (Iter.Iter) = null;
-   end At_End;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Script_Iterator) return Script_Description is
-   begin
-      return Get_Element (Iter.Iter).all;
-   end Get;
-
-   ----------------
-   -- Get_Script --
-   ----------------
-
-   function Get_Script (Iter : Script_Iterator) return String is
-   begin
-      return Get_Key (Iter.Iter);
-   end Get_Script;
-
-   -------------------
-   -- Get_Full_File --
-   -------------------
-
-   function Get_Full_File (Desc : Script_Description) return Virtual_File is
-   begin
-      return Desc.File;
-   end Get_Full_File;
-
-   --------------
-   -- Get_Load --
-   --------------
-
-   function Get_Load (Desc : Script_Description) return Boolean is
-   begin
-      return Desc.Load;
-   end Get_Load;
-
-   ------------------
-   -- Get_Explicit --
-   ------------------
-
-   function Get_Explicit (Desc : Script_Description) return Boolean is
-   begin
-      return Desc.Explicit;
-   end Get_Explicit;
-
-   --------------
-   -- Get_Init --
-   --------------
-
-   function Get_Init (Descr : Script_Description) return Node_Ptr is
-   begin
-      return Descr.Initialization;
-   end Get_Init;
+         Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
+      end loop;
+   end For_All_Startup_Scripts;
 
    -----------------------------
    -- Override_Startup_Script --
@@ -569,24 +574,25 @@ package body GPS.Kernel.Custom is
       Startup : Script_Description_Access :=
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
                        K => Base_Name);
+      Mode : constant Load_Mode :=
+        (if Load then Explicit_On else Explicit_Off);
    begin
-      if Startup /= null then
-         Startup.Load           := Load;
+      if Startup = null then
+         Startup := new Script_Description'
+           (Initialization => Initialization,
+            Mode           => Mode,
+            Loaded         => False,
+            File           => GNATCOLL.VFS.No_File);
+         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+              K => Base_Name,
+              E => Startup);
+      else
+         Startup.Mode := Mode;
          if Startup.Initialization /= Initialization then
             Free (Startup.Initialization);
          end if;
 
          Startup.Initialization := Initialization;
-         Startup.Explicit       := True;
-      else
-         Startup := new Script_Description'
-           (File           => GNATCOLL.VFS.No_File,
-            Load           => Load,
-            Explicit       => True,
-            Initialization => Initialization);
-         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-              K => Base_Name,
-              E => Startup);
       end if;
    end Override_Startup_Script;
 
@@ -595,43 +601,58 @@ package body GPS.Kernel.Custom is
    --------------------------
 
    function Load_File_At_Startup
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Default : Boolean) return Boolean
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : GNATCOLL.VFS.Virtual_File;
+      Default        : Boolean) return Boolean
    is
-      Startup : Script_Description_Access :=
-                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                       K => +Base_Name (File));
+      Startup : Script_Description_Access;
    begin
       --  The base name would be "" for python module (ie subdirectories).
 
-      if Base_Name (File) /= ""
-         and then Startup /= null
-      then
-         if Startup.File /= GNATCOLL.VFS.No_File then
-            Insert (Kernel,
-                    -"There are several startup scripts with the same name: "
-                    & Display_Full_Name (Startup.File)
-                    & ASCII.LF
-                    & (-"Not loading: ") & Display_Full_Name (File),
-                    Mode => Error);
-            return False;
-         else
-            Startup.File := File;
-         end if;
-
+      if File.Base_Name = "" then
+         Startup := Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                         K => +File.Base_Dir_Name);
       else
-         Startup := new Script_Description'
-           (File           => File,
-            Load           => Default,
-            Explicit       => False,
-            Initialization => null);
-         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-              K => +Base_Name (File),
-              E => Startup);
+         Startup := Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                         K => +File.Base_Name);
       end if;
 
-      return Startup.Load;
+      if Startup = null then
+         Startup := new Script_Description'
+           (Initialization   => null,
+            Mode             => Automatic,
+            Loaded           => Default,
+            File             => File);
+
+         if File.Base_Name = "" then
+            Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                 K => +File.Base_Dir_Name,
+                 E => Startup);
+         else
+            Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+                 K => +File.Base_Name,
+                 E => Startup);
+         end if;
+
+      elsif Startup.File /= File
+        and then Startup.File /= GNATCOLL.VFS.No_File
+      then
+         Insert (Kernel,
+                 -"There are several startup scripts with the same name: "
+                 & Startup.File.Display_Full_Name
+                 & ASCII.LF
+                 & (-"Not loading: ") & File.Display_Full_Name,
+                 Mode => Error);
+         return False;
+
+      else
+         Startup.File   := File;
+         Startup.Loaded :=
+           Startup.Mode = Explicit_On
+           or else (Startup.Mode /= Explicit_Off and then Default);
+      end if;
+
+      return Startup.Loaded;
    end Load_File_At_Startup;
 
    ----------------------------

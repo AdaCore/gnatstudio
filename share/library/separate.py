@@ -26,7 +26,7 @@ def on_goto_separate (context):
 def separate_filter (context):
    if isinstance (context, GPS.EntityContext) and context.entity():
       try:
-        context.entity().body (2)
+        context.entity().body(2)
         return True
       except:
         return False

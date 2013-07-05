@@ -1,15 +1,24 @@
-<?xml version="1.0" ?>
-<!--  This file provides enhanced support for C and C++ files.
+"""
+This file provides enhanced support for C and C++ files.
 
-      It declares a number of project attributes (and how they should be
-      edited graphically in the project properties editor),
-      It also adds a number of predefined search patterns to match
-      function or class declarations,...
+It declares a number of project attributes (and how they should be
+edited graphically in the project properties editor),
+It also adds a number of predefined search patterns to match
+function or class declarations,...
 
-      Syntax highlighting and cross-references are built-in in GPS, and are
-      not defined in this file.
--->
+Syntax highlighting and cross-references are built-in in GPS, and are
+not defined in this file.
 
+"""
+
+
+###########################################################################
+## No user customization below this line
+###########################################################################
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
    <tool name="C" package="Compiler" index="c" >
       <language>C</language>
@@ -205,5 +214,7 @@
      <name>C++ OBJECT-&gt;member(</name>
      <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
    </vsearch-pattern>
-
 </GPS>
+"""
+
+GPS.parse_xml(XML)

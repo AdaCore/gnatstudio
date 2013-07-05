@@ -232,7 +232,7 @@ gnatlib/testsuite/scripts/M701-028-dict-iter/bin
 gps/gmon.out*
 po/Makefile
 scripts/sortxml
-share/plug-ins/protocols.xml
-share/plug-ins/runtime.xml
+share/support/core/protocols.py
+share/support/core/runtime.py
 templates_parser
 widgets/Makefile.widgets

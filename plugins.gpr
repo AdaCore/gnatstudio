@@ -4,8 +4,7 @@ project Plugins is
 
    for Languages use ("XML", "Python", "CSS");
    for Source_Dirs use
-     ("share", "share/plug-ins", "share/plug-ins/gps_utils",
-      "share/library", "share/library/pygps");
+     ("share", "share/plug-ins/**", "share/support/**", "share/library/**");
 
    package Naming is
       for Implementation_Suffix ("Python") use ".py";

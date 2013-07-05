@@ -79,8 +79,6 @@ class gnatMakeProc:
       self.gnatCmd = ""
 
    def init_switches(self):
-      global xmlCompilerHead, xmlCompilerDefault, xmlCompilerTrailer
-
       # ensure_switches returns true if the gnat command is not identical to
       # the previous one. In this case, we need to recreate the whole xml
       # tree and call GPS.parse_xml to update the switch editor.
@@ -136,8 +134,6 @@ class gnatMakeProc:
          return False
 
    def __get_xml(self):
-      global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity
-      global xmlCompilerPopupStyles, xmlCompilerTrailer
       xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
                  <title line="1" column="1" column-span="3">Global switches</title>
                  <title line="2" column="1" column-span="3">Warnings</title>
@@ -225,7 +221,7 @@ class gnatMakeProc:
       </popup>
 """
       xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
-      return xmlCompiler;
+      return xmlCompiler
 
    def __add_switch_callback (self, process, matched, unmatched):
       if unmatched.startswith("\n"):
@@ -357,6 +353,29 @@ class gnatMakeProc:
 # did not manage to correctly parse the gnatmake output.
 
 xmlCompilerHead = """
+   <tool name="Gnatmake" package="Builder" index="ada">
+      <language>Ada</language>
+      <initial-cmd-line></initial-cmd-line>
+      <switches columns="2">
+         <title column="1" line="1" >Dependencies</title>
+         <title column="2" line="1" >Compilation</title>
+         <check label="Recompile if switches changed" switch="-s"
+                tip="Recompile if compiler switches have changed since last compilation" />
+         <check label="Minimal recompilation" switch="-m"
+                tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
+
+         <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
+               column="2"
+               tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+         <check label="Keep going" switch="-k" column="2"
+                tip="Continue as much as possible after a compilation error" />
+         <check label="Debug information" switch="-g" column="2"
+                tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
+         <check label="Use mapping file" switch="-C" column="2"
+                tip="Use a mapping file. A mapping file is a way to communicate to the compiler two mappings: from unit name to file names, and from file names to path names. This will generally improve the compilation time" />
+      </switches>
+   </tool>
+
    <tool name="Ada" package="Compiler" index="ada" override="true">
       <language>Ada</language>
       <initial-cmd-line>-g -gnatQ</initial-cmd-line>
@@ -561,6 +580,38 @@ xmlCompilerDefault="""
 """
 
 xmlCompilerTrailer="""
+      </switches>
+   </tool>
+
+   <tool name="Binder" package="Binder" index="ada">
+      <language>Ada</language>
+      <switches lines="1">
+         <check label="Store call stack in exceptions" switch="-E"
+                tip="Store tracebacks in exception occurrences when the target supports it" />
+         <check label="List possible restrictions" switch="-r" />
+         <check label="Shared GNAT run time" switch="-shared" />
+      </switches>
+   </tool>
+
+   <tool name="Ada Linker" package="Linker" index="ada">
+      <language>Ada</language>
+      <initial-cmd-line>-g</initial-cmd-line>
+      <switches lines="1">
+         <check label="Strip symbols" switch="-s" />
+         <check label="Debug information" switch="-g" />
+         <dependency master-page="Gnatmake" slave-page="Ada Linker"
+                     master-switch="-g" slave-switch="-g"
+                     master-status="on" slave-status="on" />
+
+         <check label="Code coverage" switch="-fprofile-generate"
+                tip="Create data files for the gcov code-coverage utility" />
+         <dependency master-page="Ada" slave-page="Ada Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-fprofile-generate"
+                     master-status="on" slave-status="on" />
+         <check label="Remove unused sections (GNU ld only)"
+                switch="-Wl,--gc-sections"
+                tip="Remove all unused sections from the link output. This is a GNU ld switch. See also -ffunction-sections and -fdata-sections compiler flags" />
       </switches>
    </tool>
 """

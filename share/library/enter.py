@@ -1,15 +1,20 @@
-<?xml version="1.0" ?>
-<!--  New GPS action: insert newline, but don't auto-indent
+"""
+New GPS action: insert newline, but don't auto-indent
 
-  This file binds the Shift-Return key so that it just
-  inserts a newline character, but not do auto-reindent the
-  current line first, as opposed to what Return does.
+This file binds the Shift-Return key so that it just
+inserts a newline character, but not do auto-reindent the
+current line first, as opposed to what Return does.
 
-  One usage is if you want some parts of your code to have some
-  special indentation that doesn't match what the automatic
-  indentation engine tries to do.
--->
+One usage is if you want some parts of your code to have some
+special indentation that doesn't match what the automatic
+indentation engine tries to do.
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <enter>
    <action name="newline no auto-indent" category="Editor">
       <shell>current_context</shell>
@@ -25,3 +30,6 @@
 
    <key action="newline no auto-indent">shift-Return</key>
 </enter>
+"""
+
+GPS.parse_xml(XML)

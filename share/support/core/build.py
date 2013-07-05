@@ -1,11 +1,157 @@
-<?xml version="1.0" ?>
-<!--  This file provides default build models and targets for GPS
-  -->
+"""
+This file provides default build modes and targets (gnatmake and gprbuild) for GPS
+"""
 
+
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
-<!-- This is an XML model for all GNAT builders (gnatmake, gprbuild, gprmake)
-  -->
-<target-model name="builder" category="">
+ <builder-mode name="default">
+  <description>Build with default switches defined in the project</description>
+ </builder-mode>
+
+ <builder-mode name="debug">
+  <description>Build with debug information</description>
+  <subdir>debug</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="checks">
+  <description>Build with full checking enabled</description>
+  <subdir>check</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <substitutions>
+    <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
+  </substitutions>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs:Ada</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-gnato</arg>
+     <arg>-fstack-check</arg>
+     <arg>-gnatVa</arg>
+     <arg>-cargs:C</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-fstack-check</arg>
+     <arg>-cargs:C++</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-fstack-check</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="optimize">
+  <description>Build for production with full optimization</description>
+  <subdir>opt</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <substitutions>
+    <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
+  </substitutions>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs:Ada</arg>
+     <arg>-O2</arg>
+     <arg>-gnatn</arg>
+     <arg>-cargs:C</arg>
+     <arg>-O2</arg>
+     <arg>-cargs:C++</arg>
+     <arg>-O2</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="gcov">
+  <description>Build with gcov support</description>
+  <subdir>gcov</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-g</arg>
+     <arg>-fprofile-arcs</arg>
+     <arg>-ftest-coverage</arg>
+     <arg>-largs</arg>
+     <arg>--coverage</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="gprof">
+  <description>Build with gprof support</description>
+  <subdir>gprof</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-g</arg>
+     <arg>-pg</arg>
+     <arg>-largs</arg>
+     <arg>-pg</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="xref">
+  <description>Generate cross-reference information</description>
+  <subdir>.</subdir>
+  <shadow>TRUE</shadow>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <server>Tools_Server</server>
+  <substitutions>
+    <substitute src="%builder" dest="gprbuild"/>
+    <substitute src="%gnatmake" dest="gprbuild"/>
+  </substitutions>
+  <extra-args>
+    <arg>-margs</arg>
+    <arg>--subdirs=%subdir</arg>
+    <arg>-U</arg>
+    <arg>-k</arg>
+    <arg>-d</arg>
+    <arg>-ws</arg>
+    <arg>--no-object-check</arg>
+    <arg>-cargs:Ada</arg>
+    <arg>-gnatcQI</arg>
+    <arg>-gnatws</arg>
+    <arg>-gnatyN</arg>
+    <arg>-gnatVn</arg>
+    <arg>-cargs:C</arg>
+    <arg>-w</arg>
+    <arg>-fsyntax-only</arg>
+    <arg>-fdump-xref</arg>
+    <arg>-cargs:C++</arg>
+    <arg>-w</arg>
+    <arg>-fsyntax-only</arg>
+    <arg>-fpermissive</arg>
+    <arg>-fdump-xref</arg>
+  </extra-args>
+ </builder-mode>
+
+ <target-model name="builder" category="">
    <description>Generic GNAT builder</description>
    <command-line>
       <arg>%builder</arg>
@@ -355,6 +501,9 @@
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line />
-</target>
-
+ </target>
 </GPS>
+"""
+
+import GPS
+GPS.parse_xml(XML)

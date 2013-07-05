@@ -303,16 +303,40 @@ package body Startup_Module is
      (Editor : out Startup_Editor;
       Kernel : access Kernel_Handle_Record'Class)
    is
+
+      procedure Add_Script
+        (Name     : String;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Loaded   : Boolean;
+         Explicit : Boolean;
+         Init     : XML_Utils.Node_Ptr);
+      --  Add a startup script to the list
+
+      procedure Add_Script
+        (Name     : String;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Loaded   : Boolean;
+         Explicit : Boolean;
+         Init     : XML_Utils.Node_Ptr)
+      is
+         Iter : Gtk_Tree_Iter;
+      begin
+         Append (Editor.Model, Iter, Null_Iter);
+         Set (Editor.Model, Iter, Column_Load, Loaded);
+         Set (Editor.Model, Iter, Column_Name, Name);
+         Set (Editor.Model, Iter, Column_Explicit, Explicit);
+         Set_File (Editor.Model, Iter, Column_File, File);
+         Set (Editor.Model, Iter, Column_Modified, False);
+         Set (Editor.Model, Iter, Column_Initialize, +Init);
+      end Add_Script;
+
       Button      : Gtk_Widget;
       Scrolled    : Gtk_Scrolled_Window;
-      Iter        : Gtk_Tree_Iter;
       Box         : Gtk_Box;
       Pane        : Gtk_Paned;
       Text        : Gtk_Text_View;
       Event       : Gtk_Event_Box;
       Note        : Gtk_Notebook;
-      Script_Iter : Script_Iterator;
-      Script      : Script_Description;
       List        : Glib.Object.Object_Simple_List.Glist;
       Label       : Gtk_Label;
       pragma Unreferenced (Button);
@@ -410,20 +434,8 @@ package body Startup_Module is
          On_Selection_Changed'Access, Editor);
 
       Editor.Model := -Get_Model (Editor.Tree);
-      Get_First_Startup_Script (Kernel, Script_Iter);
-      while not At_End (Script_Iter) loop
-         Script := Get (Script_Iter);
 
-         Append (Editor.Model, Iter, Null_Iter);
-         Set (Editor.Model, Iter, Column_Load, Get_Load (Script));
-         Set (Editor.Model, Iter, Column_Name, Get_Script (Script_Iter));
-         Set (Editor.Model, Iter, Column_Explicit, Get_Explicit (Script));
-         Set_File (Editor.Model, Iter, Column_File, Get_Full_File (Script));
-         Set (Editor.Model, Iter, Column_Modified, False);
-         Set (Editor.Model, Iter, Column_Initialize, +Get_Init (Script));
-
-         Next (Script_Iter);
-      end loop;
+      For_All_Startup_Scripts (Kernel, Add_Script'Access);
 
       Select_Iter (Get_Selection (Editor.Tree), Get_Iter_First (Editor.Model));
 

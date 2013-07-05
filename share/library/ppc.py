@@ -1,7 +1,12 @@
-<?xml version="1.0"?>
-<!--  Adds highlighting of all branches and labels for PPC assembly code
- -->
+"""
+Adds highlighting of all branches and labels for PPC assembly code
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0"?>
 <GPS>
   <Language>
     <Name>PPC Asm</Name>
@@ -26,3 +31,6 @@
     </Categories>
   </Language>
 </GPS>
+"""
+
+GPS.parse_xml(XML)

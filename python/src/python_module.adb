@@ -63,13 +63,16 @@ package body Python_Module is
    overriding procedure Destroy (Module : in out Python_Module_Record);
 
    procedure Load_Dir
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Virtual_File;
-      Default_Autoload : Boolean);
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir                : Virtual_File;
+      Default_Autoload   : Boolean;
+      Ignore_User_Config : Boolean);
    --  Load all .py files from Dir, if any.
    --  Default_Autoload indicates whether scripts in this directory should
    --  be autoloaded by default, unless otherwise mentioned in
    --  ~/.gps/startup.xml
+   --  Ignore_User_Config should be True for the support scripts that are not
+   --  user-configurable plugins.
 
    type Python_Console_Record is new Interactive_Console_Record
      with null record;
@@ -318,9 +321,10 @@ package body Python_Module is
    --------------
 
    procedure Load_Dir
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Virtual_File;
-      Default_Autoload : Boolean)
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir                : Virtual_File;
+      Default_Autoload   : Boolean;
+      Ignore_User_Config : Boolean)
    is
       function To_Load (File : Virtual_File) return Boolean;
       --  Whether File should be loaded
@@ -332,8 +336,10 @@ package body Python_Module is
       function To_Load (File : Virtual_File) return Boolean is
          Command : Custom_Command_Access;
       begin
-         if Load_File_At_Startup
-           (Kernel, File, Default => Default_Autoload)
+         if (Ignore_User_Config and then Default_Autoload)
+           or else
+             (not Ignore_User_Config and then Load_File_At_Startup
+             (Kernel, File, Default => Default_Autoload))
          then
             Command := Initialization_Command (Kernel, File);
             if Command /= null then
@@ -360,6 +366,8 @@ package body Python_Module is
          --  Make sure the error messages will not be lost
 
          Set_Default_Console (Script, Kernel.Get_Messages_Window);
+
+         --  This adds to sys.path
          Load_Directory (Script, Dir, To_Load'Unrestricted_Access);
       end if;
    end Load_Dir;
@@ -373,15 +381,23 @@ package body Python_Module is
    is
       Env_Path : constant File_Array := Get_Custom_Path;
    begin
+      Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => True);
+      Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => True);
+      Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
+                Default_Autoload => False, Ignore_User_Config => True);
       Load_Dir
-        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True);
+        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True,
+         Ignore_User_Config => False);
       Load_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False);
+        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False,
+         Ignore_User_Config => False);
 
       for J in Env_Path'Range loop
          if Env_Path (J).Is_Directory then
-            Load_Dir
-              (Kernel, Env_Path (J), Default_Autoload => True);
+            Load_Dir (Kernel, Env_Path (J), Default_Autoload => True,
+                      Ignore_User_Config => False);
          end if;
       end loop;
    end Load_System_Python_Startup_Files;
@@ -393,7 +409,8 @@ package body Python_Module is
    procedure Load_User_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True);
+      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => False);
    end Load_User_Python_Startup_Files;
 
    ---------------------------------

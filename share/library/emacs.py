@@ -1,26 +1,27 @@
-<?xml version="1.0" ?>
-<!--  Provides Emacs-like keybindings.
+"""
+Provides Emacs-like keybindings.
 
-      This file overrides a number of the standard keybindings in GPS, to
-      be as close as possible to the Emacs editor.
-      No additional feature is provided in this package, and therefore you
-      can easily use for instance the interactive search even if you do not
-      like the Emacs key shortcuts.
+This file overrides a number of the standard keybindings in GPS, to
+be as close as possible to the Emacs editor.
+No additional feature is provided in this package, and therefore you
+can easily use for instance the interactive search even if you do not
+like the Emacs key shortcuts.
 
-      For best emulation of Emacs, it is recommanded that you also load the
-      following startup scripts:
-         - navigation_utils.py
-         - text_utils.py
-         - execute_extended.py
-         - isearch.py
-         - rectangles.py
+You can override any of these key shortcuts through the menu
+/Edit/Key Shortcuts.
 
-      You can override any of these key shortcuts through the menu
-      /Edit/Key Shortcuts.
+See the source of this script for the full list of key shortcuts.
+"""
 
-      See the source of this script for the full list of key shortcuts.
--->
+
 
+import GPS
+import isearch
+import rectangles
+import text_utils
+import navigation_utils
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
   <!--  disable GPS key shortcuts which conflict with emacs shortcuts -->
 
@@ -114,3 +115,6 @@
   <key action="/Navigate/Find Incremental">control-s</key>
   <key action="/Navigate/Find Previous Incremental">control-r</key>
 </GPS>
+"""
+
+GPS.parse_xml(XML)

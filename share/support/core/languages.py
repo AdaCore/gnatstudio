@@ -1,14 +1,19 @@
-<?xml version="1.0"?>
-<!--  Adds syntax highlighting for a number of languages
+"""
+Adds syntax highlighting for a number of languages
 
-      This script provides basic support when editing languages other
-      than Ada and C. In particular, it provides syntax highlighting,
-      and support for showing the entities in the Outline View.
+This script provides basic support when editing languages other
+than Ada and C. In particular, it provides syntax highlighting,
+and support for showing the entities in the Outline View.
 
-      Based on these examples, you can add support for your own
-      languages.
--->
+Based on these examples, you can add support for your own
+languages.
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
   <Language>
     <Name>Texinfo</Name>
@@ -273,5 +278,7 @@
     <Name>Asm2</Name>
     <Body_Suffix>.asm</Body_Suffix>
   </Language>
-
 </GPS>
+"""
+
+GPS.parse_xml(XML)

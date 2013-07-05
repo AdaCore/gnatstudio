@@ -1,9 +1,14 @@
-<?xml version="1.0" ?>
-<!--  Defines the standard toolchains used by the GPS project editor.
+"""
+Defines the standard toolchains used by the GPS project editor.
 
-      THIS PLUG-IN MUST BE LOADED.
--->
+THIS PLUG-IN MUST BE LOADED.
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <GPS>
   <!-- Default toolchain: any toolchain will have those values by default,
        prefixed using their name (e.g. gnatmake will be transformed to
@@ -134,3 +139,6 @@
     <compiler lang="asm"/>
   </toolchain>
 </GPS>
+"""
+
+GPS.parse_xml(XML)

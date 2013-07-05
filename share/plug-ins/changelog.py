@@ -1,13 +1,20 @@
-<?xml version="1.0"?>
-<!--  This file adds support for editing ChangeLog files.
-      It provides syntax highlighting in these files, and a
-      text alias "hdr" which expands to the following line:
-          date user_name <user_name@>
+"""
+This file adds support for editing ChangeLog files.
+It provides syntax highlighting in these files, and a
+text alias "hdr" which expands to the following line:
+    date user_name <user_name@>
 
-      You do not need to load this file if you never edit
-      Changelog files
- -->
+You do not need to load this file if you never edit Changelog files
+"""
 
+
+###########################################################################
+## No user customization below this line
+###########################################################################
+
+import GPS
+
+XML = r"""<?xml version="1.0"?>
 <GPS>
   <Language>
     <Name>Changelog</Name>
@@ -29,3 +36,6 @@
     <text>%D  %(USER)  &lt;%(USER)@&gt;</text>
   </alias>
 </GPS>
+"""
+
+GPS.parse_xml(XML)

@@ -4113,9 +4113,11 @@ else
 $as_echo_n "checking for default gtk+ version... " >&6; }
             # Detect the version we should use, from the system
             for WITH_GTK in "$CONFIGURE_SWITCH_WITH_GTK" "3.0" "2.0" "no"; do
-                GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
-                if test "$GTK_PREFIX" != ""; then
-                   break
+                if test "$WITH_GTK" != ""; then
+                   GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
+                   if test "$GTK_PREFIX" != ""; then
+                      break
+                   fi
                 fi
             done
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: $WITH_GTK" >&5
@@ -4609,7 +4611,7 @@ $as_echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: --------------------------------------------------" >&5
 $as_echo "$as_me: --------------------------------------------------" >&6;}
 
-ac_config_files="$ac_config_files Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml"
+ac_config_files="$ac_config_files Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5324,7 +5326,7 @@ do
     "common/core/src/config.ads") CONFIG_FILES="$CONFIG_FILES common/core/src/config.ads" ;;
     "common/expect/Makefile") CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
     "common/common.gpr") CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
-    "share/plug-ins/protocols.xml") CONFIG_FILES="$CONFIG_FILES share/plug-ins/protocols.xml" ;;
+    "share/support/core/protocols.py") CONFIG_FILES="$CONFIG_FILES share/support/core/protocols.py" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

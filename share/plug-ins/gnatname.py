@@ -1,9 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+"""
+This file adds target and target model for the gnatname utility.
+See the menu /Build/Settings/Targets to configure toolbar icons to
+easily launch gnatname.
+"""
 
-<!--  This file adds target and target model for the gnatname utility. -->
+
 
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <gnatname>
-
   <target-model name="gnatname" category="">
     <icon>gps-build-all</icon>
     <description>Generic launch of gnatname</description>
@@ -23,5 +29,7 @@
       <arg>name</arg>
     </command-line>
   </target>
-
 </gnatname>
+"""
+
+GPS.parse_xml(XML)

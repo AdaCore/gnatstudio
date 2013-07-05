@@ -1,13 +1,18 @@
-<?xml version="1.0" ?>
-<!--  Adds support for GNAT's gnatpp tool
+"""
+Adds support for GNAT's gnatpp tool
 
-      The gnatpp tool is a command line pretty printer for Ada code,
-      provided with the GNAT compiler.
-      This package integrates it into GPS:
-        - menu /Edit/Pretty Print
-        - switches edition through the project editor
--->
+The gnatpp tool is a command line pretty printer for Ada code,
+provided with the GNAT compiler.
+This package integrates it into GPS:
+  - menu /Edit/Pretty Print
+  - switches edition through the project editor
+"""
 
+
+
+import GPS
+
+XML = u"""<?xml version="1.0" ?>
 <GPS>
    <action name="Pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>
@@ -140,5 +145,7 @@
                 tip="Use separate lines for statement name with no extra indentation for statement itself" />
       </switches>
    </tool>
-
 </GPS>
+"""
+
+GPS.parse_xml(XML)

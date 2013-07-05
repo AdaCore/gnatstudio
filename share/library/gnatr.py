@@ -1,11 +1,16 @@
-<?xml version="1.0" ?>
-<!--This file adds a new Build->Compile current with -gnatR menu.
+"""
+This file adds a new Build->Compile current with -gnatR menu.
 
-  Selecting an opened source editor, and then clicking on this menu, will
-  output the layout of all the records in the current file, by recompiling
-  the file with -gnatR.
--->
+Selecting an opened source editor, and then clicking on this menu, will
+output the layout of all the records in the current file, by recompiling
+the file with -gnatR.
+"""
 
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
 <gnatr>
    <action name="View types layout in file" output="none" category="Builder" >
       <external>gnatmake -f -gnatc -P%pp -gnatR -u %F</external>
@@ -25,3 +30,6 @@
       </menu>
    </Submenu>
 </gnatr>
+"""
+
+GPS.parse_xml(XML)

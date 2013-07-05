@@ -1,5 +1,11 @@
-<?xml version='1.0'?>
-<root>
+"""
+This plug-in adds support for C# syntax highlighting and Outline.
+"""
+
+
+
+XML = r"""<?xml version="1.0" ?>
+<GPS>
   <Language>
     <Name>C#</Name>
     <Spec_Suffix>.cs</Spec_Suffix>
@@ -38,4 +44,8 @@
       </Category>
     </Categories>
   </Language>
-</root>
+</GPS>
+"""
+
+import GPS
+GPS.parse_xml(XML)
