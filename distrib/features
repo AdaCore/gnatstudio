@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M705-018 GPS: clean up Plug-ins dialog (2013-07-05)
+
+  The plug-ins dialog has been simplified. It no longer shows the python
+  files that are mandatory for GPS. It no longer supports custom
+  initialization commands for the modules (since standard python can be
+  used for this). The implementation of the plug-ins is now accessible via
+  an hyper link, instead of being displayed in this dialog.
+
 NF-60-M625-035 GPS: style for build buttons in the toolbar (2013-07-01)
 
   The rendering has been modified for the build buttons in the toolbar,

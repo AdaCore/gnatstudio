@@ -66,9 +66,8 @@ package body Startup_Module is
    Column_Name       : constant := 1;
    Column_Explicit   : constant := 2;
    Column_File       : constant := 3;
-   Column_Initialize : constant := 4;
-   Column_Modified   : constant := 5;
-   Column_Background : constant := 6;
+   Column_Modified   : constant := 4;
+   Column_Background : constant := 5;
 
    type Startup_Editor_Record is new Gtk_Dialog_Record with record
       Kernel      : Kernel_Handle;
@@ -260,11 +259,9 @@ package body Startup_Module is
             end if;
 
             Override_Startup_Script
-              (Kernel         => Editor.Kernel,
-               Base_Name      => Get_String (Editor.Model, Iter, Column_Name),
-               Load           => Get_Boolean (Editor.Model, Iter, Column_Load),
-               Initialization =>
-               +Get_Address (Editor.Model, Iter, Column_Initialize));
+              (Kernel    => Editor.Kernel,
+               Base_Name => Get_String (Editor.Model, Iter, Column_Name),
+               Load      => Get_Boolean (Editor.Model, Iter, Column_Load));
          end if;
 
          Next (Editor.Model, Iter);
@@ -308,16 +305,14 @@ package body Startup_Module is
         (Name     : String;
          File     : GNATCOLL.VFS.Virtual_File;
          Loaded   : Boolean;
-         Explicit : Boolean;
-         Init     : XML_Utils.Node_Ptr);
+         Explicit : Boolean);
       --  Add a startup script to the list
 
       procedure Add_Script
         (Name     : String;
          File     : GNATCOLL.VFS.Virtual_File;
          Loaded   : Boolean;
-         Explicit : Boolean;
-         Init     : XML_Utils.Node_Ptr)
+         Explicit : Boolean)
       is
          Iter : Gtk_Tree_Iter;
       begin
@@ -327,7 +322,6 @@ package body Startup_Module is
          Set (Editor.Model, Iter, Column_Explicit, Explicit);
          Set_File (Editor.Model, Iter, Column_File, File);
          Set (Editor.Model, Iter, Column_Modified, False);
-         Set (Editor.Model, Iter, Column_Initialize, +Init);
       end Add_Script;
 
       Button      : Gtk_Widget;
@@ -368,7 +362,6 @@ package body Startup_Module is
                           Column_Name       => GType_String,
                           Column_Explicit   => GType_Boolean,
                           Column_File       => Get_Virtual_File_Type,
-                          Column_Initialize => GType_Pointer,
                           Column_Modified   => GType_Boolean,
                           Column_Background => GType_String),
          Column_Names => (Column_Load + 1 => Load_Cst'Unchecked_Access,

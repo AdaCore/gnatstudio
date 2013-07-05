@@ -46,9 +46,7 @@
 --    - Dynamic modules need to be loaded when the menus they have registered
 --      are called initially.
 
-with Commands.Custom;
 with GNATCOLL.VFS_Utils;
-with XML_Utils;
 
 package GPS.Kernel.Custom is
 
@@ -134,8 +132,7 @@ package GPS.Kernel.Custom is
    procedure Override_Startup_Script
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
-      Load           : Boolean;
-      Initialization : XML_Utils.Node_Ptr);
+      Load           : Boolean);
    --  Override the attributes of startup.xml for this specific script. This
    --  new value will automatically be saved in startup.xml at the end of the
    --  session.
@@ -153,23 +150,13 @@ package GPS.Kernel.Custom is
    --  list them to the user later on.
    --  For python modules, the File should be the name of the directory.
 
-   function Initialization_Command
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File)
-      return Commands.Custom.Custom_Command_Access;
-   --  Return the command to execute to initialize this module. This is
-   --  null if no initialization command was provided. These are read from
-   --  the file ~/.gps/startup.xml.
-   --  The user must free the returned value.
-
    procedure For_All_Startup_Scripts
      (Kernel : access Kernel_Handle_Record'Class;
       Callback : not null access procedure
         (Name     : String;
          File     : GNATCOLL.VFS.Virtual_File;
          Loaded   : Boolean;
-         Explicit : Boolean;
-         Init     : XML_Utils.Node_Ptr));
+         Explicit : Boolean));
    --  Iterate over all known startup scripts.
    --  This only include those scripts that user can choose to explicitly
    --  enable or disable, not the mandatory support scripts.
@@ -186,10 +173,6 @@ package GPS.Kernel.Custom is
    --
    --  Explicit is True if the script was loaded (or not) because of an
    --  explicit user settings.
-   --
-   --  Init is the initialization commands that should be performed after
-   --  the script has been loaded. You mustn't free the returned value,
-   --  which points to internal data.
 
 private
    type Load_Mode is
@@ -198,7 +181,6 @@ private
       Explicit_Off); --  explicitly disabled
 
    type Script_Description is record
-      Initialization : XML_Utils.Node_Ptr;      --  from startup.xml
       Mode           : Load_Mode := Automatic;  --  Whether to load this plugin
       Loaded         : Boolean := False;
       File           : GNATCOLL.VFS.Virtual_File;

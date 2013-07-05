@@ -32,7 +32,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Commands.Custom;            use Commands.Custom;
 with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
@@ -40,7 +39,6 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Python_Core;
 with Histories;                  use Histories;
@@ -334,27 +332,11 @@ package body Python_Module is
       -------------
 
       function To_Load (File : Virtual_File) return Boolean is
-         Command : Custom_Command_Access;
       begin
-         if (Ignore_User_Config and then Default_Autoload)
+         return (Ignore_User_Config and then Default_Autoload)
            or else
              (not Ignore_User_Config and then Load_File_At_Startup
-             (Kernel, File, Default => Default_Autoload))
-         then
-            Command := Initialization_Command (Kernel, File);
-            if Command /= null then
-               Launch_Background_Command
-                 (Kernel,
-                  Command    => Command,
-                  Active     => False,  --  After the "import"
-                  Show_Bar   => False,
-                  Block_Exit => False);
-            end if;
-            return True;
-
-         else
-            return False;
-         end if;
+             (Kernel, File, Default => Default_Autoload));
       end To_Load;
 
       Script : constant Scripting_Language :=

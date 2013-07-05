@@ -22,9 +22,7 @@ with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with XML_Utils;                 use XML_Utils;
-with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with String_Hash;
@@ -154,8 +152,6 @@ package body GPS.Kernel.Custom is
    is
       Files : File_Array_Access;
       File_Node : Node_Ptr;
-      Command   : Custom_Command_Access;
-
    begin
       if Is_Directory (Directory) then
          Files := Read_Dir (Directory, Files_Only);
@@ -186,16 +182,6 @@ package body GPS.Kernel.Custom is
                         Execute_Customization_String
                           (Kernel, F, File_Node.Child, Level);
                         Free (File_Node);
-
-                        Command := Initialization_Command (Kernel, F);
-                        if Command /= null then
-                           Launch_Background_Command
-                             (Kernel,
-                              Command    => Command,
-                              Active     => True,
-                              Show_Bar   => False,
-                              Block_Exit => False);
-                        end if;
                      end if;
                   end if;
                end if;
@@ -449,8 +435,7 @@ package body GPS.Kernel.Custom is
                   end;
 
                   Script := new Script_Description'
-                    (Initialization => Deep_Copy (N.Child),
-                     Mode           => Mode,
+                    (Mode           => Mode,
                      Loaded         => False,
                      File           => GNATCOLL.VFS.No_File);
 
@@ -504,11 +489,6 @@ package body GPS.Kernel.Custom is
                  (Child, "load", Boolean'Image (Script.Mode = Explicit_On));
                Set_Attribute (Child, "file", Get_Key (Iter));
 
-               if Script.Initialization /= null then
-                  Add_Child (Child, Deep_Copy (Script.Initialization),
-                             Append => True);
-                  --  Append in case Initialization has several siblings
-               end if;
                Add_Child (File, Child);
          end case;
 
@@ -534,8 +514,7 @@ package body GPS.Kernel.Custom is
         (Name     : String;
          File     : GNATCOLL.VFS.Virtual_File;
          Loaded   : Boolean;
-         Explicit : Boolean;
-         Init     : XML_Utils.Node_Ptr))
+         Explicit : Boolean))
    is
       Iter : Scripts_Hash.String_Hash_Table.Cursor;
       S    : Script_Description_Access;
@@ -553,8 +532,7 @@ package body GPS.Kernel.Custom is
               (Name     => Get_Key (Iter),
                File     => S.File,
                Loaded   => S.Loaded,
-               Explicit => S.Mode /= Automatic,
-               Init     => S.Initialization);
+               Explicit => S.Mode /= Automatic);
          end if;
 
          Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
@@ -568,8 +546,7 @@ package body GPS.Kernel.Custom is
    procedure Override_Startup_Script
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
-      Load           : Boolean;
-      Initialization : XML_Utils.Node_Ptr)
+      Load           : Boolean)
    is
       Startup : Script_Description_Access :=
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
@@ -579,8 +556,7 @@ package body GPS.Kernel.Custom is
    begin
       if Startup = null then
          Startup := new Script_Description'
-           (Initialization => Initialization,
-            Mode           => Mode,
+           (Mode           => Mode,
             Loaded         => False,
             File           => GNATCOLL.VFS.No_File);
          Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
@@ -588,11 +564,6 @@ package body GPS.Kernel.Custom is
               E => Startup);
       else
          Startup.Mode := Mode;
-         if Startup.Initialization /= Initialization then
-            Free (Startup.Initialization);
-         end if;
-
-         Startup.Initialization := Initialization;
       end if;
    end Override_Startup_Script;
 
@@ -619,8 +590,7 @@ package body GPS.Kernel.Custom is
 
       if Startup = null then
          Startup := new Script_Description'
-           (Initialization   => null,
-            Mode             => Automatic,
+           (Mode             => Automatic,
             Loaded           => Default,
             File             => File);
 
@@ -655,34 +625,6 @@ package body GPS.Kernel.Custom is
       return Startup.Loaded;
    end Load_File_At_Startup;
 
-   ----------------------------
-   -- Initialization_Command --
-   ----------------------------
-
-   function Initialization_Command
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File)
-      return Commands.Custom.Custom_Command_Access
-   is
-      Startup : constant Script_Description_Access :=
-                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                       K => +Base_Name (File));
-      Custom  : Custom_Command_Access;
-   begin
-      if Startup /= null and then Startup.Initialization /= null then
-         Custom := new Custom_Command;
-         Create
-           (Item           => Custom,
-            Name           => "Initialize " & Display_Full_Name (File),
-            Kernel         => Kernel_Handle (Kernel),
-            Default_Output => No_Output,
-            Command        => Startup.Initialization);
-         return Custom;
-      else
-         return null;
-      end if;
-   end Initialization_Command;
-
    ----------
    -- Free --
    ----------
@@ -691,7 +633,6 @@ package body GPS.Kernel.Custom is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Script_Description, Script_Description_Access);
    begin
-      Free (File.Initialization);
       Unchecked_Free (File);
    end Free;
 
