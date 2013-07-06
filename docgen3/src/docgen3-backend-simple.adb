@@ -869,7 +869,7 @@ package body Docgen3.Backend.Simple is
 
             Tmpl   : constant Virtual_File :=
                        Get_Template
-                         (Get_System_Dir (Backend.Context.Kernel),
+                         (Get_Share_Dir (Backend.Context.Kernel),
                           Tmpl_Entities);
 
             Cursor      : EInfo_List.Cursor;

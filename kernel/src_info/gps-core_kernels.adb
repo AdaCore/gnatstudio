@@ -20,6 +20,7 @@ with Ada.Strings.Hash;
 with GNAT.OS_Lib;
 with GNAT.Strings;                     use GNAT.Strings;
 
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -28,6 +29,35 @@ with GPS.Scripts;
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
+
+   -----------------------
+   -- Get_Doc_Directory --
+   -----------------------
+
+   function Get_Doc_Directory
+     (Kernel : access Core_Kernel_Record'Class) return Virtual_File
+   is
+      Project  : Project_Type renames Kernel.Registry.Tree.Root_Project;
+      Attr     : constant String :=
+                   Project.Attribute_Value (Documentation_Dir_Attribute);
+      Base_Dir : Virtual_File;
+
+   begin
+      if Attr /= "" then
+         Base_Dir := Create_From_Base (+Attr);
+         Base_Dir.Ensure_Directory;
+
+         return Base_Dir;
+      end if;
+
+      if Project.Object_Dir /= No_File then
+         Base_Dir := Project.Object_Dir;
+      else
+         Base_Dir := Project.Project_Path.Get_Parent;
+      end if;
+
+      return Create_From_Dir (Base_Dir, +"doc/");
+   end Get_Doc_Directory;
 
    ----------------------
    -- Create_From_Base --
