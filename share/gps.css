@@ -26,6 +26,18 @@
    /* background: shade(@theme_bg_color, 0.9); */
 }
 
+.notebook.leftTabs, .notebook.rightTabs {
+   -GtkNotebook-initial-gap: 0;
+}
+
+.gps-local-toolbar {
+   padding: 0px;
+}
+.gps-local-toolbar * {
+   margin: 0px;
+   padding: 0px;
+}
+
 /* Search and filter fields */
 GtkEntry.search {
   border-radius: 8px;
