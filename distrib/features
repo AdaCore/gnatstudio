@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M705-044 GPS: rotation text in notebook tabs (2012-07-08)
+
+  It is now possible, via the contextual menu on each notebook tab, to
+  change the orientation of the text. For instance, displaying the tabs
+  on the left will by default rotate the text bottom-to-top, thus saving
+  horizontal space.
+
 NF-60-M705-018 GPS: clean up Plug-ins dialog (2013-07-05)
 
   The plug-ins dialog has been simplified. It no longer shows the python
