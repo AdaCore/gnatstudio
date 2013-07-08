@@ -1162,9 +1162,13 @@ package body Default_Preferences is
    is
       Btn : constant Gtk_Color_Button := Gtk_Color_Button (Button);
       Rgba : Gdk_RGBA;
+      Val  : constant Gdk_RGBA := Color_Preference (Data.Pref).Get_Pref;
    begin
       Btn.Get_Rgba (Rgba);
-      Set_Pref (Color_Preference (Data.Pref), Data.Manager, To_String (Rgba));
+      if Rgba /= Val then
+         Set_Pref
+           (Color_Preference (Data.Pref), Data.Manager, To_String (Rgba));
+      end if;
    end Color_Changed;
 
    ---------------
@@ -1173,10 +1177,16 @@ package body Default_Preferences is
 
    procedure Update_Fg
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      Old, Val : Gdk_RGBA;
    begin
-      Gtk_Color_Button (Button).Set_Rgba
-        (Get_Pref_Fg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Get_Rgba (Old);
+      Val := Get_Pref_Fg (Style_Preference (Data.Pref));
+
+      if Old /= Val then
+         Gtk_Color_Button (Button).Set_Rgba (Val);
+      end if;
    end Update_Fg;
 
    ---------------
@@ -1185,10 +1195,16 @@ package body Default_Preferences is
 
    procedure Update_Bg
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      Old, Val : Gdk_RGBA;
    begin
-      Gtk_Color_Button (Button).Set_Rgba
-        (Get_Pref_Bg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Get_Rgba (Old);
+      Val := Get_Pref_Bg (Style_Preference (Data.Pref));
+
+      if Old /= Val then
+         Gtk_Color_Button (Button).Set_Rgba (Val);
+      end if;
    end Update_Bg;
 
    -----------------------
@@ -1216,12 +1232,16 @@ package body Default_Preferences is
      (Button : access GObject_Record'Class;
       Data   : Manager_Preference)
    is
-      R : Gdk_RGBA;
+      R, Old : Gdk_RGBA;
       Success : Boolean;
    begin
       Parse (R, Get_Pref (Color_Preference (Data.Pref)), Success);
+
       if Success then
-         Set_Rgba (Gtk_Color_Button (Button), R);
+         Gtk_Color_Button (Button).Get_Rgba (Old);
+         if Old /= R then
+            Set_Rgba (Gtk_Color_Button (Button), R);
+         end if;
       end if;
    end Update_Color;
 
@@ -1237,8 +1257,10 @@ package body Default_Preferences is
       R : Gdk_RGBA;
    begin
       C.Get_Rgba (R);
-      Style_Preference (Data.Pref).Fg_Color := R;
-      Data.Manager.On_Pref_Changed (Data.Pref);
+      if Style_Preference (Data.Pref).Fg_Color /= R then
+         Style_Preference (Data.Pref).Fg_Color := R;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Fg_Color_Changed;
 
    ---------------------
@@ -1249,10 +1271,12 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class; Data  : Manager_Preference)
    is
       C : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
+      V : constant Variant_Enum := From_String (C.Get_Active_Text);
    begin
-      Variant_Preference (Data.Pref).Variant := From_String
-        (C.Get_Active_Text);
-      Data.Manager.On_Pref_Changed (Data.Pref);
+      if Variant_Preference (Data.Pref).Variant /= V then
+         Variant_Preference (Data.Pref).Variant := V;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Variant_Changed;
 
    ----------------------
@@ -1267,8 +1291,10 @@ package body Default_Preferences is
       R : Gdk_RGBA;
    begin
       C.Get_Rgba (R);
-      Style_Preference (Data.Pref).Bg_Color := R;
-      Data.Manager.On_Pref_Changed (Data.Pref);
+      if Style_Preference (Data.Pref).Bg_Color /= R then
+         Style_Preference (Data.Pref).Bg_Color := R;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Bg_Color_Changed;
 
    ---------------
