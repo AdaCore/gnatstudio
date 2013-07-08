@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M708-023 GPS: middle-click on tab closes the window (2012-07-08)
+
+  This is close to the behavior most web browsers implement and is a
+  convenient way to quickly close a number of tabs.
+
 NF-60-M705-044 GPS: rotation text in notebook tabs (2012-07-08)
 
   It is now possible, via the contextual menu on each notebook tab, to
