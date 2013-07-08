@@ -55,6 +55,7 @@ package body GPS.Stock_Icons is
 
          Icon_Size_Lookup (Icon_Size_Button, W, H, Result);
          Trace (Me, "Icon size Button =>" & W'Img & "x" & H'Img);
+
       end if;
    end Register_Stock_Icons;
 

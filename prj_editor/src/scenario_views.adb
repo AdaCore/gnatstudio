@@ -18,37 +18,38 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System.Assertions;
 
-with Glib;                use Glib;
-with Glib.Convert;        use Glib.Convert;
-with Glib.Object;         use Glib.Object;
-with Glib.Properties;     use Glib.Properties;
-with Glib.Values;         use Glib.Values;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Glib.Convert;             use Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
+with Glib;                     use Glib;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Combo;  use Gtk.Cell_Renderer_Combo;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.List_Store;      use Gtk.List_Store;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Toolbar;         use Gtk.Toolbar;
-with Gtk.Tree_Model;      use Gtk.Tree_Model;
-with Gtk.Tree_Selection;  use Gtk.Tree_Selection;
-with Gtk.Tree_Store;      use Gtk.Tree_Store;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.MDI;          use Gtkada.MDI;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.List_Store;           use Gtk.List_Store;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.MDI;               use Gtkada.MDI;
 
-with Commands.Interactive;  use Commands.Interactive;
-with Projects;              use Projects;
+with Commands.Interactive;      use Commands.Interactive;
+with Projects;                  use Projects;
 with Generic_Views;
-with GNAT.Strings;          use GNAT.Strings;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -59,12 +60,13 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Project_Viewers;       use Project_Viewers;
-with Variable_Editors;      use Variable_Editors;
-with GPS.Intl;              use GPS.Intl;
-with GUI_Utils;             use GUI_Utils;
-with Traces;                use Traces;
-with XML_Utils;             use XML_Utils;
+with GPS.Stock_Icons;
+with Project_Viewers;           use Project_Viewers;
+with Variable_Editors;          use Variable_Editors;
+with GPS.Intl;                  use GPS.Intl;
+with GUI_Utils;                 use GUI_Utils;
+with Traces;                    use Traces;
+with XML_Utils;                 use XML_Utils;
 
 package body Scenario_Views is
 
@@ -533,7 +535,9 @@ package body Scenario_Views is
 
    overriding procedure Create_Toolbar
      (View    : not null access Scenario_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Sep : Gtk_Separator_Tool_Item;
    begin
       Add_Button
         (View.Kernel,
@@ -544,15 +548,19 @@ package body Scenario_Views is
       Add_Button
         (View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Edit,
-         Action   => Command_Edit_Variable_Name,
-         Tooltip  => Command_Edit_Variable_Tip);
-      Add_Button
-        (View.Kernel,
-         Toolbar  => Toolbar,
          Stock_Id => Stock_Remove,
          Action   => Command_Delete_Variable_Name,
          Tooltip  => Command_Delete_Variable_Tip);
+
+      Gtk_New (Sep);
+      Toolbar.Insert (Sep);
+
+      Add_Button
+        (View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
+         Action   => Command_Edit_Variable_Name,
+         Tooltip  => Command_Edit_Variable_Tip);
    end Create_Toolbar;
 
    -------------

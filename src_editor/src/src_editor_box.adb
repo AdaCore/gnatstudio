@@ -639,11 +639,11 @@ package body Src_Editor_Box is
       end case;
 
       if Get_Writable (Box.Source_Buffer) then
-         Set (Box.Read_Only_Label, GPS_Writable, Icon_Size_Menu);
+         Set (Box.Read_Only_Label, GPS_Writable, Icon_Size_Local_Toolbar);
          Box.Read_Only_Label.Set_Tooltip_Text (-"Writable");
          Get_Style_Context (Box.Source_View).Remove_Class ("read-only");
       else
-         Set (Box.Read_Only_Label, GPS_Read_Only, Icon_Size_Menu);
+         Set (Box.Read_Only_Label, GPS_Read_Only, Icon_Size_Local_Toolbar);
          Box.Read_Only_Label.Set_Tooltip_Text (-"Read Only");
          Get_Style_Context (Box.Source_View).Add_Class ("read-only");
       end if;

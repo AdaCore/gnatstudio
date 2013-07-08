@@ -72,4 +72,7 @@ package GPS.Stock_Icons is
    GPS_Refresh             : constant String := "gps-refresh";
    --  Refresh views
 
+   GPS_Edit_Value          : constant String := "gps-edit";
+   --  Edit a value in a view
+
 end GPS.Stock_Icons;
