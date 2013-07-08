@@ -24,8 +24,9 @@ with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
 with Glib.Values;         use Glib.Values;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Combo; use Gtk.Cell_Renderer_Combo;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Combo;  use Gtk.Cell_Renderer_Combo;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.List_Store;      use Gtk.List_Store;
@@ -227,6 +228,7 @@ package body Scenario_Views is
       Col_Number : Gint;
       Val      : GValue;
       Iter     : Gtk_Tree_Iter;
+      Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
       pragma Unreferenced (Col_Number);
    begin
       Initialize_Vbox (View, Homogeneous => False);
@@ -266,6 +268,12 @@ package body Scenario_Views is
       Col.Set_Resizable (True);
       Col.Set_Sort_Column_Id (1);
       Col_Number := View.View.Append_Column (Col);
+
+      Gtk_New (Pixbuf);
+      Col.Pack_Start (Pixbuf, False);
+      Set_Property (Pixbuf, Stock_Id_Property, "gps-double-arrow");
+      Col.Add_Attribute (Pixbuf, "visible", 3);
+
       Gtk_New (Combo);
       Col.Pack_Start (Combo, True);
       Set_Property (Combo, Text_Column_Property, 0);  --  in combo's model

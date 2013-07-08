@@ -72,6 +72,7 @@ XML = r"""<?xml version="1.0"?>
        <alternate                     file="${icons}/18px/stack_down_18.png" size="Icon_Size_Small_Toolbar" />
     </icon>
 
+
     <!-- Note that the icon file is specified twice. The first occurrence is
          a general-purpose one (this is the reference image which will be scaled
          at different sizes if needed, the other is the image to use as-is for
@@ -125,6 +126,8 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-project-closed"              file="${icons}/16px/project_box.png" />
     <icon id="gps-project-modified-open"       file="${icons}/16px/project_box_pencil.png" />
     <icon id="gps-project-modified-closed"     file="${icons}/16px/project_box_pencil.png" />
+
+    <icon id="gps-double-arrow" file="${icons}/svg/double_arrow.svg"/>
 
     <icon id="gps-box"                file="${icons}/16px/box.png" />
 
