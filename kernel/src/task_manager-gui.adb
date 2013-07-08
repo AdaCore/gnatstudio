@@ -1096,8 +1096,14 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Dummy);
    begin
       Gtk_New_First (Path);
+
+      for J in 2 .. Index loop
+         Next (Path);
+      end loop;
+
       Row_Deleted (+GUI.Model, Path);
       Path_Free (Path);
+
       Refresh (GUI);
 
       if GUI.Manager.Queues (Index).Show_Bar then
