@@ -14,7 +14,7 @@ from gi.repository import Gtk, Gdk
 
 themes = [
    {"name": "Default",
-    "@dark": False,
+    "@theme": "Adwaita",
     "@theme_bg_color": None,           # the background color for windows
     "@theme_fg_color": None,           # default color for the text
     "@theme_selected_bg_color": None,  # selection in trees or menus
@@ -32,7 +32,7 @@ themes = [
     "Src-Editor-Block-Variant":              ("DEFAULT", "#A600D9", "transparent")
    },
    {"name": "Darkside",
-    "@dark": True,
+    "@theme": "Adwaita (Dark)",
     "@theme_bg_color": "#222324",
     "General-Default-Style":                 ("${font}", "#BABABA", "#222324"),
     "Src-Editor-Current-Line-Color":         "#303333",
@@ -46,7 +46,7 @@ themes = [
     "Src-Editor-Block-Variant":              ("DEFAULT", "#68C244", "transparent")
    },
    {"name": "Monokai",
-    "@dark": True,
+    "@theme": "Adwaita (Dark)",
     "@theme_bg_color": "#272822",
     "@theme_fg_color": "#F8F8F2",
     "@theme_selected_bg_color": "#49483E",
@@ -63,7 +63,7 @@ themes = [
     "Src-Editor-Block-Variant":              ("DEFAULT", "#A6E22E", "transparent")
    },
    {"name": "iPlastic",
-    "@dark": False,
+    "@theme": "Adwaita",
     "General-Default-Style":                 ("${font}", "#000000", "#EEEEEE"),
     "Src-Editor-Current-Line-Color":         "rgba(0,0,0,0.2)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "#000000", "#EEEEEE"),
@@ -81,8 +81,8 @@ themes = [
 class Color_Theme_Switcher(object):
 
     pref_name = "General/ColorTheme"
+    pref_gtk_theme = "GPS6-Gtk-Theme-Name"
     gtkpref_name = "/ColorTheme gtk+"
-    pref_dark_name = "/ColorTheme dark"
     
     def __init__(self):
         args = ["Custom"] + [t["name"] for t in themes]
@@ -97,7 +97,6 @@ class Color_Theme_Switcher(object):
         self.current = p.get()
 
         GPS.Preference(self.gtkpref_name).create("", "string", "", "")
-        GPS.Preference(self.pref_dark_name).create("", "boolean", "", False)
 
         self.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
@@ -105,16 +104,10 @@ class Color_Theme_Switcher(object):
 
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
 
-        self.__set_gtk_properties()
-
     def __del__(self):
         GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
 
     def __set_gtk_properties(self):
-        Gtk.Settings.get_default().set_property(
-            'gtk-application-prefer-dark-theme',
-            GPS.Preference(self.pref_dark_name).get())
-
         c = GPS.Preference(self.gtkpref_name).get()
         if c == "":
             self.provider.load_from_data("*{}")  # Clear contents
@@ -158,7 +151,7 @@ class Color_Theme_Switcher(object):
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
         GPS.Preference(self.gtkpref_name).set(colors)
-        GPS.Preference(self.pref_dark_name).set(theme.get("@dark", False))
+        GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
 
         default = GPS.Preference("General-Default-Style").get().split("@")[0]
         font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
