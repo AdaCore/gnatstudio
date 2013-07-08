@@ -43,7 +43,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
@@ -64,6 +63,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Stock_Icons;
 with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
@@ -1034,7 +1034,7 @@ package body Project_Explorers_Files is
    is
       Button : Gtk_Tool_Button;
    begin
-      Gtk_New_From_Stock (Button, Stock_Refresh);
+      Gtk_New_From_Stock (Button, GPS.Stock_Icons.GPS_Refresh);
       Button.Set_Tooltip_Text (-"Refresh");
       Widget_Callback.Object_Connect
         (Button, Gtk.Tool_Button.Signal_Clicked, Refresh'Access, View);

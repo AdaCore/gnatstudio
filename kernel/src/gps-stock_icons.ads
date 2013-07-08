@@ -69,4 +69,7 @@ package GPS.Stock_Icons is
    Icon_Size_Local_Toolbar : Gtk.Enums.Gtk_Icon_Size;
    --  The size for local toolbars in the MDI panels.
 
+   GPS_Refresh             : constant String := "gps-refresh";
+   --  Refresh views
+
 end GPS.Stock_Icons;

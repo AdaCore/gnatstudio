@@ -633,7 +633,7 @@ package body Browsers.Canvas is
         (Button, Gtk.Tool_Button.Signal_Clicked, Toggle_Links'Access,
          View);
 
-      Gtk_New_From_Stock (Button, Stock_Refresh);
+      Gtk_New_From_Stock (Button, GPS_Refresh);
       Button.Set_Tooltip_Text (-"Refresh layout");
       Toolbar.Insert (Button);
       Widget_Callback.Object_Connect

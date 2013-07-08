@@ -46,7 +46,6 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -82,6 +81,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
@@ -1084,7 +1084,7 @@ package body Project_Explorers is
    is
       Button : Gtk_Tool_Button;
    begin
-      Gtk_New_From_Stock (Button, Stock_Refresh);
+      Gtk_New_From_Stock (Button, GPS_Refresh);
       Button.Set_Tooltip_Text (-"Reload project");
       Widget_Callback.Object_Connect
         (Button, Gtk.Tool_Button.Signal_Clicked,
