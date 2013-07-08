@@ -124,14 +124,14 @@ package body GPS.Kernel.Preferences is
          Run_Hook (Self.Kernel, Preference_Changed_Hook, Data'Access);
       end if;
 
-      if Self.Get_Editor /= null then
-         Widget_Callback.Emit_By_Name
-           (Self.Get_Editor, Signal_Preferences_Changed);
-      end if;
-
       if not Self.Is_Loading_Preferences
         and then Self.Nested_Pref_Changed = 1
       then
+         if Self.Get_Editor /= null then
+            Widget_Callback.Emit_By_Name
+              (Self.Get_Editor, Signal_Preferences_Changed);
+         end if;
+
          Save_Preferences (Self.Kernel);
       end if;
 
