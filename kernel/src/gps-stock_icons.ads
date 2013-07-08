@@ -62,6 +62,9 @@ package GPS.Stock_Icons is
    GPS_Regexp : constant String := "gps-regexp";
    GPS_Negate_Search : constant String := "gps-negate";
 
+   GPS_Double_Arrow : constant String := "gps-double-arrow";
+   --  Two arrows aligned vertically, to show that there is a combo box
+
    Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
    --  A very small icon size (7x7). It is used for instance for the Stop_Task
    --  button in the main toolbar.

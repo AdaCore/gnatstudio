@@ -273,7 +273,8 @@ package body Scenario_Views is
 
       Gtk_New (Pixbuf);
       Col.Pack_Start (Pixbuf, False);
-      Set_Property (Pixbuf, Stock_Id_Property, "gps-double-arrow");
+      Set_Property
+        (Pixbuf, Stock_Id_Property, GPS.Stock_Icons.GPS_Double_Arrow);
       Col.Add_Attribute (Pixbuf, "visible", 3);
 
       Gtk_New (Combo);
