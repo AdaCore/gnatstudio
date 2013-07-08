@@ -6611,10 +6611,15 @@ package body Src_Editor_Buffer is
          BC_Last    : Natural;
          EC_Last    : Natural;
          Line       : Src_String;
+         To_Length  : Character_Offset_Type;
 
       begin  --  Refill_Comments
          for K in From_Line .. To_Line loop
             Line := Get_String (Buffer, K);
+
+            if K = To_Line then
+               To_Length := Character_Offset_Type (Line.Length);
+            end if;
 
             --  Handle continuation of multi-line comment
 
@@ -6789,9 +6794,7 @@ package body Src_Editor_Buffer is
               (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
          else
             Replace_Slice
-              (Buffer, From_Line, 1,
-               To_Line, Character_Offset_Type (Length (New_Text)),
-               To_String (New_Text));
+              (Buffer, From_Line, 1, To_Line, To_Length, To_String (New_Text));
          end if;
 
       exception
@@ -7056,7 +7059,8 @@ package body Src_Editor_Buffer is
             Append (S, End_Comment_Pattern);
 
             Single_Line_BC_Pattern :=
-              new Pattern_Matcher'(Compile (To_String (S)));
+              new Pattern_Matcher'
+                (Compile (To_String (S), GNAT.Regpat.Single_Line));
          end if;
 
          --  Handle multi-line comments
