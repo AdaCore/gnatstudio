@@ -31,6 +31,7 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gtk-undo"               label="Undo" file="${icons}/svg/undo.svg" />
     <icon id="gtk-preferences"        label="Preferences" file="${icons}/svg/settings.svg" />
     <icon id="gtk-close"              label="Close" file="${icons}/svg/close.svg" />
+    <icon id="gps-clear-entry"        label="Clear Entry" file="${icons}/svg/clear_entry.svg" />
     <icon id="gtk-print"              label="Print" file="${icons}/svg/print.svg" />
     <icon id="gtk-clear"              label="Clean" file="${icons}/svg/clean.svg" />
 
@@ -123,7 +124,6 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-stopTask"          file="${icons}/svg/close.svg"/>
     <icon id="gps-expandAll"         file="${icons}/9px/expand_12.png"/>
     <icon id="gps-collapseAll"       file="${icons}/9px/collapse_12.png"/>
-    <icon id="gps-clear-entry"       file="${icons}/16px/clear_entry_16.png"/>
     <icon id="gps-toggle-links"      file="${icons}/9px/toggle_links_12.png"/>
     <icon id="gps-remove-unselected" file="${icons}/9px/remove_unselected_12.png"/>
     <icon id="gps-read-only"         file="${icons}/svg/lock.svg"/>

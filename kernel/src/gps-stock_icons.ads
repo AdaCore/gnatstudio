@@ -56,7 +56,7 @@ package GPS.Stock_Icons is
    --  Remove unselected elements
 
    GPS_Read_Only : constant String := "gps-read-only";
-   GPS_Writable  : constant String := "gps-writable";
+   GPS_Writable  : constant String := "gps-edit";
    --  Locl and unlock icons
 
    GPS_Regexp : constant String := "gps-regexp";
