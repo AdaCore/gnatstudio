@@ -6,13 +6,21 @@
  * carefully setup so that they do not hard-code colors, but use a number
  * of predefined named colors and shades of them. For instance:
  */
-
 /*
    @define-color base_color black;
    @define-color bg_color #fff;
    @define-color theme_bg_color green;
    @define-color theme_tooltip_bg_color yellow;
 */
+
+
+* {
+  
+   /* Reduce the size of the scroll arrows in notebooks */
+   -GtkWidget-scroll-arrow-hlength: 8;
+   -GtkWidget-scroll-arrow-vlength: 8;
+   -GtkNotebook-arrow-spacing: 0;
+}
 
 .gps-task-manager GtkProgressBar {
    -GtkProgressBar-min-horizontal-bar-height: 1;
