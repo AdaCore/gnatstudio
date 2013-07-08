@@ -52,7 +52,7 @@
 
 /* Search and filter fields */
 GtkEntry.search {
-  border-radius: 8px;
+  border-radius: 3px;
   border-color: transparent;
   border-width: 1px;
   box-shadow: none;
