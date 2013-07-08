@@ -34,6 +34,24 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gtk-print"              label="Print" file="${icons}/svg/print.svg" />
     <icon id="gtk-clear"              label="Clean" file="${icons}/svg/clean.svg" />
 
+    <icon id="gps-edit"               label="Edit" file="${icons}/svg/edit.svg" />
+    <icon id="gps-environment"        label="Environment" file="${icons}/svg/environment.svg" />
+    <icon id="gps-messages"           label="Messages" file="${icons}/svg/messages.svg" />
+
+    <icon id="gps-power"              label="Power" file="${icons}/svg/power.svg" />
+
+    <icon id="gps-error"              label="Error" file="${icons}/svg/error.svg" />
+    <icon id="gps-warning"            label="Warning" file="${icons}/svg/warning.svg" />
+    <icon id="gps-info"               label="Info" file="${icons}/svg/info.svg" />
+
+    <icon id="gps-project"            label="Project" file="${icons}/svg/project.svg" />
+    <icon id="gps-refresh"            label="Refresh" file="${icons}/svg/refresh.svg" />
+    <icon id="gps-search"             label="Search" file="${icons}/svg/search.svg" />
+
+    <icon id="gps-zip"                label="Zip" file="${icons}/svg/zip.svg" />
+    <icon id="gps-zoom"               label="Zoom" file="${icons}/svg/zoom.svg" />
+    <icon id="gps-zoomout"            label="Zoom out" file="${icons}/svg/zoomout.svg" />
+
     <!-- Debugger icons -->
 
     <icon id="gps-debugger-run"       label="Go"
@@ -250,7 +268,9 @@ XML = r"""<?xml version="1.0"?>
 
     <icon id="gps-clean"              label="Clean" file="${icons}/svg/clean.svg" />
     <icon id="gps-build-all"          label="Build all" file="${icons}/svg/buildall.svg" />
-    <icon id="gps-compile"            label="Build main" file="${icons}/svg/build.svg" />
+    <icon id="gps-compile"            label="Build main" file="${icons}/svg/compile.svg" />
+    <icon id="gps-build"            label="Build main" file="${icons}/svg/build.svg" />
+
     <icon id="gps-build-main"         label="Build main" file="${icons}/svg/buildmain.svg" />
 
     <icon id="gps-compute-xref"       label="Compute Xref"
@@ -259,17 +279,12 @@ XML = r"""<?xml version="1.0"?>
        <alternate                     file="${icons}/18px/compute_xref_18.png" size="Icon_Size_Small_Toolbar" />
     </icon>
 
-    <icon id="gps-custom-build"       label="Custom build"
-                                      file="${icons}/24px/custom_build_24.png" >
-       <alternate                     file="${icons}/16px/custom_build_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="${icons}/18px/custom_build_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
+    <icon id="gps-custom-build"       label="Custom build" file="${icons}/svg/buildcustom.svg" />
 
-    <icon id="gps-semantic-check"       label="Semantic check"
-                                      file="${icons}/24px/semantic_check_24.png" >
-       <alternate                     file="${icons}/16px/semantic_check_16.png" size="Icon_Size_Menu" />
-       <alternate                     file="${icons}/18px/semantic_check_18.png" size="Icon_Size_Small_Toolbar" />
-    </icon>
+    <icon id="gps-semantic-check"       label="Semantic check"  file="${icons}/svg/gnatcheck.svg" />
+
+    <icon id="gps-metric"             label="Metrics"  file="${icons}/svg/gnatmetric.svg" />
+    <icon id="gps-test"               label="Test"  file="${icons}/svg/gnattest.svg" />
 
     <icon id="gps-syntax-check"       label="Syntax check"
                                       file="${icons}/24px/syntax_check_24.png" >
