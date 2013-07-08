@@ -373,8 +373,13 @@ package body GPS.Kernel.Charsets is
 
       GNAT.Strings.Free (Contents);
 
-      UTF8_Validate
-        (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+      if UTF8 /= Null_Ptr then
+         UTF8_Validate
+           (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+      else
+         Valid := False;
+         First_Invalid := 0;
+      end if;
 
       if not Valid then
          UTF8_Len := First_Invalid - 1;
