@@ -24,21 +24,15 @@
 --        - the line and column number of the insert cursor
 --  </description>
 
-with Ada.Unchecked_Deallocation;
-
 with Glib;
 with Glib.Main;
 with Glib.Object;
 with Gdk.Event;
 
 with Gtk.Box;
-with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Handlers;
-with Gtk.Image;
-with Gtk.Separator;
 with Gtk.Text_Mark;
-with Gtk.Widget;
 
 with Basic_Types;           use Basic_Types;
 with Language;
@@ -49,9 +43,9 @@ with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
+with Src_Editor_Status_Bar; use Src_Editor_Status_Bar;
 with Src_Editor_View;
 with GNATCOLL.VFS;
-with Commands.Interactive;  use Commands, Commands.Interactive;
 with Xref;
 
 package Src_Editor_Box is
@@ -95,14 +89,6 @@ package Src_Editor_Box is
    function Get_Buffer (Editor : access Source_Editor_Box_Record)
       return Src_Editor_Buffer.Source_Buffer;
    --  Return the source buffer associated with the box
-
-   procedure Set_Writable
-     (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean;
-      Explicit : Boolean := False);
-   --  Change the writable status of the editor (the underlying buffer
-   --  actually). Explicit should be True when it is an explicit query from
-   --  the customer.
 
    procedure Read_Only_By_Default (State : Boolean := True);
    --  If State if True, this will set the Writable state of new
@@ -254,13 +240,18 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record) return String;
    --  Return the contents of the entire buffer
 
+   procedure Set_Writable
+     (Editor   : access Source_Editor_Box_Record;
+      Writable : Boolean;
+      Explicit : Boolean := False);
+   --  Change the writable status of the editor (the underlying buffer
+   --  actually). Explicit should be True when it is an explicit query from
+   --  the customer.
+
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return String;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
    --  Return the name for the subprogram enclosing Line.
-   --  If Line is left to its default value, then the subprogram at the current
-   --  line is computed.
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
    --  Check whether the file in Editor is writable, and update the read-only
@@ -271,81 +262,13 @@ package Src_Editor_Box is
    -- Contextual menu --
    ---------------------
 
-   type In_Line_Numbers_Area_Filter is new GPS.Kernel.Action_Filter_Record
-      with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access In_Line_Numbers_Area_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the event currently processed was in an editor's line numbers
-   --  area
-
-   type Has_Body_Filter is new GPS.Kernel.Action_Filter_Record
+   type Goto_Body_Menu_Label is new
+     GPS.Kernel.Modules.UI.Contextual_Menu_Label_Creator_Record
      with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Body_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a body
-
-   type Has_Type_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a type
-
-   type Has_Parent_Type_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Parent_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a parent type (and thus is itself a type)
-
-   type Is_Access_Type_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Access_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity is an access type.
-
-   type Is_Dispatching_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Dispatching_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current entity has a type
-
-   type Has_Other_File_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Other_File_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current file has a spec/body
-
-   type Goto_Line_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
-   overriding function Execute
-     (Command : access Goto_Line_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Ask the user on which line to jump to
-
-   type Goto_Other_File_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Goto_Other_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Go to the file spec/body, depending on what is currently open
-
-   type Goto_Declaration_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Goto_Declaration_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Go to the declaration of the entity in the context
-
-   type Goto_Next_Body_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Goto_Next_Body_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Go to the body of the entity in the context
+   overriding function Get_Label
+     (Creator : access Goto_Body_Menu_Label;
+      Context : GPS.Kernel.Selection_Context) return String;
+   --  Return the label to use for the contextual menu "Goto body"
 
    type Goto_Dispatch_Declaration_Submenu is new
      GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
@@ -364,26 +287,6 @@ package Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Adds submenus to the "Goto dispatching body" contextual menu
-
-   type Goto_Body_Menu_Label is new
-     GPS.Kernel.Modules.UI.Contextual_Menu_Label_Creator_Record
-     with null record;
-   overriding function Get_Label
-     (Creator : access Goto_Body_Menu_Label;
-      Context : GPS.Kernel.Selection_Context) return String;
-   --  Return the label to use for the contextual menu "Goto body"
-
-   type Goto_Type_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Goto_Type_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Go to the type declaration of the entity in the context
-
-   type Type_Hierarchy_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Type_Hierarchy_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Output type hierarchy into the location view
 
    type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
    procedure Get_Contextual_Menu
@@ -447,6 +350,15 @@ package Src_Editor_Box is
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity_Name close by.
 
+   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether the Entity referenced in context has a body other than at the
+   --  location described in Context
+
+   procedure Add_Navigation_Location
+     (Source : access Source_Editor_Box_Record'Class);
+   --  Add a navigation command to mark the given location in the source
+   --  editor. Used to remember the location before Xref navigation.
+
 private
 
    function To_Box_Line
@@ -472,17 +384,6 @@ private
    --  the user. If he answers no the first time, we forbid editing until he
    --  has said yes.
 
-   type Frame_Separator is record
-      Label     : Gtk.Widget.Gtk_Widget;  --  label or image
-      Separator : Gtk.Separator.Gtk_Separator;
-   end record;
-
-   type Frames_Array is array (Natural range <>) of Frame_Separator;
-   type Frames_Array_Access is access Frames_Array;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Frames_Array, Frames_Array_Access);
-
    type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel               : GPS.Kernel.Kernel_Handle;
 
@@ -491,32 +392,14 @@ private
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
 
-      Label_Box            : Gtk.Box.Gtk_Hbox;
-
-      Current_Line         : Editable_Line_Type;
-      --  Cache for the current line
-
+      Status_Bar           : Source_Editor_Status_Bar;
       --  The status bar
-      Function_Label       : Gtk.Label.Gtk_Label;
-      Read_Only_Label      : Gtk.Image.Gtk_Image;
-      Modified_Label       : Gtk.Image.Gtk_Image;
-      Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-
-      Cursor_Handler       : Gtk.Handlers.Handler_Id;
-      --  Handler connected to the signal "cursor_position_changed" in
-      --  the Source_Buffer.
 
       Status_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "status_changed"
       --  from the source buffer.
-
-      Buffer_Info_Handler  : Gtk.Handlers.Handler_Id;
-      --  Handler connected to the signal "buffer_information_changed" from the
-      --  source buffer.
-
-      Buffer_Info_Frames   : Frames_Array_Access := null;
 
       Check_Timestamp_Registered : Boolean := False;
       Check_Timestamp_Id         : Glib.Main.G_Source_Id;

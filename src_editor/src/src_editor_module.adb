@@ -59,6 +59,7 @@ with Pango.Layout;                      use Pango.Layout;
 with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Case_Handling;                     use Case_Handling;
+with Commands;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Commands.Controls;                 use Commands.Controls;
 with Completion_Module;                 use Completion_Module;
@@ -94,6 +95,7 @@ with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
+with Src_Editor_Module.Commands;        use Src_Editor_Module.Commands;
 with Src_Editor_Module.Messages;        use Src_Editor_Module.Messages;
 
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
@@ -130,7 +132,8 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
-     (Child : access Editor_Child_Record) return Commands.Command_Queue;
+     (Child : access Editor_Child_Record)
+      return Standard.Commands.Command_Queue;
    overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
@@ -1600,7 +1603,7 @@ package body Src_Editor_Module is
             end;
       end case;
 
-      return Commands.Success;
+      return Standard.Commands.Success;
    end Execute;
 
    --------------
@@ -3571,7 +3574,8 @@ package body Src_Editor_Module is
    -----------------------
 
    overriding function Get_Command_Queue
-     (Child : access Editor_Child_Record) return Commands.Command_Queue
+     (Child : access Editor_Child_Record)
+      return Standard.Commands.Command_Queue
    is
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (MDI_Child (Child));
