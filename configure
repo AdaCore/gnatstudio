@@ -4520,17 +4520,8 @@ case "${host}" in
     esac
   ;;
 
-  # AMD64 processors
-  x86_64-*-* )
-    case "${host}" in
-      *-linux-gnu* )
-        EXEC_COMMAND="xterm -hold -e"
-        PRINT_CMD="a2ps" ;;
-    esac
-  ;;
-
-  ## Intel 386 machines where we don't care about the manufacturer
-  i[3456]86-*-* )
+  ## Intel machines where we don't care about the manufacturer
+  i[3456]86-*-*|x86_64-*-* )
     machine=intel386
     case "${host}" in
       *-linux-gnu* )
@@ -4559,7 +4550,8 @@ case "${host}" in
 
       *-darwin* )
 	STRIP_CR=True
-	DEFAULT_FIXED_FONT="Monospace 7.5"
+	DEFAULT_FONT="Arial 13"
+	DEFAULT_FIXED_FONT="Monaco 10"
 	;;
       # Otherwise we'll fall through to the generic opsys code at the bottom.
     esac
