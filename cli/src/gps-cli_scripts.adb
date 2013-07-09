@@ -20,7 +20,7 @@ with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
-with Docgen3;
+with Docgen3;                         use Docgen3;
 
 with XML_Utils;                       use XML_Utils;
 with XML_Parsers;
@@ -33,6 +33,15 @@ package body GPS.CLI_Scripts is
    Xml_Cst               : aliased constant String := "xml";
    Xml_Custom_Parameters : constant Cst_Argument_List := (1 => Xml_Cst'Access);
    Docgen_Class_Name     : constant String := "Docgen";
+   Skip_C_Files_Cst      : aliased constant String := "skip_c_files";
+   Report_Errors_Cst     : aliased constant String := "report_errors";
+   Tree_Output_Cst       : aliased constant String := "tree_output";
+   With_Comments_Cst     : aliased constant String := "with_comments";
+   Process_Parameters    : constant Cst_Argument_List :=
+     (1 => Skip_C_Files_Cst'Access,
+      2 => Report_Errors_Cst'Access,
+      3 => Tree_Output_Cst'Access,
+      4 => With_Comments_Cst'Access);
 
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -106,12 +115,20 @@ package body GPS.CLI_Scripts is
       Kernel : constant Core_Kernel := Get_Kernel (Data);
    begin
       if Command = "process_project" then
+         Name_Parameters (Data, Process_Parameters);
+
          declare
+            Skip_C_Files  : constant Boolean := Nth_Arg (Data, 1, False);
+            Report_Errors : constant String := Nth_Arg (Data, 2, "None");
+            Tree_Output   : constant String := Nth_Arg (Data, 3, "None");
+            With_Comments : constant Boolean := Nth_Arg (Data, 4, False);
+
             Options : constant Docgen3.Docgen_Options :=
               (Comments_Filter => null,
-               Report_Errors   => Docgen3.None,
-               Skip_C_Files    => True,
-               Tree_Output     => (Docgen3.None, False),
+               Report_Errors   => Report_Errors_Kind'Value (Report_Errors),
+               Skip_C_Files    => Skip_C_Files,
+               Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
+                                   With_Comments),
                Display_Time    => False);
          begin
             Docgen3.Process_Project_Files
@@ -119,6 +136,9 @@ package body GPS.CLI_Scripts is
                Options   => Options,
                Project   => Kernel.Registry.Tree.Root_Project,
                Recursive => False);
+         exception
+            when others =>
+               Set_Error_Msg (Data, "Error while executing "  & Command);
          end;
       end if;
    end Docgen_Command_Handler;
@@ -151,6 +171,8 @@ package body GPS.CLI_Scripts is
         (Kernel.Scripts, "process_project",
          Class         => Get_Docgen_Class (Kernel),
          Static_Method => True,
+         Minimum_Args  => 0,
+         Maximum_Args  => 4,
          Handler       => Docgen_Command_Handler'Access);
    end Register_Commands;
 
