@@ -35,6 +35,8 @@ with Build_Command_Utils;
 with Build_Configurations;                     use Build_Configurations;
 with Language.Tree.Database;
 with Language.Ada;
+with Language.C;
+with Language.Cpp;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
@@ -124,9 +126,33 @@ package body GPS.CLI_Utils is
       Register_Classes (Kernel);
       Register_Output_Parsers (Builder.all);
       Kernel.Register_Module (Target_Loader);
+
       Kernel.Lang_Handler.Register_Language
         (Lang      => Language.Ada.Ada_Lang,
          Tree_Lang => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
+
+      Kernel.Registry.Environment.Register_Default_Language_Extension
+        (Language_Name       => "Ada",
+         Default_Spec_Suffix => ".ads",
+         Default_Body_Suffix => ".adb");
+
+      Kernel.Lang_Handler.Register_Language
+        (Lang      => Language.C.C_Lang,
+         Tree_Lang => null);
+
+      Kernel.Registry.Environment.Register_Default_Language_Extension
+        (Language_Name       => "c",
+         Default_Spec_Suffix => ".h",
+         Default_Body_Suffix => ".c");
+
+      Kernel.Lang_Handler.Register_Language
+        (Lang      => Language.Cpp.Cpp_Lang,
+         Tree_Lang => null);
+
+      Kernel.Registry.Environment.Register_Default_Language_Extension
+        (Language_Name       => "c++",
+         Default_Spec_Suffix => ".hh",
+         Default_Body_Suffix => ".cpp");
 
       --  Set GNAT version
       Kernel.Registry.Environment.Set_Path_From_Gnatls
