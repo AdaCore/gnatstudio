@@ -21,6 +21,7 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 
 LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
 XDG_DATA_DIRS=$root/share
+XDG_CONFIG_HOME=$root/etc
 GTK_DATA_PREFIX=$root
 GTK_EXE_PREFIX=$root
 GI_TYPELIB_PATH=$root/lib/girepository-1.0
@@ -60,7 +61,7 @@ if [ "$CHARSET" = "" ]; then
   export CHARSET
 fi
 
-export LD_LIBRARY_PATH XDG_DATA_DIRS GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
+export LD_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
 
 if [ $debug = debug ]; then
    gdb -args $root/bin/${prog}_exe "$@"
