@@ -134,7 +134,7 @@ case "${host}" in
 
       *-darwin* )
 	STRIP_CR=True
-	DEFAULT_FONT="Arial 13"
+	DEFAULT_FONT="Lucida Grande 13"
 	DEFAULT_FIXED_FONT="Monaco 10"
 	;;
       # Otherwise we'll fall through to the generic opsys code at the bottom.
