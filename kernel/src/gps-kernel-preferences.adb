@@ -631,25 +631,25 @@ package body GPS.Kernel.Preferences is
 
       Block_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Block-Variant",
-         Label        => -"Block",
+         Name         => "Src-Editor-Blocks-Variant",
+         Label        => -"Blocks",
          Doc          => -("Style to use when displaying blocks (subprograms,"
            & "tasks, entries, ...) in declarations."),
          Base            => Default_Style,
          Default_Variant => Default,
-         Default_Fg      => "#A600D9",
+         Default_Fg      => "#60615F",
          Default_Bg      => "white",
          Page            => -"Editor/Fonts & Colors");
 
       Type_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Type-Variant",
-         Label        => -"Type",
+         Name         => "Src-Editor-Types-Variant",
+         Label        => -"Types",
          Doc          => -("Style to use when displaying types in "
            & "declarations."),
          Base            => Default_Style,
          Default_Variant => Default,
-         Default_Fg   => "#009CD9",
+         Default_Fg   => "#009900",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
@@ -661,8 +661,8 @@ package body GPS.Kernel.Preferences is
            & " The background color will be that of the default if left"
            & " to white"),
          Base            => Default_Style,
-         Default_Variant => Bold,
-         Default_Fg      => "black",
+         Default_Variant => Default,
+         Default_Fg      => "#0000E6",
          Default_Bg      => "white",
          Page            => -"Editor/Fonts & Colors");
 
@@ -674,8 +674,8 @@ package body GPS.Kernel.Preferences is
            & " The background color will be that of the default if left"
            & " to white",
          Base            => Default_Style,
-         Default_Variant => Italic,
-         Default_Fg   => "blue",
+         Default_Variant => Default,
+         Default_Fg   => "#969696",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
@@ -689,7 +689,7 @@ package body GPS.Kernel.Preferences is
          & " to white",
          Base            => Default_Style,
          Default_Variant => Default,
-         Default_Fg   => "#21A9DE",
+         Default_Fg   => "#60615F",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
@@ -702,7 +702,7 @@ package body GPS.Kernel.Preferences is
            & " to white",
          Base            => Default_Style,
          Default_Variant => Default,
-         Default_Fg   => "brown",
+         Default_Fg   => "#CE7B00",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
@@ -722,7 +722,7 @@ package body GPS.Kernel.Preferences is
       Current_Line_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",
-         Default => "#D1DCFC",
+         Default => "rgba(231, 237, 255, 0.6)",
          Doc     => -("Color for highlighting the current line. White means"
                       & " transparent"),
          Label   => -"Current line color",
@@ -731,7 +731,7 @@ package body GPS.Kernel.Preferences is
       Current_Line_Thin := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Thin",
-         Default => True,
+         Default => False,
          Doc     => -("Whether to use a thin line rather than full background"
            & ASCII.LF & " highlighting on the current line."),
          Label   => -"Draw current line as a thin line",

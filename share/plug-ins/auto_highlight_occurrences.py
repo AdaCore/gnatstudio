@@ -35,10 +35,10 @@ from gps_utils.highlighter import Location_Highlighter, OverlayStyle
 import traceback
 
 default_colors = {
-  "object"            : "#ffcefe",
-  "subprogram"        : "#ffcf90",
-  "package/namespace" : "lightgreen",
-  "type"              : "lightgreen",
+  "object"            : "rgba(255, 190, 238, 0.7)",
+  "subprogram"        : "rgba(252, 175, 62, 0.5)",
+  "package/namespace" : "rgba(144, 238, 144, 0.5)",
+  "type"              : "rgba(144, 238, 144, 0.5)",
   "unknown"           : "#d7d7d7"}
 
 # Whether to display occurrences in the speed bar

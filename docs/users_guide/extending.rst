@@ -419,11 +419,11 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       The default font, default foreground and default background colors used
       in the source editor.
 
-    *Block*
+    *Blocks*
       Font variant and colors used to highlight blocks (subprograms, task,
       entries, ...) in declarations.
 
-    *Type*
+    *Types*
       Font variant and colors used to highlight types in declarations.
 
     *Keywords*
