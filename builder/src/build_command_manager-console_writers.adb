@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Interactive_Consoles;         use Interactive_Consoles;
 with Build_Configurations;         use Build_Configurations;
 with String_Utils;                 use String_Utils;
@@ -22,6 +23,7 @@ with Time_Utils;                   use Time_Utils;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Messages.Legacy;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
 package body Build_Command_Manager.Console_Writers is
 
@@ -106,25 +108,44 @@ package body Build_Command_Manager.Console_Writers is
       Command : Command_Access)
    is
       use GPS.Kernel.Messages.Legacy;
-      Kernel : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
+      Kernel  : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
    begin
       if Self.Show_Status then
          declare
             End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
             Time_Stamp : constant String := Timestamp (End_Time);
+            Msg : Unbounded_String;
+            Progress : constant Progress_Record := Command.Progress;
          begin
+            Msg := To_Unbounded_String (Time_Stamp);
+
             if Status = 0 then
-               Self.Console.Insert
-                 (Time_Stamp &
-                  (-"process terminated successfully (elapsed time: ")
-                  & Elapsed (Self.Start_Time, End_Time) & "s)");
+               Append (Msg, -"process terminated successfully");
             else
-               Self.Console.Insert
-                 (Time_Stamp
-                  & (-"process exited with status ")
-                  & Image (Status) & " (elapsed time: "
-                  & Elapsed (Self.Start_Time, End_Time) & "s)");
+               Append (Msg, -"process exited with status " & Image (Status));
             end if;
+
+            if Progress.Current /= 0
+               and then Progress.Total > 1
+               and then (Status /= 0
+                         or else Progress.Current /= Progress.Total)
+            then
+               Append
+                  (Msg,
+                   ","
+                   & Integer'Image (100 * Progress.Current / Progress.Total)
+                   & "% ("
+                   & Image (Progress.Current, Min_Width => 1)
+                   & "/"
+                   & Image (Progress.Total, Min_Width => 1)
+                   & ")");
+            end if;
+
+            Append
+               (Msg, ", elapsed time: "
+                & Elapsed (Self.Start_Time, End_Time) & "s");
+
+            Self.Console.Insert (To_String (Msg));
          end;
       end if;
 

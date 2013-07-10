@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M710-025 GPS: display build progress when build completes (2012-07-10)
+
+  When a build terminates on failure, GPS now displays the total progress
+  (as displayed by the task manager) in the console. This makes it easier to
+  know how many files were compiled up to the first compilation error.
+
 NF-60-M709-025 GPS: allow closing the Messages window (2012-07-10)
 
   The Messages window can now be closed, and will be reopened automatically
