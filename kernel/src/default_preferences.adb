@@ -37,7 +37,6 @@ with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Label;                use Gtk.Label;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
@@ -50,8 +49,6 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
-
-with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Pango.Context;
 with Pango.Enums;              use Pango.Enums;
@@ -92,10 +89,6 @@ package body Default_Preferences is
 
    procedure Free (Pref : in out Preference);
    --  Free the memory associated with Pref
-
-   procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class);
-   --  Called when a toggle button has changed, to display the appropriate text
-   --  in it.
 
    function From_String (Color : String) return Gdk_RGBA;
    --  Parse the name of the color, and default to black if color is not found
@@ -962,20 +955,6 @@ package body Default_Preferences is
       when E : others => Trace (Exception_Handle, E);
    end Save_Preferences;
 
-   ---------------------
-   -- Toggled_Boolean --
-   ---------------------
-
-   procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class) is
-      T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
-   begin
-      if Get_Active (T) then
-         Set_Text (Gtk_Label (Get_Child (T)), -"(Enabled)");
-      else
-         Set_Text (Gtk_Label (Get_Child (T)), -"(Disabled)");
-      end if;
-   end Toggled_Boolean;
-
    ------------------
    -- Gint_Changed --
    ------------------
@@ -1481,10 +1460,7 @@ package body Default_Preferences is
       P : constant Manager_Preference :=
         (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New (Toggle, -"Enabled");
-      Widget_Callback.Connect
-        (Toggle, Signal_Toggled, Toggled_Boolean'Access);
-      Toggle.Set_Active (True); --  Forces a toggle
+      Gtk_New (Toggle, Pref.Get_Label);
       Toggle.Set_Active (Pref.Bool_Value);
 
       Preference_Handlers.Connect

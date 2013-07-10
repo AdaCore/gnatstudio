@@ -105,6 +105,12 @@ package Default_Preferences is
    --  change the value stored in Pref. Such connection to signals will
    --  generally be done through Preference_Handlers below
 
+   function Editor_Needs_Label
+     (Pref : not null access Preference_Record) return Boolean is (True);
+   --  Whether a separate label should be displayed for the preference in
+   --  the editor. If False is returned, it is assumed that the widget returned
+   --  by Edit already shows the label.
+
    type Variant_Enum is (Default, Normal, Italic, Bold, Bold_Italic);
    --  Auxiliary type to list text variants offered in Variant_Preferences
 
@@ -476,6 +482,9 @@ private
    overriding function Is_Default
      (Self : not null access Boolean_Preference_Record) return Boolean
      is (Self.Default = Self.Bool_Value);
+   overriding function Editor_Needs_Label
+     (Pref : not null access Boolean_Preference_Record) return Boolean
+     is (False);
 
    type String_Preference_Record is new Preference_Record with record
       Str_Value     : GNAT.Strings.String_Access;

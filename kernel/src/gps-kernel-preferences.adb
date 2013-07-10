@@ -53,7 +53,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Traces;
 
@@ -1604,7 +1603,6 @@ package body GPS.Kernel.Preferences is
       Model             : Gtk_Tree_Store;
       Main_Table        : Gtk_Table;
       Current_Selection : Gtk_Widget;
-      Title             : Gtk_Label;
 
       function Find_Or_Create_Page
         (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
@@ -1697,7 +1695,6 @@ package body GPS.Kernel.Preferences is
          if Iter /= Null_Iter then
             Current_Selection := Gtk_Widget (Get_Object (Model, Iter, 1));
             Set_Child_Visible (Current_Selection, True);
-            Set_Text (Title, Get_String (Model, Iter, 0));
          end if;
       end Selection_Changed;
 
@@ -1756,9 +1753,6 @@ package body GPS.Kernel.Preferences is
       Gtk_New (Frame);
       Main_Table.Attach (Frame, 0, 1, 0, 3);
 
-      Create_Blue_Label (Title, Event);
-      Main_Table.Attach (Event, 1, 2, 0, 1, Yoptions => 0);
-
       Gtk_New_Hseparator (Separator);
       Main_Table.Attach (Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
 
@@ -1793,20 +1787,32 @@ package body GPS.Kernel.Preferences is
             Row := Get_Property (Table, N_Rows_Property);
             Resize (Table, Rows => Row + 1, Columns => 2);
 
-            Gtk_New (Event);
-            Gtk_New (Label, Pref.Get_Label);
-            Event.Add (Label);
-            Event.Set_Tooltip_Text (Pref.Get_Doc);
-            Label.Set_Alignment (0.0, 0.5);
-            Table.Attach (Event, 0, 1, Row, Row + 1,
-                          Xoptions => Fill, Yoptions => 0);
+            if Pref.Editor_Needs_Label then
+               Gtk_New (Event);
+               Gtk_New (Label, Pref.Get_Label);
+               Event.Add (Label);
+               Event.Set_Tooltip_Text (Pref.Get_Doc);
+               Label.Set_Alignment (0.0, 0.5);
+               Table.Attach (Event, 0, 1, Row, Row + 1,
+                             Xoptions => Fill, Yoptions => 0);
 
-            Widget := Edit
-              (Pref      => Pref,
-               Manager   => Manager);
+               Widget := Edit
+                 (Pref      => Pref,
+                  Manager   => Manager);
 
-            if Widget /= null then
-               Table.Attach (Widget, 1, 2, Row, Row + 1, Yoptions => 0);
+               if Widget /= null then
+                  Table.Attach (Widget, 1, 2, Row, Row + 1, Yoptions => 0);
+               end if;
+
+            else
+               Widget := Edit
+                 (Pref      => Pref,
+                  Manager   => Manager);
+               Widget.Set_Tooltip_Text (Pref.Get_Doc);
+
+               if Widget /= null then
+                  Table.Attach (Widget, 0, 2, Row, Row + 1, Yoptions => 0);
+               end if;
             end if;
          end if;
 
