@@ -21,7 +21,6 @@ with Cairo;             use Cairo;
 with Pango.Cairo;       use Pango.Cairo;
 with Pango.Layout;      use Pango.Layout;
 
-with Gdk.Cairo;         use Gdk.Cairo;
 with Gdk.Rectangle;     use Gdk.Rectangle;
 with Gdk.Event;         use Gdk.Event;
 
@@ -580,7 +579,7 @@ package body Display_Items is
          Height => Title_Height);
 
       Draw_Shadow
-        (Cr, Get_Style (Get_Canvas (Item.Debugger)),
+        (Cr, Get_Canvas (Item.Debugger),
          Shadow_Type => Shadow_Out,
          X           => 0,
          Y           => 0,
@@ -1009,16 +1008,16 @@ package body Display_Items is
    begin
       --  Click on a button ?
 
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
-        and then Gint (Get_Y (Event)) > Spacing
-        and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
+        and then Gint (Event.Y) > Spacing
+        and then Gint (Event.Y) <= Spacing + Buttons_Size
       then
          X := Buttons_Start;
 
          for B in 0 .. Num_Buttons - 1 loop
-            if Gint (Get_X (Event)) >= X
-              and then Gint (Get_X (Event)) <= X + Buttons_Size
+            if Gint (Event.X) >= X
+              and then Gint (Event.X) <= X + Buttons_Size
             then
                --  Just inform the caller that we handle the click
                return True;
@@ -1029,16 +1028,16 @@ package body Display_Items is
 
          return False;
 
-      elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
-        and then Gint (Get_Y (Event)) > Spacing
-        and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
+      elsif Event.Button = 1
+        and then Event.The_Type = Button_Release
+        and then Gint (Event.Y) > Spacing
+        and then Gint (Event.Y) <= Spacing + Buttons_Size
       then
          X := Buttons_Start;
 
          for B in 0 .. Num_Buttons - 1 loop
-            if Gint (Get_X (Event)) >= X
-              and then Gint (Get_X (Event)) <= X + Buttons_Size
+            if Gint (Event.X) >= X
+              and then Gint (Event.X) <= X + Buttons_Size
             then
                case B is
                   when 0 =>
@@ -1075,9 +1074,9 @@ package body Display_Items is
 
       --  Raise or lower the item
 
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
-        and then Gint (Get_Y (Event)) <= Item.Title_Height
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
+        and then Gint (Event.Y) <= Item.Title_Height
       then
          if Is_On_Top (Get_Canvas (Item.Debugger), Item) then
             Lower_Item (Get_Canvas (Item.Debugger), Item);
@@ -1093,29 +1092,29 @@ package body Display_Items is
       end if;
 
       Component := Get_Component
-        (Item.Entity, Gint (Get_X (Event)),
-         Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+        (Item.Entity, Gint (Event.X),
+         Gint (Event.Y) - Item.Title_Height - Border_Spacing);
 
       --  Dereferencing access types
 
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
+      if Event.Button = 1
+        and then Event.The_Type = Gdk_2button_Press
+        and then Gint (Event.Y) >= Item.Title_Height + Border_Spacing
         and then Component.all in Access_Type'Class
       then
          Dereference_Item
            (Item,
             Component,
-            Gint (Get_X (Event)),
-            Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+            Gint (Event.X),
+            Gint (Event.Y) - Item.Title_Height - Border_Spacing);
 
          return True;
 
       --  Hiding a component
 
-      elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
+      elsif Event.Button = 1
+        and then Event.The_Type = Gdk_2button_Press
+        and then Gint (Event.Y) >= Item.Title_Height + Border_Spacing
       then
          Change_Visibility (Item, Component);
 
@@ -1123,9 +1122,9 @@ package body Display_Items is
 
       --  Selecting a component
 
-      elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
-        and then Gint (Get_Y (Event)) > Item.Title_Height
+      elsif Event.Button = 1
+        and then Event.The_Type = Button_Press
+        and then Gint (Event.Y) > Item.Title_Height
       then
          Select_Item (Item.Debugger, Item, Component);
 

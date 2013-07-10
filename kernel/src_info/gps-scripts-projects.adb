@@ -15,7 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;
+
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
 with GPS.Intl;                use GPS.Intl;
@@ -32,10 +36,24 @@ package body GPS.Scripts.Projects is
    Name_Cst       : aliased constant String := "name";
    Recursive_Cst  : aliased constant String := "recursive";
 
+   Sources_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+   Source_Dirs_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+   Languages_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
+     (1 => Recursive_Cst'Access);
+
    Project_Cmd_Parameters   : constant Cst_Argument_List :=
                                 (1 => Name_Cst'Access);
 
+   function Nth_Arg
+     (Data : Callback_Data'Class; N : Positive)
+      return GNATCOLL.VFS.Virtual_File renames GPS.Scripts.Files.Nth_Arg;
+
    procedure Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+
+   procedure Project_Queries
      (Data : in out Callback_Data'Class; Command : String);
 
    procedure Set_Data
@@ -181,6 +199,87 @@ package body GPS.Scripts.Projects is
       end if;
    end Project_Command_Handler;
 
+   ---------------------
+   -- Project_Queries --
+   ---------------------
+
+   procedure Project_Queries
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+
+      Project : constant Project_Type := Get_Data (Data, 1);
+
+   begin
+      if Command = "get_executable_name" then
+         declare
+            Main : constant Virtual_File := Nth_Arg (Data, 2);
+
+         begin
+            Set_Return_Value
+              (Data, Project.Executable_Name (Main.Full_Name.all));
+         end;
+
+      elsif Command = "sources" then
+         Name_Parameters (Data, Sources_Cmd_Parameters);
+         declare
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+            Sources   : File_Array_Access := Project.Source_Files
+              (Recursive  => Recursive);
+         begin
+            Set_Return_Value_As_List (Data);
+            for S in Sources'Range loop
+               Set_Return_Value
+                 (Data, GPS.Scripts.Files.Create_File
+                    (Get_Script (Data), Sources (S)));
+            end loop;
+            Unchecked_Free (Sources);
+         end;
+
+      elsif Command = "languages" then
+         Name_Parameters (Data, Languages_Cmd_Parameters);
+         declare
+            Langs : GNAT.Strings.String_List := Project.Languages
+              (Recursive => Nth_Arg (Data, 2, False));
+         begin
+            Set_Return_Value_As_List (Data);
+            for L in Langs'Range loop
+               Set_Return_Value (Data, Langs (L).all);
+            end loop;
+            Free (Langs);
+         end;
+
+      elsif Command = "source_dirs" then
+         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
+         declare
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+            Dirs      : constant File_Array := Project.Source_Dirs
+              (Recursive => Recursive);
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for D in Dirs'Range loop
+               --  ??? We should return the Virtual_File object instead
+               Set_Return_Value (Data, Dirs (D).Full_Name);
+            end loop;
+         end;
+
+      elsif Command = "object_dirs" then
+         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
+         declare
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+            Object    : constant File_Array :=
+              Object_Path (Project, Recursive, False);
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for J in Object'Range loop
+               --  ??? Shouldn't we return a list of files instead ?
+               Set_Return_Value (Data, Object (J).Full_Name);
+            end loop;
+         end;
+      end if;
+   end Project_Queries;
+
    -----------------------
    -- Register_Commands --
    -----------------------
@@ -218,6 +317,36 @@ package body GPS.Scripts.Projects is
          Minimum_Args => 0,
          Maximum_Args => 1,
          Handler      => Project_Command_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts, "sources",
+         Maximum_Args => Sources_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Queries'Access);
+      Register_Command
+        (Kernel.Scripts, "source_dirs",
+         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
+         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Queries'Access);
+      Register_Command
+        (Kernel.Scripts, "get_executable_name",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Queries'Access);
+      Register_Command
+        (Kernel.Scripts, "languages",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Queries'Access);
+      Register_Command
+        (Kernel.Scripts, "object_dirs",
+         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
+         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Queries'Access);
    end Register_Commands;
 
    --------------

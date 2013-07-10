@@ -64,8 +64,9 @@ package body Refactoring.UI is
 
          Gtk_New (Label, Msg);
          Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
-         Pack_Start (Get_Vbox (Dialog), Create_File_List (Files));
+         Pack_Start
+           (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
+         Pack_Start (Get_Content_Area (Dialog), Create_File_List (Files));
 
          Button := Add_Button (Dialog, Execute_Label, Gtk_Response_OK);
          Grab_Default (Button);

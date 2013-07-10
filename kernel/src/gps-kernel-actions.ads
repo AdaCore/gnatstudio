@@ -21,6 +21,7 @@
 --  be associated with menus, keys and toolbar buttons among other things.
 
 with Commands.Interactive;
+with Gdk.Event;
 with GNAT.Strings;
 with GNATCOLL.VFS;
 
@@ -91,6 +92,17 @@ package GPS.Kernel.Actions is
    --  If Name represents the absolute path to a menu (starting with /), then
    --  an action is created dynamically as appropriate (but doesn't need to
    --  be freed explicitly by the caller)
+
+   function Execute_In_Background
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Action  : not null Action_Record_Access;
+      Context : Selection_Context := No_Context;
+      Event   : Gdk.Event.Gdk_Event := null;
+      Repeat  : Positive := 1) return Boolean;
+   --  Execute the action if it is valid for the given context.
+   --  If Context is null, it is computed automatically.
+   --  Returns True if the command was executed, False if it did not apply to
+   --  the context.
 
    type Action_Iterator is private;
 

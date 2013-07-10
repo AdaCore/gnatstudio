@@ -1,23 +1,24 @@
-"""Processes a text selection through an external shell command, and
-   substitutes it with the output of that command.
-   If no text is selected, simply insert he output of the external command.
+"""
+Processes a text selection through an external shell command, and
+substitutes it with the output of that command.
+If no text is selected, simply insert he output of the external command.
 
-   This is similar to vi's ! command. For instance, you can use this
-   script to run a select chunk of text through the following shell
-   commands:
-      - "fmt"  => Reformat each paragraph of the selection, using
-                  advanced algorithms that try not to break after the first
-                  word of a sentence, or before the last. Also try to
-                  balance line lengths.
-                  See the function fmt_selection() below, which automatically
-                  sets a number of parameters when calling this function.
+This is similar to vi's ! command. For instance, you can use this
+script to run a select chunk of text through the following shell
+commands:
+   - "fmt"  => Reformat each paragraph of the selection, using
+               advanced algorithms that try not to break after the first
+               word of a sentence, or before the last. Also try to
+               balance line lengths.
+               See the function fmt_selection() below, which automatically
+               sets a number of parameters when calling this function.
 
-      - "sort" => Sort the selected lines
+   - "sort" => Sort the selected lines
 
-      - "ls"   => If you have no current selection, this will simply insert
-                  the contents of the current directory in the file
+   - "ls"   => If you have no current selection, this will simply insert
+               the contents of the current directory in the file
 
-      - "date" => Insert the current date in the file
+   - "date" => Insert the current date in the file
 """
 
 

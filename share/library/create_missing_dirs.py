@@ -1,12 +1,13 @@
-"""This script will create missing object-directories for a
- project tree when loading it into GPS.
- It is different from the gnatmake switch -p, which will also create
- the directories but only when the project is compiled. Since the project
- is first loaded in GPS, the latter would return errors when creating the
- project if some directories are missing.
+"""
+This script will create missing object-directories for a
+project tree when loading it into GPS.
+It is different from the gnatmake switch -p, which will also create
+the directories but only when the project is compiled. Since the project
+is first loaded in GPS, the latter would return errors when creating the
+project if some directories are missing.
 
- A new preference is created that allows you to disable the creation
- of directories, and the default is to create missing directories.
+A new preference is created that allows you to disable the creation
+of directories, and the default is to create missing directories.
 """
 
 

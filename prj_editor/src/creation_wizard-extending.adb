@@ -33,7 +33,6 @@ with Gtk.Widget;               use Gtk.Widget;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -174,7 +173,7 @@ package body Creation_Wizard.Extending is
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => 2);
-      Model := Gtk_Tree_Store (Get_Model (Page.Files));
+      Model := -Get_Model (Page.Files);
       Add (Scrolled, Page.Files);
 
       Page.Projects_Count := 0;
@@ -301,7 +300,7 @@ package body Creation_Wizard.Extending is
 
       --  Find the list of source files that are modified
 
-      Model := Gtk_Tree_Store (Get_Model (Page.Files));
+      Model := -Get_Model (Page.Files);
       PIter := Get_Iter_First (Model);
       while PIter /= Null_Iter loop
          Prj := Get_Registry (Kernel).Tree.Project_From_Name
@@ -472,7 +471,7 @@ package body Creation_Wizard.Extending is
          -"Should GPS copy the file into the extending projects source dir ?");
       Label.Set_Selectable (True);
       Label.Set_Justify (Justify_Center);
-      Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+      Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
 
       for D in Dirs'Range loop
          Gtk_New
@@ -480,7 +479,7 @@ package body Creation_Wizard.Extending is
             Group        => Radio (Radio'First),
             Label        => Dirs (D).Display_Full_Name);
          Radio (D).Set_Active (D = Dirs'First);
-         Dialog.Get_Vbox.Pack_Start (Radio (D), Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Radio (D), Expand => False);
       end loop;
 
       if Dirs'Length = 0 then
@@ -489,7 +488,7 @@ package body Creation_Wizard.Extending is
             Label        =>
               Project_Directory (Get_Project (Kernel)).Display_Full_Name);
          Prj_Dir_Radio.Set_Active (True);
-         Dialog.Get_Vbox.Pack_Start (Prj_Dir_Radio, Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Prj_Dir_Radio, Expand => False);
       end if;
 
       Ignore := Dialog.Add_Button (-"Copy", Gtk_Response_Yes);
@@ -566,7 +565,7 @@ package body Creation_Wizard.Extending is
             -"Should GPS remove the file from the disk as well ?");
          Label.Set_Selectable (True);
          Label.Set_Justify (Justify_Center);
-         Dialog.Get_Vbox.Pack_Start (Label, Expand => False);
+         Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
 
          Ignore := Dialog.Add_Button (-"Delete", Gtk_Response_Yes);
          Ignore := Dialog.Add_Button (-"Do not delete", Gtk_Response_No);
@@ -584,10 +583,9 @@ package body Creation_Wizard.Extending is
       if Response = Gtk_Response_Yes then
          Delete (File, Removed);
          if not Removed then
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               Text => -"Failed to remove " & File.Display_Full_Name,
-               Mode => GPS.Kernel.Console.Error);
+            Kernel.Insert
+              (Text => -"Failed to remove " & File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
             return Failure;
          end if;
       end if;
@@ -606,9 +604,8 @@ package body Creation_Wizard.Extending is
          Free (List);
 
       elsif Project.Has_Attribute (Source_List_File_Attribute) then
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            Text => -"Project '"
+         Kernel.Insert
+           (Text => -"Project '"
             & Project.Name
             & (-("' specifies its sources via a"
               & " Source_List_File attribute, which wasn't edited"

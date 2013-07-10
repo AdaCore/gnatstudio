@@ -17,7 +17,7 @@
 
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Shared_Macros; use GPS.Kernel.Shared_Macros;
+with GPS.Shared_Macros;       use GPS.Shared_Macros;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;

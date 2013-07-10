@@ -21,11 +21,12 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Commands;
+with Default_Preferences;
 with Gtkada.MDI;         use Gtkada.MDI;
+with Glib.Main;
 with Gtk.Accel_Group;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Icon_Factory;
-with Gtk.Main;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -160,8 +161,13 @@ package GPS.Kernel.MDI is
    --  Change the current perspective to another one.
    --  Nothing is done if Name does not exist
 
-   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class);
-   --  Configure the MDI based on the preferences
+   procedure Configure_MDI
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference := null);
+   --  Configure the MDI based on the preferences.
+   --  If specified, Pref is used to find out whether any reconfiguration needs
+   --  to be done. It is intended to be used when the user has changed a
+   --  preference.
 
    procedure Create_MDI_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
@@ -223,11 +229,6 @@ package GPS.Kernel.MDI is
    --  something less drastic than killing the whole process), and return
    --  True.
 
-   procedure Set_Font_And_Colors
-     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean);
-   --  Change the style of the widget based on the preferences
-
    --------------------------
    -- MDI Location markers --
    --------------------------
@@ -261,7 +262,7 @@ package GPS.Kernel.MDI is
    -- Misc Gtk+ Related Subprograms --
    -----------------------------------
 
-   package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
+   package Object_Idle is new Glib.Main.Generic_Sources (Glib.Object.GObject);
    --  General Idle loop for a GObject
 
    function Get_Current_Focus_Widget
@@ -280,11 +281,6 @@ package GPS.Kernel.MDI is
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory
 
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar;
-   --  Return the main toolbar associated with the kernel
-
    function Get_Current_Context
      (Kernel : access Kernel_Handle_Record'Class) return Selection_Context;
    --  Return the context associated with the current MDI child.
@@ -300,6 +296,38 @@ package GPS.Kernel.MDI is
    --  is one at that point in time (therefore, we ignore cases where for
    --  instance a new child has been selected automatically at that point)
 
+   -------------
+   -- Toolbar --
+   -------------
+
+   --  The GPS toolbar is organized this way:
+   --
+   --    <gps-defined> <custom> | <build> | [debug]      [progress] <search>
+   --                          (a)       (b)
+   --
+   --  where:
+   --     | is a named separator
+   --     gps-defined are the icons set by GPS
+   --     custom are the custom icons
+   --     build are the build icons
+   --     debug are the debug icons
+   --     progress is the progress bar
+   --     search is the search area
+   --
+   --  The position of the named separators can be obtained by
+   --  Get_Toolbar_Separator_Position
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar;
+   --  Return the main toolbar associated with the kernel
+
+   type GPS_Toolbar_Separator is (Before_Build, Before_Debug);
+
+   function Get_Toolbar_Separator_Position
+     (Handle    : access Kernel_Handle_Record'Class;
+      Separator : GPS_Toolbar_Separator) return Gint;
+   --  Get the position of the given named separator
    ---------------------
    -- Signal emission --
    ---------------------

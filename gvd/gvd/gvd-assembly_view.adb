@@ -18,12 +18,13 @@
 with GNAT.Strings;            use GNAT.Strings;
 with GNAT.Regpat;             use GNAT.Regpat;
 
-with Gdk.Color;               use Gdk.Color;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 
+with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
@@ -40,6 +41,8 @@ with Pango.Font;              use Pango.Font;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Debugger;                use Debugger;
+with Default_Preferences;     use Default_Preferences;
+with Generic_Views;           use Generic_Views;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -47,6 +50,7 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Code_Editors;        use GVD.Code_Editors;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
@@ -73,8 +77,7 @@ package body GVD.Assembly_View is
    --  Some debuggers (gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
-   type Assembly_View_Record is
-     new GVD.Views.Scrolled_Views.Process_View_Record with
+   type Assembly_View_Record is new Base_Views.Process_View_Record with
       record
          View                : Gtk.Text_View.Gtk_Text_View;
 
@@ -137,13 +140,13 @@ package body GVD.Assembly_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Scrolled_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Assembly_View",
       View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
@@ -243,13 +246,14 @@ package body GVD.Assembly_View is
      (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       View : Assembly_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -263,8 +267,7 @@ package body GVD.Assembly_View is
    is
       Tag_Table : constant Gtk_Text_Tag_Table :=
                     Get_Tag_Table (Get_Buffer (View.View));
-      Color     : Gdk_Color;
-      Success   : Boolean;
+      Color     : Gdk_RGBA;
    begin
       --  Font
 
@@ -274,7 +277,7 @@ package body GVD.Assembly_View is
 
       Gtk_New (View.Highlight_Tag);
       Set_Property
-        (View.Highlight_Tag, Foreground_Gdk_Property,
+        (View.Highlight_Tag, Foreground_Rgba_Property,
          Asm_Highlight_Color.Get_Pref);
       Add (Tag_Table, View.Highlight_Tag);
 
@@ -282,7 +285,7 @@ package body GVD.Assembly_View is
 
       Gtk_New (View.Breakpoint_Tag);
       Set_Property
-        (View.Breakpoint_Tag, Background_Gdk_Property,
+        (View.Breakpoint_Tag, Background_Rgba_Property,
          Asm_Breakpoint_Color.Get_Pref);
       Add (Tag_Table, View.Breakpoint_Tag);
 
@@ -292,10 +295,9 @@ package body GVD.Assembly_View is
       --  counter at the Gtk_Text_Buffer level.
 
       Gtk_New (View.Pc_Tag);
-      Set_Rgb (Color, 0, Guint16'Last, 0);
-      Alloc_Color (Get_Colormap (View), Color, Success => Success);
+      Color := (Red => 0.0, Green => 1.0, Blue => 0.0, Alpha => 1.0);
       Set_Property
-        (View.Pc_Tag, Background_Gdk_Property, Color);
+        (View.Pc_Tag, Background_Rgba_Property, Color);
       Add (Tag_Table, View.Pc_Tag);
 
    end Configure;
@@ -1026,9 +1028,9 @@ package body GVD.Assembly_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Assembly);
+      return Generic_Views.Abstract_View_Access (Process.Assembly);
    end Get_View;
 
    --------------
@@ -1037,7 +1039,7 @@ package body GVD.Assembly_View is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       --  If we are detaching, clear the old view
       if View = null
@@ -1135,14 +1137,19 @@ package body GVD.Assembly_View is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Hook : Preferences_Hook;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Widget);
-      Set_Policy (Widget, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Widget, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Widget.View);
+      Widget.View.Get_Buffer.Insert_At_Cursor ("");
+      Scrolled.Add (Widget.View);
       Set_Editable (Widget.View, False);
       Set_Wrap_Mode (Widget.View, Wrap_None);
-      Add (Widget, Widget.View);
 
       Assembly_View_Event_Cb.Object_Connect
         (Widget.View, Signal_Key_Press_Event,
@@ -1152,9 +1159,9 @@ package body GVD.Assembly_View is
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with View => Assembly_View (Widget));
+        (Function_With_Args with View => Assembly_View (Widget));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Kernel, Preference_Changed_Hook, Hook,
          Name => "gvd.assembly_view.preferences_changed",
          Watch => GObject (Widget));
 
@@ -1167,19 +1174,35 @@ package body GVD.Assembly_View is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+      Pref : constant Preference := Get_Pref (Data);
    begin
-      Set_Property
-        (Hook.View.Highlight_Tag,
-         Foreground_Gdk_Property,
-         Asm_Highlight_Color.Get_Pref);
-      Set_Property
-        (Hook.View.Breakpoint_Tag,
-         Background_Gdk_Property,
-         Asm_Breakpoint_Color.Get_Pref);
-      Set_Font (Hook.View, Default_Style.Get_Pref_Font);
+      if Pref = null
+        or else Pref = Preference (Asm_Highlight_Color)
+      then
+         Set_Property
+           (Hook.View.Highlight_Tag,
+            Foreground_Rgba_Property,
+            Asm_Highlight_Color.Get_Pref);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Asm_Breakpoint_Color)
+      then
+         Set_Property
+           (Hook.View.Breakpoint_Tag,
+            Background_Rgba_Property,
+            Asm_Breakpoint_Color.Get_Pref);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Default_Style)
+      then
+         Set_Font (Hook.View, Default_Style.Get_Pref_Font);
+      end if;
 
       Update (Hook.View);
 

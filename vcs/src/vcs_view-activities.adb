@@ -18,13 +18,13 @@
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
+with Glib.Main;                 use Glib.Main;
 with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 
@@ -54,7 +54,8 @@ package body VCS_View.Activities is
    -- Local constants --
    ---------------------
 
-   package Activities_Idle is new Gtk.Main.Idle (VCS_Activities_View_Access);
+   package Activities_Idle is new Glib.Main.Generic_Sources
+     (VCS_Activities_View_Access);
    use Activities_Idle;
    function Start_Editing_Idle
      (Explorer : VCS_Activities_View_Access) return Boolean;
@@ -224,7 +225,7 @@ package body VCS_View.Activities is
                    Get_Activities_Explorer (Kernel, False, False);
       Activity : Activity_Id;
       Iter     : Gtk_Tree_Iter;
-      Id       : Idle_Handler_Id;
+      Id       : G_Source_Id;
       pragma Unreferenced (Id);
    begin
       Activity := New_Activity (Kernel);
@@ -238,8 +239,8 @@ package body VCS_View.Activities is
 
       Explorer.Iter := Iter;
 
-      Id := Add (Start_Editing_Idle'Access, Explorer,
-                 Priority => Priority_High_Idle);
+      Id := Idle_Add (Start_Editing_Idle'Access, Explorer,
+                      Priority => Priority_High_Idle);
    end On_Create_Activity;
 
    ------------------------
@@ -736,8 +737,7 @@ package body VCS_View.Activities is
          procedure Add_Selected_Item
            (Model : Gtk.Tree_Model.Gtk_Tree_Model;
             Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-            Data  : Explorer_Selection_Foreach.Data_Type_Access);
+            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
          --  Add an item to Result
 
          -----------------------
@@ -747,10 +747,9 @@ package body VCS_View.Activities is
          procedure Add_Selected_Item
            (Model : Gtk.Tree_Model.Gtk_Tree_Model;
             Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-            Data  : Explorer_Selection_Foreach.Data_Type_Access)
+            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
          is
-            pragma Unreferenced (Model, Path, Data);
+            pragma Unreferenced (Model, Path);
          begin
             if Parent (Explorer.Model, Iter) = Null_Iter then
                --  Take root nodes, those are the activity name
@@ -760,18 +759,13 @@ package body VCS_View.Activities is
             end if;
          end Add_Selected_Item;
 
-         E  : aliased VCS_View_Access := Explorer;
-         EA : constant Explorer_Selection_Foreach.Data_Type_Access :=
-                E'Unchecked_Access;
-
       begin
          if Explorer = null then
             return Result;
          end if;
 
-         Explorer_Selection_Foreach.Selected_Foreach
-           (Get_Selection (Explorer.Tree),
-            Add_Selected_Item'Unrestricted_Access, EA);
+         Explorer.Tree.Get_Selection.Selected_Foreach
+           (Add_Selected_Item'Unrestricted_Access);
          return Result;
       end Get_Selected_Activities;
 
@@ -785,8 +779,7 @@ package body VCS_View.Activities is
    begin
       --  If there is no selection, select the item under the cursor
 
-      Iter := Find_Iter_For_Event
-        (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+      Iter := Find_Iter_For_Event (Explorer.Tree, Event);
 
       if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);

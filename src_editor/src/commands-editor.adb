@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with GNAT.Strings;              use GNAT.Strings;
 with Interfaces.C;
 
@@ -22,9 +21,12 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
-with GPS.Editors;               use GPS.Editors;
+use  Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Multi_Cursors;
+use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
 package body Commands.Editor is
 
@@ -32,6 +34,11 @@ package body Commands.Editor is
      (P : String; Max : Interfaces.C.size_t) return Long_Integer;
    pragma Import (C, g_utf8_strlen);
    --  Return the text size of an UTF8 string
+
+   function Avoid_Move_Cursor
+     (Command : access Editor_Command_Type) return Boolean;
+   --  Predicate that returns wether the cursor should be moved
+   --  for the given command.
 
    ------------
    -- Create --
@@ -136,15 +143,16 @@ package body Commands.Editor is
    ------------
 
    procedure Create
-     (Item          : out Editor_Command;
-      Mode          : Editor_Command_Mode;
-      Buffer        : Source_Buffer;
-      User_Executed : Boolean;
-      Line          : Editable_Line_Type;
-      Column        : Character_Offset_Type;
-      Direction     : Direction_Type := Forward;
-      Cursor_Line   : Editable_Line_Type := 0;
-      Cursor_Column : Character_Offset_Type := 0) is
+     (Item              : out Editor_Command;
+      Mode              : Editor_Command_Mode;
+      Buffer            : Source_Buffer;
+      User_Executed     : Boolean;
+      Line              : Editable_Line_Type;
+      Column            : Character_Offset_Type;
+      Direction         : Direction_Type := Forward;
+      Cursor_Line       : Editable_Line_Type := 0;
+      Cursor_Column     : Character_Offset_Type := 0;
+      Cursor_Name       : String := "") is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -156,7 +164,19 @@ package body Commands.Editor is
       Item.Direction := Direction;
       Item.Cursor_Line := Cursor_Line;
       Item.Cursor_Column := Cursor_Column;
+      Item.Alternative_Cursor_Name := To_Unbounded_String (Cursor_Name);
    end Create;
+
+   -----------------------
+   -- Avoid_Move_Cursor --
+   -----------------------
+
+   function Avoid_Move_Cursor
+     (Command : access Editor_Command_Type) return Boolean
+   is
+   begin
+      return Command.Buffer.Avoid_Cursor_Move_On_Changes;
+   end Avoid_Move_Cursor;
 
    --------------
    -- Get_Text --
@@ -265,6 +285,49 @@ package body Commands.Editor is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
       View   : Source_View;
+      Cursor_Name : constant String
+        := To_String (Command.Alternative_Cursor_Name);
+      Mark : Gtk_Text_Mark;
+      MC_Sync_Save : Multi_Cursors_Sync_Type;
+
+      procedure Set_Cursor_Position;
+      --  Set the action's cursor at the right place whether it is a multi
+      --  cursor or the main cursor
+
+      procedure Set_Cursor_Position is
+         Iter : Gtk_Text_Iter;
+         Mark : Gtk_Text_Mark;
+         Reset_Mode : Boolean := False;
+      begin
+
+         if Get_Multi_Cursors_Sync (Command.Buffer).Mode = Auto then
+            Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+            Reset_Mode := True;
+         end if;
+
+         --  The cursor is a multi cursor
+         if Cursor_Name /= "" then
+            Mark := Command.Buffer.Get_Mark (Cursor_Name);
+            if Mark /= null then
+               Command.Buffer.Get_Iter_At_Line_Offset
+                 (Iter, Gint (Command.Line - 1), Gint (Command.Column - 1));
+               Command.Buffer.Move_Mark (Mark, Iter);
+            end if;
+         else
+            Set_Cursor_Position
+              (Command.Buffer,
+               Command.Line,
+               Command.Column,
+               Internal  => True);
+            Scroll_To_Cursor_Location (View);
+         end if;
+
+         if Reset_Mode then
+            Set_Multi_Cursors_Auto_Sync (Command.Buffer);
+         end if;
+
+      end Set_Cursor_Position;
+
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
@@ -274,16 +337,24 @@ package body Commands.Editor is
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
          View := Get_View (Editor);
 
+         MC_Sync_Save := Get_Multi_Cursors_Sync (Command.Buffer);
+
+         --  The cursor is a multi cursor
+         if Cursor_Name /= "" then
+            Mark := Command.Buffer.Get_Mark (Cursor_Name);
+            if Mark /= null then
+               Set_Multi_Cursors_Manual_Sync (Command.Buffer, Mark);
+            else
+               Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+            end if;
+         else
+            Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+         end if;
+
          case Command.Edition_Mode is
             when Insertion =>
-               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
-                  Set_Cursor_Position
-                    (Command.Buffer,
-                     Command.Line,
-                     Command.Column,
-                     Centering => Minimal,
-                     Internal  => True);
-                  Scroll_To_Cursor_Location (View);
+               if not Avoid_Move_Cursor (Command) then
+                  Set_Cursor_Position;
                end if;
 
                Insert
@@ -294,25 +365,12 @@ package body Commands.Editor is
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
 
-               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
-                  if Command.Direction = Extended then
-                     Set_Cursor_Position
-                       (Command.Buffer,
-                        Command.Cursor_Line,
-                        Command.Cursor_Column,
-                        Centering => Minimal,
-                        Internal  => True);
-                     Scroll_To_Cursor_Location (View);
-
-                  elsif Command.Direction = Backward then
-                     Set_Cursor_Position
-                       (Command.Buffer,
-                        Command.Line,
-                        Command.Column,
-                        Centering => Minimal,
-                        Internal  => True);
-                     Scroll_To_Cursor_Location (View);
-                  end if;
+               if not Avoid_Move_Cursor (Command)
+                 and then
+                   (Command.Direction = Extended
+                    or else Command.Direction = Backward)
+               then
+                  Set_Cursor_Position;
                end if;
 
             when Deletion =>
@@ -327,16 +385,12 @@ package body Commands.Editor is
                         Interfaces.C.size_t (Command.Current_Text_Size))),
                   False);
 
-               if not Avoid_Cursor_Move_On_Changes (Command.Buffer) then
-                  Set_Cursor_Position
-                    (Command.Buffer,
-                     Command.Line,
-                     Command.Column,
-                     Centering => Minimal,
-                     Internal  => True);
-                  Scroll_To_Cursor_Location (View);
+               if not Avoid_Move_Cursor (Command) then
+                  Set_Cursor_Position;
                end if;
          end case;
+
+         Set_Multi_Cursors_Sync (Command.Buffer, MC_Sync_Save);
       end if;
 
       Command_Finished (Command, True);
@@ -410,7 +464,6 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After,
-            Centering => Minimal,
             Internal  => True);
          Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
@@ -454,14 +507,12 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_Before,
             Command.End_Column_Before,
-            Centering => Minimal,
             Internal  => True);
       else
          Set_Cursor_Position
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Centering => Minimal,
             Internal  => True);
       end if;
 

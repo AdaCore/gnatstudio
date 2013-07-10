@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ----------------------------------------------------------------------------*/
 
-#include <gtk/gtktextbuffer.h>
+#include <gtk/gtk.h>
 
 void* replace_insert_text
    (struct _GtkTextBufferClass* class, void* insert_func)

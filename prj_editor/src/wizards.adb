@@ -21,9 +21,10 @@ with Glib;                     use Glib;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Style;                use Gtk.Style;
+with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Pango.Enums;              use Pango.Enums;
@@ -117,7 +118,6 @@ package body Wizards is
       Title    : String;
       Show_Toc : Boolean := True)
    is
-      Highlight_Font : Pango_Font_Description;
    begin
       Logo_Boxes.Initialize
         (Win        => Wiz,
@@ -136,13 +136,11 @@ package body Wizards is
 
       Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
-      Set_Flags (Wiz.Next, Can_Default);
       Widget_Callback.Object_Connect
         (Wiz.Next, Signal_Clicked, Next_Page'Access, Wiz);
 
       Wiz.Finish :=
         Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
-      Set_Flags (Wiz.Finish, Can_Default);
       Widget_Callback.Object_Connect
         (Wiz.Finish, Signal_Clicked, On_Finish'Access, Wiz);
 
@@ -151,12 +149,6 @@ package body Wizards is
 
       Widget_Callback.Connect (Wiz, Signal_Map, Map'Access);
       Widget_Callback.Connect (Wiz, Signal_Destroy, On_Destroy'Access);
-
-      Wiz.Normal_Style := Copy (Get_Style (Wiz));
-      Wiz.Highlight_Style := Copy (Get_Style (Wiz));
-      Highlight_Font := Get_Font_Description (Wiz.Highlight_Style);
-      Set_Weight (Highlight_Font, Pango_Weight_Bold);
-      Set_Font_Description (Wiz.Highlight_Style, Highlight_Font);
 
       Wiz.Pages := null;
       Wiz.Current_Page := 1;
@@ -200,7 +192,9 @@ package body Wizards is
       Show_All (Page.Toc);
       Set_Alignment (Page.Toc, 0.0, 0.0);
       Pack_Start (Get_Side_Box (Wiz), Page.Toc, Expand => False);
-      Set_Style (Page.Toc, Wiz.Normal_Style);
+
+      Override_Font (Page.Toc, Get_Style_Context (Wiz).Get_Font
+                     (Gtk_State_Flag_Normal));
 
       Size_Request (Page.Toc, Req);
 
@@ -339,8 +333,8 @@ package body Wizards is
       if W.Pages = null
         or else W.Pages'Length = 1
       then
-         Hide_All (W.Next);
-         Hide_All (W.Previous);
+         Hide (W.Next);
+         Hide (W.Previous);
       else
          Show_All (W.Next);
          Show_All (W.Previous);
@@ -383,7 +377,9 @@ package body Wizards is
    ----------------------
 
    procedure Set_Current_Page
-     (Wiz : access Wizard_Record'Class; Num : Positive) is
+     (Wiz : access Wizard_Record'Class; Num : Positive)
+   is
+      Font : Pango_Font_Description;
    begin
       pragma Assert (Wiz.Pages /= null);
       pragma Assert (Num <= Wiz.Pages'Last);
@@ -393,7 +389,9 @@ package body Wizards is
       --  Unhighlight the current page
 
       if Wiz.Pages (Wiz.Current_Page).Toc /= null then
-         Set_Style (Wiz.Pages (Wiz.Current_Page).Toc, Wiz.Normal_Style);
+         Override_Font
+           (Wiz.Pages (Wiz.Current_Page).Toc,
+            Get_Style_Context (Wiz).Get_Font (Gtk_State_Flag_Normal));
       end if;
 
       if Wiz.Pages (Wiz.Current_Page).Content /= null then
@@ -419,7 +417,9 @@ package body Wizards is
       Update_Page (Wiz.Pages (Wiz.Current_Page));
 
       if Wiz.Pages (Wiz.Current_Page).Toc /= null then
-         Set_Style (Wiz.Pages (Wiz.Current_Page).Toc, Wiz.Highlight_Style);
+         Font := Get_Font (Get_Style_Context (Wiz), Gtk_State_Flag_Normal);
+         Set_Weight (Font, Pango_Weight_Bold);
+         Override_Font (Wiz.Pages (Wiz.Current_Page).Toc, Font);
       end if;
 
       Set_Text (Get_Title_Label (Wiz), Wiz.Pages (Wiz.Current_Page).Title.all);

@@ -13,9 +13,9 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
-default:
-	$(MAKE) -C gps $@
-	$(MAKE) -C cli $@
+all default:
+	$(MAKE) -C gps default
+	$(MAKE) -C cli default
 
 codepeer:
 	$(MAKE) -C gps scil
@@ -52,6 +52,9 @@ endif
 	$(RM) $(sharedir)/gps/library/*.xml
 	$(RM) $(sharedir)/gps/plug-ins/*.py
 	$(RM) $(sharedir)/gps/plug-ins/*.xml
+	$(RM) $(sharedir)/gps/support/core/*.py
+	$(RM) $(sharedir)/gps/support/ui/*.py
+	${RM} ${sharedir}/gps/perspectives.xml
 	$(RMDIR) $(sharedir)/gps/templates
 # update runtime.xml before copying the plug-ins files.
 	(cd distrib; $(PERL) from_impunit.pl)
@@ -61,7 +64,6 @@ ifeq ($(OS),Windows_NT)
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.xml
 	$(RM) share/plug-ins/subversion_native_windows.xml
 endif
-	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/spark/*.py) | (cd $(sharedir)/gps; tar xf -)
@@ -69,7 +71,9 @@ endif
 	(cd share; tar cf - plug-ins/images/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - support/) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
+	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/support/core/gnat_switches.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.py
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
@@ -86,6 +90,9 @@ endif
 	$(MAKE) -C gnatlib install
 
 install: install-common
+# Install gnatcoll itself, so that it also installs the GPS-support files, as
+# well as gnatinspect
+	$(MAKE) -C gnatlib install
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark.exe $(bindir)

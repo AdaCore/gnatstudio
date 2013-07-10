@@ -31,7 +31,8 @@ with Glib.Error;                 use Glib.Error;
 with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
@@ -46,10 +47,8 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
-with GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
@@ -246,7 +245,7 @@ package body Src_Contexts is
      (Regexp_Reference_Array, Regexp_Reference_Array_Access);
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Box_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
@@ -796,7 +795,6 @@ package body Src_Contexts is
                     Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
-
             begin
                Message.Set_Highlighting
                  (Get_Or_Create_Style_Copy
@@ -835,7 +833,6 @@ package body Src_Contexts is
                     Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
-
             begin
                Message.Set_Highlighting
                  (Get_Or_Create_Style_Copy
@@ -2415,8 +2412,8 @@ package body Src_Contexts is
                  (Get_Buffer (Editor),
                   Context.End_Line,
                   Context.End_Column,
-                  GPS.Editors.With_Margin,
                   Internal => True);
+               Get_View (Editor).Set_Position_Set_Explicitely;
 
                Save_Cursor_Position (Get_View (Editor));
             end if;
@@ -2538,12 +2535,11 @@ package body Src_Contexts is
                            Write (Writable, Contents);
                            Close (Writable);
                         else
-                           Insert
-                             (Kernel,
-                              "Could not save " & (+File.Full_Name.all)
+                           Kernel.Insert
+                             ("Could not save " & (+File.Full_Name.all)
                               & " with encoding " & Get_File_Charset (File)
                               & ", replace operation aborted for this file.",
-                              Mode => GPS.Kernel.Console.Error);
+                              Mode => GPS.Kernel.Error);
                            Error_Free (Error.all);
                            Error.all := null;
                         end if;
@@ -3152,7 +3148,7 @@ package body Src_Contexts is
    ----------------------------
 
    procedure Initialize_Scope_Combo
-     (Combo  : access Gtk_Combo_Box_Record'Class;
+     (Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
    begin
@@ -3191,7 +3187,7 @@ package body Src_Contexts is
       Set_Alignment (Label, 0.0, 0.5);
       Gtk.Box.Pack_Start (Box, Label, False);
 
-      Gtk_New_Text (Selector.Combo);
+      Gtk_New (Selector.Combo);
       Gtk.Box.Pack_Start (Box, Selector.Combo, True, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
@@ -3213,7 +3209,7 @@ package body Src_Contexts is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Extra.Files_Table, Label, 0, 1, 0, 1, Fill, 0);
 
-      Gtk_New_Text (Extra.Combo);
+      Gtk_New (Extra.Combo);
       Initialize_Scope_Combo (Extra.Combo, Kernel);
       Attach (Extra.Files_Table, Extra.Combo, 1, 2, 0, 1, Fill, 0);
 

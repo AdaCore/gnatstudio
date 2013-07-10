@@ -44,8 +44,8 @@ with Histories;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
-with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Location_View;     use GPS.Location_View;
 with Code_Analysis_GUI;
 with CodePeer.Module;
 
@@ -80,7 +80,7 @@ package body CodePeer.Messages_Reports is
            Messages_Report);
 
    package Compare_Functions is
-     new Gtk.Tree_Sortable.Compare_Funcs (Messages_Report);
+     new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
 
@@ -154,7 +154,7 @@ package body CodePeer.Messages_Reports is
    --  selection on mouse press, and activation on double-press/release events.
 
    function Compare
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint;
@@ -189,7 +189,8 @@ package body CodePeer.Messages_Reports is
    Status_Bug_History            : constant Histories.History_Key :=
      "codepeer-summary_report-status-bug";
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Activated)),
@@ -204,7 +205,7 @@ package body CodePeer.Messages_Reports is
    -------------
 
    function Compare
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       A         : Gtk.Tree_Model.Gtk_Tree_Iter;
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint
@@ -243,7 +244,7 @@ package body CodePeer.Messages_Reports is
          Value : Glib.Values.GValue;
 
       begin
-         Model.Get_Value (Iter, Column, Value);
+         Get_Value (Model, Iter, Column, Value);
 
          declare
             Image : constant String := Glib.Values.Get_String (Value);
@@ -284,7 +285,7 @@ package body CodePeer.Messages_Reports is
       end Get;
 
    begin
-      if Model.Parent (A) = Gtk.Tree_Model.Null_Iter then
+      if Parent (Model, A) = Gtk.Tree_Model.Null_Iter then
          return 0;
       end if;
 
@@ -318,8 +319,8 @@ package body CodePeer.Messages_Reports is
       pragma Unreferenced (Menu, Event_Widget, Kernel);
 
       Self       : constant Messages_Report := Messages_Report (Object);
-      X          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X          : constant Glib.Gint := Glib.Gint (Event.Button.X);
+      Y          : constant Glib.Gint := Glib.Gint (Event.Button.Y);
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Model_Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Cell_X     : Glib.Gint;
@@ -335,7 +336,7 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_View.Get_Path_At_Pos
         (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-      if Path /= null then
+      if Path /= Null_Gtk_Tree_Path then
          Self.Analysis_View.Get_Selection.Select_Path (Path);
          Model_Path :=
            Self.Analysis_Sort_Model.Convert_Path_To_Child_Path (Path);
@@ -482,13 +483,14 @@ package body CodePeer.Messages_Reports is
                   (Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
-      Gtk.Box.Initialize_Vbox (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerSummaryReport",
-         Signal_Parameters);
+        (Ancestor     => Gtk.Box.Get_Vbox_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "CodePeerSummaryReport",
+         Parameters   => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
+
       Summary_Report_Callbacks.Connect
         (Self,
          Gtk.Widget.Signal_Destroy,
@@ -585,12 +587,11 @@ package body CodePeer.Messages_Reports is
          File_Icon,
          Subprogram_Icon);
       Gtk.Tree_Model_Sort.Gtk_New_With_Model
-        (Self.Analysis_Sort_Model, Self.Analysis_Model);
+        (Self.Analysis_Sort_Model, To_Interface (Self.Analysis_Model));
       Compare_Functions.Set_Default_Sort_Func
         (+Self.Analysis_Sort_Model, Compare'Access, Messages_Report (Self));
       Gtk.Tree_View.Gtk_New
-        (Self.Analysis_View,
-         Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Sort_Model));
+        (Self.Analysis_View, +Self.Analysis_Sort_Model);
       Scrolled.Add (Self.Analysis_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -620,7 +621,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.High_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.High_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -634,7 +635,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.Medium_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.Medium_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -648,7 +649,7 @@ package body CodePeer.Messages_Reports is
          CodePeer.Messages_Summary_Models.Low_Current_Count_Column);
       Column.Add_Attribute
         (Text_Renderer,
-         "cell_background_gdk",
+         "cell-background-rgba",
          CodePeer.Messages_Summary_Models.Low_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
@@ -931,8 +932,8 @@ package body CodePeer.Messages_Reports is
 
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Sort_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      X         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y         : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X         : constant Glib.Gint := Glib.Gint (Event.Button.X);
+      Y         : constant Glib.Gint := Glib.Gint (Event.Button.Y);
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       Cell_X    : Glib.Gint;
       Cell_Y    : Glib.Gint;
@@ -953,7 +954,7 @@ package body CodePeer.Messages_Reports is
          Self.Analysis_View.Get_Path_At_Pos
            (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             Self.Analysis_View.Get_Selection.Select_Path (Path);
             Sort_Iter := Self.Analysis_Sort_Model.Get_Iter (Path);
             Self.Analysis_Sort_Model.Convert_Iter_To_Child_Iter
@@ -967,10 +968,11 @@ package body CodePeer.Messages_Reports is
                --  Request Locations View to expand corresponding category/file
 
                if File_Node /= null then
-                  GPS.Kernel.Messages.View.Expand_File
-                    (Self.Kernel,
+                  Expand_File
+                    (Get_Or_Create_Location_View (Self.Kernel),
                      CodePeer.Module.CodePeer_Category_Name,
-                     File_Node.Name);
+                     File_Node.Name,
+                     Goto_First => False);
                end if;
             end;
          end if;

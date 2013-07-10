@@ -35,7 +35,6 @@ with XML_Utils;                  use XML_Utils;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -720,9 +719,8 @@ package body GPS.Kernel.Remote is
          end if;
 
          if not Gexpect.Db.Is_Configured (To) then
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               -"Sync files failure: " &
+            Kernel.Insert
+              (-"Sync files failure: " &
                To & (-" is not correctly configured"),
                Mode => Error);
             return;
@@ -733,9 +731,8 @@ package body GPS.Kernel.Remote is
 
       elsif To = Local_Nickname then
          if not Gexpect.Db.Is_Configured (From) then
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               -"Sync files failure: " &
+            Kernel.Insert
+              (-"Sync files failure: " &
                From & (-" is not correctly configured"),
                Mode => Error);
             return;
@@ -779,9 +776,8 @@ package body GPS.Kernel.Remote is
          if not Run_Hook_Until_Success
            (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
          then
-            GPS.Kernel.Console.Insert
-              (Kernel,
-               Machine.Rsync_Func & (-" failure: ") &
+            Kernel.Insert
+              (Machine.Rsync_Func & (-" failure: ") &
                (-"Please verify your network configuration"),
                Mode => Error);
 

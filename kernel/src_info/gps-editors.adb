@@ -94,15 +94,6 @@ package body GPS.Editors is
       return Nil_Editor_Buffer;
    end Buffer;
 
-   overriding function Create_Mark
-     (This : Dummy_Editor_Location; Name : String := "")
-      return Editor_Mark'Class
-   is
-      pragma Unreferenced (This, Name);
-   begin
-      return Nil_Editor_Mark;
-   end Create_Mark;
-
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class

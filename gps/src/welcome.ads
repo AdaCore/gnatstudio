@@ -18,7 +18,7 @@
 with Gtk.Button;
 with Gtk.Check_Button;
 with Gtk.Radio_Button;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with Gtk.GEntry;
 
 with GPS.Kernel;
@@ -61,7 +61,7 @@ private
       Default_Dir         : Gtk.GEntry.Gtk_Entry;
       Default_Browse      : Gtk.Button.Gtk_Button;
       Create_Project      : Gtk.Radio_Button.Gtk_Radio_Button;
-      Open_Project        : Gtk.Combo_Box.Gtk_Combo_Box;
+      Open_Project        : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Browse         : Gtk.Button.Gtk_Button;
       Always_Show         : Gtk.Check_Button.Gtk_Check_Button;

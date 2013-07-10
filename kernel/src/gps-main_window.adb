@@ -15,20 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 
 with Glib;                      use Glib;
-with Glib.Error;                use Glib.Error;
 with Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
-
-with Pango.Font;                use Pango.Font;
 
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -39,17 +36,19 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
-with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Style;
 with Gtkada.Types;
+
+with Pango.Font;                use Pango.Font;
 
 with Config;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -67,19 +66,18 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
 with Remote;                    use Remote;
-with Traces;                    use Traces;
 with User_Interface_Tools;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
 
 package body GPS.Main_Window is
 
-   Me : constant Debug_Handle := Create ("GPS.Main_Window");
-
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -127,7 +125,6 @@ package body GPS.Main_Window is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
    Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
-   Pref_Show_Statusbar : Boolean_Preference;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -135,7 +132,8 @@ package body GPS.Main_Window is
    --  Callback for the delete event
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
@@ -169,9 +167,6 @@ package body GPS.Main_Window is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Act on the layout of windows
-
-   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class);
-   --  Add the animated icon in the main window
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project is changed
@@ -290,39 +285,6 @@ package body GPS.Main_Window is
    end Execute;
 
    -------------
-   -- Anim_Cb --
-   -------------
-
-   function Anim_Cb (Kernel : Kernel_Handle) return Boolean is
-      Window : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-   begin
-      if Window.Animation_Iter = null then
-         return False;
-
-      elsif Advance (Window.Animation_Iter) then
-         if Window.Animation_Image /= null then
-            Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));
-         end if;
-      end if;
-
-      return True;
-   end Anim_Cb;
-
-   ---------------------------
-   -- Display_Default_Image --
-   ---------------------------
-
-   procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle) is
-      Window : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-   begin
-      if Window.Static_Image /= null then
-         Set (Window.Animation_Image, Window.Static_Image);
-      end if;
-   end Display_Default_Image;
-
-   -------------
    -- Gtk_New --
    -------------
 
@@ -374,113 +336,82 @@ package body GPS.Main_Window is
       Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
    end On_Project_Changed;
 
-   -------------------
-   -- Put_Animation --
-   -------------------
-
-   procedure Put_Animation (Main_Window : access GPS_Window_Record'Class) is
-      GPS_Dir  : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_System_Dir (Main_Window.Kernel), "/share/gps/");
-      Throbber : constant Filesystem_String :=
-                   Normalize_Pathname ("gps-animation.gif", GPS_Dir.Full_Name);
-      Image    : constant Filesystem_String :=
-                   Normalize_Pathname ("gps-animation.png", GPS_Dir.Full_Name);
-      Error    : GError;
-      Pixbuf   : Gdk_Pixbuf;
-
-   begin
-      if Is_Regular_File (Image) then
-         Trace (Me, "loading gps-animation.png");
-         Gdk_New_From_File (Main_Window.Static_Image, +Image, Error);
-         Gtk_New (Main_Window.Animation_Image, Main_Window.Static_Image);
-         Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
-      else
-         Trace (Me, "gps-animation.png not found");
-         return;
-      end if;
-
-      if Is_Regular_File (Throbber) then
-         Trace (Me, "loading gps-animation.gif");
-         Gdk_New_From_File (Main_Window.Animation, +Throbber, Error);
-         Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
-         Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
-         Set (Main_Window.Animation_Image, Pixbuf);
-      else
-         Trace (Me, "gps-animation.gif not found");
-      end if;
-
-      Show_All (Main_Window.Animation_Image);
-   end Put_Animation;
-
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Win   : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Theme : constant String :=
-                Glib.Properties.Get_Property
-                  (Gtk.Settings.Get_Default,
-                   Gtk.Settings.Gtk_Theme_Name);
+      P     : constant Preference := Get_Pref (Data);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
+      Theme : Theme_Descr;
 
    begin
-      if Theme /= Get_Pref (Gtk_Theme) then
+      if P = null
+        or else P = Preference (Gtk_Theme)
+      then
+         Theme := Gtk_Theme.Get_Pref;
+
+         if Theme.Directory /= null then
+            Glib.Properties.Set_Property
+              (Gtk.Settings.Get_Default,
+               Gtk.Settings.Gtk_Theme_Name_Property,
+               Theme.Directory.all);
+         end if;
+
          Glib.Properties.Set_Property
            (Gtk.Settings.Get_Default,
-            Gtk.Settings.Gtk_Theme_Name,
-            Get_Pref (Gtk_Theme));
+            Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
+            Theme.Dark);
       end if;
 
-      Gtk.Rc.Parse_String
-        ("gtk-font-name="""
-         & To_String (Default_Font.Get_Pref_Font) & '"' & ASCII.LF);
+      if P = null
+        or else P = Preference (Default_Font)
+      then
+         --  ??? This creates a new css_provider every time prefs are changed.
+         Gtkada.Style.Load_Css_String
+           ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
+            Priority => Gtk.Style_Provider.Priority_Theme);
+      end if;
 
-      Gtk.Rc.Parse_String
-        ("style ""gtk-default-tooltips-style""  {" & ASCII.LF
-         & "  bg[NORMAL] = """
-         & Tooltip_Color.Get_Pref & """" & ASCII.LF
-         & "}");
-
-      case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
+      if P = null
+        or else P = Preference (Pref_Toolbar_Style)
+      then
+         case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>
+            Set_Size_Request (Win.Toolbar_Box, -1, 0);
             Set_Child_Visible (Win.Toolbar_Box, False);
-            Hide_All (Win.Toolbar_Box);
+            Hide (Win.Toolbar_Box);
 
          when Small_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
-            Set_Icon_Size (Win.Toolbar, Icon_Size_Small_Toolbar);
+            Set_Icon_Size (Win.Toolbar, Icon_Size_Menu);
 
          when Large_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
             Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
-      end case;
-
-      if Toolbar_Show_Text.Get_Pref then
-         Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
-      else
-         Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
+         end case;
       end if;
 
-      if Pref_Show_Statusbar.Get_Pref then
-         Show (Win.Statusbar);
-         Set_Child_Visible (Win.Statusbar, True);
-         Set_Size_Request (Win.Statusbar, 0, -1);
-      else
-         Hide_All (Win.Statusbar);
-         Set_Child_Visible (Win.Statusbar, False);
-         Set_Size_Request (Win.Statusbar, 0, 0);
+      if P = null
+        or else P = Preference (Toolbar_Show_Text)
+      then
+         if Toolbar_Show_Text.Get_Pref then
+            Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
+         else
+            Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
+         end if;
       end if;
 
-      Configure_MDI (Kernel);
+      Configure_MDI (Kernel, P);
    end Preferences_Changed;
 
    ----------------
@@ -493,17 +424,19 @@ package body GPS.Main_Window is
       Prefix_Directory : Virtual_File)
    is
       Vbox      : Gtk_Vbox;
-      Box1      : Gtk_Hbox;
-      Progress  : Gtk.Progress_Bar.Gtk_Progress_Bar;
       Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
+      Tool_Item : Gtk_Separator_Tool_Item;
 
    begin
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
-      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
       Glib.Object.Initialize_Class_Record
-        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
+        (Ancestor     => Gtk.Window.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => "GpsMainWindow");
+      Glib.Object.G_New (Main_Window, Class_Record);
 
       Gtk_New
         (Main_Window.Kernel,
@@ -514,25 +447,12 @@ package body GPS.Main_Window is
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
-         Name    => "General-Toolbar-Style",
+         Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Tool bar style",
-         Page    => -"General",
+         Page    => -"",
          Doc     => -("Indicates how the tool bar should be displayed"),
-         Default => Large_Icons);
+         Default => Small_Icons);
 
-      Pref_Show_Statusbar := Create
-        (Get_Preferences (Main_Window.Kernel),
-         Name  => "Window-Show-Status-Bar",
-         Label => -"Show status bar",
-         Page  => -"General",
-         Doc   => -("Whether the area at the bottom of the GPS window"
-                       & " should be displayed. This area contains the"
-                       & " progress bars while actions are taking place. The"
-                       & " same information is available from the Task"
-                       & " Manager"),
-         Default => True);
-
-      Set_Policy (Main_Window, False, True, False);
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
@@ -552,35 +472,8 @@ package body GPS.Main_Window is
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
 
-      Gtk_New_Hbox
-        (Main_Window.Statusbar, Homogeneous => False, Spacing => 4);
-      Set_Size_Request (Main_Window.Statusbar, 0, -1);
-
-      --  Avoid resizing the main window whenever a label is changed
-      Set_Resize_Mode (Main_Window.Statusbar, Resize_Queue);
-
-      Gtk_New (Progress);
-      Set_Text (Progress, " ");
-      --  ??? This is a tweak : it seems that the gtk progress bar doesn't
-      --  have a size that is the same when it has text than when it does not,
-      --  but we do want to insert and remove text from this bar, without
-      --  the annoying change in size, so we make sure there is always some
-      --  text displayed.
-
-      Pack_Start (Main_Window.Statusbar, Progress, False, False, 0);
-
-      --  ??? We set the default width to 0 so that the progress bar appears
-      --  only as a vertical separator.
-      --  This should be removed when another way to keep the size of the
-      --  status bar acceptable is found.
-      Set_Size_Request (Progress, 0, -1);
-      Pack_End (Vbox, Main_Window.Statusbar, False, False, 0);
-
-      Gtk_New_Hbox (Main_Window.Menu_Box, False, 0);
-      Pack_Start (Vbox, Main_Window.Menu_Box, False, False);
-
       Gtk_New (Main_Window.Menu_Bar);
-      Pack_Start (Main_Window.Menu_Box, Main_Window.Menu_Bar);
+      Pack_Start (Vbox, Main_Window.Menu_Bar, False);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_File");
       Append (Main_Window.Menu_Bar, Menu_Item);
@@ -628,36 +521,38 @@ package body GPS.Main_Window is
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
-      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
+      Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
+      Main_Window.Toolbar_Box.Set_Name ("toolbar-box");
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
 
-      Gtk_New_Hbox (Box1);
-      Pack_Start (Main_Window.Toolbar_Box, Box1);
-      Gtk_New (Main_Window.Toolbar, Orientation_Horizontal, Toolbar_Icons);
-      Set_Tooltips (Main_Window.Toolbar, True);
-      Pack_Start (Box1, Main_Window.Toolbar, True, True);
+      Gtk_New (Main_Window.Toolbar);
+      Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
+      Set_Style (Main_Window.Toolbar, Toolbar_Icons);
+      Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
 
-      Gtk_New (Main_Window.Animation_Frame);
-      Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_None);
-      Pack_End
-        (Main_Window.Menu_Box, Main_Window.Animation_Frame, False, False);
-      Put_Animation (Main_Window);
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
+      Main_Window.Build_Separator := Gtk_Tool_Item (Tool_Item);
+
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
+      Main_Window.Debug_Separator := Gtk_Tool_Item (Tool_Item);
+
+      Gtk_New (Tool_Item);
+      Tool_Item.Set_Expand (True);
+      Tool_Item.Set_Draw (False);
+      Main_Window.Toolbar.Insert (Tool_Item);
 
       Add (Vbox, Main_Window.MDI);
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
-      Add_Hook (Main_Window.Kernel, Preferences_Changed_Hook,
+      Add_Hook (Main_Window.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "main_window.preferences_changed");
-      Preferences_Changed (Main_Window.Kernel);
-
-      --  Make sure we don't display the toolbar until we have actually loaded
-      --  the preferences and checked whether the user wants it or not. This is
-      --  to avoid flickering
-      Set_Size_Request (Main_Window.Toolbar_Box, -1, 0);
-      Set_Child_Visible (Main_Window.Toolbar_Box, False);
-      Hide_All (Main_Window.Toolbar_Box);
+      Preferences_Changed (Main_Window.Kernel, Data => null);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),
@@ -1234,7 +1129,7 @@ package body GPS.Main_Window is
                Hbox  : Gtk_Hbox;
             begin
                Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Get_Vbox (Dialog), Hbox, Padding => 3);
+               Pack_Start (Get_Content_Area (Dialog), Hbox, Padding => 3);
 
                while Index <= Arg'Last loop
                   exit when Arg (Index) = '=';
@@ -1297,7 +1192,8 @@ package body GPS.Main_Window is
 
             Set_Alignment (Label, 0.0, 0.5);
             Pack_Start
-              (Get_Vbox (Dialog), Label, Expand => True, Padding => 10);
+              (Get_Content_Area (Dialog),
+               Label, Expand => True, Padding => 10);
 
             Gtk_New (Group);
 
@@ -1393,20 +1289,8 @@ package body GPS.Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
-      Win : constant GPS_Window := GPS_Window (Main_Window);
+      pragma Unreferenced (Main_Window);
    begin
-      if Win.Animation /= null then
-         Unref (Win.Animation);
-      end if;
-
-      if Win.Animation_Iter /= null then
-         Unref (Win.Animation_Iter);
-      end if;
-
-      if Win.Static_Image /= null then
-         Unref (Win.Static_Image);
-      end if;
-
       if Main_Level > 0 then
          Main_Quit;
       end if;

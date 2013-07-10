@@ -17,14 +17,20 @@
 
 --  This package defines the abstract root type for GPS kernel.
 
+with Ada.Tags;
+with Ada.Containers.Hashed_Maps;
+
 with Language_Handlers;
 with Projects;
 with Xref;
 with GPS.Messages_Windows;
+with GPS.Process_Launchers;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
+with Toolchains;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package GPS.Core_Kernels is
 
@@ -64,6 +70,17 @@ package GPS.Core_Kernels is
       is abstract;
    --  Return console window
 
+   function Process_Launcher
+     (Self : not null access Core_Kernel_Record)
+     return GPS.Process_Launchers.Process_Launcher is abstract;
+   --  Process launcher service
+
+   function Get_Share_Dir
+     (Self : not null access Core_Kernel_Record)
+     return GNATCOLL.VFS.Virtual_File is abstract;
+   --  Return share/gps/ in installation directory for GPS.
+   --  This always ends up with a directory separator.
+
    function Create_From_Base
      (Kernel : access Core_Kernel_Record'Class;
       Name   : GNATCOLL.VFS.Filesystem_String)
@@ -87,11 +104,62 @@ package GPS.Core_Kernels is
       Result : out GNATCOLL.Scripts.Scripts_Repository);
    --  Initialize Scripts_Repository with kernel specific version
 
+   function Get_Build_Mode
+     (Self : not null access Core_Kernel_Record) return String;
+   --  Returns the current build mode.
+
+   function Get_Toolchains_Manager
+     (Self : not null access Core_Kernel_Record)
+      return Toolchains.Toolchain_Manager;
+
+   procedure Set_Toolchains_Manager
+     (Self    : not null access Core_Kernel_Record;
+      Manager : Toolchains.Toolchain_Manager);
+
    procedure Initialize (Self : not null access Core_Kernel_Record'Class);
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class);
 
+   type Abstract_Module_Record is abstract tagged limited null record;
+   type Abstract_Module is access all Abstract_Module_Record'Class;
+
+   procedure Register_Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Module : not null Abstract_Module);
+   --  Register Module in Kernel. Module is registered as implementation of
+   --  any service defined by each of its parents.
+
+   function Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module;
+   --  Return last module that implement service with given Tag
+
+   package Abstract_Module_List is new Ada.Containers.Doubly_Linked_Lists
+     (Abstract_Module, "=");
+
+   function Module_List
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List;
+   --  Return list of modules that implement service with given Tag
+
+   function Get_Doc_Directory
+     (Kernel : access Core_Kernel_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  If the Directory_Dir attribute is defined in the project, then use the
+   --  value; otherwise use the default directory (that is, a subdirectory
+   --  'doc' in the object directory, or in the project directory if no
+   --  object dir is defined).
+
 private
+
+   function Hash (Tag : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
+
+   package Module_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Ada.Tags.Tag,
+      Element_Type    => Abstract_Module_List.List,
+      Hash            => Hash,
+      Equivalent_Keys => Ada.Tags."=",
+      "="             => Abstract_Module_List."=");
 
    type Core_Kernel_Record is abstract tagged record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
@@ -108,6 +176,11 @@ private
 
       Scripts : GNATCOLL.Scripts.Scripts_Repository;
       --  Data used to store information for the scripting languages
+
+      Toolchains_Manager : Toolchains.Toolchain_Manager;
+      --  Current toolchain manager
+
+      Modules : Module_Maps.Map;
    end record;
 
 end GPS.Core_Kernels;

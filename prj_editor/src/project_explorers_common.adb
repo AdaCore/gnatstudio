@@ -46,7 +46,7 @@ with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Gtk.Selection;
+with Gtk.Target_List;
 with Gtk.Dnd;
 
 package body Project_Explorers_Common is
@@ -584,7 +584,7 @@ package body Project_Explorers_Common is
       Line, Column : Gint;
    begin
       if Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (Tree, Model, Event);
+         Iter := Find_Iter_For_Event (Tree, Event);
 
          if Iter /= Null_Iter then
             if Get_Event_Type (Event) /= Button_Release then
@@ -641,13 +641,13 @@ package body Project_Explorers_Common is
                   elsif Get_Event_Type (Event) = Button_Press then
 
                      declare
-                        use type Gtk.Selection.Target_List;
-                        X : constant Gtk.Selection.Target_List
+                        use type Gtk.Target_List.Gtk_Target_List;
+                        X : constant Gtk.Target_List.Gtk_Target_List
                           := Gtk.Dnd.Source_Get_Target_List (Tree);
                      begin
                         --  If Tree provides drag&drop source, then use it
                         --  instead of MDI drag&drop
-                        if X /= null then
+                        if not X.Is_Null then
                            Cancel_Child_Drag (Child);
                            return False;
                         end if;
@@ -723,7 +723,7 @@ package body Project_Explorers_Common is
          when File_Node =>
             Open_File_Editor
               (Kernel,
-               Get_File (Model, Iter, File_Column),
+               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
                Line   => 0,
                Column => 0);
 
@@ -733,7 +733,7 @@ package body Project_Explorers_Common is
 
             Open_File_Editor
               (Kernel,
-               Get_File (Model, Iter, File_Column),
+               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
                Line   => Natural (Line),
                Column => Visible_Column_Type (Column));
 
@@ -977,7 +977,7 @@ package body Project_Explorers_Common is
       end Entity_Base;
 
       Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (Tree, Model, Event);
+                    Find_Iter_For_Event (Tree, Event);
       Node_Type : Node_Types;
       L         : Integer := 0;
 

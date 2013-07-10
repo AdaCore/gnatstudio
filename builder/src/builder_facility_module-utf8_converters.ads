@@ -21,7 +21,7 @@ with Commands; use Commands;
 
 with GPS.Kernel;
 
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Builder_Facility_Module.UTF8_Converters is
 
@@ -34,7 +34,7 @@ package Builder_Facility_Module.UTF8_Converters is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
      (Self   : access Output_Parser_Fabric;
@@ -49,7 +49,7 @@ package Builder_Facility_Module.UTF8_Converters is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
+     new GPS.Tools_Output.Output_Parser_Fabric with record
       Kernel     : GPS.Kernel.Kernel_Handle;
    end record;
 

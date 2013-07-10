@@ -34,7 +34,6 @@ with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -503,8 +502,8 @@ package body VCS_Activities_View_API is
    begin
 
       if Files'Length = 0 then
-         Console.Insert
-           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         Kernel.Insert
+           (-"VCS: No file in activity, cannot commit", Mode => Error);
          return;
       end if;
 
@@ -537,8 +536,8 @@ package body VCS_Activities_View_API is
       Files : constant File_Array := Get_Files_In_Activity (Activity);
    begin
       if Files'Length = 0 then
-         Console.Insert
-           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         Kernel.Insert
+           (-"VCS: No file in activity, cannot commit", Mode => Error);
          return;
       end if;
 
@@ -578,8 +577,8 @@ package body VCS_Activities_View_API is
 
    begin
       if Files'Length = 0 then
-         Console.Insert
-           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         Kernel.Insert
+           (-"VCS: No file in activity, cannot commit", Mode => Error);
          return;
       end if;
 

@@ -50,8 +50,10 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
+      Tooltip    : String := "";
       Every_Line : Boolean := True;
-      Normalize  : Boolean := True);
+      Normalize  : Boolean := True;
+      Icon       : String := "");
    --  Create the Mime info for adding/creating/removing line information,
    --  and send it.
    --  If File is an empty string, send the Mime for all open buffers.
@@ -84,6 +86,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_File_Location
      (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Preference
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_File_Status_Changed
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert some shell arguments into suitable hooks_data
@@ -111,8 +115,10 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
+      Tooltip    : String := "";
       Every_Line : Boolean := True;
-      Normalize  : Boolean := True)
+      Normalize  : Boolean := True;
+      Icon       : String := "")
    is
       Data : aliased File_Line_Hooks_Args :=
                (Hooks_Data with
@@ -121,7 +127,9 @@ package body GPS.Kernel.Standard_Hooks is
                 File              => File,
                 Info              => Info,
                 Every_Line        => Every_Line,
-                Normalize         => Normalize);
+                Tooltip           => new String'(Tooltip),
+                Normalize         => Normalize,
+                Icon              => new String'(Icon));
    begin
       if File /= GNATCOLL.VFS.No_File then
          if not Run_Hook_Until_Success
@@ -149,6 +157,9 @@ package body GPS.Kernel.Standard_Hooks is
             end loop;
          end;
       end if;
+
+      GNAT.Strings.Free (Data.Tooltip);
+      GNAT.Strings.Free (Data.Icon);
    end General_Line_Information;
 
    ----------------------
@@ -159,7 +170,9 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : Virtual_File;
       Identifier : String;
-      Label      : String)
+      Label      : String;
+      Tooltip    : String := "";
+      Icon       : String := "")
    is
       Infos : Line_Information_Data;
 
@@ -167,7 +180,8 @@ package body GPS.Kernel.Standard_Hooks is
       Infos := new Line_Information_Array (-1 .. -1);
       Infos (-1).Text := new String'(Label);
 
-      Add_Line_Information (Kernel, File, Identifier, Infos);
+      Add_Line_Information
+        (Kernel, File, Identifier, Infos, Tooltip => Tooltip, Icon => Icon);
 
       Unchecked_Free (Infos);
    end Add_Editor_Label;
@@ -190,12 +204,12 @@ package body GPS.Kernel.Standard_Hooks is
       A_Access (0) := Info;
 
       General_Line_Information
-        (Kernel,
-         File,
-         Identifier,
-         A_Access,
-         Every_Line,
-         Normalize);
+        (Kernel     => Kernel,
+         File       => File,
+         Identifier => Identifier,
+         Info       => A_Access,
+         Every_Line => Every_Line,
+         Normalize  => Normalize);
       Unchecked_Free (A_Access);
    end Create_Line_Information_Column;
 
@@ -223,10 +237,13 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
-      Normalize  : Boolean := True) is
+      Normalize  : Boolean := True;
+      Tooltip    : String := "";
+      Icon       : String := "") is
    begin
       General_Line_Information
-        (Kernel, File, Identifier, Info, Normalize => Normalize);
+        (Kernel, File, Identifier, Info, Normalize => Normalize,
+         Tooltip => Tooltip, Icon => Icon);
    end Add_Line_Information;
 
    ------------------------
@@ -435,6 +452,8 @@ package body GPS.Kernel.Standard_Hooks is
          Identifier        => Identifier,
          File         => Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel))),
          Info              => null,
+         Tooltip           => null,
+         Icon              => null,
          Every_Line        => Nth_Arg (Data, 4),
          Normalize         => Nth_Arg (Data, 5));
    end From_Callback_Data_Line_Info;
@@ -739,6 +758,41 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 2, P);
       return D;
    end Create_Callback_Data;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Preference_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      pragma Unreferenced (Data);
+      D : constant Callback_Data_Access :=
+            new Callback_Data'Class'(Create (Script, 1));
+   begin
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
+
+      --  For backward compatibility, do not send the hook name
+      --  Set_Nth_Arg (D.all, 2, Data.Pref.Get_Name);
+      return D;
+   end Create_Callback_Data;
+
+   -----------------------------------
+   -- From_Callback_Data_Preference --
+   -----------------------------------
+
+   function From_Callback_Data_Preference
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      pragma Unreferenced (Data);
+   begin
+      return Preference_Hooks_Args'
+        (Hooks_Data with
+           Pref => null);
+   end From_Callback_Data_Preference;
 
    --------------------------
    -- Create_Callback_Data --
@@ -1141,8 +1195,27 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, File_Location_Hook_Type,
          Args_Creator => From_Callback_Data_File_Location'Access);
+      Register_Hook_Data_Type
+        (Kernel, Preference_Hook_Type,
+         Args_Creator => From_Callback_Data_Preference'Access);
 
       Register_Hook_No_Args (Kernel, Stop_Macro_Action_Hook);
    end Register_Action_Hooks;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Data : access Hooks_Data'Class) return Default_Preferences.Preference is
+   begin
+      if Data /= null
+        and then Data.all in Preference_Hooks_Args'Class
+      then
+         return Preference_Hooks_Args (Data.all).Pref;
+      else
+         return null;
+      end if;
+   end Get_Pref;
 
 end GPS.Kernel.Standard_Hooks;

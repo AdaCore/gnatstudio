@@ -19,7 +19,7 @@ with Case_Handling;             use Case_Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GPS.Intl;                  use GPS.Intl;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 
 with GUI_Utils;                 use GUI_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -33,15 +33,15 @@ package body Language_Handlers.GUI is
    function Create_Language_Combo
      (Handler : access Language_Handler_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk_Combo_Box
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
-      Combo     : Gtk_Combo_Box;
+      Combo     : Gtk_Combo_Box_Text;
       Languages : Argument_List := Known_Languages (Handler, Sorted => True);
       Project_Lang : String :=
         Get_Language_From_File (Handler, File, From_Project_Only => True);
 
    begin
-      Gtk_New_Text (Combo);
+      Gtk_New (Combo);
 
       if Project_Lang = "" then
          Combo.Append_Text (-"(From project) unknown");

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib;                    use Glib;
+with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
 
 with Cairo;                   use Cairo;
@@ -23,7 +24,6 @@ with Cairo;                   use Cairo;
 with Gdk.Event;               use Gdk.Event;
 
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
-with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
@@ -39,6 +39,7 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Browsers.Canvas;         use Browsers.Canvas;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Fname;                   use Fname;
+with Generic_Views;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -57,7 +58,6 @@ with Namet;                   use Namet;
 with Pango.Layout;            use Pango.Layout;
 with Projects;                use Projects;
 with Traces;                  use Traces;
-with XML_Utils;               use XML_Utils;
 with Xref;                    use Xref;
 
 package body Browsers.Dependency_Items is
@@ -105,9 +105,26 @@ package body Browsers.Dependency_Items is
    type Dependency_Browser_Record is new
      Browsers.Canvas.General_Browser_Record with
    record
-      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Id : Glib.Main.G_Source_Id := 0;
    end record;
-   type Dependency_Browser is access all Dependency_Browser_Record'Class;
+
+   function Initialize
+     (View   : access Dependency_Browser_Record'Class)
+      return Gtk_Widget;
+   --  Creates the dependency browser and returns the focus widget
+
+   package Dependency_Views is new Generic_Views.Simple_Views
+     (Module_Name            => Dependency_Browser_Module_Name,
+      View_Name              => -"Dependency Browser",
+      Formal_View_Record     => Dependency_Browser_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
+      Position               => Position_Automatic,
+      Group                  => Group_Graphs);
+   subtype Dependency_Browser is Dependency_Views.View_Access;
 
    type Project_Changed_Hook_Record is new Function_No_Args with record
       Browser : Dependency_Browser;
@@ -187,7 +204,7 @@ package body Browsers.Dependency_Items is
       Recompute_Layout : Boolean;
    end record;
    package Dependency_Idle is
-     new Gtk.Main.Idle (Examine_Dependencies_Idle_Data);
+     new Glib.Main.Generic_Sources (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -236,10 +253,6 @@ package body Browsers.Dependency_Items is
    --  It could also simply use the paths to detect whether the file is in
    --  one of the predefined paths.
 
-   procedure On_Dependency_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Browsers->Dependency
-
    procedure Browser_Context_Factory
      (Context      : in out Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -249,14 +262,6 @@ package body Browsers.Dependency_Items is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the context to use when a contextual menu is displayed in the
    --  browser.
-
-   function Open_Dependency_Browser
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child;
-   --  Open a new browser that supports all the types described in
-   --  Browser_Type.
-   --  If there is already a browser in GPS that handles all the types
-   --  Browser_Type, we re-use this one instead.
 
    procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data);
    --  Called when the idle loop is destroyed
@@ -268,19 +273,6 @@ package body Browsers.Dependency_Items is
    function Project_Of
      (Item : access File_Item_Record'Class) return Project_Type;
    --  Return the name of the project that contains Item
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Support functions for the MDI
-
-   function Create_Dependency_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Dependency_Browser;
-   --  Create a new dependency browser
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
@@ -425,29 +417,6 @@ package body Browsers.Dependency_Items is
       end if;
    end Browser_Context_Factory;
 
-   -------------------------------
-   -- Create_Dependency_Browser --
-   -------------------------------
-
-   function Create_Dependency_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Dependency_Browser
-   is
-      Browser : Dependency_Browser;
-   begin
-      Browser := new Dependency_Browser_Record;
-      Initialize (Browser, Kernel, Create_Toolbar => False);
-      Register_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Browser,
-         Object          => Browser,
-         ID              => Dependency_Browser_Module_ID,
-         Context_Func    => Browser_Context_Factory'Access);
-
-      Widget_Callback.Connect (Browser, Signal_Destroy, On_Destroy'Access);
-      return Browser;
-   end Create_Dependency_Browser;
-
    ----------------
    -- On_Destroy --
    ----------------
@@ -456,7 +425,7 @@ package body Browsers.Dependency_Items is
       B : constant Dependency_Browser := Dependency_Browser (Browser);
    begin
       if B.Idle_Id /= 0 then
-         Idle_Remove (B.Idle_Id);
+         Remove (B.Idle_Id);
       end if;
    end On_Destroy;
 
@@ -485,51 +454,36 @@ package body Browsers.Dependency_Items is
       end loop;
    end Execute;
 
-   -----------------------------
-   -- Open_Dependency_Browser --
-   -----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Open_Dependency_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child
+   function Initialize
+     (View   : access Dependency_Browser_Record'Class)
+      return Gtk_Widget
    is
-      Child   : GPS_MDI_Child;
-      Browser : Dependency_Browser;
       Hook    : Project_Changed_Hook;
-      Title   : constant String := -"Dependency Browser";
-
    begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Dependency_Browser_Record'Tag));
+      Initialize (View, Create_Toolbar => False);
+      Register_Contextual_Menu
+        (Kernel          => View.Kernel,
+         Event_On_Widget => View,
+         Object          => View,
+         ID              => Dependency_Views.Get_Module,
+         Context_Func    => Browser_Context_Factory'Access);
 
-      if Child /= null then
-         Raise_Child (Child);
-      else
-         Browser := Create_Dependency_Browser (Kernel);
-         Gtk_New (Child, Browser,
-                  Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Dependency_Browser_Module_ID);
-         Set_Title (Child, Title);
-         Put (Get_MDI (Kernel), Child);
-         Set_Focus_Child (Child);
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
-         Hook := new Project_Changed_Hook_Record'
-           (Function_No_Args with
-            Browser         => Browser);
-         Add_Hook
-           (Kernel, GPS.Kernel.Project_Changed_Hook,
-            Hook,
-            Name  => "browsers.dependency_items.project_changed",
-            Watch => GObject (Browser));
-      end if;
+      Hook := new Project_Changed_Hook_Record'
+        (Function_No_Args with Browser => View);
+      Add_Hook
+        (View.Kernel, GPS.Kernel.Project_Changed_Hook,
+         Hook,
+         Name  => "browsers.dependency_items.project_changed",
+         Watch => GObject (View));
 
-      Add_Navigation_Location (Kernel, Title);
-
-      return MDI_Child (Child);
-   end Open_Dependency_Browser;
+      return Gtk_Widget (View);
+   end Initialize;
 
    --------------------------
    -- Examine_Dependencies --
@@ -541,7 +495,6 @@ package body Browsers.Dependency_Items is
       Recompute_Layout : Boolean := True)
    is
       Browser       : Dependency_Browser;
-      Child_Browser : MDI_Child;
       Item, Initial : File_Item;
       Link          : Dependency_Link;
       Intern        : Virtual_File;
@@ -554,8 +507,7 @@ package body Browsers.Dependency_Items is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       --  Create the browser if it doesn't exist
-      Child_Browser := Open_Dependency_Browser (Kernel);
-      Browser := Dependency_Browser (Get_Widget (Child_Browser));
+      Browser := Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
 
       Initial := File_Item (Find_File (Browser, File));
 
@@ -719,7 +671,6 @@ package body Browsers.Dependency_Items is
    is
       Data          : Examine_Dependencies_Idle_Data;
       Browser       : Dependency_Browser;
-      Child_Browser : MDI_Child;
       Item          : File_Item;
       Cr            : Cairo_Context;
 
@@ -727,8 +678,7 @@ package body Browsers.Dependency_Items is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       --  Create the browser if it doesn't exist
-      Child_Browser := Open_Dependency_Browser (Kernel);
-      Browser := Dependency_Browser (Get_Widget (Child_Browser));
+      Browser := Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
 
       --  Look for an existing item corresponding to entity
       Item := File_Item (Find_File (Browser, File));
@@ -751,11 +701,11 @@ package body Browsers.Dependency_Items is
                Recompute_Layout => Recompute_Layout);
 
       if Interactive then
-         Browser.Idle_Id := Dependency_Idle.Add
-           (Cb       => Examine_Ancestors_Idle'Access,
-            D        => Data,
-            Priority => Priority_Low_Idle,
-            Destroy  => Destroy_Idle'Access);
+         Browser.Idle_Id := Dependency_Idle.Idle_Add
+           (Func     => Examine_Ancestors_Idle'Access,
+            Data     => Data,
+            Priority => Priority_Low,
+            Notify   => Destroy_Idle'Access);
       else
          while Examine_Ancestors_Idle (Data) loop
             null;
@@ -838,30 +788,6 @@ package body Browsers.Dependency_Items is
       return Item;
    end Find_File;
 
-   ---------------------------
-   -- On_Dependency_Browser --
-   ---------------------------
-
-   procedure On_Dependency_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Child : MDI_Child;
-      pragma Unreferenced (Widget, Child);
-
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-   begin
-      Child := Open_Dependency_Browser (Kernel);
-
-      if Context /= No_Context
-        and then Has_File_Information (Context)
-      then
-         Examine_Dependencies (Kernel, File_Information (Context));
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Dependency_Browser;
-
    -------------
    -- Execute --
    -------------
@@ -926,7 +852,8 @@ package body Browsers.Dependency_Items is
       Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
-      Browser : constant Dependency_Browser := Dependency_Browser (Child);
+      Browser : constant Dependency_Browser :=
+        Dependency_Views.View_From_Widget (Child);
       Iter    : constant Item_Iterator :=
         Start (Get_Canvas (Browser), Selected_Only => True);
    begin
@@ -1025,7 +952,6 @@ package body Browsers.Dependency_Items is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Browsers");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
                   (not Lookup_Filter (Kernel, "Entity"))
@@ -1033,12 +959,10 @@ package body Browsers.Dependency_Items is
 
    begin
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
-      Register_Module
-        (Module       => Dependency_Browser_Module_ID,
-         Kernel       => Kernel,
-         Module_Name  => Dependency_Browser_Module_Name,
-         Priority     => Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Dependency_Views.Register_Module
+        (Kernel,
+         Dependency_Browser_Module_ID,
+         Menu_Name => -"Browsers/_Dependency");
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"
 
@@ -1065,9 +989,6 @@ package body Browsers.Dependency_Items is
          Action => Command,
          Filter =>
            Create (Module => Dependency_Browser_Module_Name) and Filter);
-
-      Register_Menu (Kernel, Tools, -"_Dependency", "",
-                     On_Dependency_Browser'Access);
 
       Register_Command
         (Kernel, "uses",
@@ -1192,9 +1113,8 @@ package body Browsers.Dependency_Items is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      B          : constant Dependency_Browser :=
-                     Dependency_Browser
-                       (Get_Widget (Open_Dependency_Browser (Kernel)));
+      B : constant Dependency_Browser :=
+        Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
       Other_File : constant Virtual_File :=
         Get_Registry (Kernel).Tree.Other_File
            (File_Information (Context.Context));
@@ -1237,53 +1157,6 @@ package body Browsers.Dependency_Items is
          Files   => (1 => Src),
          Project => Project_Of (Item));
    end Contextual_Factory;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-      Child : GPS_MDI_Child;
-   begin
-      if Node.Tag.all = "Dependency_Browser" then
-         Gtk_New (Child, Create_Dependency_Browser (User),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Dependency_Browser_Module_ID);
-         Set_Title (Child, -"Dependency Browser");
-         Put (Get_MDI (User), Child);
-
-         return MDI_Child (Child);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Dependency_Browser_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Dependency_Browser");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    ---------------------
    -- Resize_And_Draw --

@@ -28,6 +28,7 @@ with Commands.VCS;              use Commands.VCS;
 
 with Log_Utils;                 use Log_Utils;
 
+with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -561,8 +562,7 @@ package body VCS_Module.Actions is
    is
       pragma Unreferenced (Filter);
    begin
-      return Get_Creator (Context) = Abstract_Module_ID
-        (VCS_Explorer_Module_Id);
+      return Get_Creator (Context) = Abstract_Module (VCS_Explorer_Module_Id);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -696,10 +696,10 @@ package body VCS_Module.Actions is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Creator : constant Abstract_Module_ID := Get_Creator (Context);
+      Creator : constant Abstract_Module := Get_Creator (Context);
    begin
-      if (Creator /= Abstract_Module_ID (VCS_Module_ID)
-          and then Creator /= Abstract_Module_ID (VCS_Explorer_Module_Id))
+      if (Creator /= Abstract_Module (VCS_Module_ID)
+          and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu

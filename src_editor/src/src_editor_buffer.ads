@@ -33,12 +33,12 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Gdk.Color;
+with Gdk.RGBA;
 with Glib;                      use Glib;
 with Glib.Main;
 with Gtk;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
@@ -51,13 +51,25 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Styles;                use GPS.Styles;
 with GPS.Styles.UI;             use GPS.Styles.UI;
-with Language;
+with Language.Tree;
 with Src_Highlighting;
+with Ada.Strings.Unbounded;
 
 package Src_Editor_Buffer is
 
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
+
+   type Multi_Cursor is private;
+
+   type MC_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
+   --  This type represents the mode the buffer is in regarding multi cursors
+   --  behaviour
+
+   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is private;
+
+   package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Gtk.Text_Mark.Gtk_Text_Mark);
 
    procedure Gtk_New
      (Buffer : out Source_Buffer;
@@ -241,13 +253,9 @@ package Src_Editor_Buffer is
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : GPS.Editors.Centering_Type := GPS.Editors.Center;
       Internal  : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
-   --  If, following this call, the cursor location needs to be displayed, the
-   --  editor will scroll so that the cursor is visible, with the behavior
-   --  specified in Centering.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -489,11 +497,12 @@ package Src_Editor_Buffer is
    --  is one and Current_Line_Only is False).
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean;
-   --  Refill selected text or the current line if no selection is active. The
-   --  text is wrapped depending on the right margin defined by the column
-   --  highlight preference. This routine handles simple text and comments.
-   --  The indentation and comment detection is done according to the first
-   --  line selected.
+   --  Refill selected text or the current paragraph if no selection is active.
+   --
+   --  The text is wrapped depending on the right margin defined by the column
+   --  highlight preference. This routine handles simple text and comments. The
+   --  indentation and comment detection is done according to the first line
+   --  selected.
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
    --  Return true if auto-indentation is supported for this buffer, and if
@@ -601,7 +610,7 @@ package Src_Editor_Buffer is
 
    procedure Set_Avoid_Cursor_Move_On_Changes
      (Buffer : access Source_Buffer_Record; Value : Boolean);
-   --  Set wether we should avoid to do cusrot modifications in case of
+   --  Set wether we should avoid to do cursor modifications in case of
    --  additions / deletions.
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
@@ -610,6 +619,19 @@ package Src_Editor_Buffer is
       return Source_Buffer_Array;
    --  Return the list of all buffers currently edited. Each buffer appears
    --  only once even if multiple views exist.
+
+   procedure Set_Column_Memory
+     (Buffer : access Source_Buffer_Record; Offset : Gint);
+   --  Set column memory for the main cursor of the buffer
+
+   function  Get_Column_Memory
+     (Buffer : access Source_Buffer_Record) return Gint;
+   --  Get column memory for the main cursor of the buffer
+
+   function Is_Inserting_Internally
+     (Buffer  : access Source_Buffer_Record) return Boolean;
+   --  Predicate to know if the buffer is in the middle of an internal
+   --  insertion.
 
    -------------------
    -- Buffer Status --
@@ -694,11 +716,12 @@ package Src_Editor_Buffer is
    type Extra_Information_Record is record
       Identifier : GNAT.Strings.String_Access;
       Info       : Line_Information_Access;
+      Tooltip    : GNAT.Strings.String_Access;
+      Icon       : GNAT.Strings.String_Access;
    end record;
    type Extra_Information_Access is access Extra_Information_Record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Extra_Information_Record, Extra_Information_Access);
+   procedure Free (Info : in out Extra_Information_Access);
 
    type Extra_Information_Array is
      array (Natural range <>) of Extra_Information_Access;
@@ -795,7 +818,7 @@ package Src_Editor_Buffer is
    function Get_Highlight_Color
      (Editor  : access Source_Buffer_Record;
       Line    : Buffer_Line_Type;
-      Context : Highlight_Location) return Gdk.Color.Gdk_Color;
+      Context : Highlight_Location) return Gdk.RGBA.Gdk_RGBA;
    pragma Inline (Get_Highlight_Color);
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
@@ -823,25 +846,31 @@ package Src_Editor_Buffer is
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0
 
-      Color             : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Color             : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The color to use when highlighting this block
+
+      Tree              : Language.Tree.Construct_Tree;
+      Iter              : Language.Tree.Construct_Tree_Iterator;
+      --  The iterator representing the current construct. This can only used
+      --  until the file is modified, so should never be stored outside of this
+      --  block_record
    end record;
 
    function Get_Block
-     (Editor        : access Source_Buffer_Record;
-      Line          : Editable_Line_Type;
-      Force_Compute : Boolean := True) return Block_Record;
+     (Editor             : access Source_Buffer_Record;
+      Line               : Editable_Line_Type;
+      Update_Immediately : Boolean;
+      Filter             : Language.Tree.Category_Array :=
+        Language.Tree.Null_Category_Array) return Block_Record;
    --  Return the block information associated with Line.
-   --  If Force_Compute is True, then the buffer blocks will be parsed
-   --  on-the-fly if needed. If Force_Compute is False and the buffer blocks
-   --  are not up-to-date, the latest known block at this line will be
-   --  returned.
+   --  If Update_Immediately is True, update the constructs information before
+   --  returning the block.
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record;
-   --  Returns the block corresponding to the subprogram enclosing Line. If no
-   --  block is found at this position an empty block is returned.
+      Line   : Editable_Line_Type) return Block_Record;
+   --  Same as above, with a filter that only selects blocks like subprograms
+   --  and packages.
 
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
@@ -963,30 +992,14 @@ package Src_Editor_Buffer is
    procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
    --  Refresh the side columns in Buffer
 
-   function Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record;
-      Reset  : Boolean) return Boolean;
-   --  Return True if the position of the cursor has been set explicitely (ie
-   --  not as a side effect of a text change)
-   --  If Reset is true, deactivate the flag saying that the cursor has been
-   --  set explicitely: further calls to Position_Set_Explicitely will return
-   --  False.
-
-   procedure Set_Position_Set_Explicitely
-     (Buffer : access Source_Buffer_Record);
-   --  Set the flag "Position_Set_Explicitely".
-   --  This should only be called when opening an editor or when jumping to
-   --  a location. This flag will not do anything on editors that are already
-   --  open and scrolled.
-
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
    --  This procedure should be called every time that an internal
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
-   function In_Destruction_Is_Set
+   function In_Destruction
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
-   --  Similar to Gtk.Widget.In_Destruction_Is_Set
+   --  Similar to Gtk.Widget.In_Destruction
 
    function Get_Command_Queue
      (Buffer : access Source_Buffer_Record'Class) return Command_Queue;
@@ -1094,13 +1107,9 @@ private
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : GPS.Editors.Centering_Type;
       Internal  : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
-   --  If, following this call, the cursor location needs to be displayed, the
-   --  editor will scroll so that the cursor is centered if Center is True.
-   --  Otherwise, only a minimal scrolling will be performed.
    --
    --  The validity of the cursor position must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
@@ -1115,10 +1124,22 @@ private
    --  If Extend_Selection is True, extend the selection from the current
    --  bound to the given position.
 
+   procedure Find_Current_Comment_Paragraph
+     (Buffer : not null access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Start_Line, End_Line : out Editable_Line_Type);
+   --  Find the bounds of the current comment paragraph that includes Line.
+   --  * If Line is not a comment, returns the bounds for that line.
+   --  * Otherwise, search backward and forward for either the first blank
+   --    comment line, or the first line not in a comment, and use those bounds
+   --
+   --  This computation relies on syntax highlighting and will always only
+   --  return the current line if syntax highlighting has not been activated
+
    function Is_In_Comment
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   --  Retruns true if Iter is in a comment. This relies on syntax coloring and
+   --  Returns true if Iter is in a comment. This relies on syntax coloring and
    --  will return False if the syntax coloring has not been computed for Iter.
 
    function Is_In_String
@@ -1139,6 +1160,10 @@ private
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "buffer_information_changed" signal
+
+   procedure Line_Highlights_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "Line_Highlights_Changed" signal
 
    procedure Register_Edit_Timeout
      (Buffer : access Source_Buffer_Record'Class);
@@ -1202,7 +1227,9 @@ private
 
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
-      Gdk.Color.Null_Color);
+      Gdk.RGBA.Null_RGBA,
+      Language.Tree.Null_Construct_Tree,
+      Language.Tree.Null_Construct_Tree_Iterator);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
@@ -1325,6 +1352,34 @@ private
 
    type Last_Typed_Chars is array (1 .. Max_Typed_Chars) of Gunichar;
    --  The array to store the last typed characters in a buffer
+
+   ------------------
+   -- Multi_Cursor --
+   ------------------
+
+   type Multi_Cursor is record
+      Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
+      Current_Command          : Command_Access;
+      Column_Memory : Gint := 0;
+   end record;
+   --  Represents the information we have to store about each multi-cursor
+   --  The Mark field is the mark representing the multi cursor in the buffer
+   --  The Current_Command field is the last command relative to this mark, so
+   --  that we can perform command aggregation (see multiple insertions as one
+   --  for example)
+
+   package Multi_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Multi_Cursor);
+
+   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
+      case Mode is
+         when Auto => null;
+         when Manual_Master => null;
+         when Manual_Slave =>
+            Cursor_Name : Ada.Strings.Unbounded.Unbounded_String;
+            MC : Multi_Cursor;
+      end case;
+   end record;
 
    --------------------------
    -- Source_Buffer_Record --
@@ -1521,17 +1576,6 @@ private
       Tab_Width : Gint := 8;
       --  Width of a Tab character
 
-      Cursor_Set_Explicitely : Boolean := False;
-      --  True when the user requested to scroll to this position when the
-      --  editor was first opened. This is used to scroll to this position in
-      --  the callbacks that display the editor.
-
-      Initial_Scroll_Has_Occurred : Boolean := False;
-      --  Whether the initial scroll has occurred.
-      --  This flag, in cunjunction with Cursor_Set_Explicitely above, are used
-      --  to make sure that a newly-created editor will scroll to the given
-      --  location when it is first opened.
-
       In_Destruction : Boolean := False;
       --  Indicates whether the buffer is currently being destroyed
 
@@ -1601,6 +1645,26 @@ private
       Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
       Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The begin and end of the highlighted section
+
+      Multi_Cursors_List                    : Multi_Cursors_Lists.List;
+      --  The list of all active multi cursors
+
+      Multi_Cursors_Next_Id                 : Natural := 0;
+      --  Unique id for the next multi cursor. Incremented at multi cursor
+      --  creation
+
+      Multi_Cursors_Delete_Offset           : Gint := 0;
+      --  Internal field used between before and after delete events handlers
+      --  Represents a simple deletion. +5 means delete 5 chars forward.
+      --  -5 means delete 5 chars backward. 0 means do nothing.
+
+      Multi_Cursors_Sync                    : Multi_Cursors_Sync_Type;
+      --  The sync mode of the buffer. The operating mode is detailed precisely
+      --  in the public procedures related to sync, in
+      --  Src_Editor_Buffer.Multi_Cursors.
+
+      Cursor_Column_Memory                  : Gint := 0;
+      --  Memory for the horizontal of the cursor when moving from line to line
 
       Logical_Timestamp : Integer := -1;
    end record;

@@ -22,7 +22,7 @@
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Notebook;             use Gtk.Notebook;
@@ -101,7 +101,7 @@ private
 
       Multiple_Targets : Gtk_Entry;
 
-      Launch_Combo   : Gtk_Combo_Box;
+      Launch_Combo   : Gtk_Combo_Box_Text;
 
       Expanded_Entry : Gtk_Text_View;
    end record;

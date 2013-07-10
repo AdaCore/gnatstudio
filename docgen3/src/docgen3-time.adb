@@ -18,7 +18,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Docgen3.Files;         use Docgen3.Files;
-with Docgen3.Backend;       use Docgen3.Backend; --   to remove???
 
 package body Docgen3.Time is
 

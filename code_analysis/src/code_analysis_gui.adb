@@ -33,7 +33,6 @@ with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -88,7 +87,7 @@ package body Code_Analysis_GUI is
            Cov_Sort    => GType_Int,
            Cov_Bar_Txt => GType_String,
            Cov_Bar_Val => GType_Int));
-      Gtk_New (View.Tree, Gtk_Tree_Model (View.Model));
+      Gtk_New (View.Tree, View.Model);
       --  Ideally, we should have used Set_Name on the view itself, but for
       --  historical reasons we set it on View.Tree. This name can be retrieved
       --  using the Name function below.
@@ -259,7 +258,7 @@ package body Code_Analysis_GUI is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
       Path : Gtk_Tree_Path;
    begin
-      Hide_All (View.Empty_Board);
+      Hide (View.Empty_Board);
       Clear (View.Model);
       Fill_Iter
         (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
@@ -340,6 +339,7 @@ package body Code_Analysis_GUI is
       Tree  : constant Gtk_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
+      M     : Gtk_Tree_Store;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -347,9 +347,10 @@ package body Code_Analysis_GUI is
          Get_Selected (Get_Selection (Tree), Model, Iter);
 
          if Iter /= Null_Iter then
+            M := -Model;
             declare
                Node : constant Node_Access := Code_Analysis.Node_Access
-                 (Node_Set.Get (Gtk_Tree_Store (Model), Iter, Node_Col));
+                 (Node_Set.Get (M, Iter, Node_Col));
             begin
                if Node.all in Code_Analysis.Project'Class then
                   --  So we are on a project node
@@ -386,8 +387,8 @@ package body Code_Analysis_GUI is
    is
       Marker : MDI_Location_Marker;
    begin
-      Do_Not_Goto_First_Location (Kernel);
-      List_File_Uncovered_Lines (Kernel, File_Node, Quiet);
+      List_File_Uncovered_Lines
+        (Kernel, File_Node, Quiet, Allow_Auto_Jump_To_First => False);
 
       Marker := Create_MDI_Marker (View.Name & (-" Report"));
       Push_Marker_In_History (Kernel, Marker);
@@ -446,8 +447,7 @@ package body Code_Analysis_GUI is
       pragma Unreferenced (Event_Widget, Kernel);
       use Project_Maps;
       View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
+      X, Y      : Gdouble;
       Path      : Gtk_Tree_Path;
       Prj_Node  : Code_Analysis.Project_Access;
       File_Node : Code_Analysis.File_Access;
@@ -460,7 +460,7 @@ package body Code_Analysis_GUI is
       Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
 
    begin
-
+      Get_Coords (Event, X, Y);
       Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
                        Buffer_X, Buffer_Y, Row_Found);
 
@@ -504,11 +504,11 @@ package body Code_Analysis_GUI is
       --  Set up context information  --
       ----------------------------------
 
-      if Path /= null then
+      if Path /= Null_Gtk_Tree_Path then
          Gtk_New (Sep);
          Append (Menu, Sep);
          Select_Path (Get_Selection (View.Tree), Path);
-         Iter := Get_Iter (Gtk_Tree_Model (View.Model), Path);
+         Iter := Get_Iter (View.Model, Path);
 
          declare
             Node : constant Node_Access := Code_Analysis.Node_Access

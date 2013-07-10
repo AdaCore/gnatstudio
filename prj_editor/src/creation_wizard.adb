@@ -128,7 +128,7 @@ package body Creation_Wizard is
          Project  : constant String := Get_Text (Page.Project_Name);
       begin
          if Project = "" then
-            if not Has_Focus_Is_Set (Page.Project_Location) then
+            if not Page.Project_Location.Has_Focus then
                Grab_Focus (Page.Project_Name);
             end if;
 
@@ -136,7 +136,7 @@ package body Creation_Wizard is
          end if;
 
          if not Is_Valid_Project_Name (Project) then
-            if not Has_Focus_Is_Set (Page.Project_Location) then
+            if not Page.Project_Location.Has_Focus then
                Grab_Focus (Page.Project_Name);
             end if;
 
@@ -146,7 +146,7 @@ package body Creation_Wizard is
       end;
 
       if Get_Text (Page.Project_Location) = "" then
-         if not Has_Focus_Is_Set (Page.Project_Name) then
+         if not Page.Project_Name.Has_Focus then
             Grab_Focus (Page.Project_Location);
          end if;
 
@@ -184,7 +184,8 @@ package body Creation_Wizard is
       Gtk_New (Label, -"Enter the name of the project to create:");
       Attach (Table, Label, 0, 2, 0, 1);
 
-      Gtk_New (Page.Project_Name, 255);
+      Gtk_New (Page.Project_Name);
+      Page.Project_Name.Set_Max_Length (255);
       Attach (Table, Page.Project_Name, 0, 1, 1, 2);
       Set_Activates_Default (Page.Project_Name, True);
       Grab_Focus (Page.Project_Name);
@@ -200,7 +201,8 @@ package body Creation_Wizard is
          -"Enter the directory where the project file will be created:");
       Attach (Table, Label, 0, 2, 2, 3);
 
-      Gtk_New (Page.Project_Location, 255);
+      Gtk_New (Page.Project_Location);
+      Page.Project_Location.Set_Max_Length (255);
       Set_Text (Page.Project_Location, Get_Current_Dir);
       Attach (Table, Page.Project_Location, 0, 1, 3, 4);
       Set_Activates_Default (Page.Project_Location, True);

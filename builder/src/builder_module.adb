@@ -43,8 +43,9 @@ with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
-with Build_Command_Manager;
+with Build_Command_Utils;
 with Builder_Facility_Module;
+with Commands.Builder;           use Commands.Builder;
 with Traces;
 with Xref;                       use Xref;
 
@@ -114,32 +115,30 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      pragma Unreferenced (Data);
    begin
       if Command = "compute_xref" then
-         Build_Command_Manager.Launch_Target
-           (Kernel,
-            Builder_Facility_Module.Registry,
+         Launch_Target
+           (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
             Quiet       => True,
             Synchronous => True,
-            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
             Background  => False,
             Main        => GNATCOLL.VFS.No_File);
 
       elsif Command = "compute_xref_bg" then
-         Build_Command_Manager.Launch_Target
-           (Kernel,
-            Builder_Facility_Module.Registry,
+         Launch_Target
+           (Builder_Facility_Module.Builder,
             "Build All", "xref",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
             Quiet       => True,
             Synchronous => False,
             Background  => False,
-            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
             Main        => GNATCOLL.VFS.No_File);
       end if;
    end Compile_Command;
@@ -151,18 +150,18 @@ package body Builder_Module is
    procedure On_Compute_Xref
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Kernel);
       pragma Unreferenced (Object);
    begin
-      Build_Command_Manager.Launch_Target
-        (Kernel,
-         Builder_Facility_Module.Registry,
+      Launch_Target
+        (Builder_Facility_Module.Builder,
          "Build All", "xref",
          GNATCOLL.VFS.No_File,
          Extra_Args  => null,
          Quiet       => False,
          Synchronous => False,
          Background  => False,
-         Dialog      => Build_Command_Manager.Force_No_Dialog,
+         Dialog      => Build_Command_Utils.Force_No_Dialog,
          Main        => GNATCOLL.VFS.No_File);
 
    exception

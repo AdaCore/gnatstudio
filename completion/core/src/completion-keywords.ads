@@ -35,8 +35,7 @@ package Completion.Keywords is
    function Get_Id (Resolver : Completion_Keywords) return String;
    --  See inherited documentation
 
-   overriding
-   procedure Free (Resolver : in out Completion_Keywords);
+   overriding procedure Free (Resolver : in out Completion_Keywords) is null;
    --  See inherited documentation
 
 private

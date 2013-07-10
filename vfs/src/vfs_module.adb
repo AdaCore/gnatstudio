@@ -33,7 +33,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with GUI_Utils;                 use GUI_Utils;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -421,9 +420,8 @@ package body VFS_Module is
             Delete (File, Success);
 
             if not Success then
-               Console.Insert
-                 (Get_Kernel (Context.Context),
-                  (-"Cannot remove file: ") &
+               Get_Kernel (Context.Context).Insert
+                 ((-"Cannot remove file: ") &
                   Display_Full_Name (File),
                   Mode => Error);
             end if;
@@ -454,8 +452,7 @@ package body VFS_Module is
 
             if not Success then
                Success := False;
-               Console.Insert
-                 (Get_Kernel (Context.Context),
+               Get_Kernel (Context.Context).Insert (
                   (-"Cannot remove directory: ") & Dir.Display_Full_Name,
                   Mode => Error);
             end if;
@@ -598,9 +595,8 @@ package body VFS_Module is
          Rename (File_In, Renamed, Success);
 
          if not Success then
-            Console.Insert
-              (Get_Kernel (Context.Context),
-               (-"Cannot rename ") &
+            Get_Kernel (Context.Context).Insert
+              ((-"Cannot rename ") &
                Display_Full_Name (File_In) &
                (-" into ") &
                Display_Full_Name (Renamed),
@@ -708,9 +704,8 @@ package body VFS_Module is
             end if;
          exception
             when Directory_Error =>
-               Console.Insert
-                 (Get_Kernel (Context.Context),
-                  (-"Cannot create dir ") &
+               Get_Kernel (Context.Context).Insert
+                 ((-"Cannot create dir ") &
                   Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;
@@ -733,9 +728,8 @@ package body VFS_Module is
             end if;
          exception
             when others =>
-               Console.Insert
-                 (Get_Kernel (Context.Context),
-                  (-"Cannot create file ") &
+               Get_Kernel (Context.Context).Insert
+                 ((-"Cannot create file ") &
                   Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;

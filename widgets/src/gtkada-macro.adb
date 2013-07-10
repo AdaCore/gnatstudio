@@ -19,6 +19,7 @@ with System;
 with Glib.Object;       use Glib.Object;
 with Gdk.Window;
 
+with Gdk;               use Gdk;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -133,7 +134,7 @@ package body Gtkada.Macro is
       while Current /= Widget_List.Null_List loop
          Widget := Widget_List.Get_Data (Current);
 
-         if Has_Focus_Is_Set (Widget) then
+         if Widget.Has_Focus then
             Widget_List.Free (List);
             return Widget;
          end if;
@@ -188,7 +189,7 @@ package body Gtkada.Macro is
             elsif W.all in Gtk_Container_Record'Class
               and then Id.Id_Type /= Title
             then
-               L := Children (Gtk_Container (W));
+               L := Get_Children (Gtk_Container (W));
 
                if L /= Widget_List.Null_List then
                   W := Get_Widget_From_Id (Id, L);
@@ -210,7 +211,7 @@ package body Gtkada.Macro is
       W    := Get_Widget_From_Id (Item.Id, List);
       Widget_List.Free (List);
 
-      if W = null or else Get_Window (W) = Gdk.Window.Null_Window then
+      if W = null or else Get_Window (W) = null then
          return null;
       end if;
 
@@ -276,7 +277,7 @@ package body Gtkada.Macro is
       --  associated with an id.
 
       while Parent /= null loop
-         if Get_Window (Parent) /= Gdk.Window.Null_Window then
+         if Get_Window (Parent) /= null then
             Parent_Id := Get_Id (Parent);
             exit when Parent_Id.Id /= null;
          end if;
@@ -373,55 +374,47 @@ package body Gtkada.Macro is
             declare
                Str : constant String := Load_Line (File'Access, "Type");
             begin
-               if Str = "FIXED_TIME" then
-                  Typ := Nothing;
-                  --  ??? Need to record a special event that will temporarily
-                  --  reset the replay speed to 1.0
-               else
+               if Str /= "FIXED_TIME" then
                   Typ := Gdk_Event_Type'Value (Str);
+                  case Typ is
+                     when Enter_Notify | Leave_Notify =>
+                        Next := new Macro_Item_Crossing;
+
+                     when Button_Press | Button_Release
+                       | Gdk_2button_Press
+                       | Gdk_3button_Press
+                       =>
+                        Next := new Macro_Item_Mouse;
+
+                     when Key_Press | Key_Release =>
+                        Next := new Macro_Item_Key;
+
+                     when Motion_Notify =>
+                        Next := new Macro_Item_Motion;
+
+                     when others =>
+                        --  Ignore unknown events. Do nothing else so that we
+                        --  are forward compatible.
+
+                        Next    := null;
+                        Success := False;
+                  end case;
+
+                  if Next /= null then
+                     Next.Event_Type := Typ;
+                     Load_Macro (File'Access, Next.all);
+
+                     if Prev = null then
+                        Item := Next;
+                     else
+                        Prev.Next := Next;
+                        Next.Prev := Prev;
+                     end if;
+
+                     Prev := Next;
+                  end if;
                end if;
             end;
-
-            case Typ is
-               when Nothing =>
-                  Next := null;
-
-               when Enter_Notify | Leave_Notify =>
-                  Next := new Macro_Item_Crossing;
-
-               when Button_Press | Button_Release
-                    | Gdk_2button_Press
-                    | Gdk_3button_Press
-               =>
-                  Next := new Macro_Item_Mouse;
-
-               when Key_Press | Key_Release =>
-                  Next := new Macro_Item_Key;
-
-               when Motion_Notify =>
-                  Next := new Macro_Item_Motion;
-
-               when others =>
-                  --  Ignore unknown events. Do nothing else so that we are
-                  --  forward compatible.
-
-                  Next    := null;
-                  Success := False;
-            end case;
-
-            if Next /= null then
-               Next.Event_Type := Typ;
-               Load_Macro (File'Access, Next.all);
-
-               if Prev = null then
-                  Item := Next;
-               else
-                  Prev.Next := Next;
-                  Next.Prev := Prev;
-               end if;
-
-               Prev := Next;
-            end if;
 
          exception
             when Constraint_Error | Invalid_Line =>
@@ -643,7 +636,7 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X_Root, Item.Y_Root);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
+      Gdk.Window.At_Pointer (X, Y, Win);
 
       if W /= null then
          Parent := Get_Parent (W);
@@ -693,13 +686,11 @@ package body Gtkada.Macro is
                   --  call the handler immediately, possibly blocking in
                   --  another event loop, so we have to send an event instead.
 
-                  Allocate
-                    (Event      => E,
-                     Event_Type => Key_Press,
-                     Window     => Win);
-                  Set_State (E, Item.State);
-                  Set_Key_Val (E, GDK_KP_Space);
-                  Set_Hardware_Keycode (E, 36);  --  is this portable ???
+                  Gdk_New (E, Key_Press);
+                  E.Key.Window := Win;
+                  E.Key.State := Item.State;
+                  E.Key.Keyval := GDK_KP_Space;
+                  E.Key.Hardware_Keycode := 36;  --  is this portable ???
                   Put (E);
                   Free (E);
 
@@ -709,16 +700,14 @@ package body Gtkada.Macro is
          end if;
       end if;
 
-      Allocate
-        (Event      => E,
-         Event_Type => Item.Event_Type,
-         Window     => Win);
-      Set_X (E, Gdouble (Item.X));
-      Set_Y (E, Gdouble (Item.Y));
-      Set_Xroot (E, Gdouble (Item.X_Root));
-      Set_Yroot (E, Gdouble (Item.Y_Root));
-      Set_Button (E, Item.Button);
-      Set_State (E, Item.State);
+      Gdk_New (E, Item.Event_Type);
+      E.Button.Window := Win;
+      E.Button.X := Gdouble (Item.X);
+      E.Button.Y := Gdouble (Item.Y);
+      E.Button.X_Root := Gdouble (Item.X_Root);
+      E.Button.Y_Root := Gdouble (Item.Y_Root);
+      E.Button.Button := Item.Button;
+      E.Button.State := Item.State;
       Put (E);
       Free (E);
 
@@ -748,14 +737,12 @@ package body Gtkada.Macro is
          end if;
       end if;
 
-      Allocate
-        (Event      => E,
-         Event_Type => Item.Event_Type,
-         Window     => Get_Window (Widget));
-      Set_State (E, Item.State);
-      Set_Key_Val (E, Item.Keyval);
-      Set_Group (E, Item.Group);
-      Set_Hardware_Keycode (E, Item.Hardware_Keycode);
+      Gdk_New (E, Item.Event_Type);
+      E.Key.Window := Get_Window (Widget);
+      E.Key.State := Item.State;
+      E.Key.Keyval := Item.Keyval;
+      E.Key.Group := Item.Group;
+      E.Key.Hardware_Keycode := Item.Hardware_Keycode;
       Put (E);
       Free (E);
       return True;
@@ -773,14 +760,13 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X, Item.Y);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
-      Allocate
-        (Event      => E,
-         Event_Type => Item.Event_Type,
-         Window     => Win);
-      Set_X (E, Gdouble (Item.X - X));
-      Set_Y (E, Gdouble (Item.Y - Y));
-      Set_State (E, Item.State);
+      Gdk.Window.At_Pointer (X, Y, Win);
+
+      Gdk_New (E, Item.Event_Type);
+      E.Motion.Window := Win;
+      E.Motion.X := Gdouble (Item.X - X);
+      E.Motion.Y := Gdouble (Item.Y - Y);
+      E.Motion.State := Item.State;
       Put (E);
       Free (E);
       return True;
@@ -800,18 +786,16 @@ package body Gtkada.Macro is
       Move_Pointer (Item.X, Item.Y);
 
       if Item.Mode /= Crossing_Normal then
-         Gdk.Window.Window_At_Pointer (X, Y, Win);
-         Allocate
-           (Event      => E,
-            Event_Type => Item.Event_Type,
-            Window     => Win);
-         Set_X (E, Gdouble (Item.X - X));
-         Set_Y (E, Gdouble (Item.Y - Y));
-         Set_Xroot (E, Gdouble (Item.X));
-         Set_Yroot (E, Gdouble (Item.Y));
-         Set_Mode (E, Item.Mode);
-         Set_Detail (E, Item.Detail);
-         Set_State (E, Item.State);
+         Gdk.Window.At_Pointer (X, Y, Win);
+         Gdk_New (E, Item.Event_Type);
+         E.Crossing.Window := Win;
+         E.Crossing.X := Gdouble (Item.X - X);
+         E.Crossing.Y := Gdouble (Item.Y - Y);
+         E.Crossing.X_Root := Gdouble (Item.X);
+         E.Crossing.Y_Root := Gdouble (Item.Y);
+         E.Crossing.Mode  := Item.Mode;
+         E.Crossing.Detail := Item.Detail;
+         E.Crossing.State := Item.State;
          Put (E);
          Free (E);
       end if;
@@ -831,17 +815,16 @@ package body Gtkada.Macro is
 
    begin
       Move_Pointer (Item.X, Item.Y);
-      Gdk.Window.Window_At_Pointer (X, Y, Win);
-      Allocate
-        (Event      => E,
-         Event_Type => Item.Event_Type,
-         Window     => Win);
-      Set_X (E, Gdouble (Item.X - X));
-      Set_Y (E, Gdouble (Item.Y - Y));
-      Set_Xroot (E, Gdouble (Item.X));
-      Set_Yroot (E, Gdouble (Item.Y));
-      Set_State (E, Item.State);
-      Set_Direction (E, Item.Direction);
+      Gdk.Window.At_Pointer (X, Y, Win);
+
+      Gdk_New (E, Item.Event_Type);
+      E.Scroll.Window := Win;
+      E.Scroll.X := Gdouble (Item.X - X);
+      E.Scroll.Y := Gdouble (Item.Y - Y);
+      E.Scroll.X_Root := Gdouble (Item.X);
+      E.Scroll.Y_Root := Gdouble (Item.Y);
+      E.Scroll.State := Item.State;
+      E.Scroll.Direction := Item.Direction;
       Put (E);
       Free (E);
 
@@ -860,23 +843,25 @@ package body Gtkada.Macro is
       Item   : Macro_Item_Mouse_Access;
    begin
       Item            := new Macro_Item_Mouse;
-      Find_Named_Parent (Get_Event_Widget (Event), Parent, Item.Id);
+      Find_Named_Parent
+        (Get_Event_Widget (To_Event (Event'Unrestricted_Access)),
+         Parent, Item.Id);
 
-      Item.Event_Type := Get_Event_Type (Event);
-      Item.X          := Gint (Get_X (Event));
-      Item.Y          := Gint (Get_Y (Event));
-      Item.X_Root     := Gint (Get_X_Root (Event));
-      Item.Y_Root     := Gint (Get_Y_Root (Event));
-      Item.Button     := Get_Button (Event);
-      Item.State      := Get_State (Event);
+      Item.Event_Type := Event.The_Type;
+      Item.X          := Gint (Event.X);
+      Item.Y          := Gint (Event.Y);
+      Item.X_Root     := Gint (Event.X_Root);
+      Item.Y_Root     := Gint (Event.Y_Root);
+      Item.Button     := Event.Button;
+      Item.State      := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
       else
-         Item.Time := Get_Time (Event) - Prev_Time;
+         Item.Time := Event.Time - Prev_Time;
       end if;
 
-      Item.Window     := Get_Window (Event);
+      Item.Window     := Event.Window;
       return Item;
    end Create_Item;
 
@@ -888,20 +873,22 @@ package body Gtkada.Macro is
       Item   : Macro_Item_Key_Access;
    begin
       Item                  := new Macro_Item_Key;
-      Find_Named_Parent (Get_Event_Widget (Event), Parent, Item.Id);
+      Find_Named_Parent
+        (Get_Event_Widget (To_Event (Event'Unrestricted_Access)),
+         Parent, Item.Id);
 
-      Item.Event_Type       := Get_Event_Type (Event);
-      Item.State            := Get_State (Event);
+      Item.Event_Type       := Event.The_Type;
+      Item.State            := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
       else
-         Item.Time := Get_Time (Event) - Prev_Time;
+         Item.Time := Event.Time - Prev_Time;
       end if;
 
-      Item.Keyval           := Get_Key_Val (Event);
-      Item.Group            := Get_Group (Event);
-      Item.Hardware_Keycode := Get_Hardware_Keycode (Event);
+      Item.Keyval           := Event.Keyval;
+      Item.Group            := Event.Group;
+      Item.Hardware_Keycode := Event.Hardware_Keycode;
       return Item;
    end Create_Item;
 
@@ -912,15 +899,15 @@ package body Gtkada.Macro is
       Item : Macro_Item_Motion_Access;
    begin
       Item            := new Macro_Item_Motion;
-      Item.Event_Type := Get_Event_Type (Event);
-      Item.X          := Gint (Get_X_Root (Event));
-      Item.Y          := Gint (Get_Y_Root (Event));
-      Item.State      := Get_State (Event);
+      Item.Event_Type := Event.The_Type;
+      Item.X          := Gint (Event.X_Root);
+      Item.Y          := Gint (Event.Y_Root);
+      Item.State      := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
       else
-         Item.Time := Get_Time (Event) - Prev_Time;
+         Item.Time := Event.Time - Prev_Time;
       end if;
 
       return Item;
@@ -933,16 +920,16 @@ package body Gtkada.Macro is
       Item : Macro_Item_Crossing_Access;
    begin
       Item            := new Macro_Item_Crossing;
-      Item.Event_Type := Get_Event_Type (Event);
-      Item.X          := Gint (Get_X_Root (Event));
-      Item.Y          := Gint (Get_Y_Root (Event));
-      Item.Mode       := Get_Mode (Event);
-      Item.Detail     := Get_Detail (Event);
+      Item.Event_Type := Event.The_Type;
+      Item.X          := Gint (Event.X_Root);
+      Item.Y          := Gint (Event.Y_Root);
+      Item.Mode       := Event.Mode;
+      Item.Detail     := Event.Detail;
 
       if Prev_Time = 0 then
          Item.Time := 0;
       else
-         Item.Time := Get_Time (Event) - Prev_Time;
+         Item.Time := Event.Time - Prev_Time;
       end if;
 
       return Item;
@@ -955,16 +942,16 @@ package body Gtkada.Macro is
       Item : Macro_Item_Scroll_Access;
    begin
       Item            := new Macro_Item_Scroll;
-      Item.Event_Type := Get_Event_Type (Event);
-      Item.X          := Gint (Get_X_Root (Event));
-      Item.Y          := Gint (Get_Y_Root (Event));
-      Item.State      := Get_State (Event);
-      Item.Direction  := Get_Direction (Event);
+      Item.Event_Type := Event.The_Type;
+      Item.X          := Gint (Event.X_Root);
+      Item.Y          := Gint (Event.Y_Root);
+      Item.State      := Event.State;
+      Item.Direction  := Event.Direction;
 
       if Prev_Time = 0 then
          Item.Time := 0;
       else
-         Item.Time := Get_Time (Event) - Prev_Time;
+         Item.Time := Event.Time - Prev_Time;
       end if;
 
       return Item;

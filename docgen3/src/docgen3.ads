@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Expect;
-with GPS.Kernel;        use GPS.Kernel;
+with GPS.Core_Kernels;  use GPS.Core_Kernels;
 with GNATCOLL.Traces;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
@@ -72,13 +72,13 @@ package Docgen3 is
    end record;
 
    procedure Process_Single_File
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options : Docgen_Options;
       File    : GNATCOLL.VFS.Virtual_File);
    --  Generate documentation for a single file
 
    procedure Process_Project_Files
-     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel    : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options   : Docgen_Options;
       Project   : Project_Type;
       Recursive : Boolean := False);
@@ -94,7 +94,7 @@ private
    --  addition it avoids computing several times these values.
 
    type Docgen_Context is record
-      Kernel       : Kernel_Handle;
+      Kernel       : Core_Kernel;
       Database     : General_Xref_Database;
       Lang_Handler : Language_Handler;
       Options      : Docgen_Options;

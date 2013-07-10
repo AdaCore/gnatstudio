@@ -41,8 +41,8 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
+with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -520,7 +520,7 @@ package body Help_Module is
          Error => Error);
 
       if Error /= null then
-         Insert (Kernel, Error.all, Mode => GPS.Kernel.Console.Error);
+         Kernel.Insert (Error.all, Mode => GPS.Kernel.Error);
          Free (Error);
       end if;
       return Tmp;

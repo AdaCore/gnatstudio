@@ -29,7 +29,7 @@ package body Gtkada.Text_View is
       Buffer : Gtkada_Text_Buffer := null) is
    begin
       View := new Gtkada_Text_View_Record;
-      Initialize (View, Buffer);
+      Gtkada.Text_View.Initialize (View, Buffer);
    end Gtk_New;
 
    ----------------

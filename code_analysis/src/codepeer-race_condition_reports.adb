@@ -21,11 +21,11 @@ with Gtk.Cell_Renderer_Text;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Scrolled_Window;
-with Gtk.Tree_Model;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
-with GPS.Kernel.Messages.View;
+with GPS.Location_View;          use GPS.Location_View;
 
 with CodePeer.Module;
 
@@ -150,8 +150,7 @@ package body CodePeer.Race_Condition_Reports is
       use type Gdk.Event.Gdk_Event_Type;
       use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      X      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
-      Y      : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_Y (Event));
+      X, Y   : Glib.Gint;
       Path   : Gtk.Tree_Model.Gtk_Tree_Path;
       Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cell_X : Glib.Gint;
@@ -164,10 +163,12 @@ package body CodePeer.Race_Condition_Reports is
       if Gdk.Event.Get_Button (Event) = 1
         and then Gdk.Event.Get_Event_Type (Event) = Gdk.Event.Button_Press
       then
+         X := Glib.Gint (Event.Button.X);
+         Y := Glib.Gint (Event.Button.Y);
          Self.Summary_View.Get_Path_At_Pos
            (X, Y, Path, Column, Cell_X, Cell_Y, Found);
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             Self.Summary_View.Get_Selection.Select_Path (Path);
             Iter := Self.Summary_Model.Get_Iter (Path);
             Self.Details_Model.Set
@@ -175,10 +176,12 @@ package body CodePeer.Race_Condition_Reports is
 
             Self.Summary_Model.Get_Value
               (Iter, CodePeer.Race_Summary_Models.Object_Name_Column, Value);
-            GPS.Kernel.Messages.View.Expand_Category
-              (Self.Kernel,
+
+            Expand_Category
+              (Get_Or_Create_Location_View (Self.Kernel),
                CodePeer.Module.Race_Condition_Category
-                 (Glib.Values.Get_String (Value)));
+                 (Glib.Values.Get_String (Value)),
+               Goto_First => False);
          end if;
       end if;
 

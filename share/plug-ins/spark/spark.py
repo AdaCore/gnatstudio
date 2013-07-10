@@ -11,7 +11,7 @@ import re
 import GPS
 from gps_utils import *
 
-spark_module="import spark; spark"
+spark_module="spark.spark"
 spark_console="SPARK Output"
 spark_category="Examiner"
 

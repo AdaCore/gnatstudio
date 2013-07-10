@@ -17,30 +17,12 @@
 
 --  This package provides a view that allows the remote servers configuration
 
-with Glib.Object;
-with Gtk.Widget;
-with Gtkada.MDI;
-
 with GPS.Kernel;
-with GPS.Kernel.Modules;
-with XML_Utils;
 
 package Remote.View is
 
-   function Load_Desktop
-     (Module : GPS.Kernel.Modules.Module_ID;
-      Node   : XML_Utils.Node_Ptr;
-      User   : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
-   function Save_Desktop
-     (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User        : GPS.Kernel.Kernel_Handle;
-      Module_Name : String) return XML_Utils.Node_Ptr;
-   --  Load and save desktop
-
-   procedure Show_Remote_View
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Module : GPS.Kernel.Modules.Module_ID);
-   --  Show the remote view MDI child
+   procedure Register_Module
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the Remove view.
 
 end Remote.View;

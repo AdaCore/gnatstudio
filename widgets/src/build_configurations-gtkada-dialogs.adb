@@ -23,7 +23,6 @@ with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -55,7 +54,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
       Cat_E : Gtk_Entry);
    --  Fill Combo and Cat_E from information stored in UI
 
@@ -91,9 +90,9 @@ package body Build_Configurations.Gtkada.Dialogs is
    ------------------
 
    function Models_Combo
-     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box
+     (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Text
    is
-      Combo     : Gtk_Combo_Box;
+      Combo     : Gtk_Combo_Box_Text;
       Model     : Gtk_Tree_Store;
 
       function Columns return GType_Array;
@@ -152,10 +151,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New_With_Entry (Combo);
       Gtk_New (Model, Columns);
 
-      Set_Model (Combo, Gtk_Tree_Model (Model));
+      Set_Model (Combo, +Model);
 
       Set_Entry_Text_Column (Combo, Name_Column);
-      Col := Gtk.Combo_Box."+" (Combo);
+      Col := +Combo;
 
       Gtk_New (Text_Renderer);
       Pack_Start (Col, Text_Renderer, False);
@@ -227,7 +226,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
       Cat_E : Gtk_Entry)
    is
       function Strip (S : String) return String;
@@ -299,7 +298,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       pragma Unreferenced (Button);
       Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
       Dialog : Gtk_Dialog;
-      Combo  : Gtk_Combo_Box;
+      Combo  : Gtk_Combo_Box_Text;
       Label  : Gtk_Label;
 
       Model_E : Gtk_Entry;
@@ -308,7 +307,6 @@ package body Build_Configurations.Gtkada.Dialogs is
       Table   : Gtk_Table;
 
       Hbox    : Gtk_Hbox;
-      M       : Gtk_List_Store;
 
       use Model_Map;
       C : Cursor;
@@ -374,8 +372,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
 
-      Gtk_New (M, GType_Array'(0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Combo, M);
+      Gtk_New_With_Entry (Combo);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Cat_E.Set_Name ("new_target-target_category");
@@ -388,7 +385,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
 
-      Pack_Start (Get_Vbox (Dialog), Table, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Table, False, False, 3);
 
       --  Add the buttons
 
@@ -444,7 +441,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Button : Gtk_Button;
       pragma Unreferenced (Button);
       Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
-      Combo  : Gtk_Combo_Box;
+      Combo  : Gtk_Combo_Box_Text;
       Label  : Gtk_Label;
 
       Name_E  : Gtk_Entry;
@@ -452,7 +449,6 @@ package body Build_Configurations.Gtkada.Dialogs is
       Table   : Gtk_Table;
 
       Hbox    : Gtk_Hbox;
-      M       : Gtk_List_Store;
 
    begin
       Cancelled := False;
@@ -489,8 +485,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
 
-      Gtk_New (M, GType_Array'(0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Combo, M);
+      Gtk_New_With_Entry (Combo);
       Combo.Set_Entry_Text_Column (0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
       Set_Tooltip_Text
@@ -502,7 +497,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
 
-      Pack_Start (Get_Vbox (Dialog), Table, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Table, False, False, 3);
 
       --  Add the buttons
 

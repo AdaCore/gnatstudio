@@ -22,7 +22,7 @@ with GNAT.Regpat;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with Gtk.Box;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;                 use Gtk.Text_Mark;
 with Gtk.Widget;
@@ -541,13 +541,13 @@ private
    overriding procedure Free (Context : in out Open_Files_Context);
 
    type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
-      Combo : Gtk.Combo_Box.Gtk_Combo_Box;
+      Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    end record;
 
    type Files_Extra_Scope_Record is new
      Files_Extra_Info_Pkg.Files_Extra_Info_Record with
    record
-      Combo : Gtk.Combo_Box.Gtk_Combo_Box;
+      Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    end record;
 
    type Runtime_Files_Context is new Files_Project_Context with null record;

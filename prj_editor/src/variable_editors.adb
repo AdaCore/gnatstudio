@@ -20,7 +20,7 @@ with Glib;                     use Glib;
 with Glib.Convert;             use Glib.Convert;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -151,6 +151,8 @@ package body Variable_Editors is
       end if;
 
       Set_Transient_For (Editor, Get_Main_Window (Kernel));
+      Editor.Set_Screen (Get_Main_Window (Kernel).Get_Screen);
+      Editor.Set_Position (Win_Pos_Center_On_Parent);
       Set_Title (Editor, Title);
 
       Set_Mode (Get_Selection (Editor.Values_List), Selection_Single);
@@ -158,7 +160,7 @@ package body Variable_Editors is
       --  Create the model that contains the data to show in the tree
 
       Gtk_New (Editor.Model, Column_Types);
-      Set_Model (Editor.Values_List, Gtk_Tree_Model (Editor.Model));
+      Set_Model (Editor.Values_List, +Editor.Model);
 
       --  Create the cell renderers that are needed to display the tree view
 
@@ -278,9 +280,11 @@ package body Variable_Editors is
       Selection : constant Gtk_Tree_Selection :=
                     Get_Selection (E.Values_List);
       Iter      : Gtk_Tree_Iter;
+      M         : Gtk_Tree_Model;
 
    begin
-      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
+      Get_Selected (Selection, M, Iter);
+      E.Model := -M;
 
       if Iter /= Null_Iter then
          Set_Cursor
@@ -300,9 +304,11 @@ package body Variable_Editors is
       Selection : constant Gtk_Tree_Selection :=
                     Get_Selection (E.Values_List);
       Iter      : Gtk_Tree_Iter;
+      M         : Gtk_Tree_Model;
 
    begin
-      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
+      Get_Selected (Selection, M, Iter);
+      E.Model := -M;
 
       if Iter /= Null_Iter then
          Remove (E.Model, Iter);

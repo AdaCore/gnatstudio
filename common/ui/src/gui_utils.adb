@@ -28,19 +28,15 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
 
-with Cairo;                     use Cairo;
-with Cairo.Image_Surface;       use Cairo.Image_Surface;
-
-with Gdk.Color;                 use Gdk.Color;
+with Gdk;                       use Gdk;
 with Gdk.Cursor;                use Gdk.Cursor;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Keyval;                use Gdk.Keyval;
 with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Screen;                use Gdk.Screen;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -52,7 +48,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -68,7 +63,6 @@ with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Style;                 use Gtk.Style;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -82,12 +76,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Style;              use Gtkada.Style;
-
-with Pango.Context;             use Pango.Context;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
-with Pango.Layout;              use Pango.Layout;
 
 with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
@@ -98,6 +86,9 @@ with Traces;                    use Traces;
 package body GUI_Utils is
 
    Me : constant Debug_Handle := Create ("GUI_Utils");
+
+   Busy_Cursor : Gdk.Gdk_Cursor;
+   --  A global variable, allocated once and never freed
 
    type Contextual_Menu_Data is record
       Create  : Contextual_Menu_Create;
@@ -154,20 +145,6 @@ package body GUI_Utils is
       Output    : Event_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
 
-   -----------------------------------
-   -- Gtk_New_Combo_Text_With_Entry --
-   -----------------------------------
-
-   procedure Gtk_New_Combo_Text_With_Entry
-     (Combo : out Gtk.Combo_Box.Gtk_Combo_Box)
-   is
-      List : Gtk_List_Store;
-   begin
-      Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Combo, List);
-      Combo.Set_Entry_Text_Column (0);
-   end Gtk_New_Combo_Text_With_Entry;
-
    ---------------------------
    -- Add_Unique_List_Entry --
    ---------------------------
@@ -206,11 +183,11 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter : Gtk_Tree_Iter;
@@ -225,17 +202,16 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Select_Text    : Boolean := False;
-      Prepend        : Boolean := False;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Select_Text  : Boolean := False;
+      Prepend      : Boolean := False;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk_Tree_Iter
    is
       Iter  : Gtk_Tree_Iter;
-      Model : Gtk_List_Store;
+      Model : constant Gtk_List_Store := -Gtk.Combo_Box.Get_Model (Combo);
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -272,15 +248,14 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Active_Text
-     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text           : String;
-      Col            : Gint := 0;
+     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text         : String;
+      Col          : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter  : Gtk_Tree_Iter;
-      Model : Gtk_List_Store;
+      Model : constant Gtk_List_Store := -Combo.Get_Model;
    begin
-      Model := Gtk_List_Store (Gtk.Combo_Box.Get_Model (Combo));
       Iter := Get_Iter_First (Model);
 
       while Iter /= Null_Iter loop
@@ -309,15 +284,10 @@ package body GUI_Utils is
    -- Set_Busy_Cursor --
    ---------------------
 
-   Busy_Cursor : Gdk.Cursor.Gdk_Cursor;
-   --  A global variable, allocated once and never freed
-
    procedure Set_Busy_Cursor
-     (Window        : Gdk.Window.Gdk_Window;
+     (Window        : Gdk.Gdk_Window;
       Busy          : Boolean := True;
-      Force_Refresh : Boolean := False)
-   is
-      use type Gdk_Window;
+      Force_Refresh : Boolean := False) is
    begin
       if Window /= null then
          if Busy then
@@ -455,7 +425,7 @@ package body GUI_Utils is
       --  propagated, and the contextual menu will be properly displayed.
       --  So we just avoid a gtk warning
 
-      if not No_Window_Is_Set (Widget) then
+      if Widget.Get_Has_Window then
          Add_Events
            (Widget,
             Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
@@ -564,8 +534,6 @@ package body GUI_Utils is
                          Button        => Gdk.Event.Get_Button (Event),
                          Activate_Time => Gdk.Event.Get_Time (Event));
                end if;
-               Menu.Ref_Sink;
-               Menu.Unref;
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
@@ -589,7 +557,7 @@ package body GUI_Utils is
          User         : User_Data;
          Menu_Create  : Contextual_Menu_Create) is
       begin
-         if not No_Window_Is_Set (Widget) then
+         if Widget.Get_Has_Window then
             Add_Events
               (Widget,
                Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
@@ -743,123 +711,6 @@ package body GUI_Utils is
       when E : others => Trace (Exception_Handle, E);
    end Edited_Callback;
 
-   -----------------------------
-   -- Create_Pixmap_From_Text --
-   -----------------------------
-
-   procedure Create_Pixmap_From_Text
-     (Text       : String;
-      Font       : Pango.Font.Pango_Font_Description;
-      Bg_Color   : Gdk.Color.Gdk_Color;
-      Widget     : access Gtk_Widget_Record'Class;
-      Pixmap     : out Cairo_Surface;
-      Wrap_Width : Glib.Gint := -1;
-      Use_Markup : Boolean := False)
-   is
-      Margin        : constant := 2;
-      Color         : Cairo_Color;
-      Layout        : Pango_Layout;
-      Width, Height : Gint;
-      Line_Height   : Gint;
-      Font_Rec      : Pango_Font;
-      Font_Metrics  : Pango_Font_Metrics;
-      Max_Height    : Gint;
-      Max_Lines     : Gint;
-      Nb_Lines      : Gint;
-      Last          : Natural;
-      Ellipsis      : String (1 .. 6);
-      Ellipsis_Last : Integer;
-      Cr            : Cairo_Context;
-
-   begin
-      if Text = "" then
-         Pixmap := Null_Surface;
-         return;
-      end if;
-
-      Layout := Create_Pango_Layout (Widget);
-      Set_Font_Description (Layout, Font);
-
-      --  First, we will ensure that the tooltip is not greater than the screen
-      --  height: this could lead to X11 error and violent crash (G221-010)
-
-      --  We determine a line's height
-      Font_Rec := Load_Font (Get_Pango_Context (Widget), Font);
-      Font_Metrics := Get_Metrics (Font_Rec);
-
-      Line_Height := (Pango.Font.Get_Ascent (Font_Metrics) +
-                        Pango.Font.Get_Descent (Font_Metrics)) / 1024;
-      --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro
-
-      Pango.Font.Unref (Font_Metrics);
-      Unref (Font_Rec);
-
-      --  We retrieve the screen's height
-      Max_Height := Gdk.Screen.Get_Height (Gdk.Screen.Get_Default);
-
-      --  And then we determine the maximum number of lines in the tooltip
-      Max_Lines := Max_Height / Line_Height - 1;
-
-      Nb_Lines := 1;
-      Ellipsis_Last := Ellipsis'First - 1;
-      for J in Text'Range loop
-         if Text (J) = ASCII.LF then
-            Nb_Lines := Nb_Lines + 1;
-
-            if Nb_Lines = Max_Lines then
-               Last := J;
-               Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
-               exit;
-            end if;
-         end if;
-
-         Last := J;
-      end loop;
-
-      if Wrap_Width /= -1 then
-         Set_Wrap (Layout, Pango_Wrap_Char);
-         Set_Width (Layout, Wrap_Width * Pango_Scale);
-      end if;
-
-      if Use_Markup then
-         Set_Markup (Layout, Text (Text'First .. Last) &
-                     Ellipsis (1 .. Ellipsis_Last));
-      else
-         Set_Text (Layout, Text (Text'First .. Last) &
-                   Ellipsis (1 .. Ellipsis_Last));
-      end if;
-
-      Get_Pixel_Size (Layout, Width, Height);
-      Width := Width + Margin * 2;
-      Height := Height + Margin * 2;
-
-      Pixmap := Create (Cairo_Format_ARGB32, Width, Height);
-      Cr := Create (Pixmap);
-      Set_Line_Width (Cr, 0.5);
-
-      Draw_Rectangle
-        (Cr, To_Cairo (Bg_Color),
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Width,
-         Height => Height);
-
-      Color := To_Cairo (Get_Black (Get_Default_Style));
-      Draw_Rectangle
-        (Cr, Color,
-         Filled => False,
-         X      => 0,
-         Y      => 0,
-         Width  => Width,
-         Height => Height);
-
-      Draw_Layout (Cr, Color, Margin, Margin, Layout);
-
-      Unref (Layout);
-      Destroy (Cr);
-   end Create_Pixmap_From_Text;
-
    -------------
    -- Gtk_New --
    -------------
@@ -904,43 +755,36 @@ package body GUI_Utils is
 
    function Find_Iter_For_Event
      (Tree  : access Gtk_Tree_View_Record'Class;
-      Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Event : Gdk_Event) return Gtk_Tree_Iter
+      Event : Gdk_Event_Button) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
       Col  : Gtk_Tree_View_Column;
    begin
-      Coordinates_For_Event (Tree, Model, Event, Iter, Col);
+      Coordinates_For_Event (Tree, Event, Iter, Col);
       return Iter;
    end Find_Iter_For_Event;
 
-   ---------------------------
-   -- Coordinates_For_Event --
-   ---------------------------
+   -------------------------
+   -- Find_Iter_For_Event --
+   -------------------------
 
-   procedure Coordinates_For_Event
-     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
-      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
+   function Find_Iter_For_Event
+     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      X         : Gdouble;
-      Y         : Gdouble;
+      X, Y      : Gdouble;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Path      : Gtk_Tree_Path;
       N_Model   : Gtk_Tree_Model;
+      Iter      : Gtk_Tree_Iter;
+      Column    : Gtk_Tree_View_Column := null;
    begin
-      Column := null;
-
       if Event /= null
         and then Get_Event_Type (Event) in Button_Press .. Button_Release
       then
-         X := Get_X (Event);
-         Y := Get_Y (Event);
-         --  Path := Gtk_New;
+         Get_Coords (Event, X, Y);
          Get_Path_At_Pos
            (Tree,
             Gint (X),
@@ -951,12 +795,54 @@ package body GUI_Utils is
             Buffer_Y,
             Row_Found);
 
-         if Path = null then
+         if Path = Null_Gtk_Tree_Path then
+            return Null_Iter;
+         end if;
+
+         Iter := Get_Iter (Get_Model (Tree), Path);
+         Path_Free (Path);
+      else
+         Get_Selected (Get_Selection (Tree), N_Model, Iter);
+      end if;
+
+      return Iter;
+   end Find_Iter_For_Event;
+
+   ---------------------------
+   -- Coordinates_For_Event --
+   ---------------------------
+
+   procedure Coordinates_For_Event
+     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Button;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
+   is
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Path      : Gtk_Tree_Path;
+      N_Model   : Gtk_Tree_Model;
+   begin
+      Column := null;
+
+      if Event.The_Type in Button_Press .. Button_Release then
+         Get_Path_At_Pos
+           (Tree,
+            Gint (Event.X),
+            Gint (Event.Y),
+            Path,
+            Column,
+            Buffer_X,
+            Buffer_Y,
+            Row_Found);
+
+         if Path = Null_Gtk_Tree_Path then
             Iter := Null_Iter;
             return;
          end if;
 
-         Iter := Get_Iter (Model, Path);
+         Iter := Get_Iter (Get_Model (Tree), Path);
          Path_Free (Path);
       else
          Get_Selected (Get_Selection (Tree), N_Model, Iter);
@@ -1133,7 +1019,7 @@ package body GUI_Utils is
                 Image (Get_Key_Val (Event), Get_State (Event));
    begin
       if Text /= Special_Key_Binding then
-         Deep_Copy (From => Event, To => Output.all);
+         Output.all := Copy (Event);
          Main_Quit;
       end if;
       return True;
@@ -1168,7 +1054,7 @@ package body GUI_Utils is
          Event_Mask => Button_Press_Mask or Button_Release_Mask,
          Confine_To => Get_Window (In_Widget),
          Time       => 0);
-      Grab_Add (In_Widget);
+      In_Widget.Grab_Add;
 
       Grab_Focus (In_Widget);
 
@@ -1189,7 +1075,7 @@ package body GUI_Utils is
          Mods := 0;
       end if;
 
-      Grab_Remove (In_Widget);
+      In_Widget.Grab_Remove;
       Keyboard_Ungrab (0);
       Pointer_Ungrab (0);
       Gtk.Handlers.Disconnect (In_Widget, Id);
@@ -1299,8 +1185,7 @@ package body GUI_Utils is
       File : File_Type;
 
       procedure Save_Dynamic_Key
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
@@ -1311,13 +1196,11 @@ package body GUI_Utils is
       ----------------------
 
       procedure Save_Dynamic_Key
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
       is
-         pragma Unreferenced (Data);
       begin
          if Changed and then Accel_Key /= GDK_VoidSymbol then
             Put_Line (File, "(gtk_accel_path """
@@ -1331,7 +1214,7 @@ package body GUI_Utils is
    begin
       Create (File, Out_File, Filename);
       Gtk.Accel_Map.Foreach
-        (System.Null_Address, Save_Dynamic_Key'Unrestricted_Access);
+        (Save_Dynamic_Key'Unrestricted_Access);
       Close (File);
    end Save_Accel_Map;
 
@@ -1358,10 +1241,10 @@ package body GUI_Utils is
 
       Gtk_New (Label, Prompt);
       Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
       Gtk_New (GEntry);
-      Pack_Start (Get_Vbox (Dialog), GEntry, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), GEntry, Expand => False);
       Set_Activates_Default (GEntry, True);
       Set_Text (GEntry, Default);
 
@@ -1662,13 +1545,12 @@ package body GUI_Utils is
      (Label : out Gtk.Label.Gtk_Label;
       Event : out Gtk.Event_Box.Gtk_Event_Box)
    is
-      Color : Gdk_Color;
+      Color   : Gdk_RGBA;
+      Success : Boolean;
    begin
       Gtk_New (Event);
-      Color := Parse ("#0e79bd");
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
+      Parse (Color, "#0e79bd", Success);
+      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
 
       Gtk_New (Label, "");
       Set_Alignment (Label, 0.1, 0.5);
@@ -1761,7 +1643,7 @@ package body GUI_Utils is
             Tree_Column_Callback.Connect
               (Toggle_Render, Signal_Toggled,
                Toggle_Callback'Access,
-               User_Data => (Gtk_Tree_Model (Model), Gint (N)));
+               User_Data => (+Model, Gint (N)));
 
             if Integer (ColNum) in Editable_Columns'Range
               and then Editable_Columns (Integer (ColNum)) >= 0
@@ -1842,6 +1724,7 @@ package body GUI_Utils is
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : Gtk_Tree_Iter;
       Activatable : Boolean;
+      M           : Gtk_Tree_Store;
    begin
       Iter := Get_Iter_From_String (Data.Model, Path_String);
 
@@ -1852,9 +1735,9 @@ package body GUI_Utils is
            Get_Property (R, Property_Boolean (Glib.Build ("activatable")));
 
          if Activatable then
-            Set (Gtk_Tree_Store (Data.Model), Iter, Data.Column,
-                 not Get_Boolean (Gtk_Tree_Store (Data.Model),
-                                  Iter, Data.Column));
+            M := -Data.Model;
+            Set (M, Iter, Data.Column,
+                 not Get_Boolean (M, Iter, Data.Column));
          end if;
       end if;
    end Toggle_Callback;
@@ -1971,51 +1854,32 @@ package body GUI_Utils is
    -- Darken --
    ------------
 
-   function Darken (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
-      Output  : Gdk.Color.Gdk_Color;
-      Success : Boolean;
+   function Darken (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
    begin
-      Set_Rgb
-        (Output,
-         Red   => Guint16 (Integer (Red (Color)) * 90 / 100),
-         Green => Guint16 (Integer (Green (Color)) * 90 / 100),
-         Blue  => Guint16 (Integer (Blue (Color)) * 90 / 100));
-      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
-      if Success then
-         return Output;
-      else
-         return Color;
-      end if;
+      return
+        (Red   => Color.Red * 0.9,
+         Green => Color.Green * 0.9,
+         Blue  => Color.Blue * 0.9,
+         Alpha => Color.Alpha);
    end Darken;
 
    -------------
    -- Lighten --
    -------------
 
-   function Lighten (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color is
-      Percent : constant := 10;
-      White   : constant Integer := Integer (Guint16'Last) * Percent / 100;
-      Output  : Gdk.Color.Gdk_Color;
-      Success : Boolean;
+   function Lighten (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA is
+      Percent : constant := 0.1;
+      White   : constant := 0.1;
    begin
       --  Very basic algorithm. Since we also want to change blacks, we can't
       --  simply multiply RGB components, so we just move part of the way to
       --  white:    R' = R + (White - R) * 10% = 90% * R + 10% * White
 
-      Set_Rgb
-        (Output,
-         Red   =>
-           Guint16 (Integer (Red (Color)) * (100 - Percent) / 100 + White),
-         Green =>
-           Guint16 (Integer (Green (Color)) * (100 - Percent) / 100 + White),
-         Blue  =>
-           Guint16 (Integer (Blue (Color)) * (100 - Percent) / 100 + White));
-      Alloc_Color (Get_Default_Colormap, Output, False, True, Success);
-      if Success then
-         return Output;
-      else
-         return Color;
-      end if;
+      return
+        (Red   => Color.Red * (1.0 - Percent) + White,
+         Green => Color.Green * (1.0 - Percent) + White,
+         Blue  => Color.Blue * (1.0 - Percent) + White,
+         Alpha => Color.Alpha);
    end Lighten;
 
    -----------------------
@@ -2023,18 +1887,18 @@ package body GUI_Utils is
    -----------------------
 
    function Darken_Or_Lighten
-     (Color : Gdk.Color.Gdk_Color) return Gdk.Color.Gdk_Color
+     (Color : Gdk.RGBA.Gdk_RGBA) return Gdk.RGBA.Gdk_RGBA
    is
       --  Compute luminosity as in photoshop (as per wikipedia)
-      Luminosity : constant Float :=
-        0.299 * Float (Red (Color))
-        + 0.587 * Float (Green (Color))
-        + 0.114 * Float (Blue (Color));
+      Luminosity : constant Gdouble :=
+        0.299 * Color.Red
+        + 0.587 * Color.Green
+        + 0.114 * Color.Blue;
 
-      Gray_Luminosity : constant Float :=
-        0.299 * Float (Guint16'Last / 2)
-        + 0.587 * Float (Guint16'Last / 2)
-        + 0.114 * Float (Guint16'Last / 2);
+      Gray_Luminosity : constant Gdouble :=
+        0.299 * 0.5
+        + 0.587 * 0.5
+        + 0.114 * 0.5;
    begin
       if Luminosity > Gray_Luminosity then
          return Darken (Color);
@@ -2042,4 +1906,22 @@ package body GUI_Utils is
          return Lighten (Color);
       end if;
    end Darken_Or_Lighten;
+
+   ------------------------
+   -- Remove_Child_Nodes --
+   ------------------------
+
+   procedure Remove_Child_Nodes
+     (Model  : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Parent : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      loop
+         Iter := Model.Nth_Child (Parent, 0);
+         exit when Iter = Null_Iter;
+         Model.Remove (Iter);
+      end loop;
+   end Remove_Child_Nodes;
+
 end GUI_Utils;

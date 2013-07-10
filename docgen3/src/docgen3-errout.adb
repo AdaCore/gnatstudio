@@ -27,7 +27,7 @@ package body Docgen3.Errout is
      (Context : access constant Docgen_Context;
       Loc     : General_Location;
       Msg     : String;
-      Mode    : Message_Type);
+      Mode    : GPS.Messages_Windows.Message_Type);
 
    -----------
    -- Error --
@@ -42,7 +42,7 @@ package body Docgen3.Errout is
    begin
       if Context.Options.Report_Errors /= None then
          Output_Message
-           (Context, Loc, Prefix & Msg, Mode => Error);
+           (Context, Loc, Prefix & Msg, Mode => GPS.Messages_Windows.Error);
       end if;
    end Error;
 
@@ -65,7 +65,7 @@ package body Docgen3.Errout is
      (Context : access constant Docgen_Context;
       Loc     : General_Location;
       Msg     : String;
-      Mode    : Message_Type)
+      Mode    : GPS.Messages_Windows.Message_Type)
    is
       Line : constant String := Natural'Image (Loc.Line);
       Col  : constant String := Natural'Image (Integer (Loc.Column));
@@ -89,7 +89,8 @@ package body Docgen3.Errout is
       Prefix : constant String := "warning: ";
    begin
       if Context.Options.Report_Errors = Errors_And_Warnings then
-         Output_Message (Context, Loc, Prefix & Msg, Mode => Info);
+         Output_Message
+           (Context, Loc, Prefix & Msg, Mode => GPS.Messages_Windows.Info);
       end if;
    end Warning;
 

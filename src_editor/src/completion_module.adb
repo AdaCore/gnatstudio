@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;              use GNAT.Strings;
@@ -29,16 +28,13 @@ with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
@@ -48,7 +44,6 @@ with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -61,6 +56,7 @@ with Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
@@ -72,6 +68,7 @@ with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
+with Completion.Aliases;        use Completion.Aliases;
 
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
@@ -89,7 +86,6 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Engine_Wrappers;                 use Engine_Wrappers;
 with Projects;                        use Projects;
-with XML_Utils;                       use XML_Utils;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 
 package body Completion_Module is
@@ -108,6 +104,24 @@ package body Completion_Module is
    Smart_Completion : Smart_Completion_Preferences.Preference;
 
    use String_List_Utils.String_List;
+
+   type Update_Lock_Access is access all Update_Lock;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Update_Lock, Update_Lock_Access);
+
+   type Smart_Completion_Data is record
+      Manager             : Completion_Manager_Access;
+      Constructs_Resolver : Completion_Resolver_Access;
+      Result              : Completion_List;
+      Start_Mark          : Gtk_Text_Mark := null;
+      End_Mark            : Gtk_Text_Mark := null;
+      Buffer              : Source_Buffer;
+      The_Text            : GNAT.Strings.String_Access;
+
+      --  We need to lock the update of the file during the completion process
+      --  in order to keep valid information in the trees.
+      Lock                : Update_Lock_Access;
+   end record;
 
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.Strings.String_Access;
@@ -176,6 +190,16 @@ package body Completion_Module is
       --  The current completion window. This is only valid when
       --  Has_Smart_Completion is True.
 
+      Data : Smart_Completion_Data;
+      --  The data to use for the smart completion window. This is only valid
+      --  when Has_Smart_Completion is True. It used to be passed as a callback
+      --  parameter for Signal_Destroy on the completion window, but this does
+      --  not work when GPS is terminated while the completion window is opened
+      --  since gtk+ is terminated first, then the GPS (and this module). Even
+      --  if Module.Destroy is destroying the completion window, no more gtk+
+      --  signals are propagated, and this data is never properly finalized as
+      --  it must.
+
       Completion_Triggers_Callback    : Function_With_Args_Access;
       --  The hook callback corresponding to character triggers
 
@@ -188,30 +212,9 @@ package body Completion_Module is
 
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
+      Completion_Aliases  : Completion_Aliases_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
-
-   type Update_Lock_Access is access all Update_Lock;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Update_Lock, Update_Lock_Access);
-
-   type Smart_Completion_Data is record
-      Manager             : Completion_Manager_Access;
-      Constructs_Resolver : Completion_Resolver_Access;
-      Result              : Completion_List;
-      Start_Mark          : Gtk_Text_Mark := null;
-      End_Mark            : Gtk_Text_Mark := null;
-      Buffer              : Source_Buffer;
-      The_Text            : GNAT.Strings.String_Access;
-
-      --  We need to lock the update of the file during the completion process
-      --  in order to keep valid information in the trees.
-      Lock                : Update_Lock_Access;
-   end record;
-
-   package Smart_Completion_Callback is new
-     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Smart_Completion_Data);
-   use Smart_Completion_Callback;
 
    Completion_Module : Completion_Module_Access;
 
@@ -240,12 +243,12 @@ package body Completion_Module is
    --  Move to the start of the next or previous word. This correctly takes
    --  into account '_' as part of a word.
 
-   procedure On_Completion_Destroy
-     (Win  : access Gtk_Widget_Record'Class;
-      Data : Smart_Completion_Data);
+   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure File_Saved
@@ -284,202 +287,15 @@ package body Completion_Module is
    --  Complete indicates whether we should automatically complete to the
    --  biggest common prefix.
 
-   function Entity_View (Kernel : Kernel_Handle) return MDI_Child;
-   --  Create an entity view
-
-   procedure Entity_View_Dialog
-     (Kernel     : Kernel_Handle;
-      Pattern    : String;
-      Visibility : Visibility_Context);
-   --  Create an Entity_View in a dialog.
-   --  The pattern entry is pre-filled with Pattern.
-
-   procedure On_Entity_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Menu callback to display the Entity View
-
-   procedure On_Entity_View_Dialog
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Menu callback to display the Entity View
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Desktop handling
-
-   ------------------------
-   -- Entity_View_Dialog --
-   ------------------------
-
-   procedure Entity_View_Dialog
-     (Kernel     : Kernel_Handle;
-      Pattern    : String;
-      Visibility : Visibility_Context)
-   is
-      Dialog   : Gtk_Dialog;
-      Explorer : Entity_View_Access;
-
-      Response : Gtk_Response_Type;
-      Dummy    : Gtk_Widget;
-      pragma Unreferenced (Dummy);
-   begin
-      Gtk_New (Explorer, Kernel, Pattern, Visibility);
-      Gtk_New (Dialog, "Goto entity...", Get_Main_Window (Kernel), 0);
-
-      Set_Dialog (Explorer, Dialog);
-      Pack_Start (Get_Vbox (Dialog), Explorer, True, True, 3);
-      Set_Default_Size (Dialog, 650, 300);
-      Show_All (Dialog);
-
-      Dummy := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Response := Run (Dialog);
-      if Response = Gtk_Response_Cancel then
-         Destroy (Dialog);
-      end if;
-   end Entity_View_Dialog;
-
-   -----------------
-   -- Entity_View --
-   -----------------
-
-   function Entity_View (Kernel : Kernel_Handle) return MDI_Child is
-      Child    : GPS_MDI_Child;
-      Explorer : Entity_View_Access;
-   begin
-      Gtk_New (Explorer, Kernel, "", Null_Visibility_Context);
-      Gtk_New (Child, Explorer,
-               Default_Width  => 600,
-               Default_Height => 400,
-               Group          => Group_Consoles,
-               Focus_Widget   => Gtk_Widget (Get_Entry (Explorer)),
-               Module         => Completion_Module);
-      Set_Title (Child, -"Entity", -"Entity");
-      Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-
-      return MDI_Child (Child);
-   end Entity_View;
-
-   --------------------
-   -- On_Entity_View --
-   --------------------
-
-   procedure On_Entity_View
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Child    : MDI_Child;
-   begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel),
-         Completion_Window.Entity_Views.Entity_View_Record'Tag);
-
-      if Child = null then
-         Child := Entity_View (Kernel);
-      end if;
-
-      Raise_Child (Child);
-      Set_Focus_Child (Get_MDI (Kernel), Child);
-
-   exception
-      when E : others => Trace (Traces.Exception_Handle, E);
-   end On_Entity_View;
-
-   ---------------------------
-   -- On_Entity_View_Dialog --
-   ---------------------------
-
-   procedure On_Entity_View_Dialog
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-
-      Visibility      : Visibility_Context;
-      File            : Virtual_File;
-      Structured_File : Structured_File_Access;
-   begin
-      --  Create the Visisbility context from the context
-      if Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_Column_Information (Context)
-      then
-         --  Compute the offset
-
-         File := File_Information (Context);
-         Structured_File := Get_Or_Create
-           (Get_Construct_Database (Kernel), File);
-
-         Visibility :=
-           (Structured_File,
-            To_String_Index
-              (Structured_File,
-               Line_Information (Context),
-               Column_Information (Context)),
-            Everything,
-            Public_Library_Visible);
-
-         Entity_View_Dialog
-           (Kernel,
-            Entity_Name_Information (Context), Visibility);
-      else
-         Entity_View_Dialog (Kernel, "", Null_Visibility_Context);
-      end if;
-   exception
-      when E : others => Trace (Traces.Exception_Handle, E);
-   end On_Entity_View_Dialog;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-   begin
-      if Widget.all in
-        Completion_Window.Entity_Views.Entity_View_Record'Class
-      then
-         return Save_Desktop (Entity_View_Access (Widget));
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Entity_View" then
-         return Completion_Window.Entity_Views.Load_Desktop
-           (User, Node, Module_ID (Completion_Module));
-      end if;
-      return null;
-   end Load_Desktop;
-
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Smart_Completion_Pref : constant Smart_Completion_Type :=
                                 Smart_Completion.Get_Pref;
    begin
@@ -560,44 +376,43 @@ package body Completion_Module is
    -- On_Completion_Destroy --
    ---------------------------
 
-   procedure On_Completion_Destroy
-     (Win  : access Gtk_Widget_Record'Class;
-      Data : Smart_Completion_Data)
-   is
-      D           : Smart_Completion_Data := Data;
+   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class) is
+      D           : Smart_Completion_Data renames Completion_Module.Data;
       First, Last : Gtk_Text_Iter;
       Dummy       : Boolean;
       pragma Unreferenced (Dummy);
-      Target      : Gtk_Text_Iter;
    begin
-      Unlock (D.Lock.all);
+      if Completion_Module.Has_Smart_Completion then
+         Completion_Module.Has_Smart_Completion := False;
+         D.Lock.Unlock;
+         Free (D.Lock);
 
-      Free (D.Manager);
-      Free (D.Constructs_Resolver);
-      Free (D.Result);
-      Free (D.The_Text);
-      Free (D.Lock);
+         Free (D.Manager);
+         Free (D.Constructs_Resolver);
+         Free (D.Result);
+         Free (D.The_Text);
 
-      Completion_Module.Has_Smart_Completion := False;
-      Completion_Module.Smart_Completion := null;
+         Completion_Module.Smart_Completion := null;
 
-      End_Completion (Source_View (Win));
+         if Win /= null then
+            End_Completion (Source_View (Win));
 
-      if D.Start_Mark /= null then
-         Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
-         Delete_Mark (D.Buffer, D.Start_Mark);
+            if D.Start_Mark /= null then
+               Get_Iter_At_Mark (D.Buffer, First, D.Start_Mark);
+               Delete_Mark (D.Buffer, D.Start_Mark);
+               D.Start_Mark := null;
 
-         Get_Iter_At_Mark (D.Buffer, Last, Get_Insert (D.Buffer));
-         Get_Iter_At_Mark (D.Buffer, Target, D.End_Mark);
-         Delete_Mark (D.Buffer, D.End_Mark);
+               Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
+               Delete_Mark (D.Buffer, D.End_Mark);
+               D.End_Mark := null;
 
-         Place_Cursor (D.Buffer, Target);
+               --  If we did complete on multiple lines, indent the resulting
+               --  lines using the user preferences.
 
-         --  If we did complete on multiple lines, indent the resulting lines
-         --  using the user preferences.
-
-         if Get_Line (First) < Get_Line (Last) then
-            Dummy := Do_Indentation (D.Buffer, First, Last, False);
+               if Get_Line (First) < Get_Line (Last) then
+                  Dummy := Do_Indentation (D.Buffer, First, Last, False);
+               end if;
+            end if;
          end if;
       end if;
 
@@ -626,19 +441,16 @@ package body Completion_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Completion_Module_Record) is
-      pragma Unreferenced (Module);
    begin
-      if Completion_Module /= null then
-         Kill_File_Iteration
-           (Get_Kernel (Completion_Module.all), Db_Loading_Queue);
-         Free
-           (Completion_Resolver_Access (Completion_Module.Completion_History));
-         Free (Completion_Resolver_Access
-               (Completion_Module.Completion_Keywords));
+      On_Completion_Destroy (Win => null);
 
-         Reset_Completion_Data;
-         Completion_Module := null;
-      end if;
+      Kill_File_Iteration (Get_Kernel (Module), Db_Loading_Queue);
+      Free (Completion_Resolver_Access (Module.Completion_History));
+      Free (Completion_Resolver_Access (Module.Completion_Keywords));
+      Free (Completion_Resolver_Access (Module.Completion_Aliases));
+
+      Reset_Completion_Data;
+      Completion_Module := null;
    end Destroy;
 
    -----------------------
@@ -1000,9 +812,9 @@ package body Completion_Module is
                                       Smart_Completion.Get_Pref;
 
             Lang : constant Language_Access := Get_Language (Buffer);
-            Win  : Completion_Window_Access
-                     renames Completion_Module.Smart_Completion;
-            Data : Smart_Completion_Data;
+            Win  : Completion_Window_Access;
+            Data : Smart_Completion_Data renames
+              Completion_Module.Data;
             It   : Gtk_Text_Iter;
 
          begin
@@ -1024,6 +836,8 @@ package body Completion_Module is
                   Get_Filename (Buffer));
 
                Data.The_Text := Get_String (Buffer);
+
+               Completion_Module.Has_Smart_Completion := True;
 
                Data.Lock :=
                  new Update_Lock'(Lock_Updates
@@ -1050,6 +864,8 @@ package body Completion_Module is
 
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_History);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Aliases);
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Keywords);
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
@@ -1083,12 +899,13 @@ package body Completion_Module is
 
                if At_End (First (Data.Result, Kernel.Databases)) then
                   Trace (Me_Adv, "No completions found");
-                  On_Completion_Destroy (View, Data);
+                  On_Completion_Destroy (View);
                   Kernel.Pop_State;
                   return Commands.Success;
                end if;
 
                Gtk_New (Win, Kernel);
+               Completion_Module.Smart_Completion := Win;
 
                Data.Buffer := Buffer;
 
@@ -1112,12 +929,10 @@ package body Completion_Module is
 
                Start_Completion (View, Win);
 
-               Completion_Module.Has_Smart_Completion := True;
-
-               Object_Connect
+               Widget_Callback.Object_Connect
                  (Win, Signal_Destroy,
-                  To_Marshaller (On_Completion_Destroy'Access),
-                  View, Data, After => True);
+                  Widget_Callback.To_Marshaller (On_Completion_Destroy'Access),
+                  View, After => True);
 
                Set_Iterator
                  (Win, new Comp_Iterator'
@@ -1348,7 +1163,7 @@ package body Completion_Module is
                Callback       => Load_One_File_Constructs'Access,
                Chunk_Size     => 1,
                Queue_Name     => Db_Loading_Queue,
-               Operation_Name => "load constructs db",
+               Operation_Name => "load constructs",
                Files          => Added_Files);
 
             Unchecked_Free (Project_Files);
@@ -1405,8 +1220,6 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Action := Register_Action
@@ -1440,7 +1253,7 @@ package body Completion_Module is
                      Action     => Action,
                      Filter     => Src_Action_Context);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "completion_module.preferences_changed");
       Add_Hook
@@ -1455,21 +1268,12 @@ package body Completion_Module is
          Wrapper (File_Saved'Access),
          Name => "completion_module.file_saved");
 
-      Register_Menu
-        (Kernel, "/_Tools/_Views/", -"_Entity",
-         Ref_Item => -"Messages",
-         Callback   => On_Entity_View'Access);
-
-      Register_Menu
-        (Kernel, "/_Navigate/", "Goto _Entity...",
-         Ref_Item => "Goto _Line...",
-         Accel_Key => GDK_LC_t,
-         Accel_Mods => Control_Mask,
-         Callback => On_Entity_View_Dialog'Access);
-
       Register_Preferences (Kernel);
 
+      Completion_Window.Entity_Views.Register_Module (Kernel);
+
       Completion_Module.Completion_History := new Completion_History;
+      Completion_Module.Completion_Aliases := new Completion_Aliases;
       Completion_Module.Completion_Keywords := new Completion_Keywords;
    end Register_Module;
 
@@ -1480,11 +1284,25 @@ package body Completion_Module is
    function Trigger_Timeout_Callback return Boolean is
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
+      Widget        : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Get_Kernel (Completion_Module.all));
+      View          : Source_View;
+      Buffer        : Source_Buffer;
+
    begin
-      Ignore := Smart_Complete
-        (Get_Kernel (Completion_Module.all),
-         Complete => False,
-         Volatile => True);
+      if Widget /= null
+        and then Widget.all in Source_View_Record'Class
+      then
+         View   := Source_View (Widget);
+         Buffer := Source_Buffer (Get_Buffer (View));
+      end if;
+
+      if Get_Multi_Cursors (Buffer).Is_Empty then
+         Ignore := Smart_Complete
+           (Get_Kernel (Completion_Module.all),
+            Complete => False,
+            Volatile => True);
+      end if;
 
       Completion_Module.Has_Trigger_Timeout := False;
       return False;
@@ -1608,7 +1426,6 @@ package body Completion_Module is
 
       --  Local variables
 
-      pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
                        File_Edition_Hooks_Args (Data.all);
       Buffer       : Glib.UTF8_String (1 .. 6);
@@ -1654,7 +1471,22 @@ package body Completion_Module is
       end if;
 
       if Smart_Completion_Pref = Dynamic then
-         Dummy := Trigger_Timeout_Callback;
+         declare
+            Widget        : constant Gtk_Widget :=
+              Get_Current_Focus_Widget (Kernel);
+            View   : Source_View;
+            Buffer : Source_Buffer;
+         begin
+            if Widget /= null
+              and then Widget.all in Source_View_Record'Class
+            then
+               View   := Source_View (Widget);
+               Buffer := Source_Buffer (Get_Buffer (View));
+               if not Buffer.Is_Inserting_Internally then
+                  Dummy := Trigger_Timeout_Callback;
+               end if;
+            end if;
+         end;
       end if;
 
    exception

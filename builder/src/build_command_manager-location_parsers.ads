@@ -19,9 +19,7 @@
 
 with Commands; use Commands;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with GPS.Kernel;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
-with GPS.Styles.UI;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Build_Command_Manager.Location_Parsers is
 
@@ -33,14 +31,11 @@ package Build_Command_Manager.Location_Parsers is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
-     (Self              : access Output_Parser_Fabric;
-      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Category          : String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean);
+     (Self    : access Output_Parser_Fabric;
+      Builder : Builder_Context);
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -53,18 +48,13 @@ package Build_Command_Manager.Location_Parsers is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
-      Kernel            : GPS.Kernel.Kernel_Handle;
-      Category          : Unbounded_String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean;
+     new GPS.Tools_Output.Output_Parser_Fabric with record
+      Builder : Builder_Context;
    end record;
 
    type Location_Parser is new Tools_Output_Parser with record
-      Kernel            : GPS.Kernel.Kernel_Handle;
-      Category          : Unbounded_String;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles;
-      Show_In_Locations : Boolean;
+      Builder : Builder_Context;
+      Build   : Build_Information;
    end record;
 
 end Build_Command_Manager.Location_Parsers;

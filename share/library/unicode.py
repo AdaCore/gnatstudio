@@ -1,24 +1,27 @@
-"""Enter Unicode characters in editors
-
-   This module provides a GPS action that, when executed, opens a
-   small command window. In this window, the user can either type the
-   numeric value or the name of a unicode character to insert at the
-   cursor position in the current editor.
-
-   For instance, select the menu /Edit/Insert Unicode, then type the
-   following decimal value:
-      928
-   This will insert a PI character. You could also insert it by typing
-      greek capital letter pi
-   or (in hexadecimal):
-      x3A0
-
-   Another GPS action is provided that describes the unicode character
-   currently under the cursor, including its numeric value and its name.
-   This action is called "Describe unicode char". It can be bound to a key,
-   assigned to a menu, or more easily executed through the startup script
-   execute_extended.py
 """
+Enter Unicode characters in editors
+
+This module provides a GPS action that, when executed, opens a
+small command window. In this window, the user can either type the
+numeric value or the name of a unicode character to insert at the
+cursor position in the current editor.
+
+For instance, select the menu /Edit/Insert Unicode, then type the
+following decimal value:
+   928
+This will insert a PI character. You could also insert it by typing
+   greek capital letter pi
+or (in hexadecimal):
+   x3A0
+
+Another GPS action is provided that describes the unicode character
+currently under the cursor, including its numeric value and its name.
+This action is called "Describe unicode char". It can be bound to a key,
+assigned to a menu, or more easily executed through the startup script
+execute_extended.py
+"""
+
+
 
 background_color = "yellow"
 ## Background color to use for the command window
@@ -36,7 +39,6 @@ words    = ["acute", "grave", "circumflex", "diaresis", "title",
 ##    prefix = prefix + ["vertical", "opening"]
 ## Only lower case letters should be used
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

@@ -223,6 +223,12 @@ package Completion is
    --  Return the label of the completion proposal. By defaut, return the
    --  completion
 
+   function Is_Accessible
+     (Proposal : Completion_Proposal)
+      return Boolean
+   is (True);
+   --  Returns True if the completion is accessible in the current unit.
+
    function Get_Id
      (Proposal : Completion_Proposal;
       Db : access Xref.General_Xref_Database_Record'Class)
@@ -254,6 +260,26 @@ package Completion is
      (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
    --  Return the visibility of the object proposed for completion
 
+   function Get_Action_Name
+     (Proposal : Completion_Proposal)
+      return String;
+   --  Return the action name associated with the completion proposal
+   --  The action will be used as a substitute for the completion text
+   --  when it is supplied.
+   --  WARNING : This is a GPS specific feature for the moment
+   --  The default implementation returns the empty string.
+
+   function Get_Custom_Icon_Name
+     (Proposal : Completion_Proposal)
+      return String is ("");
+   --  If the completion needs to display a custom icon, this will
+   --  return its name
+
+   function Get_Documentation
+     (Proposal : Completion_Proposal)
+      return String is ("");
+   --  Return custom documentation associated with this proposal
+
    function Is_Valid (Proposal : Completion_Proposal) return Boolean;
    --  Return true if the proposal should be accessible by the user. By
    --  default, this is always true. Unvalid proposal are automatically skipped
@@ -283,6 +309,9 @@ package Completion is
       return Completion_Id is abstract;
    --  Creates a completion id able to retreive this completion proposal later
    --  on.
+   --  WARNING : This completion Id is used to check a proposal's identity
+   --  This means that if two proposals have the same Id, only one will show
+   --  up in the completion window
 
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.

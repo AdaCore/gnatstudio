@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
@@ -24,7 +23,7 @@ with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -43,12 +42,14 @@ with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
 with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
+with Language.Tree;
 with Src_Contexts;              use Src_Contexts;
 with Traces;                    use Traces;
 
@@ -234,7 +235,9 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Location) return Editor_Buffer'Class;
 
    overriding function Create_Mark
-     (This : Src_Editor_Location; Name : String := "")
+     (This : Src_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class;
 
    overriding function Forward_Char
@@ -346,6 +349,25 @@ package body Src_Editor_Module.Editors is
       Overlay : Editor_Overlay'Class;
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location);
+
+   overriding procedure Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class);
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This     : Src_Editor_Buffer);
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer);
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class);
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Src_Editor_Buffer);
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Src_Editor_Buffer) return Mark_Lists.List;
 
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
@@ -527,10 +549,14 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String) return String;
    overriding function Get_Property
      (This : Src_Editor_Overlay; Name : String) return Boolean;
+   overriding function Get_Property
+     (This : Src_Editor_Overlay; Name : String) return Integer;
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : String);
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Boolean);
+   overriding procedure Set_Property
+     (This : Src_Editor_Overlay; Name : String; Value : Integer);
    overriding procedure Adjust (This : in out Src_Editor_Overlay);
    overriding procedure Finalize (This : in out Src_Editor_Overlay);
 
@@ -562,8 +588,15 @@ package body Src_Editor_Module.Editors is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Screen_Position (Buffer.Contents.Buffer, Iter, Line, Column);
-      return Create_Editor_Location (Buffer, Iter);
+      if Is_Valid_Position (Buffer.Contents.Buffer, Line, Column) then
+         Get_Iter_At_Screen_Position
+           (Buffer.Contents.Buffer, Iter, Line, Column);
+
+         return Create_Editor_Location (Buffer, Iter);
+      else
+         raise Editor_Exception
+           with (-"Unable to create location at" & Line'Img & Column'Img);
+      end if;
    end Create_Editor_Location;
 
    ------------------
@@ -924,7 +957,8 @@ package body Src_Editor_Module.Editors is
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
             Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line));
+              (Buffer, Get_Editable_Line (Buffer, Line), True,
+               Filter => Language.Tree.Categories_For_Block_Highlighting);
          end if;
       end if;
    end Get_Block;
@@ -1146,7 +1180,9 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding function Create_Mark
-     (This : Src_Editor_Location; Name : String := "")
+     (This : Src_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class
    is
       Success : Boolean;
@@ -1163,8 +1199,9 @@ package body Src_Editor_Module.Editors is
          if Mark = null then
             Mark := Create_Mark
               (Get_Buffer (Iter),
-               Mark_Name => Name,
-               Where     => Iter);
+               Mark_Name    => Name,
+               Where        => Iter,
+               Left_Gravity => Left_Gravity);
          else
             Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
          end if;
@@ -1522,14 +1559,20 @@ package body Src_Editor_Module.Editors is
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class
    is
-      Result : Src_Editor_Location;
    begin
-      Result.Buffer := This;
-      Result.Line   := Editable_Line_Type'Max (1, Editable_Line_Type (Line));
-      Result.Column := Visible_Column_Type'Max
-        (1, Column);
-
-      return Result;
+      return Create_Editor_Location
+        (This, Editable_Line_Type (Line), Character_Offset_Type (Column));
+   exception
+      when Editor_Exception =>
+         declare
+            Result : Src_Editor_Location;
+         begin
+            Result.Buffer := This;
+            Result.Line :=
+              Editable_Line_Type'Max (1, Editable_Line_Type (Line));
+            Result.Column := Visible_Column_Type'Max (1, Column);
+            return Result;
+         end;
    end New_Location;
 
    ---------
@@ -2799,6 +2842,56 @@ package body Src_Editor_Module.Editors is
       end if;
    end Remove_Overlay;
 
+   ----------------------
+   -- Add_Multi_Cursor --
+   ----------------------
+
+   overriding procedure Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
+      Add_Multi_Cursor (This.Contents.Buffer, Iter);
+   end Add_Multi_Cursor;
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This     : Src_Editor_Buffer) is
+   begin
+      Remove_All_Multi_Cursors (This.Contents.Buffer);
+   end Remove_All_Multi_Cursors;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer) is
+   begin
+      Set_Multi_Cursors_Manual_Sync (This.Contents.Buffer);
+   end Set_Multi_Cursors_Manual_Sync;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class) is
+   begin
+      Set_Multi_Cursors_Manual_Sync
+        (This.Contents.Buffer, This.Contents.Buffer.Get_Mark (Mark.Name));
+   end Set_Multi_Cursors_Manual_Sync;
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Src_Editor_Buffer) is
+   begin
+      Set_Multi_Cursors_Auto_Sync (This.Contents.Buffer);
+   end Set_Multi_Cursors_Auto_Sync;
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Src_Editor_Buffer) return Mark_Lists.List
+   is
+      List : Mark_Lists.List;
+   begin
+      for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
+         List.Append (This.Create_Editor_Mark (Get_Mark (Cursor)));
+      end loop;
+      return List;
+   end Get_Multi_Cursors_Marks;
+
    ----------
    -- Name --
    ----------
@@ -2816,19 +2909,30 @@ package body Src_Editor_Module.Editors is
    ------------------
 
    overriding function Get_Property
+     (This : Src_Editor_Overlay; Name : String) return Integer is
+   begin
+      return Integer (Get_Property
+         (This.Tag, Property_Int'(Glib.Properties.Build (Name))));
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   overriding function Get_Property
      (This : Src_Editor_Overlay; Name : String) return String
    is
-      Color : Gdk_Color;
+      Color : Gdk_RGBA;
       W     : Weight;
       S     : Pango.Enums.Style;
    begin
       if This.Tag /= null then
          if Name = "foreground" then
-            Color := Get_Property (This.Tag, Foreground_Gdk_Property);
+            Color := Get_Property (This.Tag, Foreground_Rgba_Property);
             return To_String (Color);
 
          elsif Name = "background" then
-            Color := Get_Property (This.Tag, Background_Gdk_Property);
+            Color := Get_Property (This.Tag, Background_Rgba_Property);
             return To_String (Color);
 
          elsif Name = "font" then
@@ -2855,8 +2959,10 @@ package body Src_Editor_Module.Editors is
                when Pango_Style_Italic =>
                   return "italic";
             end case;
+
          else
-            raise Editor_Exception with -"Invalid property";
+            return Get_Property
+               (This.Tag, Property_String'(Glib.Properties.Build (Name)));
          end if;
       end if;
 
@@ -2871,11 +2977,8 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String) return Boolean is
    begin
       if This.Tag /= null then
-         if Name = "editable" then
-            return Get_Property (This.Tag, Gtk.Text_Tag.Editable_Property);
-         else
-            raise Editor_Exception with -"Invalid property";
-         end if;
+         return Get_Property
+            (This.Tag, Property_Boolean'(Glib.Properties.Build (Name)));
       end if;
 
       return False;
@@ -2889,15 +2992,7 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : String) is
    begin
       if This.Tag /= null then
-         if Name = "foreground" then
-            Set_Property (This.Tag, Foreground_Property, Value);
-         elsif Name = "background" then
-            Set_Property (This.Tag, Background_Property, Value);
-         elsif Name = "paragraph-background" then
-            Set_Property (This.Tag, Paragraph_Background_Property, Value);
-         elsif Name = "font" then
-            Set_Property (This.Tag, Font_Property, Value);
-         elsif Name = "weight" then
+         if Name = "weight" then
             if Value = "light" then
                Set_Property (This.Tag, Weight_Property, Pango_Weight_Light);
             elsif Value = "normal" then
@@ -2908,6 +3003,7 @@ package body Src_Editor_Module.Editors is
                raise Editor_Exception
                  with -"Invalid weight: use light, normal or bold";
             end if;
+
          elsif Name = "style" then
             if Value = "normal" then
                Set_Property
@@ -2922,8 +3018,11 @@ package body Src_Editor_Module.Editors is
                raise Editor_Exception
                  with -"Invalid style: use normal, oblique or italic";
             end if;
+
          else
-            raise Editor_Exception with -"Invalid property";
+            Set_Property (This.Tag,
+                          Property_String'(Glib.Properties.Build (Name)),
+                          Value);
          end if;
       end if;
    end Set_Property;
@@ -2932,11 +3031,19 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : Boolean) is
    begin
       if This.Tag /= null then
-         if Name = "editable" then
-            Set_Property (This.Tag, Gtk.Text_Tag.Editable_Property, Value);
-         else
-            raise Editor_Exception with -"Invalid property";
-         end if;
+         Set_Property (This.Tag,
+                       Property_Boolean'(Glib.Properties.Build (Name)),
+                       Value);
+      end if;
+   end Set_Property;
+
+   overriding procedure Set_Property
+     (This : Src_Editor_Overlay; Name : String; Value : Integer) is
+   begin
+      if This.Tag /= null then
+         Set_Property (This.Tag,
+                       Property_Int'(Glib.Properties.Build (Name)),
+                       Gint (Value));
       end if;
    end Set_Property;
 

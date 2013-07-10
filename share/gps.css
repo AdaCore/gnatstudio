@@ -1,0 +1,89 @@
+/*
+ * Custom styling for GPS.
+ */
+
+/* You can override the default theme colors. Most gtk+ themes are
+ * carefully setup so that they do not hard-code colors, but use a number
+ * of predefined named colors and shades of them. For instance:
+ */
+/*
+   @define-color base_color black;
+   @define-color bg_color #fff;
+   @define-color theme_bg_color green;
+   @define-color theme_tooltip_bg_color yellow;
+*/
+
+
+* {
+  
+   /* Reduce the size of the scroll arrows in notebooks */
+   -GtkWidget-scroll-arrow-hlength: 8;
+   -GtkWidget-scroll-arrow-vlength: 8;
+   -GtkNotebook-arrow-spacing: 0;
+}
+
+.gps-task-manager GtkProgressBar {
+   -GtkProgressBar-min-horizontal-bar-height: 1;
+}
+
+.gps-local-toolbar {  /* local toolbar in the panes/views */
+}
+
+/* Uncomment this if you want to have the same behavior as in previous
+ * GPS releases: the active tab of the active notebook gets a blue background
+ * to make it quicker to find where keyboard input goes */
+/*
+.notebook.mdifocused tab:active,
+.notebook.mdifocused tab.left:active,
+.notebook.mdifocused tab.right:active {
+   background-image: none;
+   background-color: rgba(0,0,255,0.2);
+}
+*/
+
+/* When the MDI tabs are displayed on the left or on the right, we do not
+ * want an extra space at the top, before the first tab
+ */
+.notebook.leftTabs, .notebook.rightTabs {
+   -GtkNotebook-initial-gap: 0;
+}
+
+/* Let's condense things in the local toolbars of the views */
+.gps-local-toolbar {
+   background: shade(@theme_bg_color, 0.9);
+   padding: 0px;
+}
+.gps-local-toolbar * {
+   margin: 0px;
+   padding: 0px;
+}
+
+/* Search and filter fields */
+GtkEntry.search {
+  border-radius: 3px;
+  border-color: transparent;
+  border-width: 1px;
+  box-shadow: none;
+  padding-left: 2px;
+}
+
+.completion-list {
+   /* The list of possible completions, in a completion entry */
+}
+
+/*
+ * Tooltips
+ */
+/*
+@define-color theme_tooltip_bg_color #ffffee;
+@define-color theme_tooltip_fg_color black;
+*/
+
+/*
+ * Editors
+ * Control the color of links displayed in the status bar of editors
+ */
+/*
+-GtkWidget-link-color: @link_color;
+-GtkWidget-visited-link-color: @link_color;
+*/

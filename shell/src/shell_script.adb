@@ -27,17 +27,15 @@ with GNATCOLL.Scripts.Shell;    use GNATCOLL.Scripts.Shell;
 with GNATCOLL.Scripts.Python;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with XML_Utils;                 use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.MDI;                use Gtkada.MDI;
 
+with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
@@ -59,6 +57,16 @@ package body Shell_Script is
      (Script          : access Shell_GPS_Scripting_Record;
       Arguments_Count : Natural) return Callback_Data'Class;
    --  Create our own callback_data
+
+   --  The memory for script is never reclaimed: doing so might
+   --  interfer with some controlled script objects that are only freed when
+   --  the application finalizes, and these objects might store pointers to
+   --  the scripting language. To avoid having a memory leak reported by
+   --  valgrind (where ignoring all leaks from Register_Module might miss some
+   --  real leak in the future), we therefore use a global variable on the
+   --  stack. This is never accessed directly though
+
+   Global_Shell_Script : aliased Shell_GPS_Scripting_Record;
 
    ----------------------
    -- Shell_Subprogram --
@@ -99,131 +107,47 @@ package body Shell_Script is
    --  The shell console. This is mostly use to have a unique tag when saving
    --  the console.
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Support functions for saving the desktop
+   function Initialize
+     (Console : access Shell_Console_Record'Class) return Gtk_Widget;
+   --  Initialize a new shell console and returns the focus widget.
 
-   function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child;
-   --  Return a handle to the shell console, or create a new one if necessary
+   package Shell_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Shell_Console",
+      View_Name          => -"Shell",
+      Formal_View_Record => Shell_Console_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => False,
+      Local_Config       => False,
+      Group              => Group_Consoles);
 
-   procedure Open_Shell_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open a new shell console (if none exists). This is a callback for the
-   --  menu bar items.
+   ----------------
+   -- Initialize --
+   ----------------
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Shell_Console" then
-         return Get_Or_Create_Console (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ---------------------------
-   -- Get_Or_Create_Console --
-   ---------------------------
-
-   function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child
+   function Initialize
+     (Console : access Shell_Console_Record'Class) return Gtk_Widget
    is
       Script  : constant Shell_Scripting := Shell_Scripting
-        (Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name));
-      Virtual : constant Virtual_Console := Get_Default_Console (Script);
-      Child   : GPS_MDI_Child;
-      Console : Interactive_Console;
+        (Lookup_Scripting_Language
+           (Get_Scripts (Console.Kernel), GPS_Shell_Name));
    begin
-      if Virtual = null then
-         Console := new Shell_Console_Record;
-         Initialize
-           (Console      => Console,
-            Prompt       => "GPS> ",
-            User_Data    => Kernel.all'Address,
-            History_List => Get_History (Kernel),
-            Key          => "shell",
-            Wrap_Mode    => Wrap_Char);
-         Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
-
-         Gtk_New (Child, Console,
-                  Default_Width       => 400,
-                  Default_Height      => 120,
-                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                  Group               => Group_Consoles,
-                  Module              => null,
-                  Desktop_Independent => True);
-         Set_Title (Child, -"Shell");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-
-         Set_Default_Console (Script, Get_Or_Create_Virtual_Console (Console));
-      else
-         Child := GPS_MDI_Child
-           (Find_MDI_Child (Get_MDI (Kernel), Get_Console (Virtual)));
-      end if;
-
-      Raise_Child (Child);
-      return MDI_Child (Child);
-   end Get_Or_Create_Console;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Shell_Console_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Shell_Console");
-         return N;
-      end if;
-      return null;
-   end Save_Desktop;
-
-   ------------------------
-   -- Open_Shell_Console --
-   ------------------------
-
-   procedure Open_Shell_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Child : MDI_Child;
-      pragma Unreferenced (Widget, Child);
-   begin
-      Child := Get_Or_Create_Console (Kernel);
-   end Open_Shell_Console;
+      Initialize
+        (Console      => Console,
+         Prompt       => "GPS> ",
+         User_Data    => Console.Kernel.all'Address,
+         History_List => Get_History (Console.Kernel),
+         Key          => "shell",
+         Wrap_Mode    => Wrap_Char);
+      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
+      Set_Default_Console (Script, Get_Or_Create_Virtual_Console (Console));
+      return Gtk_Widget (Console.Get_View);
+   end Initialize;
 
    ---------------------
    -- Register_Module --
    ---------------------
-
-   --  The memory for script is never reclaimed: doing so might
-   --  interfer with some controlled script objects that are only freed when
-   --  the application finalizes, and these objects might store pointers to
-   --  the scripting language. To avoid having a memory leak reported by
-   --  valgrind (where ignoring all leaks from Register_Module might miss some
-   --  real leak in the future), we therefore use a global variable on the
-   --  stack. This is never accessed directly though
-
-   Global_Shell_Script : aliased Shell_GPS_Scripting_Record;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -233,13 +157,8 @@ package body Shell_Script is
       Register_Shell_Scripting (Get_Scripts (Kernel), Script);
       Set_Prompt (Script, "GPS>");
 
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
-      Register_Menu
-        (Kernel,
-         Parent_Path => "/" & (-"_Tools") & '/' & (-"_Consoles"),
-         Text        => -"_GPS Shell",
-         Callback    => Open_Shell_Console'Access);
+      Shell_Views.Register_Module
+        (Kernel, Menu_Name => -"Consoles/_GPS Shell");
 
       --  Only remember the last 100 commands.
       Set_Max_Length (Get_History (Kernel).all, 100, "shell");

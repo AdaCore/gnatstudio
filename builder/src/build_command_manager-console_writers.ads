@@ -17,8 +17,9 @@
 
 --  Declare parser to write each output item to console.
 
-with Commands; use Commands;
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with Ada.Calendar;
+with Commands;                  use Commands;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 with Interactive_Consoles;
 
 package Build_Command_Manager.Console_Writers is
@@ -30,12 +31,17 @@ package Build_Command_Manager.Console_Writers is
       Item    : String;
       Command : Command_Access);
 
-   type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+   overriding procedure End_Of_Stream
+     (Self    : not null access Console_Writer;
+      Status  : Integer;
+      Command : Command_Access);
 
-   procedure Set_Console
+   type Output_Parser_Fabric is
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
+
+   procedure Set
      (Self    : access Output_Parser_Fabric;
-      Console : Interactive_Consoles.Interactive_Console);
+      Builder : Builder_Context);
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -46,12 +52,17 @@ package Build_Command_Manager.Console_Writers is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with record
-      Console : Interactive_Consoles.Interactive_Console;
+     new GPS.Tools_Output.Output_Parser_Fabric with record
+      Builder : Builder_Context;
    end record;
 
    type Console_Writer is new Tools_Output_Parser with record
-      Console : Interactive_Consoles.Interactive_Console;
+      Builder        : Builder_Context;
+      Build          : Build_Information;
+      Console        : Interactive_Consoles.Interactive_Console;
+      Raise_On_Error : Boolean;
+      Show_Status    : Boolean;
+      Start_Time     : Ada.Calendar.Time;
    end record;
 
 end Build_Command_Manager.Console_Writers;

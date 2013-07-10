@@ -367,7 +367,7 @@ package body Vdiff2_Module is
          Default  => "#FDE66A");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Kernel, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "vdiff2.preferences_changed");
       Add_Hook

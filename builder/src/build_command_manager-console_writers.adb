@@ -15,7 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interactive_Consoles;      use Interactive_Consoles;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Interactive_Consoles;         use Interactive_Consoles;
+with Build_Configurations;         use Build_Configurations;
+with String_Utils;                 use String_Utils;
+with Time_Utils;                   use Time_Utils;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Kernel.Messages.Legacy;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
 package body Build_Command_Manager.Console_Writers is
 
@@ -26,14 +34,132 @@ package body Build_Command_Manager.Console_Writers is
    overriding function Create
      (Self  : access Output_Parser_Fabric;
       Child : Tools_Output_Parser_Access)
-      return Tools_Output_Parser_Access is
+      return Tools_Output_Parser_Access
+   is
+      Build          : Build_Information := Self.Builder.Get_Last_Build;
+      Show_Status    : constant Boolean :=
+        not (Build.Shadow or else Build.Background or else Build.Quiet);
+      Raise_On_Error : Boolean := False;
+      Cmd_Console    : Interactive_Console;
+      Console        : Interactive_Console;
    begin
-      if Self.Console =  null then
+      if Is_Run (Build.Target) then
+         if not Build.Quiet then
+            Cmd_Console := Get_Build_Console
+              (Kernel_Handle (Self.Builder.Kernel),
+               Build.Shadow, Build.Background, False,
+               "Run: " & Build.Main.Display_Base_Name);
+
+            --  Update console in Builder.Last_Build
+            Build.Console := Cmd_Console.Get_Console_Messages_Window;
+            Self.Builder.Set_Last_Build (Build);
+
+            if Show_Status then
+               Build.Console.Raise_Console (Give_Focus => True);
+               Build.Console.Clear;
+            end if;
+
+            if not Build.Background then
+               Console := Cmd_Console;
+            end if;
+         end if;
+      else
+         Cmd_Console := Get_Build_Console
+           (Kernel_Handle (Self.Builder.Kernel),
+            Shadow              => Build.Shadow,
+            Background          => Build.Background,
+            Create_If_Not_Exist => True);
+
+         --  Update console in Builder.Last_Build
+         Build.Console := Cmd_Console.Get_Console_Messages_Window;
+         Self.Builder.Set_Last_Build (Build);
+
+         if Show_Status then
+            Build.Console.Raise_Console (Give_Focus => False);
+         end if;
+
+         Console := Cmd_Console;
+
+         if not Build.Background then
+            Raise_On_Error := True;
+         end if;
+      end if;
+
+      if Console =  null then
          return Child;
       else
-         return new Console_Writer'(Child => Child, Console => Self.Console);
+         return new Console_Writer'(Child          => Child,
+                                    Builder        => Self.Builder,
+                                    Build          => Build,
+                                    Console        => Console,
+                                    Raise_On_Error => Raise_On_Error,
+                                    Show_Status    => Show_Status,
+                                    Start_Time     => Ada.Calendar.Clock);
       end if;
    end Create;
+
+   -------------------
+   -- End_Of_Stream --
+   -------------------
+
+   overriding procedure End_Of_Stream
+     (Self    : not null access Console_Writer;
+      Status  : Integer;
+      Command : Command_Access)
+   is
+      use GPS.Kernel.Messages.Legacy;
+      Kernel  : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
+   begin
+      if Self.Show_Status then
+         declare
+            End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+            Time_Stamp : constant String := Timestamp (End_Time);
+            Msg : Unbounded_String;
+            Progress : constant Progress_Record := Command.Progress;
+         begin
+            Msg := To_Unbounded_String (Time_Stamp);
+
+            if Status = 0 then
+               Append (Msg, -"process terminated successfully");
+            else
+               Append (Msg, -"process exited with status " & Image (Status));
+            end if;
+
+            if Progress.Current /= 0
+               and then Progress.Total > 1
+               and then (Status /= 0
+                         or else Progress.Current /= Progress.Total)
+            then
+               Append
+                  (Msg,
+                   ","
+                   & Integer'Image (100 * Progress.Current / Progress.Total)
+                   & "% ("
+                   & Image (Progress.Current, Min_Width => 1)
+                   & "/"
+                   & Image (Progress.Total, Min_Width => 1)
+                   & ")");
+            end if;
+
+            Append
+               (Msg, ", elapsed time: "
+                & Elapsed (Self.Start_Time, End_Time) & "s");
+
+            Self.Console.Insert (To_String (Msg));
+         end;
+      end if;
+
+      --  Raise the messages window is compilation was unsuccessful
+      --  and no error was parsed. See D914-005
+
+      if Self.Raise_On_Error and then Status /= 0 and then
+        Category_Count (Kernel, To_String (Self.Build.Category)) = 0
+      then
+         Kernel.Raise_Console;
+      end if;
+
+      Tools_Output_Parser (Self.all).End_Of_Stream (Status, Command);
+   end End_Of_Stream;
 
    ---------------------------
    -- Parse_Standard_Output --
@@ -48,15 +174,15 @@ package body Build_Command_Manager.Console_Writers is
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
-   -----------------
-   -- Set_Console --
-   -----------------
+   ---------
+   -- Set --
+   ---------
 
-   procedure Set_Console
+   procedure Set
      (Self    : access Output_Parser_Fabric;
-      Console : Interactive_Consoles.Interactive_Console) is
+      Builder : Builder_Context) is
    begin
-      Self.Console := Console;
-   end Set_Console;
+      Self.Builder := Builder;
+   end Set;
 
 end Build_Command_Manager.Console_Writers;

@@ -40,7 +40,7 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -69,8 +69,8 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Basic_Types;               use Basic_Types;
 with Creation_Wizard;           use Creation_Wizard;
 with File_Utils;                use File_Utils;
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -433,7 +433,7 @@ package body Project_Properties is
 
    type List_Attribute_Editor_Record is new Attribute_Editor_Record with record
       Model : Gtk_Tree_Store;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
    end record;
    type List_Attribute_Editor is access all List_Attribute_Editor_Record'Class;
 
@@ -2748,10 +2748,10 @@ package body Project_Properties is
          end if;
 
          if Editable then
-            Gtk_New_Combo_Text_With_Entry (Editor.Combo);
+            Gtk_New_With_Entry (Editor.Combo);
             Set_Activates_Default (Gtk_Entry (Editor.Combo.Get_Child), True);
          else
-            Gtk_New_Text (Editor.Combo);
+            Gtk_New (Editor.Combo);
          end if;
       end if;
 
@@ -2862,7 +2862,7 @@ package body Project_Properties is
 
             Gtk_New (Scrolled);
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True);
+            Pack_Start (Get_Content_Area (Dialog), Scrolled, Expand => True);
 
             Tree := Create_Tree_View
               (Column_Types       => (0 => GType_Boolean,
@@ -2872,7 +2872,7 @@ package body Project_Properties is
                Show_Column_Titles => False,
                Initial_Sort_On    => 2);
             Add (Scrolled, Tree);
-            Model := Gtk_Tree_Store (Get_Model (Tree));
+            Model := -Get_Model (Tree);
 
             case Filter is
                when Filter_From_Project =>
@@ -3163,7 +3163,7 @@ package body Project_Properties is
             Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
             Relative : constant String := Get_String (Ed.Model, Iter, 2);
          begin
-            Iter_Copy (Iter, Dest => Iter2);
+            Iter2 := Iter;
             Next (Ed.Model, Iter);
 
             if Iter /= Null_Iter then
@@ -3498,7 +3498,8 @@ package body Project_Properties is
             Set_Text (Ent, Get_Current_Value
                       (Project, Description, Index => Attribute_Index));
             Set_Activates_Default (Ent, True);
-            Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+            Pack_Start
+              (Get_Content_Area (Dialog), Ent, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
@@ -3527,7 +3528,7 @@ package body Project_Properties is
             Dialog.Set_Size_Request (600, 400);
 
             Gtk_New (Scrolled);
-            Dialog.Get_Vbox.Pack_Start (Scrolled, True, True);
+            Dialog.Get_Content_Area.Pack_Start (Scrolled, True, True);
 
             View := Create_Tree_View
               (Column_Types    => (1 => GType_String),
@@ -3535,7 +3536,7 @@ package body Project_Properties is
                Selection_Mode  => Gtk.Enums.Selection_Multiple,
                Initial_Sort_On => 1);
             Scrolled.Add (View);
-            Model := Gtk_Tree_Store (View.Get_Model);
+            Model := -View.Get_Model;
             Selection := View.Get_Selection;
 
             declare
@@ -3644,7 +3645,8 @@ package body Project_Properties is
                Get_Current_Value
                  (Project, Description, Index => Attribute_Index),
                Case_Sensitive => Description.Case_Sensitive_Index);
-            Pack_Start (Get_Vbox (Dialog), W, Expand => True, Fill => True);
+            Pack_Start
+              (Get_Content_Area (Dialog), W, Expand => True, Fill => True);
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Grab_Default (Button);
@@ -4177,9 +4179,12 @@ package body Project_Properties is
       Ignore         : Gtk_Widget;
       pragma Unreferenced (Ignore);
       Typ            : Attribute_Type;
+      X, Y           : Gdouble;
    begin
+      Get_Coords (Event, X, Y);
+
       Get_Path_At_Pos
-        (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+        (Ed.View, Gint (X), Gint (Y),
          Path, Column, Cell_X, Cell_Y, Row_Found);
 
       if Row_Found
@@ -4212,7 +4217,7 @@ package body Project_Properties is
                   Attribute_Index => Attribute_Index,
                   Path_Widget     => Ed.Path_Widget,
                   Is_List         => True);
-               Pack_Start (Get_Vbox (Dialog), Value_Ed,
+               Pack_Start (Get_Content_Area (Dialog), Value_Ed,
                            Expand => True, Fill => True);
                Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
                Grab_Default (Button);
@@ -4739,27 +4744,23 @@ package body Project_Properties is
          Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Name (Editor, "Project Properties"); --  For testsuite
-      Set_Policy
-        (Editor,
-         Allow_Shrink => False,
-         Allow_Grow   => True,
-         Auto_Shrink  => True);
       Realize (Editor);
 
       Gtk_New (Editor.Errors);
-      Pack_Start (Get_Vbox (Editor), Editor.Errors, Expand => False);
+      Pack_Start (Get_Content_Area (Editor), Editor.Errors, Expand => False);
       Set_No_Show_All (Editor.Errors, No_Show_All => True);
 
       Gtk_New_Hpaned (Main_Box);
-      Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Main_Box, Expand => True, Fill => True);
 
       Gtk_New (Editor.Note);
       Set_Name (Editor.Note, "Project Properties Notebook"); --  Testsuite
       Set_Tab_Pos (Editor.Note, Pos_Left);
-      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => True);
+      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => False);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack2 (Main_Box, Box, Resize => False, Shrink => True);
+      Pack2 (Main_Box, Box, Resize => False, Shrink => False);
 
       Gtk_New (Label, -"Apply changes to:");
       Set_Alignment (Label, 0.0, 0.0);
@@ -5154,7 +5155,7 @@ package body Project_Properties is
       Flags                : Selector_Flags;
    begin
       if Page >= Pages_From_XML_Count
-        and then not In_Destruction_Is_Set (Ed)
+        and then not Ed.In_Destruction
       then
          --  Some pages might not be visible though...
          P := Get_Nth_Project_Editor_Page
@@ -5214,12 +5215,12 @@ package body Project_Properties is
 
       Gtk_New (L, Message);
       Set_Alignment (L, 0.0, 0.5);
-      Pack_Start (Get_Vbox (D), L, Expand => True, Fill => True);
+      Pack_Start (Get_Content_Area (D), L, Expand => True, Fill => True);
 
       if not Always_Load_Source then
          Gtk_New (C, -"Edit the project file");
          Set_Active (C, True);
-         Pack_End (Get_Vbox (D), C, Expand => False);
+         Pack_End (Get_Content_Area (D), C, Expand => False);
       end if;
 
       if Always_Load_Source then

@@ -1,0 +1,408 @@
+"""
+Defines the standard project attributes.
+
+THIS PLUG-IN MUST BE LOADED.
+
+This plug-in defines the standard project attributes, and how they should
+be edited graphically in the project properties editor. If you do not
+load this script, GPS will display a number of warnings in its Messages
+window when a project is loaded
+"""
+
+
+
+import GPS
+
+XML = r"""<?xml version="1.0" ?>
+<GPS>
+   <project_attribute
+       name="languages"
+       editor_page="Languages"
+       editor_section="Languages"
+       label=""
+       description="List of languages for the source files of this project"
+       hide_in="properties"
+       list="true">
+       <shell default="Ada">supported_languages</shell>
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="Compiler_Command"
+       package="IDE"
+       editor_page="Languages"
+       editor_section="Tools"
+       description="The command to compile the source files for a given language"
+       hide_in="all"
+       label="compiler">
+       <index attribute="Languages">
+          <string />
+       </index>
+       <specialized_index value="Ada">
+          <choice default="true" >gnatmake</choice>
+       </specialized_index>
+   </project_attribute>
+
+   <project_attribute
+       name="gnatlist"
+       package="IDE"
+       editor_page="Languages"
+       editor_section="Tools"
+       description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
+       hide_in="all"
+       label="Gnatls">
+       <choice default="true" >gnatls</choice>
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="gnat"
+       package="IDE"
+       editor_page="Languages"
+       editor_section="Tools"
+       description="The gnat driver used to run the various commands associated with the GNAT toolchain"
+       hide_in="all"
+       label="Gnat">
+       <choice default="true" >gnat</choice>
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="debugger_command"
+       package="IDE"
+       editor_page="Languages"
+       editor_section="Tools"
+       description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
+       hide_in="all"
+       label="Debugger">
+       <choice default="true" >gdb</choice>
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="global_configuration_pragmas"
+       package="Builder"
+       editor_page="General"
+       editor_section="External configuration"
+       description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
+       label="Global pragmas"
+       hide_in="wizard library_wizard">
+       <string type="file" />
+   </project_attribute>
+
+   <project_attribute
+       name="local_configuration_pragmas"
+       package="Compiler"
+       editor_page="General"
+       editor_section="External configuration"
+       description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
+       label="Local pragmas"
+       hide_in="wizard library_wizard">
+       <string type="file" />
+   </project_attribute>
+
+   <project_attribute
+       name="program_host"
+       package="IDE"
+       editor_page="General"
+       editor_section="Cross environment"
+       description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
+       hide_in="wizard library_wizard"
+       label="Program host">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="communication_protocol"
+       package="IDE"
+       editor_page="General"
+       editor_section="Cross environment"
+       description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
+       hide_in="wizard library_wizard"
+       label="Protocol">
+       <choice>wtx</choice>
+       <choice>dfw</choice>
+       <choice>dfw-rtp</choice>
+       <choice>remote</choice>
+       <string />
+   </project_attribute>
+
+   <!--  VCS attributes -->
+
+   <project_attribute
+       name="vcs_kind"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="System"
+       description="Name of the version control system that you are using"
+       label="System">
+       <shell default="None" >VCS.supported_systems</shell>
+   </project_attribute>
+
+   <project_attribute
+       name="vcs_log_check"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="Actions"
+       description="Application run on the log file/revision history just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the log file"
+       label="Log checker">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="vcs_file_check"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="Actions"
+       description="Application run on the source file just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the source file"
+       label="File checker">
+       <string />
+    </project_attribute>
+
+    <project_attribute
+       name="vcs_repository_root"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="Path"
+       description="The repository root path"
+       label="Repository">
+       <string />
+    </project_attribute>
+
+    <project_attribute
+       name="vcs_patch_root"
+       package="IDE"
+       editor_page="VCS"
+       editor_section="Path"
+       description="The root directory to use for building patch file. The root project directory is used if this value is not defined."
+       label="Patch">
+       <string />
+    </project_attribute>
+
+    <!-- Sources directories -->
+
+    <project_attribute
+        name="source_dirs"
+        editor_page="Source dirs"
+        editor_section="Source directories"
+        list="true"
+        ordered="true"
+        description="List of directories that contain the source files. You can specify that a directory and all its subdirectories should be included by checking the Recursive checkbox"
+        label="">
+        <string type="directory" default="." />
+    </project_attribute>
+
+    <!--  Source files -->
+
+    <project_attribute
+        name="source_list_file"
+        editor_page="Source files"
+        description="Name of a file that contains the list of source files for this project. The names should appear one per line. The names should not include any directory information, since this is taken from the list of source directories. This attribute is ignored if an explicit list of sources is given."
+        disable_if_not_set="true"
+        disable="source_files"
+        hide_in="wizard library_wizard"
+        label="Source list file">
+        <string type="file" default="" />
+    </project_attribute>
+
+    <project_attribute
+        name="source_files"
+        editor_page="Source files"
+        list="true"
+        base_name_only="true"
+        disable_if_not_set="true"
+        disable="source_list_file"
+        hide_in="wizard library_wizard"
+        description="List of source files for this project. These are the base name of the files, and should not include any directory information. This attribute is not compatible with Source List File.">
+        <string type="file" default="project source files" />
+    </project_attribute>
+
+    <!--  Locally removed files -->
+
+    <project_attribute
+        name="locally_removed_files"
+        label="files"
+        editor_page="Hidden files"
+        editor_section="Locally removed files"
+        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project"
+        disable_if_not_set="true"
+        hide_in="library_wizard wizard"
+        list="true"
+        base_name_only="true">
+        <string type="file" filter="extended_project" default="" />
+    </project_attribute>
+
+    <!--  Object directories -->
+
+    <project_attribute
+        name="object_dir"
+        editor_page="Objects"
+        description="The name of the directories in which the files generated by the compiler will be put. This include object files and any other file that your compiler generates as a by-product of the compilation. If you need multiple object directories, you must create multiple project files that import each other. The directory is relative to the project directory (thus '.' means the project directory)."
+        label="Build directory">
+        <string type="directory" default="." allow_empty="False"/>
+    </project_attribute>
+
+    <project_attribute
+        name="exec_dir"
+        editor_page="Objects"
+        description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
+        label="Exec directory"
+        omit_if_default="true">
+        <string type="directory" default="(same as build directory)" allow_empty="False" />
+    </project_attribute>
+
+    <project_attribute
+        name="documentation_dir"
+        package="IDE"
+        editor_page="Objects"
+        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified"
+        label="Doc directory"
+        omit_if_default="true">
+        <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
+    </project_attribute>
+
+    <!--  Main units -->
+
+    <project_attribute
+        name="main"
+        editor_page="Main files"
+        editor_section="Main files"
+        list="true"
+        description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications"
+        label=""
+        base_name_only="true" >
+        <string type="file" filter="project" />
+   </project_attribute>
+
+   <project_attribute
+       name="executable_suffix"
+       package="builder"
+       editor_page="Main files"
+       label="Default suffix"
+       description="The default suffix for executables generated by the builder. This default can be overriden by modifying the list of executable names below.">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="executable"
+       package="Builder"
+       editor_page="Main files"
+       editor_section="Executable names"
+       description="Name of the executable generated when compiling each of the main units"
+       case_sensitive_index="file"
+       label="">
+       <index attribute="main">
+          <string default="(same as main unit, minus extension)"/>
+       </index>
+   </project_attribute>
+
+   <project_attribute
+       name="library_name"
+       editor_page="Library"
+       editor_section="General"
+       label="Library Name"
+       hide_in="wizard"
+       description="Name of the library that will contain all the object files from this project. You must chose a name which is valid for your platform.">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="library_dir"
+       editor_page="Library"
+       editor_section="General"
+       label="Library Directory"
+       hide_in="wizard"
+       description="Directory in which the library will be copied as a result of the compilation. Some extra files will be copied in this directory as well, for instance the ALI file for Ada sources. This directory must be different from the object directory">
+       <string type="directory"/>
+   </project_attribute>
+
+   <project_attribute
+       name="library_ali_dir"
+       editor_page="Library"
+       editor_section="General"
+       label="Library ALI Directory"
+       hide_in="wizard"
+       description="Directory in which the ALI files needed by the GNAT compiler will be copied when the library is installed. By default, this will be the same as the Library Directory. This attribute requires a recent version of GNAT">
+       <string type="directory"/>
+   </project_attribute>
+
+   <project_attribute
+       name="library_kind"
+       editor_page="Library"
+       editor_section="General"
+       label="Library Kind"
+       hide_in="wizard"
+       description="The kind of library that should be built. If you need to build different kinds of libraries, it is recommend to select a different library directory for each, since the object files might need to be compiled differently in each case">
+       <choice default="true">static</choice>
+       <choice>dynamic</choice>
+   </project_attribute>
+
+   <project_attribute
+       name="library_version"
+       editor_page="Library"
+       editor_section="General"
+       label="Version"
+       hide_in="wizard"
+       description="The version of the library. This is a platform depend string, and you should make sure it is valid for your platform.">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="linker_options"
+       package="linker"
+       editor_page="Library"
+       editor_section="General"
+       label="Linker options"
+       hide_in="wizard"
+       list="true"
+       description="Additional linker switches used when linking an executable. This attribute is ignored in the main project, and only used from dependent projects.">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="externally_built"
+       editor_page="Library"
+       editor_section="General"
+       label="Externally Built"
+       hide_in="wizard"
+       description="Set this attribute to True if the compiler should not check whether the library is up-to-date. As a result, the sources do not need to be
+available, apart of course for the spec files and the bodies of generic packages">
+       <choice default="true">False</choice>
+       <choice>True</choice>
+   </project_attribute>
+
+   <project_attribute
+       name="library_interface"
+       editor_page="Library"
+       editor_section="Standalone library"
+       label="Interface"
+       hide_in="wizard"
+       description="This attribute is optional. If it is defined, it should contain the list of units that are the public interface to the library. All other units will not be accessible by users of the library. If this attribute is defined, the library will be a standalone library."
+       list="true">
+       <string type="unit" />
+   </project_attribute>
+
+   <project_attribute
+       name="library_auto_init"
+       editor_page="Library"
+       editor_section="Standalone library"
+       label="Auto Init"
+       hide_in="wizard"
+       description="If this attribute is true, then the standalone library will be automatically initialized when part of the project. If this attribute is false, you need to call some special elaboration code yourself. You must define the interface to the library as well.">
+       <choice default="true">True</choice>
+       <choice>False</choice>
+   </project_attribute>
+
+   <project_attribute
+       name="library_src_dir"
+       editor_page="Library"
+       editor_section="Standalone library"
+       label="Source directory"
+       hide_in="wizard"
+       description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory">
+       <string type="directory" />
+   </project_attribute>
+</GPS>
+"""
+
+GPS.parse_xml(XML)

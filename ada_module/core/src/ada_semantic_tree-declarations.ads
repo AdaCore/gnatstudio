@@ -114,8 +114,12 @@ package Ada_Semantic_Tree.Declarations is
    --  (in which case Seeked_Name is the beginning of Tested_Name), false
    --  otherwise
 
-   function To_Declaration (Entity : Entity_Access) return Entity_View;
+   function To_Declaration
+     (Entity : Entity_Access; Is_Accessible : Boolean := True)
+      return Entity_View;
    --  Return the declaration view of the entity given in parameter.
+   --  Is_Accessible is an optional parameter specifying if the view
+   --  should be seen as accessible in the context of the search
 
    -----------------------------
    -- Declaration_View_Record --
@@ -125,10 +129,14 @@ package Ada_Semantic_Tree.Declarations is
       Profile         : List_Profile_Access;
       Actuals         : Actual_Parameter_Resolver_Access := null;
       Generic_Context : Instance_Info;
+      Is_Accessible   : Boolean := True;
    end record;
 
    overriding function Get_Name
      (E : access Declaration_View_Record) return UTF8_String;
+
+   overriding function Is_Accessible
+     (E : access Declaration_View_Record) return Boolean;
 
    overriding procedure Fill_Children
      (E               : access Declaration_View_Record;

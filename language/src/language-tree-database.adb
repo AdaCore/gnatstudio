@@ -112,8 +112,11 @@ package body Language.Tree.Database is
    function Get_Profile
      (Lang       : access Tree_Language;
       Entity     : Entity_Access;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format : Boolean := False) return String
    is
+      pragma Unreferenced (Color_For_Optional_Param);
+
       Tree   : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
       Buffer : constant GNAT.Strings.String_Access :=

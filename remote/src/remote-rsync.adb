@@ -34,12 +34,13 @@ with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 
-with GPS.Intl;              use GPS.Intl;
-with GPS.Kernel.Console;    use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;     use GPS.Kernel.Remote;
-with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
+with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Console;               use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
+with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 
 with Commands;              use Commands;
 with Password_Manager;      use Password_Manager;
@@ -183,22 +184,21 @@ package body Remote.Rsync is
    begin
       Dialog := new Rsync_Dialog_Record;
       Initialize (Dialog, -"Synchronisation in progress",
-                  Get_Main_Window (Kernel), 0);
-      Set_Has_Separator (Dialog, False);
+                  Get_Main_Window (Kernel), No_Separator);
       Gtk_New (Label, -"Synchronisation with remote host in progress.");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"From: ") & "<span foreground=""blue"">" &
                   Src_Path.Display_Full_Name & "</span>");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"To: ") & "<span foreground=""blue"">" &
                   Dest_Path.Display_Full_Name & "</span>");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Dialog.Progress);
-      Pack_Start (Get_Vbox (Dialog), Dialog.Progress);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Progress);
       Gtk_New (Dialog.File_Progress);
-      Pack_Start (Get_Vbox (Dialog), Dialog.File_Progress);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.File_Progress);
       Gtk_New_From_Stock (Dialog.Abort_Button, Stock_Cancel);
       Add_Action_Widget (Dialog, Dialog.Abort_Button, Gtk_Response_Cancel);
       Dialog.Aborted := False;
@@ -424,7 +424,7 @@ package body Remote.Rsync is
                     (Cb_Data.Dialog.Abort_Button, Signal_Clicked,
                      On_Abort_Clicked'Access,
                      Cb_Data.Dialog);
-                  Gtk.Main.Grab_Add (Cb_Data.Dialog);
+                  Cb_Data.Dialog.Grab_Add;
                end if;
 
                Real_Print_Output :=
@@ -783,8 +783,8 @@ package body Remote.Rsync is
       Trace (Me, "Rsync_Terminated");
 
       if Cb_Data.Synchronous and then Cb_Data.Dialog /= null then
-         Hide_All (Cb_Data.Dialog);
-         Gtk.Main.Grab_Remove (Cb_Data.Dialog);
+         Hide (Cb_Data.Dialog);
+         Cb_Data.Dialog.Grab_Remove;
          Cb_Data.Dialog := null;
       end if;
 

@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
+with Ada.Strings.Unbounded;
 
 package Aliases_Module is
+   package SU renames Ada.Strings.Unbounded;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -54,5 +56,17 @@ package Aliases_Module is
    --  Func is the function called to get the replacement text for Special.
    --  Description is used in the contextual menu in the aliases editor to
    --  describe this special character.
+
+   type Alias_Info is record
+      Name : SU.Unbounded_String;
+      Expansion : SU.Unbounded_String;
+   end record;
+   No_Alias_Info : constant Alias_Info := (SU.Null_Unbounded_String,
+                                           SU.Null_Unbounded_String);
+
+   type Alias_Info_List is array (Positive range <>) of Alias_Info;
+
+   function Get_Aliases_List return Alias_Info_List;
+   function Get_Alias (Name : SU.Unbounded_String) return Alias_Info;
 
 end Aliases_Module;

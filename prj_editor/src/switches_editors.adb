@@ -783,7 +783,8 @@ package body Switches_Editors is
       end if;
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Fill => True, Expand => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Box, Fill => True, Expand => True);
 
       Gtk_New (Switches, Kernel);
       Switches.Kernel := Kernel_Handle (Kernel);

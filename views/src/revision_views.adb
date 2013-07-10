@@ -31,8 +31,10 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Gdk.Color;                  use Gdk.Color;
+with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Event;                  use Gdk.Event;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -56,7 +58,6 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
@@ -95,7 +96,7 @@ package body Revision_Views is
       Mode         : Mode_Kind := Link;
       Syms         : String_Hash_Table.Instance;
       File         : Virtual_File;
-      Root_Color   : Gdk_Color;
+      Root_Color   : Gdk_RGBA;
       Child        : MDI_Child;
    end record;
 
@@ -206,13 +207,13 @@ package body Revision_Views is
    --  Get the Data at Iter
 
    function Sort_On_Date
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Sort tree on date field
 
    function Sort_On_Revision
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Sort tree on revision number field
@@ -313,9 +314,8 @@ package body Revision_Views is
    procedure Add_Link_If_Not_Present
      (View : Revision_View; Log_1, Log_2 : Log_Data)
    is
-      Model : constant Gtk_Tree_Model_Sort :=
-                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
-      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+      Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
 
       procedure Move (From : in out Gtk_Tree_Iter; To : Gtk_Tree_Iter);
       --  Move line pointed by From into To
@@ -328,7 +328,7 @@ package body Revision_Views is
          Line : constant Line_Data := Get_Data_From_Iter (View, From);
       begin
          Fill_Info (View, To, Line);
-         Remove (Store, From);
+         Remove (-Store, From);
       end Move;
 
       Rev_1 : Gtk_Tree_Iter := Find_Revision (View, Log_1);
@@ -354,7 +354,7 @@ package body Revision_Views is
                Path := Get_Path (Store, Rev_1);
 
                loop
-                  Append (Store, Iter, Parent);
+                  Append (-Store, Iter, Parent);
 
                   if Parent = Rev_2 then
                      --  The first node becomes the parent of the next
@@ -384,11 +384,11 @@ package body Revision_Views is
                --  Check if we need to reparent Rev_1 under Rev_2
 
                if To_String (Log_1.Revision) /= To_String (View.Prev2) then
-                  Append (Store, Iter, Rev_2);
+                  Append (-Store, Iter, Rev_2);
                   Move (Rev_1, Iter);
                   View.Parent := Rev_2;
                else
-                  Set (Store, Rev_2, Link_Column, True);
+                  Set (-Store, Rev_2, Link_Column, True);
                end if;
             end if;
       end case;
@@ -401,9 +401,8 @@ package body Revision_Views is
    procedure Add_Log_If_Not_Present
      (View : Revision_View; Log : Log_Data; Expand : Boolean)
    is
-      Model : constant Gtk_Tree_Model_Sort :=
-                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
-      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+      Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
+      Store : constant Gtk_Tree_Store := -Get_Model (Model);
       Iter  : Gtk_Tree_Iter := Find_Revision (View, Log);
    begin
       if Iter = Null_Iter then
@@ -534,7 +533,7 @@ package body Revision_Views is
       Dummy_Model : Gtk_Tree_Model;
    begin
       if Event /= null then
-         Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+         Iter := Find_Iter_For_Event (V.Tree, Event);
       else
          Get_Selected (Selection => Get_Selection (V.Tree),
                        Model     => Dummy_Model,
@@ -618,9 +617,8 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter;
       Line : Line_Data)
    is
-      Model : constant Gtk_Tree_Model_Sort :=
-                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
-      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+      Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
 
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
@@ -629,20 +627,20 @@ package body Revision_Views is
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
    begin
-      Set (Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
-      Set (Store, Iter, Revision_Column, To_String (Line.Log.Revision));
-      Set (Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
-      Set (Store, Iter, Author_Column, To_String (Line.Log.Author));
-      Set (Store, Iter, Date_Column, To_String (Line.Log.Date));
-      Set (Store, Iter, Log_Column, To_String (Line.Log.Log));
-      Set (Store, Iter, Link_Column, Line.Link);
+      Set (-Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
+      Set (-Store, Iter, Revision_Column, To_String (Line.Log.Revision));
+      Set (-Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
+      Set (-Store, Iter, Author_Column, To_String (Line.Log.Author));
+      Set (-Store, Iter, Date_Column, To_String (Line.Log.Date));
+      Set (-Store, Iter, Log_Column, To_String (Line.Log.Log));
+      Set (-Store, Iter, Link_Column, Line.Link);
       Info := Line.Log.Date;
 
       --  Create log entry
 
-      Append (Store, Child, Iter);
-      Set (Store, Child, Color_Column, C_Proxy'(null));
-      Set (Store, Child, Info_Column, To_String (Line.Log.Log));
+      Append (-Store, Child, Iter);
+      Set (-Store, Child, Color_Column, C_Proxy'(null));
+      Set (-Store, Child, Info_Column, To_String (Line.Log.Log));
 
       --  Tags & Branches
 
@@ -662,9 +660,9 @@ package body Revision_Views is
             Node := SL.First (List);
 
             while Node /= SL.Null_Node loop
-               Append (Store, Child, Iter);
-               Set (Store, Child, Info_Column, "tag: " & SL.Data (Node));
-               Set (Store, Child, Rev_Info_Column, SL.Data (Node));
+               Append (-Store, Child, Iter);
+               Set (-Store, Child, Info_Column, "tag: " & SL.Data (Node));
+               Set (-Store, Child, Rev_Info_Column, SL.Data (Node));
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -678,7 +676,7 @@ package body Revision_Views is
          end if;
       end;
 
-      Set (Store, Iter, Info_Column, To_String (Info));
+      Set (-Store, Iter, Info_Column, To_String (Info));
    end Fill_Info;
 
    ------------------------
@@ -689,9 +687,8 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Line_Data
    is
-      Model : constant Gtk_Tree_Model_Sort :=
-                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
-      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+      Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
+      Store : constant Gtk_Tree_Model := Get_Model (Model);
       Log   : Log_Data;
    begin
       Log.Revision := +Get_String (Store, Iter, Rev_Info_Column);
@@ -706,7 +703,7 @@ package body Revision_Views is
    ------------------
 
    function Sort_On_Date
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
@@ -807,7 +804,7 @@ package body Revision_Views is
    ----------------------
 
    function Sort_On_Revision
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
@@ -897,26 +894,31 @@ package body Revision_Views is
       -------------------
 
       procedure Set_Attribute (Col : Gint) is
-         List : Cell_Renderer_List.Glist;
+         List : Glib.Object.Object_Simple_List.Glist;
       begin
-         List := Get_Cell_Renderers (Get_Column (View.Tree, Col));
+         List := Get_Cells (+Get_Column (View.Tree, Col));
          Add_Attribute
            (Get_Column (View.Tree, Col),
-            Cell_Renderer_List.Get_Data (List),
-            "foreground_gdk", Color_Column);
-         Free (List);
+            Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
+            "foreground_rgba", Color_Column);
+         Object_Simple_List.Free (List);
       end Set_Attribute;
 
       Names   : GNAT.Strings.String_List :=
                   (1 => new String'(-"Revision"),
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));
-      Success : Boolean;
+      Scrolled : Gtk_Scrolled_Window;
+      Success  : Boolean;
 
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Revision_Column => GType_String,
@@ -925,7 +927,7 @@ package body Revision_Views is
                                 Date_Column     => GType_String,
                                 Log_Column      => GType_String,
                                 Link_Column     => GType_Boolean,
-                                Color_Column    => Gdk_Color_Type,
+                                Color_Column    => Gdk.RGBA.Get_Type,
                                 Rev_Info_Column => GType_String),
          Column_Names       => Names,
          Show_Column_Titles => True,
@@ -941,14 +943,12 @@ package body Revision_Views is
          Set_Sort_Func (+S_Model, Revision_Column, Sort_On_Revision'Access);
          Set_Sort_Func (+S_Model, Info_Column, Sort_On_Date'Access);
 
-         Set_Model (View.Tree, Gtk_Tree_Model (S_Model));
+         Set_Model (View.Tree, +S_Model);
       end Adjust_Model;
 
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
-      View.Root_Color := Parse (Root_Color_Name);
-      Alloc_Color
-        (Get_Default_Colormap, View.Root_Color, False, True, Success);
+      Parse (View.Root_Color, Root_Color_Name, Success);
 
       Set_Attribute (Revision_Column);
       Set_Attribute (Author_Column);
@@ -978,9 +978,8 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Log  : Log_Data) return Gtk_Tree_Iter
    is
-      Model  : constant Gtk_Tree_Model_Sort :=
-                 Gtk_Tree_Model_Sort (Get_Model (View.Tree));
-      Store  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+      Model  : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
+      Store  : constant Gtk_Tree_Model := Get_Model (Model);
       Rev    : constant String := To_String (Log.Revision);
       Result : Gtk_Tree_Iter := Null_Iter;
 
@@ -993,10 +992,8 @@ package body Revision_Views is
 
       procedure Iterate (Iter : Gtk_Tree_Iter) is
          Quit : Boolean := False;
-         J    : Gtk_Tree_Iter;
+         J    : Gtk_Tree_Iter := Iter;
       begin
-         Iter_Copy (Iter, J);
-
          while not Quit and then J /= Null_Iter loop
             if Has_Child (Store, J) then
                Iterate (Children (Store, J));
@@ -1004,7 +1001,7 @@ package body Revision_Views is
 
             if Get_String (Store, J, Rev_Info_Column) = Rev then
                Quit := True;
-               Iter_Copy (J, Result);
+               Result := J;
                return;
             end if;
 
@@ -1046,8 +1043,6 @@ package body Revision_Views is
 
          Gtk_New (GPS_MDI_Child (Child), View,
                   Focus_Widget   => Gtk_Widget (View.Tree),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Consoles,
                   Module         => Revision_View_Module_ID);
          View.Child := Child;

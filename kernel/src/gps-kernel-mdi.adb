@@ -26,8 +26,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
-with Gdk.Color; use Gdk; use Gdk.Color;
-with Gdk.Window;
+with Gdk;      use Gdk;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -37,9 +36,11 @@ with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -56,20 +57,16 @@ with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
-with GUI_Utils;                use GUI_Utils;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
-
-with Pango.Font;                use Pango.Font;
 
 with Glib.Xml_Int;
 with XML_Utils;                 use XML_Utils;
@@ -96,14 +93,14 @@ package body GPS.Kernel.MDI is
    Pref_Tabs_Position    : Tabs_Position_Preferences.Preference;
    MDI_Opaque            : Boolean_Preference;
    MDI_Destroy_Floats    : Boolean_Preference;
-   MDI_Background_Color  : Color_Preference;
    MDI_Title_Bar_Color   : Color_Preference;
    MDI_Focus_Title_Color : Color_Preference;
    MDI_All_Floating      : Boolean_Preference;
    MDI_Float_Short_Title : Boolean_Preference;
    MDI_Editors_Floating  : Boolean_Preference;
+   MDI_Homogeneous_Tabs  : Boolean_Preference;
 
-   Desktop_Name : constant Filesystem_String := "perspectives.xml";
+   Desktop_Name : constant Filesystem_String := "perspectives6.xml";
 
    -----------------------
    -- Local subprograms --
@@ -136,7 +133,7 @@ package body GPS.Kernel.MDI is
       if Child /= null then
          Widget := Get_Widget (Child);
 
-         if Realized_Is_Set (Widget) then
+         if Widget.Get_Realized then
             return Gtk_Window (Get_Toplevel (Widget));
          end if;
       end if;
@@ -175,7 +172,8 @@ package body GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) is
+      Desktop_Independent : Boolean := False)
+   is
    begin
       Gtkada.MDI.Initialize (Child, Widget, Flags, Group, Focus_Widget);
 
@@ -298,12 +296,14 @@ package body GPS.Kernel.MDI is
          Label   => -"Floating editors",
          Page    => "");  --  -"Windows"
 
-      MDI_Background_Color := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Background-Color",
-         Default => "#666666",
-         Doc     => -"Color to use for the background of the MDI",
-         Label   => -"Background color",
+      MDI_Homogeneous_Tabs  := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Homogeneous-Tabs",
+         Default => False,
+         Doc     =>
+           -("If enabled, the text in notebook tabs will never use ellipsis."
+             & " Changing this preference requires a restart of GPS."),
+         Label   => -"Homogeneous tabs",
          Page    => -"Windows");
 
       MDI_Title_Bar_Color := Create
@@ -324,37 +324,40 @@ package body GPS.Kernel.MDI is
 
       Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Title-Bars",
+         Name  => "GPS6-Window-Title-Bars",
          Label => -"Show title bars",
          Page  => -"Windows",
          Doc   => -("Whether the windows should have their own title bars."
            & " If this is disabled, then the notebooks tabs will"
            & " be highlighted to show the current window"),
-         Default => Always);
+         Default => Never);
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Tabs-Policy",
+         Name  => "GPS6-Window-Tabs-Policy",
          Label => -"Notebook tabs policy",
          Page  => -"Windows",
          Doc   => -"When the notebook tabs should be displayed",
-         Default => Automatic);
+         Default => Always);
 
       Pref_Tabs_Position := Tabs_Position_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Tabs-Position",
+         Name  => "GPS6-Window-Tabs-Position",
          Label => -"Notebook tabs position",
          Page  => -"Windows",
          Doc   => -("Where the tabs should be displayed relative to the"
            & " notebooks"),
-         Default => Bottom);
+         Default => Top);
    end Create_MDI_Preferences;
 
    -------------------
    -- Configure_MDI --
    -------------------
 
-   procedure Configure_MDI (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Configure_MDI
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference := null)
+   is
       Pos    : Gtk_Position_Type;
       Policy : Show_Tabs_Policy_Enum;
    begin
@@ -371,23 +374,44 @@ package body GPS.Kernel.MDI is
          when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
-      Configure
-        (Get_MDI (Kernel),
-         Opaque_Resize             => MDI_Opaque.Get_Pref,
-         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
-           and not MDI_Editors_Floating.Get_Pref,
-         Title_Font                => Default_Font.Get_Pref_Font,
-         Background_Color          => MDI_Background_Color.Get_Pref,
-         Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
-         Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
-         Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
-         Show_Tabs_Policy          => Policy,
-         Tabs_Position             => Pos);
+      if Pref = null
+        or else Pref = Preference (MDI_Opaque)
+        or else Pref = Preference (MDI_Destroy_Floats)
+        or else Pref = Preference (MDI_Editors_Floating)
+        or else Pref = Preference (Default_Font)
+        or else Pref = Preference (MDI_Title_Bar_Color)
+        or else Pref = Preference (MDI_Focus_Title_Color)
+        or else Pref = Preference (Pref_Titles_Policy)
+        or else Pref = Preference (Pref_Tabs_Position)
+        or else Pref = Preference (Pref_Tabs_Policy)
+        or else Pref = Preference (MDI_Homogeneous_Tabs)
+      then
+         Configure
+           (Get_MDI (Kernel),
+            Opaque_Resize             => MDI_Opaque.Get_Pref,
+            Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
+            and not MDI_Editors_Floating.Get_Pref,
+            Title_Font                => Default_Font.Get_Pref_Font,
+            Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
+            Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
+            Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
+            Show_Tabs_Policy          => Policy,
+            Tabs_Position             => Pos,
+            Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
+      end if;
 
-      Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (MDI_All_Floating)
+      then
+         Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
+      end if;
 
-      Use_Short_Titles_For_Floats
-        (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+      if Pref = null
+        or else Pref = Preference (MDI_Float_Short_Title)
+      then
+         Use_Short_Titles_For_Floats
+           (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
+      end if;
    end Configure_MDI;
 
    -----------------------
@@ -550,7 +574,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
          if Num_Unsaved > 1 then
             Gtk_New (Label);
@@ -560,15 +584,15 @@ package body GPS.Kernel.MDI is
                  (-"<span style=""oblique"">Select</span>") &
                  (-" label will select/unselect all"));
             Set_Alignment (Label, 0.0, 0.0);
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
          end if;
 
          Gtk_New (Scrolled);
          Set_Size_Request (Scrolled, -1, 150);
          Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-         Pack_Start (Get_Vbox (Dialog), Scrolled, Padding => 10);
+         Pack_Start (Get_Content_Area (Dialog), Scrolled, Padding => 10);
 
-         Gtk_New (View, Gtk_Tree_Model (Model));
+         Gtk_New (View, Model);
          Unref (Model);
 
          Set_Mode (Get_Selection (View), Selection_Single);
@@ -716,8 +740,7 @@ package body GPS.Kernel.MDI is
    -------------------------
 
    procedure Select_All_Children (View : access Gtk_Widget_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Model : constant Gtk_Tree_Store := -Get_Model (Gtk_Tree_View (View));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Value : Boolean;
 
@@ -740,8 +763,7 @@ package body GPS.Kernel.MDI is
      (View   : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Model       : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Model : constant Gtk_Tree_Store := -Get_Model (Gtk_Tree_View (View));
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : constant Gtk_Tree_Iter :=
                       Get_Iter_From_String (Model, Path_String);
@@ -827,30 +849,6 @@ package body GPS.Kernel.MDI is
         (Get_MDI (Kernel), Name, Kernel_Handle (Kernel));
    end Load_Perspective;
 
-   -------------------------
-   -- Set_Font_And_Colors --
-   -------------------------
-
-   procedure Set_Font_And_Colors
-     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Fixed_Font : Boolean)
-   is
-      Active_Bg : constant Gdk_Color := Darken_Or_Lighten
-        (Default_Font.Get_Pref_Bg);
-   begin
-      if Fixed_Font then
-         Modify_Font (Widget, View_Fixed_Font.Get_Pref);
-      else
-         Modify_Font (Widget, Default_Font.Get_Pref_Font);
-      end if;
-
-      Modify_Text (Widget, State_Normal, Default_Font.Get_Pref_Fg);
-      Modify_Text (Widget, State_Active, Default_Font.Get_Pref_Fg);
-
-      Modify_Base (Widget, State_Normal, Default_Font.Get_Pref_Bg);
-      Modify_Base (Widget, State_Active, Active_Bg);
-   end Set_Font_And_Colors;
-
    --------------------------------
    -- Register_Desktop_Functions --
    --------------------------------
@@ -904,7 +902,7 @@ package body GPS.Kernel.MDI is
          end if;
       end Get_Project_Name;
 
-      Main_Window : constant Gdk.Window.Gdk_Window :=
+      Main_Window : constant Gdk.Gdk_Window :=
                       Get_Window (Handle.Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant Virtual_File :=
@@ -919,7 +917,6 @@ package body GPS.Kernel.MDI is
 
       Perspectives, Central : Glib.Xml_Int.Node_Ptr;
       Perspectives_Convert, Central_Convert : Node_Ptr;
-
    begin
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
@@ -1259,7 +1256,7 @@ package body GPS.Kernel.MDI is
 
             if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
                W := Get_Focus (Toplevel);
-               if W /= null and then Has_Focus_Is_Set (W) then
+               if W /= null and then W.Has_Focus then
                   exit;
                end if;
                W := null;
@@ -1357,6 +1354,30 @@ package body GPS.Kernel.MDI is
          return null;
       end if;
    end Get_Toolbar;
+
+   ------------------------------------
+   -- Get_Toolbar_Separator_Position --
+   ------------------------------------
+
+   function Get_Toolbar_Separator_Position
+     (Handle    : access Kernel_Handle_Record'Class;
+      Separator : GPS_Toolbar_Separator) return Gint
+   is
+      W : GPS_Window;
+   begin
+      if Handle.Main_Window = null then
+         return -1;
+      end if;
+
+      W := GPS_Window (Handle.Main_Window);
+
+      case Separator is
+         when Before_Build =>
+            return W.Toolbar.Get_Item_Index (W.Build_Separator);
+         when Before_Debug =>
+            return W.Toolbar.Get_Item_Index (W.Debug_Separator);
+      end case;
+   end Get_Toolbar_Separator_Position;
 
    -------------------------
    -- Get_Current_Context --

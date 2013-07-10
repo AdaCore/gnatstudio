@@ -27,6 +27,7 @@ with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Pango.Layout;
 
+with Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -34,14 +35,12 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Prj;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
-with XML_Utils;              use XML_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Vsearch;                use Vsearch;
 
@@ -50,7 +49,6 @@ package body Browsers.Projects is
    Me : constant Debug_Handle := Create ("Browsers.Projects");
 
    type Project_Browser_Module is new Module_ID_Record with null record;
-   Project_Browser_Module_ID : Module_ID;
 
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
@@ -69,7 +67,25 @@ package body Browsers.Projects is
 
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
      with null record;
-   type Project_Browser is access all Project_Browser_Record'Class;
+
+   function Initialize
+     (View   : access Project_Browser_Record'Class)
+      return Gtk_Widget;
+   --  Initialize the browser, and return the focus widget
+
+   package Project_Views is new Generic_Views.Simple_Views
+     (Module_Name            => "Project_Browser",
+      View_Name              => -"Project Browser",
+      Formal_View_Record     => Project_Browser_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
+      Position               => Position_Automatic,
+      Group                  => Group_Graphs);
+   subtype Project_Browser is Project_Views.View_Access;
+   use type Project_Browser;
 
    --------------
    -- Commands --
@@ -127,27 +143,9 @@ package body Browsers.Projects is
    --  If Recursive is True, then the projects imported indirectly are also
    --  displayed.
 
-   function Create_Project_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Project_Browser;
-   --  Create a new project browser
-
-   function Open_Project_Browser
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child;
-   --  Find, or create, a project browser
-
    function Project_Of (Item : access Browser_Project_Vertex'Class)
       return Project_Type;
    --  Return the project associated with Item
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Support functions for the MDI
 
    function Browser_Search_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -520,107 +518,24 @@ package body Browsers.Projects is
       Set_File_Information (Context, Project => Project_Of (Item));
    end Contextual_Factory;
 
-   ----------------------------
-   -- Create_Project_Browser --
-   ----------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Project_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Project_Browser
+   function Initialize
+     (View   : access Project_Browser_Record'Class)
+      return Gtk_Widget
    is
-      Browser : Project_Browser;
    begin
-      Browser := new Project_Browser_Record;
-      Initialize (Browser, Kernel, Create_Toolbar => False);
-      --  Setup_Default_Toolbar (Browser);
-
+      Initialize (View, Create_Toolbar => False);
       Register_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Browser,
-         Object          => Browser,
-         ID              => Project_Browser_Module_ID,
+        (Kernel          => View.Kernel,
+         Event_On_Widget => View,
+         Object          => View,
+         ID              => Project_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
-      return Browser;
-   end Create_Project_Browser;
-
-   --------------------------
-   -- Open_Project_Browser --
-   --------------------------
-
-   function Open_Project_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
-   is
-      Child   : GPS_MDI_Child;
-      Browser : Project_Browser;
-      Title   : constant String := -"Project Browser";
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Browser_Record'Tag));
-
-      if Child /= null then
-         Raise_Child (Child);
-      else
-         Browser := Create_Project_Browser (Kernel);
-         Gtk_New (Child, Browser,
-                  Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Project_Browser_Module_ID);
-         Set_Title (Child, Title);
-         Put (Get_MDI (Kernel), Child);
-         Set_Focus_Child (Child);
-      end if;
-
-      Add_Navigation_Location (Kernel, Title);
-
-      return MDI_Child (Child);
-   end Open_Project_Browser;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      Child : GPS_MDI_Child;
-   begin
-      if Node.Tag.all = "Project_Browser" then
-         Gtk_New (Child, Create_Project_Browser (User),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Project_Browser_Module_ID);
-         Set_Title (Child, -"Project Browser");
-         Put (MDI, Child);
-
-         return MDI_Child (Child);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Project_Browser_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Project_Browser");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
+      return Gtk_Widget (View);
+   end Initialize;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -632,7 +547,8 @@ package body Browsers.Projects is
       Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
-      Browser : constant Project_Browser := Project_Browser (Child);
+      Browser : constant Project_Browser :=
+        Project_Views.View_From_Widget (Child);
       Iter    : constant Item_Iterator :=
         Start (Get_Canvas (Browser), Selected_Only => True);
    begin
@@ -681,20 +597,19 @@ package body Browsers.Projects is
       pragma Unreferenced (Search_Backward, Give_Focus);
       First_Match  : Canvas_Item;
       Saw_Selected : Boolean;
-      Child        : constant MDI_Child := Open_Project_Browser (Kernel);
-      Browser      : Project_Browser;
+      Browser : constant Project_Browser :=
+        Project_Views.Retrieve_View (Kernel);
       Iter         : Item_Iterator;
       It           : Browser_Project_Vertex_Access;
       Selection    : Item_Iterator;
 
    begin
-      if Child = null then
+      if Browser = null then
          Found := False;
          Continue := False;
          return;
       end if;
 
-      Browser := Project_Browser (Get_Widget (Child));
       Selection := Start (Get_Canvas (Browser), Selected_Only => True);
 
       Saw_Selected := Get (Selection) = null;
@@ -751,16 +666,16 @@ package body Browsers.Projects is
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Browser : constant MDI_Child :=
-                  Open_Project_Browser (Get_Kernel (Context.Context));
+      Browser : constant Project_Browser :=
+        Project_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
    begin
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
-           (Project_Browser (Get_Widget (Browser)),
+           (Browser,
             Project_Information (Context.Context));
       else
          Examine_Project_Hierarchy
-           (Project_Browser (Get_Widget (Browser)),
+           (Browser,
             Project_Information (Context.Context),
             Recursive => Command.Recursive);
       end if;
@@ -776,14 +691,12 @@ package body Browsers.Projects is
    is
       Name    : constant String := "Project Browser";
       Command : Interactive_Command_Access;
+      Project_Browser_Module_ID : Module_ID;
    begin
       Project_Browser_Module_ID := new Project_Browser_Module;
-      Register_Module
-        (Module      => Project_Browser_Module_ID,
-         Kernel      => Kernel,
-         Module_Name => Project_Browser_Module_Name,
-         Priority    => Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Project_Views.Register_Module
+        (Kernel, Project_Browser_Module_ID,
+         Menu_Name => -"Browsers/Project");
 
       --  ??? will be done in hook
       --     Set_Sensitive (Mitem, not Children_Shown (Item));
@@ -817,7 +730,7 @@ package body Browsers.Projects is
         (Kernel  => Kernel,
          Label   => Name,
          Factory => Browser_Search_Factory'Access,
-         Id      => Abstract_Module_ID (Project_Browser_Module_ID),
+         Id      => Project_Views.Get_Module,
          Mask    => All_Options and not Supports_Replace
             and not Search_Backward and not All_Occurrences);
    end Register_Module;

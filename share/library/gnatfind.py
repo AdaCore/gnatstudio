@@ -1,7 +1,8 @@
-""" This script implements a contextual menu to launch the command "gnatfind"
-    on the selected source entity.
+"""
+This script implements a contextual menu to launch the command "gnatfind"
+on the selected source entity.
 
-    This works only when the project hierarchy consists in a single project.
+This works only when the project hierarchy consists in a single project.
 """
 
 import GPS

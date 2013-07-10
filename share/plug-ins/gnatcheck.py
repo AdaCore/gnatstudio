@@ -8,41 +8,40 @@ This plug-in adds support for gnatcheck, a coding standard checker
 ## No user customization below this line
 ###########################################################################
 
-import GPS, os, os.path, re, string, pygtk, traceback
+import GPS, os, os.path, re, string, traceback
 import os_utils
-pygtk.require('2.0')
-import gobject, gtk
+from gi.repository import GObject, Gtk, GLib
 from gps_utils.gnatcheck_rules_editor import *
 
 gnatcheck = None
 
-class rulesSelector(gtk.Dialog):
+class rulesSelector(Gtk.Dialog):
    """Dialog used to select a coding standard file before launching gnatcheck."""
 
    def __init__ (self, projectname, defaultfile):
-      gtk.Dialog.__init__ (self, title="Select a coding standard file", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=gtk.DIALOG_MODAL, buttons=None)
+      Gtk.Dialog.__init__ (self, title="Select a coding standard file", parent=GPS.MDI.current().pywidget().get_toplevel(), flags=Gtk.DialogFlags.MODAL, buttons=None)
 
       # OK - Cancel buttons
-      self.okButton=gtk.Button ('OK')
+      self.okButton=Gtk.Button ('OK')
       self.okButton.connect ('clicked', self.on_ok)
       self.okButton.show()
       self.action_area.pack_start(self.okButton, True, True, 0)
 
-      self.cancelButton=gtk.Button ('Cancel')
+      self.cancelButton=Gtk.Button ('Cancel')
       self.cancelButton.connect ('clicked', self.on_cancel)
       self.cancelButton.show()
       self.action_area.pack_start(self.cancelButton, True, True, 0)
 
-      label=gtk.Label("No check switches are defined for project " + projectname + "\n" +
+      label=Gtk.Label(label="No check switches are defined for project " + projectname + "\n" +
                       "Please enter a coding standard file containing the desired gnatcheck rules:");
       label.show()
       self.vbox.pack_start (label, False, False, 0)
 
-      hbox = gtk.HBox()
+      hbox = Gtk.HBox()
       hbox.show()
       self.vbox.pack_start (hbox, False, False, 0)
 
-      self.fileEntry = gtk.Entry()
+      self.fileEntry = Gtk.Entry()
       self.fileEntry.set_editable(True)
       self.fileEntry.show()
       hbox.pack_start (self.fileEntry, True, True, 0)
@@ -52,7 +51,7 @@ class rulesSelector(gtk.Dialog):
       self.fileEntry.connect ('changed', self.on_file_entry_changed)
       self.on_file_entry_changed()
 
-      button=gtk.Button ('Browse')
+      button=Gtk.Button ('Browse')
       button.connect ('clicked', self.on_coding_standard_file_browse)
       button.show()
       hbox.pack_start (button, False, False, 0)
@@ -76,11 +75,11 @@ class rulesSelector(gtk.Dialog):
 
    def on_ok (self, *args):
       """Callback to 'Cancel' button"""
-      self.response(gtk.RESPONSE_OK)
+      self.response(Gtk.ResponseType.OK)
 
    def on_cancel (self, *args):
       """Callback to 'Cancel' button"""
-      self.response(gtk.RESPONSE_CANCEL)
+      self.response(Gtk.ResponseType.CANCEL)
 
 class gnatCheckProc:
    """This class controls the gnatcheck execution"""
@@ -184,7 +183,7 @@ class gnatCheckProc:
       if need_rules_file:
          selector = rulesSelector (project.name(), self.rules_file)
 
-         if selector.run() == gtk.RESPONSE_OK:
+         if selector.run() == Gtk.ResponseType.OK:
             self.rules_file = selector.get_file()
             selector.destroy()
          else:

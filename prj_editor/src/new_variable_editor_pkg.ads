@@ -17,7 +17,7 @@
 
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
-with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Label;           use Gtk.Label;
@@ -33,7 +33,7 @@ package New_Variable_Editor_Pkg is
       Dialog_Action_Area1 : Gtk_Hbox;
       Table1              : Gtk_Table;
       Label58             : Gtk_Label;
-      Variable_Name       : Gtk_Combo_Box;
+      Variable_Name       : Gtk_Combo_Box_Text;
       Label60             : Gtk_Label;
       Scrolledwindow2     : Gtk_Scrolled_Window;
       Viewport1           : Gtk_Viewport;

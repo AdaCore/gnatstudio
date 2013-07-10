@@ -117,6 +117,15 @@ Classes
 
    .. automethod:: GPS.Activities.vcs
 
+:class:`GPS.Alias`
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Alias
+
+   
+
+   .. automethod:: GPS.Alias.get
+
 :class:`GPS.AreaContext`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -570,6 +579,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.__init__
 
+   .. automethod:: GPS.EditorBuffer.add_multi_cursor
+
    .. automethod:: GPS.EditorBuffer.add_special_line
 
    .. automethod:: GPS.EditorBuffer.apply_overlay
@@ -596,6 +607,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.end_of_buffer
 
+   .. automethod:: GPS.EditorBuffer.expand_alias
+
    .. automethod:: GPS.EditorBuffer.file
 
    .. automethod:: GPS.EditorBuffer.finish_undo_group
@@ -605,6 +618,8 @@ Classes
    .. automethod:: GPS.EditorBuffer.get_chars
 
    .. automethod:: GPS.EditorBuffer.get_mark
+
+   .. automethod:: GPS.EditorBuffer.get_multi_cursors_marks
 
    .. automethod:: GPS.EditorBuffer.get_new
 
@@ -626,6 +641,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.refill
 
+   .. automethod:: GPS.EditorBuffer.remove_all_multi_cursors
+
    .. automethod:: GPS.EditorBuffer.remove_overlay
 
    .. automethod:: GPS.EditorBuffer.remove_special_lines
@@ -637,6 +654,10 @@ Classes
    .. automethod:: GPS.EditorBuffer.selection_end
 
    .. automethod:: GPS.EditorBuffer.selection_start
+
+   .. automethod:: GPS.EditorBuffer.set_multi_cursors_auto_sync
+
+   .. automethod:: GPS.EditorBuffer.set_multi_cursors_manual_sync
 
    .. automethod:: GPS.EditorBuffer.set_read_only
 
@@ -907,6 +928,8 @@ Classes
 
    .. automethod:: GPS.File.project
 
+   .. automethod:: GPS.File.references
+
    .. automethod:: GPS.File.remove_property
 
    .. automethod:: GPS.File.search
@@ -1084,6 +1107,58 @@ Classes
 .. autoclass:: MDI
 
    
+
+
+   .. autoattribute:: GPS.MDI.GROUP_CONSOLES
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEBUGGER_DATA
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEBUGGER_STACK
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_DEFAULT
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_GRAPHS
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VCS_ACTIVITIES
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VCS_EXPLORER
+
+
+
+   .. autoattribute:: GPS.MDI.GROUP_VIEW
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_AUTOMATIC
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_BOTTOM
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_LEFT
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_RIGHT
+
+
+
+   .. autoattribute:: GPS.MDI.POSITION_TOP
+
 
    .. automethod:: GPS.MDI.add
 

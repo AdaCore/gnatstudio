@@ -41,7 +41,8 @@ package GPS.Editors.GtkAda is
    --  Retrieve the mark stored in the value
 
    function Get_Mark
-     (Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+     (Model  : not null
+          access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return Editor_Mark'Class;
    --  Return the mark stored in the tree at the specified location

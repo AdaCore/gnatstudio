@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
@@ -36,15 +35,13 @@ with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
 with Gtk.Check_Button;                  use Gtk.Check_Button;
-with Gtk.Combo_Box;                     use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;                use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
-with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Rc;                            use Gtk.Rc;
 with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
@@ -53,7 +50,6 @@ with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
-with Gtkada.Entry_Completion;           use Gtkada.Entry_Completion;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
 with Gtkada.Types;                      use Gtkada.Types;
@@ -63,6 +59,7 @@ with Pango.Layout;                      use Pango.Layout;
 with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Case_Handling;                     use Case_Handling;
+with Commands;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Commands.Controls;                 use Commands.Controls;
 with Completion_Module;                 use Completion_Module;
@@ -74,7 +71,6 @@ with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -99,6 +95,7 @@ with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
+with Src_Editor_Module.Commands;        use Src_Editor_Module.Commands;
 with Src_Editor_Module.Messages;        use Src_Editor_Module.Messages;
 
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
@@ -118,10 +115,6 @@ package body Src_Editor_Module is
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
 
-   Open_From_Path_History : constant History_Key := "open-from-project";
-   --  Key used to store the most recently open files in the Open From Project
-   --  dialog.
-
    Underscore : constant Gunichar := UTF8_Get_Char ("_");
    Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
@@ -133,16 +126,14 @@ package body Src_Editor_Module is
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
-   Cursor_Color        : Color_Preference;
-   Cursor_Aspect_Ratio : Integer_Preference;
-
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
    overriding procedure Tab_Contextual
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Command_Queue
-     (Child : access Editor_Child_Record) return Commands.Command_Queue;
+     (Child : access Editor_Child_Record)
+      return Standard.Commands.Command_Queue;
    overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
@@ -198,10 +189,6 @@ package body Src_Editor_Module is
    procedure On_Open_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Open menu
-
-   procedure On_Open_From_Path
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Open From Path menu
 
    procedure On_Open_Remote_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -276,15 +263,6 @@ package body Src_Editor_Module is
    --  Comment or uncomment the current selection, if any.
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
-   type File_Completion_Factory is new Completions_Factory with record
-      File1, File2 : File_Array_Access;
-   end record;
-   overriding function Completion
-     (Factory : File_Completion_Factory; Index : Positive) return String;
-   overriding function Description
-     (Factory : File_Completion_Factory; Index : Positive) return String;
-   --  See doc from inherited subprogram
-
    type Edit_File_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Edit_File_Command;
@@ -342,7 +320,8 @@ package body Src_Editor_Module is
    --  Callback for the "cursor_stopped" hook
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Add_To_Recent_Menu
@@ -656,7 +635,7 @@ package body Src_Editor_Module is
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
+            Update_Subprogram_Name (Box);
          end if;
       end if;
 
@@ -993,8 +972,6 @@ package body Src_Editor_Module is
            (Child, Editor,
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-            Default_Height => Gint (Default_Widget_Height.Get_Pref),
             Module         => Src_Editor_Module_Id);
 
          --  Find the first free view number
@@ -1202,7 +1179,7 @@ package body Src_Editor_Module is
               (Editor, Line, Real_Column, Focus,
                Centering => With_Margin);
 
-            Set_Position_Set_Explicitely (Get_Buffer (Editor));
+            Set_Position_Set_Explicitely (Get_View (Editor));
 
             if Column_End /= 0
               and then Is_Valid_Position
@@ -1259,8 +1236,6 @@ package body Src_Editor_Module is
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Group          => Group,
-            Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-            Default_Height => Gint (Default_Widget_Height.Get_Pref),
             Module         => Src_Editor_Module_Id);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
@@ -1275,19 +1250,16 @@ package body Src_Editor_Module is
          if Get_Status (Get_Buffer (Editor)) = Modified then
             if File_Modified_Pixbuf /= null then
                Set_Icon (Child, File_Modified_Pixbuf);
-               Ref (File_Modified_Pixbuf);
             end if;
 
          elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
             if File_Unsaved_Pixbuf /= null then
                Set_Icon (Child, File_Unsaved_Pixbuf);
-               Ref (File_Unsaved_Pixbuf);
             end if;
 
          else
             if File_Pixbuf /= null then
                Set_Icon (Child, File_Pixbuf);
-               Ref (File_Pixbuf);
             end if;
          end if;
 
@@ -1394,8 +1366,8 @@ package body Src_Editor_Module is
          end if;
 
       else
-         Console.Insert
-           (Kernel, (-"Cannot open file ") & "'" & Display_Full_Name (File)
+         Kernel.Insert
+           ((-"Cannot open file ") & "'" & Display_Full_Name (File)
             & "'",
             Add_LF => True,
             Mode   => Error);
@@ -1492,185 +1464,6 @@ package body Src_Editor_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Open_Remote_File;
 
-   ----------------
-   -- Completion --
-   ----------------
-
-   overriding function Completion
-     (Factory : File_Completion_Factory; Index : Positive) return String
-   is
-      File : GNATCOLL.VFS.Virtual_File;
-   begin
-      if Index > Factory.File1'Length then
-         if Index - Factory.File1'Length > Factory.File2'Length then
-            return "";
-         else
-            File := Factory.File2
-              (Factory.File2'First + Index - Factory.File1'Length - 1);
-         end if;
-      else
-         File := Factory.File1 (Factory.File1'First + Index - 1);
-      end if;
-
-      if File = GNATCOLL.VFS.No_File then
-         return "@$#$";  --  Unlikely string, will not match any suffix
-      else
-         return +Base_Name (File);
-      end if;
-   end Completion;
-
-   -----------------
-   -- Description --
-   -----------------
-
-   overriding function Description
-     (Factory : File_Completion_Factory; Index : Positive) return String
-   is
-      File : GNATCOLL.VFS.Virtual_File;
-   begin
-      if Index > Factory.File1'Length then
-         if Index - Factory.File1'Length > Factory.File2'Length then
-            return "";
-         else
-            File := Factory.File2
-              (Factory.File2'First + Index - Factory.File1'Length - 1);
-         end if;
-      else
-         File := Factory.File1 (Factory.File1'First + Index - 1);
-      end if;
-
-      if File = GNATCOLL.VFS.No_File then
-         return "";
-      else
-         return +Full_Name (File);
-      end if;
-   end Description;
-
-   -----------------------
-   -- On_Open_From_Path --
-   -----------------------
-
-   procedure On_Open_From_Path
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Label  : Gtk_Label;
-      Ignore : Gtk_Widget;
-      pragma Unreferenced (Widget, Ignore);
-
-      Open_File_Dialog : Gtk_Dialog;
-      Open_File_Entry  : Gtkada_Entry;
-      Hist             : constant String_List_Access :=
-                           Get_History
-                             (Get_History (Kernel).all,
-                              Open_From_Path_History);
-      List1            : File_Array_Access :=
-                           Get_Project (Kernel).Source_Files
-                             (Recursive => True);
-      List2            : File_Array_Access := new File_Array'
-                           (Get_Registry (Kernel).Environment
-                            .Predefined_Source_Files);
-      Compl            : File_Completion_Factory;
-
-   begin
-      Push_State (Kernel,  Busy);
-      Gtk_New (Open_File_Dialog,
-               Title  => -"Open file from project",
-               Parent => Get_Current_Window (Kernel),
-               Flags  => Modal or Destroy_With_Parent);
-      Set_Default_Size (Open_File_Dialog, 600, 400);
-      Set_Position (Open_File_Dialog, Win_Pos_Mouse);
-
-      Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-      Pack_Start (Get_Vbox (Open_File_Dialog), Label, Expand => False);
-
-      --  Do not use a combo box, so that users can easily navigate to the list
-      --  of completions through the keyboard (C423-005)
-      Gtk_New (Open_File_Entry,
-               Case_Sensitive =>
-                 Is_Case_Sensitive (Get_Nickname (Build_Server)));
-      Set_Activates_Default (Get_Entry (Open_File_Entry), True);
-      Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
-                  Fill => True, Expand => True);
-
-      if Hist /= null then
-         Set_Text (Get_Entry (Open_File_Entry),
-                   Base_Name (Hist (Hist'First).all));
-         Select_Region (Get_Entry (Open_File_Entry), 0, -1);
-      end if;
-
-      Ignore := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
-      Ignore := Add_Button
-        (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
-      Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
-
-      Grab_Focus (Get_Entry (Open_File_Entry));
-      Show_All (Open_File_Dialog);
-
-      Compl.File1 := List1;
-      Compl.File2 := List2;
-
-      Set_Completions (Open_File_Entry, Compl);
-
-      Pop_State (Kernel);
-
-      if Run (Open_File_Dialog) = Gtk_Response_OK then
-
-         --  Look for the file in the project. If the file cannot be found,
-         --  display an error message in the console.
-
-         declare
-            Complet : constant Integer :=
-                        Current_Completion (Open_File_Entry);
-            Text    : constant String :=
-                        Get_Text (Get_Entry (Open_File_Entry));
-            --  ??? What if the filesystem path is non-UTF8?
-            Full    : Virtual_File;
-         begin
-            --  Close the dialog first, so that the current context becomes the
-            --  one of the editor while running hooks
-            Destroy (Open_File_Dialog);
-
-            if Complet /= 0 then
-               if Complet > List1'Length then
-                  Full := List2 (List2'First + Complet - List1'Length - 1);
-               else
-                  Full := List1 (List1'First + Complet - 1);
-               end if;
-            else
-               Full := Create (+Text, Kernel, Use_Object_Path => False);
-            end if;
-
-            Add_To_History
-              (Get_History (Kernel).all, Open_From_Path_History,
-               +Full_Name (Full));
-
-            if Is_Regular_File (Full) then
-               Open_File_Editor
-                 (Kernel, Full,
-                  Enable_Navigation => True,
-                  New_File          => False,
-                  Line              => 0,
-                  Column            => 0);
-
-            else
-               Insert
-                 (Kernel,
-                    -"Could not find source file """ & Text &
-                      (-""" in currently loaded project."),
-                  Mode => Error);
-            end if;
-         end;
-      else
-         Destroy (Open_File_Dialog);
-      end if;
-
-      Unchecked_Free (List1);
-      Unchecked_Free (List2);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Open_From_Path;
-
    --------------
    -- Activate --
    --------------
@@ -1679,9 +1472,6 @@ package body Src_Editor_Module is
      (Callback : access On_Recent; Item : String) is
    begin
       Open_File_Editor (Callback.Kernel, Create (Full_Filename => +Item));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Activate;
 
    -----------------
@@ -1813,7 +1603,7 @@ package body Src_Editor_Module is
             end;
       end case;
 
-      return Commands.Success;
+      return Standard.Commands.Success;
    end Execute;
 
    --------------
@@ -1829,7 +1619,7 @@ package body Src_Editor_Module is
       Source           : Source_Editor_Box;
    begin
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         Kernel.Insert ("No source file selected", Mode => Error);
          return;
       end if;
 
@@ -1864,12 +1654,12 @@ package body Src_Editor_Module is
       if Has_Area_Information (Context) then
          Get_Area (Context, Natural (Start_Line), Natural (End_Line));
       else
-         Console.Insert (Kernel, "No selection", Mode => Error);
+         Kernel.Insert ("No selection", Mode => Error);
          return;
       end if;
 
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         Kernel.Insert ("No source file selected", Mode => Error);
          return;
       end if;
 
@@ -2238,6 +2028,28 @@ package body Src_Editor_Module is
    is
       D     : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
       Child : constant MDI_Child := Find_Editor (Kernel, D.File);
+
+      function Get_Tooltip return String;
+      function Get_Icon return String;
+
+      function Get_Tooltip return String is
+      begin
+         if D.Tooltip = null then
+            return "";
+         else
+            return D.Tooltip.all;
+         end if;
+      end Get_Tooltip;
+
+      function Get_Icon return String is
+      begin
+         if D.Icon = null then
+            return "";
+         else
+            return D.Icon.all;
+         end if;
+      end Get_Icon;
+
    begin
       if Child /= null then
          if D.Info'First = 0 then
@@ -2257,7 +2069,11 @@ package body Src_Editor_Module is
                Add_Extra_Information
                  (Get_Buffer
                     (Source_Editor_Box
-                       (Get_Widget (Child))), D.Identifier, D.Info);
+                       (Get_Widget (Child))),
+                  D.Identifier, D.Info,
+                  Icon    => Get_Icon,
+                  Tooltip => Get_Tooltip);
+
             else
                --  ??? Source duplicated in src_editor_buffer-line_information
                --  (Add_Blank_Lines)
@@ -2388,8 +2204,8 @@ package body Src_Editor_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dialog  : Gtk_Dialog;
       Label   : Gtk_Label;
-      Lang    : Gtk_Combo_Box;
-      Charset : Gtk_Combo_Box;
+      Lang    : Gtk_Combo_Box_Text;
+      Charset : Gtk_Combo_Box_Text;
       Strip   : Gtk_Check_Button;
       Strip_Lines : Gtk_Check_Button;
       Box     : Gtk_Box;
@@ -2416,7 +2232,7 @@ package body Src_Editor_Module is
       --  Base name
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
       Gtk_New (Label, -"File:");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
@@ -2428,7 +2244,7 @@ package body Src_Editor_Module is
       --  Directory
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
       Gtk_New (Label, -"Directory:");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
@@ -2440,7 +2256,7 @@ package body Src_Editor_Module is
       --  Language
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Language: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2455,7 +2271,7 @@ package body Src_Editor_Module is
       --  Charset
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Character set: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2469,7 +2285,7 @@ package body Src_Editor_Module is
       --  Trailing spaces
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Strip blanks: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2483,7 +2299,7 @@ package body Src_Editor_Module is
       --  Trailing blank lines
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
 
       Gtk_New (Label, -"Strip lines: ");
       Set_Alignment (Label, 0.0, 0.5);
@@ -2973,11 +2789,6 @@ package body Src_Editor_Module is
          On_Open_File'Access, null, GDK_F3,
          Ref_Item => -"Save More");
       Register_Menu
-        (Kernel, File, -"Open _From Project...",  Stock_Open,
-         On_Open_From_Path'Access, null,
-         GDK_F3, Shift_Mask,
-         Ref_Item => -"Save More");
-      Register_Menu
         (Kernel, File, -"Open From _Host...",  Stock_Open,
          On_Open_Remote_File'Access, null, GDK_F3, Control_Mask,
          Ref_Item => -"Save More");
@@ -3083,17 +2894,20 @@ package body Src_Editor_Module is
       begin
          Gtk_New (Space);
          Set_Draw (Space, True);
-         Insert (Toolbar, Space);
+         Insert (Toolbar, Space,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
          Set_Tooltip_Text (UR.Undo_Button, -"Undo Previous Action");
          Set_Sensitive (UR.Undo_Button, False);
-         Insert (Toolbar, UR.Undo_Button);
+         Insert (Toolbar, UR.Undo_Button,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
          Set_Tooltip_Text (UR.Redo_Button, -"Redo Previous Action");
          Set_Sensitive (UR.Redo_Button, False);
-         Insert (Toolbar, UR.Redo_Button);
+         Insert (Toolbar, UR.Redo_Button,
+                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
       end;
 
       Kernel_Callback.Connect
@@ -3258,7 +3072,7 @@ package body Src_Editor_Module is
 
       Kernel.Set_Undo_Redo (UR);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "src_editor.preferences_changed");
       Add_Hook (Kernel, File_Edited_Hook,
@@ -3354,27 +3168,6 @@ package body Src_Editor_Module is
       Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
       Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
 
-      --  Register preferences
-
-      Cursor_Color := Create
-        (Get_Preferences (Kernel),
-         Name    => "Editor-Cursor-Color",
-         Default => "black",
-         Page    => -"Editor/Fonts & Colors",
-         Doc     => -"Color to use for the cursor in editors",
-         Label   => -"Cursor color");
-
-      Cursor_Aspect_Ratio := Create
-        (Get_Preferences (Kernel),
-         Name    => "Editor-Cursor-Aspect-Ratio",
-         Default => 10,
-         Minimum => 1,
-         Maximum => 100,
-         Page    => -"Editor/Fonts & Colors",
-         Label   => -"Cursor aspect ratio",
-         Doc     => -("Size of the cursor, proportionaly to one character. 100"
-                      & "means the same size as a character"));
-
       Completion_Module.Register_Module (Kernel);
 
       Register_Hook_No_Return (Kernel, Buffer_Modified_Hook, File_Hook_Type);
@@ -3388,8 +3181,10 @@ package body Src_Editor_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref;
       Pref_Display_Subprogram_Names : constant Boolean :=
@@ -3414,33 +3209,13 @@ package body Src_Editor_Module is
             Files : constant GNATCOLL.VFS.File_Array := Open_Files (Kernel);
          begin
             for Node in Files'Range loop
-               declare
-                  Box : constant Source_Editor_Box :=
-                    Get_Source_Box_From_MDI
-                      (Find_Editor (Kernel, Files (Node)));
-               begin
-                  if Pref_Display_Subprogram_Names then
-                     Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
-                  else
-                     Clear_Subprogram_Name (Box);
-                  end if;
-               end;
+               Get_Source_Box_From_MDI
+                 (Find_Editor (Kernel, Files (Node))).Update_Subprogram_Name;
             end loop;
          end;
 
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
       end if;
-
-      Parse_String ("style ""gps-style"" { " & ASCII.LF
-                    & "GtkTextView::cursor-color="""
-                    & Cursor_Color.Get_Pref
-                    & """" & ASCII.LF
-                    & "GtkTextView::cursor-aspect-ratio="
-                    & Float'Image
-                      (Float (Cursor_Aspect_Ratio.Get_Pref) / 100.0)
-                    & ASCII.LF
-                    & "}" & ASCII.LF
-                    & "class ""GtkTextView"" style ""gps-style""");
 
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
          Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
@@ -3799,7 +3574,8 @@ package body Src_Editor_Module is
    -----------------------
 
    overriding function Get_Command_Queue
-     (Child : access Editor_Child_Record) return Commands.Command_Queue
+     (Child : access Editor_Child_Record)
+      return Standard.Commands.Command_Queue
    is
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (MDI_Child (Child));

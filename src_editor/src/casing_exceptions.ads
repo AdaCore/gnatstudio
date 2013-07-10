@@ -19,9 +19,10 @@
 --  to add or remove a casing exception and to initialize the casing
 --  GPS feature (create menu, read/write casing XML files).
 
-with GPS.Kernel;    use GPS.Kernel;
-with Case_Handling; use Case_Handling;
-with XML_Utils;     use XML_Utils;
+with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
+with Case_Handling;                    use Case_Handling;
+with XML_Utils;                        use XML_Utils;
 
 with GNATCOLL.VFS;
 

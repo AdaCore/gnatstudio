@@ -447,10 +447,12 @@ package Xref is
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format       : Boolean := False;
       Check_Constructs : Boolean := True) return String;
    --  Return the documentation (tooltips,...) for the entity.
-   --  If Raw_Format is False, the documentation is formated in HTML.
+   --  If Raw_Format is False, the documentation is formated in HTML (using
+   --  Color_For_Optional_Param to highlight optional parameters).
    --
    --  Check_Constructs should be False to disable the use of the constructs
    --  database.
@@ -677,7 +679,10 @@ package Xref is
       In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       In_Scope              : General_Entity := No_General_Entity;
       Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False);
+      Include_Overridden    : Boolean := False;
+      Include_Implicit      : Boolean := False;
+      Include_All           : Boolean := False;
+      Kind                  : String := "");
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  If In_File is specified, then only the references in that file will be
@@ -691,6 +696,26 @@ package Xref is
    --  references to an overriding or Overriden subprogram will also be
    --  returned. If Entity is a parameter of subprogram A, this will also
    --  return the parameters of subprograms that override A.
+   --
+   --  If Include_Implicit is False, then implicit references will not be
+   --  returned.
+   --  If Include_All is True, then references like end-of-spec and other
+   --  information on the entity will be returned.
+   --  Kind can be used to filter the reference kinds that should be returned.
+   --  If it is specified, Include_Implicit and Include_All are ignored. It is
+   --  a list of comma-separated strings.
+
+   subtype References_Sort is GNATCOLL.Xref.References_Sort;
+   procedure Find_All_References
+      (Self     : access General_Xref_Database_Record;
+       Iter     : out Entity_Reference_Iterator;
+       File     : GNATCOLL.VFS.Virtual_File;
+       Kind     : String := "";
+       Sort     : References_Sort := GNATCOLL.Xref.By_Location);
+   --  Return references to all entities in the file, possibly filtering by
+   --  entity kind.
+   --  ??? This will always return an empty list when using the old xref
+   --  engine.
 
    function At_End (Iter : Entity_Reference_Iterator) return Boolean;
    --  Whether there are no more reference to return
@@ -814,10 +839,18 @@ private
       Name => Ada.Strings.Unbounded.Null_Unbounded_String,
       Body_Is_Full_Declaration => True);
 
+   type GPS_Recursive_References_Cursor
+      is new GNATCOLL.Xref.Recursive_References_Cursor
+   with record
+      Include_Implicit : Boolean := False;
+      Include_All      : Boolean := False;
+      Kind             : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
    type Entity_Reference_Iterator is record
       Old_Iter : Old_Entities.Queries.Entity_Reference_Iterator;
 
-      Iter     : GNATCOLL.Xref.Recursive_References_Cursor;
+      Iter     : GPS_Recursive_References_Cursor;
       In_File  : GNATCOLL.VFS.Virtual_File;
       In_Scope : General_Entity := No_General_Entity;
    end record;

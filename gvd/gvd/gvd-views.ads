@@ -17,31 +17,24 @@
 
 --  Various instanciations of GVD.Generic_Views
 
+with Generic_Views;
 with GVD.Generic_View;
 with GVD.Process;          use GVD.Process;
 with GVD.Scripts;          use GVD.Scripts;
 with GVD_Module;           use GVD_Module;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Views is
 
-   package Scrolled_Views is new GVD.Generic_View
-     (Base_Type                     => Gtk_Scrolled_Window_Record,
-      Base_Type_Access              => Gtk_Scrolled_Window,
+   package Base_Views is new GVD.Generic_View
+     (Base_Type                     => Generic_Views.View_Record,
+      Base_Type_Access              => Generic_Views.Abstract_View_Access,
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger);
 
    package Console_Views is new GVD.Generic_View
      (Base_Type                     => Interactive_Console_Record,
       Base_Type_Access              => Interactive_Console,
-      Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger               => GVD.Process.Visual_Debugger);
-
-   package Boxed_Views is new GVD.Generic_View
-     (Base_Type                     => Gtk_Box_Record,
-      Base_Type_Access              => Gtk_Box,
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger);
 

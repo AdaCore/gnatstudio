@@ -71,8 +71,6 @@ package body Breakpoints_Pkg is
       Set_Scrollable (Breakpoints.Notebook1, False);
       Set_Show_Border (Breakpoints.Notebook1, True);
       Set_Show_Tabs (Breakpoints.Notebook1, True);
-      Set_Tab_Hborder (Breakpoints.Notebook1, 2);
-      Set_Tab_Vborder (Breakpoints.Notebook1, 2);
       Set_Tab_Pos (Breakpoints.Notebook1, Pos_Top);
       Pack_Start (Main_Vbox, Breakpoints.Notebook1, True, True, 0);
 
@@ -154,7 +152,7 @@ package body Breakpoints_Pkg is
       Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Subprogram_Combo);
+      Gtk_New_With_Entry (Breakpoints.Subprogram_Combo);
       Breakpoints.Subprogram_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Add (Alignment, Breakpoints.Subprogram_Combo);
@@ -174,7 +172,7 @@ package body Breakpoints_Pkg is
         (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Address_Combo);
+      Gtk_New_With_Entry (Breakpoints.Address_Combo);
       Breakpoints.Address_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Add (Alignment, Breakpoints.Address_Combo);
@@ -193,7 +191,7 @@ package body Breakpoints_Pkg is
       Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
       Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Regexp_Combo);
+      Gtk_New_With_Entry (Breakpoints.Regexp_Combo);
       Breakpoints.Regexp_Combo.Append_Text ("");
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
       Add (Alignment, Breakpoints.Regexp_Combo);
@@ -209,12 +207,9 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Vbuttonbox2);
       Set_Spacing (Breakpoints.Vbuttonbox2, 10);
       Set_Layout (Breakpoints.Vbuttonbox2, Buttonbox_Start);
-      Set_Child_Size (Breakpoints.Vbuttonbox2, 85, 27);
-      Set_Child_Ipadding (Breakpoints.Vbuttonbox2, 7, 0);
       Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbuttonbox2, False, False, 0);
 
       Gtk_New_From_Stock (Breakpoints.Add_Location, Stock_Add);
-      Set_Flags (Breakpoints.Add_Location, Can_Default);
       Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
       Gtk_New (Breakpoints.Location, -("Location"));
@@ -222,7 +217,10 @@ package body Breakpoints_Pkg is
       Set_Padding (Breakpoints.Location, 0, 0);
       Set_Justify (Breakpoints.Location, Justify_Center);
       Set_Line_Wrap (Breakpoints.Location, False);
-      Set_Tab (Breakpoints.Notebook1, 0, Breakpoints.Location);
+      Set_Tab_Label
+        (Breakpoints.Notebook1,
+         Get_Nth_Page (Breakpoints.Notebook1, 0),
+         Breakpoints.Location);
 
       Gtk_New_Hbox (Breakpoints.Hbox3, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox3);
@@ -253,7 +251,7 @@ package body Breakpoints_Pkg is
       Set_Line_Wrap (Breakpoints.Label10, False);
       Pack_Start (Breakpoints.Vbox7, Breakpoints.Label10, False, False, 5);
 
-      Gtk_New_Text (Breakpoints.Watchpoint_Type);
+      Gtk_New (Breakpoints.Watchpoint_Type);
       Breakpoints.Watchpoint_Type.Append_Text (-"written");
       Breakpoints.Watchpoint_Type.Append_Text (-"read");
       Breakpoints.Watchpoint_Type.Append_Text (-"read or written");
@@ -282,12 +280,9 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Vbuttonbox3);
       Set_Spacing (Breakpoints.Vbuttonbox3, 10);
       Set_Layout (Breakpoints.Vbuttonbox3, Buttonbox_Start);
-      Set_Child_Size (Breakpoints.Vbuttonbox3, 85, 27);
-      Set_Child_Ipadding (Breakpoints.Vbuttonbox3, 7, 0);
       Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbuttonbox3, False, True, 0);
 
       Gtk_New_From_Stock (Breakpoints.Add_Watchpoint, Stock_Add);
-      Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
       Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
 
       Gtk_New (Breakpoints.Watchpoint, -("Variable"));
@@ -295,7 +290,10 @@ package body Breakpoints_Pkg is
       Set_Padding (Breakpoints.Watchpoint, 0, 0);
       Set_Justify (Breakpoints.Watchpoint, Justify_Center);
       Set_Line_Wrap (Breakpoints.Watchpoint, False);
-      Set_Tab (Breakpoints.Notebook1, 1, Breakpoints.Watchpoint);
+      Set_Tab_Label
+        (Breakpoints.Notebook1,
+         Get_Nth_Page (Breakpoints.Notebook1, 1),
+         Breakpoints.Watchpoint);
 
       Gtk_New_Hbox (Breakpoints.Hbox4, False, 0);
       Add (Breakpoints.Notebook1, Breakpoints.Hbox4);
@@ -315,7 +313,7 @@ package body Breakpoints_Pkg is
       Gtk_New_Hbox (Breakpoints.Hbox14, False, 8);
       Pack_Start (Breakpoints.Vbox8, Breakpoints.Hbox14, False, True, 0);
 
-      Gtk_New_Combo_Text_With_Entry (Breakpoints.Exception_Name);
+      Gtk_New_With_Entry (Breakpoints.Exception_Name);
       Breakpoints.Exception_Name.Append_Text ("All exceptions");
       Breakpoints.Exception_Name.Set_Active (0);
       Pack_Start
@@ -358,12 +356,9 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Vbuttonbox4);
       Set_Spacing (Breakpoints.Vbuttonbox4, 10);
       Set_Layout (Breakpoints.Vbuttonbox4, Buttonbox_Start);
-      Set_Child_Size (Breakpoints.Vbuttonbox4, 85, 27);
-      Set_Child_Ipadding (Breakpoints.Vbuttonbox4, 7, 0);
       Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbuttonbox4, False, False, 0);
 
       Gtk_New_From_Stock (Breakpoints.Add_Exception, Stock_Add);
-      Set_Flags (Breakpoints.Add_Exception, Can_Default);
       Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
       Gtk_New (Breakpoints.Except, -("Exception"));
@@ -371,7 +366,10 @@ package body Breakpoints_Pkg is
       Set_Padding (Breakpoints.Except, 0, 0);
       Set_Justify (Breakpoints.Except, Justify_Center);
       Set_Line_Wrap (Breakpoints.Except, False);
-      Set_Tab (Breakpoints.Notebook1, 2, Breakpoints.Except);
+      Set_Tab_Label
+        (Breakpoints.Notebook1,
+         Get_Nth_Page (Breakpoints.Notebook1, 2),
+         Breakpoints.Except);
 
       Gtk_New (Breakpoints.Frame11, -"Breakpoints");
       Set_Shadow_Type (Breakpoints.Frame11, Shadow_Etched_In);
@@ -423,23 +421,18 @@ package body Breakpoints_Pkg is
       Gtk_New (Breakpoints.Hbuttonbox8);
       Set_Spacing (Breakpoints.Hbuttonbox8, 30);
       Set_Layout (Breakpoints.Hbuttonbox8, Buttonbox_Spread);
-      Set_Child_Size (Breakpoints.Hbuttonbox8, 85, 27);
-      Set_Child_Ipadding (Breakpoints.Hbuttonbox8, 7, 0);
       Pack_Start
         (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
 
       Gtk_New_From_Stock (Breakpoints.Remove, Stock_Remove);
-      Set_Flags (Breakpoints.Remove, Can_Default);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Remove);
 
       Gtk_New (Breakpoints.View, -"View");
       Set_Relief (Breakpoints.View, Relief_Normal);
-      Set_Flags (Breakpoints.View, Can_Default);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.View);
 
       Gtk_New (Breakpoints.Advanced_Location, -"Advanced");
       Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
-      Set_Flags (Breakpoints.Advanced_Location, Can_Default);
       Add (Breakpoints.Hbuttonbox8, Breakpoints.Advanced_Location);
    end Initialize;
 

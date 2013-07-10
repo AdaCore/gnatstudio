@@ -19,7 +19,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
-with Gdk.Color;                use Gdk.Color;
+with Gdk.RGBA;                 use Gdk.RGBA;
 
 with Glib.Object;              use Glib.Object;
 
@@ -34,8 +34,8 @@ with Pango.Cairo;              use Pango.Cairo;
 with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.Xref;
-with GPS.Editors;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
 
@@ -687,9 +687,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       if Buffer.Extra_Information /= null then
          for J in Buffer.Extra_Information'Range loop
-            Free (Buffer.Extra_Information (J).Info);
-            GNAT.Strings.Free (Buffer.Extra_Information (J).Identifier);
-            Unchecked_Free (Buffer.Extra_Information (J));
+            Free (Buffer.Extra_Information (J));
          end loop;
          Unchecked_Free (Buffer.Extra_Information);
       end if;
@@ -784,7 +782,9 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_Extra_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : Line_Information_Data)
+      Info       : Line_Information_Data;
+      Tooltip    : String := "";
+      Icon       : String := "")
    is
       Found  : Boolean := False;
    begin
@@ -795,6 +795,8 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Extra_Information := new Extra_Information_Array'
            (1 => new Extra_Information_Record'
               (Identifier => new String'(Identifier),
+               Tooltip => new String'(Tooltip),
+               Icon    => new String'(Icon),
                Info    => new Line_Information_Record'(Info (Info'First))));
 
       else
@@ -819,6 +821,8 @@ package body Src_Editor_Buffer.Line_Information is
                  new Extra_Information_Record'
                    (Info       => new Line_Information_Record'
                         (Info (Info'First)),
+                    Tooltip => new String'(Tooltip),
+                    Icon    => new String'(Icon),
                     Identifier => new String'(Identifier));
             end;
          end if;
@@ -963,9 +967,9 @@ package body Src_Editor_Buffer.Line_Information is
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
-      Color       : Gdk_Color;
+      Color       : Gdk_RGBA;
       Layout      : Pango_Layout;
-      Drawable    : Cairo.Cairo_Surface)
+      Cr          : Cairo.Cairo_Context)
    is
       Current_Line    : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;
@@ -976,7 +980,6 @@ package body Src_Editor_Buffer.Line_Information is
       Dummy_Gint      : Gint;
       Dummy_Boolean   : Boolean;
       Line_Info       : Line_Info_Width;
-      Cr              : Cairo_Context;
 
       Line_Char_Width : constant Gint := Line_Number_Character_Width;
 
@@ -1013,7 +1016,7 @@ package body Src_Editor_Buffer.Line_Information is
             return;
          end if;
 
-         Set_Markup (Layout, Editable_Line'Img);
+         Set_Markup (Layout, Image (Integer (Editable_Line), Min_Width => 0));
          Get_Pixel_Size (Layout, Width, Height);
 
          Move_To (Cr,
@@ -1057,8 +1060,7 @@ package body Src_Editor_Buffer.Line_Information is
       Current_Line := Top_Line;
       Get_Iter_At_Line (Buffer, Iter, Gint (Current_Line - 1));
 
-      Cr := Create (Drawable);
-      Set_Source_Color (Cr, Color);
+      Set_Source_RGBA (Cr, Color);
 
       Drawing_Loop :
       while Current_Line <= Bottom_Line loop
@@ -1068,7 +1070,7 @@ package body Src_Editor_Buffer.Line_Information is
          --  Convert the buffer coords back to window coords
 
          Buffer_To_Window_Coords
-           (View, Text_Window_Left,
+           (View, Text_Window_Text,
             Buffer_X => 0, Buffer_Y => Y_In_Buffer,
             Window_X => Dummy_Gint, Window_Y => Y_Pix_In_Window);
 
@@ -1101,8 +1103,6 @@ package body Src_Editor_Buffer.Line_Information is
 
          Current_Line := Current_Line + 1;
       end loop Drawing_Loop;
-
-      Destroy (Cr);
    end Draw_Line_Info;
 
    ----------------
@@ -1152,8 +1152,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command : Command_Access;
    begin
-      Set_Cursor_Position
-        (Buffer, Gint (Line - 1), 0, GPS.Editors.Minimal, False);
+      Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
       if BL.all /= null then
          for Col in BL.all'Range loop
@@ -1489,6 +1488,8 @@ package body Src_Editor_Buffer.Line_Information is
                Highlight_In =>
                  (Highlight_Speedbar => Style.In_Speedbar,
                   Highlight_Editor   => True));
+
+            Line_Highlights_Changed (Buffer);
          else
             if Style.In_Speedbar then
                Compute_BL;
@@ -1501,6 +1502,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Highlight_In =>
                     (Highlight_Speedbar => Style.In_Speedbar,
                      Highlight_Editor   => False));
+
+               Line_Highlights_Changed (Buffer);
             end if;
 
             Compute_EL;
@@ -2660,7 +2663,7 @@ package body Src_Editor_Buffer.Line_Information is
       Remove     : Boolean := False)
    is
       Tag                  : Gtk_Text_Tag;
-      Color                : Gdk_Color;
+      Color                : Gdk_RGBA;
       New_Tag              : Boolean := False;
    begin
       --  Get the text tag, create it if necessary
@@ -2680,8 +2683,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  ??? Should we do the following even if not New_Tag ?
 
-      if Color /= Null_Color then
-         Set_Property (Tag, Background_Gdk_Property, Color);
+      if Color /= Null_RGBA then
+         Set_Property (Tag, Background_Rgba_Property, Color);
          Set_Property (Tag, Underline_Property, Pango_Underline_None);
       else
          Set_Property (Tag, Underline_Property, Pango_Underline_Error);

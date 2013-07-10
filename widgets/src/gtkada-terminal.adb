@@ -19,6 +19,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
+with Glib.Types;
 with Glib.Properties;      use Glib.Properties;
 with Glib.Unicode;         use Glib.Unicode;
 with Gtk.Text_Buffer;      use Gtk.Text_Buffer;
@@ -28,7 +29,7 @@ with Gtk.Text_Tag;         use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;   use Gtk.Text_Tag_Table;
 with Gtk.Widget;           use Gtk.Widget;
 with Pango.Enums;          use Pango.Enums;
-with Interfaces.C.Strings; use Interfaces.C, Interfaces.C.Strings;
+with Interfaces.C;         use Interfaces.C;
 with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
@@ -161,7 +162,7 @@ package body Gtkada.Terminal is
    type FSM_Transition is array (Escape_Chars) of FSM_State;
 
    type GtkAda_Terminal_Class is record
-      C_Class : GObject_Class := Uninitialized_Class;
+      C_Class : Ada_GObject_Class := Uninitialized_Class;
       Default_Insert_Callback : Insert_Callback := null;
    end record;
    Class : GtkAda_Terminal_Class;
@@ -1412,13 +1413,13 @@ package body Gtkada.Terminal is
 
       Iter : Gtk_Text_Iter;
    begin
-      Gtk.Text_Buffer.Initialize (Self);
       Initialize_Class_Record
-        (Object       => Self,
-         Signals      => (1 .. 0 => Null_Ptr),
+        (Ancestor     => Gtk.Text_Buffer.Get_Type,
          Class_Record => Class.C_Class,
          Type_Name    => "GtkAdaTerminal",
          Parameters   => Null_Parameter_Types);
+      G_New (Self, Class.C_Class);
+      Gtk.Text_Buffer.Initialize (Self);
 
       Self.Prevent_Cursor_Motion := Prevent_Cursor_Motion_With_Mouse;
       if Self.Prevent_Cursor_Motion then
@@ -1428,7 +1429,8 @@ package body Gtkada.Terminal is
 
       if Class.Default_Insert_Callback = null then
          Class.Default_Insert_Callback := Replace_Insert_Text
-           (Class.C_Class, On_Insert_Text'Access);
+           (Glib.Types.Class_Peek (Class.C_Class.The_Type),
+            On_Insert_Text'Access);
 
          --  Initialize charset tables
          for C in Alternate_Charset'Range loop

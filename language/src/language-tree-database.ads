@@ -38,6 +38,7 @@ package Language.Tree.Database is
    --  This type points to a precise entity in the database. It's not suitable
    --  for persistent storage: its data are not valid anymore after a refresh
    --  on the file where the entity is located.
+   --  See also Entity_Persistent_Access for longer term storage.
 
    type Construct_Database is tagged private;
    --  A construct database is a data structure containing a file index and a
@@ -65,6 +66,7 @@ package Language.Tree.Database is
    function Get_Profile
      (Lang       : access Tree_Language;
       Entity     : Entity_Access;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format : Boolean := False) return String;
    --  Return a formatted view of the profile of this construct - if any.
    --  For example, for subprogram, this would return
@@ -73,6 +75,8 @@ package Language.Tree.Database is
    --       : [type]    on one line
    --  If Raw_Format is true, then no formatting characters or tag will be
    --  inserted (and the profile can be used as-is in e.g. code).
+   --  If Raw_Format is false, optional parameters are highlighted with
+   --  Color_For_Optional_Param, which must be of the form "#dddddd".
 
    function Get_Declaration
      (Lang   : access Tree_Language;

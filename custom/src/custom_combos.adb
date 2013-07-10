@@ -22,7 +22,8 @@ with Glib.Object;        use Glib.Object;
 with Glib.Properties;    use Glib.Properties;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
-with Gtk.Combo_Box;      use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 with Gtk.List_Store;     use Gtk.List_Store;
 with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Toolbar;        use Gtk.Toolbar;
@@ -33,7 +34,6 @@ with Gtk.Label;          use Gtk.Label;
 with Gtk.Widget;         use Gtk.Widget;
 
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -85,7 +85,7 @@ package body Custom_Combos is
                             (1 => Label_Cst'Access);
 
    type Custom_Combo_Record is new Gtk_Box_Record with record
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
    end record;
    type Custom_Combo is access all Custom_Combo_Record'Class;
 
@@ -169,7 +169,7 @@ package body Custom_Combos is
       Label : String)
    is
       Iter : Gtk_Tree_Iter;
-      List : constant Gtk_List_Store := Gtk_List_Store (Combo.Combo.Get_Model);
+      List : constant Gtk_List_Store := -Combo.Combo.Get_Model;
 
    begin
       Iter := List.Get_Iter_First;
@@ -309,7 +309,7 @@ package body Custom_Combos is
             Pack_Start (Combo, Label, Expand => False, Padding => 4);
          end if;
 
-         Gtk_New_Text (Combo.Combo);
+         Gtk_New (Combo.Combo);
          Set_Name (Combo, Id);
          Pack_Start
            (Combo, Combo.Combo, Expand => True, Fill => True, Padding => 4);
@@ -450,8 +450,10 @@ package body Custom_Combos is
             Widget : constant Gtk_Widget :=
               Gtk_Widget (GObject'(Get_Data (EntInst)));
             Tip    : constant String := Nth_Arg (Data, 3, "");
+            Pos : constant Gint := Get_Toolbar_Separator_Position
+              (Kernel, Before_Build);
          begin
-            Insert (Widget, Tip, -1);
+            Insert (Widget, Tip, Pos - 1);
          end;
 
       elsif Command = "insert" then
@@ -507,8 +509,7 @@ package body Custom_Combos is
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
          Clear
-           (Gtk_List_Store
-              (Get_Model (Custom_Combo (GObject'(Get_Data (Inst))).Combo)));
+           (-Get_Model (Custom_Combo (GObject'(Get_Data (Inst))).Combo));
 
       elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);

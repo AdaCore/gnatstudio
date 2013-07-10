@@ -18,56 +18,40 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
-
-with Gdk.Color;                use Gdk.Color;
-with Gdk.Types;                use Gdk.Types;
+with GNAT.OS_Lib;
 
 with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
 with XML_Utils;                use XML_Utils;
 
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Button;         use Gtk.Color_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
-with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Label;                use Gtk.Label;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Settings;             use Gtk.Settings;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Table;                use Gtk.Table;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 
-with Gtkada.Handlers;          use Gtkada.Handlers;
-
 with Pango.Context;
 with Pango.Enums;              use Pango.Enums;
-with Pango.Font;               use Pango.Font;
 
 with Config;
 with GPS.Intl;                 use GPS.Intl;
@@ -90,21 +74,12 @@ package body Default_Preferences is
      (String, String, Ada.Strings.Hash, "=");
    use Str_Maps;
 
-   type Saved_Prefs_Data_Record is record
-      Preferences : Str_Maps.Map;
-      Manager     : Preferences_Manager;
-   end record;
-
    -------------------------
    --  Preferences Editor --
    -------------------------
 
-   type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
-   type Preferences_Editor is access all Preferences_Editor_Record'Class;
-   Preferences_Editor_Class_Record : Glib.Object.GObject_Class :=
-     Glib.Object.Uninitialized_Class;
-   Preferences_Editor_Signals : constant chars_ptr_array :=
-                       (1 => New_String (String (Signal_Preferences_Changed)));
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Theme_Descr_Array, Theme_Descr_Array_Access);
 
    procedure Create_Color_Buttons
      (Box     : Gtk_Box;
@@ -115,9 +90,8 @@ package body Default_Preferences is
    procedure Free (Pref : in out Preference);
    --  Free the memory associated with Pref
 
-   procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class);
-   --  Called when a toggle button has changed, to display the appropriate text
-   --  in it.
+   function From_String (Color : String) return Gdk_RGBA;
+   --  Parse the name of the color, and default to black if color is not found
 
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
@@ -215,10 +189,7 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class; Data : Manager_Preference);
    --  Open a dialog to select a new font
 
-   procedure Key_Grab (Ent : access Gtk_Widget_Record'Class);
-   --  Callback for the "grab" button when editing a key preference
-
-   function To_String (Font, Fg, Bg : String) return String;
+   function To_String (Font : String; Fg, Bg : Gdk_RGBA) return String;
    function Style_Token (Value : String; Num : Positive) return String;
    --  Handling of Param_Spec_Style
 
@@ -251,6 +222,19 @@ package body Default_Preferences is
    begin
       return Pref.Label.all;
    end Get_Label;
+
+   --------------
+   -- Get_Page --
+   --------------
+
+   function Get_Page (Pref : access Preference_Record'Class) return String is
+   begin
+      if Pref.Page = null then
+         return "";
+      else
+         return Pref.Page.all;
+      end if;
+   end Get_Page;
 
    -------------
    -- Get_Doc --
@@ -318,6 +302,7 @@ package body Default_Preferences is
       Result.Int_Min_Value := Minimum;
       Result.Int_Max_Value := Maximum;
       Result.Int_Value     := Default;
+      Result.Default       := Default;
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -332,11 +317,30 @@ package body Default_Preferences is
       Default                   : Boolean)
       return Boolean_Preference
    is
-      Result : constant Boolean_Preference := new Boolean_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
+      Val : Boolean;
    begin
-      Result.Bool_Value := Default;
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      --  Preference might have been created from loading the XML files before
+      --  we actually registered it.
+      if Pref = null
+        or else Pref.all not in Boolean_Preference_Record'Class
+      then
+         if Pref /= null
+           and then Pref.all in String_Preference_Record'Class
+         then
+            Val := Boolean'Value (String_Preference (Pref).Get_Pref);
+         else
+            Val := Default;
+         end if;
+
+         Pref := new Boolean_Preference_Record;
+         Boolean_Preference (Pref).Bool_Value := Val;
+      end if;
+
+      Boolean_Preference (Pref).Default := Default;
+      Register (Manager, Name, Label, Page, Doc, Pref);
+      return Boolean_Preference (Pref);
    end Create;
 
    ------------
@@ -350,13 +354,39 @@ package body Default_Preferences is
       Multi_Line                : Boolean := False)
       return String_Preference
    is
-      Result : constant String_Preference := new String_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
    begin
-      Result.Str_Value := new String'(Default);
-      Result.Multi_Line := Multi_Line;
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      if Pref = null
+        or else Pref.all not in String_Preference_Record'Class
+      then
+         Pref := new String_Preference_Record;
+         String_Preference (Pref).Str_Value := new String'(Default);
+      end if;
+
+      if String_Preference (Pref).Default = null then
+         String_Preference (Pref).Default := new String'(Default);
+      end if;
+
+      String_Preference (Pref).Multi_Line := Multi_Line;
+      Register (Manager, Name, Label, Page, Doc, Pref);  --  override previous
+      return String_Preference (Pref);
    end Create;
+
+   -----------------
+   -- From_String --
+   -----------------
+
+   function From_String (Color : String) return Gdk_RGBA is
+      Success : Boolean;
+      Result  : Gdk_RGBA;
+   begin
+      Parse (Result, Color, Success);
+      if not Success then
+         return Black_RGBA;
+      end if;
+      return Result;
+   end From_String;
 
    ------------
    -- Create --
@@ -370,7 +400,9 @@ package body Default_Preferences is
    is
       Result : constant Color_Preference := new Color_Preference_Record;
    begin
-      Result.Color_Value := new String'(Default);
+      Result.Color := From_String (Default);
+      Result.Default := Result.Color;
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -387,26 +419,8 @@ package body Default_Preferences is
    is
       Result : constant Font_Preference := new Font_Preference_Record;
    begin
-      Result.Font_Value := new String'(Default);
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
-   end Create;
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
-      Default_Modifier          : Gdk.Types.Gdk_Modifier_Type;
-      Default_Key               : Gdk.Types.Gdk_Key_Type)
-      return Key_Preference
-   is
-      Result : constant Key_Preference := new Key_Preference_Record;
-   begin
-      Result.Key_Modifier := Default_Modifier;
-      Result.Key_Value    := Default_Key;
+      Result.Descr := From_String (Default);
+      Result.Default := Copy (Result.Descr);
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -425,9 +439,15 @@ package body Default_Preferences is
    is
       Result : constant Style_Preference := new Style_Preference_Record;
    begin
-      Result.Style_Font := new String'(Default_Font);
-      Result.Style_Fg   := new String'(Default_Fg);
-      Result.Style_Bg   := new String'(Default_Bg);
+      Result.Fg_Color := From_String (Default_Fg);
+      Result.Fg_Default := Result.Fg_Color;
+
+      Result.Bg_Color := From_String (Default_Bg);
+      Result.Bg_Default := Result.Bg_Color;
+
+      Result.Font_Descr := From_String (Default_Font);
+      Result.Font_Default := Copy (Result.Font_Descr);
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -447,10 +467,16 @@ package body Default_Preferences is
    is
       Result : constant Variant_Preference := new Variant_Preference_Record;
    begin
+      Result.Fg_Color := From_String (Default_Fg);
+      Result.Fg_Default := Result.Fg_Color;
+
+      Result.Bg_Color := From_String (Default_Bg);
+      Result.Bg_Default := Result.Bg_Color;
+
       Result.Variant := Default_Variant;
+      Result.Default_Variant := Default_Variant;
       Result.Base_Font := Base;
-      Result.Style_Fg   := new String'(Default_Fg);
-      Result.Style_Bg   := new String'(Default_Bg);
+
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -522,7 +548,7 @@ package body Default_Preferences is
       Pref.Label := new String'(Label);
 
       Free (Pref.Page);
-      if Page /= "" then
+      if Page /= "" and then Page /= "/" then
          Pref.Page := new String'(Page);
       end if;
 
@@ -537,13 +563,18 @@ package body Default_Preferences is
 
       if Has_Element (Old) then
          Old_Pref := Element (Old);
-         Delete (Manager.Preferences, Old);
-         Free (Old_Pref);
+         if Old_Pref /= Preference (Pref) then
+            Delete (Manager.Preferences, Old);
+            Free (Old_Pref);
+            Append
+              (Container => Manager.Preferences,
+               New_Item  => Preference (Pref));
+         end if;
+      else
+         Append
+           (Container => Manager.Preferences,
+            New_Item  => Preference (Pref));
       end if;
-
-      Append
-        (Container => Manager.Preferences,
-         New_Item  => Preference (Pref));
    end Register;
 
    --------------
@@ -583,36 +614,13 @@ package body Default_Preferences is
    overriding function Get_Pref
      (Pref : access Color_Preference_Record) return String is
    begin
-      return Pref.Color_Value.all;
+      return To_String (Pref.Color);
    end Get_Pref;
 
    function Get_Pref
-     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color is
+     (Pref : access Color_Preference_Record) return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Color = Gdk.Color.Null_Color then
-         Pref.Color := Parse (Pref.Color_Value.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Color);
-      end if;
       return Pref.Color;
-   exception
-      when Wrong_Color =>
-         Pref.Color := Black (Get_Default_Colormap);
-         return Pref.Color;
-   end Get_Pref;
-
-   overriding function Get_Pref
-     (Pref : access Key_Preference_Record) return String is
-   begin
-      return Image (Pref.Key_Value, Pref.Key_Modifier);
-   end Get_Pref;
-
-   procedure Get_Pref
-     (Pref     : access Key_Preference_Record;
-      Modifier : out Gdk_Modifier_Type;
-      Key      : out Gdk_Key_Type) is
-   begin
-      Modifier := Pref.Key_Modifier;
-      Key      := Pref.Key_Value;
    end Get_Pref;
 
    overriding function Get_Pref
@@ -630,16 +638,13 @@ package body Default_Preferences is
    overriding function Get_Pref
      (Pref : access Font_Preference_Record) return String is
    begin
-      return Pref.Font_Value.all;
+      return To_String (Pref.Descr);
    end Get_Pref;
 
    function Get_Pref
      (Pref    : access Font_Preference_Record)
       return Pango.Font.Pango_Font_Description is
    begin
-      if Pref.Descr = null then
-         Pref.Descr := From_String (Pref.Font_Value.all);
-      end if;
       return Pref.Descr;
    end Get_Pref;
 
@@ -647,22 +652,19 @@ package body Default_Preferences is
      (Pref : access Style_Preference_Record) return String is
    begin
       return To_String
-        (Pref.Style_Font.all, Pref.Style_Fg.all, Pref.Style_Bg.all);
+        (To_String (Pref.Font_Descr), Pref.Fg_Color, Pref.Bg_Color);
    end Get_Pref;
 
    overriding function Get_Pref
      (Pref : access Variant_Preference_Record) return String is
    begin
       return To_String
-        (Pref.Variant'Img, Pref.Style_Fg.all, Pref.Style_Bg.all);
+        (Pref.Variant'Img, Pref.Fg_Color, Pref.Bg_Color);
    end Get_Pref;
 
    function Get_Pref_Font
      (Pref : access Style_Preference_Record) return Pango_Font_Description is
    begin
-      if Pref.Font_Descr = null then
-         Pref.Font_Descr := From_String (Pref.Style_Font.all);
-      end if;
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
@@ -697,72 +699,31 @@ package body Default_Preferences is
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
+   -----------------
+   -- Get_Pref_Fg --
+   -----------------
+
    function Get_Pref_Fg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
+      return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Fg_Color = Gdk.Color.Null_Color then
-         Pref.Fg_Color := Parse (Pref.Style_Fg.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Fg_Color);
-      end if;
       return Pref.Fg_Color;
-   exception
-      when Wrong_Color =>
-         Pref.Fg_Color := Black (Get_Default_Colormap);
-         return Pref.Fg_Color;
    end Get_Pref_Fg;
+
+   -----------------
+   -- Get_Pref_Bg --
+   -----------------
 
    function Get_Pref_Bg
      (Pref : access Style_Preference_Record'Class)
-      return Gdk.Color.Gdk_Color is
+      return Gdk.RGBA.Gdk_RGBA is
    begin
-      if Pref.Bg_Color = Gdk.Color.Null_Color then
-         Pref.Bg_Color := Parse (Pref.Style_Bg.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Bg_Color);
-      end if;
       return Pref.Bg_Color;
-   exception
-      when Wrong_Color =>
-         Pref.Bg_Color := Black (Get_Default_Colormap);
-         return Pref.Bg_Color;
    end Get_Pref_Bg;
-
-   -----------------------
-   -- Emit_Pref_Changed --
-   -----------------------
-
-   procedure Emit_Pref_Changed
-     (Manager : access Preferences_Manager_Record'Class) is
-   begin
-      if Manager /= null and then Manager.Pref_Editor /= null then
-         Widget_Callback.Emit_By_Name
-           (Manager.Pref_Editor, Signal_Preferences_Changed);
-      end if;
-   end Emit_Pref_Changed;
 
    --------------
    -- Set_Pref --
    --------------
-
-   overriding procedure Set_Pref
-     (Pref    : access Key_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class;
-      Value   : String) is
-   begin
-      GUI_Utils.Value (Value, Pref.Key_Value, Pref.Key_Modifier);
-      Emit_Pref_Changed (Manager);
-   end Set_Pref;
-
-   procedure Set_Pref
-     (Pref     : Key_Preference;
-      Manager  : access Preferences_Manager_Record'Class;
-      Modifier : Gdk.Types.Gdk_Modifier_Type;
-      Key      : Gdk.Types.Gdk_Key_Type) is
-   begin
-      Pref.Key_Value := Key;
-      Pref.Key_Modifier := Modifier;
-      Emit_Pref_Changed (Manager);
-   end Set_Pref;
 
    overriding procedure Set_Pref
      (Pref    : access Integer_Preference_Record;
@@ -770,7 +731,7 @@ package body Default_Preferences is
       Value   : String) is
    begin
       Pref.Int_Value := Integer'Value (Value);
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    procedure Set_Pref
@@ -779,7 +740,7 @@ package body Default_Preferences is
       Value   : Integer) is
    begin
       Pref.Int_Value := Value;
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -788,7 +749,7 @@ package body Default_Preferences is
       Value   : String) is
    begin
       Pref.Bool_Value := Boolean'Value (Value);
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    procedure Set_Pref
@@ -797,7 +758,7 @@ package body Default_Preferences is
       Value   : Boolean) is
    begin
       Pref.Bool_Value := Value;
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -807,7 +768,7 @@ package body Default_Preferences is
    begin
       Free (Pref.Str_Value);
       Pref.Str_Value := new String'(Value);
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -815,15 +776,8 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
    begin
-      Free (Pref.Color_Value);
-      Pref.Color_Value := new String'(Value);
-
-      if Pref.Color /= Null_Color then
-         Free_Colors (Gtk.Widget.Get_Default_Colormap, (1 => Pref.Color));
-         Pref.Color := Null_Color;
-      end if;
-
-      Emit_Pref_Changed (Manager);
+      Pref.Color := From_String (Value);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -831,10 +785,9 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class;
       Value   : String) is
    begin
-      Free (Pref.Font_Value);
       Free (Pref.Descr);
-      Pref.Font_Value := new String'(Value);
-      Emit_Pref_Changed (Manager);
+      Pref.Descr := From_String (Value);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -864,23 +817,23 @@ package body Default_Preferences is
       Manager      : access Preferences_Manager_Record'Class;
       Font, Fg, Bg : String) is
    begin
-      Free (Pref.Style_Font);
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
 
-      if Pref.Fg_Color /= Null_Color then
-         Free_Colors (Gtk.Widget.Get_Default_Colormap,
-                      (1 => Pref.Fg_Color, 2 => Pref.Bg_Color));
-         Pref.Fg_Color := Null_Color;
-         Pref.Bg_Color := Null_Color;
-      end if;
+      Pref.Fg_Color := From_String (Fg);
+      Pref.Bg_Color := From_String (Bg);
+      Pref.Font_Descr := From_String (Font);
 
-      Pref.Style_Font := new String'(Font);
-      Pref.Style_Fg   := new String'(Fg);
-      Pref.Style_Bg   := new String'(Bg);
+      Manager.On_Pref_Changed (Pref);
+   end Set_Pref;
 
-      Emit_Pref_Changed (Manager);
+   procedure Set_Pref
+     (Pref         : Font_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Font         : Pango_Font_Description) is
+   begin
+      Free (Pref.Descr);
+      Pref.Descr := Copy (Font);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    procedure Set_Pref
@@ -889,11 +842,12 @@ package body Default_Preferences is
       Variant      : Variant_Enum;
       Fg, Bg       : String) is
    begin
-      Set_Pref
-        (Style_Preference (Pref),
-         Manager, Pref.Base_Font.Style_Font.all, Fg, Bg);
-      Pref.Variant := Variant;
-      Emit_Pref_Changed (Manager);
+      Free (Pref.Font_Descr);
+      Pref.Fg_Color := From_String (Fg);
+      Pref.Bg_Color := From_String (Bg);
+      Pref.Variant    := Variant;
+
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    overriding procedure Set_Pref
@@ -902,7 +856,7 @@ package body Default_Preferences is
       Value   : String) is
    begin
       Pref.Enum_Value := Integer'Value (Value);
-      Emit_Pref_Changed (Manager);
+      Manager.On_Pref_Changed (Pref);
    end Set_Pref;
 
    ----------------------
@@ -917,6 +871,7 @@ package body Default_Preferences is
       Err        : String_Access;
    begin
       if Is_Regular_File (File_Name) then
+         Manager.Loading_Prefs := True;
          XML_Parsers.Parse (File_Name, File, Err);
          if File /= null then
             Node := File.Child;
@@ -956,10 +911,13 @@ package body Default_Preferences is
          end if;
 
          Free (File);
+         Manager.Loading_Prefs := False;
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Manager.Loading_Prefs := False;
+         Trace (Exception_Handle, E);
    end Load_Preferences;
 
    ----------------------
@@ -980,11 +938,14 @@ package body Default_Preferences is
 
       while Has_Element (C) loop
          P := Element (C);
-         Node     := new XML_Utils.Node;
-         Node.Tag := new String'("pref");
-         Set_Attribute (Node, "name", Get_Name (P));
-         Node.Value := new String'(Get_Pref (P));
-         Add_Child (File, Node);
+         if not P.Is_Default then
+            Node     := new XML_Utils.Node;
+            Node.Tag := new String'("pref");
+            Set_Attribute (Node, "name", Get_Name (P));
+            Node.Value := new String'(Get_Pref (P));
+            Add_Child (File, Node);
+         end if;
+
          Next (C);
       end loop;
 
@@ -993,20 +954,6 @@ package body Default_Preferences is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Save_Preferences;
-
-   ---------------------
-   -- Toggled_Boolean --
-   ---------------------
-
-   procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class) is
-      T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
-   begin
-      if Get_Active (T) then
-         Set_Text (Gtk_Label (Get_Child (T)), -"(Enabled)");
-      else
-         Set_Text (Gtk_Label (Get_Child (T)), -"(Disabled)");
-      end if;
-   end Toggled_Boolean;
 
    ------------------
    -- Gint_Changed --
@@ -1018,7 +965,9 @@ package body Default_Preferences is
    is
       A : constant Gtk_Adjustment := Gtk_Adjustment (Adj);
    begin
-      Set_Pref (Integer_Preference (Data.Pref), null, Integer (Get_Value (A)));
+      Set_Pref
+        (Integer_Preference (Data.Pref),
+         Data.Manager, Integer (Get_Value (A)));
    end Gint_Changed;
 
    -----------------
@@ -1044,7 +993,7 @@ package body Default_Preferences is
    is
       T     : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
-      Set_Pref (Boolean_Preference (Data.Pref), null, Get_Active (T));
+      Set_Pref (Boolean_Preference (Data.Pref), Data.Manager, Get_Active (T));
    end Boolean_Changed;
 
    --------------------
@@ -1072,7 +1021,8 @@ package body Default_Preferences is
    begin
       Get_Start_Iter (E, From);
       Get_End_Iter   (E, To);
-      Set_Pref (String_Preference (Data.Pref), null, Get_Text (E, From, To));
+      Set_Pref
+        (String_Preference (Data.Pref), Data.Manager, Get_Text (E, From, To));
    end Text_Buffer_Changed;
 
    ------------------------
@@ -1096,7 +1046,7 @@ package body Default_Preferences is
    is
       E     : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
-      Set_Pref (String_Preference (Data.Pref), null, Get_Text (E));
+      Set_Pref (String_Preference (Data.Pref), Data.Manager, Get_Text (E));
    end Entry_Changed;
 
    ------------------
@@ -1118,9 +1068,9 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+      C : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
-      Set_Pref (Data.Pref, null, Get_Active_Text (C));
+      Set_Pref (Data.Pref, Data.Manager, Get_Active_Text (C));
    end Combo_Changed;
 
    ------------------
@@ -1132,7 +1082,8 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
    begin
-      Set_Active_Text (Gtk_Combo_Box (Combo), String'(Get_Pref (Data.Pref)));
+      Set_Active_Text
+        (Gtk_Combo_Box_Text (Combo), String'(Get_Pref (Data.Pref)));
    end Update_Combo;
 
    ----------------
@@ -1168,30 +1119,17 @@ package body Default_Preferences is
       E     : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
       if Data.Pref.all in Font_Preference_Record'Class then
-         Set_Pref (Font_Preference (Data.Pref), null, Get_Text (E));
+         Set_Pref (Font_Preference (Data.Pref), Data.Manager, Get_Text (E));
 
       else
-         Free (Style_Preference (Data.Pref).Style_Font);
          Free (Style_Preference (Data.Pref).Font_Descr);
-         Style_Preference (Data.Pref).Style_Font := new String'(Get_Text (E));
+         Style_Preference (Data.Pref).Font_Descr := From_String (E.Get_Text);
+         Data.Manager.On_Pref_Changed (Data.Pref);
       end if;
 
       Reset_Font (E);
       return False;
    end Font_Entry_Changed;
-
-   --------------
-   -- Key_Grab --
-   --------------
-
-   procedure Key_Grab (Ent : access Gtk_Widget_Record'Class) is
-      E    : constant Gtk_Entry := Gtk_Entry (Ent);
-      Key  : Gdk.Types.Gdk_Key_Type;
-      Mods : Gdk.Types.Gdk_Modifier_Type;
-   begin
-      GUI_Utils.Key_Grab (E, Key, Mods);
-      Set_Text (E, Image (Key, Mods));
-   end Key_Grab;
 
    -------------------
    -- Color_Changed --
@@ -1202,8 +1140,14 @@ package body Default_Preferences is
       Data   : Manager_Preference)
    is
       Btn : constant Gtk_Color_Button := Gtk_Color_Button (Button);
+      Rgba : Gdk_RGBA;
+      Val  : constant Gdk_RGBA := Color_Preference (Data.Pref).Get_Pref;
    begin
-      Set_Pref (Color_Preference (Data.Pref), null, To_String (Btn.Get_Color));
+      Btn.Get_Rgba (Rgba);
+      if Rgba /= Val then
+         Set_Pref
+           (Color_Preference (Data.Pref), Data.Manager, To_String (Rgba));
+      end if;
    end Color_Changed;
 
    ---------------
@@ -1212,10 +1156,16 @@ package body Default_Preferences is
 
    procedure Update_Fg
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      Old, Val : Gdk_RGBA;
    begin
-      Set_Color (Gtk_Color_Button (Button),
-                 Get_Pref_Fg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Get_Rgba (Old);
+      Val := Get_Pref_Fg (Style_Preference (Data.Pref));
+
+      if Old /= Val then
+         Gtk_Color_Button (Button).Set_Rgba (Val);
+      end if;
    end Update_Fg;
 
    ---------------
@@ -1224,10 +1174,16 @@ package body Default_Preferences is
 
    procedure Update_Bg
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      Old, Val : Gdk_RGBA;
    begin
-      Set_Color (Gtk_Color_Button (Button),
-                 Get_Pref_Bg (Style_Preference (Data.Pref)));
+      Gtk_Color_Button (Button).Get_Rgba (Old);
+      Val := Get_Pref_Bg (Style_Preference (Data.Pref));
+
+      if Old /= Val then
+         Gtk_Color_Button (Button).Set_Rgba (Val);
+      end if;
    end Update_Bg;
 
    -----------------------
@@ -1240,10 +1196,10 @@ package body Default_Preferences is
    begin
       if Data.Pref.all in Font_Preference_Record'Class then
          Set_Text (Gtk_Entry (Ent),
-                   Font_Preference (Data.Pref).Font_Value.all);
+                   To_String (Font_Preference (Data.Pref).Descr));
       else
          Set_Text (Gtk_Entry (Ent),
-                   Style_Preference (Data.Pref).Style_Font.all);
+                   To_String (Style_Preference (Data.Pref).Font_Descr));
       end if;
    end Update_Font_Entry;
 
@@ -1253,11 +1209,19 @@ package body Default_Preferences is
 
    procedure Update_Color
      (Button : access GObject_Record'Class;
-      Data   : Manager_Preference) is
+      Data   : Manager_Preference)
+   is
+      R, Old : Gdk_RGBA;
+      Success : Boolean;
    begin
-      Set_Color
-        (Gtk_Color_Button (Button),
-         Parse (Get_Pref (Color_Preference (Data.Pref))));
+      Parse (R, Get_Pref (Color_Preference (Data.Pref)), Success);
+
+      if Success then
+         Gtk_Color_Button (Button).Get_Rgba (Old);
+         if Old /= R then
+            Set_Rgba (Gtk_Color_Button (Button), R);
+         end if;
+      end if;
    end Update_Color;
 
    ----------------------
@@ -1269,11 +1233,13 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
+      R : Gdk_RGBA;
    begin
-      Free (Style_Preference (Data.Pref).Style_Fg);
-      Style_Preference (Data.Pref).Style_Fg :=
-        new String'(To_String (Get_Color (C)));
-      Style_Preference (Data.Pref).Fg_Color := Get_Color (C);
+      C.Get_Rgba (R);
+      if Style_Preference (Data.Pref).Fg_Color /= R then
+         Style_Preference (Data.Pref).Fg_Color := R;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Fg_Color_Changed;
 
    ---------------------
@@ -1283,10 +1249,13 @@ package body Default_Preferences is
    procedure Variant_Changed
      (Combo : access GObject_Record'Class; Data  : Manager_Preference)
    is
-      C : constant Gtk_Combo_Box := Gtk_Combo_Box (Combo);
+      C : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
+      V : constant Variant_Enum := From_String (C.Get_Active_Text);
    begin
-      Variant_Preference (Data.Pref).Variant := From_String
-        (C.Get_Active_Text);
+      if Variant_Preference (Data.Pref).Variant /= V then
+         Variant_Preference (Data.Pref).Variant := V;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Variant_Changed;
 
    ----------------------
@@ -1298,20 +1267,22 @@ package body Default_Preferences is
       Data  : Manager_Preference)
    is
       C : constant Gtk_Color_Button := Gtk_Color_Button (Combo);
+      R : Gdk_RGBA;
    begin
-      Free (Style_Preference (Data.Pref).Style_Bg);
-      Style_Preference (Data.Pref).Style_Bg :=
-        new String'(To_String (Get_Color (C)));
-      Style_Preference (Data.Pref).Bg_Color := Get_Color (C);
+      C.Get_Rgba (R);
+      if Style_Preference (Data.Pref).Bg_Color /= R then
+         Style_Preference (Data.Pref).Bg_Color := R;
+         Data.Manager.On_Pref_Changed (Data.Pref);
+      end if;
    end Bg_Color_Changed;
 
    ---------------
    -- To_String --
    ---------------
 
-   function To_String (Font, Fg, Bg : String) return String is
+   function To_String (Font : String; Fg, Bg : Gdk_RGBA) return String is
    begin
-      return Font & '@' & Fg & '@' & Bg;
+      return Font & '@' & To_String (Fg) & '@' & To_String (Bg);
    end To_String;
 
    -----------------
@@ -1361,7 +1332,7 @@ package body Default_Preferences is
                Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (F);
-      Pack_Start (Get_Vbox (Dialog), F, Expand => True, Fill => True);
+      Pack_Start (Get_Content_Area (Dialog), F, Expand => True, Fill => True);
 
       Tmp := Add_Button (Dialog, Stock_Ok,     Gtk_Response_OK);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -1375,17 +1346,15 @@ package body Default_Preferences is
          Set_Text (E, Get_Font_Name (F));
 
          if Data.Pref.all in Font_Preference_Record'Class then
-            Free (Font_Preference (Data.Pref).Font_Value);
             Free (Font_Preference (Data.Pref).Descr);
-            Font_Preference (Data.Pref).Font_Value :=
-              new String'(Get_Text (E));
+            Font_Preference (Data.Pref).Descr := From_String (E.Get_Text);
 
          else
-            Free (Style_Preference (Data.Pref).Style_Font);
             Free (Style_Preference (Data.Pref).Font_Descr);
-            Style_Preference (Data.Pref).Style_Font :=
-              new String'(Get_Text (E));
+            Style_Preference (Data.Pref).Font_Descr :=
+              From_String (E.Get_Text);
          end if;
+         Data.Manager.On_Pref_Changed (Data.Pref);
          Reset_Font (E);
       end if;
 
@@ -1405,6 +1374,7 @@ package body Default_Preferences is
       Box    : Gtk_Box;
       Ent    : Gtk_Entry;
       Button : Gtk_Button;
+      P : constant Manager_Preference := (Preferences_Manager (Manager), Pref);
    begin
       Gtk_New_Hbox (Box, Homogeneous => False);
       Gtk_New (Ent);
@@ -1415,16 +1385,13 @@ package body Default_Preferences is
       Preference_Handlers.Object_Connect
         (Button, Gtk.Button.Signal_Clicked,
          Preference_Handlers.To_Marshaller (Select_Font'Access),
-         Slot_Object => Ent,
-         User_Data => (Preferences_Manager (Manager), Pref));
+         Slot_Object => Ent, User_Data => P);
 
       Return_Preference_Handlers.Connect
-        (Ent, Signal_Focus_Out_Event, Font_Entry_Changed'Access,
-         User_Data => (Preferences_Manager (Manager), Pref));
+        (Ent, Signal_Focus_Out_Event, Font_Entry_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Font_Entry'Access, Ent,
-         User_Data => (Preferences_Manager (Manager), Pref));
+         Update_Font_Entry'Access, Ent, P);
 
       if Pango.Context.Load_Font
         (Get_Pango_Context (Manager.Pref_Editor), Desc) /= null
@@ -1460,6 +1427,8 @@ package body Default_Preferences is
    is
       Spin : Gtk_Spin_Button;
       Adj  : Gtk_Adjustment;
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
       Gtk_New (Adj,
                Value => Gdouble (Pref.Int_Value),
@@ -1468,16 +1437,13 @@ package body Default_Preferences is
                Step_Increment => 1.0,
                Page_Increment => 10.0);
       Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
-      Set_Editable (Spin, True);
+      Spin.Set_Editable (True);
 
       Preference_Handlers.Connect
-        (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+        (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Gint'Access, Adj,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
-
+         Update_Gint'Access, Adj, P);
       return Gtk_Widget (Spin);
    end Edit;
 
@@ -1491,20 +1457,17 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Toggle : Gtk_Check_Button;
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New (Toggle, -"Enabled");
-      Widget_Callback.Connect
-        (Toggle, Signal_Toggled, Toggled_Boolean'Access);
-      Set_Active (Toggle, True); --  Forces a toggle
-      Set_Active (Toggle, Pref.Bool_Value);
+      Gtk_New (Toggle, Pref.Get_Label);
+      Toggle.Set_Active (Pref.Bool_Value);
 
       Preference_Handlers.Connect
-        (Toggle, Signal_Toggled, Boolean_Changed'Access,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+        (Toggle, Signal_Toggled, Boolean_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Boolean'Access, Toggle,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         Update_Boolean'Access, Toggle, P);
       return Gtk_Widget (Toggle);
    end Edit;
 
@@ -1520,6 +1483,8 @@ package body Default_Preferences is
       Ent  : Gtk_Entry;
       Text : Gtk_Text_View;
       Scrolled : Gtk_Scrolled_Window;
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
       if Pref.Multi_Line then
          Gtk_New (Scrolled);
@@ -1528,13 +1493,10 @@ package body Default_Preferences is
          Add (Scrolled, Text);
          Set_Text (Get_Buffer (Text), Pref.Str_Value.all);
          Preference_Handlers.Connect
-           (Get_Buffer (Text), "changed", Text_Buffer_Changed'Access,
-            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+           (Get_Buffer (Text), "changed", Text_Buffer_Changed'Access, P);
          Preference_Handlers.Object_Connect
            (Manager.Pref_Editor, Signal_Preferences_Changed,
-            Update_Text_Buffer'Access, Get_Buffer (Text),
-            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
-
+            Update_Text_Buffer'Access, Get_Buffer (Text), P);
          return Gtk.Widget.Gtk_Widget (Scrolled);
 
       else
@@ -1543,19 +1505,14 @@ package body Default_Preferences is
 
          Preference_Handlers.Connect
            (Ent, Gtk.Editable.Signal_Insert_Text,
-            Entry_Changed'Access,
-            User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
-            After       => True);
+            Entry_Changed'Access, P, After => True);
          Preference_Handlers.Connect
            (Ent, Signal_Delete_Text,
-            Entry_Changed'Access,
-            User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
-            After       => True);
+            Entry_Changed'Access, P, After => True);
          Preference_Handlers.Object_Connect
            (Manager.Pref_Editor, Signal_Preferences_Changed,
             Update_Entry'Access,
-            Ent,
-            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+            Ent, P);
          return Gtk_Widget (Ent);
       end if;
    end Edit;
@@ -1567,6 +1524,7 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out String_Preference_Record) is
    begin
       Free (Pref.Str_Value);
+      Free (Pref.Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1580,30 +1538,19 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Button : Gtk_Color_Button;
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New_With_Color (Button, Get_Pref (Color_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref (Color_Preference (Pref)));
+      Button.Set_Use_Alpha (True);
 
       Preference_Handlers.Connect
-        (Button, Signal_Color_Set,
-         Color_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+        (Button, Signal_Color_Set, Color_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Color'Access, Button,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
-
+         Update_Color'Access, Button, P);
       return Gtk_Widget (Button);
    end Edit;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Pref : in out Color_Preference_Record) is
-   begin
-      Free (Pref.Color_Value);
-      Free (Preference_Record (Pref));
-   end Free;
 
    ----------
    -- Edit --
@@ -1627,52 +1574,10 @@ package body Default_Preferences is
 
    overriding procedure Free (Pref : in out Font_Preference_Record) is
    begin
-      Free (Pref.Font_Value);
+      Free (Pref.Default);
       Free (Pref.Descr);
       Free (Preference_Record (Pref));
    end Free;
-
-   ----------
-   -- Edit --
-   ----------
-
-   overriding function Edit
-     (Pref               : access Key_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
-      return Gtk.Widget.Gtk_Widget
-   is
-      Ent    : Gtk_Entry;
-      Modif  : Gdk_Modifier_Type;
-      Key    : Gdk_Key_Type;
-      Button : Gtk_Button;
-      Box    : Gtk_Box;
-   begin
-      Gtk_New_Hbox (Box);
-      Gtk_New (Ent);
-      Set_Editable (Ent, False);
-      Pack_Start (Box, Ent, Expand => True, Fill => True);
-
-      Gtk_New (Button, -"Grab...");
-      Pack_Start (Box, Button, Expand => False);
-
-      Get_Pref (Key_Preference (Pref), Modif, Key);
-
-      Append_Text (Ent, Image (Key, Modif));
-
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
-         Slot_Object => Ent);
-      Preference_Handlers.Connect
-        (Ent, Gtk.Editable.Signal_Insert_Text, Entry_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
-         After       => True);
-      Preference_Handlers.Object_Connect
-        (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Entry'Access,
-         Ent, User_Data => (Preferences_Manager (Manager), Preference (Pref)));
-
-      return Gtk_Widget (Box);
-   end Edit;
 
    --------------------------
    -- Create_Color_Buttons --
@@ -1684,30 +1589,27 @@ package body Default_Preferences is
       Manager : access Preferences_Manager_Record'Class)
    is
       Button : Gtk_Color_Button;
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New_With_Color (Button, Get_Pref_Fg (Style_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref_Fg (Style_Preference (Pref)));
+      Button.Set_Use_Alpha (True);
       Set_Tooltip_Text (Button, -"Foreground color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
-        (Button, Signal_Color_Set,
-         Fg_Color_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+        (Button, Signal_Color_Set, Fg_Color_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Fg'Access, Button,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         Update_Fg'Access, Button, P);
 
-      Gtk_New_With_Color (Button, Get_Pref_Bg (Style_Preference (Pref)));
+      Gtk_New_With_Rgba (Button, Get_Pref_Bg (Style_Preference (Pref)));
       Set_Tooltip_Text (Button, -"Background color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect
-        (Button, Signal_Color_Set,
-         Bg_Color_Changed'Access,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+        (Button, Signal_Color_Set, Bg_Color_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Bg'Access, Button,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         Update_Bg'Access, Button, P);
    end Create_Color_Buttons;
 
    ----------
@@ -1748,11 +1650,12 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Box   : Gtk_Box;
-      Variant_Combo : Gtk_Combo_Box;
+      Variant_Combo : Gtk_Combo_Box_Text;
       Count : Gint := 0;
-
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New_Text (Variant_Combo);
+      Gtk_New (Variant_Combo);
       for J in Variant_Enum loop
          Append_Text (Variant_Combo, To_String (J));
          if J = Pref.Variant then
@@ -1766,8 +1669,7 @@ package body Default_Preferences is
       Pack_Start (Box, Variant_Combo, Expand => True, Fill => True);
       Preference_Handlers.Connect
         (Variant_Combo, Gtk.Combo_Box.Signal_Changed,
-         Variant_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+         Variant_Changed'Access, P);
 
       Create_Color_Buttons (Box, Pref, Manager);
 
@@ -1778,12 +1680,20 @@ package body Default_Preferences is
    -- Free --
    ----------
 
+   overriding procedure Free (Pref : in out Variant_Preference_Record) is
+   begin
+      Free (Pref.Font_Descr);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    overriding procedure Free (Pref : in out Style_Preference_Record) is
    begin
-      Free (Pref.Style_Font);
       Free (Pref.Font_Descr);
-      Free (Pref.Style_Fg);
-      Free (Pref.Style_Bg);
+      Free (Pref.Font_Default);
       Free (Preference_Record (Pref));
    end Free;
 
@@ -1794,10 +1704,30 @@ package body Default_Preferences is
    overriding function Get_Pref
      (Pref : access Theme_Preference_Record) return String is
    begin
-      if Pref.Themes = null or else Pref.Current not in Pref.Themes'Range then
+      if Pref = null
+        or else Pref.Themes = null
+        or else Pref.Current not in Pref.Themes'Range
+      then
          return "";
       else
-         return Pref.Themes (Pref.Current).all;
+         return Pref.Themes (Pref.Current).Name.all;
+      end if;
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Pref : access Theme_Preference_Record) return Theme_Descr is
+   begin
+      if Pref = null
+        or else Pref.Themes = null
+        or else Pref.Current not in Pref.Themes'Range
+      then
+         return (null, null, False);
+      else
+         return Pref.Themes (Pref.Current);
       end if;
    end Get_Pref;
 
@@ -1808,18 +1738,16 @@ package body Default_Preferences is
    overriding procedure Set_Pref
      (Pref    : access Theme_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
-      Value   : String)
-   is
-      pragma Unreferenced (Manager);
+      Value   : String) is
    begin
       if Pref.Themes = null then
          return;
       end if;
 
       for J in Pref.Themes'Range loop
-         if Pref.Themes (J).all = Value then
+         if Pref.Themes (J).Name.all = Value then
             Pref.Current := J;
-
+            Manager.On_Pref_Changed (Pref);
             return;
          end if;
       end loop;
@@ -1834,104 +1762,122 @@ package body Default_Preferences is
       Name, Label, Page, Doc : String)
       return Theme_Preference
    is
+      use GNAT.OS_Lib;
       Ret         : constant Theme_Preference := new Theme_Preference_Record;
-      Search_Path : constant Filesystem_String := +Gtk.Rc.Get_Theme_Dir;
-      Default     : constant String :=
-                      Glib.Properties.Get_Property
-                        (Gtk.Settings.Get_Default,
-                         Gtk.Settings.Gtk_Theme_Name);
-      Dir         : GNATCOLL.VFS.Virtual_File;
-      Gtk_Default : Natural := 0;
-      Win_Default : Natural := 0;
-      Unx_Default : Natural := 0;
-      N_Themes    : Natural := 0;
-      Num         : Positive;
+      Search_Path : constant Filesystem_String :=
+         (Get_Home_Directory.Full_Name.all & Directory_Separator & ".themes")
+         & Path_Separator
+         & (+Gtk.Rc.Get_Theme_Dir);
 
-   begin
-      if Search_Path'Length > 0 then
-         if Active (Me) then
-            Trace (Me, "Theme search path is " & (+Search_Path));
-            Trace (Me, "Active theme is " & Default);
+      --  Do not attempt to use the system default for gtk+. On most systems,
+      --  it will be Raleigh because gtk+ is not standard. On linux, since we
+      --  are using our own gtk+, chances are that the user's theme is not
+      --  available with our own gtk+ anyway.
+      Default     : constant String := "<unknown>";
+--                        Glib.Properties.Get_Property
+--                          (Gtk.Settings.Get_Default,
+--                           Gtk.Settings.Gtk_Theme_Name_Property);
+
+      Dirs       : constant File_Array := From_Path (Search_Path);
+      Dir        : GNATCOLL.VFS.Virtual_File;
+      Subdirs    : GNATCOLL.VFS.File_Array_Access;
+      Rc_File    : Virtual_File;
+      use type Config.Host_Type;
+
+      procedure Add_Theme (Name : String; Dark : Boolean);
+      --  Register a new theme
+
+      procedure Add_Theme (Name : String; Dark : Boolean) is
+         Tmp : Theme_Descr_Array_Access := Ret.Themes;
+      begin
+         if Tmp = null then
+            Ret.Themes := new Theme_Descr_Array (1 .. 1);
+         else
+            Ret.Themes := new Theme_Descr_Array (Tmp'First .. Tmp'Last + 1);
+            Ret.Themes (Tmp'Range) := Tmp.all;
+            Unchecked_Free (Tmp);
          end if;
 
-         Dir := Create (Search_Path);
+         if Dark then
+            Ret.Themes (Ret.Themes'Last) :=
+              (Name      => new String'(Name & " (Dark)"),
+               Directory => new String'(Name),
+               Dark      => Dark);
+         else
+            Ret.Themes (Ret.Themes'Last) :=
+              (Name      => new String'(Name),
+               Directory => new String'(Name),
+               Dark      => Dark);
+         end if;
 
-         declare
-            Subdirs : File_Array_Access;
-            Rc_File : Virtual_File;
+         if Default = Ret.Themes (Ret.Themes'Last).Name.all
+           or else (Ret.Current = Natural'Last
+                    and then Ret.Themes (Ret.Themes'Last).Name.all = "Adwaita")
+         then
+            Ret.Current := Ret.Themes'Last;
+         end if;
+      end Add_Theme;
 
-         begin
-            if Dir.Is_Directory then
-               Subdirs := Dir.Read_Dir (Dirs_Only);
-            else
-               Subdirs := new File_Array (1 .. 0);
-               if Active (Me) then
-                  Trace (Me, "Theme search path not found on disk.");
-               end if;
-            end if;
+   begin
+      if Active (Me) then
+         Trace (Me, "Theme search path is " & (+Search_Path));
+         Trace (Me, "Active theme is " & Default);
+      end if;
 
-            --  Count the total number of available themes
-            for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-2.0/gtkrc");
+      Ret.Current := Natural'Last;
+      Ret.Themes  := null;
+
+      for D in Dirs'Range loop
+         Dir := Dirs (D);
+
+         if Dir.Is_Directory then
+            Subdirs := Dir.Read_Dir (Dirs_Only);
+
+            for Subdir of Subdirs.all loop
+               Rc_File := Subdir.Create_From_Dir ("gtk-3.0/gtk.css");
 
                if Rc_File.Is_Regular_File then
-                  N_Themes := N_Themes + 1;
+                  Add_Theme (+Base_Dir_Name (Subdir), Dark => False);
                end if;
-            end loop;
 
-            Ret.Themes := new GNAT.Strings.String_List (1 .. N_Themes);
-            Ret.Current := 0;
+               --  Check for a "dark" variant. We cannot unfortunately guess
+               --  the possible variants of a theme just by looking at the
+               --  file names, since many themes for instance provide a
+               --  "gtk-widgets.css", where "widgets" is not a variant. In any
+               --  case, the only variant supported by GSettings is "dark"...
 
-            --  Fill the list of themes
-            Num := Ret.Themes'First;
-
-            for J in Subdirs'Range loop
-               Rc_File := Subdirs (J).Create_From_Dir ("gtk-2.0/gtkrc");
+               Rc_File := Subdir.Create_From_Dir ("gtk-3.0/gtk-dark.css");
 
                if Rc_File.Is_Regular_File then
-                  declare
-                     Theme : constant String := +Base_Dir_Name (Subdirs (J));
-                  begin
-                     Ret.Themes (Num) := new String'(Theme);
-
-                     if Theme = "Raleigh" then
-                        --  Fallback in case the active theme cannot be
-                        --  determined
-                        Gtk_Default := Num;
-
-                     elsif Theme = "MS-Windows" then
-                        --  Fallback in the windows case
-                        Win_Default := Num;
-
-                     elsif Theme = "Clearlooks" then
-                        --  Fallback in the unix case
-                        Unx_Default := Num;
-
-                     elsif Theme = Default then
-                        --  We found the active theme, and it's not a default.
-                        --  This must then come from user-specified gtkrc file.
-                        --  Let's keep this value.
-                        Ret.Current := Num;
-
-                     end if;
-
-                     Num := Num + 1;
-                  end;
+                  Add_Theme (+Base_Dir_Name (Subdir), Dark => True);
                end if;
             end loop;
-
-            if Ret.Current = 0 then
-               if Win_Default > 0 then
-                  Ret.Current := Win_Default;
-               elsif Unx_Default > 0 then
-                  Ret.Current := Unx_Default;
-               elsif Gtk_Default > 0 then
-                  Ret.Current := Gtk_Default;
-               end if;
-            end if;
 
             Unchecked_Free (Subdirs);
-         end;
+
+         else
+            if Active (Me) then
+               Trace (Me, "Theme search path not found on disk: "
+                      & Dir.Display_Full_Name);
+            end if;
+         end if;
+      end loop;
+
+      --  The 'gtk-win32' and 'Raleigh' themes are now directly embedded inside
+      --  the gtk library, so exist event without any directory in the themes
+      --  directories. We thus need to add them manually to the list of
+      --  available themes.
+      if Config.Host = Config.Windows then
+         Add_Theme ("gtk-win32", Dark => False);
+         Add_Theme ("gtk-win32-xp", Dark => False);
+         Add_Theme ("gtk-win32-classic", Dark => False);
+      end if;
+
+      Add_Theme ("Raleigh", Dark => False);
+
+      if Ret.Current = Natural'Last then
+         --  Should not happen
+         Ret.Current := Ret.Themes'First;
       end if;
 
       Register (Manager, Name, Label, Page, Doc, Ret);
@@ -1944,18 +1890,19 @@ package body Default_Preferences is
    ----------
 
    overriding function Edit
-     (Pref    : access Theme_Preference_Record;
-      Manager : access Preferences_Manager_Record'Class)
+     (Pref      : access Theme_Preference_Record;
+      Manager   : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Theme_Combo : Gtk_Combo_Box;
-
+      P : constant Manager_Preference :=
+        (Preferences_Manager (Manager), Preference (Pref));
+      Theme_Combo : Gtk_Combo_Box_Text;
    begin
-      Gtk_New_Text (Theme_Combo);
+      Gtk_New (Theme_Combo);
       Set_Tooltip_Text (Theme_Combo, -"Theme list");
 
       for J in Pref.Themes'Range loop
-         Append_Text (Theme_Combo, Pref.Themes (J).all);
+         Append_Text (Theme_Combo, Pref.Themes (J).Name.all);
 
          if J = Pref.Current then
             Theme_Combo.Set_Active (Gint (J) - Gint (Pref.Themes'First));
@@ -1963,13 +1910,10 @@ package body Default_Preferences is
       end loop;
 
       Preference_Handlers.Connect
-        (Theme_Combo, Gtk.Combo_Box.Signal_Changed, Combo_Changed'Access,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+        (Theme_Combo, Gtk.Combo_Box.Signal_Changed, Combo_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Combo'Access,
-         Theme_Combo,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         Update_Combo'Access, Theme_Combo, P);
 
       return Gtk_Widget (Theme_Combo);
    end Edit;
@@ -1981,365 +1925,15 @@ package body Default_Preferences is
    overriding procedure Free (Pref : in out Theme_Preference_Record) is
    begin
       if Pref.Themes /= null then
-         Free (Pref.Themes);
+         for T in Pref.Themes'Range loop
+            Free (Pref.Themes (T).Name);
+            Free (Pref.Themes (T).Directory);
+         end loop;
+         Unchecked_Free (Pref.Themes);
       end if;
 
       Free (Preference_Record (Pref));
    end Free;
-
-   ----------------------
-   -- Edit_Preferences --
-   ----------------------
-
-   procedure Edit_Preferences
-     (Manager      : access Preferences_Manager_Record;
-      Parent       : access Gtk.Window.Gtk_Window_Record'Class;
-      On_Changed   : Action_Callback;
-      Custom_Pages : Preferences_Page_Array)
-   is
-      Model             : Gtk_Tree_Store;
-      Main_Table        : Gtk_Table;
-      Current_Selection : Gtk_Widget;
-      Title             : Gtk_Label;
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
-      --  Return the iterator in Model matching Name.
-      --  If no such page already exists, then eithe Widget (if non null) is
-      --  inserted for it, or a new table is created and inserted
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
-      --  Called when the selected page has changed.
-
-      -------------------------
-      -- Find_Or_Create_Page --
-      -------------------------
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget
-      is
-         Current     : Gtk_Tree_Iter := Null_Iter;
-         Child       : Gtk_Tree_Iter;
-         First, Last : Integer := Name'First;
-         Table       : Gtk_Table;
-         W           : Gtk_Widget;
-
-      begin
-         while First <= Name'Last loop
-            Last := First;
-
-            while Last <= Name'Last
-              and then Name (Last) /= '/'
-            loop
-               Last := Last + 1;
-            end loop;
-
-            if Current = Null_Iter then
-               Child := Get_Iter_First (Model);
-            else
-               Child := Children (Model, Current);
-            end if;
-
-            while Child /= Null_Iter
-              and then Get_String (Model, Child, 0) /= Name (First .. Last - 1)
-            loop
-               Next (Model, Child);
-            end loop;
-
-            if Child = Null_Iter then
-               if Widget = null then
-                  Gtk_New (Table, Rows => 0, Columns => 2,
-                           Homogeneous => False);
-                  Set_Row_Spacings (Table, 1);
-                  Set_Col_Spacings (Table, 5);
-                  W := Gtk_Widget (Table);
-
-               else
-                  W := Widget;
-               end if;
-
-               Append (Model, Child, Current);
-               Set (Model, Child, 0, Name (First .. Last - 1));
-               Set (Model, Child, 1, GObject (W));
-
-               Attach (Main_Table, W, 1, 2, 2, 3,
-                       Ypadding => 0, Xpadding => 10);
-               Set_Child_Visible (W, False);
-            end if;
-
-            Current := Child;
-
-            First := Last + 1;
-         end loop;
-
-         return Gtk_Widget (Get_Object (Model, Current, 1));
-      end Find_Or_Create_Page;
-
-      -----------------------
-      -- Selection_Changed --
-      -----------------------
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class) is
-         Iter : Gtk_Tree_Iter;
-         M    : Gtk_Tree_Model;
-      begin
-         if Current_Selection /= null then
-            Set_Child_Visible (Current_Selection, False);
-            Current_Selection := null;
-         end if;
-
-         Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
-
-         if Iter /= Null_Iter then
-            Current_Selection := Gtk_Widget (Get_Object (Model, Iter, 1));
-            Set_Child_Visible (Current_Selection, True);
-            Set_Text (Title, Get_String (Model, Iter, 0));
-         end if;
-      end Selection_Changed;
-
-      Dialog     : Preferences_Editor;
-      Frame      : Gtk_Frame;
-      Table      : Gtk_Table;
-      View       : Gtk_Tree_View;
-      Col        : Gtk_Tree_View_Column;
-      Render     : Gtk_Cell_Renderer_Text;
-      Num        : Gint;
-      Scrolled   : Gtk_Scrolled_Window;
-
-      Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-        (1 => (1 => GType_None));
-
-      Custom_Widgets : array (Custom_Pages'Range) of Gtk_Widget;
-
-      Tmp        : Gtk_Widget;
-      pragma Unreferenced (Tmp, Num);
-
-      Saved      : Saved_Prefs_Data;
-      Pref       : Preference;
-
-      Had_Apply  : Boolean := False;
-      Row        : Guint;
-      Widget     : Gtk_Widget;
-      Event      : Gtk_Event_Box;
-      Label      : Gtk_Label;
-      Separator  : Gtk_Separator;
-      C          : Preferences_Maps.Cursor := First (Manager.Preferences);
-   begin
-      Save_Preferences (Manager, Saved);
-
-      Dialog := new Preferences_Editor_Record;
-      Initialize
-        (Dialog => Dialog,
-         Title  => -"Preferences",
-         Parent => Gtk_Window (Parent),
-         Flags  => Modal or Destroy_With_Parent);
-      Set_Name (Dialog, "Preferences");  --  for the testsuite
-      Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, 620, 400);
-
-      Glib.Object.Initialize_Class_Record
-        (Dialog,
-         Signals      => Preferences_Editor_Signals,
-         Class_Record => Preferences_Editor_Class_Record,
-         Type_Name    => "PreferencesEditor",
-         Parameters   => Signal_Parameters);
-      Manager.Pref_Editor := Gtk_Widget (Dialog);
-
-      Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Main_Table);
-
-      Gtk_New (Frame);
-      Attach (Main_Table, Frame, 0, 1, 0, 3);
-
-      Create_Blue_Label (Title, Event);
-      Attach (Main_Table, Event, 1, 2, 0, 1, Yoptions => 0);
-
-      Gtk_New_Hseparator (Separator);
-      Attach (Main_Table, Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-      Add (Frame, Scrolled);
-
-      Gtk_New (Model, (0 => GType_String, 1 => GType_Object));
-      Gtk_New (View, Model);
-      Unref (Model);
-      Set_Headers_Visible (View, False);
-
-      Gtk_New (Col);
-      Num := Append_Column (View, Col);
-      Gtk_New (Render);
-      Pack_Start (Col, Render, Expand => True);
-      Add_Attribute (Col, Render, "text", 0);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (View), Gtk.Tree_Selection.Signal_Changed,
-         Selection_Changed'Unrestricted_Access,
-         View);
-
-      Add (Scrolled, View);
-
-      --  Add all custom pages first
-
-      for P in Custom_Pages'Range loop
-         Widget := Create (Custom_Pages (P));
-
-         if Widget /= null then
-            Custom_Widgets (P) := Find_Or_Create_Page
-              (Name (Custom_Pages (P)), Widget);
-         end if;
-      end loop;
-
-      --  Then add all implicitely defined pages
-
-      while Has_Element (C) loop
-         Pref := Element (C);
-
-         if Pref.Page /= null then
-            Table := Gtk_Table (Find_Or_Create_Page (Pref.Page.all, null));
-            Row := Get_Property (Table, N_Rows_Property);
-            Resize (Table, Rows => Row + 1, Columns => 2);
-
-            Gtk_New (Event);
-            Gtk_New (Label, Pref.Label.all);
-            Add (Event, Label);
-            Set_Tooltip_Text (Event, Pref.Doc.all);
-            Set_Alignment (Label, 0.0, 0.5);
-            Attach (Table, Event, 0, 1, Row, Row + 1,
-                    Xoptions => Fill, Yoptions => 0);
-
-            Widget := Edit
-              (Pref    => Pref,
-               Manager => Manager);
-
-            if Widget /= null then
-               Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
-            end if;
-         end if;
-
-         Next (C);
-      end loop;
-
-      Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
-      Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-
-      loop
-         case Run (Dialog) is
-            when Gtk_Response_OK =>
-               for P in Custom_Pages'Range loop
-                  if Custom_Widgets (P) /= null then
-                     Validate (Custom_Pages (P), Custom_Widgets (P));
-                  end if;
-               end loop;
-
-               Manager.Pref_Editor := null;
-               Destroy (Saved);
-               Destroy (Dialog);
-
-               if On_Changed /= null then
-                  On_Changed (Manager);
-               end if;
-
-               exit;
-
-            when Gtk_Response_Apply =>
-               for P in Custom_Pages'Range loop
-                  if Custom_Widgets (P) /= null then
-                     Validate (Custom_Pages (P), Custom_Widgets (P));
-                  end if;
-               end loop;
-
-               if On_Changed /= null then
-                  On_Changed (Manager);
-               end if;
-
-               Had_Apply := True;
-
-            when others =>  --  including Cancel
-               for P in Custom_Pages'Range loop
-                  if Custom_Widgets (P) /= null then
-                     Undo (Custom_Pages (P), Custom_Widgets (P));
-                  end if;
-               end loop;
-
-               Manager.Pref_Editor := null;
-               Destroy (Dialog);
-               Restore_Preferences (Saved);
-
-               if Had_Apply and then On_Changed /= null then
-                  On_Changed (Manager);
-               end if;
-
-               exit;
-         end case;
-      end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         Destroy (Dialog);
-   end Edit_Preferences;
-
-   ----------------------
-   -- Save_Preferences --
-   ----------------------
-
-   procedure Save_Preferences
-     (Manager : access Preferences_Manager_Record;
-      Saved   : out Saved_Prefs_Data)
-   is
-      C    : Preferences_Maps.Cursor := First (Manager.Preferences);
-      Pref : Preference;
-   begin
-      Saved := new Saved_Prefs_Data_Record;
-      Saved.Manager := Preferences_Manager (Manager);
-
-      while Has_Element (C) loop
-         Pref := Element (C);
-         Include
-           (Saved.Preferences,
-            Pref.Name.all,
-            String'(Get_Pref (Pref)));
-         Next (C);
-      end loop;
-   end Save_Preferences;
-
-   -------------------------
-   -- Restore_Preferences --
-   -------------------------
-
-   procedure Restore_Preferences (Saved : Saved_Prefs_Data) is
-      C    : Preferences_Maps.Cursor := First (Saved.Manager.Preferences);
-      Pref : Preference;
-   begin
-      while Has_Element (C) loop
-         Pref := Element (C);
-         begin
-            Set_Pref (Pref,
-                      Manager => null,
-                      Value   => Element (Saved.Preferences, Pref.Name.all));
-         exception
-            when Constraint_Error =>
-               null;
-         end;
-
-         Next (C);
-      end loop;
-   end Restore_Preferences;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Data : in out Saved_Prefs_Data) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Saved_Prefs_Data_Record, Saved_Prefs_Data);
-   begin
-      Unchecked_Free (Data);
-   end Destroy;
 
    ----------
    -- Undo --
@@ -2353,6 +1947,17 @@ package body Default_Preferences is
    begin
       null;
    end Undo;
+
+   ----------------
+   -- Set_Editor --
+   ----------------
+
+   procedure Set_Editor
+     (Manager : access Preferences_Manager_Record;
+      Editor  : access Gtk.Widget.Gtk_Widget_Record'Class) is
+   begin
+      Manager.Pref_Editor := Gtk_Widget (Editor);
+   end Set_Editor;
 
    ----------------
    -- Get_Editor --
@@ -2397,5 +2002,66 @@ package body Default_Preferences is
       end loop;
       return Variant_Enum'Value (R);
    end From_String;
+
+   ----------------------------
+   -- Is_Loading_Preferences --
+   ----------------------------
+
+   function Is_Loading_Preferences
+     (Self : not null access Preferences_Manager_Record'Class) return Boolean
+   is
+   begin
+      return Self.Loading_Prefs;
+   end Is_Loading_Preferences;
+
+   --------------------------
+   -- Set_Is_Loading_Prefs --
+   --------------------------
+
+   procedure Set_Is_Loading_Prefs
+     (Self : not null access Preferences_Manager_Record'Class;
+      Loading : Boolean)
+   is
+   begin
+      Self.Loading_Prefs := Loading;
+   end Set_Is_Loading_Prefs;
+
+   -------------------------
+   -- Get_First_Reference --
+   -------------------------
+
+   function Get_First_Reference
+     (Manager : not null access Preferences_Manager_Record)
+      return Cursor
+   is
+   begin
+      return (C => First (Manager.Preferences));
+   end Get_First_Reference;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Manager : not null access Preferences_Manager_Record;
+      C       : in out Cursor)
+   is
+      pragma Unreferenced (Manager);
+   begin
+      Next (C.C);
+   end Next;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref (Self : Cursor) return Preference is
+   begin
+      if not Has_Element (Self.C) then
+         return null;
+      else
+         return Element (Self.C);
+      end if;
+   end Get_Pref;
 
 end Default_Preferences;

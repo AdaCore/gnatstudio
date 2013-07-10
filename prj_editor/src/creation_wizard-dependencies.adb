@@ -17,6 +17,8 @@
 
 with Ada.Containers.Hashed_Sets;
 with Glib;                             use Glib;
+with Glib.Object;
+
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
 with Gtk.Dialog;                       use Gtk.Dialog;
@@ -25,6 +27,7 @@ with Gtk.Label;                        use Gtk.Label;
 with Gtk.Handlers;                     use Gtk.Handlers;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Stock;                        use Gtk.Stock;
+with Gtk.Cell_Layout;                  use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;                use Gtk.Cell_Renderer;
 with Gtk.Tree_View;                    use Gtk.Tree_View;
 with Gtk.Tree_View_Column;             use Gtk.Tree_View_Column;
@@ -38,7 +41,6 @@ with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.File_Selector;             use Gtkada.File_Selector;
 
 with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -169,9 +171,9 @@ package body Creation_Wizard.Dependencies is
 
       procedure Report_Error (S : String) is
       begin
-         Console.Insert
-           (Kernel, S & ASCII.LF,
-            Mode => Console.Error,
+         Kernel.Insert
+           (S & ASCII.LF,
+            Mode => GPS.Kernel.Error,
             Add_LF => False);
          Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;
@@ -438,7 +440,7 @@ package body Creation_Wizard.Dependencies is
       Label     : Gtk_Label;
       Button    : Gtk_Button;
       Scrolled  : Gtk_Scrolled_Window;
-      List      : Cell_Renderer_List.Glist;
+      List      : Glib.Object.Object_Simple_List.Glist;
    begin
       Page.Kernel := Get_Kernel (Wiz);
       Page.Project := Get_Project (Project_Wizard (Wiz));
@@ -470,14 +472,14 @@ package body Creation_Wizard.Dependencies is
          Initial_Sort_On    => 1 + Project_Name_Column,
          Selection_Mode     => Gtk.Enums.Selection_Single);
       Add (Scrolled, Page.Tree);
-      Model := Gtk_Tree_Store (Get_Model (Page.Tree));
+      Model := -Get_Model (Page.Tree);
 
-      List := Get_Cell_Renderers (Get_Column (Page.Tree, Is_Limited_Column));
+      List := Get_Cells (+Get_Column (Page.Tree, Is_Limited_Column));
       Add_Attribute
         (Get_Column (Page.Tree, Is_Limited_Column),
-         Cell_Renderer_List.Get_Data (List),
+         Gtk_Cell_Renderer (Glib.Object.Object_Simple_List.Get_Data (List)),
          "activatable", Can_Change_Limited_Column);
-      Cell_Renderer_List.Free (List);
+      Glib.Object.Object_Simple_List.Free (List);
 
       Add_Imported_Projects (Get_Project (Project_Wizard (Wiz)), Model);
 
@@ -539,7 +541,8 @@ package body Creation_Wizard.Dependencies is
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Scrolled, Expand => True, Fill => True);
 
       Tree := Create_Tree_View
         (Column_Types      =>
@@ -557,7 +560,7 @@ package body Creation_Wizard.Dependencies is
          Initial_Sort_On    => 1 + Project_Name_Column2,
          Selection_Mode     => Gtk.Enums.Selection_None);
       Add (Scrolled, Tree);
-      Model := Gtk_Tree_Store (Get_Model (Tree));
+      Model := -Get_Model (Tree);
 
       Add_Predefined_Projects (P.Kernel, P.Project, Model);
 
@@ -570,7 +573,7 @@ package body Creation_Wizard.Dependencies is
          Iter := Get_Iter_First (Model);
          while Iter /= Null_Iter loop
             if Get_Boolean (Model, Iter, Selected_Column2) then
-               PModel := Gtk_Tree_Store (Get_Model (P.Tree));
+               PModel := -Get_Model (P.Tree);
                Append (PModel, PIter, Null_Iter);
                Set (PModel, PIter, Project_Name_Column,
                     Get_String (Model, Iter, Project_Name_Column2));
@@ -601,7 +604,7 @@ package body Creation_Wizard.Dependencies is
       B     : constant Dependency_Project_Page_Access :=
                 Dependency_Project_Page_Access (Page);
       Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (B.Tree));
+                -Get_Model (B.Tree);
       Wiz   : Creation_Wizard.Project_Wizard;
       Iter  : Gtk_Tree_Iter;
       Name  : Virtual_File;
@@ -633,7 +636,7 @@ package body Creation_Wizard.Dependencies is
       B     : constant Dependency_Project_Page_Access :=
                 Dependency_Project_Page_Access (Page);
       Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (B.Tree));
+                -Get_Model (B.Tree);
       Name  : constant Virtual_File := Select_File
         (-"Select Project",
          Get_Current_Dir,
@@ -673,7 +676,7 @@ package body Creation_Wizard.Dependencies is
    begin
       Get_Selected (Selection, Model, Iter);
       if Iter /= Null_Iter then
-         Remove (Gtk_Tree_Store (Model), Iter);
+         Remove (-Model, Iter);
       end if;
    end Remove_Project;
 
@@ -688,8 +691,7 @@ package body Creation_Wizard.Dependencies is
       Project            : in out Project_Type;
       Changed            : in out Boolean)
    is
-      Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (Page.Tree));
+      Model    : constant Gtk_Tree_Store := -Get_Model (Page.Tree);
       Iter     : Gtk_Tree_Iter;
       pragma Unreferenced (Scenario_Variables);
       Imported : Project_Iterator := Project.Start (Direct_Only => True);

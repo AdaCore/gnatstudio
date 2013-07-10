@@ -1,7 +1,8 @@
-"""Automatically saves the contents of the Messages window when a
-   compilation has finished.
-   The output is saved in a file called "messages.txt" in the root project's
-   object directory.
+"""
+Automatically saves the contents of the Messages window when a
+compilation has finished.
+The output is saved in a file called "messages.txt" in the root project's
+object directory.
 """
 
 

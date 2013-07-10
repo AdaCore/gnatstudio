@@ -844,13 +844,13 @@ package body Refactoring.Subprograms is
                Parent => Get_Current_Window (Get_Kernel (Context.Context)),
                Flags  => Modal);
       Gtk_New (Label, -"Name of the new subprogram:");
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
       Gtk_New (Ent);
       Set_Text (Ent, -"New_Method");
       Select_Region (Ent, 0, -1);
       Set_Activates_Default (Ent, True);
-      Pack_Start (Get_Vbox (Dialog), Ent, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Ent, Expand => False);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);

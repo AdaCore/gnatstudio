@@ -18,8 +18,10 @@
 --  This package handles the charsets supported by GPS
 
 with Default_Preferences;  use Default_Preferences;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 with Gtk.Widget;
+with Gtkada.Types;
+with GNATCOLL.VFS;
 
 package GPS.Kernel.Charsets is
 
@@ -53,14 +55,14 @@ package GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box;
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    --  Return a combo box that can be used to edit the charset associated with
    --  a file.
    --  Default is used if File is VFS.No_File. If unspecified, the
    --  corresponding preference is used.
 
    function Selected_Charset
-     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String;
+     (Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text) return String;
    --  Return Charset name from Charset_Combo
 
    function Get_File_Charset (File : GNATCOLL.VFS.Virtual_File) return String;
@@ -74,5 +76,25 @@ package GPS.Kernel.Charsets is
    --  Set the charset that should be used to edit File.
    --  If Charset is left to the empty string, the default charset specified in
    --  the preferences will be used
+
+   type File_Props is record
+      CR_Found              : Boolean;
+      NUL_Found             : Boolean;
+      Trailing_Spaces_Found : Boolean;
+      Trailing_Lines_Found  : Boolean;
+      Invalid_UTF8          : Boolean;
+   end record;
+   --  Various properties automatically detected for files
+
+   procedure Read_File_With_Charset
+     (File     : GNATCOLL.VFS.Virtual_File;
+      UTF8     : out Gtkada.Types.Chars_Ptr;
+      UTF8_Len : out Natural;
+      Props    : out File_Props);
+   --  Read the file from the disk, and apply charset conversions as needed.
+   --  The returned string is UTF8. Only the UTF8_Len first characters should
+   --  be used.
+   --  This also normalizes newline characters.
+   --  Caller must free UTF8.
 
 end GPS.Kernel.Charsets;

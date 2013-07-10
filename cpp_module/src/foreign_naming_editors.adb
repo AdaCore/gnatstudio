@@ -17,14 +17,12 @@
 
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
-with Glib;                             use Glib;
 with Gtk.Box;                          use Gtk.Box;
-with Gtk.Combo_Box;                    use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;               use Gtk.Combo_Box_Text;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Frame;                        use Gtk.Frame;
 with Gtk.GEntry;                       use Gtk.GEntry;
 with Gtk.Label;                        use Gtk.Label;
-with Gtk.List_Store;                   use Gtk.List_Store;
 with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Widget;                       use Gtk.Widget;
 
@@ -47,7 +45,6 @@ package body Foreign_Naming_Editors is
       Box, Vbox : Gtk_Box;
       Label     : Gtk_Label;
       Group     : Gtk_Size_Group;
-      List      : Gtk_List_Store;
 
    begin
       Editor := new Foreign_Naming_Editor_Record;
@@ -71,8 +68,7 @@ package body Foreign_Naming_Editors is
       Add_Widget (Group, Label);
       Pack_Start (Box, Label);
 
-      Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Editor.Spec_Ext, List);
+      Gtk_New_With_Entry (Editor.Spec_Ext);
       Editor.Spec_Ext.Set_Entry_Text_Column (0);
       Pack_Start (Box, Editor.Spec_Ext);
       Editor.Spec_Ext.Append_Text (".h");
@@ -88,8 +84,7 @@ package body Foreign_Naming_Editors is
       Add_Widget (Group, Label);
       Pack_Start (Box, Label);
 
-      Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Editor.Body_Ext, List);
+      Gtk_New_With_Entry (Editor.Body_Ext);
       Editor.Body_Ext.Set_Entry_Text_Column (0);
       Pack_Start (Box, Editor.Body_Ext);
       Editor.Body_Ext.Append_Text (".c");

@@ -1,9 +1,10 @@
-"""This file provides support for using the GNATprove tool.
+"""
+This file provides support for using the GNATprove tool.
 
-   GNATprove is a tool to apply automatic program proof to Ada programs.
-   This plugin allows the user to perform a proof run and integrate its output
-   into GPS.
-   See menu Prove.
+GNATprove is a tool to apply automatic program proof to Ada programs.
+This plugin allows the user to perform a proof run and integrate its output
+into GPS.
+See menu Prove.
 """
 
 ############################################################################

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
@@ -279,7 +278,7 @@ package body GVD.Source_Editor.GPS is
       Kernel  : constant Kernel_Handle := Editor.Window.Kernel;
    begin
       Editor.Current_File := GNATCOLL.VFS.No_File;
-      Console.Insert (Kernel, Message);
+      Kernel.Insert (Message);
       --  ??? Do not insert an error, to avoid loosing the focus from the
       --  debugger console. Consider putting a message in the status bar
       --  instead

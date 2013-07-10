@@ -80,7 +80,8 @@ package body CodePeer.Categories_Criteria_Editors is
               Categories_Criteria_Model_Record,
             Categories_Criteria_Editor);
 
-   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+   Class_Record : Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
@@ -133,13 +134,13 @@ package body CodePeer.Categories_Criteria_Editors is
       pragma Warnings (Off, Dummy);
 
    begin
-      Gtk.Scrolled_Window.Initialize (Self);
       Glib.Object.Initialize_Class_Record
-        (Self,
-         Signals,
-         Class_Record,
-         "CodePeerMessageCategoryCriteriaEditor",
-         Signal_Parameters);
+        (Ancestor      => Gtk.Scrolled_Window.Get_Type,
+         Signals       => Signals,
+         Class_Record  => Class_Record,
+         Type_Name     => "CodePeerMessageCategoryCriteriaEditor",
+         Parameters    => Signal_Parameters);
+      Glib.Object.G_New (Self, Class_Record);
 
       Message_Categories_Criteria_Editor_Callbacks.Connect
         (Self,
@@ -265,8 +266,9 @@ package body CodePeer.Categories_Criteria_Editors is
       use type Histories.History_Key;
 
       Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                         Self.Model.Get_Iter_From_String
-                           (Interfaces.C.Strings.Value (Path));
+        Gtk.Tree_Model.Get_Iter_From_String
+          (Gtk.Tree_Model.To_Interface (Self.Model),
+           Interfaces.C.Strings.Value (Path));
 
    begin
       if Object.Get_Active then

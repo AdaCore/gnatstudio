@@ -616,20 +616,46 @@ package body Language.Tree is
          when Enclosing =>
             declare
                It : Construct_Tree_Iterator := First (Tree);
+               Line : Natural;
             begin
-               while It /= Null_Construct_Tree_Iterator loop
-                  exit when Location < It.Node.Construct.Sloc_Start;
+               if Location.Absolute_Offset then
+                  while It /= Null_Construct_Tree_Iterator loop
+                     --  Only compare lines, not columns, since most likely the
+                     --  cursor is not exactly within the scope of the
+                     --  declaration (for instance, a subprogram's declaration
+                     --  starts at column 4, but the cursor is on column 1 of
+                     --  the same line => we still want to return the
+                     --  subprogram).
 
-                  if Location <= It.Node.Construct.Sloc_End then
-                     if Match_Category (It.Node.Construct.Category) then
-                        Last_Matched := It;
+                     exit when Location < It.Node.Construct.Sloc_Start;
+
+                     if Location <= It.Node.Construct.Sloc_End then
+                        if Match_Category (It.Node.Construct.Category) then
+                           Last_Matched := It;
+                        end if;
+
+                        It := Next (Tree, It, Jump_Into);
+                     else
+                        It := Next (Tree, It, Jump_Over);
                      end if;
+                  end loop;
+               else
+                  Line := Location.Line;
 
-                     It := Next (Tree, It, Jump_Into);
-                  else
-                     It := Next (Tree, It, Jump_Over);
-                  end if;
-               end loop;
+                  while It /= Null_Construct_Tree_Iterator
+                     and then Line  >= It.Node.Construct.Sloc_Start.Line
+                  loop
+                     if Line <= It.Node.Construct.Sloc_End.Line then
+                        if Match_Category (It.Node.Construct.Category) then
+                           Last_Matched := It;
+                        end if;
+
+                        It := Next (Tree, It, Jump_Into);
+                     else
+                        It := Next (Tree, It, Jump_Over);
+                     end if;
+                  end loop;
+               end if;
             end;
 
             return Last_Matched;

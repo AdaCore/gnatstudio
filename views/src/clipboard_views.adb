@@ -18,16 +18,15 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
-with Cairo;                     use Cairo;
-
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -38,10 +37,12 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -60,18 +61,17 @@ package body Clipboard_Views is
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
-      Kernel  : Kernel_Handle;
       Current : Gdk_Pixbuf;
    end record;
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Clipboard_View_Record'Class) return Gtk_Widget;
    --  Create a new clipboard view
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Clipboard_View",
       View_Name          => "Clipboard",
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Formal_View_Record => Clipboard_View_Record);
    subtype Clipboard_View_Access is Generic_View.View_Access;
@@ -81,7 +81,8 @@ package body Clipboard_Views is
    --  Called when the contents of the clipboard has changed
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Refresh (View : access Clipboard_View_Record'Class);
@@ -124,53 +125,43 @@ package body Clipboard_Views is
    -- Tooltips --
    --------------
 
-   type Clipboard_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Clipboard_View : Clipboard_View_Access;
+   type Clipboard_View_Tooltips is new Tooltips.Tooltips with record
+      Kernel : Kernel_Handle;
    end record;
-   type Clipboard_View_Tooltips_Access is
-     access all Clipboard_View_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   type Clipboard_View_Tooltips_Access is access all Clipboard_View_Tooltips;
+   overriding function Create_Contents
+     (Tooltip  : not null access Clipboard_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Clipboard_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Clipboard_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Model      : constant Gtk_Tree_Model :=
-                     Get_Model (Tooltip.Clipboard_View.Tree);
+      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model      : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter       : Gtk_Tree_Iter;
       Selected   : Integer;
-
-      Text       : GNAT.Strings.String_Access;
+      Label      : Gtk_Label;
+      Area       : Gdk_Rectangle;
    begin
-      Pixmap := Null_Surface;
-
-      Initialize_Tooltips (Tooltip.Clipboard_View.Tree, Area, Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Iter);
       if Iter /= Null_Iter then
+         Tooltip.Set_Tip_Area (Area);
+
          Selected := Integer (Get_Int (Model, Iter, 2));
 
-         Text := new String'
-           (Get_Content
-              (Get_Clipboard (Tooltip.Clipboard_View.Kernel)) (Selected).all);
-
-         if Text /= null then
-            Create_Pixmap_From_Text
-              (Text.all,
-               Default_Font.Get_Pref_Font,
-               White (Get_Default_Colormap),
-               Tooltip.Clipboard_View.Tree,
-               Pixmap);
-            Free (Text);
-         end if;
+         Gtk_New
+           (Label,
+            Get_Content (Get_Clipboard (Tooltip.Kernel)) (Selected).all);
       end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --
@@ -227,11 +218,10 @@ package body Clipboard_Views is
      (View  : access Clipboard_View_Record'Class;
       Event : Gdk_Event) return Integer
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Iter : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (View.Tree, Event);
       if Iter /= Null_Iter then
          return Integer (Get_Int (Model, Iter, 2));
       else
@@ -319,12 +309,14 @@ package body Clipboard_Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Clipboard_View_Access :=
-               Generic_View.Get_Or_Create_View (Kernel, Focus => False);
+        Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+      Set_Font_And_Colors
+        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
    end On_Preferences_Changed;
 
    -------------
@@ -332,8 +324,7 @@ package body Clipboard_Views is
    -------------
 
    procedure Refresh (View : access Clipboard_View_Record'Class) is
-      Model           : constant Gtk_Tree_Store :=
-                          Gtk_Tree_Store (Get_Model (View.Tree));
+      Model           : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Selection       : constant Selection_List :=
                           Get_Content (Get_Clipboard (View.Kernel));
       Iter            : Gtk_Tree_Iter;
@@ -418,14 +409,15 @@ package body Clipboard_Views is
    ----------------
 
    function Initialize
-     (View   : access Clipboard_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Clipboard_View_Record'Class) return Gtk_Widget
    is
-      Tooltip : Clipboard_View_Tooltips_Access;
+      Tooltip  : Clipboard_View_Tooltips_Access;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (View, Homogeneous => False);
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (0 => Gdk.Pixbuf.Get_Type,
@@ -436,7 +428,7 @@ package body Clipboard_Views is
          Selection_Mode     => Selection_None,
          Sortable_Columns   => False,
          Hide_Expander      => True);
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
@@ -450,17 +442,17 @@ package body Clipboard_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Clipboard_Changed_Hook,
+      Add_Hook (View.Kernel, Clipboard_Changed_Hook,
                 Wrapper (On_Clipboard_Changed'Access),
                 Name => "clipboard_views.on_clipboard_changed",
                 Watch => GObject (View));
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "clipboard_views.preferences_changed",
                 Watch => GObject (View));
@@ -469,8 +461,8 @@ package body Clipboard_Views is
       --  Initialize tooltips
 
       Tooltip := new Clipboard_View_Tooltips;
-      Tooltip.Clipboard_View := Clipboard_View_Access (View);
-      Set_Tooltip (Tooltip, View.Tree, 250);
+      Tooltip.Kernel := View.Kernel;
+      Set_Tooltip (Tooltip, View.Tree);
 
       return Gtk_Widget (View.Tree);
    end Initialize;
@@ -485,7 +477,7 @@ package body Clipboard_Views is
       Command : Interactive_Command_Access;
    begin
       Generic_View.Register_Module
-        (Kernel, Menu_Name => -"_Clipboard", Before_Menu => -"Entity");
+        (Kernel, Menu_Name => -"Views/_Clipboard", Before_Menu => -"Entity");
       Command := new Merge_With_Previous_Command;
       Register_Contextual_Menu
         (Kernel, "Clipboard View Append To Previous",

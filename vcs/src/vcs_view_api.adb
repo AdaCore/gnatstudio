@@ -45,8 +45,8 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Custom;           use Commands; use Commands.Custom;
+with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -461,7 +461,7 @@ package body VCS_View_API is
          Flags  => Destroy_With_Parent);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"From: ");
       Pack_Start (Box, Label, Expand => False);
@@ -475,7 +475,7 @@ package body VCS_View_API is
          On_Select_Dir'Access, Switch_Tag_Dialog (Dialog));
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"Tag name: ");
       Pack_Start (Box, Label, Expand => False);
@@ -483,7 +483,7 @@ package body VCS_View_API is
       Pack_Start (Box, Dialog.Tag_Name);
 
       Gtk_New (Dialog.Branch, -"Is a branch tag");
-      Pack_Start (Get_Vbox (Dialog), Dialog.Branch, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Dialog.Branch, Expand => False);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -508,7 +508,7 @@ package body VCS_View_API is
          Flags  => Destroy_With_Parent);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"From: ");
       Pack_Start (Box, Label, Expand => False);
@@ -521,7 +521,7 @@ package body VCS_View_API is
         (Browse, Signal_Clicked, On_Select_Dir'Access, Dialog);
 
       Gtk_New_Hbox (Box);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
 
       Gtk_New (Label, -"Tag name: ");
       Pack_Start (Box, Label, Expand => False);
@@ -754,7 +754,7 @@ package body VCS_View_API is
                  and not (VCS = Unknown_VCS.Unknown_VCS_Reference)
                then
                   VCS.Used;
-                  Console.Insert (Kernel, -("Auto-VCS: using " & Name (VCS)));
+                  Kernel.Insert (-("Auto-VCS: using " & Name (VCS)));
                end if;
 
             else
@@ -927,9 +927,7 @@ package body VCS_View_API is
          end;
       end if;
 
-      if Get_Creator (Context) =
-        Abstract_Module_ID (VCS_Explorer_Module_Id)
-      then
+      if Get_Creator (Context) = Abstract_Module (VCS_Explorer_Module_Id) then
          Items_Inserted := True;
          Gtk_New (Item, Label => -"Expand all");
          Append (Menu, Item);
@@ -1666,8 +1664,8 @@ package body VCS_View_API is
             Unchecked_Free (Files);
          end if;
 
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
+         Kernel.Insert
+           (-"VCS: No file selected, cannot commit", Mode => Error);
          return;
       end if;
 
@@ -1746,8 +1744,8 @@ package body VCS_View_API is
       List := Get_Selected_Files (Context);
 
       if List = null or else List'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot open file",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot open file",
             Mode => Error);
          return;
       end if;
@@ -1816,8 +1814,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot remove file",
             Mode => Error);
          return;
       end if;
@@ -1851,8 +1849,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot remove file",
             Mode => Error);
          return;
       end if;
@@ -1886,9 +1884,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context),
-            -"VCS: No file selected, cannot mark file as resolved",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot mark file as resolved",
             Mode => Error);
          return;
       end if;
@@ -1962,8 +1959,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot remove file",
             Mode => Error);
          return;
       end if;
@@ -1997,8 +1994,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot annotate",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot annotate",
             Mode => Error);
          return;
       end if;
@@ -2032,8 +2029,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot remove annotations",
+         Kernel.Insert
+           (-"VCS: No file selected, cannot remove annotations",
             Mode => Error);
          return;
       end if;
@@ -2068,8 +2065,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot update file",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot update file",
             Mode => Error);
          return;
       end if;
@@ -2125,8 +2122,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot get status",
+         Kernel.Insert
+           (-"VCS: No file selected, cannot get status",
             Mode => Error);
          return;
       end if;
@@ -2533,8 +2530,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot diff",
             Mode => Error);
          return;
       end if;
@@ -2568,8 +2565,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot diff",
             Mode => Error);
          return;
       end if;
@@ -2603,8 +2600,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot diff",
             Mode => Error);
          return;
       end if;
@@ -2755,8 +2752,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot view log",
             Mode => Error);
          return;
       end if;
@@ -2788,8 +2785,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot view log",
             Mode => Error);
          return;
       end if;
@@ -2826,8 +2823,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot view log",
             Mode => Error);
          return;
       end if;
@@ -2989,8 +2986,8 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if Files = null or else Files'Length = 0 then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+         Get_Kernel (Context).Insert
+           (-"VCS: No file selected, cannot diff",
             Mode => Error);
          return;
       end if;

@@ -25,15 +25,13 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 
-with Gdk.Dnd;                   use Gdk.Dnd;
+with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-
-with Cairo;                     use Cairo;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -49,7 +47,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -60,7 +58,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -271,6 +268,31 @@ package body GPS.Kernel.Modules.UI is
       Full_Path : String) return Menu_Command;
    --  Utility function: create a command for a given menu
 
+   --------------
+   -- Toolbars --
+   --------------
+
+   type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
+      Kernel : Kernel_Handle;
+      Action : GNAT.Strings.String_Access;
+   end record;
+   type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
+
+   procedure Gtk_New
+     (Button   : out Action_Tool_Button;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Action   : String);
+   --  Create a new button so that it executes action when pressed.
+
+   procedure On_Action_Button_Clicked
+     (Button : access Gtk_Widget_Record'Class);
+   --  Called when an Action_Tool_Button has been activated.
+
+   procedure On_Action_Button_Destroy
+     (Button : access Gtk_Widget_Record'Class);
+   --  Called when an Action_Tool_Button is destroyed.
+
    -----------------------------
    -- Create_Command_For_Menu --
    -----------------------------
@@ -314,9 +336,8 @@ package body GPS.Kernel.Modules.UI is
          Activate (Menu);
          return Success;
       else
-         Console.Insert
-           (Command.Kernel,
-            (-"Can't execute ") & Command.Menu_Name.all,
+         Command.Kernel.Insert
+           ((-"Can't execute ") & Command.Menu_Name.all,
             Mode => Error);
          return Failure;
       end if;
@@ -408,7 +429,7 @@ package body GPS.Kernel.Modules.UI is
       W := Get_Focus_Widget;
 
       if W = null
-        or else In_Destruction_Is_Set (W)
+        or else W.In_Destruction
       then
          --  No valid window has the focus ? It is probably because we had a
          --  dialog like the Open From Project dialog, which is being closed.
@@ -532,29 +553,29 @@ package body GPS.Kernel.Modules.UI is
    -- Compute_Tooltip --
    ---------------------
 
-   procedure Compute_Tooltip
+   function Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context;
-      Pixmap  : out Cairo_Surface)
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
-      use type Module_List.List_Node;
-      Current : Module_List.List_Node :=
-                  Module_List.First (List_Of_Modules (Kernel));
+      use Abstract_Module_List;
+      List    : constant Abstract_Module_List.List :=
+        Kernel.Module_List (Module_ID_Record'Tag);
+      Current : Cursor := Abstract_Module_List.First (List);
       Module  : Module_ID;
+      W       : Gtk_Widget;
    begin
-      Pixmap := Null_Surface;
-
-      while Current /= Module_List.Null_Node loop
-         Module := Module_List.Data (Current);
+      while Has_Element (Current) loop
+         Module := Module_ID (Element (Current));
          if Module /= null then
-            Pixmap := Tooltip_Handler (Module, Context);
-            if Pixmap /= Null_Surface then
-               return;
+            W := Tooltip_Handler (Module, Context);
+            if W /= null then
+               return W;
             end if;
          end if;
 
-         Current := Module_List.Next (Current);
+         Current := Abstract_Module_List.Next (Current);
       end loop;
+      return null;
    end Compute_Tooltip;
 
    -------------------
@@ -565,10 +586,11 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : access Kernel_Handle_Record'Class;
       Load   : XML_Utils.Node_Ptr := null) return Location_Marker
    is
-      use type Module_List.List_Node;
+      use Abstract_Module_List;
       use type XML_Utils.Node_Ptr;
-      Current : Module_List.List_Node :=
-                  Module_List.First (List_Of_Modules (Kernel));
+      List    : constant Abstract_Module_List.List :=
+        Kernel.Module_List (Module_ID_Record'Tag);
+      Current : Cursor := Abstract_Module_List.First (List);
       Module  : Module_ID;
       Marker  : Location_Marker;
    begin
@@ -579,15 +601,16 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
       else
-         while Current /= Module_List.Null_Node loop
-            Module := Module_List.Data (Current);
+         while Has_Element (Current) loop
+            Module := Module_ID (Element (Current));
             Marker := Bookmark_Handler (Module, Load);
             if Marker /= null then
                return Marker;
             end if;
-            Current := Module_List.Next (Current);
+            Current := Abstract_Module_List.Next (Current);
          end loop;
       end if;
+
       return null;
    end Create_Marker;
 
@@ -1055,11 +1078,9 @@ package body GPS.Kernel.Modules.UI is
       then
          Free (GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual);
       end if;
-      Deep_Copy
-        (From => Event,
-         To   =>
-           GPS_Window
-             (User.Kernel.Main_Window).Last_Event_For_Contextual);
+
+      GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual :=
+        Copy (Event);
 
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when
@@ -1245,7 +1266,7 @@ package body GPS.Kernel.Modules.UI is
             Create_Proxy
               (Command.Command,
                (null, Context, False, No_File, null, null, 1, 0)),
-            Destroy_On_Exit => False,
+            Destroy_On_Exit => False,  --  ??? Should this be True
             Active          => True, Show_Bar => False, Queue_Id => "");
 
       elsif Get_Error_Message (Command.Filter) /= "" then
@@ -1516,7 +1537,7 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Widget);
 
       procedure Remove_Item
-        (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
+        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class);
       --  Remove one item from Data.Menu
 
       -----------------
@@ -1524,7 +1545,7 @@ package body GPS.Kernel.Modules.UI is
       -----------------
 
       procedure Remove_Item
-        (Item : access Gtk.Widget.Gtk_Widget_Record'Class) is
+        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
       begin
          Remove (Data.Menu, Item);
       end Remove_Item;
@@ -1641,7 +1662,8 @@ package body GPS.Kernel.Modules.UI is
 
       Set_Homogeneous (Button, False);
 
-      Insert (Toolbar, Button);
+      Insert (Toolbar, Button,
+              Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
       if Tooltip /= "" then
          Set_Tooltip_Text (Button, Tooltip);
@@ -1674,7 +1696,8 @@ package body GPS.Kernel.Modules.UI is
       if Tooltip /= "" then
          Set_Tooltip_Text (Button, Tooltip);
       end if;
-      Insert (Get_Toolbar (Kernel), Button, -1);
+      Insert (Get_Toolbar (Kernel), Button,
+              Get_Toolbar_Separator_Position (Kernel, Before_Build) - 1);
 
       Show_All (Button);
 
@@ -1699,9 +1722,9 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Object);
 
       Context : constant Drag_Context :=
-                  Drag_Context (Get_Proxy (Nth (Args, 1)));
-      Data    : constant Selection_Data :=
-                  Selection_Data (Get_Proxy (Nth (Args, 4)));
+                  Drag_Context (Get_Object (Nth (Args, 1)));
+      Data    : constant Gtk_Selection_Data :=
+                  From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
       File    : Virtual_File;
    begin
@@ -2246,5 +2269,83 @@ package body GPS.Kernel.Modules.UI is
          Ref_Item,
          Add_Before);
    end Register_Contextual_Submenu;
+
+   ------------------------------
+   -- On_Action_Button_Clicked --
+   ------------------------------
+
+   procedure On_Action_Button_Clicked
+     (Button : access Gtk_Widget_Record'Class)
+   is
+      B      : constant Action_Tool_Button := Action_Tool_Button (Button);
+      Action : constant Action_Record_Access :=
+        Lookup_Action (B.Kernel, B.Action.all);
+   begin
+      if Action = null then
+         B.Kernel.Insert
+           ("Command not found: '" & B.Action.all & "'",
+            Mode => Error);
+
+      else
+         Execute_Command
+           (Button,
+            Command => (Kernel  => B.Kernel,
+                        Command => Action.Command,
+                        Filter  => Action.Filter));
+      end if;
+   end On_Action_Button_Clicked;
+
+   ------------------------------
+   -- On_Action_Button_Destroy --
+   ------------------------------
+
+   procedure On_Action_Button_Destroy
+     (Button : access Gtk_Widget_Record'Class)
+   is
+      B : constant Action_Tool_Button := Action_Tool_Button (Button);
+   begin
+      GNAT.Strings.Free (B.Action);
+   end On_Action_Button_Destroy;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Button   : out Action_Tool_Button;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Stock_Id : String;
+      Action   : String)
+   is
+   begin
+      --  ??? Should automatically grey out when the context does not match.
+      Button := new Action_Tool_Button_Record;
+      Button.Kernel := Kernel_Handle (Kernel);
+      Button.Action := new String'(Action);
+      Gtk.Tool_Button.Initialize_From_Stock (Button, Stock_Id);
+      Widget_Callback.Connect
+        (Button, Gtk.Tool_Button.Signal_Clicked,
+         On_Action_Button_Clicked'Access);
+      Widget_Callback.Connect
+        (Button, Gtk.Widget.Signal_Destroy, On_Action_Button_Destroy'Access);
+   end Gtk_New;
+
+   ----------------
+   -- Add_Button --
+   ----------------
+
+   procedure Add_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Stock_Id : String;
+      Action   : String;
+      Tooltip  : String)
+   is
+      Button : Action_Tool_Button;
+   begin
+      Gtk_New (Button, Kernel, Stock_Id, Action);
+      Button.Set_Tooltip_Markup (Tooltip);
+      Toolbar.Insert (Button);
+   end Add_Button;
 
 end GPS.Kernel.Modules.UI;

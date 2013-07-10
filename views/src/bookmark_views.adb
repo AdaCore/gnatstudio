@@ -24,10 +24,9 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-
-with Cairo;                     use Cairo;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -35,8 +34,9 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Main;                  use Gtk.Main;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -50,10 +50,10 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -64,8 +64,8 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
+with Tooltips;
 with Traces;                    use Traces;
-with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
@@ -100,7 +100,6 @@ package body Bookmark_Views is
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Gtk_Tree_View;
-      Kernel    : Kernel_Handle;
       Goto_Icon : Gdk_Pixbuf;
       Deleting  : Boolean := False;
       --  Whether we are deleting multiple bookmarks
@@ -108,18 +107,18 @@ package body Bookmark_Views is
    type Bookmark_View is access all Bookmark_View_Record'Class;
 
    package Bookmarks_Selection_Foreach is new
-     Selection_Foreach (Bookmark_View_Record);
+     Gtk.Tree_Selection.Selected_Foreach_User_Data (Bookmark_View_Record);
    use Bookmarks_Selection_Foreach;
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Bookmark_View_Record'Class) return Gtk_Widget;
    --  Create a new Bookmark view
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
       Reuse_If_Exist     => True,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Bookmark_View_Record);
    subtype Bookmark_View_Access is Generic_View.View_Access;
 
@@ -151,7 +150,8 @@ package body Bookmark_Views is
    --  in List.
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    function Button_Press
@@ -181,7 +181,8 @@ package body Bookmark_Views is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
 
-   package Bookmark_Idle is new Gtk.Main.Idle (Bookmark_View_Access);
+   package Bookmark_Idle is new Glib.Main.Generic_Sources
+     (Bookmark_View_Access);
    use Bookmark_Idle;
    function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean;
    --  Function called to start editing the selected line. This is necessary
@@ -231,15 +232,12 @@ package body Bookmark_Views is
    -- Tooltips --
    --------------
 
-   type Bookmark_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Bookmark_View : Bookmark_View_Access;
-   end record;
-   type Bookmark_View_Tooltips_Access is
-     access all Bookmark_View_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Bookmark_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   type Bookmark_View_Tooltips is new Tooltips.Tooltips
+     with null record;
+   overriding function Create_Contents
+     (Tooltip  : not null access Bookmark_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    -------------
    -- Destroy --
@@ -258,49 +256,46 @@ package body Bookmark_Views is
       Save_Bookmarks (Get_Kernel (Module));
    end Destroy;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Bookmark_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Bookmark_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Model : constant Gtk_Tree_Model :=
-                Get_Model (Tooltip.Bookmark_View.Tree);
+      Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter  : Gtk_Tree_Iter;
-      Text  : GNAT.Strings.String_Access;
       Data  : Bookmark_Data_Access;
+      Label : Gtk_Label;
+      Area  : Gdk_Rectangle;
 
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tooltip.Bookmark_View.Tree, Area, Iter);
+      Tooltips.Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
          Data := Convert (Get_Address (Model, Iter, Data_Column));
+         Tooltip.Set_Tip_Area (Area);
 
          declare
             Location : constant String := To_String (Data.Marker);
          begin
             if Location = Data.Name.all then
-               Text := new String'("Location: " & Location);
+               Gtk_New (Label, "<b>Location:</b> " & Location);
             else
-               Text := new String'
-                 ("Name: " & Data.Name.all & ASCII.LF &
-                  "Location: " & Location);
+               Gtk_New
+                 (Label,
+                  "<b>Name:</b> " & Data.Name.all & ASCII.LF &
+                  "<b>Location:</b> " & Location);
             end if;
+            Label.Set_Use_Markup (True);
+            return Gtk_Widget (Label);
          end;
-
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tooltip.Bookmark_View.Tree,
-            Pixmap);
-         Free (Text);
       end if;
-   end Draw;
+      return null;
+   end Create_Contents;
 
    ---------------------
    -- Delete_Bookmark --
@@ -344,7 +339,7 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Data  : Bookmark_Data_Access;
       Iter  : Gtk_Tree_Iter;
    begin
@@ -357,7 +352,7 @@ package body Bookmark_Views is
 
             if Data /= null then
                Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
-               Remove (Gtk_Tree_Store (Model), Iter);
+               Remove (Model, Iter);
                Iter := Get_Iter_First (Model);
             else
                Next (Model, Iter);
@@ -380,8 +375,7 @@ package body Bookmark_Views is
       procedure Edit_Selected
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Data_Type_Access);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
       --  Foreach callback on a selection
 
       -------------------
@@ -391,9 +385,8 @@ package body Bookmark_Views is
       procedure Edit_Selected
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Data_Type_Access) is
-         pragma Unreferenced (Model, Data);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) is
+         pragma Unreferenced (Model);
       begin
          if Iter /= Null_Iter then
             Set_Cursor
@@ -407,9 +400,8 @@ package body Bookmark_Views is
       end Edit_Selected;
 
    begin
-      Selected_Foreach
-        (Get_Selection (View.Tree), Edit_Selected'Unrestricted_Access,
-         Data_Type_Access (View));
+      View.Tree.Get_Selection.Selected_Foreach
+        (Edit_Selected'Unrestricted_Access);
       return False;
 
    exception
@@ -428,15 +420,13 @@ package body Bookmark_Views is
    is
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
 
-      Ignore : Idle_Handler_Id;
+      Ignore : G_Source_Id;
       pragma Unreferenced (Command, Ignore);
    begin
       if Context.Event /= null then
-         Iter := Find_Iter_For_Event (View.Tree, Model, Context.Event);
+         Iter := Find_Iter_For_Event (View.Tree, Context.Event);
          if Iter /= Null_Iter then
             Unselect_All (Get_Selection (View.Tree));
             Select_Iter (Get_Selection (View.Tree), Iter);
@@ -445,8 +435,8 @@ package body Bookmark_Views is
             --  the focus when the menu is hidden, and stops the edition
             --  immediately.
 
-            Ignore := Add (Start_Editing_Idle'Access, View,
-                           Priority => Priority_High_Idle);
+            Ignore := Idle_Add (Start_Editing_Idle'Access, View,
+                                Priority => Priority_High_Idle);
             return Success;
          end if;
       end if;
@@ -527,10 +517,9 @@ package body Bookmark_Views is
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
       V     : constant Bookmark_View_Access := Bookmark_View_Access (Object);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter  : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
@@ -547,8 +536,7 @@ package body Bookmark_Views is
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
       Path   : Gtk_Tree_Path;
-      Model  : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (View.Tree));
+      Model  : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Iter   : Gtk_Tree_Iter;
       Marker : Bookmark_Data_Access;
       Ignore : Boolean;
@@ -561,7 +549,7 @@ package body Bookmark_Views is
          Grab_Focus (View.Tree);
 
       elsif Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+         Iter := Find_Iter_For_Event (View.Tree, Event);
 
          if Iter /= Null_Iter then
             --  Select the row that was clicked
@@ -608,7 +596,7 @@ package body Bookmark_Views is
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
-      Ignore : Idle_Handler_Id;
+      Ignore : G_Source_Id;
       pragma Unreferenced (Ignore);
 
    begin
@@ -625,7 +613,7 @@ package body Bookmark_Views is
             View := Bookmark_View_Access (Get_Widget (Child));
          end if;
 
-         Model := Gtk_Tree_Store (Get_Model (View.Tree));
+         Model := -Get_Model (View.Tree);
          Refresh (View);
          Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
 
@@ -646,8 +634,8 @@ package body Bookmark_Views is
 
          --  Register a callback for editing the selected node
 
-         Ignore := Add
-           (Start_Editing_Idle'Access, View, Priority => Priority_Low_Idle);
+         Ignore := Idle_Add
+           (Start_Editing_Idle'Access, View, Priority => Priority_Low);
          return Success;
       end if;
       return Failure;
@@ -658,8 +646,7 @@ package body Bookmark_Views is
    -------------
 
    procedure Refresh (View : access Bookmark_View_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       List  : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
    begin
@@ -688,8 +675,7 @@ package body Bookmark_Views is
       Params : Glib.Values.GValues)
    is
       View        : constant Gtk_Tree_View := Gtk_Tree_View (V);
-      M           : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (View));
+      M           : constant Gtk_Tree_Store := -Get_Model (View);
       Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant GValue := Nth (Params, 2);
       Iter        : Gtk_Tree_Iter;
@@ -707,12 +693,14 @@ package body Bookmark_Views is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       View : constant Bookmark_View_Access :=
                Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+      Set_Font_And_Colors
+        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
    end On_Preferences_Changed;
 
    ----------------
@@ -729,15 +717,17 @@ package body Bookmark_Views is
    ----------------
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Bookmark_View_Record'Class) return Gtk_Widget
    is
-      Tooltip   : Bookmark_View_Tooltips_Access;
+      Tooltip   : Tooltips.Tooltips_Access;
       Refresh_H : Refresh_Hook_Access;
+      Scrolled  : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column     => Gdk.Pixbuf.Get_Type,
@@ -754,7 +744,7 @@ package body Bookmark_Views is
          Merge_Icon_Columns => False,
          Hide_Expander      => True);
       Set_Name (View.Tree, "Bookmark TreeView"); --  For the testsuite
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 
@@ -767,13 +757,13 @@ package body Bookmark_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Module_ID (Bookmark_Views_Module),
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name  => "bookmark_views.preferences_changed",
                 Watch => GObject (View));
@@ -781,11 +771,11 @@ package body Bookmark_Views is
 
       Refresh_H := new Refresh_Hook'
         (Function_With_Args with View => Bookmark_View (View));
-      Add_Hook (Kernel, Bookmark_Added_Hook,
+      Add_Hook (View.Kernel, Bookmark_Added_Hook,
                 Refresh_H,
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));
-      Add_Hook (Kernel, Bookmark_Removed_Hook,
+      Add_Hook (View.Kernel, Bookmark_Removed_Hook,
                 Refresh_H,
                 Name  => "bookmark_views.refresh",
                 Watch => GObject (View));
@@ -793,8 +783,7 @@ package body Bookmark_Views is
       --  Initialize tooltips
 
       Tooltip := new Bookmark_View_Tooltips;
-      Tooltip.Bookmark_View := Bookmark_View_Access (View);
-      Set_Tooltip (Tooltip, View.Tree, 250);
+      Tooltip.Set_Tooltip (View.Tree);
 
       return Gtk_Widget (View.Tree);
    end Initialize;
@@ -1073,7 +1062,7 @@ package body Bookmark_Views is
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module
         (Kernel, Module_ID (Bookmark_Views_Module),
-         "_Bookmarks", -"Call Trees");
+         "Views/_Bookmarks", -"Call Trees");
 
       Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
       Register_Hook_No_Return

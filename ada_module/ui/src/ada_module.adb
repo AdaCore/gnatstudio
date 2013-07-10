@@ -63,7 +63,8 @@ package body Ada_Module is
    Ada_Stick_Comments        : Boolean_Preference;
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
@@ -91,9 +92,10 @@ package body Ada_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
@@ -292,10 +294,10 @@ package body Ada_Module is
          Label   => -"Align comments on keywords");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Kernel, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          "ada_module_preferences_changed");
-      On_Preferences_Changed (Kernel);
+      On_Preferences_Changed (Kernel, null);
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);

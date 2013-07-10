@@ -59,7 +59,8 @@ package body Cpp_Module is
    --  gps kernel.
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed. Subsidiary of Register_Module
    --  but must be defined at library level because it is invoked from the
    --  gps kernel.
@@ -84,9 +85,10 @@ package body Cpp_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
       Style  : constant Indentation_Kind := C_Automatic_Indentation.Get_Pref;
       Params : constant Indent_Parameters :=
                  (Indent_Level        => C_Indentation_Level.Get_Pref,
@@ -177,10 +179,10 @@ package body Cpp_Module is
          Label   => -"Indent comments");
 
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Kernel, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "cpp_module.preferences_changed");
-      On_Preferences_Changed (Kernel);
+      On_Preferences_Changed (Kernel, Data => null);
 
       Register_Naming_Scheme_Editor
         (Kernel, "c", C_Naming_Scheme_Editor'Access);

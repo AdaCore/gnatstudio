@@ -85,7 +85,8 @@ package Code_Analysis is
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
       Line_Text   : String_Access;
-      Added       : in out Boolean) is abstract;
+      Added       : in out Boolean;
+      Allow_Auto_Jump_To_First : Boolean) is abstract;
    --  Adds location of the uncovered line to the location window. Set Added to
    --  True if line has been added; otherwise preserve Added value.
 

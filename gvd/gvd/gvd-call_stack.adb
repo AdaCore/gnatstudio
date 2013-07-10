@@ -22,6 +22,7 @@ with Gdk.Event;              use Gdk.Event;
 with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
 
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
@@ -40,6 +41,7 @@ with Gtkada.MDI;             use Gtkada.MDI;
 
 with Config;                 use Config;
 with Debugger;               use Debugger;
+with Generic_Views;          use Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -79,7 +81,7 @@ package body GVD.Call_Stack is
    File_Location   : constant Stack_List_Mask := 2 ** 4;
    --  Lists the information to be displayed in the stack list window.
 
-   type Call_Stack_Record is new Scrolled_Views.Process_View_Record with
+   type Call_Stack_Record is new Base_Views.Process_View_Record with
       record
          Tree                       : Gtk_Tree_View;
          Model                      : Gtk_Tree_Store;
@@ -98,8 +100,9 @@ package body GVD.Call_Stack is
      (View : access Call_Stack_Record; New_State : Debugger_State);
    overriding procedure Load_From_XML
      (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr);
-   overriding function Save_To_XML
-     (View : access Call_Stack_Record) return XML_Utils.Node_Ptr;
+   overriding procedure Save_To_XML
+     (View : access Call_Stack_Record;
+      XML  : in out XML_Utils.Node_Ptr);
    --  See inherited documentation
 
    function Initialize
@@ -109,13 +112,13 @@ package body GVD.Call_Stack is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Scrolled_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Call_Stack",
       View_Name          => -"Call Stack",
       Formal_View_Record => Call_Stack_Record,
@@ -159,9 +162,9 @@ package body GVD.Call_Stack is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Stack);
+      return Generic_Views.Abstract_View_Access (Process.Stack);
    end Get_View;
 
    --------------
@@ -170,7 +173,7 @@ package body GVD.Call_Stack is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window)
+      View    : Generic_Views.Abstract_View_Access)
    is
       Old : constant Call_Stack := Call_Stack (Process.Stack);
    begin
@@ -333,9 +336,13 @@ package body GVD.Call_Stack is
       Name_Subprog : aliased String := -"Subprogram";
       Name_Params  : aliased String := -"Parameters";
       Name_Loc     : aliased String := -"Location";
+      Scrolled     : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Widget);
-      Set_Policy (Widget, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Widget, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       Widget.Tree := Create_Tree_View
         (Column_Types => (Frame_Num_Column       => GType_String,
@@ -350,9 +357,9 @@ package body GVD.Call_Stack is
             1 + Params_Column          => Name_Params'Unchecked_Access,
             1 + File_Location_Column   => Name_Loc'Unchecked_Access),
          Sortable_Columns => False);
-      Widget.Model := Gtk_Tree_Store (Get_Model (Widget.Tree));
+      Widget.Model := -Get_Model (Widget.Tree);
 
-      Add (Widget, Widget.Tree);
+      Scrolled.Add (Widget.Tree);
 
       Set_Column_Types (Widget);
 
@@ -393,7 +400,7 @@ package body GVD.Call_Stack is
 
          if Frame_Info = Location_Found then
             S.Block := True;
-            Path := Gtk_New (Process.Current_Output (First .. Last));
+            Gtk_New (Path, Process.Current_Output (First .. Last));
             Select_Path (Get_Selection (S.Tree), Path);
             Path_Free (Path);
             S.Block := False;
@@ -446,14 +453,15 @@ package body GVD.Call_Stack is
    -- Save_To_XML --
    -----------------
 
-   overriding function Save_To_XML
-     (View : access Call_Stack_Record) return XML_Utils.Node_Ptr
+   overriding procedure Save_To_XML
+     (View : access Call_Stack_Record;
+      XML  : in out XML_Utils.Node_Ptr)
    is
       N : constant Node_Ptr := new Node;
    begin
       N.Tag   := new String'("mask");
       N.Value := new String'(Stack_List_Mask'Image (View.Backtrace_Mask));
-      return N;
+      XML.Child := N;
    end Save_To_XML;
 
    ----------------------

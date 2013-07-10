@@ -315,7 +315,7 @@ package body Project_Templates.GUI is
       use Project_Templates_List;
       C : Cursor;
 
-      package Forwarder is new Generic_Assistant_Functions (Boolean);
+      package Forwarder is new Set_Forward_Page_Func_User_Data (Boolean);
 
       function Next_Page
         (Current_Page : Gint; User_Data : Boolean) return Gint;
@@ -339,7 +339,7 @@ package body Project_Templates.GUI is
          Event  : Gdk_Event) return Boolean;
       --  Callback on a key press
 
-      procedure On_Apply (Widget : access GObject_Record'Class);
+      procedure On_Apply_Assistant (Widget : access GObject_Record'Class);
       --  Press on the "Apply" button
 
       procedure Check_Completeness (Object : access GObject_Record'Class);
@@ -583,7 +583,7 @@ package body Project_Templates.GUI is
                      Assistant.Set_Current_Page
                        (Next_Page (Current_Page, False));
                   else
-                     On_Apply (Widget);
+                     On_Apply_Assistant (Widget);
                   end if;
                end if;
 
@@ -601,11 +601,11 @@ package body Project_Templates.GUI is
             return False;
       end On_Key_Press;
 
-      --------------
-      -- On_Apply --
-      --------------
+      ------------------------
+      -- On_Apply_Assistant --
+      ------------------------
 
-      procedure On_Apply (Widget : access GObject_Record'Class) is
+      procedure On_Apply_Assistant (Widget : access GObject_Record'Class) is
          pragma Unreferenced (Widget);
          Page : Template_Page;
       begin
@@ -628,7 +628,7 @@ package body Project_Templates.GUI is
          when E : others =>
             Errors := Errors & ASCII.LF & Exception_Information (E);
             Gtk.Main.Main_Quit;
-      end On_Apply;
+      end On_Apply_Assistant;
 
    begin
       Chosen := Null_Project_Template;
@@ -711,10 +711,10 @@ package body Project_Templates.GUI is
            (On_Key_Press'Unrestricted_Access));
 
       Object_Callback.Connect
-        (Assistant, "apply", On_Apply'Unrestricted_Access);
+        (Assistant, "apply", On_Apply_Assistant'Unrestricted_Access);
 
       Forwarder.Set_Forward_Page_Func
-        (Assistant, Next_Page'Unrestricted_Access, True);
+        (Assistant, Next_Page'Access, True);
 
       --  Launch the assistant
 

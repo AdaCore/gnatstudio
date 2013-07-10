@@ -24,7 +24,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Traces;                     use Traces;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with Password_Manager;           use Password_Manager;
 with String_Utils;               use String_Utils;
 

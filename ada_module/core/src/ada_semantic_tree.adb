@@ -37,6 +37,19 @@ package body Ada_Semantic_Tree is
       end if;
    end Get_Construct;
 
+   -------------------
+   -- Is_Accessible --
+   -------------------
+
+   function Is_Accessible
+     (E : access Entity_View_Record)
+      return Boolean
+   is
+      pragma Unreferenced (E);
+   begin
+      return True;
+   end Is_Accessible;
+
    ------------------
    -- Get_Category --
    ------------------

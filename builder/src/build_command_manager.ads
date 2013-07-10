@@ -27,52 +27,49 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with GPS.Kernel;
-with Build_Configurations;  use Build_Configurations;
-with Commands;              use Commands;
-with Commands.Interactive;  use Commands.Interactive;
+with GPS.Kernel.Messages;
+
+with Commands;               use Commands;
+with Commands.Interactive;   use Commands.Interactive;
+with Build_Command_Utils;    use Build_Command_Utils;
+with Build_Configurations;   use Build_Configurations;
+with Extending_Environments; use Extending_Environments;
+with Interactive_Consoles;   use Interactive_Consoles;
+with Remote;                 use Remote;
 
 package Build_Command_Manager is
 
-   type Dialog_Mode is
-     (Force_Dialog, Force_No_Dialog,
-      Force_Dialog_Unless_Disabled_By_Target,
-      Default);
-   --  Force_Dialog means that the dialog should always be displayed
-   --  Force_No_Dialog means that the dialog should not be displayed
-   --  Force_Dialog_Unless_Disabled_By_Target means that the dialog should
-   --    be displayed, unless the target launches with Manually_With_No_Dialog
-   --  Default means that the target default should be enforced
+   Builder_Message_Flags    : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => True,
+      GPS.Kernel.Messages.Locations   => True);
+   Background_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
+     (GPS.Kernel.Messages.Editor_Side => True,
+      GPS.Kernel.Messages.Locations   => False);
 
-   procedure Launch_Target
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
-      Target_Name : String;
-      Mode_Name   : String;
-      Force_File  : Virtual_File;
-      Extra_Args  : Argument_List_Access;
-      Quiet       : Boolean;
-      Synchronous : Boolean;
-      Dialog      : Dialog_Mode;
-      Main        : Virtual_File;
-      Background  : Boolean;
-      Directory   : Virtual_File := No_File);
-   --  Launch a build of target named Target_Name
-   --  If Mode_Name is not the empty string, then the Mode Mode_Name will be
-   --  used.
-   --  If Force_File is not set to No_File, then force the command to work
-   --  on this file. (This is needed to support GPS scripting).
-   --  Extra_Args may point to a list of unexpanded args.
-   --  If Quiet is true:
-   --    - files are not saved before build launch
-   --    - the console is not raised when launching the build
-   --    - the console is not cleared when launching the build
-   --  If Synchronous is True, GPS will block until the command is terminated.
-   --  See document of Dialog_Mode for details on Dialog values.
-   --  Main, if not empty, indicates the main to build.
-   --  If Directory is not empty, indicates which directory the target should
-   --  be run under. Default is the project's directory.
-   --  If Background, run the compile in the background.
+   function Get_Build_Console
+     (Kernel              : GPS.Kernel.Kernel_Handle;
+      Shadow              : Boolean;
+      Background          : Boolean;
+      Create_If_Not_Exist : Boolean;
+      New_Console_Name    : String := "") return Interactive_Console;
+   --  Return the console appropriate for showing compiler errors
+   --  If New_Console_Name is specified, create a new console with this name.
+
+   function Expand_Command_Line
+     (Builder    : Builder_Context;
+      CL         : Argument_List;
+      Target     : Target_Access;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Main       : Virtual_File;
+      Subdir     : Filesystem_String;
+      Background : Boolean;
+      Simulate   : Boolean;
+      Background_Env : Extending_Environment) return Expansion_Result;
+   --  Expand all macros contained in CL using the GPS macro language.
+   --  User must free the result.
+   --  CL must contain at least one element.
+   --  If Simulate is true, never fail on unknown parameters.
 
    -------------------
    -- Build_Command --
@@ -84,10 +81,9 @@ package Build_Command_Manager is
    type Build_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
       Main         : Virtual_File;
-      Registry     : Build_Config_Registry_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
       Dialog       : Dialog_Mode;
       Quiet        : Boolean;
+      Builder      : Builder_Context;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
@@ -99,8 +95,7 @@ package Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Main        : Virtual_File;
       Quiet       : Boolean;
@@ -119,10 +114,9 @@ package Build_Command_Manager is
       Target_Name  : Unbounded_String;
       Target_Type  : Unbounded_String;
       Main         : Natural;
-      Registry     : Build_Config_Registry_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
       Dialog       : Dialog_Mode;
       Quiet        : Boolean;
+      Builder      : Builder_Context;
    end record;
    type Build_Main_Command_Access is access all Build_Main_Command'Class;
 
@@ -134,8 +128,7 @@ package Build_Command_Manager is
 
    procedure Create
      (Item        : out Build_Main_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
+      Builder     : Builder_Context;
       Target_Name : String;
       Target_Type : String;
       Main        : Natural;

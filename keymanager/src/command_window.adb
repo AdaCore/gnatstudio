@@ -18,9 +18,9 @@
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Main;                use Gdk.Main;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Window;              use Gdk.Window;
@@ -33,7 +33,6 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Frame;               use Gtk.Frame;
 with Gtk.Label;               use Gtk.Label;
-with Gtk.Style;               use Gtk.Style;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_View;           use Gtk.Text_View;
@@ -397,11 +396,10 @@ package body Command_Window is
       Prompt            : String := "";
       Applies_To_Global : Boolean := True)
    is
-      X, Y        : Gint;
-      Requisition : Gtk_Requisition;
-      Frame       : Gtk_Frame;
-      Applies_To  : Gtk_Widget;
-      Success     : Boolean;
+      X, Y             : Gint;
+      Frame            : Gtk_Frame;
+      Applies_To       : Gtk_Widget;
+      Min_H, Natural_H : Gint;
    begin
       --  Do not make the window modal, although that is much more precise to
       --  be sure we always get all key events on the application. This has the
@@ -473,15 +471,20 @@ package body Command_Window is
          Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
-      Show_All (Frame);
+      Show_All (Window);
 
-      Get_Origin       (Get_Window (Applies_To), X, Y, Success);
-      Set_Size_Request (Window, Get_Allocation_Width (Applies_To), -1);
-      Size_Request     (Frame, Requisition);
-      if Success then
-         Y := Y + Get_Allocation_Height (Applies_To) - Requisition.Height;
-         Set_UPosition (Window, X, Y);
-      end if;
+      --  Aim for our window to appear as a strip over the bottom of
+      --  the Applies_To widget.
+
+      Get_Origin (Get_Window (Applies_To), X, Y);
+      Get_Preferred_Height (Window, Min_H, Natural_H);
+      Set_Size_Request
+        (Window,
+         Width  => Get_Allocated_Width (Applies_To),
+         Height => Natural_H);
+      Move (Window,
+            X => X,
+            Y => Y + Get_Allocated_Height (Applies_To) - Natural_H);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
@@ -492,11 +495,13 @@ package body Command_Window is
 
       Add_Event_Handler (Kernel, Command_Window_Event_Handler'Access);
 
-      Show_All (Window);
-
       Grab_Focus (Window.Line);
 
       KeyManager_Module.Block_Key_Shortcuts (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Testsuite_Handle, E);
    end Gtk_New;
 
    ----------------------------------
@@ -532,7 +537,7 @@ package body Command_Window is
                   New_Class (Get_Kernel (Data), "CommandWindow");
       Inst    : constant Class_Instance := Nth_Arg (Data, 1, Class);
       Window  : Command_Window;
-      Color   : Gdk_Color;
+      Color   : Gdk.RGBA.Gdk_RGBA;
       Success : Boolean;
    begin
       if Command = Constructor_Method then
@@ -606,7 +611,7 @@ package body Command_Window is
                   Show_All (Window.Prompt);
                else
                   Set_Child_Visible (Window.Prompt, False);
-                  Hide_All (Window.Prompt);
+                  Hide (Window.Prompt);
                end if;
             end;
          end if;
@@ -617,14 +622,16 @@ package body Command_Window is
          Window := Command_Window (GObject'(Get_Data (Inst)));
          if Window /= null then
             if Nth_Arg (Data, 2, "") = "" then
-               Color := Get_Base (Get_Style (Window), State_Normal);
+               Color := Gdk.RGBA.Null_RGBA;
             else
-               Color := Parse (Nth_Arg (Data, 2));
-               Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+               Parse (Color, Nth_Arg (Data, 2), Success);
             end if;
-            Modify_Base (Window.Line, State_Normal, Color);
-            Modify_Base (Window.Line, State_Active, Color);
-            Modify_Base (Window.Line, State_Selected, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Normal, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Active, Color);
+            Window.Line.Override_Background_Color
+              (Gtk_State_Flag_Selected, Color);
          end if;
       end if;
    end Command_Handler;

@@ -21,14 +21,16 @@ with Ada.Strings.Unbounded;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings;
 
+with Gdk;                      use Gdk;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
-with Gdk.Color;                use Gdk.Color;
+with Gdk.RGBA;                 use Gdk.RGBA;
 with Glib.Properties;          use Glib.Properties;
 
 with Gtk;                      use Gtk;
@@ -36,7 +38,8 @@ with Gtk.Arguments;            use Gtk.Arguments;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
@@ -56,6 +59,7 @@ with Pango.Font;               use Pango.Font;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
+with Generic_Views;            use Generic_Views;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -90,7 +94,7 @@ package body GVD.Memory_View is
    --  Note that any change in this type needs to be coordinated in
    --  Update_Display.
 
-   type GVD_Memory_View_Record is new Boxed_Views.Process_View_Record with
+   type GVD_Memory_View_Record is new Base_Views.Process_View_Record with
       record
          Editor : Memory_View_Access;
 
@@ -157,13 +161,13 @@ package body GVD.Memory_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Boxed_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Memory_View",
       View_Name          => -"Memory",
       Formal_View_Record => GVD_Memory_View_Record,
@@ -203,7 +207,7 @@ package body GVD.Memory_View is
 
    procedure Init_Graphics
      (View   : access GVD_Memory_View_Record'Class;
-      Window : Gdk.Window.Gdk_Window);
+      Window : Gdk.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
    procedure Update_Display (View : access GVD_Memory_View_Record'Class);
@@ -326,9 +330,9 @@ package body GVD.Memory_View is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Box (Process.Memory_View);
+      return Generic_Views.Abstract_View_Access (Process.Memory_View);
    end Get_View;
 
    --------------
@@ -337,7 +341,7 @@ package body GVD.Memory_View is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box)
+      View    : Generic_Views.Abstract_View_Access)
    is
       Old : constant GVD_Memory_View :=
         GVD_Memory_View (Process.Memory_View);
@@ -604,24 +608,24 @@ package body GVD.Memory_View is
    begin
       --  Tag used to display not modified memory
       Gtk_New (View.Default_Tag);
-      Set_Property (View.Default_Tag, Background_Gdk_Property, Null_Color);
-      Set_Property (View.Default_Tag, Foreground_Gdk_Property, Null_Color);
+      Set_Property (View.Default_Tag, Background_Rgba_Property, Null_RGBA);
+      Set_Property (View.Default_Tag, Foreground_Rgba_Property, Null_RGBA);
       Set_Property (View.Default_Tag, Font_Desc_Property, Font);
       Add (Tag_Table, View.Default_Tag);
 
       --  Tag used to display modified memory
       Gtk_New (View.Modified_Tag);
-      Set_Property (View.Modified_Tag, Background_Gdk_Property, Null_Color);
-      Set_Property (View.Modified_Tag, Foreground_Gdk_Property,
+      Set_Property (View.Modified_Tag, Background_Rgba_Property, Null_RGBA);
+      Set_Property (View.Modified_Tag, Foreground_Rgba_Property,
                     Change_Color.Get_Pref);
       Set_Property (View.Modified_Tag, Font_Desc_Property, Font);
       Add (Tag_Table, View.Modified_Tag);
 
       --  Tag used to display memory addresses
       Gtk_New (View.Address_Tag);
-      Set_Property (View.Address_Tag, Background_Gdk_Property,
+      Set_Property (View.Address_Tag, Background_Rgba_Property,
                     Memory_Highlighted_Color.Get_Pref);
-      Set_Property (View.Address_Tag, Foreground_Gdk_Property,
+      Set_Property (View.Address_Tag, Foreground_Rgba_Property,
                     Memory_View_Color.Get_Pref);
       Set_Property (View.Address_Tag, Font_Desc_Property, Font);
       Set_Property (View.Address_Tag, Text_Tag.Editable_Property, False);
@@ -859,10 +863,9 @@ package body GVD.Memory_View is
          Y_Box      : Gint;
          Width_Box  : Gint;
          Height_Box : Gint;
-         Depth_Box  : Gint;
       begin
          Gdk.Window.Get_Geometry
-           (View.Get_Window, X_Box, Y_Box, Width_Box, Height_Box, Depth_Box);
+           (View.Get_Window, X_Box, Y_Box, Width_Box, Height_Box);
 
          Gdk.Window.Invalidate_Rect
            (View.Get_Window,
@@ -1738,7 +1741,7 @@ package body GVD.Memory_View is
       if Proxy = null then
          return False;
       else
-         Arg1 := Gdk_Event (Proxy);
+         Arg1 := Get_Event (Nth (Params, 1));
       end if;
 
       if Arg1 = null
@@ -1767,20 +1770,26 @@ package body GVD.Memory_View is
             Gtk.Handlers.Emit_Stop_By_Name
               (View.Editor.View, "key_press_event");
 
-            if Get_String (Arg1)'Length /= 0 then
-               Insert (View, Get_String (Arg1));
-            end if;
+            begin
+               declare
+                  Str : constant String :=
+                    Interfaces.C.Strings.Value (Arg1.Key.String);
+               begin
+                  if Str'Length /= 0 then
+                     Insert (View, Str);
+                  end if;
+               end;
+            exception
+               when Constraint_Error =>
+                  --  On windows, it seems that pressing the control key
+                  --  generates an event for which Get_String is invalid
+                  null;
+            end;
       end case;
 
       return False;
 
    exception
-      --  On windows, it seems that pressing the control key generates
-      --  an event for which Get_String is invalid
-
-      when Invalid_Field =>
-         return False;
-
       when E : others => Trace (Exception_Handle, E);
          return False;
    end On_View_Key_Press_Event;

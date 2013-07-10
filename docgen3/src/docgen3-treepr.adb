@@ -18,7 +18,6 @@
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Docgen3.Atree;           use Docgen3.Atree;
-with Docgen3.Backend;         use Docgen3.Backend;
 with Docgen3.Files;           use Docgen3.Files;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Docgen3.Comment;         use Docgen3.Comment;
@@ -41,7 +40,7 @@ package body Docgen3.Treepr is
    --  Append the extension associated with tree output files
 
    function Get_Listing_Directory
-     (Kernel : Kernel_Handle) return Virtual_File;
+     (Kernel : Core_Kernel) return Virtual_File;
    --  Return the directory where the tree output must be generated
 
    ---------------------------
@@ -49,7 +48,7 @@ package body Docgen3.Treepr is
    ---------------------------
 
    function Get_Listing_Directory
-     (Kernel : Kernel_Handle) return Virtual_File
+     (Kernel : Core_Kernel) return Virtual_File
    is
       Base_Dir : constant Virtual_File := Get_Doc_Directory (Kernel);
    begin

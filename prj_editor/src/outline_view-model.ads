@@ -16,14 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Sets;
-
 with GNATCOLL.Symbols;
+with GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Values;                use Glib.Values;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
 
+with Generic_Views;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -33,11 +34,13 @@ with Language.Tree.Database; use Language.Tree.Database;
 
 private package Outline_View.Model is
 
-   Pixbuf_Column       : constant := 0;
+   Spec_Pixbuf_Column  : constant := 0;
    Display_Name_Column : constant := 1;
+   Body_Pixbuf_Column  : constant := 2;
 
    type Outline_Model_Record
-     is new Gtk_Abstract_Tree_Model_Record with private;
+     is new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record
+       with private;
    --  This model represents a structured tree. It contains instances of
    --  Entity_Persisent_Access. Using the update listener callback, we ensure
    --  that these entities are never referenced if they don't exist - so we
@@ -54,18 +57,34 @@ private package Outline_View.Model is
       Hide_Declarations : Boolean := False;
       Hide_Tasks        : Boolean := False;
       Show_Profile      : Boolean := False;
+      Sorted            : Boolean;
+      Group_Spec_And_Body : Boolean := False;
+      Flat_View           : Boolean := False;
    end record;
+   --  Group_Spec_And_Body indicates whether to group the spec and body for
+   --  a given entity on the same line. This doesn't force a refresh of the
+   --  model.
+   --  Flat_View indicates whether to display all entities in a flat view, or
+   --  hierarchically
 
-   procedure Init_Model
-     (Model     : access Outline_Model_Record'Class;
-      Key       : Construct_Annotations_Pckg.Annotation_Key;
-      File      : Structured_File_Access;
-      Filter    : Tree_Filter;
-      Sort      : Boolean;
-      Add_Roots : Boolean := False);
+   procedure Setup
+     (Model  : not null access Outline_Model_Record'Class;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter);
+   --  Setup the filters for the model.
 
+   procedure Set_Filter
+     (Model   : not null access Outline_Model_Record'Class;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options);
+   --  Filters the contents of the model. This does not refresh the model.
+
+   procedure Set_File
+     (Model : not null access Outline_Model_Record'Class;
+      File  : Structured_File_Access);
    function Get_File (Model : Outline_Model) return Structured_File_Access;
-   --  Return the file modelized by this model
+   --  Return the file modelized by this model.
+   --  Setting the file forces a refresh of the model.
 
    type Sorted_Node is private;
 
@@ -143,8 +162,13 @@ private package Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  See inherited documentation
 
-   function Get_Entity (Iter : Gtk_Tree_Iter) return Entity_Persistent_Access;
-   --  Return the entity designed by this iterator
+   function Get_Entity
+     (Self   : not null access Outline_Model_Record'Class;
+      Iter   : Gtk_Tree_Iter;
+      Column : Gint := Spec_Pixbuf_Column) return Entity_Access;
+   --  Return the entity designed by this iterator.
+   --  If Column is set to Body_Pixbuf_Column, the "body" of the entity is
+   --  returned.
 
    procedure Free (Model : access Outline_Model_Record);
    --  Free the memory associated to this model content. The model won't be
@@ -174,13 +198,11 @@ private
 
    type Sorted_Node is record
       Entity      : Entity_Persistent_Access;
-      Prev, Next  : Sorted_Node_Access;
-      First_Child : Sorted_Node_Access;
-      Last_Child  : Sorted_Node_Access;
-      Parent      : Sorted_Node_Access;
+
+      Prev, Next   : Sorted_Node_Access;
+      Parent : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
-      N_Children        : Integer := -1;
 
       Ordered_Index : Sorted_Node_Set.Set;
       Order_Kind    : Order_Kind_Type;
@@ -196,8 +218,9 @@ private
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record
       Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
       File           : Structured_File_Access;
+
       Filter         : Tree_Filter;
-      Sorted         : Boolean;
+      Filter_Pattern : GNAT.Strings.String_Access := null;
 
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children

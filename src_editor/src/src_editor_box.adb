@@ -24,7 +24,6 @@ with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Tribooleans;       use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.Xref;
@@ -32,7 +31,6 @@ with GNATCOLL.Xref;
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Main;                   use Gdk.Main;
-with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk.Display;                use Gdk.Display;
@@ -47,19 +45,14 @@ with Gtk.Box;                    use Gtk.Box;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
-with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Separator;              use Gtk.Separator;
-with Gtk.Status_Bar;             use Gtk.Status_Bar;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
-with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
@@ -72,11 +65,9 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -88,15 +79,12 @@ with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
-with Pango.Layout;               use Pango.Layout;
-with Projects;                   use Projects;
 with Src_Editor_Box.Tooltips;    use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
-with Std_Dialogs;                use Std_Dialogs;
 with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
 with Traces;
@@ -140,33 +128,6 @@ package body Src_Editor_Box is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored
 
-   procedure Show_Cursor_Position
-     (Box    : access Source_Editor_Box_Record'Class;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type);
-   --  Redraw the cursor position in the Line/Column areas of the status bar
-
-   procedure Show_Which_Function
-     (Box  : Source_Editor_Box;
-      Name : String);
-   pragma Inline (Show_Which_Function);
-   --  Name if not null is the name of the enclosing subprogram, it is
-   --  displayed on the left of the status bar.
-
-   procedure Cursor_Position_Changed_Handler
-     (Buffer : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box);
-   --  This handler is merely a proxy to Show_Cursor_Position. It just
-   --  extracts the necessary values from Params, and pass them on to
-   --  Show_Cursor_Position.
-
-   procedure Buffer_Information_Handler
-     (Buffer : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box);
-   --  Reflect the change in buffer information
-
    procedure Status_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -178,10 +139,6 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
    --  Reflect the change in buffer filename
-
-   procedure Destroy_Info_Frames
-     (Box : access Source_Editor_Box_Record'Class);
-   --  Destroy Box.Buffer_Info_Frames
 
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
@@ -199,13 +156,6 @@ package body Src_Editor_Box is
       Data   : Entity_And_Kernel);
    --  Jump to the body of the given entity
 
-   procedure On_Toggle_Overwrite
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box);
-   --  Callback to be called when the view receives the "toggle_overwrite"
-   --  signal.
-
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
    --  on the disk is more recent than the one that was read for the editor.
@@ -215,10 +165,6 @@ package body Src_Editor_Box is
 
    function Key_Press (Box : access GObject_Record'Class) return Boolean;
    --  Check whether the file has been modified on disk
-
-   function On_Read_Only_Pressed
-     (Box : access GObject_Record'Class) return Boolean;
-   --  Toggle read-only/writable state of a given box
 
    function Check_Timestamp_Idle (Box : GObject) return Boolean;
    --  Idle callback to check that the timestamp of a file hasn't changed
@@ -238,27 +184,9 @@ package body Src_Editor_Box is
       Callback      : Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
-   function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  Whether the Entity referenced in context has a body other than at the
-   --  location described in Context
-
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
-
-   procedure On_Goto_Line
-     (Widget  : access GObject_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class);
-   --  Callback for the "Goto Line" contextual menu
-
-   function On_Goto_Line_Func
-     (Editor : access GObject_Record'Class) return Boolean;
-   --  Callback when clicking on the line number in the status bar
-
-   procedure Add_Navigation_Location
-     (Source : access Source_Editor_Box_Record'Class);
-   --  Add a navigation command to mark the given location in the source
-   --  editor. Used to remember the location before Xref navigation.
 
    -----------------------------
    -- Add_Navigation_Location --
@@ -321,8 +249,8 @@ package body Src_Editor_Box is
 
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
-         Console.Insert
-           (Kernel, -"Cross-references not possible on unamed files",
+         Kernel.Insert
+           (-"Cross-references not possible on unamed files",
             Mode => Error);
          return;
       end if;
@@ -343,9 +271,8 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert
-           (Kernel,
-            -"No cross-reference information found for "
+         Kernel.Insert
+           (-"No cross-reference information found for "
             & Entity_Name_Information (Context) & ASCII.LF,
             Mode => Error);
          Pop_State (Kernel_Handle (Kernel));
@@ -482,9 +409,8 @@ package body Src_Editor_Box is
             if Get_Language_Context
               (Get_Language (Source.Source_Buffer)).Accurate_Xref
             then
-               Console.Insert
-                 (Kernel,
-                  -("xref info mismatch, cursor was set at closest ref to ")
+               Kernel.Insert
+                 (-("xref info mismatch, cursor was set at closest ref to ")
                     & Entity_Name);
             end if;
 
@@ -571,41 +497,6 @@ package body Src_Editor_Box is
       return Character_Offset_Type (Col + 1);
    end To_Box_Column;
 
-   --------------------------
-   -- Show_Cursor_Position --
-   --------------------------
-
-   procedure Show_Cursor_Position
-     (Box    : access Source_Editor_Box_Record'Class;
-      Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) is
-   begin
-      Set_Text
-        (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ':' & Image (Integer (Column)));
-   end Show_Cursor_Position;
-
-   -------------------------
-   -- Show_Which_Function --
-   -------------------------
-
-   procedure Show_Which_Function
-     (Box  : Source_Editor_Box;
-      Name : String) is
-   begin
-      Set_Text (Box.Function_Label, Name);
-   end Show_Which_Function;
-
-   ---------------------------
-   -- Clear_Subprogram_Name --
-   ---------------------------
-
-   procedure Clear_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record) is
-   begin
-      Set_Text (Editor.Function_Label, "");
-   end Clear_Subprogram_Name;
-
    ----------------------------
    -- Status_Changed_Handler --
    ----------------------------
@@ -616,45 +507,12 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer, Params);
-      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
    begin
-      case Get_Status (Box.Source_Buffer) is
-         when Unmodified =>
-            Set_Text (Box.Modified_Label, -"Unmodified");
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
-               Ref (File_Pixbuf);
-            end if;
-
-         when Unsaved =>
-            Set_Text (Box.Modified_Label, -"Unsaved");
-            if Child /= null and then File_Unsaved_Pixbuf /= null then
-               Set_Icon (Child, File_Unsaved_Pixbuf);
-               Ref (File_Unsaved_Pixbuf);
-            end if;
-
-         when Saved =>
-            Set_Text (Box.Modified_Label, -"Saved");
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
-               Ref (File_Pixbuf);
-            end if;
-
-         when Modified =>
-            Set_Text (Box.Modified_Label, -"Modified");
-            if Child /= null and then File_Modified_Pixbuf /= null then
-               Set_Icon (Child, File_Modified_Pixbuf);
-               Ref (File_Modified_Pixbuf);
-            end if;
-      end case;
-
+      Update_Status (Box.Status_Bar);
       File_Status_Changed
         (Get_Kernel (Box),
          Get_Filename (Box.Source_Buffer),
          Get_Status (Box.Source_Buffer));
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end Status_Changed_Handler;
 
    ------------------------------
@@ -679,122 +537,15 @@ package body Src_Editor_Box is
          Trace (Traces.Exception_Handle, E);
    end Filename_Changed_Handler;
 
-   --------------------------------
-   -- Buffer_Information_Handler --
-   --------------------------------
+   ----------------------------
+   -- Update_Subprogram_Name --
+   ----------------------------
 
-   procedure Buffer_Information_Handler
-     (Buffer : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box)
-   is
-      pragma Unreferenced (Buffer, Params);
-
-      Info  : constant Extra_Information_Array_Access :=
-                Get_Extra_Information (Box.Source_Buffer);
-
+   procedure Update_Subprogram_Name
+     (Box : not null access Source_Editor_Box_Record'Class) is
    begin
-      Destroy_Info_Frames (Box);
-      if Info = null then
-         return;
-      end if;
-
-      Box.Buffer_Info_Frames := new Frames_Array (Info'Range);
-
-      for J in Box.Buffer_Info_Frames'Range loop
-         if Info (J).Info.Text /= null then
-            Gtk_New (Box.Buffer_Info_Frames (J).Label, Info (J).Info.Text.all);
-         else
-            Gtk_New (Box.Buffer_Info_Frames (J).Label);
-         end if;
-
-         Gtk_New_Vseparator (Box.Buffer_Info_Frames (J).Separator);
-         Pack_End
-           (Box.Label_Box,
-            Box.Buffer_Info_Frames (J).Separator,
-            Expand => False,
-            Fill => False);
-
-         Pack_End
-           (Box.Label_Box,
-            Box.Buffer_Info_Frames (J).Label,
-            Expand  => False,
-            Fill    => True,
-            Padding => 0);
-      end loop;
-
-      Show_All (Box.Label_Box);
-   end Buffer_Information_Handler;
-
-   --------------------------
-   -- Show_Subprogram_Name --
-   --------------------------
-
-   procedure Show_Subprogram_Name
-     (Box             : Source_Editor_Box;
-      Subprogram_Name : String) is
-   begin
-      Show_Which_Function (Box, Subprogram_Name);
-   end Show_Subprogram_Name;
-
-   -------------------------------------
-   -- Cursor_Position_Changed_Handler --
-   -------------------------------------
-
-   procedure Cursor_Position_Changed_Handler
-     (Buffer : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box)
-   is
-      pragma Unreferenced (Buffer);
-      Child : MDI_Child;
-      File  : GNATCOLL.VFS.Virtual_File := Get_Filename (Box.Source_Buffer);
-   begin
-      if File = GNATCOLL.VFS.No_File then
-         File := Get_File_Identifier (Box.Source_Buffer);
-      end if;
-
-      Box.Current_Line :=
-        Editable_Line_Type (Values.Get_Int (Values.Nth (Params, 1)));
-
-      --  In case there are multiple views, we only want to change the one that
-      --  last had the focus. Otherwise, they would all end up with the same
-      --  line number, which is inaccurate.
-      --  The box might not have the focus currently: if we are for instance
-      --  changing the current line from the "Go to line" dialog, the latter
-      --  still has the focus at this point.
-
-      Child := Find_Editor (Box.Kernel, File);
-
-      if Child /= null and then Get_Widget (Child) = Gtk_Widget (Box) then
-         Show_Cursor_Position
-           (Box,
-            Line   => Box.Current_Line,
-            Column => Character_Offset_Type
-              (Values.Get_Int (Values.Nth (Params, 2))));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-   end Cursor_Position_Changed_Handler;
-
-   -------------------------
-   -- Destroy_Info_Frames --
-   -------------------------
-
-   procedure Destroy_Info_Frames
-     (Box : access Source_Editor_Box_Record'Class) is
-   begin
-      if Box.Buffer_Info_Frames /= null then
-         for J in Box.Buffer_Info_Frames'Range loop
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Label);
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Separator);
-         end loop;
-
-         Unchecked_Free (Box.Buffer_Info_Frames);
-      end if;
-   end Destroy_Info_Frames;
+      Update_Subprogram_Name (Box.Status_Bar);
+   end Update_Subprogram_Name;
 
    --------------------
    -- On_Box_Destroy --
@@ -807,46 +558,19 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object, Params);
    begin
-      Destroy_Info_Frames (Box);
 
-      Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
-      Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
 
       Delete (Box.Source_View);
 
       --  Remove the idle handler if it was registered
       if Box.Check_Timestamp_Registered then
-         Idle_Remove (Box.Check_Timestamp_Id);
+         Glib.Main.Remove (Box.Check_Timestamp_Id);
       end if;
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
    end On_Box_Destroy;
-
-   -------------------------
-   -- On_Toggle_Overwrite --
-   -------------------------
-
-   procedure On_Toggle_Overwrite
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Box    : Source_Editor_Box)
-   is
-      pragma Unreferenced (Object, Params);
-   begin
-      Box.Overwrite := not Box.Overwrite;
-
-      if Box.Overwrite then
-         Set_Text (Box.Overwrite_Label, -"Overwrite");
-      else
-         Set_Text (Box.Overwrite_Label, -"Insert");
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-   end On_Toggle_Overwrite;
 
    ----------------
    -- Initialize --
@@ -858,13 +582,10 @@ package body Src_Editor_Box is
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
    is
-      Frame          : Gtk_Frame;
-      Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
-      Separator      : Gtk_Vseparator;
-      Status_Bar     : Gtk_Status_Bar;
+      Frame          : Gtk_Frame;
 
    begin
       Initialize_Vbox (Box, Homogeneous => False);
@@ -882,8 +603,8 @@ package body Src_Editor_Box is
       Gtk_New (Scrolling_Area);
       Set_Policy
         (Scrolling_Area,
-         H_Scrollbar_Policy => Policy_Automatic,
-         V_Scrollbar_Policy => Policy_Automatic);
+         Hscrollbar_Policy => Policy_Automatic,
+         Vscrollbar_Policy => Policy_Automatic);
       Pack_End (Hbox, Scrolling_Area, Expand => True, Fill => True);
 
       if Source = null then
@@ -905,61 +626,17 @@ package body Src_Editor_Box is
          Unref (Box.Source_Buffer);
       end if;
 
-      Set_Tooltip
-        (Tooltip   => Create_Tooltips (Box),
-         On_Widget => Box.Source_View,
-         Timeout   => Guint (Tooltip_Timeout.Get_Pref));
+      Create_Tooltips (Box).Set_Tooltip (Box.Source_View);
 
       --  The status bar, at the bottom of the window...
 
-      --  We use an actual GtkStatusBar so that themes can correctly display
-      --  the status bar as desired.
-      Gtk_New (Status_Bar);
-      Status_Bar.Set_Has_Resize_Grip (False);
-      Pack_Start (Box, Status_Bar, Expand => False, Fill => False);
-      Box.Label_Box := Gtk_Hbox (Status_Bar.Get_Message_Area);
+      Gtk_New (Box.Status_Bar, Box, Box.Source_View, Box.Source_Buffer);
 
-      --  Remove packed-in children, and replace with our own widgets
-      declare
-         Children : Gtk.Widget.Widget_List.Glist :=
-                      Box.Label_Box.Get_Children;
-         Child    : Gtk_Widget;
-         use Gtk.Widget.Widget_List;
+      Gtk_New (Frame);
+      Frame.Set_Shadow_Type (Shadow_None);
+      Pack_Start (Box, Frame, Expand => False, Fill => False);
 
-      begin
-         for J in 0 .. Length (Children) - 1 loop
-            Child := Nth_Data (Children, J);
-            Box.Label_Box.Remove (Child);
-         end loop;
-
-         Free (Children);
-      end;
-
-      --  Avoid resizing the main window whenever a label is changed
-      Set_Resize_Mode (Box.Label_Box, Resize_Queue);
-
-      --  Line:Column number area...
-      Gtk_New (Event_Box);
-      Pack_End (Box.Label_Box, Event_Box, Expand => False, Fill => False);
-      Gtk_New (Box.Cursor_Loc_Label, "1:1");
-      Add (Event_Box, Box.Cursor_Loc_Label);
-
-      --  Setup a minimal size for the line:column area, to avoid too much
-      --  resizing.
-
-      declare
-         Layout : constant Pango_Layout :=
-                    Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
-         Width, Height : Gint;
-      begin
-         Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
-         Get_Pixel_Size (Layout, Width, Height);
-         Set_Size_Request (Event_Box, Width, Height);
-         Unref (Layout);
-      end;
-
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Box);
+      Frame.Add (Box.Status_Bar);
 
       Gtkada.Handlers.Return_Callback.Connect
         (Box,
@@ -967,64 +644,7 @@ package body Src_Editor_Box is
          Delete_Callback'Access,
          After => False);
 
-      --  Modified file area...
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Box.Modified_Label);
-      Pack_End
-        (Box.Label_Box, Box.Modified_Label, Expand => False, Fill => True);
-
-      --  Read only file area...
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Event_Box);
-      Pack_End
-        (Box.Label_Box, Event_Box, Expand => False, Fill => True);
-      Gtk_New (Box.Read_Only_Label);
-      Add (Event_Box, Box.Read_Only_Label);
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event,
-         On_Read_Only_Pressed'Access, Box);
-
-      --  Insert/Overwrite label
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Box.Label_Box, Separator, Expand => False, Fill => False);
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Gtk_New (Box.Overwrite_Label, -"Insert");
-
-      --  ??? Using an Event_Box should not be necessary, but it avoids
-      --  some overlaps when resizing the editor window
-
-      Gtk_New (Event_Box);
-      Pack_End (Box.Label_Box, Event_Box, Expand => False, Fill => True);
-      Add (Event_Box, Box.Overwrite_Label);
-      Box_Callback.Connect
-        (Box.Source_View,
-         Signal_Toggle_Overwrite,
-         On_Toggle_Overwrite'Access,
-         User_Data => Source_Editor_Box (Box));
-
-      --  Function location area
-      Gtk_New (Box.Function_Label);
-      Set_Ellipsize (Box.Function_Label, Ellipsize_End);
-      Set_Alignment (Box.Function_Label, 0.0, 0.5);
-
-      --  Using an Event_Box to avoid some overlaps when resizing the editor
-      --  window. See also ??? comment above.
-
-      Gtk_New (Event_Box);
-      Pack_Start (Box.Label_Box, Event_Box, Expand => True, Fill => True);
-      Add (Event_Box, Box.Function_Label);
-
       --  Connect to source buffer signals
-
-      Box.Cursor_Handler := Box_Callback.Connect
-        (Box.Source_Buffer,
-         Signal_Cursor_Position_Changed,
-         Cursor_Position_Changed_Handler'Access,
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
 
       Box.Status_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
@@ -1040,21 +660,11 @@ package body Src_Editor_Box is
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
-      Box.Buffer_Info_Handler := Box_Callback.Connect
-        (Box.Source_Buffer,
-         Signal_Buffer_Information_Changed,
-         Buffer_Information_Handler'Access,
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
-
       Box_Callback.Connect
         (Box.Source_View,
          Signal_Destroy,
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
-
-      Show_Cursor_Position
-        (Source_Editor_Box (Box), Line => 1, Column => 1);
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
@@ -1095,26 +705,6 @@ package body Src_Editor_Box is
          Trace (Traces.Exception_Handle, E);
          return False;
    end Key_Press;
-
-   --------------------------
-   -- On_Read_Only_Pressed --
-   --------------------------
-
-   function On_Read_Only_Pressed
-     (Box : access GObject_Record'Class) return Boolean
-   is
-      Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
-   begin
-      Set_Writable
-        (Editor, not Get_Writable (Editor.Source_Buffer), Explicit => True);
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-         return False;
-   end On_Read_Only_Pressed;
 
    --------------------------
    -- Check_Timestamp_Idle --
@@ -1205,7 +795,7 @@ package body Src_Editor_Box is
       if not B.Check_Timestamp_Registered then
          B.Check_Timestamp_Registered := True;
          B.Check_Timestamp_Id :=
-           Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
+           Object_Idle.Idle_Add (Check_Timestamp_Idle'Access, GObject (Box));
       end if;
 
       --  Connect the Undo/Redo buttons to the buffer
@@ -1255,27 +845,6 @@ package body Src_Editor_Box is
          Event    => Event,
          Menu     => Menu);
    end Get_Contextual_Menu;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access In_Line_Numbers_Area_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Event  : constant Gdk_Event := Get_Current_Event;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Editor : constant Source_Editor_Box  :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-
-   begin
-      return Event /= null
-        and then Editor /= null
-        and then Get_Window (Event) =
-          Get_Window (Editor.Source_View, Text_Window_Left);
-   end Filter_Matches_Primitive;
 
    -------------------------
    -- Get_Contextual_Menu --
@@ -1337,6 +906,7 @@ package body Src_Editor_Box is
       end In_Selection;
 
       Cursor_Location : Gtk_Text_Iter;
+      Xevent, Yevent : Gdouble;
    begin
       if Location = Location_Event
         and then
@@ -1366,9 +936,10 @@ package body Src_Editor_Box is
          when Location_Event =>
             if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
                --  Click in the line numbers area
+               Get_Coords (Event, Xevent, Yevent);
                Window_To_Buffer_Coords
                  (Editor.Source_View, Text_Window_Left,
-                  Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
+                  Gint (Xevent), Gint (Yevent), X, Y);
                Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
                Line := Get_Line (Start_Iter);
                Place_Cursor (Editor.Source_Buffer, Start_Iter);
@@ -1877,74 +1448,6 @@ package body Src_Editor_Box is
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
 
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Get_Entity_Type_Of (Context) /= No_General_Entity;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Parent_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Has_Parent_Types (Context);
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Access_Type_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Entity : constant General_Entity := Get_Entity (Context);
-      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
-
-   begin
-      return Entity /= No_General_Entity
-        and then Kernel.Databases.Is_Access (Entity)
-        and then Kernel.Databases.Is_Type (Entity);
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Other_File_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-   begin
-      if Has_File_Information (Context) then
-         declare
-            File       : constant Virtual_File := File_Information (Context);
-            Other_File : constant Virtual_File :=
-              Get_Registry (Kernel).Tree.Other_File (File);
-         begin
-            return Other_File /= No_File
-              and then Other_File /= File;
-         end;
-      end if;
-      return False;
-   end Filter_Matches_Primitive;
-
    --------------
    -- Has_Body --
    --------------
@@ -1966,379 +1469,6 @@ package body Src_Editor_Box is
       return Location /= No_Location
         and then Location /= Spec_Location;
    end Has_Body;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Body_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Has_Body (Context);
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Dispatching_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Count  : Integer := 0;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
-
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean;
-
-      ---------------
-      -- On_Callee --
-      ---------------
-
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean
-      is
-         pragma Unreferenced (Callee, Primitive_Of);
-      begin
-         --  Consider dispatching calls only if we find more than one
-         --  potential target, to avoid creating submenu with only one entry
-         Count := Count + 1;
-         return Count <= 1;
-      end On_Callee;
-
-   begin
-      --  Assertion commented out, since does not always hold, e.g. at start
-      --  up when the xref DB is loaded, if the 'Load Xref info' pref is set.
-      --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
-
-      if Is_Dispatching_Call (Context) = Indeterminate then
-         Push_State (Kernel, Busy);
-
-         Xref.For_Each_Dispatching_Call
-           (Dbase     => Db,
-            Entity    => Get_Entity (Context),
-            Ref       => Get_Closest_Ref (Context),
-            On_Callee => On_Callee'Access,
-            Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
-
-         Pop_State (Get_Kernel (Context));
-
-         --  See comment above to see why this code is commented out pragma
-         --  Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
-
-         Set_Is_Dispatching_Call (Context, Count > 1);
-      end if;
-
-      return Is_Dispatching_Call (Context) = To_Boolean (True);
-   end Filter_Matches_Primitive;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Other_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File       : constant Virtual_File := File_Information (Context.Context);
-      Other_File : constant Virtual_File :=
-        Get_Registry (Kernel).Tree.Other_File (File);
-   begin
-      Trace (Me, "Goto_Other_File_Command File="
-             & Display_Full_Name (File)
-             & " Other_File=" & Display_Full_Name (Other_File));
-
-      if Other_File /= GNATCOLL.VFS.No_File then
-         Open_File_Editor (Kernel, Other_File, Line => 0);
-         return Commands.Success;
-      else
-         return Commands.Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Line_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Context);
-      Box : constant Source_Editor_Box :=
-              Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
-   begin
-      On_Goto_Line (Box, Command.Kernel);
-      return Commands.Success;
-   end Execute;
-
-   ------------------
-   -- On_Goto_Line --
-   ------------------
-
-   procedure On_Goto_Line
-     (Widget : access GObject_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
-      Box : constant Source_Editor_Box := Source_Editor_Box (Widget);
-   begin
-      declare
-         Str : constant String := Simple_Entry_Dialog
-           (Get_Current_Window (Kernel),
-            -"Goto Line...", -"Enter line number:",
-            Win_Pos_Mouse, Get_History (Kernel), "Goto_Line");
-
-      begin
-         if Str = "" or else Str (Str'First) = ASCII.NUL then
-            return;
-         end if;
-
-         Push_Current_Editor_Location_In_History (Kernel);
-         Set_Cursor_Location
-           (Box, Editable_Line_Type'Value (Str), 1, Centering => With_Margin);
-         Add_Navigation_Location (Box);
-
-      exception
-         when Constraint_Error =>
-            Console.Insert
-              (Kernel, -"Invalid line number: " & Str, Mode => Error);
-      end;
-   end On_Goto_Line;
-
-   -----------------------
-   -- On_Goto_Line_Func --
-   -----------------------
-
-   function On_Goto_Line_Func
-     (Editor : access GObject_Record'Class) return Boolean is
-   begin
-      --  ??? Not nice to get a context here
-      On_Goto_Line (Source_Editor_Box (Editor),
-                    Source_Editor_Box (Editor).Kernel);
-      return True;
-   end On_Goto_Line_Func;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Declaration_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      Goto_Declaration_Or_Body
-        (Kernel,
-         To_Body => False,
-         Editor  => Box,
-         Context => Context.Context);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Next_Body_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      Goto_Declaration_Or_Body
-        (Kernel,
-         To_Body => True,
-         Editor  => Box,
-         Context => Context.Context);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Type_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Db      : constant General_Xref_Database := Kernel.Databases;
-      Entity  : constant General_Entity := Get_Entity (Context.Context);
-
-   begin
-      if Entity = No_General_Entity then
-         --  Probably means that we either could not locate the ALI file,
-         --  or it could also be that we failed to parse it. Either way,
-         --  a message should have already been printed. So, just abort.
-
-         Console.Insert
-           (Kernel,
-            -"No cross-reference information found for "
-            & Entity_Name_Information (Context.Context) & ASCII.LF,
-            Mode => Error);
-         return Commands.Failure;
-
-      else
-         declare
-            Entity_Type : General_Entity;
-            Location    : General_Location;
-
-         begin
-            Entity_Type := Get_Type_Of (Db, Entity);
-
-            if Is_Predefined_Entity (Db, Entity_Type) then
-               Console.Insert
-                 (Kernel,
-                  Get_Name (Db, Entity)
-                  & " is of predefined type "
-                  & Get_Name (Db, Entity_Type));
-               return Commands.Failure;
-
-            else
-               Location := Db.Get_Declaration (Entity_Type).Loc;
-               Go_To_Closest_Match
-                 (Kernel,
-                  Filename => Location.File,
-                  Line     => Editable_Line_Type (Location.Line),
-                  Column   => Location.Column,
-                  Entity   => Entity_Type);
-
-               return Commands.Success;
-            end if;
-         end;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Type_Hierarchy_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
-
-      procedure Insert (Name : String; Entity : General_Entity);
-      --  Add entry for Entity into the location view
-
-      function Get_Type_Or_Ref
-        (Entity : General_Entity) return General_Entity;
-      pragma Inline (Get_Type_Or_Ref);
-      --  Retruns the type of Entity (handle case where entity is an access
-      --  type, in this case we returned the pointed entity).
-
-      ---------------------
-      -- Get_Type_Or_Ref --
-      ---------------------
-
-      function Get_Type_Or_Ref
-        (Entity : General_Entity) return General_Entity is
-      begin
-         if Db.Is_Access (Entity) then
-            return Db.Pointed_Type (Entity);
-         elsif Db.Is_Type (Entity) then
-            declare
-               Parents : constant Entity_Array :=
-                 Db.Parent_Types (Entity, Recursive => False);
-            begin
-               if Parents'Length /= 0 then
-                  return Parents (Parents'First);
-               else
-                  return No_General_Entity;
-               end if;
-            end;
-         else
-            return Get_Type_Of (Db, Entity);
-         end if;
-      end Get_Type_Or_Ref;
-
-      ------------
-      -- Insert --
-      ------------
-
-      procedure Insert (Name : String; Entity : General_Entity) is
-         Kind : constant String := Db.Get_Display_Kind (Entity);
-         Loc  : constant General_Location :=
-           Db.Get_Declaration (Entity).Loc;
-      begin
-         Create_Simple_Message
-           (Get_Messages_Container (Kernel),
-            -"Type Hierarchy for " & Name,
-            Loc.File,
-            Loc.Line,
-            Loc.Column,
-            Get_Name (Db, Entity) & " (" & Kind & ')',
-            0,
-            (Editor_Side => True,
-             Locations   => True));
-      end Insert;
-
-      Entity      : constant General_Entity := Get_Entity (Context.Context);
-      Entity_Type : General_Entity;
-
-   begin
-      if Entity = No_General_Entity then
-         --  Probably means that we either could not locate the ALI file,
-         --  or it could also be that we failed to parse it. Either way,
-         --  a message should have already been printed. So, just abort.
-
-         Console.Insert_UTF8
-           (Kernel,
-            -"No cross-reference information found for "
-            & Entity_Name_Information (Context.Context) & ASCII.LF,
-            Mode => Error);
-         return Commands.Failure;
-
-      else
-         declare
-            Name : constant String := Db.Get_Name (Entity);
-         begin
-            if Db.Is_Type (Entity) then
-               Insert (Name, Entity);
-               Entity_Type := Get_Type_Or_Ref (Entity);
-            else
-               Entity_Type := Db.Get_Type_Of (Entity);
-            end if;
-
-            if Is_Predefined_Entity (Db, Entity_Type) then
-               Console.Insert
-                 (Kernel,
-                  Name & (-" is of predefined type ")
-                  & Get_Name (Db, Entity_Type));
-               return Commands.Failure;
-            end if;
-
-            loop
-               exit when Entity_Type = No_General_Entity
-                 or else Db.Is_Predefined_Entity (Entity_Type);
-
-               Insert (Name, Entity_Type);
-               Entity_Type := Get_Type_Or_Ref (Entity_Type);
-            end loop;
-         end;
-
-         return Commands.Success;
-      end if;
-   end Execute;
 
    ---------------------
    -- Delete_Callback --
@@ -2389,20 +1519,28 @@ package body Src_Editor_Box is
    procedure Create_New_View
      (Box    : out Source_Editor_Box;
       Kernel : access Kernel_Handle_Record'Class;
-      Source : access Source_Editor_Box_Record) is
+      Source : access Source_Editor_Box_Record)
+   is
+      Line : Editable_Line_Type;
+      Col  : Character_Offset_Type;
    begin
       Box := new Source_Editor_Box_Record;
       Initialize
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
-      Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 
-      if Get_Writable (Box.Source_Buffer) then
-         Set_Text (Box.Read_Only_Label, -"Writable");
-      else
-         Set_Text (Box.Read_Only_Label, -"Read Only");
+      if not Get_Writable (Box.Source_Buffer) then
          Set_Editable (Box.Source_View, False);
       end if;
+
+      --  Preserve the current location
+      Get_Cursor_Position (Box.Source_Buffer, Line, Col);
+      Box.Set_Cursor_Location
+        (Line   => Line,
+         Column => Col);
+      Box.Source_View.Set_Position_Set_Explicitely;
+
+      Update_Status (Box.Status_Bar);
    end Create_New_View;
 
    ----------------
@@ -2460,12 +1598,12 @@ package body Src_Editor_Box is
    begin
       for V in Views'Range loop
          Set_Editable (Views (V).Source_View, Writable);
+         Update_Status (Views (V).Status_Bar);
 
-         if Writable then
-            Set_Text (Views (V).Read_Only_Label, -"Writable");
-         else
-            Set_Text (Views (V).Read_Only_Label, -"Read Only");
-         end if;
+         --  Changing the class does not take into account the CSS
+         --  background-color, for some reason, although it does take other
+         --  attributes like "color" into account.
+         Views (V).Source_View.Set_Background_Color;
       end loop;
    end Set_Writable;
 
@@ -2510,9 +1648,11 @@ package body Src_Editor_Box is
       Set_Filename (Editor.Source_Buffer, Filename);
       Set_Initial_Dir (Editor.Source_Buffer, Initial_Dir);
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
-      Set_Text (Editor.Modified_Label, -"Unmodified");
+
       Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
       Load_Empty_File (Editor.Source_Buffer);
+
+      Update_Status (Editor.Status_Bar);
    end Load_Empty_File;
 
    ------------------
@@ -2832,9 +1972,13 @@ package body Src_Editor_Box is
 
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, Column,
-            Centering => Centering,
             Internal  => False,
             Extend_Selection => Extend_Selection);
+
+         if Centering /= Minimal then
+            Editor.Source_View.Set_Position_Set_Explicitely;
+         end if;
+
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
@@ -2850,23 +1994,26 @@ package body Src_Editor_Box is
          end if;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, Centering, False,
+           (Editor.Source_Buffer, Editable_Line, 1, False,
             Extend_Selection => Extend_Selection);
+
+         if Centering /= Minimal then
+            Editor.Source_View.Set_Position_Set_Explicitely;
+         end if;
+
          Save_Cursor_Position (Editor.Source_View);
          Scroll_To_Cursor_Location (Editor.Source_View, Centering);
 
       else
          if Column = 1 then
-            Console.Insert
-              (Editor.Kernel,
-               -"Invalid line number: " & Image (Integer (Line)),
+            Editor.Kernel.Insert
+              (-"Invalid line number: " & String_Utils.Image (Integer (Line)),
                Mode => Error);
          else
-            Console.Insert
-              (Editor.Kernel,
-               -"Invalid source location: " &
-               Image (Integer (Line)) &
-               ':' & Image (Natural (Column)), Mode => Error);
+            Editor.Kernel.Insert
+              (-"Invalid source location: " &
+               String_Utils.Image (Integer (Line)) &
+               ':' & String_Utils.Image (Natural (Column)), Mode => Error);
          end if;
       end if;
    end Set_Cursor_Location;
@@ -2965,7 +2112,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.First_Line);
    end Get_Block_Start;
@@ -2978,7 +2126,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
@@ -2991,7 +2140,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Get (Block.Name).all;
    end Get_Block_Name;
@@ -3004,7 +2154,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
@@ -3017,7 +2168,8 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
-      Block : constant Block_Record := Get_Block (Editor.Source_Buffer, Line);
+      Block : constant Block_Record := Get_Block
+        (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
@@ -3028,17 +2180,11 @@ package body Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return String
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
    is
-      Normalized_Line : Editable_Line_Type := Line;
-      Block           : Block_Record;
+      Block       : Block_Record;
    begin
-      if Normalized_Line = Editable_Line_Type'Last then
-         Normalized_Line := Editor.Current_Line;
-      end if;
-
-      Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
+      Block := Get_Subprogram_Block (Editor.Source_Buffer, Line);
 
       if Block.Name /= No_Symbol then
          return Get (Block.Name).all;
@@ -3060,6 +2206,28 @@ package body Src_Editor_Box is
       Get_Bounds (Editor.Source_Buffer, Begin_Iter, End_Iter);
       return Get_Text (Begin_Iter, End_Iter);
    end Get_Buffer;
+
+   ------------------
+   -- Set_Writable --
+   ------------------
+
+   procedure Set_Writable
+     (Editor   : access Source_Editor_Box_Record;
+      Writable : Boolean;
+      Explicit : Boolean := False)
+   is
+      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
+   begin
+      Set_Writable (Editor.Source_Buffer, Writable, Explicit);
+
+      if Writable then
+         Add_Controls (Editor.Source_Buffer);
+      else
+         Remove_Controls (Editor.Source_Buffer);
+      end if;
+
+      Set_Writable (Views, Writable);
+   end Set_Writable;
 
    ----------
    -- Undo --
@@ -3102,28 +2270,6 @@ package body Src_Editor_Box is
    begin
       return Editor.Source_Buffer;
    end Get_Buffer;
-
-   ------------------
-   -- Set_Writable --
-   ------------------
-
-   procedure Set_Writable
-     (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean;
-      Explicit : Boolean := False)
-   is
-      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
-   begin
-      Set_Writable (Editor.Source_Buffer, Writable, Explicit);
-
-      if Writable then
-         Add_Controls (Editor.Source_Buffer);
-      else
-         Remove_Controls (Editor.Source_Buffer);
-      end if;
-
-      Set_Writable (Views, Writable);
-   end Set_Writable;
 
    ---------------
    -- Get_Views --

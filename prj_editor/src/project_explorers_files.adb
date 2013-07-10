@@ -17,9 +17,6 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
-with Cairo;                     use Cairo;
-
-with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -29,11 +26,14 @@ with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Gdk.Dnd;                    use Gdk.Dnd;
+with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gtk.Box;                    use Gtk.Box;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
 with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -41,8 +41,10 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Selection;              use Gtk.Selection;
+with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Toolbar;                use Gtk.Toolbar;
+with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gdk.Types;
@@ -50,16 +52,18 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
+with Generic_List;
+with Generic_Views;              use Generic_Views;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Stock_Icons;
 with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
@@ -67,7 +71,6 @@ with Tooltips;                   use Tooltips;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
-with XML_Utils;                  use XML_Utils;
 
 package body Project_Explorers_Files is
    Explorer_Files_Module_Id     : Module_ID;
@@ -81,6 +84,56 @@ package body Project_Explorers_Files is
       Context : in out Selection_Context;
       Child   : Glib.Object.GObject);
    --  See inherited documentation
+
+   type Append_Directory_Idle_Data;
+   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
+   --  Custom data for the asynchronous fill function
+
+   package File_Append_Directory_Timeout is
+      new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
+
+   procedure Free (D : in out Glib.Main.G_Source_Id) is null;
+
+   package Timeout_Id_List is new Generic_List (Glib.Main.G_Source_Id);
+
+   type Project_Explorer_Files_Record is new Generic_Views.View_Record with
+      record
+         File_Tree           : Gtk.Tree_View.Gtk_Tree_View;
+         File_Model          : Gtk.Tree_Store.Gtk_Tree_Store;
+         Expanding           : Boolean := False;
+
+         Scroll_To_Directory : Boolean := False;
+         Path                : Gtk.Tree_Model.Gtk_Tree_Path;
+         Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
+
+         Fill_Timeout_Ids    : Timeout_Id_List.List;
+         --  ??? This is implemented as a list of handlers instead of just one
+         --  handler, in case the fill function should call itself recursively
+         --  : to be investigated.
+      end record;
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Files_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Project_Explorer_Files_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   function Initialize
+     (Explorer : access Project_Explorer_Files_Record'Class)
+      return Gtk_Widget;
+   --  Create a new explorer and returns the focus widget
+
+   package Explorer_Files_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Files_View",
+      View_Name          => -"Files",
+      Formal_View_Record => Project_Explorer_Files_Record,
+      Formal_MDI_Child   => MDI_Explorer_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => True,
+      Local_Config       => True,
+      Position           => Position_Left);
+   subtype Project_Explorer_Files is Explorer_Files_Views.View_Access;
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
@@ -168,7 +221,7 @@ package body Project_Explorers_Files is
      (Context      : in out Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
+      Object       : access GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu);
    --  ??? Unused for now while the files explorer is not a separate module.
@@ -179,23 +232,6 @@ package body Project_Explorers_Files is
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
-   --  Save the status of the project explorer to an XML tree
-
-   procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Raise the existing explorer, or open a new one
 
    type File_View_Filter_Record is new Action_Filter_Record
       with null record;
@@ -275,14 +311,14 @@ package body Project_Explorers_Files is
    -- Tooltips --
    --------------
 
-   type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
+   type Explorer_Tooltips is new Tooltips.Tooltips with record
       Explorer : Project_Explorer_Files;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentatoin
 
    ------------------------------
@@ -309,7 +345,8 @@ package body Project_Explorers_Files is
    begin
       Explorer_Context_Factory
         (Context, Get_Kernel (Module.all),
-         Gtk_Widget (Child), Child, null, null);
+         Gtk_Widget (Child),
+         Explorer_Files_Views.View_From_Widget (Child), null, null);
    end Default_Context_Factory;
 
    -------------------
@@ -324,12 +361,13 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Kernel);
 
       Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Object);
-      Model : Gtk_Tree_Model := Tree.Get_Model;
+      Model : Gtk_Tree_Model;
+      M     : constant Gtk_Tree_Store := -Tree.Get_Model;
       Iter  : Gtk_Tree_Iter;
       Kind  : Node_Types;
       File  : Virtual_File;
-      Data  : constant Gtk.Selection.Selection_Data :=
-        Gtk.Selection.Selection_Data (Get_Proxy (Nth (Args, 2)));
+      Data  : constant Gtk.Selection_Data.Gtk_Selection_Data :=
+        From_Object (Get_Address (Nth (Args, 2)));
    begin
       Get_Selected (Get_Selection (Tree), Model, Iter);
 
@@ -337,19 +375,19 @@ package body Project_Explorers_Files is
          return;
       end if;
 
-      Kind := Node_Types'Val (Get_Int (Model, Iter, Node_Type_Column));
+      Kind := Node_Types'Val (Get_Int (M, Iter, Node_Type_Column));
 
       case Kind is
 
          when File_Node | Directory_Node =>
-            File := Get_File (Model, Iter, File_Column);
+            File := Get_File (M, Iter, File_Column);
 
          when others =>
             return;
       end case;
 
-      Gtk.Selection.Selection_Data_Set
-        (Data, Gtk.Selection.Get_Target (Data), 8,
+      Gtk.Selection_Data.Selection_Data_Set
+        (Data, Gtk.Selection_Data.Get_Target (Data), 8,
          "file:///" & File.Display_Full_Name);
    end Drag_Data_Get;
 
@@ -363,15 +401,15 @@ package body Project_Explorers_Files is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       Tree    : constant Gtk_Tree_View := Gtk_Tree_View (Object);
-      Model   : constant Gtk_Tree_Model := Tree.Get_Model;
+      Model   : constant Gtk_Tree_Store := -Tree.Get_Model;
       Context : constant Drag_Context :=
-                  Drag_Context (Get_Proxy (Nth (Args, 1)));
+                  Drag_Context (Get_Object (Nth (Args, 1)));
       X       : constant Gint := Get_Int (Nth (Args, 2));
       Y       : constant Gint := Get_Int (Nth (Args, 3));
-      Data    : constant Selection_Data :=
-                  Selection_Data (Get_Proxy (Nth (Args, 4)));
+      Data    : constant Gtk_Selection_Data :=
+                  From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
-      Action  : constant Drag_Action := Get_Action (Context);
+      Action  : constant Drag_Action := Get_Actions (Context);
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
    begin
@@ -389,7 +427,7 @@ package body Project_Explorers_Files is
             Buffer_Y,
             Success);
 
-         if not Success or Path = null then
+         if not Success or Path = Null_Gtk_Tree_Path then
             Iter := Null_Iter;
          else
             Iter := Get_Iter (Model, Path);
@@ -641,7 +679,7 @@ package body Project_Explorers_Files is
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Expose_Event,
+                         (D.Explorer.File_Tree, Signal_Draw,
                           Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
@@ -776,34 +814,26 @@ package body Project_Explorers_Files is
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Explorer : out Project_Explorer_Files;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Explorer := new Project_Explorer_Files_Record;
-      Initialize (Explorer, Kernel);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+   function Initialize
+     (Explorer : access Project_Explorer_Files_Record'Class)
+      return Gtk_Widget
    is
       Deleted_Hook : File_Deleted_Hook;
       Saved_Hook   : File_Saved_Hook;
       Renamed_Hook : File_Renamed_Hook;
       Project_Hook : Project_View_Changed_Hook;
       Tooltip      : Explorer_Tooltips_Access;
+      Scrolled     : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Explorer);
-      Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Explorer, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Explorer.File_Model, Columns_Types);
       Gtk_New (Explorer.File_Tree, Explorer.File_Model);
@@ -812,9 +842,7 @@ package body Project_Explorers_Files is
       --  The model should be destroyed as soon as the tree view is destroyed
       Unref (Explorer.File_Model);
 
-      Explorer.Kernel := Kernel_Handle (Kernel);
-
-      Add (Explorer, Explorer.File_Tree);
+      Scrolled.Add (Explorer.File_Tree);
 
       Set_Headers_Visible (Explorer.File_Tree, False);
 
@@ -850,7 +878,7 @@ package body Project_Explorers_Files is
       Set_Column_Types (Explorer.File_Tree);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Explorer.Kernel,
          Event_On_Widget => Explorer.File_Tree,
          Object          => Explorer,
          ID              => Explorer_Files_Module_Id,
@@ -882,35 +910,35 @@ package body Project_Explorers_Files is
         (Explorer.File_Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.File_Tree, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Kernel_Handle (Kernel));
+         Drag_Data_Received'Access, Explorer.Kernel);
       Explorer.File_Tree.Enable_Model_Drag_Source
         (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Explorer.File_Tree, Signal_Drag_Data_Get,
-         Drag_Data_Get'Access, Kernel_Handle (Kernel));
+         Drag_Data_Get'Access, Explorer.Kernel);
 
       Deleted_Hook := new File_Deleted_Hook_Record;
       Deleted_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Deleted_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Deleted_Hook,
                 Deleted_Hook,
                 Name  => "project_explorers_files.file_deleted",
                 Watch => GObject (Explorer));
       Saved_Hook := new File_Saved_Hook_Record;
       Saved_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Saved_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Saved_Hook,
                 Saved_Hook,
                 Name  => "project_explorers_files.file_saved",
                 Watch => GObject (Explorer));
       Renamed_Hook := new File_Renamed_Hook_Record;
       Renamed_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.File_Renamed_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Renamed_Hook,
                 Renamed_Hook,
                 Name  => "project_explorers_files.file_renamed",
                 Watch => GObject (Explorer));
 
       Project_Hook := new Project_View_Changed_Hook_Record;
       Project_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Kernel, GPS.Kernel.Project_View_Changed_Hook,
+      Add_Hook (Explorer.Kernel, GPS.Kernel.Project_View_Changed_Hook,
                 Project_Hook,
                 Name => "project_explorers_files.project_view_changed",
                 Watch => GObject (Explorer));
@@ -919,7 +947,9 @@ package body Project_Explorers_Files is
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Explorer := Project_Explorer_Files (Explorer);
-      Set_Tooltip (Tooltip, Explorer.File_Tree, 250);
+      Tooltip.Set_Tooltip (Explorer.File_Tree);
+
+      return Gtk_Widget (Explorer.File_Tree);
    end Initialize;
 
    ------------------------------
@@ -930,20 +960,18 @@ package body Project_Explorers_Files is
      (Context      : in out Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
+      Object       : access GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget);
-
-      T         : constant Project_Explorer_Files :=
-                    Project_Explorer_Files (Object);
+      pragma Unreferenced (Event_Widget, Kernel);
+      Explorer     : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Object);
       Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
+                    Find_Iter_For_Event (Explorer.File_Tree, Event);
       Path      : Gtk_Tree_Path;
       File      : Virtual_File;
       Node_Type : Node_Types;
-      Check     : Gtk_Check_Menu_Item;
    begin
       if Iter /= Null_Iter then
          --  If Menu is null, this means that this function is being called
@@ -952,17 +980,17 @@ package body Project_Explorers_Files is
          --  which would cause scrolling of the currently selected cell if it
          --  is not visible.
          if Menu /= null then
-            Path := Get_Path (T.File_Model, Iter);
-            Set_Cursor (T.File_Tree, Path, null, False);
+            Path := Get_Path (Explorer.File_Model, Iter);
+            Set_Cursor (Explorer.File_Tree, Path, null, False);
             Path_Free (Path);
          end if;
 
          Node_Type := Node_Types'Val
-           (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
+           (Integer (Get_Int (Explorer.File_Model, Iter, Node_Type_Column)));
 
          case Node_Type is
             when Directory_Node | File_Node =>
-               File := Get_File (T.File_Model, Iter, File_Column);
+               File := Get_File (Explorer.File_Model, Iter, File_Column);
                Set_File_Information (Context, (1 => File));
 
             when Entity_Node =>
@@ -975,16 +1003,43 @@ package body Project_Explorers_Files is
 
          end case;
       end if;
-
-      if Menu /= null then
-         Gtk_New (Check, Label => -"Show files from project only");
-         Associate
-           (Get_History (Kernel).all, File_View_Shows_Only_Project, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, T);
-      end if;
    end Explorer_Context_Factory;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Project_Explorer_Files_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, Label => -"Show files from project only");
+      Associate
+        (Get_History (View.Kernel).all, File_View_Shows_Only_Project, Check,
+         Default => False);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Refresh'Access, View);
+   end Create_Menu;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Files_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Button : Gtk_Tool_Button;
+   begin
+      Gtk_New_From_Stock (Button, GPS.Stock_Icons.GPS_Refresh);
+      Button.Set_Tooltip_Text (-"Refresh");
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Tool_Button.Signal_Clicked, Refresh'Access, View);
+      Toolbar.Insert (Button);
+   end Create_Toolbar;
 
    ----------------------------
    -- File_Remove_Idle_Calls --
@@ -1143,8 +1198,6 @@ package body Project_Explorers_Files is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
       Context_Changed (T.Kernel);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end File_Selection_Changed;
 
    -----------------------
@@ -1159,13 +1212,8 @@ package body Project_Explorers_Files is
    begin
       return On_Button_Press
         (T.Kernel,
-         MDI_Explorer_Child (Find_MDI_Child (Get_MDI (T.Kernel), T)),
+         MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
          T.File_Tree, T.File_Model, Event, True);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end File_Button_Press;
 
    --------------------
@@ -1179,11 +1227,6 @@ package body Project_Explorers_Files is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
       return On_Key_Press (T.Kernel, T.File_Tree, Event);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end File_Key_Press;
 
    -------------
@@ -1457,44 +1500,40 @@ package body Project_Explorers_Files is
       end loop;
    end Add_File;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Explorer_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Explorer_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
+      pragma Unreferenced (Widget);
       Tree : constant Gtk.Tree_View.Gtk_Tree_View :=
         Tooltip.Explorer.File_Tree;
+      Model : constant Gtk_Tree_Store := -Get_Model (Tree);
       Iter : Gtk_Tree_Iter;
-      Text : GNAT.Strings.String_Access;
+      Label : Gtk_Label;
+      Area : Gdk_Rectangle;
 
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tree, Area, Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
+         Tooltip.Set_Tip_Area (Area);
          declare
             File : constant Virtual_File :=
-              Get_File (Get_Model (Tree), Iter, File_Column);
+              Get_File (Model, Iter, File_Column);
             Dir  : constant Virtual_File := Get_Parent (File);
          begin
-            Text := new String'
-              (File.Display_Base_Dir_Name & ASCII.LF & "in "
-               & Dir.Display_Full_Name);
+            Gtk_New (Label,
+                     File.Display_Base_Dir_Name & ASCII.LF & "in "
+                     & Dir.Display_Full_Name);
          end;
-
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tree,
-            Pixmap);
-         GNAT.Strings.Free (Text);
       end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --
@@ -1552,82 +1591,6 @@ package body Project_Explorers_Files is
       Add_File (Hook.View, Files_2_Hooks_Args (Data.all).Renamed);
    end Execute;
 
-   ----------------------
-   -- On_Open_Explorer --
-   ----------------------
-
-   procedure On_Open_Explorer
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Files : Project_Explorer_Files;
-      Child : MDI_Child;
-      C2    : MDI_Explorer_Child;
-   begin
-      --  Start with the files view, so that if both are needed, the project
-      --  view ends up on top of the files view
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Files_Record'Tag);
-
-      if Child = null then
-         Gtk_New (Files, Kernel);
-         C2 := new MDI_Explorer_Child_Record;
-         Initialize (C2, Files,
-                     Default_Width  => 215,
-                     Default_Height => 600,
-                     Group          => Group_View,
-                     Module         => Explorer_Files_Module_Id);
-         Set_Title (C2, -"Files",  -"Files");
-         Put (Get_MDI (Kernel), C2, Initial_Position => Position_Left);
-         Child := MDI_Child (C2);
-      end if;
-
-      Raise_Child (Child);
-      Set_Focus_Child (Get_MDI (Kernel), Child);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Open_Explorer;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child is
-   begin
-      if Node.Tag.all = "Project_Explorer_Files" then
-         On_Open_Explorer (MDI, User);
-         return Find_MDI_Child_By_Tag
-           (Get_MDI (User), Project_Explorer_Files_Record'Tag);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Project_Explorer_Files_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Project_Explorer_Files");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1635,20 +1598,14 @@ package body Project_Explorers_Files is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools") & '/' & (-"Views");
       File_View_Filter : constant Action_Filter :=
                            new File_View_Filter_Record;
    begin
       Explorer_Files_Module_Id := new Explorer_Module_Record;
-      Register_Module
-        (Module      => Explorer_Files_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => "Files_View",
-         Priority    => GPS.Kernel.Modules.Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-      Register_Menu
-        (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,
-         Ref_Item => -"Entity", Add_Before => False);
+      Explorer_Files_Views.Register_Module
+        (Kernel, Explorer_Files_Module_Id,
+         Menu_Name   => -"Views/_Files",
+         Before_Menu => -"Entity");
       Register_Filter
         (Kernel,
          Filter => File_View_Filter,

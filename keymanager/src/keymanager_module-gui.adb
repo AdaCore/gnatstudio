@@ -133,10 +133,10 @@ package body KeyManager_Module.GUI is
      (Editor : access Gtk_Widget_Record'Class);
    --  Called when the user toggles "View only actions with shortcuts"
 
-   package Keys_Editor_Visible_Funcs is new Gtk.Tree_Model_Filter.Visible_Funcs
-     (Keys_Editor);
+   package Keys_Editor_Visible_Funcs is new
+     Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor);
    function Action_Is_Visible
-     (Model : access Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean;
    --  Selects whether a given row should be visible in the key shortcuts
@@ -272,8 +272,7 @@ package body KeyManager_Module.GUI is
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
 
       procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
@@ -284,8 +283,7 @@ package body KeyManager_Module.GUI is
       --------------------------
 
       procedure Process_Menu_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
+        (Accel_Path : String;
          Accel_Key  : Gdk.Types.Gdk_Key_Type;
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean)
@@ -295,7 +293,7 @@ package body KeyManager_Module.GUI is
          Binding : Key_Description_List;
          Found   : Boolean := False;
          Ignore  : Boolean;
-         pragma Unreferenced (Data, Changed, Accel_Key, Accel_Mods, Ignore);
+         pragma Unreferenced (Changed, Accel_Key, Accel_Mods, Ignore);
 
       begin
          while First <= Accel_Path'Last
@@ -363,7 +361,7 @@ package body KeyManager_Module.GUI is
 
       --  Update the gtk+ accelerators for the menus to reflect the keybindings
       Gtk.Accel_Map.Foreach_Unfiltered
-        (System.Null_Address, Process_Menu_Binding'Unrestricted_Access);
+        (Process_Menu_Binding'Unrestricted_Access);
 
       Save_Custom_Keys (Editor.Kernel);
    end Save_Editor;
@@ -511,7 +509,7 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    function Action_Is_Visible
-     (Model : access Gtk_Tree_Model_Record'Class;
+     (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean
    is
@@ -543,7 +541,7 @@ package body KeyManager_Module.GUI is
          It           : Gtk_Tree_Iter;
          User_Changed : aliased Boolean;
       begin
-         Iter_Copy (Source => Iter, Dest => It);
+         It := Iter;
          while It /= Null_Iter loop
             if Children (Editor.Model, It) /= Null_Iter then
                Refresh_Iter (Children (Editor.Model, It));
@@ -847,7 +845,8 @@ package body KeyManager_Module.GUI is
          To   => Editor.Bindings.all);
 
       Gtk_New_Vbox (Vbox, Homogeneous => False);
-      Pack_Start (Get_Vbox (Editor), Vbox, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Editor), Vbox, Expand => True, Fill => True);
 
       Gtk_New_Hbox (Filter_Box, Homogeneous => False);
       Pack_Start (Vbox, Filter_Box, Expand => False);
@@ -895,12 +894,12 @@ package body KeyManager_Module.GUI is
           Key_Column        => GType_String));
 
       --  A filter model on top of it, so that we can filter out some rows
-      Gtk_New (Editor.Filter, Editor.Model);
+      Gtk_New (Editor.Filter, +Editor.Model);
       Keys_Editor_Visible_Funcs.Set_Visible_Func
         (Editor.Filter, Action_Is_Visible'Access, Editor);
 
       --  A sort model on top of the filter, so that rows can be sorted
-      Gtk_New_With_Model (Editor.Sort, Editor.Filter);
+      Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
 
       Gtk_New (Editor.View, Editor.Sort);
       Set_Name (Editor.View, "Key shortcuts tree"); --  for testsuite

@@ -15,13 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Doubly_Linked_Lists;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
 with Gtk.Stock;
 with Xref;
-with GNATCOLL.VFS;
 
 package Refactoring.UI is
 
@@ -29,11 +27,7 @@ package Refactoring.UI is
      (Xref.General_Location, Xref."=");
    --  Handling of dynamic arrays
 
-   package Source_File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => GNATCOLL.VFS.Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => GNATCOLL.VFS."=",
-      "="                 => GNATCOLL.VFS."=");
+   package Source_File_Sets renames GPS.Kernel.File_Sets;
    subtype Source_File_Set is Source_File_Sets.Set;
 
    function Confirm_Files

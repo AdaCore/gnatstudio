@@ -26,7 +26,7 @@ with Language;           use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
-with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel; use GPS.Kernel;
 
 package body Src_Editor_Buffer.Text_Handling is
 

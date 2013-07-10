@@ -29,12 +29,16 @@ package GPS.Kernel.Messages.Tools_Output is
       Highlight         : Boolean := False;
       Styles            : GPS.Styles.UI.Builder_Message_Styles :=
         (others => null);
-      Show_In_Locations : Boolean := True);
+      Show_In_Locations : Boolean := True;
+      Allow_Auto_Jump_To_First : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
    --  locations using Highlight_Category, Style_Category or Warning_Category
    --  as highlighting identifier.
+   --  If Allow_Auto_Jump_To_First is True and the corresponding user
+   --  preference is set, the Locations window will automatically jump to the
+   --  first location in this new category.
 
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;
@@ -51,7 +55,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Style_Index_In_Regexp   : Integer;
       Warning_Index_In_Regexp : Integer;
       Info_Index_In_Regexp    : Integer;
-      Show_In_Locations       : Boolean);
+      Show_In_Locations       : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
@@ -65,6 +70,28 @@ package GPS.Kernel.Messages.Tools_Output is
    --  otherwise show messages only in the editors.
    --  Subprograms below is intended to be used only by scripting engine
 
+   procedure Parse_File_Locations_Unknown_Encoding
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : Glib.UTF8_String;
+      Highlight               : Boolean := False;
+      Highlight_Category      : String := "Builder results";
+      Style_Category          : String := "Style errors";
+      Warning_Category        : String := "Builder warnings";
+      Info_Category           : String := "Compiler info";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1;
+      Info_Index_In_Regexp    : Integer := -1;
+      Quiet                   : Boolean := False;
+      Allow_Auto_Jump_To_First : Boolean := True);
+   --  Same as above, but the encoding for Text is unknown so we first try to
+   --  convert it to UTF8
+
    function Add_Tool_Message
      (Container          : not null access Messages_Container'Class;
       Category           : String;
@@ -76,7 +103,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Highlight_Category : GPS.Styles.UI.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean) return Message_Access;
+      Show_In_Locations  : Boolean;
+      Allow_Auto_Jump_To_First : Boolean := True) return Message_Access;
    --  Looking for same message in the messages container and add it into the
    --  container when it is not exists. If secondary locations is detected in
    --  the message when add messages for all detected locations.

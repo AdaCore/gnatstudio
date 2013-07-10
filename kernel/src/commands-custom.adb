@@ -57,10 +57,9 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;    use GPS.Kernel.Interactive;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -390,8 +389,6 @@ package body Commands.Custom is
       begin
          if Console /= null then
             Insert (Console, Message, Add_LF => False);
-            Highlight_Child
-              (Find_MDI_Child (Get_MDI (Command.Kernel), Console));
          end if;
       end Insert;
 
@@ -1772,8 +1769,7 @@ package body Commands.Custom is
      (Editor   : access Custom_Command_Editor_Record'Class;
       Selected : Integer := -1)
    is
-      Model         : constant Gtk_Tree_Store :=
-                        Gtk_Tree_Store (Get_Model (Editor.Tree));
+      Model         : constant Gtk_Tree_Store := -Get_Model (Editor.Tree);
       Parent        : Gtk_Tree_Iter;
       Iter          : Gtk_Tree_Iter;
       First, Last   : Gtk_Text_Iter;
@@ -1822,10 +1818,7 @@ package body Commands.Custom is
                    Editor.Components (C + 1).On_Failure_For
                  or else Editor.Components (C + 1).On_Failure_For = -1)
             then
-               Parent := Gtk.Tree_Model.Parent
-                 (Gtk_Tree_Model (Model),
-                  Gtk.Tree_Model.Parent
-                    (Gtk_Tree_Model (Model), Parent));
+               Parent := Model.Parent (Model.Parent (Parent));
             end if;
          end if;
       end loop;
@@ -1949,8 +1942,7 @@ package body Commands.Custom is
          Component := Custom_Component_Editor (Get_Child2 (Ed.Pane));
          Get_Start_Iter (Component.Command, First);
          Get_End_Iter   (Component.Command, Last);
-         Set (Gtk_Tree_Store (Model), Iter, 0,
-              Get_Text (Component.Command, First, Last));
+         Set (-Model, Iter, 0, Get_Text (Component.Command, First, Last));
       end if;
    end On_Command_Changed;
 

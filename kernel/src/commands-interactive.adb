@@ -139,7 +139,7 @@ package body Commands.Interactive is
       C.Context := Context;
 
       if Context.Event /= null then
-         Deep_Copy (From => Context.Event, To => C.Context.Event);
+         C.Context.Event := Copy (Context.Event);
       end if;
 
       return Command_Access (C);

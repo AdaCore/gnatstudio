@@ -50,7 +50,8 @@ package Vdiff2_Module.Callback is
    --  Callback for the "file_closed" signal
 
    procedure On_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Called when the preferences have changed
 
    type Change_Ref_File_Command is new Interactive_Command with null record;

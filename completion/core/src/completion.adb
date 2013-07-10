@@ -319,6 +319,19 @@ package body Completion is
       return Null_File_Location;
    end Get_Location;
 
+   ---------------------
+   -- Get_Action_Name --
+   ---------------------
+
+   function Get_Action_Name
+     (Proposal : Completion_Proposal)
+      return String
+   is
+      pragma Unreferenced (Proposal);
+   begin
+      return "";
+   end Get_Action_Name;
+
    --------------
    -- Is_Valid --
    --------------
@@ -331,7 +344,7 @@ package body Completion is
 
    -----------------
    -- Get_Manager --
-   ------------------
+   -----------------
 
    function Get_Resolver (Proposal : Completion_Proposal)
      return Completion_Resolver_Access is
@@ -435,11 +448,9 @@ package body Completion is
    ------------------
 
    overriding function Get_Category
-     (Proposal : Simple_Completion_Proposal) return Language_Category
-   is
-      pragma Unreferenced (Proposal);
+     (Proposal : Simple_Completion_Proposal) return Language_Category is
    begin
-      return Cat_Unknown;
+      return Proposal.Category;
    end Get_Category;
 
    --------------------

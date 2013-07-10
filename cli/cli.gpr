@@ -2,6 +2,9 @@ with "../shared";
 
 with "../kernel/kernel_core";
 with "../python/python_core";
+with "../builder/builder_core";
+with "../ada_module/core/ada_module_core";
+with "../docgen3/docgen3";
 
 project CLI is
 

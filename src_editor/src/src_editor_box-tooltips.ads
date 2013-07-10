@@ -21,7 +21,7 @@
 
 with Tooltips;
 
-private package Src_Editor_Box.Tooltips is
+package Src_Editor_Box.Tooltips is
 
    function Create_Tooltips
      (Box : access Source_Editor_Box_Record'Class)

@@ -17,6 +17,7 @@
 
 with GNAT.Strings;
 
+with Glib.Main;
 with GNATCOLL.Projects;
 
 with Glib.Object;
@@ -27,8 +28,8 @@ with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Combo_Box;       use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
 with Gtk.Label;           use Gtk.Label;
-with Gtk.Main;            use Gtk.Main;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Text_Mark;       use Gtk.Text_Mark;
@@ -189,7 +190,7 @@ private
       Search_For_Label        : Gtk_Label;
       Search_In_Label         : Gtk_Label;
       Replace_Combo           : Gtk_Combo_Box;
-      Context_Combo           : Gtk_Combo_Box;
+      Context_Combo           : Gtk_Combo_Box_Text;
       Pattern_Combo           : Gtk_Combo_Box;
       Buttons_Table           : Gtk_Table;
       Options_Frame           : Gtk_Box;
@@ -213,7 +214,7 @@ private
       Search_All_Button       : Gtk.Button.Gtk_Button;
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
       Extra_Information       : Gtk.Widget.Gtk_Widget;
-      Search_Idle_Handler     : Gtk.Main.Idle_Handler_Id := 0;
+      Search_Idle_Handler     : Glib.Main.G_Source_Id := 0;
       Last_Search_Context     : Find_Utils.Search_Context_Access;
       --  This is the context used for single Find/Next and Replace operations.
       Last_Search_All_Context : Find_Utils.Search_Context_Access;

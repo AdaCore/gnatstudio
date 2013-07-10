@@ -30,7 +30,6 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 with String_Utils;        use String_Utils;
-with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
 
 package body GVD.Generic_View is
@@ -51,18 +50,6 @@ package body GVD.Generic_View is
    begin
       View.Process := Process;
    end Set_Process;
-
-   -----------------
-   -- Save_To_XML --
-   -----------------
-
-   function Save_To_XML
-     (View : access Process_View_Record) return XML_Utils.Node_Ptr
-   is
-      pragma Unreferenced (View);
-   begin
-      return null;
-   end Save_To_XML;
 
    -----------------
    -- Get_Process --
@@ -89,14 +76,24 @@ package body GVD.Generic_View is
    ------------------
 
    package body Simple_Views is
-      type Formal_View_Access is access all Formal_View_Record'Class;
+      function Local_Initialize
+        (View   : access Formal_View_Record'Class)
+         return Gtk_Widget;
+      --  Initialize the view and returns the focus widget.
 
-      procedure Gtk_New
-        (View   : out Formal_View_Access;
-         Child  : out GPS_MDI_Child;
-         MDI    : access MDI_Window_Record'Class;
-         Kernel : access Kernel_Handle_Record'Class);
-      --  Create a new view and put it in the MDI
+      package Views is new Generic_Views.Simple_Views
+        (Module_Name        => Module_Name,
+         View_Name          => View_Name,
+         Formal_View_Record => Formal_View_Record,
+         Formal_MDI_Child   => GPS_MDI_Child_Record,
+         Reuse_If_Exist     => False,
+         Initialize         => Local_Initialize,
+         Position           => Position,
+         Commands_Category  => "",  --  No "open ... " command, since we might
+                                    --  reuse existing views
+         Group              => Group);
+      subtype Formal_View_Access is Views.View_Access;
+      use type Formal_View_Access;
 
       ----------------
       -- On_Destroy --
@@ -136,20 +133,13 @@ package body GVD.Generic_View is
             --  we were to destroy the latter, this means that
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
-            if Get_Main_Window (Get_Kernel (P)) /= null
-              and then not Gtk.Widget.In_Destruction_Is_Set
-                (Get_Main_Window (Get_Kernel (P)))
+            if Get_Main_Window (Kernel) /= null
+              and then not Get_Main_Window (Kernel).In_Destruction
               and then Get_Process (V) /= null
             then
                Set_View (Get_Process (V), null);
                Unset_Process (V);
-
-               declare
-                  Child : constant MDI_Child :=
-                    Find_MDI_Child (Get_MDI (Kernel), V);
-               begin
-                  Child.Close_Child (Force => True);
-               end;
+               Views.Child_From_View (V).Close_Child (Force => True);
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);
@@ -172,14 +162,26 @@ package body GVD.Generic_View is
          Kernel  : constant Kernel_Handle := Get_Kernel (Get_Module.all);
          MDI     : constant MDI_Window := Get_MDI (Kernel);
          Child   : MDI_Child;
-         Child2  : GPS_MDI_Child;
          Iter    : Child_Iterator;
          View    : Formal_View_Access;
          Button  : Message_Dialog_Buttons;
          pragma Unreferenced (Button);
 
+--           List : Debugger_List_Link;
+         P    : constant Visual_Debugger := Visual_Debugger (Process);
+
       begin
-         View := Formal_View_Access (Get_View (Process));
+         if Process = null then
+            null;
+            --  ??? Should try to attach to the current debugger, but there are
+            --  elaboration circularities.
+--              List := Get_Debugger_List (Kernel);
+--              if List /= null then
+--                 P := Visual_Debugger (List.Debugger);
+--              end if;
+         end if;
+
+         View := Formal_View_Access (Get_View (P));
 
          if View = null then
             --  Do we have an existing unattached view ?
@@ -200,8 +202,8 @@ package body GVD.Generic_View is
             --  If no existing view was found, create one
 
             if Child = null and then Create_If_Necessary then
-               Gtk_New (View, Child2, MDI, Kernel);
-               Child := MDI_Child (Child2);
+               View := Views.Get_Or_Create_View (Kernel);
+               Child := Views.Child_From_View (View);
             end if;
 
             if Child /= null then
@@ -211,36 +213,38 @@ package body GVD.Generic_View is
                --  Make it visible again
                Raise_Child (Child);
 
-               Set_Process (View, Visual_Debugger (Process));
-               Set_View (Process, Base_Type_Access (View));
+               if P /= null then
+                  Set_Process (View, P);
+                  Set_View (P, Base_Type_Access (View));
 
-               if Get_Num (Visual_Debugger (Process)) = 1 then
-                  Set_Title (Child, View_Name);
-               else
-                  Set_Title
-                    (Child,
-                     View_Name
-                     & " <"
-                     & Image (Integer (Get_Num (Visual_Debugger (Process))))
-                     & ">");
+                  if Get_Num (P) = 1 then
+                     Set_Title (Child, View_Name);
+                  else
+                     Set_Title
+                       (Child,
+                        View_Name
+                        & " <"
+                        & Image (Integer (Get_Num (P)))
+                        & ">");
+                  end if;
+
+                  On_Attach (View, P);
+
+                  if Command_In_Process (P) then
+                     Button := Message_Dialog
+                       (-"Cannot update " & View_Name
+                        & (-" while the debugger is busy." & ASCII.LF &
+                          (-"Interrupt the debugger or wait for its"
+                             & " availability.")),
+                        Dialog_Type => Warning,
+                        Buttons     => Button_OK);
+                  else
+                     Update (View);
+                  end if;
+
+                  Widget_Callback.Connect
+                    (View, Signal_Destroy, Destroy_Access);
                end if;
-
-               On_Attach (View, Process);
-
-               if Command_In_Process (Process) then
-                  Button := Message_Dialog
-                    (-"Cannot update " & View_Name
-                     & (-" while the debugger is busy." & ASCII.LF &
-                       (-"Interrupt the debugger or wait for its"
-                          & " availability.")),
-                     Dialog_Type => Warning,
-                     Buttons     => Button_OK);
-               else
-                  Update (View);
-               end if;
-
-               Widget_Callback.Connect
-                 (View, Signal_Destroy, On_Destroy'Unrestricted_Access);
             end if;
 
          else
@@ -252,87 +256,33 @@ package body GVD.Generic_View is
                --  Something really bad happened: the stack window is not
                --  part of the MDI, reset it.
                Destroy (View);
-               Set_View (Process, null);
+
+               if P /= null then
+                  Set_View (P, null);
+               end if;
             end if;
          end if;
       end Attach_To_View;
 
-      -------------
-      -- Gtk_New --
-      -------------
+      ----------------------
+      -- Local_Initialize --
+      ----------------------
 
-      procedure Gtk_New
-        (View   : out Formal_View_Access;
-         Child  : out GPS_MDI_Child;
-         MDI    : access MDI_Window_Record'Class;
-         Kernel : access Kernel_Handle_Record'Class)
+      function Local_Initialize
+        (View   : access Formal_View_Record'Class)
+         return Gtk_Widget
       is
          Focus_Widget : Gtk_Widget;
       begin
-         View := new Formal_View_Record;
-         Focus_Widget := Initialize (View, Kernel);
+         Focus_Widget := Initialize (View, View.Kernel);
          Add_Hook
-           (Kernel,
+           (View.Kernel,
             Hook  => Debugger_Terminated_Hook,
             Func  => Wrapper (On_Debugger_Terminate'Unrestricted_Access),
             Name  => "terminate_" & Module_Name,
             Watch => GObject (View));
-
-         Gtk_New (Child, View,
-                  Flags          => MDI_Child_Flags,
-                  Group          => Group,
-                  Focus_Widget   => Focus_Widget,
-                  Default_Width  => 150,
-                  Default_Height => 150,
-                  Module         => Get_Module);
-         Set_Title (Child, View_Name);
-         Put (MDI, Child, Initial_Position => Position);
-
-      end Gtk_New;
-
-      ------------------
-      -- Load_Desktop --
-      ------------------
-
-      function Load_Desktop
-        (MDI    : MDI_Window;
-         Node   : XML_Utils.Node_Ptr;
-         Kernel : Kernel_Handle) return MDI_Child
-      is
-         Child : GPS_MDI_Child;
-         View  : Formal_View_Access;
-      begin
-         if Node.Tag.all = Module_Name then
-            Gtk_New (View, Child, MDI, Kernel);
-            if Node.Child /= null then
-               Load_From_XML (View, Node.Child);
-            end if;
-            return MDI_Child (Child);
-         end if;
-
-         return null;
-      end Load_Desktop;
-
-      ------------------
-      -- Save_Desktop --
-      ------------------
-
-      function Save_Desktop
-        (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-         Kernel : Kernel_Handle) return XML_Utils.Node_Ptr
-      is
-         pragma Unreferenced (Kernel);
-         N : XML_Utils.Node_Ptr;
-      begin
-         if Widget'Tag = Formal_View_Record'Tag then
-            N       := new XML_Utils.Node;
-            N.Tag   := new String'(Module_Name);
-            N.Child := Save_To_XML (Formal_View_Access (Widget));
-            return N;
-         end if;
-
-         return null;
-      end Save_Desktop;
+         return Focus_Widget;
+      end Local_Initialize;
 
       ---------------
       -- On_Update --
@@ -402,12 +352,11 @@ package body GVD.Generic_View is
       --------------------------------
 
       procedure Register_Desktop_Functions
-        (Kernel : access Kernel_Handle_Record'Class) is
+        (Kernel : access Kernel_Handle_Record'Class)
+      is
       begin
-         Register_Desktop_Functions
-           (Simple_Views.Save_Desktop'Unrestricted_Access,
-            Simple_Views.Load_Desktop'Unrestricted_Access);
-         Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
+         Views.Register_Module (Kernel, Menu_Name => "");
+                  Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
                    Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".process_stopped");
          Add_Hook (Kernel, Debugger_Context_Changed_Hook,

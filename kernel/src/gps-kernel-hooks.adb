@@ -25,7 +25,6 @@ with Glib.Object;               use Glib.Object;
 
 with Generic_List;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
@@ -1869,7 +1868,8 @@ package body GPS.Kernel.Hooks is
         (Kernel, "general",
          General_From_Callback_Data'Access);
 
-      Register_Hook_No_Args (Kernel, Preferences_Changed_Hook);
+      Register_Hook_No_Return
+        (Kernel, Preference_Changed_Hook, Preference_Hook_Type);
       Register_Hook_No_Args (Kernel, Contextual_Menu_Open_Hook);
       Register_Hook_No_Args (Kernel, Contextual_Menu_Close_Hook);
       Register_Hook_No_Args (Kernel, Search_Reset_Hook);
@@ -1882,6 +1882,8 @@ package body GPS.Kernel.Hooks is
       Register_Hook_No_Args (Kernel, Project_Editor_Hook);
       Register_Hook_No_Return
         (Kernel, Compilation_Finished_Hook, String_Hook_Type);
+      Register_Hook_No_Return
+        (Kernel, Build_Mode_Changed_Hook, String_Hook_Type);
       Register_Hook_No_Return (Kernel, Project_Saved_Hook, Project_Hook_Type);
       Register_Hook_No_Return
         (Kernel, Context_Changed_Hook, Context_Hook_Type);

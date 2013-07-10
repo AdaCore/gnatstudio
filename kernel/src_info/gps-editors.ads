@@ -83,6 +83,8 @@ package GPS.Editors is
      (This : Editor_Overlay; Name : String) return String  is abstract;
    function Get_Property
      (This : Editor_Overlay; Name : String) return Boolean is abstract;
+   function Get_Property
+     (This : Editor_Overlay; Name : String) return Integer is abstract;
    --  Retrieve the value of specific properties.
    --  See the python documentation for a list of supported properties
 
@@ -90,6 +92,8 @@ package GPS.Editors is
      (This : Editor_Overlay; Name : String; Value : String) is abstract;
    procedure Set_Property
      (This : Editor_Overlay; Name : String; Value : Boolean) is abstract;
+   procedure Set_Property
+     (This : Editor_Overlay; Name : String; Value : Integer) is abstract;
    --  Set the value of specific properties.
 
    package Overlay_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
@@ -158,7 +162,9 @@ package GPS.Editors is
    --  Return the editor in which the location is found
 
    function Create_Mark
-     (This : Editor_Location; Name : String := "")
+     (This : Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
       return Editor_Mark'Class is abstract;
    --  Create a mark at that location in the buffer. The mark will stay
    --  permanently at that location, and follows if the buffer is modified. If
@@ -282,6 +288,9 @@ package GPS.Editors is
       Script : access Scripting_Language_Record'Class)
       return Class_Instance is abstract;
    --  Return an Class_Instance for the mark
+
+   package Mark_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Editor_Mark'Class);
 
    -----------------
    -- Editor_View --
@@ -582,6 +591,44 @@ package GPS.Editors is
    --  isn't an error if the overlay is not applied to any of the character in
    --  the range, it just has no effect in that case
 
+   procedure Add_Multi_Cursor
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+   --  Add a multi cursor at the specified location
+
+   procedure Remove_All_Multi_Cursors (This : Editor_Buffer) is abstract;
+   --  Remove all multi cursors from current buffer
+
+   procedure Set_Multi_Cursors_Manual_Sync (This : Editor_Buffer) is abstract;
+   --  This sets the buffer in "main manual mode" regarding multi cursor
+   --  insertion. It should be called before the main cursor action is done
+   --  This basically means that in this mode, if any action is performed :
+   --  - It wont impact any multi cursor
+   --  - The main cursor will move accordingly to the action
+
+   procedure Set_Multi_Cursors_Manual_Sync
+     (This : Editor_Buffer;
+      Mark : Editor_Mark'Class) is abstract;
+   --  This sets the buffer in "slave manual mode" regarding multi cursor
+   --  insertion, with the corresponding text mark as the multi-cursors mark.
+   --  This should be called before the corresponding multi cursor's action is
+   --  done. This basically means that in this mode, if any action is
+   --  performed :
+   --  - It wont impact any multi cursor
+   --  - The main cursor will not move
+   --  The action will be recorded as part of the same group as the main
+   --  cursor's action regarding undo/redo groups.
+
+   procedure Set_Multi_Cursors_Auto_Sync (Buffer : Editor_Buffer) is abstract;
+   --  This sets the buffer in auto mode regarding multi cursor insertion.
+   --  This means that every insert/delete will impact every active cursors
+   --  in the buffer. Do not forget to set that back after a manual multi
+   --  cursor operation !
+
+   function Get_Multi_Cursors_Marks
+     (This : Editor_Buffer) return Mark_Lists.List is abstract;
+   --  Get the list of all multi cursor's marks
+
    overriding function "="
      (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
    --     is abstract; --  ??? workaround, for J617-004
@@ -674,8 +721,10 @@ private
      (This : Dummy_Editor_Location) return Editor_Buffer'Class;
 
    overriding function Create_Mark
-     (This : Dummy_Editor_Location; Name : String := "")
-      return Editor_Mark'Class;
+     (This : Dummy_Editor_Location;
+      Name : String := "";
+      Left_Gravity : Boolean := True)
+      return Editor_Mark'Class is (Nil_Editor_Mark);
 
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
@@ -895,6 +944,26 @@ private
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location) is null;
 
+   overriding procedure Add_Multi_Cursor
+     (This : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) is null;
+
+   overriding procedure Remove_All_Multi_Cursors
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Set_Multi_Cursors_Manual_Sync
+     (This : Dummy_Editor_Buffer; Mark : Editor_Mark'Class) is null;
+
+   overriding procedure Set_Multi_Cursors_Auto_Sync
+     (This : Dummy_Editor_Buffer) is null;
+
+   overriding function Get_Multi_Cursors_Marks
+     (This : Dummy_Editor_Buffer) return Mark_Lists.List
+   is (Mark_Lists.Empty_List);
+
    overriding function Views
      (This : Dummy_Editor_Buffer) return View_Lists.List;
 
@@ -952,10 +1021,14 @@ private
      (This : Dummy_Editor_Overlay; Name : String) return String;
    overriding function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return Boolean;
+   overriding function Get_Property
+     (This : Dummy_Editor_Overlay; Name : String) return Integer is (0);
    overriding procedure Set_Property
      (This : Dummy_Editor_Overlay; Name : String; Value : String) is null;
    overriding procedure Set_Property
      (This : Dummy_Editor_Overlay; Name : String; Value : Boolean) is null;
+   overriding procedure Set_Property
+     (This : Dummy_Editor_Overlay; Name : String; Value : Integer) is null;
 
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
      Dummy_Editor_Overlay'(Controlled with others => <>);

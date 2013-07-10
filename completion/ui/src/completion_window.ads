@@ -39,6 +39,7 @@ with Gtk.Window;     use Gtk.Window;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.List_Store; use Gtk.List_Store;
+with Gtk.Tree_Model_Filter; use Gtk.Tree_Model_Filter;
 
 with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
@@ -79,6 +80,9 @@ package Completion_Window is
      (Explorer : access Completion_Explorer_Record'Class;
       Kernel   : Kernel_Handle);
    --  Internal initialization procedure
+
+   procedure Delete (Explorer : access Completion_Explorer_Record'Class);
+   --  Delete explorer procedure
 
    procedure Gtk_New
      (Window : out Completion_Window_Access;
@@ -136,7 +140,7 @@ package Completion_Window is
 
 private
 
-   Minimal_Items_To_Show : constant := 50;
+   Minimal_Items_To_Show : constant := 2;
 
    procedure Expand_Selection
      (Explorer : access Completion_Explorer_Record'Class);
@@ -158,7 +162,7 @@ private
       Offset   : Character_Offset_Type;
       --  The offset at which to place the cursor after completion.
       Proposals : Proposals_List.List;
-      Visible  : Boolean := True;
+      Accessible : Boolean;
    end record;
 
    type Information_Array is array (Positive range <>) of Information_Record;
@@ -173,6 +177,7 @@ private
 
       View  : Gtk_Tree_View;
       Model : Gtk_List_Store;
+      Model_Filter : Gtk_Tree_Model_Filter;
 
       Tree_Scroll : Gtk_Scrolled_Window;
       --  The scrolled window that contains the tree view.
@@ -184,12 +189,17 @@ private
       Shown : Natural := 0;
       --  Number of elements displayed in the tree.
 
-      Number_To_Show : Natural := Minimal_Items_To_Show;
+      Number_To_Show : Natural := 50;
 
       Notes_Container : Gtk_Bin;
       --  The container which actually contains the notes.
 
-      More_Iter      : Gtk_Tree_Iter := Null_Iter;
+      Notes_Info      : Notes_Window_Info;
+      --  Necessary information to idly complete the notes window
+
+      Notes_Need_Completion : Boolean := False;
+
+      Computing_Iter  : Gtk_Tree_Iter := Null_Iter;
       --  Indicates the iter which says ("more...");
 
       Iter           : Root_Iterator_Access;
@@ -200,27 +210,30 @@ private
 
       Completion_History : Completion_History_Access;
 
-      Has_Idle_Expansion : Boolean := False;
+      Has_Idle_Computation : Boolean := False;
       --  Whether we are querying the database for expansion.
 
-      Idle_Expansion : G_Source_Id;
+      Idle_Computation : G_Source_Id;
       --  The id of the current idle callback.
 
       Fixed_Width_Font : Pango_Font_Description;
       --  A fixed-width font in use in the tree and the notes window.
 
       Case_Sensitive : Boolean;
+
+      Completion_Window : Completion_Window_Access;
+      --  access to the parent completion window
    end record;
 
    type Completion_Window_Record is new Gtk_Window_Record with record
       Explorer : Completion_Explorer_Access;
 
-      Text   : Gtk_Text_View;
-      Buffer : Gtk_Text_Buffer;
-      Mark   : Gtk_Text_Mark;
+      Text       : Gtk_Text_View;
+      Buffer     : Gtk_Text_Buffer;
+      Start_Mark : Gtk_Text_Mark;
       --  The mark from which the text should be replaced
 
-      Cursor_Mark : Gtk_Text_Mark;
+      End_Mark : Gtk_Text_Mark;
       --  The mark set at the cursor place
 
       Initial_Offset : Gint;
@@ -251,5 +264,7 @@ private
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
    Icon_Column   : constant := 2;
+   Shown_Column  : constant := 3;
+   Completion_Column : constant := 4;
 
 end Completion_Window;

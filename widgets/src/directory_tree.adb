@@ -21,6 +21,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
+with Cairo; use Cairo;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
@@ -151,8 +153,8 @@ package body Directory_Tree is
    --  node if they are not there already.
 
    function Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean;
+     (Explorer : access Gtk_Widget_Record'Class;
+      Cr       : Cairo_Context) return Boolean;
    --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
@@ -385,7 +387,7 @@ package body Directory_Tree is
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
       Dir            : GNATCOLL.VFS.Virtual_File;
-      Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
+      Busy_Cursor_On : Gdk.Gdk_Window := null)
    is
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;
@@ -676,7 +678,7 @@ package body Directory_Tree is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.Directory.File_Tree,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Gint (Event.Button.X), Gint (Event.Button.Y),
             Path, Column, Cell_X, Cell_Y, Is_Valid);
       end if;
 
@@ -726,8 +728,6 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      use type Gint_List.Glist;
-
       Item        : Gtk_Menu_Item;
       Is_Valid    : Boolean := False;
       Menu        : Gtk_Menu;
@@ -739,7 +739,7 @@ package body Directory_Tree is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Path_At_Pos
            (Selector.List_Tree,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Gint (Event.Button.X), Gint (Event.Button.Y),
             Path, Column, Cell_X, Cell_Y, Is_Valid);
       end if;
 
@@ -790,13 +790,16 @@ package body Directory_Tree is
                Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New (Label, "Directory Name:");
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Label, Expand => False, Fill => True);
 
-      Gtk_New (Ent, Max => 1024);
+      Gtk_New (Ent);
+      Ent.Set_Max_Length (1024);
       Set_Width_Chars (Ent, 30);
       Set_Text (Ent, Display_Full_Name (Current_Dir));
 
-      Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+      Pack_Start
+        (Get_Content_Area (Dialog), Ent, Expand => True, Fill => True);
 
       Ignore := Add_Button (Dialog, "Create", Gtk_Response_OK);
       Ignore := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
@@ -1172,7 +1175,7 @@ package body Directory_Tree is
 
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
-                     if D.Explorer.Path /= null then
+                     if D.Explorer.Path /= Null_Gtk_Tree_Path then
                         Path_Free (D.Explorer.Path);
                      end if;
 
@@ -1192,9 +1195,10 @@ package body Directory_Tree is
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
-                       Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Expose_Event,
-                          Expose_Event_Cb'Access, D.Explorer, True);
+                       Gtkada.Handlers.Return_Callback.Object_Connect
+                         (D.Explorer.File_Tree, Signal_Draw,
+                          Gtkada.Handlers.Return_Callback.To_Marshaller
+                            (Expose_Event_Cb'Access), D.Explorer, True);
                   end;
 
                else
@@ -1423,7 +1427,7 @@ package body Directory_Tree is
       pragma Unreferenced (Params);
       E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
-      if E.Path /= null then
+      if E.Path /= Null_Gtk_Tree_Path then
          Path_Free (E.Path);
       end if;
 
@@ -1463,10 +1467,10 @@ package body Directory_Tree is
    ---------------------
 
    function Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean
+     (Explorer : access Gtk_Widget_Record'Class;
+      Cr       : Cairo_Context) return Boolean
    is
-      pragma Unreferenced (Values);
+      pragma Unreferenced (Cr);
       T : constant Dir_Tree := Dir_Tree (Explorer);
 
    begin
@@ -1496,6 +1500,7 @@ package body Directory_Tree is
          After => True);
 
       return True;
+
    exception
       when E : others =>
          Trace (Me, E);
@@ -1559,7 +1564,7 @@ package body Directory_Tree is
    is
       Iter         : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (Tree, Model, Event);
+      Iter := Find_Iter_For_Event (Tree, Event);
 
       if Iter /= Null_Iter then
          if Get_Event_Type (Event) = Gdk_2button_Press then

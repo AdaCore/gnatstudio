@@ -74,35 +74,4 @@ package body CodePeer.Shell_Commands is
       end;
    end Build_Target_Execute;
 
-   --------------------
-   -- Get_Build_Mode --
-   --------------------
-
-   function Get_Build_Mode (Kernel : GPS.Kernel.Kernel_Handle) return String is
-   begin
-      return GPS.Kernel.Scripts.Execute_GPS_Shell_Command
-        (Kernel, Create ("get_build_mode"));
-   end Get_Build_Mode;
-
-   --------------------
-   -- Set_Build_Mode --
-   --------------------
-
-   procedure Set_Build_Mode
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Mode   : String)
-   is
-      CL : Arg_List := Create ("set_build_mode");
-
-   begin
-      Append_Argument (CL, Mode, One_Arg);
-      declare
-         Result : constant String :=
-           GPS.Kernel.Scripts.Execute_GPS_Shell_Command (Kernel, CL);
-         pragma Unreferenced (Result);
-      begin
-         null;
-      end;
-   end Set_Build_Mode;
-
 end CodePeer.Shell_Commands;

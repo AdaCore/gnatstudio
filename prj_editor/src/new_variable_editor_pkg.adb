@@ -20,7 +20,6 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl;        use GPS.Intl;
-with GUI_Utils;       use GUI_Utils;
 
 package body New_Variable_Editor_Pkg is
 
@@ -36,12 +35,12 @@ package body New_Variable_Editor_Pkg is
    begin
       Gtk.Dialog.Initialize (New_Variable_Editor);
       Set_Title (New_Variable_Editor, -"Creating a variable");
-      Set_Policy (New_Variable_Editor, False, True, True);
       Set_Position (New_Variable_Editor, Win_Pos_None);
       Set_Modal (New_Variable_Editor, False);
       Set_Default_Size (New_Variable_Editor, 600, 400);
 
-      New_Variable_Editor.Dialog_Vbox1 := Get_Vbox (New_Variable_Editor);
+      New_Variable_Editor.Dialog_Vbox1 :=
+        Get_Content_Area (New_Variable_Editor);
       Set_Homogeneous (New_Variable_Editor.Dialog_Vbox1, False);
       Set_Spacing (New_Variable_Editor.Dialog_Vbox1, 0);
 
@@ -68,7 +67,7 @@ package body New_Variable_Editor_Pkg is
               Fill, Fill,
               0, 0);
 
-      Gtk_New_Combo_Text_With_Entry (New_Variable_Editor.Variable_Name);
+      Gtk_New_With_Entry (New_Variable_Editor.Variable_Name);
       New_Variable_Editor.Variable_Name.Append_Text ("");
       Attach (New_Variable_Editor.Table1, New_Variable_Editor.Variable_Name,
               1, 2, 0, 1,
@@ -109,22 +108,17 @@ package body New_Variable_Editor_Pkg is
       Gtk_New (New_Variable_Editor.Hbuttonbox4);
       Set_Spacing (New_Variable_Editor.Hbuttonbox4, 30);
       Set_Layout (New_Variable_Editor.Hbuttonbox4, Buttonbox_End);
-      Set_Child_Size (New_Variable_Editor.Hbuttonbox4, 85, 27);
-      Set_Child_Ipadding (New_Variable_Editor.Hbuttonbox4, 7, 0);
       Pack_Start (New_Variable_Editor.Vbox54, New_Variable_Editor.Hbuttonbox4,
                   False, False, 0);
 
       Gtk_New_From_Stock (New_Variable_Editor.Delete_Variable, Stock_Remove);
-      Set_Flags (New_Variable_Editor.Delete_Variable, Can_Default);
       Add (New_Variable_Editor.Hbuttonbox4,
            New_Variable_Editor.Delete_Variable);
 
       Gtk_New_From_Stock (New_Variable_Editor.New_Variable, Stock_Add);
-      Set_Flags (New_Variable_Editor.New_Variable, Can_Default);
       Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
 
       Gtk_New (New_Variable_Editor.Rename_Variable, -"Rename");
-      Set_Flags (New_Variable_Editor.Rename_Variable, Can_Default);
       Add (New_Variable_Editor.Hbuttonbox4,
            New_Variable_Editor.Rename_Variable);
 

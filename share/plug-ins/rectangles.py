@@ -1,38 +1,39 @@
-"""This file provides support for rectangle-mode in an editor.
+"""
+This file provides support for rectangle-mode in an editor.
 
-   In particular, it is possible to select a rectangular area,
-   cut it, and paste it elsewhere.
+In particular, it is possible to select a rectangular area,
+cut it, and paste it elsewhere.
 
-   To perform a selection, use the standard selection mechanisms (e.g.
-   mouse+click selection, or keyboard shift+arrows).
+To perform a selection, use the standard selection mechanisms (e.g.
+mouse+click selection, or keyboard shift+arrows).
 
-   The highlighting of the selection itself is done on the whole
-   lines, not on the rectangle itself, but the rectangle is the
-   part between the column of the start of the selection, and the
-   column of the end of the selection. For instance:
+The highlighting of the selection itself is done on the whole
+lines, not on the rectangle itself, but the rectangle is the
+part between the column of the start of the selection, and the
+column of the end of the selection. For instance:
 
-       ABCD
-       EFGH
-       IJKL
+    ABCD
+    EFGH
+    IJKL
 
-   If the selection goes from B to K, the rectangle will be:
-        BC
-        FG
-        JK
-   However, the highlighting will include:
-        BCD
-       EFGH
-       IJK
+If the selection goes from B to K, the rectangle will be:
+     BC
+     FG
+     JK
+However, the highlighting will include:
+     BCD
+    EFGH
+    IJK
 
-   Cutting the rectangle will result in:
-       AD
-       EH
-       IL
+Cutting the rectangle will result in:
+    AD
+    EH
+    IL
 
-   If you move the cursor before "A", and paste the rectangle:
-       BCAD
-       FGEH
-       JKIL
+If you move the cursor before "A", and paste the rectangle:
+    BCAD
+    FGEH
+    JKIL
 """
 
 

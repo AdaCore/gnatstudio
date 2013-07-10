@@ -442,10 +442,10 @@ package body Code_Analysis.Tree_Models is
                           Self.File_At (Iter);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
                           Self.Subprogram_At (Iter);
-      Result          : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-                          Gtk.Tree_Model.Gtk_New;
+      Result          : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
+      Gtk_New (Result);
       if Project_Node /= null then
          Gtk.Tree_Model.Append_Index
            (Result,
@@ -481,10 +481,10 @@ package body Code_Analysis.Tree_Models is
       Project    : constant Project_Item_Access    := Self.Project (Iter);
       File       : constant File_Item_Access       := Self.File (Iter);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
-      Result     : constant Gtk.Tree_Model.Gtk_Tree_Path :=
-                     Gtk.Tree_Model.Gtk_New;
+      Result     : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
+      Gtk_New (Result);
       if Project /= null then
          Gtk.Tree_Model.Append_Index
            (Result, Glib.Gint (Self.Projects.Find_Index (Project) - 1));
@@ -1215,7 +1215,7 @@ package body Code_Analysis.Tree_Models is
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
-      Self.Row_Changed (Path, Iter);
+      Row_Changed (To_Interface (Self), Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Changed;
 
@@ -1234,7 +1234,7 @@ package body Code_Analysis.Tree_Models is
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
-      Self.Row_Deleted (Path);
+      Row_Deleted (To_Interface (Self), Path);
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Deleted;
 
@@ -1253,7 +1253,7 @@ package body Code_Analysis.Tree_Models is
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
-      Self.Row_Inserted (Path, Iter);
+      Row_Inserted (To_Interface (Self), Path, Iter);
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Inserted;
 

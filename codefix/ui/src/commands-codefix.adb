@@ -21,7 +21,6 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with GPS.Intl;              use GPS.Intl;
-with GPS.Kernel.Console;    use GPS.Kernel.Console;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix_Module;        use Codefix_Module;
@@ -72,9 +71,8 @@ package body Commands.Codefix is
             Command.Session,
             Command.Error);
       else
-         GPS.Kernel.Console.Insert
-           (Command.Kernel,
-            -"cannot fix readonly file",
+         Command.Kernel.Insert
+           (-"cannot fix readonly file",
             Mode => Error);
       end if;
 

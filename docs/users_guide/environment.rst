@@ -204,29 +204,22 @@ Files
   custom files. This only contains the key bindings overridden through the
   key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
 
-*$HOME/.gps/gtkrc*
+*$HOME/.gps/gps.css*
   .. index:: Dynamic Key Binding
 
-  .. index:: gtkrc
+  .. index:: CSS
 
-  Configuration and theme file for gtkrc. This file can be edited to activate
-  gtk+ specific aspects, or change the look of GPS in some measure. Mostly,
-  everything can be done through the standard GPS preferences, but this file
-  can be used to get access to the old GPS preference "Dynamic Key Binding".
-  This preference activated a gtk+ behavior were key shortcuts for menu can be
-  changed by simply pressing the appropriate key combination when the mouse is
-  over that menu. It has various dangereous aspects and is not fully supported
-  by GPS, so was removed as a preference, but you can add the following line in
-  :file:`gtkrc` to get this back::
+  Configuration and theme file for gtk. This file can be change specific
+  aspects of the look of GPS. Its contents overrides any other style
+  information set by your default gtk+ theme (as selected in the Preferences
+  dialog) and GPS's :file:`prefix/share/gps/gps.css` file.
 
-     gtk-can-change-accels=1
-    
 *$HOME/.gps/actions.xml*
   Contains the definition of all the actions that were defined through the
   graphical interface. This is loaded last, and overrides all actions defined
   elsewhere.
 
-*$HOME/.gps/perspectives.xml*
+*$HOME/.gps/perspectives6.xml*
   Desktop file in XML format (using the menu `File->Save More->Desktop`),
   loaded automatically if found.
 
@@ -334,7 +327,7 @@ Files
 
   Splash screen displayed by default when GPS is started.
 
-*prefix*/share/gps/perspectives.xml
+*prefix*/share/gps/perspectives6.xml
   .. index:: default desktop
   .. index:: desktop, default
 
@@ -342,7 +335,7 @@ Files
   hasn't defined his own default desktop and no project specific desktop
   exists.  You can modify this file if you want, knowing that this will impact
   all users of GPS sharing this installation.  The format of this file is the
-  same as $HOME/.gps/perspectives.xml, which can be copied from your own
+  same as $HOME/.gps/perspectives6.xml, which can be copied from your own
   directory if you wish.
 
 *prefix*/share/gps/default.gpr
@@ -552,9 +545,12 @@ installing GPS.
   GPS requires a display depth of at least 24 bits per pixel. This can be an
   issue when using Windows remotely, since the Remote Desktop feature is
   capped by default at 16 bits per pixels. However, the system provides ways
-  to remove this cap in most cases. Here is how to do this on Windows Server 2003:
+  to remove this cap in most cases. Here is how to do this on Windows Server 2003::
+
     `http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/
     <http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/>`_
-  And on Windows XP:
-  `https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows
-  <https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows>`_
+
+  And on Windows XP::
+
+    `https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows
+    <https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows>`_

@@ -31,7 +31,6 @@ with Commands;                         use Commands;
 with Commands.VCS;                     use Commands.VCS;
 with Commands.External;                use Commands.External;
 with String_Utils;                     use String_Utils;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -633,7 +632,7 @@ package body Log_Utils is
    begin
       if not String_List.Is_Empty (List) then
          while Head_Temp /= Null_Node loop
-            Console.Insert (Kernel, Data (Head_Temp), Mode => Console.Error);
+            Kernel.Insert (Data (Head_Temp), Mode => Error);
             Head_Temp := Next (Head_Temp);
          end loop;
       end if;
@@ -642,7 +641,7 @@ package body Log_Utils is
          declare
             S : constant String := Data (List_Temp);
          begin
-            Console.Insert (Kernel, S, Mode => Console.Error);
+            Kernel.Insert (S, Mode => Error);
             Length := Length + S'Length;
          end;
 

@@ -58,8 +58,8 @@ package Entities_Tooltips_Utility is
    --  Return the documentation of the tooltip
 
    function Get_Tooltip_Documentation
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Access) return String;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Entity  : Entity_Access) return String;
    --  Return the documentation of the tooltip
 
    function Is_Guess

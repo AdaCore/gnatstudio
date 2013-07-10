@@ -155,12 +155,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     navigated through the menu `Edit->Paste` and `Edit->Paste Previous`, as
     described earlier in this guide.
 
-  *Tool bar style*
-    .. index:: tool bar
-
-    How the tool bar should be displayed: not at all, with small icons or with
-    large icons
-
   *Show status bar*
     .. index:: status bar
 
@@ -6655,14 +6649,14 @@ should be displayed in them. There are several ways to control this:
 Creating custom graphical interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. index:: pygtk
+.. index:: pygobject
 
 GPS is based on the Gtk+ graphical toolkit, which is available under many
 platforms and for many programming languages.
 
-In particular, GPS comes with pygtk, a python binding to Gtk+.  Using pygtk,
-you will be able to create your own dialogs and graphical windows using the
-python capabilities provided by GPS.
+In particular, GPS comes with pygobject, a python binding to Gtk+.  Using
+pygobject, you will be able to create your own dialogs and graphical windows
+using the python capabilities provided by GPS.
 
 See the menu `Help->Python Extensions`, in particular the `GPS.MDI`
 documentation, for a sample of code on how to create your own graphical

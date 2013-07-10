@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Config;                use Config;
+with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
@@ -95,7 +96,7 @@ package body GVD.Dialogs is
    --  Would be nice to use a primitive operation, but that would require
    --  declaring the types in the spec, not nice...
 
-   type Thread_View_Record is new Scrolled_Views.Process_View_Record with
+   type Thread_View_Record is new Base_Views.Process_View_Record with
       record
          Tree     : Gtk.Tree_View.Gtk_Tree_View;
          Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
@@ -108,14 +109,14 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    function Get_Thread_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    overriding procedure Update (Thread : access Thread_View_Record);
    --  See description in GVD.Generic_View
 
-   package Thread_Views is new Scrolled_Views.Simple_Views
+   package Thread_Views is new Base_Views.Simple_Views
      (Module_Name        => "Thread_View",
       View_Name          => -"Threads",
       Formal_View_Record => Thread_View_Record,
@@ -137,16 +138,16 @@ package body GVD.Dialogs is
    type Task_View_Record is new Thread_View_Record with null record;
    function Get_Task_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_Task_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    function Initialize
      (Tasks  : access Task_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package Tasks_Views is new Scrolled_Views.Simple_Views
+   package Tasks_Views is new Base_Views.Simple_Views
      (Module_Name        => "Tasks_View",
       View_Name          => -"Tasks",
       Formal_View_Record => Task_View_Record,
@@ -163,16 +164,16 @@ package body GVD.Dialogs is
    type PD_View_Record is new Thread_View_Record with null record;
    function Get_PD_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_PD_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window);
+      View    : Generic_Views.Abstract_View_Access);
    function Initialize
      (PDs    : access PD_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package PD_Views is new Scrolled_Views.Simple_Views
+   package PD_Views is new Base_Views.Simple_Views
      (Module_Name        => "PD_View",
       View_Name          => -"Protection Domains",
       Formal_View_Record => PD_View_Record,
@@ -366,10 +367,10 @@ package body GVD.Dialogs is
       Event  : Gdk_Event) return Boolean
    is
       T     : constant Thread_View := Thread_View (Thread);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (T.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (T.Tree);
       Iter  : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (T.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (T.Tree, Event);
 
       if Iter /= Null_Iter then
          T.Switch (T, Get_String (Model, Iter, 0));
@@ -387,9 +388,9 @@ package body GVD.Dialogs is
 
    function Get_Thread_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Threads);
+      return Generic_Views.Abstract_View_Access (Process.Threads);
    end Get_Thread_View;
 
    ---------------------
@@ -398,14 +399,14 @@ package body GVD.Dialogs is
 
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.Threads /= null
         and then Thread_View (Process.Threads).Tree /= null
       then
          Clear
-           (Gtk_Tree_Store (Get_Model (Thread_View (Process.Threads).Tree)));
+           (-Get_Model (Thread_View (Process.Threads).Tree));
       end if;
 
       Process.Threads := Gtk_Widget (View);
@@ -417,9 +418,9 @@ package body GVD.Dialogs is
 
    function Get_Task_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.Tasks);
+      return Generic_Views.Abstract_View_Access (Process.Tasks);
    end Get_Task_View;
 
    -------------------
@@ -428,14 +429,13 @@ package body GVD.Dialogs is
 
    procedure Set_Task_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.Tasks /= null
         and then Thread_View (Process.Tasks).Tree /= null
       then
-         Clear
-           (Gtk_Tree_Store (Get_Model (Thread_View (Process.Tasks).Tree)));
+         Clear (-Get_Model (Thread_View (Process.Tasks).Tree));
       end if;
 
       Process.Tasks := Gtk_Widget (View);
@@ -447,9 +447,9 @@ package body GVD.Dialogs is
 
    function Get_PD_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Scrolled_Window is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Scrolled_Window (Process.PDs);
+      return Generic_Views.Abstract_View_Access (Process.PDs);
    end Get_PD_View;
 
    -----------------
@@ -458,14 +458,13 @@ package body GVD.Dialogs is
 
    procedure Set_PD_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Generic_Views.Abstract_View_Access) is
    begin
       if View = null
         and then Process.PDs /= null
         and then Thread_View (Process.PDs).Tree /= null
       then
-         Clear
-           (Gtk_Tree_Store (Get_Model (Thread_View (Process.PDs).Tree)));
+         Clear (-Get_Model (Thread_View (Process.PDs).Tree));
       end if;
 
       Process.PDs := Gtk_Widget (View);
@@ -505,7 +504,7 @@ package body GVD.Dialogs is
       Sel         : Gtk_Tree_Selection;
    begin
       if Get_Process (Thread) /= null
-        and then Visible_Is_Set (Thread)
+        and then Thread.Get_Visible
         and then Get_Process (Get_Process (Thread).Debugger) /= null
       then
          Thread.Get_Info (Get_Process (Thread).Debugger, Info, Len);
@@ -560,13 +559,13 @@ package body GVD.Dialogs is
                end if;
             end if;
 
-            Clear (Gtk_Tree_Store (Get_Model (Thread.Tree)));
+            Clear (-Get_Model (Thread.Tree));
          end if;
 
          for J in Info'First + 1 .. Len loop
-            Append (Gtk_Tree_Store (Get_Model (Thread.Tree)), Iter, Null_Iter);
+            Append (-Get_Model (Thread.Tree), Iter, Null_Iter);
             for Col in Info (J).Information'Range loop
-               Set (Gtk_Tree_Store (Get_Model (Thread.Tree)),
+               Set (-Get_Model (Thread.Tree),
                     Iter,
                     Gint (Col - Info (J).Information'First),
                     Value (Info (J).Information (Col)));
@@ -575,7 +574,7 @@ package body GVD.Dialogs is
 
          --  If a selection was found before clearing the tree, restore it
 
-         if Path /= null then
+         if Path /= Null_Gtk_Tree_Path then
             Set_Cursor (Thread.Tree, Path, null, False);
             Path_Free (Path);
          end if;
@@ -593,9 +592,13 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Thread);
-      Set_Policy (Thread, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (Thread, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Thread.Pack_Start (Scrolled, Expand => True, Fill => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       --  The tree will be created on the first call to Update, since we do not
       --  know yet how many columns are needed.
@@ -660,11 +663,10 @@ package body GVD.Dialogs is
       Gtk.Dialog.Initialize (Dialog, -"Question", Main_Window, 0);
       Dialog.Main_Window := Main_Window;
 
-      Set_Policy (Dialog, False, True, False);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
 
-      Dialog.Vbox1 := Get_Vbox (Dialog);
+      Dialog.Vbox1 := Get_Content_Area (Dialog);
       Set_Homogeneous (Dialog.Vbox1, False);
       Set_Spacing (Dialog.Vbox1, 0);
 
@@ -676,7 +678,6 @@ package body GVD.Dialogs is
       Gtk_New (Dialog.Hbuttonbox1);
       Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
       Set_Spacing (Dialog.Hbuttonbox1, 10);
-      Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
       Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
 
       Gtk_New_From_Stock (Dialog.Close_Button, Stock_Close);

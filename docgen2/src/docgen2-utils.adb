@@ -18,7 +18,6 @@
 with Projects;                         use Projects;
 
 with Basic_Types;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with Xref;                             use Xref;
@@ -41,8 +40,7 @@ package body Docgen2.Utils is
                Line (Line'First + 1 .. Line'Last) & ":" &
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin
-      Insert (Kernel, Err,
-              Mode => Error);
+      Kernel.Insert (Err, Mode => GPS.Kernel.Error);
       Parse_File_Locations (Kernel, Err, "Documentation");
    end Warning;
 

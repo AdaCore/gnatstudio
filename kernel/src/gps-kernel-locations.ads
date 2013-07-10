@@ -34,25 +34,4 @@ package GPS.Kernel.Locations is
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
 
-   procedure Parse_File_Locations_Unknown_Encoding
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : Glib.UTF8_String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : String := "Builder results";
-      Style_Category          : String := "Style errors";
-      Warning_Category        : String := "Builder warnings";
-      Info_Category           : String := "Compiler info";
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1;
-      Info_Index_In_Regexp    : Integer := -1;
-      Quiet                   : Boolean := False);
-   --  Same as above, but the encoding for Text is unknown so we first try to
-   --  convert it to UTF8
-
 end GPS.Kernel.Locations;

@@ -43,7 +43,6 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
-      use type Gint_List.Glist;
    begin
       declare
          Dialog    : constant Question_Dialog_Access :=
@@ -79,7 +78,6 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
-      use type Gint_List.Glist;
    begin
       declare
          Dialog    : constant Question_Dialog_Access :=
@@ -114,7 +112,6 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
-      use type Gint_List.Glist;
    begin
       declare
          Dialog    : constant Question_Dialog_Access :=
@@ -140,7 +137,7 @@ package body GVD.Dialogs.Callbacks is
                  Gtk_Tree_Path_List.Get_Data (Tmp);
                Iter : Gtk_Tree_Iter;
             begin
-               Iter := M.Get_Iter (Path);
+               Iter := Get_Iter (M, Path);
                Append (S, Get_String (M, Iter, 0));
             end;
             Tmp := Gtk_Tree_Path_List.Next (Tmp);

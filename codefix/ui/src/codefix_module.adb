@@ -42,7 +42,6 @@ with Codefix.SPARK_Parser;
 with Commands.Codefix;          use Commands.Codefix;
 with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Legacy;
@@ -282,10 +281,9 @@ package body Codefix_Module is
             Get_Message (Err),
             null);
       else
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            -"cannot fix readonly file",
-            Mode => GPS.Kernel.Console.Error);
+         Kernel.Insert
+           (-"cannot fix readonly file",
+            Mode => GPS.Kernel.Error);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);

@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;               use Ada, Ada.Calendar;
-with Ada.Calendar.Formatting;
 with Ada.Unchecked_Conversion;
-with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -42,11 +40,12 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
+--  with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
+with Time_Utils;                 use Time_Utils;
 with Traces;                     use Traces;
 
 package body GPS.Kernel.Timeout is
@@ -291,8 +290,17 @@ package body GPS.Kernel.Timeout is
    -------------
 
    procedure Cleanup (Data : Console_Process) is
+      procedure Insert (Msg : String);
+      procedure Insert (Msg : String) is
+      begin
+         if Data.Console /= null then
+            Data.Console.Insert (Msg);
+         else
+            Data.D.Kernel.Insert (Msg);
+         end if;
+      end Insert;
+
       Status  : Integer;
-      Console : Interactive_Console := Data.Console;
    begin
       if Data.Id /= No_Source_Id then
          Remove (Data.Id);
@@ -304,54 +312,32 @@ package body GPS.Kernel.Timeout is
       end if;
 
       Close (Data.D.Descriptor.all, Status);
+      if Data.Interrupted then
+         Status := -1;
+      end if;
 
       --  So that next call to Cleanup does nothing
       Free (Data.D.Descriptor);
 
-      if Data.Console = null then
-         Console := Get_Console (Data.D.Kernel);
-      end if;
-
       declare
          End_Time      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Time_Stamp    : constant String :=
-                           "[" & Image (End_Time, ISO_Date & " %T") & "] ";
-         Elapsed       : constant String :=
-                           Calendar.Formatting.Image
-                             (End_Time - Data.Start_Time,
-                              Include_Time_Fraction => True);
-         Elapsed_Start : Natural := Elapsed'First;
-
+         Time_Stamp    : constant String := Timestamp (End_Time);
       begin
-         --  The console might no longer exists if we are exiting GPS
-         if Console /= null then
-            --  Do not show hours and minutes if they are 0. The output is
-            --  thus similar to the one of the Unix command time
-
-            if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-               Elapsed_Start := Elapsed_Start + 3;
-            end if;
-
-            if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-               Elapsed_Start := Elapsed_Start + 3;
-            end if;
-
-            if Data.Interrupted then
-               Insert (Console, Time_Stamp &
-                       (-"<^C> process interrupted (elapsed time: ")
-                       & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
-               --  ??? elsif Data.Show_Output or else Data.Show_Command then
-            elsif Data.Show_Exit_Status then
-               if Status = 0 then
-                  Insert (Console, Time_Stamp &
-                          (-"process terminated successfully (elapsed time: ")
-                          & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
-               else
-                  Insert (Console, Time_Stamp
-                          & (-"process exited with status ")
-                          & Image (Status) & " (elapsed time: "
-                          & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
-               end if;
+         if Data.Interrupted then
+            Insert (Time_Stamp &
+                    (-"<^C> process interrupted (elapsed time: ")
+                    & Elapsed (Data.Start_Time, End_Time) & "s)");
+            --  ??? elsif Data.Show_Output or else Data.Show_Command then
+         elsif Data.Show_Exit_Status then
+            if Status = 0 then
+               Insert (Time_Stamp &
+                       (-"process terminated successfully (elapsed time: ")
+                       & Elapsed (Data.Start_Time, End_Time) & "s)");
+            else
+               Insert (Time_Stamp
+                       & (-"process exited with status ")
+                       & Image (Status) & " (elapsed time: "
+                       & Elapsed (Data.Start_Time, End_Time) & "s)");
             end if;
          end if;
       end;
@@ -461,15 +447,11 @@ package body GPS.Kernel.Timeout is
                   --  Display all remaining output
 
                   Insert (Data.Console, Output, Add_LF => False);
-                  Highlight_Child
-                    (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
                end if;
             end;
          end if;
 
-         if Data.Console /= null
-           and then Data.Console /= Get_Console (Data.D.Kernel)
-         then
+         if Data.Console /= null then
             Enable_Prompt_Display (Data.Console, False);
          end if;
 

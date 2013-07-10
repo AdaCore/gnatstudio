@@ -51,7 +51,7 @@ package body Completion.Keywords is
             then
                Proposal := (Resolver => Resolver,
                             Name     => Keywords (J),
-                            Category => Cat_Custom);
+                            Category => Cat_Unknown);
 
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
                  (List, Proposal);
@@ -75,17 +75,5 @@ package body Completion.Keywords is
    begin
       return Resolver_ID;
    end Get_Id;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free
-     (Resolver : in out Completion_Keywords)
-   is
-      pragma Unreferenced (Resolver);
-   begin
-      null;
-   end Free;
 
 end Completion.Keywords;

@@ -22,7 +22,7 @@ with Naming_Exceptions;
 with GNAT.Strings;
 with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with Gtk.Box;
-with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;
 
 package Foreign_Naming_Editors is
 
@@ -58,6 +58,6 @@ private
       GUI        : Gtk.Box.Gtk_Box;
       Language   : GNAT.Strings.String_Access;
       Exceptions : Naming_Exceptions.Exceptions_Editor;
-      Spec_Ext, Body_Ext : Gtk.Combo_Box.Gtk_Combo_Box;
+      Spec_Ext, Body_Ext : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    end record;
 end Foreign_Naming_Editors;

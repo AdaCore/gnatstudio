@@ -28,17 +28,16 @@ with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Widget;
 
 with Basic_Types;
+with Default_Preferences;        use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Console;
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.View;   use GPS.Kernel.Messages.View;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -199,7 +198,8 @@ package body CodePeer.Module is
       Context : Module_Context);
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure On_Project_Changed_Hook
@@ -356,7 +356,7 @@ package body CodePeer.Module is
    ---------------
 
    function Get_Color
-     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.Color.Gdk_Color is
+     (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA is
    begin
       return Module.Message_Colors (Ranking).Get_Pref;
    end Get_Color;
@@ -370,14 +370,11 @@ package body CodePeer.Module is
       Force       : Boolean;
       Build_Target : String := "Run CodePeer")
    is
-      Saved_Mode    : constant String :=
-        CodePeer.Shell_Commands.Get_Build_Mode
-          (Kernel_Handle (Module.Kernel));
+      Saved_Mode    : constant String := Module.Kernel.Get_Build_Mode;
       Project : constant Project_Type := Get_Project (Module.Kernel);
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
       Module.Action := Load_UI;
 
       CodePeer.Shell_Commands.Build_Target_Execute
@@ -389,8 +386,7 @@ package body CodePeer.Module is
          Synchronous => False,
          Dir         => Project.Object_Dir);
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Saved_Mode);
+      Module.Kernel.Set_Build_Mode (Saved_Mode);
    end Review;
 
    --------------------
@@ -769,11 +765,10 @@ package body CodePeer.Module is
          Self.Report_Subwindow.Raise_Child;
 
       else
-         Console.Insert
-           (Self.Kernel,
-            File.Display_Full_Name &
+         Self.Kernel.Insert
+           (File.Display_Full_Name &
             (-" does not exist. Please perform a full analysis first"),
-            Mode => Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end Load;
 
@@ -828,20 +823,16 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
       CodePeer.Module.Bridge.Inspection (Module);
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Display_Code_Review;
 
    --------------------------
@@ -853,12 +844,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Info_File : constant Virtual_File :=
@@ -868,11 +856,10 @@ package body CodePeer.Module is
 
       begin
          if not Is_Regular_File (Info_File) then
-            Console.Insert
-              (Kernel,
-               Info_File.Display_Full_Name &
+            Kernel.Insert
+              (Info_File.Display_Full_Name &
                (-" does not exist. Please perform a full analysis first"),
-               Mode => Console.Error);
+               Mode => GPS.Kernel.Error);
          else
             Review
               (Module,
@@ -881,14 +868,12 @@ package body CodePeer.Module is
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Regenerate_Report;
 
    --------------------------
@@ -900,11 +885,9 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          HTML_File : constant Virtual_File :=
@@ -914,24 +897,21 @@ package body CodePeer.Module is
 
       begin
          if not Is_Regular_File (HTML_File) then
-            Console.Insert
-              (Kernel,
-               HTML_File.Display_Full_Name &
+            Kernel.Insert
+              (HTML_File.Display_Full_Name &
                (-" does not exist. Please perform a full analysis first"),
-               Mode => Console.Error);
+               Mode => GPS.Kernel.Error);
          else
             Open_Html (Kernel, String (Full_Name (HTML_File).all));
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_HTML_Report;
 
    --------------------------
@@ -945,12 +925,10 @@ package body CodePeer.Module is
       pragma Unreferenced (Widget);
 
       Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Mode    : constant String :=
-                  Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode    : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Text_File : constant Virtual_File :=
@@ -967,21 +945,18 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel,
-               -"cannot find text listing: " & Text_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find text listing: " & Text_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Text_Listing;
 
    ---------------------------
@@ -994,12 +969,10 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Mode : constant String :=
-               Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Text_File : constant Virtual_File :=
@@ -1014,21 +987,18 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel,
-               -"cannot find text overview: " & Text_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find text overview: " & Text_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Text_Overview;
 
    -----------------
@@ -1040,12 +1010,10 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode  : constant String :=
-                Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode  : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Log_File : constant Virtual_File :=
@@ -1060,20 +1028,18 @@ package body CodePeer.Module is
                New_File     => False,
                Force_Reload => True);
          else
-            Console.Insert
-              (Kernel, -"cannot find log file: " & Log_File.Display_Full_Name,
-               Mode => Console.Error);
+            Kernel.Insert
+              (-"cannot find log file: " & Log_File.Display_Full_Name,
+               Mode => GPS.Kernel.Error);
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Edit_Log;
 
    --------------------
@@ -1085,12 +1051,10 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Mode : constant String :=
-               Get_Build_Mode (Kernel_Handle (Module.Kernel));
+      Mode : constant String := Module.Kernel.Get_Build_Mode;
 
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
+      Module.Kernel.Set_Build_Mode ("codepeer");
 
       declare
          Lock_File : constant Virtual_File :=
@@ -1104,29 +1068,25 @@ package body CodePeer.Module is
             Delete (Lock_File, Success);
 
             if Success then
-               Console.Insert
-                 (Kernel,
-                  -"deleted lock file: " & Lock_File.Display_Full_Name);
+               Kernel.Insert
+                 (-"deleted lock file: " & Lock_File.Display_Full_Name);
             else
-               Console.Insert
-                 (Kernel,
-                  -"could not delete lock file: " &
+               Kernel.Insert
+                 (-"could not delete lock file: " &
                   Lock_File.Display_Full_Name);
             end if;
          else
-            Console.Insert
-              (Kernel, -"no lock file found: " & Lock_File.Display_Full_Name);
+            Kernel.Insert
+              (-"no lock file found: " & Lock_File.Display_Full_Name);
          end if;
       end;
 
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Remove_Lock;
 
    ------------------------------
@@ -1267,7 +1227,7 @@ package body CodePeer.Module is
       pragma Unreferenced (Ignore);
 
    begin
-      Console.Insert (Kernel, -"Deleting SCIL directories...");
+      Kernel.Insert (-"Deleting SCIL directories...");
 
       --  Remove all SCIL and Insp_* directories under each <obj>/codepeer dir.
       --  Ignore errors on e.g. read-only or non-existent directories.
@@ -1332,8 +1292,8 @@ package body CodePeer.Module is
                      Success   => Ignore);
       end loop;
 
-      Console.Insert
-        (Kernel, -"Deleted all CodePeer artefacts.", Add_LF => False);
+      Kernel.Insert
+        (-"Deleted all CodePeer artefacts.", Add_LF => False);
 
    exception
       when E : others =>
@@ -1352,9 +1312,7 @@ package body CodePeer.Module is
                     Compilation_Finished_Hooks_Args :=
                       GPS.Kernel.Standard_Hooks.
                         Compilation_Finished_Hooks_Args (Data.all);
-      Mode      : constant String :=
-                    CodePeer.Shell_Commands.Get_Build_Mode
-                      (GPS.Kernel.Kernel_Handle (Kernel));
+      Mode      : constant String := Kernel.Get_Build_Mode;
       Action    : constant CodePeer_Action := Module.Action;
 
    begin
@@ -1384,11 +1342,9 @@ package body CodePeer.Module is
               (Module, Force => True, Build_Target => "Run CodePeer Quickly");
 
          when Load_UI =>
-            CodePeer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
+            Kernel.Set_Build_Mode ("codepeer");
             CodePeer.Module.Bridge.Inspection (Module);
-            CodePeer.Shell_Commands.Set_Build_Mode
-              (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+            Kernel.Set_Build_Mode (Mode);
 
          when None => null;
       end case;
@@ -1573,23 +1529,34 @@ package body CodePeer.Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+      P : constant Preference := Get_Pref (Data);
 
    begin
-      Module.Annotation_Style.Set_Background
-        (Module.Annotation_Color.Get_Pref);
-      Module.Message_Styles (CodePeer.High).Set_Background
-        (Module.Message_Colors (CodePeer.High).Get_Pref);
-      Module.Message_Styles (CodePeer.Medium).Set_Background
-        (Module.Message_Colors (CodePeer.Medium).Get_Pref);
-      Module.Message_Styles (CodePeer.Low).Set_Background
-        (Module.Message_Colors (CodePeer.Low).Get_Pref);
-      Module.Message_Styles (CodePeer.Informational).Set_Background
-        (Module.Message_Colors (CodePeer.Informational).Get_Pref);
-      Module.Message_Styles (CodePeer.Suppressed).Set_Background
-        (Module.Message_Colors (CodePeer.Suppressed).Get_Pref);
+      if P = Preference (Module.Annotation_Color) then
+         Module.Annotation_Style.Set_Background
+           (Module.Annotation_Color.Get_Pref);
+      elsif P = Preference (Module.Message_Colors (CodePeer.High)) then
+         Module.Message_Styles (CodePeer.High).Set_Background
+           (Module.Message_Colors (CodePeer.High).Get_Pref);
+      elsif P = Preference (Module.Message_Colors (CodePeer.Medium)) then
+         Module.Message_Styles (CodePeer.Medium).Set_Background
+           (Module.Message_Colors (CodePeer.Medium).Get_Pref);
+      elsif P = Preference (Module.Message_Colors (CodePeer.Low)) then
+         Module.Message_Styles (CodePeer.Low).Set_Background
+           (Module.Message_Colors (CodePeer.Low).Get_Pref);
+      elsif P =
+        Preference (Module.Message_Colors (CodePeer.Informational))
+      then
+         Module.Message_Styles (CodePeer.Informational).Set_Background
+           (Module.Message_Colors (CodePeer.Informational).Get_Pref);
+      elsif P = Preference (Module.Message_Colors (CodePeer.Suppressed)) then
+         Module.Message_Styles (CodePeer.Suppressed).Set_Background
+           (Module.Message_Colors (CodePeer.Suppressed).Get_Pref);
+      end if;
    end On_Preferences_Changed;
 
    -----------------------------
@@ -1616,23 +1583,16 @@ package body CodePeer.Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Mode : constant String := Get_Build_Mode (Kernel);
-
+      Mode : constant String := Kernel.Get_Build_Mode;
    begin
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), "codepeer");
-
+      Module.Kernel.Set_Build_Mode ("codepeer");
       Bridge.Remove_Inspection_Cache_File (Module);
-
-      CodePeer.Shell_Commands.Set_Build_Mode
-        (Kernel_Handle (Module.Kernel), Mode);
+      Module.Kernel.Set_Build_Mode (Mode);
 
    exception
       when E : others =>
          Trace (Me, E);
-         CodePeer.Shell_Commands.Set_Build_Mode
-           (Kernel_Handle (Module.Kernel), Mode);
+         Module.Kernel.Set_Build_Mode (Mode);
    end On_Remove_XML_Review;
 
    -------------------------
@@ -1727,11 +1687,10 @@ package body CodePeer.Module is
          Module.Review_Message (Message);
 
       else
-         Console.Insert
-           (Self.Kernel,
-            File.Display_Full_Name &
+         Self.Kernel.Insert
+           (File.Display_Full_Name &
             (-" does not exist. Please perform a full analysis first"),
-            Mode => Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end Review_Message;
 
@@ -1842,7 +1801,8 @@ package body CodePeer.Module is
                     Basic_Types.Visible_Column_Type (Message.Column),
                     Image (Message),
                     Message_Ranking_Level'Pos (Message.Ranking),
-                    Flags);
+                    Flags,
+                    Allow_Auto_Jump_To_First => False);
                Style   : constant Style_Access :=
                  Module.Message_Styles (Message.Ranking);
 
@@ -2025,7 +1985,6 @@ package body CodePeer.Module is
       end Process_File;
 
    begin
-      Do_Not_Goto_First_Location (Self.Kernel);
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (CodePeer_Category_Name, Alphabetical);
 
@@ -2303,7 +2262,7 @@ package body CodePeer.Module is
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
          Name => "codepeer.compilation_finished");
       GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Preferences_Changed_Hook,
+        (Kernel, GPS.Kernel.Preference_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
          "codepeer.preferences_changed");
       GPS.Kernel.Hooks.Add_Hook

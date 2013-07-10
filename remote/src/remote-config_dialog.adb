@@ -32,20 +32,20 @@ with Glib.Object;                use Glib.Object;
 
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
-with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
+with Gtk.Expander;               use Gtk.Expander;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Label;                  use Gtk.Label;
-with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
@@ -64,7 +64,6 @@ with Gtkada;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-with Collapsing_Pane;            use Collapsing_Pane;
 
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
@@ -110,7 +109,7 @@ package body Remote.Config_Dialog is
       Remote_Browse_Button : Gtk_Button;
       Remote_Frame         : Gtk_Frame;
       Remote_Hbox          : Gtk_Hbox;
-      Sync_Combo           : Gtk_Combo_Box;
+      Sync_Combo           : Gtk_Combo_Box_Text;
       Remove_Button        : Gtk_Button;
    end record;
    type Path_Row is access all Path_Row_Record;
@@ -118,6 +117,24 @@ package body Remote.Config_Dialog is
 
    function Convert is new Ada.Unchecked_Conversion (System.Address, Path_Row);
    function Convert is new Ada.Unchecked_Conversion (Path_Row, System.Address);
+
+   type For_Each_Data (Nickname_Length : Natural) is record
+      Nickname : String (1 .. Nickname_Length);
+      The_Iter : Gtk_Tree_Iter;
+      Found    : Boolean;
+   end record;
+   type For_Each_Data_Access is access all For_Each_Data;
+
+   function For_Each
+     (Model     : Gtk_Tree_Model;
+      Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
+      User_Data : For_Each_Data_Access) return Boolean;
+   --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
+   --  corresponding to the previously selected machine.
+
+   package Foreach is new Gtk.Tree_Model.Foreach_User_Data
+     (For_Each_Data_Access);
 
    package Path_Row_List is new Glib.Glist.Generic_List (Path_Row);
 
@@ -195,15 +212,15 @@ package body Remote.Config_Dialog is
       Nickname_Label        : Gtk_Label;
       Nickname_Entry        : Gtk_Entry;
       Network_Name_Entry    : Gtk_Entry;
-      Remote_Access_Combo   : Gtk_Combo_Box;
-      Remote_Shell_Combo    : Gtk_Combo_Box;
-      Remote_Sync_Combo     : Gtk_Combo_Box;
+      Remote_Access_Combo   : Gtk_Combo_Box_Text;
+      Remote_Shell_Combo    : Gtk_Combo_Box_Text;
+      Remote_Sync_Combo     : Gtk_Combo_Box_Text;
       --  Advanced config panel
-      Advanced_Pane         : Collapsing_Pane.Collapsing_Pane;
+      Advanced_Pane         : Gtk.Expander.Gtk_Expander;
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
-      Cr_Lf_Combo           : Gtk_Combo_Box;
+      Cr_Lf_Combo           : Gtk_Combo_Box_Text;
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
       Debug_Button          : Gtk_Check_Button;
@@ -414,7 +431,8 @@ package body Remote.Config_Dialog is
       Add (Row.Local_Browse_Button, Pix);
       Set_Relief (Row.Local_Browse_Button, Relief_None);
       Set_Border_Width (Row.Local_Browse_Button, 0);
-      Unset_Flags (Row.Local_Browse_Button, Can_Focus or Can_Default);
+      Set_Can_Focus (Row.Local_Browse_Button, False);
+      Set_Can_Default (Row.Local_Browse_Button, False);
       Pack_Start (Row.Local_Hbox, Row.Local_Browse_Button, False, False);
       Set_Tooltip_Text
         (Row.Local_Browse_Button,
@@ -439,7 +457,8 @@ package body Remote.Config_Dialog is
       Add (Row.Remote_Browse_Button, Pix);
       Set_Relief (Row.Remote_Browse_Button, Relief_None);
       Set_Border_Width (Row.Remote_Browse_Button, 0);
-      Unset_Flags (Row.Remote_Browse_Button, Can_Focus or Can_Default);
+      Set_Can_Focus (Row.Remote_Browse_Button, False);
+      Set_Can_Default (Row.Remote_Browse_Button, False);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
       Set_Tooltip_Text
         (Row.Remote_Browse_Button,
@@ -449,30 +468,18 @@ package body Remote.Config_Dialog is
 
       Gtk_New (Row.Sync_Combo);
       declare
-         Iter : Gtk_Tree_Iter;
-         List : Gtk_List_Store;
          Cell : Gtk_Cell_Renderer_Text;
       begin
-         Gtk_New (List, (1 => Glib.GType_String));
-         Gtk_New_With_Model (Row.Sync_Combo, List);
+         Gtk_New (Row.Sync_Combo);
          Gtk_New (Cell);
-         Pack_Start
-           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
-            Cell,
-            True);
-         Add_Attribute
-           (Implements_Cell_Layout.To_Interface (Row.Sync_Combo),
-            Cell, "text", 0);
+         Row.Sync_Combo.Pack_Start (Cell, True);
+         Row.Sync_Combo.Add_Attribute (Cell, "text", 0);
 
-         Iter := Null_Iter;
          for J in Synchronisation_Type'Range loop
-            List.Append (Iter);
-            List.Set (Iter, 0, Synchronisation_String (J).all);
-
-            if J = Synchro then
-               Row.Sync_Combo.Set_Active_Iter (Iter);
-            end if;
+            Row.Sync_Combo.Append_Text (Synchronisation_String (J).all);
          end loop;
+
+         Row.Sync_Combo.Set_Active (Synchronisation_Type'Pos (Synchro));
       end;
 
       Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
@@ -522,17 +529,17 @@ package body Remote.Config_Dialog is
 
       declare
          List : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
-         Iter : Gtk_Tree_Iter := List.Get_Iter_First;
+         Iter : Gtk_Tree_Iter := Get_Iter_First (List);
       begin
          while Iter /= Null_Iter loop
-            if List.Get_String (Iter, 0) =
+            if Get_String (List, Iter, 0) =
               Synchronisation_String (Synchro).all
             then
                Row.Sync_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
 
-            List.Next (Iter);
+            Next (List, Iter);
          end loop;
       end;
 
@@ -646,7 +653,7 @@ package body Remote.Config_Dialog is
       declare
          Model    : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
          Sync_Str : constant String :=
-                      Model.Get_String (Row.Sync_Combo.Get_Active_Iter, 0);
+                      Get_String (Model, Row.Sync_Combo.Get_Active_Iter, 0);
       begin
          for J in Synchronisation_Type'Range loop
             if Sync_Str = Synchronisation_String (J).all then
@@ -843,7 +850,7 @@ package body Remote.Config_Dialog is
       Dialog.Kernel := Kernel;
 
       Gtk_New_Hpaned (Main_Table);
-      Pack_Start (Get_Vbox (Dialog), Main_Table);
+      Pack_Start (Get_Content_Area (Dialog), Main_Table);
 
       Gtk_New_Vbox (VBox, Homogeneous => False);
       Pack1 (Main_Table, VBox, Resize => False, Shrink => False);
@@ -934,7 +941,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Access_Combo);
+      Gtk_New (Dialog.Remote_Access_Combo);
       Set_Name (Dialog.Remote_Access_Combo, "remote access combo");
       Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -976,7 +983,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Shell_Combo);
+      Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Name (Dialog.Remote_Shell_Combo, "remote shell combo");
       Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
@@ -996,7 +1003,7 @@ package body Remote.Config_Dialog is
       Attach (Dialog.Right_Table, Label,
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Remote_Sync_Combo);
+      Gtk_New (Dialog.Remote_Sync_Combo);
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
@@ -1039,14 +1046,13 @@ package body Remote.Config_Dialog is
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
-      Set_State (Dialog.Advanced_Pane, Collapsed);
       Attach (Dialog.Right_Table, Dialog.Advanced_Pane,
               0, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Table,
                Rows => 5, Columns => 2, Homogeneous => False);
-      Set_Expanded_Widget (Dialog.Advanced_Pane, Dialog.Advanced_Table);
+      Dialog.Advanced_Pane.Add (Dialog.Advanced_Table);
 
       Gtk_New (Label, -"User name:");
       Set_Alignment (Label, 0.0, 0.5);
@@ -1099,7 +1105,7 @@ package body Remote.Config_Dialog is
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
-      Gtk_New_Text (Dialog.Cr_Lf_Combo);
+      Gtk_New (Dialog.Cr_Lf_Combo);
       Set_Name (Dialog.Cr_Lf_Combo, "crlf handling combo");
       Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
               1, 2, 3, 4,
@@ -1196,7 +1202,7 @@ package body Remote.Config_Dialog is
 
       --  Fill the tree with already configured machines
 
-      Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+      Model := -Get_Model (Dialog.Machine_Tree);
       Iter := Null_Iter;
 
       for J in Machines'Range loop
@@ -1251,49 +1257,49 @@ package body Remote.Config_Dialog is
          Iter  : Gtk_Tree_Iter;
       begin
          Model := Dialog.Remote_Access_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Access_Tool then
+            if Get_String (Model, Iter, 0) = Machine.Access_Tool then
                Dialog.Remote_Access_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Remote_Shell_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Shell then
+            if Get_String (Model, Iter, 0) = Machine.Shell then
                Dialog.Remote_Shell_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Remote_Sync_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) = Machine.Rsync_Func then
+            if Get_String (Model, Iter, 0) = Machine.Rsync_Func then
                Dialog.Remote_Sync_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Model := Dialog.Cr_Lf_Combo.Get_Model;
-         Iter  := Model.Get_Iter_First;
+         Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Model.Get_String (Iter, 0) =
+            if Get_String (Model, Iter, 0) =
               Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img)
             then
                Dialog.Cr_Lf_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
       end;
 
@@ -1321,41 +1327,22 @@ package body Remote.Config_Dialog is
       Dialog.Modified := False;
    end Set_Machine;
 
-   function For_Each
-     (Model     : access Gtk_Tree_Model_Record'Class;
-      Path      : Gtk_Tree_Path;
-      Iter      : Gtk_Tree_Iter;
-      User_Data : System.Address) return Boolean;
-   --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
-   --  corresponding to the previously selected machine.
-
-   type For_Each_Data (Nickname_Length : Natural) is record
-      Nickname : String (1 .. Nickname_Length);
-      The_Iter : Gtk_Tree_Iter;
-      Found    : Boolean;
-   end record;
-   type For_Each_Data_Access is access all For_Each_Data;
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, For_Each_Data_Access);
-
    --------------
    -- For_Each --
    --------------
 
    function For_Each
-     (Model     : access Gtk_Tree_Model_Record'Class;
+     (Model     : Gtk_Tree_Model;
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
-      User_Data : System.Address) return Boolean
+      User_Data : For_Each_Data_Access) return Boolean
    is
       pragma Unreferenced (Path);
-      Data : constant For_Each_Data_Access := Convert (User_Data);
    begin
-      Data.The_Iter := Iter;
-      Data.Found    :=
-        Get_String (Model, Iter, Name_Col) = Data.Nickname;
-      return Data.Found;
+      User_Data.The_Iter := Iter;
+      User_Data.Found    :=
+        Get_String (Model, Iter, Name_Col) = User_Data.Nickname;
+      return User_Data.Found;
    end For_Each;
 
    -----------------
@@ -1383,8 +1370,7 @@ package body Remote.Config_Dialog is
                         The_Iter        => Gtk.Tree_Model.Null_Iter,
                         Found           => False);
       begin
-         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
-
+         Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
          if Data.Found then
             Dialog.Select_Back := True;
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Data.The_Iter);
@@ -1425,10 +1411,10 @@ package body Remote.Config_Dialog is
                         The_Iter        => Gtk.Tree_Model.Null_Iter,
                         Found           => False);
       begin
-         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
+         Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
 
          if Data.Found then
-            Remove (Gtk_Tree_Store (Model), Data.The_Iter);
+            Remove (Gtk_Tree_Store'(-Model), Data.The_Iter);
          end if;
       end;
 
@@ -1676,7 +1662,8 @@ package body Remote.Config_Dialog is
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
       Dialog    : constant Server_List_Editor :=
-                    Server_List_Editor (W);
+        Server_List_Editor (W);
+      M         : Gtk_Tree_Model;
       Model     : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -1700,8 +1687,8 @@ package body Remote.Config_Dialog is
 
       --  Now reinit the dialog values
 
-      Get_Selected
-        (Get_Selection (Dialog.Machine_Tree), Gtk_Tree_Model (Model), Iter);
+      Get_Selected (Get_Selection (Dialog.Machine_Tree), M, Iter);
+      Model := -M;
 
       if Iter /= Null_Iter then
          declare
@@ -1790,7 +1777,7 @@ package body Remote.Config_Dialog is
 
             Set_Child_Visible (Dialog.Right_Table, True);
 
-            Model := Gtk_Tree_Store (Get_Model (Dialog.Machine_Tree));
+            Model := -Get_Model (Dialog.Machine_Tree);
             Append (Model, Iter, Null_Iter);
             Set (Model, Iter, Name_Col, Nickname);
 

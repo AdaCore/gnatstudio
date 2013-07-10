@@ -15,9 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-with Ada.Text_IO;
+with Ada.Strings.Fixed;              use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Text_IO;                    use Ada.Text_IO;
 with System.Address_To_Access_Conversions;
+
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Generic_Views;
+with GPS.Stock_Icons;                use GPS.Stock_Icons;
+with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -31,28 +37,30 @@ with Glib.Main;                        use Glib.Main;
 with Glib.Object;                      use Glib.Object;
 with Glib.Values;                      use Glib.Values;
 
+with Gtk.Box;                          use Gtk.Box;
 with Gtk.Check_Menu_Item;              use Gtk.Check_Menu_Item;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
-with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;          use Gtk.Separator_Menu_Item;
+with Gtk.Separator_Tool_Item;          use Gtk.Separator_Tool_Item;
+with Gtk.Stock;                        use Gtk.Stock;
+with Gtk.Toolbar;                      use Gtk.Toolbar;
+with GPS.Tree_View;                    use GPS.Tree_View;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
-with Gtk.Widget;                       use Gtk.Widget;
 
 with Gtkada.File_Selector;
 with Gtkada.Handlers;                  use Gtkada.Handlers;
 with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
-with Commands;
+with Commands.Interactive;             use Commands.Interactive;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;             use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -62,23 +70,104 @@ with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
-with GPS.Location_View.Actions;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
-with XML_Utils;                        use XML_Utils;
-with Traces;                           use Traces;
+with Histories;                        use Histories;
 
 package body GPS.Location_View is
 
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
-   use Ada.Strings.Unbounded;
+   Command_Remove_Message_Name : constant String  :=
+     "Locations remove selection";
+   Command_Remove_Message_Tip : constant String :=
+     "Remove the selected category, file or message";
+
+   Command_Clear_Locations_Name : constant String := "Locations clear";
+   Command_Clear_Locations_Tip : constant String :=
+     "Remove all the messages";
+
+   Command_Export_Name : constant String := "Locations export to text file";
+   Command_Export_Tip : constant String :=
+     "Export the selected category or file to a text file";
+
+   Command_Toggle_Sort_By_Subcategory : constant String :=
+     "Locations toggle sort by subcategory";
+   Command_Toggle_Sort_By_Subcategory_Tip : constant String :=
+     "Changes the sort order in the locations window. When active, this will"
+     & " group all error messages together, and then warning messages";
+
+   Command_Expand_Category_Name : constant String :=
+     "Locations expand files in category";
+   Command_Expand_Category_Tip : constant String :=
+     "Expand all files in the current category";
+
+   Command_Collapse_All_Files_Name : constant String :=
+     "Locations collapse all files";
+   Command_Collapse_All_Files_Tip : constant String :=
+     "Collapse all files in the locations view";
+
+   History_Sort_By_Subcategory : constant History_Key :=
+     "locations-sort-by-subcategory";
+   Hist_Auto_Jump_To_First : constant History_Key :=
+     "locations-auto-jump-to-first";
+   Hist_Locations_Wrap : constant History_Key := "locations-wrap";
+   Hist_Locations_Auto_Close : constant History_Key := "locations-auto-close";
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
       GPS.Kernel.Messages.Locations   => True);
 
-   type Location_View_Module is new Module_ID_Record with null record;
-   Location_View_Module_Id : Module_ID;
+   type Expansion_Request is record
+      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Goto_First : Boolean;
+   end record;
+
+   package Expansion_Request_Vectors is
+     new Ada.Containers.Vectors (Positive, Expansion_Request);
+
+   type Location_View_Record is new Generic_Views.View_Record with record
+      View                : GPS_Locations_Tree_View;
+
+      --  Idle handlers
+
+      Idle_Expand_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Requests            : Expansion_Request_Vectors.Vector;
+      --  Expansion requests.
+
+      --  Message listener
+      Listener            : GPS.Kernel.Messages.Listener_Access;
+
+      Do_Not_Delete_Messages_On_Exit : Boolean := False;
+      --  Protection against reentrancy
+   end record;
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Location_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Location_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Location_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options);
+
+   function Initialize
+     (Self   : access Location_View_Record'Class)
+      return Gtk_Widget;
+   --  Creates the locations view, and returns the focus widget
+
+   package Location_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Location_View_Record",
+      View_Name          => -"Locations",
+      Formal_View_Record => Location_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => True,
+      Local_Config       => True,
+      Group              => Group_Consoles);
+   use Location_Views;
+   subtype Location_View is Location_Views.View_Access;
 
    package View_Idle is new Glib.Main.Generic_Sources (Location_View);
 
@@ -92,13 +181,74 @@ package body GPS.Location_View is
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
 
-   procedure Set_Filter_Visibility
-     (Self    : access Location_View_Record'Class;
-      Visible : Boolean);
-   --  Hide or show the filter panel
-
    package Message_Conversions is
      new System.Address_To_Access_Conversions (Abstract_Message'Class);
+
+   -------------
+   -- Actions --
+   -------------
+
+   type Clear_Locations_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Clear_Locations_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Removes all messages
+
+   type Remove_Selection_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Remove_Selection_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Removes selected message
+
+   type Export_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Export_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Export selection to a text file
+
+   type Toggle_Sort_By_Subcategory_Command is new Interactive_Command
+     with null record;
+   overriding function Execute
+     (Self    : access Toggle_Sort_By_Subcategory_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Changes sort order in locations view.
+
+   type Expand_Category_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Expand_Category_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Expand all files within the current category
+
+   type Collapse_All_Files_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Collapse_All_Files_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Collapse all files
+
+   --------------
+   -- Messages --
+   --------------
+
+   type View_Manager
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+     new Abstract_Listener with null record;
+   type View_Manager_Access is access all View_Manager'Class;
+   overriding procedure Message_Added
+     (Self    : not null access View_Manager;
+      Message : not null access Abstract_Message'Class);
+   overriding procedure Category_Added
+     (Self     : not null access View_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean);
+   --  Monitoring messages.
+   --  ??? Can this be done simply by monitoring the model instead ? We are at
+   --  at a low-level anyway here
 
    ---------------------
    -- Local constants --
@@ -174,30 +324,8 @@ package body GPS.Location_View is
      (Self : access Location_View_Record'Class);
    --  Called when a row has been delete in the model
 
-   procedure On_Remove_Category
-     (Self : access Location_View_Record'Class);
-   --  Remove the selected category in the Location_View
-
-   procedure On_Remove_File
-     (Self : access Location_View_Record'Class);
-   --  Remove the selected file in the Location_View
-
-   procedure On_Expand_Category (Self : access Location_View_Record'Class);
-   --  Expand all files in the selected Category
-
-   procedure On_Collapse_All (Self : access Location_View_Record'Class);
-   --  Collapse all categories in the Location View
-
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
-
-   procedure On_Export_Category
-     (Self : access Location_View_Record'Class);
-   --  Exports all messages of the selected category into text file
-
-   procedure On_Export_File
-     (Self : access Location_View_Record'Class);
-   --  Exports all messages of the selected file into text file
 
    procedure Context_Func
      (Context      : in out Selection_Context;
@@ -208,45 +336,17 @@ package body GPS.Location_View is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
-   function Get_Or_Create_Location_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return MDI_Child;
-   --  Internal version of Get_Or_Create_Location_View
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr;
-   --  Save the status of the project explorer to an XML tree
-
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler
 
-   procedure On_Toggle_Sort (Self : access Location_View_Record'Class);
+   procedure On_Change_Sort (Self : access Location_View_Record'Class);
    --  Callback for the activation of the sort contextual menu item
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
-
-   procedure On_Apply_Filter (Self : access Location_View_Record'Class);
-   --  Called on "apply-filter" signal from filter panel
-
-   procedure On_Cancel_Filter (Self : access Location_View_Record'Class);
-   --  Called on "cancel-filter" signal from filter panel
-
-   procedure On_Visibility_Toggled (Self : access Location_View_Record'Class);
-   --  Called on "visibility-toggled" signal from filter panel
-
-   procedure On_Filter_Panel_Activated
-     (Self : access Location_View_Record'Class);
-   --  Called when filter panel item in the context menu is activated
 
    procedure Goto_Location (Self : access Location_View_Record'Class);
    --  Goto the selected location in the Location_View
@@ -261,21 +361,61 @@ package body GPS.Location_View is
       File      : GNATCOLL.VFS.Virtual_File);
    --  Exports messages of the specified category and file into text file.
 
+   --------------------
+   -- Category_Added --
+   --------------------
+
+   overriding procedure Category_Added
+     (Self     : not null access View_Manager;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean)
+   is
+      Auto : constant Boolean := Allow_Auto_Jump_To_First
+        and then Get_History
+          (Get_History (Self.Kernel).all, Hist_Auto_Jump_To_First);
+   begin
+      Expand_Category
+        (Location_View_Access
+           (Location_Views.Get_Or_Create_View
+              (Self.Kernel, Focus => True)),
+         Ada.Strings.Unbounded.To_String (Category),
+         Auto);
+   end Category_Added;
+
+   -------------------
+   -- Message_Added --
+   -------------------
+
+   overriding procedure Message_Added
+     (Self    : not null access View_Manager;
+      Message : not null access Abstract_Message'Class)
+   is
+      pragma Unreferenced (Message);
+   begin
+      Location_Views.Child_From_View
+        (Location_Views.Get_Or_Create_View
+           (Self.Kernel, Focus => True))
+        .Highlight_Child;
+   end Message_Added;
+
    ---------------------
    -- Expand_Category --
    ---------------------
 
    procedure Expand_Category
-     (Self       : not null access Location_View_Record'Class;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
-      Goto_First : Boolean) is
+     (Self       : Location_View_Access;
+      Category   : String;
+      Goto_First : Boolean)
+   is
+      Loc : constant Location_View := Location_View (Self);
    begin
-      Self.Requests.Prepend ((Category, GNATCOLL.VFS.No_File, Goto_First));
+      Loc.Requests.Prepend
+        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
+         GNATCOLL.VFS.No_File, Goto_First));
 
-      if Self.Idle_Expand_Handler = No_Source_Id then
-         Self.Idle_Expand_Handler :=
-           View_Idle.Idle_Add
-             (Idle_Expand'Access, Location_View (Self));
+      if Loc.Idle_Expand_Handler = No_Source_Id then
+         Loc.Idle_Expand_Handler :=
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
       end if;
    end Expand_Category;
 
@@ -284,17 +424,20 @@ package body GPS.Location_View is
    -----------------
 
    procedure Expand_File
-     (Self       : not null access Location_View_Record'Class;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+     (Self       : Location_View_Access;
+      Category   : String;
       File       : GNATCOLL.VFS.Virtual_File;
-      Goto_First : Boolean) is
+      Goto_First : Boolean)
+   is
+      Loc : constant Location_View := Location_View (Self);
    begin
-      Self.Requests.Prepend ((Category, File, Goto_First));
+      Loc.Requests.Prepend
+        ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
+         File, Goto_First));
 
-      if Self.Idle_Expand_Handler = No_Source_Id then
-         Self.Idle_Expand_Handler :=
-           View_Idle.Idle_Add
-             (Idle_Expand'Access, Location_View (Self));
+      if Loc.Idle_Expand_Handler = No_Source_Id then
+         Loc.Idle_Expand_Handler :=
+           View_Idle.Idle_Add (Idle_Expand'Access, Loc);
       end if;
    end Expand_File;
 
@@ -341,13 +484,13 @@ package body GPS.Location_View is
 
    begin
       Requests : while not Self.Requests.Is_Empty loop
-         Iter := Model.Get_Iter_First;
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            exit Requests when Model.Get_String (Iter, Category_Column)
+            exit Requests when Get_String (Model, Iter, Category_Column)
               = Self.Requests.First_Element.Category;
 
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          Self.Requests.Delete_First;
@@ -370,24 +513,24 @@ package body GPS.Location_View is
 
          --  Expand category node
 
-         Path := Model.Get_Path (Iter);
+         Path := Get_Path (Model, Iter);
          Dummy := Self.View.Expand_Row (Path, False);
 
          --  Expand file node
 
-         Iter := Model.Children (Iter);
+         Iter := Children (Model, Iter);
 
          while Iter /= Null_Iter loop
             exit when
               GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column)
                 = Self.Requests.First_Element.File;
 
-            Model.Next (Iter);
+            Next (Model, Iter);
          end loop;
 
          if Iter /= Null_Iter then
             Gtk.Tree_Model.Path_Free (Path);
-            Path := Model.Get_Path (Iter);
+            Path := Get_Path (Model, Iter);
 
          else
             Down (Path);
@@ -430,11 +573,11 @@ package body GPS.Location_View is
    begin
       Self.View.Get_Selection.Get_Selected (Model, Iter);
 
-      if Model = null or else Iter = Null_Iter then
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
          return;
       end if;
 
-      Path := Model.Get_Path (Iter);
+      Path := Get_Path (Model, Iter);
 
       while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (Self.View, Path, False);
@@ -442,58 +585,28 @@ package body GPS.Location_View is
          Self.View.Get_Selection.Select_Path (Path);
       end loop;
 
-      Iter := Model.Get_Iter (Path);
-      Path_Free (Path);
+      Iter := Get_Iter (Model, Path);
 
-      if Iter = Null_Iter then
-         return;
+      if Iter /= Null_Iter then
+         On_Location_Clicked (Self, Path, Iter);
       end if;
 
-      declare
-         Mark     : constant Editor_Mark'Class :=
-           Get_Mark (Model, Iter, Node_Mark_Column);
-         Location : constant Editor_Location'Class := Mark.Location (True);
-
-      begin
-         if Mark /= Nil_Editor_Mark then
-            Location.Buffer.Current_View.Cursor_Goto (Location, True);
-         end if;
-      end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
+      Path_Free (Path);
    end Goto_Location;
 
-   -----------------------
-   -- On_Remove_Message --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Remove_Message (Self : access Location_View_Record'Class) is
-      Model   : Gtk_Tree_Model;
-      Iter    : Gtk_Tree_Iter;
-      Value   : GValue;
-      Message : Message_Access;
+   overriding function Execute
+     (Self    : access Expand_Category_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Location_View := Location_Views.Retrieve_View (K);
 
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      if Model = null or else Iter = Null_Iter then
-         return;
-      end if;
-
-      Model.Get_Value (Iter, Message_Column, Value);
-      Message :=
-        Message_Access (Message_Conversions.To_Pointer (Get_Address (Value)));
-      Glib.Values.Unset (Value);
-
-      Message.Remove;
-   end On_Remove_Message;
-
-   ------------------------
-   -- On_Expand_Category --
-   ------------------------
-
-   procedure On_Expand_Category (Self : access Location_View_Record'Class) is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
@@ -501,171 +614,66 @@ package body GPS.Location_View is
       pragma Unreferenced (Dummy);
 
    begin
-      Get_Selected (Get_Selection (Self.View), Model, Iter);
+      Get_Selected (Get_Selection (V.View), Model, Iter);
       Path := Get_Path (Model, Iter);
 
-      while Get_Depth (Path) > 1 loop
-         Dummy := Up (Path);
+      while Path.Get_Depth > 1 and then Up (Path) loop
+         null;
       end loop;
 
-      Dummy := Self.View.Expand_Row (Path, True);
+      Dummy := V.View.Expand_Row (Path, True);
 
       Path_Free (Path);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Expand_Category;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------
-   -- On_Export_Category --
-   ------------------------
-
-   procedure On_Export_Category
-     (Self : access Location_View_Record'Class)
+   overriding function Execute
+     (Self    : access Collapse_All_Files_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
    is
-      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (Self.Kernel);
-      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Export_File : GNATCOLL.VFS.Virtual_File;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      Export_File := Gtkada.File_Selector.Select_File;
-
-      if Export_File /= No_File then
-         declare
-            Category : constant Unbounded_String :=
-              To_Unbounded_String (Model.Get_String (Iter, Category_Column));
-            Files    : constant Virtual_File_Array :=
-              Container.Get_Files (Category);
-            File     : Ada.Text_IO.File_Type;
-
-         begin
-            Ada.Text_IO.Create
-              (File, Ada.Text_IO.Out_File, String (Export_File.Full_Name.all));
-
-            for J in Files'Range loop
-               Export_Messages (File, Container, Category, Files (J));
-            end loop;
-
-            Ada.Text_IO.Close (File);
-         end;
-      end if;
-   end On_Export_Category;
-
-   --------------------
-   -- On_Export_File --
-   --------------------
-
-   procedure On_Export_File
-     (Self : access Location_View_Record'Class)
-   is
-      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (Self.Kernel);
-      Model       : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Export_File : GNATCOLL.VFS.Virtual_File;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-
-      Export_File := Gtkada.File_Selector.Select_File;
-
-      if Export_File /= No_File then
-         declare
-            Category : constant Unbounded_String :=
-              To_Unbounded_String (Model.Get_String (Iter, Category_Column));
-            File     : constant Virtual_File :=
-              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
-            Out_File : Ada.Text_IO.File_Type;
-
-         begin
-            Ada.Text_IO.Create
-              (Out_File,
-               Ada.Text_IO.Out_File,
-               String (Export_File.Full_Name.all));
-            Export_Messages (Out_File, Container, Category, File);
-            Ada.Text_IO.Close (Out_File);
-         end;
-      end if;
-   end On_Export_File;
-
-   ------------------------
-   -- On_Clear_Locations --
-   ------------------------
-
-   procedure On_Clear_Locations (Self : access Location_View_Record'Class) is
-      Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Self.Kernel);
-
-   begin
-      Container.Remove_All_Messages
-        ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
-   end On_Clear_Locations;
-
-   ---------------------
-   -- On_Collapse_All --
-   ---------------------
-
-   procedure On_Collapse_All (Self : access Location_View_Record'Class) is
-   begin
-      Self.View.Collapse_All;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Collapse_All;
-
-   ------------------------
-   -- On_Remove_Category --
-   ------------------------
-
-   procedure On_Remove_Category
-     (Self : access Location_View_Record'Class)
-   is
-      Model : Gtk_Tree_Model;
+      pragma Unreferenced (Self);
+      K     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V     : constant Location_View := Location_Views.Retrieve_View (K);
       Iter  : Gtk_Tree_Iter;
-
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-      Get_Messages_Container (Self.Kernel).Remove_Category
-        (Model.Get_String (Iter, Category_Column),
-         Locations_Message_Flags);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Remove_Category;
-
-   --------------------
-   -- On_Remove_File --
-   --------------------
-
-   procedure On_Remove_File
-     (Self : access Location_View_Record'Class)
-   is
       Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
 
    begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
-      Get_Messages_Container (Self.Kernel).Remove_File
-        (Model.Get_String (Iter, Category_Column),
-         Get_File (Model, Iter, File_Column),
-         Locations_Message_Flags);
+      --  When Locations view doesn't have focus it just clear selection on
+      --  collapse all action. Selection is moved to category row to workaround
+      --  this.
 
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Remove_File;
+      V.View.Get_Selection.Get_Selected (Model, Iter);
+
+      if Iter /= Null_Iter then
+         Path := Get_Path (Model, Iter);
+
+         while Path.Get_Depth > 1 and then Up (Path) loop
+            null;
+         end loop;
+
+         V.View.Get_Selection.Select_Path (Path);
+         Path_Free (Path);
+      end if;
+
+      V.View.Collapse_All;
+      return Commands.Success;
+   end Execute;
 
    ---------------
    -- Next_Item --
    ---------------
 
    procedure Next_Item
-     (Self      : access Location_View_Record'Class;
+     (Self      : Location_View_Access;
       Backwards : Boolean := False)
    is
+      Loc : constant Location_View := Location_View (Self);
       Iter          : Gtk_Tree_Iter;
       Path          : Gtk_Tree_Path;
       File_Path     : Gtk_Tree_Path;
@@ -676,7 +684,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Ignore);
 
    begin
-      Get_Selected (Get_Selection (Self.View), Model, Iter);
+      Get_Selected (Get_Selection (Loc.View), Model, Iter);
 
       if Iter = Null_Iter then
          return;
@@ -688,9 +696,9 @@ package body GPS.Location_View is
 
       Success := True;
       while Success and then Get_Depth (Path) < 3 loop
-         Success := Expand_Row (Self.View, Path, False);
+         Success := Expand_Row (Loc.View, Path, False);
          Down (Path);
-         Select_Path (Get_Selection (Self.View), Path);
+         Select_Path (Get_Selection (Loc.View), Path);
       end loop;
 
       if Get_Depth (Path) < 3 then
@@ -721,7 +729,9 @@ package body GPS.Location_View is
          if not Success
            or else Get_Iter (Model, File_Path) = Null_Iter
          then
-            if Locations_Wrap.Get_Pref then
+            if Get_History (Get_History (Loc.Kernel).all,
+                            Hist_Locations_Wrap)
+            then
                File_Path := Copy (Category_Path);
                Down (File_Path);
 
@@ -740,7 +750,7 @@ package body GPS.Location_View is
             end if;
          end if;
 
-         Ignore := Expand_Row (Self.View, File_Path, False);
+         Ignore := Expand_Row (Loc.View, File_Path, False);
          Path := Copy (File_Path);
          Down (Path);
 
@@ -753,9 +763,9 @@ package body GPS.Location_View is
          end if;
       end if;
 
-      Select_Path (Get_Selection (Self.View), Path);
-      Scroll_To_Cell (Self.View, Path, null, False, 0.1, 0.1);
-      Goto_Location (Self);
+      Select_Path (Get_Selection (Loc.View), Path);
+      Scroll_To_Cell (Loc.View, Path, null, False, 0.1, 0.1);
+      Goto_Location (Loc);
 
       Path_Free (File_Path);
       Path_Free (Path);
@@ -782,23 +792,7 @@ package body GPS.Location_View is
       if V.Idle_Expand_Handler /= No_Source_Id then
          Glib.Main.Remove (V.Idle_Expand_Handler);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (View   : out Location_View;
-      Kernel : Kernel_Handle;
-      Module : Abstract_Module_ID) is
-   begin
-      View := new Location_View_Record;
-      Initialize (View, Kernel, Module);
-   end Gtk_New;
 
    ------------------
    -- Context_Func --
@@ -812,159 +806,87 @@ package body GPS.Location_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event);
-      Mitem    : Gtk_Menu_Item;
-      Sep      : Gtk_Separator_Menu_Item;
-
+      pragma Unreferenced (Kernel, Event_Widget, Event, Menu);
       Explorer : constant Location_View := Location_View (Object);
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
-      Check    : Gtk_Check_Menu_Item;
-      Created  : Boolean := False;
-
    begin
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
 
-      Gtk_New (Check, -"Filter panel");
-      Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
-      Append (Menu, Check);
-      Location_View_Callbacks.Object_Connect
-        (Check, Signal_Activate, On_Filter_Panel_Activated'Access, Explorer);
-
-      Gtk_New (Check, -"Sort by subcategory");
-      Set_Active (Check, Explorer.Sort_By_Category);
-      Append (Menu, Check);
-      Location_View_Callbacks.Object_Connect
-        (Check, Signal_Activate, On_Toggle_Sort'Access, Explorer);
-
-      if Model = null
-        or else Iter = Null_Iter
-      then
-         --  There is no selection
-
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
          return;
       end if;
 
-      Gtk_New (Sep);
-      Append (Menu, Sep);
-
-      Gtk_New (Mitem, -"Expand category");
-      Location_View_Callbacks.Object_Connect
-        (Mitem, Signal_Activate, On_Expand_Category'Access, Explorer);
-      Append (Menu, Mitem);
-
-      Gtk_New (Mitem, -"Collapse all");
-      Location_View_Callbacks.Object_Connect
-        (Mitem, Signal_Activate, On_Collapse_All'Access, Explorer);
-      Append (Menu, Mitem);
-
       Path := Get_Path (Model, Iter);
 
-      if Get_Depth (Path) = 1 then
-         Gtk_New (Mitem, -"Remove category");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Remove_Category'Access,
-            Explorer);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Export messages into text file...");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Export_Category'Access,
-            Explorer);
-         Append (Menu, Mitem);
-
-      elsif Get_Depth (Path) = 2 then
-         Gtk_New (Mitem, -"Remove File");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Remove_File'Access,
-            Explorer);
-         Append (Menu, Mitem);
-         Gtk_New (Mitem, -"Export messages into text file...");
-         Location_View_Callbacks.Object_Connect
-           (Mitem,
-            Signal_Activate,
-            On_Export_File'Access,
-            Explorer);
-         Append (Menu, Mitem);
-
-      elsif Get_Depth (Path) >= 3 then
-         Gtk_New (Mitem, -"Remove message");
-         Location_View_Callbacks.Object_Connect
-           (Mitem, Signal_Activate, On_Remove_Message'Access, Explorer);
-         Append (Menu, Mitem);
-
-         Gtk_New (Mitem, -"Jump to location");
-         Location_View_Callbacks.Object_Connect
-           (Mitem, Signal_Activate, Goto_Location'Access, Explorer);
-         Append (Menu, Mitem);
-
+      if Get_Depth (Path) >= 3 then
          declare
             File_Iter     : Gtk_Tree_Iter;
             Category_Iter : Gtk_Tree_Iter;
 
          begin
-            File_Iter := Model.Parent (Iter);
-            Category_Iter := Model.Parent (File_Iter);
+            File_Iter := Parent (Model, Iter);
+            Category_Iter := Parent (Model, File_Iter);
 
             --  Unwind secondary level messages
 
-            while Model.Parent (Category_Iter) /= Null_Iter loop
+            while Parent (Model, Category_Iter) /= Null_Iter loop
                File_Iter := Category_Iter;
-               Category_Iter := Model.Parent (Category_Iter);
+               Category_Iter := Parent (Model, Category_Iter);
             end loop;
 
             Set_File_Information
               (Context,
                Files  => (1 => Get_File (Model, File_Iter, File_Column)),
-               Line   => Positive (Model.Get_Int (Iter, Line_Column)),
+               Line   => Positive (Get_Int (Model, Iter, Line_Column)),
                Column => Visible_Column_Type
-                 (Model.Get_Int (Iter, Column_Column)));
+                 (Get_Int (Model, Iter, Column_Column)));
             Set_Message_Information
               (Context,
-               Category => Model.Get_String (Category_Iter, Category_Column),
-               Message => Model.Get_String (Iter, Text_Column));
-
-            Created := True;
+               Category => Get_String (Model, Category_Iter, Category_Column),
+               Message => Get_String (Model, Iter, Text_Column));
          end;
       end if;
-
-      if Created then
-         Gtk_New (Sep);
-         Append (Menu, Sep);
-      end if;
-
-      Gtk_New (Mitem, -"Clear locations");
-      Append (Menu, Mitem);
-      Location_View_Callbacks.Object_Connect
-        (Mitem, Signal_Activate, On_Clear_Locations'Access, Explorer);
 
       Path_Free (Path);
    end Context_Func;
 
-   --------------------
-   -- On_Toggle_Sort --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Toggle_Sort (Self : access Location_View_Record'Class) is
+   overriding function Execute
+     (Self    : access Toggle_Sort_By_Subcategory_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      H : constant Histories.History := Get_History (K);
+      V : constant Location_View := Location_Views.Retrieve_View (K);
    begin
-      Self.Sort_By_Category := not Self.Sort_By_Category;
+      Set_History
+        (H.all, History_Sort_By_Subcategory,
+         not Get_History (H.all, History_Sort_By_Subcategory));
+      On_Change_Sort (V);
+      return Commands.Success;
+   end Execute;
 
-      if Self.Sort_By_Category then
+   --------------------
+   -- On_Change_Sort --
+   --------------------
+
+   procedure On_Change_Sort (Self : access Location_View_Record'Class) is
+   begin
+      if Get_History
+        (Get_History (Self.Kernel).all, History_Sort_By_Subcategory)
+      then
          Self.View.Sort_By_Subcategory;
-
       else
          Self.View.Sort_By_Location;
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Toggle_Sort;
+   end On_Change_Sort;
 
    ----------------------
    -- Location_Changed --
@@ -976,8 +898,8 @@ package body GPS.Location_View is
    is
       D             : constant File_Location_Hooks_Args_Access :=
                         File_Location_Hooks_Args_Access (Data);
-      Child         : MDI_Child;
-      Locations     : Location_View;
+      Locations     : constant Location_View :=
+        Location_Views.Get_Or_Create_View (Kernel, Focus => False);
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
       Message_Iter  : Gtk_Tree_Iter;
@@ -986,10 +908,6 @@ package body GPS.Location_View is
       Path          : Gtk_Tree_Path;
 
    begin
-      Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Location_View_Record'Tag);
-      Locations := Location_View (Get_Widget (Child));
-
       --  Check current selection: if it is on the same line as the new
       --  location, do not change the selection. Otherwise, there is no easy
       --  way for a user to click on a secondary location found in the same
@@ -999,8 +917,7 @@ package body GPS.Location_View is
 
       if Iter /= Null_Iter
         and then Get_File (Model, Iter, File_Column) = D.File
-        and then Integer
-          (Model.Get_Int (Iter, Line_Column)) = D.Line
+        and then Integer (Get_Int (Model, Iter, Line_Column)) = D.Line
       then
          return;
       end if;
@@ -1013,21 +930,19 @@ package body GPS.Location_View is
       if Iter = Null_Iter then
          --  There is no selected node, look for "Builder results" category.
 
-         Model := Locations.View.Get_Model;
-         Category_Iter := Model.Get_Iter_First;
+         Category_Iter := Get_Iter_First (Model);
 
          while Category_Iter /= Null_Iter loop
-            exit when Model.Get_String (Category_Iter, Category_Column)
+            exit when Get_String (Model, Category_Iter, Category_Column)
               = "Builder results";
 
-            Model.Next (Category_Iter);
+            Next (Model, Category_Iter);
          end loop;
 
          --  Otherwise try to use first visible category.
 
          if Category_Iter = Null_Iter then
---            Category_Iter := Model.Children (Null_Iter);
-            Category_Iter := Model.Get_Iter_First;
+            Category_Iter := Get_Iter_First (Model);
          end if;
 
       else
@@ -1035,31 +950,31 @@ package body GPS.Location_View is
 
          while Iter /= Null_Iter loop
             Category_Iter := Iter;
-            Iter := Model.Parent (Iter);
+            Iter := Parent (Model, Iter);
          end loop;
       end if;
 
       if Category_Iter /= Null_Iter then
          --  Look for file node
 
-         File_Iter := Model.Children (Category_Iter);
+         File_Iter := Children (Model, Category_Iter);
 
          while File_Iter /= Null_Iter loop
             exit when Get_File (Model, File_Iter, File_Column) = D.File;
 
-            Model.Next (File_Iter);
+            Next (Model, File_Iter);
          end loop;
 
          if File_Iter /= Null_Iter then
             --  Look for message node
 
-            Message_Iter := Model.Children (File_Iter);
+            Message_Iter := Children (Model, File_Iter);
 
             while Message_Iter /= Null_Iter loop
                exit when
-                 Integer (Model.Get_Int (Message_Iter, Line_Column)) = D.Line;
+                 Integer (Get_Int (Model, Message_Iter, Line_Column)) = D.Line;
 
-               Model.Next (Message_Iter);
+               Next (Model, Message_Iter);
             end loop;
 
             if Message_Iter /= Null_Iter then
@@ -1077,29 +992,30 @@ package body GPS.Location_View is
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (Self   : access Location_View_Record'Class;
-      Kernel : Kernel_Handle;
-      Module : Abstract_Module_ID)
+   function Initialize
+     (Self   : access Location_View_Record'Class)
+      return Gtk_Widget
    is
+      M        : Gtk_Tree_Model;
       Scrolled : Gtk_Scrolled_Window;
-
    begin
-      Initialize_Vbox (Self);
+      Initialize_Vbox (Self, Homogeneous => False);
 
-      Self.Kernel := Kernel;
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       --  Initialize the listener
 
-      Self.Listener := Listener_Access (Register (Kernel));
+      Self.Listener := Listener_Access (Register (Self.Kernel));
 
       --  Initialize the tree view
 
-      Gtk_New
-        (Self.View,
-         Get_Model (Locations_Listener_Access (Self.Listener)));
+      M := Get_Model (Locations_Listener_Access (Self.Listener));
+      Gtk_New (Self.View, M);
+      Scrolled.Add (Self.View);
       Location_View_Callbacks.Object_Connect
-        (Get_Model (Locations_Listener_Access (Self.Listener)),
+        (Gtk.Tree_Model."-" (M),
          Signal_Row_Deleted,
          Location_View_Callbacks.To_Marshaller (On_Row_Deleted'Access),
          Location_View (Self),
@@ -1107,31 +1023,6 @@ package body GPS.Location_View is
 
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Add (Scrolled, Self.View);
-      Self.Pack_Start (Scrolled);
-
-      --  Initialize the filter panel
-
-      Gtk_New (Self.Filter_Panel, Kernel);
-      Set_Filter_Visibility (Self, Visible => True);
-      Location_View_Callbacks.Object_Connect
-        (Self.Filter_Panel,
-         Signal_Apply_Filter,
-         Location_View_Callbacks.To_Marshaller (On_Apply_Filter'Access),
-         Location_View (Self));
-      Location_View_Callbacks.Object_Connect
-        (Self.Filter_Panel,
-         Signal_Cancel_Filter,
-         Location_View_Callbacks.To_Marshaller (On_Cancel_Filter'Access),
-         Location_View (Self));
-      Location_View_Callbacks.Object_Connect
-        (Self.Filter_Panel,
-         Signal_Visibility_Toggled,
-         Location_View_Callbacks.To_Marshaller (On_Visibility_Toggled'Access),
-         Location_View (Self));
-      Self.Pack_Start (Self.Filter_Panel, False, False);
 
       Widget_Callback.Connect (Self, Signal_Destroy, On_Destroy'Access);
 
@@ -1150,19 +1041,24 @@ package body GPS.Location_View is
         (Self.Kernel,
          Event_On_Widget => Self.View,
          Object          => Self,
-         ID              => Module_ID (Module),
+         ID              => Location_Views.Get_Module,
          Context_Func    => Context_Func'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Self.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "location_view.preferences_changed",
                 Watch => GObject (Self));
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
 
-      Add_Hook (Kernel, Location_Changed_Hook,
+      Add_Hook (Self.Kernel, Location_Changed_Hook,
                 Wrapper (On_Location_Changed'Access),
                 Name  => "locations.location_changed",
                 Watch => GObject (Self));
+
+      --  Apply the current "sort by subcategory" setting
+      On_Change_Sort (Self);
+
+      return Gtk_Widget (Self.View);
    end Initialize;
 
    -----------------------
@@ -1184,7 +1080,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Ignore);
 
    begin
-      Self.View.Get_Model.Get_Value (Iter, Action_Command_Column, Value);
+      Get_Value (Self.View.Get_Model, Iter, Action_Command_Column, Value);
       Action := To_Action_Item (Get_Address (Value));
 
       if Action /= null
@@ -1194,9 +1090,6 @@ package body GPS.Location_View is
       end if;
 
       Unset (Value);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Action_Clicked;
 
    -------------------------
@@ -1209,11 +1102,11 @@ package body GPS.Location_View is
       Iter : Gtk_Tree_Iter)
    is
       pragma Unreferenced (Path);
-
    begin
       declare
          Mark     : constant Editor_Mark'Class :=
-           Get_Mark (Self.View.Get_Model, Iter, Node_Mark_Column);
+           Get_Mark (Gtk.Tree_Model."-" (Self.View.Get_Model),
+                     Iter, Node_Mark_Column);
          Location : constant Editor_Location'Class := Mark.Location (True);
 
       begin
@@ -1221,9 +1114,6 @@ package body GPS.Location_View is
             Location.Buffer.Current_View.Cursor_Goto (Location, True);
          end if;
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Location_Clicked;
 
    ---------------------------------
@@ -1231,169 +1121,129 @@ package body GPS.Location_View is
    ---------------------------------
 
    function Get_Or_Create_Location_View
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return Location_View
-   is
-      Child : MDI_Child;
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Location_View_Access is
    begin
-      Child := Get_Or_Create_Location_View_MDI (Kernel, Allow_Creation);
-
-      if Child = null then
-         return null;
-      else
-         return Location_View (Get_Widget (Child));
-      end if;
+      return Location_View_Access (Location_Views.Get_Or_Create_View (Kernel));
    end Get_Or_Create_Location_View;
-
-   -------------------------------------
-   -- Get_Or_Create_Location_View_MDI --
-   -------------------------------------
-
-   function Get_Or_Create_Location_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return MDI_Child
-   is
-      Child     : GPS_MDI_Child;
-      Locations : Location_View;
-   begin
-      if Get_MDI (Kernel) = null then
-         --  We are destroying everything. This function gets called likely
-         --  because a module (code_analysis for instance) tries to cleanup
-         --  the locations view after the latter has already been destroyed)
-         return null;
-      end if;
-
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-         (Get_MDI (Kernel), Location_View_Record'Tag,
-          Visible_Only => not Allow_Creation));
-
-      if Child = null then
-         if not Allow_Creation then
-            return null;
-         end if;
-
-         Gtk_New (Locations, Kernel_Handle (Kernel),
-                  Abstract_Module_ID (Location_View_Module_Id));
-         Gtk_New (Child, Locations,
-                  Module              => Location_View_Module_Id,
-                  Default_Width       => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height      => Gint (Default_Widget_Height.Get_Pref),
-                  Focus_Widget        => Gtk_Widget (Locations.View),
-                  Group               => Group_Consoles,
-                  Desktop_Independent => True);
-         Set_Title (Child, -"Locations");
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-         Set_Focus_Child (Child);
-      end if;
-
-      return MDI_Child (Child);
-   end Get_Or_Create_Location_View_MDI;
 
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      View  : Location_View;
-      Child : MDI_Child;
-
+      View  : constant Location_View := Location_Views.Retrieve_View (Kernel);
    begin
-      Child := Get_Or_Create_Location_View_MDI
-        (Kernel, Allow_Creation => False);
-
-      if Child = null then
-         return;
+      if View /= null then
+         Set_Font_And_Colors
+           (View.View, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
-
-      View := Location_View (Get_Widget (Child));
-
-      Set_Font_And_Colors (View.View, Fixed_Font => True);
    end Preferences_Changed;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
+   --------------------
+   -- Create_Toolbar --
+   --------------------
 
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
+   overriding procedure Create_Toolbar
+     (View    : not null access Location_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      pragma Unreferenced (MDI);
-      Child                    : MDI_Child;
-      View                     : Location_View;
-
+      use Generic_Views;
+      Sep    : Gtk_Separator_Tool_Item;
    begin
-      if Node.Tag.all = "Location_View_Record" then
-         Child := Get_Or_Create_Location_View_MDI
-           (User, Allow_Creation => True);
-         View := Location_View (Get_Widget (Child));
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Clear,
+         Action   => Command_Clear_Locations_Name,
+         Tooltip  => Command_Clear_Locations_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Remove,
+         Action   => Command_Remove_Message_Name,
+         Tooltip  => Command_Remove_Message_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Save,
+         Action   => Command_Export_Name,
+         Tooltip  => Command_Export_Tip);
 
-         if Boolean'Value (Get_Attribute (Node, "filter_panel", "FALSE")) then
-            Set_Filter_Visibility (View, Visible => True);
-            View.Filter_Panel.Set_Pattern
-              (Get_Attribute (Node, "filter_pattern", ""));
+      Gtk_New (Sep);
+      Toolbar.Insert (Sep);
 
-         else
-            Set_Filter_Visibility (View, Visible => False);
-         end if;
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS_Expand_All,
+         Action   => Command_Expand_Category_Name,
+         Tooltip  => Command_Expand_Category_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS_Collapse_All,
+         Action   => Command_Collapse_All_Files_Name,
+         Tooltip  => Command_Collapse_All_Files_Tip);
 
-         View.Filter_Panel.Set_Is_Regexp
-           (Boolean'Value (Get_Attribute (Node, "filter_regexp", "FALSE")));
-         View.Filter_Panel.Set_Hide_Matched
-           (Boolean'Value
-             (Get_Attribute (Node, "filter_hide_matches", "FALSE")));
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "locations",
+         Tooltip     => -"The text pattern or regular expression",
+         Placeholder => -"filter",
+         Options     => Has_Regexp or Has_Negate);
+   end Create_Toolbar;
 
-         return Child;
-      end if;
+   -----------------
+   -- Create_Menu --
+   -----------------
 
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
+   overriding procedure Create_Menu
+     (View    : not null access Location_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (User);
-
-      N    : Node_Ptr;
-      View : Location_View;
-
+      Check : Gtk_Check_Menu_Item;
    begin
-      if Widget.all in Location_View_Record'Class then
-         View := Location_View (Widget);
+      Gtk_New (Check, -"Sort by subcategory");
+      Associate (Get_History (View.Kernel).all,
+                 History_Sort_By_Subcategory, Check, Default => False);
+      Location_View_Callbacks.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         On_Change_Sort'Access, View);
+      Menu.Add (Check);
 
-         N := new Node;
-         N.Tag := new String'("Location_View_Record");
+      Gtk_New (Check, -"Jump to first location");
+      Check.Set_Tooltip_Text
+        (-("Whether GPS should automatically jump to the first location"
+           & " when entries are added to the Location window (error"
+           & " messages, find results, ...)"));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Auto_Jump_To_First, Check, Default => True);
+      Location_View_Callbacks.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         On_Change_Sort'Access, View);  --  force refresh
+      Menu.Add (Check);
 
-         if View.Filter_Panel.Mapped_Is_Set then
-            Set_Attribute (N, "filter_panel", "TRUE");
+      Gtk_New (Check, -"Wrap around on next/previous");
+      Check.Set_Tooltip_Text
+        (-("Whether using the Next Tag and Previous Tag actions "
+         & " should wrap around to the beginning when reaching the end of "
+         & " the category."));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Locations_Wrap, Check, Default => True);
+      Menu.Add (Check);
 
-            if View.Filter_Panel.Get_Pattern /= "" then
-               Set_Attribute
-                 (N, "filter_pattern", View.Filter_Panel.Get_Pattern);
-            end if;
-         end if;
-
-         if View.Filter_Panel.Get_Is_Regexp then
-            Set_Attribute (N, "filter_regexp", "TRUE");
-         end if;
-
-         if View.Filter_Panel.Get_Hide_Matched then
-            Set_Attribute (N, "filter_hide_matches", "TRUE");
-         end if;
-
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
+      Gtk_New (Check, -"Auto close Locations");
+      Check.Set_Tooltip_Text
+        (-("Whether the Locations view should be closed "
+         & "automatically when it becomes empty."));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Locations_Auto_Close, Check, Default => True);
+      Menu.Add (Check);
+   end Create_Menu;
 
    ---------------------
    -- Register_Module --
@@ -1402,18 +1252,65 @@ package body GPS.Location_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Module_Name : constant String := "Location View";
-
+      Manager : constant View_Manager_Access := new View_Manager (Kernel);
+      Command : Commands.Interactive.Interactive_Command_Access;
    begin
-      Location_View_Module_Id := new Location_View_Module;
-      Register_Module
-        (Module      => Location_View_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => Module_Name);
+      Location_Views.Register_Module
+        (Kernel, Menu_Name => -"Views/Locations");
 
-      GPS.Location_View.Actions.Register_Actions (Kernel);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Auto_Jump_To_First,
+         Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Locations_Wrap,
+         Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Locations_Auto_Close,
+         Default_Value => False);
 
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Command := new Remove_Selection_Command;
+      Register_Action
+        (Kernel, Command_Remove_Message_Name,
+         Command, Command_Remove_Message_Tip,
+         null, -"Locations");
+      GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
+
+      Command := new Clear_Locations_Command;
+      Register_Action
+        (Kernel, Command_Clear_Locations_Name,
+         Command, Command_Clear_Locations_Tip,
+         null, -"Locations");
+
+      Command := new Export_Command;
+      Register_Action
+        (Kernel, Command_Export_Name, Command, Command_Export_Tip,
+         null, -"Locations");
+
+      Command := new Toggle_Sort_By_Subcategory_Command;
+      Register_Action
+        (Kernel, Command_Toggle_Sort_By_Subcategory,
+         Command, Command_Toggle_Sort_By_Subcategory_Tip,
+         null, -"Locations");
+
+      Command := new Expand_Category_Command;
+      Register_Action
+        (Kernel, Command_Expand_Category_Name,
+         Command, Command_Expand_Category_Tip,
+         null, -"Locations");
+
+      Command := new Collapse_All_Files_Command;
+      Register_Action
+        (Kernel, Command_Collapse_All_Files_Name,
+         Command, Command_Collapse_All_Files_Tip,
+         null, -"Locations");
+
+      Get_Messages_Container (Kernel).Register_Listener
+        (Listener_Access (Manager),
+         (Editor_Side => False,
+          GPS.Kernel.Messages.Locations => True));
    end Register_Module;
 
    -----------------------
@@ -1598,89 +1495,185 @@ package body GPS.Location_View is
       end if;
    end Default_Command_Handler;
 
-   ---------------------
-   -- On_Apply_Filter --
-   ---------------------
+   --------------------
+   -- Filter_Changed --
+   --------------------
 
-   procedure On_Apply_Filter (Self : access Location_View_Record'Class) is
+   overriding procedure Filter_Changed
+     (Self    : not null access Location_View_Record;
+      Pattern : String;
+      Options : Generic_Views.Filter_Options)
+   is
    begin
       Self.View.Get_Filter_Model.Set_Pattern
-        (Self.Filter_Panel.Get_Pattern,
-         Self.Filter_Panel.Get_Is_Regexp,
-         Self.Filter_Panel.Get_Hide_Matched);
-      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title
-        (+"Locations (filtered)");
-   end On_Apply_Filter;
-
-   ----------------------
-   -- On_Cancel_Filter --
-   ----------------------
-
-   procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
-   begin
-      Self.View.Get_Filter_Model.Set_Pattern ("", False, False);
-      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title (+"Locations");
-   end On_Cancel_Filter;
-
-   ---------------------------
-   -- Set_Filter_Visibility --
-   ---------------------------
-
-   procedure Set_Filter_Visibility
-     (Self : access Location_View_Record'Class;
-      Visible : Boolean) is
-   begin
-      if Visible then
-         Set_Child_Visible (Self.Filter_Panel, True);
-         Set_USize (Self.Filter_Panel, -1, -1);
-         Self.Filter_Panel.Show;
-      else
-         Set_Child_Visible (Self.Filter_Panel, False);
-         Set_USize (Self.Filter_Panel, -1, 0);
-         Set_Size_Request (Self.Filter_Panel, -1, 0);
-         Self.Filter_Panel.Hide;
-      end if;
-   end Set_Filter_Visibility;
-
-   -------------------------------
-   -- On_Filter_Panel_Activated --
-   -------------------------------
-
-   procedure On_Filter_Panel_Activated
-     (Self : access Location_View_Record'Class) is
-   begin
-      Set_Filter_Visibility (Self, not Self.Filter_Panel.Mapped_Is_Set);
-   end On_Filter_Panel_Activated;
-
-   ---------------------------
-   -- On_Visibility_Toggled --
-   ---------------------------
-
-   procedure On_Visibility_Toggled
-     (Self : access Location_View_Record'Class) is
-   begin
-      Self.View.Get_Filter_Model.Set_Pattern
-        (Self.Filter_Panel.Get_Pattern,
-         Self.Filter_Panel.Get_Is_Regexp,
-         Self.Filter_Panel.Get_Hide_Matched);
-   end On_Visibility_Toggled;
+        (Pattern,
+         Is_Regexp    => Options.Regexp,
+         Hide_Matched => Options.Negate);
+   end Filter_Changed;
 
    --------------------
    -- On_Row_Deleted --
    --------------------
 
    procedure On_Row_Deleted
-     (Self : access Location_View_Record'Class) is
+     (Self : access Location_View_Record'Class)
+   is
    begin
-      if Locations_Auto_Close.Get_Pref then
-         if Self.View.Get_Model.Get_Iter_First = Null_Iter then
+      if Get_History (Get_History (Self.Kernel).all,
+                      Hist_Locations_Auto_Close)
+      then
+         if Get_Iter_First (Self.View.Get_Model) = Null_Iter then
             Self.Do_Not_Delete_Messages_On_Exit := True;
             Destroy (Self);
          end if;
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Row_Deleted;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Clear_Locations_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      View : constant Location_View :=
+        Location_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Container : Messages_Container_Access;
+   begin
+      if View /= null then
+         Container := Get_Messages_Container (View.Kernel);
+         Container.Remove_All_Messages
+           ((Editor_Side => False,
+             GPS.Kernel.Messages.Locations => True));
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Remove_Selection_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      View : constant Location_View :=
+        Location_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Message  : Message_Access;
+      Value    : GValue;
+   begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      Get_Selected (Get_Selection (View.View), Model, Iter);
+
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+         return Commands.Failure;
+      end if;
+
+      Path := Get_Path (Model, Iter);
+
+      if Get_Depth (Path) = 1 then
+         Get_Messages_Container (View.Kernel).Remove_Category
+           (Get_String (Model, Iter, Category_Column),
+            Locations_Message_Flags);
+      elsif Get_Depth (Path) = 2 then
+         Get_Messages_Container (View.Kernel).Remove_File
+           (Get_String (Model, Iter, Category_Column),
+            Get_File (Model, Iter, File_Column),
+            Locations_Message_Flags);
+      elsif Get_Depth (Path) >= 3 then
+         Get_Value (Model, Iter, Message_Column, Value);
+         Message := Message_Access
+           (Message_Conversions.To_Pointer (Get_Address (Value)));
+         Glib.Values.Unset (Value);
+         Message.Remove;
+      end if;
+
+      Path_Free (Path);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Export_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      View : constant Location_View :=
+        Location_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      Export_File : GNATCOLL.VFS.Virtual_File;
+      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
+        Get_Messages_Container (View.Kernel);
+   begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      Get_Selected (Get_Selection (View.View), Model, Iter);
+
+      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+         return Commands.Failure;
+      end if;
+
+      Path := Get_Path (Model, Iter);
+
+      if Get_Depth (Path) = 1 then
+         Export_File := Gtkada.File_Selector.Select_File;
+         if Export_File /= No_File then
+            declare
+               Category : constant Unbounded_String := To_Unbounded_String
+                 (Get_String (Model, Iter, Category_Column));
+               Files    : constant Virtual_File_Array :=
+                 Container.Get_Files (Category);
+               File     : Ada.Text_IO.File_Type;
+            begin
+               Create (File, Out_File, String (Export_File.Full_Name.all));
+               for J in Files'Range loop
+                  Export_Messages (File, Container, Category, Files (J));
+               end loop;
+               Ada.Text_IO.Close (File);
+            end;
+         end if;
+
+      elsif Get_Depth (Path) = 2 then
+         Export_File := Gtkada.File_Selector.Select_File;
+         if Export_File /= No_File then
+            declare
+               Category : constant Unbounded_String := To_Unbounded_String
+                 (Get_String (Model, Iter, Category_Column));
+               File     : constant Virtual_File :=
+                 GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
+               F : File_Type;
+            begin
+               Create (F, Out_File, String (Export_File.Full_Name.all));
+               Export_Messages (F, Container, Category, File);
+               Close (F);
+            end;
+         end if;
+
+      elsif Get_Depth (Path) >= 3 then
+         null;   --  Nothing to do
+      end if;
+
+      Path_Free (Path);
+      return Commands.Success;
+   end Execute;
 
 end GPS.Location_View;

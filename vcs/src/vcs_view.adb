@@ -18,12 +18,14 @@
 with GNAT.Strings;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
+with Gdk;                       use Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Types;                 use Gdk.Types;
+with Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -32,14 +34,12 @@ with Basic_Types;               use Basic_Types;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
-with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 
 package body VCS_View is
 
@@ -92,14 +92,14 @@ package body VCS_View is
          Quit : Boolean := False;
          I, K : Gtk_Tree_Iter;
       begin
-         Iter_Copy (Iter, I);
+         I := Iter;
 
          while not Quit and then I /= Null_Iter loop
             if Has_Child (Explorer.Model, I) and then not Root_Only then
                Iterate (Children (Explorer.Model, I), Root => False);
             end if;
 
-            Iter_Copy (I, K);
+            K := I;
             Next (Explorer.Model, I);
             --  We copy and compute the next iterator now to support Action
             --  that deletes nodes.
@@ -125,7 +125,6 @@ package body VCS_View is
       Selection       : Gtk_Tree_Selection;
 
    begin
-      Init_Graphics;
       Initialize_Hbox (Explorer);
 
       Explorer.Kernel := Kernel_Handle (Kernel);
@@ -163,7 +162,7 @@ package body VCS_View is
 
       Tooltip := new VCS_Tooltips;
       Tooltip.Explorer := VCS_View.VCS_View_Access (Explorer);
-      Set_Tooltip (Tooltip, Explorer.Tree);
+      Tooltip.Set_Tooltip (Explorer.Tree);
 
       --  Emit a "clicked" signal on the file column to sort it
 
@@ -222,8 +221,7 @@ package body VCS_View is
 
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press then
-         Iter := Find_Iter_For_Event
-           (Explorer.Tree, Get_Model (Explorer.Tree), Event);
+         Iter := Find_Iter_For_Event (Explorer.Tree, Event);
 
          if Iter /= Null_Iter then
             Path := Get_Path (Get_Model (Explorer.Tree), Iter);
@@ -250,80 +248,72 @@ package body VCS_View is
          return False;
    end Button_Press;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
+   overriding function Create_Contents
      (Tooltip : access VCS_Tooltips;
-      Pixmap  : out Cairo.Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Window     : Gdk.Window.Gdk_Window;
-      New_Window : Gdk_Window;
-      Mask       : Gdk_Modifier_Type;
+      pragma Unreferenced (Widget);  --  a Gtk_Tree_View, not the explorer
 
-      X, Y       : Gint;
+      Label      : Gtk_Label;
+
       Path       : Gtk_Tree_Path;
       Column     : Gtk_Tree_View_Column;
       Cell_X,
       Cell_Y     : Gint;
       Row_Found  : Boolean;
       Iter       : Gtk_Tree_Iter;
-
-      Text       : GNAT.Strings.String_Access;
+      Area       : Gdk.Rectangle.Gdk_Rectangle;
 
    begin
-      Pixmap := Null_Surface;
-
       if Tooltip.Explorer.Tree = null then
-         return;
+         return null;
       end if;
-
-      Window := Get_Bin_Window (Tooltip.Explorer.Tree);
-      Get_Pointer (Window, X, Y, Mask, New_Window);
+--        Window := Get_Bin_Window (Tooltip.Explorer.Tree);
+--        Get_Pointer (Window, X1, Y1, Mask, New_Window);
 
       Get_Path_At_Pos
         (Tooltip.Explorer.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
-         return;
+         return null;
       end if;
 
       Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
       Iter := Get_Iter (Tooltip.Explorer.Model, Path);
       Path_Free (Path);
 
+      Tooltip.Set_Tip_Area (Area);
+
       if Column = Tooltip.Explorer.Status_Column then
-         Text := new String'
-           (-"Status: "
+         Gtk_New
+           (Label,
+            -"<b>Status</b>: "
             & Get_String
               (Tooltip.Explorer.Model, Iter, Status_Description_Column));
+         Label.Set_Use_Markup (True);
 
       elsif Column = Tooltip.Explorer.Log_Column then
          --  ??? check if we are on an activity line or a file line
          if Get_Boolean (Tooltip.Explorer.Model, Iter, Has_Log_Column) then
-            Text := new String'(-"A revision log exists for this file");
+            Gtk_New (Label, -"A revision log exists for this file");
          else
-            Text := new String'(-"No revision log exists for this file");
+            Gtk_New (Label, -"No revision log exists for this file");
          end if;
 
       elsif Column = Tooltip.Explorer.File_Column then
-         Text := new String'
-           (Get_File
+         Gtk_New
+           (Label,
+            Get_File
               (Tooltip.Explorer.Model, Iter, File_Column).Display_Full_Name);
       end if;
 
-      if Text /= null then
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tooltip.Explorer.Tree,
-            Pixmap);
-         GNAT.Strings.Free (Text);
-      end if;
-   end Draw;
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    ---------------
    -- Fill_Info --
@@ -532,8 +522,7 @@ package body VCS_View is
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access);
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter);
       --  Add an item to Result
 
       -----------------------
@@ -543,10 +532,9 @@ package body VCS_View is
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access)
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
       is
-         pragma Unreferenced (Model, Path, Data);
+         pragma Unreferenced (Model, Path);
       begin
          if not (Parent (Explorer.Model, Iter) = Null_Iter) then
             --  Do not take root nodes, those are the activity name or the VCS
@@ -558,18 +546,13 @@ package body VCS_View is
          end if;
       end Add_Selected_Item;
 
-      E  : aliased VCS_View_Access := Explorer;
-      EA : constant Explorer_Selection_Foreach.Data_Type_Access :=
-             E'Unchecked_Access;
-
    begin
       if Explorer = null then
          return Result;
       end if;
 
-      Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Explorer.Tree),
-         Add_Selected_Item'Unrestricted_Access, EA);
+      Explorer.Tree.Get_Selection.Selected_Foreach
+        (Add_Selected_Item'Unrestricted_Access);
 
       return Result;
    end Get_Selected_Files;
@@ -669,7 +652,7 @@ package body VCS_View is
 
    procedure Clear (Explorer : access VCS_View_Record'Class) is
    begin
-      if Realized_Is_Set (Explorer.Tree) then
+      if Explorer.Tree.Get_Realized then
          Scroll_To_Point (Explorer.Tree, 0, 0);
       end if;
 

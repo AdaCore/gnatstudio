@@ -27,17 +27,19 @@ with Cairo;                     use Cairo;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
+with Glib.Main;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style;                 use Gtk.Style;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Canvas;             use Gtkada.Canvas;
@@ -51,17 +53,16 @@ with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
-with XML_Utils;                 use XML_Utils;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
@@ -116,13 +117,29 @@ package body Browsers.Entities is
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
-      Idle_Id          : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Id          : Glib.Main.G_Source_Id := 0;
    end record;
-   type Type_Browser is access all Type_Browser_Record'Class;
-
    overriding procedure Refresh_Layout_Orientation
      (Browser : access Type_Browser_Record);
    --  See inherited documentation
+
+   function Initialize
+     (View   : access Type_Browser_Record'Class)
+      return Gtk_Widget;
+   --  Creates the dependency browser and returns the focus widget
+
+   package Entities_Views is new Generic_Views.Simple_Views
+     (Module_Name            => "Entity_Browser",
+      View_Name              => -"Entity Browser",
+      Formal_View_Record     => Type_Browser_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Initialize             => Initialize,
+      Local_Toolbar          => True,
+      Local_Config           => True,
+      Position               => Position_Automatic,
+      Group                  => Group_Graphs);
+   subtype Type_Browser is Entities_Views.View_Access;
 
    ---------------
    -- Type item --
@@ -232,24 +249,6 @@ package body Browsers.Entities is
    -- Misc --
    ----------
 
-   procedure On_Type_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Entity browser menu
-
-   function Open_Type_Browser_Child
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child;
-   --  Create (or return an existing) type browser, and insert it directly into
-   --  the MDI.
-   --  If a new browser is created, it is initially empty.
-   --  If the browser already existed, it is raised.
-
-   function Open_Type_Browser
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Type_Browser;
-   --  Create (or return an existing) type browser. The newly created browser
-   --  is not inserted into the MDI.
-
    function Add_Or_Select_Item
      (Browser : access Type_Browser_Record'Class;
       Entity  : General_Entity) return Type_Item;
@@ -275,7 +274,7 @@ package body Browsers.Entities is
 
    overriding function Call
      (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
    overriding procedure Destroy (Callback : in out Show_Entity_Callback);
    --  See inherated doc
 
@@ -320,16 +319,6 @@ package body Browsers.Entities is
    --  Add the parent package information for an entity at the end of its
    --  cross-reference lists.
 
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
-   --  Support functions for the MDI
-
    procedure On_Show_Source
      (Browser : access Gtk_Widget_Record'Class; Item : Browser_Item);
    --  Display a source editor to show the declaration of the entity
@@ -347,7 +336,7 @@ package body Browsers.Entities is
    --  Display the parent/child types for the item
 
    procedure Hide_Show_Inherited
-     (Event : Gdk_Event;
+     (Event : Gdk_Event_Button;
       Item  : access Browser_Item_Record'Class);
    --  Change the status of inherited primitive operations (shown or hidden)
 
@@ -419,10 +408,10 @@ package body Browsers.Entities is
 
    overriding function Call
      (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean is
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean is
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
       then
          Add_Item_And_Link
            (Type_Item (Callback.Item), Callback.Entity,
@@ -469,15 +458,15 @@ package body Browsers.Entities is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Child : constant MDI_Child :=
-                Open_Type_Browser_Child (Get_Kernel (Context.Context));
+      View : constant Type_Browser := Entities_Views.Get_Or_Create_View
+        (Get_Kernel (Context.Context));
       Ignore  : Type_Item;
       pragma Unreferenced (Ignore);
    begin
       Ignore := Add_Or_Select_Item
-        (Browser => Type_Browser (Get_Widget (Child)),
+        (Browser => View,
          Entity  => Get_Entity (Context.Context));
-      Layout (Type_Browser (Get_Widget (Child)), Force => False);
+      Layout (View, Force => False);
       return Commands.Success;
    end Execute;
 
@@ -493,14 +482,9 @@ package body Browsers.Entities is
                                   new Entity_Browser_Action_Context;
    begin
       Entity_Browser_Module := new Entity_Browser_Module_Record;
-
-      Register_Module
-        (Module      => Entity_Browser_Module,
-         Kernel      => Kernel,
-         Module_Name => "Entity_Browser");
-
-      Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
+      Entities_Views.Register_Module
+        (Kernel, Entity_Browser_Module,
+         Menu_Name => -"Browsers/_Entity");
 
       Command := new Examine_Entity_Command;
 
@@ -511,11 +495,6 @@ package body Browsers.Entities is
          Ref_Item   => "Entity called by in browser",
          Add_Before => False,
          Filter     => not Entity_Browser_Context);
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => '/' & (-"Tools") & '/' & (-"Browsers"),
-         Text        => -"_Entity",
-         Callback    => On_Type_Browser'Access);
       Register_Command
         (Kernel, "show",
          Class   => Get_Entity_Class (Kernel),
@@ -580,16 +559,16 @@ package body Browsers.Entities is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : constant General_Entity := Get_Data (Data, 1);
-      Child  : MDI_Child;
+      View   : Type_Browser;
       Result : General_Entity;
       Ignore : Type_Item;
       pragma Unreferenced (Ignore);
    begin
       if Entity /= No_General_Entity then
          if Command = "show" then
-            Child := Open_Type_Browser_Child (Kernel);
+            View := Entities_Views.Get_Or_Create_View (Kernel, Focus => True);
             Ignore := Add_Or_Select_Item
-              (Browser => Type_Browser (Get_Widget (Child)),
+              (Browser => View,
                Entity  => Entity);
 
          elsif Command = "discriminants" then
@@ -719,100 +698,36 @@ package body Browsers.Entities is
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
-   -----------------------
-   -- Open_Type_Browser --
-   -----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Open_Type_Browser
-     (Kernel : access Kernel_Handle_Record'Class) return Type_Browser
+   function Initialize
+     (View   : access Type_Browser_Record'Class)
+      return Gtk_Widget
    is
-      Browser    : constant Type_Browser := new Type_Browser_Record;
       i_page_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       pragma Import (C, i_page_xpm, "i_page_xpm");
 
    begin
       Initialize
-        (Browser, Kernel,
+        (View,
          Create_Toolbar  => False,
          Parents_Pixmap  => Stock_Go_Up,
          Children_Pixmap => Stock_Go_Down);
 
       --  ??? Should be freed when browser is destroyed
-      Browser.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
+      View.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Browser,
-         Object          => Browser,
-         ID              => Entity_Browser_Module,
+        (Kernel          => View.Kernel,
+         Event_On_Widget => View,
+         Object          => View,
+         ID              => Entities_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
 
-      return Browser;
-   end Open_Type_Browser;
-
-   -----------------------------
-   -- Open_Type_Browser_Child --
-   -----------------------------
-
-   function Open_Type_Browser_Child
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child
-   is
-      Child   : GPS_MDI_Child;
-      Browser : Type_Browser;
-      Title   : constant String := -"Entity Browser";
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Type_Browser_Record'Tag));
-
-      if Child /= null then
-         Raise_Child (Child);
-      else
-         Browser := Open_Type_Browser (Kernel);
-         Gtk_New (Child, Browser,
-                  Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Entity_Browser_Module);
-         Set_Title (Child, Title);
-         Put (Get_MDI (Kernel), Child);
-         Set_Focus_Child (Child);
-      end if;
-
-      Add_Navigation_Location (Kernel, Title);
-
-      return MDI_Child (Child);
-   end Open_Type_Browser_Child;
-
-   ---------------------
-   -- On_Type_Browser --
-   ---------------------
-
-   procedure On_Type_Browser
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Child   : MDI_Child;
-      Entity  : General_Entity;
-      Ignore   : Type_Item;
-      pragma Unreferenced (Widget, Ignore);
-
-   begin
-      Child := Open_Type_Browser_Child (Kernel);
-
-      if Context /= No_Context then
-         Entity := Get_Entity (Context);
-         if Entity /= No_General_Entity then
-            Ignore := Add_Or_Select_Item
-              (Browser => Type_Browser (Get_Widget (Child)),
-               Entity  => Entity);
-         end if;
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Type_Browser;
+      return Gtk_Widget (View);
+   end Initialize;
 
    -------------
    -- Gtk_New --
@@ -1414,13 +1329,13 @@ package body Browsers.Entities is
    -------------------------
 
    procedure Hide_Show_Inherited
-     (Event : Gdk_Event;
+     (Event : Gdk_Event_Button;
       Item  : access Browser_Item_Record'Class)
    is
       It : constant Type_Item := Type_Item (Item);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+      if Event.Button = 1
+        and then Event.The_Type = Button_Release
       then
          It.Inherited_Primitives := not It.Inherited_Primitives;
          Trace (Me, "Hide_Show_Inherited => "
@@ -1453,8 +1368,9 @@ package body Browsers.Entities is
       Attr_Lines                     : Xref_List;
       Meth_Lines                     : Xref_List;
       Added                          : Boolean;
-      Style                          : Gtk_Style;
-
+      Style_Context                  : Gtk_Style_Context;
+      Color                          : Gdk_RGBA;
+      Border                         : Gtk.Style.Gtk_Border;
    begin
       Add_Line
         (General_Lines, Kernel.Databases.Get_Display_Kind (Item.Entity));
@@ -1525,12 +1441,19 @@ package body Browsers.Entities is
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
          Y := Y + 2;
-         Style := Get_Item_Style (Item);
+
+         Style_Context := Get_Style_Context (Get_Browser (Item));
+         Style_Context.Get_Color (Gtk_State_Flag_Normal, Color);
+         --  We used to use Gtk.Style.X_Thickness to determine the width of
+         --  the line.  Now we'll use the thickness of the bottom border
+         --  instead.
+         Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
          Draw_Line
-           (Cr, Get_Fg (Style, State_Normal),
-            X1       => X_Thickness (Style),
+           (Cr,
+            Color    => Color,
+            X1       => Gint (Border.Bottom),
             Y1       => Y,
-            X2       => Get_Coord (Item).Width - X_Thickness (Style) - 1,
+            X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
             Y2       => Y);
          Y := Y + 1;
       end if;
@@ -1603,53 +1526,6 @@ package body Browsers.Entities is
 
       return Found;
    end Add_Or_Select_Item;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      Child : GPS_MDI_Child;
-   begin
-      if Node.Tag.all = "Entities_Browser" then
-         Gtk_New (Child, Open_Type_Browser (User),
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Graphs,
-                  Module         => Entity_Browser_Module);
-         Set_Title (Child, -"Entity Browser");
-         Put (MDI, Child);
-
-         return MDI_Child (Child);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
-   is
-      pragma Unreferenced (User);
-      N : Node_Ptr;
-   begin
-      if Widget.all in Type_Browser_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Entities_Browser");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
 
    --------------------
    -- On_Show_Source --
@@ -1727,7 +1603,8 @@ package body Browsers.Entities is
       Child   : Glib.Object.GObject)
    is
       pragma Unreferenced (Module);
-      Browser : constant Type_Browser := Type_Browser (Child);
+      Browser : constant Type_Browser :=
+        Entities_Views.View_From_Widget (Child);
       Iter    : constant Item_Iterator :=
         Start (Get_Canvas (Browser), Selected_Only => True);
    begin
@@ -1817,7 +1694,10 @@ package body Browsers.Entities is
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   is
+      Browser : constant Browsers.Canvas.General_Browser := Get_Browser (Item);
+      Color   : Gdk.RGBA.Gdk_RGBA;
    begin
       Yoffset := Yoffset + Generic_Item_Box_Height_Top;
       Resize_And_Draw
@@ -1826,8 +1706,11 @@ package body Browsers.Entities is
          Width_Offset + Generic_Item_Box_Width_Right,
          Height_Offset, Xoffset, Yoffset, Layout);
 
+      Get_Background_Color
+        (Get_Style_Context (Browser), Gtk_State_Flag_Normal, Color);
       Draw_Rectangle
-        (Cr, Get_Base (Get_Item_Style (Item), State_Normal),
+        (Cr,
+         Color  => Color,
          Filled => True,
          X      => Get_Coord (Item).Width - Generic_Item_Box_Width + 1,
          Y      => 1,
@@ -1835,7 +1718,7 @@ package body Browsers.Entities is
          Height => Generic_Item_Box_Height - 2);
       Draw_Shadow
         (Cr,
-         Style       => Get_Style (Get_Browser (Item)),
+         Widget      => Browser,
          Shadow_Type => Shadow_Out,
          X           => Get_Coord (Item).Width - Generic_Item_Box_Width,
          Y           => 0,

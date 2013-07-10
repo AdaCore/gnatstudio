@@ -18,7 +18,7 @@
 --  This package provides a task manager with a scheduler
 --  to handle asynchronous or background tasks run by GPS.
 --
---  The task manager is created upon GPS startup.
+--  The task manager is created at GPS startup.
 --
 --  By default, the task manager does nothing.
 --  When it is given a command (through a call to Add_Command), it will begin
@@ -71,6 +71,16 @@ package Task_Manager is
       Pop_Command  : Command_Access);
    --  Set the commands used to push/pop the busy state
 
+   procedure Pause_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Pause command referenced by Index
+
+   procedure Resume_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Resume paused command referenced by Index
+
    procedure Destroy
      (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager
@@ -94,6 +104,11 @@ package Task_Manager is
       Queue_Id : String) return Boolean;
    --  Return True if a queue identified by Queue_Id is currently running or
    --  paused in the task manager.
+
+   procedure Interrupt_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer);
+   --  Interrupt command referenced by Index
 
 private
 

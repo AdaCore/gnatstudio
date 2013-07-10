@@ -226,8 +226,12 @@ package GPS.Kernel.Messages is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags);
-   --  Initialize message and connect it to container
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean);
+   --  Initialize message and connect it to container.
+   --  If Allow_Auto_Jump_To_First is True and the user preference is also true
+   --  then the locations window will automatically jump to the first message
+   --  when the category is created.
    --  ??? Need doc for Weight, Actual_Line, Actual_Column, not trivial
 
    procedure Initialize
@@ -344,7 +348,15 @@ package GPS.Kernel.Messages is
 
    procedure Category_Added
      (Self     : not null access Abstract_Listener;
+      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Allow_Auto_Jump_To_First : Boolean) is null;
+   --  If Allow_Auto_Jump_To_First is True and the user preference is also true
+   --  then the locations window will automatically jump to the first message.
+
+   procedure Category_Removed
+     (Self     : not null access Abstract_Listener;
       Category : Ada.Strings.Unbounded.Unbounded_String) is null;
+   --  Called on remove of category
 
    procedure File_Added
      (Self     : not null access Abstract_Listener;
@@ -450,6 +462,8 @@ private
         Hash,
         Ada.Tags."=");
 
+   type Message_Counters is array (Message_Visibility_Kind) of Natural;
+
    type Node_Kinds is (Node_Category, Node_File, Node_Message);
 
    --  Declaration of Node_Record as tagged type with discriminant versus
@@ -460,17 +474,26 @@ private
    type Node_Record (Kind : Node_Kinds) is tagged limited record
       Parent   : Node_Access;
       Children : Node_Vectors.Vector;
-      Flags    : Message_Flags;
 
       case Kind is
-         when Node_Category =>
-            Container : Messages_Container_Access;
-            Name      : Ada.Strings.Unbounded.Unbounded_String;
-            File_Map  : File_Maps.Map;
-            Sort_Hint : Sort_Order_Hint;
+         when Node_Category | Node_File =>
+            Counters : Message_Counters;
+            --  Number of messages of each visibility kinds. Used to manage
+            --  notification about category and file addition/removal.
 
-         when Node_File =>
-            File : GNATCOLL.VFS.Virtual_File;
+            case Kind is
+               when Node_Category =>
+                  Container : Messages_Container_Access;
+                  Name      : Ada.Strings.Unbounded.Unbounded_String;
+                  File_Map  : File_Maps.Map;
+                  Sort_Hint : Sort_Order_Hint;
+
+               when Node_File =>
+                  File : GNATCOLL.VFS.Virtual_File;
+
+               when Node_Message =>
+                  null;
+            end case;
 
          when Node_Message =>
             Line   : Natural;
@@ -480,6 +503,7 @@ private
             Style  : GPS.Styles.UI.Style_Access;
             Length : Natural := 0;
             Notes  : Note_Maps.Map;
+            Flags  : Message_Flags;
       end case;
    end record;
 
@@ -515,7 +539,8 @@ private
         Weight        : Natural;
         Actual_Line   : Integer;
         Actual_Column : Integer;
-        Flags         : Message_Flags)
+        Flags         : Message_Flags;
+        Allow_Auto_Jump_To_First : Boolean)
         return not null Message_Access;
 
    type Secondary_Message_Load_Procedure is

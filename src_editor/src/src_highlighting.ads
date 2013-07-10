@@ -21,7 +21,7 @@
 --  also line or word highlighting, etc).
 --  </description>
 
-with Gdk.Color;
+with Gdk.RGBA;
 with Gtk.Text_Tag;
 with Pango.Font;
 
@@ -59,36 +59,18 @@ package Src_Highlighting is
    procedure Unref (Tags : in out Highlighting_Tags);
    --  Free memory
 
-   procedure Create_Syntax_Tags
-     (Result                      : in out Highlighting_Tags;
-      Type_Color                  : Gdk.Color.Gdk_Color;
-      Type_Color_Bg               : Gdk.Color.Gdk_Color;
-      Type_Font_Desc              : Pango.Font.Pango_Font_Description := null;
-      Block_Color                 : Gdk.Color.Gdk_Color;
-      Block_Color_Bg              : Gdk.Color.Gdk_Color;
-      Block_Font_Desc             : Pango.Font.Pango_Font_Description := null;
-      Keyword_Color               : Gdk.Color.Gdk_Color;
-      Keyword_Color_Bg            : Gdk.Color.Gdk_Color;
-      Keyword_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Comment_Color               : Gdk.Color.Gdk_Color;
-      Comment_Color_Bg            : Gdk.Color.Gdk_Color;
-      Comment_Font_Desc           : Pango.Font.Pango_Font_Description := null;
-      Annotated_Comment_Color     : Gdk.Color.Gdk_Color;
-      Annotated_Comment_Color_Bg  : Gdk.Color.Gdk_Color;
-      Annotated_Comment_Font_Desc : Pango.Font.Pango_Font_Description := null;
-      Character_Color             : Gdk.Color.Gdk_Color;
-      Character_Color_Bg          : Gdk.Color.Gdk_Color;
-      Character_Font_Desc         : Pango.Font.Pango_Font_Description := null;
-      String_Color                : Gdk.Color.Gdk_Color;
-      String_Color_Bg             : Gdk.Color.Gdk_Color;
-      String_Font_Desc            : Pango.Font.Pango_Font_Description := null);
-   --  Create or update a Highlighting_Tags object using the given color names.
-   --  If some colors name can not be parsed, then no special color will be
-   --  used to highlight the associated source parts.
+   procedure New_Tag
+     (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name   : String;
+      Fore_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Back_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
+      Font_Desc  : Pango.Font.Pango_Font_Description := null);
+   --  Create a new Gtk_Text_Tag with the given name.
+   --  If the tag already exists, its properties are changed accordingly.
 
    procedure Create_Highlight_Line_Tag
      (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk.Color.Gdk_Color);
+      Color : Gdk.RGBA.Gdk_RGBA);
    --  Create a tag and set the Background_Gdk property using the given Color.
    --  The priority of this Tag is guarantied to exceed the priority of the
    --  syntax highlighting tags to ensure that highlighting a part of the

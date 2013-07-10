@@ -73,6 +73,18 @@ package Engine_Wrappers is
    --  the corresponding entity if the proposal is based on a source code
    --  entity.
 
+   function Get_Custom_Icon_Name
+     (Proposal : Root_Proposal)
+      return String is ("");
+   --  If the proposal has a custom icon (not determined by the completion
+   --  type), this function will return its name
+
+   function Is_Accessible
+     (Proposal : Root_Proposal)
+      return Boolean is (True);
+   --  Returns true if the proposal is accessible from the context of the
+   --  current completion
+
    procedure Free (X : in out Root_Proposal) is null;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -127,6 +139,11 @@ package Engine_Wrappers is
      (Proposal : Comp_Proposal;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
       return String;
+   overriding function Get_Custom_Icon_Name
+     (Proposal : Comp_Proposal) return String;
+   overriding function Is_Accessible
+     (Proposal : Comp_Proposal)
+      return Boolean;
 
    overriding procedure Free (X : in out Comp_Proposal);
 

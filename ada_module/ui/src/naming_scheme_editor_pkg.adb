@@ -19,10 +19,10 @@ with Glib;                   use Glib;
 
 with Gtk;                    use Gtk;
 with Gtk.Alignment;          use Gtk.Alignment;
+with Gtk.Combo_Box;
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
@@ -75,13 +75,11 @@ package body Naming_Scheme_Editor_Pkg is
       Render                   : Gtk_Cell_Renderer_Text;
       Col                      : Gtk_Tree_View_Column;
       Col_Number               : Gint;
-      List                     : Gtk_List_Store;
       pragma Unreferenced (Col_Number);
 
    begin
       Gtk.Window.Initialize (Naming_Scheme_Editor, Window_Toplevel);
       Set_Title (Naming_Scheme_Editor, -"Naming scheme");
-      Set_Policy (Naming_Scheme_Editor, False, True, True);
       Set_Position (Naming_Scheme_Editor, Win_Pos_None);
       Set_Modal (Naming_Scheme_Editor, False);
 
@@ -103,7 +101,7 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox4, Naming_Scheme_Editor.Label_Naming_Scheme, False, False, 0);
 
-      Gtk_New_Text (Naming_Scheme_Editor.Standard_Scheme);
+      Gtk_New (Naming_Scheme_Editor.Standard_Scheme);
       Naming_Scheme_Editor.Standard_Scheme.Append_Text (-"GNAT default");
       Naming_Scheme_Editor.Standard_Scheme.Append_Text
         (-"unit.separate.1.ada");
@@ -133,7 +131,7 @@ package body Naming_Scheme_Editor_Pkg is
       Set_Line_Wrap (Naming_Scheme_Editor.Label_Casing, False);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Label_Casing, False, False, 0);
 
-      Gtk_New_Text (Naming_Scheme_Editor.Casing);
+      Gtk_New (Naming_Scheme_Editor.Casing);
       Naming_Scheme_Editor.Casing.Append_Text (-"");
       Naming_Scheme_Editor.Casing.Set_Active (0);
       Pack_Start (Hbox5, Naming_Scheme_Editor.Casing, True, True, 0);
@@ -175,8 +173,7 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox6, Naming_Scheme_Editor.Label_Spec_Extensions, False, False, 0);
 
-      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Naming_Scheme_Editor.Spec_Extension, List);
+      Gtk_New_With_Entry (Naming_Scheme_Editor.Spec_Extension);
       Naming_Scheme_Editor.Spec_Extension.Set_Entry_Text_Column (0);
       Naming_Scheme_Editor.Spec_Extension.Append_Text (".ads");
       Naming_Scheme_Editor.Spec_Extension.Append_Text (".1.ada");
@@ -199,8 +196,7 @@ package body Naming_Scheme_Editor_Pkg is
       Pack_Start
         (Hbox8, Naming_Scheme_Editor.Label_Body_Extensions, False, False, 0);
 
-      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry (Naming_Scheme_Editor.Body_Extension, List);
+      Gtk_New_With_Entry (Naming_Scheme_Editor.Body_Extension);
       Naming_Scheme_Editor.Body_Extension.Set_Entry_Text_Column (0);
       Naming_Scheme_Editor.Body_Extension.Append_Text (".adb");
       Naming_Scheme_Editor.Body_Extension.Append_Text (".2.ada");
@@ -226,9 +222,7 @@ package body Naming_Scheme_Editor_Pkg is
         (Hbox9, Naming_Scheme_Editor.Label_Separate_Extensions,
          False, False, 0);
 
-      Gtk.List_Store.Gtk_New (List, (0 => GType_String));
-      Gtk_New_With_Model_And_Entry
-        (Naming_Scheme_Editor.Separate_Extension, List);
+      Gtk_New_With_Entry (Naming_Scheme_Editor.Separate_Extension);
       Naming_Scheme_Editor.Separate_Extension.Set_Entry_Text_Column (0);
       Naming_Scheme_Editor.Separate_Extension.Append_Text (".adb");
       Naming_Scheme_Editor.Separate_Extension.Append_Text (".2.ada");

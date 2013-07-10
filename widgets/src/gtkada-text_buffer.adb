@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;            use Glib;
-
 with Gtk.Text_Iter;   use Gtk.Text_Iter;
 
 package body Gtkada.Text_Buffer is
@@ -39,6 +38,15 @@ package body Gtkada.Text_Buffer is
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
    end Initialize;
+
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type return Glib.GType is
+   begin
+      return Gtk.Text_Buffer.Get_Type;
+   end Get_Type;
 
    -----------
    -- Clear --

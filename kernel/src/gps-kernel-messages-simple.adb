@@ -38,7 +38,8 @@ package body GPS.Kernel.Messages.Simple is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags)
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access;
    --  Loads additional data from the XML node and creates primary simple
    --  message.
@@ -65,7 +66,8 @@ package body GPS.Kernel.Messages.Simple is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags)
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access;
    --  Internal create subprogram
 
@@ -92,11 +94,13 @@ package body GPS.Kernel.Messages.Simple is
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
       Weight    : Natural;
-      Flags     : Message_Flags)
+      Flags     : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
    is
       Aux : constant Simple_Message_Access :=
-              Create_Simple_Message
-                (Container, Category, File, Line, Column, Text, Weight, Flags);
+        Create_Simple_Message
+          (Container, Category, File, Line, Column, Text, Weight, Flags,
+           Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
       pragma Unreferenced (Aux);
 
    begin
@@ -115,7 +119,8 @@ package body GPS.Kernel.Messages.Simple is
       Column    : Basic_Types.Visible_Column_Type;
       Text      : String;
       Weight    : Natural;
-      Flags     : Message_Flags)
+      Flags     : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access is
    begin
       return
@@ -129,7 +134,8 @@ package body GPS.Kernel.Messages.Simple is
            Weight,
            Line,
            Integer (Column),
-           Flags);
+           Flags,
+           Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Create_Simple_Message;
 
    ---------------------------
@@ -146,7 +152,8 @@ package body GPS.Kernel.Messages.Simple is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags)
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Simple_Message_Access
    is
       Result : constant not null Simple_Message_Access :=
@@ -165,7 +172,8 @@ package body GPS.Kernel.Messages.Simple is
          Weight,
          Actual_Line,
          Actual_Column,
-         Flags);
+         Flags,
+         Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
       return Result;
    end Create_Simple_Message;
@@ -255,7 +263,8 @@ package body GPS.Kernel.Messages.Simple is
       Weight        : Natural;
       Actual_Line   : Integer;
       Actual_Column : Integer;
-      Flags         : Message_Flags)
+      Flags         : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access
    is
       Text : constant String := Get_Attribute (XML_Node, "text", "");
@@ -273,7 +282,8 @@ package body GPS.Kernel.Messages.Simple is
                 Weight,
                 Actual_Line,
                 Actual_Column,
-                Flags));
+                Flags,
+                Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
    end Load;
 
    ----------

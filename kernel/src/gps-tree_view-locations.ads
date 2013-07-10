@@ -45,7 +45,7 @@ private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
 private with Gtk.Tree_View_Column;
 with GPS.Location_View_Filter;
-private with GPS.Sort_Model.Locations;
+private with GPS.Location_View_Sort;
 
 package GPS.Tree_View.Locations is
 
@@ -62,11 +62,11 @@ package GPS.Tree_View.Locations is
 
    procedure Gtk_New
      (Object : in out GPS_Locations_Tree_View;
-      Model  : not null Gtk.Tree_Model.Gtk_Tree_Model);
+      Model  : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Initialize
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
-      Model : not null Gtk.Tree_Model.Gtk_Tree_Model);
+      Model  : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Sort_By_Subcategory
      (Self : not null access GPS_Locations_Tree_View_Record'Class);
@@ -107,7 +107,7 @@ private
 
       Filter                  :
         GPS.Location_View_Filter.Location_View_Filter_Model;
-      Sort                    : GPS.Sort_Model.Locations.Locations_Proxy_Model;
+      Sort                    : GPS.Location_View_Sort.Locations_Proxy_Model;
       --  Intermediate models to support filtering and custom sorting of items
       --  in the view
 
@@ -118,7 +118,7 @@ private
       --  expanded node. Handler is a Gtk+ idle handler.
    end record;
 
-   overriding procedure On_Lowerst_Model_Row_Inserted
+   overriding procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -134,7 +134,7 @@ private
    --  Registers idle callback to scroll view to make visible the first child
    --  node.
 
-   overriding function To_Lowerst_Model_Iter
+   overriding function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter;

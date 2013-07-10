@@ -24,8 +24,7 @@ with Cairo;           use Cairo;
 with Pango.Cairo;     use Pango.Cairo;
 with Pango.Layout;    use Pango.Layout;
 
-with Gdk.Cairo;       use Gdk.Cairo;
-with Gdk.Color;       use Gdk.Color;
+with Gdk.RGBA;        use Gdk.RGBA;
 
 with Gtkada.Style;    use Gtkada.Style;
 
@@ -55,7 +54,7 @@ package body Items.Simples is
       Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      Color   : Gdk_Color;
+      Color   : Gdk_RGBA;
       X, Y    : Gint := 0);
    --  Paint a simple type or one of its children
 
@@ -173,10 +172,10 @@ package body Items.Simples is
       Cr      : Cairo_Context;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
-      Color   : Gdk_Color;
+      Color   : Gdk_RGBA;
       X, Y    : Gint := 0)
    is
-      Text_Color : Gdk_Color := Color;
+      Text_Color : Gdk_RGBA := Color;
       Y2         : Gint := Y;
       W, H       : Gint;
 
@@ -565,7 +564,7 @@ package body Items.Simples is
       X, Y    : Gint := 0)
    is
       pragma Unreferenced (Lang, Mode);
-      Text_Color : Gdk_Color;
+      Text_Color : Gdk_RGBA;
       Line       : Gint := Y;
       Line_Start : Positive;
       W, H       : Gint;

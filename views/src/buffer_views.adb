@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Cairo;                  use Cairo;
-
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
@@ -38,6 +38,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -45,17 +46,21 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Search;             use GPS.Search;
 with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
 with GNAT.Strings;           use GNAT.Strings;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Tooltips;               use Tooltips;
-with Traces;                 use Traces;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
 package body Buffer_Views is
+   Me : constant Trace_Handle := Create ("BUFFERS");
 
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
@@ -74,14 +79,12 @@ package body Buffer_Views is
 
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
-      Kernel            : Kernel_Handle;
       File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
 
    function Initialize
-     (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Buffer_View_Record'Class) return Gtk_Widget;
    --  Create a new Buffer view
 
    Module_Name : constant String := "Windows_View";
@@ -90,6 +93,7 @@ package body Buffer_Views is
      (Module_Name        => Module_Name,
       View_Name          => "Windows",
       Reuse_If_Exist     => True,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Buffer_View_Record);
    subtype Buffer_View_Access is Generic_View.View_Access;
 
@@ -97,20 +101,21 @@ package body Buffer_Views is
    --  Called when a new child is selected
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Refresh the contents of the Buffer view
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
    --  Callback for the "button_press" event
 
    function Get_Path_At_Event
      (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path;
+      Event : Gdk_Event_Button) return Gtk_Tree_Path;
    --  Return the path at which Event has occured.
    --  User must free memory associated to the returned path.
 
@@ -129,58 +134,83 @@ package body Buffer_Views is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Context factory when creating contextual menus
 
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Opened_Windows_Search is new Kernel_Search_Provider with record
+      Pattern : Search_Pattern_Access;
+      Iter    : Child_Iterator;
+   end record;
+   type Opened_Windows_Search_Access is
+      access all Opened_Windows_Search'Class;
+   overriding procedure Set_Pattern
+      (Self     : not null access Opened_Windows_Search;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last);
+   overriding procedure Next
+      (Self     : not null access Opened_Windows_Search;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean);
+   overriding function Display_Name
+      (Self     : not null access Opened_Windows_Search) return String
+      is (Provider_Opened_Win);
+   overriding function Documentation
+      (Self     : not null access Opened_Windows_Search) return String;
+
+   type Opened_Windows_Result is new Kernel_Search_Result with null record;
+   overriding procedure Execute
+      (Self       : not null access Opened_Windows_Result;
+       Give_Focus : Boolean);
+   overriding function Full
+      (Self       : not null access Opened_Windows_Result) return Gtk_Widget;
+
    --------------
    -- Tooltips --
    --------------
 
-   type Buffer_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Buffer_View : Buffer_View_Access;
-   end record;
-   type Buffer_View_Tooltips_Access is
-     access all Buffer_View_Tooltips'Class;
-   overriding procedure Draw
-     (Tooltip : access Buffer_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   type Buffer_View_Tooltips is new Tooltips.Tooltips with null record;
+   overriding function Create_Contents
+     (Tooltip  : not null access Buffer_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
-   ----------
-   -- Draw --
-   ----------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   overriding procedure Draw
-     (Tooltip : access Buffer_View_Tooltips;
-      Pixmap  : out Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   overriding function Create_Contents
+     (Tooltip  : not null access Buffer_View_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Model : constant Gtk_Tree_Model :=
-                Get_Model (Tooltip.Buffer_View.Tree);
+      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
+      Model : constant Gtk_Tree_Model := Get_Model (Tree);
       Iter  : Gtk_Tree_Iter;
-      Text  : GNAT.Strings.String_Access;
+      Area  : Gdk_Rectangle;
+      Label : Gtk_Label;
 
    begin
-      Pixmap := Null_Surface;
-      Initialize_Tooltips (Tooltip.Buffer_View.Tree, Area, Iter);
+      Initialize_Tooltips (Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
+         Tooltip.Set_Tip_Area (Area);
+
          declare
             Name : constant String :=
               Get_String (Model, Iter, Name_Column);
             Title : constant String :=
               Get_String (Model, Iter, Data_Column);
          begin
-            Text := new String'
-              ("Name: " & Name & ASCII.LF & "Title: " & Title);
+            Gtk_New
+              (Label, "<b>Name:</b> " & Name & ASCII.LF
+               & "<bTitle:</b> " & Title);
+            Label.Set_Use_Markup (True);
          end;
-
-         Create_Pixmap_From_Text
-           (Text.all,
-            Default_Font.Get_Pref_Font,
-            Tooltip_Color.Get_Pref,
-            Tooltip.Buffer_View.Tree,
-            Pixmap);
-         Free (Text);
       end if;
-   end Draw;
+
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --
@@ -197,8 +227,7 @@ package body Buffer_Views is
                         (Get_Widget
                            (Find_MDI_Child_By_Tag
                               (Get_MDI (Kernel), Buffer_View_Record'Tag)));
-      Model       : constant Gtk_Tree_Store :=
-                      Gtk_Tree_Store (Get_Model (View.Tree));
+      Model       : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Child       : MDI_Child;
       Iter, Iter2 : Gtk_Tree_Iter;
       Count       : Natural := 0;
@@ -258,22 +287,17 @@ package body Buffer_Views is
 
    function Get_Path_At_Event
      (Tree  : Gtk_Tree_View;
-      Event : Gdk_Event) return Gtk_Tree_Path
+      Event : Gdk_Event_Button) return Gtk_Tree_Path
    is
-      X         : constant Gdouble := Get_X (Event);
-      Y         : constant Gdouble := Get_Y (Event);
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Path      : Gtk_Tree_Path;
       Column    : Gtk_Tree_View_Column := null;
-
    begin
-      Path := Gtk_New;
       Get_Path_At_Pos
-        (Tree, Gint (X), Gint (Y),
+        (Tree, Gint (Event.X), Gint (Event.Y),
          Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
       return Path;
    end Get_Path_At_Event;
 
@@ -282,25 +306,28 @@ package body Buffer_Views is
    ------------------
 
    function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
    is
+      Ev : constant Gdk_Event := To_Event (Event'Unrestricted_Access);
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
-      Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (Explorer.Tree));
+      Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
       Path     : constant Gtk_Tree_Path :=
                    Get_Path_At_Event (Explorer.Tree, Event);
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
-      if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
+      Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
+             & " State=" & Event.State'Img);
+
+      if (Event.State and (Control_Mask or Shift_Mask)) /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.
          Grab_Focus (Explorer.Tree);
 
-      elsif Path /= null then
+      elsif Path /= Null_Gtk_Tree_Path then
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
 
@@ -309,17 +336,19 @@ package body Buffer_Views is
 
             Child := Find_MDI_Child_By_Name
               (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+            Trace (Me, "Clicked on row for child " & Get_Title (Child));
 
-            if Get_Button (Event) = 3 then
+            if Event.Button = 3 then
                --  Right click ?
                return False;
 
-            elsif Get_Button (Event) = 1 then
-               if Get_Event_Type (Event) = Gdk_2button_Press then
+            elsif Event.Button = 1 then
+               if Event.The_Type = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
-               elsif Get_Event_Type (Event) = Button_Press then
-                  Child_Drag_Begin (Child => Child, Event => Event);
+               elsif Event.The_Type = Button_Press then
+                  Child_Drag_Begin (Child => Child, Event => Ev);
                   Raise_Child (Child, Give_Focus => True);
+                  Trace (Me, "Child should now have the focus");
                end if;
 
                return True;
@@ -328,10 +357,6 @@ package body Buffer_Views is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end Button_Press;
 
    --------------------
@@ -340,11 +365,12 @@ package body Buffer_Views is
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class) is
       V     : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Iter2 : Gtk_Tree_Iter;
    begin
+      Trace (Me, "Child_Selected " & Get_Title (Child));
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
 
@@ -381,8 +407,6 @@ package body Buffer_Views is
             end loop;
          end;
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Child_Selected;
 
    -------------
@@ -391,7 +415,7 @@ package body Buffer_Views is
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model   : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Editors_Only   : constant Boolean := Get_History
         (Get_History (V.Kernel).all, History_Editors_Only);
       Show_Notebooks : constant Boolean := Get_History
@@ -477,9 +501,9 @@ package body Buffer_Views is
       Clear (Model);
 
       if Show_Notebooks then
-         Column := Freeze_Sort (Gtk_Tree_Store (Get_Model (V.Tree)));
+         Column := Freeze_Sort (-Get_Model (V.Tree));
       else
-         Thaw_Sort (Gtk_Tree_Store (Get_Model (V.Tree)), 1);
+         Thaw_Sort (-Get_Model (V.Tree), 1);
       end if;
 
       I_Child := First_Child
@@ -514,9 +538,6 @@ package body Buffer_Views is
       end if;
 
       Expand_All (V.Tree);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Refresh;
 
    --------------------------
@@ -533,7 +554,6 @@ package body Buffer_Views is
    is
       pragma Unreferenced (Event_Widget, Context);
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
-      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Iter    : Gtk_Tree_Iter;
       Check   : Gtk_Check_Menu_Item;
    begin
@@ -545,7 +565,7 @@ package body Buffer_Views is
         (Find_MDI_Child (Get_MDI (V.Kernel), V), Give_Focus => True);
       Handler_Unblock (Get_MDI (V.Kernel), V.Child_Selected_Id);
 
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          --  Nothing special in the context, just the module itself so that
@@ -577,14 +597,16 @@ package body Buffer_Views is
    ----------------
 
    function Initialize
-     (View   : access Buffer_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Buffer_View_Record'Class) return Gtk_Widget
    is
-      Tooltip   : Buffer_View_Tooltips_Access;
+      Tooltip   : Tooltips.Tooltips_Access;
+      Scrolled  : Gtk_Scrolled_Window;
    begin
-      View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Initialize_Vbox (View, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Icon_Column => Gdk.Pixbuf.Get_Type,
@@ -596,43 +618,43 @@ package body Buffer_Views is
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
          Hide_Expander      => False);
-      Add (View, View.Tree);
+      Scrolled.Add (View.Tree);
 
       Set_Font_And_Colors (View.Tree, Fixed_Font => True);
 
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Added,
+        (Get_MDI (View.Kernel), Signal_Child_Added,
          Refresh'Access, Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Removed, Refresh'Access,
+        (Get_MDI (View.Kernel), Signal_Child_Removed, Refresh'Access,
          Slot_Object => View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Title_Changed, Refresh'Access, View);
+        (Get_MDI (View.Kernel),
+         Signal_Child_Title_Changed, Refresh'Access, View);
       View.Child_Selected_Id := Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Selected,
+        (Get_MDI (View.Kernel), Signal_Child_Selected,
          Widget_Callback.To_Marshaller (Child_Selected'Access), View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Child_Icon_Changed, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Child_Icon_Changed,
+         Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Float_Child, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Float_Child, Refresh'Access, View);
       Widget_Callback.Object_Connect
-        (Get_MDI (Kernel), Signal_Children_Reorganized, Refresh'Access, View);
+        (Get_MDI (View.Kernel), Signal_Children_Reorganized, Refresh'Access,
+         View);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (View.Tree,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
-         Slot_Object => View,
-         After       => False);
+      View.Tree.On_Button_Press_Event
+         (Call => Button_Press'Access,
+          Slot => View);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
          Context_Func    => View_Context_Factory'Access);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "windows view.preferences_changed",
                 Watch => GObject (View));
@@ -640,20 +662,131 @@ package body Buffer_Views is
       --  Initialize tooltips
 
       Tooltip := new Buffer_View_Tooltips;
-      Tooltip.Buffer_View := Buffer_View_Access (View);
-      Set_Tooltip (Tooltip, View.Tree, 250);
+      Tooltip.Set_Tooltip (View.Tree);
 
       Refresh (View);
 
       return Gtk_Widget (View.Tree);
    end Initialize;
 
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+      (Self     : not null access Opened_Windows_Search;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last)
+   is
+      pragma Unreferenced (Limit);
+   begin
+      Self.Pattern := Search_Pattern_Access (Pattern);
+      Self.Iter    := First_Child (Get_MDI (Self.Kernel));
+   end Set_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+      (Self     : not null access Opened_Windows_Search;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean)
+   is
+      C : Search_Context;
+      L     : GNAT.Strings.String_Access;
+      Child : constant MDI_Child := Get (Self.Iter);
+   begin
+      Result := null;
+
+      if Child = null then
+         Has_Next  := False;
+      else
+         C := Self.Pattern.Start (Child.Get_Short_Title);
+         if C /= GPS.Search.No_Match then
+            if Child.Get_Title /= Child.Get_Short_Title then
+               L := new String'(Child.Get_Title);
+            end if;
+            Result := new Opened_Windows_Result'
+               (Kernel   => Self.Kernel,
+                Provider => Self,
+                Score    => C.Score,
+                Short    => new String'
+                   (Self.Pattern.Highlight_Match
+                      (Child.Get_Short_Title, Context => C)),
+                Long     => L,
+                Id       => new String'(Child.Get_Title));
+            Self.Adjust_Score (Result);
+
+         elsif Child.Get_Short_Title /= Child.Get_Title then
+            C := Self.Pattern.Start (Child.Get_Title);
+            if C /= GPS.Search.No_Match then
+               L := new String'(Child.Get_Title);
+               Result := new Opened_Windows_Result'
+                  (Kernel   => Self.Kernel,
+                   Provider => Self,
+                   Score    => C.Score,
+                   Short    => new String'(Child.Get_Short_Title),
+                   Long     => new String'
+                      (Self.Pattern.Highlight_Match
+                         (Child.Get_Title, Context => C)),
+                   Id       => new String'(Child.Get_Title));
+               Self.Adjust_Score (Result);
+            end if;
+         end if;
+
+         Next (Self.Iter);
+         Has_Next := Get (Self.Iter) /= null;
+      end if;
+   end Next;
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   overriding function Documentation
+      (Self     : not null access Opened_Windows_Search) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Search amongst opened windows";
+   end Documentation;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self       : not null access Opened_Windows_Result;
+       Give_Focus : Boolean)
+   is
+      C : constant MDI_Child :=
+         Find_MDI_Child_By_Name (Get_MDI (Self.Kernel), Self.Id.all);
+   begin
+      if C /= null then
+         Raise_Child (C, Give_Focus => Give_Focus);
+      end if;
+   end Execute;
+
+   ----------
+   -- Full --
+   ----------
+
+   overriding function Full
+      (Self       : not null access Opened_Windows_Result) return Gtk_Widget
+   is
+      pragma Unreferenced (Self);
+   begin
+      return null;
+   end Full;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       Child : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Buffer_View_Record'Tag);
@@ -661,7 +794,8 @@ package body Buffer_Views is
    begin
       if Child /= null then
          View := Buffer_View_Access (Get_Widget (Child));
-         Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+         Set_Font_And_Colors
+           (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
 
@@ -673,8 +807,9 @@ package body Buffer_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
+      P : Opened_Windows_Search_Access;
    begin
-      Generic_View.Register_Module (Kernel, Menu_Name => -"_Windows");
+      Generic_View.Register_Module (Kernel, Menu_Name => -"Views/_Windows");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Editors_Only, True);
@@ -687,6 +822,9 @@ package body Buffer_Views is
          Action => Command,
          Filter => Create (Module => Module_Name),
          Label  => -"Close selected windows");
+
+      P := new Opened_Windows_Search;
+      Register_Provider_And_Action (Kernel, P);
    end Register_Module;
 
 end Buffer_Views;

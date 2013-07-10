@@ -17,17 +17,13 @@
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
-with Glib.Main;
-
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Icon_Factory; use Gtk.Icon_Factory;
 with Gtk.Menu_Bar;     use Gtk.Menu_Bar;
+with Gtk.Tool_Item;    use Gtk.Tool_Item;
 with Gtk.Window;       use Gtk.Window;
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Pixbuf;       use Gdk.Pixbuf;
-with Gtk.Frame;        use Gtk.Frame;
-with Gtk.Image;        use Gtk.Image;
 with Gtk.Toolbar;      use Gtk.Toolbar;
 
 with Gtkada.MDI;       use Gtkada.MDI;
@@ -44,22 +40,19 @@ package GPS.Main_Window is
       Icon_Factory      : Gtk_Icon_Factory;
       --  The icon factory specific to GPS
 
-      Menu_Box          : Gtk.Box.Gtk_Hbox;
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Toolbar_Box       : Gtk_Vbox;
+      Toolbar_Box       : Gtk_Box;
       Toolbar           : Gtk_Toolbar;
       MDI               : Gtkada.MDI.MDI_Window;
-      Statusbar         : Gtk.Box.Gtk_Hbox;
+
+      Build_Separator   : Gtk_Tool_Item;
+      --  The item just before the build items in the toolbar
+
+      Debug_Separator   : Gtk_Tool_Item;
+      --  The item just before the debug items
 
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu
-
-      Animation_Frame   : Gtk_Frame;
-      Static_Image      : Gdk_Pixbuf;
-      Animation         : Gdk_Pixbuf_Animation;
-      Animation_Iter    : Gdk_Pixbuf_Animation_Iter;
-      Animation_Image   : Gtk_Image;
-      Animation_Timeout : Glib.Main.G_Source_Id := 0;
 
       State_Level       : Integer := 0;
       Busy_Level        : Integer := 0;
@@ -85,12 +78,6 @@ package GPS.Main_Window is
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
-
-   function Anim_Cb (Kernel : GPS.Kernel.Kernel_Handle) return Boolean;
-   --  Function called when the GPS animation needs to be updated
-
-   procedure Display_Default_Image (Kernel : GPS.Kernel.Kernel_Handle);
-   --  Display the default image in the top right corner of the main window
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;

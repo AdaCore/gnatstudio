@@ -41,9 +41,9 @@ with Gtk.Widget;                             use Gtk.Widget;
 with Gtk.Box;                                use Gtk.Box;
 with Gtk.Label;                              use Gtk.Label;
 with Gtkada.MDI;                             use Gtkada.MDI;
+with GPS.Core_Kernels;                       use GPS.Core_Kernels;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
-with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
@@ -680,9 +680,8 @@ package body Code_Analysis_Module is
       Cov_File := Find_Gcov_File (Kernel, File);
 
       if not Is_Regular_File (Cov_File) then
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            -"Could not find coverage file " & Display_Full_Name (Cov_File));
+         Kernel.Insert
+           (-"Could not find coverage file " & Display_Full_Name (Cov_File));
 
          Set_Error (File_Node, File_Not_Found);
 
@@ -691,7 +690,8 @@ package body Code_Analysis_Module is
          Compute_Project_Coverage (Prj_Node);
 
          Coverage_GUI.Clear_File_Locations (Kernel, File_Node);
-         Coverage_GUI.List_File_Uncovered_Lines (Kernel, File_Node, False);
+         Coverage_GUI.List_File_Uncovered_Lines
+           (Kernel, File_Node, False, Allow_Auto_Jump_To_First => False);
 
          --  Refresh source editor annotations and locations information.
          if not From_XML then
@@ -1027,7 +1027,7 @@ package body Code_Analysis_Module is
                end if;
             end if;
          else
-            Hide_All (View.Error_Board);
+            Hide (View.Error_Board);
          end if;
       end;
 
@@ -1360,9 +1360,8 @@ package body Code_Analysis_Module is
            (CB_Data.Kernel, Analysis, CB_Data.Project);
 
          if not Have_Gcov_Info (Analysis.Projects, CB_Data.Project) then
-            GPS.Kernel.Console.Insert
-              (CB_Data.Kernel,
-               -"No coverage information to display for "
+            CB_Data.Kernel.Insert
+              (-"No coverage information to display for "
                & Prj_Node.Name.Name);
 
             return;
@@ -1424,9 +1423,8 @@ package body Code_Analysis_Module is
          if not Have_Gcov_Info
            (Analysis.Projects, CB_Data.Project, CB_Data.File)
          then
-            GPS.Kernel.Console.Insert
-              (CB_Data.Kernel,
-               -"No coverage information to display for "
+            CB_Data.Kernel.Insert
+              (-"No coverage information to display for "
                & Display_Base_Name (File_Node.Name));
             return;
          end if;
@@ -1435,7 +1433,8 @@ package body Code_Analysis_Module is
       --  Call Open_File_Editor with Line = 0 so that, if the editor is already
       --  open, we do not jump to line 1.
       Open_File_Editor (CB_Data.Kernel, File_Node.Name, Line => 0);
-      List_File_Uncovered_Lines (CB_Data.Kernel, File_Node, False);
+      List_File_Uncovered_Lines
+        (CB_Data.Kernel, File_Node, False, Allow_Auto_Jump_To_First => False);
       Add_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
 
    exception
@@ -1730,7 +1729,7 @@ package body Code_Analysis_Module is
       end if;
 
       if Get_Creator (Context) /=
-        Abstract_Module_ID (Code_Analysis_Module_ID)
+        Abstract_Module (Code_Analysis_Module_ID)
       then
          Gtk_New (Sep);
          Append (Submenu, Sep);

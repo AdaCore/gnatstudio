@@ -18,13 +18,12 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
+with Gdk.Device;
 with Glib;                     use Glib;
-with Gtk.Arrow;                use Gtk.Arrow;
-with Gtk.Button;               use Gtk.Button;
+with Glib.Main;
+with Gtk.Button;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Fixed;                use Gtk.Fixed;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tool_Item;
 
 package Gtkada.Combo_Tool_Button is
@@ -35,14 +34,11 @@ package Gtkada.Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
    procedure Gtk_New
-     (Button       : out Gtkada_Combo_Tool_Button;
-      Stock_Id     : String;
-      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar);
-
+     (Self     : out Gtkada_Combo_Tool_Button;
+      Stock_Id : String);
    procedure Initialize
-     (Button       : access Gtkada_Combo_Tool_Button_Record'Class;
-      Stock_Id     : String;
-      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar);
+     (Self     : access Gtkada_Combo_Tool_Button_Record'Class;
+      Stock_Id : String);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads)
 
    type User_Data_Record is abstract tagged null record;
@@ -95,7 +91,7 @@ package Gtkada.Combo_Tool_Button is
    --
    --  </signals>
 
-   Signal_Clicked           : constant Glib.Signal_Name := "clicked";
+   Signal_Clicked : constant Glib.Signal_Name := "clicked";
    Signal_Selection_Changed : constant Glib.Signal_Name := "selection_changed";
 
 private
@@ -107,12 +103,14 @@ private
      Gtk.Tool_Item.Gtk_Tool_Item_Record with record
       Items       : Strings_Vector.Vector;
       Selected    : Strings_Vector.Extended_Index;
-      Arrow       : Gtk_Arrow;
-      Fixed       : Gtk_Fixed;
-      Menu_Button : Gtk_Toggle_Button;
-      Icon_Button : Gtk_Button;
       Menu        : Gtk_Menu;
       Stock_Id    : Unbounded_String;
+
+      Button        : Gtk.Button.Gtk_Button;
+
+      Popup_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Popup_Device  : Gdk.Device.Gdk_Device;
+      Popup_Time    : Glib.Guint32;
    end record;
 
 end Gtkada.Combo_Tool_Button;

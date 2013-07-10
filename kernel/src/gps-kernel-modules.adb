@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Traces;
@@ -23,7 +22,6 @@ with GNATCOLL.Traces;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 
-with System;                    use System;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -32,11 +30,8 @@ package body GPS.Kernel.Modules is
    Me : constant Debug_Handle :=
           Create ("GPS.Kernel.Modules", GNATCOLL.Traces.Off);
 
-   type Module_List_Access is access Module_List.List;
-   function Convert is new Ada.Unchecked_Conversion
-     (Module_List_Access, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Module_List_Access);
+   procedure Free (Module : in out Module_ID);
+   --  Free memory associated to a Module_ID
 
    -------------------
    -- Save_Function --
@@ -60,11 +55,11 @@ package body GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Cairo.Cairo_Surface
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Module, Context);
    begin
-      return Cairo.Null_Surface;
+      return null;
    end Tooltip_Handler;
 
    ----------------------
@@ -88,9 +83,11 @@ package body GPS.Kernel.Modules is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Record'Class, Module_ID);
    begin
-      Destroy (Module.all);
-      GNAT.Strings.Free (Module.Name);
-      Unchecked_Free (Module);
+      if Module /= null then
+         Destroy (Module.all);
+         GNAT.Strings.Free (Module.Name);
+         Unchecked_Free (Module);
+      end if;
    end Free;
 
    ----------------
@@ -119,20 +116,13 @@ package body GPS.Kernel.Modules is
      (Module      : access Module_ID_Record;
       Kernel      : access Kernel_Handle_Record'Class;
       Module_Name : String;
-      Priority    : Module_Priority := Default_Priority)
-   is
-      List : Module_List_Access := Convert (Kernel.Modules_List);
+      Priority    : Module_Priority := Default_Priority) is
    begin
       Module.Name     := new String'(Module_Name);
       Module.Priority := Priority;
       Module.Kernel   := Kernel_Handle (Kernel);
 
-      if List = null then
-         List := new Module_List.List;
-         Kernel.Modules_List := Convert (List);
-      end if;
-
-      Module_List.Append (List.all, Module_ID (Module));
+      Kernel.Register_Module (Module);
    end Register_Module;
 
    -----------------------------
@@ -217,29 +207,24 @@ package body GPS.Kernel.Modules is
    ------------------
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Module_List.List, Module_List_Access);
-      List : Module_List_Access := Convert (Kernel.Modules_List);
+      use Abstract_Module_List;
+      List : constant Abstract_Module_List.List :=
+        Kernel.Module_List (Module_ID_Record'Tag);
+      Current : Cursor := Abstract_Module_List.Last (List);
    begin
       --  Destroy the modules in the reverse order,
       --  otherwise, the scripts module is no longer available for the other
       --  modules, and some modules (e.g. editor) is freed too early.
 
-      if List /= null then
-         Module_List.Free (List.all, Reversed => True);
-         Unchecked_Free (List);
-         Kernel.Modules_List := System.Null_Address;
-      end if;
+      while Has_Element (Current) loop
+         declare
+            Module : Abstract_Module := Element (Current);
+         begin
+            Free (Module_ID (Module));
+         end;
+
+         Current := Abstract_Module_List.Previous (Current);
+      end loop;
    end Free_Modules;
-
-   ---------------------
-   -- List_Of_Modules --
-   ---------------------
-
-   function List_Of_Modules
-     (Kernel : access Kernel_Handle_Record'Class) return Module_List.List is
-   begin
-      return Convert (Kernel.Modules_List).all;
-   end List_Of_Modules;
 
 end GPS.Kernel.Modules;

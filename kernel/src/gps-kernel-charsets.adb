@@ -15,22 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
+with Glib.Unicode;               use Glib.Unicode;
 
-with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with Basic_Types;                use Basic_Types;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
-with GUI_Utils;                  use GUI_Utils;
+with String_Utils;               use String_Utils;
 
 package body GPS.Kernel.Charsets is
-
    CHARSET : constant String_Access := Getenv ("CHARSET");
 
    Default_Charset : Charset_Preference;
@@ -91,7 +95,7 @@ package body GPS.Kernel.Charsets is
      (Combo : access GObject_Record'Class;
       Data  : Manager_Preference)
    is
-      Value : constant String := Get_Active_Text (Gtk_Combo_Box (Combo));
+      Value : constant String := Get_Active_Text (Gtk_Combo_Box_Text (Combo));
    begin
       for C in Charsets'Range loop
          if Charsets (C).Description.all = Value then
@@ -112,7 +116,7 @@ package body GPS.Kernel.Charsets is
       Data  : Manager_Preference) is
    begin
       Set_Text
-        (Gtk_Entry (Gtk_Combo_Box (Combo).Get_Child), Data.Pref.Get_Pref);
+        (Gtk_Entry (Gtk_Combo_Box_Text (Combo).Get_Child), Data.Pref.Get_Pref);
    end Update_Charset;
 
    --------------------------
@@ -121,10 +125,10 @@ package body GPS.Kernel.Charsets is
 
    function Create_Charset_Combo
      (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box.Gtk_Combo_Box
+      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
       function Get_Default_Charset_Name return String;
-      Combo : Gtk_Combo_Box;
+      Combo : Gtk_Combo_Box_Text;
 
       function Get_Default_Charset_Name return String is
          Found : Boolean := False;
@@ -146,7 +150,7 @@ package body GPS.Kernel.Charsets is
       Default_Name  : constant String := Get_Default_Charset_Name;
       Default_Index : Integer := -1;
    begin
-      Gtk_New_Combo_Text_With_Entry (Combo);
+      Gtk_New_With_Entry (Combo);
 
       for C in Charsets'Range loop
          Combo.Append_Text (Charsets (C).Description.all);
@@ -166,7 +170,7 @@ package body GPS.Kernel.Charsets is
    ----------------------
 
    function Selected_Charset
-     (Combo : Gtk.Combo_Box.Gtk_Combo_Box) return String
+     (Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text) return String
    is
       Index : constant Integer := Integer (Combo.Get_Active);
    begin
@@ -187,10 +191,10 @@ package body GPS.Kernel.Charsets is
       return Gtk.Widget.Gtk_Widget
    is
       Value    : constant String := Pref.Get_Pref;
-      Combo    : Gtk_Combo_Box;
+      Combo    : Gtk_Combo_Box_Text;
       Selected : Integer := -1;
    begin
-      Gtk_New_Combo_Text_With_Entry (Combo);
+      Gtk_New_With_Entry (Combo);
 
       for C in Charsets'Range loop
          Combo.Append_Text (Charsets (C).Description.all);
@@ -233,7 +237,7 @@ package body GPS.Kernel.Charsets is
    is
       Result : constant Charset_Preference := new Charset_Preference_Record;
    begin
-      Set_Pref (Result, null, Default);
+      Set_Pref (Result, Manager, Default);
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -308,5 +312,81 @@ package body GPS.Kernel.Charsets is
          Set_Property (Kernel, File, "charset", Prop, Persistent => True);
       end if;
    end Set_File_Charset;
+
+   ----------------------------
+   -- Read_File_With_Charset --
+   ----------------------------
+
+   procedure Read_File_With_Charset
+     (File     : GNATCOLL.VFS.Virtual_File;
+      UTF8     : out Gtkada.Types.Chars_Ptr;
+      UTF8_Len : out Natural;
+      Props    : out File_Props)
+   is
+      Contents      : GNAT.Strings.String_Access;
+      Last          : Natural;
+      Ignore        : aliased Natural;
+      Length        : aliased Natural;
+      Valid         : Boolean;
+      First_Invalid : Natural;
+      Charset : constant String := Get_File_Charset (File);
+   begin
+      Props := (Invalid_UTF8          => False,
+                CR_Found              => False,
+                NUL_Found             => False,
+                Trailing_Spaces_Found => False,
+                Trailing_Lines_Found  => False);
+
+      Contents := File.Read_File;
+      if Contents = null then
+         UTF8 := Null_Ptr;
+         UTF8_Len := 0;
+         return;
+      end if;
+
+      Strip_CR_And_NUL
+        (Contents.all, Last,
+         Props.CR_Found, Props.NUL_Found, Props.Trailing_Spaces_Found);
+
+      UTF8 := Glib.Convert.Convert
+        (Contents (Contents'First .. Last), "UTF-8", Charset,
+         Ignore'Unchecked_Access, Length'Unchecked_Access);
+
+      if UTF8 = Gtkada.Types.Null_Ptr then
+         --  In case conversion failed, use a default encoding so that we
+         --  can at least show something in the editor
+         UTF8 := Glib.Convert.Convert
+           (Contents (Contents'First .. Last), "UTF-8", Charset,
+            Ignore'Unchecked_Access, Length'Unchecked_Access);
+      end if;
+
+      for J in reverse Contents'Range loop
+         if Contents (J) = ASCII.LF then
+            if J /= Length - 1 then
+               Props.Trailing_Lines_Found := True;
+               exit;
+            end if;
+         elsif Contents (J) /= ' ' and then Contents (J) /= ASCII.HT then
+            exit;
+         end if;
+      end loop;
+
+      GNAT.Strings.Free (Contents);
+
+      if UTF8 /= Null_Ptr then
+         UTF8_Validate
+           (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
+      else
+         Valid := False;
+         First_Invalid := 0;
+      end if;
+
+      if not Valid then
+         UTF8_Len := First_Invalid - 1;
+         Props.Invalid_UTF8 := True;
+      else
+         UTF8_Len := Length;
+      end if;
+   end Read_File_With_Charset;
 
 end GPS.Kernel.Charsets;

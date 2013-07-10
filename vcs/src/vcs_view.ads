@@ -21,10 +21,7 @@
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 
-with Cairo;                use Cairo;
-
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Rectangle;        use Gdk.Rectangle;
 
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Tree_View;        use Gtk.Tree_View;
@@ -234,17 +231,17 @@ private
       --  The column containing the activity name
    end record;
 
-   type VCS_Tooltips is new Tooltips.Pixmap_Tooltips with record
+   type VCS_Tooltips is new Tooltips.Tooltips with record
       Explorer : VCS_View_Access;
    end record;
    type VCS_Tooltips_Access is access all VCS_Tooltips'Class;
-   overriding procedure Draw
+   overriding function Create_Contents
      (Tooltip : access VCS_Tooltips;
-      Pixmap  : out Cairo.Cairo_Surface;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
 
    package Explorer_Selection_Foreach is
-     new Selection_Foreach (VCS_View_Access);
+     new Gtk.Tree_Selection.Selected_Foreach_User_Data (VCS_View_Access);
 
 end VCS_View;

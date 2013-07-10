@@ -23,22 +23,23 @@ with Cairo;
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
+with Gdk.RGBA; use Gdk.RGBA;
 
 with Glib.Object;
 
-with Gtk.Box;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
 with Gtk.Style;
+with Gtk.Toolbar;
 with Gtk.Widget;
 
 with Gtkada.Canvas;
-with Gtkada.Style;
 
 with Pango.Layout;
 
+with Generic_Views;
 with GPS.Kernel;
 
 package Browsers.Canvas is
@@ -47,8 +48,15 @@ package Browsers.Canvas is
    --  Margin used when drawing the items, to leave space around the arrows and
    --  the actual contents of the item
 
-   type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type General_Browser_Record is new Generic_Views.View_Record with private;
    type General_Browser is access all General_Browser_Record'Class;
+
+   overriding procedure Create_Toolbar
+     (View    : not null access General_Browser_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access General_Browser_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
    with record
@@ -61,7 +69,6 @@ package Browsers.Canvas is
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
       Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
@@ -91,10 +98,6 @@ package Browsers.Canvas is
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
    --  Return the toolbar at the bottom of the browser. This returns null if no
    --  toolbar was created in the call to Initialize.
-
-   procedure Setup_Default_Toolbar (Browser : access General_Browser_Record);
-   --  Add the default buttons to the toolbar of browser. Nothing is done if no
-   --  toolbar was created.
 
    function Get_Canvas (Browser : access General_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;
@@ -134,7 +137,7 @@ package Browsers.Canvas is
    type Active_Area_Callback is abstract tagged null record;
    type Active_Area_Cb is access all Active_Area_Callback'Class;
    function Call (Callback : Active_Area_Callback;
-                  Event    : Gdk.Event.Gdk_Event)
+                  Event    : Gdk.Event.Gdk_Event_Button)
      return Boolean is abstract;
    --  A callback for the active areas. Event is the mouse event that started
    --  the chain that lead to callback.
@@ -330,7 +333,7 @@ package Browsers.Canvas is
 
    function Activate
      (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event) return Boolean;
+      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  Calls the callback that is activated when the user clicks in the
    --  item. The coordinates returned by Get_X and Get_Y in Event should be
    --  relative to the top-left corner of the Item.
@@ -432,7 +435,7 @@ package Browsers.Canvas is
    ---------------
 
    type Item_Active_Callback is access
-     procedure (Event : Gdk.Event.Gdk_Event;
+     procedure (Event : Gdk.Event.Gdk_Event_Button;
                 User  : access Browser_Item_Record'Class);
    type Item_Active_Area_Callback is new Active_Area_Callback with private;
    --  A special instanciation of the callback for cases where the user data is
@@ -530,13 +533,12 @@ package Browsers.Canvas is
 
 private
 
-   type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
+   type General_Browser_Record is new Generic_Views.View_Record with record
       Canvas                   : Gtkada.Canvas.Interactive_Canvas;
-      Kernel                   : GPS.Kernel.Kernel_Handle;
       Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
-      Selected_Link_Color      : Gtkada.Style.Cairo_Color;
-      Unselected_Link_Color    : Gtkada.Style.Cairo_Color;
+      Selected_Link_Color      : Gdk_RGBA;
+      Unselected_Link_Color    : Gdk_RGBA;
       Item_Style               : Gtk.Style.Gtk_Style;
       --  The following colors are used from this style:
       --  Bg[NORMAL|SELECTED]: the background of the item
@@ -613,7 +615,7 @@ private
    end record;
    overriding function Call
      (Callback : Item_Active_Area_Callback;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
+      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
    --  See doc for inherited Call
 
    type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;

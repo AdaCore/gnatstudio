@@ -30,9 +30,8 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Main_Window;        use GPS.Main_Window;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package GPS.Callbacks is
 

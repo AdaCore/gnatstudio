@@ -28,19 +28,17 @@ with GNATCOLL.Xref;
 with Basic_Types;
 
 with Glib.Object;                use Glib.Object;
-with XML_Utils;                  use XML_Utils;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Commands.Custom;            use Commands.Custom;
+with Generic_Views;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Python_Core;
 with Histories;                  use Histories;
@@ -61,34 +59,36 @@ package body Python_Module is
 
    type Python_Module_Record is new Module_ID_Record with null record;
    overriding procedure Destroy (Module : in out Python_Module_Record);
-   type Python_Module_Record_Access is access all Python_Module_Record'Class;
-   Python_Module_Id : Python_Module_Record_Access;
 
    procedure Load_Dir
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Virtual_File;
-      Default_Autoload : Boolean);
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir                : Virtual_File;
+      Default_Autoload   : Boolean;
+      Ignore_User_Config : Boolean);
    --  Load all .py files from Dir, if any.
    --  Default_Autoload indicates whether scripts in this directory should
    --  be autoloaded by default, unless otherwise mentioned in
    --  ~/.gps/startup.xml
+   --  Ignore_User_Config should be True for the support scripts that are not
+   --  user-configurable plugins.
 
-   function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child;
-   --  Create the python console if it doesn't exist yet
+   type Python_Console_Record is new Interactive_Console_Record
+     with null record;
 
-   procedure Open_Python_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open a new python console if none exists
+   function Initialize
+     (Console : access Python_Console_Record'Class) return Gtk_Widget;
+   --  Initialize the python console, and returns the focus widget.
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr;
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
-   --  Support functions for saving the desktop
+   package Python_Views is new Generic_Views.Simple_Views
+     (Module_Name        => "Python_Console",
+      View_Name          => -"Python",
+      Formal_View_Record => Python_Console_Record,
+      Formal_MDI_Child   => GPS_Console_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Initialize         => Initialize,
+      Local_Toolbar      => False,
+      Local_Config       => False,
+      Group              => Group_Consoles);
 
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -102,29 +102,34 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
-   ---------------------------
-   -- Create_Python_Console --
-   ---------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child is
-      Console : Interactive_Console;
+   function Initialize
+     (Console : access Python_Console_Record'Class) return Gtk_Widget
+   is
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
                   Lookup_Scripting_Language
-                    (Get_Scripts (Kernel), Python_Name);
+                    (Get_Scripts (Console.Kernel), Python_Name);
       Errors  : aliased Boolean;
       Result  : PyObject;
+
+      Hist : constant History_Key := "python_console";
    begin
-      Console := Create_Interactive_Console
-        (Kernel              => Kernel,
-         Title               => -"Python",
-         Module              => Abstract_Module_ID (Python_Module_Id),
-         History             => History_Key'("python_console"),
-         Create_If_Not_Exist => True);
+      Interactive_Consoles.Initialize
+        (Console, Prompt => "", Handler => Default_Command_Handler'Access,
+         User_Data       => System.Null_Address,
+         History_List    => Get_History (Console.Kernel),
+         Wrap_Mode       => Wrap_Char,
+         Key             => Hist);
+      Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
+      Set_Max_Length   (Get_History (Console.Kernel).all, 100, Hist);
+      Allow_Duplicates (Get_History (Console.Kernel).all, Hist, True, True);
+
       Backend := Get_Or_Create_Virtual_Console (Console);
       Set_Default_Console (Script, Backend);
-      Set_Command_Handler
-        (Console, Default_Command_Handler'Access, System.Null_Address);
 
       --  After creating the Python console, import everything from
       --  the plugin GPS_help, to override the default help function
@@ -142,64 +147,9 @@ package body Python_Module is
       Py_XDECREF (Result);
       Console.Enable_Prompt_Display (True);
       Console.Display_Prompt;
-      return Find_MDI_Child (Get_MDI (Kernel), Console);
-   end Create_Python_Console;
 
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = "Python_Console" then
-         return Create_Python_Console (User);
-      end if;
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
-   is
-      N       : Node_Ptr;
-      Script  : Scripting_Language;
-      Virtual : Virtual_Console;
-      Child   : MDI_Child;
-   begin
-      if Widget.all not in Interactive_Console_Record'Class then
-         return null;
-      end if;
-
-      --  We must test whether this is indeed a python-specific console, since
-      --  it might happen that the default console is redirected elsewhere (for
-      --  instance to the Messages window at the beginning)
-
-      Script := Lookup_Scripting_Language (Get_Scripts (User), Python_Name);
-      Virtual := Get_Default_Console (Script);
-
-      if Virtual /= null
-        and then Gtk_Widget (Widget) = Gtk_Widget (Get_Console (Virtual))
-      then
-         Child := Find_MDI_Child (Get_MDI (User), Widget);
-         if Child /= null
-            and then Get_Title (Child) = "Python"
-         then
-            N := new Node;
-            N.Tag := new String'("Python_Console");
-            return N;
-         end if;
-      end if;
-      return null;
-   end Save_Desktop;
+      return Gtk_Widget (Console.Get_View);
+   end Initialize;
 
    ---------------------
    -- Register_Module --
@@ -212,6 +162,7 @@ package body Python_Module is
       Tmp     : Boolean;
       pragma Unreferenced (Ignored, Tmp);
       Script  : Scripting_Language;
+      MDI     : Class_Type;
 
    begin
       GPS.Python_Core.Register_Python (Kernel);
@@ -224,21 +175,14 @@ package body Python_Module is
 
       Init_PyGtk_Support (Script);
 
-      Set_Default_Console
-        (Script, Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
+      Set_Default_Console (Script, Kernel.Get_Messages_Window);
 
-      Python_Module_Id := new Python_Module_Record;
-      Register_Module
-        (Module      => Module_ID (Python_Module_Id),
-         Kernel      => Kernel,
-         Module_Name => "Python");
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-
-      Register_Menu
+      Python_Views.Register_Module
         (Kernel,
-         Parent_Path => "/" & (-"_Tools") & '/' & (-"Consoles"),
-         Text        => -"_Python",
-         Callback    => Open_Python_Console'Access);
+         new Python_Module_Record,
+         Menu_Name  => -"Consoles/_Python");
+
+      MDI := New_Class (Get_Scripts (Kernel), "MDI");
 
       Add_PyWidget_Method
         (Get_Scripts (Kernel), Class => Get_GUI_Class (Kernel));
@@ -246,9 +190,13 @@ package body Python_Module is
         (Get_Scripts (Kernel),
          Command       => "add",
          Handler       => Python_GUI_Command_Handler'Access,
-         Class         => New_Class (Get_Scripts (Kernel), "MDI"),
-         Minimum_Args  => 1,
-         Maximum_Args  => 3,
+         Class         => MDI,
+         Params        =>
+            (Param ("widget"),
+             Param ("title", Optional => True),
+             Param ("short", Optional => True),
+             Param ("group", Optional => True),
+             Param ("position", Optional => True)),
          Static_Method => True,
          Language      => Python_Name);
 
@@ -371,9 +319,10 @@ package body Python_Module is
    --------------
 
    procedure Load_Dir
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Virtual_File;
-      Default_Autoload : Boolean)
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Dir                : Virtual_File;
+      Default_Autoload   : Boolean;
+      Ignore_User_Config : Boolean)
    is
       function To_Load (File : Virtual_File) return Boolean;
       --  Whether File should be loaded
@@ -383,25 +332,11 @@ package body Python_Module is
       -------------
 
       function To_Load (File : Virtual_File) return Boolean is
-         Command : Custom_Command_Access;
       begin
-         if Load_File_At_Startup
-           (Kernel, File, Default => Default_Autoload)
-         then
-            Command := Initialization_Command (Kernel, File);
-            if Command /= null then
-               Launch_Background_Command
-                 (Kernel,
-                  Command    => Command,
-                  Active     => False,  --  After the "import"
-                  Show_Bar   => False,
-                  Block_Exit => False);
-            end if;
-            return True;
-
-         else
-            return False;
-         end if;
+         return (Ignore_User_Config and then Default_Autoload)
+           or else
+             (not Ignore_User_Config and then Load_File_At_Startup
+             (Kernel, File, Default => Default_Autoload));
       end To_Load;
 
       Script : constant Scripting_Language :=
@@ -412,9 +347,9 @@ package body Python_Module is
       if Script /= null then
          --  Make sure the error messages will not be lost
 
-         Set_Default_Console
-           (Script,
-            Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
+         Set_Default_Console (Script, Kernel.Get_Messages_Window);
+
+         --  This adds to sys.path
          Load_Directory (Script, Dir, To_Load'Unrestricted_Access);
       end if;
    end Load_Dir;
@@ -428,15 +363,23 @@ package body Python_Module is
    is
       Env_Path : constant File_Array := Get_Custom_Path;
    begin
+      Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => True);
+      Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => True);
+      Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
+                Default_Autoload => False, Ignore_User_Config => True);
       Load_Dir
-        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True);
+        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True,
+         Ignore_User_Config => False);
       Load_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False);
+        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False,
+         Ignore_User_Config => False);
 
       for J in Env_Path'Range loop
          if Env_Path (J).Is_Directory then
-            Load_Dir
-              (Kernel, Env_Path (J), Default_Autoload => True);
+            Load_Dir (Kernel, Env_Path (J), Default_Autoload => True,
+                      Ignore_User_Config => False);
          end if;
       end loop;
    end Load_System_Python_Startup_Files;
@@ -448,7 +391,8 @@ package body Python_Module is
    procedure Load_User_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True);
+      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True,
+                Ignore_User_Config => False);
    end Load_User_Python_Startup_Files;
 
    ---------------------------------
@@ -510,15 +454,20 @@ package body Python_Module is
    is
       Widget : Glib.Object.GObject;
       Child  : GPS_MDI_Child;
+      Group  : Child_Group;
+      Position : Child_Position;
    begin
       if Command = "add" then
          Widget := From_PyGtk (Data, 1);
          if Widget /= null then
-            Gtk_New (Child, Gtk_Widget (Widget), Group => Group_Default,
+            Group := Child_Group (Nth_Arg (Data, 4, Integer (Group_Default)));
+            Position := Child_Position'Val
+               (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
+
+            Gtk_New (Child, Gtk_Widget (Widget), Group => Group,
                      Module => null, Desktop_Independent => False);
             Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
-            Put (Get_MDI (Get_Kernel (Data)), Child,
-                 Initial_Position => Position_Automatic);
+            Put (Get_MDI (Get_Kernel (Data)), Child, Position);
             Set_Focus_Child (Child);
          end if;
       end if;
@@ -693,19 +642,6 @@ package body Python_Module is
             raise;
          end if;
    end Python_Location_Command_Handler;
-
-   -------------------------
-   -- Open_Python_Console --
-   -------------------------
-
-   procedure Open_Python_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Child : MDI_Child;
-      pragma Unreferenced (Widget, Child);
-   begin
-      Child := Create_Python_Console (Kernel);
-   end Open_Python_Console;
 
    -------------
    -- Destroy --

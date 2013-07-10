@@ -17,26 +17,18 @@
 
 with System;
 with Glib.Object;      use Glib.Object;
-with Gdk.Event;        use Gdk.Event;
-with Gdk.Rectangle;    use Gdk.Rectangle;
+with Gdk.RGBA;         use Gdk.RGBA;
 with Gtk.Enums;        use Gtk.Enums;
-with Gtk.Handlers;
-with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
 
 package body Gtkada.Check_Button is
 
-   package Return_Callback is new Gtk.Handlers.Return_Callback
-     (Gtkada_Check_Button_Record, Boolean);
+   procedure Redraw_State (Check : access Gtkada_Check_Button_Record'Class);
+   --  Redraw the state of Check
 
-   procedure On_Clicked (Obj : System.Address);
-   pragma Convention (C, On_Clicked);
+   procedure On_Button_Clicked (Obj : System.Address);
+   pragma Convention (C, On_Button_Clicked);
    --  Callback for the clicked event
-
-   function On_Expose
-     (Check : access Gtkada_Check_Button_Record'Class;
-      Event : Gdk_Event) return Boolean;
-   --  Callback for the expose event
 
    -------------
    -- Gtk_New --
@@ -55,7 +47,7 @@ package body Gtkada.Check_Button is
    -- Initialize --
    ----------------
 
-   Class_Record : GObject_Class := Uninitialized_Class;
+   Class_Record : aliased Ada_GObject_Class := Uninitialized_Class;
 
    procedure Initialize
      (Check : access Gtkada_Check_Button_Record'Class;
@@ -63,46 +55,36 @@ package body Gtkada.Check_Button is
       Default : Boolean := False)
    is
       procedure Install_Clicked_Handler
-        (Obj     : System.Address;
+        (Obj     : GType;
          Handler : System.Address);
       pragma Import (C, Install_Clicked_Handler,
                      "gtkada_check_button_install_handler");
 
-      Set_Handler : Boolean := False;
    begin
-      Gtkada_Check_Button_Record (Check.all) :=
-        (Gtk.Check_Button.Gtk_Check_Button_Record with
-         Default  => False,
-         State    => State_Unchecked,
-         Internal => False);
-      Gtk.Check_Button.Initialize (Check, Label);
-      Set_Default (Check, Default);
-
-      --  We need to create a new Class Record for this widget, as we are
-      --  going to replace the default handler for the 'clicked' signal.
-      if Class_Record = Uninitialized_Class then
-         Set_Handler := True;
-      end if;
-
-      Initialize_Class_Record
-        (Object       => Check,
+      if Initialize_Class_Record
+        (Ancestor     => Gtk.Check_Button.Get_Type,
          Signals      => (1 .. 0 => <>),
-         Class_Record => Class_Record,
-         Type_Name    => "GtkadaCheckButton");
-
-      if Set_Handler then
+         Class_Record => Class_Record'Access,
+         Type_Name    => "GtkadaCheckButton")
+      then
          --  We replace the class handler for 'clicked' because this signal
          --  has the flag G_SIGNAL_RUN_FIRST which makes the class handler
          --  always being called first even when connecting a new signal
          --  handler with 'Last' set to false.
          --  We absolutely need to be called before the class handler.
-         Install_Clicked_Handler (Get_Object (Check), On_Clicked'Address);
+         Install_Clicked_Handler
+            (Class_Record.The_Type, On_Button_Clicked'Address);
       end if;
 
-      Return_Callback.Connect
-        (Check,
-         Gtk.Widget.Signal_Expose_Event,
-         Return_Callback.To_Marshaller (On_Expose'Access));
+      Glib.Object.G_New (Check, Class_Record.The_Type);
+      Check.Default := False;
+      Check.State := State_Unchecked;
+      Check.Internal := False;
+      Check.Forcing_Update := False;
+
+      Check.Set_Label (Label);
+      Set_Default (Check, Default);
+      Redraw_State (Check);
    end Initialize;
 
    -----------------
@@ -189,6 +171,8 @@ package body Gtkada.Check_Button is
       Check.Internal := True;
       Clicked (Check);
       Check.Internal := False;
+
+      Redraw_State (Check);
    end Set_Active;
 
    ---------------
@@ -201,11 +185,11 @@ package body Gtkada.Check_Button is
       return Check.State;
    end Get_State;
 
-   ----------------
-   -- On_Clicked --
-   ----------------
+   -----------------------
+   -- On_Button_Clicked --
+   -----------------------
 
-   procedure On_Clicked (Obj : System.Address)
+   procedure On_Button_Clicked (Obj : System.Address)
    is
       procedure Force_State (Check : System.Address; Val : Integer);
       pragma Import (C, Force_State, "gtkada_check_button_force_state");
@@ -219,6 +203,11 @@ package body Gtkada.Check_Button is
       Underlying_State : Boolean;
 
    begin
+      --  Prevent recursion loop
+      if Check.Forcing_Update then
+         return;
+      end if;
+
       --  Change state only when not an internal call, where the state is
       --  already in the desired state
       if not Check.Internal then
@@ -242,6 +231,8 @@ package body Gtkada.Check_Button is
       Underlying_State := Check.State /= State_Unchecked;
       --  the desired underlying GtkCheckButton state
 
+      Check.Forcing_Update := True;
+
       --  We want the underlying check_button state be different from the
       --  current state, as the original handler will toggle it.
       if Underlying_State = Get_Active (Check) then
@@ -253,174 +244,29 @@ package body Gtkada.Check_Button is
          end if;
       end if;
 
+      Check.Forcing_Update := False;
+
       Original_Handler (Get_Object (Check));
-   end On_Clicked;
 
-   ---------------
-   -- On_Expose --
-   ---------------
+      Redraw_State (Check);
+   end On_Button_Clicked;
 
-   function On_Expose
-     (Check : access Gtkada_Check_Button_Record'Class;
-      Event : Gdk_Event) return Boolean
-   is
-      Area           : constant Gdk_Rectangle := Get_Area (Event);
-      State          : Gtk.Enums.Gtk_State_Type;
-      Shadow         : Gtk_Shadow_Type;
-      X, Y           : Glib.Gint;
-      Ind_Size       : Glib.Gint;
-      Ind_Spacing    : Glib.Gint;
-      Border_Width   : Glib.Gint;
-      Interior_Focus : Glib.Gint;
-      Focus_Width    : Glib.Gint;
-      Focus_Pad      : Glib.Gint;
-      Child          : Gtk_Widget;
+   ------------------
+   -- Redraw_State --
+   ------------------
 
-      procedure Get_Style_Prop
-        (Widget        : System.Address;
-         Property_Name : String;
-         Value         : out Gint);
-      pragma Import (C, Get_Style_Prop, "ada_gtk_widget_style_get_int");
-
+   procedure Redraw_State (Check : access Gtkada_Check_Button_Record'Class) is
+      Grey : Gdk_RGBA;
+      Success : Boolean;
    begin
-      --  Draw only when the Drawable state is set.
-      if not Drawable_Is_Set (Check) then
-         return False;
-      end if;
-
-      Get_Style_Prop
-        (Get_Object (Check),
-         "indicator-size" & ASCII.NUL,
-         Ind_Size);
-      Get_Style_Prop
-        (Get_Object (Check),
-         "indicator-spacing" & ASCII.NUL,
-         Ind_Spacing);
-      Get_Style_Prop
-        (Get_Object (Check),
-         "interior-focus" & ASCII.NUL,
-         Interior_Focus);
-      Get_Style_Prop
-        (Get_Object (Check),
-         "focus-line-width" & ASCII.NUL,
-         Focus_Width);
-      Get_Style_Prop
-        (Get_Object (Check),
-         "focus-padding" & ASCII.NUL,
-         Focus_Pad);
-      Border_Width := Gint (Get_Border_Width (Check));
-
-      Child := Get_Child (Check);
-
-      X := Get_Allocation_X (Check) + Ind_Spacing + Border_Width;
-      Y := Get_Allocation_Y (Check) +
-        (Get_Allocation_Height (Check) - Ind_Size) / 2;
-
-      if Interior_Focus = 0
-        or else not (Child /= null and then Visible_Is_Set (Child))
-      then
-         X := X + Focus_Width + Focus_Pad;
-      end if;
-
-      if Get_State (Check) = State_Prelight then
-         declare
-            Restrict_Area, New_Area : Gdk_Rectangle;
-            Intersect_Result        : Boolean;
-         begin
-            Restrict_Area :=
-              (X => Get_Allocation_X (Check) + Border_Width,
-               Y => Get_Allocation_Y (Check) + Border_Width,
-               Width => Get_Allocation_Width (Check) - (2 * Border_Width),
-               Height => Get_Allocation_Height (Check) - (2 * Border_Width));
-            Intersect (Area, Restrict_Area, New_Area, Intersect_Result);
-
-            if Intersect_Result then
-               Paint_Flat_Box
-                 (Style       => Get_Style (Check),
-                  Window      => Get_Window (Check),
-                  State_Type  => State_Prelight,
-                  Shadow_Type => Shadow_Etched_Out,
-                  Area        => Area,
-                  Widget      => Check,
-                  Detail      => "checkbutton",
-                  X           => New_Area.X,
-                  Y           => New_Area.Y,
-                  Width       => New_Area.Width,
-                  Height      => New_Area.Height);
-            end if;
-         end;
-      end if;
-
-      State := Get_State (Check);
-
       case Check.State is
+         when State_Checked | State_Unchecked =>
+            Check.Override_Background_Color
+              (Gtk_State_Flag_Normal, White_RGBA);
          when State_Checked_Default =>
-            Shadow := Shadow_In;
-            State := Gtk.Enums.State_Insensitive;
-
-         when State_Checked =>
-            Shadow := Shadow_In;
-
-         when State_Unchecked =>
-            Shadow := Shadow_None;
+            Parse (Grey, "#777777", Success);
+            Check.Override_Background_Color (Gtk_State_Flag_Normal, Grey);
       end case;
-
-      Paint_Check
-        (Get_Style (Check),
-         Get_Window (Check),
-         State,
-         Shadow,
-         Area,
-         Check,
-         "checkbutton",
-         X           => X,
-         Y           => Y,
-         Width       => Ind_Size,
-         Height      => Ind_Size);
-
-      if Has_Focus_Is_Set (Check) then
-         if Interior_Focus = 1
-           and then Child /= null
-           and then Visible_Is_Set (Child)
-         then
-            Paint_Focus
-              (Style      => Get_Style (Check),
-               Window     => Get_Window (Check),
-               State_Type => Get_State (Check),
-               Area       => Area,
-               Widget     => Check,
-               Detail     => "checkbutton",
-               X          =>
-                 Get_Allocation_X (Child) - Focus_Width - Focus_Pad,
-               Y          =>
-                 Get_Allocation_Y (Child) - Focus_Width - Focus_Pad,
-               Width      =>
-                 Get_Allocation_Width (Child) + 2 * (Focus_Width + Focus_Pad),
-               Height     =>
-                 Get_Allocation_Height (Child) +
-                 2 * (Focus_Width + Focus_Pad));
-         else
-            Paint_Focus
-              (Style      => Get_Style (Check),
-               Window     => Get_Window (Check),
-               State_Type => Get_State (Check),
-               Area       => Area,
-               Widget     => Check,
-               Detail     => "checkbutton",
-               X          => Get_Allocation_X (Check) + Border_Width,
-               Y          => Get_Allocation_Y (Check) + Border_Width,
-               Width      => Get_Allocation_Width (Check) - 2 * Border_Width,
-               Height     => Get_Allocation_Height (Check) - 2 * Border_Width);
-         end if;
-      end if;
-
-      if Child /= null then
-         Propagate_Expose (Check, Child, Event);
-      end if;
-
-      --  Stop the signal here: prevent the original expose handler to be
-      --  called
-      return True;
-   end On_Expose;
+   end Redraw_State;
 
 end Gtkada.Check_Button;

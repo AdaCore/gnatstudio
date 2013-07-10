@@ -25,7 +25,7 @@ with GNAT.OS_Lib;
 with GNAT.Regpat;          use GNAT.Regpat;
 
 with GPS.Intl;             use GPS.Intl;
-with GPS.Kernel.Console;   use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;   use GPS.Kernel.Interactive;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 
 with Basic_Types;          use Basic_Types;
@@ -119,9 +119,8 @@ package body Remote.Db is
 
    begin
       if Nickname = "" then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_machine_descriptor tags missing" &
+         Kernel.Insert
+           (-("XML Error: remote_machine_descriptor tags missing" &
               " a nickname attribute"),
             Add_LF => True, Mode => Error);
 
@@ -129,9 +128,8 @@ package body Remote.Db is
       end if;
 
       if Network_Name = "" then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_machine_descriptor tags missing" &
+         Kernel.Insert
+           (-("XML Error: remote_machine_descriptor tags missing" &
               " a network_name attribute"),
             Add_LF => True, Mode => Error);
 
@@ -139,9 +137,8 @@ package body Remote.Db is
       end if;
 
       if Remote_Access = "" then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_machine_descriptor tags missing" &
+         Kernel.Insert
+           (-("XML Error: remote_machine_descriptor tags missing" &
               " a remote_access attribute"),
             Add_LF => True, Mode => Error);
 
@@ -149,9 +146,8 @@ package body Remote.Db is
       end if;
 
       if Remote_Shell = "" then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_machine_descriptor tags missing" &
+         Kernel.Insert
+           (-("XML Error: remote_machine_descriptor tags missing" &
               " a remote_shell attribute"),
             Add_LF => True, Mode => Error);
 
@@ -290,9 +286,8 @@ package body Remote.Db is
          if M_Point.Local_Root = No_File
            or else M_Point.Remote_Root = No_File
          then
-            Console.Insert
-              (Kernel,
-               -("XML Error: local_path and/or remote_path invalid in remote"
+            Kernel.Insert
+              (-("XML Error: local_path and/or remote_path invalid in remote"
                  & " mode configuration"),
                Mode => Error);
             return;
@@ -385,16 +380,14 @@ package body Remote.Db is
 
    begin
       if Shell_Name = "" then
-         Console.Insert
-           (Kernel,
-            -"XML Error: missing 'name' attribute in remote_shell_config",
+         Kernel.Insert
+           (-"XML Error: missing 'name' attribute in remote_shell_config",
             Mode => Error);
          return;
 
       elsif Db.Shells.Contains (Shell_Name) then
-         Console.Insert
-           (Kernel,
-            -"XML Error: remote_shell_config " & Shell_Name &
+         Kernel.Insert
+           (-"XML Error: remote_shell_config " & Shell_Name &
             (-" is defined twice"),
             Mode => Error);
          return;
@@ -402,8 +395,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "start_command");
       if Tmp = null then
-         Console.Insert
-           (Kernel, -"XML Error for " & Shell_Name &
+         Kernel.Insert
+           (-"XML Error for " & Shell_Name &
             (-": missing 'start_command' child in remote_shell_config"),
             Mode => Error);
          return;
@@ -420,8 +413,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "gps_prompt");
       if Tmp = null then
-         Console.Insert
-           (Kernel, "XML Error for shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error for shell " & Shell_Name &
             ": missing 'gps_prompt' child in remote_shell_config",
             Mode => Error);
          return;
@@ -430,8 +423,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "filesystem");
       if Tmp = null then
-         Console.Insert
-           (Kernel, "XML Error in shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error in shell " & Shell_Name &
             ": missing 'filesystem' child in remote_shell_config",
             Mode => Error);
          return;
@@ -444,8 +437,8 @@ package body Remote.Db is
       elsif Tmp.all = "unix-case-insensitive" then
          FS := FS_Unix_Case_Insensitive;
       else
-         Console.Insert
-           (Kernel, "XML Error for shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error for shell " & Shell_Name &
             ": 'filesystem' child has " & Tmp.all &
             " value. Only 'windows' or 'unix' values are supported",
             Mode => Error);
@@ -464,8 +457,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "cd_command");
       if Tmp = null then
-         Console.Insert
-           (Kernel, "XML Error for shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error for shell " & Shell_Name &
             ": missing 'cd_command' child in remote_shell_config",
             Mode => Error);
          return;
@@ -474,8 +467,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "get_status_command");
       if Tmp = null then
-         Console.Insert
-           (Kernel, "XML Error for shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error for shell " & Shell_Name &
             ": missing 'get_status_command' child in " &
             "remote_shell_config",
             Mode => Error);
@@ -485,8 +478,8 @@ package body Remote.Db is
 
       Tmp := Get_Field (Node, "get_status_ptrn");
       if Tmp = null then
-         Console.Insert
-           (Kernel, "XML Error for shell " & Shell_Name &
+         Kernel.Insert
+           ("XML Error for shell " & Shell_Name &
             ": missing 'get_status_ptrn' child in remote_shell_config",
             Mode => Error);
          return;
@@ -569,17 +562,15 @@ package body Remote.Db is
 
    begin
       if Name = "" then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_connection_config tag is missing a " &
+         Kernel.Insert
+           (-("XML Error: remote_connection_config tag is missing a " &
               "name attribute."),
             Add_LF => True, Mode => Error);
          return;
 
       elsif Db.Access_Tools.Contains (Name) then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_connection_config has a duplicated " &
+         Kernel.Insert
+           (-("XML Error: remote_connection_config has a duplicated " &
               "configuration for " & Name),
             Add_LF => True, Mode => Error);
          return;
@@ -611,9 +602,8 @@ package body Remote.Db is
          end if;
 
       else
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_connection_config is missing a " &
+         Kernel.Insert
+           (-("XML Error: remote_connection_config is missing a " &
               "start_command field for " & Name),
             Add_LF => True, Mode => Error);
 
@@ -621,9 +611,8 @@ package body Remote.Db is
       end if;
 
       if Start_Command = null then
-         Console.Insert
-           (Kernel,
-            -("XML Error: remote_connection_config is missing a " &
+         Kernel.Insert
+           (-("XML Error: remote_connection_config is missing a " &
               "start_command field for " & Name),
             Add_LF => True, Mode => Error);
          return;

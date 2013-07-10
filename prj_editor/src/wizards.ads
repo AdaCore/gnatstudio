@@ -36,7 +36,6 @@
 
 with Gtk.Button;
 with Gtk.Widget;
-with Gtk.Style;
 with Gtk.Label;
 with GPS.Kernel;
 with GNAT.Strings;
@@ -219,8 +218,6 @@ private
 
       Current_Page    : Positive;
       Pages           : Wizard_Pages_Array_Access;
-      Highlight_Style : Gtk.Style.Gtk_Style;
-      Normal_Style    : Gtk.Style.Gtk_Style;
       Kernel          : GPS.Kernel.Kernel_Handle;
    end record;
 end Wizards;

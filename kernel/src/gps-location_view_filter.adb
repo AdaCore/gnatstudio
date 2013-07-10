@@ -19,97 +19,178 @@ with Ada.Strings.Fixed;
 with GNAT.Regpat;
 
 with Basic_Types;
-with GNATCOLL.Utils;
+with GPS.Editors.GtkAda;          use GPS.Editors.GtkAda;
 with GPS.Location_View.Listener;
+with GNATCOLL.Utils;
+with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+with Glib;                        use Glib;
+with Glib.Values;                 use Glib.Values;
+with Gtk.Tree_Model;              use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;       use Gtk.Tree_Model_Filter;
 
 package body GPS.Location_View_Filter is
 
    use type Glib.Gint;
    use type Gtk.Tree_Model.Gtk_Tree_Iter;
 
+   package Set_Visible_Funcs is new Set_Visible_Func_User_Data
+     (User_Data_Type => Location_View_Filter_Model);
+
+   function Is_Visible
+     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self        : Location_View_Filter_Model) return Boolean;
+   --  Computes whether a row should be visible.
+
+   procedure Get_Value
+     (Filter_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value        : in out Glib.Values.GValue;
+      Column       : Gint);
+   --  Return the value to use for that cell.
+
    ---------------
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
-     (Self   : access Location_View_Filter_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue)
+   procedure Get_Value
+     (Filter_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value        : in out Glib.Values.GValue;
+      Column       : Gint)
    is
+      Self        : constant Location_View_Filter_Model :=
+        Location_View_Filter_Model (Gtk_Tree_Model_Filter'(-Filter_Model));
+      Child_Model : constant Gtk_Tree_Model := Self.Get_Model;
+      It          : Gtk_Tree_Iter;  --  in child model
       Proxy_Path  : Gtk.Tree_Model.Gtk_Tree_Path;
       Proxy_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      V           : Glib.Values.GValue;
 
    begin
+      Self.Convert_Iter_To_Child_Iter (Child_Iter => It, Filter_Iter => Iter);
+
       --  Obtain value from the source model.
 
-      Gtkada.Abstract_Filter_Model.Gtk_Abstract_Filter_Model_Record
-        (Self.all).Get_Value (Iter, Column, Value);
+      Gtk.Tree_Model.Get_Value (Child_Model, It, Column, V);
 
-      --  Modify markup text for categories and files level rows.
+      --  Copy (modified if necessary) value into destination GValue object
 
-      if Column = GPS.Location_View.Listener.Node_Markup_Column then
-         Proxy_Path := Self.Get_Path (Iter);
-         Source_Iter := Self.Map_To_Source (Iter);
+      case Column is
+         when GPS.Location_View.Listener.Category_Column =>
+            Set_String (Value, Get_String (V));
 
-         if Gtk.Tree_Model.Get_Depth (Proxy_Path) < 3 then
-            declare
-               Text        : constant String := Glib.Values.Get_String (Value);
-               Total       : constant Natural :=
-                 Natural
-                   (Self.Get_Source_Model.Get_Int
-                      (Source_Iter,
-                       GPS.Location_View.Listener.Number_Of_Children_Column));
-               Total_Image : constant String :=
-                 GNATCOLL.Utils.Image (Total, 1);
-               Visible     : Natural;
+         when GPS.Location_View.Listener.Weight_Column =>
+            Set_Int (Value, Get_Int (V));
 
-            begin
-               --  Compute number of visible messages.
+         when GPS.Location_View.Listener.File_Column =>
+            Set_File (Value, Get_File (V));
 
-               if Gtk.Tree_Model.Get_Depth (Proxy_Path) = 1 then
-                  --  For category row go through all children files rows
+         when GPS.Location_View.Listener.Line_Column =>
+            Set_Int (Value, Get_Int (V));
 
-                  Visible := 0;
-                  Proxy_Iter := Self.Children (Iter);
+         when GPS.Location_View.Listener.Column_Column =>
+            Set_Int (Value, Get_Int (V));
 
-                  while Proxy_Iter /= Gtk.Tree_Model.Null_Iter loop
-                     Visible :=
-                       Visible + Natural (Self.N_Children (Proxy_Iter));
-                     Self.Next (Proxy_Iter);
-                  end loop;
+         when GPS.Location_View.Listener.Text_Column =>
+            Set_String (Value, Get_String (V));
 
-               else
-                  --  For file row obtain number of visible rows directly.
+         when GPS.Location_View.Listener.Node_Icon_Column =>
+            Set_Object (Value, Get_Object (V));
 
-                  Visible := Natural (Self.N_Children (Iter));
-               end if;
+         when GPS.Location_View.Listener.Node_Markup_Column =>
+            --  Modify markup text for categories and files level rows.
 
-               if Total = 1 then
-                  Glib.Values.Set_String
-                    (Value, Text & " (" & Total_Image & " item)");
+            Proxy_Path := Self.Get_Path (Iter);
 
-               else
-                  if Visible = Total then
-                     Glib.Values.Set_String
-                       (Value, Text & " (" & Total_Image & " items)");
+            if Gtk.Tree_Model.Get_Depth (Proxy_Path) < 3 then
+               declare
+                  Text        : constant String := Glib.Values.Get_String (V);
+                  Total       : constant Gint :=
+                    Get_Int
+                      (Child_Model,
+                       It,
+                       GPS.Location_View.Listener.Number_Of_Children_Column);
+                  Total_Image : constant String :=
+                    GNATCOLL.Utils.Image (Natural (Total), 1);
+                  Visible     : Natural;
+
+               begin
+                  --  Compute number of visible messages.
+
+                  if Gtk.Tree_Model.Get_Depth (Proxy_Path) = 1 then
+                     --  For category row go through all children files rows
+
+                     Visible := 0;
+                     Proxy_Iter := Self.Children (Iter);
+
+                     while Proxy_Iter /= Gtk.Tree_Model.Null_Iter loop
+                        Visible :=
+                          Visible + Natural (Self.N_Children (Proxy_Iter));
+                        Self.Next (Proxy_Iter);
+                     end loop;
 
                   else
-                     Glib.Values.Set_String
-                       (Value,
-                        Text
-                        & " ("
-                        & GNATCOLL.Utils.Image (Visible, 1)
-                        & " of "
-                        & Total_Image
-                        & " items)");
-                  end if;
-               end if;
-            end;
-         end if;
-      end if;
+                     --  For file row obtain number of visible rows directly.
 
+                     Visible := Natural (Self.N_Children (Iter));
+                  end if;
+
+                  if Total = 1 then
+                     Glib.Values.Set_String
+                       (Value, Text & " (" & Total_Image & " item)");
+
+                  else
+                     if Visible = Natural (Total) then
+                        Glib.Values.Set_String
+                          (Value, Text & " (" & Total_Image & " items)");
+
+                     else
+                        Glib.Values.Set_String
+                          (Value,
+                           Text
+                           & " ("
+                           & GNATCOLL.Utils.Image (Visible, 1)
+                           & " of "
+                           & Total_Image
+                           & " items)");
+                     end if;
+                  end if;
+               end;
+
+            else
+               Set_String (Value, Get_String (V));
+            end if;
+
+         when GPS.Location_View.Listener.Node_Tooltip_Column =>
+            Set_String (Value, Get_String (V));
+
+         when GPS.Location_View.Listener.Node_Mark_Column =>
+            Set_Mark (Value, Get_Mark (V));
+
+         when GPS.Location_View.Listener.Action_Pixbuf_Column =>
+            Set_Object (Value, Get_Object (V));
+
+         when GPS.Location_View.Listener.Action_Command_Column =>
+            Set_Address (Value, Get_Address (V));
+
+         when GPS.Location_View.Listener.Action_Tooltip_Column =>
+            Set_String (Value, Get_String (V));
+
+         when GPS.Location_View.Listener.Number_Of_Children_Column =>
+            Set_Int (Value, Get_Int (V));
+
+         when GPS.Location_View.Listener.Sort_Order_Hint_Column =>
+            Set_Int (Value, Get_Int (V));
+
+         when GPS.Location_View.Listener.Message_Column =>
+            Set_Address (Value, Get_Address (V));
+
+         when others =>
+            null;
+      end case;
+
+      Unset (V);
       Gtk.Tree_Model.Path_Free (Proxy_Path);
    end Get_Value;
 
@@ -117,89 +198,74 @@ package body GPS.Location_View_Filter is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Model : out Location_View_Filter_Model) is
+   procedure Gtk_New
+     (Model       : out Location_View_Filter_Model;
+      Child_Model : Gtk.Tree_Model.Gtk_Tree_Model)
+   is
+      Cols : constant Guint := Guint (Get_N_Columns (Child_Model));
+      Types : GType_Array (0 .. Cols - 1);
    begin
       Model := new Location_View_Filter_Model_Record;
-      Initialize (Model);
+      Gtk.Tree_Model_Filter.Initialize (Model, Child_Model => Child_Model);
+
+      for T in Types'Range loop
+         Types (T) := Get_Column_Type (Child_Model, Gint (T));
+      end loop;
+
+      Set_Visible_Funcs.Set_Visible_Func
+        (Model, Is_Visible'Access, Data => Model);
+      Model.Set_Modify_Func (Types, Get_Value'Access);
    end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self : not null access Location_View_Filter_Model_Record'Class) is
-   begin
-      Gtkada.Abstract_Filter_Model.Initialize (Self);
-   end Initialize;
 
    ----------------
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
-     (Self        : not null access Location_View_Filter_Model_Record;
-      Source_Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Source_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean
+   function Is_Visible
+     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self        : Location_View_Filter_Model) return Boolean
    is
       use type GNAT.Expect.Pattern_Matcher_Access;
       use type GNAT.Strings.String_Access;
 
-      Depth : constant Glib.Gint := Gtk.Tree_Model.Get_Depth (Source_Path);
+      P     : constant Gtk_Tree_Iter := Parent (Child_Model, Iter);
+      P2    : Gtk_Tree_Iter;
+      Child : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
-      if Depth = 1 then
+      if P = Null_Iter then
          --  Category rows are displayed always, otherwise view doesn't
          --  display any rows at all when model is filled from empty state.
 
          return True;
+      end if;
 
-      elsif Depth = 2 then
+      P2 := Parent (Child_Model, P);
+      if P2 = Null_Iter then
          --  File rows are displayed only when they have visible messages.
 
-         declare
-            Child_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-            Child_Path : Gtk.Tree_Model.Gtk_Tree_Path;
-            Found      : Boolean := False;
-
-         begin
-            Child_Iter := Self.Get_Source_Model.Children (Source_Iter);
-            Child_Path := Gtk.Tree_Model.Copy (Source_Path);
-            Gtk.Tree_Model.Down (Child_Path);
-
-            while Child_Iter /= Gtk.Tree_Model.Null_Iter loop
-               if Self.Is_Visible (Child_Path, Child_Iter) then
-                  Found := True;
-
-                  exit;
-               end if;
-
-               Self.Get_Source_Model.Next (Child_Iter);
-               Gtk.Tree_Model.Next (Child_Path);
-            end loop;
-
-            Gtk.Tree_Model.Path_Free (Child_Path);
-
-            return Found;
-         end;
+         Child := Children (Child_Model, Iter);
+         while Child /= Null_Iter loop
+            if Is_Visible (Child_Model, Child, Self) then
+               return True;
+            end if;
+            Next (Child_Model, Child);
+         end loop;
+         return False;
 
       else
-         --  Messages rows are displayed when match filter.
+         --  Messages rows are displayed when they match filter.
 
          declare
-            Text  : constant String :=
-              Self.Get_Source_Model.Get_String
-                (Source_Iter, GPS.Location_View.Listener.Text_Column);
+            Text  : constant String := Get_String
+              (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
             Found : Boolean := False;
-
          begin
             if Self.Regexp /= null then
                Found := GNAT.Regpat.Match (Self.Regexp.all, Text);
-
             elsif Self.Text /= null then
                Found := Ada.Strings.Fixed.Index (Text, Self.Text.all) /= 0;
-
             else
                return True;
             end if;
@@ -251,7 +317,7 @@ package body GPS.Location_View_Filter is
       Self.Text    := New_Text;
       Self.Is_Hide := Hide_Matched;
 
-      Self.Invalidate;
+      Self.Refilter;
    end Set_Pattern;
 
 end GPS.Location_View_Filter;

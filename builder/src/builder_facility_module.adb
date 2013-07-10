@@ -17,21 +17,19 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Glib;
+with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Alignment;             use Gtk.Alignment;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
@@ -45,10 +43,8 @@ with Commands.Interactive;        use Commands.Interactive;
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
-with Build_Command_Utils;           use Build_Command_Utils;
-
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -56,12 +52,12 @@ with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Search;         use GPS.Kernel.Search;
+with GPS.Search;                use GPS.Search;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
@@ -76,15 +72,17 @@ with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
 
-with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Unbounded.Hash;
+with GPS.Tools_Output;          use GPS.Tools_Output;
 
-with GPS.Kernel.Tools_Output;   use GPS.Kernel.Tools_Output;
-
+with Build_Command_Manager.Console_Writers;
+with Build_Command_Manager.Location_Parsers;
+with Build_Command_Manager.End_Of_Build;
 with Builder_Facility_Module.Output_Choppers;
 with Builder_Facility_Module.Text_Splitters;
 with Builder_Facility_Module.UTF8_Converters;
 with Commands.Builder.Progress_Parsers;
+with Commands.Builder.Build_Output_Collectors;
+with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
 
@@ -95,8 +93,8 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
 
-   Mode_Property : constant String := "Build-Mode";
-   --  History to store which mode is selected
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Any_Type, Any_Type_Access);
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -109,9 +107,6 @@ package body Builder_Facility_Module is
 
    package Combo_Callback is new Gtk.Handlers.Callback
      (Gtkada_Combo_Tool_Button_Record);
-
-   package Combo_Box_Callback is new Gtk.Handlers.Callback
-     (Gtk_Combo_Box_Record);
 
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
@@ -134,18 +129,6 @@ package body Builder_Facility_Module is
 
    package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
-
-   package Target_Outputs is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Unbounded_String, Ada.Strings.Unbounded.Hash, "=");
-
-   type Target_Output_Type is
-     (Normal_Output, Background_Output, Shadow_Output);
-
-   type Target_Output_Array is array (Target_Output_Type) of
-     Target_Outputs.Map;
-
-   package Files is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -176,37 +159,23 @@ package body Builder_Facility_Module is
       --  The set of menu items that need to be removed when reloading the
       --  targets
 
-      Outputs : Target_Output_Array;
-
       Build_Count : Natural := 0;
       --  The number of builds currently running
-
-      Modes_Toolbar_Item : Gtk_Tool_Item;
-      Modes_Combo : Gtk_Combo_Box;
-      --  The toolbar item containing the modes
-
-      Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
-      --  The mode we are currently looking for when filling the combo,
-      --  set to Null_Unbounded_String if we are not browsing.
-
-      Background_Build_ID : Integer := 1;
-      --  The ID of the current background build.
-
-      Background_Build_Command : Scheduled_Command_Access;
-      --  The command holding the background build.
 
       Prevent_Save_Reentry : Boolean := False;
       --  Used to prevent cases where a compilation is triggered "on file save"
       --  and the "file save" is caused by another compilation
 
-      Last_Mains : Files.Map;
-      --  The last launched main
-
       Output_Chopper   : aliased Output_Choppers.Output_Parser_Fabric;
       Text_Splitter    : aliased Text_Splitters.Output_Parser_Fabric;
       UTF8_Converter   : aliased UTF8_Converters.Output_Parser_Fabric;
       Progress_Parser  : aliased Progress_Parsers.Output_Parser_Fabric;
+      Output_Collector : aliased Build_Output_Collectors.Output_Parser_Fabric;
+      Console_Writer   : aliased Console_Writers.Output_Parser_Fabric;
+      Location_Parser  : aliased Location_Parsers.Output_Parser_Fabric;
+      Build_Hook       : aliased End_Of_Build.Output_Parser_Fabric;
 
+      Builder          : aliased Builder_Context_Record;
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -229,6 +198,47 @@ package body Builder_Facility_Module is
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Target_Cursor_Access is access all Target_Cursor;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Target_Cursor, Target_Cursor_Access);
+
+   type Builder_Search_Provider is new Kernel_Search_Provider with record
+      Pattern : Search_Pattern_Access;
+      Iter    : Target_Cursor_Access;
+      Mains   : Any_Type_Access;
+      Current_Main : Integer;
+   end record;
+   overriding procedure Free (Self : in out Builder_Search_Provider);
+   overriding procedure Set_Pattern
+      (Self     : not null access Builder_Search_Provider;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last);
+   overriding procedure Next
+      (Self     : not null access Builder_Search_Provider;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean);
+   overriding function Display_Name
+      (Self     : not null access Builder_Search_Provider) return String
+      is (Provider_Builds);
+   overriding function Documentation
+      (Self     : not null access Builder_Search_Provider) return String;
+
+   procedure Setup
+      (Self : not null access Builder_Search_Provider'Class);
+   --  Preparate internal data for the current target
+
+   type Builder_Search_Result is new Kernel_Search_Result with record
+      Target : Target_Access;
+      Main   : Virtual_File;
+   end record;
+   overriding procedure Execute
+      (Self       : not null access Builder_Search_Result;
+       Give_Focus : Boolean);
 
    -----------------------
    -- Local subprograms --
@@ -309,10 +319,6 @@ package body Builder_Facility_Module is
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user clicks on a toolbar combo button
 
-   procedure On_Mode_Changed
-     (Widget : access Gtk_Combo_Box_Record'Class);
-   --  Called when a user selects a mode from the Mode combo box
-
    procedure On_Combo_Selection
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user selects a new item from the combo
@@ -366,6 +372,11 @@ package body Builder_Facility_Module is
       Data   : access Hooks_Data'Class) return Any_Type;
    --  Called when computing build targets
 
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the build mode is being changed by the user
+
    procedure Add_Action_For_Target (T : Target_Access);
    --  Register a Kernel Action to build T
 
@@ -386,11 +397,6 @@ package body Builder_Facility_Module is
    type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
    --  So that items created for the dynamic Make and Run menus have a special
    --  type, and we only remove these when refreshing the menu
-
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when project changed. Selects value in the build-mode combobox
-   --  previously used for project
 
    type Contextual_Menu_Type is (Build_Targets, Run_Targets);
    procedure Append_To_Contextual_Menu
@@ -529,10 +535,7 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      for T in Target_Output_Type loop
-         Module.Outputs (T).Clear;
-      end loop;
-
+      Module.Builder.Destroy;
       Free (Module.Registry);
    end Destroy;
 
@@ -562,7 +565,7 @@ package body Builder_Facility_Module is
          --  Register the "build main number x"-like actions
 
          for J in 1 .. 4 loop
-            Create (M, Get_Kernel, Builder_Module_ID.Registry, N,
+            Create (M, Builder_Module_ID.Builder'Access, N,
                     To_String (Get_Properties (T).Target_Type), J,
                     False, Default);
             Set_Unbounded_String (Action, N & (-" Number") & J'Img);
@@ -578,8 +581,7 @@ package body Builder_Facility_Module is
          end loop;
       else
          Create
-           (C, Get_Kernel,
-            Builder_Module_ID.Registry, N, No_File, False, Default);
+           (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
 
          Register_Action (Kernel      => Get_Kernel,
                           Name        => Name,
@@ -718,13 +720,7 @@ package body Builder_Facility_Module is
            (Category, Builder_Message_Flags);
       end if;
 
-      if Shadow then
-         Builder_Module_ID.Outputs (Shadow_Output).Clear;
-      elsif Background then
-         Builder_Module_ID.Outputs (Background_Output).Clear;
-      else
-         Builder_Module_ID.Outputs (Normal_Output).Clear;
-      end if;
+      Builder_Module_ID.Builder.Clear_Build_Output (Shadow, Background);
    end Clear_Compilation_Output;
 
    --------------------
@@ -956,7 +952,7 @@ package body Builder_Facility_Module is
          --  build errors, do not launch a background build.
 
          if Has_Category
-           (Get_Messages_Container (Get_Kernel), Error_Category)
+           (Get_Messages_Container (Kernel), Error_Category)
          then
             return;
          end if;
@@ -969,7 +965,7 @@ package body Builder_Facility_Module is
       declare
          P : Project_Type;
       begin
-         P := Get_Registry (Get_Kernel).Tree.Info (File).Project;
+         P := Get_Registry (Kernel).Tree.Info (File).Project;
 
          --  No project was found for the file: this is not a source file, so
          --  return now.
@@ -987,8 +983,7 @@ package body Builder_Facility_Module is
            or else (not Saved
                     and then Get_Properties (T).Launch_Mode = In_Background)
          then
-            Launch_Target (Kernel       => Kernel_Handle (Kernel),
-                           Registry     => Builder_Module_ID.Registry,
+            Launch_Target (Builder      => Builder_Module_ID.Builder'Access,
                            Target_Name  => Get_Name (T),
                            Mode_Name    => "",
                            Force_File   => File,
@@ -1171,8 +1166,7 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Widget);
    begin
       Launch_Target
-        (Get_Kernel,
-         Builder_Module_ID.Registry,
+        (Builder_Module_ID.Builder'Access,
          To_String (Data.Target),
          "",
          No_File,
@@ -1194,8 +1188,7 @@ package body Builder_Facility_Module is
    begin
       if Data /= null then
          Launch_Target
-           (Get_Kernel,
-            Builder_Module_ID.Registry,
+           (Builder_Module_ID.Builder'Access,
             To_String (Target_And_Main (Data.all).Target),
             "",
             No_File,
@@ -1224,56 +1217,14 @@ package body Builder_Facility_Module is
          ": " & Get_Selected_Item (Widget));
    end On_Combo_Selection;
 
-   ---------------------
-   -- On_Mode_Changed --
-   ---------------------
-
-   procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Record'Class)
-   is
-      Mode : constant String := Get_Active_Text (Widget);
-      Reg  : Project_Registry renames
-               Project_Registry (Get_Registry (Get_Kernel).all);
-      Prop : aliased String_Property_Access;
-
-   begin
-      --  Do not consider a change to be effective if we are just creating
-      --  items or browsign through them.
-
-      if Builder_Module_ID.Browsing_For_Mode /= Null_Unbounded_String
-        and then Mode /= To_String (Builder_Module_ID.Browsing_For_Mode)
-      then
-         return;
-      end if;
-
-      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
-         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
-         Recompute_View (Get_Kernel);
-      end if;
-
-      if Mode /= "default" then
-         Prop := new String_Property;
-         Prop.Value := new String'(Mode);
-         Set_Property
-           (Get_Kernel,
-            GPS.Kernel.Project.Get_Project (Get_Kernel),
-            Mode_Property,
-            Prop,
-            True);
-
-      else
-         GPS.Kernel.Properties.Remove_Property
-           (Get_Kernel,
-            GPS.Kernel.Project.Get_Project (Get_Kernel),
-            Mode_Property);
-      end if;
-   end On_Mode_Changed;
-
    -------------------------------
    -- Install_Button_For_Target --
    -------------------------------
 
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
+      Pos     : constant Glib.Gint := Get_Toolbar_Separator_Position
+        (Get_Kernel, Before_Debug);
       Button : Gtk.Tool_Item.Gtk_Tool_Item;
 
       procedure Button_For_Target
@@ -1308,7 +1259,7 @@ package body Builder_Facility_Module is
                Set_Name (Widget, "toolbar_button_" & Name);
 
                String_Callback.Connect
-                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
+                 (Widget, Gtk.Tool_Button.Signal_Clicked,
                   On_Button_Or_Menu_Click'Access,
                   (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
@@ -1318,6 +1269,7 @@ package body Builder_Facility_Module is
                Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
             begin
                Gtk_New (Widget, Get_Icon (Target));
+
                --  Connect to this signal to automatically update the tooltips
                --  when a new main file is selected
                Combo_Callback.Connect
@@ -1333,14 +1285,14 @@ package body Builder_Facility_Module is
                end loop;
 
                Combo_Callback.Connect
-                 (Widget, "clicked",
+                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
                   On_Combo_Click'Access);
                Button := Gtk_Tool_Item (Widget);
             end;
          end if;
 
          Builder_Module_ID.Buttons.Prepend (Button);
-         Insert (Toolbar => Toolbar, Item    => Button);
+         Insert (Toolbar => Toolbar, Item    => Button, Pos => Pos);
          Show_All (Button);
 
       end Button_For_Target;
@@ -1413,8 +1365,7 @@ package body Builder_Facility_Module is
       begin
          Create
            (C,
-            Get_Kernel,
-            Builder_Module_ID.Registry,
+            Builder_Module_ID.Builder'Access,
             Name,
             Main,
             False,
@@ -1513,7 +1464,8 @@ package body Builder_Facility_Module is
    procedure Set_Parsers_For_Target (Target : Target_Access) is
       P : constant Target_Properties := Get_Properties (Target);
    begin
-      Set_Parsers (Get_Name (Target), To_String (P.Output_Parsers));
+      Builder_Module_ID.Builder.Set_Parsers
+        (Get_Name (Target), To_String (P.Output_Parsers));
    end Set_Parsers_For_Target;
 
    -----------------
@@ -1541,7 +1493,7 @@ package body Builder_Facility_Module is
                --  reference when inserting new items.
 
                if Menu_Name = -"/Build/Run" then
-                  Remove_Submenu (M);
+                  Set_Submenu (M, null);
                else
                   Destroy (M);
                end if;
@@ -1647,47 +1599,6 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Modes_Manager;
 
-   -----------------------------
-   -- On_Project_Changed_Hook --
-   -----------------------------
-
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      use type Glib.Gint;
-
-      Prop  : String_Property;
-      Found : Boolean;
-
-   begin
-      Prop.Get_Property
-        (GPS.Kernel.Project.Get_Project (Kernel), Mode_Property, Found);
-
-      if Found then
-         declare
-            Mode : constant String := Prop.Value.all;
-         begin
-            --  Going in reverse order, so if unknown mode is specified in the
-            --  property then 'default' mode will be selected
-
-            Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
-
-            for J in reverse 0 ..
-              Builder_Module_ID.Modes_Combo.Get_Model.N_Children - 1
-            loop
-               Builder_Module_ID.Modes_Combo.Set_Active (J);
-
-               exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
-            end loop;
-
-            Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
-         end;
-
-      elsif Builder_Module_ID.Modes_Combo /= null then
-         Builder_Module_ID.Modes_Combo.Set_Active (0);
-      end if;
-   end On_Project_Changed_Hook;
-
    -----------------------
    -- Auxiliary_Console --
    -----------------------
@@ -1705,13 +1616,8 @@ package body Builder_Facility_Module is
       if Console = null then
          Console := Get_Build_Console (Kernel, Shadow, Background, True);
 
-         if Shadow then
-            C := Builder_Module_ID.Outputs (Shadow_Output).First;
-         elsif Background then
-            C := Builder_Module_ID.Outputs (Background_Output).First;
-         else
-            C := Builder_Module_ID.Outputs (Normal_Output).First;
-         end if;
+         C := Builder_Module_ID.Builder.Clear_All_Build_Output
+           (Shadow, Background);
 
          while Target_Outputs.Has_Element (C) loop
             Insert (Console,
@@ -1760,60 +1666,11 @@ package body Builder_Facility_Module is
 
    procedure Parse_Mode_Node (XML : Node_Ptr) is
       Mode       : Mode_Record;
-      First_Mode : Boolean := False;
-      Align      : Gtk_Alignment;
-
-      use type Glib.Gint;
-
+      pragma Unreferenced (Mode);
    begin
       --  Create the mode and add it to the list of supported modes
 
       Mode := Load_Mode_From_XML (Builder_Module_ID.Registry, XML);
-
-      if Mode.Name = "" then
-         return;
-      end if;
-
-      --  Add the mode to the combo if it is not a shadow mode
-
-      if not Mode.Shadow then
-         --  If the combo is not created, create it now
-
-         if Builder_Module_ID.Modes_Combo = null then
-            First_Mode := True;
-            Gtk_New_Text (Builder_Module_ID.Modes_Combo);
-
-            --  ... and add it to the toolbar
-
-            Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
-            Gtk_New (Align, 0.5, 0.5, 1.0, 0.6);
-            Add (Align, Builder_Module_ID.Modes_Combo);
-
-            Builder_Module_ID.Modes_Toolbar_Item.Add (Align);
-
-            Insert (Get_Toolbar (Get_Kernel),
-                    Builder_Module_ID.Modes_Toolbar_Item);
-            Show_All (Builder_Module_ID.Modes_Toolbar_Item);
-            Combo_Box_Callback.Connect
-              (Builder_Module_ID.Modes_Combo,
-               Signal_Changed,
-               On_Mode_Changed'Access);
-         end if;
-
-         --  Now, insert the mode in the combo
-
-         Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
-
-         if First_Mode then
-            Set_Active (Builder_Module_ID.Modes_Combo, 0);
-         end if;
-
-         --  Regenerate the tooltips for the combo box
-
-         Set_Tooltip_Text
-           (Builder_Module_ID.Modes_Toolbar_Item,
-           Get_Builder_Mode_Chooser_Tooltip (Builder_Module_ID.Registry));
-      end if;
    end Parse_Mode_Node;
 
    ---------------
@@ -1887,17 +1744,28 @@ package body Builder_Facility_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Space : Gtk_Separator_Tool_Item;
+      P : Kernel_Search_Provider_Access;
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
       --  Initialise the registry
       Builder_Module_ID.Registry := Create (Log'Access);
 
+      Initialize
+        (Builder_Module_ID.Builder'Access,
+         GPS.Core_Kernels.Core_Kernel (Kernel),
+         Builder_Module_ID.Registry);
+
       Register_Module
         (Module      => Builder_Module_ID,
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
+
+      P := new Builder_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
+      if P.Kernel = null then
+         raise Program_Error;
+      end if;
 
       --  Register the menus
 
@@ -1957,23 +1825,14 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compute_Build_Targets_Hook,
                 Wrapper (On_Compute_Build_Targets'Access),
                 Name => "builder_facility_module.compute_build_targets");
-
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_Changed_Hook,
-         Func   => Wrapper (On_Project_Changed_Hook'Access),
-         Name   => "builder_facility_module.on_project_changed");
+      Add_Hook (Kernel, Build_Mode_Changed_Hook,
+                Wrapper (On_Build_Mode_Changed'Access),
+                Name => "builder_facility_module.build_mode_changed");
 
       --  Register the shell commands
 
       Builder_Facility_Module.Scripts.Register_Commands
         (Kernel_Handle (Kernel));
-
-      --  Insert a separator in the toolbar
-
-      Gtk_New (Space);
-      Set_Draw (Space, True);
-      Insert (Get_Toolbar (Kernel), Space);
 
       --  Load the user-defined targets
 
@@ -1987,6 +1846,19 @@ package body Builder_Facility_Module is
         (Builder_Module_ID.UTF8_Converter'Access, "utf_converter");
       Register_Output_Parser
         (Builder_Module_ID.Text_Splitter'Access, "text_splitter");
+      Register_Output_Parser
+        (Builder_Module_ID.Console_Writer'Access, "console_writer");
+      Register_Output_Parser
+        (Builder_Module_ID.Location_Parser'Access, "location_parser");
+      Register_Output_Parser
+        (Builder_Module_ID.Output_Collector'Access, "output_collector");
+      Register_Output_Parser
+        (Builder_Module_ID.Build_Hook'Access, "end_of_build");
+
+      Builder_Module_ID.Output_Collector.Set (Builder);
+      Builder_Module_ID.Location_Parser.Set (Builder);
+      Builder_Module_ID.Console_Writer.Set (Builder);
+      Builder_Module_ID.Build_Hook.Set (Builder);
 
       declare
          Progress_Pattern : constant String :=
@@ -2012,169 +1884,14 @@ package body Builder_Facility_Module is
       return Builder_Module_ID.Registry;
    end Registry;
 
-   ----------------------------
-   -- Append_To_Build_Output --
-   ----------------------------
+   -------------
+   -- Builder --
+   -------------
 
-   procedure Append_To_Build_Output
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line       : String;
-      Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean)
-   is
-      pragma Unreferenced (Kernel);
-
-      Inserted : Boolean := True;
-      C : Target_Outputs.Cursor;
-      T : Target_Output_Type;
-      use Target_Outputs;
+   function Builder return Builder_Context is
    begin
-      if Builder_Module_ID /= null then
-         if Shadow then
-            T := Shadow_Output;
-
-         elsif Background then
-            T := Background_Output;
-
-         else
-            T := Normal_Output;
-         end if;
-
-         C := Builder_Module_ID.Outputs (T).Find
-           (To_Unbounded_String (Target));
-
-         if C = Target_Outputs.No_Element then
-            Builder_Module_ID.Outputs (T).Insert
-              (Key       => To_Unbounded_String (Target),
-               New_Item  => To_Unbounded_String (Line & ASCII.LF),
-               Position  => C,
-               Inserted  => Inserted);
-         else
-            declare
-               procedure Local_Append (Key : Unbounded_String;
-                                       E   : in out Unbounded_String);
-               --  Auxiliary subprogram to append to an unbounded string
-               --  in place in the container.
-
-               ------------------
-               -- Local_Append --
-               ------------------
-
-               procedure Local_Append (Key : Unbounded_String;
-                                       E   : in out Unbounded_String)
-               is
-                  pragma Unreferenced (Key);
-               begin
-                  Append (E, Line & ASCII.LF);
-               end Local_Append;
-            begin
-               Builder_Module_ID.Outputs (T).Update_Element
-                 (C, Local_Append'Access);
-            end;
-         end if;
-      end if;
-   end Append_To_Build_Output;
-
-   ----------------------
-   -- Get_Build_Output --
-   ----------------------
-
-   function Get_Build_Output
-     (Target     : String;
-      Shadow     : Boolean;
-      Background : Boolean) return Unbounded_String
-   is
-      Output : Target_Output_Type;
-   begin
-      if Shadow then
-         Output := Shadow_Output;
-      elsif Background then
-         Output := Background_Output;
-      else
-         Output := Normal_Output;
-      end if;
-
-      if Target = "" then
-         declare
-            C : Target_Outputs.Cursor;
-            R : Unbounded_String;
-         begin
-            C := Builder_Module_ID.Outputs (Output).First;
-
-            while Target_Outputs.Has_Element (C) loop
-               R := R & Target_Outputs.Element (C);
-               Target_Outputs.Next (C);
-            end loop;
-
-            return R;
-         end;
-      else
-         return Builder_Module_ID.Outputs (Output).Element
-           (To_Unbounded_String (Target));
-      end if;
-   end Get_Build_Output;
-
-   -----------------------
-   -- Get_List_Of_Modes --
-   -----------------------
-
-   function Get_List_Of_Modes
-     (Model : String) return GNAT.OS_Lib.Argument_List
-   is
-      Result : Argument_List
-        (1 .. Number_Of_Modes (Builder_Module_ID.Registry));
-      Index  : Natural;
-      --  The first available element in Result;
-
-      use Mode_Map;
-      C : Mode_Map.Cursor;
-      Mode : Mode_Record;
-   begin
-      if Builder_Module_ID.Modes_Combo = null
-        or else Result'Length = 0
-      then
-         return (1 => new String'(""));
-      end if;
-
-      --  The first mode is the one selected in the combo
-
-      Result (1) := new String'
-        (Get_Active_Text (Builder_Module_ID.Modes_Combo));
-      Index := 2;
-
-      --  Find all the shadow modes
-
-      C := First_Mode (Builder_Module_ID.Registry);
-
-      while Has_Element (C) loop
-         Mode := Element (C);
-
-         if Mode.Shadow
-           and then Mode.Active
-         then
-            declare
-               use Model_List;
-               C2 : Model_List.Cursor;
-            begin
-               C2 := Mode.Models.First;
-
-               while Has_Element (C2) loop
-                  if Element (C2).Model = Model then
-                     Result (Index) := new String'(To_String (Mode.Name));
-                     Index := Index + 1;
-                  end if;
-
-                  Next (C2);
-               end loop;
-            end;
-         end if;
-
-         Next (C);
-      end loop;
-
-      return Result (1 .. Index - 1);
-   end Get_List_Of_Modes;
+      return Builder_Module_ID.Builder'Access;
+   end Builder;
 
    -------------------
    -- Activate_Mode --
@@ -2208,132 +1925,176 @@ package body Builder_Facility_Module is
       end if;
    end Set_Subdir;
 
-   --------------
-   -- Get_Mode --
-   --------------
+   ---------------------------
+   -- On_Build_Mode_Changed --
+   ---------------------------
 
-   function Get_Mode return String is
+   procedure On_Build_Mode_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Mode : constant String := String_Hooks_Args (Data.all).Value;
+      Reg  : Project_Registry renames
+               Project_Registry (Get_Registry (Kernel).all);
    begin
-      if Builder_Module_ID.Modes_Combo = null then
-         return "";
+      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
+         Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
+         Recompute_View (Get_Kernel);
+      end if;
+   end On_Build_Mode_Changed;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+      (Self     : not null access Builder_Search_Provider;
+       Pattern  : not null access GPS.Search.Search_Pattern'Class;
+       Limit    : Natural := Natural'Last)
+   is
+      pragma Unreferenced (Limit);
+   begin
+      Self.Pattern := Search_Pattern_Access (Pattern);
+
+      Unchecked_Free (Self.Iter);
+
+      Self.Iter := new Target_Cursor'
+         (Get_First_Target (Builder_Module_ID.Registry));
+      Setup (Self);
+   end Set_Pattern;
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup
+      (Self : not null access Builder_Search_Provider'Class)
+   is
+      T : constant Target_Access := Get_Target (Self.Iter.all);
+   begin
+      if Self.Mains /= null then
+         Free (Self.Mains.all);
+         Unchecked_Free (Self.Mains);
       end if;
 
-      return (Get_Active_Text (Builder_Module_ID.Modes_Combo));
-   end Get_Mode;
-
-   --------------
-   -- Set_Mode --
-   --------------
-
-   procedure Set_Mode (Mode : String) is
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-   begin
-      if Builder_Module_ID.Modes_Combo = null then
-         return;
+      if T /= null then
+         declare
+            Targets : constant Unbounded_String :=
+               Get_Properties (T).Target_Type;
+            Data : aliased String_Hooks_Args :=
+               (Hooks_Data with
+                Length => Length (Targets),
+                Value  => To_String (Targets));
+         begin
+            Self.Mains := new Any_Type'(Run_Hook_Until_Not_Empty
+               (Self.Kernel,
+                Compute_Build_Targets_Hook,
+                Data'Unchecked_Access));
+            Self.Current_Main := 1;
+         end;
+      else
+         Self.Mains := null;
+         Self.Current_Main := Integer'Last;
       end if;
+   end Setup;
 
-      Model := Builder_Module_ID.Modes_Combo.Get_Model;
+   ----------
+   -- Next --
+   ----------
 
-      Iter := Model.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         if Get_String (Model, Iter, 0) = Mode then
-            Builder_Module_ID.Modes_Combo.Set_Active_Iter (Iter);
-            return;
+   overriding procedure Next
+      (Self     : not null access Builder_Search_Provider;
+       Result   : out GPS.Search.Search_Result_Access;
+       Has_Next : out Boolean)
+   is
+      T : constant Target_Access := Get_Target (Self.Iter.all);
+      C : Search_Context;
+   begin
+      Result := null;
+      if T = null or else Self.Mains = null then
+         Has_Next := False;
+      else
+         if Self.Current_Main < Self.Mains.Length then
+            declare
+               Main : constant Virtual_File :=
+                  Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
+               Name : constant String :=
+                  Get_Name (T) & " " & Main.Display_Base_Name;
+            begin
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  Result := new Builder_Search_Result'
+                     (Kernel   => Self.Kernel,
+                      Provider => Self,
+                       Score   => C.Score,
+                       Short   => new String'
+                          (Self.Pattern.Highlight_Match (Name, Context => C)),
+                       Long    => null,
+                       Id      => new String'("build-" & Name),
+                       Main    => Main,
+                       Target  => T);
+                  Self.Adjust_Score (Result);
+               end if;
+            end;
          end if;
 
-         Next (Model, Iter);
-      end loop;
-   end Set_Mode;
+         Self.Current_Main := Self.Current_Main + 1;
+         if Self.Current_Main > Self.Mains.Length then
+            Next (Self.Iter.all);
+            Setup (Self);
+            Has_Next := Get_Target (Self.Iter.all) /= null;
+         else
+            Has_Next := True;
+         end if;
+      end if;
+   end Next;
 
-   ----------------------------------
-   -- Previous_Background_Build_Id --
-   ----------------------------------
+   ----------
+   -- Free --
+   ----------
 
-   function Previous_Background_Build_Id return String is
+   overriding procedure Free (Self : in out Builder_Search_Provider) is
    begin
-      return Integer'Image (Builder_Module_ID.Background_Build_ID - 1);
-   end Previous_Background_Build_Id;
-
-   ---------------------------------
-   -- Current_Background_Build_Id --
-   ---------------------------------
-
-   function Current_Background_Build_Id return String is
-   begin
-      return Integer'Image (Builder_Module_ID.Background_Build_ID);
-   end Current_Background_Build_Id;
-
-   -------------------------------
-   -- Background_Build_Finished --
-   -------------------------------
-
-   procedure Background_Build_Finished is
-   begin
-      if Builder_Module_ID.Background_Build_ID = Integer'Last then
-         --  Very very unlikely, but just in case.
-         Builder_Module_ID.Background_Build_ID := 1;
-      else
-         Builder_Module_ID.Background_Build_ID :=
-           Builder_Module_ID.Background_Build_ID + 1;
+      if Self.Mains /= null then
+         Free (Self.Mains.all);
+         Unchecked_Free (Self.Mains);
       end if;
 
-      Builder_Module_ID.Background_Build_Command := null;
-   end Background_Build_Finished;
+      Unchecked_Free (Self.Iter);
 
-   ------------------------------
-   -- Background_Build_Started --
-   ------------------------------
-
-   procedure Background_Build_Started (Command : Scheduled_Command_Access) is
-   begin
-      Builder_Module_ID.Background_Build_Command := Command;
-   end Background_Build_Started;
-
-   --------------------------------
-   -- Interrupt_Background_Build --
-   --------------------------------
-
-   procedure Interrupt_Background_Build is
-   begin
-      if Builder_Module_ID.Background_Build_Command /= null then
-         Get_Messages_Container (Builder_Module_ID.Get_Kernel).Remove_Category
-           (Current_Background_Build_Id, Background_Message_Flags);
-
-         Interrupt_Queue
-           (Get_Kernel,
-            Command_Access (Builder_Module_ID.Background_Build_Command));
-         Builder_Module_ID.Background_Build_Command := null;
-      end if;
-   end Interrupt_Background_Build;
+      Free (Kernel_Search_Provider (Self));
+   end Free;
 
    -------------------
-   -- Set_Last_Main --
+   -- Documentation --
    -------------------
 
-   procedure Set_Last_Main (Target : String; Main : Virtual_File) is
-      Key : constant Unbounded_String := To_Unbounded_String (Target);
+   overriding function Documentation
+      (Self     : not null access Builder_Search_Provider) return String
+   is
+      pragma Unreferenced (Self);
    begin
-      Builder_Module_ID.Last_Mains.Exclude (Key);
-      Builder_Module_ID.Last_Mains.Insert (Key, Main);
-   end Set_Last_Main;
+      return "Search amongst build targets";
+   end Documentation;
 
-   -------------------
-   -- Get_Last_Main --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Get_Last_Main (Target : String) return Virtual_File is
-      Key : constant Unbounded_String := To_Unbounded_String (Target);
-      Cur : Files.Cursor;
-      use Files;
+   overriding procedure Execute
+      (Self       : not null access Builder_Search_Result;
+       Give_Focus : Boolean)
+   is
+      C : aliased Build_Command;
+      Result : Command_Return_Type;
+      pragma Unreferenced (Result, Give_Focus);
    begin
-      Cur := Builder_Module_ID.Last_Mains.Find (Key);
-      if Cur /= Files.No_Element then
-         return Element (Cur);
-      else
-         return No_File;
-      end if;
-   end Get_Last_Main;
+      C.Builder := Builder;
+      C.Target_Name := To_Unbounded_String (Get_Name (Self.Target));
+      C.Main    := Self.Main;
+      C.Dialog  := Build_Command_Utils.Default;
+      C.Quiet   := False;
+      Result := C.Execute (Context => Null_Context);
+   end Execute;
 
 end Builder_Facility_Module;

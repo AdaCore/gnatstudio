@@ -6191,6 +6191,67 @@
 }
 
 {
+  OSX specific
+  Memcheck:Cond
+  fun:*
+  fun:*
+  fun:*
+  fun:dlsym
+}
+{
+  OSX specific
+  Memcheck:Value8
+  fun:*
+  fun:*
+  fun:*
+  fun:dlsym
+}
+{
+  OSX specific
+  Memcheck:Value8
+  fun:*
+  fun:*
+  fun:dlsym
+}
+{
+  OSX specific
+  Memcheck:Cond
+  fun:*
+  fun:dlsym
+}
+{
+  OSX specific
+  Memcheck:Value8
+  fun:*
+  fun:_simple_vsprintf
+}
+{
+  OSX specific
+  Memcheck:Cond
+  fun:*
+  fun:_simple_vsprintf
+}
+{
+  OSX specific
+  Memcheck:Cond
+  fun:*
+  fun:*
+  fun:_simple_vsprintf
+}
+{
+  OSX specific
+  Memcheck:Value8
+  fun:*
+  fun:*
+  fun:_simple_vsprintf
+}
+{
+  OSX specific
+  Memcheck:Cond
+  fun:pthread_rwlock_init
+}
+
+{
    Libiconv on linux
    Memcheck:Addr4
    obj:*libiconv*

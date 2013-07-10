@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk.RGBA;          use Gdk.RGBA;
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module; use Src_Editor_Module;
@@ -79,7 +80,9 @@ package body Src_Editor_Buffer.Blocks is
                Last_Line         => Line_End,
                Name              => Current.Name,
                Block_Type        => Current.Category,
-               Color             => Gdk.Color.Null_Color);
+               Tree              => Language.Tree.Null_Construct_Tree,
+               Iter              => Language.Tree.Null_Construct_Tree_Iterator,
+               Color             => Null_RGBA);
 
             for J in Line_Start + 1 .. Line_End loop
                if Buffer.Editable_Lines (J).Block = null then

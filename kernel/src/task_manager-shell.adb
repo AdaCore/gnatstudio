@@ -20,7 +20,6 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Task_Manager.GUI;        use Task_Manager.GUI;
 
 package body Task_Manager.Shell is
 

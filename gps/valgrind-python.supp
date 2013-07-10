@@ -237,9 +237,25 @@
    fun:SHA1_Update
 }
 
+##################################
+# gtk+ 3.0 and pygobject
+##################################
+
+{
+   gtk3 or pygobject error
+   Memcheck:Addr4
+   fun:gdk_event_copy
+   fun:gdk_display_put_event
+   fun:gdk_event_put
+   fun:ffi_call_SYSV
+   fun:ffi_call
+   fun:g_callable_info_invoke
+   fun:g_function_info_invoke
+   fun:pygi_callable_info_invoke
+}
+
 {
    in fontconfig (L910-063)
    Memcheck:Addr4
    obj:*libfontconfig*
 }
-

@@ -62,13 +62,13 @@ with GNAT.Strings;
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
-with Cairo;
 with Gdk.Types;
 with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Selection;
+with Gtk.Target_List;
+with Gtk.Toolbar;
 with Gtk.Widget;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
@@ -316,14 +316,13 @@ package GPS.Kernel.Modules.UI is
    -- Tooltips --
    --------------
 
-   procedure Compute_Tooltip
+   function Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context;
-      Pixmap  : out Cairo.Cairo_Surface);
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
    --  Given a context, pointing to e.g an entity, the kernel will ask
    --  each of the registered modules whether it wants to display a tooltip.
-   --  The first module to set Pixmap will stop the process.
-   --  If no module wants to display a tooltip, Pixmap is set to null.
+   --  The first module to return non-null will stop the process.
+   --  If no module wants to display a tooltip, returns null.
 
    -----------
    -- Menus --
@@ -457,14 +456,25 @@ package GPS.Kernel.Modules.UI is
       Tooltip  : String := "");
    --  Same as above but with a stock button
 
+   procedure Add_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Stock_Id : String;
+      Action   : String;
+      Tooltip  : String);
+   --  Insert a button in the local toolbar, associated with the given named
+   --  action. The action will be lookuped up upon execution, so it is valid
+   --  even if it has not been registered yet.
+   --  Tooltip is a markup.
+
    -------------------------
    -- Drag'n'drop support --
    -------------------------
 
    My_Target_Url    : constant Guint := 0;
-   Target_Table_Url : constant Gtk.Selection.Target_Entry_Array :=
+   Target_Table_Url : constant Gtk.Target_List.Target_Entry_Array :=
      (1 => (Interfaces.C.Strings.New_String ("text/uri-list"),
-            Gtk.Selection.Target_No_Constraint, My_Target_Url));
+            0, My_Target_Url));
 
    procedure Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;

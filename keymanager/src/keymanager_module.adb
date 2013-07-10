@@ -21,12 +21,15 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Interfaces.C.Strings;
 
 with System.Assertions;       use System.Assertions;
 
+with Gdk.Device;              use Gdk.Device;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
@@ -41,20 +44,21 @@ with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
 
-with Gtkada.MDI;              use Gtkada.MDI;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.Style;            use Gtkada.Style;
 
 with Config;                  use Config;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Kernel;              use GPS.Kernel;
+
+with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
+with GPS.Kernel;                       use GPS.Kernel;
+
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
@@ -129,15 +133,16 @@ package body KeyManager_Module is
       Next    : Event_Handler_Access;
    end record;
 
+   package Event_Handler_Kernel is new Handler_Set_User_Data
+     (Kernel_Handle);
+
    procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
+     (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler for GPS
-   pragma Convention (C, General_Event_Handler);
 
    procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
+     (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler used for event-level debugging
-   pragma Convention (C, Debug_Event_Handler);
 
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
@@ -200,7 +205,7 @@ package body KeyManager_Module is
    --  ??? Global variable, could be queries from the kernel
    Keymanager_Module : Keymanager_Module_ID;
 
-   function Process_Event
+   function Process_Key_Event
      (Kernel  : access Kernel_Handle_Record'Class;
       Event   : Gdk_Event) return Boolean;
    --  Process the event and call the appropriate actions if needed
@@ -221,7 +226,8 @@ package body KeyManager_Module is
    pragma Warnings (On);
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
    procedure Keymanager_Command_Handler
@@ -400,7 +406,10 @@ package body KeyManager_Module is
       Tmp : Event_Handler_Access := Keymanager_Module.Handlers;
       N   : Event_Handler_Access;
    begin
-      if Tmp.Handler = Handler then
+      if Tmp = null then
+         null;
+
+      elsif Tmp.Handler = Handler then
          Keymanager_Module.Handlers := Tmp.Next;
          Unchecked_Free (Tmp);
 
@@ -422,7 +431,7 @@ package body KeyManager_Module is
    ---------------------------
 
    procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address)
+     (Event : Gdk_Event; Kernel : Kernel_Handle)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
 
@@ -430,7 +439,7 @@ package body KeyManager_Module is
       if Keymanager_Module = null then
          --  This can happen when GPS is exiting and modules have been
          --  deallocated already.
-         Gtk.Main.Do_Event (Event);
+         Gtk.Main.Main_Do_Event (Event);
          return;
       end if;
 
@@ -438,7 +447,7 @@ package body KeyManager_Module is
          EH : Event_Handler_Access := Keymanager_Module.Handlers;
       begin
          while EH /= null
-           and then not EH.Handler (Event, Convert (Kernel))
+           and then not EH.Handler (Event, Kernel)
          loop
             EH := EH.Next;
          end loop;
@@ -457,7 +466,7 @@ package body KeyManager_Module is
             if Current = null
               or else not Get_Modal (Gtk_Window (Get_Toplevel (Current)))
             then
-               if Process_Event (Convert (Kernel), Event) then
+               if Process_Key_Event (Kernel, Event) then
                   return;
                end if;
             end if;
@@ -472,7 +481,7 @@ package body KeyManager_Module is
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
-      Gtk.Main.Do_Event (Event);
+      Gtk.Main.Main_Do_Event (Event);
 
    --  We do not put a global exception handler in this procedure since
    --  it is called very often, so when using setjmp/longjmp, the cost
@@ -497,7 +506,7 @@ package body KeyManager_Module is
    end Break_Me_State;
 
    procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address)
+     (Event : Gdk_Event; Kernel : Kernel_Handle)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
@@ -820,8 +829,8 @@ package body KeyManager_Module is
         and then Action /= "/Edit/Copy"
         and then Action /= "Copy to Clipboard"
       then
-         Console.Insert
-           (Kernel, -("Warning: binding Ctrl-C is unreliable on Windows,"
+         Kernel.Insert
+           (-("Warning: binding Ctrl-C is unreliable on Windows,"
             & " external actions can have unexpected results."));
       end if;
 
@@ -993,11 +1002,11 @@ package body KeyManager_Module is
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type)
    is
-      State : constant Gdk_Modifier_Type := Get_State (Event);
+      State : constant Gdk_Modifier_Type := Event.Key.State;
    begin
       --  Remove any num-lock and caps-lock modifiers
       Modifier := State and Get_Default_Mod_Mask;
-      Key := Get_Key_Val (Event);
+      Key := Event.Key.Keyval;
 
       --  If Caps lock in on, and the key is an upper-case character,
       --  lower-case it.
@@ -1011,6 +1020,7 @@ package body KeyManager_Module is
 
       if Active (Me) then
          Trace (Me, "Key=" & Key'Img & " Modif=" & Modifier'Img
+                & " Code=" & Event.Key.Hardware_Keycode'Img
                 & " => " & Image (Key, Modifier)
                 & " / "
                 & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
@@ -1030,11 +1040,11 @@ package body KeyManager_Module is
       --       left-menu  => GDK_MOD1_MASK
    end Get_Normalized_Key;
 
-   -------------------
-   -- Process_Event --
-   -------------------
+   -----------------------
+   -- Process_Key_Event --
+   -----------------------
 
-   function Process_Event
+   function Process_Key_Event
      (Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
@@ -1047,17 +1057,10 @@ package body KeyManager_Module is
       Context          : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action     : Boolean := False;
-      Child            : GPS_MDI_Child;
+      Count            : Natural;
 
       procedure Compute_Context;
       --  Compute the current context if not done already
-
-      procedure Compute_Child;
-      --  Compute the child that currently has the focus. If no such child, or
-      --  this isn't a GPS_MDI_Child, null is set.
-
-      procedure Undo_Group (Start : Boolean);
-      --  Start or end an undo group
 
       ---------------------
       -- Compute_Context --
@@ -1070,36 +1073,6 @@ package body KeyManager_Module is
             Context_Computed := True;
          end if;
       end Compute_Context;
-
-      -------------------
-      -- Compute_Child --
-      -------------------
-
-      procedure Compute_Child is
-         C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      begin
-         if C /= null and then C.all in GPS_MDI_Child_Record'Class then
-            Child := GPS_MDI_Child (C);
-         end if;
-      end Compute_Child;
-
-      ----------------
-      -- Undo_Group --
-      ----------------
-
-      procedure Undo_Group (Start : Boolean) is
-      begin
-         if Start then
-            if Keymanager_Module.Repeat_Count >= 2 then
-               Compute_Child;
-               if Child /= null then
-                  Start_Group (Get_Command_Queue (Child));
-               end if;
-            end if;
-         elsif Child /= null then
-            End_Group (Get_Command_Queue (Child));
-         end if;
-      end Undo_Group;
 
    begin
       --  We could test Modif /= 0 if we allowed only key shortcuts with a
@@ -1136,8 +1109,9 @@ package body KeyManager_Module is
                      Keymanager_Module.Argument_Current :=
                        new String'(Tmp.all & Character'Val (Key));
                   else
-                     Keymanager_Module.Argument_Current :=
-                       new String'(Tmp.all & Get_String (Event));
+                     Keymanager_Module.Argument_Current := new String'
+                       (Tmp.all
+                        & Interfaces.C.Strings.Value (Event.Key.String));
                   end if;
                   Free (Tmp);
                end;
@@ -1198,54 +1172,20 @@ package body KeyManager_Module is
                elsif Command.Command /= null then
                   Compute_Context;
 
-                  if Command.Filter = null
-                    or else
-                      (Context /= No_Context
-                       and then Filter_Matches (Command.Filter, Context))
+                  if Execute_In_Background
+                     (Kernel  => Kernel,
+                      Action  => Command,
+                      Context => Context,
+                      Event   => Event,
+                      Repeat  => Keymanager_Module.Repeat_Count)
                   then
-                     if Active (Me) then
-                        if Keymanager_Module.Repeat_Count > 1 then
-                           Trace (Me, "Executing action "
-                                  & Binding.Action.all
-                                  & Keymanager_Module.Repeat_Count'Img
-                                  & " times");
-                        else
-                           Trace (Me, "Executing action "
-                                  & Binding.Action.all);
-                        end if;
-                     end if;
-
                      if Keymanager_Module.Last_Command /=
                        Cst_String_Access (Binding.Action)
                      then
                         Free (Keymanager_Module.Last_User_Command);
                      end if;
                      Keymanager_Module.Last_Command :=
-                       Cst_String_Access (Binding.Action);
-
-                     Undo_Group (Start => True);
-                     for R in 1 .. Keymanager_Module.Repeat_Count loop
-                        Launch_Background_Command
-                          (Kernel,
-                           Create_Proxy
-                             (Command.Command,
-                              (Event            => Event,
-                               Context          => Context,
-                               Synchronous      => False,
-                               Dir              => No_File,
-                               Args             => null,
-                               Label            => new String'
-                                 (Binding.Action.all),
-                               Repeat_Count     => R,
-                               Remaining_Repeat =>
-                                 Keymanager_Module.Repeat_Count - R)),
-                           Destroy_On_Exit => True,
-                           Active          => True,
-                           Show_Bar        => False,
-                           Queue_Id        => "");
-                     end loop;
-                     Undo_Group (Start => False);
-
+                        Cst_String_Access (Binding.Action);
                      Found_Action := True;
                      Keymanager_Module.Repeat_Count := 1;
                   end if;
@@ -1256,7 +1196,6 @@ package body KeyManager_Module is
          end loop;
 
          if not Found_Action then
-            Trace (Me, "No action was executed, falling though gtk+");
             --  The command will be executed by gtk, we don't know exactly how
             if Keymanager_Module.Last_Command /= null then
                Free (Keymanager_Module.Last_User_Command);
@@ -1267,26 +1206,28 @@ package body KeyManager_Module is
             --  No need to create an undo group, since these events are
             --  processed asynchronously anyway. The editor will properly merge
             --  editing actions into a single undo command anyway.
-            for R in 2 .. Keymanager_Module.Repeat_Count loop
+
+            Count := Keymanager_Module.Repeat_Count;
+            Keymanager_Module.Repeat_Count := 1;
+            for R in 2 .. Count loop
                declare
-                  Ev : Gdk_Event;
+                  Ev : constant Gdk_Event := Copy (Event);
                begin
-                  Deep_Copy (From => Event, To => Ev);
-                  Put (Ev);
+                  --  Process the event immediately
+                  General_Event_Handler (Ev, Kernel_Handle (Kernel));
+                  Free (Ev);
                end;
             end loop;
-            Keymanager_Module.Repeat_Count := 1;
          end if;
 
       elsif Get_Event_Type (Event) = Key_Release then
-         Key   := Get_Key_Val (Event);
+         Get_Normalized_Key (Event, Key, Modif);
 
          --  If we are releasing CTRL, enter Hyper Mode
 
          if Key = GDK_Control_L or else Key = GDK_Control_R then
             Leave_Hyper_Mode (Kernel);
          end if;
-
       end if;
 
       --  Let gtk+ handle all events even if we have already processed one or
@@ -1297,13 +1238,17 @@ package body KeyManager_Module is
       --  ??? On the other hand, if we let it through this means that for
       --  instance alt-w will open the Window menu, even after some action has
       --  been executed.
+
+      if not (Found_Action or Has_Secondary) then
+         Trace (Me, "No action was executed, falling though gtk+");
+      end if;
       return Found_Action or Has_Secondary;
 
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
          return False;
-   end Process_Event;
+   end Process_Key_Event;
 
    ----------------------
    -- Load_Custom_Keys --
@@ -1635,6 +1580,130 @@ package body KeyManager_Module is
                Next (Get_Kernel (Data), Iter);
             end loop;
          end;
+
+      elsif Command = "send_button_event" then
+         declare
+            use type Gdk.Gdk_Window;
+            use Widget_List;
+
+            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 1);
+            Typ     : constant Gdk_Event_Type :=
+              Gdk_Event_Type'Val
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press)));
+            Button  : constant Integer := Nth_Arg (Data, 3, 1);
+            X       : constant Integer := Nth_Arg (Data, 4, 1);
+            Y       : constant Integer := Nth_Arg (Data, 5, 1);
+            Event   : Gdk_Event;
+            List    : Widget_List.Glist;
+            Win     : Gtk_Widget;
+            Device  : Gdk_Device;
+         begin
+            if Window = null then
+               List := List_Toplevels;
+               Win := Get_Data (List);
+               Window := Get_Window (Win);
+               Free (List);
+            end if;
+
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Mouse);
+
+            Gdk_New (Event, Typ);
+            Event.Button :=
+               (The_Type    => Typ,
+                Window      => Window,
+                Send_Event  => 1,
+                Time        => 0, --  CURRENT_TIME
+                X           => Gdouble (X),
+                Y           => Gdouble (Y),
+                Axes        => null,
+                State       => 0,
+                Button      => Guint (Button),
+                Device      => System.Null_Address,
+                X_Root      => 0.0,
+                Y_Root      => 0.0);
+            Ref (Event.Button.Window);
+
+            Device.Ref;
+            Set_Device (Event, Device);
+            Device.Ref;
+            Set_Source_Device (Event, Device);
+
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
+            Gdk.Event.Free (Event);
+         end;
+
+      elsif Command = "send_key_event" then
+         declare
+            use type Gdk.Gdk_Window;
+            use Widget_List;
+
+            Keyval  : constant Gdk_Key_Type :=
+               Gdk_Key_Type (Integer'(Nth_Arg (Data, 1)));
+            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 2);
+            Control : constant Boolean := Nth_Arg (Data, 3, False);
+            Alt     : constant Boolean := Nth_Arg (Data, 4, False);
+            Shift   : constant Boolean := Nth_Arg (Data, 5, False);
+            Event   : Gdk_Event;
+            List    : Widget_List.Glist;
+            Win     : Gtk_Widget;
+            Device  : Gdk_Device;
+         begin
+            if Window = null then
+               List := List_Toplevels;
+               Win := Get_Data (List);
+               Window := Get_Window (Win);
+               Free (List);
+            end if;
+
+            Gdk_New (Event, Gdk.Event.Key_Press);
+            Event.Key :=
+               (The_Type    => Gdk.Event.Key_Press,
+                Window      => Window,
+                Keyval      => Keyval,
+                Send_Event  => 1,
+                Time        => 0, --  CURRENT_TIME
+                Is_Modifier => 0,
+                Group       => 0,
+                State       => 0,
+                Length      => 0,
+                String      => Interfaces.C.Strings.Null_Ptr,
+                Hardware_Keycode => 0);
+            Ref (Event.Key.Window);
+
+            if Control then
+               Event.Key.State := Event.Key.State or Control_Mask;
+            end if;
+
+            if Shift then
+               Event.Key.State := Event.Key.State or Shift_Mask;
+            end if;
+
+            if Alt then
+               Event.Key.State := Event.Key.State or Mod1_Mask;
+            end if;
+
+            if Keyval = GDK_BackSpace then
+               if GNAT.OS_Lib.Directory_Separator = '\' then
+                  Event.Key.Hardware_Keycode := 8;
+               else
+                  --  On MAC, should be 51, on Unix 59
+                  Event.Key.Hardware_Keycode := 59;
+               end if;
+            end if;
+
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Keyboard);
+            Device.Ref;
+            Set_Device (Event, Device);
+            Device.Ref;
+            Set_Source_Device (Event, Device);
+
+            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
+            Gdk.Event.Free (Event);
+         end;
       end if;
    end Keymanager_Command_Handler;
 
@@ -1735,13 +1804,15 @@ package body KeyManager_Module is
         (Keymanager_Module, Kernel, "keymanager");
 
       if Active (Event_Debug_Trace) then
-         Event_Handler_Set
+         Event_Handler_Kernel.Handler_Set
            (Debug_Event_Handler'Access,
-            Convert (Kernel_Handle (Kernel)));
+            Kernel_Handle (Kernel),
+            null);
       else
-         Event_Handler_Set
+         Event_Handler_Kernel.Handler_Set
            (General_Event_Handler'Access,
-            Convert (Kernel_Handle (Kernel)));
+            Kernel_Handle (Kernel),
+            null);
       end if;
 
       Register_Command
@@ -1756,6 +1827,25 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
+      if Active (Traces.Testsuite_Handle) then
+         Register_Command
+            (Get_Scripts (Kernel), "send_key_event",
+            (Param ("keyval"),
+             Param ("window", Optional => True),
+             Param ("control", Optional => True),
+             Param ("alt", Optional => True),
+             Param ("shift", Optional => True)),
+            Keymanager_Command_Handler'Access);
+         Register_Command
+           (Get_Scripts (Kernel), "send_button_event",
+            (Param ("window", Optional => True),
+             Param ("type", Optional => True),
+             Param ("button", Optional => True),
+             Param ("x", Optional => True),
+             Param ("y", Optional => True)),
+            Keymanager_Command_Handler'Access);
+      end if;
+
       Command := new Repeat_Next_Command;
       Repeat_Next_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
@@ -1767,7 +1857,7 @@ package body KeyManager_Module is
          Category => -"General");
       Bind_Default_Key (Kernel, "Repeat Next", "control-u");
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "key_manager.preferences_changed");
 
@@ -1779,9 +1869,10 @@ package body KeyManager_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Keymanager_Module.Menus_Created := True;
    end Preferences_Changed;

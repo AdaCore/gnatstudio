@@ -30,7 +30,7 @@ GPS.Preference ("Plugins/python_support/port").create (
 This is a small local server to which your web browser connects to display the documentation for the standard python library. It is accessed through the /Python menu when editing a python file""", 9432)
 
 try:
-  import gtk
+  from gi.repository import Gtk
   has_pygtk=1
 except:
   has_pygtk=0
@@ -130,7 +130,7 @@ def project_recomputed (hook_name):
   """if python is one of the supported language for the project, add various
      predefined directories that may contain python files, so that shift-F3
      works to open these files as it does for the Ada runtime"""
-  GPS.Project.add_predefined_paths (sources=GPS.get_home_dir() + "plug-ins")
+  GPS.Project.add_predefined_paths(sources="%splug-ins" % GPS.get_home_dir())
   try:
     GPS.Project.root().languages (recursive=True).index ("python")
     # The rest is done only if we support python

@@ -47,7 +47,7 @@ with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
@@ -314,19 +314,21 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "lsmod" then
          declare
-            use type Module_List.List_Node;
-            Current : Module_List.List_Node;
-            List    : constant Module_List.List := List_Of_Modules (Kernel);
+            package Module_List renames GPS.Core_Kernels.Abstract_Module_List;
+            use Module_List;
+            Current : Cursor;
+            List    : constant Module_List.List :=
+              Kernel.Module_List (Module_ID_Record'Tag);
 
          begin
             Current := Module_List.First (List);
 
             Set_Return_Value_As_List (Data);
 
-            while Current /= Module_List.Null_Node loop
+            while Has_Element (Current) loop
                Set_Return_Value
                  (Data,
-                  Module_Name (Module_List.Data (Current)));
+                  Module_Name (Module_ID (Element (Current))));
                Current := Module_List.Next (Current);
             end loop;
          end;
@@ -398,7 +400,8 @@ package body GPS.Kernel.Scripts is
                  (Data, -"No current context, can't execute action");
 
             elsif not Filter_Matches (Action.Filter, Context) then
-               Set_Error_Msg (Data, -"Invalid context for the action");
+               Set_Error_Msg
+                  (Data, -"Invalid context for action """ & Action_Name & '"');
 
             else
                Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
@@ -448,9 +451,9 @@ package body GPS.Kernel.Scripts is
          declare
             Name  : constant String := Nth_Arg (Data, 1);
             Value : constant String := Nth_Arg (Data, 2);
-            Var   : Scenario_Variable :=
-              Get_Registry (Kernel).Tree.Scenario_Variables (Name);
+            Var   : Scenario_Variable;
          begin
+            Var := Get_Registry (Kernel).Tree.Scenario_Variables (Name);
             Set_Value (Var, Value);
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Run_Hook (Kernel, Variable_Changed_Hook);
@@ -1020,7 +1023,7 @@ package body GPS.Kernel.Scripts is
                Title               => Title,
                History             => History_Key ("console_" & Title),
                Create_If_Not_Exist => Title /= "Python"
-                 and then Title /= "Shell",
+               and then Title /= "Shell",
                Force_Create        => Force,
                Manage_Prompt       => Manage_Prompt,
                ANSI_Support        => ANSI_Support,

@@ -32,7 +32,6 @@ with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -286,7 +285,9 @@ package body External_Editor_Module is
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed.
 
    -------------------
@@ -779,9 +780,10 @@ package body External_Editor_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Select_Client;
    end Preferences_Changed;
@@ -843,7 +845,7 @@ package body External_Editor_Module is
                 Wrapper (Open_File_Hook'Access),
                 Name => "external_editor.open_file");
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "external_editor.preferences_changed");
    end Register_Module;

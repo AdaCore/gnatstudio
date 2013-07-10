@@ -36,7 +36,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -329,7 +328,6 @@ package body KeyManager_Module.Macros is
                   Keymanager_Macro_Module.Recording := False;
                   Remove_Event_Handler
                     (Command.Kernel, General_Event_Handler'Access);
-                  Set_Follow_Events (False);
                   Set_Sensitive
                     (Find_Menu_Item
                        (Command.Kernel, Macro & (-"Start Keyboard Macro")),
@@ -379,8 +377,6 @@ package body KeyManager_Module.Macros is
       Macro  : constant String := '/' & (-"Tools/Macro") & '/';
       Events : Event_Set_Access;
    begin
-      Set_Follow_Events (True);
-
       --  ??? There's no way to remove Pointer_Motion_Mask afterwards
       Add_Events (Get_Main_Window (Kernel), Pointer_Motion_Mask);
 
@@ -708,30 +704,30 @@ package body KeyManager_Module.Macros is
          case Event_Type is
             when Key_Press | Key_Release =>
                if Macro.Current_Event /= null
-                 and then not Get_Send_Event (Event)
-                 and then Get_Key_Val (Event) = GDK_Escape
+                 and then Event.Key.Send_Event /= 0
+                 and then Event.Key.Keyval = GDK_Escape
                then
                   Trace (Me, "Replay cancelled");
                   Macro.Current_Event := null;
                   return True;
                end if;
 
-               Key_Item := Create_Item (Event, Macro.Prev_Time);
+               Key_Item := Create_Item (Event.Key, Macro.Prev_Time);
                Save_Item (Macro_Item_Access (Key_Item));
 
             when Button_Press | Button_Release
                | Gdk_2button_Press
                | Gdk_3button_Press
                  =>
-               Button_Item := Create_Item (Event, Macro.Prev_Time);
+               Button_Item := Create_Item (Event.Button, Macro.Prev_Time);
                Save_Item (Macro_Item_Access (Button_Item));
 
             when Motion_Notify =>
-               Motion_Item := Create_Item (Event, Macro.Prev_Time);
+               Motion_Item := Create_Item (Event.Motion, Macro.Prev_Time);
                Save_Item (Macro_Item_Access (Motion_Item));
 
             when Scroll =>
-               Scroll_Item := Create_Item (Event, Macro.Prev_Time);
+               Scroll_Item := Create_Item (Event.Scroll, Macro.Prev_Time);
                Save_Item (Macro_Item_Access (Scroll_Item));
 
                --  Other events should not be needed: they will be generated as

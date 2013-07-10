@@ -33,10 +33,8 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 
-with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 
@@ -53,7 +51,6 @@ with Default_Preferences;       use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -61,16 +58,15 @@ with GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.View;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
@@ -97,20 +93,22 @@ package body GPS.Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
+   Build_Mode_Property : constant String := "Build-Mode";
+   --  The name of a GPS.Properties to store the current build mode. Use
+   --  Get_Build_Mode below instead
+
    use Action_Filters_Htable.String_Hash_Table;
 
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
-
-   function Process_Anim (Data : Process_Data) return Boolean;
-   --  Process_Timeout callback to handle image animations
 
    procedure Free (Tool : in out Tool_Properties_Record);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
    --  Free the list of registered tools
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
    procedure On_Main_Window_Destroyed
@@ -134,15 +132,6 @@ package body GPS.Kernel is
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;
       Text     : String);
-
-   type Kernel_Messages_Window is new Abstract_Messages_Window with record
-      Kernel : Kernel_Handle;
-   end record;
-   overriding procedure Insert
-     (Self   : not null access Kernel_Messages_Window;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : GPS.Messages_Windows.Message_Type := Info);
 
    ------------------
    -- Report_Error --
@@ -331,7 +320,7 @@ package body GPS.Kernel is
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
       Handle.Prefix   := Prefix_Directory;
-      Handle.Messages_Window := new Kernel_Messages_Window'(Kernel => Handle);
+      Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
@@ -349,6 +338,8 @@ package body GPS.Kernel is
       --  We need to load now so that for instance the splash screen is
       --  correctly taken into account.
       Handle.Preferences := new GPS_Preferences_Record;
+      GPS_Preferences_Record (Handle.Preferences.all).Set_Kernel (Handle);
+
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
@@ -356,9 +347,8 @@ package body GPS.Kernel is
 
       --  Create the message container
       Handle.Messages_Container := Create_Messages_Container (Handle);
-      GPS.Kernel.Messages.View.Register (Handle);
 
-      On_Preferences_Changed (Handle);
+      On_Preferences_Changed (Handle, Data => null);
 
       Handle.History := new History_Record;
       Load (Handle.History.all,
@@ -370,7 +360,7 @@ package body GPS.Kernel is
       Create_Clipboard (Handle);
 
       Add_Hook
-        (Handle, Preferences_Changed_Hook,
+        (Handle, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "kernel.preferences_changed");
    end Gtk_New;
@@ -380,23 +370,34 @@ package body GPS.Kernel is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      P : constant Preference := Get_Pref (Data);
    begin
-      if Kernel.Hidden_File_Matcher /= null then
-         Unchecked_Free (Kernel.Hidden_File_Matcher);
+      if P = null
+        or else P = Preference (Hidden_Directories_Pattern)
+      then
+         if Kernel.Hidden_File_Matcher /= null then
+            Unchecked_Free (Kernel.Hidden_File_Matcher);
+         end if;
+
+         declare
+            Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
+         begin
+            if Pattern /= "" then
+               Kernel.Hidden_File_Matcher :=
+                 new Pattern_Matcher'(Compile (Pattern));
+            end if;
+         end;
       end if;
 
-      declare
-         Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
-      begin
-         if Pattern /= "" then
-            Kernel.Hidden_File_Matcher :=
-              new Pattern_Matcher'(Compile (Pattern));
-         end if;
-      end;
-
-      Get_Registry (Kernel).Environment.Set_Trusted_Mode
-        (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+      if P = null
+        or else P = Preference (GPS.Kernel.Preferences.Trusted_Mode)
+      then
+         Get_Registry (Kernel).Environment.Set_Trusted_Mode
+           (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+      end if;
    end On_Preferences_Changed;
 
    ----------------------------
@@ -411,13 +412,24 @@ package body GPS.Kernel is
    end Get_Construct_Database;
 
    ----------------------
+   -- Preferences_File --
+   ----------------------
+
+   function Preferences_File
+     (Self : access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File
+   is
+   begin
+      return Create_From_Dir (Self.Home_Dir, "preferences");
+   end Preferences_File;
+
+   ----------------------
    -- Load_Preferences --
    ----------------------
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
    begin
-      Load_Preferences
-        (Handle.Preferences, Create_From_Dir (Handle.Home_Dir, "preferences"));
+      Load_Preferences (Handle.Preferences, Handle.Preferences_File);
    end Load_Preferences;
 
    ---------------------
@@ -453,28 +465,6 @@ package body GPS.Kernel is
    begin
       Kernel.Editor_Factory := Factory;
    end Set_Buffer_Factory;
-
-   ----------------------------
-   -- Get_Toolchains_Manager --
-   ----------------------------
-
-   function Get_Toolchains_Manager
-     (Kernel : access Kernel_Handle_Record)
-      return Toolchains.Toolchain_Manager is
-   begin
-      return Kernel.Toolchains_Manager;
-   end Get_Toolchains_Manager;
-
-   ----------------------------
-   -- Set_Toolchains_Manager --
-   ----------------------------
-
-   procedure Set_Toolchains_Manager
-     (Kernel  : access Kernel_Handle_Record;
-      Manager : Toolchains.Toolchain_Manager) is
-   begin
-      Kernel.Toolchains_Manager := Manager;
-   end Set_Toolchains_Manager;
 
    -------------------
    -- Get_Undo_Redo --
@@ -766,13 +756,11 @@ package body GPS.Kernel is
             (-"Please verify that you have write access to this file."),
             Error, Button_OK, Justification => Justify_Left);
       else
-         GPS.Kernel.Console.Insert
-           (Handle,
-            (-"Could not save the configuration file ") &
+         Handle.Insert
+           ((-"Could not save the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
-            Mode => GPS.Kernel.Console.Error);
-         Raise_Console (Handle);
+            Mode => Error);
       end if;
    end Report_Preference_File_Error;
 
@@ -962,22 +950,6 @@ package body GPS.Kernel is
       return Handle.Main_Window;
    end Get_Main_Window;
 
-   ------------------
-   -- Process_Anim --
-   ------------------
-
-   function Process_Anim (Data : Process_Data) return Boolean is
-      Window : constant GPS_Window := GPS_Window (Data.Kernel.Main_Window);
-   begin
-      if Anim_Cb (Data.Kernel) then
-         Window.Animation_Timeout := Process_Timeout.Timeout_Add
-           (Guint (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, Data);
-      end if;
-
-      return False;
-   end Process_Anim;
-
    --------------
    -- Get_Busy --
    --------------
@@ -1004,25 +976,13 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Window = null
-        or else Gtk.Widget.In_Destruction_Is_Set (Window)
-      then
+      if Window = null or else Window.In_Destruction then
          return;
       end if;
 
       if State = Busy then
          Set_Busy_Cursor (Get_Window (Window), True, True);
          Window.Busy_Level := Window.Busy_Level + 1;
-      end if;
-
-      if Window.State_Level = 0
-        and then Window.Animation_Timeout = 0
-        and then Window.Animation_Iter /= null
-      then
-         Window.Animation_Timeout := Process_Timeout.Timeout_Add
-           (Guint (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access,
-            (Kernel_Handle (Handle), null, null, null, null, null, False));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
@@ -1041,9 +1001,7 @@ package body GPS.Kernel is
 
       Window := GPS_Window (Handle.Main_Window);
 
-      if Window = null
-        or else Gtk.Widget.In_Destruction_Is_Set (Window)
-      then
+      if Window = null or else Window.In_Destruction then
          return;
       end if;
 
@@ -1056,15 +1014,6 @@ package body GPS.Kernel is
             if Window.Busy_Level = 0 then
                Set_Busy_Cursor (Get_Window (Window), False, False);
             end if;
-         end if;
-
-         if Window.State_Level = 0
-           and then not Gtk.Widget.Destroyed_Is_Set (Get_Main_Window (Handle))
-           and then Window.Animation_Timeout /= 0
-         then
-            Glib.Main.Remove (Window.Animation_Timeout);
-            Window.Animation_Timeout := 0;
-            Display_Default_Image (Kernel_Handle (Handle));
          end if;
       end if;
    end Pop_State;
@@ -1088,6 +1037,17 @@ package body GPS.Kernel is
    begin
       return Handle.Prefix;
    end Get_System_Dir;
+
+   -------------------
+   -- Get_Share_Dir --
+   -------------------
+
+   overriding function Get_Share_Dir
+     (Self : not null access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Create_From_Dir (Self.Get_System_Dir, "share/gps/");
+   end Get_Share_Dir;
 
    ---------------------
    -- Get_Logs_Mapper --
@@ -1169,8 +1129,6 @@ package body GPS.Kernel is
       Free_Tools (Handle);
 
       Free (Handle.Logs_Mapper);
-      GPS.Kernel.Messages.View.Unregister (Handle);
-      Free_Modules (Handle);
       Free_Messages_Container (Handle);
 
       Commands.Free (Handle.Perma_Commands);
@@ -2010,6 +1968,40 @@ package body GPS.Kernel is
       end if;
    end Set_Default_Key;
 
+   -------------------------
+   -- Set_Messages_Window --
+   -------------------------
+
+   procedure Set_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Console : not null access Abstract_Messages_Window'Class) is
+   begin
+      Kernel.Messages := Abstract_Messages_Window_Access (Console);
+   end Set_Messages_Window;
+
+   --------------------------
+   -- Get_Messages_Console --
+   --------------------------
+
+   function Get_Messages_Console
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      return Kernel.Messages.Get_Console_Window;
+   end Get_Messages_Console;
+
+   -------------------------
+   -- Get_Messages_Window --
+   -------------------------
+
+   function Get_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Virtual_Console
+   is
+   begin
+      return Kernel.Messages.Get_Virtual_Console;
+   end Get_Messages_Window;
+
    ---------------------
    -- Messages_Window --
    ---------------------
@@ -2018,21 +2010,126 @@ package body GPS.Kernel is
      (Self : not null access Kernel_Handle_Record)
       return GPS.Messages_Windows.Abstract_Messages_Window_Access is
    begin
-      return Self.Messages_Window;
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access
+        (Self.Messages);
    end Messages_Window;
 
    ------------
    -- Insert --
    ------------
 
-   overriding procedure Insert
-     (Self   : not null access Kernel_Messages_Window;
+   procedure Insert
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : GPS.Messages_Windows.Message_Type := Info) is
+      Mode   : Message_Type := Info) is
    begin
-      Insert
-        (Self.Kernel, Text, Add_LF, GPS.Kernel.Console.Message_Type (Mode));
+      Kernel.Messages.Insert (Text, Add_LF, Mode);
    end Insert;
+
+   -----------------
+   -- Insert_UTF8 --
+   -----------------
+
+   procedure Insert_UTF8
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is
+   begin
+      Kernel.Messages.Insert_UTF8 (UTF8, Add_LF, Mode);
+   end Insert_UTF8;
+
+   --------------------
+   -- Clear_Messages --
+   --------------------
+
+   procedure Clear_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Messages.Clear;
+   end Clear_Messages;
+
+   -------------------
+   -- Raise_Console --
+   -------------------
+
+   procedure Raise_Console
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Messages.Raise_Console (Give_Focus => False);
+   end Raise_Console;
+
+   --------------------
+   -- Set_Build_Mode --
+   --------------------
+
+   procedure Set_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class;
+      New_Mode : String)
+   is
+      Data   : aliased String_Hooks_Args :=
+        (Hooks_Data with
+         Length => New_Mode'Length,
+         Value  => New_Mode);
+      Prop : aliased String_Property_Access;
+   begin
+      Trace (Me, "Change build mode to: " & New_Mode);
+
+      if New_Mode /= "default" then
+         Prop := new String_Property;
+         Prop.Value := new String'(New_Mode);
+         Set_Property
+           (Kernel,
+            GPS.Kernel.Project.Get_Project (Kernel),
+            Build_Mode_Property,
+            Prop,
+            Persistent => True);
+      else
+         GPS.Kernel.Properties.Remove_Property
+           (Kernel,
+            GPS.Kernel.Project.Get_Project (Kernel),
+            Build_Mode_Property);
+      end if;
+
+      Run_Hook (Kernel, Build_Mode_Changed_Hook, Data'Access);
+      Destroy (Data);
+   end Set_Build_Mode;
+
+   --------------------
+   -- Get_Build_Mode --
+   --------------------
+
+   overriding function Get_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record) return String
+   is
+      Prop  : String_Property;
+      Found : Boolean;
+   begin
+      --  This needs to be kept in sync with
+      --  Builder_Facility_Module.On_Build_Mode_Changed
+
+      Get_Property
+        (Prop,
+         Project => GPS.Kernel.Project.Get_Project (Kernel),
+         Name    => Build_Mode_Property,
+         Found   => Found);
+      if Found then
+         return Prop.Value.all;
+      else
+         return "default";
+      end if;
+   end Get_Build_Mode;
+
+   ----------------------
+   -- Process_Launcher --
+   ----------------------
+
+   overriding function Process_Launcher
+     (Self : not null access Kernel_Handle_Record)
+      return GPS.Process_Launchers.Process_Launcher is
+   begin
+      return Self.Launcher'Access;
+   end Process_Launcher;
 
 end GPS.Kernel;

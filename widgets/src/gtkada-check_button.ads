@@ -68,6 +68,8 @@ private
       State     : State_Type;
       Default   : Boolean;
       Internal  : Boolean;
+
+      Forcing_Update : Boolean := False;
    end record;
 
 end Gtkada.Check_Button;

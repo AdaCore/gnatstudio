@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
-with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Window;              use Gdk.Window;
 with Gdk;                     use Gdk;
@@ -138,13 +137,14 @@ package body GVD.Canvas is
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       Canvas : GVD_Canvas;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed, to refresh the GVD canvas
    --  appropriately.
 
@@ -361,9 +361,10 @@ package body GVD.Canvas is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Preferences_Changed (Hook.Canvas);
    end Execute;
@@ -979,15 +980,18 @@ package body GVD.Canvas is
      (Canvas : access GVD_Canvas_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
+      pragma Unreferenced (Kernel);
       Annotation_Font : Pango_Font_Description;
       Hook            : Preferences_Hook;
    begin
+      Assert (Me, Canvas.Kernel /= null,
+              "Canvas' kernel not initialized");
       Browsers.Canvas.Initialize
-        (Canvas, Kernel, Create_Toolbar => False);
+        (Canvas, Create_Toolbar => False);
       Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Canvas.Kernel,
          Event_On_Widget => Canvas,
          Object          => Canvas,
          ID              => Debugger_Module_ID,
@@ -1001,9 +1005,9 @@ package body GVD.Canvas is
          Canvas);
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with Canvas => GVD_Canvas (Canvas));
+        (Function_With_Args with Canvas => GVD_Canvas (Canvas));
       Add_Hook
-        (Kernel, Preferences_Changed_Hook, Hook,
+        (Canvas.Kernel, Preference_Changed_Hook, Hook,
          Name  => "canvas.preferences_changed",
          Watch => GObject (Canvas));
 
@@ -1027,8 +1031,8 @@ package body GVD.Canvas is
 
    procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class) is
    begin
-      Canvas.Item_Context.Foreground := Black (Get_Default_Colormap);
-      Canvas.Tooltip_Context.Foreground := Black (Get_Default_Colormap);
+      Canvas.Item_Context.Foreground := Black_RGBA;
+      Canvas.Tooltip_Context.Foreground := Black_RGBA;
 
       Canvas.Item_Context.Xref_Color := Xref_Color.Get_Pref;
       Canvas.Tooltip_Context.Xref_Color := Xref_Color.Get_Pref;
@@ -1039,7 +1043,7 @@ package body GVD.Canvas is
       Canvas.Item_Context.Selection_Color := Selected_Item_Color.Get_Pref;
       Canvas.Tooltip_Context.Selection_Color := Selected_Item_Color.Get_Pref;
 
-      Canvas.Box_Context.Black_Color := Black (Get_Default_Colormap);
+      Canvas.Box_Context.Black_Color := Black_RGBA;
       Canvas.Box_Context.Grey_Color := Title_Color.Get_Pref;
       Canvas.Box_Context.Thaw_Bg_Color := Thaw_Bg_Color.Get_Pref;
       Canvas.Box_Context.Freeze_Bg_Color := Freeze_Bg_Color.Get_Pref;
@@ -1051,7 +1055,7 @@ package body GVD.Canvas is
 
    procedure On_Realize (Canvas : access Gtk_Widget_Record'Class) is
       C   : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Win : constant Gdk.Window.Gdk_Window := Get_Window (Get_Canvas (C));
+      Win : constant Gdk.Gdk_Window := Get_Window (Get_Canvas (C));
    begin
       pragma Assert (Win /= null);
       if C.Box_Context.Close_Pixmap = null then
@@ -1515,7 +1519,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Show Type");
+         Gtk_New (Radio, Get_Group (Radio), -"Show Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1530,7 +1534,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Show Value + Type");
+         Gtk_New (Radio, Get_Group (Radio), -"Show Value + Type");
          Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1564,7 +1568,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Decimal");
+         Gtk_New (Radio, Get_Group (Radio), -"Decimal");
          Set_Active (Radio, Get_Format (Item) = Decimal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1579,7 +1583,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Hexadecimal");
+         Gtk_New (Radio, Get_Group (Radio), -"Hexadecimal");
          Set_Active (Radio, Get_Format (Item) = Hexadecimal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1594,7 +1598,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Octal");
+         Gtk_New (Radio, Get_Group (Radio), -"Octal");
          Set_Active (Radio, Get_Format (Item) = Octal);
          Item_Handler.Connect
            (Radio, Signal_Activate,
@@ -1609,7 +1613,7 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Submenu, Radio);
 
-         Gtk_New (Radio, Group (Radio), -"Binary");
+         Gtk_New (Radio, Get_Group (Radio), -"Binary");
          Set_Active (Radio, Get_Format (Item) = Binary);
          Item_Handler.Connect
            (Radio, Signal_Activate,

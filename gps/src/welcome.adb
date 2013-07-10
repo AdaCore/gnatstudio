@@ -22,7 +22,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -104,13 +104,13 @@ package body Welcome is
          Title      => -"Welcome to GPS " & Config.Version &
                        " (" & Config.Source_Date & ")",
          Parent     => null,
-         Title_Font => Wizard_Title_Font.Get_Pref);
+         Title_Font => Wizard_Title_Font.Get_Pref,
+         Has_Separator => False);
 
       Set_Default_Size (Screen, 600, 350);
 
       Screen.Kernel := Kernel_Handle (Kernel);
 
-      Set_Has_Separator (Screen, False);
       Set_Position (Screen, Win_Pos_Center);
 
       Gtk_New (Size);
@@ -204,7 +204,7 @@ package body Welcome is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
 
-      Gtk_New_Combo_Text_With_Entry (Screen.Open_Project);
+      Gtk_New_With_Entry (Screen.Open_Project);
       Get_History (Get_History (Kernel).all,
                    "project_files", Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
@@ -301,7 +301,7 @@ package body Welcome is
                --  a "default.gpr" found while loading the default project.
                Get_Registry (Screen.Kernel).Tree.Set_Status (Default);
 
-               Hide_All (Screen);
+               Hide (Screen);
                declare
                   Cancelled : Boolean;
                begin

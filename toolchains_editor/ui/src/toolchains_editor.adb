@@ -37,13 +37,14 @@ with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
+with Gtk.Icon_Set;             use Gtk.Icon_Set;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
@@ -59,6 +60,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
@@ -898,7 +900,7 @@ package body Toolchains_Editor is
          end if;
 
       else
-         Set (Icon, "", Icon_Size_Button);
+         Set (Icon, Null_Gtk_Icon_Set, Icon_Size_Button);
          Label.Set_Has_Tooltip (False);
          GEntry.Set_Has_Tooltip (False);
          Icon.Set_Has_Tooltip (False);
@@ -1062,9 +1064,10 @@ package body Toolchains_Editor is
       Editor.Updating := True;
 
       while Gtk.Widget.Widget_List.Length
-        (Editor.Details_View.Children) > 0
+        (Editor.Details_View.Get_Children) > 0
       loop
-         W := Gtk.Widget.Widget_List.Get_Data (Editor.Details_View.Children);
+         W :=
+           Gtk.Widget.Widget_List.Get_Data (Editor.Details_View.Get_Children);
          Editor.Details_View.Remove (W);
       end loop;
 
@@ -1427,7 +1430,7 @@ package body Toolchains_Editor is
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
       Dialog     : Gtk.Dialog.Gtk_Dialog;
-      Name_Entry : Gtk.Combo_Box.Gtk_Combo_Box;
+      Name_Entry : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
       Res        : Gtk_Response_Type;
       Known_Tc   : GNAT.Strings.String_List_Access :=
                      Toolchains.Known.Get_Known_Toolchain_Names;
@@ -1439,7 +1442,7 @@ package body Toolchains_Editor is
         (Dialog, -"New toolchain",
          Gtk_Window (Editor.Get_Toplevel),
          Modal);
-      Gtk_New_Combo_Text_With_Entry (Name_Entry);
+      Gtk_New_With_Entry (Name_Entry);
       Dialog.Get_Content_Area.Pack_Start (Name_Entry, False, False, 5);
       Gtk_Entry (Name_Entry.Get_Child).Set_Activates_Default (True);
 
@@ -1501,14 +1504,14 @@ package body Toolchains_Editor is
       --  to call gprconfig: we display a popup dialog to inform the user that
       --  he needs to wait a bit for the operation to finish
       Gtk.Dialog.Gtk_New
-        (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)), 0);
-      Set_Has_Separator (Dialog, False);
+        (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)),
+         No_Separator);
       Gtk_New
         (Label, -"Scanning host for available compilers, please wait ...");
-      Pack_Start (Get_Vbox (Dialog), Label);
+      Pack_Start (Get_Content_Area (Dialog), Label);
       Dialog.Show_All;
       Dialog.Ref;
-      Gtk.Main.Grab_Add (Dialog);
+      Dialog.Grab_Add;
 
       --  ??? At some point we should handle the 'Success' status and display
       --  an appropriate warning in the widget stating that we could not
@@ -1518,8 +1521,8 @@ package body Toolchains_Editor is
       Editor.Mgr.Do_Snapshot;
 
       --  Hide and destroy the dialog
-      Gtk.Main.Grab_Remove (Dialog);
-      Dialog.Hide_All;
+      Dialog.Grab_Remove;
+      Dialog.Hide;
       Dialog.Unref;
 
       --  And finally display the toolchains

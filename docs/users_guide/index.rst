@@ -23,6 +23,8 @@ Using the GNAT Programming Studio
    extending
    environment
    GPS
+   runtime
+   plugins
    license
 
 Indices and tables

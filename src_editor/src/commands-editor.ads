@@ -22,6 +22,7 @@ with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package Commands.Editor is
 
@@ -129,20 +130,23 @@ package Commands.Editor is
    --  Return the direction associated with Command
 
    procedure Create
-     (Item          : out Editor_Command;
-      Mode          : Editor_Command_Mode;
-      Buffer        : Source_Buffer;
-      User_Executed : Boolean;
-      Line          : Editable_Line_Type;
-      Column        : Character_Offset_Type;
-      Direction     : Direction_Type := Forward;
-      Cursor_Line   : Editable_Line_Type := 0;
-      Cursor_Column : Character_Offset_Type := 0);
+     (Item              : out Editor_Command;
+      Mode              : Editor_Command_Mode;
+      Buffer            : Source_Buffer;
+      User_Executed     : Boolean;
+      Line              : Editable_Line_Type;
+      Column            : Character_Offset_Type;
+      Direction         : Direction_Type := Forward;
+      Cursor_Line       : Editable_Line_Type := 0;
+      Cursor_Column     : Character_Offset_Type := 0;
+      Cursor_Name       : String := "");
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
    --  Cursor_Line and Cursor_Column need to be specified only if the
    --  Direction_Type is Extended.
+   --  Cursor_Name needs to be set if the Command needs to be executed for
+   --  a specific multi cursor, and not for the main cursor
 
    procedure Add_Text
      (Item         : Editor_Command;
@@ -198,6 +202,8 @@ private
 
       Cursor_Line               : Editable_Line_Type;
       Cursor_Column             : Character_Offset_Type;
+      Alternative_Cursor_Name   : Unbounded_String;
+      --  Name of the multi cursor this action is bound to, if there is one
    end record;
 
    type Editor_Replace_Slice_Type is new Base_Editor_Command_Type with record

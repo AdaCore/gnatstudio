@@ -31,6 +31,8 @@ with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Icon_Set;              use Gtk.Icon_Set;
+with Gtk.Icon_Source;           use Gtk.Icon_Source;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
@@ -48,11 +50,10 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
-with Custom_Tools_Output;       use Custom_Tools_Output;
 with Expect_Interface;          use Expect_Interface;
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -908,7 +909,9 @@ package body Custom_Module is
             Gtk_New (Space);
             Set_Draw (Space, True);
             Show_All (Space);
-            Insert (Get_Toolbar (Kernel), Space, -1);
+            Insert (Get_Toolbar (Kernel),
+                    Space,
+                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
          end if;
 
          Free (Title);
@@ -1202,18 +1205,31 @@ package body Custom_Module is
                         end if;
 
                         if Is_Regular_File (Pic_File) then
-                           Source := Gtk_New;
+                           Gtk_New (Source);
                            Set_Filename (Source, +Full_Name (Pic_File, True));
 
                            declare
+                              use Gtk.Enums;
                               Size : Gtk.Enums.Gtk_Icon_Size;
+                              S : constant String :=
+                                 Get_Attribute (Files, "size");
                            begin
-                              Size := Gtk.Enums.Gtk_Icon_Size'Value
-                                (Get_Attribute (Files, "size"));
+                              if S = "Icon_Size_Menu" then
+                                 Size := Icon_Size_Menu;
+                              elsif S = "Icon_Size_Small_Toolbar" then
+                                 Size := Icon_Size_Small_Toolbar;
+                              elsif S = "Icon_Size_Large_Toolbar" then
+                                 Size := Icon_Size_Large_Toolbar;
+                              else
+                                 Insert (Kernel, "Invalid icon size: " & S,
+                                         Mode => Error);
+                              end if;
+
                               Set_Size (Source, Size);
                               Set_Size_Wildcarded (Source, False);
                            exception
-                              when Constraint_Error =>
+                              when E : Constraint_Error =>
+                                 Trace (Me, E);
                                  Insert
                                    (Kernel,
                                     -("No valid size specified for alternate"
@@ -1282,9 +1298,9 @@ package body Custom_Module is
                      end if;
 
                      if Is_Regular_File (Pic_File) then
-                        Set    := Gtk_New;
+                        Gtk_New (Set);
 
-                        Source := Gtk_New;
+                        Gtk_New (Source);
                         Set_Filename (Source, +Full_Name (Pic_File, True));
                         Add_Source (Set, Source);
                         Free (Source);
@@ -1996,7 +2012,6 @@ package body Custom_Module is
       Custom_Combos.Register_Commands (Kernel);
       Custom_Timeout.Register_Commands (Kernel);
       XML_Viewer.Register_Commands (Kernel);
-      Custom_Tools_Output.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, Constructor_Method,

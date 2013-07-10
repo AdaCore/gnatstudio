@@ -22,7 +22,7 @@ with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
 with Commands; use Commands;
 
-with GPS.Kernel.Tools_Output;          use GPS.Kernel.Tools_Output;
+with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 package Browsers.Elaborations.Cycle_Parser is
 
@@ -44,7 +44,7 @@ package Browsers.Elaborations.Cycle_Parser is
       Command : Command_Access);
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with private;
+     new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    overriding function Create
      (Self  : access Output_Parser_Fabric;
@@ -55,7 +55,7 @@ package Browsers.Elaborations.Cycle_Parser is
 private
 
    type Output_Parser_Fabric is
-     new GPS.Kernel.Tools_Output.Output_Parser_Fabric with null record;
+     new GPS.Tools_Output.Output_Parser_Fabric with null record;
 
    type State_Kinds is
      (New_Cycle, New_Dependency, New_Reason,

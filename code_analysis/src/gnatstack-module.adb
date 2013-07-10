@@ -31,9 +31,8 @@ with Gtk.Widget;
 with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
-with GPS.Kernel.Console;            use GPS.Kernel;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;              use GPS.Kernel;
 with GPS.Kernel.Project;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;
@@ -477,11 +476,10 @@ package body GNATStack.Module is
          Module.Loaded := True;
 
       else
-         GPS.Kernel.Console.Insert
-           (Self.Kernel,
-            "stack_usage.xml not found. Run GNATStack first.",
+         Self.Kernel.Insert
+           ("stack_usage.xml not found. Run GNATStack first.",
             True,
-            GPS.Kernel.Console.Error);
+            Mode => GPS.Kernel.Error);
       end if;
    end Load_Data;
 
@@ -659,11 +657,10 @@ package body GNATStack.Module is
 
    exception
       when E : others =>
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            "Unable to load stack usage information.",
+         Kernel.Insert
+           ("Unable to load stack usage information.",
             True,
-            GPS.Kernel.Console.Error);
+            GPS.Kernel.Error);
          Trace (Exception_Handle, E);
    end On_Load_Data;
 
@@ -718,11 +715,8 @@ package body GNATStack.Module is
    is
    begin
       if not Self.Loaded then
-         GPS.Kernel.Console.Insert
-           (Self.Kernel,
-            "No stack usage information loaded.",
-            True,
-            GPS.Kernel.Console.Error);
+         Self.Kernel.Insert
+           ("No stack usage information loaded.", True, GPS.Kernel.Error);
 
       else
          if Self.Call_Tree_View_MDI /= null then
@@ -761,18 +755,13 @@ package body GNATStack.Module is
 
    begin
       if not Self.Loaded then
-         GPS.Kernel.Console.Insert
-           (Self.Kernel,
-            "No stack usage information loaded.",
-            True,
-            GPS.Kernel.Console.Error);
+         Self.Kernel.Insert
+           ("No stack usage information loaded.", True, GPS.Kernel.Error);
 
       elsif Self.Data.CIs.Is_Empty then
-         GPS.Kernel.Console.Insert
-           (Self.Kernel,
-            "User's CI files not listed in project file.",
-            True,
-            GPS.Kernel.Console.Error);
+         Self.Kernel.Insert
+           ("User's CI files not listed in project file.",
+            True, GPS.Kernel.Error);
 
       elsif Self.CI_Editor_MDI = null then
          GNATStack.CI_Editors.Gtk_New (CI_Editor, Self.Data'Access);

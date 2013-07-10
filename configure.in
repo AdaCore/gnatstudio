@@ -1,11 +1,11 @@
-AC_INIT(gps,[5.3.0w],[report@adacore.com])
+AC_INIT(gps,[6.0.0w],[report@adacore.com])
 GPS_VERSION=AC_PACKAGE_VERSION()
 
 AC_CONFIG_SRCDIR(gps/src/gps-main.adb)
 AC_CANONICAL_SYSTEM
 
-# Forces gtk+ 2.0
-CONFIGURE_SWITCH_WITH_GTK=2.0
+# Forces gtk+ 3.0
+CONFIGURE_SWITCH_WITH_GTK=3.0
 export CONFIGURE_SWITCH_WITH_GTK
 
 STRIP_CR=False
@@ -59,7 +59,7 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 
 ######### checking for gtk
 AM_PATH_GTK
-AM_PATH_GTKADA(2.24.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTKADA(3.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
@@ -104,17 +104,8 @@ case "${host}" in
     esac
   ;;
 
-  # AMD64 processors
-  x86_64-*-* )
-    case "${host}" in
-      *-linux-gnu* )
-        EXEC_COMMAND="xterm -hold -e"
-        PRINT_CMD="a2ps" ;;
-    esac
-  ;;
-
-  ## Intel 386 machines where we don't care about the manufacturer
-  i[[3456]]86-*-* )
+  ## Intel machines where we don't care about the manufacturer
+  i[[3456]]86-*-* | x86_64-*-* )
     machine=intel386
     case "${host}" in
       *-linux-gnu* )
@@ -143,7 +134,8 @@ case "${host}" in
 
       *-darwin* )
 	STRIP_CR=True
-	DEFAULT_FIXED_FONT="Monospace 7.5"
+	DEFAULT_FONT="Lucida Grande 13"
+	DEFAULT_FIXED_FONT="Monaco 10"
 	;;
       # Otherwise we'll fall through to the generic opsys code at the bottom.
     esac
@@ -188,4 +180,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml)
+AC_OUTPUT(Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py)

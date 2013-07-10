@@ -1559,7 +1559,7 @@ package body Old_Entities is
    begin
       Result.Entity_Cursor := Next (Result.Entity_Cursor);
 
-      if Result.Entity_Cursor = Entities_In_File_Sets.No_Element then
+      if not Entities_In_File_Sets.Has_Element (Result.Entity_Cursor) then
          loop
             Result.File_Cursor := Next (Result.File_Cursor);
 
@@ -1567,7 +1567,7 @@ package body Old_Entities is
 
             Result.Entity_Cursor := First (Element (Result.File_Cursor).Refs);
 
-            exit when Result.Entity_Cursor /= Entities_In_File_Sets.No_Element;
+            exit when Entities_In_File_Sets.Has_Element (Result.Entity_Cursor);
          end loop;
       end if;
 
@@ -1589,7 +1589,7 @@ package body Old_Entities is
       if Result.File_Cursor /= Entity_File_Maps.No_Element then
          Result.Entity_Cursor := First (Element (Result.File_Cursor).Refs);
 
-         if Result.Entity_Cursor = Entities_In_File_Sets.No_Element then
+         if not Entities_In_File_Sets.Has_Element (Result.Entity_Cursor) then
             Result := Next (Result);
          end if;
       end if;
@@ -1619,7 +1619,8 @@ package body Old_Entities is
       Map : constant File_With_Refs_Access :=
         List.Element (Key.Loc.File.Ordered_Index);
    begin
-      return Element (Map.Refs.Find ((Location => Key.Loc, others => <>)));
+      return Element (Map.Refs.Find
+         ((Location => Key.Loc, Kind => Unknown, others => <>)));
    end Element;
 
    --------------

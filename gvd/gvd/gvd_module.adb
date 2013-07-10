@@ -19,14 +19,11 @@ with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-
-with Cairo;                     use Cairo;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -56,7 +53,6 @@ with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -108,9 +104,6 @@ package body GVD_Module is
 
    Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
-   Max_Tooltip_Width : constant := 400;
-   --  Maximum size to use for the tooltip windows
-
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
    type File_Edited_Hook_Record is new Function_With_Args with record
@@ -145,6 +138,7 @@ package body GVD_Module is
       Lines_Hook                     : Lines_Revealed_Hook;
 
       Space_Separator                : Gtk_Separator_Tool_Item;
+
       Cont_Button,
       Step_Button,
       Next_Button,
@@ -165,7 +159,7 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Cairo_Surface;
+      Context : Selection_Context) return Gtk_Widget;
    --  See inherited documentation
 
    GVD_Module_Name : constant String := "Debugger";
@@ -189,7 +183,9 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, remove them for all files.
 
-   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences are changed in the GPS kernel
 
    procedure Create_Debugger_Columns
@@ -467,6 +463,8 @@ package body GVD_Module is
       Toolbar : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
       Window  : constant Gtk_Window := Get_Main_Window (Kernel);
 
+      Pos : constant Gint := Get_Toolbar_Separator_Position
+        (Kernel, Before_Debug) + 1;
    begin
       if GVD_Module_ID.Cont_Button /= null then
          return;
@@ -474,7 +472,7 @@ package body GVD_Module is
 
       Gtk_New (GVD_Module_ID.Space_Separator);
       Set_Draw (GVD_Module_ID.Space_Separator, True);
-      Insert (Toolbar, GVD_Module_ID.Space_Separator);
+      Insert (Toolbar, GVD_Module_ID.Space_Separator, Pos);
       Show_All (GVD_Module_ID.Space_Separator);
 
       Gtk_New_From_Stock (GVD_Module_ID.Cont_Button, "gps-debugger-run");
@@ -482,7 +480,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Cont_Button,
          -"Start/Continue the debugged program");
-      Insert (Toolbar, GVD_Module_ID.Cont_Button);
+      Insert (Toolbar, GVD_Module_ID.Cont_Button, Pos + 1);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Cont_Button, Signal_Clicked,
          On_Start_Continue'Access, Window);
@@ -491,7 +489,7 @@ package body GVD_Module is
       Gtk_New_From_Stock (GVD_Module_ID.Step_Button, "gps-debugger-step");
       Set_Name (GVD_Module_ID.Step_Button, "gps-debugger-step-button");
       Set_Tooltip_Text (GVD_Module_ID.Step_Button, -"Step");
-      Insert (Toolbar, GVD_Module_ID.Step_Button);
+      Insert (Toolbar, GVD_Module_ID.Step_Button, Pos + 2);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Step_Button, Signal_Clicked, On_Step'Access, Window);
       Show_All (GVD_Module_ID.Step_Button);
@@ -499,7 +497,7 @@ package body GVD_Module is
       Gtk_New_From_Stock (GVD_Module_ID.Next_Button, "gps-debugger-next");
       Set_Name (GVD_Module_ID.Next_Button, "gps-debugger-next-button");
       Set_Tooltip_Text (GVD_Module_ID.Next_Button, -"Next");
-      Insert (Toolbar, GVD_Module_ID.Next_Button);
+      Insert (Toolbar, GVD_Module_ID.Next_Button, Pos + 3);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Next_Button, Signal_Clicked, On_Next'Access, Window);
       Show_All (GVD_Module_ID.Next_Button);
@@ -509,7 +507,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Finish_Button,
          -"Execute until selected stack frame returns");
-      Insert (Toolbar, GVD_Module_ID.Finish_Button);
+      Insert (Toolbar, GVD_Module_ID.Finish_Button, Pos + 4);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Finish_Button,
          Signal_Clicked, On_Finish'Access, Window);
@@ -520,7 +518,7 @@ package body GVD_Module is
       Set_Tooltip_Text
         (GVD_Module_ID.Up_Button,
          -"Select and print stack frame that called this one");
-      Insert (Toolbar, GVD_Module_ID.Up_Button);
+      Insert (Toolbar, GVD_Module_ID.Up_Button, Pos + 5);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Up_Button, Signal_Clicked, On_Up'Access, Window);
       Show_All (GVD_Module_ID.Up_Button);
@@ -529,7 +527,7 @@ package body GVD_Module is
       Set_Name (GVD_Module_ID.Down_Button, "gps-debugger-down-button");
       Set_Tooltip_Text (GVD_Module_ID.Down_Button,
                         -"Select and print stack frame called by this one");
-      Insert (Toolbar, GVD_Module_ID.Down_Button);
+      Insert (Toolbar, GVD_Module_ID.Down_Button, Pos + 6);
       Widget_Callback.Object_Connect
         (GVD_Module_ID.Down_Button, Signal_Clicked, On_Down'Access, Window);
       Show_All (GVD_Module_ID.Down_Button);
@@ -660,8 +658,8 @@ package body GVD_Module is
             end;
 
          else
-            Console.Insert
-              (Kernel, (-"Could not find file: ") & S.Display_Full_Name,
+            Kernel.Insert
+              ((-"Could not find file: ") & S.Display_Full_Name,
                Mode => Error);
          end if;
       end;
@@ -1271,7 +1269,7 @@ package body GVD_Module is
       Set_Default_Size (Dialog, 300, 100);
 
       Gtk_New (Table, 2, 2, False);
-      Pack_Start (Get_Vbox (Dialog), Table, Expand => False);
+      Pack_Start (Get_Content_Area (Dialog), Table, Expand => False);
 
       Gtk_New (Label, -"Target name:");
       Set_Alignment (Label, 0.0, 0.0);
@@ -1358,8 +1356,8 @@ package body GVD_Module is
             Exec := GNATCOLL.VFS.Locate_On_Path (Base_Name (S));
 
             if not Is_Regular_File (Exec) then
-               Console.Insert
-                 (Kernel, (-"Could not find file: ") & Display_Base_Name (S),
+               Kernel.Insert
+                 ((-"Could not find file: ") & Display_Base_Name (S),
                   Mode => Error);
                S := GNATCOLL.VFS.No_File;
             else
@@ -1373,8 +1371,8 @@ package body GVD_Module is
 
       exception
          when Executable_Not_Found =>
-            Console.Insert
-              (Kernel, (-"Could not find file: ") & Display_Full_Name (S),
+            Kernel.Insert
+              ((-"Could not find file: ") & Display_Full_Name (S),
                Mode => Error);
       end;
 
@@ -1420,8 +1418,8 @@ package body GVD_Module is
                Mode => GVD.Types.Visible);
 
          else
-            Console.Insert
-              (Kernel, (-"Could not find core file: ") &
+            Kernel.Insert
+              ((-"Could not find core file: ") &
                Display_Full_Name (S),
                Mode => Error);
          end if;
@@ -1646,13 +1644,15 @@ package body GVD_Module is
 
    overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Cairo_Surface
+      Context : Selection_Context) return Gtk_Widget
    is
       pragma Unreferenced (Module);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Debugger : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Kernel));
       Value    : GNAT.Strings.String_Access;
+      W        : Gtk_Widget;
+      Label    : Gtk_Label;
 
    begin
       if Debugger = null
@@ -1660,7 +1660,7 @@ package body GVD_Module is
         or else not Has_Entity_Name_Information (Context)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
-         return Null_Surface;
+         return null;
       end if;
 
       Push_State (Kernel, Busy);
@@ -1668,7 +1668,6 @@ package body GVD_Module is
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
-         Pixmap        : Cairo_Surface;
 
       begin
          if Variable_Name = ""
@@ -1676,39 +1675,34 @@ package body GVD_Module is
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Pop_State (Kernel);
-            return Null_Surface;
+            return null;
 
          else
             Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
          end if;
 
          if Value.all /= "" then
-            Create_Pixmap_From_Text
-              (Text       => Value.all,
-               Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref_Font,
-               Bg_Color   => White (Get_Default_Colormap),
-               Widget     => Get_Main_Window (Kernel),
-               Pixmap     => Pixmap,
-               Wrap_Width => Max_Tooltip_Width);
+            Gtk_New (Label, Value.all);
+            W := Gtk_Widget (Label);
          else
             --  Note: if Value.all is "", we will return Pixmap below, hence
             --  the assignment.
 
-            Pixmap := Null_Surface;
+            W := null;
          end if;
 
          GNAT.Strings.Free (Value);
          Pop_State (Kernel);
-         return Pixmap;
+         return W;
       end;
 
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
-         return Null_Surface;
+         return null;
       when E : others => Trace (Exception_Handle, E);
          Pop_State (Kernel);
-         return Null_Surface;
+         return null;
    end Tooltip_Handler;
 
    -------------------
@@ -1726,7 +1720,7 @@ package body GVD_Module is
 
    begin
       if Get_Main_Window (Kernel) /= null
-        and then not In_Destruction_Is_Set (Get_Main_Window (Kernel))
+        and then not Get_Main_Window (Kernel).In_Destruction
       then
          if State = Debug_Available then
             Add_Debug_Buttons (Kernel);
@@ -2308,8 +2302,10 @@ package body GVD_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Window : constant Gtk_Window := Get_Main_Window (Kernel);
       Top    : constant GPS_Window := GPS_Window (Window);
       Prev   : Boolean;
@@ -2547,7 +2543,7 @@ package body GVD_Module is
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "gvd.preferences_changed");
       Add_Hook (Kernel, Debugger_Executable_Changed_Hook,

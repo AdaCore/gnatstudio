@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with ALI;
@@ -48,14 +49,16 @@ with Gdk.Visual;
 with Gtk;                              use Gtk;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
+with Gtk.Handlers;
 with Gtk.Main;                         use Gtk.Main;
-with Gtk.Rc;
+with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
 with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.MDI;                       use Gtkada.MDI;
+with Gtkada.Style;
 
 with Config;                           use Config;
 with DDE;
@@ -80,14 +83,16 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Stock_Icons;
 with GPS.Main_Window;
 with GPS.Menu;
+with GPS.Search.GUI;
 with OS_Utils;                         use OS_Utils;
 with Projects;                         use Projects;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
-with Task_Manager;
+with Task_Manager.GUI;
 with Traces;                           use Traces;
 with Welcome;                          use Welcome;
 with Welcome_Page;                     use Welcome_Page;
@@ -254,8 +259,6 @@ procedure GPS.Main is
    About_Contents         : String_Access;
    Passed_Project_Name    : String_Access;
 
-   Python_Path : String_Access;
-
    Splash                 : Gtk_Window;
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
@@ -311,6 +314,21 @@ procedure GPS.Main is
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
 
+   procedure Default_Gtk_Exception_Handler
+     (Occurrence : Ada.Exceptions.Exception_Occurrence);
+   --  Called when an Ada callback raises an exception, to log it.
+
+   -----------------------------------
+   -- Default_Gtk_Exception_Handler --
+   -----------------------------------
+
+   procedure Default_Gtk_Exception_Handler
+     (Occurrence : Ada.Exceptions.Exception_Occurrence)
+   is
+   begin
+      Traces.Trace (Traces.Exception_Handle, Occurrence);
+   end Default_Gtk_Exception_Handler;
+
    ---------------------
    -- Clean_Parameter --
    ---------------------
@@ -350,13 +368,15 @@ procedure GPS.Main is
 
          Close (FD);
          Gtk_New (Splash, Window_Toplevel);
-         Set_Property (Splash, Allow_Shrink_Property, False);
-         Set_Property (Splash, Allow_Grow_Property, False);
+         Splash.Set_Hexpand (False);
+         Splash.Set_Vexpand (False);
          Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
          Gdk_New_From_File (Pixbuf, +File.Full_Name, Error);
          Gtk_New (Image, Pixbuf);
-         Unref (Pixbuf);
+         if Pixbuf /= null then
+            Unref (Pixbuf);
+         end if;
          Add (Splash, Image);
          Show_All (Splash);
       end if;
@@ -458,6 +478,9 @@ procedure GPS.Main is
       pragma Unreferenced (Ignored);
 
    begin
+      Gtk.Handlers.Set_On_Exception
+        (Default_Gtk_Exception_Handler'Unrestricted_Access);
+
       Tmp  := Getenv ("GPS_MEMORY_MONITOR");
       Tmp2 := Getenv ("GPS_MEMORY_CHECK");
 
@@ -555,26 +578,29 @@ procedure GPS.Main is
 
       Prefix_Dir := Create (+Prefix.all);
 
-      --  Parse the config files
-      Gtk.Rc.Add_Default_File
-        (+Create_From_Dir (Prefix_Dir, "etc/gps/gtkrc").Full_Name);
-      Gtk.Rc.Add_Default_File
-        (+Create_From_Dir (GPS_Home_Dir, "gtkrc").Full_Name);
-
       Gtk.Main.Init;
 
       --  Python startup path
 
-      Python_Path := Getenv ("PYTHONPATH");
-      if Python_Path.all = "" then
-         Setenv ("PYTHONPATH",
-                 +Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
-      else
-         Setenv ("PYTHONPATH",
-                 +To_Path
-                   (From_Path (+Python_Path.all) &
-                    (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
-      end if;
+      declare
+         Python_Path : String_Access := Getenv ("PYTHONPATH");
+         New_Val : String_Access;
+      begin
+         if Python_Path.all = "" then
+            New_Val := new String'
+              (+Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
+         else
+            New_Val := new String'
+              (+To_Path
+                 (From_Path (+Python_Path.all) &
+                  (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
+         end if;
+
+         Setenv ("PYTHONPATH", New_Val.all);
+         Trace (Me, "PYTHONPATH=" & New_Val.all);
+         Free (Python_Path);
+         Free (New_Val);
+      end;
 
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
@@ -695,6 +721,29 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Major_Version) & '.'
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
+
+      GPS.Stock_Icons.Register_Stock_Icons (Prefix_Dir);
+
+      declare
+         Global : constant Virtual_File :=
+           Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
+         Local  : constant Virtual_File :=
+           GPS_Home_Dir.Create_From_Dir ("gps.css");
+      begin
+         if Global.Is_Regular_File then
+            Trace (Me, "Loading " & Global.Display_Full_Name);
+            Gtkada.Style.Load_Css_File
+              (Global.Display_Full_Name, Put_Line'Access,
+               Priority_Settings);
+         end if;
+
+         if Local.Is_Regular_File then
+            Trace (Me, "Loading " & Local.Display_Full_Name);
+            Gtkada.Style.Load_Css_File
+              (Local.Display_Full_Name, Put_Line'Access,
+               Priority_User);
+         end if;
+      end;
 
       Parse_Switches;
 
@@ -1251,9 +1300,8 @@ procedure GPS.Main is
                      Line := Natural'Value (+S (S'First + 1 .. S'Last));
                   exception
                      when Constraint_Error =>
-                        Console.Insert
-                          (GPS_Main.Kernel,
-                           "Invalid switch: " & (+S),
+                        GPS_Main.Kernel.Insert
+                          ("Invalid switch: " & (+S),
                            Mode => Error);
                         Line := 1;
                   end;
@@ -1459,6 +1507,8 @@ procedure GPS.Main is
          Scenario_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
+      GPS.Search.GUI.Register_Module (GPS_Main.Kernel);
+      Task_Manager.GUI.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
 
       if Active (VCS_Trace) then
@@ -1580,7 +1630,7 @@ procedure GPS.Main is
       --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
       --   and call Set_Default_Icon_List
 
-      Icon := Render_Icon (GPS_Main, "gps-icon-32", -1);
+      Icon := Render_Icon_Pixbuf (GPS_Main, "gps-icon-32", Icon_Size_Dialog);
 
       if Icon /= null then
          Set_Default_Icon (Icon);
@@ -1589,9 +1639,8 @@ procedure GPS.Main is
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
-      Console.Insert
-        (GPS_Main.Kernel,
-         -"Welcome to GPS " & Config.Version &
+      GPS_Main.Kernel.Insert
+        (-"Welcome to GPS " & Config.Version &
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
@@ -1695,15 +1744,20 @@ procedure GPS.Main is
          Set_Pref (Tip_Of_The_Day, GPS_Main.Kernel, False);
       end if;
 
-      --  Load the preferences set when creating the kernel.
-      --  This needs to be done after all the graphical elements have been
+      --  Load the preferences set when creating the kernel
+      --  This needs to be done after all the graphical eleents have been
       --  created, to be sure they are realized and will take the preferences
       --  into account.
 
-      Run_Hook (GPS_Main.Kernel, Preferences_Changed_Hook);
+      declare
+         D : aliased Preference_Hooks_Args :=
+           (Hooks_Data with Pref => null);
+      begin
+         Run_Hook (GPS_Main.Kernel, Preference_Changed_Hook, D'Access);
+      end;
 
       if not Hide_GPS then
-         Show (GPS_Main);
+         GPS_Main.Present;
       end if;
 
       if Program_Args /= null then
@@ -1740,9 +1794,6 @@ procedure GPS.Main is
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
       Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Access);
-
-      Setenv ("PYTHONPATH", Python_Path.all);
-      Free (Python_Path);
 
       return False;
    end Finish_Setup;
@@ -1842,8 +1893,6 @@ procedure GPS.Main is
       --  are handled separately,...
       --  Since the call to destroy below will free the animation at some
       --  point, we no longer want to access/update it past this point.
-
-      GPS_Main.Animation_Image := null;
 
       Destroy (GPS_Main);
 

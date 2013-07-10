@@ -148,11 +148,11 @@ package body CodePeer.Race_Summary_Models is
       if Iter /= Gtk.Tree_Model.Null_Iter
         and then Index in Self.Data.First_Index .. Self.Data.Last_Index
       then
-         Path := Gtk.Tree_Model.Gtk_New;
+         Gtk.Tree_Model.Gtk_New (Path);
          Gtk.Tree_Model.Append_Index (Path, Glib.Gint (Index - 1));
 
       else
-         Path := null;
+         Path := Gtk.Tree_Model.Null_Gtk_Tree_Path;
       end if;
 
       return Path;

@@ -1,9 +1,9 @@
 """ Enables a selection of Eclipse-like shortcuts in GPS.
 
-
 The "delete line" (Ctrl-D) action was contributed by Robert ter Vehn.
-
 """
+
+
 
 import GPS
 

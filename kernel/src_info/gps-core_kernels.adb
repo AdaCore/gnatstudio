@@ -15,9 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Hash;
+
 with GNAT.OS_Lib;
 with GNAT.Strings;                     use GNAT.Strings;
 
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -26,6 +29,35 @@ with GPS.Scripts;
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
+
+   -----------------------
+   -- Get_Doc_Directory --
+   -----------------------
+
+   function Get_Doc_Directory
+     (Kernel : access Core_Kernel_Record'Class) return Virtual_File
+   is
+      Project  : Project_Type renames Kernel.Registry.Tree.Root_Project;
+      Attr     : constant String :=
+                   Project.Attribute_Value (Documentation_Dir_Attribute);
+      Base_Dir : Virtual_File;
+
+   begin
+      if Attr /= "" then
+         Base_Dir := Create_From_Base (+Attr);
+         Base_Dir.Ensure_Directory;
+
+         return Base_Dir;
+      end if;
+
+      if Project.Object_Dir /= No_File then
+         Base_Dir := Project.Object_Dir;
+      else
+         Base_Dir := Project.Project_Path.Get_Parent;
+      end if;
+
+      return Create_From_Dir (Base_Dir, +"doc/");
+   end Get_Doc_Directory;
 
    ----------------------
    -- Create_From_Base --
@@ -104,6 +136,27 @@ package body GPS.Core_Kernels is
       GNATCOLL.Symbols.Free (Self.Symbols);
    end Destroy;
 
+   --------------------
+   -- Get_Build_Mode --
+   --------------------
+
+   function Get_Build_Mode
+     (Self : not null access Core_Kernel_Record) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "default";
+   end Get_Build_Mode;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Tag : Ada.Tags.Tag) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (Ada.Tags.External_Tag (Tag));
+   end Hash;
+
    ------------------
    -- Lang_Handler --
    ------------------
@@ -114,6 +167,70 @@ package body GPS.Core_Kernels is
    begin
       return Kernel.Lang_Handler;
    end Lang_Handler;
+
+   ------------
+   -- Module --
+   ------------
+
+   function Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module
+   is
+      use Abstract_Module_List;
+      Sequence : constant List := Kernel.Module_List (Tag);
+   begin
+      if Is_Empty (Sequence) then
+         return null;
+      else
+         return Sequence.Last_Element;
+      end if;
+   end Module;
+
+   -----------------
+   -- Module_List --
+   -----------------
+
+   function Module_List
+     (Kernel : access Core_Kernel_Record'Class;
+      Tag    : Ada.Tags.Tag) return Abstract_Module_List.List
+   is
+      Pos : constant Module_Maps.Cursor := Kernel.Modules.Find (Tag);
+   begin
+      if Module_Maps.Has_Element (Pos) then
+         return Module_Maps.Element (Pos);
+      else
+         return Abstract_Module_List.Empty_List;
+      end if;
+   end Module_List;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access Core_Kernel_Record'Class;
+      Module : not null Abstract_Module)
+   is
+      use Ada.Tags;
+
+      Item : Ada.Tags.Tag := Module'Tag;
+   begin
+      while Item /= No_Tag loop
+         declare
+            Pos  : constant Module_Maps.Cursor := Kernel.Modules.Find (Item);
+            List : Abstract_Module_List.List;
+         begin
+            if Module_Maps.Has_Element (Pos) then
+               List := Module_Maps.Element (Pos);
+            end if;
+
+            Abstract_Module_List.Append (List, Module);
+            Kernel.Modules.Include (Item, List);
+
+            Item := Parent_Tag (Item);
+         end;
+      end loop;
+   end Register_Module;
 
    --------------
    -- Registry --
@@ -166,4 +283,25 @@ package body GPS.Core_Kernels is
       Self.Create_Scripts_Repository (Self.Scripts);
    end Initialize;
 
+   ----------------------------
+   -- Get_Toolchains_Manager --
+   ----------------------------
+
+   function Get_Toolchains_Manager
+     (Self : not null access Core_Kernel_Record)
+      return Toolchains.Toolchain_Manager is
+   begin
+      return Self.Toolchains_Manager;
+   end Get_Toolchains_Manager;
+
+   ----------------------------
+   -- Set_Toolchains_Manager --
+   ----------------------------
+
+   procedure Set_Toolchains_Manager
+     (Self    : not null access Core_Kernel_Record;
+      Manager : Toolchains.Toolchain_Manager) is
+   begin
+      Self.Toolchains_Manager := Manager;
+   end Set_Toolchains_Manager;
 end GPS.Core_Kernels;

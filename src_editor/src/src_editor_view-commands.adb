@@ -26,6 +26,7 @@ with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
@@ -35,7 +36,8 @@ package body Src_Editor_View.Commands is
    procedure Move_Iter
      (Iter : in out Gtk_Text_Iter;
       Kind : Movement_Type;
-      Step : Integer);
+      Step : Integer;
+      Horiz_Offset : Gint := -1);
    --  Move the iterator according to Kind. Kind should be different from page
 
    ---------------
@@ -45,7 +47,8 @@ package body Src_Editor_View.Commands is
    procedure Move_Iter
      (Iter : in out Gtk_Text_Iter;
       Kind : Movement_Type;
-      Step : Integer)
+      Step : Integer;
+      Horiz_Offset : Gint := -1)
    is
       Ignored : Boolean;
       Offset  : Gint;
@@ -73,14 +76,16 @@ package body Src_Editor_View.Commands is
             end if;
 
          when Line =>
+            Offset := Horiz_Offset;
             if Step > 0 then
-               Offset := Get_Line_Offset (Iter);
                Forward_Lines (Iter, Gint (Step), Ignored);
                Forward_Cursor_Positions
                  (Iter, Gint'Min
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             else
-               Offset := Get_Line_Offset (Iter);
+               if Get_Line (Iter) = 0 then
+                  return;
+               end if;
                Backward_Lines (Iter, -Gint (Step), Ignored);
                Forward_Cursor_Positions
                  (Iter, Gint'Min
@@ -88,17 +93,8 @@ package body Src_Editor_View.Commands is
             end if;
 
          when Page =>
-            null;
---  ??? why is this code commented out
---              if Step > 0 then
---                 for S in 1 .. Step loop
---                    Forward_Display_Line (View, Iter, Ignored);
---                 end loop;
---              else
---                 for S in 1 .. -Step loop
---                    Backward_Display_Line (View, Iter, Ignored);
---                 end loop;
---              end if;
+            --  The page case is never handled by move iter
+            raise Program_Error with "Should not be here";
       end case;
    end Move_Iter;
 
@@ -111,17 +107,21 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      View     : constant Source_View   :=
-                   Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer   : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Iter     : Gtk_Text_Iter;
-      Mark     : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
-      Scrolled : Gtk_Scrolled_Window;
-      Adj      : Gtk_Adjustment;
-      Moved    : Boolean;
+      View         : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+      Buffer       : constant Source_Buffer :=
+        Source_Buffer (Get_Buffer (View));
+      Iter         : Gtk_Text_Iter;
+      Mark         : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Scrolled     : Gtk_Scrolled_Window;
+      Adj          : Gtk_Adjustment;
+      Moved        : Boolean;
+      Column       : constant Gint := Buffer.Get_Column_Memory;
       pragma Unreferenced (Moved);
 
    begin
+      Set_Multi_Cursors_Manual_Sync (Buffer);
+
       if Command.Kind = Page then
          Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
          Adj      := Get_Vadjustment (Scrolled);
@@ -138,15 +138,37 @@ package body Src_Editor_View.Commands is
          end if;
          Moved := Place_Cursor_Onscreen (View);
          Moved := Move_Mark_Onscreen (View, Mark);
-         return Success;
-
       else
          Get_Iter_At_Mark (Buffer, Iter, Mark);
-         Move_Iter (Iter, Command.Kind, Command.Step);
+         Move_Iter (Iter, Command.Kind, Command.Step, Column);
          Move_Mark (Buffer, Mark, Iter);
          Place_Cursor (Buffer, Iter);
-         return Success;
+         View.Scroll_To_Cursor_Location;
+
+         for Cursor of Get_Multi_Cursors (Buffer) loop
+            declare
+               Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
+               Horiz_Offset : constant Gint :=
+                 Get_Column_Memory (Cursor);
+            begin
+               Buffer.Get_Iter_At_Mark (Iter, Mark);
+               Move_Iter (Iter, Command.Kind, Command.Step,
+                          Get_Column_Memory (Cursor));
+               Buffer.Move_Mark (Mark, Iter);
+               if Command.Kind = Line or Command.Kind = Page then
+                  Set_Column_Memory (Cursor, Horiz_Offset);
+               end if;
+            end;
+         end loop;
+
       end if;
+
+      Set_Multi_Cursors_Auto_Sync (Buffer);
+      if Command.Kind = Line or Command.Kind = Page then
+         Buffer.Set_Column_Memory (Column);
+      end if;
+
+      return Success;
    end Execute;
 
    -------------
@@ -189,10 +211,27 @@ package body Src_Editor_View.Commands is
       Iter, Start : Gtk_Text_Iter;
 
    begin
+      Set_Multi_Cursors_Manual_Sync (Buffer);
+
       Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
       Copy (Source => Iter, Dest => Start);
       Move_Iter (Iter, Command.Kind, Command.Count);
       Delete (Buffer, Iter, Start);
+
+      for Cursor of Get_Multi_Cursors (Buffer) loop
+         declare
+            Cursor_Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
+         begin
+            Set_Multi_Cursors_Manual_Sync (Buffer, Cursor.all);
+            Get_Iter_At_Mark (Buffer, Iter, Cursor_Mark);
+            Copy (Source => Iter, Dest => Start);
+            Move_Iter (Iter, Command.Kind, Command.Count);
+            Delete (Buffer, Iter, Start);
+         end;
+      end loop;
+
+      Set_Multi_Cursors_Auto_Sync (Buffer);
+
       return Success;
    end Execute;
 

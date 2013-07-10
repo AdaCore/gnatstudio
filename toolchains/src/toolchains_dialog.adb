@@ -229,14 +229,14 @@ package body Toolchains_Dialog is
       Gtk_New (Check, -"Activate multiple toolchains setup");
       Show_All (Check);
       Set_Active (Check, Widget.Active);
-      Widget.Get_Vbox.Add (Check);
+      Widget.Get_Content_Area.Add (Check);
       Dialog_Callback.Connect
         (Check, Signal_Toggled, Activate_Toggled'Access, Widget);
 
       Gtk_New (Widget.Frame, -"Paths");
       Set_Sensitive (Widget.Frame, Widget.Active);
       Show_All (Widget.Frame);
-      Widget.Get_Vbox.Add (Widget.Frame);
+      Widget.Get_Content_Area.Add (Widget.Frame);
 
       Gtk_New (Table, Rows => 3, Columns => 3, Homogeneous => False);
       Show_All (Table);
@@ -303,7 +303,8 @@ package body Toolchains_Dialog is
          Add (Browse, Pix);
          Set_Relief (Browse, Relief_None);
          Set_Border_Width (Browse, 0);
-         Unset_Flags (Browse, Can_Focus or Can_Default);
+         Set_Can_Focus (Browse, False);
+         Set_Can_Default (Browse, False);
          Show_All (Browse);
          Attach (Table, Browse, 2, 3, Guint (J - 1), Guint (J));
          Set_Tooltip_Text

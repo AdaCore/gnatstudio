@@ -22,8 +22,8 @@
 
 with Cairo;                  use Cairo;
 with Glib.Main;
-with Gdk.Color;
 with Gdk.Event;
+with Gdk.RGBA;
 with Glib;                   use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Scrolled_Window;
@@ -71,6 +71,11 @@ package Src_Editor_View is
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
+
+   procedure Set_Background_Color
+     (Self : not null access Source_View_Record'Class);
+   --  Update the background color of the window, based on the user preferences
+   --  and whether the editor is editable
 
    procedure Scroll_To_Cursor_Location
      (View      : access Source_View_Record;
@@ -161,6 +166,21 @@ package Src_Editor_View is
    procedure Reset_As_Is_Mode (View : access Source_View_Record'Class);
    --  Set As_Mode to false
 
+   function Position_Set_Explicitely
+     (Self   : access Source_View_Record;
+      Reset  : Boolean) return Boolean;
+   --  Return True if the position of the cursor has been set explicitely (ie
+   --  not as a side effect of a text change)
+   --  If Reset is true, deactivate the flag saying that the cursor has been
+   --  set explicitely: further calls to Position_Set_Explicitely will return
+   --  False.
+
+   procedure Set_Position_Set_Explicitely (Self : access Source_View_Record);
+   --  Set the flag "Position_Set_Explicitely".
+   --  This should only be called when opening an editor or when jumping to
+   --  a location. This flag will not do anything on editors that are already
+   --  open and scrolled.
+
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
@@ -172,22 +192,36 @@ private
       Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
       --  The drawing area used for the speed column
 
+      Side_Info_Width     : Gint := 0;
+      --  The width of the side info
+
+      Speed_Bar_Width     : Gint := 0;
+      --  The width of the speed bar
+
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
-      Current_Line_Color  : Gdk.Color.Gdk_Color;
+      Current_Line_Color  : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Current   : Boolean := False;
       Highlight_As_Line   : Boolean := False;
 
+      Cursor_Set_Explicitely : Boolean := False;
+      --  True when the user requested to scroll to this position when the
+      --  editor was first opened. This is used to scroll to this position in
+      --  the callbacks that display the editor.
+
+      Initial_Scroll_Has_Occurred : Boolean := False;
+      --  Whether the initial scroll has occurred.
+      --  This flag, in cunjunction with Cursor_Set_Explicitely above, are used
+      --  to make sure that a newly-created editor will scroll to the given
+      --  location when it is first opened, but keep the user location
+      --  at other times.
+
       Top_Line            : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Bottom_Line         : Src_Editor_Buffer.Buffer_Line_Type := 0;
 
-      Buffer_Top_Line     : Src_Editor_Buffer.Buffer_Line_Type := 1;
-      Buffer_Bottom_Line  : Src_Editor_Buffer.Buffer_Line_Type := 0;
       Buffer_Column_Size  : Gint := 1;
-      Side_Column_Buffer  : Cairo_Surface := Null_Surface;
-      --  Cache for avoiding to redraw the side columns too often
 
       Side_Columns_Up_To_Date : Boolean := False;
 
@@ -203,7 +237,7 @@ private
 
       Width_Of_256_Chars  : Gint;
 
-      Current_Block_Color : Gdk.Color.Gdk_Color;
+      Current_Block_Color : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
@@ -239,11 +273,11 @@ private
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
-      Background_Color       : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Background_Color      : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);
       Background_Color_Other : Gtkada.Style.Cairo_Color := (others => 0.0);
       --  The editor background color and its ligthened/darkened version
 
-      Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Text_Color           : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The editor text color
 
       Button_Pressed       : Boolean := False;

@@ -83,7 +83,7 @@ AC_DEFUN(AM_PATH_GTKADA,
 dnl Get the cflags and libraries from the gtkada-config script
 dnl
   AC_MSG_CHECKING(GTK GLIB ATK PANGO prefix)
-  GTK="gtk+-2.0"
+  GTK="gtk+-3.0"
   GLIB="glib-2.0"
   PANGO="pango"
   ATK="atk"

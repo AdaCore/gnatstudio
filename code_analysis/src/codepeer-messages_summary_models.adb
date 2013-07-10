@@ -16,12 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;
-with Gdk.Color;
+with Gdk.RGBA;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Intl;          use GPS.Intl;
-
 with CodePeer.Module;
 
 package body CodePeer.Messages_Summary_Models is
@@ -117,7 +116,7 @@ package body CodePeer.Messages_Summary_Models is
             | Medium_Current_Color_Column
             | Low_Current_Color_Column
             =>
-            return Gdk.Color.Gdk_Color_Type;
+            return Gdk.RGBA.Get_Type;
 
          when others =>
             return Glib.GType_Invalid;
@@ -334,22 +333,22 @@ package body CodePeer.Messages_Summary_Models is
             Set_Count_Image (CodePeer.Low);
 
          when Low_Current_Color_Column =>
-            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
-            Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (Low));
+            Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (Low));
 
          when Medium_Current_Count_Column =>
             Set_Count_Image (CodePeer.Medium);
 
          when Medium_Current_Color_Column =>
-            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
-            Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (Medium));
+            Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (Medium));
 
          when High_Current_Count_Column =>
             Set_Count_Image (CodePeer.High);
 
          when High_Current_Color_Column =>
-            Glib.Values.Init (Value, Gdk.Color.Gdk_Color_Type);
-            Gdk.Color.Set_Value (Value, CodePeer.Module.Get_Color (High));
+            Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (High));
 
          when Suppressed_Current_Count_Column =>
             Set_Count_Image (CodePeer.Suppressed);

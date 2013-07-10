@@ -29,8 +29,8 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Log_Utils;                 use Log_Utils;
 
+with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -231,10 +231,10 @@ package body VCS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory, Object);
-      Creator : constant Abstract_Module_ID := Get_Creator (Context);
+      Creator : constant Abstract_Module := Get_Creator (Context);
    begin
-      if (Creator /= Abstract_Module_ID (VCS_Module_ID)
-          and then Creator /= Abstract_Module_ID (VCS_Explorer_Module_Id))
+      if (Creator /= Abstract_Module (VCS_Module_ID)
+          and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
          VCS_View_API.VCS_Contextual_Menu
@@ -1142,8 +1142,6 @@ package body VCS_Module is
 
       if Show and then M.Explorer_Child = null then
          Gtk_New (Child, M.Explorer,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_VCS_Explorer,
                   Module         => VCS_Explorer_Module_Id);
          M.Explorer_Child := MDI_Child (Child);
@@ -1203,8 +1201,6 @@ package body VCS_Module is
 
       if Show and then M.Activities_Child = null then
          Gtk_New (Child, M.Activities,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_VCS_Activities,
                   Module         => VCS_Module_ID);
          M.Activities_Child := MDI_Child (Child);

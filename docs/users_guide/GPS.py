@@ -159,8 +159,8 @@ class GUI(object):
     def pywidget(self):
         """
         This function is only available if GPS was compiled with support for
-        pygtk, and the latter was found at run time. It returns a widget that
-        can be manipulated through the usual PyGtk functions. PyGtk is a
+        pygobject, and the latter was found at run time. It returns a widget that
+        can be manipulated through the usual PyGtk functions. PyGObject is a
         binding to the gtk+ toolkit, and allows you to create your own windows
         easily, or manipulate the entire GPS GUI from python
 
@@ -3360,6 +3360,12 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def expand_alias(alias):
+        """
+        Expand given alias in the editor buffer at the point where the cursor
+        is.
+        """
+
     def file(self):
         """
         Returns the name of the file edited in this buffer
@@ -3670,6 +3676,44 @@ class EditorBuffer(object):
 
         """
         pass  # implemented in Ada
+
+    def add_multi_cursor(self, location):
+        """
+        Adds a new multi cursor at the given location.
+        """
+
+    def get_multi_cursors_marks(self):
+        """
+        Returns the list of all marks corresponding to existing multi cursors
+        in that buffer. Note that if you intend to perform actions with them
+        (in particular deletions/insertions), you should call
+        set_multi_cursors_manual_sync, with the cursor mark as argument.
+        See set_multi_cursors_* functions for more details
+
+        :return: A list of :class:`GPS.EditorMark` instances
+        """
+
+    def remove_all_multi_cursors(self):
+        """
+        Removes all active multi-cursors from the buffer
+        """
+
+    def set_multi_cursors_auto_sync(self):
+        """
+        Set the buffer in auto sync mode regarding multi cursors.
+        This means that any insertion/deletion will be propagated
+        in a 'naive' way on all multi cursors. Cursor movements won't
+        be propagated.
+        """
+
+    def set_multi_cursors_manual_sync(self, multi_cursor_mark=None):
+        """
+        Set the buffer in manual sync mode regarding multi cursors.
+        multi_cursor_mark should be the mark corresponding to the multi
+        cursor that is gonna be affected, or None if the action is from
+        the main cursor. This info is useful to provide correct undo/redo
+        actions for custom multi cursors actions.
+        """
 
 
 ###########################################################
@@ -4236,6 +4280,17 @@ class EditorOverlay(object):
     or more overlays are applied to the same range of text, the final colors
     and fonts of the text depends on the priorities of these overlays and the
     order in which they were applied to the buffer.
+
+    This class is fairly low-level, and we recommend using the class
+    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
+    similar support for specifying attributes, but makes it easier to highlight
+    sections of an editor with that style, or to remove the highlighting.
+
+    In fact, if your goal is to highlight parts of editors, it might be simpler
+    to use :py:func:`gps_utils.highilghter.Background_Highlighter` or one of the
+    classes derived from it. These classes provide convenient support for
+    highlighting editors in the background, i.e. without interfering with the
+    user or slowing things down.
     """
 
     def __init__(self):
@@ -4301,6 +4356,45 @@ text,... The following attribute names are currently recognized:
 
 - *editable* (value is a boolean): Indicates whether this range of text is
    editable or not
+
+- *variant* (one of 0 ("normal") or 1 ("small_caps"))
+
+- *stretch* (from 0 ("ultra-condensed") to 8 ("ultra-expanded"))
+
+- *underline* (one of 0 ("none"), 1 ("single"), 2 ("double"), 3 ("low"))
+
+- *size-points* (an integer)
+  Font size in points
+
+- *rise* (an integer)
+
+  Offset of text above the baseline (below the baseline if rise is negative,
+  in Pango units.
+
+- *pixels-above-lines* (an integer)
+
+  Pixels of blank space above paragraphs.
+
+- *pixels-below-lines* (an integer)
+
+  Pixels of blank space below paragraphs.
+
+- *pixels-inside-wrap* (an integer)
+
+  Pixels of blank space between wrapped lines in a paragraph.
+
+- *invisible* (a boolean)
+
+  Whether this text is hidden
+
+- *strikethrough* (a boolean)
+
+  Whether to strike through the text.
+
+- *background-full-height* (a boolean)
+
+  Whether the background color fills the entire line height or only the
+  height of the tagged characters.
 
 The set of predefined attributes is fixed. However, overlays are especially
 useful to store your own user data in the usual python manner, which you can
@@ -5191,6 +5285,30 @@ class File(object):
         """
         pass  # implemented in Ada
 
+    def references(self, kind="", sortby=0):
+        """
+        Returns all references (to any entity) within the file. The acceptable
+        values for kind can currently be retrieved directly from the
+        cross-references database by using a slightly convoluted approach::
+
+               sqlite3 obj/gnatinspect.db
+               > select display from reference_kinds;
+
+        :param string kind: this can be used to filter the references, and is
+           more efficient than traversing the list afterward. For instance,
+           you can get access to the list of dispatching calls by passing
+           "dispatching call" for kind. The list of kinds is defined in the
+           cross-reference database, and new values can be added at any time.
+           See above on how to retrieve the list of possible values.
+
+        :param integer sortby: how the returned list should be sorted.
+           0 indicates that they are sorted in the order in which they
+           appear in the file; 1 indicates that they are sorted first by
+           entity, and then in file order.
+
+        :return: a list of tuples (GPS.Entity, GPS.FileLocation)
+        """
+
     def remove_property(self, name):
         """
         Removes a property associated with a file
@@ -5674,6 +5792,8 @@ The available hooks are:
   Among the various tasks that GPS connects to this hook are the automatic
   reparsing of all xref information, and the activation of the automatic-error
   fixes
+
+  See also the hook "xref_updated".
 
   :param category: A string, the location/highlighting category that contains the compilation output.
   :param target_name: A string, name of the executed build target.
@@ -6222,6 +6342,10 @@ The available hooks are:
   Hook called when one of the scenario variables has been renamed, removed or
   when one of its possible values has changed.
 
+- xref_updated(hookname)
+
+  Hook called when the cross-reference information have been updated.
+
 - word_added(hookname, file)
 
   Hook called when a word has been added in the editor
@@ -6635,26 +6759,24 @@ class MDI(object):
 
     .. seealso:: :class:`GPS.MDIWindow`
 
-    If you have installed the pygtk package (see GPS's documentation}, GPS will
-    export a few more functions to python so that it is easier to interact with
-    GPS itself. In particular, the GPS.MDI.add function allows you to put a
-    widget created by pygtk under control of GPS's MDI, so that users can
+    If you have installed the pygobject package (see GPS's documentation}, GPS
+    will export a few more functions to python so that it is easier to interact
+    with GPS itself. In particular, the GPS.MDI.add function allows you to put a
+    widget created by pygobject under control of GPS's MDI, so that users can
     interact with it as with all other GPS windows.
 
     .. code-block:: python
 
        import GPS
 
-       ## The following three lines are the usual to make pygtk visible
-       import pygtk
-       pygtk.require('2.0')
-       import gtk
+       ## The following line is the usual way to make pygobject visible
+       from gi.repository import Gtk, GLib, Gdk, GObject
 
        def on_clicked(*args):
           GPS.Console().write("button was pressed\\n")
 
        def create():
-          button=gtk.Button('press')
+          button=Gtk.Button('press')
           button.connect('clicked', on_clicked)
           GPS.MDI.add(button, "From testgtk", "testgtk")
           win = GPS.MDI.get('testgtk')
@@ -6663,12 +6785,29 @@ class MDI(object):
        create()
     """
 
+    GROUP_CONSOLES = 0
+    GROUP_DEBUGGER_DATA = 0
+    GROUP_DEBUGGER_STACK = 0
+    GROUP_DEFAULT = 0
+    GROUP_GRAPHS = 0
+    GROUP_VCS_ACTIVITIES = 0
+    GROUP_VCS_EXPLORER = 0
+    GROUP_VIEW = 0
+    # constants to be used in GPS.MDI.add()
+
+    POSITION_AUTOMATIC = 0
+    POSITION_BOTTOM = 0
+    POSITION_TOP = 0
+    POSITION_LEFT = 0
+    POSITION_RIGHT = 0
+    # constants to be used in GPS.MDI.add()
+
     @staticmethod
-    def add(widget, title, short):
+    def add(widget, title="", short="", group=0, position=0):
         """
-        This function is only available if pygtk could be loaded in the python
-        shell. You must install this library first, see the documentation for
-        GPS.MDI itself.
+        This function is only available if pygobject could be loaded in the
+        python shell. You must install this library first, see the documentation
+        for GPS.MDI itself.
 
         This function adds a widget inside the MDI of GPS. The resulting window
         can then be manipulated by the user like any other standard GPS
@@ -6677,9 +6816,25 @@ class MDI(object):
         notebook tabs. You can immediately retrieve a handle to the created
         window by calling GPS.MDI.get (short).
 
-        :param widget: A widget, created by pygtk
+        :param widget: A widget, created by pygobject
         :param title: A string
         :param short: A string
+
+        :param group: An integer, see the constants MDI.GROUP_*
+            This indicates to which logical group the widget belongs (the
+            default group should be reserved for editors). You can create
+            new groups as you see fit.
+        :param position: An integer, see the constants MDI.POSITION_*.
+            It is used when no other widget of the same group exists, to
+            specify the initial location of the newly created notebook.
+            When other widgets of the same group exist, the widget is put
+            on top of them.
+
+        .. code-block:: python
+
+           from gi.repository import Gtk
+           b = Gtk.Button("Press Me")
+           GPS.MDI.add(b)
 
         .. seealso::
 
@@ -7288,7 +7443,10 @@ class Preference(object):
         found in the $HOME/.gps/preferences file. When you are creating a new
         preference, this name can include '/' characters, which will result in
         subpages created in the Preferences dialog. The name after the last '/'
-        should only include letters and '-' characters.
+        should only include letters and '-' characters. If the name starts
+        with '/' and contains no other '/', then the preference will not be
+        visible in the Preferences dialog, although it can be manipulated as
+        usual and will be loaded automatically by GPS on startup.
 
         :param name: A string
         """
@@ -7302,6 +7460,9 @@ used when creating the instance of GPS.Preference. The label is used to qualify
 the preference, and doc will appear as a tooltip to explain the preference to
 users. The type describes the type of preference, and therefore how it should
 be edited by users.
+
+The parameters to this function cannot be named (since it uses a variable
+number of parameters, see the documentation below).
 
 The additional parameters depend on the type of preference you are creating:
 
@@ -7350,13 +7511,10 @@ The additional parameters depend on the type of preference you are creating:
     def set(self, value, save=True):
         """
         Set value for the given preference. The type of the parameter depends
-        on the type of the preference. If the save parameter is true, the new
-        value is immediately saved for future GPS sessions, and the new value
-        is taken into account by GPS itself. Otherwise, if set to false, you
-        will need to call the hook "preferences_changed" to force it
-
+        on the type of the preference.
+        
         :param value: A string, boolean or integer
-        :param save: A boolean
+        :param save: no longer used, kept for backward compatibility only.
         """
         pass  # implemented in Ada
 
@@ -8502,6 +8660,12 @@ class Style(object):
     """
     This class is used to manipulate GPS Styles, which are used for instance to
     represent graphical attributes given to Messages.
+
+    This class is fairly low-level, and we recommend using the class
+    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
+    similar support for specifying attributes, but makes it easier to highlight
+    sections of an editor with that style, or to remove the highlighting.
+
     """
 
     def __init__(self, name, create):
@@ -9320,6 +9484,23 @@ column.
         :param str: A string
         """
         pass  # implemented in Ada
+
+###########################################################
+# Alias
+###########################################################
+
+class Alias(object):
+    """
+    This class represents a GPS Alias, that is, a code template
+    to be expanded in an editor. This class allows you to manipulate
+    them programmatically.
+    """
+
+    @staticmethod
+    def get(name):
+        """
+        Get the alias instance corresponding to name
+        """
 
 ###########################################################
 # OutputParserWrapper

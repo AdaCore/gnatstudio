@@ -23,7 +23,6 @@ with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Console;             use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
@@ -166,10 +165,10 @@ package body GPS.Kernel.Xref is
       Error : String)
    is
    begin
-      Insert (Kernel => Self.Kernel,
-              Text   => Error,
-              Add_LF => True,
-              Mode   => GPS.Kernel.Console.Error);
+      Self.Kernel.Insert
+        (Text   => Error,
+         Add_LF => True,
+         Mode   => GPS.Kernel.Error);
    end On_Error;
 
    -------------------------------
@@ -820,6 +819,7 @@ package body GPS.Kernel.Xref is
       Count     : Natural := 0;
       Label     : Gtk_Label;
       Model     : Gtk_Tree_Store;
+      M         : Gtk_Tree_Model;
       Dialog    : Gtk_Dialog;
       It        : Gtk_Tree_Iter;
       Scrolled  : Gtk_Scrolled_Window;
@@ -848,14 +848,14 @@ package body GPS.Kernel.Xref is
             Set_Default_Size (Dialog, 500, 500);
 
             Gtk_New (Label, -"This entity is overloaded.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);
 
             Gtk_New (Label, -"Please select the appropriate declaration.");
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);
 
             Gtk_New (Scrolled);
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-            Pack_Start (Get_Vbox (Dialog), Scrolled);
+            Pack_Start (Dialog.Get_Action_Area, Scrolled);
 
             OK_Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
             Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -865,7 +865,7 @@ package body GPS.Kernel.Xref is
                Column_Names       => Column_Names,
                Initial_Sort_On    => 1);
             Add (Scrolled, View);
-            Model := Gtk_Tree_Store (Get_Model (View));
+            Model := -Get_Model (View);
 
             Widget_Callback.Object_Connect
               (View, Signal_Row_Activated, Row_Activated'Access, Dialog);
@@ -894,8 +894,8 @@ package body GPS.Kernel.Xref is
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK then
-            Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-            Get_Value (Model, It, 4, Val);
+            Get_Selected (Get_Selection (View), M, It);
+            Get_Value (M, It, 4, Val);
             Result := From_GValue (Val);
          end if;
 

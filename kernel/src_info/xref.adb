@@ -93,6 +93,12 @@ package body Xref is
       Loc : General_Location) return Entity_Access;
    --  Return the construct entity found at the location given in parameter.
 
+   procedure Reference_Iterator_Get_References
+     (Self   : Xref_Database'Class;
+      Entity : Entity_Information;
+      Cursor : in out References_Cursor'Class);
+   --  Wraps GNATCOLL.Xref.References to pass correct parameters
+
    ----------------
    -- Assistants --
    ----------------
@@ -143,6 +149,7 @@ package body Xref is
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
       Raw_Format       : Boolean := False;
       Check_Constructs : Boolean := True) return String
    is
@@ -187,8 +194,10 @@ package body Xref is
                     Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
                     Language          => Context.Syntax,
                     Format            => Form);
-               Profile : constant String :=
-                 Get_Profile (Tree_Lang, Ent, Raw_Format => Raw_Format);
+               Profile : constant String := Get_Profile
+                 (Tree_Lang, Ent,
+                  Color_For_Optional_Param => Color_For_Optional_Param,
+                  Raw_Format => Raw_Format);
 
             begin
                if Comment /= "" then
@@ -1384,6 +1393,44 @@ package body Xref is
    -------------------------
 
    procedure Find_All_References
+      (Self     : access General_Xref_Database_Record;
+       Iter     : out Entity_Reference_Iterator;
+       File     : GNATCOLL.VFS.Virtual_File;
+       Kind     : String := "";
+       Sort     : References_Sort := GNATCOLL.Xref.By_Location) is
+   begin
+      if Active (SQLITE) then
+         Self.Xref.References
+            (File => File, Cursor => Iter.Iter, Kind => Kind, Sort => Sort);
+      else
+         Iter.Old_Iter := No_Entity_Reference_Iterator;
+      end if;
+   end Find_All_References;
+
+   ---------------------------------------
+   -- Reference_Iterator_Get_References --
+   ---------------------------------------
+
+   procedure Reference_Iterator_Get_References
+     (Self   : Xref_Database'Class;
+      Entity : Entity_Information;
+      Cursor : in out References_Cursor'Class)
+   is
+      C : constant GPS_Recursive_References_Cursor :=
+         GPS_Recursive_References_Cursor (Cursor);
+   begin
+      Self.References
+        (Entity, Cursor,
+         Include_Implicit => C.Include_Implicit,
+         Include_All      => C.Include_All,
+         Kinds            => To_String (C.Kind));
+   end Reference_Iterator_Get_References;
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+
+   procedure Find_All_References
      (Self                  : access General_Xref_Database_Record;
       Iter                  : out Entity_Reference_Iterator;
       Entity                : General_Entity;
@@ -1391,16 +1438,22 @@ package body Xref is
       In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       In_Scope              : General_Entity := No_General_Entity;
       Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False)
+      Include_Overridden    : Boolean := False;
+      Include_Implicit      : Boolean := False;
+      Include_All           : Boolean := False;
+      Kind                  : String := "")
    is
       F      : Old_Entities.Source_File;
    begin
       if Active (SQLITE) then
          --  File_Has_No_LI_Report voluntarily ignored.
 
+         Iter.Iter.Include_Implicit := Include_Implicit;
+         Iter.Iter.Include_All := Include_All;
+         Iter.Iter.Kind := To_Unbounded_String (Kind);
          Self.Xref.Recursive
            (Entity          => Entity.Entity,
-            Compute         => GNATCOLL.Xref.References'Access,
+            Compute         => Reference_Iterator_Get_References'Access,
             Cursor          => Iter.Iter,
             From_Overriding => Include_Overriding,
             From_Overridden => Include_Overridden,
@@ -1422,7 +1475,37 @@ package body Xref is
       else
          declare
             use Old_Entities;
+            Filter : Old_Entities.Reference_Kind_Filter;
+            R : String_List_Access;
          begin
+            if Kind /= "" then
+               Filter := (others => False);
+               R := GNATCOLL.Utils.Split (Kind, ',');
+
+               for K in Filter'Range loop
+                  declare
+                     KS : constant String := Kind_To_String (K);
+                  begin
+                     for F2 in R'Range loop
+                        if KS = R (F2).all then
+                           Filter (K) := True;
+                           exit;
+                        end if;
+                     end loop;
+                  end;
+               end loop;
+
+               Free (R);
+
+            elsif Include_All then
+               Filter := (others => True);
+            else
+               Filter := Real_References_Filter;
+               if Include_Implicit then
+                  Filter (Implicit) := True;
+               end if;
+            end if;
+
             if In_File /= No_File then
                F := Old_Entities.Get_Or_Create
                  (Db    => Self.Entities,
@@ -1433,6 +1516,7 @@ package body Xref is
             Old_Entities.Queries.Find_All_References
               (Iter.Old_Iter, Entity.Old_Entity,
                File_Has_No_LI_Report, F, In_Scope.Old_Entity,
+               Filter             => Filter,
                Include_Overriding => Include_Overriding,
                Include_Overridden => Include_Overridden);
          end;
@@ -2755,16 +2839,11 @@ package body Xref is
      (Self   : access General_Xref_Database_Record;
       Entity : General_Entity) return Integer
    is
-
-      Decl : Entity_Declaration;
+      pragma Unreferenced (Self);
    begin
       if Active (SQLITE) then
-         Decl := Self.Xref.Declaration (Entity.Entity);
-         return Integer
-           (Hash (To_String (Decl.Name)
-            & Decl.Location.File.Display_Full_Name
-            & Decl.Location.Line'Img
-            & Decl.Location.Column'Img));
+         --  Use directly the sqlite internal id.
+         return GNATCOLL.Xref.Internal_Id (Entity.Entity);
 
       elsif Entity.Old_Entity /= null then
          declare
@@ -2792,8 +2871,20 @@ package body Xref is
      (Self   : access General_Xref_Database_Record;
       Entity1, Entity2 : General_Entity) return Integer
    is
+      Id1, Id2 : Integer;
    begin
-      if Entity1 = No_General_Entity then
+      if Active (SQLITE) then
+         Id1 := GNATCOLL.Xref.Internal_Id (Entity1.Entity);
+         Id2 := GNATCOLL.Xref.Internal_Id (Entity2.Entity);
+         if Id1 < Id2 then
+            return -1;
+         elsif Id1 = Id2 then
+            return 0;
+         else
+            return 1;
+         end if;
+
+      elsif Entity1 = No_General_Entity then
          if Entity2 = No_General_Entity then
             return 0;
          else

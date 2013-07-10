@@ -32,6 +32,7 @@ with Glib.Values;                 use Glib.Values;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
+with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
@@ -44,6 +45,7 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.List_Store;              use Gtk.List_Store;
+with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
@@ -105,7 +107,6 @@ package body Call_Graph_Views is
 
    type Callgraph_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
-      Kernel            : Kernel_Handle;
 
       Show_Locations    : Boolean := True;
       --  Whether we should show the locations in the call graph
@@ -159,19 +160,20 @@ package body Call_Graph_Views is
    function From_XML (N : Node_Ptr) return Reference_Record;
    --  Conversion functions
 
-   overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr;
+   overriding procedure Save_To_XML
+     (View : access Callgraph_View_Record; XML : in out XML_Utils.Node_Ptr);
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
-     (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
    --  Create a new view
 
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Callgraph_View",
       View_Name          => "Call Trees",
       Reuse_If_Exist     => True,
+      Group              => GPS.Kernel.MDI.Group_Consoles,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Callgraph_View_Record);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
@@ -314,7 +316,7 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter) return General_Entity
    is
       Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (View.Tree));
+                   Gtk_Tree_Store (Gtk.Tree_Store."-"(Get_Model (View.Tree)));
    begin
       return View.Kernel.Databases.Get_Entity
         (Name => Get_String (Model, Iter, Entity_Name_Column),
@@ -419,7 +421,7 @@ package body Call_Graph_Views is
          Get_Selected (Get_Selection (V.Tree), Model, Selected);
 
          if Selected /= Null_Iter then
-            Iter_Copy (Selected, New_Iter);
+            New_Iter := Selected;
 
             Path := Get_Path (Model, New_Iter);
 
@@ -655,8 +657,7 @@ package body Call_Graph_Views is
       View := Callgraph_View_Access (Widget);
 
       if Get_Event_Type (Event) = Button_Press then
-         Iter := Find_Iter_For_Event
-           (View.Locations_Tree, View.Locations_Model, Event);
+         Iter := Find_Iter_For_Event (View.Locations_Tree, Event);
 
          if Iter /= Null_Iter then
             Select_Iter (Get_Selection (View.Locations_Tree), Iter);
@@ -786,8 +787,7 @@ package body Call_Graph_Views is
 
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (View);
-      M      : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (V.Tree));
+      M      : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child  : Gtk_Tree_Iter := Null_Iter;
       Dummy  : Gtk_Tree_Iter;
       Entity : General_Entity;
@@ -797,6 +797,7 @@ package body Call_Graph_Views is
 
       Local_Path  : Gtk_Tree_Path;
       Model : constant Gtk_Tree_Model := V.Tree.Get_Model;
+      Row : Gtk_Tree_Row_Reference;
    begin
       if V.Block_On_Expanded then
          return;
@@ -819,25 +820,26 @@ package body Call_Graph_Views is
       --  by gtk+.
 
       Local_Path := Get_Path (Model, Iter);
+      Gtk_New (Row, Model, Local_Path);
       Data := new Ancestors_User_Data'
         (Commands_User_Data_Record with
            View        => V,
-         Computing_Ref => null,
-         Entity_Ref    => Gtk_New (Model, Local_Path));
+         Computing_Ref => Null_Gtk_Tree_Row_Reference,
+         Entity_Ref    => Row);
       Path_Free (Local_Path);
 
       Prepend (M, Computing_Iter, Iter);
       Set (M, Computing_Iter, Name_Column, Computing_Label);
 
-      Iter_Copy (Computing_Iter, Child);
+      Child := Computing_Iter;
       Next (M, Child);
 
       Local_Path := Get_Path (Model, Computing_Iter);
-      Data.Computing_Ref := Gtk_New (Model, Local_Path);
+      Gtk_New (Data.Computing_Ref, Model, Local_Path);
       Path_Free (Local_Path);
 
       while Child /= Null_Iter loop
-         Iter_Copy (Child, Dummy);
+         Dummy := Child;
          Next (M, Child);
          Remove (M, Dummy);
       end loop;
@@ -880,7 +882,7 @@ package body Call_Graph_Views is
 
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Remove (Gtk_Tree_Store (Model), Iter);
+      Remove (Gtk_Tree_Store'(-Model), Iter);
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -892,8 +894,7 @@ package body Call_Graph_Views is
 
    procedure Clear_View (Object : access Gtk_Widget_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store
-                  (Get_Model (Callgraph_View_Access (Object).Tree));
+                -Get_Model (Callgraph_View_Access (Object).Tree);
    begin
       Clear (Model);
    exception
@@ -928,14 +929,14 @@ package body Call_Graph_Views is
       pragma Unreferenced (Event_Widget, Kernel);
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (Object);
-      Model  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      Model  : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Iter   : Gtk_Tree_Iter;
       Entity : General_Entity;
       Mitem  : Gtk_Menu_Item;
       Sep    : Gtk_Separator_Menu_Item;
 
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
@@ -1034,7 +1035,7 @@ package body Call_Graph_Views is
          Init (L_Value, GType_Pointer);
          Set_Address (L_Value, Addr);
          Set_Value
-           (Gtk_Tree_Store (Get_Model (View.Tree)),
+           (Gtk_Tree_Store'(-Get_Model (View.Tree)),
             Iter, List_Column, L_Value);
 
          return L;
@@ -1047,11 +1048,10 @@ package body Call_Graph_Views is
    -- Save_To_XML --
    -----------------
 
-   overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr
+   overriding procedure Save_To_XML
+     (View : access Callgraph_View_Record; XML : in out XML_Utils.Node_Ptr)
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Root  : Node_Ptr;
 
       procedure Recursive_Save
@@ -1099,7 +1099,6 @@ package body Call_Graph_Views is
                  (N, "type",
                   View_Type'Image
                     (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
-
                N.Tag := new String'("entity");
                Set_Attribute
                  (N, "entity_name",
@@ -1139,11 +1138,11 @@ package body Call_Graph_Views is
 
    begin
       Root := new Node;
+      XML.Child := Root;
       Root.Tag := new String'("callgraph");
       Set_Attribute (Root, "position", Get_Position (View.Pane)'Img);
 
       Recursive_Save (Null_Iter, Root);
-      return Root;
    end Save_To_XML;
 
    -------------------
@@ -1153,8 +1152,7 @@ package body Call_Graph_Views is
    overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
-      Model    : constant Gtk_Tree_Store :=
-                   Gtk_Tree_Store (Get_Model (View.Tree));
+      Model    : constant Gtk_Tree_Store := -Get_Model (View.Tree);
 
       Is_Calls : Boolean := True;
       --  For upward compatibility
@@ -1205,6 +1203,11 @@ package body Call_Graph_Views is
                Set (Model, Iter, Sort_Column,
                     Get_Attribute (N, "name") & " "
                     & Get_Attribute (N, "decl"));
+               Set
+                 (Model, Iter, Kind_Column,
+                  View_Type'Pos
+                    (View_Type'Value
+                       (Get_Attribute (N, "type", "view_calls"))));
 
                --  We want to be compatible with previous version not having
                --  the type node. We then get information from top type node
@@ -1251,9 +1254,14 @@ package body Call_Graph_Views is
          end loop;
       end Recursive_Load;
 
+      Callgraph : constant Node_Ptr := XML.Child;  --  The <callgraph> node
    begin
+      if Callgraph = null then
+         return;
+      end if;
+
       declare
-         Pos_Str : constant String := Get_Attribute (XML, "position");
+         Pos_Str : constant String := Get_Attribute (Callgraph, "position");
          V_Type  : constant String := Get_Attribute (XML, "type");
       begin
          if Pos_Str /= "" then
@@ -1263,7 +1271,7 @@ package body Call_Graph_Views is
          Is_Calls := V_Type = "calls";
       end;
 
-      Recursive_Load (Null_Iter, XML.Child, False);
+      Recursive_Load (Null_Iter, Callgraph.Child, False);
    end Load_From_XML;
 
    ----------------
@@ -1271,21 +1279,20 @@ package body Call_Graph_Views is
    ----------------
 
    function Initialize
-     (View   : access Callgraph_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (View   : access Callgraph_View_Record'Class) return Gtk_Widget
    is
       Names  : GNAT.Strings.String_List := (1 => new String'(-"Name"));
       Scroll : Gtk_Scrolled_Window;
 
    begin
-      if View.Tree /= null then
-         --  This widget is already initialized, return it
-         return Gtk_Widget (View.Tree);
-      end if;
+      Initialize_Vbox (View, Homogeneous => False);
 
-      View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Scrolled_Window.Initialize (View);
-      Set_Policy (View, Policy_Automatic, Policy_Automatic);
+      Gtk_New_Hpaned (View.Pane);
+      View.Pack_Start (View.Pane, Expand => True, Fill => True);
+
+      Gtk_New (Scroll);
+      View.Pane.Add1 (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
         (Column_Types       => (Name_Column   => GType_String,
@@ -1301,18 +1308,15 @@ package body Call_Graph_Views is
          Show_Column_Titles => False,
          Sortable_Columns   => True);
       Set_Name (View.Tree, "Call Graph Tree"); --  For test suite
-      Gtk_New_Hpaned (View.Pane);
+      Scroll.Add (View.Tree);
 
       --  Set custom order by column: Name & Decl
       View.Tree.Get_Column (0).Set_Sort_Column_Id (Sort_Column);
       View.Tree.Get_Column (0).Clicked;
 
       Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Scroll, View.Tree);
-      Add1 (View.Pane, Scroll);
-
-      Add_With_Viewport (View, View.Pane);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      View.Pane.Add2 (Scroll);
 
       --  Create the lines list
 
@@ -1324,6 +1328,7 @@ package body Call_Graph_Views is
                 Location_File_Column      => Get_Virtual_File_Type));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
+      Scroll.Add (View.Locations_Tree);
 
       Set_Name (View.Locations_Tree, "Call Graph Location Tree");
       --  For test suite
@@ -1353,13 +1358,8 @@ package body Call_Graph_Views is
          Dummy := Append_Column (View.Locations_Tree, Col);
       end;
 
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Scroll, View.Locations_Tree);
-      Add2 (View.Pane, Scroll);
-
       View.Show_Locations :=
-        Get_History (Get_History (Kernel).all, History_Show_Locations);
+        Get_History (Get_History (View.Kernel).all, History_Show_Locations);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
@@ -1392,7 +1392,7 @@ package body Call_Graph_Views is
          After       => False);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree,
          Object          => View,
          ID              => Generic_View.Get_Module,
@@ -1429,8 +1429,7 @@ package body Call_Graph_Views is
       Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Parent);
-      Model     : constant Gtk_Tree_Store :=
-                    Gtk_Tree_Store (Get_Model (View.Tree));
+      Model     : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Decl      : constant General_Entity_Declaration :=
         View.Kernel.Databases.Get_Declaration (Entity);
       Iter      : Gtk_Tree_Iter;
@@ -1549,20 +1548,19 @@ package body Call_Graph_Views is
         and then Valid (Data.Computing_Ref)
       then
          Path := Get_Path (Data.Computing_Ref);
-         Model := Gtk_Tree_Store (Get_Model (Data.View.Tree));
+         Model := -Get_Model (Data.View.Tree);
          Iter := Get_Iter (Model, Path);
          Remove (Model, Iter);
          Path_Free (Path);
       end if;
 
-      if Data.Computing_Ref /= null then
-         Row_Reference_Free (Data.Computing_Ref);
+      if Data.Computing_Ref /= Null_Gtk_Tree_Row_Reference then
+         Free (Data.Computing_Ref);
       end if;
 
-      if Data.Entity_Ref /= null then
-         Row_Reference_Free (Data.Entity_Ref);
+      if Data.Entity_Ref /= Null_Gtk_Tree_Row_Reference then
+         Free (Data.Entity_Ref);
       end if;
-
    end Destroy;
 
    ---------------------
@@ -1633,11 +1631,9 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      R      : Gtk_Requisition;
    begin
       if Entity /= No_General_Entity then
-         View := Generic_View.Get_Or_Create_View
-           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
+         View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
@@ -1646,9 +1642,7 @@ package body Call_Graph_Views is
               Kind                => View_Calls,
               Through_Dispatching => False));
 
-         Size_Request (View.Tree, R);
-         R := Get_Child_Requisition (View.Tree);
-         Set_Position (View.Pane, (R.Width * 3) / 2);
+         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
@@ -1667,11 +1661,9 @@ package body Call_Graph_Views is
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
-      R      : Gtk_Requisition;
    begin
       if Entity /= No_General_Entity then
-         View := Generic_View.Get_Or_Create_View
-           (Kernel, Group => GPS.Kernel.MDI.Group_Consoles);
+         View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
@@ -1680,9 +1672,11 @@ package body Call_Graph_Views is
                Kind                => View_Called_By,
                Through_Dispatching => False));
 
-         Size_Request (View.Tree, R);
-         R := Get_Child_Requisition (View.Tree);
-         Set_Position (View.Pane, (R.Width * 3) / 2);
+         --  ??? Should we be changing the position here ? It should be kept
+         --  as it. Unfortunately, it is not computed properly if we never
+         --  call Set_Position, and we can't call it from Initialize because
+         --  we don't know yet the size that View will be allocated.
+         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
@@ -1699,7 +1693,7 @@ package body Call_Graph_Views is
       Command : Interactive_Command_Access;
    begin
       Generic_View.Register_Module
-        (Kernel, Menu_Name => "Ca_ll Trees", Before_Menu => -"Entity");
+        (Kernel, Menu_Name => -"Views/Ca_ll Trees", Before_Menu => -"Entity");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);

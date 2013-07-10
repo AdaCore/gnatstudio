@@ -72,24 +72,26 @@
 
 with GNAT.Strings;
 with Glib.Object;
-with Cairo;
-with Generic_List;
+with Gtk.Widget;
 with XML_Utils;
+with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
 
 package GPS.Kernel.Modules is
 
-   Explorer_Module_Name           : constant String := "Explorer";
+   Explorer_Module_Name        : constant String := "Project_Explorer_Project";
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    Revision_View_Module_Name      : constant String := "Revision_Views";
-   --  Names for the internal modules
+   --  Names for the internal modules.
+   --  Changing these might also impact the contents of the saved perspectives
+   --  files.
 
    ------------------
    -- Module types --
    ------------------
 
-   type Module_ID_Record is new Abstract_Module_ID_Record with private;
+   type Module_ID_Record is new Customizable_Module_Record with private;
    type Module_ID is access all Module_ID_Record'Class;
 
    procedure Destroy (Id : in out Module_ID_Record) is null;
@@ -136,7 +138,7 @@ package GPS.Kernel.Modules is
 
    function Tooltip_Handler
      (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Cairo.Cairo_Surface;
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
    --  Callback used every time some tooltip event happens in GPS.
    --  Context contains all the information about the context of the tooltip.
    --
@@ -161,7 +163,7 @@ package GPS.Kernel.Modules is
    --
    --  null should be returned if we can't create a marker at that position
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -170,19 +172,6 @@ package GPS.Kernel.Modules is
    --  It is initially called just after all modules have been registered,
    --  and gets passed a single XML node.
    --  File is the XML file that is currently being parsed.
-
-   ------------------
-   -- Modules list --
-   ------------------
-
-   procedure Free (Module : in out Module_ID);
-   --  Free memory associated to a Module_ID
-
-   package Module_List is new Generic_List (Module_ID);
-
-   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return Module_List.List;
-   --  Return the list of currently loaded modules
 
    -------------------------
    -- Module manipulation --
@@ -243,7 +232,7 @@ package GPS.Kernel.Modules is
 
 private
 
-   type Module_ID_Record is new Abstract_Module_ID_Record with record
+   type Module_ID_Record is new Customizable_Module_Record with record
       Kernel   : Kernel_Handle;
       Priority : Module_Priority;
       Name     : GNAT.Strings.String_Access;

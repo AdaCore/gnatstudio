@@ -42,15 +42,4 @@ private package Docgen3.Backend is
    function New_Backend return Docgen3_Backend'Class;
    --  Factory method
 
-   ---------------------------------------
-   -- Complementary backend subprograms --
-   ---------------------------------------
-
-   function Get_Doc_Directory
-     (Kernel : Kernel_Handle) return Virtual_File;
-   --  If the Directory_Dir attribute is defined in the project, then use the
-   --  value; otherwise use the default directory (that is, a subdirectory
-   --  'doc' in the object directory, or in the project directory if no
-   --  object dir is defined).
-
 end Docgen3.Backend;

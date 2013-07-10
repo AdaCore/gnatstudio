@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;     use GNAT.Strings;
+with GNAT.Strings;       use GNAT.Strings;
 
-with Glib;             use Glib;
-with Glib.Object;      use Glib.Object;
-with Gdk.Event;        use Gdk.Event;
+with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
+with Gdk.Event;          use Gdk.Event;
 with Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gdk.Window;        use Gdk.Window;
+with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
+with Gdk.Window;         use Gdk.Window;
 
-with Gtk;              use Gtk;
-with Gtk.Arguments;    use Gtk.Arguments;
-with Gtk.Box;          use Gtk.Box;
-with Gtk.Button;       use Gtk.Button;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Combo_Box;    use Gtk.Combo_Box;
-with Gtk.Dialog;       use Gtk.Dialog;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.List_Store;   use Gtk.List_Store;
-with Gtk.Main;         use Gtk.Main;
-with Gtk.Notebook;     use Gtk.Notebook;
-with Gtk.Radio_Button; use Gtk.Radio_Button;
-with Gtk.Spin_Button;  use Gtk.Spin_Button;
-with Gtk.Widget;       use Gtk.Widget;
+with Gtk;                use Gtk;
+with Gtk.Arguments;      use Gtk.Arguments;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Check_Button;   use Gtk.Check_Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.List_Store;     use Gtk.List_Store;
+with Gtk.Main;           use Gtk.Main;
+with Gtk.Notebook;       use Gtk.Notebook;
+with Gtk.Radio_Button;   use Gtk.Radio_Button;
+with Gtk.Spin_Button;    use Gtk.Spin_Button;
+with Gtk.Widget;         use Gtk.Widget;
 
 with Gtk.Text_View;    use Gtk.Text_View;
 with Gtk.Text_Buffer;  use Gtk.Text_Buffer;
@@ -52,6 +52,7 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Breakpoints_Pkg;         use Breakpoints_Pkg;
+with Generic_Views;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
@@ -72,7 +73,7 @@ with Traces;           use Traces;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Breakpoints_Editor is
-   type Breakpoint_Editor_Record is new Boxed_Views.Process_View_Record with
+   type Breakpoint_Editor_Record is new Base_Views.Process_View_Record with
       record
          Editor               : Breakpoints_Access;
          Advanced_Breakpoints : Advanced_Breakpoint_Access;
@@ -92,13 +93,13 @@ package body Breakpoints_Editor is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box;
+      return Generic_Views.Abstract_View_Access;
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box);
+      View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Boxed_Views.Simple_Views
+   package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Breakpoints",
       View_Name          => -"Breakpoints",
       Formal_View_Record => Breakpoint_Editor_Record,
@@ -134,8 +135,8 @@ package body Breakpoints_Editor is
    --  Called when a row of the breakpoint editor was selected.
 
    function Breakpoint_Clicked
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean;
    --  Called when receiving a click on the breakpoint tree.
 
    procedure On_Advanced_Location_Clicked
@@ -184,9 +185,9 @@ package body Breakpoints_Editor is
 
    function Get_View
      (Process : access Visual_Debugger_Record'Class)
-      return Gtk_Box is
+      return Generic_Views.Abstract_View_Access is
    begin
-      return Gtk_Box (Process.Breakpoints_Editor);
+      return Generic_Views.Abstract_View_Access (Process.Breakpoints_Editor);
    end Get_View;
 
    --------------
@@ -195,8 +196,9 @@ package body Breakpoints_Editor is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Box)
+      View    : Generic_Views.Abstract_View_Access)
    is
+      use type Generic_Views.Abstract_View_Access;
       Old : constant Breakpoint_Editor :=
         Breakpoint_Editor (Process.Breakpoints_Editor);
    begin
@@ -251,8 +253,8 @@ package body Breakpoints_Editor is
       Br           : Breakpoint_Data;
       Size         : Gint;
       pragma Unreferenced (Size);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
       Iter          : Gtk_Tree_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
 
@@ -324,6 +326,7 @@ package body Breakpoints_Editor is
 
    overriding procedure Update (View   : access Breakpoint_Editor_Record) is
       Process  : Process_Proxy_Access;
+      M        : Gtk_List_Store;
    begin
       if Get_Process (View) /= null then
          Process := Get_Process (Get_Process (View).Debugger);
@@ -345,7 +348,8 @@ package body Breakpoints_Editor is
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      Gtk_List_Store (View.Editor.Exception_Name.Get_Model).Clear;
+      M := -View.Editor.Exception_Name.Get_Model;
+      M.Clear;
       Add_Unique_Combo_Entry
         (View.Editor.Exception_Name, -"All exceptions");
       Add_Unique_Combo_Entry
@@ -381,8 +385,8 @@ package body Breakpoints_Editor is
    overriding procedure On_Process_Terminated
      (View : access Breakpoint_Editor_Record)
    is
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
    begin
       Clear (Model);
    end On_Process_Terminated;
@@ -465,13 +469,8 @@ package body Breakpoints_Editor is
         (Widget.Editor.View, Gtk.Button.Signal_Clicked,
          Widget_Callback.To_Marshaller (On_View_Clicked'Access), Widget);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Widget.Editor.Breakpoint_List,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Breakpoint_Clicked'Access),
-         Slot_Object => Widget,
-         After       => False);
+      Widget.Editor.Breakpoint_List.On_Button_Press_Event
+        (Breakpoint_Clicked'Access, Widget);
 
       Add_Hook
         (Kernel, Debugger_Breakpoints_Changed_Hook,
@@ -479,7 +478,7 @@ package body Breakpoints_Editor is
          Watch => GObject (Widget),
          Name  => "breakpoints_editor.on_breakpoints_changed");
 
-      Set_Page (Widget.Editor.Notebook1, 0);
+      Widget.Editor.Notebook1.Set_Current_Page (0);
 
       Show_All (Widget);
       return Gtk_Widget (Widget);
@@ -549,7 +548,7 @@ package body Breakpoints_Editor is
       --  Fill the information
 
       if Br.Except /= null then
-         Set_Page (View.Editor.Notebook1, 2);
+         View.Editor.Notebook1.Set_Current_Page (2);
          Set_Active (View.Editor.Stop_Always_Exception, True);
 
          if Br.Except.all = "all" then
@@ -567,7 +566,7 @@ package body Breakpoints_Editor is
          Set_Active (View.Editor.Temporary_Exception, Br.Disposition /= Keep);
 
       else
-         Set_Page (View.Editor.Notebook1, 0);
+         View.Editor.Notebook1.Set_Current_Page (0);
 
          if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (View.Editor.Location_Selected, True);
@@ -604,21 +603,20 @@ package body Breakpoints_Editor is
    ------------------------
 
    function Breakpoint_Clicked
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access GObject_Record'Class;
+      Event  : Gdk_Event_Button) return Boolean
    is
       View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
       Iter  : Gtk_Tree_Iter;
       Col   : Gtk_Tree_View_Column;
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+      if Event.Button = 1
+        and then Event.The_Type = Button_Press
       then
          Coordinates_For_Event
            (View.Editor.Breakpoint_List,
-            Get_Model (View.Editor.Breakpoint_List),
             Event, Iter, Col);
 
          if Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb) then
@@ -639,10 +637,10 @@ package body Breakpoints_Editor is
             return True;
          end if;
 
-      elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
+      elsif Event.Button = 1
+        and then Event.The_Type = Gdk_2button_Press
       then
-         On_View_Clicked (Widget);
+         On_View_Clicked (Gtk_Widget (Widget));
       end if;
 
       return False;
@@ -659,7 +657,6 @@ package body Breakpoints_Editor is
    function Get_Selection_Index
      (View : access Breakpoint_Editor_Record'Class) return Integer
    is
-      use Gint_List;
       Process   : constant Visual_Debugger := Get_Process (View);
       Br_Num    : Breakpoint_Identifier;
       Iter      : Gtk_Tree_Iter;
@@ -755,7 +752,7 @@ package body Breakpoints_Editor is
       Start, The_End : Gtk_Text_Iter;
 
    begin
-      if Visible_Is_Set (Adv.Condition_Box) then
+      if Adv.Condition_Box.Get_Visible then
          Get_Bounds (Get_Buffer (Adv.Command_Descr), Start, The_End);
 
          declare
@@ -1087,8 +1084,8 @@ package body Breakpoints_Editor is
    is
       View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
       Process   : constant Visual_Debugger := Get_Process (View);
-      Model     : constant Gtk_Tree_Store := Gtk_Tree_Store
-        (Get_Model (View.Editor.Breakpoint_List));
+      Model     : constant Gtk_Tree_Store :=
+        -Get_Model (View.Editor.Breakpoint_List);
       Selection : constant Integer := Get_Selection_Index (View);
 
    begin

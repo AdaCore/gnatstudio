@@ -45,7 +45,6 @@ package body Commands.Builder.Progress_Parsers is
       Command : Command_Access)
    is
       use type Commands.Command_Access;
-      use type Tools_Output_Parser_Access;
       Start    : Integer := Item'First;
       Matched  : Match_Array (0 .. 3);
       Buffer   : Unbounded_String;

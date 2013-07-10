@@ -17,23 +17,16 @@
 
 with GNAT.Strings;
 
-with Glib.Object;
-with Gtk.Widget;
-with Gtkada.MDI;
-
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -62,22 +55,6 @@ package body Remote_Module is
    Remote_Module_Id : Module_ID;
    Module_Name : constant String := "Remote_Module";
 
-   procedure Show_Remote_View
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
-   --  Shows the remote view
-
-   function Load_Desktop
-     (MDI  : Gtkada.MDI.MDI_Window;
-      Node : XML_Utils.Node_Ptr;
-      User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
-   --  Loads the desktop
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
-   --  Saves the desktop
-
    procedure File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -87,46 +64,6 @@ package body Remote_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Command handler for the "is_local_server" command
-
-   ----------------------
-   -- Show_Remote_View --
-   ----------------------
-
-   procedure Show_Remote_View
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle) is
-   begin
-      Remote.View.Show_Remote_View (Widget, Kernel, Remote_Module_Id);
-   end Show_Remote_View;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (MDI  : Gtkada.MDI.MDI_Window;
-      Node : XML_Utils.Node_Ptr;
-      User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child
-   is
-      pragma Unreferenced (MDI);
-   begin
-      if Node.Tag.all = Module_Name then
-         return Remote.View.Load_Desktop (Remote_Module_Id, Node, User);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr is
-   begin
-      return Remote.View.Save_Desktop (Widget, User, Module_Name);
-   end Save_Desktop;
 
    ----------------
    -- File_Saved --
@@ -207,28 +144,16 @@ package body Remote_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools_View_Menu : constant String :=
-        '/' & (-"_Tools") & '/' & (-"_Views");
-
    begin
       Remote_Module_Id := new Remote_Module_Record;
       Register_Module
         (Module      => Remote_Module_Id,
          Kernel      => Kernel,
          Module_Name => Module_Name);
-
-      --  Register server list changed hook
       Register_Hook_No_Args
         (Kernel, Remote.Db.Server_List_Changed_Hook);
-      --  Initialize the remote configuration database
       Remote_Module_Record (Remote_Module_Id.all).Database :=
         Remote.Db.Initialize_Database;
-
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-      Register_Menu
-        (Kernel, Tools_View_Menu, -"_Remote", "",
-         Show_Remote_View'Access,
-         Ref_Item => -"Consoles");
 
       --  Load user specific machine list
       Load_Remote_Config (Kernel);
@@ -242,6 +167,8 @@ package body Remote_Module is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Remote_Commands_Handler'Access);
+
+      Remote.View.Register_Module (Kernel);
    end Register_Module;
 
    -----------------------------

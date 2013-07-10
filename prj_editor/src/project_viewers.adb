@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
+with Generic_Views;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
@@ -25,7 +26,7 @@ with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 
-with Gdk.Color;                    use Gdk.Color;
+with Gdk.RGBA;                     use Gdk.RGBA;
 with Gdk.Event;                    use Gdk.Event;
 
 with Glib;                         use Glib;
@@ -36,9 +37,11 @@ with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Menu;                     use Gtk.Menu;
-with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Separator_Menu_Item;      use Gtk.Separator_Menu_Item;
+with Gtk.Stock;                    use Gtk.Stock;
+with Gtk.Toolbar;                  use Gtk.Toolbar;
+with Gtk.Tool_Button;              use Gtk.Tool_Button;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
@@ -54,6 +57,7 @@ with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
 with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
@@ -109,19 +113,12 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
-   Recursive_Cst : aliased constant String := "recursive";
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
    Src_Path_Cst  : aliased constant String := "sources";
    Obj_Path_Cst  : aliased constant String := "objects";
    Name_Cst      : aliased constant String := "name";
    Path_Cst      : aliased constant String := "path";
-   Sources_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
-   Source_Dirs_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
-   Languages_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Recursive_Cst'Access);
    Add_Source_Dir_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Directory_Cst'Access);
    Remove_Dep_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
@@ -140,16 +137,14 @@ package body Project_Viewers is
    Compiler_Switches_Column  : constant := 2;
    Compiler_Color_Column     : constant := 3;
 
-   type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
+   type Project_Viewer_Record is new Generic_Views.View_Record with record
       Tree  : Gtk.Tree_View.Gtk_Tree_View;
       Model : Gtk.Tree_Store.Gtk_Tree_Store;
       --  The actual contents of the viewer
 
-      Default_Switches_Color : Gdk.Color.Gdk_Color;
+      Default_Switches_Color : Gdk.RGBA.Gdk_RGBA;
       --  Color to use when displaying switches that are set at the project
       --  level, rather than file specific
-
-      Kernel : GPS.Kernel.Kernel_Handle;
 
       View_Changed_Blocked : Boolean := False;
       --  True if the hook for "project_view_changed" should be ignored
@@ -162,19 +157,29 @@ package body Project_Viewers is
       Current_Dir : Virtual_File := No_File;
       --  The directory currently being shown
    end record;
-   type Project_Viewer is access all Project_Viewer_Record'Class;
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Viewer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
-   procedure Gtk_New
-     (Viewer : out Project_Viewer;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new project viewer.
+   function Initialize
+     (Viewer : access Project_Viewer_Record'Class)
+     return Gtk_Widget;
+   --  Create a new project viewer, and return the focus widget.
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
-   procedure Initialize
-     (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Internal subprogram for creating widgets
+   package File_Views is new Generic_Views.Simple_Views
+     (Formal_View_Record => Project_Viewer_Record,
+      Module_Name        => "File_Switches",
+      View_Name          => -"Switches editor",
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Initialize         => Initialize,
+      Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
+      Group              => Group_Default,
+      Position           => Position_Automatic);
+   subtype Project_Viewer is File_Views.View_Access;
+   use File_Views;
 
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record'Class;
@@ -233,11 +238,6 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the current context for the contextual menu
 
-   procedure On_Edit_Switches
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Callback for the Project->Edit Project Switches menu
-
    procedure On_Project_Properties
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -275,13 +275,14 @@ package body Project_Viewers is
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
-   type Preferences_Hook_Record is new Function_No_Args with record
+   type Preferences_Hook_Record is new Function_With_Args with record
       Viewer : Project_Viewer;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Hook called when the preferences change
 
    type Project_View_Hook_Record is new Function_No_Args with record
@@ -408,7 +409,7 @@ package body Project_Viewers is
       procedure Internal
         (Tree, Iter : System.Address;
          Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gdk_Color);
+         Col3  : Gint; Value3 : Gdk_RGBA);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
       File_Name  : constant Virtual_File :=
@@ -416,9 +417,10 @@ package body Project_Viewers is
       Language   : constant String :=
                      Get_Language_From_File
                        (Get_Language_Handler (Viewer.Kernel), File_Name);
-      Color      : Gdk_Color;
+      Color      : Gdk_RGBA;
       Value      : String_List_Access;
       Is_Default : Boolean;
+      Success    : Boolean;
    begin
       Viewer.Current_Project.Switches
         (Compiler_Package, File_Name,
@@ -427,7 +429,7 @@ package body Project_Viewers is
       if Is_Default then
          Color := Viewer.Default_Switches_Color;
       else
-         Color := Black (Get_Default_Colormap);
+         Parse (Color, "#000000", Success);
       end if;
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
@@ -480,7 +482,7 @@ package body Project_Viewers is
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Get_Button (Event) = 1
       then
-         Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+         Iter := Find_Iter_For_Event (V.Tree, Event);
          if Iter /= Null_Iter then
             if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
                Unselect_All (Get_Selection (V.Tree));
@@ -509,14 +511,9 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class) is
    begin
       if not Hook.Viewer.View_Changed_Blocked then
-         if Hook.Viewer.Current_Project /= No_Project then
-            Hook.Viewer.Current_Project := Get_Project (Kernel);
-            Show_Project (Hook.Viewer, Hook.Viewer.Current_Project);
-         end if;
+         Hook.Viewer.Current_Project := Get_Project (Kernel);
+         Show_Project (Hook.Viewer, Hook.Viewer.Current_Project);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
    ---------------------
@@ -529,28 +526,27 @@ package body Project_Viewers is
       Directory : Virtual_File := GNATCOLL.VFS.No_File;
       File      : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Child : MDI_Child;
+      Child : constant MDI_Child := File_Views.Child_From_View (Viewer);
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
 
    begin
-      Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
-      Assert (Me, Child /= null, "No MDI window visiting the project viewer");
-
       --  If the context is invalid, keep the currently displayed lines, so
       --  that when a new MDI child is selected, the contents of the viewer is
       --  not necessarily reset.
 
-      if Directory = GNATCOLL.VFS.No_File then
-         Set_Title (Child,
-                    Title => -"Editing switches for project "
-                    & Project.Name,
-                    Short_Title => Project_Switches_Name);
-      else
-         Set_Title (Child,
-                    Title => -"Editing switches for directory " &
-                    Directory.Display_Full_Name,
-                    Short_Title => Project_Switches_Name);
+      if Child /= null then
+         if Directory = GNATCOLL.VFS.No_File then
+            Set_Title (Child,
+                       Title => -"Editing switches for project "
+                       & Project.Name,
+                       Short_Title => Project_Switches_Name);
+         else
+            Set_Title (Child,
+                       Title => -"Editing switches for directory " &
+                         Directory.Display_Full_Name,
+                       Short_Title => Project_Switches_Name);
+         end if;
       end if;
 
       Viewer.Current_Project := Project;
@@ -598,9 +594,6 @@ package body Project_Viewers is
       else
          Update_Contents (Viewer, Get_Project (Viewer.Kernel));
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Explorer_Selection_Changed;
 
    -------------
@@ -626,31 +619,22 @@ package body Project_Viewers is
       end if;
    end Execute;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Viewer : out Project_Viewer;
-      Kernel : access Kernel_Handle_Record'Class) is
-   begin
-      Viewer := new Project_Viewer_Record;
-      Project_Viewers.Initialize (Viewer, Kernel);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
-     (Viewer : access Project_Viewer_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+   function Initialize
+     (Viewer : access Project_Viewer_Record'Class)
+      return Gtk_Widget
    is
+      Context : constant Selection_Context :=
+        Get_Current_Context (Viewer.Kernel);
+
       Column_Types : constant GType_Array :=
                        (Display_File_Name_Column => GType_String,
                         File_Column              => Get_Virtual_File_Type,
                         Compiler_Switches_Column => GType_String,
-                        Compiler_Color_Column    => Gdk_Color_Type);
+                        Compiler_Color_Column    => Gdk.RGBA.Get_Type);
 
       Scrolled     : Gtk_Scrolled_Window;
       Col          : Gtk_Tree_View_Column;
@@ -662,7 +646,6 @@ package body Project_Viewers is
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
-      Viewer.Kernel := Kernel_Handle (Kernel);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -694,10 +677,10 @@ package body Project_Viewers is
       Pack_Start (Col, Render, False);
       Set_Sort_Column_Id (Col, Compiler_Switches_Column);
       Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
-      Add_Attribute (Col, Render, "foreground_gdk", Compiler_Color_Column);
+      Add_Attribute (Col, Render, "foreground_rgba", Compiler_Color_Column);
 
       Register_Contextual_Menu
-        (Kernel          => Kernel,
+        (Kernel          => Viewer.Kernel,
          Event_On_Widget => Viewer.Tree,
          Object          => Viewer,
          ID              => Module_ID (Prj_Editor_Module_ID),
@@ -710,26 +693,37 @@ package body Project_Viewers is
       Hook3 := new Context_Hook_Record'
         (Function_With_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Context_Changed_Hook, Hook3,
+        (Viewer.Kernel, Context_Changed_Hook, Hook3,
          Name => "project_viewer.context_changed", Watch => GObject (Viewer));
 
       Hook2 := new Project_View_Hook_Record'
         (Function_No_Args with Viewer => Project_Viewer (Viewer));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, Hook2,
+        (Viewer.Kernel, Project_View_Changed_Hook, Hook2,
          Name => "project_viewer.project_view_changed",
          Watch => GObject (Viewer));
 
       Hook := new Preferences_Hook_Record'
-        (Function_No_Args with Viewer => Project_Viewer (Viewer));
-      Execute (Hook.all, Kernel);
+        (Function_With_Args with Viewer => Project_Viewer (Viewer));
+      Execute (Hook.all, Viewer.Kernel, Data => null);
       Add_Hook
-        (Kernel, Preferences_Changed_Hook,
+        (Viewer.Kernel, Preference_Changed_Hook,
          Hook,
          Name => "project_viewer.preferences_changed",
          Watch => GObject (Viewer));
 
       Show_All (Viewer);
+
+      --  The initial contents of the viewer should be read immediately from
+      --  the explorer, without forcing the user to do a new selection.
+
+      if Context /= No_Context then
+         Explorer_Selection_Changed (Viewer, Context);
+      else
+         Update_Contents (Viewer, Get_Project (Viewer.Kernel));
+      end if;
+
+      return Gtk_Widget (Viewer.Tree);
    end Initialize;
 
    -------------
@@ -738,13 +732,19 @@ package body Project_Viewers is
 
    overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
    begin
       Hook.Viewer.Default_Switches_Color :=
         Default_Switches_Color.Get_Pref;
       --  ??? Do we need to change the model to reflect this change
+
+      if View /= null then
+         Set_Font_And_Colors
+           (View, Fixed_Font => True, Pref => Get_Pref (Data));
+      end if;
    end Execute;
 
    ------------------
@@ -780,64 +780,20 @@ package body Project_Viewers is
 
       Sorted := Freeze_Sort (Viewer.Model);
       Ref (Viewer.Model);
-      Set_Model (Viewer.Tree, null);  --  Do not refresh while adding files
+
+      --  Do not refresh while adding files
+      Set_Model (Viewer.Tree, Null_Gtk_Tree_Model);
 
       for F in Files'Range loop
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
 
       Thaw_Sort (Viewer.Model, Sorted);
-      Set_Model (Viewer.Tree, Gtk_Tree_Model (Viewer.Model));
+      Set_Model (Viewer.Tree, +Viewer.Model);
       Unref (Viewer.Model);
 
       Unchecked_Free (Files);
    end Show_Project;
-
-   ------------------------
-   -- On_Editor_Switches --
-   ------------------------
-
-   procedure On_Edit_Switches
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Child   : GPS_MDI_Child;
-      Viewer  : Project_Viewer;
-
-   begin
-      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Viewer_Record'Tag));
-
-      if Child /= null then
-         Raise_Child (Child);
-         Viewer := Project_Viewer (Get_Widget (Child));
-      else
-         Gtk_New (Viewer, Kernel);
-         Gtk_New (Child, Viewer,
-                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
-                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
-                  Group          => Group_Default,
-                  Module         => Prj_Editor_Module_ID);
-         Set_Title (Child, -"Switches editor");
-         Put (Get_MDI (Kernel), Child);
-      end if;
-
-      --  The initial contents of the viewer should be read immediately from
-      --  the explorer, without forcing the user to do a new selection.
-
-      if Context /= No_Context then
-         Explorer_Selection_Changed (Viewer, Context);
-      else
-         Update_Contents (Viewer, Get_Project (Kernel));
-      end if;
-
-      Set_Focus_Child (Child);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Edit_Switches;
 
    ---------------------------
    -- On_Project_Properties --
@@ -918,6 +874,24 @@ package body Project_Viewers is
       return Success;
    end Execute;
 
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Viewer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Button : Gtk_Tool_Button;
+   begin
+      Gtk_New_From_Stock (Button, Stock_Edit);
+      Button.Set_Tooltip_Text (-"Edit switches for all selected files");
+      Toolbar.Insert (Button);
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Tool_Button.Signal_Clicked, Edit_Multiple_Switches'Access,
+         Slot_Object => View);
+   end Create_Toolbar;
+
    ------------------------------------
    -- Project_Editor_Context_Factory --
    ------------------------------------
@@ -930,14 +904,13 @@ package body Project_Viewers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Kernel);
+      pragma Unreferenced (Event_Widget, Kernel, Menu);
       V    : constant Project_Viewer := Project_Viewer (Object);
-      Item : Gtk_Menu_Item;
       Iter : Gtk_Tree_Iter;
 
    begin
       --  ??? Should call Project_Editor_Contextual
-      Iter := Find_Iter_For_Event (V.Tree, V.Model, Event);
+      Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter = Null_Iter then
          Set_File_Information (Context, Project => V.Current_Project);
@@ -958,17 +931,6 @@ package body Project_Viewers is
                Project => V.Current_Project);
          end;
       end if;
-
-      if Has_File_Information (Context) then
-         Gtk_New (Item, -"Edit switches for all selected files");
-         Add (Menu, Item);
-         Widget_Callback.Object_Connect
-           (Item, Signal_Activate, Edit_Multiple_Switches'Access,
-            Slot_Object => V);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Project_Editor_Context_Factory;
 
    ----------------------------
@@ -1297,15 +1259,6 @@ package body Project_Viewers is
             end if;
          end;
 
-      elsif Command = "get_executable_name" then
-         declare
-            Main : constant Virtual_File := Nth_Arg (Data, 2);
-
-         begin
-            Set_Return_Value
-              (Data, Project.Executable_Name (Main.Full_Name.all));
-         end;
-
       elsif Command = "rename" then
          Name_Parameters (Data, Rename_Cmd_Parameters);
          declare
@@ -1358,64 +1311,6 @@ package body Project_Viewers is
                   Use_Base_Name      => False,
                   Use_Relative_Path  => Relative);
             end if;
-         end;
-
-      elsif Command = "sources" then
-         Name_Parameters (Data, Sources_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Sources   : File_Array_Access := Project.Source_Files
-              (Recursive  => Recursive);
-         begin
-            Set_Return_Value_As_List (Data);
-            for S in Sources'Range loop
-               Set_Return_Value
-                 (Data, Create_File (Get_Script (Data), Sources (S)));
-            end loop;
-            Unchecked_Free (Sources);
-         end;
-
-      elsif Command = "languages" then
-         Name_Parameters (Data, Languages_Cmd_Parameters);
-         declare
-            Langs : GNAT.Strings.String_List := Project.Languages
-              (Recursive => Nth_Arg (Data, 2, False));
-         begin
-            Set_Return_Value_As_List (Data);
-            for L in Langs'Range loop
-               Set_Return_Value (Data, Langs (L).all);
-            end loop;
-            Free (Langs);
-         end;
-
-      elsif Command = "source_dirs" then
-         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Dirs      : constant File_Array := Project.Source_Dirs
-              (Recursive => Recursive);
-         begin
-            Set_Return_Value_As_List (Data);
-
-            for D in Dirs'Range loop
-               --  ??? We should return the Virtual_File object instead
-               Set_Return_Value (Data, Dirs (D).Full_Name);
-            end loop;
-         end;
-
-      elsif Command = "object_dirs" then
-         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
-         declare
-            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Object    : constant File_Array :=
-              Object_Path (Project, Recursive, False);
-         begin
-            Set_Return_Value_As_List (Data);
-
-            for J in Object'Range loop
-               --  ??? Shouldn't we return a list of files instead ?
-               Set_Return_Value (Data, Object (J).Full_Name);
-            end loop;
          end;
 
       elsif Command = "add_source_dir" then
@@ -1734,7 +1629,6 @@ package body Project_Viewers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      Tools   : constant String := '/' & (-"Tools") & '/' & (-"Views");
       Filter  : Action_Filter;
       Filter2 : Action_Filter;
       Command : Interactive_Command_Access;
@@ -1748,18 +1642,19 @@ package body Project_Viewers is
          Module_Name => Project_Editor_Module_Name,
          Priority    => Default_Priority);
 
+      File_Views.Register_Module
+        (Kernel,
+         Menu_Name => -"Views/File Sw_itches");
+      File_Views.Register_Open_Menu
+        (Kernel,
+         Menu_Name => Project,
+         Item_Name => -"Edit File _Switches");
+
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
       Register_Menu (Kernel, Project, -"_New...", "",
                      Creation_Wizard.Selector.On_New_Project'Access,
                      Ref_Item => -"Open From Host...", Add_Before => False);
-
-      Register_Menu
-        (Kernel, Project, -"Edit File _Switches", "",
-         On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
-      Register_Menu
-        (Kernel, Tools, -"File Sw_itches", "", On_Edit_Switches'Access,
-         Ref_Item => -"Files", Add_Before => False);
 
       Register_Menu
         (Kernel, Project, -"Edit Project _Properties", "",
@@ -1828,11 +1723,16 @@ package body Project_Viewers is
 
       Command := new Add_Variable_Command;
       Register_Contextual_Menu
-        (Kernel, "Add configuration variable",
+        (Kernel, "Add scenario variable",
          Action => Command,
-         Label  => "Project/Add configuration variable",
-         Filter => (Create (Module => "Explorer") and Filter2)
-                   or Create (Module => "Scenario_View"));
+         Label  => "Project/Add scenario variable",
+         Filter => (Create (Module => Explorer_Module_Name) and Filter2));
+
+      Register_Action
+        (Kernel, Action_Add_Scenario_Variable,
+         Command => Command,
+         Description => -"Add a new scenario variable to the selected project",
+         Category => -"Projects");
 
       Filter := Lookup_Filter (Kernel, "Project and file");
       Register_Contextual_Menu
@@ -1866,29 +1766,6 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "sources",
-         Maximum_Args => Sources_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "source_dirs",
-         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
-         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_executable_name",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "languages",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
         (Kernel, "rename",
          Minimum_Args => 1,
          Maximum_Args => 2,
@@ -1900,12 +1777,6 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler      => Project_Static_Command_Handler'Access);
-      Register_Command
-        (Kernel, "object_dirs",
-         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
-         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
       Register_Command
         (Kernel, "add_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,

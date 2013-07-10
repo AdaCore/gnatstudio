@@ -26,6 +26,7 @@ with Glib.Convert;
 with Glib.Object;              use Glib.Object;
 
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Editable;             use Gtk.Editable;
@@ -37,6 +38,7 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Row_Reference;   use Gtk.Tree_Row_Reference;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -526,7 +528,7 @@ package body Build_Configurations.Gtkada is
       Label         : Gtk_Label;
       Main_Hbox     : Gtk_Hbox;
       Box           : Target_UI_Access;
-      Combo         : Gtk_Combo_Box;
+      Combo         : Gtk_Combo_Box_Text;
       Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Locations_Frame : Gtk_Frame;
@@ -609,7 +611,7 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 1,
                  Xoptions      => Expand or Fill);
 
-         Gtk_New_Text (Box.Launch_Combo);
+         Gtk_New (Box.Launch_Combo);
          for J in Launch_Mode_Type loop
             Append_Text (Box.Launch_Combo, Beautify (J'Img));
          end loop;
@@ -987,7 +989,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (UI, Vbox, True, True, 3);
 
-      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Buttons, False, False, 3);
 
       --  Create the main notebook
 
@@ -1025,8 +1027,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
 
       Refresh (UI, "");
 
@@ -1039,7 +1040,7 @@ package body Build_Configurations.Gtkada is
       declare
          Path : Gtk_Tree_Path;
       begin
-         Path := Gtk_New ("0:0");
+         Gtk_New (Path, "0:0");
          Select_Path (Get_Selection (UI.View), Path);
          Path_Free (Path);
       end;
@@ -1169,7 +1170,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (UI, Vbox, True, True, 3);
 
-      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+      Pack_Start (Get_Content_Area (Dialog), Buttons, False, False, 3);
 
       --  Create the main notebook
 
@@ -1207,8 +1208,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
 
       Refresh (UI);
       Show_All (Dialog);
@@ -1220,7 +1220,7 @@ package body Build_Configurations.Gtkada is
       declare
          Path : Gtk_Tree_Path;
       begin
-         Path := Gtk_New ("0");
+         Gtk_New (Path, "0");
          Select_Path (Get_Selection (UI.View), Path);
          Path_Free (Path);
       end;
@@ -1447,8 +1447,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
-      Set_Has_Separator (Dialog, False);
+      Pack_Start (Get_Content_Area (Dialog), UI, True, True, 3);
 
       --  Create the target UI itself
 
@@ -1648,7 +1647,7 @@ package body Build_Configurations.Gtkada is
 
          if Select_Target = To_String (Target.Name) then
             Path := Get_Path (View.Model, Iter);
-            Target_Iter := Gtk_New (View.Model, Path);
+            Gtk_New (Target_Iter, +View.Model, Path);
             Path_Free (Path);
          end if;
       end Add_Target;
@@ -1692,7 +1691,7 @@ package body Build_Configurations.Gtkada is
 
       --  Select the target
 
-      if Target_Iter /= null then
+      if Target_Iter /= Null_Gtk_Tree_Row_Reference then
          if Valid (Target_Iter) then
             declare
                Path : Gtk_Tree_Path;
@@ -1705,7 +1704,7 @@ package body Build_Configurations.Gtkada is
             end;
          end if;
 
-         Row_Reference_Free (Target_Iter);
+         Free (Target_Iter);
       end if;
    end Refresh;
 

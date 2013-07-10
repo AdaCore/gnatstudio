@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
@@ -24,13 +23,14 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 
-with Gdk.Color;                 use Gdk.Color;
+with Gdk.RGBA;                  use Gdk.RGBA;
 
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;
@@ -95,6 +95,7 @@ package body Src_Editor_Module.Shell is
    Before_Cst            : aliased constant String := "before";
    After_Cst             : aliased constant String := "after";
    Name_Cst              : aliased constant String := "name";
+   Left_Gravity_Cst      : aliased constant String := "left_gravity";
    First_Line_Cst        : aliased constant String := "first_line";
    Start_Column_Cst      : aliased constant String := "start_column";
    Last_Line_Cst         : aliased constant String := "last_line";
@@ -1511,15 +1512,15 @@ package body Src_Editor_Module.Shell is
             Color    : constant String := Nth_Arg (Data, 2);
             Box      : Source_Editor_Box;
             Child    : MDI_Child;
-            Col      : Gdk_Color;
+            Col      : Gdk_RGBA;
+            Success  : Boolean;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
-               Col := Parse (Color);
-               Alloc (Gtk.Widget.Get_Default_Colormap, Col);
-               Modify_Base (Get_View (Box), State_Normal, Col);
+               Parse (Col, Color, Success);
+               Override_Color (Get_View (Box), Gtk_State_Flag_Normal, Col);
             end if;
          end;
 
@@ -1863,6 +1864,34 @@ package body Src_Editor_Module.Shell is
            (Get_Overlay (Data, 2),
             Get_Location (Data, 3), Get_Location (Data, 4));
 
+      elsif Command = "add_multi_cursor" then
+         Get_Buffer (Data, 1).Add_Multi_Cursor
+           (Get_Location (Data, 2));
+
+      elsif Command = "remove_all_multi_cursors" then
+         Get_Buffer (Data, 1).Remove_All_Multi_Cursors;
+
+      elsif Command = "set_multi_cursors_manual_sync" then
+
+         if Data.Number_Of_Arguments = 1 then
+            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync;
+         elsif Data.Number_Of_Arguments = 2 then
+            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync
+              (Get_Mark (Data, 2));
+         end if;
+
+      elsif Command = "set_multi_cursors_auto_sync" then
+         Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
+
+      elsif Command = "get_multi_cursors_marks" then
+         Set_Return_Value_As_List (Data);
+         for Cursor_Mark of
+           Get_Buffer (Data, 1).Get_Multi_Cursors_Marks
+         loop
+            Data.Set_Return_Value
+              (Cursor_Mark.Create_Instance (Data.Get_Script));
+         end loop;
+
       elsif Command = "start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
 
@@ -1929,6 +1958,21 @@ package body Src_Editor_Module.Shell is
             (Line   => Integer'Max (1, Nth_Arg (Data, 3)),
              Column =>
                Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 4)))));
+
+      elsif Command = "__repr__" then
+         declare
+            Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
+         begin
+            if Loc1 = Nil_Editor_Location then
+               Set_Return_Value (Data, String'("<no location>"));
+            else
+               Set_Return_Value
+                  (Data,
+                   Loc1.Buffer.File.Display_Full_Name
+                   & ":" & Image (Loc1.Line, Min_Width => 1)
+                   & ":" & Image (Integer (Loc1.Column), Min_Width => 1));
+            end if;
+         end;
 
       elsif Command = Comparison_Method then
          declare
@@ -2074,11 +2118,13 @@ package body Src_Editor_Module.Shell is
                Get_Location (Data, 1).Forward_Line (Nth_Arg (Data, 2, 1))));
 
       elsif Command = "create_mark" then
-         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Name_Parameters (Data, (1 => Name_Cst'Access,
+                                 2 => Left_Gravity_Cst'Access));
          Set_Return_Value
            (Data, Create_Editor_Mark
               (Get_Script (Data),
-               Get_Location (Data, 1).Create_Mark (Nth_Arg (Data, 2, ""))));
+               Get_Location (Data, 1).Create_Mark
+               (Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, True))));
 
       elsif Command = "get_char" then
          declare
@@ -2285,11 +2331,28 @@ package body Src_Editor_Module.Shell is
               or else Name = "font"
               or else Name = "weight"
               or else Name = "style"
+              or else Name = "paragraph-background"
             then
                Set_Return_Value
                  (Data, String'(Get_Overlay (Data, 1).Get_Property (Name)));
 
-            elsif Name = "editable" then
+            elsif Name = "rise"
+              or else Name = "pixels-above-lines"
+              or else Name = "pixels-below-lines"
+              or else Name = "pixels-inside-wrap"
+              or else Name = "size-points"
+              or else Name = "variant"
+              or else Name = "stretch"
+              or else Name = "underline"
+            then
+               Set_Return_Value
+                  (Data, Integer'(Get_Overlay (Data, 1).Get_Property (Name)));
+
+            elsif Name = "editable"
+              or else Name = "invisible"
+              or else Name = "strikethrough"
+              or else Name = "background-full-height"
+            then
                Set_Return_Value
                  (Data, Boolean'(Get_Overlay (Data, 1).Get_Property (Name)));
             end if;
@@ -2311,9 +2374,29 @@ package body Src_Editor_Module.Shell is
                Get_Overlay (Data, 1).Set_Property
                  (Name, String'(Nth_Arg (Data, 3)));
 
-            elsif Name = "editable" then
+            elsif Name = "rise"
+              or else Name = "pixels-above-lines"
+              or else Name = "pixels-below-lines"
+              or else Name = "pixels-inside-wrap"
+              or else Name = "size-points"
+              or else Name = "variant"
+              or else Name = "stretch"
+              or else Name = "underline"
+            then
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, Integer'(Nth_Arg (Data, 3)));
+
+            elsif Name = "editable"
+              or else Name = "invisible"
+              or else Name = "strikethrough"
+              or else Name = "background-full-height"
+            then
                Get_Overlay (Data, 1).Set_Property
                  (Name, Boolean'(Nth_Arg (Data, 3)));
+
+            else
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, String'(Nth_Arg (Data, 3)));
             end if;
          end;
 
@@ -2457,6 +2540,8 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Comparison_Method, 1, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
+        (Kernel, "__repr__", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
         (Kernel, Addition_Method, 1, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, Substraction_Method, 1, 1, Location_Cmds'Access, EditorLoc);
@@ -2549,6 +2634,24 @@ package body Src_Editor_Module.Shell is
         (Kernel, "apply_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
+
+      Register_Command
+        (Kernel, "add_multi_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "remove_all_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "set_multi_cursors_manual_sync",  0, 1, Buffer_Cmds'Access,
+         EditorBuffer);
+      Register_Command
+        (Kernel,
+         "set_multi_cursors_auto_sync",  0, 0, Buffer_Cmds'Access,
+         EditorBuffer);
+      Register_Command
+        (Kernel,
+         "get_multi_cursors_marks",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

@@ -18,6 +18,7 @@
 --  This package is the root of the GPS' kernel API
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
@@ -33,6 +34,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Glib.Object;  use Glib;
+with Gtk.Widget;
 with Gtk.Window;
 
 with Basic_Types;
@@ -50,13 +52,15 @@ with Refactoring;
 with Switches_Chooser;
 with String_List_Utils;
 with Task_Manager;
-with Toolchains;
 with XML_Utils;
 with Xref;
 
 with GPS.Editors;
-with GPS.Core_Kernels;
-with GPS.Messages_Windows; use GPS.Messages_Windows;
+with GPS.Core_Kernels;                 use GPS.Core_Kernels;
+with GPS.Messages_Windows;
+with GPS.Process_Launchers;
+with GPS.Process_Launchers.Implementation;
+use GPS.Process_Launchers.Implementation;
 
 package GPS.Kernel is
 
@@ -80,19 +84,6 @@ package GPS.Kernel is
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
-   type Customization_Level is
-     (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
-   --  The various level of customization (See GPS.Kernel.Custom).
-   --  Hard_Coded is used for customization that are hard-coded in the GPS code
-   --  System_Wide is used if customization comes from a custom file found in
-   --  the installation directory of GPS.
-   --  Project_Wide is used if the customization comes from a custom file found
-   --  in one of the directories lists in GPS_CUSTOM_PATH.
-   --  User_Specific is used if the customization comes from a custom file
-   --  found in the user's own directory (see GPS_HOME/.gps/plug-ins).
-   --  Themes is used if the customization was found in a theme definition,
-   --  wherever that definition was found.
-
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
    --  Load the preferences from the user's file ~/.gps/preferences
 
@@ -103,6 +94,14 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record)
       return Default_Preferences.Preferences_Manager;
    --  Return the preference manager associated with Handle
+
+   function Preferences_File
+     (Self : access Kernel_Handle_Record)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return the name of the preferences file.
+   --  This is the file that GPS will modify when the user modifies the
+   --  preferences. But the default value for preferences could be set from any
+   --  plug-in.
 
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
@@ -160,6 +159,12 @@ package GPS.Kernel is
      return Virtual_File;
    --  Return the installation directory for GPS. This always ends up with a
    --  directory separator.
+
+   overriding function Get_Share_Dir
+     (Self : not null access Kernel_Handle_Record)
+     return GNATCOLL.VFS.Virtual_File;
+   --  Return share/gps/ in Get_System_Dir directory. This always ends up with
+   --  a directory separator.
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)
@@ -226,15 +231,6 @@ package GPS.Kernel is
       Accel_Mods : Natural);
    --  Set a default key for the registered action.
 
-   -------------
-   -- Modules --
-   -------------
-   --  ??? Could be moved to GPS.Kernel.Module if the contexts didn't require
-   --  an Abstract_Module_ID. Perhaps we could move them to GPS.Kernel.Contexts
-
-   type Abstract_Module_ID_Record is abstract tagged limited null record;
-   type Abstract_Module_ID is access all Abstract_Module_ID_Record'Class;
-
    -----------
    -- Files --
    -----------
@@ -296,14 +292,14 @@ package GPS.Kernel is
    procedure Set_Context_Information
      (Context : in out Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Abstract_Module_ID);
+      Creator : Abstract_Module);
    --  Set the information in the context
 
    function Get_Kernel (Context : Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
    function Get_Creator
-     (Context : Selection_Context) return Abstract_Module_ID;
+     (Context : Selection_Context) return Abstract_Module;
    --  Return the module ID for the module that created the context
 
    procedure Set_Is_Dispatching_Call
@@ -584,18 +580,6 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
-   -------------------------
-   --  Toolchains Manager --
-   -------------------------
-
-   function Get_Toolchains_Manager
-     (Kernel : access Kernel_Handle_Record)
-      return Toolchains.Toolchain_Manager;
-
-   procedure Set_Toolchains_Manager
-     (Kernel  : access Kernel_Handle_Record;
-      Manager : Toolchains.Toolchain_Manager);
-
    ----------------
    --  Undo_Redo --
    ----------------
@@ -614,6 +598,61 @@ package GPS.Kernel is
 
    function Refactoring_Context
      (Kernel : access Kernel_Handle_Record) return Refactoring.Factory_Context;
+
+   ---------------------
+   -- Messages window --
+   ---------------------
+
+   subtype Message_Type is GPS.Messages_Windows.Message_Type;
+
+   function Info    return Message_Type renames GPS.Messages_Windows.Info;
+   function Error   return Message_Type renames GPS.Messages_Windows.Error;
+   function Verbose return Message_Type renames GPS.Messages_Windows.Verbose;
+
+   type Abstract_Messages_Window is abstract new
+     GPS.Messages_Windows.Abstract_Messages_Window with null record;
+   type Abstract_Messages_Window_Access is
+     access all Abstract_Messages_Window'Class;
+
+   function Get_Console_Window
+     (Self : not null access Abstract_Messages_Window)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the widget (if any) representing the console. It will be an
+   --  instance of Interactive_Console, but we cannot make that explicit here
+   --  to avoid circularities.
+
+   procedure Set_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Console : not null access Abstract_Messages_Window'Class);
+   function Get_Messages_Window
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+     return GNATCOLL.Scripts.Virtual_Console;
+   --  Set the messages window
+
+   function Get_Messages_Console
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the widget (if any) representing the console.
+
+   procedure Insert
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   procedure Insert_UTF8
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   --  Insert a message in the Messages window.
+
+   procedure Clear_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Clear the messaged window.
+
+   procedure Raise_Console
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Raise the Messages window if it exists.
 
    ----------------
    -- Hyper_Mode --
@@ -719,7 +758,7 @@ package GPS.Kernel is
      renames To_Unbounded_String;
 
    --  Hooks with no arguments
-   Preferences_Changed_Hook      : constant Hook_Name :=
+   Preference_Changed_Hook      : constant Hook_Name :=
                                      To_Hook_Name ("preferences_changed");
    Search_Reset_Hook             : constant Hook_Name :=
                                      To_Hook_Name ("search_reset");
@@ -798,6 +837,42 @@ package GPS.Kernel is
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").
 
+   -------------------
+   -- Sets of files --
+   -------------------
+
+   package File_Sets is new Ada.Containers.Hashed_Sets
+      (Element_Type        => GNATCOLL.VFS.Virtual_File,
+       Hash                => GNATCOLL.VFS.Full_Name_Hash,
+       Equivalent_Elements => GNATCOLL.VFS."=",
+       "="                 => GNATCOLL.VFS."=");
+   -----------------
+   -- Build modes --
+   -----------------
+
+   Build_Mode_Changed_Hook : constant Hook_Name :=
+                               To_Hook_Name ("build_mode_changed");
+   --  Hook run to request the change of the build mode
+
+   procedure Set_Build_Mode
+     (Kernel : access Kernel_Handle_Record'Class;
+      New_Mode : String);
+   --  Called when a new build mode is being selected. The name of that mode is
+   --  passed as parameter to the Build_Mode_Changed_Hook. At the time the hook
+   --  is run, various settings like the object's subdir might not have been
+   --  set yet, since they are set by listeners on that hook.
+
+   overriding function Get_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record) return String;
+   --  Returns the current build mode.
+   --  This build mode is in fact stored as a property of the root project by
+   --  the builder module, so this function is a convenient to retrieve that
+   --  property.
+
+   subtype Abstract_Module_ID        is Abstract_Module;
+   subtype Abstract_Module_ID_Record is Abstract_Module_Record;
+   --  Type aliases for compability
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
@@ -844,7 +919,7 @@ private
 
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
-      Creator   : Abstract_Module_ID;
+      Creator   : Abstract_Module;
       Ref_Count : Natural := 1;
 
       Instances : GNATCOLL.Scripts.Instance_List_Access;
@@ -1042,10 +1117,6 @@ private
       All_Action_Filters : Action_Filters_List.List;
       --  The action contexts registered in the kernel
 
-      Modules_List : System.Address := System.Null_Address;
-      --  The list of all the modules that have been registered in this kernel.
-      --  See GPS.Kernel.Modules for functions manipulating that list
-
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main GPS window
 
@@ -1119,26 +1190,24 @@ private
 
       Editor_Factory               : GPS.Editors.Editor_Buffer_Factory_Access;
 
-      Toolchains_Manager           : Toolchains.Toolchain_Manager;
-
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode
 
       Messages_Container : System.Address := System.Null_Address;
       --  The message container for this instance of kernel
 
-      Locations_View_Manager : System.Address := System.Null_Address;
-      --  The locations view manager
-
       Key_Setter_Function : Key_Setter;
       --  The function to set default keys
 
       Refactoring : Standard.Refactoring.Factory_Context;
 
-      Messages_Window : Abstract_Messages_Window_Access;
+      Messages : Abstract_Messages_Window_Access;
 
       Undo_Redo : Commands.Controls.Undo_Redo;
       --  Undo/redo controls
+
+      Launcher : aliased GPS_Process_Launcher_Record;
+      --  External process launcher
    end record;
 
    overriding procedure Create_Registry
@@ -1151,6 +1220,10 @@ private
 
    overriding function Messages_Window
      (Self : not null access Kernel_Handle_Record)
-      return Abstract_Messages_Window_Access;
+      return GPS.Messages_Windows.Abstract_Messages_Window_Access;
+
+   overriding function Process_Launcher
+     (Self : not null access Kernel_Handle_Record)
+     return GPS.Process_Launchers.Process_Launcher;
 
 end GPS.Kernel;

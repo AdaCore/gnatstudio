@@ -22,7 +22,7 @@ with Gtkada.MDI;
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Basic_Types;
-
+with Default_Preferences;
 with GPS.Editors;        use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
@@ -147,6 +147,21 @@ package GPS.Kernel.Standard_Hooks is
       Context : GPS.Kernel.Selection_Context;
    end record;
    --  Base type for hooks that take a single context in parameter
+
+   Preference_Hook_Type : constant Hook_Type := "preference_hooks";
+   type Preference_Hooks_Args is new Hooks_Data with record
+      Pref : Default_Preferences.Preference;
+   end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Preference_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  Hooks that take a preference in parameter
+
+   function Get_Pref
+     (Data : access Hooks_Data'Class) return Default_Preferences.Preference;
+   --  If Data is a Preference_Hooks_Args, returns the preference, else null.
 
    ------------------
    -- Marker_Hooks --
@@ -320,6 +335,8 @@ package GPS.Kernel.Standard_Hooks is
       Every_Line : Boolean := True;
       Normalize  : Boolean := True;
       Identifier : String (1 .. Identifier_Length);
+      Tooltip    : GNAT.Strings.String_Access;
+      Icon       : GNAT.Strings.String_Access;
    end record;
    --  Identifier is the identity of the emitted
    --  If Every_Line is set to True, then the editor will emit a line_revealed
@@ -357,22 +374,30 @@ package GPS.Kernel.Standard_Hooks is
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
       Info       : Line_Information_Data;
-      Normalize  : Boolean := True);
+      Normalize  : Boolean := True;
+      Tooltip    : String := "";
+      Icon       : String := "");
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
-   --  that are to be modified.
+   --  that are to be modified. If the range is -1 .. -1, the info is added to
+   --  the status line of the editors (and tooltip is then used when hovering
+   --  that label).
    --  If Normalize is True, the file name will be normalized.
    --  See File_Line_Action_Hook
    --  Infos must be freed by caller using Unchecked_Free. The actual contents
    --  will be freed by the editor.
+   --  Icon is the name of a stock icon to display
 
    procedure Add_Editor_Label
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
-      Label      : String);
+      Label      : String;
+      Tooltip    : String := "";
+      Icon       : String := "");
    --  Add a label in the editors for File.
    --  See File_Line_Action_Hook
+   --  Icon is the name of a stock image to display
 
    function To_Line_Information is new Ada.Unchecked_Conversion
      (System.Address, Line_Information_Data);
@@ -459,7 +484,7 @@ package GPS.Kernel.Standard_Hooks is
    -- Status_Changed_Hook --
    -------------------------
 
-   type File_Status is (Modified, Unmodified, Unsaved, Saved);
+   type File_Status is (Modified, Unmodified, Unsaved, Saved, Readonly);
 
    type File_Status_Changed_Hooks_Args is new File_Hooks_Args with record
       Status : File_Status;

@@ -16,16 +16,16 @@
 ------------------------------------------------------------------------------
 
 with Glib.Main;        use Glib.Main;
-with Gtk.Main;         use Gtk.Main;
 with Traces;           use Traces;
 
-with Task_Manager.GUI; use Task_Manager.GUI;
+--  with Task_Manager.GUI; use Task_Manager.GUI;
 
 package body Task_Manager is
 
    Timeout : constant := 100;
 
-   package Task_Manager_Idle is new Gtk.Main.Idle (Task_Manager_Access);
+   package Task_Manager_Idle is new Glib.Main.Generic_Sources
+     (Task_Manager_Access);
    package Task_Manager_Timeout is new Glib.Main.Generic_Sources
      (Task_Manager_Access);
 
@@ -54,6 +54,28 @@ package body Task_Manager is
      (Command : Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
+
+   -----------------------
+   -- Interrupt_Command --
+   -----------------------
+
+   procedure Interrupt_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         Interrupt (Manager.Queues (Index).Queue.First_Element.all);
+
+         Manager.Queues (Index).Status := Completed;
+         Queue_Changed (Manager, Index, True);
+         Run (Task_Manager_Access (Manager),
+              Active => Index < Manager.Passive_Index);
+      end if;
+   end Interrupt_Command;
 
    ------------------
    -- Safe_Execute --
@@ -318,7 +340,7 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Active  : Boolean)
    is
-      Unused_Handler  : Idle_Handler_Id;
+      Unused_Handler  : G_Source_Id;
       Unused_Id       : G_Source_Id;
       Result          : Command_Return_Type;
       pragma Unreferenced (Unused_Handler, Unused_Id, Result);
@@ -335,7 +357,7 @@ package body Task_Manager is
          Manager.Running_Active := True;
 
          if Active_Incremental (Manager) then
-            Unused_Handler := Task_Manager_Idle.Add
+            Unused_Handler := Task_Manager_Idle.Idle_Add
               (Active_Incremental'Access, Manager);
          end if;
       end if;
@@ -580,6 +602,50 @@ package body Task_Manager is
          Unref (Manager.Pop_Command);
       end if;
    end Destroy;
+
+   -------------------
+   -- Pause_Command --
+   -------------------
+
+   procedure Pause_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Running then
+            Manager.Queues (Index).Status := Paused;
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Pause_Command;
+
+   --------------------
+   -- Resume_Command --
+   --------------------
+
+   procedure Resume_Command
+     (Manager : access Task_Manager_Record'Class;
+      Index   : Integer) is
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      if Index in Manager.Queues'Range then
+         if Manager.Queues (Index).Status = Paused then
+            Manager.Queues (Index).Status := Running;
+            Run (Task_Manager_Access (Manager),
+                 Active => Index < Manager.Passive_Index);
+         end if;
+
+         Queue_Changed (Manager, Index, True);
+      end if;
+   end Resume_Command;
 
    ---------------------------
    -- Interrupt_Latest_Task --

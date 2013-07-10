@@ -20,12 +20,22 @@ with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with Language;
 with GPS_Preferences_Types; use GPS_Preferences_Types;
+with Gtk.Widget;
 
 package GPS.Kernel.Preferences is
 
    type GPS_Preferences_Record is new Preferences_Manager_Record
      with private;
-   type GPS_Preferences is access GPS_Preferences_Record'Class;
+   type GPS_Preferences is access all GPS_Preferences_Record'Class;
+
+   overriding procedure On_Pref_Changed
+     (Self : not null access GPS_Preferences_Record;
+      Pref : not null access Preference_Record'Class);
+
+   procedure Set_Kernel
+     (Self   : not null access GPS_Preferences_Record;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Set the kernel
 
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Graphically edit the preferences
@@ -41,9 +51,7 @@ package GPS.Kernel.Preferences is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the preference module
 
-   procedure Save_Preferences
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : Virtual_File);
+   procedure Save_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  See Default_Preferences.Save_Preferences
 
    procedure Set_Pref
@@ -60,6 +68,15 @@ package GPS.Kernel.Preferences is
       Value  : String);
    --  See Default_Preferences.Set_Pref
 
+   procedure Set_Font_And_Colors
+     (Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Fixed_Font : Boolean;
+      Pref       : Default_Preferences.Preference := null);
+   --  Change the style of the widget based on the preferences.
+   --  If Pref is specified, nothing will be done unless that
+   --  preference has an impact on the fonts and colors. This is used to limit
+   --  the amount of work done when the user changes preferences.
+
    --------------------------------
    -- Specific preferences pages --
    --------------------------------
@@ -70,16 +87,6 @@ package GPS.Kernel.Preferences is
    --  Register a new pasge to display in the preferences dialog.
    --  This page will be put first on the list of preference pages in the
    --  dialog.
-
-   --------------------------
-   -- Saving and Restoring --
-   --------------------------
-
-   procedure Save_Preferences
-     (Kernel : access Kernel_Handle_Record'Class;
-      Saved  : out Default_Preferences.Saved_Prefs_Data);
-   --  Save the current value of the preferences.
-   --  Saved must be freed by the user
 
    ------------------
    -- Enumerations --
@@ -126,11 +133,12 @@ package GPS.Kernel.Preferences is
 
    -- General --
    Gtk_Theme              : Theme_Preference;
+
    Default_Font           : Style_Preference;
    View_Fixed_Font        : Font_Preference;
+   Small_Font             : Font_Preference;
+
    Use_Native_Dialogs     : Boolean_Preference;
-   Default_Widget_Width   : Integer_Preference;
-   Default_Widget_Height  : Integer_Preference;
    Splash_Screen          : Boolean_Preference;
    Display_Welcome        : Boolean_Preference;
    Toolbar_Show_Text      : Boolean_Preference;
@@ -138,9 +146,7 @@ package GPS.Kernel.Preferences is
    Save_Desktop_On_Exit   : Boolean_Preference;
    Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
-   Auto_Jump_To_First     : Boolean_Preference;
    Hyper_Mode             : Boolean_Preference;
-   Tooltip_Color          : Color_Preference;
    Tip_Of_The_Day         : Boolean_Preference;
 
    -- Messages --
@@ -198,7 +204,6 @@ package GPS.Kernel.Preferences is
    Display_Line_Numbers      : Boolean_Preference;
    Display_Subprogram_Names  : Boolean_Preference;
    Display_Tooltip           : Boolean_Preference;
-   Tooltip_Timeout           : Integer_Preference;
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;
    Highlight_Column          : Integer_Preference;
@@ -255,16 +260,17 @@ package GPS.Kernel.Preferences is
    ClearCase_Command         : String_Preference;
    Default_VCS               : String_Preference;
 
-   -- Location View --
-   Locations_Wrap            : Boolean_Preference;
-   Locations_Auto_Close      : Boolean_Preference;
-
    --  Debugger preferences are registered in GVD.Preferences
 
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
 private
-   type GPS_Preferences_Record is new Preferences_Manager_Record
-     with null record;
+   type GPS_Preferences_Record is new Preferences_Manager_Record with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+
+      Nested_Pref_Changed : Natural := 0;
+      --  Monitor the nested calls to On_Pref_Changed to avoid saving the
+      --  preferences file too often.
+   end record;
 end GPS.Kernel.Preferences;

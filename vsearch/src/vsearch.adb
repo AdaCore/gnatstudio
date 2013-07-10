@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
-
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -29,6 +26,7 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Types;                use Glib.Types;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
@@ -41,7 +39,7 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
@@ -56,9 +54,9 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -110,6 +108,13 @@ package body Vsearch is
        & " unselected, the focus is left on the search window, which means"
        & " you can keep typing Enter to go to the next search, but can't"
        & " modify the editor directly");
+
+   package Implements_Editable is new Glib.Types.Implements
+     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   function "+"
+     (Widget : access GObject_Record'Class)
+      return Gtk.Editable.Gtk_Editable
+      renames Implements_Editable.To_Interface;
 
    type Search_Module_Data is record
       Mask              : Search_Options_Mask;
@@ -323,10 +328,8 @@ package body Vsearch is
    --  On_Search_Replace.
 
    procedure Receive_Text
-     (Clipboard : Gtk_Clipboard;
-      Text      : Interfaces.C.Strings.chars_ptr;
-      Data      : System.Address);
-   pragma Convention (C, Receive_Text);
+     (Clipboard : not null access Gtk_Clipboard_Record'Class;
+      Text      : Glib.UTF8_String);
    --  Used to paste the contents of the clibboard in the search pattern entry,
    --  when no selection can be found
 
@@ -383,7 +386,8 @@ package body Vsearch is
    --  The floating state of the search widget has changed
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed.
 
    procedure Store_Position (Vsearch : Vsearch_Access);
@@ -421,7 +425,7 @@ package body Vsearch is
 
       Y := Gint'Value (Hist (Hist'First).all);
 
-      Set_UPosition (Win, X, Y);
+      Move (Gtk_Window (Win), X, Y);
    end Restore_Position;
 
    --------------------
@@ -550,7 +554,7 @@ package body Vsearch is
             Unref (Vsearch.View);
          end if;
 
-         Hide_All (Vsearch.Auto_Hide_Check);
+         Hide (Vsearch.Auto_Hide_Check);
          Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
 
          --  Store the position of the floating window
@@ -734,8 +738,9 @@ package body Vsearch is
       Data    : constant Search_Module_Data :=
                   Find_Module
                     (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+
       Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      Iter    : Gtk_Tree_Iter;
+      Iter    : Gtk_Tree_Iter := Null_Iter;
       List    : Gtk_List_Store;
       Options : Search_Options;
    begin
@@ -777,7 +782,7 @@ package body Vsearch is
       if Get_Active_Iter (Vsearch.Pattern_Combo) = Null_Iter then
          Iter := Add_Unique_Combo_Entry
            (Vsearch.Pattern_Combo, Pattern, Prepend => True);
-         List := Gtk_List_Store (Get_Model (Vsearch.Pattern_Combo));
+         List := -Get_Model (Vsearch.Pattern_Combo);
          List.Set (Iter, Column_Pattern, Pattern);
          List.Set (Iter, Column_Case_Sensitive, Options.Case_Sensitive);
          List.Set (Iter, Column_Is_Regexp, Options.Regexp);
@@ -924,7 +929,7 @@ package body Vsearch is
       --  is set, close the dialog.
 
       if not Replace
-        and then Realized_Is_Set (Vsearch)
+        and then Vsearch.Get_Realized
         and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
         and then Get_Active (Vsearch.Auto_Hide_Check)
       then
@@ -949,9 +954,6 @@ package body Vsearch is
       end if;
 
       Internal_Search (Vsearch_Access (Object));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Search;
 
    ------------------------
@@ -1110,7 +1112,7 @@ package body Vsearch is
       if Ask_Confirmation_For_Replace_All.Get_Pref then
          Gtk_New (Do_Not_Ask, -"Do not ask this question again");
          Gtk_New_Hbox (Box);
-         Pack_Start (Get_Vbox (Dialog), Box, True, True, 3);
+         Pack_Start (Get_Content_Area (Dialog), Box, True, True, 3);
          Pack_Start (Box, Do_Not_Ask, True, False, 3);
 
          Button := Add_Button
@@ -1429,10 +1431,10 @@ package body Vsearch is
    begin
       if Get_Active_Iter (Search.Pattern_Combo) /= Null_Iter then
          Iter := Get_Active_Iter (Search.Pattern_Combo);
-         Case_Sensitive := Search.Pattern_Combo.Get_Model.Get_Boolean
-           (Iter, Column_Case_Sensitive);
-         Is_Regexp := Search.Pattern_Combo.Get_Model.Get_Boolean
-           (Iter, Column_Is_Regexp);
+         Case_Sensitive := Get_Boolean
+           (Search.Pattern_Combo.Get_Model, Iter, Column_Case_Sensitive);
+         Is_Regexp := Get_Boolean
+           (Search.Pattern_Combo.Get_Model, Iter, Column_Is_Regexp);
 
          Set_Active (Search.Case_Check, Case_Sensitive);
          Set_Active (Search.Regexp_Check, Is_Regexp);
@@ -1470,7 +1472,7 @@ package body Vsearch is
             Case_Sensitive => Case_Sensitive,
             Is_Regexp => Is_Regexp);
 
-         List := Gtk_List_Store (Get_Model (Search.Pattern_Combo));
+         List := -Get_Model (Search.Pattern_Combo);
          List.Set (Item, Column_Pattern, Get_Nth_Search_Regexp (Kernel, S));
          List.Set (Item, Column_Case_Sensitive, Case_Sensitive);
          List.Set (Item, Column_Is_Regexp, Is_Regexp);
@@ -1574,7 +1576,7 @@ package body Vsearch is
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
 
-      Gtk_New_With_Model_And_Entry (Vsearch.Replace_Combo, Model);
+      Gtk_New_With_Model_And_Entry (Vsearch.Replace_Combo, +Model);
       Vsearch.Replace_Combo.Set_Entry_Text_Column (0);
       Attach
         (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2,
@@ -1589,13 +1591,13 @@ package body Vsearch is
           Guint (Column_Pattern)        => GType_String,
           Guint (Column_Case_Sensitive) => GType_Boolean,
           Guint (Column_Is_Regexp)      => GType_Boolean));
-      Gtk_New_With_Model_And_Entry (Vsearch.Pattern_Combo, Model);
+      Gtk_New_With_Model_And_Entry (Vsearch.Pattern_Combo, +Model);
       Vsearch.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
       Attach
         (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
          Xpadding => 0,
          Ypadding => 2);
-      Layout := Implements_Cell_Layout.To_Interface (Vsearch.Pattern_Combo);
+      Layout := +Vsearch.Pattern_Combo;
 
       Gtk_New (Renderer);
       Gtk.Cell_Layout.Clear (Layout);
@@ -1695,7 +1697,8 @@ package body Vsearch is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Handle).all, "regexp_search", False);
       Associate
-        (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check);
+        (Get_History (Handle).all, "regexp_search", Vsearch.Regexp_Check,
+         Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Regexp_Check, 0, 1, 0, 1);
 
       Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word");
@@ -1707,7 +1710,7 @@ package body Vsearch is
         (Get_History (Handle).all, "whole_word_search", False);
       Associate
         (Get_History (Handle).all, "whole_word_search",
-         Vsearch.Whole_Word_Check);
+         Vsearch.Whole_Word_Check, Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, 0, 1, 1, 2);
 
       Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
@@ -1719,7 +1722,7 @@ package body Vsearch is
         (Get_History (Handle).all, "case_sensitive_search", False);
       Associate
         (Get_History (Handle).all, "case_sensitive_search",
-         Vsearch.Case_Check);
+         Vsearch.Case_Check, Default => False);
       Attach (Vsearch.Options_Vbox, Vsearch.Case_Check, 0, 1, 2, 3);
 
       Gtk_New (Vsearch.Select_Editor_Check, -"Select on Match");
@@ -1729,7 +1732,8 @@ package body Vsearch is
       Associate
         (Hist   => Get_History (Handle).all,
          Key    => Select_On_Match_Hist_Key,
-         Button => Vsearch.Select_Editor_Check);
+         Button => Vsearch.Select_Editor_Check,
+         Default => True);
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 0, 1);
 
       Gtk_New (Vsearch.Case_Preserving_Replace, -"Preserve Casing");
@@ -1740,7 +1744,7 @@ package body Vsearch is
         (Get_History (Handle).all, "case_preserving_replace", True);
       Associate
         (Get_History (Handle).all, "case_preserving_replace",
-         Vsearch.Case_Preserving_Replace);
+         Vsearch.Case_Preserving_Replace, Default => True);
       Attach
         (Vsearch.Options_Vbox, Vsearch.Case_Preserving_Replace, 1, 2, 1, 2);
       Set_Sensitive (Vsearch.Case_Preserving_Replace, False);
@@ -1750,9 +1754,10 @@ package body Vsearch is
         (Vsearch.Auto_Hide_Check,
          -Close_On_Match_Description);
       Associate
-        (Hist   => Get_History (Handle).all,
-         Key    => Close_On_Match_Hist_Key,
-         Button => Vsearch.Auto_Hide_Check);
+        (Hist    => Get_History (Handle).all,
+         Key     => Close_On_Match_Hist_Key,
+         Default => False,
+         Button  => Vsearch.Auto_Hide_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check,  1, 2, 2, 3);
 
       --  Context specific search
@@ -1764,7 +1769,7 @@ package body Vsearch is
       Vsearch.Scope_Frame.Set_Border_Width (4);
       Add (Scope_Box, Vsearch.Scope_Frame);
 
-      Gtk_New_Text (Vsearch.Context_Combo);
+      Gtk_New (Vsearch.Context_Combo);
       Set_Tooltip_Text (Vsearch.Context_Combo, -"The context of the search");
       Pack_Start (Vsearch.Scope_Frame, Vsearch.Context_Combo);
       Widget_Callback.Object_Connect
@@ -1815,7 +1820,7 @@ package body Vsearch is
         (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo,
          Clear_Combo => False, Prepend => True);
 
-      Model := Gtk_List_Store (Get_Model (Vsearch.Pattern_Combo));
+      Model := -Get_Model (Vsearch.Pattern_Combo);
       Value := Get_History (Get_History (Handle).all, Pattern_Hist_Key);
 
       if Value /= null then
@@ -1884,24 +1889,15 @@ package body Vsearch is
    ------------------
 
    procedure Receive_Text
-     (Clipboard : Gtk_Clipboard;
-      Text      : Interfaces.C.Strings.chars_ptr;
-      Data      : System.Address)
+     (Clipboard : not null access Gtk_Clipboard_Record'Class;
+      Text      : Glib.UTF8_String)
    is
-      pragma Unreferenced (Clipboard, Data);
+      pragma Unreferenced (Clipboard);
    begin
-      if Text /= Interfaces.C.Strings.Null_Ptr then
-         declare
-            Ada_Text : constant String := Interfaces.C.Strings.Value (Text);
-         begin
-            if Ada_Text /= ""
-              and then Ada_Text'Length < 128
-              and then Index (Ada_Text, (1 => ASCII.LF)) = 0
-            then
-               Set_Active_Text
-                 (Vsearch_Module_Id.Search.Pattern_Combo, Ada_Text);
-            end if;
-         end;
+      if Text /= ""
+        and then Text'Length < 128
+      then
+         Set_Active_Text (Vsearch_Module_Id.Search.Pattern_Combo, Text);
       end if;
 
    exception
@@ -1943,15 +1939,16 @@ package body Vsearch is
                               (Get_MDI (Kernel), Vsearch_Record'Tag));
 
       declare
-         Start, Stop : Guint;
+         Start, Stop : Gint;
          Success : Boolean := False;
       begin
-         if W /= null and then W.all in Gtk_Editable_Record'Class then
-            Get_Selection_Bounds (Gtk_Editable (W), Success, Start, Stop);
+         if W /= null
+           and then Is_A (W.Get_Type, Gtk.Editable.Get_Type)
+         then
+            Get_Selection_Bounds (+W, Start, Stop, Success);
 
             if Success and then Start /= Stop then
-               Default_Pattern := new String'
-                 (Get_Chars (Gtk_Editable (W), Gint (Start), Gint (Stop)));
+               Default_Pattern := new String'(Get_Chars (+W, Start, Stop));
             end if;
          elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
             Buffer := Get_Buffer (Gtk_Text_View (W));
@@ -2033,8 +2030,7 @@ package body Vsearch is
       else
          Request_Text
            (Gtk.Clipboard.Get (Selection_Primary),
-            Receive_Text'Access,
-            System.Null_Address);
+            Receive_Text'Access);
       end if;
 
       if Raise_Widget then
@@ -2587,7 +2583,7 @@ package body Vsearch is
 
       Register_Default_Search (Kernel);
 
-      Add_Hook (Kernel, Preferences_Changed_Hook,
+      Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "vsearch.preferences_changed");
 
@@ -2649,9 +2645,10 @@ package body Vsearch is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
    begin
       Vsearch_Module_Id.Tab_Width := Tab_Width;
    end Preferences_Changed;
