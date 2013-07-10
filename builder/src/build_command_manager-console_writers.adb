@@ -64,7 +64,9 @@ package body Build_Command_Manager.Console_Writers is
       else
          Cmd_Console := Get_Build_Console
            (Kernel_Handle (Self.Builder.Kernel),
-            Build.Shadow, Build.Background, False);
+            Shadow              => Build.Shadow,
+            Background          => Build.Background,
+            Create_If_Not_Exist => True);
 
          --  Update console in Builder.Last_Build
          Build.Console := Cmd_Console.Get_Console_Messages_Window;

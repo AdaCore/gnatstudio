@@ -24,7 +24,8 @@ package GPS.Kernel.Console is
    --  Register the console module into the list
 
    function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Create_If_Not_Exist : Boolean := True) return Interactive_Console;
    --  Return the interactive console associated with the kernel
 
 end GPS.Kernel.Console;

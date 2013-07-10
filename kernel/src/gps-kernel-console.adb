@@ -92,7 +92,6 @@ package body GPS.Kernel.Console is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => True,
-      MDI_Flags          => 0,  --  No destroy button
       Group              => Group_Consoles);
    use Messages_Views;
    subtype GPS_Message is Messages_Views.View_Access;
@@ -161,10 +160,16 @@ package body GPS.Kernel.Console is
    -----------------
 
    function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console
+     (Kernel : access Kernel_Handle_Record'Class;
+      Create_If_Not_Exist : Boolean := True) return Interactive_Console
    is
    begin
-      return Interactive_Console (Messages_Views.Retrieve_View (Kernel));
+      if Create_If_Not_Exist then
+         return Interactive_Console
+            (Messages_Views.Get_Or_Create_View (Kernel));
+      else
+         return Interactive_Console (Messages_Views.Retrieve_View (Kernel));
+      end if;
    end Get_Console;
 
    -----------
