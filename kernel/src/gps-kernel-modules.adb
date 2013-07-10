@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings; use GNAT.Strings;
 
 with GNATCOLL.Traces;
 
@@ -105,6 +106,15 @@ package body GPS.Kernel.Modules is
 
    function Get_Name (Module : Module_ID) return String is
    begin
+      --  The module might be null, for instance the Welcome page has
+      --  no associated module.
+
+      if Module = null
+        or else Module.Name = null
+      then
+         return "";
+      end if;
+
       return Module.Name.all;
    end Get_Name;
 
