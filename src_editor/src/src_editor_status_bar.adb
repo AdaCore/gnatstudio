@@ -15,43 +15,44 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Image; use Gtk.Image;
-with Glib; use Glib;
-with Basic_Types; use Basic_Types;
-with String_Utils; use String_Utils;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Glib.Object;
-use Glib.Object;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Basic_Types;               use Basic_Types;
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Editors;               use GPS.Editors;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Glib.Object;               use Glib.Object;
 with Glib.Values;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Glib; use Glib;
+with Gtk.Arguments; use Gtk.Arguments;
 with Gtk.Enums; use Gtk.Enums;
-with Traces;
-with Pango.Layout; use Pango.Layout;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Gtk.Separator; use Gtk.Separator;
+with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Handlers; use Gtk.Handlers;
-with GPS.Kernel.MDI; use GPS.Kernel.MDI;
+with Gtk.Image; use Gtk.Image;
+with Gtk.Label; use Gtk.Label;
+with Gtk.Separator; use Gtk.Separator;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Widget; use Gtk.Widget;
 with Gtkada.Handlers;
-with Gtk.Arguments; use Gtk.Arguments;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Src_Editor_Box; use Src_Editor_Box;
-with GPS.Editors; use GPS.Editors;
-with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
 with Gtkada.MDI; use Gtkada.MDI;
-with Src_Editor_Module; use Src_Editor_Module;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                   use GPS.Intl;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-with GPS.Stock_Icons; use GPS.Stock_Icons;
-with Gtk.Style_Context; use Gtk.Style_Context;
 with Language.Tree; use Language.Tree;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language; use Language;
-with GNATCOLL.Symbols; use GNATCOLL.Symbols;
-with GNAT.Strings; use GNAT.Strings;
+with Pango.Layout; use Pango.Layout;
+with Src_Editor_Box; use Src_Editor_Box;
+with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
+with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_Module; use Src_Editor_Module;
+with String_Utils; use String_Utils;
+with Traces;
 
 package body Src_Editor_Status_Bar is
 
@@ -395,11 +396,26 @@ package body Src_Editor_Status_Bar is
    procedure Show_Cursor_Position
      (Bar    : access Source_Editor_Status_Bar_Record'Class;
       Line   : Editable_Line_Type;
-      Column : Character_Offset_Type) is
+      Column : Character_Offset_Type)
+   is
+      Pos : constant String :=
+         String_Utils.Image (Integer (Line))
+         & ':' & String_Utils.Image (Integer (Column));
+      Start, The_End : Gtk_Text_Iter;
+      Result : Boolean;
+      Lines, Offset : Gint;
    begin
-      Bar.Cursor_Loc_Label.Set_Text
-        (String_Utils.Image (Integer (Line))
-         & ':' & String_Utils.Image (Integer (Column)));
+      Bar.Buffer.Get_Selection_Bounds (Start, The_End, Result);
+      if Result then
+         Lines := Get_Line (The_End) - Get_Line (Start) + 1;
+         Offset := Get_Offset (The_End) - Get_Offset (Start);
+         Bar.Cursor_Loc_Label.Set_Text
+            (Pos & " ("
+             & Image (Integer (Lines), Min_Width => 1) & " lines,"
+             & Offset'Img & " chars)");
+      else
+         Bar.Cursor_Loc_Label.Set_Text (Pos);
+      end if;
    end Show_Cursor_Position;
 
    -------------------------------------

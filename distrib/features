@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M710-029 GPS: display size of selection in editors (2012-07-10)
+
+  When a selection exists in an editor, the status bar will display the
+  number of characters and lines that are selected.
+
 NF-60-M710-025 GPS: display build progress when build completes (2012-07-10)
 
   When a build terminates on failure, GPS now displays the total progress
