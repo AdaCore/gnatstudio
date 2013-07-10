@@ -34,11 +34,6 @@ NF-60-M710-025 GPS: display build progress when build completes (2012-07-10)
   (as displayed by the task manager) in the console. This makes it easier to
   know how many files were compiled up to the first compilation error.
 
-NF-60-M709-025 GPS: allow closing the Messages window (2012-07-10)
-
-  The Messages window can now be closed, and will be reopened automatically
-  as soon as some message needs to be displayed.
-
 NF-60-M708-023 GPS: middle-click on tab closes the window (2012-07-08)
 
   This is close to the behavior most web browsers implement and is a
