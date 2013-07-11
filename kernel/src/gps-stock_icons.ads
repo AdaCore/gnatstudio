@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2012, AdaCore                     --
+--                     Copyright (C) 2005-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -56,7 +56,7 @@ package GPS.Stock_Icons is
    --  Remove unselected elements
 
    GPS_Read_Only : constant String := "gps-read-only";
-   GPS_Writable  : constant String := "gps-edit";
+   GPS_Writable  : constant String := "gps-writable";
    --  Locl and unlock icons
 
    GPS_Regexp : constant String := "gps-regexp";
