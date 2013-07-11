@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M711-005: GPS: focus issue after drag-and-drop
+  Problem:    When you drag an editor to a different notebook, it loses
+              the keyboard focus (which is left to the next window in its
+              old notebook), although it seems to be the active window in
+              GPS.
+  Workaround: click in the editor once to get the focus back.
+
 - M703-034: GPS unexpected Align contextual menu in Bookmarks view
   Problem:    When clicking on a bookmark in the Bookmarks view, there are
               two unexpected contextual menu entries ("Align" and
