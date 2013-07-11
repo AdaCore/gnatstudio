@@ -455,7 +455,8 @@ package body Build_Command_Manager is
             Force_Create        => False,
             Accept_Input        => False);
       else
-         return Get_Console (Kernel);
+         return Get_Console
+            (Kernel, Create_If_Not_Exist => Create_If_Not_Exist);
       end if;
    end Get_Build_Console;
 
