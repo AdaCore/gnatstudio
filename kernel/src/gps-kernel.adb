@@ -420,7 +420,7 @@ package body GPS.Kernel is
       return GNATCOLL.VFS.Virtual_File
    is
    begin
-      return Create_From_Dir (Self.Home_Dir, "preferences");
+      return Create_From_Dir (Self.Home_Dir, "preferences.xml");
    end Preferences_File;
 
    ----------------------
