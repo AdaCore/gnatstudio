@@ -2260,35 +2260,28 @@ package body Src_Contexts is
       --  columns
 
       Set_Avoid_Cursor_Move_On_Changes (Buffer, True);
-
       Start_Undo_Group (Buffer);
+      Buffer.Disable_Highlighting;
 
-      declare
-      begin
-         for M in reverse Matches'Range loop
-            Replace_Slice
-              (Buffer,
-               Editable_Line_Type (Matches (M).Begin_Line),
-               Matches (M).Begin_Column,
-               Editable_Line_Type (Matches (M).End_Line),
-               Matches (M).End_Column,
-               Context.Replacement_Text
-                 (Replacement,
-                  Get_Text
-                    (Buffer,
-                     Editable_Line_Type (Matches (M).Begin_Line),
-                     Matches (M).Begin_Column,
-                     Editable_Line_Type (Matches (M).End_Line),
-                     Matches (M).End_Column)));
-         end loop;
-      exception
-         when others =>
-            --  For safety
-            Finish_Undo_Group (Buffer);
-      end;
+      for M in reverse Matches'Range loop
+         Replace_Slice
+           (Buffer,
+            Editable_Line_Type (Matches (M).Begin_Line),
+            Matches (M).Begin_Column,
+            Editable_Line_Type (Matches (M).End_Line),
+            Matches (M).End_Column,
+            Context.Replacement_Text
+              (Replacement,
+               Get_Text
+                 (Buffer,
+                  Editable_Line_Type (Matches (M).Begin_Line),
+                  Matches (M).Begin_Column,
+                  Editable_Line_Type (Matches (M).End_Line),
+                  Matches (M).End_Column)));
+      end loop;
 
+      Buffer.Enable_Highlighting;
       Finish_Undo_Group (Buffer);
-
       Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
    end Replace_Matched;
 

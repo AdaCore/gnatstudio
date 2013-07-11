@@ -1091,6 +1091,10 @@ package Src_Editor_Buffer is
    procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class);
    --  Start / Finish an undo group on this buffer.
 
+   procedure Enable_Highlighting (Buffer : access Source_Buffer_Record'Class);
+   procedure Disable_Highlighting (Buffer : access Source_Buffer_Record'Class);
+   --  Suppress highlighting in the Buffer for a while
+
 private
 
    procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
@@ -1566,6 +1570,9 @@ private
 
       Highlight_Needed : Boolean := False;
       --  Whether the text should be re-highlighted
+
+      Highlight_Enabled : Boolean := True;
+      --  Endable/Disable immediate highlighting after each insert/delete
 
       Auto_Syntax_Check : Boolean := False;
       --  Whether the syntax should be checked automatically

@@ -7536,7 +7536,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      if not Buffer.Inserting then
+      if not Buffer.Inserting and Buffer.Highlight_Enabled then
          Process_Highlight_Region (Buffer);
       end if;
    end Update_Highlight_Region;
@@ -8112,5 +8112,25 @@ package body Src_Editor_Buffer is
       End_Group (Buffer.Queue);
       Leave_Current_Group (Buffer);
    end Finish_Undo_Group;
+
+   -------------------------
+   -- Enable_Highlighting --
+   -------------------------
+
+   procedure Enable_Highlighting
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Highlight_Enabled := False;
+   end Enable_Highlighting;
+
+   --------------------------
+   -- Disable_Highlighting --
+   --------------------------
+
+   procedure Disable_Highlighting
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Highlight_Enabled := False;
+   end Disable_Highlighting;
 
 end Src_Editor_Buffer;
