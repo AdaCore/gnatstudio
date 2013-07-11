@@ -327,14 +327,12 @@ package body GUI_Utils is
          if Menu /= null then
             Grab_Focus (Widget);
             Show_All (Menu);
-            --  We need to ref_sink and then unref the menu to avoid leaks.
-            --  See http://blogs.gnome.org/xclaesse/2010/02/11/
-            --     common-mistake-with-gtkmenu/
+            Menu.Set_Can_Focus (True);
+            Menu.Grab_Focus;
             Popup (Menu,
-                   Button        => 3,
+                   Button        => 0,
                    Activate_Time => Gdk.Event.Get_Time (Event));
-            Menu.Ref_Sink;
-            Menu.Unref;
+
             Emit_Stop_By_Name (Widget, "key_press_event");
             return True;
          end if;
@@ -396,8 +394,6 @@ package body GUI_Utils is
                       Button        => Gdk.Event.Get_Button (Event),
                       Activate_Time => Gdk.Event.Get_Time (Event));
             end if;
-            Menu.Ref_Sink;
-            Menu.Unref;
 
             Emit_Stop_By_Name (Widget, "button_press_event");
             return True;
@@ -475,12 +471,12 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
-               Grab_Focus (Widget);
                Show_All (Menu);
+               Menu.Set_Can_Focus (True);
+               Menu.Grab_Focus;
                Popup (Menu,
-                      Button        => 3,
+                      Button        => 0,
                       Activate_Time => Gdk.Event.Get_Time (Event));
-               Menu.Ref_Sink;
                Emit_Stop_By_Name (Widget, "key_press_event");
                return True;
             end if;
