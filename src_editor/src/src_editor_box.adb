@@ -50,7 +50,6 @@ with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -79,6 +78,7 @@ with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
+with Src_Editor_Box.Scrolled_Window; use Src_Editor_Box.Scrolled_Window;
 with Src_Editor_Box.Tooltips;    use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -582,7 +582,7 @@ package body Src_Editor_Box is
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
    is
-      Scrolling_Area : Gtk_Scrolled_Window;
+      Scrolling_Area : Tooltip_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
       Frame          : Gtk_Frame;
@@ -596,16 +596,11 @@ package body Src_Editor_Box is
       Pack_Start (Box, Hbox, Expand => True, Fill => True);
 
       Gtk_New (Drawing_Area);
-      Set_Size_Request (Drawing_Area, 1, -1);
-
-      Pack_Start (Hbox, Drawing_Area, Expand => False, Fill => False);
+      Hbox.Pack_Start (Drawing_Area, Expand => False, Fill => False);
+      Drawing_Area.Set_Size_Request (1, -1);
 
       Gtk_New (Scrolling_Area);
-      Set_Policy
-        (Scrolling_Area,
-         Hscrollbar_Policy => Policy_Automatic,
-         Vscrollbar_Policy => Policy_Automatic);
-      Pack_End (Hbox, Scrolling_Area, Expand => True, Fill => True);
+      Hbox.Pack_End (Scrolling_Area, Expand => True, Fill => True);
 
       if Source = null then
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
@@ -617,8 +612,7 @@ package body Src_Editor_Box is
                Scrolling_Area,
                Drawing_Area,
                Box.Source_Buffer, Kernel);
-
-      Add (Scrolling_Area, Box.Source_View);
+      Scrolling_Area.Add (Box.Source_View);
 
       if Source = null then
          --  The newly created buffer is now under the responsability of the

@@ -1290,7 +1290,7 @@ package body Src_Editor_View is
 
    procedure Gtk_New
      (View   : out Source_View;
-      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
@@ -1305,7 +1305,7 @@ package body Src_Editor_View is
 
    procedure Initialize
      (View   : access Source_View_Record;
-      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
@@ -1324,7 +1324,7 @@ package body Src_Editor_View is
       Gtkada.Text_View.Initialize (View, Gtkada_Text_Buffer (Buffer));
 
       View.Kernel := Kernel_Handle (Kernel);
-      View.Scroll := Scroll;
+      View.Scroll := Gtk_Scrolled_Window (Scroll);
       View.Area   := Area;
 
       Register_View (Buffer, Add => True);

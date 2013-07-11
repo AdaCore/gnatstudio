@@ -23,23 +23,28 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
-NF-60-M710-029 GPS: display size of selection in editors (2012-07-10)
+NF-60-M711-028 GPS: tooltip while scrolling in editors (2013-07-11)
+
+  When manipulating an editor scrollbar with the mouse, a tooltip is
+  displayed that shows the current line and entity.
+
+NF-60-M710-029 GPS: display size of selection in editors (2013-07-10)
 
   When a selection exists in an editor, the status bar will display the
   number of characters and lines that are selected.
 
-NF-60-M710-025 GPS: display build progress when build completes (2012-07-10)
+NF-60-M710-025 GPS: display build progress when build completes (2013-07-10)
 
   When a build terminates on failure, GPS now displays the total progress
   (as displayed by the task manager) in the console. This makes it easier to
   know how many files were compiled up to the first compilation error.
 
-NF-60-M708-023 GPS: middle-click on tab closes the window (2012-07-08)
+NF-60-M708-023 GPS: middle-click on tab closes the window (2013-07-08)
 
   This is close to the behavior most web browsers implement and is a
   convenient way to quickly close a number of tabs.
 
-NF-60-M705-044 GPS: rotation text in notebook tabs (2012-07-08)
+NF-60-M705-044 GPS: rotation text in notebook tabs (2013-07-08)
 
   It is now possible, via the contextual menu on each notebook tab, to
   change the orientation of the text. For instance, displaying the tabs

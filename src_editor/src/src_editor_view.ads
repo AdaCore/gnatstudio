@@ -48,7 +48,7 @@ package Src_Editor_View is
 
    procedure Gtk_New
      (View   : out Source_View;
-      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -65,7 +65,7 @@ package Src_Editor_View is
 
    procedure Initialize
      (View   : access Source_View_Record;
-      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
       Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
