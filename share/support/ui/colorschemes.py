@@ -40,8 +40,8 @@ themes = [
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
     "Src-Editor-Strings-Variant":            ("DEFAULT", "#F2D42C", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#729FCF", "transparent"),
-    "Src-Editor-Comments-Variant":           ("ITALIC",  "#729FCF", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("BOLD",    "#F08D24", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT",  "#729FCF", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT",    "#F08D24", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "#8E69C9", "transparent"),
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "#68C244", "transparent")
    },
@@ -57,8 +57,8 @@ themes = [
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
     "Src-Editor-Strings-Variant":            ("DEFAULT", "#E6DB74", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#75715E", "transparent"),
-    "Src-Editor-Comments-Variant":           ("ITALIC",  "#75715E", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("BOLD",    "#F92672", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT",  "#75715E", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT",    "#F92672", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "#66D9EF", "transparent"),
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "#A6E22E", "transparent")
    },
@@ -69,10 +69,10 @@ themes = [
     "Src-Editor-Reference-Style":            ("${editorfont}", "#000000", "#EEEEEE"),
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
     "Src-Editor-Strings-Variant":            ("DEFAULT", "#009933", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("ITALIC",  "#0066FF", "transparent"),
-    "Src-Editor-Comments-Variant":           ("ITALIC",  "#0066FF", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("BOLD",    "#0000FF", "transparent"),
-    "Src-Editor-Types-Variant":              ("BOLD",    "#66D9EF", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT",  "#0066FF", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT",  "#0066FF", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT",    "#0000FF", "transparent"),
+    "Src-Editor-Types-Variant":              ("DEFAULT",    "#66D9EF", "transparent"),
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "#FF8000", "transparent")
    },
 ]
@@ -81,7 +81,7 @@ themes = [
 class Color_Theme_Switcher(object):
 
     pref_name = "General/ColorTheme"
-    pref_gtk_theme = "GPS6-Gtk-Theme-Name"
+    pref_gtk_theme = "Gtk-Theme-Name"
     gtkpref_name = "/ColorTheme gtk+"
 
     def __init__(self):
