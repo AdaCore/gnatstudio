@@ -398,6 +398,24 @@ package Build_Command_Utils is
       Simulate   : Boolean) return Expansion_Result;
    --  Expand command line CL using trivial Build_Command_Adapter.
 
+   function Expand_Command_Line
+     (Build_Registry   : Build_Config_Registry_Access;
+      Proj_Registry    : Project_Registry_Access;
+      Proj_Type        : Project_Type;
+      Toolchains       : Toolchain_Manager;
+      Command_Line     : String;
+      Target_Name      : String;
+      Mode_Name        : String;
+      Project_File     : Virtual_File;
+      Force_File       : Virtual_File;
+      Main_File        : Virtual_File;
+      Simulate         : Boolean;
+      Trusted_Mode     : Boolean;
+      Multi_Language_Builder : Multi_Language_Builder_Policy;
+      Execute_Command  : String
+      ) return Expansion_Result;
+   --  Expand command line CL compatible with gnatbench objects.
+
 private
 
    type Abstract_Build_Command_Adapter is abstract tagged record
