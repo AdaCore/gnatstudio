@@ -481,8 +481,6 @@ package body GUI_Utils is
                       Button        => 3,
                       Activate_Time => Gdk.Event.Get_Time (Event));
                Menu.Ref_Sink;
-               Menu.Unref;
-               Show_All (Menu);
                Emit_Stop_By_Name (Widget, "key_press_event");
                return True;
             end if;
