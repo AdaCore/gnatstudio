@@ -496,7 +496,7 @@ class Tip:
         self.results = results
 
         border     = Gdk.color_parse ("#6897CB") # GPS blue
-        background = Gdk.color_parse ("#FFFFE0") # light yellow
+        background = Gdk.color_parse ("#F0F0F0") # light grey
 
         window = Gtk.Window()
         self.window = window
@@ -514,6 +514,7 @@ class Tip:
 
         ebox = Gtk.EventBox()
         ebox.modify_bg(Gtk.StateType.NORMAL, background)
+        ebox.modify_fg(Gtk.StateType.NORMAL, Gdk.color_parse ("black"))
         ebox.set_border_width (5)
         window.add(ebox)
 
