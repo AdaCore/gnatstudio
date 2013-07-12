@@ -84,6 +84,7 @@ package body Src_Editor_View.Commands is
                     (Offset, Get_Chars_In_Line (Iter) - 1), Ignored);
             else
                if Get_Line (Iter) = 0 then
+                  Set_Line_Offset (Iter, 0);
                   return;
                end if;
                Backward_Lines (Iter, -Gint (Step), Ignored);
@@ -155,7 +156,9 @@ package body Src_Editor_View.Commands is
                Move_Iter (Iter, Command.Kind, Command.Step,
                           Get_Column_Memory (Cursor));
                Buffer.Move_Mark (Mark, Iter);
-               if Command.Kind = Line or Command.Kind = Page then
+               if (Command.Kind = Line or Command.Kind = Page)
+                 and then Get_Line (Iter) /= 0
+               then
                   Set_Column_Memory (Cursor, Horiz_Offset);
                end if;
             end;
@@ -163,8 +166,11 @@ package body Src_Editor_View.Commands is
 
       end if;
 
+      Buffer.Get_Iter_At_Mark (Iter, Mark);
       Set_Multi_Cursors_Auto_Sync (Buffer);
-      if Command.Kind = Line or Command.Kind = Page then
+      if (Command.Kind = Line or Command.Kind = Page)
+        and then Get_Line (Iter) /= 0
+      then
          Buffer.Set_Column_Memory (Column);
       end if;
 
