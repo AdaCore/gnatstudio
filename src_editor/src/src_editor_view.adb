@@ -1658,7 +1658,7 @@ package body Src_Editor_View is
       end if;
 
       Self.Background_Color := C;
-      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.1);
+      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.07);
 
       --  Overridding background color also seems to set the selected color, so
       --  that selected text becomes invisible. So we have to reset it as well.
