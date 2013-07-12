@@ -1511,7 +1511,7 @@ package body Completion_Module is
            "Normal: smart completion occurs on key press," &
            " or after a timeout on special characters." & ASCII.LF &
            "Dynamic: the smart completion occurs on every key press."),
-         Default => Normal);
+         Default => Dynamic);
 
       Smart_Completion_Trigger_Timeout := Create
         (Get_Preferences (Kernel),
