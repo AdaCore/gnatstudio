@@ -1649,7 +1649,7 @@ procedure GPS.Main is
 
       if not Hide_GPS
         and then Active (Check_Color_Depth)
-        and then Gdk.Visual.Get_Best_Depth < 24
+        and then Gdk.Visual.Get_Best_Depth < 16
       then
          declare
             Ignored : Message_Dialog_Buttons;
@@ -1658,7 +1658,7 @@ procedure GPS.Main is
             Ignored := Gtkada.Dialogs.Message_Dialog
               (Msg            =>
                  "GPS requires a display with a minimum color depth"
-               & " of 24 bits.",
+               & " of 16 bits.",
                Dialog_Type    => Error,
                Buttons        => Button_OK,
                Default_Button => Button_OK,

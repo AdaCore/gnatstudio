@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M712-005 GPS: support for displays with 16 bpp (2013-07-12)
+
+  GPS now supports displays with a color depth of 16 bits per pixels.
+
 NF-60-M711-028 GPS: tooltip while scrolling in editors (2013-07-11)
 
   When manipulating an editor scrollbar with the mouse, a tooltip is
