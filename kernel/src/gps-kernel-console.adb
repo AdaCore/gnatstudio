@@ -92,6 +92,7 @@ package body GPS.Kernel.Console is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => True,
+      MDI_Flags          => 0,  --  prevent explicit delete
       Group              => Group_Consoles);
    use Messages_Views;
    subtype GPS_Message is Messages_Views.View_Access;
