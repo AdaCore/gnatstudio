@@ -871,6 +871,11 @@ package body Src_Editor_View is
 
       X, Y, Width, Height : Gint;
    begin
+      if Text_Window = null then
+         --  This can happen when the view is not realized.
+         return;
+      end if;
+
       --  Figure out the top and bottom line
 
       Get_Geometry (Text_Window, X, Y, Width, Height);
