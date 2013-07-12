@@ -15,11 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Expect;                      use GNAT.Expect;
+with GNAT.Expect;     use GNAT.Expect;
 with GNAT.OS_Lib;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with Ada.Exceptions; use Ada.Exceptions;
 
 package body GPS.CLI_Process_Launchers is
+
+   Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("Process Launchers", On);
 
    --------------------
    -- Launch_Process --
@@ -53,16 +58,26 @@ package body GPS.CLI_Process_Launchers is
          Change_Dir (Directory);
       end if;
 
+      Success := True;
+
       declare
-         Output : constant String := Get_Command_Output
-           (Command    => Get_Command (CL),
-            Arguments  => Arg_List,
-            Input      => "",
-            Status     => Status'Access,
-            Err_To_Out => True);
       begin
-         Output_Parser.Parse_Standard_Output (Output, Command => null);
-         Output_Parser.End_Of_Stream (Status, Command => null);
+         declare
+            Output : constant String := Get_Command_Output
+              (Command    => Get_Command (CL),
+               Arguments  => Arg_List,
+               Input      => "",
+               Status     => Status'Access,
+               Err_To_Out => True);
+         begin
+            Output_Parser.Parse_Standard_Output (Output, Command => null);
+            Output_Parser.End_Of_Stream (Status, Command => null);
+         end;
+      exception
+         when Ex : Invalid_Process =>
+            Trace (Me, "Exception " & Exception_Name (Ex)
+                   & ": Could not launch process: " & Get_Command (CL));
+            Success := False;
       end;
 
       if Directory /= No_File then
@@ -72,8 +87,6 @@ package body GPS.CLI_Process_Launchers is
       for J in Arg_List'Range loop
          GNAT.OS_Lib.Free (Arg_List (J));
       end loop;
-
-      Success := True;
    end Launch_Process;
 
    ----------------------------------
