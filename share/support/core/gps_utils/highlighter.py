@@ -564,22 +564,26 @@ class Location_Highlighter(Background_Highlighter):
                 elif self.context > 0:
                     for c in range(1, self.context + 1):
                         # Search after original xref line (same column)
-                        s2 = GPS.EditorLocation(
-                            buffer, ref.line() + c, ref.column())
-                        e2 = s2 + (len (u) - 1)
-                        b = buffer.get_chars(s2, e2).decode("utf-8").lower()
-                        if b == u:
-                            self.style.apply(s2, e2)
-                            break
+                        try:
+                            s2 = GPS.EditorLocation(
+                                buffer, ref.line() + c, ref.column())
+                            e2 = s2 + (len (u) - 1)
+                            b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                            if b == u:
+                                self.style.apply(s2, e2)
+                                break
 
-                        # Search before original xref line
-                        s2 = GPS.EditorLocation(
-                            buffer, ref.line() - c, ref.column())
-                        e2 = s2 + (len (u) - 1)
-                        b = buffer.get_chars(s2, e2).decode("utf-8").lower()
-                        if b == u:
-                            self.style.apply(s2, e2)
-                            break
+                            # Search before original xref line
+                            s2 = GPS.EditorLocation(
+                                buffer, ref.line() - c, ref.column())
+                            e2 = s2 + (len (u) - 1)
+                            b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                            if b == u:
+                                self.style.apply(s2, e2)
+                                break
+                        except:
+                            # An invalid location ?
+                            continue
 
 
 class Regexp_Highlighter(On_The_Fly_Highlighter):
