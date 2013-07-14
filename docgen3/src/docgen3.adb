@@ -34,6 +34,7 @@ with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with Traces;
 with Templates_Parser;        use Templates_Parser;
+with Xref.Docgen;             use Xref.Docgen;
 
 with GNAT.IO;  -- to be removed???
 
@@ -63,14 +64,18 @@ package body Docgen3 is
       Src_Files           : in out Files_List.Vector;
       Update_Global_Index : Boolean)
    is
-      Database  : constant General_Xref_Database := Kernel.Databases;
+      Database     : constant General_Xref_Database := Kernel.Databases;
+      Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
 
-      procedure Check_Files;
-      --  Check the contents of Files and remove from the list those files
+      procedure Check_Src_Files;
+      --  Check the contents of Src_Files and remove from the list those files
       --  which can not be processed
 
-      procedure Check_Files is
-         Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
+      procedure Prepend_C_Header_Files;
+      --  Prepend to Src_Files all the C and C++ files specified in "#include"
+      --  directives.
+
+      procedure Check_Src_Files is
 
          function Skip_File (File_Index : Files_List.Cursor) return Boolean;
          --  Return True if if the file Src_Files (File_Index) cannot be
@@ -170,7 +175,60 @@ package body Docgen3 is
 
          Num_Files := Natural (Src_Files.Length);
          Trace (Me, "Number of files to process: " & Num_Files'Img);
-      end Check_Files;
+      end Check_Src_Files;
+
+      ----------------------------
+      -- Prepend_C_Header_Files --
+      ----------------------------
+
+      procedure Prepend_C_Header_Files is
+
+         procedure Prepend_Include_Files (File : Virtual_File);
+         procedure Prepend_Include_Files (File : Virtual_File) is
+            Cursor : Xref.Entities_In_File_Cursor;
+            E      : General_Entity;
+            Loc    : General_Location;
+
+         begin
+            Cursor := Database.Entities_In_File (File);
+            while not At_End (Cursor) loop
+               E   := Cursor.Get;
+               Loc := Get_Location (Database, E);
+
+               if Xref.Get_Display_Kind (Database, E) = "include file"
+                 and then not Src_Files.Contains (Loc.File)
+               then
+                  declare
+                     Name : constant String := Database.Get_Name (E);
+                     Kind : constant String := Database.Get_Display_Kind (E);
+
+                  begin
+                     GNAT.IO.Put_Line ("> " & Name & " [" & Kind & "]");
+                     Src_Files.Prepend (Loc.File);
+                  end;
+               end if;
+
+               Cursor.Next;
+            end loop;
+         end Prepend_Include_Files;
+
+         File_Index : Files_List.Cursor;
+         Lang       : Language_Access;
+
+      begin
+         File_Index := Src_Files.First;
+         while Files_List.Has_Element (File_Index) loop
+            Lang :=
+              Get_Language_From_File
+                (Lang_Handler, Files_List.Element (File_Index));
+
+            if Lang.all in Language.C.C_Language'Class then
+               Prepend_Include_Files (Files_List.Element (File_Index));
+            end if;
+
+            Files_List.Next (File_Index);
+         end loop;
+      end Prepend_C_Header_Files;
 
       ----------
       -- Free --
@@ -181,10 +239,9 @@ package body Docgen3 is
 
       --  Local variables
 
-      Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
-      Backend      : Docgen3_Backend'Class := New_Backend;
-      Context      : aliased Docgen_Context_Ptr :=
-                       new Docgen_Context'
+      Backend : Docgen3_Backend'Class := New_Backend;
+      Context : aliased Docgen_Context_Ptr :=
+                          new Docgen_Context'
                              (Kernel, Database, Lang_Handler, Options);
 
    --  Start of processing for Process_Files
@@ -197,11 +254,15 @@ package body Docgen3 is
 
       --  Remove from the list those files which cannot be processed
 
-      Check_Files;
+      Check_Src_Files;
 
       if Src_Files.Is_Empty then
          Trace (Me, "No files to process");
          return;
+      end if;
+
+      if not Context.Options.Skip_C_Files then
+         Prepend_C_Header_Files;
       end if;
 
       Docgen3.Time.Reset;
@@ -289,6 +350,20 @@ package body Docgen3 is
                   end if;
                end Set_Idepth;
 
+               procedure Set_Alias (E : Entity_Id);
+               procedure Set_Alias (E : Entity_Id) is
+                  Alias : Entity_Id;
+               begin
+                  if Present (LL.Get_Alias (E)) then
+                     pragma Assert (No (Get_Alias (E)));
+                     Alias :=
+                       Find_Unique_Entity
+                         (Get_Location (Database, LL.Get_Alias (E)));
+                     pragma Assert (Present (Alias));
+                     Set_Alias (E, Alias);
+                  end if;
+               end Set_Alias;
+
                Cursor : Tree_List.Cursor;
                Tree   : aliased Tree_Type;
 
@@ -298,6 +373,7 @@ package body Docgen3 is
                   Tree := Tree_List.Element (Cursor);
 
                   For_All (Tree.All_Entities, Set_Idepth'Access);
+                  For_All (Tree.All_Entities, Set_Alias'Access);
 
                   Backend.Process_File (Tree'Access);
 

@@ -88,9 +88,10 @@ package body Docgen3.Backend.Simple is
       --  Append to Printout the reStructured output of a label for E
 
       procedure ReST_Append_List
-        (Printout : access Unbounded_String;
-         List     : EInfo_List.Vector;
-         Header   : String);
+        (Printout      : access Unbounded_String;
+         List          : EInfo_List.Vector;
+         Header        : String;
+         Use_Full_Name : Boolean := False);
       --  Append to Printout the Header plus the reStructured Text of all the
       --  elements of List.
       --
@@ -229,9 +230,10 @@ package body Docgen3.Backend.Simple is
       ----------------------
 
       procedure ReST_Append_List
-        (Printout : access Unbounded_String;
-         List     : EInfo_List.Vector;
-         Header   : String)
+        (Printout      : access Unbounded_String;
+         List          : EInfo_List.Vector;
+         Header        : String;
+         Use_Full_Name : Boolean := False)
       is
          Cursor : EInfo_List.Cursor;
          E      : Entity_Id;
@@ -249,7 +251,7 @@ package body Docgen3.Backend.Simple is
 
             Append (Printout, "   * :ref:`");
 
-            if Get_Language (E).all in Language.Cpp.Cpp_Language'Class then
+            if Use_Full_Name then
                Append (Printout, Get_Full_Name (E));
             else
                Append (Printout, Get_Short_Name (E));
@@ -428,9 +430,11 @@ package body Docgen3.Backend.Simple is
 
             if In_Ada_Language (E) then
                Append_Line (Printout, ".. code-block:: ada");
-            elsif In_C_Language (E) then
-               Append_Line (Printout, ".. code-block:: c");
-            else
+
+            --  We cannot reliably differentiate C/C++ sources in header files.
+            --  Hence we use C++ for both cases.
+
+            elsif In_C_Or_CPP_Language (E) then
                Append_Line (Printout, ".. code-block:: c++");
             end if;
 
@@ -449,8 +453,9 @@ package body Docgen3.Backend.Simple is
          E        : Entity_Id)
       is
          Name   : constant String :=
-                    (if In_CPP_Language (E) then Get_Full_Name (E)
-                                            else Get_Short_Name (E));
+                    (if In_C_Or_CPP_Language (E) and then LL.Is_Primitive (E)
+                     then Get_Full_Name (E)
+                     else Get_Short_Name (E));
          Header : constant String (Name'Range) := (others => '=');
 
       begin
@@ -855,6 +860,7 @@ package body Docgen3.Backend.Simple is
                   Entity   => E,
                   Prefix   => Prefix,
                   Suffix   => Suffix);
+               Append_Line (Printout'Access, "");
 
                Cursor := Get_Derivations (E).First;
                while EInfo_List.Has_Element (Cursor) loop
@@ -1018,6 +1024,7 @@ package body Docgen3.Backend.Simple is
          --  Copy the "support" directory into the target directory
 
          Src_Dir.Copy (Dst_Dir.Full_Name, Success);
+
          pragma Assert (Success);
       end Generate_Support_Files;
 
@@ -1101,8 +1108,13 @@ package body Docgen3.Backend.Simple is
                Backend.Entities.Variables.Append (E);
 
             elsif LL.Is_Subprogram (E) then
-               if In_CPP_Language (E)
-                 and then Get_Kind (Entity) = E_Class
+
+               --  C/C++ macros unsupported yet???
+
+               if Get_Kind (E) = E_Macro then
+                  null;
+
+               elsif Get_Kind (Entity) = E_Class
                  and then LL.Is_Primitive (E)
                then
                   --  This is not fully correct since we should check that
@@ -1198,11 +1210,13 @@ package body Docgen3.Backend.Simple is
          if In_Ada_Language (Entity) then
             ReST_Append_List
               (Printout'Access, Entities.Methods, "Dispatching subprograms");
-         elsif In_CPP_Language (Entity) then
+         else
             ReST_Append_List
-              (Printout'Access, Entities.CPP_Constructors, "Constructors");
+              (Printout'Access, Entities.CPP_Constructors, "Constructors",
+               Use_Full_Name => True);
             ReST_Append_List
-              (Printout'Access, Entities.Methods, "Methods");
+              (Printout'Access, Entities.Methods, "Methods",
+               Use_Full_Name => True);
          end if;
 
          if In_Ada_Language (Entity) then
@@ -1243,7 +1257,7 @@ package body Docgen3.Backend.Simple is
                Printout'Access,
                ReST_Append_Subprogram'Access);
 
-         elsif In_CPP_Language (Entity) then
+         else
             For_All
               (Entities.CPP_Constructors,
                Printout'Access,
@@ -1268,9 +1282,7 @@ package body Docgen3.Backend.Simple is
                if Scope_Level = 0 then
                   return +Tree.File.Base_Name;
 
-               elsif In_CPP_Language (Entity)
-                 and then Get_Kind (Entity) = E_Class
-               then
+               elsif Get_Kind (Entity) = E_Class then
                   return Get_Short_Name (Entity);
 
                else
@@ -1294,9 +1306,7 @@ package body Docgen3.Backend.Simple is
                  & ReST_Label (Entity)
                  & ASCII.LF;
 
-            elsif In_CPP_Language (Entity)
-              and then Get_Kind (Entity) = E_Class
-            then
+            elsif Get_Kind (Entity) = E_Class then
                Labels :=
                  To_Unbounded_String (ReST_Label (Entity)) & ASCII.LF;
             end if;
@@ -1315,9 +1325,7 @@ package body Docgen3.Backend.Simple is
                  & To_ReST (Get_Comment (Entity))
                  & ASCII.LF;
 
-            elsif In_CPP_Language (Entity)
-              and then Get_Kind (Entity) = E_Class
-            then
+            elsif Get_Kind (Entity) = E_Class then
                ReST_Append_Src (Header'Access, Entity);
                ReST_Append_Comment (Header'Access, Entity);
             end if;
@@ -1364,7 +1372,7 @@ package body Docgen3.Backend.Simple is
 
          --  (C++) Handle C++ nested classes
 
-         elsif In_CPP_Language (Entity) then
+         else
             declare
                Cursor : EInfo_List.Cursor;
 

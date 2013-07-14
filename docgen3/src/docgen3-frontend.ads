@@ -57,6 +57,10 @@ private package Docgen3.Frontend is
 
    procedure Finalize;
 
+   function Find_Unique_Entity (Location : General_Location) return Entity_Id;
+   --  Search for the entity defined at Location in the hash table containing
+   --  all the entities of the project. No_Entity is returned if not found.
+
    package Tree_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Tree_Type);
 

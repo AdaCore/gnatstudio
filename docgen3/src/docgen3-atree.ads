@@ -204,6 +204,8 @@ private package Docgen3.Atree is
    procedure Append_Progenitor
      (E : Entity_Id; Value : Entity_Id);
 
+   function Get_Alias
+     (E : Entity_Id) return Entity_Id;
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
    function Get_Derivations
@@ -254,9 +256,7 @@ private package Docgen3.Atree is
 
    function In_Ada_Language
      (E : Entity_Id) return Boolean;
-   function In_C_Language
-     (E : Entity_Id) return Boolean;
-   function In_CPP_Language
+   function In_C_Or_CPP_Language
      (E : Entity_Id) return Boolean;
 
    function Is_Incomplete_Or_Private_Type
@@ -292,6 +292,8 @@ private package Docgen3.Atree is
       V3 : Entity_Kind;
       V4 : Entity_Kind) return Boolean;
 
+   procedure Set_Alias
+     (E : Entity_Id; Value : Entity_Id);
    procedure Set_Comment
      (E : Entity_Id; Value : Structured_Comment);
    procedure Set_Doc
@@ -552,9 +554,6 @@ private
          --       backend to generate valid and unique cross references
          --       between generated reST files.
 
-         Xref            : Xref_Info;
-         --  Information retrieved directly from the Xref database.
-
          Kind            : Entity_Kind;
          --  When the entity is created the fields Kind and Xref.Ekind are
          --  initialized with the same values. However, Kind may be decorated
@@ -562,12 +561,14 @@ private
          --  context (for example, an E_Variable entity may be redecorated
          --  as E_Formal (see docgen3-frontend.adb)
 
+         Alias           : Entity_Id;
          Scope           : Entity_Id;
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
 
          Is_Incomplete_Or_Private_Type : Boolean;
+         Is_Internal     : Boolean;
          Is_Partial_View : Boolean;
          Is_Private      : Boolean;
          Is_Tagged_Type  : Boolean;
@@ -608,6 +609,10 @@ private
 
          Error_Msg       : Unbounded_String;
          --  Errors reported on this entity
+
+         Xref            : Xref_Info;
+         --  Information retrieved directly from the Xref database.
+
       end record;
 
    pragma Inline (Append_Derivation);
@@ -617,6 +622,7 @@ private
    pragma Inline (Append_Method);
    pragma Inline (Append_Progenitor);
 
+   pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);
    pragma Inline (Get_Derivations);
    pragma Inline (Get_Discriminants);
@@ -641,8 +647,7 @@ private
    pragma Inline (Get_Unique_Id);
    pragma Inline (Has_Formals);
    pragma Inline (In_Ada_Language);
-   pragma Inline (In_C_Language);
-   pragma Inline (In_CPP_Language);
+   pragma Inline (In_C_Or_CPP_Language);
    pragma Inline (Is_Incomplete_Or_Private_Type);
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
@@ -653,6 +658,7 @@ private
    pragma Inline (Kind_In);
    pragma Inline (No);
    pragma Inline (Present);
+   pragma Inline (Set_Alias);
    pragma Inline (Set_Comment);
    pragma Inline (Set_IDepth_Level);
    pragma Inline (Set_Doc);

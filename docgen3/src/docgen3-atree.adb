@@ -21,7 +21,6 @@ with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Docgen3.Utils;               use Docgen3.Utils;
 with Language.Ada;
 with Language.C;
-with Language.Cpp;
 with Language.Tree;               use Language.Tree;
 with Language.Tree.Database;      use Language.Tree.Database;
 with Traces;                      use Traces;
@@ -390,6 +389,15 @@ package body Docgen3.Atree is
       List.Clear;
    end Free;
 
+   ---------------
+   -- Get_Alias --
+   ---------------
+
+   function Get_Alias (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Alias;
+   end Get_Alias;
+
    -----------------
    -- Get_Comment --
    -----------------
@@ -670,23 +678,11 @@ package body Docgen3.Atree is
    -- In_C_Language --
    -------------------
 
-   function In_C_Language
+   function In_C_Or_CPP_Language
      (E : Entity_Id) return Boolean is
    begin
-      return Get_Language (E).all in Language.C.C_Language'Class
-               and then
-             Get_Language (E).all not in Language.Cpp.Cpp_Language'Class;
-   end In_C_Language;
-
-   ---------------------
-   -- In_CPP_Language --
-   ---------------------
-
-   function In_CPP_Language
-     (E : Entity_Id) return Boolean is
-   begin
-      return Get_Language (E).all in Language.Cpp.Cpp_Language'Class;
-   end In_CPP_Language;
+      return Get_Language (E).all in Language.C.C_Language'Class;
+   end In_C_Or_CPP_Language;
 
    ----------------
    -- Initialize --
@@ -973,11 +969,12 @@ package body Docgen3.Atree is
 
            Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
-           Scope           => null,
+           Alias           => No_Entity,
+           Scope           => No_Entity,
            Kind            => Kind,
 
            Is_Incomplete_Or_Private_Type => False,
-
+           Is_Internal       => False,
            Is_Tagged_Type    => False,
            Is_Private        => False,
            Is_Partial_View   => False,
@@ -1204,15 +1201,20 @@ package body Docgen3.Atree is
    function New_Internal_Entity
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
-      Name     : String) return Entity_Id is
+      Name     : String) return Entity_Id
+   is
+      New_E : Entity_Id;
    begin
-      return
+      New_E :=
         Internal_New_Entity
           (Context => Context,
            Lang    => Language,
            E       => No_General_Entity,
            Loc     => No_Location,
            Name    => Name);
+      New_E.Is_Internal := True;
+
+      return New_E;
    end New_Internal_Entity;
 
    --------
@@ -1233,9 +1235,18 @@ package body Docgen3.Atree is
       return E /= null;
    end Present;
 
-   -------------
-   -- Setters --
-   -------------
+   ---------------
+   -- Set_Alias --
+   ---------------
+
+   procedure Set_Alias (E : Entity_Id; Value : Entity_Id) is
+   begin
+      E.Alias := Value;
+   end Set_Alias;
+
+   -----------------
+   -- Set_Comment --
+   -----------------
 
    procedure Set_Comment (E : Entity_Id; Value : Structured_Comment) is
    begin
@@ -1920,6 +1931,19 @@ package body Docgen3.Atree is
 
       if No (E) then
          return "";
+
+      --  Internal entity (currently used only to represent the standard scope)
+
+      elsif E.Is_Internal then
+         Append_Line
+           ("*** "
+            & To_String (E.Id)
+            & ": "
+            & Get (E.Short_Name).all
+            & " ("
+            & E.Kind'Img
+            & ")");
+         return To_String (Printout);
       end if;
 
       Append_Line
@@ -1937,6 +1961,10 @@ package body Docgen3.Atree is
 
       if Present (E.Scope) then
          Append_Entity ("Scope: ", E.Scope);
+      end if;
+
+      if Present (E.Alias) then
+         Append_Entity ("Alias: ", E.Alias);
       end if;
 
       if Present (Get_Parent (E)) then
