@@ -1027,7 +1027,7 @@ package body Docgen3.Backend.Simple is
 
          --  Local variables
 
-         Printout    : Unbounded_String;
+         Printout    : aliased Unbounded_String;
          Translation : Translate_Set;
          Tmpl        : constant Virtual_File :=
                          Get_Template
@@ -1052,66 +1052,90 @@ package body Docgen3.Backend.Simple is
 
          Src_Files := Get_Ada_Src_Files;
          if Natural (Src_Files.Length) > 0 then
-            Files_Vector_Sort.Sort (Src_Files);
-            Generate_Files_Index
-              (Src_Files => Src_Files,
-               Filename  => "ada_files",
-               Header    => "Ada source files");
-            Printout := Printout
-              & "   ada_files" & ASCII.LF;
+            declare
+               Filename : constant String := "ada_files_idx";
+            begin
+               Files_Vector_Sort.Sort (Src_Files);
+               Generate_Files_Index
+                 (Src_Files => Src_Files,
+                  Filename  => Filename,
+                  Header    => "Ada source files");
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
          end if;
 
-         Generate_Entities_Index
-           (Filename => "ada_entities",
-            Header   => "Ada entities",
-            Filter   => Lang_Ada);
-         Printout := Printout & "   ada_entities" & ASCII.LF;
+         declare
+            Filename : constant String := "ada_entities_idx";
+         begin
+            Generate_Entities_Index
+              (Filename => Filename,
+               Header   => "Ada entities",
+               Filter   => Lang_Ada);
+            Append_Line (Printout'Access, "   " & Filename);
+         end;
 
          if EInfo_List.Has_Element (Backend.Entities.Tagged_Types.First) then
-            Generate_Tagged_Types_Tree_Index
-              (Filename => "ada_dep_tree",
-               Header   => "Ada derivations tree (tagged types)");
-            Printout := Printout
-              & "   Ada_dep_tree" & ASCII.LF;
+            declare
+               Filename : constant String := "ada_dep_tree_idx";
+            begin
+               Generate_Tagged_Types_Tree_Index
+                 (Filename => Filename,
+                  Header   => "Ada derivations tree (tagged types)");
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
          end if;
 
          Printout := Printout & ASCII.LF;
 
          Src_Files := Get_C_And_CPP_Src_Files;
          if Natural (Src_Files.Length) > 0 then
-            Files_Vector_Sort.Sort (Src_Files);
-            Generate_Files_Index
-              (Src_Files => Src_Files,
-               Filename  => "c_files",
-               Header    => "C & C++ source files");
-            Printout := Printout
-              & "   c_files" & ASCII.LF;
+            declare
+               Filename : constant String := "c_files_idx";
+            begin
+               Files_Vector_Sort.Sort (Src_Files);
+               Generate_Files_Index
+                 (Src_Files => Src_Files,
+                  Filename  => Filename,
+                  Header    => "C & C++ source files");
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
          end if;
 
-         Generate_Entities_Index
-           (Filename => "c_entities",
-            Header   => "C & C++ entities",
-            Filter   => Lang_C_CPP);
-         Printout := Printout & "   c_entities" & ASCII.LF;
+         declare
+            Filename : constant String := "c_entities_idx";
+         begin
+            Generate_Entities_Index
+              (Filename => Filename,
+               Header   => "C & C++ entities",
+               Filter   => Lang_C_CPP);
+            Append_Line (Printout'Access, "   " & Filename);
+         end;
 
          Printout := Printout & ASCII.LF;
 
          Src_Files := Backend.Src_Files;
          if Natural (Src_Files.Length) > 0 then
-            Files_Vector_Sort.Sort (Src_Files);
-            Generate_Files_Index
-              (Src_Files => Src_Files,
-               Filename  => "all_files",
-               Header    => "All source files");
-            Printout := Printout
-              & "   all_files" & ASCII.LF;
+            declare
+               Filename : constant String := "all_files_idx";
+            begin
+               Files_Vector_Sort.Sort (Src_Files);
+               Generate_Files_Index
+                 (Src_Files => Src_Files,
+                  Filename  => Filename,
+                  Header    => "All source files");
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
          end if;
 
-         Generate_Entities_Index
-           (Filename => "all_entities",
-            Header   => "All entities",
-            Filter   => None);
-         Printout := Printout & "   all_entities" & ASCII.LF;
+         declare
+            Filename : constant String := "all_entities_idx";
+         begin
+            Generate_Entities_Index
+              (Filename => Filename,
+               Header   => "All entities",
+               Filter   => None);
+            Append_Line (Printout'Access, "   " & Filename);
+         end;
 
          Printout := Printout & ASCII.LF;
 
