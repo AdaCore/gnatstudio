@@ -44,6 +44,22 @@ package body GPS.CLI_Process_Launchers is
       Status      : aliased Integer := -1;
       Arg_List    : GNAT.OS_Lib.Argument_List :=
         To_List (CL, Include_Command => False);
+
+      procedure Finally;
+      --  Gather instruction to do at the end of the procedure
+      --  in any case
+
+      procedure Finally is
+      begin
+         if Directory /= No_File then
+            Change_Dir (Old_Dir);
+         end if;
+
+         for J in Arg_List'Range loop
+            GNAT.OS_Lib.Free (Arg_List (J));
+         end loop;
+      end Finally;
+
    begin
       if not Is_Local (Server) then
          --  Remote server not implemented
@@ -61,32 +77,25 @@ package body GPS.CLI_Process_Launchers is
       Success := True;
 
       declare
+         Output : constant String := Get_Command_Output
+           (Command    => Get_Command (CL),
+            Arguments  => Arg_List,
+            Input      => "",
+            Status     => Status'Access,
+            Err_To_Out => True);
       begin
-         declare
-            Output : constant String := Get_Command_Output
-              (Command    => Get_Command (CL),
-               Arguments  => Arg_List,
-               Input      => "",
-               Status     => Status'Access,
-               Err_To_Out => True);
-         begin
-            Output_Parser.Parse_Standard_Output (Output, Command => null);
-            Output_Parser.End_Of_Stream (Status, Command => null);
-         end;
-      exception
-         when Ex : Invalid_Process =>
-            Trace (Me, "Exception " & Exception_Name (Ex)
-                   & ": Could not launch process: " & Get_Command (CL));
-            Success := False;
+         Output_Parser.Parse_Standard_Output (Output, Command => null);
+         Output_Parser.End_Of_Stream (Status, Command => null);
       end;
 
-      if Directory /= No_File then
-         Change_Dir (Old_Dir);
-      end if;
+      Finally;
 
-      for J in Arg_List'Range loop
-         GNAT.OS_Lib.Free (Arg_List (J));
-      end loop;
+   exception
+      when E : Invalid_Process =>
+         Trace (Me, "Exception " & Exception_Name (E)
+                & ": Could not launch process: " & Get_Command (CL));
+         Success := False;
+         Finally;
    end Launch_Process;
 
    ----------------------------------
