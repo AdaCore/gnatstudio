@@ -2044,7 +2044,7 @@ after that second entry.
       def filter(self, context):
          return isinstance(context, GPS.EntityContext)
 
-      def on_activate(self, context, choice):
+      def on_activate(self, context, choice, choice_index):
          GPS.Console("Messages").write("You selected " + choice)
 
       def factory(self, context):
