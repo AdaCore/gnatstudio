@@ -8,11 +8,14 @@ INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
 
-all: ug tutorial gps_pg
+all: ug tutorial gps_pg relnotes
 static:
 
 gps_pg:
 	make -C programers_guide html
+
+relnotes:
+	make -C release_notes html
 
 ug:
 	make -C users_guide html latexpdf
