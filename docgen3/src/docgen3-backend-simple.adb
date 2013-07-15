@@ -1027,14 +1027,16 @@ package body Docgen3.Backend.Simple is
 
          --  Local variables
 
-         Printout    : aliased Unbounded_String;
-         Translation : Translate_Set;
-         Tmpl        : constant Virtual_File :=
-                         Get_Template
-                           (Get_Share_Dir (Backend.Context.Kernel),
-                            Tmpl_Global_Index);
-         Src_Files   : aliased Files_List.Vector;
-         My_Delay    : Delay_Time;
+         Printout      : aliased Unbounded_String;
+         Translation   : Translate_Set;
+         Tmpl          : constant Virtual_File :=
+                           Get_Template
+                             (Get_Share_Dir (Backend.Context.Kernel),
+                              Tmpl_Global_Index);
+         Src_Files     : aliased Files_List.Vector;
+         My_Delay      : Delay_Time;
+         Has_Ada_Files : Boolean := False;
+         Has_C_Files   : Boolean := False;
 
          --  Start of processing for Generate_Global_Index
 
@@ -1051,7 +1053,9 @@ package body Docgen3.Backend.Simple is
          EInfo_Vector_Sort_Short.Sort (Backend.Entities.CPP_Classes);
 
          Src_Files := Get_Ada_Src_Files;
-         if Natural (Src_Files.Length) > 0 then
+         Has_Ada_Files := Natural (Src_Files.Length) > 0;
+
+         if Has_Ada_Files then
             declare
                Filename : constant String := "ada_files_idx";
             begin
@@ -1062,33 +1066,37 @@ package body Docgen3.Backend.Simple is
                   Header    => "Ada source files");
                Append_Line (Printout'Access, "   " & Filename);
             end;
-         end if;
 
-         declare
-            Filename : constant String := "ada_entities_idx";
-         begin
-            Generate_Entities_Index
-              (Filename => Filename,
-               Header   => "Ada entities",
-               Filter   => Lang_Ada);
-            Append_Line (Printout'Access, "   " & Filename);
-         end;
-
-         if EInfo_List.Has_Element (Backend.Entities.Tagged_Types.First) then
             declare
-               Filename : constant String := "ada_dep_tree_idx";
+               Filename : constant String := "ada_entities_idx";
             begin
-               Generate_Tagged_Types_Tree_Index
+               Generate_Entities_Index
                  (Filename => Filename,
-                  Header   => "Ada derivations tree (tagged types)");
+                  Header   => "Ada entities",
+                  Filter   => Lang_Ada);
                Append_Line (Printout'Access, "   " & Filename);
             end;
+
+            if EInfo_List.Has_Element
+                 (Backend.Entities.Tagged_Types.First)
+            then
+               declare
+                  Filename : constant String := "ada_dep_tree_idx";
+               begin
+                  Generate_Tagged_Types_Tree_Index
+                    (Filename => Filename,
+                     Header   => "Ada derivations tree (tagged types)");
+                  Append_Line (Printout'Access, "   " & Filename);
+               end;
+            end if;
+
+            Printout := Printout & ASCII.LF;
          end if;
 
-         Printout := Printout & ASCII.LF;
-
          Src_Files := Get_C_And_CPP_Src_Files;
-         if Natural (Src_Files.Length) > 0 then
+         Has_C_Files := Natural (Src_Files.Length) > 0;
+
+         if Has_C_Files then
             declare
                Filename : constant String := "c_files_idx";
             begin
@@ -1099,43 +1107,45 @@ package body Docgen3.Backend.Simple is
                   Header    => "C & C++ source files");
                Append_Line (Printout'Access, "   " & Filename);
             end;
+
+            declare
+               Filename : constant String := "c_entities_idx";
+            begin
+               Generate_Entities_Index
+                 (Filename => Filename,
+                  Header   => "C & C++ entities",
+                  Filter   => Lang_C_CPP);
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
+
+            Printout := Printout & ASCII.LF;
          end if;
 
-         declare
-            Filename : constant String := "c_entities_idx";
-         begin
-            Generate_Entities_Index
-              (Filename => Filename,
-               Header   => "C & C++ entities",
-               Filter   => Lang_C_CPP);
-            Append_Line (Printout'Access, "   " & Filename);
-         end;
+         if Has_Ada_Files and Has_C_Files then
+            Src_Files := Backend.Src_Files;
+            if Natural (Src_Files.Length) > 0 then
+               declare
+                  Filename : constant String := "all_files_idx";
+               begin
+                  Files_Vector_Sort.Sort (Src_Files);
+                  Generate_Files_Index
+                    (Src_Files => Src_Files,
+                     Filename  => Filename,
+                     Header    => "All source files");
+                  Append_Line (Printout'Access, "   " & Filename);
+               end;
+            end if;
 
-         Printout := Printout & ASCII.LF;
-
-         Src_Files := Backend.Src_Files;
-         if Natural (Src_Files.Length) > 0 then
             declare
-               Filename : constant String := "all_files_idx";
+               Filename : constant String := "all_entities_idx";
             begin
-               Files_Vector_Sort.Sort (Src_Files);
-               Generate_Files_Index
-                 (Src_Files => Src_Files,
-                  Filename  => Filename,
-                  Header    => "All source files");
+               Generate_Entities_Index
+                 (Filename => Filename,
+                  Header   => "All entities",
+                  Filter   => None);
                Append_Line (Printout'Access, "   " & Filename);
             end;
          end if;
-
-         declare
-            Filename : constant String := "all_entities_idx";
-         begin
-            Generate_Entities_Index
-              (Filename => Filename,
-               Header   => "All entities",
-               Filter   => None);
-            Append_Line (Printout'Access, "   " & Filename);
-         end;
 
          Printout := Printout & ASCII.LF;
 
