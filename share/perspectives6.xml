@@ -1,23 +1,19 @@
 <?xml version="1.0"?>
 <GPS>
-  <perspectives state=" 0" mdi_height=" 699" mdi_width=" 1024" height=" 768" width=" 1024"  >
+  <perspectives state=" 0" mdi_height=" 706" mdi_width=" 1024" height=" 768" width=" 1024"  >
     <perspective name="Default">
       <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL" >
-        <Pane width=" 20%" Orientation="ORIENTATION_VERTICAL" >
-          <Notebook height=" 20%" Tabs="POS_TOP" >
-            <Child Raised="True" Group=" 106" State="NORMAL" >
-              <Scenario_View />
-            </Child>
-          </Notebook>
-          <Notebook height=" 80%" Tabs="POS_TOP" >
-            <Child Raised="True" Group=" 106" State="NORMAL" >
-              <Project_Explorer_Project />
-            </Child>
-            <Child Group=" 106" State="NORMAL" >
-              <Outline_View />
-            </Child>
-          </Notebook>
-        </Pane>
+        <Notebook width=" 20%" Tabs="POS_LEFT" >
+          <Child Raised="True" Focus="True" Group=" 106" State="NORMAL" >
+            <Project_Explorer_Project />
+          </Child>
+          <Child Group=" 106" State="NORMAL" >
+            <Outline_View />
+          </Child>
+          <Child Group=" 106" State="NORMAL" >
+            <Scenario_View />
+          </Child>
+        </Notebook>
         <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
           <central height=" 80%"  />
           <Notebook height=" 20%" Tabs="POS_TOP" >
