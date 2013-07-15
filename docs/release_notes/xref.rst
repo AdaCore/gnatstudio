@@ -1,8 +1,8 @@
-Cross-references
-----------------
+Cross-refaerences
+-----------------
 
-New cross-reference engine :feature:`(GPS -- 2013-01-24 -- L530-025)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New cross-reference engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 GPS and GNATbench both have a new xref engine, based on sqlite. This new
 engine is expected to bring extra performance (since the xref database

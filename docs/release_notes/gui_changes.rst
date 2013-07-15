@@ -11,8 +11,8 @@ the user interface itself.
 
 
 
-Local toolbars :feature:`(GPS -- 2012-12-03 -- LC03-011)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Local toolbars
+~~~~~~~~~~~~~~
 
 A number of views now have a local toolbar. They also display their
 configuration settings in a local menu rather than in the :file:`Preferences`
@@ -33,8 +33,8 @@ preference `Auto Jump To First Location` was removed from the preferences menu
 and moved to the toolbar as well.
 
 
-Global search field in the toolbar :feature:`(GPS -- 2013-05-27 -- M523-031)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Global search field in the toolbar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A search field is now provided, which will look simultaneously in various
 context (source file names, entities,...). You can optionally restrict the
@@ -50,7 +50,7 @@ search is done via the global search field.
 The :file:`/Tools/Views/Entity` view was also removed since its features
 are now available through the global search field.
 
-..  This is Approximate search :feature:`(GPS -- 2013-06-25 -- M625-005)`
+..  This is Approximate search
 
 Various modes are available, to search full text, regular expressions or
 fuzzy matches. In particular, when searching in source code, GPS is able
@@ -64,8 +64,8 @@ match "search" when this mode is activated.
    Search in all contexts
 
 
-Color schemes :feature:`(GPS -- 2013-06-20 -- M620-018)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Color schemes
+~~~~~~~~~~~~~
 
 A new preference is available to select color schemes. This effects other
 preferences and can be used to set dark colors for the background of
@@ -84,8 +84,8 @@ editors and windows.
    Switching GPS to a dark theme
 
 
-Tab menu allows easy selection of open tabs :feature:`(GPS -- 2012-12-17 -- LC06-015)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tab menu allows easy selection of open tabs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The right-click menu on notebook tabs now shows the list of all windows open
 in that tabs, to ease navigation.
@@ -97,8 +97,8 @@ in that tabs, to ease navigation.
    Menu when right-clicking on tabs
 
 
-Key shortcuts dialog improvements :feature:`(GPS -- 2012-11-21 -- LB20-022)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Key shortcuts dialog improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The display of the key shortcuts in this dialog now matches what is
 done for the toplevel menus, using symbols like up arrow for the shift
@@ -112,8 +112,8 @@ Mac keyboards.
    Key shortcuts display machine-specific symbols for keys
 
 
-Use ellipsis in window titles :feature:`(GPS -- 2012-11-28 -- LB29-006)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Use ellipsis in window titles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The text in the title bars and in the notebook tabs will now use ellipsis
 ("...") when the window is too small to accomodate the whole text. The size
@@ -128,8 +128,8 @@ is controlled by a new preference `Window/Homogeneous Tabs`.
    Ellipsis in window titles
 
 
-Clickable qualified name in editor status bars :feature:`(GPS -- 2012-12-13 -- LB26-025)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Clickable qualified name in editor status bars
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The name of the current subprogram, as displayed in the editors status bars,
 now includes the name of the enclosing subprograms and packages. Each of
@@ -146,8 +146,8 @@ block.
 Outline view improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Protected objects in outline view :feature:`(GPS -- 2012-10-16 -- L921-032)`
-............................................................................
+Protected objects in outline view
+.................................
 
 Protected and task types/objects and their entries are now visible in
 :file:`Outline View`. A new filter in `Show tasks, entries, and protected
@@ -160,8 +160,8 @@ types` is used to show/hide these items (in the local configuration menu).
    New configuration menu for the outline view
 
 
-Group spec and body in outline view :feature:`(GPS -- 2013-01-10 -- M110-025)`
-..............................................................................
+Group spec and body in outline view
+...................................
 
 It is now possible to group the spec and body (or spec and full view) for an
 entity on the same row in the Outline view, to reduce the total height of the
@@ -177,13 +177,13 @@ directory to the spec or the body.
    Grouping spec and body on the same line in Outline
 
 
-Filter in outline view :feature:`(GPS -- 2013-01-23 -- M122-025)`
-.................................................................
+Filter in outline view
+......................
 
 A filter has been added to the Outline view to make it easier to find entities.
 
-Flat view mode in outline :feature:`(GPS -- 2013-01-21 -- M121-011)`
-....................................................................
+Flat view mode in outline
+.........................
 
 It is now possible to display all entities at the same level, rather than
 nested hierarchically. In some cases, it makes searching for an entity easier.
@@ -191,8 +191,8 @@ It also reduces the amount of horizontal space that the :file:`Outline view`
 needs.
 
 
-Scenario view displays a tree :feature:`(GPS -- 2013-01-08 -- LC21-017)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Scenario view displays a tree
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :file:`Scenario view` has been updated to a more usable tree rendering.
 
@@ -203,15 +203,15 @@ The :file:`Scenario view` has been updated to a more usable tree rendering.
    Scenario variables are editable in-place
 
 
-Apply preferences on the fly :feature:`(GPS -- 2013-06-17 -- M617-030)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Apply preferences on the fly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Apply button was removed from the preferenes dialog.
 Instead, GPS will be refreshed every time any of the settings is modified.
 
 
-Tooltips in Project, Files and Windows views :feature:`(GPS -- 2012-11-13 -- L926-027)`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tooltips in Project, Files and Windows views
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tooltips added to views to help navigation when windows are narrow. They also provide
 additional information in some cases.
