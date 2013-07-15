@@ -23,6 +23,7 @@ with Docgen3.Time;            use Docgen3.Time;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
+with Language.C;
 with Language.Cpp;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
@@ -87,18 +88,19 @@ package body Docgen3.Backend.Simple is
          E        : Entity_Id);
       --  Append to Printout the reStructured output of a label for E
 
+      type List_Filter_Kind is (None, Lang_Ada, Lang_C_CPP);
+
       procedure ReST_Append_List
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
-         Use_Full_Name : Boolean := False);
+         Use_Full_Name : Boolean := False;
+         Filter        : List_Filter_Kind := None);
       --  Append to Printout the Header plus the reStructured Text of all the
-      --  elements of List.
-      --
-      --  (C/C++): C_Headers_File is passed only when processing C or C++
-      --  files. It is the .h file associated with the current .c/.cpp file;
-      --  it is used to identify references to entities defined in the .h file
-      --  since the compiler does NOT generate gli files for .h files.
+      --  elements of List whose language is covered by the Filter (if the
+      --  filter is none then all entities are appended to Printout). If no
+      --  entity of List is covered by Filter then the Header is not added
+      --  to Printout.
 
       procedure ReST_Append_Record_Type_Declaration
         (Printout : access Unbounded_String;
@@ -233,14 +235,41 @@ package body Docgen3.Backend.Simple is
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
-         Use_Full_Name : Boolean := False)
+         Use_Full_Name : Boolean  := False;
+         Filter        : List_Filter_Kind := None)
       is
          Cursor : EInfo_List.Cursor;
          E      : Entity_Id;
+         Found  : Boolean;
 
       begin
          if not EInfo_List.Has_Element (List.First) then
             return;
+         end if;
+
+         --  Check if there is some entity passing the filter; otherwise no
+         --  output is generated.
+
+         if Filter /= None then
+            Found := False;
+            Cursor := List.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               E := EInfo_List.Element (Cursor);
+
+               if (Filter = Lang_Ada and then In_Ada_Language (E))
+                 or else
+                   (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
+               then
+                  Found := True;
+                  exit;
+               end if;
+
+               EInfo_List.Next (Cursor);
+            end loop;
+
+            if not Found then
+               return;
+            end if;
          end if;
 
          Append_Line (Printout, "- " & Header);
@@ -249,19 +278,24 @@ package body Docgen3.Backend.Simple is
          while EInfo_List.Has_Element (Cursor) loop
             E := EInfo_List.Element (Cursor);
 
-            Append (Printout, "   * :ref:`");
+            if Filter = None
+              or else (Filter = Lang_Ada and then In_Ada_Language (E))
+              or else (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
+            then
+               Append (Printout, "   * :ref:`");
 
-            if Use_Full_Name then
-               Append (Printout, Get_Full_Name (E));
-            else
-               Append (Printout, Get_Short_Name (E));
+               if Use_Full_Name then
+                  Append (Printout, Get_Full_Name (E));
+               else
+                  Append (Printout, Get_Short_Name (E));
+               end if;
+
+               Append_Line (Printout,
+                            " <"
+                            & Get_Unique_Name (E)
+                            & ">` "
+                            & Image (LL.Get_Location (E)));
             end if;
-
-            Append_Line (Printout,
-              " <"
-              & Get_Unique_Name (E)
-              & ">` "
-              & Image (LL.Get_Location (E)));
 
             EInfo_List.Next (Cursor);
          end loop;
@@ -605,15 +639,42 @@ package body Docgen3.Backend.Simple is
 
       procedure Generate_Global_Index is
 
-         procedure Generate_Entities;
-         procedure Generate_Files;
-         procedure Generate_Tagged_Types_Tree;
+         procedure Generate_Entities_Index
+           (Filename : String;
+            Header   : String;
+            Filter   : List_Filter_Kind);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with all the entities of the project which pass the Filter.
+
+         procedure Generate_Files_Index
+           (Filename  : String;
+            Header    : String;
+            Src_Files : Files_List.Vector);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with all the files of Src_Files.
+
+         procedure Generate_Tagged_Types_Tree_Index
+           (Filename  : String;
+            Header    : String);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with the tree of dependencies of Ada tagged types.
+
+         function Get_Ada_Src_Files return Files_List.Vector;
+         --  Return the list of Ada source files of the project
+
+         function Get_C_And_CPP_Src_Files return Files_List.Vector;
+         --  Return the list of C & C++ source files of the project
 
          -----------------------
          -- Generate_Entities --
          -----------------------
 
-         procedure Generate_Entities is
+         procedure Generate_Entities_Index
+           (Filename : String;
+            Header   : String;
+            Filter   : List_Filter_Kind)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
             Printout    : aliased Unbounded_String;
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
@@ -623,58 +684,51 @@ package body Docgen3.Backend.Simple is
          begin
             Printout :=
               Printout
-              & "All entities" & ASCII.LF
-              & "============" & ASCII.LF
+              & Header   & ASCII.LF
+              & Header_U & ASCII.LF
               & ASCII.LF;
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Pkgs);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Pkgs,
-               "Packages");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Variables);
+               "Packages",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Variables,
-               "Constants & variables");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Simple_Types);
+               "Constants & variables",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Simple_Types,
-               "Types");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Record_Types);
+               "Types",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Record_Types,
-               "Records");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Subprgs);
+               "Records",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Subprgs,
-               "Subprograms");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.Tagged_Types);
+               "Subprograms",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tagged_Types,
-               "Tagged types");
-
-            EInfo_Vector_Sort_Short.Sort (Backend.Entities.CPP_Classes);
+               "Tagged types",
+               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.CPP_Classes,
-               "C++ Classes");
+               "C++ Classes",
+               Filter => Filter);
 
             Insert
               (Translation, Assoc ("PRINTOUT", Printout));
@@ -682,39 +736,38 @@ package body Docgen3.Backend.Simple is
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name ("entities"),
+               Filename  => To_Destination_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
-         end Generate_Entities;
+         end Generate_Entities_Index;
 
          --------------------
          -- Generate_Files --
          --------------------
 
-         procedure Generate_Files is
+         procedure Generate_Files_Index
+           (Filename  : String;
+            Header    : String;
+            Src_Files : Files_List.Vector)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
+            Printout_H  : aliased Unbounded_String;
             Printout    : aliased Unbounded_String;
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
-              Get_Template
-                (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Files_Index);
+                            Get_Template
+                              (Get_Share_Dir (Backend.Context.Kernel),
+                               Tmpl_Files_Index);
             File        : GNATCOLL.VFS.Virtual_File;
             File_Index  : Files_List.Cursor;
 
          begin
-            Files_Vector_Sort.Sort (Backend.Src_Files);
+            Printout_H :=
+              Printout
+              & Header & ASCII.LF
+              & Header_U & ASCII.LF;
 
-            File_Index := Backend.Src_Files.First;
-            while Files_List.Has_Element (File_Index) loop
-               File := Files_List.Element (File_Index);
-
-               Printout :=
-                 Printout
-                 & "   " & (+File.Base_Name) & ASCII.LF;
-
-               Files_List.Next (File_Index);
-            end loop;
-
-            File_Index := Backend.Extra_Files.First;
+            File_Index := Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
                File := Files_List.Element (File_Index);
 
@@ -726,21 +779,27 @@ package body Docgen3.Backend.Simple is
             end loop;
 
             Insert
+              (Translation, Assoc ("HEADER", Printout_H));
+            Insert
               (Translation, Assoc ("PRINTOUT", Printout));
 
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name ("files"),
+               Filename  => To_Destination_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
-         end Generate_Files;
+         end Generate_Files_Index;
 
          --------------------------------
          -- Generate_Tagged_Types_Tree --
          --------------------------------
 
-         procedure Generate_Tagged_Types_Tree is
+         procedure Generate_Tagged_Types_Tree_Index
+           (Filename : String;
+            Header   : String)
+         is
+            Header_U : constant String (Header'Range) := (others => '=');
             Printout : aliased Unbounded_String;
 
             function Collect_Tagged_Types_And_Interfaces
@@ -884,8 +943,8 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
 
          begin
-            Append_Line (Printout'Access, "Tagged type derivations tree");
-            Append_Line (Printout'Access, "============================");
+            Append_Line (Printout'Access, Header);
+            Append_Line (Printout'Access, Header_U);
             Append_Line (Printout'Access, "");
 
             Root_Types := Get_Root_Types (Collect_Tagged_Types_And_Interfaces);
@@ -905,10 +964,66 @@ package body Docgen3.Backend.Simple is
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name ("dep_tree"),
+               Filename  => To_Destination_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
-         end Generate_Tagged_Types_Tree;
+         end Generate_Tagged_Types_Tree_Index;
+
+         -----------------------
+         -- Get_Ada_Src_Files --
+         -----------------------
+
+         function Get_Ada_Src_Files return Files_List.Vector is
+            File       : GNATCOLL.VFS.Virtual_File;
+            File_Index : Files_List.Cursor;
+            Lang       : Language_Access;
+            Result     : Files_List.Vector;
+
+         begin
+            File_Index := Backend.Src_Files.First;
+
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+               Lang :=
+                 Backend.Context.Lang_Handler.Get_Language_From_File (File);
+
+               if Lang.all in Language.Ada.Ada_Language'Class then
+                  Result.Append (File);
+               end if;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            return Result;
+         end Get_Ada_Src_Files;
+
+         -----------------------------
+         -- Get_C_And_CPP_Src_Files --
+         -----------------------------
+
+         function Get_C_And_CPP_Src_Files return Files_List.Vector is
+            File       : GNATCOLL.VFS.Virtual_File;
+            File_Index : Files_List.Cursor;
+            Lang       : Language_Access;
+            Result     : Files_List.Vector;
+
+         begin
+            File_Index := Backend.Src_Files.First;
+
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+               Lang :=
+                 Backend.Context.Lang_Handler.Get_Language_From_File (File);
+
+               if Lang.all in Language.C.C_Language'Class then
+                  Result.Append (File);
+               end if;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            return Result;
+         end Get_C_And_CPP_Src_Files;
 
          --  Local variables
 
@@ -918,6 +1033,7 @@ package body Docgen3.Backend.Simple is
                          Get_Template
                            (Get_Share_Dir (Backend.Context.Kernel),
                             Tmpl_Global_Index);
+         Src_Files   : aliased Files_List.Vector;
          My_Delay    : Delay_Time;
 
          --  Start of processing for Generate_Global_Index
@@ -926,14 +1042,78 @@ package body Docgen3.Backend.Simple is
          Start (My_Delay);
          Trace (Me, "Generate_Global_Index");
 
-         Generate_Entities;
-         Generate_Files;
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Pkgs);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Variables);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Simple_Types);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Record_Types);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Subprgs);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Tagged_Types);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.CPP_Classes);
+
+         Src_Files := Get_Ada_Src_Files;
+         if Natural (Src_Files.Length) > 0 then
+            Files_Vector_Sort.Sort (Src_Files);
+            Generate_Files_Index
+              (Src_Files => Src_Files,
+               Filename  => "ada_files",
+               Header    => "Ada source files");
+            Printout := Printout
+              & "   ada_files" & ASCII.LF;
+         end if;
+
+         Generate_Entities_Index
+           (Filename => "ada_entities",
+            Header   => "Ada entities",
+            Filter   => Lang_Ada);
+         Printout := Printout & "   ada_entities" & ASCII.LF;
 
          if EInfo_List.Has_Element (Backend.Entities.Tagged_Types.First) then
-            Generate_Tagged_Types_Tree;
+            Generate_Tagged_Types_Tree_Index
+              (Filename => "ada_dep_tree",
+               Header   => "Ada derivations tree (tagged types)");
             Printout := Printout
-              & "   dep_tree" & ASCII.LF;
+              & "   Ada_dep_tree" & ASCII.LF;
          end if;
+
+         Printout := Printout & ASCII.LF;
+
+         Src_Files := Get_C_And_CPP_Src_Files;
+         if Natural (Src_Files.Length) > 0 then
+            Files_Vector_Sort.Sort (Src_Files);
+            Generate_Files_Index
+              (Src_Files => Src_Files,
+               Filename  => "c_files",
+               Header    => "C & C++ source files");
+            Printout := Printout
+              & "   c_files" & ASCII.LF;
+         end if;
+
+         Generate_Entities_Index
+           (Filename => "c_entities",
+            Header   => "C & C++ entities",
+            Filter   => Lang_C_CPP);
+         Printout := Printout & "   c_entities" & ASCII.LF;
+
+         Printout := Printout & ASCII.LF;
+
+         Src_Files := Backend.Src_Files;
+         if Natural (Src_Files.Length) > 0 then
+            Files_Vector_Sort.Sort (Src_Files);
+            Generate_Files_Index
+              (Src_Files => Src_Files,
+               Filename  => "all_files",
+               Header    => "All source files");
+            Printout := Printout
+              & "   all_files" & ASCII.LF;
+         end if;
+
+         Generate_Entities_Index
+           (Filename => "all_entities",
+            Header   => "All entities",
+            Filter   => None);
+         Printout := Printout & "   all_entities" & ASCII.LF;
+
+         Printout := Printout & ASCII.LF;
 
          Insert (Translation, Assoc ("PRINTOUT", Printout));
 

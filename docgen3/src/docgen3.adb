@@ -198,14 +198,7 @@ package body Docgen3 is
                if Xref.Get_Display_Kind (Database, E) = "include file"
                  and then not Src_Files.Contains (Loc.File)
                then
-                  declare
-                     Name : constant String := Database.Get_Name (E);
-                     Kind : constant String := Database.Get_Display_Kind (E);
-
-                  begin
-                     GNAT.IO.Put_Line ("> " & Name & " [" & Kind & "]");
-                     Src_Files.Prepend (Loc.File);
-                  end;
+                  Src_Files.Prepend (Loc.File);
                end if;
 
                Cursor.Next;
