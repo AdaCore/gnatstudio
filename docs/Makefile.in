@@ -15,7 +15,7 @@ gps_pg:
 	make -C programers_guide html
 
 relnotes:
-	make -C release_notes html
+	make -C release_notes singlehtml
 
 ug:
 	make -C users_guide html latexpdf
