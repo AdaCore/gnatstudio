@@ -261,14 +261,6 @@ package body Src_Editor_Box.Tooltips is
       Area.Width  := Win_X - Area.X + Location.Width;
       Area.Height := Win_Y - Area.Y + Location.Height;
 
-      declare
-         Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height : Gint;
-      begin
-         Get_Geometry (Get_Window (View, Text_Window_Left),
-                       Tmp_X, Tmp_Y, Tmp_Width, Tmp_Height);
-         Area.X := Area.X + Tmp_Width;
-      end;
-
       Tooltip.Set_Tip_Area (Area);
 
       declare
