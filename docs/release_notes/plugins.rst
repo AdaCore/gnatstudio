@@ -1,4 +1,4 @@
-plug-ins and python enhancements
+Plug-ins and python enhancements
 --------------------------------
 
 CodePeer

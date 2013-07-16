@@ -1,5 +1,5 @@
-Cross-refaerences
------------------
+Cross-references
+----------------
 
 New cross-reference engine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
