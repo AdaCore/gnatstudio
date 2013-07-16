@@ -19,6 +19,7 @@ with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Screen;           use Gdk.Screen;
+with Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
 with Glib.Main;            use Glib.Main;
 with Glib.Object;          use Glib.Object;
@@ -26,6 +27,7 @@ with Glib.Properties;      use Glib.Properties;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Main;
 with Gtk.Settings;         use Gtk.Settings;
 with Gtk.Style_Context;    use Gtk.Style_Context;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
@@ -47,6 +49,10 @@ package body Tooltips is
      (Widget  : not null access Gtk_Widget_Record'Class;
       Tooltip : access Tooltips'Class);
    --  Hide or show the tooltip
+
+   function Is_In_Area (X, Y : Gint) return Boolean;
+   --  Return True if the global tooltip is present, mapped, and the pointer
+   --  location given by X,Y is within the area.
 
    function Tooltip_Event_Cb
      (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -160,6 +166,21 @@ package body Tooltips is
          return False;
    end On_Tooltip_Delay;
 
+   ----------------
+   -- Is_In_Area --
+   ----------------
+
+   function Is_In_Area (X, Y : Gint) return Boolean is
+   begin
+      return Global_Tooltip.Get_Mapped
+        and then Global_Tooltip.Area_Is_Set
+        and then not
+          (X < Global_Tooltip.Area.X
+           or else X > Global_Tooltip.Area.X + Global_Tooltip.Area.Width
+           or else Y < Global_Tooltip.Area.Y
+           or else Y > Global_Tooltip.Area.Y + Global_Tooltip.Area.Height);
+   end Is_In_Area;
+
    ------------------
    -- Show_Tooltip --
    ------------------
@@ -168,8 +189,10 @@ package body Tooltips is
      (Widget  : not null access Gtk_Widget_Record'Class;
       Tooltip : access Tooltips'Class)
    is
-      X, Y     : Gint;
-      Settings : Gtk_Settings;
+      X, Y            : Gint;
+      Settings        : Gtk_Settings;
+      Window, Ignored : Gdk_Window;
+      Mask            : Gdk.Types.Gdk_Modifier_Type;
    begin
       if Global_Tooltip = null then
          Global_Tooltip := new Tooltip_Object_Record;
@@ -188,18 +211,21 @@ package body Tooltips is
                 & Global_Tooltip.Timeout'Img);
       end if;
 
-      Widget.Get_Pointer (X, Y);
+      Window := Widget.Get_Window;
+
+      Gdk.Window.Get_Device_Position
+        (Self   => Window,
+         Device => Gtk.Main.Get_Current_Event_Device,
+         X      => X,
+         Y      => Y,
+         Mask   => Mask,
+         Window => Ignored);
+
+      Trace (Me, "Coords: " & X'Img & Y'Img);
 
       --  If still within the current area
 
-      if Global_Tooltip.Get_Mapped
-        and then Global_Tooltip.Area_Is_Set
-        and then not
-          (X < Global_Tooltip.Area.X
-           or else X > Global_Tooltip.Area.X + Global_Tooltip.Area.Width
-           or else Y < Global_Tooltip.Area.Y
-           or else Y > Global_Tooltip.Area.Y + Global_Tooltip.Area.Height)
-      then
+      if Is_In_Area (X, Y) then
          --  Leave the tooltip as is
          return;
       end if;
