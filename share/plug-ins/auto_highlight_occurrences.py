@@ -284,6 +284,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.remove_highlight()
 
         if not entity and not word:
+            self.entity = None
+            self.word = None
             return
 
         self.entity = entity
