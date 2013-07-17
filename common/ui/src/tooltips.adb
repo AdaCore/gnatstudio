@@ -221,8 +221,6 @@ package body Tooltips is
          Mask   => Mask,
          Window => Ignored);
 
-      Trace (Me, "Coords: " & X'Img & Y'Img);
-
       --  If still within the current area
 
       if Is_In_Area (X, Y) then
