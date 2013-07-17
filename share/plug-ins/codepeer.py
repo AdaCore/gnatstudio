@@ -250,7 +250,7 @@ xml_codepeer = """<?xml version="1.0"?>
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
-          <arg>gnatmake</arg>
+          <arg>codepeer-gnatmake</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
@@ -280,7 +280,7 @@ xml_codepeer = """<?xml version="1.0"?>
       <supported-model filter="--subdirs=">gprclean</supported-model>
       <server>Tools_Server</server>
       <substitutions>
-        <substitute src="%builder" dest="gnatmake"/>
+        <substitute src="%builder" dest="codepeer-gnatmake"/>
       </substitutions>
       <extra-args>
         <arg>-margs</arg>
@@ -336,7 +336,7 @@ xml_codepeer = """<?xml version="1.0"?>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>gnatmake</arg>
+          <arg>codepeer-gnatmake</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
@@ -374,6 +374,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
+          <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -391,6 +392,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>ide_progress_bar</arg>
           <arg>-root-only</arg>
           <arg>-P%PP</arg>
+          <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -409,6 +411,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-P%PP</arg>
           <arg>-file</arg>
           <arg>%F</arg>
+          <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -426,6 +429,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
+          <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
     </target>

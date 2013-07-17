@@ -99,11 +99,6 @@ package body CodePeer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
-   procedure Analyze
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Action : CodePeer_Action);
-   --  Helper functions for On_Analyze_xxx callbacks below
-
    procedure On_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
@@ -1100,31 +1095,10 @@ package body CodePeer.Module is
       pragma Unreferenced (Widget, Kernel);
    begin
       Review (Module, Force => False);
-
    exception
       when E : others =>
          Trace (Me, E);
    end On_Run_Analysis_Manually;
-
-   -------------
-   -- Analyze --
-   -------------
-
-   procedure Analyze
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Action : CodePeer_Action) is
-   begin
-      Module.Action := Action;
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
-         Force       => True,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Analyze;
 
    --------------------
    -- On_Analyze_All --
@@ -1134,9 +1108,9 @@ package body CodePeer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      Analyze (Kernel, Run_All);
+      Review (Module, Force => True, Build_Target => "Run CodePeer");
    end On_Analyze_All;
 
    ---------------------
@@ -1147,9 +1121,9 @@ package body CodePeer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      Analyze (Kernel, Run_Project);
+      Review (Module, Force => True, Build_Target => "Run CodePeer Root");
    end On_Analyze_Root;
 
    ---------------------
@@ -1160,9 +1134,9 @@ package body CodePeer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      Analyze (Kernel, Run_File);
+      Review (Module, Force => True, Build_Target => "Run CodePeer File");
    end On_Analyze_File;
 
    --------------------------
@@ -1173,16 +1147,9 @@ package body CodePeer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      Module.Action := Quick_Run;
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
-         Force       => True,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
-
+      Review (Module, Force => True, Build_Target => "Run CodePeer Quickly");
    exception
       when E : others =>
          Trace (Me, E);
@@ -1233,27 +1200,35 @@ package body CodePeer.Module is
       --  Ignore errors on e.g. read-only or non-existent directories.
 
       for J in Objs'Range loop
-         Dirs := Read_Dir (Create_From_Dir (Objs (J), "codepeer"), Dirs_Only);
+         begin
+            Dirs :=
+              Read_Dir (Create_From_Dir (Objs (J), "codepeer"), Dirs_Only);
+         exception
+            when VFS_Directory_Error =>
+               Dirs := null;
+         end;
 
-         for K in Dirs'Range loop
-            declare
-               Base : constant Filesystem_String := Dirs (K).Base_Name;
-            begin
-               if Base = "SCIL"
-                 or else
-                   (Base'Length > Temp_SCIL'Length
-                    and then
-                      Base (Base'First .. Base'First + Temp_SCIL'Length - 1)
-                        = Temp_SCIL)
-               then
-                  Remove_Dir (Dir       => Dirs (K),
-                              Recursive => True,
-                              Success   => Ignore);
-               end if;
-            end;
-         end loop;
+         if Dirs /= null then
+            for K in Dirs'Range loop
+               declare
+                  Base : constant Filesystem_String := Dirs (K).Base_Name;
+               begin
+                  if Base = "SCIL"
+                    or else
+                      (Base'Length > Temp_SCIL'Length
+                       and then
+                         Base (Base'First .. Base'First + Temp_SCIL'Length - 1)
+                           = Temp_SCIL)
+                  then
+                     Remove_Dir (Dir       => Dirs (K),
+                                 Recursive => True,
+                                 Success   => Ignore);
+                  end if;
+               end;
+            end loop;
 
-         Unchecked_Free (Dirs);
+            Unchecked_Free (Dirs);
+         end if;
       end loop;
 
       CodePeer.Shell_Commands.Build_Target_Execute
@@ -1318,7 +1293,7 @@ package body CodePeer.Module is
    begin
       Module.Action := None;
 
-      if (Hook_Data.Status /= 0 and then Action not in CodePeer_Action_Run)
+      if Hook_Data.Status /= 0
         or else Action = None
         or else Hook_Data.Category /= "CodePeer"
       then
@@ -1326,21 +1301,6 @@ package body CodePeer.Module is
       end if;
 
       case Action is
-         when Run_All =>
-            Review (Module, Force => True, Build_Target => "Run CodePeer");
-
-         when Run_Project =>
-            Review
-              (Module, Force => True, Build_Target => "Run CodePeer Root");
-
-         when Run_File =>
-            Review
-              (Module, Force => True, Build_Target => "Run CodePeer File");
-
-         when Quick_Run =>
-            Review
-              (Module, Force => True, Build_Target => "Run CodePeer Quickly");
-
          when Load_UI =>
             Kernel.Set_Build_Mode ("codepeer");
             CodePeer.Module.Bridge.Inspection (Module);

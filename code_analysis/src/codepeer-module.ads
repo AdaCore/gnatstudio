@@ -99,18 +99,10 @@ private
      array (CodePeer.Message_Ranking_Level)
        of GPS.Styles.UI.Style_Access;
 
-   type CodePeer_Action is
-     (None, Run_All, Run_Project, Run_File, Quick_Run, Load_UI);
-   --  Various actions related to codepeer handling:
+   type CodePeer_Action is (None, Load_UI);
+   --  Actions related to codepeer handling:
    --   - None: no action registered
-   --   - Run_All: run "Run CodePeer" target on the whole project tree
-   --   - Run_Project: run "Run CodePeer" target on the root project
-   --   - Run_File: run "Run CodePeer" target on the current file
-   --   - Quick_Run: run "Run CodePeer Quickly" target
    --   - Load_UI: load CodePeer UI
-
-   subtype CodePeer_Action_Run is CodePeer_Action range Run_All .. Quick_Run;
-   --  Used to identify 'Run xxx' actions
 
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
