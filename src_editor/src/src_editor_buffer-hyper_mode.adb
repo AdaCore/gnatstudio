@@ -206,6 +206,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
                      | Annotated_Comment_Text
                      | Character_Text
                      | String_Text
+                     | Number_Text
                      => Highlight := False;
                end case;
                return True;

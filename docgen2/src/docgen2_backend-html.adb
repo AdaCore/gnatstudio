@@ -259,7 +259,8 @@ package body Docgen2_Backend.HTML is
             return "<span class=""comment"">" & Value & "</span>";
          when Character_Text | String_Text =>
             return "<span class=""string"">" & Value & "</span>";
-         when Normal_Text | Partial_Identifier_Text | Operator_Text =>
+         when Normal_Text | Number_Text | Partial_Identifier_Text
+           | Operator_Text =>
             return Value;
       end case;
    end Gen_Tag;

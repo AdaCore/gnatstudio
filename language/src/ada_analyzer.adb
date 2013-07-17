@@ -4505,7 +4505,17 @@ package body Ada_Analyzer is
                Entity := Identifier_Text;
                Casing := Ident_Casing;
 
-               if Is_Optional_Keyword /= null
+               if Is_Digit (Str (1))
+                 or else (Prev_Token = Tok_Pound
+                          and then Is_Hexadecimal_Digit (Str (1)))
+               then
+                  --  Recognize simple cases of numeric values
+                  --  ??? recognizing more cases would require changing
+                  --  Next_Word parsing.
+
+                  Entity := Number_Text;
+
+               elsif Is_Optional_Keyword /= null
                  and then Is_Optional_Keyword (Str (1 .. Str_Len))
                then
                   Entity := Keyword_Text;

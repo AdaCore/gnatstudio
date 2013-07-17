@@ -78,6 +78,7 @@ package Language is
       Partial_Identifier_Text,
       Block_Text,
       Type_Text,
+      Number_Text,
       Keyword_Text,
       Annotated_Keyword_Text,
       Comment_Text,
