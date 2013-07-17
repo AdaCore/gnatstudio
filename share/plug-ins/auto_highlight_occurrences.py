@@ -98,8 +98,16 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.speedbar = None
         self.pref_cache = {}
 
+        self.current_buffer = None
+
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         GPS.Hook("location_changed").add(self.highlight)
+        GPS.Hook("file_closed").add(self.__on_file_closed)
+
+    def __on_file_closed(self, hook, file):
+        if self.current_buffer:
+            if self.current_buffer.file == file:
+                self.current_buffer = None
 
     def __on_preferences_changed(self, hook_name):
         """
@@ -291,6 +299,12 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.entity = entity
         self.word = word
 
+        if self.current_buffer and (self.current_buffer != buffer):
+            # We have just switched buffers: clear the highlighting on the
+            # previous buffer
+            self.stop_highlight(buffer=self.current_buffer)
+            self.remove_highlight(buffer=self.current_buffer)
+
         if self.entity:
             if self.entity.is_subprogram():
                 self.set_style(self.styles["subprogram"])
@@ -303,6 +317,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         else:
             self.set_style(self.styles["unknown"])
 
+        self.current_buffer = buffer
         self.start_highlight(buffer=buffer)
 
 
