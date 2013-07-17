@@ -3269,6 +3269,18 @@ package body Src_Editor_Buffer is
       --  the source view, we don't need to do anything for this.
 
       if Pref = null
+        or else Pref = Preference (Block_Style)
+        or else Pref = Preference (Default_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Block_Text),
+            Block_Color_Tag_Name,
+            Fore_Color => Block_Style.Get_Pref_Fg,
+            Back_Color => Block_Style.Get_Pref_Bg,
+            Font_Desc  => Block_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
         or else Pref = Preference (Type_Style)
         or else Pref = Preference (Default_Style)
       then
@@ -3281,15 +3293,16 @@ package body Src_Editor_Buffer is
       end if;
 
       if Pref = null
-        or else Pref = Preference (Block_Style)
+      --  or else Pref = Preference (Number_Style)
+      --  ??? Number_Style doesn't exist yet
         or else Pref = Preference (Default_Style)
       then
          New_Tag
-           (B.Syntax_Tags (Block_Text),
-            Block_Color_Tag_Name,
-            Fore_Color => Block_Style.Get_Pref_Fg,
-            Back_Color => Block_Style.Get_Pref_Bg,
-            Font_Desc  => Block_Style.Get_Pref_Font);
+           (B.Syntax_Tags (Number_Text),
+            Type_Color_Tag_Name,   --  ??? Change that to Number_Color_Tag_Name
+            Fore_Color => Default_Style.Get_Pref_Fg,
+            Back_Color => Default_Style.Get_Pref_Bg,
+            Font_Desc  => Default_Style.Get_Pref_Font);
       end if;
 
       if Pref = null
