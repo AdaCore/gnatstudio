@@ -2,9 +2,9 @@
 <GPS>
   <perspectives state=" 0" mdi_height=" 706" mdi_width=" 1024" height=" 768" width=" 1024"  >
     <perspective name="Default">
-      <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL" >
-        <Notebook width=" 20%" Tabs="POS_LEFT" >
-          <Child Raised="True" Focus="True" Group=" 106" State="NORMAL" >
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
+        <Notebook width=" 2.00787E+01%" Tabs="POS_LEFT" >
+          <Child Raised="True" Group=" 106" State="NORMAL" >
             <Project_Explorer_Project />
           </Child>
           <Child Group=" 106" State="NORMAL" >
@@ -14,9 +14,9 @@
             <Scenario_View />
           </Child>
         </Notebook>
-        <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
-          <central height=" 80%"  />
-          <Notebook height=" 20%" Tabs="POS_TOP" >
+        <Pane width=" 8.03150E+01%" Orientation="ORIENTATION_VERTICAL" >
+          <central height=" 8.05158E+01%"  />
+          <Notebook height=" 2.00573E+01%" Tabs="POS_TOP" >
             <Child Raised="True" Group=" 107" State="NORMAL" >
               <Message_Window />
             </Child>
@@ -25,36 +25,36 @@
       </Pane>
     </perspective>
     <perspective name="Debug">
-      <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL" >
-        <Notebook height=" 15%" Tabs="POS_TOP" >
-          <Child Raised="True" Group=" 101" State="NORMAL" >
-            <Debugger_Data />
+      <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL">
+        <Notebook height=" 15%" Tabs="POS_TOP">
+          <Child Raised="True" Group=" 101" State="NORMAL">
+            <Debugger_Data  />
           </Child>
         </Notebook>
-        <Pane height=" 85%" Orientation="ORIENTATION_HORIZONTAL" >
-          <Notebook width=" 20%" Tabs="POS_LEFT" >
-            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL" >
-              <Project_Explorer_Project />
+        <Pane height=" 85%" Orientation="ORIENTATION_HORIZONTAL">
+          <Notebook width=" 20%" Tabs="POS_LEFT">
+            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL">
+              <Project_Explorer_Project  />
             </Child>
-            <Child Group=" 106" State="NORMAL" >
-              <Outline_View />
+            <Child Group=" 106" State="NORMAL">
+              <Outline_View  />
             </Child>
-            <Child Group=" 106" State="NORMAL" >
-              <Scenario_View />
+            <Child Group=" 106" State="NORMAL">
+              <Scenario_View  />
             </Child>
           </Notebook>
-          <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL" >
-            <Pane height=" 80%" Orientation="ORIENTATION_HORIZONTAL" >
-              <central width=" 80%"  />
-              <Notebook width=" 20%" Tabs="POS_RIGHT" >
-                <Child Raised="True" Group=" 103" State="NORMAL" >
-                  <Call_Stack />
+          <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL">
+            <Pane height=" 80%" Orientation="ORIENTATION_HORIZONTAL">
+              <central width=" 80%" />
+              <Notebook width=" 20%" Tabs="POS_RIGHT">
+                <Child Raised="True" Group=" 103" State="NORMAL">
+                  <Call_Stack  />
                 </Child>
               </Notebook>
             </Pane>
-            <Notebook height=" 20%" Tabs="POS_TOP" >
-              <Child Raised="True" Group=" 107" State="NORMAL" >
-                <Message_Window />
+            <Notebook height=" 20%" Tabs="POS_TOP">
+              <Child Raised="True" Group=" 107" State="NORMAL">
+                <Message_Window  />
               </Child>
             </Notebook>
           </Pane>
@@ -62,4 +62,8 @@
       </Pane>
     </perspective>
   </perspectives>
+  <desktops>
+    <desktop perspective="Default" >
+    </desktop>
+  </desktops>
 </GPS>
