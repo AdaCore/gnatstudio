@@ -21,6 +21,7 @@ with GNAT.OS_Lib;
 with GNAT.Strings;                     use GNAT.Strings;
 
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -269,10 +270,16 @@ package body GPS.Core_Kernels is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : not null access Core_Kernel_Record'Class) is
+   procedure Initialize
+     (Self : not null access Core_Kernel_Record'Class;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access := null) is
       Handler : Language_Handler;
    begin
-      Self.Symbols := GNATCOLL.Symbols.Allocate;
+      if Symbols /= null then
+         Self.Symbols := Symbols;
+      else
+         Self.Symbols := GNATCOLL.Symbols.Allocate;
+      end if;
       Create_Handler (Handler, Self.Symbols);
       Self.Lang_Handler := Handler;
       Self.Create_Registry (Self.Registry);
