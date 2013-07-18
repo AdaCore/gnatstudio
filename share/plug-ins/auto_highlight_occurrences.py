@@ -111,7 +111,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
     def __on_preferences_changed(self, hook_name):
         """
-        Called whenever one of the preferencles has changed.
+        Called whenever one of the preferences has changed.
         """
 
         changed = False
