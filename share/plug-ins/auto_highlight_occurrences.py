@@ -106,12 +106,12 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
     def __on_file_closed(self, hook, file):
         if self.current_buffer:
-            if self.current_buffer.file == file:
+            if self.current_buffer.file() == file:
                 self.current_buffer = None
 
     def __on_preferences_changed(self, hook_name):
         """
-        Called whenever one of the preferences has changed.
+        Called whenever one of the preferencles has changed.
         """
 
         changed = False
