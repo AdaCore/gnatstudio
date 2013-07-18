@@ -170,10 +170,10 @@ def get_supported_rules (gnatCmd):
 
    return cat
 
-def deactivate (widg):
+def deactivate (widg, self):
    """Utility function to deactivate a widget. Used as callback in foreach loop"""
    widg.set_sensitive(False)
-def activate (widg):
+def activate (widg, self):
    """Utility function to activate a widget. Used as callback in foreach loop"""
    widg.set_sensitive(True)
 
@@ -244,7 +244,7 @@ class rulesEditor(Gtk.Dialog):
       xml = self.main_cat.Xml ("")
       xml = str ("""<?xml version="1.0"?><tool name="Coding_Standard" lines="1" columns="1">%s</tool>""" % (xml))
       self.SwitchesChooser = GPS.SwitchesChooser ("Gnatcheck", xml);
-      self.switchvbox.pack_start (self.SwitchesChooser.pywidget())
+      self.switchvbox.pack_start (self.SwitchesChooser.pywidget(), False, False, 0)
       self.show_all()
 
       # Save - Cancel buttons
@@ -267,10 +267,10 @@ class rulesEditor(Gtk.Dialog):
       """Callback when the file entry changed"""
       name = self.fileEntry.get_text()
       if name == "":
-        self.switchvbox.foreach (deactivate)
+        self.switchvbox.foreach (deactivate, self)
         self.saveButton.set_sensitive(False)
       else:
-        self.switchvbox.foreach (activate)
+        self.switchvbox.foreach (activate, self)
         self.saveButton.set_sensitive(True)
         if os.path.isfile (name):
            f = open (name, "r")
