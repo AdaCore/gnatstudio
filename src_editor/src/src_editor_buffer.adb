@@ -3297,6 +3297,7 @@ package body Src_Editor_Buffer is
       --  ??? Number_Style doesn't exist yet
         or else Pref = Preference (Default_Style)
       then
+         --  ??? Replace Default_Style by Number_Style below
          New_Tag
            (B.Syntax_Tags (Number_Text),
             Number_Color_Tag_Name,
