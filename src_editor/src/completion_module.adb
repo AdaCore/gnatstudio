@@ -853,6 +853,9 @@ package body Completion_Module is
                       (Construct_Db   => Get_Construct_Database (Kernel),
                        Current_File   => Get_Filename (Buffer),
                        Current_Buffer => Data.The_Text);
+
+                  Register_Resolver
+                    (Data.Manager, Completion_Module.Completion_Aliases);
                else
                   Data.Manager := new C_Completion_Manager;
 
@@ -864,8 +867,6 @@ package body Completion_Module is
 
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_History);
-               Register_Resolver
-                 (Data.Manager, Completion_Module.Completion_Aliases);
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Keywords);
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
