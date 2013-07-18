@@ -9975,7 +9975,30 @@ def freeze_xref():
     """
     pass  # implemented in Ada
 
+def freeze_prefs():
+    """
+    Prevents the signal "preferences_changed" from being emitted.
+    One call to thaw_prefs should be made to unfreeze.
+    
+    Freezing/thawing this signal is useful when about to modify a large
+    number of preferences in one batch.
+    
+    .. seealso::
+    
+      :func:`GPS.thaw_prefs`
+    """
+    pass  # implemented in Ada
+    
+def thaw_prefs():
+    """
+    Re-enables the emission of the "preferences_changed"
 
+    .. seealso::
+    
+      :func:`GPS.freeze_prefs`
+    """
+    pass  # implemented in Ada
+    
 def get_build_mode():
     """
     Return the name of the current build mode. Return an empty string if no

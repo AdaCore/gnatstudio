@@ -506,6 +506,11 @@ package body GPS.Kernel.Scripts is
          begin
             Kernel.Databases.Thaw (Lock);
          end;
+      elsif Command = "freeze_prefs" then
+         Kernel.Preferences.Freeze;
+      elsif Command = "thaw_prefs" then
+         Kernel.Preferences.Thaw;
+         GPS.Kernel.Preferences.Emit_Preferences_Changed (Kernel);
       end if;
    end Default_Command_Handler;
 
@@ -1370,6 +1375,13 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "thaw_xref",
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "freeze_prefs",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "thaw_prefs",
          Handler      => Default_Command_Handler'Access);
 
       Register_Command

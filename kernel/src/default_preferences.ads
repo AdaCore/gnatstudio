@@ -69,6 +69,14 @@ package Default_Preferences is
    --  True while we are loading the preferences. This is used to disable
    --  saving the preferences when we are setting their initial value.
 
+   procedure Freeze (Self : not null access Preferences_Manager_Record'Class);
+   procedure Thaw (Self : not null access Preferences_Manager_Record'Class);
+   --  Freeze/Thaw the emission of the preferences_changed signal
+
+   function Is_Frozen
+     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
+   --  Return True iff Self is frozen
+
    ----------------
    -- Preference --
    ----------------
@@ -634,6 +642,10 @@ private
       Loading_Prefs : Boolean := False;
       --  True while we are loading the preferences. This is used to disable
       --  saving the preferences when we are setting their initial value.
+
+      Freeze_Count : Integer := 0;
+      --  How many calls have been made to "Freeze". If 0, this manager is
+      --  not frozen.
    end record;
 
 end Default_Preferences;

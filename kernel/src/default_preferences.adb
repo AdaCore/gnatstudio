@@ -2064,4 +2064,37 @@ package body Default_Preferences is
       end if;
    end Get_Pref;
 
+   ------------
+   -- Freeze --
+   ------------
+
+   procedure Freeze
+     (Self : not null access Preferences_Manager_Record'Class) is
+   begin
+      Self.Freeze_Count := Self.Freeze_Count + 1;
+   end Freeze;
+
+   ----------
+   -- Thaw --
+   ----------
+
+   procedure Thaw
+     (Self : not null access Preferences_Manager_Record'Class) is
+   begin
+      if Self.Freeze_Count > 0 then
+         Self.Freeze_Count := Self.Freeze_Count - 1;
+      end if;
+   end Thaw;
+
+   ---------------
+   -- Is_Frozen --
+   ---------------
+
+   function Is_Frozen
+     (Self : not null access Preferences_Manager_Record'Class)
+      return Boolean is
+   begin
+      return Self.Freeze_Count > 0;
+   end Is_Frozen;
+
 end Default_Preferences;

@@ -106,7 +106,6 @@ package body GPS.Kernel.Preferences is
       Pref : not null access Preference_Record'Class)
    is
       Font : Pango_Font_Description;
-      Data : aliased Preference_Hooks_Args;
    begin
       Self.Nested_Pref_Changed := Self.Nested_Pref_Changed + 1;
       if Pref = Default_Font then
@@ -119,8 +118,8 @@ package body GPS.Kernel.Preferences is
 
       if not Self.Is_Loading_Preferences then
          Trace (Me, "Preference changed: " & Pref.Get_Name);
-         Data.Pref := Default_Preferences.Preference (Pref);
-         Run_Hook (Self.Kernel, Preference_Changed_Hook, Data'Access);
+         Emit_Preferences_Changed
+           (Self.Kernel, Default_Preferences.Preference (Pref));
       end if;
 
       if not Self.Is_Loading_Preferences
@@ -1833,13 +1832,7 @@ package body GPS.Kernel.Preferences is
             Backup_File.Copy (Filename.Full_Name, Success => Backup_Created);
             Manager.Load_Preferences (Filename);
 
-            declare
-               Data : aliased Preference_Hooks_Args;
-            begin
-               --  all preferences changed
-               Data.Pref := null;
-               Run_Hook (Kernel, Preference_Changed_Hook, Data'Access);
-            end;
+            Emit_Preferences_Changed (Kernel, null);
          end if;
       end if;
 
@@ -1942,5 +1935,21 @@ package body GPS.Kernel.Preferences is
          end if;
       end if;
    end Set_Font_And_Colors;
+
+   ------------------------------
+   -- Emit_Preferences_Changed --
+   ------------------------------
+
+   procedure Emit_Preferences_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pref   : Preference := null)
+   is
+      Data : aliased Preference_Hooks_Args;
+   begin
+      if not Kernel.Preferences.Is_Frozen then
+         Data.Pref := Pref;
+         Run_Hook (Kernel, Preference_Changed_Hook, Data'Access);
+      end if;
+   end Emit_Preferences_Changed;
 
 end GPS.Kernel.Preferences;
