@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Language.Cpp;     use Language.Cpp;
 with Xref;             use Xref;
@@ -28,7 +29,7 @@ package body Completion.C.Constructs_Extractor is
 
    function To_Language_Category
      (Db : access General_Xref_Database_Record'Class;
-      E   : General_Entity) return Language_Category;
+      E  : General_Entity) return Language_Category;
    --  Make a simple association between entity categories and construct
    --  categories. This association is known to be inaccurate.
 
@@ -62,12 +63,30 @@ package body Completion.C.Constructs_Extractor is
 
       Db : constant General_Xref_Database := Resolver.Kernel.Databases;
 
-      procedure Add_Proposal
+      procedure Append_Proposal
         (To_List : in out Extensive_List_Pckg.List;
          E       : General_Entity);
       --  Append to the list To_List the proposal E
 
-      procedure Add_Scope_Proposals
+      procedure Append_Proposal_With_Params
+        (To_List : in out Extensive_List_Pckg.List;
+         E       : General_Entity);
+      --  Append to the list To_List one proposal containing all the
+      --  parameters needed to call E. In addition, in order to provide the
+      --  same behavior of Ada completions, one proposal per parameter is
+      --  added to To_List.
+
+      procedure Append_Proposals_Without_Context
+        (E_List    : in out Extensive_List_Pckg.List;
+         Prefix    : String;
+         Threshold : Natural := 500);
+      --  Called when no context is available. It traverses the tree of include
+      --  files associated with the current file collecting global entities.
+      --  For large projects such traversal is too expensive and hence this
+      --  routine stops the traversal after processing the number of entities
+      --  specified in Threshold.
+
+      procedure Append_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.List;
          Scope        : General_Entity;
          Prefix_Token : Token_Record);
@@ -76,11 +95,15 @@ package body Completion.C.Constructs_Extractor is
       --  identifier then all the entities defined in Scope are appended
       --  to To_List.
 
+      function Is_Self_Referenced_Type
+        (E : General_Entity) return Boolean;
+      --  Return true if the type of E is itself
+
       ------------------
       -- Add_Proposal --
       ------------------
 
-      procedure Add_Proposal
+      procedure Append_Proposal
         (To_List : in out Extensive_List_Pckg.List;
          E       : General_Entity)
       is
@@ -97,25 +120,13 @@ package body Completion.C.Constructs_Extractor is
             Is_Param      => False);
 
          Append (To_List, Proposal);
-      end Add_Proposal;
-
-      procedure Add_Proposal_With_Params
-        (To_List : in out Extensive_List_Pckg.List;
-         E       : General_Entity);
-      --  Append to the list To_List one proposal containing all the
-      --  parameters needed to call E. In addition, in order to provide the
-      --  same behavior of Ada completions, one proposal per parameter is
-      --  added to To_List.
-
-      function Is_Self_Referenced_Type
-        (E : General_Entity) return Boolean;
-      --  Return true if the type of E is itself
+      end Append_Proposal;
 
       ------------------------------
       -- Add_Proposal_With_Params --
       ------------------------------
 
-      procedure Add_Proposal_With_Params
+      procedure Append_Proposal_With_Params
         (To_List : in out Extensive_List_Pckg.List;
          E       : General_Entity)
       is
@@ -154,13 +165,13 @@ package body Completion.C.Constructs_Extractor is
                end;
             end loop;
          end;
-      end Add_Proposal_With_Params;
+      end Append_Proposal_With_Params;
 
       -------------------------
       -- Add_Scope_Proposals --
       -------------------------
 
-      procedure Add_Scope_Proposals
+      procedure Append_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.List;
          Scope        : General_Entity;
          Prefix_Token : Token_Record)
@@ -201,7 +212,7 @@ package body Completion.C.Constructs_Extractor is
             --  The last token is a delimiter (dot, scope or dereference)
 
             elsif Prefix_Token.Tok_Type /= Tok_Identifier then
-               Add_Proposal (To_List, E);
+               Append_Proposal (To_List, E);
 
             --  The last token is an identifier. Check if the name of the
             --  entity is a valid prefix
@@ -216,7 +227,7 @@ package body Completion.C.Constructs_Extractor is
                       Nam (Nam'First .. Nam'First + Prefix_Text'Length - 1)
                         = Prefix_Text
                   then
-                     Add_Proposal (To_List, E);
+                     Append_Proposal (To_List, E);
                   end if;
                end;
             end if;
@@ -225,7 +236,96 @@ package body Completion.C.Constructs_Extractor is
          end loop;
 
          Destroy (It);
-      end Add_Scope_Proposals;
+      end Append_Scope_Proposals;
+
+      --------------------------------------
+      -- Append_Proposals_Without_Context --
+      --------------------------------------
+
+      procedure Append_Proposals_Without_Context
+        (E_List    : in out Extensive_List_Pckg.List;
+         Prefix    : String;
+         Threshold : Natural := 500)
+      is
+         E_Count : Natural := 0;
+         --  Entities counter. When this counter passes the Threshold we stop
+         --  searching for proposals.
+
+         package Files_List is new Ada.Containers.Vectors
+           (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
+         Files_Queue : Files_List.Vector;
+         --  Queue of processed files. All include files found as part of
+         --  processing file entities are appended to this queue. We use a
+         --  queue (instead of adding an extra formal to Append_File_Proposals)
+         --  because we have implemented a breadth-first algorithm (instead of
+         --  a depth-first algorithm). That is, sibling files are processed
+         --  before child files. We assume that such traversal gives better
+         --  output to the user when the threshold stops the traversal.
+
+         procedure Append_File_Proposals (File : Virtual_File);
+         --  Traverse all the entities of File searching for entities whose
+         --  name matches Prefix and add them as proposals. For entities
+         --  associated with include file the corresponding file is added
+         --  to the queue of files processed searching for proposals
+
+         ----------------------------
+         --  Append_File_Proposals --
+         ----------------------------
+
+         procedure Append_File_Proposals (File : Virtual_File) is
+
+            function Has_Prefix (Name : String) return Boolean;
+            function Has_Prefix (Name : String) return Boolean is
+            begin
+               return Name'Length >= Prefix'Length
+                 and then
+                   Name (Name'First .. Name'First + Prefix'Length - 1)
+                      = Prefix;
+            end Has_Prefix;
+
+            Cursor : Entities_In_File_Cursor;
+            Decl   : General_Entity_Declaration;
+            E      : General_Entity;
+
+         begin
+            Cursor := Db.Entities_In_File (File);
+            while not At_End (Cursor) loop
+               E_Count := E_Count + 1;
+
+               if E_Count > Threshold then
+                  return;
+               end if;
+
+               E := Get (Cursor);
+
+               if Db.Get_Display_Kind (E) = "include file" then
+                  Decl := Db.Get_Declaration (E);
+
+                  if not Files_Queue.Contains (Decl.Loc.File) then
+                     Files_Queue.Append (Decl.Loc.File);
+                  end if;
+               end if;
+
+               if Db.Is_Global (E) and then Has_Prefix (Db.Get_Name (E)) then
+                  Append_Proposal (E_List, E);
+               end if;
+
+               Next (Cursor);
+            end loop;
+         end Append_File_Proposals;
+
+         File_Index : Files_List.Cursor;
+      begin
+         Files_Queue.Append (Get_File (Context));
+
+         File_Index := Files_Queue.First;
+         while Files_List.Has_Element (File_Index) and E_Count < Threshold loop
+            Append_File_Proposals (Files_List.Element (File_Index));
+            Files_List.Next (File_Index);
+         end loop;
+
+         Files_List.Clear (Files_Queue);
+      end Append_Proposals_Without_Context;
 
       ------------------------
       -- Is_Self_Referenced --
@@ -254,9 +354,8 @@ package body Completion.C.Constructs_Extractor is
       --  Local variables
 
       C_Context  : C_Completion_Context;
-      Expression : Parsed_Expression;
       E_List     : Extensive_List_Pckg.List;
-      Iter       : Entities_In_Project_Cursor;
+      Expression : Parsed_Expression;
       Token      : Token_Record;
 
    --  Start of processing for Get_Completion_Root
@@ -295,13 +394,7 @@ package body Completion.C.Constructs_Extractor is
                                .. Natural (Token.Token_Last));
 
             begin
-               Iter := Db.All_Entities_From_Prefix
-                 (Prefix => Prefix, Is_Partial => True);
-               while not At_End (Iter) loop
-                  Add_Proposal (E_List, Get (Iter));
-                  Next (Iter);
-               end loop;
-               Destroy (Iter);
+               Append_Proposals_Without_Context (E_List, Prefix);
 
                Append
                  (Result.List,
@@ -313,6 +406,7 @@ package body Completion.C.Constructs_Extractor is
                --  will be duplicated in the buffer.
 
                Result.Searched_Identifier := new String'(Prefix);
+               return;
             end;
 
          --  Analyze the context to suggest better proposals
@@ -395,7 +489,7 @@ package body Completion.C.Constructs_Extractor is
                         E := Get (Iter);
 
                         if Db.Is_Subprogram (E) then
-                           Add_Proposal_With_Params
+                           Append_Proposal_With_Params
                              (To_List => E_List,
                               E       => E);
                         end if;
@@ -516,7 +610,7 @@ package body Completion.C.Constructs_Extractor is
                                  end if;
                               end if;
 
-                              Add_Scope_Proposals
+                              Append_Scope_Proposals
                                 (To_List      => E_List,
                                  Scope        => E,
                                  Prefix_Token => Last_Token);
