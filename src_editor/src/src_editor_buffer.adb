@@ -3299,7 +3299,7 @@ package body Src_Editor_Buffer is
       then
          New_Tag
            (B.Syntax_Tags (Number_Text),
-            Type_Color_Tag_Name,   --  ??? Change that to Number_Color_Tag_Name
+            Number_Color_Tag_Name,
             Fore_Color => Default_Style.Get_Pref_Fg,
             Back_Color => Default_Style.Get_Pref_Bg,
             Font_Desc  => Default_Style.Get_Pref_Font);
