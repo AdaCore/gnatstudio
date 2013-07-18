@@ -125,8 +125,6 @@ class Color_Theme_Switcher(object):
                     self.apply_theme(t)
                     break
 
-            GPS.Preference(self.pref_name).set("Custom")
-
     def apply_theme(self, theme):
         colors = ""
 
@@ -150,25 +148,30 @@ class Color_Theme_Switcher(object):
         if v:
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
-        GPS.Preference(self.gtkpref_name).set(colors)
-        GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
+        try:
+           GPS.freeze_prefs()
 
-        default = GPS.Preference("General-Default-Style").get().split("@")[0]
-        font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
+           GPS.Preference(self.gtkpref_name).set(colors)
+           GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
 
-        def subst(s):
-            return s.replace("${font}", default) \
-                    .replace("${editorfont}", font) \
-                    .replace("transparent", "rgba(0,0,0,0)")
+           default = GPS.Preference("General-Default-Style").get().split("@")[0]
+           font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
 
-        for key, v in theme.iteritems():
-            if key in ("name", ) or key[0] == '@':
-                pass
-            elif isinstance(v, str):
-                GPS.Preference(key).set(subst(v))
-            elif isinstance(v, tuple):
-                GPS.Preference(key).set(
-                    "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
+           def subst(s):
+               return s.replace("${font}", default) \
+                       .replace("${editorfont}", font) \
+                       .replace("transparent", "rgba(0,0,0,0)")
+
+           for key, v in theme.iteritems():
+               if key in ("name", ) or key[0] == '@':
+                   pass
+               elif isinstance(v, str):
+                   GPS.Preference(key).set(subst(v))
+               elif isinstance(v, tuple):
+                   GPS.Preference(key).set(
+                       "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
+        finally:
+            GPS.thaw_prefs()
 
         self.__set_gtk_properties()
 
