@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M718-016: GB cannot revert modified or upgrade unmodified builder targets
+  Problem:    Reverting an ada builder target keep it unchanged.
+              Unmodified ada builder target are not automatically updated when
+              targets are updated by GNATbench update.
+  Workaround: Remove manually from targets.xml text file located in
+              your_workspace/.metadata/.plugins/com.adacore.gnatbench.core/
+              builder folder the required builder target elements.
+
 - M711-005: GPS: focus issue after drag-and-drop
   Problem:    When you drag an editor to a different notebook, it loses
               the keyboard focus (which is left to the next window in its
