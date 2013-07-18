@@ -1517,7 +1517,8 @@ package body Build_Configurations is
       File : GNATCOLL.VFS.Virtual_File;
       Load_Builder_Modes : Boolean := True;
       Load_Target_Models : Boolean := True;
-      Load_Targets : Boolean := True)
+      Load_Targets : Boolean := True;
+      From_User : Boolean := True)
    is
       N : Node_Ptr;
       C : Node_Ptr;
@@ -1560,7 +1561,7 @@ package body Build_Configurations is
             --  add targets
             while C /= null loop
                if C.Tag.all = "target" then
-                  Ignore := Load_Target_From_XML (Registry, C, True);
+                  Ignore := Load_Target_From_XML (Registry, C, From_User);
                end if;
                C := C.Next;
             end loop;

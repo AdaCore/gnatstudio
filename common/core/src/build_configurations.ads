@@ -503,7 +503,8 @@ package Build_Configurations is
       File : GNATCOLL.VFS.Virtual_File;
       Load_Builder_Modes : Boolean := True;
       Load_Target_Models : Boolean := True;
-      Load_Targets : Boolean := True);
+      Load_Targets : Boolean := True;
+      From_User : Boolean := True);
    --  fill regitry with all "builder-mode", "target-model", "target" found in
    --  the file
 
