@@ -24,7 +24,7 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gtk-cut"                label="Cut" file="${icons}/svg/cut.svg" />
     <icon id="gps-navigate-forward"   label="Forward" file="${icons}/svg/right.svg" />
     <icon id="gps-navigate-back"      label="Back" file="${icons}/svg/left.svg" />
-    <icon id="gtk-new"                label="New" file="${icons}/svg/document.svg" />
+    <icon id="gtk-new"                label="New" file="${icons}/svg/newdocument.svg" />
     <icon id="gtk-open"               label="Open" file="${icons}/svg/folder.svg" />
     <icon id="gtk-redo"               label="Redo" file="${icons}/svg/redo.svg" />
     <icon id="gtk-save"               label="Save" file="${icons}/svg/save.svg" />
@@ -126,8 +126,8 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-collapseAll"       file="${icons}/9px/collapse_12.png"/>
     <icon id="gps-toggle-links"      file="${icons}/9px/toggle_links_12.png"/>
     <icon id="gps-remove-unselected" file="${icons}/9px/remove_unselected_12.png"/>
-    <icon id="gps-read-only"         file="${icons}/svg/lock.svg"/>
-    <icon id="gps-writable"          file="${icons}/svg/unlock.svg"/>
+    <icon id="gps-read-only"         file="${icons}/svg/lock-12.svg"/>
+    <icon id="gps-writable"          file="${icons}/svg/unlock-12.svg"/>
     <icon id="gps-regexp"            file="${icons}/16px/regexp.png"/>
     <icon id="gps-negate"            file="${icons}/16px/negate.png"/>
 
