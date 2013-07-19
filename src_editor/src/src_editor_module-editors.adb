@@ -127,13 +127,6 @@ package body Src_Editor_Module.Editors is
    overriding procedure Destroy (Prop : in out Editors_Props_Record);
    --  See inherited documentation
 
-   function Get
-     (This   : Src_Editor_Buffer_Factory'Class;
-      Buffer : access Source_Buffer_Record'Class)
-      return Editor_Buffer'Class;
-   --  Wrap a gtk+ buffer into an abstract representation. If Buffer is null,
-   --  Nil_Editor_Buffer is returned
-
    function Create_Editor_Location
      (Buffer   : Src_Editor_Buffer'Class;
       Location : Gtk_Text_Iter) return Src_Editor_Location'Class;
@@ -191,6 +184,13 @@ package body Src_Editor_Module.Editors is
    -------------------------
    -- Src_Editor_Location --
    -------------------------
+
+   overriding function "=" (Left, Right : Src_Editor_Location) return Boolean
+   is
+     (Left.Line = Right.Line
+      and then Left.Column = Right.Column
+      and then String (Left.Buffer.File.Full_Name.all) =
+        String (Right.Buffer.File.Full_Name.all));
 
    overriding function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
@@ -668,11 +668,12 @@ package body Src_Editor_Module.Editors is
          Get_End_Iter (Buffer, Iter2);
          Get_Location (Iter2, Loc2, Iter2, Success);
 
-         if Get_Buffer (Iter1) /= Get_Buffer (Iter2)
-           or else Get_Buffer (Iter1) /= Gtk_Text_Buffer (Buffer)
-         then
+         if Get_Buffer (Iter1) /= Gtk_Text_Buffer (Buffer) then
             raise Editor_Exception
               with -"Locations are not in the correct buffer";
+         elsif Get_Buffer (Iter1) /= Get_Buffer (Iter2) then
+            raise Editor_Exception
+              with -"Locations are from different buffers";
          elsif Compensate_Last_Iter then
             --  All operations that take two iterators stop just before the
             --  second one. This is harder to use in scripts, though, so we
@@ -771,7 +772,6 @@ package body Src_Editor_Module.Editors is
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
          else
             Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
-
             if Box = null then
                if Open_Buffer then
                   Box := Create_File_Editor
@@ -1620,7 +1620,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function File (This : Src_Editor_Buffer) return Virtual_File is
    begin
-      return This.Contents.File;
+      return This.Contents.Buffer.Get_Filename;
    end File;
 
    ----------

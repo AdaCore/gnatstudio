@@ -44,6 +44,13 @@ package Src_Editor_Module.Editors is
    overriding function Buffers
      (This   : Src_Editor_Buffer_Factory) return Buffer_Lists.List;
 
+   function Get
+     (This   : Src_Editor_Buffer_Factory'Class;
+      Buffer : access Source_Buffer_Record'Class)
+      return Editor_Buffer'Class;
+   --  Wrap a gtk+ buffer into an abstract representation. If Buffer is null,
+   --  Nil_Editor_Buffer is returned
+
    ---------------
    -- Scripting --
    ---------------

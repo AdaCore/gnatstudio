@@ -31,8 +31,7 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Cursor_Mark.Set_Visible (True);
    end Add_Multi_Cursor;
 
-   procedure Remove_All_Multi_Cursors (Buffer : Source_Buffer)
-   is
+   procedure Remove_All_Multi_Cursors (Buffer : Source_Buffer) is
    begin
       for Cursor of Buffer.Multi_Cursors_List loop
          Buffer.Delete_Mark (Cursor.Mark);

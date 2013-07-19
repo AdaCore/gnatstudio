@@ -2119,9 +2119,12 @@ package body Src_Editor_Module is
          declare
             Box    : constant Source_Editor_Box :=
                        Get_Source_Box_From_MDI
-                         (Find_Editor (Kernel, File_Data.File));
-            Buffer : constant Source_Buffer := Get_Buffer (Box);
+                (Find_Editor (Kernel, File_Data.File));
+            Buffer : constant Source_Buffer
+--                := (if Box /= null then Get_Buffer (Box) else null);
+              := Get_Buffer (Box);
          begin
+
             if Is_Alnum (File_Data.Character) then
                Add_Typed_Char (Buffer, File_Data.Character);
             elsif File_Data.Character = Backspace then

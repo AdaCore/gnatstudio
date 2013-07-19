@@ -633,6 +633,9 @@ package Src_Editor_Buffer is
    --  Predicate to know if the buffer is in the middle of an internal
    --  insertion.
 
+   procedure Add_Listener_Factory
+     (Factory : Editor_Listener_Factory_Access);
+
    -------------------
    -- Buffer Status --
    -------------------
@@ -1095,6 +1098,11 @@ package Src_Editor_Buffer is
    procedure Disable_Highlighting (Buffer : access Source_Buffer_Record'Class);
    --  Suppress highlighting in the Buffer for a while
 
+   package Listener_Factory_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Factory_Access);
+
+   Listener_Factories : Listener_Factory_Lists.List;
+
 private
 
    procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
@@ -1385,6 +1393,11 @@ private
       end case;
    end record;
 
+   package Listener_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Access);
+
+   type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
+
    --------------------------
    -- Source_Buffer_Record --
    --------------------------
@@ -1672,6 +1685,9 @@ private
 
       Cursor_Column_Memory                  : Gint := 0;
       --  Memory for the horizontal of the cursor when moving from line to line
+
+      Editor_Buffer : Editor_Buffer_Access;
+      Listeners : Listener_Lists.List;
 
       Logical_Timestamp : Integer := -1;
    end record;

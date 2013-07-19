@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -39,6 +38,7 @@ with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with GNATCOLL.Xref;
+use GNATCOLL.Xref;
 
 with Gdk.RGBA;                            use Gdk.RGBA;
 with Glib.Convert;                        use Glib.Convert;
@@ -92,10 +92,12 @@ with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Multi_Cursors;     use Src_Editor_Buffer.Multi_Cursors;
 with Src_Editor_Module;                   use Src_Editor_Module;
+with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Traces;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package body Src_Editor_Buffer is
 
@@ -106,6 +108,9 @@ package body Src_Editor_Buffer is
    use type System.Address;
    use type GNAT.Strings.String_Access;
    use type GNATCOLL.Xref.Visible_Column;
+
+   Editors_Factory :
+   access Src_Editor_Module.Editors.Src_Editor_Buffer_Factory;
 
    Me                   : constant Trace_Handle :=
                             Create ("Source_Editor_Buffer");
@@ -1641,6 +1646,14 @@ package body Src_Editor_Buffer is
          Cursor_Move_Hook (Buffer);
          Buffer.Get_Iter_At_Mark (Iter, Mark);
          Buffer.Cursor_Column_Memory := Get_Line_Offset (Iter);
+
+         for Listener of Buffer.Listeners loop
+            Listener.After_Cursor_Moved
+              (Buffer.Editor_Buffer.New_Location
+                 (Integer (Get_Line (Iter) + 1),
+                  Visible_Column (Get_Line_Offset (Iter) + 1)),
+               not Buffer.Inserting);
+         end loop;
       end if;
 
       for Cursor of Buffer.Multi_Cursors_List loop
@@ -1774,6 +1787,16 @@ package body Src_Editor_Buffer is
 
       Update_All_Column_Memory (Buffer);
 
+      Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
+      for Listener of Buffer.Listeners loop
+         Listener.After_Insert_Text
+           (Buffer.Editor_Buffer.New_Location
+                 (Integer (Get_Line (Iter) + 1),
+               Visible_Column (Get_Line_Offset (Iter) + 1)),
+            not Buffer.Inserting);
+
+      end loop;
+
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -1864,6 +1887,7 @@ package body Src_Editor_Buffer is
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
       pragma Unreferenced (Command);
       Line        : Editable_Line_Type;
+      Col         : Integer;
       User_Action : Action_Type;
       Cursor_Previously_Held : Boolean;
    begin
@@ -1876,6 +1900,7 @@ package body Src_Editor_Buffer is
       Get_Text_Iter (Nth (Params, 1), Pos);
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+      Col := Integer (Get_Line_Offset (Pos) + 1);
 
       --  Move mark of start of re-highlight area into insertion position
 
@@ -1965,6 +1990,14 @@ package body Src_Editor_Buffer is
 
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
+
+      for Listener of Buffer.Listeners loop
+         Listener.Before_Insert_Text
+           (Buffer.Editor_Buffer.New_Location
+              (Integer (Line), Visible_Column (Col)),
+            Text.all,
+            not Buffer.Inserting);
+      end loop;
 
       if Buffer.Inserting then
          return;
@@ -2072,6 +2105,15 @@ package body Src_Editor_Buffer is
 
       Update_All_Column_Memory (Buffer);
 
+      Buffer.Get_Iter_At_Mark (Start_Iter, Buffer.Insert_Mark);
+      for Listener of Buffer.Listeners loop
+         Listener.After_Delete_Range
+           (Buffer.Editor_Buffer.New_Location
+              (Integer (Get_Line (Start_Iter) + 1),
+               Visible_Column (Get_Line_Offset (Start_Iter) + 1)),
+            not Buffer.Inserting);
+      end loop;
+
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);
@@ -2162,6 +2204,18 @@ package body Src_Editor_Buffer is
                                            when Extended => 0);
          Buffer.Multi_Cursors_Delete_Offset := Delete_Offset;
       end if;
+
+      for Listener of Buffer.Listeners loop
+         Listener.Before_Delete_Range
+           (Buffer.Editor_Buffer.New_Location
+              (Integer (Line_Start + 1),
+               Visible_Column (Column_Start + 1)),
+            Buffer.Editor_Buffer.New_Location
+              (Integer (Line_End + 1),
+               Visible_Column (Column_End)),
+            Integer (Delete_Offset),
+            not Buffer.Inserting);
+      end loop;
 
       Editable_Line_Start :=
         Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1));
@@ -3136,6 +3190,24 @@ package body Src_Editor_Buffer is
         (Buffer, Default_Column, False, Empty_Line_Information);
       Buffer.Block_Highlighting_Column :=
         Buffer.Editable_Line_Info_Columns.all'Last;
+
+      if Editors_Factory = null then
+         Editors_Factory :=
+           new Src_Editor_Module.Editors.Src_Editor_Buffer_Factory'
+             (Src_Editor_Module.Editors.Create (Kernel));
+      end if;
+
+      Buffer.Editor_Buffer := new GPS.Editors.Editor_Buffer'Class'
+          (Editors_Factory.Get (Buffer));
+
+      --  Initialize every listener from factories
+      for Factory of Listener_Factories loop
+         Buffer.Listeners.Append
+           (Factory.Create
+              (Buffer.Editor_Buffer.all,
+               Editor_Buffer_Factory (Editors_Factory.all),
+               Core_Kernel (Kernel)));
+      end loop;
    end Initialize;
 
    -------------------
@@ -5323,7 +5395,6 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Name : Virtual_File) is
    begin
       Buffer.Filename := Name;
-
       if not Is_Regular_File (Name) then
          Buffer.Saved_Position := -1;
          Buffer.Save_Complete := False;
@@ -8146,5 +8217,11 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Highlight_Enabled := False;
    end Disable_Highlighting;
+
+   procedure Add_Listener_Factory
+     (Factory : Editor_Listener_Factory_Access) is
+   begin
+      Listener_Factories.Append (Factory);
+   end Add_Listener_Factory;
 
 end Src_Editor_Buffer;

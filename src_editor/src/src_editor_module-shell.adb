@@ -2536,7 +2536,7 @@ package body Src_Editor_Module.Shell is
       --  EditorLocation
 
       Register_Command
-        (Kernel, Constructor_Method, 3, 3, Location_Cmds'Access, EditorLoc);
+        (Kernel, Constructor_Method, 2, 3, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, Comparison_Method, 1, 1, Location_Cmds'Access, EditorLoc);
       Register_Command

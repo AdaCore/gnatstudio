@@ -60,28 +60,91 @@ id_pattern = re.compile(r"[\w0-9_]")
 @interactive("Editor", name="Add multi cursor to all references of entity")
 def mc_all_entity_references():
 
+    editor = GPS.EditorBuffer.get()
+    marks = []
+    overlay = editor.create_overlay("entityrefs_overlay")
+    overlay.set_property(
+        "background", "#37A"
+    )
+
+    def get_word_bounds(loc):
+        loc_id_start = goto_word_start(loc)
+        loc_id_end = goto_word_end(loc)
+        # Check the case when we are at the end of a word
+        if not id_pattern.match(loc.get_char()):
+            ploc = loc.forward_char(-1)
+            # If we are really not in an identifier, exit
+            if not id_pattern.match(ploc.get_char()):
+                return
+            else:
+                loc_id_end = ploc
+
+        return loc_id_start, loc_id_end
+
     def loc_tuple(loc):
         return (loc.line(), loc.column())
 
-    editor = GPS.EditorBuffer.get()
     loc = editor.current_view().cursor()
-    loc_id_start = goto_word_start(loc)
-    loc_id_end = goto_word_end(loc)
+    loc_id_start, loc_id_end = get_word_bounds(loc)
+    mark_start = loc_id_start.create_mark()
+    mark_end = loc_id_end.forward_char().create_mark(left_gravity=False)
 
-    # Check the case when we are at the end of a word
-    if not id_pattern.match(loc.get_char()):
-        ploc = loc.forward_char(-1)
-        # If we are really not in an identifier, exit
-        if not id_pattern.match(ploc.get_char()):
-            return
-        else:
-            loc_id_end = ploc
+    def apply_overlay(editor, mark_start, mark_end, overlay):
+        """
+        Apply overlay overlay between mark_start and mark end
+        if mark_start - mark_end >= 1 char
+        """
+        lstart = mark_start.location()
+        lend = mark_end.location().forward_char(-1)
+        if lend >= lstart:
+            editor.apply_overlay(overlay, lstart, lend)
 
+    def on_edit(hook_name, file_name):
+        """
+        Event handler on insert/delete. Mainly ensures that the current field
+        in alias expansion is highlighted (via the aliases overlay)
+        """
+        if editor == EditorBuffer.get(file_name):
+            print "IN DAS IF"
+            editor.remove_overlay(
+                overlay,
+                editor.beginning_of_buffer(),
+                editor.end_of_buffer()
+            )
+            for mark_start, mark_end in marks:
+                apply_overlay(editor, mark_start, mark_end, overlay)
+
+    def on_move(hook_name, file_name, line, column):
+        """
+        Event handler on cursor move. Gets out of alias expansion mode
+        when the cursor gets out of the zone.
+        """
+        start_loc = mark_start.location()
+        end_loc = mark_end.location()
+        cursor_loc = editor.current_view().cursor()
+        if not (start_loc <= cursor_loc <= end_loc):
+            exit()
+
+    def exit():
+        editor.remove_overlay(
+            overlay,
+            editor.beginning_of_buffer(),
+            editor.end_of_buffer()
+        )
+        editor.remove_all_multi_cursors()
+        Hook("character_added").remove(on_edit)
+        Hook("location_changed").remove(on_move)
+
+    marks.append((mark_start, mark_end))
+    apply_overlay(editor, mark_start, mark_end, overlay)
     cursor_loc_t = loc_tuple(loc)
     word_offset = loc.column() - loc_id_start.column()
     identifier = editor.get_chars(loc_id_start, loc_id_end)
+    print identifier
 
-    entity = Entity(identifier, editor.file(), loc_id_start.line(), loc_id_start.column())
+    entity = Entity(
+        identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
+    )
 
     locs = [EditorLocation(editor, floc.line(), floc.column())
             for floc in entity.references()
@@ -93,6 +156,14 @@ def mc_all_entity_references():
         loc_t = loc_tuple(loc)
         if not (loc_t in locs_set or loc_t == cursor_loc_t):
             locs_set.add(loc_t)
+            s, e = get_word_bounds(loc)
+            ms = s.create_mark()
+            me = e.forward_char().create_mark(left_gravity=False)
+            marks.append((ms, me))
+            apply_overlay(editor, ms, me, overlay)
             editor.add_multi_cursor(loc)
+
+    Hook("character_added").add(on_edit)
+    Hook("location_changed").add(on_move)
 
 GPS.parse_xml(xml_conf)

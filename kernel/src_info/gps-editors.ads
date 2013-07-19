@@ -26,6 +26,7 @@ with GNATCOLL.Xref;    use GNATCOLL.Xref;
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 with GPS.Styles;       use GPS.Styles;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package GPS.Editors is
 
@@ -57,6 +58,13 @@ package GPS.Editors is
 
    type Editor_Overlay is abstract new Controlled with null record;
    Nil_Editor_Overlay : constant Editor_Overlay'Class;
+
+   type Editor_Listener is abstract new Controlled with null record;
+   type Editor_Listener_Access is access all Editor_Listener'Class;
+
+   type Editor_Listener_Factory is abstract new Controlled with null record;
+   type Editor_Listener_Factory_Access is
+     access all Editor_Listener_Factory'Class;
 
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
@@ -102,6 +110,9 @@ package GPS.Editors is
    ---------------------
    -- Editor_Location --
    ---------------------
+
+   overriding function "=" (Left, Right : Editor_Location) return Boolean
+     is abstract;
 
    function Beginning_Of_Line
      (This : Editor_Location) return Editor_Location'Class is abstract;
@@ -682,6 +693,49 @@ package GPS.Editors is
      (This   : Editor_Buffer_Factory) return Buffer_Lists.List is abstract;
    --  Return the list of all buffers
 
+   ---------------------
+   -- Editor_Listener --
+   ---------------------
+
+   procedure Before_Insert_Text
+     (This      : in out Editor_Listener;
+      Location  : Editor_Location'Class;
+      Text      : String := "";
+      From_User : Boolean) is abstract;
+
+   procedure Before_Delete_Range
+     (This           : in out Editor_Listener;
+      Start_Location : Editor_Location'Class;
+      End_Location   : Editor_Location'Class;
+      Offset         : Integer;
+      From_User      : Boolean) is abstract;
+
+   procedure After_Insert_Text
+     (This            : in out Editor_Listener;
+      Cursor_Location : Editor_Location'Class;
+      From_User       : Boolean) is abstract;
+
+   procedure After_Delete_Range
+     (This            : in out Editor_Listener;
+      Cursor_Location : Editor_Location'Class;
+      From_User       : Boolean) is abstract;
+
+   procedure After_Cursor_Moved
+     (This            : in out Editor_Listener;
+      Cursor_Location : Editor_Location'Class;
+      From_User       : Boolean) is abstract;
+
+   -----------------------------
+   -- Editor_Listener_Factory --
+   -----------------------------
+
+   function Create
+     (This : Editor_Listener_Factory;
+      Editor : Editor_Buffer'Class;
+      Factory : Editor_Buffer_Factory'Class;
+      Kernel : Core_Kernel) return Editor_Listener_Access
+      is abstract;
+
 private
 
    -------------------------
@@ -689,6 +743,9 @@ private
    -------------------------
 
    type Dummy_Editor_Location is new Editor_Location with null record;
+
+   overriding function "=" (Left, Right : Dummy_Editor_Location) return Boolean
+     is (True);
 
    overriding function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class;
