@@ -12,7 +12,7 @@ GPS.MDI.GROUP_DEBUGGER_STACK = 103
 GPS.MDI.GROUP_DEBUGGER_DATA = 104
 GPS.MDI.GROUP_VCS_ACTIVITIES = 105
 GPS.MDI.GROUP_VIEW = 106
-GPS.MDI.GROUP_CONSOLES = 107 
+GPS.MDI.GROUP_CONSOLES = 107
 # Must be kept in sync with GPS.Kernel.MDI
 
 GPS.MDI.POSITION_AUTOMATIC = 0
@@ -234,8 +234,9 @@ def in_xml_file(context):
       buffer = EditorBuffer.get(open=False)
       context.in_xml_file = \
          MDI.current() == MDI.get_by_child(buffer.current_view()) \
-         and buffer.file().language ().lower() in ["xml", "html"]
+         and buffer.file().language().lower() in ["xml", "html"]
    return context.in_xml_file
+
 
 def execute_for_all_cursors(editor, mark_fn, extend_selection=False):
     """
@@ -243,12 +244,13 @@ def execute_for_all_cursors(editor, mark_fn, extend_selection=False):
     meaning, the main cursor + every existing multi cursor.
     mark_fn has the prototype def mark_fn(EditorBuffer, EditorMark)
     """
-    main_cursor_mark = editor.get_mark ("insert")
+    main_cursor_mark = editor.get_mark("insert")
     editor.set_multi_cursors_manual_sync()
     mark_fn(editor, main_cursor_mark)
+    editor.current_view().goto(main_cursor_mark.location())
 
     if not extend_selection:
-        mark_fn(editor, editor.get_mark ("selection_bound"))
+        mark_fn(editor, editor.get_mark("selection_bound"))
 
     for mc_mark in editor.get_multi_cursors_marks():
         editor.set_multi_cursors_manual_sync(mc_mark)
