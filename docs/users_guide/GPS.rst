@@ -26,6 +26,7 @@ Functions
 .. autofunction:: execute_action
 .. autofunction:: execute_asynchronous_action
 .. autofunction:: exit
+.. autofunction:: freeze_prefs
 .. autofunction:: freeze_xref
 .. autofunction:: get_build_mode
 .. autofunction:: get_build_output
@@ -49,6 +50,7 @@ Functions
 .. autofunction:: set_busy
 .. autofunction:: set_last_command
 .. autofunction:: supported_languages
+.. autofunction:: thaw_prefs
 .. autofunction:: thaw_xref
 .. autofunction:: unset_busy
 .. autofunction:: version
