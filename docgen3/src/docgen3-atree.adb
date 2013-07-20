@@ -77,35 +77,6 @@ package body Docgen3.Atree is
       E.Discriminants.Append (Value);
    end Append_Discriminant;
 
-   -------------------
-   -- Append_Entity --
-   -------------------
-
-   procedure Append_Entity (E : Entity_Id; Value : Entity_Id) is
-
-      function Check_Unique return Boolean;
-      --  Check that Value is not added twice to the list of entities of E
-
-      function Check_Unique return Boolean is
-         Cursor : EInfo_List.Cursor;
-      begin
-         Cursor := Get_Entities (E).First;
-         while EInfo_List.Has_Element (Cursor) loop
-            if EInfo_List.Element (Cursor) = E then
-               return False;
-            end if;
-
-            EInfo_List.Next (Cursor);
-         end loop;
-
-         return True;
-      end Check_Unique;
-
-   begin
-      pragma Assert (Check_Unique);
-      E.Entities.Append (Value);
-   end Append_Entity;
-
    -----------------------------
    -- Append_Inherited_Method --
    -----------------------------
@@ -135,6 +106,35 @@ package body Docgen3.Atree is
       pragma Assert (not E.Progenitors.Contains (Value));
       E.Progenitors.Append (Value);
    end Append_Progenitor;
+
+   ---------------------
+   -- Append_To_Scope --
+   ---------------------
+
+   procedure Append_To_Scope (E : Entity_Id; Value : Entity_Id) is
+
+      function Check_Unique return Boolean;
+      --  Check that Value is not added twice to the list of entities of E
+
+      function Check_Unique return Boolean is
+         Cursor : EInfo_List.Cursor;
+      begin
+         Cursor := Get_Entities (E).First;
+         while EInfo_List.Has_Element (Cursor) loop
+            if EInfo_List.Element (Cursor) = E then
+               return False;
+            end if;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+
+         return True;
+      end Check_Unique;
+
+   begin
+      pragma Assert (Check_Unique);
+      E.Entities.Append (Value);
+   end Append_To_Scope;
 
    ------------------------
    -- Append_Unique_Elmt --

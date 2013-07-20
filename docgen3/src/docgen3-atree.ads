@@ -192,9 +192,6 @@ private package Docgen3.Atree is
 
    procedure Append_Derivation
      (E : Entity_Id; Value : Entity_Id);
-   procedure Append_Entity
-     (E : Entity_Id; Value : Entity_Id);
-   --  Append Value to the list of entities in the scope of E
    procedure Append_Discriminant
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Inherited_Method
@@ -203,6 +200,9 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Progenitor
      (E : Entity_Id; Value : Entity_Id);
+   procedure Append_To_Scope
+     (E : Entity_Id; Value : Entity_Id);
+   --  Append Value to the list of entities in the scope of E
 
    function Get_Alias
      (E : Entity_Id) return Entity_Id;
@@ -617,10 +617,10 @@ private
 
    pragma Inline (Append_Derivation);
    pragma Inline (Append_Discriminant);
-   pragma Inline (Append_Entity);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
    pragma Inline (Append_Progenitor);
+   pragma Inline (Append_To_Scope);
 
    pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);

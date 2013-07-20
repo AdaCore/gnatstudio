@@ -78,7 +78,7 @@ package body Docgen3 is
       procedure Check_Src_Files is
 
          function Skip_File (File_Index : Files_List.Cursor) return Boolean;
-         --  Return True if if the file Src_Files (File_Index) cannot be
+         --  Return True if the file Src_Files (File_Index) cannot be
          --  processed.
 
          ---------------

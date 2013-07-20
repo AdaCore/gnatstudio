@@ -28,7 +28,7 @@ private package Docgen3.Frontend is
       Tree_Root    : Entity_Id;
       --  Root of the tree of entities
 
-      All_Entities : EInfo_List.Vector;
+      All_Entities : aliased EInfo_List.Vector;
       --  All the entities of Tree_Root. Used by the backend when it needs to
       --  do some processing with all the nodes without traversing the tree
       --  structure.
