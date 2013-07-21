@@ -19,7 +19,6 @@
 --  associated with a single file.
 
 with Ada.Containers.Vectors;
-with Docgen3;           use Docgen3;
 with Docgen3.Atree;     use Docgen3.Atree;
 
 private package Docgen3.Frontend is
