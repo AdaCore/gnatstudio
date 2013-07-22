@@ -247,10 +247,11 @@ def execute_for_all_cursors(editor, mark_fn, extend_selection=False):
     main_cursor_mark = editor.get_mark("insert")
     editor.set_multi_cursors_manual_sync()
     mark_fn(editor, main_cursor_mark)
-    editor.current_view().goto(main_cursor_mark.location())
 
     if not extend_selection:
         mark_fn(editor, editor.get_mark("selection_bound"))
+
+    editor.current_view().goto(main_cursor_mark.location(), extend_selection)
 
     for mc_mark in editor.get_multi_cursors_marks():
         editor.set_multi_cursors_manual_sync(mc_mark)
