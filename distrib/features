@@ -122,7 +122,7 @@ NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
   keyboard. This behavior is now directly available via the new global search
   box in the GPS toolbar.
 
-NF-53-M524-041 Improved indentation of parenthesized expressions (2013-06-20)
+NF-60-M524-041 Improved indentation of parenthesized expressions (2013-06-20)
 
   Extra spaces following an open parenthesis is now taken into account
   when indenting Ada code.
@@ -132,7 +132,7 @@ NF-60-M523-031 GPS: add search field in the global toolbar (2013-05-27)
   A search field is now provided, which will look simultaneously in various
   context (source file names, entities,...).
 
-NF-53-M424-019 Improved indentation of conditional expressions (2013-05-17)
+NF-60-M424-019 Improved indentation of conditional expressions (2013-05-17)
 
   Ada 2012 If-expressions and case-expressions are better handled by the
   indentation engine and in particular extra indentation levels are used for
@@ -151,14 +151,14 @@ NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
   current lines,... in the editors. This is a convenient solution so that
   the current line also shows whether it has an associated error.
 
-NF-53-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
+NF-60-M318-031 GB: warning editing files not part of a GB project (2013-05-13)
 
   When the Ada editor opens a file not part of a GNATbench project, a dialog is
   displayed to inform the user that some features will not work properly until
   the file is part of a GNATbench project.
   This dialog can be disabled through Ada Editor Preferences page.
 
-NF-53-M315-025 WB: enable DFW_ENABLE_ADA_SYMBOL_CHECK at startup (2013-05-17)
+NF-60-M315-025 WB: enable DFW_ENABLE_ADA_SYMBOL_CHECK at startup (2013-05-17)
 
   On Wind River Workbench 3.3 or later, Ada expressions watch feature requires
   DFW_ENABLE_ADA_SYMBOL_CHECK environment variable to be set to 1.
@@ -175,7 +175,7 @@ NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
   before (in particular, you can strike through or underline specific text
   in your editors with just a few lines of code).
 
-NF-53-M301-031 New review classification of CodePeer messages (2013-06-13)
+NF-60-M301-031 New review classification of CodePeer messages (2013-06-13)
 
   When doing a manual review of a CodePeer message, the user can
   no longer change the message ranking, but instead specify a review
@@ -189,7 +189,7 @@ NF-60-M218-036: GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
   the initial location of the new widget. This allows you to put widgets on
   top of the existing GPS consoles for instance.
 
-NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
+NF-60-M205-030 ECL: navigation problems are announced (2013-05-24)
 
   When navigation functions, such as hyperlinks and goto-spec/body, encounter
   problems due to lack of compilation or use of foreign Ada source files, these
@@ -197,20 +197,20 @@ NF-53-M205-030 ECL: navigation problems are announced (2013-05-24)
   option to disable these dialogs with a checkbox on the dialogs themselves,
   for convenience.
 
-NF-53-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
+NF-60-M204-035 ECL: automatic scenario set for Android projects (2013-02-04)
 
   When the new-project wizard creates a new Ada for Android project
   the "OS" scenario variable will be set to "linux" automatically.
   This setting is essential for creating proper library names for subsequent
   use by the Android OS.
 
-NF-53-M129-023 GPS: simplified CodePeer report window (2013-03-11)
+NF-60-M129-023 GPS: simplified CodePeer report window (2013-03-11)
 
   The CodePeer report window has been simplified to improve usability and
   remove unneeded information. Access to the various filters is also
   improved.
 
-NF-53-M129-002 GPS: return block completion (2013-02-04)
+NF-60-M129-002 GPS: return block completion (2013-02-04)
 
   Add "return ... end return;" statement support for complete block
   completion
@@ -247,7 +247,7 @@ NF-60-M110-025 GPS: group spec and body in Outline view (2013-01-10)
   but if this is already the current location in the editor will jump to its
   body instead.
 
-NF-53-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
+NF-60-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
 
   Autofix has always done fixes in lowercases. This enhancement performs
   the fixes on missing constants following the user defined preferences
@@ -258,7 +258,7 @@ NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
   It is now possible to configure whether the Messages window should wrap
   lines, or require horizontal scrolling.
 
-NF-53-M102-006 GPS: move Serialize to /Edit/Rectangle/ (2013-01-11)
+NF-60-M102-006 GPS: move Serialize to /Edit/Rectangle/ (2013-01-11)
 
   This menu was previously in /Edit/Selection, but is more logical in the
   Rectangle submenu since it conceptually applies to a rectangle.
@@ -306,14 +306,14 @@ NF-60-LB26-025 GPS: clickable qualified name in editor status bars (2012-12-13)
   these names is clickable to easily jump to the beginning of the enclosing
   block.
 
-NF-53-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
+NF-60-LB20-022 GPS: Key shortcuts dialog display improved (2012-11-21)
 
   The display of the key shortcuts in this dialog now matches what is
   done for the toplevel menus, using symbols like up arrow for the shift
   key, a caret sign for the control key, and the special symbols for
   Mac keyboards.
 
-NF-53-LB15-037 GPS: EditorOverlay can now highlight a whole line (2012-12-05)
+NF-60-LB15-037 GPS: EditorOverlay can now highlight a whole line (2012-12-05)
 
   The EditorOverlay class can now be used in Python plugins to highlight an
   entire line, through the property "paragraph-background":
@@ -329,22 +329,22 @@ NF-53-LB15-037 GPS: EditorOverlay can now highlight a whole line (2012-12-05)
        GPS.EditorLocation(b, 317, 1),
        GPS.EditorLocation(b, 317, 1))
 
-NF-53-LB04-004 GB: Export GNATbench preferences like CDT (2013-01-22)
+NF-60-LB04-004 GB: Export GNATbench preferences like CDT (2013-01-22)
 
   GNATbench preferences can now be exported via the export preferences wizard
   and imported into another workspace via the import preferences wizard.
 
-NF-53-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
+NF-60-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
 
-NF-53-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
+NF-60-L921-032 GPS: Show protected objects in Outline view (2012-10-16)
 
   Protected and task types/objects and their entries are now visible in
   Outline View. New filter in Outline View "Show tasks, entries, and protected
   types" is used to show/hide these items.
 
-NF-53-L530-025 New cross-reference engine (2013-01-24)
+NF-60-L530-025 New cross-reference engine (2013-01-24)
 
    GPS and GNATbench both have a new xref engine, based on sqlite. This new
    engine is expected to bring extra performance (since the xref database
@@ -352,19 +352,19 @@ NF-53-L530-025 New cross-reference engine (2013-01-24)
    files on the fly), as well as more stability (by using an external process
    to fill the database, and relying on sqlite's very good stability).
 
-NF-53-L510-040 GPS: search in the current selection (2013-01-31)
+NF-60-L510-040 GPS: search in the current selection (2013-01-31)
 
    GPS can now limit Find and replace operations to the currently selected
    text. This is done by selecting the scope "Current Selection" in the
    Search dialog; this scope is automatically selected when launching the
    dialog while a selection exists in the current editor.
 
-NF-53-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
+NF-60-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
   The project wizard now optionally uses gnatname to search for Ada units in
   files with non-standard naming conventions.
 
-NF-53-I430-029 GB: Show Ada content in Project Explorer view (2013-03-28)
+NF-60-I430-029 GB: Show Ada content in Project Explorer view (2013-03-28)
 
   GNATbench now uses the Project Explorer view rather than the now deprecated
   GNAT Project Explorer view.  This is the standard view in Eclipse for viewing
@@ -372,13 +372,13 @@ NF-53-I430-029 GB: Show Ada content in Project Explorer view (2013-03-28)
   any folders/files that are not relevant to the current build configuration.
   Working sets are supported now as well.
 
-NF-53-I424-031 GB: Ada elements now displayed in Properties view (2013-04-22)
+NF-60-I424-031 GB: Ada elements now displayed in Properties view (2013-04-22)
 
   When any element contributed to the Project Explorer or Outline view by
   GNATbench is selected, you will now see properties of that element in the
   Properties view.
 
-NF-53-I320-015 GB: Enhance block completions (2013-01-25)
+NF-60-I320-015 GB: Enhance block completions (2013-01-25)
 
   The block completion facility has been extended to cover additional
   constructs e.g. extended return statement, protected entry bodies,
@@ -394,7 +394,7 @@ NF-60-H605-006 GPS: Visual indication of completions visibility (2013-04-16)
   In smart completions, entities that are not visible in the current scope
   are now displayed in grey.
 
-NF-53-G104-002 WB: Debug tooltip (2013-05-16)
+NF-60-G104-002 WB: Debug tooltip (2013-05-16)
 
   When debugging an ada application, if the mouse cursor is over a variable
   that can be printed by the debugger, the tooltip displays the variable
