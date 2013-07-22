@@ -461,6 +461,7 @@ def kill_line (location = None, count=1):
 ## Moving the cursor
 ################################################
 
+
 @interactive ("Editor", "Source editor", name="goto beginning of buffer")
 def beginning_of_buffer():
    """Move the cursor to the beginning of the buffer"""
@@ -468,20 +469,34 @@ def beginning_of_buffer():
    buffer.current_view().goto (buffer.beginning_of_buffer(),
        should_extend_selection)
 
+
 @interactive ("Editor", "Source editor", name="goto end of buffer")
 def end_of_buffer():
    """Move the cursor to the end of the buffer"""
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.end_of_buffer(), should_extend_selection)
 
-@interactive ("Editor", "Source editor", name="goto beginning of line")
-def goto_beginning_of_line():
-   """Goto the beginning of line"""
-   def goto_bol (buffer, mark):
-       mark.move(mark.location().beginning_of_line())
 
-   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_bol,
-                            extend_selection = should_extend_selection)
+@interactive ("Editor", filter_text_actions, name="goto beginning of line")
+def goto_beginning_of_line():
+    """Goto the beginning of line"""
+    def goto_bol (buffer, mark):
+        mark.move(mark.location().beginning_of_line())
+
+    widget = get_focused_widget()
+    ed = GPS.EditorBuffer.get()
+    from pygps import get_widgets_by_type
+    gtk_ed_view = get_widgets_by_type(Gtk.TextView, ed.current_view().pywidget())[0]
+
+    if type(widget) is Gtk.Entry:
+        widget.set_position(0)
+    elif gtk_ed_view != widget:
+        b = widget.get_buffer()
+        it = b.get_iter_at_mark(b.get_mark("insert"))
+        b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
+    else:
+        execute_for_all_cursors(ed, goto_bol,
+                                extend_selection = should_extend_selection)
 
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
@@ -489,15 +504,28 @@ def end_of_line(file, line):
    loc  = GPS.EditorLocation (buffer, line, 1)
    buffer.current_view().goto (loc.end_of_line() - 1)
 
-@interactive ("Editor", "Source editor", name="goto end of line")
+@interactive("Editor", filter_text_actions, name="goto end of line")
 def goto_end_of_line():
-   """Goto the end of line"""
+    """Goto the end of line"""
 
-   def goto_eol (buffer, mark):
-       mark.move(mark.location().end_of_line())
+    def goto_eol(buffer, mark):
+        mark.move(mark.location().end_of_line())
 
-   execute_for_all_cursors (GPS.EditorBuffer.get(), goto_eol,
-                            extend_selection = should_extend_selection)
+    widget = get_focused_widget()
+    ed = GPS.EditorBuffer.get()
+    from pygps import get_widgets_by_type
+    gtk_ed_view = get_widgets_by_type(Gtk.TextView, ed.current_view().pywidget())[0]
+
+    if type(widget) is Gtk.Entry:
+        widget.set_position(len(widget.props.text))
+    elif gtk_ed_view != widget:
+        b = widget.get_buffer()
+        it = b.get_iter_at_mark(b.get_mark("insert"))
+        it.forward_to_line_end()
+        b.place_cursor(it)
+    else:
+        execute_for_all_cursors (GPS.EditorBuffer.get(), goto_eol,
+                                 extend_selection = should_extend_selection)
 
 def is_space (char):
    return char == ' ' or char == '\t'

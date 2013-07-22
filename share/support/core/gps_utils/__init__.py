@@ -3,6 +3,7 @@
 
 from GPS import *
 import types
+from gi.repository import Gtk
 
 import GPS
 GPS.MDI.GROUP_DEFAULT = 0
@@ -21,6 +22,16 @@ GPS.MDI.POSITION_TOP = 2
 GPS.MDI.POSITION_LEFT = 3
 GPS.MDI.POSITION_RIGHT = 4
 # Must be kept in sync with Gtkada.MDI
+
+
+def get_focused_widget():
+    toplevel = GPS.MDI.current().pywidget().get_toplevel()
+    return toplevel.get_focus()
+
+
+def filter_text_actions(context):
+    ret = type(get_focused_widget()) in [Gtk.TextView, Gtk.Entry]
+    return ret
 
 
 def save_dir(fn):
