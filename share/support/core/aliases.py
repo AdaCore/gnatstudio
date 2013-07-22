@@ -1,3 +1,9 @@
+"""
+This file provides the core functionnality for interactive aliases expansion
+in GPS
+"""
+
+
 from GPS import *
 from gps_utils import *
 from itertools import izip_longest
@@ -24,8 +30,11 @@ Preference(color_pref_name).create(
 
 
 def get_paragraph_color():
+    """
+    Get the preference corresponding to paragraph background
+    color, and turn it into an hex string
+    """
     pref_string = GPS.Preference("Src-Editor-Reference-Style").get()
-    print pref_string
     c = Color(
         pref_string.split("@")[2]
     )
@@ -33,6 +42,9 @@ def get_paragraph_color():
 
 
 def get_comments_colors():
+    """
+    Get the preference corresponding to comment color
+    """
     _, c1, c2 = GPS.Preference("Src-Editor-Comments-Variant")\
                    .get().split("@")
     if c2 == "white" or c2 == "rgb(255,255,255)":
