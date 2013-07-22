@@ -138,6 +138,14 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="c++"/>
     <compiler lang="asm"/>
   </toolchain>
+
+  <toolchain name="codepeer">
+    <debugger/>
+    <cpp_filt/>
+    <compiler lang="c"/>
+    <compiler lang="c++"/>
+    <compiler lang="asm"/>
+  </toolchain>
 </GPS>
 """
 
