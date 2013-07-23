@@ -1467,7 +1467,7 @@ package body Builder_Facility_Module is
       P    : constant Target_Properties := Get_Properties (Target);
       List : constant String := To_String (P.Output_Parsers);
    begin
-      if Has_Parser (List, End_Of_Build_Name) then
+      if List = "" or else Has_Parser (List, End_Of_Build_Name) then
          Builder_Module_ID.Builder.Set_Parsers (Get_Name (Target), List);
       else
          --  Force adding end_of_build parser to parser list
