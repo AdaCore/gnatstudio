@@ -139,10 +139,10 @@ NF-60-M424-019 Improved indentation of conditional expressions (2013-05-17)
   each case branch.
 
 NF-60-M411-022 GPS: Aliases expansion directly in editor (2013-06-01)
-  
+
   The aliases expansion feature now works directly in-editor, without presenting
   the user a dialog for aliases with parameters. The user progresses through the
-  fields directly in the editor via the Ctrl+Tab shortcut. Visual feedback is 
+  fields directly in the editor via the Ctrl+Tab shortcut. Visual feedback is
   provided for the current field via highlighting.
 
 NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
@@ -385,7 +385,7 @@ NF-60-I320-015 GB: Enhance block completions (2013-01-25)
   variant parts inside record declarations.
 
 NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
-  
+
   Aliases can now be completed and expanded by the regular auto-completion
   mechanism.
 
