@@ -1717,6 +1717,31 @@ package body Build_Command_Utils is
       return Result;
    end To_Parser_List;
 
+   ----------------
+   -- Has_Parser --
+   ----------------
+
+   function Has_Parser
+     (Parser_List : String;
+      Parser_Name : String) return Boolean
+   is
+      Parsers : List := To_Parser_List (Parser_List);
+      Node    : List_Node := First (Parsers);
+      Found   : Boolean := False;
+   begin
+      while Node /= Null_Node loop
+         if Data (Node) = Parser_Name then
+            Found := True;
+            exit;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      Free (Parsers);
+      return Found;
+   end Has_Parser;
+
    Default_Parsers : constant List := To_Parser_List (Default_Parser_Names);
 
    ----------------------

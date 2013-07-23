@@ -377,6 +377,11 @@ package Build_Command_Utils is
    --  Create new chain of Tools_Output_Parsers.
    --  Result should be deallocated after use
 
+   function Has_Parser
+     (Parser_List : String;
+      Parser_Name : String) return Boolean;
+   --  Check if list of parser contains given parser
+
    procedure Set_Parsers
      (Self        : access Builder_Context_Record;
       Target_Name : String;

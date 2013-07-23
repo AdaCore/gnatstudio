@@ -93,6 +93,8 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & (-"_Build") & '/';
    --  -"Build"
 
+   End_Of_Build_Name : constant String := "end_of_build";
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Any_Type, Any_Type_Access);
 
@@ -1462,10 +1464,16 @@ package body Builder_Facility_Module is
    ----------------------------
 
    procedure Set_Parsers_For_Target (Target : Target_Access) is
-      P : constant Target_Properties := Get_Properties (Target);
+      P    : constant Target_Properties := Get_Properties (Target);
+      List : constant String := To_String (P.Output_Parsers);
    begin
-      Builder_Module_ID.Builder.Set_Parsers
-        (Get_Name (Target), To_String (P.Output_Parsers));
+      if Has_Parser (List, End_Of_Build_Name) then
+         Builder_Module_ID.Builder.Set_Parsers (Get_Name (Target), List);
+      else
+         --  Force adding end_of_build parser to parser list
+         Builder_Module_ID.Builder.Set_Parsers
+           (Get_Name (Target), List & " " & End_Of_Build_Name);
+      end if;
    end Set_Parsers_For_Target;
 
    -----------------
@@ -1853,7 +1861,7 @@ package body Builder_Facility_Module is
       Register_Output_Parser
         (Builder_Module_ID.Output_Collector'Access, "output_collector");
       Register_Output_Parser
-        (Builder_Module_ID.Build_Hook'Access, "end_of_build");
+        (Builder_Module_ID.Build_Hook'Access, End_Of_Build_Name);
 
       Builder_Module_ID.Output_Collector.Set (Builder);
       Builder_Module_ID.Location_Parser.Set (Builder);
