@@ -98,6 +98,8 @@ with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
 with Traces;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
+with Gtk.Widget; use Gtk.Widget;
+with Gtk.Window; use Gtk.Window;
 
 package body Src_Editor_Buffer is
 
@@ -7399,8 +7401,8 @@ package body Src_Editor_Buffer is
       --  it has been properly checked when the context was created, and we
       --  just check the current module from there.
       return not Completion_Module.In_Smart_Completion
-        and then GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
-        Src_Editor_Module_Id;
+        and then GPS.Kernel.Modules.Module_ID
+          (Get_Creator (Ctxt)) = Src_Editor_Module_Id;
    end Filter_Matches_Primitive;
 
    ----------

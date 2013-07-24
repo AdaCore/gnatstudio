@@ -95,4 +95,8 @@ package GPS.Main_Window is
    --  Info is an extra information to be displayed, in addition of the name
    --  of the root project which is always displayed.
 
+   function Is_Any_Menu_Open
+     (Window : access GPS_Window_Record) return Boolean;
+   --  Returns True if any of the main menu bar's menus are visible
+
 end GPS.Main_Window;

@@ -428,6 +428,15 @@ package body GPS.Main_Window is
       Menu_Item : Gtk_Menu_Item;
       Tool_Item : Gtk_Separator_Tool_Item;
 
+      procedure Init_Menu;
+      procedure Init_Menu is
+      begin
+         Append (Main_Window.Menu_Bar, Menu_Item);
+         Gtk_New (Menu);
+         Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
+         Set_Submenu (Menu_Item, Menu);
+      end Init_Menu;
+
    begin
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
@@ -476,40 +485,22 @@ package body GPS.Main_Window is
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_File");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Edit");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Project");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Build");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Debug");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Tools");
-      Append (Main_Window.Menu_Bar, Menu_Item);
-      Gtk_New (Menu);
-      Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-      Set_Submenu (Menu_Item, Menu);
+      Init_Menu;
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Window");
       Append (Main_Window.Menu_Bar, Menu_Item);
@@ -1343,5 +1334,22 @@ package body GPS.Main_Window is
          Get_Project (Window.Kernel).Name &
          Remote_Str & " project)" & Info_Str);
    end Reset_Title;
+
+   function Is_Any_Menu_Open
+     (Window : access GPS_Window_Record) return Boolean
+   is
+      use Gtk.Widget.Widget_List;
+      L : Glist := First (Window.Menu_Bar.Get_Children);
+      Menu : Gtk_Widget;
+   begin
+      while L /= Null_List loop
+         Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
+         L := Next (L);
+         if Menu.Is_Visible then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Is_Any_Menu_Open;
 
 end GPS.Main_Window;

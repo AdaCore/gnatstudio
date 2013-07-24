@@ -66,6 +66,7 @@ with Traces;
 
 with XML_Utils;               use XML_Utils;
 with XML_Parsers;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body KeyManager_Module is
 
@@ -1172,12 +1173,13 @@ package body KeyManager_Module is
                elsif Command.Command /= null then
                   Compute_Context;
 
-                  if Execute_In_Background
-                     (Kernel  => Kernel,
-                      Action  => Command,
-                      Context => Context,
-                      Event   => Event,
-                      Repeat  => Keymanager_Module.Repeat_Count)
+                  if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
+                    and then Execute_In_Background
+                      (Kernel  => Kernel,
+                       Action  => Command,
+                       Context => Context,
+                       Event   => Event,
+                       Repeat  => Keymanager_Module.Repeat_Count)
                   then
                      if Keymanager_Module.Last_Command /=
                        Cst_String_Access (Binding.Action)
