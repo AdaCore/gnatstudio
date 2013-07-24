@@ -140,10 +140,10 @@ NF-60-M424-019 Improved indentation of conditional expressions (2013-05-17)
 
 NF-60-M411-022 GPS: Aliases expansion directly in editor (2013-06-01)
 
-  The aliases expansion feature now works directly in-editor, without presenting
-  the user a dialog for aliases with parameters. The user progresses through the
-  fields directly in the editor via the Ctrl+Tab shortcut. Visual feedback is
-  provided for the current field via highlighting.
+  The aliases expansion feature now works directly in-editor, without
+  presenting the user a dialog for aliases with parameters. The user progresses
+  through the fields directly in the editor via the Ctrl+Tab shortcut. Visual
+  feedback is provided for the current field via highlighting.
 
 NF-60-M329-013 GPS: translucent highlighting colors (2013-03-29)
 
@@ -183,7 +183,7 @@ NF-60-M301-031 New review classification of CodePeer messages (2013-06-13)
   added and new filter was added for CodePeer Report view to manage visibility
   of messages by review status.
 
-NF-60-M218-036: GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
+NF-60-M218-036 GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
 
   The python function GPS.MDI.add now has additional parameters to specify
   the initial location of the new widget. This allows you to put widgets on
@@ -384,15 +384,15 @@ NF-60-I320-015 GB: Enhance block completions (2013-01-25)
   constructs e.g. extended return statement, protected entry bodies,
   variant parts inside record declarations.
 
-NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
-
-  Aliases can now be completed and expanded by the regular auto-completion
-  mechanism.
-
 NF-60-H605-006 GPS: Visual indication of completions visibility (2013-04-16)
 
   In smart completions, entities that are not visible in the current scope
   are now displayed in grey.
+
+NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
+
+  Aliases can now be completed and expanded by the regular auto-completion
+  mechanism.
 
 NF-60-G104-002 WB: Debug tooltip (2013-05-16)
 
