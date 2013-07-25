@@ -54,6 +54,17 @@ package body GNAT.Expect.TTY is
    begin
       --  If we haven't already closed the process
       if Descriptor.Process /= System.Null_Address then
+         --  Send a Ctrl-C to the process first. This way, if the
+         --  launched process is a "sh" or "cmd", the child processes
+         --  will get terminated as well. Otherwise, terminating the
+         --  main process brutally will leave the children running.
+         --
+         --  Note, special characters are sent to terminal to generate signal,
+         --  thus file descriptors must be opened.
+
+         Interrupt (Descriptor);
+         delay (0.05);
+
          if Descriptor.Input_Fd /= Invalid_FD then
             Close (Descriptor.Input_Fd);
          end if;
@@ -67,13 +78,6 @@ package body GNAT.Expect.TTY is
          if Descriptor.Output_Fd /= Invalid_FD then
             Close (Descriptor.Output_Fd);
          end if;
-
-         --  Send a Ctrl-C to the process first. This way, if the
-         --  launched process is a "sh" or "cmd", the child processes
-         --  will get terminated as well. Otherwise, terminating the
-         --  main process brutally will leave the children running.
-         Interrupt (Descriptor);
-         delay (0.05);
 
          Terminate_Process (Descriptor.Process);
          Status := Waitpid (Descriptor.Process);
