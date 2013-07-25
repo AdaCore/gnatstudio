@@ -2027,6 +2027,7 @@ package body GPS.Kernel is
       Kernel.Messages.Insert (Text, Add_LF, Mode);
    exception
       when E : Constraint_Error =>
+         Trace (Me, "Exception when inserting the follwing message: " & Text);
          Trace (Me, E);
    end Insert;
 
