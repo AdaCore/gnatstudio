@@ -11,7 +11,7 @@ See menu Prove.
 ## No user customization below this line
 ############################################################################
 
-import GPS, os_utils, os.path, tool_output, re
+import GPS, os_utils, os.path, tool_output, re, gps_utils
 
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
@@ -529,20 +529,6 @@ def is_subp_context(self):
        body or declaration."""
     return is_subp_decl_context(self) or is_subp_body_context(self)
 
-def is_ada_file_context(self):
-    """Check whether the given context is the context of an Ada file. This is
-    used to check whether one can do "Prove File" although it is a necessary,
-    but not sufficient condition (e.g. one cannot run gnatprove on a spec file
-    which has a body)."""
-    # self.file() may raise an exception even if the context is a
-    # GPSFileContext, so we wrap the whole thing in a except block
-    try:
-        return isinstance (self, GPS.FileContext) \
-            and self.file() \
-            and self.file().language().lower() == "ada"
-    except:
-        return False
-
 def is_msg_context(self):
     """This is the context in which "Show Path" may appear."""
     return isinstance(self, GPS.FileContext)
@@ -646,7 +632,7 @@ class GNATProve_Plugin:
         GPS.Menu.create(
             menu_prefix + "/" + prove_file,
             on_prove_file,
-            filter = is_ada_file_context)
+            filter = gps_utils.in_ada_file)
         GPS.Menu.create(
             menu_prefix + "/" + clean_up,
             on_clean_up)
@@ -655,13 +641,13 @@ class GNATProve_Plugin:
             on_clear_highlighting)
         GPS.Contextual(prefix + "/" + prove_file).create(
             on_activate = on_prove_file,
-            filter = is_ada_file_context)
+            filter = gps_utils.in_ada_file)
         GPS.Contextual(prefix + "/" + prove_line).create(
             on_activate = on_prove_line,
-            filter = is_ada_file_context)
+            filter = gps_utils.in_ada_file)
         GPS.Contextual(prefix + "/" + prove_subp).create(
             on_activate = on_prove_subp,
-            filter = is_ada_file_context)
+            filter = gps_utils.in_ada_file)
         GPS.parse_xml(xml_gnatprove)
         self.messages = []
         self.trace_msg = None
