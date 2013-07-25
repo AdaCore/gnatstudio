@@ -2025,6 +2025,9 @@ package body GPS.Kernel is
       Mode   : Message_Type := Info) is
    begin
       Kernel.Messages.Insert (Text, Add_LF, Mode);
+   exception
+      when E : Constraint_Error =>
+         Trace (Me, E);
    end Insert;
 
    -----------------
