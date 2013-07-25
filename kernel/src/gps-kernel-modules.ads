@@ -94,10 +94,6 @@ package GPS.Kernel.Modules is
    type Module_ID_Record is new Customizable_Module_Record with private;
    type Module_ID is access all Module_ID_Record'Class;
 
-   procedure Destroy (Id : in out Module_ID_Record) is null;
-   --  Free the memory associated with the module. By default, this does
-   --  nothing.
-
    function Get_Name (Module : Module_ID) return String;
    --  Return the name of the module
 

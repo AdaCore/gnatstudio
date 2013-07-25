@@ -1522,7 +1522,7 @@ package body Build_Command_Utils is
    -- Destroy --
    -------------
 
-   procedure Destroy (Self : access Builder_Context_Record) is
+   overriding procedure Destroy (Self : in out Builder_Context_Record) is
    begin
       for T in Target_Output_Type loop
          Self.Outputs (T).Clear;

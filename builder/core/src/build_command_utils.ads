@@ -388,7 +388,7 @@ package Build_Command_Utils is
       Parser_List : String);
    --  Assign parser name list to given target
 
-   procedure Destroy (Self : access Builder_Context_Record);
+   overriding procedure Destroy (Self : in out Builder_Context_Record);
    --  Cleanup internal data
 
    function Expand_Command_Line

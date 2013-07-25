@@ -125,6 +125,10 @@ package GPS.Core_Kernels is
    type Abstract_Module_Record is abstract tagged limited null record;
    type Abstract_Module is access all Abstract_Module_Record'Class;
 
+   procedure Destroy (Id : in out Abstract_Module_Record) is null;
+   --  Free the memory associated with the module. By default, this does
+   --  nothing.
+
    procedure Register_Module
      (Kernel : access Core_Kernel_Record'Class;
       Module : not null Abstract_Module);
