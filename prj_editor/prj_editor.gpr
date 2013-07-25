@@ -5,6 +5,7 @@ with "../toolchains_editor/ui/toolchains_ui";
 with "../widgets/widgets";
 with "../vsearch/vsearch";
 with "../shared";
+with "prj_core";
 
 project Prj_Editor is
 
