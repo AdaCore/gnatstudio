@@ -211,6 +211,14 @@ package GPS.Project_Properties is
       Name   : String) return Attribute_Description_Access;
    --  Find the description of an attribute given its package and name
 
+   function New_Attribute_Description
+     (Module  : access Base_Properties_Module;
+      Indexed : Boolean)
+      return Attribute_Description_Access;
+   --  Create new empty Attribute_Description (Indexed) record.
+   --  Derived modules could ovveride it to return extended version of
+   --  description
+
 private
 
    type Base_Properties_Module (Kernel : access Core_Kernel_Record'Class) is

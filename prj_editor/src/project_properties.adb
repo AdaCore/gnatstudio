@@ -148,6 +148,11 @@ package body Project_Properties is
    type Properties_Module_ID_Record is new Base_Properties_Module
      with null record;
 
+   overriding function New_Attribute_Description
+     (Module  : access Properties_Module_ID_Record;
+      Indexed : Boolean)
+      return Attribute_Description_Access;
+
    type Properties_Module_ID_Access
      is access all Properties_Module_ID_Record'Class;
    Properties_Module_ID : Properties_Module_ID_Access;
@@ -4477,5 +4482,19 @@ package body Project_Properties is
         (Project_Information (Context.Context), Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
+
+   -------------------------------
+   -- New_Attribute_Description --
+   -------------------------------
+
+   overriding function New_Attribute_Description
+     (Module  : access Properties_Module_ID_Record;
+      Indexed : Boolean)
+      return Attribute_Description_Access
+   is
+      pragma Unreferenced (Module);
+   begin
+      return new Editable_Attribute_Description (Indexed);
+   end New_Attribute_Description;
 
 end Project_Properties;

@@ -275,7 +275,9 @@ package body GPS.Project_Properties is
    is
       S   : Attribute_Page_Section renames
         Module.Pages (Page).Sections (Section);
-      Tmp : Attribute_Description_List;
+      Tmp  : Attribute_Description_List;
+      Self : Base_Properties_Module'Class renames
+        Base_Properties_Module'Class (Module.all);
    begin
       if S.Attributes /= null then
          for A in S.Attributes'Range loop
@@ -294,7 +296,8 @@ package body GPS.Project_Properties is
          S.Attributes := new Attribute_Description_Array (1 .. 1);
       end if;
 
-      S.Attributes (S.Attributes'Last) := new Attribute_Description (Indexed);
+      S.Attributes (S.Attributes'Last) :=
+        Self.New_Attribute_Description (Indexed);
       S.Attributes (S.Attributes'Last).Name := new String'(Name);
       S.Attributes (S.Attributes'Last).Pkg  := new String'(Pkg);
 
@@ -538,26 +541,32 @@ package body GPS.Project_Properties is
    is
       Typ : constant Attribute_Type :=
         Get_Attribute_Type_From_Description (Attr, Index);
+      Result : GNAT.Strings.String_Access;
    begin
       case Typ.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
             | Attribute_As_Directory =>
-            return Typ.Default.all;
+            Result := Typ.Default;
 
          when Attribute_As_Static_List =>
             for S in Typ.Static_Default'Range loop
                if Typ.Static_Default (S) then
-                  return Typ.Static_List (S).all;
+                  Result := Typ.Static_List (S);
+                  exit;
                end if;
             end loop;
 
          when Attribute_As_Dynamic_List =>
-            return Typ.Dynamic_Default.all;
+            Result := Typ.Dynamic_Default;
       end case;
 
-      return "";
+      if Result = null then
+         return "";
+      else
+         return Result.all;
+      end if;
    end Get_Default_Value;
 
    ----------------------------
@@ -757,6 +766,20 @@ package body GPS.Project_Properties is
             return False;
       end case;
    end Is_Any_String;
+
+   -------------------------------
+   -- New_Attribute_Description --
+   -------------------------------
+
+   function New_Attribute_Description
+     (Module  : access Base_Properties_Module;
+      Indexed : Boolean)
+      return Attribute_Description_Access
+   is
+      pragma Unreferenced (Module);
+   begin
+      return new Attribute_Description (Indexed);
+   end New_Attribute_Description;
 
    -----------
    -- Pages --
