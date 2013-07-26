@@ -588,7 +588,7 @@ def is_msg_context(self):
     return isinstance(self, GPS.FileContext)
 
 # It's more convenient to define these callbacks outside of the plugin class
-def on_clear_highlighting(self):
+def on_clear_highlighting():
     gnatprove_plug.clear_highlighting()
 
 def mk_loc_string (sloc):
@@ -613,10 +613,10 @@ def subprogram_start(cursor):
    else:
        return None
 
-def compute_subp_sloc(self):
+def compute_subp_sloc():
     """Return the location of the declaration of the subprogram that we are
        currently in"""
-    curloc = self.location()
+    curloc = GPS.current_context().location()
     buf = GPS.EditorBuffer.get(curloc.file())
     edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
     start_loc = subprogram_start(edloc)
@@ -641,7 +641,7 @@ def compute_subp_sloc(self):
     else:
         return None
 
-def on_prove_subp(self):
+def on_prove_subp():
     """execute the "prove subprogram" action on the the given subprogram entity
     """
     # The argument --limit-subp is not defined in the prove_subp build target,
@@ -649,9 +649,9 @@ def on_prove_subp(self):
     # A mild consequence is that --limit-subp does not appear in the editable
     # box shown to the user, even if appears in the uneditable argument list
     # displayed below it.
-    loc = compute_subp_sloc(self)
+    loc = compute_subp_sloc()
     if loc:
-        target = GPS.BuildTarget(prove_subp)
+        target = GPS.BuildTarget("Prove Subprogram")
         target.execute(
             extra_args="--limit-subp="+mk_loc_string (loc),
             synchronous=False)
