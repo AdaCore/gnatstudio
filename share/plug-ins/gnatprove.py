@@ -265,20 +265,74 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>--clean</arg>
        </command-line>
     </target>
+
+    <action name="Prove All" category="GNATprove" output="none">
+       <shell lang="python">GPS.BuildTarget("Prove All").execute(synchronous=False)</shell>
+    </action>
+    <action name="Prove Root Project" category="GNATprove" output="none">
+       <shell lang="python">GPS.BuildTarget("Prove Root Project").execute(synchronous=False)</shell>
+    </action>
+    <action name="Prove File" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">GPS.BuildTarget("Prove File").execute(synchronous=False)</shell>
+    </action>
+    <action name="Prove Line" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">GPS.BuildTarget("Prove Line").execute(synchronous=False)</shell>
+    </action>
+    <action name="Clean Proofs" category="GNATprove" output="none">
+        <shell lang="python">GPS.BuildTarget("Clean Proofs").execute(synchronous=False)</shell>
+    </action>
+    <action name="Prove Subprogram" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">gnatprove.on_prove_subp()</shell>
+    </action>
+    <action name="Remove Editor Highlighting" category="GNATprove" output="none">
+       <shell lang="python">gnatprove.on_clear_highlighting()</shell>
+    </action>
+
+    <submenu before="Window">
+      <Title>_Prove</Title>
+        <menu action="Prove All">
+          <Title>Prove All</Title>
+        </menu>
+        <menu action="Prove Root Project">
+          <Title>Prove Root Project</Title>
+        </menu>
+        <menu action="Prove File">
+          <Title>Prove File</Title>
+        </menu>
+        <menu action="Clean Proofs">
+          <Title>Clean Proofs</Title>
+        </menu>
+        <menu action="Remove Editor Highlighting">
+          <Title>Remove Editor Highlighting</Title>
+        </menu>
+    </submenu>
+
+    <contextual action="Prove File">
+      <Title>Prove/Prove File</Title>
+    </contextual>
+    <contextual action="Prove Line">
+      <Title>Prove/Prove Line</Title>
+    </contextual>
+    <contextual action="Prove Subprogram">
+      <Title>Prove/Prove Subprogram</Title>
+    </contextual>
   </GNATPROVE>
 """
 
 # constants that are required by the plug-in
 toolname             = "gnatprove"
-prefix               = "Prove"
-menu_prefix          = "/" + prefix
-prove_all            = "Prove All"
-prove_root_project   = "Prove Root Project"
-prove_file           = "Prove File"
-prove_line           = "Prove Line"
-prove_subp           = "Prove Subprogram"
-clean_up             = "Clean Proofs"
-clear_highlighting   = "Remove Editor Highlighting"
 
 Default_colors = {
   "info"    : "#88eeaa",
@@ -534,26 +588,8 @@ def is_msg_context(self):
     return isinstance(self, GPS.FileContext)
 
 # It's more convenient to define these callbacks outside of the plugin class
-def generic_on_prove(target):
-    GPS.BuildTarget(target).execute(synchronous=False)
-
-def on_prove_all(self):
-    generic_on_prove(prove_all)
-
-def on_prove_root_project(self):
-    generic_on_prove(prove_root_project)
-
-def on_prove_file(self):
-    generic_on_prove(prove_file)
-
-def on_prove_line(self):
-    generic_on_prove(prove_line)
-
 def on_clear_highlighting(self):
     gnatprove_plug.clear_highlighting()
-
-def on_clean_up(self):
-    generic_on_prove(clean_up)
 
 def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
@@ -624,30 +660,6 @@ class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
     def __init__(self):
-        GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
-        GPS.Menu.create(menu_prefix + "/" + prove_all, on_prove_all)
-        GPS.Menu.create(
-            menu_prefix + "/" + prove_root_project,
-            on_prove_root_project)
-        GPS.Menu.create(
-            menu_prefix + "/" + prove_file,
-            on_prove_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Menu.create(
-            menu_prefix + "/" + clean_up,
-            on_clean_up)
-        GPS.Menu.create(
-            menu_prefix + "/" + clear_highlighting,
-            on_clear_highlighting)
-        GPS.Contextual(prefix + "/" + prove_file).create(
-            on_activate = on_prove_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + prove_line).create(
-            on_activate = on_prove_line,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + prove_subp).create(
-            on_activate = on_prove_subp,
-            filter = gps_utils.in_ada_file)
         GPS.parse_xml(xml_gnatprove)
         self.messages = []
         self.trace_msg = None
