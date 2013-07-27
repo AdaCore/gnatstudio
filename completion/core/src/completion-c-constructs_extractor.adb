@@ -16,22 +16,578 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Language.Cpp;     use Language.Cpp;
+with Traces;           use Traces;
 with Xref;             use Xref;
 
 package body Completion.C.Constructs_Extractor is
+   Resolver_ID : constant String := "CNST_C  ";
+
    use Completion_List_Pckg;
    use Completion_List_Extensive_Pckg;
    use Extensive_List_Pckg;
 
-   Resolver_ID : constant String := "CNST_C  ";
+   procedure Get_Completion_Root_With_Context
+     (Resolver : access C_Completion_Resolver;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
+   --  Subsidiary subprogram of Get_Completion_Root which takes care of
+   --  generating the proposals when we have a context. In such case the
+   --  number of proposals is small and thus we generate all the proposals
+   --  at once (ie. we do not generate the proposals incrementally).
 
    function To_Language_Category
      (Db : access General_Xref_Database_Record'Class;
       E  : General_Entity) return Language_Category;
    --  Make a simple association between entity categories and construct
    --  categories. This association is known to be inaccurate.
+
+   ---------------------------------
+   -- Completion_Proposal_Handler --
+   ---------------------------------
+
+   package Completion_Proposal_Handler is
+      type C_Completion_Proposal is
+        new Simple_Completion_Proposal with private;
+
+      Null_C_Completion_Proposal : constant C_Completion_Proposal;
+
+      function New_C_Completion_Proposal
+        (Resolver    : access C_Completion_Resolver;
+         Entity      : General_Entity;
+         With_Params : Boolean := False;
+         Is_Param    : Boolean := False) return C_Completion_Proposal;
+      --  Constructor
+
+      overriding function Get_Category
+         (Proposal : C_Completion_Proposal) return Language_Category;
+
+      overriding function Get_Completion
+        (Proposal : C_Completion_Proposal;
+         Db       : access Xref.General_Xref_Database_Record'Class)
+         return UTF8_String;
+      --  Handle the completion of a single parameter of a subprogram call, the
+      --  completion of all the parameters of a subprogram call, and also the
+      --  completion of a single entity name.
+
+      overriding function Get_Label
+        (Proposal : C_Completion_Proposal;
+         Db       : access Xref.General_Xref_Database_Record'Class)
+         return UTF8_String;
+      --  Generate the label "<entity> without params" when the proposal
+      --  requests the completion of the parameters of a subprogram call and
+      --  the entity of the proposal has no parameters; generate the label
+      --  "params of <entity>" when the proposal requests the completion with
+      --  parameters and the entity of the proposal has parameters; otherwise
+      --  generate the label "<entity>".
+
+      overriding function Get_Location
+        (Proposal : C_Completion_Proposal;
+         Db       : access Xref.General_Xref_Database_Record'Class)
+         return File_Location;
+
+      overriding function Get_Visibility
+        (Proposal : C_Completion_Proposal) return Construct_Visibility;
+
+      overriding function Is_Valid
+        (Proposal : C_Completion_Proposal) return Boolean;
+
+      overriding function To_Completion_Id
+        (Proposal : C_Completion_Proposal;
+         Db       : access Xref.General_Xref_Database_Record'Class)
+         return Completion_Id;
+
+   private
+      type C_Completion_Proposal is new Simple_Completion_Proposal with record
+         Entity_Info : Xref.General_Entity;
+
+         With_Params : Boolean := False;
+         --  Set to true if Entity_Info is a subprogram and we need to provide
+         --  completions with all the parameters needed to call it
+
+         Is_Param    : Boolean := False;
+         --  Set to true if Entity_Info is a formal parameter of a subprogram
+         --  call and we need to provide completion for this single parameter
+      end record;
+
+      Null_C_Completion_Proposal : constant C_Completion_Proposal :=
+        (Simple_Completion_Proposal (Null_Completion_Proposal)
+            with Entity_Info => No_General_Entity,
+                 With_Params => False,
+                 Is_Param    => False);
+
+   end Completion_Proposal_Handler;
+   use Completion_Proposal_Handler;
+
+   --------------------------
+   -- Completion_Iterators --
+   --------------------------
+
+   --  Iterators used to perform an incremental computation of the completions
+   --  when no context is available. In such case the computation of the
+   --  proposals may be long for large C/C++ projects. This architecture has
+   --  to do with the fact that GPS is mono-thread, and, in order for the UI
+   --  to be responsive, we need to process UI events (such as responding to
+   --  user input or just refreshing the display); we cannot stay long without
+   --  processing UI events.
+   --
+   --  So what we do is the following: we don't compute all possible
+   --  completions in one go, this takes too much time and blocks the UI for
+   --  too long. Instead, we first compute a small chunk, then we process some
+   --  UI events, then we compute the next small chunk of possible completions,
+   --  then process some UI events, etc.
+   --
+   --  In the code, here is where things happen:
+   --
+   --  1 - In Completion_Module.Smart_Complete, we register a number of
+   --      Resolvers, then get the initial completion (call to
+   --      Get_Initial_Completion_List)
+   --
+   --  2 - Then we launch the completion window, which displays the first
+   --      results, and then calls every 100 ms the function Idle_Expression
+   --      (in package Completion_Window) which asks the Resolvers to give
+   --      the next chunk of completions.
+
+   package Completion_Iterators is
+
+      type C_Construct_Wrapper is
+        new Completion_List_Pckg.Virtual_List_Component with private;
+
+      function New_C_Construct_Wrapper
+        (Resolver : access C_Completion_Resolver;
+         Context  : Completion_Context;
+         Prefix   : String) return C_Construct_Wrapper;
+      --  Constructor
+
+      overriding function First
+        (Wrapper : C_Construct_Wrapper)
+         return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
+
+      overriding procedure Free (This : in out C_Construct_Wrapper);
+
+   private
+      type C_Construct_Wrapper is
+        new Completion_List_Pckg.Virtual_List_Component
+      with record
+         Resolver : access C_Completion_Resolver;
+         Context  : Completion_Context;
+         Prefix   : GNAT.Strings.String_Access;
+      end record;
+
+      package Files_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
+
+      type Construct_Iterator_Wrapper is new
+        Completion_List_Pckg.Virtual_List_Component_Iterator
+      with record
+         Resolver : access C_Completion_Resolver;
+         Prefix   : GNAT.Strings.String_Access;
+
+         Processed_Files : Files_List.Vector;
+         Queued_Files    : Files_List.Vector;
+         --  List of processed files and queue of pending files. The whole list
+         --  of files stored in these structures are used to avoid processing
+         --  twice an include file. The overall behavior is that files found as
+         --  part of processing all the entities of a given file are appended
+         --  to Queued_Files; when all the entities of the next queued file are
+         --  processed the file is moved to the list of processed files.
+
+         Cursor            : Entities_In_File_Cursor;
+         In_First_Entity   : Boolean;
+         Is_Valid_Proposal : Boolean;
+      end record;
+
+      overriding function At_End
+        (It : Construct_Iterator_Wrapper) return Boolean;
+
+      overriding procedure Next (It : in out Construct_Iterator_Wrapper);
+
+      overriding function Get
+        (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class;
+
+      overriding procedure Free (This : in out Construct_Iterator_Wrapper);
+
+   end Completion_Iterators;
+   use Completion_Iterators;
+
+   --------------------------
+   -- Completion_Iterators --
+   --------------------------
+
+   package body Completion_Iterators is
+
+      ------------
+      -- At_End --
+      ------------
+
+      overriding function At_End
+        (It : Construct_Iterator_Wrapper) return Boolean is
+      begin
+         --  True if we have processed all the entities of the current
+         --  file and we have also finished processing all the files
+
+         return At_End (It.Cursor)
+           and then Natural (It.Queued_Files.Length) = 0;
+      end At_End;
+
+      -----------
+      -- First --
+      -----------
+
+      overriding function First
+        (Wrapper : C_Construct_Wrapper)
+         return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+      is
+         Db     : constant General_Xref_Database :=
+                    Wrapper.Resolver.Kernel.Databases;
+         Result : Construct_Iterator_Wrapper;
+      begin
+         Result.Resolver := Wrapper.Resolver;
+         Result.Prefix := Wrapper.Prefix;
+
+         Result.Processed_Files.Append (Get_File (Wrapper.Context));
+         Result.Cursor := Db.Entities_In_File (Get_File (Wrapper.Context));
+         Result.In_First_Entity := True;
+         Result.Is_Valid_Proposal := True;
+
+         --  Move the cursor to the first entity that has the prefix
+         Result.Next;
+
+         return Result;
+      end First;
+
+      ----------
+      -- Free --
+      ----------
+
+      overriding procedure Free (This : in out C_Construct_Wrapper) is
+      begin
+         Free (This.Prefix);
+      end Free;
+
+      overriding procedure Free (This : in out Construct_Iterator_Wrapper) is
+      begin
+         --  We do not free Prefix here since it will be done by the free
+         --  associated with the C_Construct_Wrapper
+
+         This.Queued_Files.Clear;
+      end Free;
+
+      ---------
+      -- Get --
+      ---------
+
+      overriding function Get
+        (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class is
+      begin
+         if At_End (This.Cursor) then
+            return Null_C_Completion_Proposal;
+         else
+            return New_C_Completion_Proposal
+              (Resolver => This.Resolver,
+               Entity   => Get (This.Cursor));
+         end if;
+      end Get;
+
+      -----------------------------
+      -- New_C_Construct_Wrapper --
+      -----------------------------
+
+      function New_C_Construct_Wrapper
+        (Resolver : access C_Completion_Resolver;
+         Context  : Completion_Context;
+         Prefix   : String) return C_Construct_Wrapper is
+      begin
+         return C_Construct_Wrapper'
+                   (Resolver => Resolver,
+                    Context  => Context,
+                    Prefix   => new String'(Prefix));
+      end New_C_Construct_Wrapper;
+
+      ----------
+      -- Next --
+      ----------
+
+      overriding procedure Next (It : in out Construct_Iterator_Wrapper) is
+
+         function Has_Prefix (Name : String) return Boolean;
+
+         function Has_Prefix (Name : String) return Boolean is
+         begin
+            return Name'Length >= It.Prefix'Length
+              and then
+                Name (Name'First .. Name'First + It.Prefix'Length - 1)
+              = It.Prefix.all;
+         end Has_Prefix;
+
+         Db   : constant General_Xref_Database := It.Resolver.Kernel.Databases;
+         Decl : General_Entity_Declaration;
+         E    : General_Entity;
+
+         use type Files_List.Cursor;
+
+      begin
+         --  Processing the first entity we must not move the cursor
+
+         if It.In_First_Entity then
+            It.In_First_Entity := False;
+
+         elsif not At_End (It.Cursor) then
+            Next (It.Cursor);
+         end if;
+
+         loop
+            --  Iterate through entities of the current file appending include
+            --  files to the queue of files to be processed and searching for
+            --  a global entity whose prefix matches
+
+            while not At_End (It.Cursor) loop
+               E := Get (It.Cursor);
+
+               if Db.Get_Display_Kind (E) = "include file" then
+                  Decl := Db.Get_Declaration (E);
+
+                  if not It.Processed_Files.Contains (Decl.Loc.File)
+                    and then not It.Queued_Files.Contains (Decl.Loc.File)
+                  then
+                     It.Queued_Files.Append (Decl.Loc.File);
+                  end if;
+               end if;
+
+               if Has_Prefix (Db.Get_Name (E)) then
+                  return;  --  Proposal found!
+               end if;
+
+               Next (It.Cursor);
+            end loop;
+
+            --  Next file
+
+            if Natural (It.Queued_Files.Length) = 0 then
+               return;
+            end if;
+
+            It.Cursor := Db.Entities_In_File (It.Queued_Files.First_Element);
+
+            --  Move the file to the list of processed files
+
+            It.Processed_Files.Append (It.Queued_Files.First_Element);
+            It.Queued_Files.Delete_First;
+         end loop;
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, E);
+            raise;
+      end Next;
+
+   end Completion_Iterators;
+
+   ---------------------------------
+   -- Completion_Proposal_Handler --
+   ---------------------------------
+
+   package body Completion_Proposal_Handler is
+
+      ------------------
+      -- Get_Category --
+      ------------------
+
+      overriding function Get_Category
+        (Proposal : C_Completion_Proposal) return Language_Category is
+      begin
+         return Proposal.Category;
+      end Get_Category;
+
+      --------------------
+      -- Get_Completion --
+      --------------------
+
+      overriding function Get_Completion
+        (Proposal : C_Completion_Proposal;
+         Db       : access General_Xref_Database_Record'Class)
+         return UTF8_String
+      is
+         function Single_Param_Text (Param : General_Entity) return String;
+         --  Generate the named notation associated with Param as a C comment.
+         --  For example: "/* Param */"
+
+         function All_Params_Text return String;
+         --  Recursively traverse the whole list of parameters of the
+         --  subprogram proposal and generate the named notation
+         --  associated with all the parameters as C comments.
+
+         -----------------------
+         -- To_Named_Notation --
+         -----------------------
+
+         function Single_Param_Text (Param : General_Entity) return String is
+         begin
+            return "/* " & Db.Get_Name (Param) & " */";
+         end Single_Param_Text;
+
+         --------------------
+         -- Get_All_Params --
+         --------------------
+
+         function All_Params_Text return String is
+            Separator : constant String := "," & ASCII.LF;
+            Spaces    : constant String := "  ";
+            Params    : constant Xref.Parameter_Array :=
+              Db.Parameters (Proposal.Entity_Info);
+            Param     : General_Entity := No_General_Entity;
+
+            function Next_Params
+              (P : Integer; Prev_Params : String) return String;
+            --  Prev_Params is used to accumulate the output.
+
+            function Next_Params
+              (P : Integer; Prev_Params : String) return String is
+            begin
+               if P > Params'Last then
+                  return Prev_Params;
+               else
+                  return
+                    Next_Params
+                      (P + 1,
+                       Prev_Params
+                       & Separator
+                       & Single_Param_Text (Params (P).Parameter)
+                       & Spaces);
+               end if;
+            end Next_Params;
+
+            --  Start of processing for All_Params_Text
+
+         begin
+            if Params'Length /= 0 then
+               Param := Params (Params'First).Parameter;
+            end if;
+
+            return Next_Params
+                     (Params'First + 1, Single_Param_Text (Param) & Spaces);
+         end All_Params_Text;
+
+         --  Start of processing for Get_Completion
+
+      begin
+         if Proposal.With_Params then
+            return All_Params_Text & ")";
+
+         elsif Proposal.Is_Param then
+            return Single_Param_Text (Proposal.Entity_Info);
+
+         else
+            return Proposal.Name.all;
+         end if;
+      end Get_Completion;
+
+      ---------------
+      -- Get_Label --
+      ---------------
+
+      overriding function Get_Label
+        (Proposal : C_Completion_Proposal;
+         Db       : access General_Xref_Database_Record'Class)
+         return UTF8_String is
+      begin
+         if not Proposal.With_Params then
+            return Proposal.Name.all;
+         else
+            declare
+               Params : constant Parameter_Array :=
+                 Db.Parameters (Proposal.Entity_Info);
+            begin
+               if Params'Length = 0 then
+                  return Proposal.Name.all & " without params";
+               else
+                  return "params of " & Proposal.Name.all;
+               end if;
+            end;
+         end if;
+      end Get_Label;
+
+      ------------------
+      -- Get_Location --
+      ------------------
+
+      overriding function Get_Location
+        (Proposal : C_Completion_Proposal;
+         Db       : access General_Xref_Database_Record'Class)
+         return File_Location
+      is
+         Loc : constant General_Location :=
+                 Db.Get_Declaration (Proposal.Entity_Info).Loc;
+      begin
+         return (Loc.File, Loc.Line, Loc.Column);
+      end Get_Location;
+
+      --------------------
+      -- Get_Visibility --
+      --------------------
+
+      overriding function Get_Visibility
+        (Proposal : C_Completion_Proposal) return Construct_Visibility is
+         pragma Unreferenced (Proposal);
+      begin
+         return Visibility_Public;
+      end Get_Visibility;
+
+      --------------
+      -- Is_Valid --
+      --------------
+
+      overriding function Is_Valid
+        (Proposal : C_Completion_Proposal) return Boolean is
+      begin
+         return Proposal /= Null_C_Completion_Proposal;
+      end Is_Valid;
+
+      -------------------------------
+      -- New_C_Completion_Proposal --
+      -------------------------------
+
+      function New_C_Completion_Proposal
+         (Resolver    : access C_Completion_Resolver;
+          Entity      : General_Entity;
+          With_Params : Boolean := False;
+          Is_Param    : Boolean := False) return C_Completion_Proposal
+      is
+         Db : constant General_Xref_Database := Resolver.Kernel.Databases;
+
+      begin
+         return C_Completion_Proposal'
+           (Resolver      => Resolver,
+            Name          => new String'(Db.Get_Name (Entity)),
+            Category      => To_Language_Category (Db, Entity),
+            Entity_Info   => Entity,
+            With_Params   => With_Params,
+            Is_Param      => Is_Param);
+      end New_C_Completion_Proposal;
+
+      ----------------------
+      -- To_Completion_Id --
+      ----------------------
+
+      overriding function To_Completion_Id
+        (Proposal : C_Completion_Proposal;
+         Db       : access Xref.General_Xref_Database_Record'Class)
+         return Completion_Id
+      is
+         Id  : constant String := Proposal.Name.all;
+         Loc : constant General_Location :=
+                 Db.Get_Declaration (Proposal.Entity_Info).Loc;
+
+      begin
+         return (Id_Length   => Id'Length,
+                 Resolver_Id => Resolver_ID,
+                 Id          => Id,
+                 File        => Loc.File,
+                 Line        => Loc.Line,
+                 Column      => Integer (Loc.Column));
+      end To_Completion_Id;
+
+   end Completion_Proposal_Handler;
 
    -----------------------------------------
    -- New_C_Construct_Completion_Resolver --
@@ -43,25 +599,101 @@ package body Completion.C.Constructs_Extractor is
    is
       pragma Unreferenced (Current_File);
    begin
-      return
-        new Construct_Completion_Resolver'
-              (Manager     => null,
-               Kernel      => Kernel);
+      return new C_Completion_Resolver'
+                   (Manager     => null,
+                    Kernel      => Kernel);
    end New_C_Construct_Completion_Resolver;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (This : in out C_Completion_Resolver) is
+      pragma Unreferenced (This);
+   begin
+      null;
+   end Free;
 
    -------------------------
    -- Get_Completion_Root --
    -------------------------
 
    overriding procedure Get_Completion_Root
-     (Resolver : access Construct_Completion_Resolver;
+     (Resolver : access C_Completion_Resolver;
       Offset   : String_Index_Type;
       Context  : Completion_Context;
       Result   : in out Completion_List)
    is
       pragma Unreferenced (Offset);
+      C_Context  : C_Completion_Context;
+      Expression : Parsed_Expression;
+      Token      : Token_Record;
+   begin
+      if Context.all not in C_Completion_Context'Class then
+         return;
+      end if;
 
+      C_Context  := C_Completion_Context (Context.all);
+      Expression := C_Context.Expression;
+
+      case Token_List.Length (Expression.Tokens) is
+         when 0 =>
+            return;
+
+         --  No context available: our candidates are all the C/C++ entities
+         --  whose prefix matches this one! We perform the computation of
+         --  proposals in an incremental way using iterators.
+
+         when 1 =>
+            Token := Token_List.Data (Token_List.First (Expression.Tokens));
+
+            --  No action needed if the prefix is not an identifier. Thus we
+            --  also avoid proposing internal names generated by the G++
+            --  compiler when the prefix is just ".".
+
+            if Token.Tok_Type /= Tok_Identifier then
+               return;
+            end if;
+
+            declare
+               Prefix : constant String :=
+                          Context.Buffer
+                            (Natural (Token.Token_First)
+                               .. Natural (Token.Token_Last));
+
+            begin
+               Append (Result.List,
+                 New_C_Construct_Wrapper
+                   (Resolver => Resolver,
+                    Context  => Context,
+                    Prefix   => Prefix));
+
+               Result.Searched_Identifier := new String'(Prefix);
+               return;
+            end;
+
+         --  Analyze the context to suggest better proposals
+
+         when others =>
+            Get_Completion_Root_With_Context (Resolver, Context, Result);
+      end case;
+   end Get_Completion_Root;
+
+   --------------------------------------
+   -- Get_Completion_Root_With_Context --
+   --------------------------------------
+
+   procedure Get_Completion_Root_With_Context
+     (Resolver : access C_Completion_Resolver;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
+   is
       Db : constant General_Xref_Database := Resolver.Kernel.Databases;
+
+      C_Context  : constant C_Completion_Context :=
+                     C_Completion_Context (Context.all);
+      Expression : constant Parsed_Expression :=
+                     C_Context.Expression;
 
       procedure Append_Proposal
         (To_List : in out Extensive_List_Pckg.List;
@@ -76,16 +708,6 @@ package body Completion.C.Constructs_Extractor is
       --  same behavior of Ada completions, one proposal per parameter is
       --  added to To_List.
 
-      procedure Append_Proposals_Without_Context
-        (E_List    : in out Extensive_List_Pckg.List;
-         Prefix    : String;
-         Threshold : Natural := 500);
-      --  Called when no context is available. It traverses the tree of include
-      --  files associated with the current file collecting global entities.
-      --  For large projects such traversal is too expensive and hence this
-      --  routine stops the traversal after processing the number of entities
-      --  specified in Threshold.
-
       procedure Append_Scope_Proposals
         (To_List      : in out Extensive_List_Pckg.List;
          Scope        : General_Entity;
@@ -99,6 +721,9 @@ package body Completion.C.Constructs_Extractor is
         (E : General_Entity) return Boolean;
       --  Return true if the type of E is itself
 
+      procedure Prev_Token;
+      --  Displace Tok_Index and Tok_Prev to reference the previous token
+
       ------------------
       -- Add_Proposal --
       ------------------
@@ -107,19 +732,8 @@ package body Completion.C.Constructs_Extractor is
         (To_List : in out Extensive_List_Pckg.List;
          E       : General_Entity)
       is
-         Name     : aliased constant String := Db.Get_Name (E);
-         Proposal : C_Completion_Proposal;
-
       begin
-         Proposal :=
-           (Resolver      => Resolver,
-            Name          => new String'(Name),
-            Category      => To_Language_Category (Db, E),
-            Entity_Info   => E,
-            With_Params   => False,
-            Is_Param      => False);
-
-         Append (To_List, Proposal);
+         Append (To_List, New_C_Completion_Proposal (Resolver, E));
       end Append_Proposal;
 
       ------------------------------
@@ -130,41 +744,22 @@ package body Completion.C.Constructs_Extractor is
         (To_List : in out Extensive_List_Pckg.List;
          E       : General_Entity)
       is
-         Name     : aliased constant String := Db.Get_Name (E);
-         Proposal : C_Completion_Proposal;
+         Params : constant Xref.Parameter_Array := Db.Parameters (E);
 
       begin
-         Proposal :=
-           (Resolver      => Resolver,
-            Name          => new String'(Name),
-            Category      => To_Language_Category (Db, E),
-            Entity_Info   => E,
-            With_Params   => True,
-            Is_Param      => False);
-         Append (To_List, Proposal);
+         Append (To_List,
+           New_C_Completion_Proposal
+             (Resolver    => Resolver,
+              Entity      => E,
+              With_Params => True));
 
-         declare
-            Params : constant Xref.Parameter_Array := Db.Parameters (E);
-            Param : General_Entity;
-
-         begin
-            for P in Params'Range loop
-               Param := Params (P).Parameter;
-               declare
-                  Name : aliased constant String := Db.Get_Name (Param);
-               begin
-                  Proposal :=
-                    (Resolver      => Resolver,
-                     Name          => new String'(Name),
-                     Category      => To_Language_Category (Db, Param),
-                     Entity_Info   => Param,
-                     With_Params   => False,
-                     Is_Param      => True);
-
-                  Append (To_List, Proposal);
-               end;
-            end loop;
-         end;
+         for P in Params'Range loop
+            Append (To_List,
+              New_C_Completion_Proposal
+                (Resolver => Resolver,
+                 Entity   => Params (P).Parameter,
+                 Is_Param => True));
+         end loop;
       end Append_Proposal_With_Params;
 
       -------------------------
@@ -238,95 +833,6 @@ package body Completion.C.Constructs_Extractor is
          Destroy (It);
       end Append_Scope_Proposals;
 
-      --------------------------------------
-      -- Append_Proposals_Without_Context --
-      --------------------------------------
-
-      procedure Append_Proposals_Without_Context
-        (E_List    : in out Extensive_List_Pckg.List;
-         Prefix    : String;
-         Threshold : Natural := 500)
-      is
-         E_Count : Natural := 0;
-         --  Entities counter. When this counter passes the Threshold we stop
-         --  searching for proposals.
-
-         package Files_List is new Ada.Containers.Vectors
-           (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
-         Files_Queue : Files_List.Vector;
-         --  Queue of processed files. All include files found as part of
-         --  processing file entities are appended to this queue. We use a
-         --  queue (instead of adding an extra formal to Append_File_Proposals)
-         --  because we have implemented a breadth-first algorithm (instead of
-         --  a depth-first algorithm). That is, sibling files are processed
-         --  before child files. We assume that such traversal gives better
-         --  output to the user when the threshold stops the traversal.
-
-         procedure Append_File_Proposals (File : Virtual_File);
-         --  Traverse all the entities of File searching for entities whose
-         --  name matches Prefix and add them as proposals. For entities
-         --  associated with include file the corresponding file is added
-         --  to the queue of files processed searching for proposals
-
-         ----------------------------
-         --  Append_File_Proposals --
-         ----------------------------
-
-         procedure Append_File_Proposals (File : Virtual_File) is
-
-            function Has_Prefix (Name : String) return Boolean;
-            function Has_Prefix (Name : String) return Boolean is
-            begin
-               return Name'Length >= Prefix'Length
-                 and then
-                   Name (Name'First .. Name'First + Prefix'Length - 1)
-                      = Prefix;
-            end Has_Prefix;
-
-            Cursor : Entities_In_File_Cursor;
-            Decl   : General_Entity_Declaration;
-            E      : General_Entity;
-
-         begin
-            Cursor := Db.Entities_In_File (File);
-            while not At_End (Cursor) loop
-               E_Count := E_Count + 1;
-
-               if E_Count > Threshold then
-                  return;
-               end if;
-
-               E := Get (Cursor);
-
-               if Db.Get_Display_Kind (E) = "include file" then
-                  Decl := Db.Get_Declaration (E);
-
-                  if not Files_Queue.Contains (Decl.Loc.File) then
-                     Files_Queue.Append (Decl.Loc.File);
-                  end if;
-               end if;
-
-               if Db.Is_Global (E) and then Has_Prefix (Db.Get_Name (E)) then
-                  Append_Proposal (E_List, E);
-               end if;
-
-               Next (Cursor);
-            end loop;
-         end Append_File_Proposals;
-
-         File_Index : Files_List.Cursor;
-      begin
-         Files_Queue.Append (Get_File (Context));
-
-         File_Index := Files_Queue.First;
-         while Files_List.Has_Element (File_Index) and E_Count < Threshold loop
-            Append_File_Proposals (Files_List.Element (File_Index));
-            Files_List.Next (File_Index);
-         end loop;
-
-         Files_List.Clear (Files_Queue);
-      end Append_Proposals_Without_Context;
-
       ------------------------
       -- Is_Self_Referenced --
       ------------------------
@@ -351,476 +857,247 @@ package body Completion.C.Constructs_Extractor is
          end if;
       end Is_Self_Referenced_Type;
 
-      --  Local variables
+      ----------------
+      -- Prev_Token --
+      ----------------
 
-      C_Context  : C_Completion_Context;
-      E_List     : Extensive_List_Pckg.List;
-      Expression : Parsed_Expression;
       Token      : Token_Record;
+      Token_Prev : Token_Record;
+      Tok_Index  : Token_List.List_Node;
+      Tok_Prev   : Token_List.List_Node;
 
-   --  Start of processing for Get_Completion_Root
+      procedure Prev_Token is
+         use Token_List;
 
-   begin
-      if Context.all not in C_Completion_Context'Class then
-         return;
-      end if;
+      begin
+         Tok_Index := Tok_Prev;
 
-      C_Context  := C_Completion_Context (Context.all);
-      Expression := C_Context.Expression;
+         if Tok_Prev /= Token_List.Null_Node then
+            Token    := Data (Tok_Index);
+            Tok_Prev := Prev (Expression.Tokens, Tok_Index);
 
-      case Token_List.Length (Expression.Tokens) is
-         when 0 =>
-            return;
-
-         --  No context available: our candidates are all the the C/C++
-         --  entities stored in the trie database whose prefix matches
-         --  this one!
-
-         when 1 =>
-            Token := Token_List.Data (Token_List.First (Expression.Tokens));
-
-            --  No action needed if the prefix is not an identifier. Thus we
-            --  also avoid proposing internal names generated by the G++
-            --  compiler when the prefix is just ".".
-
-            if Token.Tok_Type /= Tok_Identifier then
-               return;
+            if Tok_Prev /= Token_List.Null_Node then
+               Token_Prev := Data (Tok_Prev);
+            else
+               Token_Prev := Null_Token;
             end if;
 
-            declare
-               Prefix : constant String :=
+         else
+            Token      := Null_Token;
+            Token_Prev := Null_Token;
+         end if;
+      end Prev_Token;
+
+      --  Local variables
+
+      Last_Token      : constant Token_Record :=
+                          Token_List.Data
+                            (Token_List.Last (Expression.Tokens));
+      Last_Token_Text : constant String :=
                           Context.Buffer
-                            (Natural (Token.Token_First)
-                               .. Natural (Token.Token_Last));
+                            (Natural (Last_Token.Token_First)
+                               .. Natural (Last_Token.Token_Last));
+      E_List          : Extensive_List_Pckg.List;
+
+      use Token_List;
+
+   --  Start of processing for Get_Completion_Root_With_Context
+
+   begin
+      pragma Assert (Context.all in C_Completion_Context'Class);
+      pragma Assert (Token_List.Length (Expression.Tokens) > 1);
+
+      Tok_Index  := Last (Expression.Tokens);
+      Tok_Prev   := Prev (Expression.Tokens, Tok_Index);
+      Token      := Data (Tok_Index);
+      Token_Prev := Data (Tok_Prev);
+
+      if Token.Tok_Type = Tok_Identifier
+        and then (Token_Prev.Tok_Type = Tok_Dot
+                    or else Token_Prev.Tok_Type = Tok_Dereference
+                    or else Token_Prev.Tok_Type = Tok_Scope)
+      then
+         Prev_Token;
+      end if;
+
+      if Token.Tok_Type = Tok_Left_Paren then
+         Prev_Token;
+
+         if Token.Tok_Type /= Tok_Identifier then
+            return;
+         end if;
+
+         --  Adding subprogram call proposals
+
+         declare
+            Prefix : constant String :=
+                       Context.Buffer
+                         (Natural (Token.Token_First)
+                            .. Natural (Token.Token_Last));
+            E      : General_Entity;
+            Iter   : Entities_In_Project_Cursor :=
+                       Db.All_Entities_From_Prefix
+                         (Prefix => Prefix, Is_Partial => False);
+
+         begin
+            while not At_End (Iter) loop
+               E := Get (Iter);
+
+               if Db.Is_Subprogram (E) then
+                  Append_Proposal_With_Params
+                    (To_List => E_List,
+                     E       => E);
+               end if;
+
+               Next (Iter);
+            end loop;
+
+            Destroy (Iter);
+
+            Completion_List_Pckg.Append
+              (Result.List,
+               To_Extensive_List (E_List));
+         end;
+
+      elsif Token.Tok_Type = Tok_Dot
+        or else Token.Tok_Type = Tok_Dereference
+        or else Token.Tok_Type = Tok_Scope
+      then
+         Prev_Token;
+
+         --  Skip array subscripts
+
+         if Token.Tok_Type = Tok_Right_Sq_Bracket then
+            declare
+               Expr_Depth : Natural := 0;
 
             begin
-               Append_Proposals_Without_Context (E_List, Prefix);
+               loop
+                  case Token.Tok_Type is
+                     when Tok_Right_Sq_Bracket =>
+                        Expr_Depth := Expr_Depth + 1;
 
-               Append
-                 (Result.List,
-                  To_Extensive_List (E_List));
+                     when Tok_Left_Sq_Bracket =>
+                        Expr_Depth := Expr_Depth - 1;
 
-               --  We must initialize the value of Searched_Identifier to
-               --  ensure that Smart_Complete() displaces the cursor backward
-               --  to the beginning of the searched identifier. Otherwise it
-               --  will be duplicated in the buffer.
+                     when others =>
+                        null;
+                  end case;
 
-               Result.Searched_Identifier := new String'(Prefix);
-               return;
+                  Prev_Token;
+
+                  exit when
+                    (Expr_Depth = 0
+                       and then
+                         Token.Tok_Type /= Tok_Right_Sq_Bracket)
+                    or else Tok_Prev = Token_List.Null_Node;
+               end loop;
             end;
+         end if;
 
-         --  Analyze the context to suggest better proposals
+         --  Protect us against wrong sources
 
-         when others =>
-            declare
-               Last_Token      : constant Token_Record :=
-                                   Token_List.Data
-                                     (Token_List.Last (Expression.Tokens));
-               Last_Token_Text : constant String :=
-                                   Context.Buffer
-                                    (Natural (Last_Token.Token_First)
-                                      .. Natural (Last_Token.Token_Last));
+         if Token = Null_Token then
+            return;
+         end if;
 
-               Tok_Index  : Token_List.List_Node;
-               Tok_Prev   : Token_List.List_Node;
-               Token_Prev : Token_Record;
+         --  Adding proposals
 
-               use Token_List;
+         declare
+            Prefix   : constant String :=
+                         Context.Buffer
+                           (Natural (Token.Token_First)
+                              .. Natural (Token.Token_Last));
+            E        : General_Entity;
+            Iter     : Entities_In_Project_Cursor :=
+                         Db.All_Entities_From_Prefix
+                           (Prefix => Prefix, Is_Partial => False);
 
-               procedure Prev_Token;
-               --  Displace Tok_Index and Tok_Prev to reference the previous
-               --  token
+         begin
+            while not At_End (Iter) loop
+               E := Get (Iter);
 
-               procedure Prev_Token is
-               begin
-                  Tok_Index := Tok_Prev;
+               if not Db.Is_Type (E) then
+                  if Db.Is_Access (E) then
+                     E := Db.Pointed_Type (E);
 
-                  if Tok_Prev /= Token_List.Null_Node then
-                     Token    := Data (Tok_Index);
-                     Tok_Prev := Prev (Expression.Tokens, Tok_Index);
+                  elsif Db.Is_Array (E) then
+                     E := Db.Component_Type (E);
 
-                     if Tok_Prev /= Token_List.Null_Node then
-                        Token_Prev := Data (Tok_Prev);
-                     else
-                        Token_Prev := Null_Token;
-                     end if;
+                     --  Class or record
+                  elsif Db.Has_Methods (E) then
+                     E := Db.Get_Type_Of (E);
 
                   else
-                     Token      := Null_Token;
-                     Token_Prev := Null_Token;
+                     E := Db.Get_Type_Of (E);
                   end if;
-               end Prev_Token;
-
-            begin
-               Tok_Index := Last (Expression.Tokens);
-               Tok_Prev  := Prev (Expression.Tokens, Tok_Index);
-               Token     := Data (Tok_Index);
-               Token_Prev := Data (Tok_Prev);
-
-               if Token.Tok_Type = Tok_Identifier
-                 and then (Token_Prev.Tok_Type = Tok_Dot
-                             or else Token_Prev.Tok_Type = Tok_Dereference
-                             or else Token_Prev.Tok_Type = Tok_Scope)
-               then
-                  Prev_Token;
                end if;
 
-               if Token.Tok_Type = Tok_Left_Paren then
-                  Prev_Token;
+               if E /= No_General_Entity then
 
-                  if Token.Tok_Type /= Tok_Identifier then
-                     return;
-                  end if;
+                  --  Class or record
 
-                  --  Adding subprogram call proposals
+                  if Db.Has_Methods (E) then
 
-                  declare
-                     Prefix : constant String :=
-                                Context.Buffer
-                                  (Natural (Token.Token_First)
-                                    .. Natural (Token.Token_Last));
-                     E      : General_Entity;
-                     Iter   : Entities_In_Project_Cursor :=
-                       Db.All_Entities_From_Prefix
-                         (Prefix => Prefix, Is_Partial => False);
+                     --  Handle named typedef structs since the compiler
+                     --  generates two entites in the LI file with the
+                     --  same name. For example:
+                     --
+                     --     typedef struct {    // First_Entity
+                     --       ...
+                     --     } my_type;          // Second_Entity
+                     --
+                     --  When we declare an object of this type:
+                     --
+                     --     my_type obj;
+                     --
+                     --  The scope of obj references Second_Entity, whose
+                     --  (parent) type is First_Entity (which is the entity
+                     --  needed for completion purposes)
 
-                  begin
-                     while not At_End (Iter) loop
-                        E := Get (Iter);
-
-                        if Db.Is_Subprogram (E) then
-                           Append_Proposal_With_Params
-                             (To_List => E_List,
-                              E       => E);
+                     if Is_Self_Referenced_Type (E) then
+                        if Active (SQLITE) then
+                           E := Db.Caller_At_Declaration (E);
+                        else
+                           E := Db.Get_Type_Of (E);
                         end if;
-
-                        Next (Iter);
-                     end loop;
-
-                     Destroy (Iter);
-
-                     Completion_List_Pckg.Append
-                       (Result.List,
-                        To_Extensive_List (E_List));
-                  end;
-
-               elsif Token.Tok_Type = Tok_Dot
-                 or else Token.Tok_Type = Tok_Dereference
-                 or else Token.Tok_Type = Tok_Scope
-               then
-                  Prev_Token;
-
-                  --  Skip array subscripts
-
-                  if Token.Tok_Type = Tok_Right_Sq_Bracket then
-                     declare
-                        Expr_Depth : Natural := 0;
-
-                     begin
-                        loop
-                           case Token.Tok_Type is
-                              when Tok_Right_Sq_Bracket =>
-                                 Expr_Depth := Expr_Depth + 1;
-
-                              when Tok_Left_Sq_Bracket =>
-                                 Expr_Depth := Expr_Depth - 1;
-
-                              when others =>
-                                 null;
-                           end case;
-
-                           Prev_Token;
-
-                           exit when
-                             (Expr_Depth = 0
-                                and then
-                                  Token.Tok_Type /= Tok_Right_Sq_Bracket)
-                             or else Tok_Prev = Token_List.Null_Node;
-                        end loop;
-                     end;
-                  end if;
-
-                  --  Protect us against wrong sources
-
-                  if Token = Null_Token then
-                     return;
-                  end if;
-
-                  --  Adding proposals
-
-                  declare
-                     Prefix   : constant String :=
-                                  Context.Buffer
-                                    (Natural (Token.Token_First)
-                                      .. Natural (Token.Token_Last));
-                     E        : General_Entity;
-                     Iter     : Entities_In_Project_Cursor :=
-                       Db.All_Entities_From_Prefix
-                         (Prefix => Prefix, Is_Partial => False);
-
-                  begin
-                     while not At_End (Iter) loop
-                        E := Get (Iter);
-
-                        if not Db.Is_Type (E) then
-                           if Db.Is_Access (E) then
-                              E := Db.Pointed_Type (E);
-
-                           elsif Db.Is_Array (E) then
-                              E := Db.Component_Type (E);
-
-                           --  Class or record
-                           elsif Db.Has_Methods (E) then
-                              E := Db.Get_Type_Of (E);
-
-                           else
-                              E := Db.Get_Type_Of (E);
-                           end if;
-                        end if;
-
-                        if E /= No_General_Entity then
-
-                           --  Class or record
-                           if Db.Has_Methods (E) then
-
-                              --  Handle named typedef structs since the
-                              --  compiler generates two entites in the LI
-                              --  file with the same name. For example:
-                              --
-                              --     typedef struct {    // First_Entity
-                              --       ...
-                              --     } my_type;          // Second_Entity
-                              --
-                              --  When we declare an object of this type:
-                              --
-                              --     my_type obj;
-                              --
-                              --  The scope of obj references Second_Entity,
-                              --  whose (parent) type is First_Entity (which
-                              --  is the entity needed for completion purposes)
-                              --
-                              --  ??? Should this be handled by the LI parser
-                              --  instead.
-
-                              if Is_Self_Referenced_Type (E) then
-                                 if Active (SQLITE) then
-                                    E := Db.Caller_At_Declaration (E);
-                                 else
-                                    E := Db.Get_Type_Of (E);
-                                 end if;
-                              end if;
-
-                              Append_Scope_Proposals
-                                (To_List      => E_List,
-                                 Scope        => E,
-                                 Prefix_Token => Last_Token);
-                           end if;
-                        end if;
-
-                        Next (Iter);
-                     end loop;
-
-                     Destroy (Iter);
-
-                     Completion_List_Pckg.Append
-                       (Result.List,
-                        To_Extensive_List (E_List));
-
-                     if Last_Token.Tok_Type = Tok_Identifier then
-                        Result.Searched_Identifier :=
-                          new String'(Last_Token_Text);
                      end if;
-                  end;
+
+                     Append_Scope_Proposals
+                       (To_List      => E_List,
+                        Scope        => E,
+                        Prefix_Token => Last_Token);
+                  end if;
                end if;
-            end;
-      end case;
-   end Get_Completion_Root;
+
+               Next (Iter);
+            end loop;
+
+            Destroy (Iter);
+
+            Completion_List_Pckg.Append
+              (Result.List,
+               To_Extensive_List (E_List));
+
+            if Last_Token.Tok_Type = Tok_Identifier then
+               Result.Searched_Identifier :=
+                 new String'(Last_Token_Text);
+            end if;
+         end;
+      end if;
+   end Get_Completion_Root_With_Context;
 
    ------------
    -- Get_Id --
    ------------
 
    overriding function Get_Id
-     (Resolver : Construct_Completion_Resolver) return String
+     (Resolver : C_Completion_Resolver) return String
    is
       pragma Unreferenced (Resolver);
    begin
       return Resolver_ID;
    end Get_Id;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (This : in out Construct_Completion_Resolver) is
-      pragma Unreferenced (This);
-   begin
-      null;
-   end Free;
-
-   ----------------------
-   -- To_Completion_Id --
-   ----------------------
-
-   overriding function To_Completion_Id
-     (Proposal : C_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id
-   is
-      Id  : constant String := Proposal.Name.all;
-      Loc : constant General_Location :=
-                       Db.Get_Declaration (Proposal.Entity_Info).Loc;
-
-   begin
-      return (Id_Length   => Id'Length,
-              Resolver_Id => Resolver_ID,
-              Id          => Id,
-              File        => Loc.File,
-              Line        => Loc.Line,
-              Column      => Integer (Loc.Column));
-   end To_Completion_Id;
-
-   ------------------
-   -- Get_Category --
-   ------------------
-
-   overriding
-   function Get_Category
-     (Proposal : C_Completion_Proposal) return Language_Category is
-   begin
-      return Proposal.Category;
-   end Get_Category;
-
-   --------------------
-   -- Get_Completion --
-   --------------------
-
-   overriding function Get_Completion
-     (Proposal : C_Completion_Proposal;
-      Db       : access General_Xref_Database_Record'Class)
-      return UTF8_String
-   is
-      function Single_Param_Text (Param : General_Entity) return String;
-      --  Generate the named notation associated with Param as a C comment.
-      --  For example: "/* Param */"
-
-      function All_Params_Text return String;
-      --  Recursively traverse the whole list of parameters of the subprogram
-      --  proposal and generate the named notation associated with all the
-      --  parameters as C comments.
-
-      -----------------------
-      -- To_Named_Notation --
-      -----------------------
-
-      function Single_Param_Text (Param : General_Entity) return String is
-      begin
-         return "/* " & Db.Get_Name (Param) & " */";
-      end Single_Param_Text;
-
-      --------------------
-      -- Get_All_Params --
-      --------------------
-
-      function All_Params_Text return String is
-         Separator : constant String := "," & ASCII.LF;
-         Spaces    : constant String := "  ";
-         Params    : constant Xref.Parameter_Array :=
-           Db.Parameters (Proposal.Entity_Info);
-         Param     : General_Entity := No_General_Entity;
-
-         function Next_Params
-           (P : Integer; Prev_Params : String) return String;
-         --  Prev_Params is used to accumulate the output.
-
-         function Next_Params
-           (P : Integer; Prev_Params : String) return String is
-         begin
-            if P > Params'Last then
-               return Prev_Params;
-            else
-               return
-                 Next_Params
-                   (P + 1,
-                    Prev_Params
-                    & Separator
-                    & Single_Param_Text (Params (P).Parameter)
-                    & Spaces);
-            end if;
-         end Next_Params;
-
-      --  Start of processing for All_Params_Text
-
-      begin
-         if Params'Length /= 0 then
-            Param := Params (Params'First).Parameter;
-         end if;
-
-         return Next_Params
-           (Params'First + 1, Single_Param_Text (Param) & Spaces);
-      end All_Params_Text;
-
-   --  Start of processing for Get_Completion
-
-   begin
-      if Proposal.With_Params then
-         return All_Params_Text & ")";
-
-      elsif Proposal.Is_Param then
-         return Single_Param_Text (Proposal.Entity_Info);
-
-      else
-         return Proposal.Name.all;
-      end if;
-   end Get_Completion;
-
-   ---------------
-   -- Get_Label --
-   ---------------
-
-   overriding function Get_Label
-     (Proposal : C_Completion_Proposal;
-      Db       : access General_Xref_Database_Record'Class)
-      return UTF8_String
-   is
-   begin
-      if not Proposal.With_Params then
-         return Proposal.Name.all;
-      else
-         declare
-            Params : constant Parameter_Array :=
-              Db.Parameters (Proposal.Entity_Info);
-         begin
-            if Params'Length = 0 then
-               return Proposal.Name.all & " without params";
-            else
-               return "params of " & Proposal.Name.all;
-            end if;
-         end;
-      end if;
-   end Get_Label;
-
-   ------------------
-   -- Get_Location --
-   ------------------
-
-   overriding function Get_Location
-     (Proposal : C_Completion_Proposal;
-      Db       : access General_Xref_Database_Record'Class)
-      return File_Location
-   is
-      Loc : constant General_Location :=
-              Db.Get_Declaration (Proposal.Entity_Info).Loc;
-   begin
-      return (Loc.File, Loc.Line, Loc.Column);
-   end Get_Location;
-
-   overriding function Get_Visibility
-     (Proposal : C_Completion_Proposal) return Construct_Visibility is
-      pragma Unreferenced (Proposal);
-   begin
-      return Visibility_Public;
-   end Get_Visibility;
 
    --------------------------
    -- To_Language_Category --
@@ -832,24 +1109,16 @@ package body Completion.C.Constructs_Extractor is
    is
    begin
       if Db.Has_Methods (E) then
-         --  class or record
          return Cat_Class;
-         --  return Cat_Structure;
 
       elsif Db.Is_Subprogram (E) then
-         --  procedure or function
          return Cat_Function;
-         --  return Cat_Procedure;
 
       elsif not Db.Is_Type (E) then
          return Cat_Variable;
       end if;
 
       return Cat_Unknown;
-
---           when Enumeration_Literal => return Cat_Literal;
---           when Include_File => return Cat_Include;
---           when Union => return Cat_Union;
    end To_Language_Category;
 
 end Completion.C.Constructs_Extractor;

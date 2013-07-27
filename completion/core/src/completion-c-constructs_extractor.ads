@@ -22,11 +22,10 @@
 with GPS.Kernel;                 use GPS.Kernel;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
-with Xref;
 
 package Completion.C.Constructs_Extractor is
 
-   type Construct_Completion_Resolver is new Completion_Resolver with private;
+   type C_Completion_Resolver is new Completion_Resolver with private;
 
    function New_C_Construct_Completion_Resolver
      (Kernel       : Kernel_Handle;
@@ -35,68 +34,23 @@ package Completion.C.Constructs_Extractor is
 
    overriding
    procedure Get_Completion_Root
-     (Resolver : access Construct_Completion_Resolver;
+     (Resolver : access C_Completion_Resolver;
       Offset   : String_Index_Type;
       Context  : Completion_Context;
       Result   : in out Completion_List);
    --  See inherited documentation
 
    overriding
-   function Get_Id (Resolver : Construct_Completion_Resolver) return String;
+   function Get_Id (Resolver : C_Completion_Resolver) return String;
    --  See inherited documentation
 
-   overriding procedure Free (This : in out Construct_Completion_Resolver);
+   overriding procedure Free (This : in out C_Completion_Resolver);
    --  Free the data associated to a construct completion resolver
 
 private
-   type Construct_Completion_Resolver is new Completion_Resolver with record
-      Kernel      : Kernel_Handle;
+
+   type C_Completion_Resolver is new Completion_Resolver with record
+      Kernel : Kernel_Handle;
    end record;
-
-   type C_Completion_Proposal is new Simple_Completion_Proposal with record
-      Entity_Info : Xref.General_Entity;
-
-      With_Params : Boolean := False;
-      --  Set to true if Entity_Info is a subprogram and we need to provide
-      --  completions with all the parameters needed to call it
-
-      Is_Param    : Boolean := False;
-      --  Set to true if Entity_Info is a formal parameter of a subprogram call
-      --  and we need to provide completion for this single parameter
-   end record;
-
-   overriding function Get_Category
-      (Proposal : C_Completion_Proposal) return Language_Category;
-
-   overriding function Get_Completion
-     (Proposal : C_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return UTF8_String;
-   --  Handle the completion of a single parameter of a subprogram call, the
-   --  completion of all the parameters of a subprogram call, and also the
-   --  completion of a single entity name.
-
-   overriding function Get_Label
-     (Proposal : C_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return UTF8_String;
-   --  Generate the label "<entity> without params" when the proposal requests
-   --  the completion of the parameters of a subprogram call and the entity of
-   --  the proposal has no parameters; generate the label "params of <entity>"
-   --  when the proposal requests the completion with parameters and the entity
-   --  of the proposal has parameters; otherwise generate the label "<entity>".
-
-   overriding function Get_Location
-     (Proposal : C_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return File_Location;
-
-   overriding function Get_Visibility
-     (Proposal : C_Completion_Proposal) return Construct_Visibility;
-
-   overriding function To_Completion_Id
-     (Proposal : C_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return Completion_Id;
 
 end Completion.C.Constructs_Extractor;
