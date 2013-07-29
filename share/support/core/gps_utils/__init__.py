@@ -213,6 +213,31 @@ class interactive:
         return fn
 
 
+def freeze_prefs():
+    """
+    A context manager that temporarily freezes GPS' preferences_changed
+    signal from being emitted, and then reactivated it. This is useful
+    when modifying a large number of preferences as a single batch.
+
+    This can be used as::
+
+        with gps_utils.freeze_prefs():
+            GPS.Preference(...).set(...)
+            GPS.Preference(...).set(...)
+            GPS.Preference(...).set(...)
+
+    """
+
+    class Context(object):
+        def __enter__(self):
+            GPS.freeze_prefs()
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            GPS.thaw_prefs()
+
+    return Context()
+
+
 ############################################################
 ## Some predefined filters
 ## These are filters that can be used when creating new menus, contextual

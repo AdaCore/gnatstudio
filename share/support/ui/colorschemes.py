@@ -10,6 +10,7 @@ These themes are inspired from:
 
 import GPS
 from gi.repository import Gtk, Gdk
+import gps_utils
 
 
 # Colors should use "rgb()" or "rgba()" format, not "#...". This is so that
@@ -31,7 +32,6 @@ themes = [
     "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(206,123,0)", "transparent"),
     "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(96,97,95)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(150,150,150)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,230)", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(0,153,0)", "transparent"),
@@ -47,7 +47,6 @@ themes = [
     "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(242,212,44)", "transparent"),
     "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(114,159,207)", "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(114,159,207)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(114,159,207)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(240,141,36)", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
@@ -66,7 +65,6 @@ themes = [
     "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(230,219,116)", "transparent"),
     "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(117,113,94)", "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(117,113,94)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(117,113,94)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(249,38,114)", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
@@ -81,7 +79,6 @@ themes = [
     "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(0,153,51)", "transparent"),
     "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(0,102,255)", "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(0,102,255)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(0,102,255)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,255)", "transparent"),
     "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
@@ -205,14 +202,10 @@ class Color_Theme_Switcher(object):
         if v:
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
-        try:
-           GPS.freeze_prefs()
+        with gps_utils.freeze_prefs():
            GPS.Preference(self.gtkpref_name).set(colors)
            GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
            self.__for_each_pref(theme, lambda k, v: GPS.Preference(k).set(v))
-
-        finally:
-            GPS.thaw_prefs()
 
         self.__set_gtk_properties()
 
