@@ -707,7 +707,7 @@ package body GPS.Kernel.Preferences is
 
       Numbers_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Number-Variant",
+         Name         => "Src-Editor-Numbers-Variant",
          Label        => -"Numbers",
          Doc          => -"Style to use when displaying numbers."
            & " The background color will be that of the default if left"
