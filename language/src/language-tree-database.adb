@@ -46,6 +46,10 @@ package body Language.Tree.Database is
 
    procedure Free (File : in out Structured_File_Access);
 
+   procedure Lock_If_Needed (File : Structured_File_Access);
+   --  If Global_Update_Lock is set then lock File (if not already locked).
+   --  Files are automatically unlocked when Global_Update_Lock is reset.
+
    ------------------------------
    -- Get_Last_Relevant_Entity --
    ------------------------------
@@ -811,6 +815,10 @@ package body Language.Tree.Database is
       if Is_Null (File) then
          return;
       end if;
+
+      --  Lock the file if global lock is set.
+
+      Lock_If_Needed (File);
 
       --  If update are temporary disabled, mark it and return.
 
@@ -1913,5 +1921,70 @@ package body Language.Tree.Database is
    begin
       return Self.Symbols;
    end Symbols;
+
+   Global_Update_Lock : Boolean := False;
+   --  When true all update contents are defered.
+
+   type Automatic_Update_Lock is record
+      Lock : Update_Lock;
+   end record;
+
+   type Automatic_Update_Lock_Access is access all Automatic_Update_Lock;
+
+   package Update_Lock_Lists is
+      new Ada.Containers.Doubly_Linked_Lists (Automatic_Update_Lock_Access);
+
+   Update_Lock_List : Update_Lock_Lists.List;
+   --  The Update_Lock created by the Global_Update_Lock feature.
+
+   ----------------------
+   -- Lock_All_Updates --
+   ----------------------
+
+   procedure Lock_All_Updates is
+   begin
+      Global_Update_Lock := True;
+   end Lock_All_Updates;
+
+   ------------------------
+   -- Unlock_All_Updates --
+   ------------------------
+
+   procedure Unlock_All_Updates is
+   begin
+      Global_Update_Lock := False;
+      if not Update_Lock_List.Is_Empty then
+         declare
+            C : Update_Lock_Lists.Cursor := Update_Lock_List.First;
+         begin
+            while Update_Lock_Lists.Has_Element (C) loop
+               declare
+                  Automatic_Lock : Automatic_Update_Lock_Access :=
+                     Update_Lock_Lists.Element (C);
+                  procedure Internal is new Standard.Ada.Unchecked_Deallocation
+                     (Automatic_Update_Lock, Automatic_Update_Lock_Access);
+               begin
+                  Unlock (Automatic_Lock.Lock);
+                  Internal (Automatic_Lock);
+               end;
+               Update_Lock_Lists.Next (C);
+            end loop;
+            Update_Lock_List.Clear;
+         end;
+      end if;
+
+   end Unlock_All_Updates;
+
+   --------------------
+   -- Lock_If_Needed --
+   --------------------
+
+   procedure Lock_If_Needed (File : Structured_File_Access) is
+   begin
+      if Global_Update_Lock and then File.Lock_Depth = 0 then
+         Update_Lock_List.Append (new Automatic_Update_Lock'
+            (Lock => Lock_Updates (File)));
+      end if;
+   end Lock_If_Needed;
 
 end Language.Tree.Database;

@@ -682,6 +682,15 @@ package Language.Tree.Database is
    procedure Free (Assistant : in out Database_Assistant) is null;
    --  Free the internal data of the database assistant.
 
+   procedure Lock_All_Updates;
+   --  Until Unlock_All_Updates is called no more Update_Contents of
+   --  Structured_File is done. Updates will be done when Unlock_All_Updates
+   --  will be called.
+
+   procedure Unlock_All_Updates;
+   --  Terminate the global update contents lock session. All pending updates
+   --  are realized.
+
 private
 
    Invalid_Reference : constant Entity_Reference_Details := (0, 0, False, 0);
