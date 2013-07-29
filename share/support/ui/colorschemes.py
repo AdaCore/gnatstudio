@@ -12,6 +12,10 @@ import GPS
 from gi.repository import Gtk, Gdk
 
 
+# Colors should use "rgb()" or "rgba()" format, not "#...". This is so that
+# __on_preferences_changed can detect changes done to the preferences and set
+# the color scheme to "Custom" appropriately.
+
 themes = [
    {"name": "Default",
     "@theme": "Adwaita",
@@ -20,32 +24,32 @@ themes = [
     "@theme_selected_bg_color": None,  # selection in trees or menus
     "@editor_bg_selection": None,      # background for selection in editors
     "@editor_fg_selection": None,      # foreground for selection in editors
-    "General-Default-Style":                 ("${font}", "black", "white"),
-    "Src-Editor-Current-Line-Color":         "#D1DCFC",
-    "Src-Editor-Reference-Style":            ("${editorfont}", "black", "white"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT", "#CE7B00", "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT", "#FF3333", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#60615F", "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT", "#969696", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT", "#0000E6", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "#009900", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "#60615F", "transparent")
+    "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(255,255,255)"),
+    "Src-Editor-Current-Line-Color":         "rgb(209,220,252)",
+    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(0,0,0)", "rgb(255,255,255)"),
+    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
+    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(206,123,0)", "transparent"),
+    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(150,150,150)", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,230)", "transparent"),
+    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(0,153,0)", "transparent"),
+    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(96,97,95)", "transparent")
    },
    {"name": "Darkside",
     "@theme": "Adwaita (Dark)",
     "@theme_bg_color": "#222324",
-    "General-Default-Style":                 ("${font}", "#BABABA", "#222324"),
-    "Src-Editor-Current-Line-Color":         "#303333",
-    "Src-Editor-Reference-Style":            ("${editorfont}", "#BABABA", "#222324"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT", "#F2D42C", "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT", "#FF3333", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#729FCF", "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT", "#729FCF", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT", "#F08D24", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "#8E69C9", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "#68C244", "transparent")
+    "General-Default-Style":                 ("${font}", "rgb(186,186,186)", "rgb(34,35,36)"),
+    "Src-Editor-Current-Line-Color":         "rgb(48,51,51)",
+    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(186,186,186)", "rgb(34,35,36)"),
+    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
+    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(242,212,44)", "transparent"),
+    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(114,159,207)", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(114,159,207)", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(240,141,36)", "transparent"),
+    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
+    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
    },
    {"name": "Monokai",
     "@theme": "Adwaita (Dark)",
@@ -54,30 +58,30 @@ themes = [
     "@theme_selected_bg_color": "#49483E",
     "@editor_bg_selection": "#49483E",
     "General-Default-Style":                 ("${font}", "#F8F8F2", "#272822"),
-    "Src-Editor-Current-Line-Color":         "#49483E",
-    "Src-Editor-Reference-Style":            ("${editorfont}", "#F8F8F2", "#272822"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT", "#E6DB74", "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT", "#FF3333", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#75715E", "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT", "#75715E", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT", "#F92672", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "#66D9EF", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "#A6E22E", "transparent")
+    "Src-Editor-Current-Line-Color":         "rgb(73,72,62)",
+    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(248,248,242)", "rgb(39,40,34)"),
+    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
+    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(230,219,116)", "transparent"),
+    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(117,113,94)", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(117,113,94)", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(249,38,114)", "transparent"),
+    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
+    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
    },
    {"name": "iPlastic",
     "@theme": "Adwaita",
-    "General-Default-Style":                 ("${font}", "#000000", "#EEEEEE"),
-    "Src-Editor-Current-Line-Color":         "rgba(0,0,0,0.2)",
-    "Src-Editor-Reference-Style":            ("${editorfont}", "#000000", "#EEEEEE"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "blue",    "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT", "#009933", "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT", "#FF3333", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "#0066FF", "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT", "#0066FF", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT", "#0000FF", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "#66D9EF", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "#FF8000", "transparent")
+    "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(238,238,238)"),
+    "Src-Editor-Current-Line-Color":         "rgb(140,140,140)",
+    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(0,0,0)", "rgb(238,238,238)"),
+    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
+    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(0,153,51)", "transparent"),
+    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(0,102,255)", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(0,102,255)", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,255)", "transparent"),
+    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
+    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(255,128,0)", "transparent")
    },
 ]
 
@@ -96,7 +100,7 @@ class Color_Theme_Switcher(object):
             "enum",         # type
             "Selecting a color scheme provides default values for a number of"
                + " other preferences, which can still be changed independently",
-            0,   # default
+            0,   # Custom
             *args)
         self.current = p.get()
 
@@ -118,16 +122,61 @@ class Color_Theme_Switcher(object):
         else:
             self.provider.load_from_data(c)
 
+    def __for_each_pref(self, theme, cb):
+        """For each preference defined in the theme, calls cb with:
+               cb(name, value)
+           where value is the string value.
+        """
+
+        default = GPS.Preference("General-Default-Style").get().split("@")[0]
+        font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
+
+        def subst(s):
+            return s.replace("${font}", default) \
+                    .replace("${editorfont}", font) \
+                    .replace("transparent", "rgba(0,0,0,0)")
+
+        for key, v in theme.iteritems():
+            if key in ("name", ) or key[0] == '@':
+                pass
+            elif isinstance(v, str):
+                cb(key, subst(v))
+            elif isinstance(v, tuple):
+                cb(key, "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
+
     def __on_preferences_changed(self, hook):
         v = GPS.Preference(self.pref_name).get()
         if v == "Custom":
             self.current = v
-        elif self.current != v:
-            self.current = v
+
+        else:
+            values = {}
             for t in themes:
-                if t["name"] == self.current:
-                    self.apply_theme(t)
+                if t["name"] == v:
+                    values = t
                     break
+
+            if self.current != v:
+                GPS.Logger("COLORSCHEME").log(
+                    "Applying new color scheme %s" % (v, ))
+                self.current = v
+                self.apply_theme(values)
+            else:
+                self.__modified = False
+
+                # if any of the preferences was changed, set to "Custom"
+                def test_changed(key, value):
+                    if GPS.Preference(key).get() != value:
+                        GPS.Logger("COLORSCHEME").log(
+                            "pref %s is different: %s != %s" %
+                            (key, value, GPS.Preference(key).get()))
+                        self.__modified = True
+
+                self.__for_each_pref(values, lambda k, v: test_changed(k, v))
+
+                if self.__modified:
+                    GPS.Preference(self.pref_name).set("Custom")
+
 
     def apply_theme(self, theme):
         colors = ""
@@ -154,26 +203,10 @@ class Color_Theme_Switcher(object):
 
         try:
            GPS.freeze_prefs()
-
            GPS.Preference(self.gtkpref_name).set(colors)
            GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
+           self.__for_each_pref(theme, lambda k, v: GPS.Preference(k).set(v))
 
-           default = GPS.Preference("General-Default-Style").get().split("@")[0]
-           font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
-
-           def subst(s):
-               return s.replace("${font}", default) \
-                       .replace("${editorfont}", font) \
-                       .replace("transparent", "rgba(0,0,0,0)")
-
-           for key, v in theme.iteritems():
-               if key in ("name", ) or key[0] == '@':
-                   pass
-               elif isinstance(v, str):
-                   GPS.Preference(key).set(subst(v))
-               elif isinstance(v, tuple):
-                   GPS.Preference(key).set(
-                       "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
         finally:
             GPS.thaw_prefs()
 

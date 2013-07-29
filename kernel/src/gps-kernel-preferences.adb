@@ -176,6 +176,7 @@ package body GPS.Kernel.Preferences is
               or else Pref.all in Font_Preference_Record'Class
               or else Pref.all in Style_Preference_Record'Class
               or else Pref.all in Enum_Preference_Record'Class
+              or else Pref.all in Theme_Preference_Record'Class
             then
                Set_Return_Value (Data, Get_Pref (Pref));
 
