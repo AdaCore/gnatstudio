@@ -58,21 +58,17 @@ endif
 	$(RMDIR) $(sharedir)/gps/templates
 # update runtime.xml before copying the plug-ins files.
 	(cd distrib; $(PERL) from_impunit.pl)
-	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
 # Clean-up changes made above for Windows.
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.py
 	$(RM) share/plug-ins/subversion_native_windows.py
 endif
-	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/spark/*.py) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/images/*.png) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - library/*.xml) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - library/GPS_old/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - support/) | (cd $(sharedir)/gps; tar xf -)
-	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/support/core/gnat_switches.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.py
