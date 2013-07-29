@@ -585,7 +585,7 @@ package body Task_Manager.GUI is
                GUI.Set_Mode (Idle => False);
                GUI.Main_Progress_Bar.Set_Fraction (Pd.Fraction);
                GUI.Task_Label.Set_Text (Pd.Text);
-               GUI.Progress_Label.Set_Text (Pd.Progress_Text);
+               GUI.Progress_Label.Set_Text (" " & Pd.Progress_Text);
                GUI.Progress_Bar_Button.Set_Sensitive (not Pd.Multiple_Queues);
 
                GUI.Main_Progress_Bar.Set_Tooltip_Markup
