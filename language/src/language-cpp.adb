@@ -208,7 +208,8 @@ package body Language.Cpp is
       Can_Indent                    => True,
       Syntax_Highlighting           => True,
       Case_Sensitive                => True,
-      Accurate_Xref                 => False);
+      Accurate_Xref                 => False,
+      Use_Semicolon                 => True);
 
    overriding function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access

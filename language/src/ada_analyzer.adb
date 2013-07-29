@@ -747,6 +747,11 @@ package body Ada_Analyzer is
 
       Aspect_Clause       : Boolean := False;
       --  True when the current construct is an Ada 2012 aspect clause
+      --  Consider merging with Subprogram_Aspect ???
+
+      Aspect_Clause_Sloc  : Source_Location;
+      --  source location of start of the current aspect clause, when
+      --  Aspect_Clause is True.
 
       type In_Declaration_Kind is
         (No_Decl, Subprogram_Decl, Subprogram_Aspect, Type_Decl);
@@ -903,6 +908,14 @@ package body Ada_Analyzer is
          Line  : Natural;
          Str   : String);
       --  Wrapper for Replace.all, taking (From, To) into account
+
+      function Call_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Call Callback and take into account Aspect_Clause/Aspect_Clause_Sloc
+      --  if needed.
 
       --------------------
       -- Stack Routines --
@@ -1952,7 +1965,7 @@ package body Ada_Analyzer is
          Temp.Visibility  := Top_Token.Visibility_Section;
 
          if Callback /= null then
-            Finish := Callback
+            Finish := Call_Callback
               (Keyword_Text,
                Temp.Sloc,
                (Line_Count, Current - Start_Of_Line + 1, Current),
@@ -3520,7 +3533,7 @@ package body Ada_Analyzer is
                      end;
 
                   else
-                     if Callback
+                     if Call_Callback
                          (Entity,
                           (Prev_Line, First - Prev_Start_Line + 1, First),
                           (Prev_Line, Last - Prev_Start_Line + 1, Last),
@@ -3930,7 +3943,7 @@ package body Ada_Analyzer is
                         P, L, Num_Spaces);
 
                      if Callback /= null then
-                        if Callback
+                        if Call_Callback
                           (Entity,
                            (L, First - Start_Of_Line + 1,
                             First),
@@ -4167,7 +4180,28 @@ package body Ada_Analyzer is
                   if Buffer (P) = ';' then
                      Prev_Token := Tok_Semicolon;
                      Right_Assignment := False;
-                     Aspect_Clause := False;
+
+                     if Aspect_Clause then
+                        Aspect_Clause := False;
+
+                        if Callback /= null then
+                           declare
+                              Prev_Tmp : constant Natural := Prev_Char (P);
+                           begin
+                              Start_Of_Line := Line_Start (Buffer, Prev_Tmp);
+
+                              if Callback
+                                (Aspect_Text,
+                                 Aspect_Clause_Sloc,
+                                 (L, Prev_Tmp - Start_Of_Line + 1, Prev_Tmp),
+                                 False)
+                              then
+                                 Terminated := True;
+                                 return;
+                              end if;
+                           end;
+                        end if;
+                     end if;
 
                      if Local_Top_Token.Token = Tok_Colon then
                         Pop_And_Set_Local (Tokens);
@@ -4283,7 +4317,7 @@ package body Ada_Analyzer is
                      Prev_Token := Tok_Char_Literal;
 
                      if Callback /= null then
-                        if Callback
+                        if Call_Callback
                           (Character_Text,
                            (L, First - Start_Of_Line + 1, First),
                            (L, P - Start_Of_Line + 1, P),
@@ -4309,7 +4343,7 @@ package body Ada_Analyzer is
                         or else Prev_Token in Tok_Semicolon .. Tok_Dot_Dot)
             then
                if Callback /= null then
-                  if Callback
+                  if Call_Callback
                     (Operator_Text,
                      (L, First - Start_Of_Line + 1, First),
                      (L, P - Start_Of_Line + 1, P),
@@ -4358,6 +4392,46 @@ package body Ada_Analyzer is
             Padding := Padding + Str'Length - (Last - First);
          end if;
       end Replace_Text;
+
+      -------------------
+      -- Call_Callback --
+      -------------------
+
+      function Call_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         Ignore : Boolean;
+         pragma Unreferenced (Ignore);
+         Ent : Language_Entity := Entity;
+
+      begin
+         if Aspect_Clause then
+            case Entity is
+               when Keyword_Text =>
+                  Ent := Aspect_Keyword_Text;
+               when others =>
+                  --  Highlight everything else with Annotated_Comment_Text,
+                  --  which will be done next time Call_Callback is called.
+                  return False;
+            end case;
+
+            Ignore := Callback
+              (Aspect_Text,
+               Aspect_Clause_Sloc,
+               (Sloc_Start.Line,
+                Sloc_Start.Column - 1,
+                Sloc_Start.Index - 1),
+               Partial_Entity);
+            Aspect_Clause_Sloc :=
+              (Sloc_End.Line, Sloc_End.Column + 1, Sloc_End.Index + 1);
+
+         end if;
+
+         return Callback (Ent, Sloc_Start, Sloc_End, Partial_Entity);
+      end Call_Callback;
 
    begin  --  Analyze_Ada_Source
       if Buffer'Length = 0 then
@@ -4573,7 +4647,7 @@ package body Ada_Analyzer is
                end if;
 
                if Callback /= null then
-                  exit Main_Loop when Callback
+                  exit Main_Loop when Call_Callback
                     (Entity,
                      (Prev_Line, Prec - Start_Of_Line + 1, Prec),
                      (Line_Count,
@@ -4594,7 +4668,7 @@ package body Ada_Analyzer is
             if Callback /= null then
                Start_Of_Line := Line_Start (Buffer, Prec);
 
-               exit Main_Loop when Callback
+               exit Main_Loop when Call_Callback
                  (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
                   (Line_Count, Current - Start_Of_Line + 1, Current),
@@ -4610,6 +4684,7 @@ package body Ada_Analyzer is
 
             declare
                Temp      : aliased Extended_Token;
+               Tmp_Index : Integer;
                Do_Push   : Boolean;
                Do_Pop    : Integer;
                Do_Finish : Boolean;
@@ -4643,11 +4718,27 @@ package body Ada_Analyzer is
                if Token = Tok_With
                  and then
                    (Top (Tokens).Token
-                    in Tok_Type | Tok_Function | Tok_Procedure)
-                 and then Prev_Prev_Token /= Tok_New
-                 and then Prev_Prev_Token /= Tok_And
+                      in Tok_Type | Tok_Function | Tok_Procedure
+                    or else (Top (Tokens).Token = No_Token
+                             and then Prev_Token
+                               not in Tok_Semicolon | No_Token))
                then
-                  Aspect_Clause := True;
+                  Tmp_Index := Current + 1;
+                  Skip_Blanks (Buffer, Tmp_Index);
+
+                  if not Look_For (Tmp_Index, "record")
+                    and then not Look_For (Tmp_Index, "null")
+                  then
+                     Aspect_Clause := True;
+
+                     if Callback /= null then
+                        Start_Of_Line := Line_Start (Buffer, Prec);
+                        Aspect_Clause_Sloc :=
+                          (Line_Count,
+                           Current + 1 - Start_Of_Line + 1,
+                           Current + 1);
+                     end if;
+                  end if;
                end if;
 
                if Do_Push then

@@ -469,7 +469,8 @@ package body Language.Ada is
                     Can_Indent                    => True,
                     Syntax_Highlighting           => True,
                     Case_Sensitive                => False,
-                    Accurate_Xref                 => True);
+                    Accurate_Xref                 => True,
+                    Use_Semicolon                 => True);
 
    overriding function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access

@@ -246,13 +246,13 @@ package body Docgen2_Backend.HTML is
       pragma Unreferenced (Backend);
    begin
       case Tag is
-         when Identifier_Text | Block_Text | Type_Text =>
+         when Identifier_Text | Block_Text | Type_Text | Aspect_Text =>
             if Emphasis then
                return "<span class=""name_emphasis"">" & Value & "</span>";
             else
                return "<span class=""name"">" & Value & "</span>";
             end if;
-         when Keyword_Text =>
+         when Keyword_Text | Aspect_Keyword_Text =>
             return "<span class=""keyword"">" & Value & "</span>";
          when Comment_Text | Annotated_Comment_Text
            | Annotated_Keyword_Text =>

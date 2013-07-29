@@ -202,8 +202,10 @@ package body Src_Editor_Buffer.Hyper_Mode is
                      => Highlight := True;
                   when Keyword_Text
                      | Annotated_Keyword_Text
+                     | Aspect_Keyword_Text
                      | Comment_Text
                      | Annotated_Comment_Text
+                     | Aspect_Text
                      | Character_Text
                      | String_Text
                      | Number_Text

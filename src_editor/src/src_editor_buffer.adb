@@ -2680,6 +2680,7 @@ package body Src_Editor_Buffer is
       --  Offset between the beginning of the Source_Buffer and the beginning
       --  of the string slice passed to Parse_Entities.
 
+      Tmp_Start, Tmp_End  : Gtk_Text_Iter;
       Slice_Offset_Column : Gint;
       Result              : Boolean;
       Ignored             : Boolean;
@@ -2852,9 +2853,9 @@ package body Src_Editor_Buffer is
       Copy (Source => Start_Iter, Dest => Entity_Start);
       Copy (Source => End_Iter, Dest => Entity_End);
 
-      --  Highlight from the beginning of the current line, to handle
-      --  special language semantics requiring information from previous
-      --  characters, such as x.all'address in Ada.
+      --  Start from the beginning of the current line to handle special
+      --  language semantics requiring information from previous characters,
+      --  such as x.all'address in Ada...
 
       Set_Line_Offset (Entity_Start, 0);
 
@@ -2862,12 +2863,45 @@ package body Src_Editor_Buffer is
          Copy (Source => Start_Iter, Dest => Entity_Start);
       end if;
 
-      --  Highlight to the end of line, to avoid missing most of the
-      --  partial entities (strings, characters, ...).
-      --  In case we have started typing a string for instance, that
-      --  provides a nice optimization over rehighlighting the whole buffer.
+      if Get_Language_Context (Buffer.Lang).Use_Semicolon then
+         --  ...and highlight from the previous semicolon, to handle multiple
+         --  line constructs such as C comments or Ada aspect clauses. Note:
+         --  this is a heuristic, since we could find a semicolon in the middle
+         --  of a comment, which wouldn't help us that much.
+
+         Backward_Search
+           (Iter => Entity_Start, Str => ";", Flags => 0,
+            Match_Start => Tmp_Start, Match_End => Tmp_End,
+            Result => Result);
+
+         if Result then
+            Forward_Char (Tmp_Start, Result);
+            Entity_Start := Tmp_Start;
+         else
+            Set_Offset (Entity_Start, 0);
+         end if;
+      end if;
+
+      --  Highlight to the end of line, to avoid missing most of the partial
+      --  entities (strings, characters, ...). In case we have started typing
+      --  a string for instance, that provides a nice optimization over
+      --  rehighlighting the whole buffer...
 
       Forward_To_Line_End (Entity_End, Result);
+
+      if Get_Language_Context (Buffer.Lang).Use_Semicolon then
+         --  ...and go to next semicolon if any
+         Forward_Search
+           (Iter => Entity_End, Str => ";", Flags => 0,
+            Match_Start => Tmp_Start, Match_End => Tmp_End,
+            Result => Result);
+
+         if Result then
+            Entity_End := Tmp_Start;
+         else
+            Forward_To_End (Entity_End);
+         end if;
+      end if;
 
       --  Search the initial minimum area to re-highlight...
 
@@ -2877,8 +2911,8 @@ package body Src_Editor_Buffer is
       for Current_Entity in Standout_Language_Entity loop
          if Has_Tag (Entity_Start, Tags (Current_Entity)) then
             --  This means that we are in a highlighted region. The minimum
-            --  region to re-highlight starts from the begining of the current
-            --  region to the end of the following region.
+            --  region to re-highlight starts from the begining of the
+            --  current region to the end of the following region.
 
             Entity_Kind := Current_Entity;
 
@@ -2898,10 +2932,10 @@ package body Src_Editor_Buffer is
             --    starts from the begining of the previous region to the
             --    end of the current region.
             --  Case Ends_Tag:
-            --    This means that we inserted right at the end of a highlighted
-            --    region. In this case, the minimum region to re-highlight
-            --    starts from the begining of the previous region to the end of
-            --    the current region.
+            --    This means that we inserted right at the end of a
+            --    highlighted region. In this case, the minimum region to
+            --    re-highlight starts from the begining of the previous
+            --    region to the end of the current region.
             --  In both cases, the processing is the same...
 
             Entity_Kind := Current_Entity;
@@ -2913,7 +2947,8 @@ package body Src_Editor_Buffer is
       end loop Entity_Kind_Search_Loop;
 
       if Entity_Kind = Normal_Text then
-         --  We are inside a normal text region. Just re-highlight this region
+         --  We are inside a normal text region. Just re-highlight this
+         --  region.
 
          Backward_To_Tag_Toggle (Entity_Start, Result => Ignored);
          Forward_To_Tag_Toggle (Entity_End, Result => Ignored);
@@ -3388,6 +3423,18 @@ package body Src_Editor_Buffer is
             Fore_Color => Keywords_Style.Get_Pref_Fg,
             Back_Color => Keywords_Style.Get_Pref_Bg,
             Font_Desc  => Keywords_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Annotated_Keyword_Text),
+            Annotated_Keyword_Color_Tag_Name,
+            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
+            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
+            Font_Desc  => Keywords_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Aspect_Keyword_Text),
+            Aspect_Keyword_Color_Tag_Name,
+            Fore_Color => Aspects_Style.Get_Pref_Fg,
+            Back_Color => Aspects_Style.Get_Pref_Bg,
+            Font_Desc  => Keywords_Style.Get_Pref_Font);
       end if;
 
       if Pref = null
@@ -3417,7 +3464,25 @@ package body Src_Editor_Buffer is
             Annotated_Keyword_Color_Tag_Name,
             Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
             Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
-            Font_Desc  => Annotated_Comments_Style.Get_Pref_Font);
+            Font_Desc  => Keywords_Style.Get_Pref_Font);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Aspects_Style)
+        or else Pref = Preference (Default_Style)
+      then
+         New_Tag
+           (B.Syntax_Tags (Aspect_Text),
+            Aspect_Color_Tag_Name,
+            Fore_Color => Aspects_Style.Get_Pref_Fg,
+            Back_Color => Aspects_Style.Get_Pref_Bg,
+            Font_Desc  => Aspects_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Aspect_Keyword_Text),
+            Aspect_Keyword_Color_Tag_Name,
+            Fore_Color => Aspects_Style.Get_Pref_Fg,
+            Back_Color => Aspects_Style.Get_Pref_Bg,
+            Font_Desc  => Keywords_Style.Get_Pref_Font);
       end if;
 
       if Pref = null

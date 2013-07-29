@@ -38,9 +38,11 @@ package Src_Highlighting is
    Number_Color_Tag_Name            : constant String := "number";
    Block_Color_Tag_Name             : constant String := "block";
    Keyword_Color_Tag_Name           : constant String := "keyword";
-   Annotated_Keyword_Color_Tag_Name : constant String := "annotated-keyword";
    Comment_Color_Tag_Name           : constant String := "comment";
+   Annotated_Keyword_Color_Tag_Name : constant String := "annotated-keyword";
    Annotated_Comment_Color_Tag_Name : constant String := "annotated-comment";
+   Aspect_Keyword_Color_Tag_Name    : constant String := "aspect-keyword";
+   Aspect_Color_Tag_Name            : constant String := "aspect";
    String_Color_Tag_Name            : constant String := "string";
    Character_Color_Tag_Name         : constant String := "character";
    --  Respectively, the name of the tags use to highlight keywords, comments,

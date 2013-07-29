@@ -693,6 +693,19 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
+      Aspects_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Aspects-Variant",
+         Label        => -"Ada/SPARK aspects",
+         Doc          => -"Style to use when displaying Ada 2012 or SPARK 2014"
+         & " aspects. The background color will be that of the default if left"
+         & " to white",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "#60615F",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
+
       Strings_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Strings-Variant",

@@ -438,6 +438,10 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       Ada comments (Starting with `--#`). Setting the color to white
       will set a transparent color.
 
+    *Ada/SPARK Aspects*
+      Font variant and colors used to highlight Ada 2012 and SPARK 2014
+      aspects. Setting the color to white will set a transparent color.
+
     *Strings*
       Font variant and colors used to highlight strings.
       Setting the color to white will set a transparent color.

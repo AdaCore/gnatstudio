@@ -127,7 +127,8 @@ package body Language.Unknown is
       Can_Indent                    => False,
       Syntax_Highlighting           => False,
       Case_Sensitive                => True,
-      Accurate_Xref                 => False);
+      Accurate_Xref                 => False,
+      Use_Semicolon                 => False);
 
    overriding function Get_Language_Context
      (Lang : access Unknown_Language) return Language_Context_Access

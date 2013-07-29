@@ -50,7 +50,7 @@ package Language is
    --  the language_handler.
 
    function Entities_Indexed (Self : Language_Root) return Boolean;
-   --  Should the entities of this languages be indexed in the entities
+   --  Should the entities of this language be indexed in the entities
    --  database? This concerns only the ALI or LI information, used for the
    --- purpose of e.g. completion for languages others than Ada. False by
    --  default.
@@ -80,9 +80,11 @@ package Language is
       Type_Text,
       Number_Text,
       Keyword_Text,
-      Annotated_Keyword_Text,
       Comment_Text,
+      Annotated_Keyword_Text,
       Annotated_Comment_Text,
+      Aspect_Keyword_Text,
+      Aspect_Text,
       Character_Text,
       String_Text,
       Operator_Text);
@@ -93,6 +95,7 @@ package Language is
    --  currently triggered only in declarations and not in statements.
    --  Annotated_Comment_Text represents special comments that contain
    --  annotations, e.g. SPARK annotations.
+   --  Aspect_Text represents Ada 2012 or SPARK 2014 aspects.
 
    subtype Identifier_Entity is Language_Entity
      range Identifier_Text .. Type_Text;
@@ -235,6 +238,10 @@ package Language is
       --  Whether cross reference information for this language is supposed
       --  to be fully accurate (and therefore any mismatch means the xref info
       --  is not up-to-date) or not.
+
+      Use_Semicolon                 : Boolean;
+      --  Whether semicolons are expected in sources and may be used as a
+      --  delimiter for syntax highlighting purposes.
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language

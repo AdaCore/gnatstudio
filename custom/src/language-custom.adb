@@ -65,7 +65,8 @@ package body Language.Custom is
       Can_Indent                    => False,
       Syntax_Highlighting           => False,
       Case_Sensitive                => True,
-      Accurate_Xref                 => False);
+      Accurate_Xref                 => False,
+      Use_Semicolon                 => False);
 
    Custom_Root : Custom_Language_Access;
    --  Holds a linked list of custom languages, so that we can implement
