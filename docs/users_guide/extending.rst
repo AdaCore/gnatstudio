@@ -3326,6 +3326,15 @@ The following tags are available in a `Language` section:
     A boolean indicating whether the language (and in particular the identifiers
     and keywords) is case sensitive.
 
+  *Accurate_Xref*
+    A boolean indicating wwhether cross reference information for this language
+    is supposed to be fully accurate or not (e.g. approximate, or none). Default
+    to False.
+
+  *Use_Semicolon*
+    A boolean indicating whether semicolons are expected in sources and may be used
+    as a delimiter for syntax highlighting purposes. Default to False.
+
 *Categories*
   Optional node to describe the categories supported by the project view
   for the current language. This node contains a list of `Category` nodes,

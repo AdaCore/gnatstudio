@@ -546,6 +546,10 @@ package body Language.Custom is
            (Node, "Syntax_Highlighting", Lang.Context.Syntax_Highlighting);
          Parse_Boolean
            (Node, "Case_Sensitive", Lang.Context.Case_Sensitive, True);
+         Parse_Boolean
+           (Node, "Accurate_Xref", Lang.Context.Accurate_Xref, False);
+         Parse_Boolean
+           (Node, "Use_Semicolon", Lang.Context.Use_Semicolon, False);
 
          if Lang.Context.Case_Sensitive then
             Flags := Multiple_Lines;
