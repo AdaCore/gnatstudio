@@ -120,17 +120,15 @@ package body GPS.Kernel.Preferences is
          Trace (Me, "Preference changed: " & Pref.Get_Name);
          Emit_Preferences_Changed
            (Self.Kernel, Default_Preferences.Preference (Pref));
-      end if;
 
-      if not Self.Is_Loading_Preferences
-        and then Self.Nested_Pref_Changed = 1
-      then
-         if Self.Get_Editor /= null then
-            Widget_Callback.Emit_By_Name
-              (Self.Get_Editor, Signal_Preferences_Changed);
+         if Self.Nested_Pref_Changed = 1 then
+            if Self.Get_Editor /= null then
+               Widget_Callback.Emit_By_Name
+                 (Self.Get_Editor, Signal_Preferences_Changed);
+            end if;
+
+            Save_Preferences (Self.Kernel);
          end if;
-
-         Save_Preferences (Self.Kernel);
       end if;
 
       Self.Nested_Pref_Changed := Self.Nested_Pref_Changed - 1;
@@ -1875,13 +1873,27 @@ package body GPS.Kernel.Preferences is
       File_Name : constant Virtual_File := Kernel.Preferences_File;
       Success : Boolean;
    begin
-      Trace (Me, "Saving preferences in " & File_Name.Display_Full_Name);
-      Save_Preferences (Kernel.Preferences, File_Name, Success);
+      if not Default_Preferences.Is_Frozen (Kernel.Preferences) then
+         Trace (Me, "Saving preferences in " & File_Name.Display_Full_Name);
+         Save_Preferences (Kernel.Preferences, File_Name, Success);
 
-      if not Success then
-         Report_Preference_File_Error (Kernel, File_Name);
+         if not Success then
+            Report_Preference_File_Error (Kernel, File_Name);
+         end if;
       end if;
    end Save_Preferences;
+
+   ----------
+   -- Thaw --
+   ----------
+
+   overriding procedure Thaw (Self : not null access GPS_Preferences_Record) is
+   begin
+      Thaw (Preferences_Manager_Record (Self.all)'Access);  --  inherited
+      if not Self.Is_Frozen then
+         Save_Preferences (Self.Kernel);
+      end if;
+   end Thaw;
 
    --------------
    -- Set_Pref --

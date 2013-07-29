@@ -31,6 +31,7 @@ package GPS.Kernel.Preferences is
    overriding procedure On_Pref_Changed
      (Self : not null access GPS_Preferences_Record;
       Pref : not null access Preference_Record'Class);
+   overriding procedure Thaw (Self : not null access GPS_Preferences_Record);
 
    procedure Set_Kernel
      (Self   : not null access GPS_Preferences_Record;

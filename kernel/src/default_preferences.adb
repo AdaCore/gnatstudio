@@ -2096,7 +2096,7 @@ package body Default_Preferences is
    ------------
 
    procedure Freeze
-     (Self : not null access Preferences_Manager_Record'Class) is
+     (Self : not null access Preferences_Manager_Record) is
    begin
       Self.Freeze_Count := Self.Freeze_Count + 1;
    end Freeze;
@@ -2106,7 +2106,7 @@ package body Default_Preferences is
    ----------
 
    procedure Thaw
-     (Self : not null access Preferences_Manager_Record'Class) is
+     (Self : not null access Preferences_Manager_Record) is
    begin
       if Self.Freeze_Count > 0 then
          Self.Freeze_Count := Self.Freeze_Count - 1;

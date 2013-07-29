@@ -69,8 +69,8 @@ package Default_Preferences is
    --  True while we are loading the preferences. This is used to disable
    --  saving the preferences when we are setting their initial value.
 
-   procedure Freeze (Self : not null access Preferences_Manager_Record'Class);
-   procedure Thaw (Self : not null access Preferences_Manager_Record'Class);
+   procedure Freeze (Self : not null access Preferences_Manager_Record);
+   procedure Thaw (Self : not null access Preferences_Manager_Record);
    --  Freeze/Thaw the emission of the preferences_changed signal
 
    function Is_Frozen
