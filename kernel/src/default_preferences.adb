@@ -108,6 +108,11 @@ package body Default_Preferences is
       Data   : Manager_Preference);
    --  Called when a boolean preference has been changed.
 
+   procedure Update_Variant
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference);
+   --  Called when a variant preference is changed.
+
    procedure Update_Boolean
      (Toggle : access GObject_Record'Class;
       Data   : Manager_Preference);
@@ -1150,6 +1155,25 @@ package body Default_Preferences is
       end if;
    end Color_Changed;
 
+   --------------------
+   -- Update_Variant --
+   --------------------
+
+   procedure Update_Variant
+     (Button : access GObject_Record'Class;
+      Data   : Manager_Preference)
+   is
+      Count : Gint := 0;
+   begin
+      for J in Variant_Enum loop
+         if J = Variant_Preference (Data.Pref).Variant then
+            Gtk_Combo_Box_Text (Button).Set_Active (Count);
+            exit;
+         end if;
+         Count := Count + 1;
+      end loop;
+   end Update_Variant;
+
    ---------------
    -- Update_Fg --
    ---------------
@@ -1670,6 +1694,9 @@ package body Default_Preferences is
       Preference_Handlers.Connect
         (Variant_Combo, Gtk.Combo_Box.Signal_Changed,
          Variant_Changed'Access, P);
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Variant'Access, Variant_Combo, P);
 
       Create_Color_Buttons (Box, Pref, Manager);
 
