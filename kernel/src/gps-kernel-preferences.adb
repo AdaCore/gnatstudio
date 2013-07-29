@@ -628,7 +628,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
-      Block_Style := Create
+      Blocks_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Blocks-Variant",
          Label        => -"Blocks",
@@ -640,7 +640,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg      => "white",
          Page            => -"Editor/Fonts & Colors");
 
-      Type_Style := Create
+      Types_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Types-Variant",
          Label        => -"Types",

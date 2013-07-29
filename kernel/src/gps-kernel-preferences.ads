@@ -187,8 +187,8 @@ package GPS.Kernel.Preferences is
    -- Source Editor --
    Default_Style             : Style_Preference;
    Keywords_Style            : Variant_Preference;
-   Block_Style               : Variant_Preference;
-   Type_Style                : Variant_Preference;
+   Blocks_Style              : Variant_Preference;
+   Types_Style               : Variant_Preference;
    Comments_Style            : Variant_Preference;
    Annotated_Comments_Style  : Variant_Preference;
    Strings_Style             : Variant_Preference;
