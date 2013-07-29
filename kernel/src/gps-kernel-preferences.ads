@@ -192,6 +192,7 @@ package GPS.Kernel.Preferences is
    Comments_Style            : Variant_Preference;
    Annotated_Comments_Style  : Variant_Preference;
    Strings_Style             : Variant_Preference;
+   Numbers_Style             : Variant_Preference;
    Hyper_Links_Style         : Variant_Preference;
 
    Delimiter_Color           : Color_Preference;

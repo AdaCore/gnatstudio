@@ -3367,17 +3367,15 @@ package body Src_Editor_Buffer is
       end if;
 
       if Pref = null
-      --  or else Pref = Preference (Number_Style)
-      --  ??? Number_Style doesn't exist yet
+        or else Pref = Preference (Numbers_Style)
         or else Pref = Preference (Default_Style)
       then
-         --  ??? Replace Default_Style by Number_Style below
          New_Tag
            (B.Syntax_Tags (Number_Text),
             Number_Color_Tag_Name,
-            Fore_Color => Default_Style.Get_Pref_Fg,
-            Back_Color => Default_Style.Get_Pref_Bg,
-            Font_Desc  => Default_Style.Get_Pref_Font);
+            Fore_Color => Numbers_Style.Get_Pref_Fg,
+            Back_Color => Numbers_Style.Get_Pref_Bg,
+            Font_Desc  => Numbers_Style.Get_Pref_Font);
       end if;
 
       if Pref = null

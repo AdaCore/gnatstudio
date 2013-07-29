@@ -442,6 +442,10 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       Font variant and colors used to highlight strings.
       Setting the color to white will set a transparent color.
 
+    *Numbers*
+      Font variant and colors used to highlight numbers.
+      Setting the color to white will set a transparent color.
+
     *Current line color*
       Color for highlighting the current line. Leave it to blank for no
       highlighting.  Setting the color to white will set a transparent color.

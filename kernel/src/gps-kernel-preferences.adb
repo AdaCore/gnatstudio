@@ -705,6 +705,19 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
+      Numbers_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Number-Variant",
+         Label        => -"Numbers",
+         Doc          => -"Style to use when displaying numbers."
+           & " The background color will be that of the default if left"
+           & " to white",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "#FF3333",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
+
       Hyper_Links_Style := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Hyper-Links-Variant",
