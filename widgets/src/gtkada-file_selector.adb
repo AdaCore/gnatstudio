@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Expect;               use GNAT.Expect;
@@ -110,6 +111,10 @@ package body Gtkada.File_Selector is
    -- Local subprograms --
    -----------------------
 
+   function Basename_Less_Than (F1, F2 : Virtual_File) return Boolean
+     is (F1.Base_Name < F2.Base_Name);
+   package By_Basename is new File_List.Generic_Sorting (Basename_Less_Than);
+
    procedure Set_Location
      (Location_Combo : Gtk_Combo_Box_Text;
       Dir            : Virtual_File);
@@ -134,10 +139,6 @@ package body Gtkada.File_Selector is
 
    procedure Refresh_Files
      (Win : access File_Selector_Window_Record'Class);
-
-   function Read_File
-     (Win : File_Selector_Window_Access) return Boolean;
-   --  Read one file from the current directory and insert it in Files
 
    function Display_File
      (Win : File_Selector_Window_Access) return Boolean;
@@ -220,10 +221,6 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  ???
 
-   procedure On_Selection_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class);
-   --  ???
-
    procedure On_Destroy
      (Object : access Gtk_Widget_Record'Class);
    --  ???
@@ -246,9 +243,6 @@ package body Gtkada.File_Selector is
    procedure On_Display_Idle_Destroy
      (Win : in out File_Selector_Window_Access);
    --  Callback used to destroy the display idle loop
-
-   procedure On_Read_Idle_Destroy (Win : in out File_Selector_Window_Access);
-   --  Callback used to destroy the read idle loop
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected
@@ -401,16 +395,6 @@ package body Gtkada.File_Selector is
    begin
       Win.Display_Idle_Handler := 0;
    end On_Display_Idle_Destroy;
-
-   ---------------------
-   -- On_Idle_Destroy --
-   ---------------------
-
-   procedure On_Read_Idle_Destroy (Win : in out File_Selector_Window_Access) is
-      pragma Warnings (Off, Win);
-   begin
-      Win.Read_Idle_Handler := 0;
-   end On_Read_Idle_Destroy;
 
    -------------------
    -- Get_Selection --
@@ -763,11 +747,15 @@ package body Gtkada.File_Selector is
    ------------------
 
    function Display_File (Win : File_Selector_Window_Access) return Boolean is
+      Max_Idle_Duration : constant Duration := 0.05;
+      --  Maximum time spent in the idle callback (in seconds)
+
       Text   : String_Access;
       State  : File_State;
       Pixbuf : Gdk_Pixbuf;
       Iter   : Gtk_Tree_Iter := Null_Iter;
       Color  : Gdk_RGBA := Null_RGBA;
+      Start  : constant Time := Clock;
 
       procedure Internal
         (Tree, Iter : System.Address;
@@ -783,10 +771,10 @@ package body Gtkada.File_Selector is
          return False;
       end if;
 
-      for J in 1 .. 100 loop
-         exit when Win.Remaining_Files = File_List.Null_Node;
-
-         F := Data (Win.Remaining_Files);
+      while Has_Element (Win.Remaining_Files)
+        and then (Clock - Start <= Max_Idle_Duration)
+      loop
+         F := Element (Win.Remaining_Files);
 
          Use_File_Filter
            (Win.Current_Filter,
@@ -796,7 +784,10 @@ package body Gtkada.File_Selector is
             Pixbuf,
             Text);
 
-         if Text = null and then F.Is_Local then
+         if State /= Invisible
+           and then Text = null
+           and then F.Is_Local
+         then
             Text := new String'
               (GNAT.Calendar.Time_IO.Image
                (F.File_Time_Stamp,
@@ -811,29 +802,27 @@ package body Gtkada.File_Selector is
 
          case State is
             when Invisible =>
-               null;
+               Free (Text);
 
             when Normal =>
-               Append (Win.File_Model, Iter, Null_Iter);
+               Win.File_Model.Append (Iter, Null_Iter);
 
             when Highlighted =>
-               Append (Win.File_Model, Iter, Null_Iter);
+               Win.File_Model.Append (Iter, Null_Iter);
                Color := Win.Highlighted_Color;
 
             when Insensitive =>
-               Append (Win.File_Model, Iter, Null_Iter);
+               Win.File_Model.Append (Iter, Null_Iter);
                Color := Win.Insensitive_Color;
          end case;
 
          if Iter /= Null_Iter then
-            Set (Win.File_Model, Iter, Base_Name_Column,
-                 Display_Base_Name (Data (Win.Remaining_Files)));
-            Set_File
-              (Win.File_Model, Iter, File_Column, Data (Win.Remaining_Files));
+            Win.File_Model.Set (Iter, Base_Name_Column, F.Display_Base_Name);
+            Set_File (Win.File_Model, Iter, File_Column, F);
 
             if Text /= null then
-               Set (Win.File_Model, Iter, Comment_Column,
-                    Locale_To_UTF8 (Text.all));
+               Win.File_Model.Set
+                 (Iter, Comment_Column, Locale_To_UTF8 (Text.all));
                Free (Text);
                Has_Info := True;
             end if;
@@ -845,8 +834,7 @@ package body Gtkada.File_Selector is
             end if;
 
             if Pixbuf /= Null_Pixbuf then
-               Set (Win.File_Model, Iter, Icon_Column,
-                    GObject (Pixbuf));
+               Win.File_Model.Set (Iter, Icon_Column, GObject (Pixbuf));
             end if;
          end if;
 
@@ -857,86 +845,8 @@ package body Gtkada.File_Selector is
       --  simply hide all column headers)
       Win.File_Tree.Set_Headers_Visible (Has_Info);
 
-      return Win.Remaining_Files /= File_List.Null_Node;
+      return Has_Element (Win.Remaining_Files);
    end Display_File;
-
-   ---------------
-   -- Read_File --
-   ---------------
-
-   function Read_File (Win : File_Selector_Window_Access) return Boolean is
-      Prev : File_List.List_Node;
-      Node : File_List.List_Node;
-
-   begin
-      if Win.Current_Directory = No_File
-        or else not Is_Directory (Win.Current_Directory)
-      then
-         return False;
-      end if;
-
-      declare
-         Files    : File_Array_Access;
-         Inserted : Boolean;
-      begin
-         Files := Read_Dir (Win.Current_Directory, Files_Only);
-
-         for F in Files'Range loop
-            if Is_Directory (Files (F)) then
-               null;
-               --  ??? or should we display directories in the File_List ?
-
-            else
-               Node := First (Win.Files);
-               Prev := File_List.Null_Node;
-               Inserted := False;
-
-               Insert_Loop :
-               while Node /= File_List.Null_Node loop
-                  if Base_Name (Files (F)) < Base_Name (Data (Node)) then
-                     Append (Win.Files, Prev, Files (F));
-                     Inserted := True;
-                     exit Insert_Loop;
-                  end if;
-
-                  Prev := Node;
-                  Node := Next (Node);
-               end loop Insert_Loop;
-
-               if not Inserted then
-                  Append (Win.Files, Files (F));
-               end if;
-            end if;
-         end loop;
-
-         Unchecked_Free (Files);
-         Clear (Win.File_Model);
-
-         --  Register the function that will fill the list in the background
-
-         Win.Remaining_Files := First (Win.Files);
-
-         if Win.Display_Idle_Handler = 0 then
-            Win.Display_Idle_Handler :=
-              Idle_Add (Display_File'Access,
-                        Win,
-                        Notify => On_Display_Idle_Destroy'Access);
-         end if;
-
-         return False;
-
-      exception
-         when GNATCOLL.VFS.VFS_Directory_Error =>
-            --  Cannot read the selected directory. Exiting
-            Clear (Win.File_Model);
-            return False;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Read_File;
 
    ---------------------
    -- Register_Filter --
@@ -978,22 +888,21 @@ package body Gtkada.File_Selector is
    -------------------
 
    procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
-      Dir    : constant Virtual_File := Win.Current_Directory;
-      Filter : File_Filter := null;
-      Iter   : Gtk_Tree_Iter;
+      Filter   : File_Filter := null;
+      Iter     : Gtk_Tree_Iter;
+      Files    : File_Array_Access;
 
    begin
-      if Get_Window (Win) = null
+      if Win.Current_Directory = No_File
+        or else not Is_Directory (Win.Current_Directory)
         or else Win.File_Tree = null
-        or else Dir = No_File
       then
          return;
       end if;
 
-      Set_Busy (Gtk_Window (Win), True);
-      Clear (Win.File_Model);
-      Free (Win.Files);
-      Win.Remaining_Files := File_List.Null_Node;
+      Win.File_Model.Clear;
+      Win.Files.Clear;
+      Win.Remaining_Files := No_Element;
 
       --  Find out which filter to use
 
@@ -1001,46 +910,59 @@ package body Gtkada.File_Selector is
          S : constant String :=
                Locale_From_UTF8 (Get_Active_Text (Win.Filter_Combo));
          C : Filter_List.List_Node := First (Win.Filters);
-
       begin
          while C /= Filter_List.Null_Node loop
             if Data (C).Label.all = S then
                Filter := Data (C);
                exit;
-            else
-               C := Next (C);
             end if;
+
+            C := Next (C);
          end loop;
       end;
 
       if Filter = null then
-         Set_Busy (Gtk_Window (Win), False);
          return;
       end if;
 
-      Append (Win.File_Model, Iter, Null_Iter);
-      Set (Win.File_Model, Iter, Base_Name_Column, -"Opening ... ");
-
       Win.Current_Filter := Filter;
 
-      --  Fill the File_List
       begin
-         if Win.Read_Idle_Handler = 0 then
-            Win.Read_Idle_Handler :=
-              Idle_Add (Read_File'Access,
-                        File_Selector_Window_Access (Win),
-                        Notify => On_Read_Idle_Destroy'Access);
+         Files := Read_Dir (Win.Current_Directory, Files_Only);
+
+         for F in Files'Range loop
+            if not Files (F).Is_Directory then
+               Win.Files.Append (Files (F));
+            end if;
+         end loop;
+
+         Unchecked_Free (Files);
+
+         By_Basename.Sort (Win.Files);
+
+         --  Register the function that will fill the list in the background
+
+         Win.Remaining_Files := First (Win.Files);
+
+         --  Do at least one pass to insert the files immediately
+
+         if Display_File (File_Selector_Window_Access (Win))
+           and then Win.Display_Idle_Handler = 0
+         then
+            Win.Display_Idle_Handler :=
+              Idle_Add (Display_File'Access,
+                        Win,
+                        Notify => On_Display_Idle_Destroy'Access);
          end if;
 
       exception
          when VFS_Directory_Error =>
-            Clear (Win.File_Model);
-            Append (Win.File_Model, Iter, Null_Iter);
-            Set (Win.File_Model, Iter, Base_Name_Column,
-                   -"Could not open " & Display_Full_Name (Dir));
+            Win.File_Model.Clear;
+            Win.File_Model.Append (Iter, Null_Iter);
+            Win.File_Model.Set
+              (Iter, Base_Name_Column,
+               -"Could not open " & Win.Current_Directory.Display_Full_Name);
       end;
-
-      Set_Busy (Gtk_Window (Win), False);
    end Refresh_Files;
 
    ----------------------
@@ -1096,7 +1018,6 @@ package body Gtkada.File_Selector is
          if Win.File_Tree = null then
             Ensure_Directory (Dir);
             Set_Text (Win.Selection_Entry, Display_Full_Name (Dir));
-
             Set_Position
               (Win.Selection_Entry,
                Gint (UTF8_Strlen (Display_Full_Name (Dir))));
@@ -1134,11 +1055,6 @@ package body Gtkada.File_Selector is
       Win.Moving_Through_History := True;
       Set_Location (Win.Location_Combo, S);
       Show_Directory (Win.Explorer_Tree, S);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Free (S);
    end On_Back_Button_Clicked;
 
    ----------------------------
@@ -1151,7 +1067,7 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
       Host : constant String := Get_Host (Win.Current_Directory);
-      H   : Virtual_File := Get_Home_Directory (Host);
+      H   : constant Virtual_File := Get_Home_Directory (Host);
 
    begin
       if H /= No_File then
@@ -1159,11 +1075,6 @@ package body Gtkada.File_Selector is
       else
          Change_Directory (Win, Win.Home_Directory);
       end if;
-
-      Free (H);
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Home_Button_Clicked;
 
    --------------------------
@@ -1179,9 +1090,6 @@ package body Gtkada.File_Selector is
    begin
       Show_Parent (Win.Explorer_Tree);
       Change_Directory (Win, Get_Selection (Win.Explorer_Tree));
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Up_Button_Clicked;
 
    -------------------------------
@@ -1196,9 +1104,6 @@ package body Gtkada.File_Selector is
 
    begin
       Refresh_Files (Win);
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Refresh_Button_Clicked;
 
    -------------------------------
@@ -1233,8 +1138,6 @@ package body Gtkada.File_Selector is
    exception
       when Stack_Empty =>
          null;
-
-      when E : others => Trace (Me, E);
    end On_Forward_Button_Clicked;
 
    -------------------
@@ -1292,7 +1195,6 @@ package body Gtkada.File_Selector is
             end loop;
          end if;
          Host_Selected (Object);
-      when E : others => Trace (Me, E);
    end Host_Selected;
 
    ------------------------
@@ -1307,9 +1209,6 @@ package body Gtkada.File_Selector is
    begin
       Change_Directory
         (Win, Get_Location (Win.Location_Combo));
-
-   exception
-      when E : others => Trace (Me, E);
    end Directory_Selected;
 
    ---------------------
@@ -1323,9 +1222,6 @@ package body Gtkada.File_Selector is
               File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Refresh_Files (Win);
-
-   exception
-      when E : others => Trace (Me, E);
    end Filter_Selected;
 
    --------------------------------------
@@ -1342,9 +1238,6 @@ package body Gtkada.File_Selector is
       if Is_Directory (S) then
          Change_Directory (Win, S);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Location_Combo_Entry_Activate;
 
    ---------------------------------
@@ -1358,7 +1251,7 @@ package body Gtkada.File_Selector is
       pragma Unreferenced (Params);
       Win : constant File_Selector_Window_Access :=
               File_Selector_Window_Access (Object);
-      Dir : constant Virtual_File := Get_Selection (Win.Explorer_Tree);
+      Dir : constant Virtual_File := Win.Explorer_Tree.Get_Selection;
 
    begin
       if Win.In_Destruction then
@@ -1368,9 +1261,6 @@ package body Gtkada.File_Selector is
       if Dir /= No_File then
          Change_Directory (Win, Dir);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Explorer_Tree_Select_Row;
 
    -------------------
@@ -1415,25 +1305,7 @@ package body Gtkada.File_Selector is
 
          Win.OK_Button.Clicked;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_File_List_End_Selection;
-
-   --------------------------------
-   -- On_Selection_Entry_Changed --
-   --------------------------------
-
-   procedure On_Selection_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      pragma Unreferenced (Object);
-   begin
-      null;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Selection_Entry_Changed;
 
    ----------------
    -- On_Destroy --
@@ -1448,19 +1320,12 @@ package body Gtkada.File_Selector is
       Clear (Win.Past_History);
       Clear (Win.Future_History);
 
-      Free (Win.Files);
+      Win.Files.Clear;
       Free (Win.Filters);
 
       if Win.Display_Idle_Handler /= 0 then
          Remove (Win.Display_Idle_Handler);
       end if;
-
-      if Win.Read_Idle_Handler /= 0 then
-         Remove (Win.Read_Idle_Handler);
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Destroy;
 
    ----------------------------------
@@ -1860,7 +1725,7 @@ package body Gtkada.File_Selector is
    ----------------
 
    procedure Initialize
-     (File_Selector_Window : access File_Selector_Window_Record'Class;
+     (Self                 : access File_Selector_Window_Record'Class;
       Root                 : Virtual_File;
       Initial_Directory    : Virtual_File;
       Dialog_Title         : String;
@@ -1886,102 +1751,83 @@ package body Gtkada.File_Selector is
       Hbox7    : Gtk_Hbox;
 
    begin
-      Gtk.Dialog.Initialize
-        (File_Selector_Window, Dialog_Title, Flags => No_Separator);
+      Gtk.Dialog.Initialize (Self, Dialog_Title, Flags => No_Separator);
+      Self.Set_Position (Win_Pos_Mouse);
+      Self.Set_Modal (False);
 
-      File_Selector_Window.History := History;
+      Self.History := History;
+      Self.Home_Directory := Root;
 
-      Parse (File_Selector_Window.Highlighted_Color, "#FF0000", Success);
-      Parse (File_Selector_Window.Insensitive_Color, "#808080", Success);
+      Parse (Self.Highlighted_Color, "#FF0000", Success);
+      Parse (Self.Insensitive_Color, "#808080", Success);
 
-      File_Selector_Window.Home_Directory := Root;
-
-      Gtk_New
-        (File_Selector_Window.Explorer_Tree,
-         Initial_Directory);
+      Gtk_New (Self.Explorer_Tree, Initial_Directory);
+      Object_Callback.Object_Connect
+        (Self.Explorer_Tree.Get_Tree_Selection,
+         Gtk.Tree_Selection.Signal_Changed,
+         On_Explorer_Tree_Select_Row'Access,
+         Slot_Object => Self,
+         After => True);
 
       if Show_Files then
-         Set_Default_Size (File_Selector_Window, 600, 500);
+         Self.Set_Default_Size (800, 650);
       else
-         Set_Default_Size (File_Selector_Window, 400, 647);
+         Self.Set_Default_Size (600, 650);
       end if;
 
-      Set_Position (File_Selector_Window, Win_Pos_Mouse);
-      Set_Modal (File_Selector_Window, False);
-
       Gtk_New (Toolbar1);
-      Set_Orientation (Toolbar1, Orientation_Horizontal);
-      Set_Style (Toolbar1, Toolbar_Both);
-      Pack_Start
-        (File_Selector_Window.Get_Content_Area, Toolbar1, False, False);
+      Toolbar1.Set_Orientation (Orientation_Horizontal);
+      Toolbar1.Set_Style (Toolbar_Icons);
+      Toolbar1.Set_Icon_Size (Icon_Size_Small_Toolbar);
+      Self.Get_Content_Area.Pack_Start (Toolbar1, False, False);
 
-      Set_Icon_Size (Toolbar1, Icon_Size_Small_Toolbar);
-      Set_Style (Toolbar1,  Toolbar_Icons);
-
-      Gtk_New_From_Stock
-        (File_Selector_Window.Back_Button, Stock_Go_Back);
-      Set_Tooltip_Text
-        (File_Selector_Window.Back_Button,
-         -"Go To Previous Location");
-      Toolbar1.Insert (File_Selector_Window.Back_Button);
+      Gtk_New_From_Stock (Self.Back_Button, Stock_Go_Back);
+      Self.Back_Button.Set_Tooltip_Text (-"Go To Previous Location");
+      Toolbar1.Insert (Self.Back_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Back_Button, Gtk.Tool_Button.Signal_Clicked,
+        (Self.Back_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Back_Button_Clicked'Access);
 
-      Gtk_New_From_Stock
-        (File_Selector_Window.Forward_Button, Stock_Go_Forward);
-      Set_Tooltip_Text
-        (File_Selector_Window.Forward_Button,
-         -"Go To Next Location");
-      Toolbar1.Insert (File_Selector_Window.Forward_Button);
+      Gtk_New_From_Stock (Self.Forward_Button, Stock_Go_Forward);
+      Self.Forward_Button.Set_Tooltip_Text (-"Go To Next Location");
+      Toolbar1.Insert (Self.Forward_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Forward_Button, Gtk.Tool_Button.Signal_Clicked,
+        (Self.Forward_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Forward_Button_Clicked'Access);
 
-      Gtk_New_From_Stock
-        (File_Selector_Window.Up_Button, Stock_Go_Up);
-      Set_Tooltip_Text
-        (File_Selector_Window.Up_Button,
-         -"Go To Parent Directory");
-      Toolbar1.Insert (File_Selector_Window.Up_Button);
+      Gtk_New_From_Stock (Self.Up_Button, Stock_Go_Up);
+      Self.Up_Button.Set_Tooltip_Text (-"Go To Parent Directory");
+      Toolbar1.Insert (Self.Up_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Up_Button, Gtk.Tool_Button.Signal_Clicked,
+        (Self.Up_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Up_Button_Clicked'Access);
 
-      Gtk_New_From_Stock
-        (File_Selector_Window.Refresh_Button, Stock_Refresh);
-      Set_Tooltip_Text
-        (File_Selector_Window.Refresh_Button,
-         -"Refresh");
-      Toolbar1.Insert (File_Selector_Window.Refresh_Button);
+      Gtk_New_From_Stock (Self.Refresh_Button, Stock_Refresh);
+      Self.Refresh_Button.Set_Tooltip_Text (-"Refresh");
+      Toolbar1.Insert (Self.Refresh_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Refresh_Button, Gtk.Tool_Button.Signal_Clicked,
+        (Self.Refresh_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Refresh_Button_Clicked'Access);
 
-      Gtk_New_From_Stock
-        (File_Selector_Window.Home_Button, Stock_Home);
-      Set_Tooltip_Text
-        (File_Selector_Window.Home_Button,
-         -"Go To Home Directory");
-      Toolbar1.Insert (File_Selector_Window.Home_Button);
+      Gtk_New_From_Stock (Self.Home_Button, Stock_Home);
+      Self.Home_Button.Set_Tooltip_Text (-"Go To Home Directory");
+      Toolbar1.Insert (Self.Home_Button);
       Widget_Callback.Connect
-        (File_Selector_Window.Home_Button, Gtk.Tool_Button.Signal_Clicked,
+        (Self.Home_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Home_Button_Clicked'Access);
 
-      File_Selector_Window.Display_Remote :=
+      Self.Display_Remote :=
         Remote_Browsing or not Is_Local (Initial_Directory);
 
       if Remote_Browsing then
          Gtk_New_Hbox (Hbox2, False, 0);
-         Pack_Start
-           (Get_Content_Area (File_Selector_Window), Hbox2, True, True);
+         Self.Get_Content_Area.Pack_Start (Hbox2, True, True);
 
          Gtk_New (Label1, -("Host:"));
-         Pack_Start (Hbox2, Label1, False, False, 3);
+         Hbox2.Pack_Start (Label1, False, False, 3);
 
-         Gtk_New_With_Entry (File_Selector_Window.Hosts_Combo);
-         Append_Text
-           (File_Selector_Window.Hosts_Combo, Display_Local_Nickname);
+         Gtk_New_With_Entry (Self.Hosts_Combo);
+         Self.Hosts_Combo.Append_Text (Display_Local_Nickname);
 
          declare
             Machines : constant GNAT.Strings.String_List := Get_Servers;
@@ -1989,203 +1835,152 @@ package body Gtkada.File_Selector is
             for J in Machines'Range loop
                Trace (Me, "Adding " & Machines (J).all &
                       " in servers list");
-               Append_Text
-                 (File_Selector_Window.Hosts_Combo, Machines (J).all);
+               Self.Hosts_Combo.Append_Text (Machines (J).all);
 
                if Initial_Directory /= No_File
                  and then not Is_Local (Initial_Directory)
                  and then Get_Host (Initial_Directory) = Machines (J).all
                then
-                  File_Selector_Window.Hosts_Combo.Set_Active (Gint (J));
+                  Self.Hosts_Combo.Set_Active (Gint (J));
                end if;
             end loop;
          end;
 
-         Pack_Start (Hbox2, File_Selector_Window.Hosts_Combo, True, True, 3);
+         Hbox2.Pack_Start (Self.Hosts_Combo, True, True, 3);
 
          --  Connect to Gtkada-combo's "changed" signal, that is raised when
          --  the list disapears. This prevents eventual dialogs appearing on
          --  host selection to be hidden by the drop down list.
          Widget_Callback.Object_Connect
-           (File_Selector_Window.Hosts_Combo, Gtk.Combo_Box.Signal_Changed,
-            Host_Selected'Access, File_Selector_Window, After => True);
+           (Self.Hosts_Combo, Gtk.Combo_Box.Signal_Changed,
+            Host_Selected'Access, Self, After => True);
       end if;
 
       Gtk_New_Hbox (Hbox3, False, 0);
-      Pack_Start
-        (Get_Content_Area (File_Selector_Window), Hbox3, False, False, 3);
+      Self.Get_Content_Area.Pack_Start (Hbox3, False, False, 3);
 
       Gtk_New (Label1, -("Exploring :"));
-      Pack_Start (Hbox3, Label1, False, False, 3);
+      Hbox3.Pack_Start (Label1, False, False, 3);
 
-      Gtk_New_With_Entry (File_Selector_Window.Location_Combo);
-      Pack_Start (Hbox3,
-                  File_Selector_Window.Location_Combo, True, True, 3);
+      Gtk_New_With_Entry (Self.Location_Combo);
+      Hbox3.Pack_Start (Self.Location_Combo, True, True, 3);
       Widget_Callback.Object_Connect
-        (File_Selector_Window.Location_Combo,
+        (Self.Location_Combo,
          Gtk.Combo_Box.Signal_Changed,
-         Directory_Selected'Access, File_Selector_Window.Location_Combo);
+         Directory_Selected'Access, Self.Location_Combo);
 
       Widget_Callback.Connect
-        (File_Selector_Window.Location_Combo.Get_Child,
-         Gtk.GEntry.Signal_Activate,
-         On_Location_Combo_Entry_Activate'Access);
+        (Self.Location_Combo.Get_Child,
+         Gtk.GEntry.Signal_Activate, On_Location_Combo_Entry_Activate'Access);
       Return_Callback.Connect
-        (File_Selector_Window.Location_Combo.Get_Child,
+        (Self.Location_Combo.Get_Child,
          Signal_Key_Press_Event, On_Location_Entry_Key_Press_Event'Access,
          After => False);
 
-      Object_Callback.Object_Connect
-        (Get_Tree_Selection (File_Selector_Window.Explorer_Tree),
-         Gtk.Tree_Selection.Signal_Changed,
-         On_Explorer_Tree_Select_Row'Access,
-         Slot_Object => File_Selector_Window,
-         After => True);
-
       if Show_Files then
          Gtk_New_Hpaned (Hpaned1);
-         Set_Position (Hpaned1, 200);
+         Hpaned1.Set_Position (200);
 
          Gtk_New_Hbox (Hbox7, False, 0);
-         Pack_Start
-           (Get_Content_Area (File_Selector_Window), Hbox7, True, True, 3);
+         Self.Get_Content_Area.Pack_Start (Hbox7, True, True, 3);
 
-         Pack_Start (Hbox7, Hpaned1, True, True, 3);
+         Hbox7.Pack_Start (Hpaned1, True, True, 3);
 
-         Hpaned1.Pack1
-           (File_Selector_Window.Explorer_Tree, True, True);
-         File_Selector_Window.Explorer_Tree.Set_Size_Request (1, 1);
+         Hpaned1.Pack1 (Self.Explorer_Tree, True, True);
 
-         Gtk_New (File_Selector_Window.Files_Scrolledwindow);
-         Set_Policy
-           (File_Selector_Window.Files_Scrolledwindow,
-            Policy_Automatic, Policy_Always);
-         Hpaned1.Pack2
-           (File_Selector_Window.Files_Scrolledwindow, True, True);
+         Gtk_New (Self.Files_Scrolledwindow);
+         Self.Files_Scrolledwindow.Set_Policy
+           (Policy_Automatic, Policy_Always);
+         Hpaned1.Pack2 (Self.Files_Scrolledwindow, True, True);
 
-         Gtk_New (File_Selector_Window.File_Model, Columns_Types);
-         Gtk_New
-           (File_Selector_Window.File_Tree,
-            File_Selector_Window.File_Model);
-         --  ??? File_Model should be Unref when File_Selector is destroyed
+         Gtk_New (Self.File_Model, Columns_Types);
+         Gtk_New (Self.File_Tree, Self.File_Model);
+         Self.File_Model.Unref;  --  owned by the file_tree
+         Self.Files_Scrolledwindow.Add (Self.File_Tree);
+         Self.File_Tree.Set_Name ("file_selector_window.file_tree");
+         Self.File_Tree.Set_Headers_Visible (True);
+         Set_Column_Types (Self.File_Tree);
 
-         Set_Name (File_Selector_Window.File_Tree,
-                "file_selector_window.file_tree");
-
-         Set_Headers_Visible (File_Selector_Window.File_Tree, True);
-         Set_Column_Types (File_Selector_Window.File_Tree);
-
-         Set_Mode
-           (Get_Selection (File_Selector_Window.File_Tree), Selection_Single);
+         Self.File_Tree.Get_Selection.Set_Mode (Selection_Single);
          Return_Callback.Connect
-           (File_Selector_Window.File_Tree, Signal_Key_Press_Event,
+           (Self.File_Tree, Signal_Key_Press_Event,
             On_File_List_Key_Press_Event'Access);
 
          Widget_Callback.Object_Connect
-           (Get_Selection (File_Selector_Window.File_Tree),
+           (Self.File_Tree.Get_Selection,
             Gtk.Tree_Selection.Signal_Changed,
-            Name_Selected'Access, File_Selector_Window);
+            Name_Selected'Access, Self);
 
          Widget_Callback.Connect
-           (File_Selector_Window.File_Tree, Signal_Row_Activated,
+           (Self.File_Tree, Signal_Row_Activated,
             On_File_List_End_Selection'Access);
-         Add (File_Selector_Window.Files_Scrolledwindow,
-              File_Selector_Window.File_Tree);
 
       else
-         Pack_Start
-           (Get_Content_Area (File_Selector_Window),
-            File_Selector_Window.Explorer_Tree, True, True, 3);
+         Self.Get_Content_Area.Pack_Start
+           (Self.Explorer_Tree, True, True, 3);
       end if;
 
       Gtk_New_Hbox (Hbox4, False, 0);
-      Pack_Start
-        (Get_Content_Area (File_Selector_Window),
-         Hbox4, False, False, 3);
+      Self.Get_Content_Area.Pack_Start (Hbox4, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Filter_Combo);
-
+      Gtk_New (Self.Filter_Combo);
+      Hbox4.Pack_Start (Self.Filter_Combo, True, True, 3);
       Widget_Callback.Connect
-        (File_Selector_Window.Filter_Combo,
+        (Self.Filter_Combo,
          Gtk.Combo_Box.Signal_Changed,
          Filter_Selected'Access);
 
-      Pack_Start (Hbox4,
-                  File_Selector_Window.Filter_Combo, True, True, 3);
-
       Gtk_New_Hbox (Hbox5, False, 0);
-      Pack_Start
-        (Get_Content_Area (File_Selector_Window),
-         Hbox5, False, False, 3);
+      Self.Get_Content_Area.Pack_Start (Hbox5, False, False, 3);
 
-      Gtk_New (File_Selector_Window.Selection_Entry);
-      Set_Name (File_Selector_Window.Selection_Entry,
-                "file_selector_window.selection_entry");
-      Set_Editable (File_Selector_Window.Selection_Entry, True);
-      Set_Max_Length (File_Selector_Window.Selection_Entry, 0);
-      Set_Visibility (File_Selector_Window.Selection_Entry, True);
-      Pack_Start
-        (Hbox5, File_Selector_Window.Selection_Entry, True, True, 3);
-      Set_Activates_Default (File_Selector_Window.Selection_Entry, True);
+      Gtk_New (Self.Selection_Entry);
+      Self.Selection_Entry.Set_Name ("file_selector_window.selection_entry");
+      Self.Selection_Entry.Set_Editable (True);
+      Self.Selection_Entry.Set_Max_Length (0);
+      Self.Selection_Entry.Set_Visibility (True);
+      Hbox5.Pack_Start (Self.Selection_Entry, True, True, 3);
+      Self.Selection_Entry.Set_Activates_Default (True);
 
       Return_Callback.Connect
-        (File_Selector_Window.Selection_Entry,
+        (Self.Selection_Entry,
          Signal_Key_Press_Event, On_Selection_Entry_Key_Press_Event'Access);
-
-      Widget_Callback.Connect
-        (File_Selector_Window.Selection_Entry,
-         Gtk.Tree_Selection.Signal_Changed,
-         On_Selection_Entry_Changed'Access);
 
       --  Get_History may trigger a call to Directory_Selected which in turn
       --  may need to access the Selection_Entry field, so need to move this
       --  call after Selection_Entry is created
 
       if History /= null then
-         Get_History (History.all, Directories_Hist_Key,
-                      File_Selector_Window.Location_Combo);
+         Get_History (History.all, Directories_Hist_Key, Self.Location_Combo);
       end if;
 
       Gtk_New_Hbox (Hbox6, False, 0);
-      Pack_Start
-        (Get_Content_Area (File_Selector_Window),
-         Hbox6, False, False, 3);
+      Self.Get_Content_Area.Pack_Start (Hbox6, False, False, 3);
 
-      File_Selector_Window.OK_Button :=
-        Gtk_Button
-          (Add_Button
-               (File_Selector_Window, Stock_Ok, Gtk_Response_OK));
+      Self.OK_Button :=
+        Gtk_Button (Add_Button (Self, Stock_Ok, Gtk_Response_OK));
 
-      Set_Name (File_Selector_Window.OK_Button,
-                "file_selector_window.ok_button");
+      Self.OK_Button.Set_Name ("file_selector_window.ok_button");
 
-      Button := Add_Button
-        (File_Selector_Window, Stock_Cancel, Gtk_Response_Cancel);
-      Set_Default_Response (File_Selector_Window, Gtk_Response_OK);
-
-      Realize (File_Selector_Window);
+      Button := Add_Button (Self, Stock_Cancel, Gtk_Response_Cancel);
+      Self.Set_Default_Response (Gtk_Response_OK);
 
       if Initial_Directory /= No_File then
          Show_Directory
-           (File_Selector_Window.Explorer_Tree,
-            Initial_Directory,
-            Get_Window (File_Selector_Window));
+           (Self.Explorer_Tree, Initial_Directory, Self.Get_Window);
       else
          Show_Directory
-           (File_Selector_Window.Explorer_Tree,
-            GNATCOLL.VFS.Get_Current_Dir,
-            Get_Window (File_Selector_Window));
+           (Self.Explorer_Tree, GNATCOLL.VFS.Get_Current_Dir, Self.Get_Window);
       end if;
 
       Widget_Callback.Connect
-        (File_Selector_Window, Signal_Destroy, On_Destroy'Access);
+        (Self, Signal_Destroy, On_Destroy'Access);
 
-      Grab_Focus (File_Selector_Window.Selection_Entry);
+      Self.Selection_Entry.Grab_Focus;
 
       if Initial_Directory = No_File then
-         Change_Directory (File_Selector_Window, GNATCOLL.VFS.Get_Current_Dir);
+         Change_Directory (Self, GNATCOLL.VFS.Get_Current_Dir);
       else
-         Change_Directory (File_Selector_Window, Initial_Directory);
+         Change_Directory (Self, Initial_Directory);
       end if;
    end Initialize;
 
@@ -2197,16 +1992,6 @@ package body Gtkada.File_Selector is
    begin
       Free (Filter.Label);
    end Destroy;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (F : in out Virtual_File) is
-      pragma Unreferenced (F);
-   begin
-      null;
-   end Free;
 
    ----------
    -- Free --

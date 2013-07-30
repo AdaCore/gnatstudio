@@ -49,6 +49,7 @@
 --
 --  </description>
 
+with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Glib.Main;           use Glib.Main;
@@ -236,7 +237,7 @@ package Gtkada.File_Selector is
    --  list of files.
 
    procedure Initialize
-     (File_Selector_Window : access File_Selector_Window_Record'Class;
+     (Self                 : access File_Selector_Window_Record'Class;
       Root                 : GNATCOLL.VFS.Virtual_File;
       Initial_Directory    : GNATCOLL.VFS.Virtual_File;
       Dialog_Title         : String;
@@ -247,8 +248,8 @@ package Gtkada.File_Selector is
 
 private
 
-   procedure Free (F : in out GNATCOLL.VFS.Virtual_File);
-   package File_List is new Generic_List (GNATCOLL.VFS.Virtual_File);
+   package File_List is new Ada.Containers.Doubly_Linked_Lists
+     (GNATCOLL.VFS.Virtual_File, GNATCOLL.VFS."=");
    use File_List;
 
    procedure Free (Filter : in out File_Filter);
@@ -285,7 +286,7 @@ private
       Files                  : File_List.List;
       --  The list of files in the current directory
 
-      Remaining_Files        : File_List.List_Node;
+      Remaining_Files        : File_List.Cursor;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
@@ -302,9 +303,6 @@ private
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons
-
-      Read_Idle_Handler      : G_Source_Id := 0;
-      --  Identifier for read idle loops
 
       Display_Idle_Handler   : G_Source_Id := 0;
       --  Identifier for display idle loops
@@ -323,7 +321,6 @@ private
       Hosts_Combo            : Gtk_Combo_Box_Text;
 
       Location_Combo         : Gtk_Combo_Box_Text;
---        Location_Combo_Entry   : Gtk_Entry;
 
       Explorer_Tree          : Dir_Tree;
 
@@ -337,7 +334,6 @@ private
       File_Text_Label        : Gtk_Label;
 
       Filter_Combo           : Gtk_Combo_Box_Text;
---        Filter_Combo_Entry     : Gtk_Entry;
       Selection_Entry        : Gtk_Entry;
 
       OK_Button              : Gtk_Button;

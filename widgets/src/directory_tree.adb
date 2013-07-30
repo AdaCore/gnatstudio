@@ -1378,8 +1378,6 @@ package body Directory_Tree is
         (Tree.File_Tree, Signal_Destroy,
          On_File_Destroy'Access, Tree, False);
 
-      Set_Size_Request (Tree, 400, 400);
-
       declare
          Initial_Dir : Virtual_File;
       begin

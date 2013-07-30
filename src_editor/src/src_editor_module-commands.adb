@@ -28,7 +28,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Main;                   use Gtk.Main;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk;                        use Gtk;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
