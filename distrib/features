@@ -49,6 +49,11 @@ NF-60-M710-025 GPS: display build progress when build completes (2013-07-10)
   (as displayed by the task manager) in the console. This makes it easier to
   know how many files were compiled up to the first compilation error.
 
+NF-60-M710-010 GPS: highlighting of numeric values (2013-07-29)
+
+  GPS now supports highlighting of numeric values in the code editor and
+  provides a new user preference to customize it.
+
 NF-60-M709-025 GPS: reopen messages window as needed (2013-07-10)
 
   There are various backdoors in GPS that makes it possible to close the
