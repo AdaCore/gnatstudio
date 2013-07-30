@@ -2252,6 +2252,33 @@ package body Ada_Analyzer is
                end if;
             end if;
 
+            if Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
+              or else (Top_Token.Token = No_Token
+                       and then Prev_Token
+                         not in Tok_Semicolon | Tok_Limited |
+                                Tok_Private | No_Token)
+            then
+               --  Recognize aspect clauses, even in the case of a partial
+               --  buffer. But do not confuse with a 'with' clause.
+
+               Tmp_Index := Current + 1;
+               Skip_Blanks (Buffer, Tmp_Index);
+
+               if not Look_For (Tmp_Index, "record")
+                 and then not Look_For (Tmp_Index, "null")
+                 and then not Look_For (Tmp_Index, "private")
+               then
+                  Aspect_Clause := True;
+                  Aspect_Clause_Sloc :=
+                    (Line_Count,
+                     Current + 1 - Start_Of_Line + 1,
+                     Current + 1);
+                  Do_Push := True;
+                  Temp.Token := Tok_Arrow;  --  Arrow is used for aspects
+                  Temp.Sloc := Aspect_Clause_Sloc;
+               end if;
+            end if;
+
          elsif Reserved = Tok_Use and then
            (Top_Token.Token = No_Token or else
               (Top_Token.Token /= Tok_For
@@ -4666,7 +4693,6 @@ package body Ada_Analyzer is
 
             declare
                Temp      : aliased Extended_Token;
-               Tmp_Index : Integer;
                Do_Push   : Boolean;
                Do_Pop    : Integer;
                Do_Finish : Boolean;
@@ -4693,37 +4719,6 @@ package body Ada_Analyzer is
                  and then Token in Tok_Function | Tok_Procedure | Tok_Package
                then
                   In_Generic := False;
-               end if;
-
-               --  Recognize aspect clauses, even in the case of a partial
-               --  buffer. But do not confuse with a 'with' clause.
-
-               if Token = Tok_With
-                 and then
-                   (Top (Tokens).Token
-                      in Tok_Type | Tok_Function | Tok_Procedure
-                    or else (Top (Tokens).Token = No_Token
-                             and then Prev_Token
-                               not in Tok_Semicolon | Tok_Limited |
-                                      Tok_Private | No_Token))
-               then
-                  Tmp_Index := Current + 1;
-                  Skip_Blanks (Buffer, Tmp_Index);
-
-                  if not Look_For (Tmp_Index, "record")
-                    and then not Look_For (Tmp_Index, "null")
-                    and then not Look_For (Tmp_Index, "private")
-                  then
-                     Aspect_Clause := True;
-                     Start_Of_Line := Line_Start (Buffer, Prec);
-                     Aspect_Clause_Sloc :=
-                       (Line_Count,
-                        Current + 1 - Start_Of_Line + 1,
-                        Current + 1);
-                     Do_Push := True;
-                     Temp.Token := Tok_Arrow;  --  Arrow is used for aspects
-                     Temp.Sloc := Aspect_Clause_Sloc;
-                  end if;
                end if;
 
                if Do_Push then
