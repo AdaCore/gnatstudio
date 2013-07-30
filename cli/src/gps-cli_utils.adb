@@ -20,6 +20,7 @@ with GPS.CLI_Target_Loaders;
 with GPS.CLI_Scripts;
 
 with GPS.Core_Kernels;
+with GPS.Project_Properties;
 with GPS.Python_Core;
 with GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations;
@@ -104,6 +105,8 @@ package body GPS.CLI_Utils is
         new Build_Command_Utils.Builder_Context_Record;
       Target_Loader      : constant GPS.Core_Kernels.Abstract_Module :=
         new GPS.CLI_Target_Loaders.Target_Loader (Kernel);
+      Project_Props      : constant GPS.Core_Kernels.Abstract_Module :=
+        new GPS.Project_Properties.Base_Properties_Module (Kernel);
 
    begin
       --  Initialize
@@ -126,6 +129,7 @@ package body GPS.CLI_Utils is
       Register_Classes (Kernel);
       Register_Output_Parsers (Builder.all);
       Kernel.Register_Module (Target_Loader);
+      Kernel.Register_Module (Project_Props);
 
       Kernel.Lang_Handler.Register_Language
         (Lang      => Language.Ada.Ada_Lang,
