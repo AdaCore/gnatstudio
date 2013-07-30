@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.CLI_Buffer_Providers;
 with GPS.CLI_Target_Loaders;
 with GPS.CLI_Scripts;
 
@@ -34,7 +33,7 @@ with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
 with Build_Command_Utils;
 with Build_Configurations;                     use Build_Configurations;
-with Language.Tree.Database;
+with Language.Tree.Database;                   use Language.Tree.Database;
 with Language.Ada;
 with Language.C;
 with Language.Cpp;
@@ -113,8 +112,7 @@ package body GPS.CLI_Utils is
       GPS.Core_Kernels.Initialize (Kernel);
 
       Language.Tree.Database.Set_Provider
-        (Kernel.Databases.Constructs,
-         new GPS.CLI_Buffer_Providers.CLI_Buffer_Provider);
+        (Kernel.Databases.Constructs, new File_Buffer_Provider);
 
       if Install_Semantic_Parser then
          Ada_Semantic_Tree.Assistants.Register_Ada_Assistants
