@@ -65,10 +65,6 @@ package Win32_Printing_Defs is
       Param2 : LPARAM) return UINT;              --  commdlg.h:426
    pragma Convention (Stdcall, LPSETUPHOOKPROC);
 
-   --  Killing warnings as there is a stdcall calling convention pointer
-   --  into this record. This may be a too strong check from GNAT and it
-   --  is discussed into M709-020.
-   pragma Warnings (Off);
    type PRINTDLGA is record                      --  commdlg.h:428
       lStructSize         : DWORD;               --  commdlg.h:429
       hwndOwner           : HWND;                --  commdlg.h:430
@@ -91,7 +87,6 @@ package Win32_Printing_Defs is
       hSetupTemplate      : HGLOBAL;             --  commdlg.h:447
    end record;
    pragma Pack (PRINTDLGA);
-   pragma Warnings (On);
    --  the required size of the PrintDlg data structure; this value
    --  is used by Windows to distinguish between variants of the data
    --  structure passed to the print dialog function
