@@ -86,12 +86,7 @@ package Win32_Printing_Defs is
       hPrintTemplate      : HGLOBAL;             --  commdlg.h:446
       hSetupTemplate      : HGLOBAL;             --  commdlg.h:447
    end record;
-   pragma Pack (PRINTDLGA);
-   --  the required size of the PrintDlg data structure; this value
-   --  is used by Windows to distinguish between variants of the data
-   --  structure passed to the print dialog function
-   PrintDlg_Size : constant := 66; --  ie, 66 bytes
-   for PRINTDLGA'Size use PrintDlg_Size * 8;
+   pragma Convention (C, PRINTDLGA);
 
    subtype PrintDlg is PRINTDLGA;                          --  commdlg.h:475
 
@@ -165,7 +160,7 @@ package Win32_Printing_Defs is
       tmPitchAndFamily   : BYTE;                 --  wingdi.h:542
       tmCharSet          : BYTE;                 --  wingdi.h:543
    end record;
-   pragma Pack (TEXTMETRICA);
+   pragma Convention (C, TEXTMETRICA);
 
    subtype TEXTMETRIC is TEXTMETRICA;               --  wingdi.h:574
 
@@ -187,7 +182,7 @@ package Win32_Printing_Defs is
       lfPitchAndFamily : BYTE;                   --  wingdi.h:728
       lfFaceName       : CHAR_Array (0 .. 31);   --  wingdi.h:729
    end record;
-   pragma Pack (LOGFONTA);
+   pragma Convention (C, LOGFONTA);
 
    subtype LOGFONT is LOGFONTA;
 
