@@ -2155,11 +2155,13 @@ package body Ada_Analyzer is
 
             if Prev_Token = Tok_Overriding
               or else (Token = Tok_Package and then Prev_Token = Tok_Private)
+              or else (Token in Tok_Procedure | Tok_Function
+                       and then Prev_Token = Tok_With)
             then
                --  Adjust column of subprogram to take into account possible
                --  [not] overriding at start of the line by using the
                --  first non blank character on the line.
-               --  Ditto for "private package xxx is"
+               --  Ditto for "private package xxx is" and "with procedure xx"
 
                Tmp_Index := Start_Of_Line;
                Skip_Blanks (Buffer, Tmp_Index);
