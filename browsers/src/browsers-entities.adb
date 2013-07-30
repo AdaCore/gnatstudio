@@ -512,6 +512,10 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
+        (Kernel, "is_predefined",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
         (Kernel, "parameters",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
@@ -537,6 +541,10 @@ package body Browsers.Entities is
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "derived_types",
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel, "parent_types",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
@@ -652,6 +660,10 @@ package body Browsers.Entities is
               (Data, Create_Entity
                  (Get_Script (Data), Kernel.Databases.Get_Type_Of (Entity)));
 
+         elsif Command = "is_predefined" then
+            Set_Return_Value
+              (Data, Kernel.Databases.Is_Predefined_Entity (Entity));
+
          elsif Command = "fields" then
             declare
                F : constant Xref.Entity_Array :=
@@ -690,6 +702,20 @@ package body Browsers.Entities is
                     (Data, Create_Entity (Get_Script (Data), Children (C)));
                end loop;
             end;
+
+         elsif Command = "parent_types" then
+            declare
+               Parents : constant Xref.Entity_Array :=
+                 Kernel.Databases.Parent_Types (Entity, Recursive => False);
+            begin
+               Set_Return_Value_As_List (Data);
+
+               for C in Parents'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Parents (C)));
+               end loop;
+            end;
+
          end if;
       end if;
 

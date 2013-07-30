@@ -4704,6 +4704,15 @@ class Entity(object):
         """
         pass
 
+    def is_predefined(self):
+        """
+        Whether self is a predefined entity, i.e. an entity for which there
+        is no explicit declaration (like an 'int' in C or an 'Integer' in Ada)
+
+        :return: A boolean
+        """
+        pass  # implemented in Ada
+
     def declaration(self):
         """
         Return the location of the declaration for the entity. The file's name
@@ -4853,6 +4862,20 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
+    def parent_types(self):
+        """
+        Return the list of parent types when self is a type. For instance,
+        if we have the following Ada code::
+
+            type T is new Integer;
+            type T1 is new T;
+
+        then the list of parent types for T1 is [T].
+
+        :return: a list of :class:`GPS.Entity`
+        """
+        pass  # implemented in Ada
+
     def pointed_type(self):
         """
         Return the type pointed to by entity. If self is not a pointer (or an
@@ -4966,7 +4989,10 @@ class Entity(object):
 
     def type(self):
         """
-        Return the type of the entity. For a variable, it is its type
+        Return the type of the entity. For a variable, it is its type.
+        This function used to return the parent types when self is itself
+        a type, but this usage is deprecated and you should be using
+        self.parent_types() instead.
 
         :return: An instance of :class:`GPS.Entity`
         """
@@ -7512,7 +7538,7 @@ The additional parameters depend on the type of preference you are creating:
         """
         Set value for the given preference. The type of the parameter depends
         on the type of the preference.
-        
+
         :param value: A string, boolean or integer
         :param save: no longer used, kept for backward compatibility only.
         """
@@ -9979,26 +10005,26 @@ def freeze_prefs():
     """
     Prevents the signal "preferences_changed" from being emitted.
     One call to thaw_prefs should be made to unfreeze.
-    
+
     Freezing/thawing this signal is useful when about to modify a large
     number of preferences in one batch.
-    
+
     .. seealso::
-    
+
       :func:`GPS.thaw_prefs`
     """
     pass  # implemented in Ada
-    
+
 def thaw_prefs():
     """
     Re-enables the emission of the "preferences_changed"
 
     .. seealso::
-    
+
       :func:`GPS.freeze_prefs`
     """
     pass  # implemented in Ada
-    
+
 def get_build_mode():
     """
     Return the name of the current build mode. Return an empty string if no
