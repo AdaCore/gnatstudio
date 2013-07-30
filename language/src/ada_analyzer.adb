@@ -865,8 +865,7 @@ package body Ada_Analyzer is
       function Is_Continuation_Line
         (Token           : Token_Type;
          Prev_Token      : Token_Type;
-         Prev_Prev_Token : Token_Type;
-         Prec            : Natural) return Boolean;
+         Prev_Prev_Token : Token_Type) return Boolean;
       --  Return True if we are indenting a continuation line
 
       procedure Compute_Indentation
@@ -1244,35 +1243,12 @@ package body Ada_Analyzer is
       function Is_Continuation_Line
         (Token           : Token_Type;
          Prev_Token      : Token_Type;
-         Prev_Prev_Token : Token_Type;
-         Prec            : Natural) return Boolean
+         Prev_Prev_Token : Token_Type) return Boolean
       is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
-         Tmp_Index : Natural := Prec + 1;
       begin
-         if Prev_Token = Tok_With and then Token = Tok_Identifier then
-            Skip_Blanks (Buffer, Tmp_Index);
-
-            if Look_For (Tmp_Index, "=>") then
-               --  We have an aspect clause, e.g:
-               --  procedure G with
-               --    Pre => F
-
-               return True;
-            else
-               return False;
-            end if;
-         elsif Token = Tok_With and then Top_Tok = Tok_Type then
-            Skip_Blanks (Buffer, Tmp_Index);
-
-            if not Look_For (Tmp_Index, "record") then
-               --  We have an aspect clause, e.g:
-               --  type T is new Integer
-               --    with ...
-               return True;
-            else
-               return False;
-            end if;
+         if Aspect_Clause then
+            return True;
          end if;
 
          if Prev_Token = Tok_Is and then In_Generic then
@@ -1447,7 +1423,7 @@ package body Ada_Analyzer is
             Continuation_Val := 0;
 
          elsif Is_Continuation_Line
-           (Token, Prev_Token, Prev_Prev_Token, Prec)
+           (Token, Prev_Token, Prev_Prev_Token)
          then
             Do_Indent (Prec, Line_Count, Num_Spaces, Continuation => True);
 
@@ -1843,6 +1819,8 @@ package body Ada_Analyzer is
                      Constructs.Current.Category := Cat_Exception_Handler;
                   when Tok_Pragma =>
                      Constructs.Current.Category := Cat_Pragma;
+                  when Tok_Arrow =>
+                     Constructs.Current.Category := Cat_Aspect;
                   when others =>
                      Constructs.Current.Category := Cat_Unknown;
                end case;
@@ -4184,22 +4162,22 @@ package body Ada_Analyzer is
                      if Aspect_Clause then
                         Aspect_Clause := False;
 
-                        if Callback /= null then
-                           declare
-                              Prev_Tmp : constant Natural := Prev_Char (P);
-                           begin
-                              Start_Of_Line := Line_Start (Buffer, Prev_Tmp);
+                        --  Pop aspect clause
+                        Prec := Prev_Char (P);
+                        Pop_And_Set_Local (Tokens);
 
-                              if Callback
-                                (Aspect_Text,
-                                 Aspect_Clause_Sloc,
-                                 (L, Prev_Tmp - Start_Of_Line + 1, Prev_Tmp),
-                                 False)
-                              then
-                                 Terminated := True;
-                                 return;
-                              end if;
-                           end;
+                        if Callback /= null then
+                           Start_Of_Line := Line_Start (Buffer, Prec);
+
+                           if Callback
+                             (Aspect_Text,
+                              Aspect_Clause_Sloc,
+                              (L, Prec - Start_Of_Line + 1, Prec),
+                              False)
+                           then
+                              Terminated := True;
+                              return;
+                           end if;
                         end if;
                      end if;
 
@@ -4713,7 +4691,8 @@ package body Ada_Analyzer is
                   In_Generic := False;
                end if;
 
-               --  Set Aspect_Clause
+               --  Recognize aspect clauses, even in the case of a partial
+               --  buffer. But do not confuse with a 'with' clause.
 
                if Token = Tok_With
                  and then
@@ -4721,23 +4700,25 @@ package body Ada_Analyzer is
                       in Tok_Type | Tok_Function | Tok_Procedure
                     or else (Top (Tokens).Token = No_Token
                              and then Prev_Token
-                               not in Tok_Semicolon | No_Token))
+                               not in Tok_Semicolon | Tok_Limited |
+                                      Tok_Private | No_Token))
                then
                   Tmp_Index := Current + 1;
                   Skip_Blanks (Buffer, Tmp_Index);
 
                   if not Look_For (Tmp_Index, "record")
                     and then not Look_For (Tmp_Index, "null")
+                    and then not Look_For (Tmp_Index, "private")
                   then
                      Aspect_Clause := True;
-
-                     if Callback /= null then
-                        Start_Of_Line := Line_Start (Buffer, Prec);
-                        Aspect_Clause_Sloc :=
-                          (Line_Count,
-                           Current + 1 - Start_Of_Line + 1,
-                           Current + 1);
-                     end if;
+                     Start_Of_Line := Line_Start (Buffer, Prec);
+                     Aspect_Clause_Sloc :=
+                       (Line_Count,
+                        Current + 1 - Start_Of_Line + 1,
+                        Current + 1);
+                     Do_Push := True;
+                     Temp.Token := Tok_Arrow;  --  Arrow is used for aspects
+                     Temp.Sloc := Aspect_Clause_Sloc;
                   end if;
                end if;
 

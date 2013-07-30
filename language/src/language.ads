@@ -441,6 +441,7 @@ package Language is
 
       Cat_Exception_Handler,
       Cat_Pragma,
+      Cat_Aspect,    --  Ada 2012 or SPARK 2014 aspect clauses
 
       ----------------------
       -- Custom construct --

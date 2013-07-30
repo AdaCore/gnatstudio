@@ -148,7 +148,8 @@ package body Syntax_Diff is
               Data_Type_Category | Cat_Representation_Clause |
               Cat_Local_Variable | Cat_Parameter | Cat_Discriminant |
               Cat_Literal | Cat_Field |
-              Cat_Exception_Handler | Construct_Category | Cat_Pragma
+              Cat_Exception_Handler | Construct_Category | Cat_Pragma |
+              Cat_Aspect
          =>
             return True;
 

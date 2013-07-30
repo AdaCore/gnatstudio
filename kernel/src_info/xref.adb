@@ -2729,61 +2729,62 @@ package body Xref is
                --  entities.
 
                case Get_Construct (E).Category is
-               when Cat_Package | Cat_Namespace => K := Package_Kind;
-               when Cat_Task
-                  | Cat_Procedure
-                  | Cat_Function
-                  | Cat_Method
-                  | Cat_Constructor
-                  | Cat_Destructor
-                  | Cat_Protected
-                  | Cat_Entry =>
+                  when Cat_Package | Cat_Namespace => K := Package_Kind;
+                  when Cat_Task
+                     | Cat_Procedure
+                     | Cat_Function
+                     | Cat_Method
+                     | Cat_Constructor
+                     | Cat_Destructor
+                     | Cat_Protected
+                     | Cat_Entry =>
 
-                  K := Procedure_Kind;
+                     K := Procedure_Kind;
 
-               when Cat_Class
-                  | Cat_Structure
-                  | Cat_Case_Inside_Record
-                  | Cat_Union
-                  | Cat_Type
-                  | Cat_Subtype =>
+                  when Cat_Class
+                     | Cat_Structure
+                     | Cat_Case_Inside_Record
+                     | Cat_Union
+                     | Cat_Type
+                     | Cat_Subtype =>
 
-                  K := Class;
-                  Is_Type := True;
+                     K := Class;
+                     Is_Type := True;
 
-               when Cat_Variable
-                  | Cat_Local_Variable
-                  | Cat_Parameter
-                  | Cat_Discriminant
-                  | Cat_Field =>
+                  when Cat_Variable
+                     | Cat_Local_Variable
+                     | Cat_Parameter
+                     | Cat_Discriminant
+                     | Cat_Field =>
 
-                  K := Signed_Integer;
+                     K := Signed_Integer;
 
-               when Cat_Literal =>
+                  when Cat_Literal =>
 
-                  K := Enumeration_Literal;
+                     K := Enumeration_Literal;
 
-               when Cat_With
-                  | Cat_Use
-                  | Cat_Include =>
+                  when Cat_With
+                     | Cat_Use
+                     | Cat_Include =>
 
-                  K := Include_File;
+                     K := Include_File;
 
-               when Cat_Unknown
-                  | Cat_Representation_Clause
-                  | Cat_Loop_Statement
-                  | Cat_If_Statement
-                  | Cat_Case_Statement
-                  | Cat_Select_Statement
-                  | Cat_Accept_Statement
-                  | Cat_Declare_Block
-                  | Cat_Return_Block
-                  | Cat_Simple_Block
-                  | Cat_Exception_Handler
-                  | Cat_Pragma
-                  | Cat_Custom =>
+                  when Cat_Unknown
+                     | Cat_Representation_Clause
+                     | Cat_Loop_Statement
+                     | Cat_If_Statement
+                     | Cat_Case_Statement
+                     | Cat_Select_Statement
+                     | Cat_Accept_Statement
+                     | Cat_Declare_Block
+                     | Cat_Return_Block
+                     | Cat_Simple_Block
+                     | Cat_Exception_Handler
+                     | Cat_Pragma
+                     | Cat_Aspect
+                     | Cat_Custom =>
 
-                  K := Unresolved_Entity;
+                     K := Unresolved_Entity;
                end case;
 
                New_Entity := Old_Entities.Create_Dummy_Entity

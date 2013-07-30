@@ -52,7 +52,7 @@ package body Language.Icons is
            (Cat_Unknown | Cat_With
             | Cat_Use   | Cat_Include
             | Construct_Category | Cat_Exception_Handler
-            | Cat_Pragma =>
+            | Cat_Pragma | Cat_Aspect =>
               R ("gps-entity-generic" & Suffix),
             Cat_Package | Cat_Namespace | Cat_Custom =>
               R ("gps-entity-package" & Suffix),

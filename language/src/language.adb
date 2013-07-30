@@ -813,6 +813,7 @@ package body Language is
          when Construct_Category        => return "";
          when Cat_Exception_Handler     => return "";
          when Cat_Pragma                => return "pragma";
+         when Cat_Aspect                => return "aspect";
       end case;
    end Category_Name;
 
