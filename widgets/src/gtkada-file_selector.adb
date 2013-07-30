@@ -891,6 +891,7 @@ package body Gtkada.File_Selector is
       Filter   : File_Filter := null;
       Iter     : Gtk_Tree_Iter;
       Files    : File_Array_Access;
+      Alloc    : Gtk_Allocation;
 
    begin
       if Win.Current_Directory = No_File
@@ -963,6 +964,14 @@ package body Gtkada.File_Selector is
               (Iter, Base_Name_Column,
                -"Could not open " & Win.Current_Directory.Display_Full_Name);
       end;
+
+      --  A workaround for a gtk3 issue: if you select a directory with no
+      --  file, the tree view no longer uses the whole vertical space.
+      --  Switching back to a directory that contains files still doesn't show
+      --  them properly until the paned is resized.
+
+      Win.File_Tree.Get_Allocation (Alloc);
+      Win.File_Tree.Size_Allocate (Alloc);
    end Refresh_Files;
 
    ----------------------
