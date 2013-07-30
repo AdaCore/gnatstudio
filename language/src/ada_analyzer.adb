@@ -1433,7 +1433,7 @@ package body Ada_Analyzer is
 
          elsif Num_Parens > 0
            and then
-             (Token = Tok_When
+             (Token in Tok_When | Tok_Vertical_Bar
               or else Prev_Token = Tok_Arrow
               or else (Prev_Token = Tok_Then
                        and then Prev_Prev_Token /= Tok_And)
@@ -1442,7 +1442,7 @@ package body Ada_Analyzer is
          then
             --  Handle a bit better Ada 2012 conditional expressions
 
-            if Token = Tok_When then
+            if Token in Tok_When | Tok_Vertical_Bar then
                Continuation_Val := Indent_Level - Indent_Continue;
             else
                Continuation_Val :=
@@ -4135,7 +4135,9 @@ package body Ada_Analyzer is
                      Long := Long - 1;
                   end if;
 
-                  if Num_Parens = 0
+                  if (Num_Parens = 0
+                      or else Prev_Token = Tok_Vertical_Bar
+                      or else Prev_Prev_Token = Tok_Arrow)
                     and then Local_Top_Token.Token /= Tok_When
                   then
                      --  If we're not inside parens or a when statement,
