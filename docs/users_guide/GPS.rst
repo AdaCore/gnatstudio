@@ -851,6 +851,8 @@ Classes
 
    .. automethod:: GPS.Entity.is_global
 
+   .. automethod:: GPS.Entity.is_predefined
+
    .. automethod:: GPS.Entity.is_subprogram
 
    .. automethod:: GPS.Entity.is_type
@@ -864,6 +866,8 @@ Classes
    .. automethod:: GPS.Entity.name_parameters
 
    .. automethod:: GPS.Entity.parameters
+
+   .. automethod:: GPS.Entity.parent_types
 
    .. automethod:: GPS.Entity.pointed_type
 
