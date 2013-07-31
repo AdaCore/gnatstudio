@@ -4535,7 +4535,7 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, name, file=None, line=1, column=1):
+    def __init__(self, name, file=None, line=1, column=1, approximate_search_fallback=True):
         """
         Initializes a new instance of the Entity class, from any reference to
         the entity. The file parameter should only be omitted for a predefined
@@ -4546,6 +4546,9 @@ class Entity(object):
         :param file: An instance of GPS.File, in which the entity is referenced
         :param line: An integer, the line at which the entity is referenced
         :param column: An integer, the column at which the entity is referenced
+        :param approximate_search_fallback: If True, when the line and column are
+        not exact, this parameter will trigger approximate search in the database
+        (eg. see if there are similar entities in the surrounding lines)
 
         >>> GPS.Entity("foo", GPS.File("a.adb"), 10, 23).declaration().file().name()
         => will return the full path name of the file in which the entity "foo",
@@ -5018,10 +5021,13 @@ class EntityContext(FileContext):
         """
         pass  # implemented in Ada
 
-    def entity(self):
+    def entity(self, approximate_search_fallback=True):
         """
         Return the entity stored in the context
 
+        :param approximate_search_fallback: If True, when the line and column are
+        not exact, this parameter will trigger approximate search in the database
+        (eg. see if there are similar entities in the surrounding lines)
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
