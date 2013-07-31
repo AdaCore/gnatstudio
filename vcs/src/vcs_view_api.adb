@@ -1445,7 +1445,8 @@ package body VCS_View_API is
                Get_Log_From_File (Kernel, File, True),
                Group            => Group_Consoles,
                Initial_Position => Position_Bottom,
-               Title            => +Base_Name (File) & " [log]");
+               Title            => +Base_Name (File) & " [log]",
+               Areas            => Gtkada.MDI.Both);
          end;
       end loop;
 

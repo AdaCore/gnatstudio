@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M731-021 GPS: prevent possible locations for views (2013-07-31)
+
+  GPS now adds a restriction as to where editors and views can be put.
+  For instance, editors can only be part of the perspective-independent
+  part of the desktop, so that they always remain visible when switching
+  perspectives. These limitations should prevent some surprising behaviors
+  that could happen before due to the flexibility of the MDI.
+
 NF-60-M716-040 GPS: new preference to override tooltip colors (2013-07-31)
 
   A new preference was added in the Windows page to override the background

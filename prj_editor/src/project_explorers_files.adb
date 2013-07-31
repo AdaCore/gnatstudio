@@ -132,6 +132,7 @@ package body Project_Explorers_Files is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => True,
+      Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left);
    subtype Project_Explorer_Files is Explorer_Files_Views.View_Access;
 

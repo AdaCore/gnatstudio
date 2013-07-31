@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2012, AdaCore                     --
+--                     Copyright (C) 2001-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -80,7 +80,8 @@ package body GPS.Kernel.Interactive is
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
                Module              => Module_ID (Module),
-               Desktop_Independent => True);
+               Desktop_Independent => True,
+               Areas               => Sides_Only);
 
          else
             GPS.Kernel.MDI.Initialize
@@ -88,7 +89,8 @@ package body GPS.Kernel.Interactive is
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
                Module              => null,
-               Desktop_Independent => False);
+               Desktop_Independent => False,
+               Areas               => Sides_Only);
          end if;
 
          Set_Title (NChild, Title, Title);

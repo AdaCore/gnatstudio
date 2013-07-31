@@ -30,6 +30,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;
 
 with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
@@ -120,6 +121,7 @@ package body Shell_Script is
       Initialize         => Initialize,
       Local_Toolbar      => False,
       Local_Config       => False,
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
 
    ----------------

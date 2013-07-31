@@ -94,7 +94,8 @@ package body Buffer_Views is
       View_Name          => "Windows",
       Reuse_If_Exist     => True,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Formal_View_Record => Buffer_View_Record);
+      Formal_View_Record => Buffer_View_Record,
+      Areas              => Gtkada.MDI.Sides_Only);
    subtype Buffer_View_Access is Generic_View.View_Access;
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);

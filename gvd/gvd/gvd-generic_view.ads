@@ -140,6 +140,7 @@ package GVD.Generic_View is
 
       Group    : Gtkada.MDI.Child_Group;
       Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Right;
+      Areas    : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Sides_Only;
       --  How should the MDI child be created?
 
    package Simple_Views is

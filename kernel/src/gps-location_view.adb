@@ -165,6 +165,7 @@ package body GPS.Location_View is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => True,
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
    use Location_Views;
    subtype Location_View is Location_Views.View_Access;

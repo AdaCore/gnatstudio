@@ -280,6 +280,7 @@ package body GPS.Kernel.Standard_Hooks is
       Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position  : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
+      Areas             : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
       Title             : String := "")
    is
       Data : aliased Source_File_Hooks_Args :=
@@ -295,6 +296,7 @@ package body GPS.Kernel.Standard_Hooks is
                 Focus             => Focus,
                 Group             => Group,
                 Initial_Position  => Initial_Position,
+                Areas             => Areas,
                 Title             => Title);
    begin
       if not Run_Hook_Until_Success
@@ -325,6 +327,7 @@ package body GPS.Kernel.Standard_Hooks is
                 Focus             => False,
                 Group             => Gtkada.MDI.Group_Default,
                 Initial_Position  => Gtkada.MDI.Position_Automatic,
+                Areas             => Gtkada.MDI.Central_Only,
                 Title             => "");
    begin
       if not Run_Hook_Until_Success
@@ -923,6 +926,7 @@ package body GPS.Kernel.Standard_Hooks is
          Focus             => Nth_Arg (Data, 9, True),
          Group             => Gtkada.MDI.Child_Group
            (Nth_Arg (Data, 11, Natural (Gtkada.MDI.Group_Default))),
+         Areas             => Gtkada.MDI.Central_Only,
          Initial_Position  => Gtkada.MDI.Child_Position'Val
            (Nth_Arg (Data, 10,
             Gtkada.MDI.Child_Position'Pos

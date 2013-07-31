@@ -89,6 +89,7 @@ package body GVD.Generic_View is
          Reuse_If_Exist     => False,
          Initialize         => Local_Initialize,
          Position           => Position,
+         Areas              => Areas,
          Commands_Category  => "",  --  No "open ... " command, since we might
                                     --  reuse existing views
          Group              => Group);

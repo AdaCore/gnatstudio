@@ -273,6 +273,7 @@ package GPS.Kernel.Standard_Hooks is
       Initial_Position  : Gtkada.MDI.Child_Position :=
                             Gtkada.MDI.Position_Automatic;
       Title             : String (1 .. Length);
+      Areas             : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Both;
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left
@@ -306,6 +307,7 @@ package GPS.Kernel.Standard_Hooks is
       Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position  : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
+      Areas             : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
       Title             : String := "");
    --  Call Open_File_Action_Hook
 

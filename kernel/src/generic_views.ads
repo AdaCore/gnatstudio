@@ -190,6 +190,9 @@ package Generic_Views is
       MDI_Flags : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
       --  Special flags used when creating the MDI window.
 
+      Areas : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Both;
+      --  Where is the view allowed to go ?
+
    package Simple_Views is
 
       type View_Access is access all Formal_View_Record'Class;

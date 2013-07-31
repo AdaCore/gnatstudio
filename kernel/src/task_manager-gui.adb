@@ -135,6 +135,7 @@ package body Task_Manager.GUI is
       Reuse_If_Exist     => True,
       Position           => Position_Bottom,
       Group              => Group_Consoles,
+      Areas              => Gtkada.MDI.Sides_Only,
       Initialize         => Initialize);
    use TM_Views;
    subtype Task_Manager_Widget_Access is TM_Views.View_Access;

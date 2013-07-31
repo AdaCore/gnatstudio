@@ -153,11 +153,13 @@ package body GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False) is
+      Desktop_Independent : Boolean := False;
+      Areas               : Allowed_Areas := Both) is
    begin
       Child := new GPS_MDI_Child_Record;
       Initialize (Child, Widget, Flags, Group, Focus_Widget,
-                  Default_Width, Default_Height, Module, Desktop_Independent);
+                  Default_Width, Default_Height, Module, Desktop_Independent,
+                  Areas);
    end Gtk_New;
 
    ----------------
@@ -172,10 +174,12 @@ package body GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False)
+      Desktop_Independent : Boolean := False;
+      Areas               : Allowed_Areas := Both)
    is
    begin
-      Gtkada.MDI.Initialize (Child, Widget, Flags, Group, Focus_Widget);
+      Gtkada.MDI.Initialize
+        (Child, Widget, Flags, Group, Focus_Widget, Areas => Areas);
 
       if Default_Width /= -1 or else Default_Height /= -1 then
          Set_Size_Request (Child, Default_Width, Default_Height);

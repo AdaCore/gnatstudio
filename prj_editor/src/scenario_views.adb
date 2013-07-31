@@ -112,6 +112,7 @@ package body Scenario_Views is
       Initialize         => Initialize,
       Local_Toolbar      => True,
       Local_Config       => False,
+      Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left);
    use Scenario_Views;
    subtype Scenario_View is Scenario_Views.View_Access;

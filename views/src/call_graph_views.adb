@@ -49,6 +49,7 @@ with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;
 
 with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
@@ -168,13 +169,16 @@ package body Call_Graph_Views is
      (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
    --  Create a new view
 
+   --  Limit to the sides of the MDI, because it can open editors and they
+   --  would be displayed on top of the callgraph.
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Callgraph_View",
       View_Name          => "Call Trees",
       Reuse_If_Exist     => True,
       Group              => GPS.Kernel.MDI.Group_Consoles,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Formal_View_Record => Callgraph_View_Record);
+      Formal_View_Record => Callgraph_View_Record,
+      Areas              => Gtkada.MDI.Sides_Only);
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
    type Entity_Calls_Command is new Interactive_Command with null record;

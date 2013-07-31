@@ -456,7 +456,8 @@ package body Generic_Views is
                      Focus_Widget   => Focus_Widget,
                      Flags          => MDI_Flags,
                      Module         => Module,
-                     Group          => Group);
+                     Group          => Group,
+                     Areas          => Areas);
          Set_Title (Child, View_Name, View_Name);
          Put (Get_MDI (Kernel), Child, Initial_Position => Position);
       end Create_If_Needed;

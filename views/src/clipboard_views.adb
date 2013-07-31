@@ -33,6 +33,7 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -73,7 +74,8 @@ package body Clipboard_Views is
       View_Name          => "Clipboard",
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
-      Formal_View_Record => Clipboard_View_Record);
+      Formal_View_Record => Clipboard_View_Record,
+      Areas              => Gtkada.MDI.Sides_Only);
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
    procedure On_Clipboard_Changed

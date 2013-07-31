@@ -142,6 +142,7 @@ package body Outline_View is
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Local_Config       => True,
+      Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left,
       Initialize         => Initialize);
    use Outline_Views;

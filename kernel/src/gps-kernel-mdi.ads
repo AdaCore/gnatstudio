@@ -134,7 +134,8 @@ package GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class; --  can be null
-      Desktop_Independent : Boolean := False);
+      Desktop_Independent : Boolean := False;
+      Areas               : Allowed_Areas := Both);
    --  Recommended version of Gtk_New to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
    --    - Module : used to associate a module with a widget. This is used to
@@ -152,7 +153,8 @@ package GPS.Kernel.MDI is
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class;
-      Desktop_Independent : Boolean := False);
+      Desktop_Independent : Boolean := False;
+      Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
 
    procedure Load_Perspective

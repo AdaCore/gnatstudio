@@ -118,6 +118,7 @@ package body Bookmark_Views is
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
       Reuse_If_Exist     => True,
+      Areas              => Gtkada.MDI.Sides_Only,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Bookmark_View_Record);
    subtype Bookmark_View_Access is Generic_View.View_Access;

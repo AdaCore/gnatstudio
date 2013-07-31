@@ -88,6 +88,7 @@ package body Python_Module is
       Initialize         => Initialize,
       Local_Toolbar      => False,
       Local_Config       => False,
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
 
    procedure Python_File_Command_Handler

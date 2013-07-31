@@ -972,7 +972,8 @@ package body Src_Editor_Module is
            (Child, Editor,
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Module         => Src_Editor_Module_Id);
+            Module         => Src_Editor_Module_Id,
+            Areas          => Central_Only);
 
          --  Find the first free view number
          Num := 2;
@@ -1148,7 +1149,8 @@ package body Src_Editor_Module is
       Group            : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
-      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only)
       return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
@@ -1236,7 +1238,8 @@ package body Src_Editor_Module is
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Group          => Group,
-            Module         => Src_Editor_Module_Id);
+            Module         => Src_Editor_Module_Id,
+            Areas          => Areas);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
@@ -1989,7 +1992,8 @@ package body Src_Editor_Module is
             Initial_Position => D.Initial_Position,
             Line             => Editable_Line_Type (D.Line),
             Column           => D.Column,
-            Column_End       => D.Column_End);
+            Column_End       => D.Column_End,
+            Areas            => D.Areas);
 
          --  This used to be done in Open_File_Editor itself, before we call
          --  the Hook, but then we wouldn't have access to Create_File_Marker.

@@ -154,6 +154,7 @@ package body GVD.Assembly_View is
       Set_View           => Set_View,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
+      Areas              => Gtkada.MDI.Both,
       Initialize         => Initialize);
 
    package Assembly_View_Event_Cb is

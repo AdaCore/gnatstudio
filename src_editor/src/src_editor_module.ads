@@ -342,7 +342,8 @@ private
       Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
-      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only)
       return Src_Editor_Box.Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.

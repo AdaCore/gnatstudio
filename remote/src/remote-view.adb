@@ -103,6 +103,7 @@ package body Remote.View is
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
+      Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left);
    subtype Remote_View is Remote_Views.View_Access;
 

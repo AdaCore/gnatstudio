@@ -176,6 +176,7 @@ package body Project_Viewers is
       Initialize         => Initialize,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
+      Areas              => Gtkada.MDI.Central_Only,
       Group              => Group_Default,
       Position           => Position_Automatic);
    subtype Project_Viewer is File_Views.View_Access;

@@ -152,6 +152,7 @@ package body Project_Explorers is
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Local_Config       => True,
+      Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left,
       Initialize         => Initialize);
    subtype Project_Explorer is Explorer_Views.View_Access;
