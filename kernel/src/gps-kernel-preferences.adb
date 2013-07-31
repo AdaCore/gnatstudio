@@ -1379,6 +1379,17 @@ package body GPS.Kernel.Preferences is
          Default => 10_000_000,
          Page    => "");
 
+      Tooltips_Background := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Tooltips-Background-Color",
+         Label   => -"Tooltips background",
+         Doc     =>
+            -("Color used for the background of tooltip windows. The default"
+              & " is to use the color set by the gtk+ theme (this is also"
+              & " the color used if you set this preference to full white)"),
+         Default => "#FFFFFF",
+         Page    => -"Windows");
+
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;
 

@@ -145,6 +145,7 @@ package GPS.Kernel.Preferences is
    Default_Font           : Style_Preference;
    View_Fixed_Font        : Font_Preference;
    Small_Font             : Font_Preference;
+   Tooltips_Background    : Color_Preference;
 
    Use_Native_Dialogs     : Boolean_Preference;
    Splash_Screen          : Boolean_Preference;

@@ -18,11 +18,16 @@
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
+with Gdk.Display;               use Gdk.Display;
 with Gdk.Dnd;                   use Gdk.Dnd;
+with Gdk.RGBA;                  use Gdk.RGBA;
+with Gdk.Screen;                use Gdk.Screen;
 
 with Glib;                      use Glib;
+with Glib.Error;                use Glib.Error;
 with Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
@@ -39,8 +44,14 @@ with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Css_Provider;          use Gtk.Css_Provider;
+with Gtk.Text_View;
+with Gtk.Text_Buffer;
+with Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -67,12 +78,9 @@ with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
 with Remote;                    use Remote;
 with User_Interface_Tools;
-with Gtk.Text_View;
-with Gtk.Text_Buffer;
-with Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
 
 package body GPS.Main_Window is
+   Me : constant Trace_Handle := Create ("MAIN");
 
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
@@ -125,6 +133,9 @@ package body GPS.Main_Window is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
    Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
+
+   Tooltips_Background_Provider : Gtk.Css_Provider.Gtk_Css_Provider;
+   --  Global variable used to override the background color for tooltips
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -349,6 +360,7 @@ package body GPS.Main_Window is
       Dead   : Boolean;
       pragma Unreferenced (Dead);
       Theme : Theme_Descr;
+      Err   : aliased GError;
 
    begin
       if P = null
@@ -408,6 +420,39 @@ package body GPS.Main_Window is
             Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
          else
             Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
+         end if;
+      end if;
+
+      if P = null
+        or else P = Preference (Tooltips_Background)
+      then
+         if Tooltips_Background.Get_Pref = White_RGBA then
+            --  Fallback to default color
+            if Tooltips_Background_Provider /= null then
+               Gtk.Style_Context.Remove_Provider_For_Screen
+                 (Get_Default_Screen (Get_Default),
+                  +Tooltips_Background_Provider);
+               Tooltips_Background_Provider := null;
+            end if;
+
+         else
+            if Tooltips_Background_Provider = null then
+               Gtk_New (Tooltips_Background_Provider);
+               Gtk.Style_Context.Add_Provider_For_Screen
+                 (Get_Default_Screen (Get_Default),
+                  +Tooltips_Background_Provider,
+                  Priority => Gtk.Style_Provider.Priority_User);
+               Unref (Tooltips_Background_Provider);
+            end if;
+
+            if not Tooltips_Background_Provider.Load_From_Data
+              ("@define-color theme_tooltip_bg_color "
+               & To_String (Tooltips_Background.Get_Pref) & ";",
+               Err'Access)
+            then
+               Trace (Me, "Error setting tooltip color: "
+                      & Get_Message (Err));
+            end if;
          end if;
       end if;
 

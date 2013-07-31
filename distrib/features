@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M716-040 GPS: new preference to override tooltip colors (2013-07-31)
+
+  A new preference was added in the Windows page to override the background
+  of tooltips as set by the gtk+ theme.
+
 NF-60-M712-005 GPS: support for displays with 16 bpp (2013-07-12)
 
   GPS now supports displays with a color depth of 16 bits per pixels.
