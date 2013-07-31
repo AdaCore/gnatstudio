@@ -2392,7 +2392,6 @@ package body Browsers.Canvas is
       W, H        : Gint;
       Num_In_Line : Natural;
       Text        : String_Access;
---      Style       : constant Gtk_Style := Get_Item_Style (Item);
 
       procedure Display (Text : String; Line : Xref_Line);
       --  Display Text on Item
@@ -2403,13 +2402,7 @@ package body Browsers.Canvas is
             return;
          end if;
 
---           Set_Text (Layout, Text);
---
---           if In_Xref then
---              Color := Get_Text (Style, State_Active);
---           else
---              Color := Get_Text (Style, State_Normal);
---           end if;
+         Layout.Set_Text (Text);
          Color := White_RGBA;
 
          Set_Source_Color (Cr, Color);
