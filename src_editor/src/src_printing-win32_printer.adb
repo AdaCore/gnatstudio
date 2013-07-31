@@ -559,7 +559,7 @@ package body Src_Printing.Win32_Printer is
 
    procedure Initialize_Print_Dialog (PD : out PrintDlg) is
    begin
-      PD.lStructSize := PrintDlg_Size;
+      PD.lStructSize := PRINTDLGA'Size;
 
       --  Use null for hwndOwner so the collating option works interactively
 
