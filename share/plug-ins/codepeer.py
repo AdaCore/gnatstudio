@@ -297,6 +297,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
+          <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
        <icon>gps-build-all</icon>
@@ -375,6 +376,22 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
           <arg>-update-scil</arg>
+          <arg>%X</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer" category="CodePeer" name="Run CodePeer Only"
+            messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
+          <arg>-P%PP</arg>
           <arg>%X</arg>
        </command-line>
     </target>

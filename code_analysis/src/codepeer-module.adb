@@ -142,7 +142,7 @@ package body CodePeer.Module is
    procedure On_Run_Analysis_Manually
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Advanced->Run CodePeer" menu item is activated
+   --  Called when "Run CodePeer" menu item is activated
 
    procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -229,9 +229,9 @@ package body CodePeer.Module is
    --  necessary.
 
    procedure Review
-     (Module      : CodePeer.Module.CodePeer_Module_Id;
-      Force       : Boolean;
-      Build_Target : String := "Run CodePeer");
+     (Module       : CodePeer.Module.CodePeer_Module_Id;
+      Force        : Boolean;
+      Build_Target : String);
    --  Launch CodePeer review using the specified build target.
    --  If Force is True, no dialog is displayed to change codepeer switches.
 
@@ -361,9 +361,9 @@ package body CodePeer.Module is
    ------------
 
    procedure Review
-     (Module      : CodePeer.Module.CodePeer_Module_Id;
-      Force       : Boolean;
-      Build_Target : String := "Run CodePeer")
+     (Module       : CodePeer.Module.CodePeer_Module_Id;
+      Force        : Boolean;
+      Build_Target : String)
    is
       Saved_Mode    : constant String := Module.Kernel.Get_Build_Mode;
       Project : constant Project_Type := Get_Project (Module.Kernel);
@@ -1094,7 +1094,7 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Widget, Kernel);
    begin
-      Review (Module, Force => False);
+      Review (Module, Force => False, Build_Target => "Run CodePeer Only");
    exception
       when E : others =>
          Trace (Me, E);
