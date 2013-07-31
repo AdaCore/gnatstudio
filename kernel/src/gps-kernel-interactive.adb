@@ -81,7 +81,7 @@ package body GPS.Kernel.Interactive is
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
                Module              => Module_ID (Module),
                Desktop_Independent => True,
-               Areas               => Sides_Only);
+               Areas               => Both);
 
          else
             GPS.Kernel.MDI.Initialize
@@ -90,7 +90,7 @@ package body GPS.Kernel.Interactive is
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
                Module              => null,
                Desktop_Independent => False,
-               Areas               => Sides_Only);
+               Areas               => Both);
          end if;
 
          Set_Title (NChild, Title, Title);
