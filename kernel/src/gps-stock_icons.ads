@@ -27,7 +27,9 @@
 --  constant.
 
 with Gtk.Enums;
+with Gtk.Icon_Set;
 with GNATCOLL.VFS;
+with GPS.Kernel;
 
 package GPS.Stock_Icons is
 
@@ -77,5 +79,20 @@ package GPS.Stock_Icons is
 
    GPS_Edit_Value          : constant String := "gps-edit";
    --  Edit a value in a view
+
+   function Set_Icon
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Id     : String;
+      Label  : String;
+      File   : GNATCOLL.VFS.Virtual_File) return Gtk.Icon_Set.Gtk_Icon_Set;
+   procedure Set_Icon
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Set    : Gtk.Icon_Set.Gtk_Icon_Set;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Size   : Gtk.Enums.Gtk_Icon_Size);
+   --  Register a new stock icon.
+   --  File is either an absolute file name, or relative to the icons directory
+   --  in the GPS install.
+   --  The second version can be used to add variants for specific sizes.
 
 end GPS.Stock_Icons;

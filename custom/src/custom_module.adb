@@ -32,8 +32,6 @@ with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Set;              use Gtk.Icon_Set;
-with Gtk.Icon_Source;           use Gtk.Icon_Source;
-with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -41,7 +39,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item;       use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -58,6 +55,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
@@ -1165,8 +1163,6 @@ package body Custom_Module is
 
       procedure Parse_Stock_Node (Node : Node_Ptr) is
          Child   : Node_Ptr := Node.Child;
-         Factory : constant Gtk_Icon_Factory := Get_Icon_Factory (Kernel);
-         Source  : Gtk_Icon_Source;
          Set     : Gtk_Icon_Set;
 
          procedure Add_Alternate_Sources;
@@ -1178,77 +1174,33 @@ package body Custom_Module is
 
          procedure Add_Alternate_Sources is
             Files    : Node_Ptr := Child.Child;
-            Pic_File : GNATCOLL.VFS.Virtual_File;
          begin
             while Files /= null loop
                if To_Lower (Files.Tag.all) = "alternate" then
                   declare
                      Filename : constant Virtual_File :=
                                   Get_File_Child (Files, "file");
+                     S : constant String := Get_Attribute (Files, "size");
+                     Size : Gtk.Enums.Gtk_Icon_Size;
                   begin
+                     if S = "Icon_Size_Menu" then
+                        Size := Gtk.Enums.Icon_Size_Menu;
+                     elsif S = "Icon_Size_Small_Toolbar" then
+                        Size := Gtk.Enums.Icon_Size_Small_Toolbar;
+                     elsif S = "Icon_Size_Large_Toolbar" then
+                        Size := Gtk.Enums.Icon_Size_Large_Toolbar;
+                     else
+                        Insert (Kernel, "Invalid icon size: " & S,
+                                Mode => Error);
+                     end if;
+
                      if Filename = No_File then
                         Insert
                           (Kernel,
                            -"No alternate file specified for icon "
                            & Get_Attribute (Child, "id"), Mode => Error);
                      else
-                        if Is_Absolute_Path (Filename) then
-                           Pic_File := Filename;
-                        else
-                           if File = GNATCOLL.VFS.No_File then
-                              Pic_File := Create_From_Dir
-                                (Get_Current_Dir, Filename.Full_Name);
-                           else
-                              Pic_File := Create_From_Dir
-                                (Get_Parent (File), Filename.Full_Name);
-                           end if;
-                        end if;
-
-                        if Is_Regular_File (Pic_File) then
-                           Gtk_New (Source);
-                           Set_Filename (Source, +Full_Name (Pic_File, True));
-
-                           declare
-                              use Gtk.Enums;
-                              Size : Gtk.Enums.Gtk_Icon_Size;
-                              S : constant String :=
-                                 Get_Attribute (Files, "size");
-                           begin
-                              if S = "Icon_Size_Menu" then
-                                 Size := Icon_Size_Menu;
-                              elsif S = "Icon_Size_Small_Toolbar" then
-                                 Size := Icon_Size_Small_Toolbar;
-                              elsif S = "Icon_Size_Large_Toolbar" then
-                                 Size := Icon_Size_Large_Toolbar;
-                              else
-                                 Insert (Kernel, "Invalid icon size: " & S,
-                                         Mode => Error);
-                              end if;
-
-                              Set_Size (Source, Size);
-                              Set_Size_Wildcarded (Source, False);
-                           exception
-                              when E : Constraint_Error =>
-                                 Trace (Me, E);
-                                 Insert
-                                   (Kernel,
-                                    -("No valid size specified for alternate"
-                                      & " image to use for icon ")
-                                    & Get_Attribute (Child, "id"),
-                                    Mode => Error);
-                           end;
-
-                           Add_Source (Set, Source);
-                           Free (Source);
-                        else
-                           Insert
-                             (Kernel,
-                              -"Error when creating stock icon "
-                              & Get_Attribute (Child, "id")
-                              & (-". File not found: ")
-                              & Display_Full_Name (Pic_File));
-                        end if;
-
+                        GPS.Stock_Icons.Set_Icon (Kernel, Set, Filename, Size);
                      end if;
                   end;
                else
@@ -1269,8 +1221,7 @@ package body Custom_Module is
                   Id       : constant String := Get_Attribute (Child, "id");
                   Filename : constant Virtual_File :=
                                Get_File_Child (Child, "file");
-
-                  Pic_File : GNATCOLL.VFS.Virtual_File;
+                  Pic_File : constant Virtual_File := Filename;
                begin
                   if Id = "" then
                      Insert
@@ -1285,48 +1236,20 @@ package body Custom_Module is
                         Mode => Error);
 
                   else
-                     if Is_Absolute_Path (Filename) then
-                        Pic_File := Filename;
-                     else
-                        if File = GNATCOLL.VFS.No_File then
-                           Pic_File := Create_From_Dir
-                             (Get_Current_Dir, Filename.Full_Name);
-                        else
-                           Pic_File := Create_From_Dir
-                             (Get_Parent (File), Filename.Full_Name);
-                        end if;
-                     end if;
+                     Set := GPS.Stock_Icons.Set_Icon
+                       (Kernel => Kernel,
+                        Id     => Id,
+                        Label  => -Get_Attribute (Child, "label"),
+                        File   => Pic_File);
 
-                     if Is_Regular_File (Pic_File) then
-                        Gtk_New (Set);
-
-                        Gtk_New (Source);
-                        Set_Filename (Source, +Full_Name (Pic_File, True));
-                        Add_Source (Set, Source);
-                        Free (Source);
-
-                        Add_Alternate_Sources;
-
-                        Add (Factory, Id, Set);
-                        Unref (Set);
-
-                        declare
-                           Stock : Gtk_Stock_Item;
-                        begin
-                           Gtk_New
-                             (Stock, Id,
-                              -Get_Attribute (Child, "label"),
-                             0, 0, "");
-                           Add (Stock);
-                           Free (Stock);  --  gtk+ took its own copy
-                        end;
-
-                     else
+                     if Set = Null_Gtk_Icon_Set then
                         Insert
                           (Kernel,
                            -"Error when creating stock icon " & Id
                            & (-". File not found: ")
                            & Display_Full_Name (Pic_File));
+                     else
+                        Add_Alternate_Sources;
                      end if;
                   end if;
                end;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2005-2012, AdaCore                     --
+--                     Copyright (C) 2005-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,11 +18,23 @@
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Glib;              use Glib;
+with Glib.Properties;   use Glib.Properties;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
+with Gtk.Icon_Set;      use Gtk.Icon_Set;
+with Gtk.Icon_Source;   use Gtk.Icon_Source;
+with Gtk.Settings;      use Gtk.Settings;
+with Gtk.Stock;         use Gtk.Stock;
+with GPS.Kernel.MDI;    use GPS.Kernel, GPS.Kernel.MDI;
 
 package body GPS.Stock_Icons is
    Me : constant Trace_Handle := Create ("STOCK");
+
+   procedure To_Absolute_Path
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Filename : in out GNATCOLL.VFS.Virtual_File);
+   --  Return the proper location for the icon.
+   --  Sets Filename to No_File if the file is not found.
 
    --------------------------
    -- Register_Stock_Icons --
@@ -55,8 +67,111 @@ package body GPS.Stock_Icons is
 
          Icon_Size_Lookup (Icon_Size_Button, W, H, Result);
          Trace (Me, "Icon size Button =>" & W'Img & "x" & H'Img);
-
       end if;
    end Register_Stock_Icons;
+
+   ----------------------
+   -- To_Absolute_Path --
+   ----------------------
+
+   procedure To_Absolute_Path
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Filename : in out GNATCOLL.VFS.Virtual_File)
+   is
+      Dark_Theme : Boolean;
+      Base, Tmp : Virtual_File;
+   begin
+      if not Filename.Is_Absolute_Path then
+         Dark_Theme := Glib.Properties.Get_Property
+           (Gtk.Settings.Get_Default,
+            Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property);
+
+         if not Dark_Theme then
+            Base := Create_From_Dir (Kernel.Get_Share_Dir, "icons/dark");
+            Filename := Create_From_Dir (Base, Filename.Full_Name);
+         else
+            --  Load icons from light icon theme, but if not found use the
+            --  default one from the dark theme.
+            Base := Create_From_Dir (Kernel.Get_Share_Dir, "icons/light");
+            Tmp := Create_From_Dir (Base, Filename.Full_Name);
+
+            if Tmp.Is_Regular_File then
+               Filename := Tmp;
+            else
+               Base := Create_From_Dir (Kernel.Get_Share_Dir, "icons/dark");
+               Filename := Create_From_Dir (Base, Filename.Full_Name);
+            end if;
+         end if;
+      end if;
+
+      if not Filename.Is_Regular_File then
+         Trace (Me, "File not found " & Filename.Display_Full_Name);
+         Filename := No_File;
+      end if;
+   end To_Absolute_Path;
+
+   --------------
+   -- Set_Icon --
+   --------------
+
+   function Set_Icon
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Id     : String;
+      Label  : String;
+      File   : GNATCOLL.VFS.Virtual_File) return Gtk.Icon_Set.Gtk_Icon_Set
+   is
+      Factory : constant Gtk_Icon_Factory := Get_Icon_Factory (Kernel);
+      Source   : Gtk_Icon_Source;
+      Set      : Gtk_Icon_Set;
+      Pic_File : GNATCOLL.VFS.Virtual_File := File;
+      Stock    : Gtk_Stock_Item;
+   begin
+      To_Absolute_Path (Kernel, Pic_File);
+
+      if Pic_File /= No_File then
+         Gtk_New (Set);
+
+         Gtk_New (Source);
+         Source.Set_Filename (+Pic_File.Full_Name (True));
+         Set.Add_Source (Source);
+         Free (Source);
+
+         Factory.Add (Id, Set);
+         Set.Unref;
+
+         Gtk_New (Stock, Id, Label, 0, 0, "");
+         Add (Stock);
+         Free (Stock);  --  gtk+ took its own copy
+
+         return Set;
+      else
+         return Null_Gtk_Icon_Set;
+      end if;
+   end Set_Icon;
+
+   --------------
+   -- Set_Icon --
+   --------------
+
+   procedure Set_Icon
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Set    : Gtk.Icon_Set.Gtk_Icon_Set;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Size   : Gtk.Enums.Gtk_Icon_Size)
+   is
+      Source   : Gtk_Icon_Source;
+      Pic_File : GNATCOLL.VFS.Virtual_File := File;
+   begin
+      To_Absolute_Path (Kernel, Pic_File);
+
+      if Pic_File /= No_File then
+         Gtk_New (Source);
+         Source.Set_Filename (+Pic_File.Full_Name (True));
+         Source.Set_Size (Size);
+         Source.Set_Size_Wildcarded (False);
+         Set.Add_Source (Source);
+         Free (Source);
+      end if;
+   end Set_Icon;
 
 end GPS.Stock_Icons;

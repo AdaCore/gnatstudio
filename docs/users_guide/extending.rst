@@ -4268,8 +4268,18 @@ places, such as buttons, menus, toolbars, and so on.
 The stock icons must be declared using the tag `<icon>`, within the global tag
 `<stock>`. The attribute `id` indicates the label used to identify the stock
 icon, and the attribute `file` points to the file which contains the actual
-picture, either in absolute format, or relative to the directory which contains
-the XML file.
+picture, either in absolute format, or relative to the GPS icons directory.
+If you would like to read the icons from a directory relative to the location
+of the plug-in, you should use a python script like::
+
+    XML = r"""<GPS><stock>
+        <icon id="gtk-new" file="${icons}/file.svg"/>
+      </stock></GPS>"""
+
+    icons = os.path.normpath(
+       os.path.join(os.path.dirname(__file__), "../dir"))
+    XML = XML.replace("${icons}", icons)
+    GPS.parse_xml(XML)
 
 If the stock icon is to be used in a toolbar, use the attribute `label` to
 specify the text to display in the toolbar, under the button, when the toolbar

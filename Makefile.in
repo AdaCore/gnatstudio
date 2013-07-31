@@ -5,6 +5,7 @@ RMDIR           = rm -rf
 STRIP           = strip
 AWK             = @AWK@
 PERL            = perl
+PYTHON          = python
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
@@ -58,6 +59,10 @@ endif
 	$(RMDIR) $(sharedir)/gps/templates
 # update runtime.xml before copying the plug-ins files.
 	(cd distrib; $(PERL) from_impunit.pl)
+# update light icon set
+	$(MKDIR) share/icons/light/svg
+	(cd distrib; $(PYTHON) iconsets.py)
+
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
 # Clean-up changes made above for Windows.
