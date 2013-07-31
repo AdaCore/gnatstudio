@@ -257,7 +257,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         if not word and isinstance(context, GPS.EntityContext):
             try:
-                entity = context.entity()
+                entity = context.entity(approximate_search_fallback=False)
             except:
                 entity = None
 

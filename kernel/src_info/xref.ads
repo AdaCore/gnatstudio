@@ -278,7 +278,8 @@ package Xref is
       Entity_Name       : String;
       Ask_If_Overloaded : Boolean := False;
       Entity            : out General_Entity;
-      Closest_Ref       : out General_Entity_Reference);
+      Closest_Ref       : out General_Entity_Reference;
+      Approximate_Search_Fallback : Boolean := True);
    --  Similar to Get_Entity, but also returns the closest reference, and
    --  handles interaction with the user if possible
    --

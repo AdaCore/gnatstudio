@@ -506,7 +506,8 @@ package body Xref is
       Entity_Name       : String;
       Ask_If_Overloaded : Boolean := False;
       Entity            : out General_Entity;
-      Closest_Ref       : out General_Entity_Reference)
+      Closest_Ref       : out General_Entity_Reference;
+      Approximate_Search_Fallback : Boolean := True)
    is
       Fuzzy : Boolean;
 
@@ -524,7 +525,8 @@ package body Xref is
                --  predefined entities
                Closest_Ref.Ref := Self.Xref.Get_Entity
                  (Name   => Name,
-                  File   => No_File);
+                  File   => No_File,
+                  Approximate_Search_Fallback => Approximate_Search_Fallback);
 
             else
                --  Already handles the operators
@@ -532,7 +534,8 @@ package body Xref is
                  (Name   => Name,
                   File   => Loc.File,
                   Line   => Loc.Line,
-                  Column => Loc.Column);
+                  Column => Loc.Column,
+                  Approximate_Search_Fallback => Approximate_Search_Fallback);
             end if;
 
             Entity.Entity := Closest_Ref.Ref.Entity;

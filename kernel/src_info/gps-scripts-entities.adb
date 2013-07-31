@@ -34,7 +34,8 @@ package body GPS.Scripts.Entities is
    File_Cst       : aliased constant String := "file";
    Line_Cst       : aliased constant String := "line";
    Col_Cst        : aliased constant String := "column";
-   Fast_Cst       : aliased constant String := "fast";
+   Approx_Search_Cst : aliased constant String
+     := "approximate_search_fallback";
    Nth_Cst        : aliased constant String := "nth";
 
    Body_Cmd_Parameters      : constant Cst_Argument_List :=
@@ -42,7 +43,7 @@ package body GPS.Scripts.Entities is
    Entity_Cmd_Parameters    : constant Cst_Argument_List :=
                                 (Name_Cst'Access, File_Cst'Access,
                                  Line_Cst'Access, Col_Cst'Access,
-                                 Fast_Cst'Access);
+                                 Approx_Search_Cst'Access);
 
    procedure Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -92,6 +93,7 @@ package body GPS.Scripts.Entities is
                        Default    => No_Class_Instance,
                        Allow_Null => True);
             Loc    : General_Location;
+            Approx_Search : constant Boolean := Nth_Arg (Data, 6, True);
 
          begin
             if File = No_Class_Instance then
@@ -109,7 +111,8 @@ package body GPS.Scripts.Entities is
                Entity_Name       => Name,
                Ask_If_Overloaded => False,
                Entity            => Entity,
-               Closest_Ref       => Ref);
+               Closest_Ref       => Ref,
+               Approximate_Search_Fallback => Approx_Search);
 
             if Entity = No_General_Entity then
                Set_Error_Msg (Data, -"Entity not found");

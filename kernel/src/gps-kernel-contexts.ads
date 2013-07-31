@@ -245,7 +245,8 @@ package GPS.Kernel.Contexts is
    --  column on which the cursor currently is.
 
    function Get_Entity
-     (Context           : Selection_Context)
+     (Context           : Selection_Context;
+      Approximate_Search_Fallback : Boolean := True)
       return Xref.General_Entity;
    pragma Inline (Get_Entity);
    --  Return the xref entity stored in the context.

@@ -736,7 +736,8 @@ package body GPS.Kernel.Contexts is
    ----------------
 
    function Get_Entity
-     (Context           : Selection_Context)
+     (Context           : Selection_Context;
+      Approximate_Search_Fallback : Boolean := True)
       return Xref.General_Entity
    is
       Db : constant General_Xref_Database :=
@@ -761,7 +762,8 @@ package body GPS.Kernel.Contexts is
                   Column => Context.Data.Data.Entity_Column),
                Entity_Name => Context.Data.Data.Entity_Name.all,
                Entity      => Context.Data.Data.Xref_Entity,
-               Closest_Ref => Context.Data.Data.Xref_Closest_Ref);
+               Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
+               Approximate_Search_Fallback => Approximate_Search_Fallback);
 
             Ref (Context.Data.Data.Xref_Entity);
          end if;

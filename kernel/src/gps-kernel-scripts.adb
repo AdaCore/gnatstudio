@@ -221,6 +221,8 @@ package body GPS.Kernel.Scripts is
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
+   Approximate_Search_Cst : aliased constant String :=
+     "approximate_search_fallback";
 
    Create_Link_Args         : constant Cst_Argument_List :=
      (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
@@ -571,10 +573,15 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Entity : constant Selection_Context := Get_Data (Data, 1);
+      Approx_Search : Boolean;
    begin
       if Command = "entity" then
+         Name_Parameters (Data, (1 => Approximate_Search_Cst'Access));
+         Approx_Search := Nth_Arg (Data, 2, True);
          Set_Return_Value
-           (Data, Create_Entity (Get_Script (Data), Get_Entity (Entity)));
+           (Data, Create_Entity
+              (Get_Script (Data), Get_Entity
+               (Entity, Approximate_Search_Fallback => Approx_Search)));
       end if;
    end Entity_Context_Command_Handler;
 
@@ -1497,7 +1504,7 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel, "entity",
+        (Kernel, "entity", 0, 1,
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
 
