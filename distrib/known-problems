@@ -16,6 +16,14 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               your_workspace/.metadata/.plugins/com.adacore.gnatbench.core/
               builder folder the required builder target elements.
 
+- M712-034: GPS: can't open view or editor from another perspective
+  Problem:    If you open an editor in the Debug perspective, then move it
+              in a place such that it is no longer visible when you switch to
+              the default perspective, then that file cannot be opened from
+              that perspective.
+  Workaround: switch back to Debug, move the file to the central area, next
+              to other editors, and switch back to Default perspective.
+
 - M711-005: GPS: focus issue after drag-and-drop
   Problem:    When you drag an editor to a different notebook, it loses
               the keyboard focus (which is left to the next window in its
