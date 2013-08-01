@@ -23,6 +23,7 @@ with Ada.Text_IO;       use Ada.Text_IO;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
 
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
@@ -39,6 +40,9 @@ procedure GPS.CLI is
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
    Script_Name           : aliased GNAT.Strings.String_Access;
+   Script                : Scripting_Language;
+   Errors                : Boolean;
+   Project_File          : Virtual_File;
    Kernel                : constant GPS.CLI_Kernels.CLI_Kernel :=
      new GPS.CLI_Kernels.CLI_Kernel_Record;
 
@@ -81,45 +85,38 @@ begin
    end;
 
    --  Check project file path passed in command line
-   declare
-      Project_File : Virtual_File;
-   begin
-      --  Exit with message if no project file path found at all
-      if not CLI_Utils.Is_Project_Path_Specified (Project_Name) then
-         Put_Line ("No project file specified");
-         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-         return;
-      end if;
+   --  Exit with message if no project file path found at all
+   if not CLI_Utils.Is_Project_Path_Specified (Project_Name) then
+      Put_Line ("No project file specified");
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+      return;
+   end if;
 
-      --  Exit with message if path is not valid
-      if not CLI_Utils.Project_File_Path_Exists (Project_Name) then
-         Put_Line ("No such file: " & Project_Name.all);
-         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-         return;
-      end if;
+   --  Exit with message if path is not valid
+   if not CLI_Utils.Project_File_Path_Exists (Project_Name) then
+      Put_Line ("No such file: " & Project_Name.all);
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+      return;
+   end if;
 
-      Project_File := Create (+Project_Name.all);
-      --  Load project
-      Kernel.Registry.Tree.Load
-        (Root_Project_Path => Project_File,
-         Env               => Kernel.Registry.Environment);
+   Project_File := Create (+Project_Name.all);
 
-      Project_Changed (Kernel.Databases);
-      Project_View_Changed (Kernel.Databases, Kernel.Registry.Tree);
-   end;
-
+   --  Load script
    if Script_Name.all /= "" then
       declare
          Colon : constant Natural :=
            Ada.Strings.Fixed.Index (Script_Name.all, ":");
+         Lang  : String renames Script_Name (Script_Name'First .. Colon - 1);
       begin
          if Colon /= 0 then
 
-            if not Execute_Batch
+            if Execute_Batch
               (Kernel,
-               Lang_Name   => Script_Name (Script_Name'First .. Colon - 1),
+               Lang_Name   => Lang,
                Script_Name => Script_Name (Colon + 1 .. Script_Name'Last))
             then
+               Script := Lookup_Scripting_Language (Kernel.Scripts, Lang);
+            else
                Put_Line
                  ("Language unknown for --load command line switch: " &
                     Script_Name (Script_Name'First .. Colon - 1));
@@ -129,6 +126,24 @@ begin
             Put_Line ("No lang in --load=" & Script_Name.all);
          end if;
       end;
+   end if;
+
+   --  Load project
+   Kernel.Registry.Tree.Load
+     (Root_Project_Path => Project_File,
+      Env               => Kernel.Registry.Environment);
+
+   Project_Changed (Kernel.Databases);
+   Project_View_Changed (Kernel.Databases, Kernel.Registry.Tree);
+
+   --  Start execute() script callback
+   if Script /= null then
+      Script.Execute_Command
+        ("if vars().has_key('execute'): execute()", Errors => Errors);
+
+      if Errors then
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+      end if;
    end if;
 
    --  Destroy all
