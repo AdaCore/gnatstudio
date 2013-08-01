@@ -204,6 +204,17 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               pixmaps. This results in blurry text on high-dpi screens.
   Workaround: The text is readable even if a bit blurry.
 
+- LB30-023: history in search dialog does not save options
+  Problem:    When you select a past search pattern, GPS does not remember
+              whether it was a regular expression, case insensitive or whole
+              word search.
+              In addition, when the dialog is opened and there is selected
+              text in the current editor, GPS now sets both the pattern and
+              replace field, assuming in most cases users will want to do
+              a minimal change to the text, rather than reuse the previous
+              replacement text.
+  Workaround: select the check boxes manually
+
 - LB30-018: Missing references with extending projects
   Problem:    If you are using extending projects, GPS will not
               parse its .ali files (containing the xref information generated
