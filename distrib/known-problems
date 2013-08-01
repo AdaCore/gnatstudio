@@ -50,6 +50,13 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               are incorrectly cased.
   Workaround: Enter a space just before the cursor.
 
+- M603-004: GPS: bad display or crash with C/C++ sources and UTF-8
+  Problem:    When editing a C or C++ source files with UTF-8 characters,
+              the syntax highlighting will be confused, which can lead in
+              some cases to hangs or crashes of GPS.
+  Workaround: Set the language to unknown or Ada to edit these files, or
+              convert these files to a 8-byte file format.
+
 - M521-020: GPS: Unwanted scrolling in the editors when switching perspectives
   Problem:    When switching perspectives, for instance when entering or
               leaving a debug session, editors scroll and lose the current
