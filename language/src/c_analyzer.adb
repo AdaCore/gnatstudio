@@ -529,6 +529,10 @@ package body C_Analyzer is
       Line              : Natural := 1;
       Padding           : Integer := 0;
       Char_In_Line      : Natural := 1;
+      --  Current byte index in current line, different from logical column
+      --  which is computed by the callers directly. In other words, callers
+      --  expect byte counts for the column information.
+
       Start_Char        : Natural;
       Start_Index       : Natural;
       Num_Ifdef         : Natural;
@@ -695,9 +699,10 @@ package body C_Analyzer is
       ---------------
 
       procedure Next_Char is
+         P : constant Natural := Index;
       begin
-         Index := Index + 1;
-         Char_In_Line := Char_In_Line + 1;
+         Index := UTF8_Next_Char (Buffer, Index);
+         Char_In_Line := Char_In_Line + Index - P;
       end Next_Char;
 
       ---------
@@ -833,9 +838,8 @@ package body C_Analyzer is
          Escape : Boolean := False;
       begin
          First := Index;
-         Index := Index + 1;
          Start_Char   := Char_In_Line;
-         Char_In_Line := Char_In_Line + 1;
+         Next_Char;
 
          while Index < Buffer'Last loop
             case Buffer (Index) is
@@ -855,8 +859,7 @@ package body C_Analyzer is
                   Escape := False;
             end case;
 
-            Index := UTF8_Next_Char (Buffer, Index);
-            Char_In_Line := Char_In_Line + 1;
+            Next_Char;
          end loop;
 
          return Do_Callback
@@ -873,8 +876,7 @@ package body C_Analyzer is
       begin
          First := Index;
          Start_Char := Char_In_Line;
-         Index := Index + 1;
-         Char_In_Line := Char_In_Line + 1;
+         Next_Char;
 
          while Index < Buffer'Last loop
             case Buffer (Index) is
@@ -894,8 +896,7 @@ package body C_Analyzer is
                   Escape := False;
             end case;
 
-            Index := UTF8_Next_Char (Buffer, Index);
-            Char_In_Line := Char_In_Line + 1;
+            Next_Char;
          end loop;
 
          return Do_Callback
@@ -927,10 +928,6 @@ package body C_Analyzer is
          --  Increment Value by a TAB character (up to 8 chars).
          pragma Inline (Add_Tab);
 
-         procedure Next;
-         --  Move Index and Char_In_line to the next character
-         pragma Inline (Next);
-
          -------------
          -- Add_Tab --
          -------------
@@ -940,31 +937,19 @@ package body C_Analyzer is
             Value := 8 * (Value / 8 + 1);
          end Add_Tab;
 
-         ----------
-         -- Next --
-         ----------
-
-         procedure Next is
-            P : constant Natural := Index;
-         begin
-            Index := UTF8_Next_Char (Buffer, Index);
-            Char_In_Line := Char_In_Line + Index - P;
-         end Next;
-
       begin
          First := Index;
 
          if Buffer (Index + 1) = '/' then
             --  C++ style comment, skip whole line
 
-            Index := Index + 1;
             Start_Char := Char_In_Line;
-            Char_In_Line := Char_In_Line + 1;
+            Next_Char;
 
             while Index <= Buffer'Last
-              and then Buffer (Index + 1) /= ASCII.LF
+              and then Buffer (UTF8_Next_Char (Buffer, Index)) /= ASCII.LF
             loop
-               Next;
+               Next_Char;
             end loop;
 
             if Indent_Comments then
@@ -1039,7 +1024,7 @@ package body C_Analyzer is
                         exit;
                   end case;
 
-                  Next;
+                  Next_Char;
                end loop;
 
                Ref_Column := Column;
@@ -1051,7 +1036,7 @@ package body C_Analyzer is
                   --  a '*' doesn't see the one after the opening of the
                   --  comment
 
-                  Next;
+                  Next_Char;
                   Column := Column + 1;
                end if;
             end if;
@@ -1097,7 +1082,7 @@ package body C_Analyzer is
                end if;
 
                Column := Column + 1;
-               Next;
+               Next_Char;
             end loop;
 
             return Do_Callback
@@ -1168,8 +1153,7 @@ package body C_Analyzer is
                   end if;
                end if;
 
-               Index := UTF8_Next_Char (Buffer, Index);
-               Char_In_Line := Char_In_Line + 1;
+               Next_Char;
             end loop;
 
             return Do_Callback
@@ -1196,15 +1180,13 @@ package body C_Analyzer is
                  and then Buffer (Index) /= '<'
                  and then Buffer (Index) /= ASCII.LF
                loop
-                  Index := UTF8_Next_Char (Buffer, Index);
-                  Char_In_Line := Char_In_Line + 1;
+                  Next_Char;
                end loop;
 
                if Index < Buffer'Last and then Buffer (Index) /= ASCII.LF then
                   Name_Index  := Index;
                   Name_Column := Char_In_Line;
-                  Index  := Index + 1;
-                  Char_In_Line := Char_In_Line + 1;
+                  Next_Char;
 
                   if Buffer (Name_Index) = '"' then
                      Char := '"';
@@ -1215,8 +1197,7 @@ package body C_Analyzer is
                   while Index < Buffer'Last
                     and then Buffer (Index) /= Char
                   loop
-                     Index := UTF8_Next_Char (Buffer, Index);
-                     Char_In_Line := Char_In_Line + 1;
+                     Next_Char;
                   end loop;
 
                   if Constructs /= null then
@@ -1342,9 +1323,8 @@ package body C_Analyzer is
            and then Is_Entity_Letter
              (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
          loop
-            Prev  := Index;
-            Index := UTF8_Next_Char (Buffer, Index);
-            Char_In_Line := Char_In_Line + 1;
+            Prev := Index;
+            Next_Char;
          end loop;
 
          Index := Prev;

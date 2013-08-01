@@ -65,7 +65,10 @@ begin
    Length := Read (F, Buffer.all'Address, Buffer'Length);
    Close (F);
 
-   if File_Extension (Name) = ".c" then
+   if File_Extension (Name) = ".c"
+     or else (Name'Length > 12
+              and then Name (Name'Last - 11 .. Name'Last) = ".c.highlight")
+   then
       Analyze_C_Source
         (Buffer.all, Symbols, Default_Indent_Parameters,
          Format   => False,
