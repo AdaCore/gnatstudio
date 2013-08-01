@@ -16,6 +16,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               your_workspace/.metadata/.plugins/com.adacore.gnatbench.core/
               builder folder the required builder target elements.
 
+- M716-051: GB: Code Assist invocation may cause Eclipse to crash
+  Problem:    Invocation of the Code Assist feature can cause a crash
+              of GNATbench.
+  Workaround: Restart Eclipse and retry the operation.
+
 - M712-034: GPS: can't open view or editor from another perspective
   Problem:    If you open an editor in the Debug perspective, then move it
               in a place such that it is no longer visible when you switch to
