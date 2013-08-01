@@ -3915,6 +3915,36 @@ pragma All_Calls_Remote [(library_unit_name)];
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Allow_Integer_Address" origin = "GNAT RM">
+      <DOC>
+Syntax:
+pragma Allow_Integer_Address;
+
+In most versions of GNAT, `System.Address' is a private type, which
+means that integer values are not allowed. If the configuration pragma
+`Allow_Integer_Address' is given, then integer expressions may be used
+anywhere a value of type `System.Address' is required.  The effect is
+to introduce an implicit unchecked conversion from the integer value to
+type `System.Address'. The following example compiles without errors:
+
+pragma Allow_Integer_Address;
+with System; use System;
+package AddrAsInt is
+X : Integer;
+Y : Integer;
+for X'Address use 16#1240#;
+for Y use at 16#3230#;
+m : Address := 16#4000#;
+n : constant Address := 4000;
+p : constant Address := Address (X + Y);
+type R is new integer;
+RR : R := 1000;
+Z : Integer;
+for Z'Address use RR;
+end AddrAsInt;
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Annotate" origin = "GNAT RM">
       <DOC>
 Syntax:
