@@ -663,57 +663,25 @@ package body Debugger.VMS is
       Set_Interrupted (Proxy);
    end Interrupt;
 
-   --------------------------
-   -- Is_Execution_Command --
-   --------------------------
+   ------------------
+   -- Command_Kind --
+   ------------------
 
-   overriding function Is_Execution_Command
+   overriding function Command_Kind
      (Debugger : access VMS_Debugger;
-      Command  : String)
-      return Boolean
+      Command  : String) return Command_Category
    is
       pragma Unreferenced (Debugger, Command);
    begin
       --  ???
-      return True;
-   end Is_Execution_Command;
-
-   ------------------------
-   -- Is_Context_Command --
-   ------------------------
-
-   overriding function Is_Context_Command
-     (Debugger : access VMS_Debugger;
-      Command : String)
-      return Boolean
-   is
-      pragma Unreferenced (Debugger, Command);
-   begin
-      --  ???
-      return False;
-   end Is_Context_Command;
-
-   ---------------------
-   -- Is_Load_Command --
-   ---------------------
-
-   overriding function Is_Load_Command
-     (Debugger : access VMS_Debugger;
-      Command  : String)
-      return Boolean
-   is
-      pragma Unreferenced (Debugger, Command);
-   begin
-      --  ???
-      return False;
-   end Is_Load_Command;
+      return Misc_Command;
+   end Command_Kind;
 
    ----------------------
    -- Is_Break_Command --
    ----------------------
 
-   overriding
-   function Is_Break_Command
+   overriding function Is_Break_Command
      (Debugger : access VMS_Debugger;
       Command : String)
       return Boolean

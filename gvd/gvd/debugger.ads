@@ -478,29 +478,27 @@ package Debugger is
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
 
-   function Is_Execution_Command
-     (Debugger : access Debugger_Root;
-      Command  : String) return Boolean is abstract;
-   --  Return True if Command is an execution command for the specified
-   --  debugger (e.g step, next, ... for gdb).
+   type Command_Category is
+     (Load_Command,
+      Context_Command,
+      Execution_Command,
+      Misc_Command);
+   --  Kind of command:
+   --    - Load: Changes the module(s) to debug (e.g. load file).
+   --    - Context: command changes the context of the debugee, e.g. thread
+   --               switching.
+   --    - Execution: execution command for the debuggee, e.g. step, next.
+   --    - Misc: None of the above.
 
-   function Is_Context_Command
+   function Command_Kind
      (Debugger : access Debugger_Root;
-      Command : String) return Boolean is abstract;
-   --  Return True if Command changes the context of the debugged process.
-   --  (e.g thread switching).
-
-   function Is_Load_Command
-     (Debugger : access Debugger_Root;
-      Command  : String) return Boolean is abstract;
-   --  Return True if Command changes the module(s) to debug (e.g load file).
+      Command  : String) return Command_Category is abstract;
+   --  Return the kind of command associated with Command
 
    function Is_Break_Command
      (Debugger : access Debugger_Root;
       Command : String) return Boolean is abstract;
    --  Return True if Command changes the list of breakpoints.
-   --  This is a superset of Is_Execution_Command, since some breakpoints might
-   --  be deleted automatically when some breakpoints are reached.
 
    function Is_Started (Debugger : access Debugger_Root)
      return Boolean;

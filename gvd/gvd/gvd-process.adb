@@ -593,8 +593,8 @@ package body GVD.Process is
       if Process.Current_Command = null then
          return False;
       else
-         return Is_Execution_Command
-           (Process.Debugger, Process.Current_Command.all);
+         return Command_Kind
+           (Process.Debugger, Process.Current_Command.all) = Execution_Command;
       end if;
    end Is_Execution_Command;
 

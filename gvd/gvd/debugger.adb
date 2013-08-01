@@ -439,19 +439,17 @@ package body Debugger is
 
             Final_Post_Process (Process, Mode);
 
-            if Is_Load_Command (Debugger, Current_Command) then
---                 Detect_Language (Debugger);
---                 Pos := Current_Command'First;
---                 Skip_To_Blank (Current_Command, Pos);
---                 Skip_Blanks (Current_Command, Pos);
---            Executable_Name= Current_Command (Pos .. Current_Command'Last);
-               Run_Debugger_Hook (Process, Debugger_Executable_Changed_Hook);
-
-            elsif Is_Context_Command (Debugger, Current_Command) then
-               Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
-            elsif Is_Execution_Command (Debugger, Current_Command) then
-               Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
-            end if;
+            case Command_Kind (Debugger, Current_Command) is
+               when Load_Command =>
+                  Run_Debugger_Hook
+                    (Process, Debugger_Executable_Changed_Hook);
+               when Context_Command =>
+                  Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
+               when Execution_Command =>
+                  Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
+               when Misc_Command =>
+                  null;
+            end case;
 
             Update_Breakpoints
               (Process,
@@ -503,12 +501,14 @@ package body Debugger is
    is
       Data    : History_Data;
       Process : Visual_Debugger;
+      Kind    : Command_Category;
 
    begin
       Set_Command_Mode (Get_Process (Debugger), Mode);
+      Kind := Command_Kind (Debugger, Cmd);
 
       if not Is_Started (Debugger)
-        and then Is_Execution_Command (Debugger, Cmd)
+        and then Kind = Execution_Command
       then
          Set_Is_Started (Debugger, True);
       end if;
@@ -536,7 +536,7 @@ package body Debugger is
          Set_Command_In_Process (Get_Process (Debugger));
 
          if Mode /= Internal
-           and then Is_Execution_Command (Debugger, Cmd)
+           and then Kind = Execution_Command
          then
             Unhighlight_Current_Line
               (Get_Source (Process.Editor_Text), GObject (Process));
@@ -581,10 +581,11 @@ package body Debugger is
      (Debugger : access Debugger_Root'Class;
       Mode     : Command_Type)
    is
-      Process : Visual_Debugger;
-      Result  : Boolean;
+      Process  : Visual_Debugger;
+      Kind     : Command_Category;
+      Is_Break : Boolean;
+      Result   : Boolean;
       pragma Unreferenced (Result);
-      Is_Context, Is_Exec, Is_Break : Boolean;
 
    begin
       --  See also Output_Available for similar handling.
@@ -593,11 +594,8 @@ package body Debugger is
       Process := GVD.Process.Convert (Debugger);
 
       if Process /= null then
-         Is_Context := Is_Context_Command
-           (Debugger, Process.Current_Command.all);
-         Is_Exec    := Is_Execution_Command
-           (Debugger, Process.Current_Command.all);
-         Is_Break   := Is_Break_Command
+         Kind := Command_Kind (Debugger, Process.Current_Command.all);
+         Is_Break := Is_Break_Command
            (Debugger, Process.Current_Command.all);
 
          Free (Process.Current_Command);
@@ -614,11 +612,17 @@ package body Debugger is
          if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
 
-            if Is_Context then
-               Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
-            elsif Is_Exec then
-               Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
-            end if;
+            case Kind is
+               when Load_Command =>
+                  Run_Debugger_Hook
+                    (Process, Debugger_Executable_Changed_Hook);
+               when Context_Command =>
+                  Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
+               when Execution_Command =>
+                  Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
+               when Misc_Command =>
+                  null;
+            end case;
 
             Update_Breakpoints (Process, Force => Is_Break);
          end if;

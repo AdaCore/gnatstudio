@@ -187,17 +187,9 @@ package Debugger.Gdb is
 
    overriding procedure Interrupt (Debugger : access Gdb_Debugger);
 
-   overriding function Is_Execution_Command
+   overriding function Command_Kind
      (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean;
-
-   overriding function Is_Context_Command
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean;
-
-   overriding function Is_Load_Command
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean;
+      Command  : String) return Command_Category;
 
    overriding function Is_Break_Command
      (Debugger : access Gdb_Debugger;

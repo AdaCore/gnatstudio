@@ -423,8 +423,9 @@ package body GVD.Scripts is
          if Process.Current_Command /= null then
             Set_Return_Value
               (Data,
-               Is_Context_Command
-                 (Process.Debugger, Process.Current_Command.all));
+               Command_Kind
+                 (Process.Debugger, Process.Current_Command.all)
+               = Context_Command);
          else
             Set_Return_Value (Data, False);
          end if;

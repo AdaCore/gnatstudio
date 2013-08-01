@@ -1704,43 +1704,41 @@ package body Debugger.Gdb is
       end if;
    end Interrupt;
 
-   ------------------------
-   -- Is_Context_Command --
-   ------------------------
+   ------------------
+   -- Command_Kind --
+   ------------------
 
-   overriding function Is_Context_Command
+   overriding function Command_Kind
      (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean
+      Command  : String) return Command_Category
    is
       pragma Unreferenced (Debugger);
+      Index : Natural;
    begin
-      return Starts_With (Command, "thread")
-        or else Starts_With (Command, "task")
-        or else Starts_With (Command, "core")
-        or else Starts_With (Command, "attach");
-   end Is_Context_Command;
-
-   --------------------------
-   -- Is_Execution_Command --
-   --------------------------
-
-   overriding function Is_Execution_Command
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean
-   is
-      pragma Unreferenced (Debugger);
-      Index : Natural := Command'First;
-   begin
-      --  Note: some of commands below can have a numeric parameter, that needs
-      --  to be ignored (e.g/ cont 99)
-
       if Command = "" then
-         return False;
+         return Misc_Command;
       end if;
 
+      if Starts_With (Command, "file")
+        or else Starts_With (Command, "add-symbol-file")
+        or else Starts_With (Command, "wtx add-symbol-file")
+        or else Starts_With (Command, "load")
+      then
+         return Load_Command;
+      end if;
+
+      if Starts_With (Command, "thread")
+        or else Starts_With (Command, "task")
+        or else Starts_With (Command, "core")
+        or else Starts_With (Command, "attach")
+      then
+         return Context_Command;
+      end if;
+
+      Index := Command'First;
       Skip_Word (Command, Index);
 
-      return    Command (Command'First .. Index - 1) = "step"
+      if        Command (Command'First .. Index - 1) = "step"
         or else Command (Command'First .. Index - 1) = "stepi"
         or else Command (Command'First .. Index - 1) = "s"
         or else Command (Command'First .. Index - 1) = "si"
@@ -1757,24 +1755,13 @@ package body Debugger.Gdb is
         or else Starts_With (Command, "run")
         or else Starts_With (Command, "r ")
         or else Starts_With (Command, "begin")
-        or else Starts_With (Command, "start");
-   end Is_Execution_Command;
+        or else Starts_With (Command, "start")
+      then
+         return Execution_Command;
+      end if;
 
-   ---------------------
-   -- Is_Load_Command --
-   ---------------------
-
-   overriding function Is_Load_Command
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean
-   is
-      pragma Unreferenced (Debugger);
-   begin
-      return Starts_With (Command, "file")
-        or else Starts_With (Command, "add-symbol-file")
-        or else Starts_With (Command, "wtx add-symbol-file")
-        or else Starts_With (Command, "load");
-   end Is_Load_Command;
+      return Misc_Command;
+   end Command_Kind;
 
    ----------------------
    -- Is_Break_Command --
@@ -1786,24 +1773,24 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Debugger);
    begin
-      return Looking_At (Command, Command'First, "break")
-        or else Looking_At (Command, Command'First + 1, "break")
-        or else Looking_At (Command, Command'First, "b ")
-        or else Looking_At (Command, Command'First, "watch")
-        or else Looking_At (Command, Command'First, "catch")
-        or else Looking_At (Command, Command'First, "awatch")
-        or else Looking_At (Command, Command'First, "rwatch")
-        or else Looking_At (Command, Command'First, "delete")
-        or else Looking_At (Command, Command'First, "del ")
-        or else Looking_At (Command, Command'First, "disable")
-        or else Looking_At (Command, Command'First, "enable")
-        or else Looking_At (Command, Command'First, "begin")
-        or else Looking_At (Command, Command'First, "start")
-        or else Looking_At (Command, Command'First, "ignore")
-        or else Looking_At (Command, Command'First, "command")
-        or else Looking_At (Command, Command'First, "condition")
-        or else Looking_At (Command, Command'First, "set break-command")
-        or else Looking_At (Command, Command'First, "change-break");
+      return Looking_At (Command, Command'First + 1, "break")
+        or else Starts_With (Command, "break")
+        or else Starts_With (Command, "b ")
+        or else Starts_With (Command, "watch")
+        or else Starts_With (Command, "catch")
+        or else Starts_With (Command, "awatch")
+        or else Starts_With (Command, "rwatch")
+        or else Starts_With (Command, "delete")
+        or else Starts_With (Command, "del ")
+        or else Starts_With (Command, "disable")
+        or else Starts_With (Command, "enable")
+        or else Starts_With (Command, "begin")
+        or else Starts_With (Command, "start")
+        or else Starts_With (Command, "ignore")
+        or else Starts_With (Command, "command")
+        or else Starts_With (Command, "condition")
+        or else Starts_With (Command, "set break-command")
+        or else Starts_With (Command, "change-break");
    end Is_Break_Command;
 
    ----------------
