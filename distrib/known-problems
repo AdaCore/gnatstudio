@@ -50,9 +50,10 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               subprogram).
   Workaround: Use "Find All References", and look for "[Body]" references.
 
-- M627-054: GPS not responding when ctrl-f Repl All on large source files
-  Problem:    Ten thousand of replaces takes forever in GPS.
-  Workaround: None. Use external editor or sed.
+- M627-054: GPS slow to execute "Replace All" on large source files
+  Problem:    When executing a "Replace All" operation on a very large source
+              file, GPS takes a long time to complete.
+  Workaround: None known.
 
 - M604-029: GPS: wrong casing in comments when at end of buffer
   Problem:    Comments entered when the cursor is at the end of the buffer
