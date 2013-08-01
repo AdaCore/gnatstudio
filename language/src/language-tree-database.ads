@@ -304,8 +304,13 @@ package Language.Tree.Database is
      (File : Structured_File_Access) return Tree_Language_Access;
    --  Return the tree language associated to this file.
 
-   procedure Update_Contents (File : Structured_File_Access);
-   --  This function will re-analyze the full contents of the file
+   procedure Update_Contents
+     (File  : Structured_File_Access;
+      Purge : Boolean := False);
+   --  This function will re-analyze the full contents of the file.
+   --  If Purge = True old content of File will be dropped and new one created
+   --  from scratch. If there is a lot of changes it could be faster then
+   --  trying to update old contents by applying changes one by one.
 
    function Is_Null (File : Structured_File_Access) return Boolean;
    --  Return true if the file is null, which can be either because the pointer
@@ -447,9 +452,11 @@ package Language.Tree.Database is
    --  Changes the association between the file and the project.
 
    procedure Update_Contents
-     (Db : access Construct_Database; File : Virtual_File);
+     (Db    : access Construct_Database;
+      File  : Virtual_File;
+      Purge : Boolean := False);
    --  Reload the file and its constructs. Previous constructs are removed from
-   --  the database.
+   --  the database. See above about Purge.
 
    procedure Clear (Db : access Construct_Database);
    --  Remove the contents of the database. New contents can still be added

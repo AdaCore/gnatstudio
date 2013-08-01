@@ -2283,6 +2283,11 @@ package body Src_Contexts is
       Buffer.Enable_Highlighting;
       Finish_Undo_Group (Buffer);
       Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
+
+      Buffer.Get_Kernel.Get_Construct_Database.Update_Contents
+        (Buffer.Get_Filename, Purge => Matches'Length > 50);
+      --  If there are a lot of changes then update contents by purging old
+      --  one and construct new contents from scratch.
    end Replace_Matched;
 
    -------------------------

@@ -31,9 +31,8 @@ with UTF8_Utils;        use UTF8_Utils;
 package body Language.Tree.Database is
 
    procedure Internal_Update_Contents
-     (File : Structured_File_Access; Is_New_File : Boolean);
-   --  Same as Update_Contents, but takes into account differences depending on
-   --  the fact that the file is a brand new one, or an existing one.
+     (File : Structured_File_Access; Purge : Boolean);
+   --  Same as Update_Contents.
 
    procedure Free
      (This : in out Construct_Db_Data_Access;
@@ -661,9 +660,11 @@ package body Language.Tree.Database is
    -- Update_Contents --
    ---------------------
 
-   procedure Update_Contents (File : Structured_File_Access) is
+   procedure Update_Contents
+     (File    : Structured_File_Access;
+      Purge : Boolean := False) is
    begin
-      Internal_Update_Contents (File, False);
+      Internal_Update_Contents (File, Purge => Purge);
    end Update_Contents;
 
    -------------
@@ -680,7 +681,7 @@ package body Language.Tree.Database is
    ------------------------------
 
    procedure Internal_Update_Contents
-     (File : Structured_File_Access; Is_New_File : Boolean)
+     (File : Structured_File_Access; Purge : Boolean)
    is
       Buffer     : GNAT.Strings.String_Access;
       Constructs : aliased Construct_List;
@@ -856,7 +857,7 @@ package body Language.Tree.Database is
 
          --  Phase 2 : replace previous content by the new one
 
-         if Is_New_File then
+         if File.Tree = null then
             Current_Update_Kind := Full_Change;
 
             declare
@@ -869,14 +870,28 @@ package body Language.Tree.Database is
                end loop;
             end;
          else
-            Current_Update_Kind := Minor_Change;
             New_Tree.Annotations := File.Tree.Annotations;
 
-            Diff
-              (File.Tree_Lang,
-               File.Tree,
-               New_Tree,
-               Diff_Callback'Unrestricted_Access);
+            if Purge then
+               Current_Update_Kind := Full_Change;
+
+               Diff
+                 (Tree_Language (File.Tree_Lang.all)'Access,
+                  File.Tree,
+                  New_Tree,
+                  Diff_Callback'Unrestricted_Access);
+               --  Diff of Tree_Language uses simpler method of update.
+               --  It just drops old contents and create new one from scratch.
+               --  It's faster in some cases then applying all changes.
+            else
+               Current_Update_Kind := Minor_Change;
+
+               Diff
+                 (File.Tree_Lang,
+                  File.Tree,
+                  New_Tree,
+                  Diff_Callback'Unrestricted_Access);
+            end if;
 
             File.Tree.Annotations :=
               Tree_Annotations_Pckg.Null_Annotation_Container;
@@ -1173,10 +1188,12 @@ package body Language.Tree.Database is
    ---------------------
 
    procedure Update_Contents
-     (Db : access Construct_Database; File : Virtual_File) is
+     (Db   : access Construct_Database;
+      File : Virtual_File;
+      Purge : Boolean := False) is
    begin
       if Contains (Db.Files_Db, File) then
-         Update_Contents (Element (Db.Files_Db, File));
+         Update_Contents (Element (Db.Files_Db, File), Purge);
       end if;
    end Update_Contents;
 
