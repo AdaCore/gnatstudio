@@ -281,8 +281,7 @@ package body MI.Utils is
    -- Process_Async --
    -------------------
 
-   function Process_Async (Result : Result_Record) return Notification_Type
-   is
+   function Process_Async (Result : Result_Record) return Notification_Type is
       Notification : Notification_Type;
    begin
       raise Not_Yet_Implemented_Error with "Process_Async";
@@ -301,7 +300,7 @@ package body MI.Utils is
    end Process_Stream_Output;
 
    ----------------------
-   -- Process_Exec_run --
+   -- Process_Exec_Run --
    ----------------------
 
    function Process_Exec_Run (Result : Result_Record) return Boolean is
@@ -311,7 +310,8 @@ package body MI.Utils is
       --  Thus we check for the Sync_Result type and the 'running' class.
 
       if Result.R_Type /= Sync_Result
-         or else Result.Class.all /= "running" then
+        or else Result.Class.all /= "running"
+      then
          Die ("Invalid result-record for -exec-run");
       end if;
 
@@ -344,8 +344,8 @@ package body MI.Utils is
          Die ("Expected attribute `bkpt'");
       end if;
 
-      Check_Is_Result_List_Value_Or_Die (Result.Variable.all,
-                                         Result.Value.all);
+      Check_Is_Result_List_Value_Or_Die
+        (Result.Variable.all, Result.Value.all);
       Cursor := Result_List_Value (Result.Value.all).Value.First;
 
       --  Iterates through the list and store each possible attribute in its
@@ -358,17 +358,17 @@ package body MI.Utils is
          if Pair.Variable.all = "number" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Number :=
-               Natural'Value (String_Value (Pair.Value.all).Value.all);
+              Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "type" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Type_Desc :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "disp" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Disp :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "enabled" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
@@ -382,37 +382,37 @@ package body MI.Utils is
          elsif Pair.Variable.all = "addr" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Address :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "func" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Function_Name :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "file" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.File_Name :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "fullname" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.File_Fullname :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "line" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Frame.Line :=
-               Natural'Value (String_Value (Pair.Value.all).Value.all);
+              Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "times" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Times :=
-               Natural'Value (String_Value (Pair.Value.all).Value.all);
+              Natural'Value (String_Value (Pair.Value.all).Value.all);
 
          elsif Pair.Variable.all = "original-location" then
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
             Breakpoint.Original_Location :=
-               new String'(String_Value (Pair.Value.all).Value.all);
+              new String'(String_Value (Pair.Value.all).Value.all);
 
          else
             Clear_Breakpoint (Breakpoint);
@@ -426,7 +426,7 @@ package body MI.Utils is
    --------------------------
 
    function Process_Break_Insert
-     (Result     : Result_Record) return Breakpoint_Type
+     (Result : Result_Record) return Breakpoint_Type
    is
       Cursor     : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair       : Result_Pair;
@@ -618,8 +618,7 @@ package body MI.Utils is
    -- Process_Var_Delete --
    ------------------------
 
-   function Process_Var_Delete (Result : Result_Record) return Natural
-   is
+   function Process_Var_Delete (Result : Result_Record) return Natural is
       Cursor : constant Result_Pair_Lists.Cursor := Result.Results.First;
       Pair   : Result_Pair;
    begin
