@@ -68,7 +68,7 @@ package MI.Lexer is
    --  In the Identifier and C_String case, the structure contains a pointer to
    --  a String.
 
-   function "=" (Left, Right : Token_Type) return Boolean;
+   overriding function "=" (Left, Right : Token_Type) return Boolean;
    --  Equality operator on Token_Type. Needed by the Token_List declared
    --  further.
 
@@ -85,7 +85,8 @@ package MI.Lexer is
    --  and clear the list.
 
    function Build_Tokens (Input : Stream_Access) return Token_List;
-   --  The main function of the lexer, which is fed with a stream, and return a
-   --  list of tokens.
+   function Build_Tokens (Input : String) return Token_List;
+   --  The main function of the lexer, which is fed with a stream or string,
+   --  and return a list of tokens.
 
 end MI.Lexer;
