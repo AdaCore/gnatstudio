@@ -164,6 +164,12 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               incorrectly display the contents of the file.
   Workaround: Use pragmas instead of aspects.
 
+- M214-004: GB: Ada editor shows ERROR with a blue horizontal line above
+  Problem:    Sometimes when opening ada files in the AdaCore's Ada Editor, its
+              contents is not displayed. Only ERROR with a blue horizontal line
+              above is shown.
+  Workaround: Close the editor and reopen it.
+
 - M122-003: GPS: tasks view is too wide
   Problem:    The Tasks view does not fit in a small width (the progress bar
               gets truncated and the pause button to its left is not visible)
