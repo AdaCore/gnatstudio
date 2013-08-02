@@ -1466,7 +1466,7 @@ package body Gtkada.Entry_Completion is
       Associate (Get_History (S.Kernel).all,
                  "global-search-auto-resize",
                  Resize,
-                 Default => True);
+                 Default => False);
       Win.Get_Content_Area.Pack_Start (Resize, Expand => False);
       Resize.On_Toggled (On_Settings_Changed'Access, Self);
 
