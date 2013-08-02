@@ -33,6 +33,7 @@ with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with String_Utils;
 with Traces;
+with Language; use Language;
 
 package body Xref is
    Me : constant Trace_Handle := Create ("Xref");
@@ -544,6 +545,15 @@ package body Xref is
                   --  or else not Self.Xref.Is_Up_To_Date (Loc.File)
               );
 
+            declare
+               ELoc : constant Entity_Reference
+                 := Self.Xref.Declaration (Entity.Entity).Location;
+            begin
+               Entity.Loc := (Line => ELoc.Line,
+                              Column => ELoc.Column,
+                              File => ELoc.File);
+            end;
+
          else
             declare
                Status : Find_Decl_Or_Body_Query_Status;
@@ -828,6 +838,33 @@ package body Xref is
      (Db     : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Entity_Declaration is
    begin
+      if Entity.Loc /= No_Location then
+         declare
+            Result    : Entity_Access;
+            Tree_Lang : Tree_Language_Access;
+            Decl      : Entity_Access;
+            Node      : Construct_Tree_Iterator;
+         begin
+            Node_From_Entity
+               (Db, Db.Lang_Handler, Entity.Loc, Result, Tree_Lang);
+
+            if Result /= Null_Entity_Access then
+               Decl := Get_Declaration
+                  (Get_Tree_Language (Get_File (Result)), Result);
+               Node := To_Construct_Tree_Iterator (Decl);
+               return (Loc => (File   => Get_File_Path (Get_File (Decl)),
+                               Line   => Get_Construct (Node).Sloc_Entity.Line,
+                               Column => Visible_Column_Type
+                                 (Get_Construct (Node).Sloc_Entity.Column)),
+                       Body_Is_Full_Declaration =>
+                         Get_Construct (Node).Category = Cat_Type,
+                       Name =>
+                         To_Unbounded_String
+                           (Get (Get_Construct (Node).Name).all));
+            end if;
+         end;
+      end if;
+
       if Active (SQLITE) then
          if Entity.Entity /= No_Entity then
             declare
@@ -862,30 +899,6 @@ package body Xref is
                             (Old_Entities.Get_Name (Entity.Old_Entity)).all));
             end;
          end if;
-      end if;
-
-      if Entity.Loc /= No_Location then
-         declare
-            Result    : Entity_Access;
-            Tree_Lang : Tree_Language_Access;
-            Decl      : Entity_Access;
-            Node      : Construct_Tree_Iterator;
-         begin
-            Node_From_Entity
-               (Db, Db.Lang_Handler, Entity.Loc, Result, Tree_Lang);
-
-            if Result /= Null_Entity_Access then
-               Decl := Get_Declaration
-                  (Get_Tree_Language (Get_File (Result)), Result);
-               Node := To_Construct_Tree_Iterator (Decl);
-               return (Loc => (File   => Get_File_Path (Get_File (Decl)),
-                               Line   => Get_Construct (Node).Sloc_Start.Line,
-                               Column => Visible_Column_Type
-                                 (Get_Construct (Node).Sloc_Start.Column)),
-                       Body_Is_Full_Declaration => False,
-                       Name => Null_Unbounded_String);
-            end if;
-         end;
       end if;
 
       return No_General_Entity_Declaration;
@@ -1048,12 +1061,57 @@ package body Xref is
       end Extract_Next_By_Heuristics;
 
       Candidate : General_Location := No_Location;
+      Decl_Loc : constant General_Location := Db.Get_Declaration (Entity).Loc;
 
    begin
       if Active (Me) then
          Increase_Indent (Me, "Get_Body of "
                           & Db.Get_Name (Entity)
                           & " fuzzy=" & Is_Fuzzy (Entity)'Img);
+      end if;
+
+      if After = No_Location
+        or else After = Decl_Loc
+      then
+         declare
+            H_Loc : constant General_Location := Extract_Next_By_Heuristics;
+         begin
+            if Active (Me) then
+               Trace (Me, "Body computed from constructs at "
+                      & To_String (H_Loc));
+            end if;
+
+            if H_Loc /= No_Location and then
+            --  If we found nothing, use the information from the constructs.
+              (Candidate = No_Location
+
+               --  it's OK to return the first entity.
+               or else (not No_Location_If_First
+                        and then not Is_Location_For_Entity (Candidate)))
+
+            then
+               Candidate := H_Loc;
+
+               --  else if the candidate is at the expected location and if
+               if Active (Me) then
+                  Trace (Me, "Use body from constructs");
+               end if;
+
+               --  If we don't have any more information to extract from the
+               --  construct database, then return the first entity if allowed
+               --  by the flags, or null.
+
+            elsif No_Location_If_First then
+               Candidate := No_Location;
+            end if;
+         end;
+      end if;
+
+      if Candidate /= No_Location then
+         if Active (Me) then
+            Decrease_Indent (Me);
+         end if;
+         return Candidate;
       end if;
 
       if Active (SQLITE) then
@@ -1135,45 +1193,6 @@ package body Xref is
                end if;
             end;
          end if;
-      end if;
-
-      --  If no next body has been found at this stage, try to see what we can
-      --  do using the construct database. The constructs database only knows
-      --  about one body though, so we skip it when asking for other bodies.
-
-      if After = No_Location then
-         declare
-            H_Loc : constant General_Location := Extract_Next_By_Heuristics;
-         begin
-            if Active (Me) then
-               Trace (Me, "Body computed from constructs at "
-                      & To_String (H_Loc));
-            end if;
-
-            if H_Loc /= No_Location and then
-            --  If we found nothing, use the information from the constructs.
-              (Candidate = No_Location
-
-               --  it's OK to return the first entity.
-               or else (not No_Location_If_First
-                        and then not Is_Location_For_Entity (Candidate)))
-
-            then
-               Candidate := H_Loc;
-
-               --  else if the candidate is at the expected location and if
-               if Active (Me) then
-                  Trace (Me, "Use body from constructs");
-               end if;
-
-               --  If we don't have any more information to extract from the
-               --  construct database, then return the first entity if allowed
-               --  by the flags, or null.
-
-            elsif No_Location_If_First then
-               Candidate := No_Location;
-            end if;
-         end;
       end if;
 
       if Active (Me) then
@@ -2714,7 +2733,7 @@ package body Xref is
 
          if not Active (SQLITE) then
             declare
-               use Old_Entities, Language;
+               use Old_Entities;
                New_Entity  : Old_Entities.Entity_Information;
                Declaration : Old_Entities.File_Location;
                K           : E_Kinds;

@@ -360,7 +360,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
       if Alternate
         or else
           (Location.Line = Natural (Line)
-           and then Location.Column = Column
+           and then Column = Location.Column
            and then Location.File = Buffer.Filename)
       then
          --  We asked for the alternate behavior, or we are already on
