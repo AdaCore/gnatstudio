@@ -147,7 +147,7 @@ package MI.Parser is
       Result : in out Record_List);
    --  This function is the parser main one.  It is fed with a Token_List,
    --  which is the result of the first phase of the parsing, i.e. the lexing,
-   --  done by the function MI.Lexer.Get_Tokens.  Build_Records return a list
+   --  done by the function MI.Lexer.Build_Tokens. Build_Records return a list
    --  of MI_Record ready to be exploited by the application.
 
 end MI.Parser;

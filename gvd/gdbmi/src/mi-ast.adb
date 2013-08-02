@@ -33,8 +33,7 @@ package body MI.Ast is
    -- Clear_MI_Record --
    ---------------------
 
-   procedure Clear_MI_Record (Rec : MI_Record_Access)
-   is
+   procedure Clear_MI_Record (Rec : MI_Record_Access) is
       V : Dealloc_Visitor;
    begin
       Rec.all.Accept_Visitor (V);
@@ -44,8 +43,7 @@ package body MI.Ast is
    -- Clear_Record_List --
    -----------------------
 
-   procedure Clear_Record_List (List : in out Record_List)
-   is
+   procedure Clear_Record_List (List : in out Record_List) is
       Cursor : Record_Lists.Cursor := Record_Lists.First (List);
       Rec    : MI_Record_Access;
    begin
@@ -63,8 +61,7 @@ package body MI.Ast is
    -- Clear_MI_Value --
    --------------------
 
-   procedure Clear_MI_Value (Value : MI_Value_Access)
-   is
+   procedure Clear_MI_Value (Value : MI_Value_Access) is
       V : Dealloc_Visitor;
    begin
       Value.all.Accept_Visitor (V);
@@ -74,8 +71,7 @@ package body MI.Ast is
    -- Clear_Value_List --
    ----------------------
 
-   procedure Clear_Value_List (List : in out Value_List)
-   is
+   procedure Clear_Value_List (List : in out Value_List) is
       Cursor : Value_Lists.Cursor := Value_Lists.First (List);
       Value  : MI_Value_Access;
    begin
@@ -93,8 +89,7 @@ package body MI.Ast is
    -- Clear_Result_Pair --
    -----------------------
 
-   procedure Clear_Result_Pair (Pair : in out Result_Pair)
-   is
+   procedure Clear_Result_Pair (Pair : in out Result_Pair) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
          (String, String_Access);
    begin
@@ -114,8 +109,7 @@ package body MI.Ast is
    -- Clear_Result_Pair_List --
    ----------------------------
 
-   procedure Clear_Result_Pair_List (List : in out Result_Pair_List)
-   is
+   procedure Clear_Result_Pair_List (List : in out Result_Pair_List) is
       Cursor : Result_Pair_Lists.Cursor := Result_Pair_Lists.First (List);
       Pair   : Result_Pair;
    begin
@@ -132,8 +126,7 @@ package body MI.Ast is
    -- Clear_String_Value --
    ------------------------
 
-   procedure Clear_String_Value (Value : in out String_Value)
-   is
+   procedure Clear_String_Value (Value : in out String_Value) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
          (String, String_Access);
    begin
@@ -165,8 +158,7 @@ package body MI.Ast is
    -- Clear_Result_Record --
    -------------------------
 
-   procedure Clear_Result_Record (Rec : in out Result_Record)
-   is
+   procedure Clear_Result_Record (Rec : in out Result_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
          (String, String_Access);
    begin
@@ -182,8 +174,7 @@ package body MI.Ast is
    -- Clear_Stream_Output_Record --
    --------------------------------
 
-   procedure Clear_Stream_Output_Record (Rec : in out Stream_Output_Record)
-   is
+   procedure Clear_Stream_Output_Record (Rec : in out Stream_Output_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
          (String, String_Access);
    begin

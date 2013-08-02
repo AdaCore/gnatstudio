@@ -26,8 +26,8 @@ package body MI.Parser is
 
    procedure Build_Records
      (Tokens : in out Token_List;
-      Result : in out Record_List) is
-
+      Result : in out Record_List)
+   is
       ----------------------------------
       -- First & Followers definition --
       ----------------------------------
@@ -1416,11 +1416,7 @@ package body MI.Parser is
          Eat (Tokens);
       end Parse_List;
 
-      ----------
-      -- Body --
-      ----------
-
-   begin
+   begin  -- Build_Records
       Parse_Unit (Tokens, Result);
       pragma Assert (Is_Unit_Follower (Look_Ahead (Tokens)));
    end Build_Records;
