@@ -87,9 +87,10 @@ package body GPS.Search is
    --    from Wu and Manber "Fast Text Searching With Errors"
 
    function Compile_Approximate
-     (Pattern        : String;
-      Case_Sensitive : Boolean;
-      Whole_Word     : Boolean) return Approximate_Search_Access;
+     (Pattern         : String;
+      Case_Sensitive  : Boolean;
+      Whole_Word      : Boolean;
+      Allow_Highlight : Boolean) return Approximate_Search_Access;
    --  Compile the pattern
 
    overriding function Start
@@ -558,6 +559,10 @@ package body GPS.Search is
       T : Natural := Self.Text'First;
       Result : Unbounded_String;
    begin
+      if not Self.Allow_Highlight then
+         return Buffer;
+      end if;
+
       Result := To_Unbounded_String
          (Glib.Convert.Escape_Text
             (Buffer (Buffer'First .. Context.Start - 1)));
@@ -639,9 +644,12 @@ package body GPS.Search is
        Buffer  : String;
        Context : Search_Context) return String
    is
-      pragma Unreferenced (Self);
       B, F, S, E : Natural;
    begin
+      if not Self.Allow_Highlight then
+         return Buffer;
+      end if;
+
       B := Integer'Max (Context.Buffer_Start, Buffer'First);
       F := Integer'Min (Context.Buffer_End, Buffer'Last);
       S := Integer'Max (Context.Start, Buffer'First);
@@ -810,18 +818,20 @@ package body GPS.Search is
    -------------------------
 
    function Compile_Approximate
-     (Pattern        : String;
-      Case_Sensitive : Boolean;
-      Whole_Word     : Boolean) return Approximate_Search_Access
+     (Pattern         : String;
+      Case_Sensitive  : Boolean;
+      Whole_Word      : Boolean;
+      Allow_Highlight : Boolean) return Approximate_Search_Access
    is
       Result : constant Approximate_Search_Access := new Approximate_Search'
-        (Text           => new String'(Pattern),
-         Case_Sensitive => Case_Sensitive,
-         Whole_Word     => Whole_Word,
-         Kind           => Approximate,
-         Pattern        => (others => 0),
-         Result         => new Approximate_Status,
-         Matched        =>  2 ** (Pattern'Length - 1));
+        (Text            => new String'(Pattern),
+         Case_Sensitive  => Case_Sensitive,
+         Whole_Word      => Whole_Word,
+         Kind            => Approximate,
+         Pattern         => (others => 0),
+         Result          => new Approximate_Status,
+         Allow_Highlight => Allow_Highlight,
+         Matched         =>  2 ** (Pattern'Length - 1));
 
       C : Character;
    begin
@@ -844,10 +854,11 @@ package body GPS.Search is
    -----------
 
    function Build
-     (Pattern        : String;
-      Case_Sensitive : Boolean := False;
-      Whole_Word     : Boolean := False;
-      Kind           : Search_Kind := Full_Text)
+     (Pattern         : String;
+      Case_Sensitive  : Boolean := False;
+      Whole_Word      : Boolean := False;
+      Kind            : Search_Kind := Full_Text;
+      Allow_Highlight : Boolean := False)
       return Search_Pattern_Access
    is
       BM    : Boyer_Moore_Pattern_Access;
@@ -860,19 +871,21 @@ package body GPS.Search is
             BM := new GNATCOLL.Boyer_Moore.Pattern;
             Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
             return new Full_Text_Search'
-              (Pattern        => BM,
-               Text           => new String'(Pattern),
-               Case_Sensitive => Case_Sensitive,
-               Whole_Word     => Whole_Word,
-               Kind           => Kind,
-               Length         => Pattern'Length);
+              (Pattern         => BM,
+               Text            => new String'(Pattern),
+               Case_Sensitive  => Case_Sensitive,
+               Allow_Highlight => Allow_Highlight,
+               Whole_Word      => Whole_Word,
+               Kind            => Kind,
+               Length          => Pattern'Length);
 
          when Fuzzy =>
             return new Fuzzy_Search'
-              (Text           => new String'(Pattern),
-               Case_Sensitive => Case_Sensitive,
-               Whole_Word     => Whole_Word,
-               Kind           => Kind);
+              (Text            => new String'(Pattern),
+               Allow_Highlight => Allow_Highlight,
+               Case_Sensitive  => Case_Sensitive,
+               Whole_Word      => Whole_Word,
+               Kind            => Kind);
 
          when Approximate =>
             if Pattern'Length > 64 then
@@ -880,18 +893,20 @@ package body GPS.Search is
                BM := new GNATCOLL.Boyer_Moore.Pattern;
                Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
                return new Full_Text_Search'
-                 (Pattern        => BM,
-                  Text           => new String'(Pattern),
-                  Case_Sensitive => Case_Sensitive,
-                  Whole_Word     => Whole_Word,
-                  Kind           => Kind,
-                  Length         => Pattern'Length);
+                 (Pattern         => BM,
+                  Text            => new String'(Pattern),
+                  Allow_Highlight => Allow_Highlight,
+                  Case_Sensitive  => Case_Sensitive,
+                  Whole_Word      => Whole_Word,
+                  Kind            => Kind,
+                  Length          => Pattern'Length);
 
             else
                return Search_Pattern_Access (Compile_Approximate
                  (Pattern,
-                  Case_Sensitive => Case_Sensitive,
-                  Whole_Word     => Whole_Word));
+                  Allow_Highlight => Allow_Highlight,
+                  Case_Sensitive  => Case_Sensitive,
+                  Whole_Word      => Whole_Word));
             end if;
 
          when Regexp =>
@@ -910,6 +925,7 @@ package body GPS.Search is
             return new Regexp_Search'
               (Pattern        => Re,
                Text           => new String'(Pattern),
+               Allow_Highlight => False,
                Case_Sensitive => Case_Sensitive,
                Whole_Word     => Whole_Word,
                Kind           => Kind,
@@ -926,10 +942,11 @@ package body GPS.Search is
        Text    : String) return Search_Pattern_Access is
    begin
       return Build
-         (Pattern        => Text,
-          Case_Sensitive => Pattern.Case_Sensitive,
-          Whole_Word     => Pattern.Whole_Word,
-          Kind           => Pattern.Kind);
+         (Pattern         => Text,
+          Case_Sensitive  => Pattern.Case_Sensitive,
+          Allow_Highlight => Pattern.Allow_Highlight,
+          Whole_Word      => Pattern.Whole_Word,
+          Kind            => Pattern.Kind);
    end Build;
 
    -----------
@@ -941,10 +958,11 @@ package body GPS.Search is
        Kind    : Search_Kind) return Search_Pattern_Access is
    begin
       return Build
-         (Pattern        => Pattern.Text.all,
-          Case_Sensitive => Pattern.Case_Sensitive,
-          Whole_Word     => Pattern.Whole_Word,
-          Kind           => Kind);
+         (Pattern         => Pattern.Text.all,
+          Case_Sensitive  => Pattern.Case_Sensitive,
+          Whole_Word      => Pattern.Whole_Word,
+          Allow_Highlight => Pattern.Allow_Highlight,
+          Kind            => Kind);
    end Build;
 
    --------------
@@ -1041,5 +1059,15 @@ package body GPS.Search is
          end if;
       end if;
    end Compute_Suffix;
+
+   --------------------------
+   -- Get_Allow_Highlights --
+   --------------------------
+
+   function Get_Allow_Highlights
+     (Self  : not null access Search_Pattern'Class) return Boolean is
+   begin
+      return Self.Allow_Highlight;
+   end Get_Allow_Highlights;
 
 end GPS.Search;

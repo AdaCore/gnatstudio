@@ -1451,6 +1451,90 @@ Classes
 
    .. automethod:: GPS.Revision.clear_view
 
+:class:`GPS.Search`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Search
+
+   
+
+
+   .. autoattribute:: GPS.Search.ACTIONS
+
+
+
+   .. autoattribute:: GPS.Search.BOOKMARKS
+
+
+
+   .. autoattribute:: GPS.Search.BUILDS
+
+
+
+   .. autoattribute:: GPS.Search.CASE_SENSITIVE
+
+
+
+   .. autoattribute:: GPS.Search.ENTITIES
+
+
+
+   .. autoattribute:: GPS.Search.FILE_NAMES
+
+
+
+   .. autoattribute:: GPS.Search.FUZZY
+
+
+
+   .. autoattribute:: GPS.Search.OPENED
+
+
+
+   .. autoattribute:: GPS.Search.REGEXP
+
+
+
+   .. autoattribute:: GPS.Search.SOURCES
+
+
+
+   .. autoattribute:: GPS.Search.SUBSTRINGS
+
+
+
+   .. autoattribute:: GPS.Search.WHOLE_WORD
+
+
+   .. automethod:: GPS.Search.__init__
+
+   .. automethod:: GPS.Search.lookup
+
+   .. automethod:: GPS.Search.next
+
+   .. automethod:: GPS.Search.search
+
+   .. automethod:: GPS.Search.set_pattern
+
+:class:`GPS.Search_Result`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Search_Result
+
+   
+
+
+   .. autoattribute:: GPS.Search_Result.long
+
+
+
+   .. autoattribute:: GPS.Search_Result.short
+
+
+   .. automethod:: GPS.Search_Result.__init__
+
+   .. automethod:: GPS.Search_Result.show
+
 :class:`GPS.Style`
 ^^^^^^^^^^^^^^^^^^
 

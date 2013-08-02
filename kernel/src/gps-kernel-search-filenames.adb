@@ -250,9 +250,18 @@ package body GPS.Kernel.Search.Filenames is
          Runtime : Boolean) return Boolean
       is
          function Highlight_Runtime
-           (Str : String; Runtime : Boolean) return String
-         is (if Runtime then "<i>" & Str & "</i>" else Str);
+           (Str : String; Runtime : Boolean) return String;
          --  For runtime files, highlight them specially
+
+         function Highlight_Runtime
+           (Str : String; Runtime : Boolean) return String is
+         begin
+            if Self.Pattern.Get_Allow_Highlights then
+               return (if Runtime then "<i>" & Str & "</i>" else Str);
+            else
+               return Str;
+            end if;
+         end Highlight_Runtime;
 
          L : GNAT.Strings.String_Access;
       begin

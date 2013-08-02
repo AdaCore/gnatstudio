@@ -86,15 +86,21 @@ package GPS.Search is
    function Equals (P1, P2 : Search_Pattern_Access) return Boolean;
    --  Compares the two patterns
 
+   function Get_Allow_Highlights
+     (Self  : not null access Search_Pattern'Class) return Boolean;
+
    function Build
-     (Pattern        : String;
-      Case_Sensitive : Boolean := False;
-      Whole_Word     : Boolean := False;
-      Kind           : Search_Kind := Full_Text)
+     (Pattern         : String;
+      Case_Sensitive  : Boolean := False;
+      Whole_Word      : Boolean := False;
+      Kind            : Search_Kind := Full_Text;
+      Allow_Highlight : Boolean := False)
       return Search_Pattern_Access;
    --  Create a new search matcher.
    --  It can be shared among multiple search providers, since it does not
    --  embed any context.
+   --  Allow_Highlight should be True if results should highlight the matching
+   --  characters.
 
    function Build
       (Pattern    : not null access Search_Pattern'Class;
@@ -405,6 +411,7 @@ private
       Case_Sensitive : Boolean := False;
       Whole_Word     : Boolean := False;
       Kind           : Search_Kind := Full_Text;
+      Allow_Highlight : Boolean := False;
    end record;
 
    No_Match : constant Search_Context :=

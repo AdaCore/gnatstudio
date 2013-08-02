@@ -4535,7 +4535,8 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, name, file=None, line=1, column=1, approximate_search_fallback=True):
+    def __init__(self, name, file=None, line=1, column=1,
+                 approximate_search_fallback=True):
         """
         Initializes a new instance of the Entity class, from any reference to
         the entity. The file parameter should only be omitted for a predefined
@@ -4547,8 +4548,8 @@ class Entity(object):
         :param line: An integer, the line at which the entity is referenced
         :param column: An integer, the column at which the entity is referenced
         :param approximate_search_fallback: If True, when the line and column are
-        not exact, this parameter will trigger approximate search in the database
-        (eg. see if there are similar entities in the surrounding lines)
+           not exact, this parameter will trigger approximate search in the database
+           (eg. see if there are similar entities in the surrounding lines)
 
         >>> GPS.Entity("foo", GPS.File("a.adb"), 10, 23).declaration().file().name()
         => will return the full path name of the file in which the entity "foo",
@@ -5026,8 +5027,8 @@ class EntityContext(FileContext):
         Return the entity stored in the context
 
         :param approximate_search_fallback: If True, when the line and column are
-        not exact, this parameter will trigger approximate search in the database
-        (eg. see if there are similar entities in the surrounding lines)
+           not exact, this parameter will trigger approximate search in the database
+           (eg. see if there are similar entities in the surrounding lines)
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
@@ -8682,6 +8683,156 @@ class Revision(object):
         :param file: A string
         """
         pass  # implemented in Ada
+
+
+###########################################################
+# Search
+###########################################################
+
+class Search(object):
+    """
+    This class provides an interface to the search facilities used for the
+    GPS omni-search. In particular, this allows you to search file names,
+    sources, actions,...
+
+    This class provides facilities exported directly by Ada, so that you can
+    for instance look for file names by writting::
+
+        s = GPS.Search.lookup(GPS.Search.FILE_NAMES)
+        s.set_pattern("search", flags=GPS.Search.FUZZY)
+        while True:
+            (has_next, result) = s.get()
+            if result:
+                print result.short
+            if not has_next:
+                break
+
+    However, one of the mandatory GPS plugins augments this base class with
+    high-level constructs such as iterators, and now you can write code as::
+
+        for result in GPS.Search.search(
+           GPS.Search.FILE_NAMES, "search", GPS.Search.FUZZY):
+             print result.short
+
+    Iterations are meant to be done in the background, so they are split into
+    small units.
+    """
+
+    FUZZY = 1
+    SUBSTRINGS = 2
+    REGEXP = 4
+    """
+    The various types of search, similar to what GPS provides in its
+    omni-search.
+    """
+
+    CASE_SENSITIVE = 8
+    WHOLE_WORD = 16
+    """
+    Flags to configure the search, that can be combined with the above.
+    """
+
+    FILE_NAMES = "File names"
+    ACTIONS = "Actions"
+    BUILDS = "Build"
+    OPENED = "Opened"
+    ENTITIES = "Entities"
+    SOURCES = "Sources"
+    BOOKMARKS = "Bookmarks"
+    """
+    The various contexts in which a search can occur.
+    """
+
+    def __init__(self):
+        """
+        Always raises an exception, use GPS.Search.lookup to retrieve an
+        instance.
+        """
+
+    def set_pattern(self, pattern, flags=0):
+        """
+        Set the search pattern.
+
+        :param pattern: a string
+        :param flags: an integer, the combination of values such as
+           GPS.Search.FUZZY, GPS.Search.REGEXP, GPS.Search.SUBSTRINGS,
+           GPS.Search.CASE_SENSITIVE, GPS.Search.WHOLE_WORD.
+        """
+
+    def get(self):
+        """
+        Returns the next occurrence of the pattern.
+
+        :return: a tuple containing two elements; the first element is a
+           boolean that indicates whether there might be further results;
+           the second element is either None or an instance of
+           GPS.Search_Result. It might be set even if the first element is
+           False. On the other hand, it might be None even if there might
+           be further results, since the search itself is split into small
+           units. For instance, when searching in sources, each source file
+           will be parsed independently. If a file does not contain a match,
+           next() will return a tuple that contains True (there might be
+           matches in other files) and None (there were no match found in the
+           current file).
+        """
+
+    @staticmethod
+    def lookup(self, name):
+        """
+        Lookup one of the existing search factories.
+
+        :param name: a string, one of GPS.Search.FILE_NAMES,
+            GPS.Search.SOURCES,...
+        """
+
+    @staticmethod
+    def search(context, pattern, flags=SUBSTRINGS):
+        """
+        A high-level wrapper around lookup and set_pattern to make python
+        code more readable (see general documentation for GPS.Search).
+
+        :param context: a string, for instance GPS.Search.SOURCES
+        :param pattern: a string
+        :param flags: an integer, see GPS.Search.set_pattern
+        """
+
+    def next(self):
+        """
+        Results the next non-null result. This might take longer than get(),
+        since it will keep looking until it actually finds a new result.
+        It raises StopIteration when there are no more results.
+        """
+
+    def __iter__(self):
+        """
+        Makes GPS.Search compatible with python iterators.
+        """
+
+
+###########################################################
+# Search
+###########################################################
+
+class Search_Result(object):
+    """
+    A class that represents the results found by GPS.Search.
+    """
+
+    short = ""
+    """The short description of the result"""
+
+    long = ""
+    """A long version of the description. For instance, when looking
+    in sources it might contain the full line that matches"""
+
+    def show(self):
+        """
+        Execute the action associated with the result. This action
+        depends on where you were searching. For instance, search in
+        file names would as a result open the corresponding file;
+        searching in bookmarks would jump to the corresponding location;
+        search in actions would execute the corresponding action.
+        """
 
 
 ###########################################################

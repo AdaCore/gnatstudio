@@ -76,6 +76,7 @@ package GPS.Kernel.Search is
    Provider_Entities   : constant String := "Entities";
    Provider_Sources    : constant String := "Sources";
    Provider_Bookmarks  : constant String := "Bookmarks";
+   --  The names must be synchronized with the search.py plugin
 
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider

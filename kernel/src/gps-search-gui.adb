@@ -50,12 +50,14 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Search.Sources;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -173,10 +175,59 @@ package body GPS.Search.GUI is
    --  Called when the user changes the number of proposals per provider
    --  through the settings.
 
+   -------------
+   -- Scripts --
+   -------------
+
+   type Provider_Property_Record is new Instance_Property_Record with record
+      Provider : Search_Provider_Access;
+      Pattern  : Search_Pattern_Access;
+   end record;
+   type Provider_Property is access all Provider_Property_Record'Class;
+   overriding procedure Destroy (Prop : in out Provider_Property_Record);
+
+   type Result_Property_Record is new Instance_Property_Record with record
+      Result : Search_Result_Access;
+   end record;
+   type Result_Property is access all Result_Property_Record'Class;
+   overriding procedure Destroy (Prop : in out Result_Property_Record);
+
+   function Get_Search_Provider
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Provider_Access;
+   function Get_Search_Result
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Result_Access;
+   --  Retrieve the provider or result information from the given parameter
+
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when the preferences change
+
+   procedure Search_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   procedure Search_Result_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handlers for the shell commands
+
+   function Create_Search_Instance
+     (Script   : not null access Scripting_Language_Record'Class;
+      Provider : access Search_Provider'Class)
+      return Class_Instance;
+   function Create_Search_Result_Instance
+     (Script   : not null access Scripting_Language_Record'Class;
+      Result   : Search_Result_Access)
+      return Class_Instance;
+   --  Create a new class instance for GPS.Search or GPS.Search_Result
+
+   procedure Set_Search_Pattern
+     (Data   : Callback_Data'Class;
+      Num    : Positive;
+      Search : Search_Pattern_Access);
+   --  Update the search pattern stored in the instance's data
 
    -------------------
    -- Documentation --
@@ -782,6 +833,276 @@ package body GPS.Search.GUI is
       end if;
    end On_Preferences_Changed;
 
+   ----------------------------
+   -- Create_Search_Instance --
+   ----------------------------
+
+   function Create_Search_Instance
+     (Script   : not null access Scripting_Language_Record'Class;
+      Provider : access Search_Provider'Class)
+      return Class_Instance
+   is
+      Search_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "Search");
+      Inst : constant Class_Instance := New_Instance (Script, Search_Class);
+   begin
+      Set_Data
+        (Inst, "Search",
+         Provider_Property_Record'
+           (Provider => Search_Provider_Access (Provider),
+            Pattern  => null));
+      return Inst;
+   end Create_Search_Instance;
+
+   -----------------------------------
+   -- Create_Search_Result_Instance --
+   -----------------------------------
+
+   function Create_Search_Result_Instance
+     (Script   : not null access Scripting_Language_Record'Class;
+      Result   : Search_Result_Access)
+      return Class_Instance
+   is
+      Result_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "Search_Result");
+      Inst : constant Class_Instance := New_Instance (Script, Result_Class);
+   begin
+      Set_Data
+        (Inst, "Search_Result", Result_Property_Record'(Result => Result));
+      return Inst;
+   end Create_Search_Result_Instance;
+
+   -------------------------
+   -- Get_Search_Provider --
+   -------------------------
+
+   function Get_Search_Provider
+     (Data : Callback_Data'Class; Num : Positive) return Search_Provider_Access
+   is
+      Search_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Search");
+      Inst : constant Class_Instance := Nth_Arg (Data, Num, Search_Class);
+      Props : Provider_Property;
+   begin
+      if Inst /= No_Class_Instance then
+         Props := Provider_Property
+           (Instance_Property'(Get_Data (Inst, "Search")));
+         if Props /= null then
+            return Props.Provider;
+         end if;
+      end if;
+      return null;
+   end Get_Search_Provider;
+
+   -----------------------
+   -- Get_Search_Result --
+   -----------------------
+
+   function Get_Search_Result
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Result_Access
+   is
+      Result_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Search_Result");
+      Inst : constant Class_Instance := Nth_Arg (Data, Num, Result_Class);
+      Props : Result_Property;
+   begin
+      if Inst /= No_Class_Instance then
+         Props := Result_Property
+           (Instance_Property'(Get_Data (Inst, "Search_Result")));
+         if Props /= null then
+            return Props.Result;
+         end if;
+      end if;
+      return null;
+   end Get_Search_Result;
+
+   ------------------------
+   -- Set_Search_Pattern --
+   ------------------------
+
+   procedure Set_Search_Pattern
+     (Data   : Callback_Data'Class;
+      Num    : Positive;
+      Search : Search_Pattern_Access)
+   is
+      Search_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Search");
+      Inst : constant Class_Instance := Nth_Arg (Data, Num, Search_Class);
+      Props : Provider_Property;
+   begin
+      if Inst /= No_Class_Instance then
+         Props := Provider_Property
+           (Instance_Property'(Get_Data (Inst, "Search")));
+         if Props /= null then
+            if Props.Pattern /= null then
+               Free (Props.Pattern);
+            end if;
+
+            Props.Pattern := Search;
+         end if;
+      end if;
+   end Set_Search_Pattern;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Prop : in out Provider_Property_Record) is
+   begin
+      Trace (Me, "Freeing search_pattern");
+      if Prop.Pattern /= null then
+         Free (Prop.Pattern);
+      end if;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Prop : in out Result_Property_Record) is
+   begin
+      Trace (Me, "Freeing search_result");
+      if Prop.Result /= null then
+         Free (Prop.Result);
+      end if;
+   end Destroy;
+
+   -----------------------------
+   -- Search_Commands_Handler --
+   -----------------------------
+
+   procedure Search_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      type Flags is mod 2 ** 16;
+      Fuzzy          : constant Flags := 1;
+      --  Substrings     : constant Flags := 2;
+      Regexp         : constant Flags := 4;
+      Case_Sensitive : constant Flags := 8;
+      Whole_Word     : constant Flags := 16;
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -"Use GPS.Search.lookup to create instances");
+
+      elsif Command = "set_pattern" then
+         declare
+            Provider : constant Search_Provider_Access :=
+              Get_Search_Provider (Data, 1);
+            Pattern : constant String := Nth_Arg (Data, 2);
+            Flag    : constant Flags := Flags (Nth_Arg (Data, 3, 0));
+            Kind    : Search_Kind := Full_Text;
+            P : Search_Pattern_Access;
+         begin
+            if (Flag and Fuzzy) /= 0 then
+               Kind := GPS.Search.Fuzzy;
+            elsif (Flag and Regexp) /= 0 then
+               Kind := GPS.Search.Regexp;
+            else
+               Kind := GPS.Search.Full_Text;
+            end if;
+
+            if Provider /= null then
+               P := Build
+                 (Pattern        => Pattern,
+                  Case_Sensitive => (Flag and Case_Sensitive) /= 0,
+                  Whole_Word     => (Flag and Whole_Word) /= 0,
+                  Kind           => Kind);
+               Set_Search_Pattern (Data, 1, P);
+               Provider.Set_Pattern (P);
+            end if;
+         end;
+
+      elsif Command = "get" then
+         declare
+            Provider : constant Search_Provider_Access :=
+              Get_Search_Provider (Data, 1);
+            Result   : Search_Result_Access;
+            Has_Next : Boolean;
+         begin
+            if Provider /= null then
+               Provider.Next (Result, Has_Next);
+
+               Set_Return_Value_As_List (Data, 2);
+               Set_Return_Value (Data, Has_Next);
+
+               if Result /= null then
+                  Set_Return_Value
+                    (Data,
+                     Create_Search_Result_Instance
+                       (Get_Script (Data), Result));
+               else
+                  Set_Return_Value (Data, No_Class_Instance);
+               end if;
+            end if;
+         end;
+
+      elsif Command = "lookup" then
+         declare
+            Name     : constant String := Nth_Arg (Data, 1);
+            Provider : constant Search_Provider_Access := Get (Registry, Name);
+         begin
+            if Provider /= null then
+               Set_Return_Value
+                 (Data, Create_Search_Instance (Get_Script (Data), Provider));
+            end if;
+         end;
+      end if;
+   end Search_Commands_Handler;
+
+   ------------------------------------
+   -- Search_Result_Commands_Handler --
+   ------------------------------------
+
+   procedure Search_Result_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -"Use GPS.Search.next to create instances");
+
+      elsif Command = "show" then
+         declare
+            Result : constant Search_Result_Access :=
+              Get_Search_Result (Data, 1);
+         begin
+            if Result /= null then
+               Result.Execute (Give_Focus => True);
+            end if;
+         end;
+
+      elsif Command = "short" then
+         declare
+            Result : constant Search_Result_Access :=
+              Get_Search_Result (Data, 1);
+         begin
+            if Result /= null
+              and then Result.Short /= null
+            then
+               Set_Return_Value (Data, Result.Short.all);
+            else
+               Set_Return_Value (Data, String'(""));
+            end if;
+         end;
+
+      elsif Command = "long" then
+         declare
+            Result : constant Search_Result_Access :=
+              Get_Search_Result (Data, 1);
+         begin
+            if Result /= null
+              and then Result.Long /= null
+            then
+               Set_Return_Value (Data, Result.Long.all);
+            else
+               Set_Return_Value (Data, String'(""));
+            end if;
+         end;
+      end if;
+   end Search_Result_Commands_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -796,6 +1117,10 @@ package body GPS.Search.GUI is
       Command : Global_Search_Command_Access;
       Item    : Gtk_Tool_Item;
       P       : Kernel_Search_Provider_Access;
+      Search_Class : constant Class_Type :=
+        New_Class (Kernel.Scripts, "Search");
+      Search_Result_Class : constant Class_Type :=
+        New_Class (Kernel.Scripts, "Search_Result");
 
    begin
       Module := new Global_Search_Module_Record;
@@ -886,6 +1211,46 @@ package body GPS.Search.GUI is
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
                 Name => "search.preferences_changed");
+
+      Register_Command
+        (Kernel.Scripts, Constructor_Method,
+         Class   => Search_Class,
+         Handler => Search_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "set_pattern",
+         Params  => (1 => Param ("pattern"),
+                     2 => Param ("flags", Optional => True)),
+         Class   => Search_Class,
+         Handler => Search_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "next",
+         Class   => Search_Class,
+         Handler => Search_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "lookup",
+         Params        => (1 => Param ("name")),
+         Static_Method => True,
+         Class         => Search_Class,
+         Handler       => Search_Commands_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts, Constructor_Method,
+         Class   => Search_Result_Class,
+         Handler => Search_Result_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "show",
+         Class   => Search_Result_Class,
+         Handler => Search_Result_Commands_Handler'Access);
+      Register_Property
+        (Kernel.Scripts, "short",
+          Class   => Search_Result_Class,
+          Getter  => Search_Result_Commands_Handler'Access,
+          Setter  => null);
+      Register_Property
+        (Kernel.Scripts, "long",
+          Class   => Search_Result_Class,
+          Getter  => Search_Result_Commands_Handler'Access,
+          Setter  => null);
    end Register_Module;
 
 end GPS.Search.GUI;

@@ -1338,9 +1338,10 @@ package body Gtkada.Entry_Completion is
 
       if Text /= "" then
          S.Pattern := GPS.Search.Build
-           (Pattern        => Text,
-            Case_Sensitive => S.Settings_Case_Sensitive.Get_Active,
-            Whole_Word     => S.Settings_Whole_Word.Get_Active,
+           (Pattern         => Text,
+            Allow_Highlight => True,
+            Case_Sensitive  => S.Settings_Case_Sensitive.Get_Active,
+            Whole_Word      => S.Settings_Whole_Word.Get_Active,
             Kind        => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
          S.Completion.Set_Pattern (S.Pattern);
       end if;
