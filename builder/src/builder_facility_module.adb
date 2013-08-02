@@ -229,6 +229,10 @@ package body Builder_Facility_Module is
       is (Provider_Builds);
    overriding function Documentation
       (Self     : not null access Builder_Search_Provider) return String;
+   overriding function Complete_Suffix
+     (Self      : not null access Builder_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
 
    procedure Setup
       (Self : not null access Builder_Search_Provider'Class);
@@ -2056,6 +2060,51 @@ package body Builder_Facility_Module is
          end if;
       end if;
    end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Builder_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix      : Unbounded_String;
+      Suffix_Last : Natural := 0;
+      C           : Search_Context;
+      T           : Target_Access;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      loop
+         T := Get_Target (Self.Iter.all);
+         exit when T = null or else Self.Mains = null;
+
+         if Self.Current_Main < Self.Mains.Length then
+            declare
+               Main : constant Virtual_File :=
+                  Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
+               Name : constant String :=
+                  Get_Name (T) & " " & Main.Display_Base_Name;
+            begin
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  Self.Pattern.Compute_Suffix (C, Name, Suffix, Suffix_Last);
+                  exit when Suffix_Last = 0;
+               end if;
+            end;
+         end if;
+
+         Self.Current_Main := Self.Current_Main + 1;
+         if Self.Current_Main > Self.Mains.Length then
+            Next (Self.Iter.all);
+            Setup (Self);
+         end if;
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
 
    ----------
    -- Free --

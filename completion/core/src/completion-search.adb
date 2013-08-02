@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
@@ -157,7 +158,7 @@ package body Completion.Search is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      L : String_Access;
+      L : GNAT.Strings.String_Access;
       C : GPS.Search.Search_Context;
       Entity : Entity_Access;
    begin
@@ -207,5 +208,48 @@ package body Completion.Search is
       Next (Self.Iter);
       Has_Next := not At_End (Self.Iter);
    end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Entities_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix      : Unbounded_String;
+      Suffix_Last : Natural := 0;
+      C : GPS.Search.Search_Context;
+      Entity : Entity_Access;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      while not At_End (Self.Iter) loop
+         if not Is_Valid (Self.Iter) then
+            Next (Self.Iter);
+         else
+            Entity := Get (Self.Iter);
+            if Entity /= Null_Entity_Access then
+               declare
+                  Construct : constant access Simple_Construct_Information :=
+                    Get_Construct (Entity);
+                  Name : constant String := Get (Construct.Name).all;
+               begin
+                  C := Self.Pattern.Start (Name);
+                  if C /= GPS.Search.No_Match then
+                     Self.Pattern.Compute_Suffix
+                       (C, Name, Suffix, Suffix_Last);
+                     exit when Suffix_Last = 0;
+                  end if;
+               end;
+            end if;
+         end if;
+
+         Next (Self.Iter);
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
 
 end Completion.Search;

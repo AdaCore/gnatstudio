@@ -39,6 +39,10 @@ package GPS.Kernel.Search.Filenames is
    overriding function Display_Name
      (Self     : not null access Filenames_Search_Provider) return String
      is (Provider_Filenames);
+   overriding function Complete_Suffix
+     (Self      : not null access Filenames_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 

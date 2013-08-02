@@ -40,6 +40,10 @@ package Completion.Search is
    overriding function Display_Name
      (Self     : not null access Entities_Search_Provider) return String
      is (Provider_Entities);
+   overriding function Complete_Suffix
+     (Self      : not null access Entities_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
 
 private
 

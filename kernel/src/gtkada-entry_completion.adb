@@ -878,8 +878,18 @@ package body Gtkada.Entry_Completion is
 
          Widget_Callback.Emit_By_Name (Self, Signal_Escape);
 
-      elsif Event.Keyval = GDK_Tab
-         or else Event.Keyval = GDK_KP_Down
+      elsif Event.Keyval = GDK_Tab then
+         declare
+            Suffix : constant String :=
+              Self.Completion.Complete_Suffix (Self.Pattern);
+            Position : Gint := -1;
+         begin
+            Self.GEntry.Insert_Text (Suffix, Position);
+            Self.GEntry.Set_Position (-1);
+            return True;
+         end;
+
+      elsif Event.Keyval = GDK_KP_Down
          or else Event.Keyval = GDK_Down
       then
          Self.View.Get_Selection.Get_Selected (M, Iter);
@@ -1063,6 +1073,11 @@ package body Gtkada.Entry_Completion is
 
       Start := Clock;
       loop
+         if Result /= null then
+            Insert_Proposal (Self, Result);
+            Inserted := True;
+         end if;
+
          if not Has_Next then
             Self.Idle := No_Source_Id;
             Trace (Me, "No more after" & Count'Img);
@@ -1070,11 +1085,6 @@ package body Gtkada.Entry_Completion is
          end if;
 
          Count := Count + 1;
-
-         if Result /= null then
-            Insert_Proposal (Self, Result);
-            Inserted := True;
-         end if;
 
          exit when Clock - Start > Max_Idle_Duration;
 

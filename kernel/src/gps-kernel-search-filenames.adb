@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
 
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -45,6 +46,17 @@ package body GPS.Kernel.Search.Filenames is
      (Hook : Hook_Project_View_Changed;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
+
+   procedure Check_Pattern
+     (Self     : not null access Filenames_Search_Provider'Class;
+      Has_Next : out Boolean;
+      Callback : not null access function
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean);
+   --  Search for the next possible match. When a match is found, calls
+   --  Callback. Stops iterating when the callback returns False.
 
    -------------
    -- Execute --
@@ -155,15 +167,20 @@ package body GPS.Kernel.Search.Filenames is
       end if;
    end Set_Pattern;
 
-   ----------
-   -- Next --
-   ----------
+   -------------------
+   -- Check_Pattern --
+   -------------------
 
-   overriding procedure Next
-     (Self     : not null access Filenames_Search_Provider;
-      Result   : out Search_Result_Access;
-      Has_Next : out Boolean)
+   procedure Check_Pattern
+     (Self     : not null access Filenames_Search_Provider'Class;
+      Has_Next : out Boolean;
+      Callback : not null access function
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean)
    is
+      Continue : Boolean := True;
 
       procedure Check (F : Virtual_File; Runtime : Boolean);
       --  Sets Result to non-null if F matches
@@ -173,75 +190,121 @@ package body GPS.Kernel.Search.Filenames is
       -----------
 
       procedure Check (F : Virtual_File; Runtime : Boolean) is
+         Text : constant String :=
+            (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
+         C : constant Search_Context := Self.Pattern.Start (Text);
+      begin
+         if C /= GPS.Search.No_Match then
+            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
 
+            if not Self.Seen.Contains (F) then
+               Continue := Callback (Text, C, F, Runtime);
+               Self.Seen.Include (F);
+            end if;
+         end if;
+      end Check;
+
+   begin
+      if Self.Index = Self.Files'First - 2 then
+         Self.Index := Self.Index + 1;
+      end if;
+
+      while Self.Index < Self.Files'Last loop
+         Self.Index := Self.Index + 1;
+         Check (Self.Files (Self.Index), Runtime => False);
+         if not Continue then
+            return;
+         end if;
+      end loop;
+
+      while Self.Runtime_Index < Self.Runtime'Last loop
+         Self.Runtime_Index := Self.Runtime_Index + 1;
+         Check (Self.Runtime (Self.Runtime_Index), Runtime => True);
+         if not Continue then
+            return;
+         end if;
+      end loop;
+
+      Has_Next := False;
+   end Check_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self     : not null access Filenames_Search_Provider;
+      Result   : out Search_Result_Access;
+      Has_Next : out Boolean)
+   is
+      function Callback
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean;
+
+      function Callback
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean
+      is
          function Highlight_Runtime
            (Str : String; Runtime : Boolean) return String
          is (if Runtime then "<i>" & Str & "</i>" else Str);
          --  For runtime files, highlight them specially
 
-         Text : constant String :=
-            (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
-         C : constant Search_Context := Self.Pattern.Start (Text);
          L : GNAT.Strings.String_Access;
       begin
-         if C /= GPS.Search.No_Match then
-            Has_Next := Self.Runtime_Index < Self.Runtime'Last;
-
-            if Self.Seen.Contains (F) then
-               Result := null;
-               return;
-            end if;
-
-            if Self.Match_Directory then
-               Result := new Filenames_Search_Result'
-                  (Kernel   => Self.Kernel,
-                   Provider => Self,
-                   Score    => C.Score,
-                   Short    => new String'
-                      (Highlight_Runtime (+F.Base_Name, Runtime)),
-                   Long     => new String'
+         if Self.Match_Directory then
+            Result := new Filenames_Search_Result'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => Context.Score,
+               Short    => new String'
+                 (Highlight_Runtime (+File.Base_Name, Runtime)),
+               Long     => new String'
+                 (Self.Pattern.Highlight_Match
+                      (Buffer => Text, Context => Context)),
+               Id       => new String'(+File.Full_Name),
+               Line     => Self.Line,
+               Column   => Self.Column,
+               File     => File);
+         else
+            L := new String'(+File.Full_Name);
+            Result := new Filenames_Search_Result'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => Context.Score,
+               Short    => new String'
+                 (Highlight_Runtime
                       (Self.Pattern.Highlight_Match
-                         (Buffer => Text, Context => C)),
-                   Id       => new String'(+F.Full_Name),
-                   Line     => Self.Line,
-                   Column   => Self.Column,
-                   File     => F);
-            else
-               L := new String'(+F.Full_Name);
-               Result := new Filenames_Search_Result'
-                  (Kernel   => Self.Kernel,
-                   Provider => Self,
-                   Score    => C.Score,
-                   Short    => new String'
-                      (Highlight_Runtime
-                         (Self.Pattern.Highlight_Match
-                            (Buffer => Text, Context => C),
-                          Runtime)),
-                   Long     => L,
-                   Id       => L,
-                   Line     => Self.Line,
-                   Column   => Self.Column,
-                   File     => F);
-            end if;
-
-            --  Lower the score for runtime files, so that the source files
-            --  always appear first. "10" is so that in fuzzy matching this
-            --  corresponds to having characters separated by 9 others.
-
-            if Runtime then
-               Result.Score := Result.Score - 10;
-            end if;
-
-            --  Give priority to shorter items (which means the pattern matched
-            --  a bigger portion of it). This way, "buffer" matches
-            --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
-
-            Result.Score := 100 * Result.Score - F.Base_Name'Length;
-            Self.Adjust_Score (Result);
-
-            Self.Seen.Include (F);
+                           (Buffer => Text, Context => Context),
+                       Runtime)),
+               Long     => L,
+               Id       => L,
+               Line     => Self.Line,
+               Column   => Self.Column,
+               File     => File);
          end if;
-      end Check;
+
+         --  Lower the score for runtime files, so that the source files
+         --  always appear first. "10" is so that in fuzzy matching this
+         --  corresponds to having characters separated by 9 others.
+
+         if Runtime then
+            Result.Score := Result.Score - 10;
+         end if;
+
+         --  Give priority to shorter items (which means the pattern matched
+         --  a bigger portion of it). This way, "buffer" matches
+         --  "src_editor_buffer.adb" before "src_editor_buffer-hooks.adb".
+
+         Result.Score := 100 * Result.Score - File.Base_Name'Length;
+         Self.Adjust_Score (Result);
+
+         return False;  --  Stop looking
+      end Callback;
 
       F : Virtual_File;
       L : GNAT.Strings.String_Access;
@@ -271,23 +334,7 @@ package body GPS.Kernel.Search.Filenames is
          end if;
       end if;
 
-      while Self.Index < Self.Files'Last loop
-         Self.Index := Self.Index + 1;
-         Check (Self.Files (Self.Index), Runtime => False);
-         if Result /= null then
-            return;
-         end if;
-      end loop;
-
-      while Self.Runtime_Index < Self.Runtime'Last loop
-         Self.Runtime_Index := Self.Runtime_Index + 1;
-         Check (Self.Runtime (Self.Runtime_Index), Runtime => True);
-         if Result /= null then
-            return;
-         end if;
-      end loop;
-
-      Has_Next := False;
+      Check_Pattern (Self, Has_Next, Callback'Access);
    end Next;
 
    -------------
@@ -340,5 +387,47 @@ package body GPS.Kernel.Search.Filenames is
          return Gtk.Widget.Gtk_Widget (Label);
       end if;
    end Full;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Filenames_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix : Unbounded_String;
+      Suffix_Last : Natural := 0;
+
+      function Callback
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean;
+
+      function Callback
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Runtime : Boolean) return Boolean
+      is
+         pragma Unreferenced (File, Runtime);
+      begin
+         Self.Pattern.Compute_Suffix (Context, Text, Suffix, Suffix_Last);
+         return True;  --  keep looking
+      end Callback;
+
+      Has_Next : Boolean;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      loop
+         Check_Pattern (Self, Has_Next, Callback'Access);
+         exit when not Has_Next or else Suffix_Last = 0;
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
 
 end GPS.Kernel.Search.Filenames;

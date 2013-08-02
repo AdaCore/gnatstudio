@@ -18,6 +18,7 @@
 --  This package describes the base types used for the various search and
 --  completion engines in GPS.
 
+with Ada.Strings.Unbounded;
 with Basic_Types;   use Basic_Types;
 with GNAT.Strings;
 with GNATCOLL.Xref;
@@ -152,6 +153,16 @@ package GPS.Search is
    --  Return a copy of Buffer where the substring or characters matching
    --  Context are highlighted.
    --  Buffer must the same one passed to Start or Next, or a substring of it.
+
+   procedure Compute_Suffix
+     (Self        : Search_Pattern;
+      Context     : Search_Context;
+      Text        : String;
+      Suffix      : in out Ada.Strings.Unbounded.Unbounded_String;
+      Suffix_Last : in out Natural);
+   --  Computes the common suffix between the substring following the part of
+   --  Text matched by the context and Suffix (Suffix'First .. Suffix_Last).
+   --  Changes Suffix_Last as needed.
 
    ------------
    -- Result --
@@ -349,6 +360,13 @@ package GPS.Search is
    --  cleanups or changes in the provider, for instance storing the list of
    --  recent items selected by the user so that the scores can be modified
    --  later on.
+
+   function Complete_Suffix
+     (Self      : not null access Search_Provider;
+      Pattern   : not null access Search_Pattern'Class)
+      return String is ("");
+   --  Used to implement completion through <tab>.
+   --  Returns the possible completion for pattern.
 
    --------------
    -- Registry --

@@ -126,6 +126,10 @@ package body GPS.Search.GUI is
       Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
       Data : not null access Glib.Object.GObject_Record'Class;
       On_Change : On_Settings_Changed_Callback);
+   overriding function Complete_Suffix
+     (Self      : not null access Overall_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Search_Provider_Access);
@@ -343,6 +347,55 @@ package body GPS.Search.GUI is
       Result := null;
       Has_Next := True;
    end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Overall_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix : Unbounded_String;
+      Found : Boolean := False;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      while Self.Provider /= null loop
+
+         declare
+            Tmp : constant String := Self.Provider.Complete_Suffix (Pattern);
+         begin
+            if Tmp /= "" then
+               if not Found then
+                  Found := True;
+                  Suffix := To_Unbounded_String (Tmp);
+               else
+                  declare
+                     Current : constant String := To_String (Suffix);
+                  begin
+                     for S in Current'Range loop
+                        if Tmp'First + S - Current'First > Tmp'Last
+                          or else Current (S) /=
+                             Tmp (Tmp'First + S - Current'First)
+                        then
+                           Suffix := To_Unbounded_String
+                             (Current (Current'First .. S - 1));
+                           exit;
+                        end if;
+                     end loop;
+                  end;
+               end if;
+            end if;
+         end;
+
+         Self.Current_Provider := Self.Current_Provider + 1;
+         Self.Provider := Registry.Get (Self.Current_Provider);
+      end loop;
+
+      return To_String (Suffix);
+   end Complete_Suffix;
 
    ------------------
    -- Display_Name --

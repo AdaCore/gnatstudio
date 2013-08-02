@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;        use GNAT.Strings;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Search;          use GPS.Search;
@@ -97,6 +98,42 @@ package body GPS.Kernel.Search.Actions is
          Has_Next := False;
       end if;
    end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Actions_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix      : Unbounded_String;
+      Suffix_Last : Natural := 0;
+      Action      : Action_Record_Access;
+      C           : Search_Context;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      loop
+         Action := Get (Self.Iter);
+         exit when Action = null;
+
+         --  Do not complete on menu names
+         if Action.Name (Action.Name'First) /= '/' then
+            C := Self.Pattern.Start (Action.Name.all);
+            if C /= GPS.Search.No_Match then
+               Self.Pattern.Compute_Suffix
+                 (C, Action.Name.all, Suffix, Suffix_Last);
+               exit when Suffix_Last = 0;
+            end if;
+         end if;
+
+         Next (Self.Kernel, Self.Iter);
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
 
    ----------
    -- Free --

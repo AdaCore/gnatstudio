@@ -38,6 +38,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
@@ -158,6 +159,10 @@ package body Buffer_Views is
       is (Provider_Opened_Win);
    overriding function Documentation
       (Self     : not null access Opened_Windows_Search) return String;
+   overriding function Complete_Suffix
+     (Self      : not null access Opened_Windows_Search;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
 
    type Opened_Windows_Result is new Kernel_Search_Result with null record;
    overriding procedure Execute
@@ -740,6 +745,47 @@ package body Buffer_Views is
          Has_Next := Get (Self.Iter) /= null;
       end if;
    end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Opened_Windows_Search;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      Suffix      : Unbounded_String;
+      Suffix_Last : Natural := 0;
+      C           : Search_Context;
+      Child       : MDI_Child;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      loop
+         Child := Get (Self.Iter);
+         exit when Child = null;
+
+         C := Self.Pattern.Start (Child.Get_Short_Title);
+         if C /= GPS.Search.No_Match then
+            Self.Pattern.Compute_Suffix
+              (C, Child.Get_Short_Title, Suffix, Suffix_Last);
+            exit when Suffix_Last = 0;
+
+         elsif Child.Get_Short_Title /= Child.Get_Title then
+            C := Self.Pattern.Start (Child.Get_Title);
+            if C /= GPS.Search.No_Match then
+               Self.Pattern.Compute_Suffix
+                 (C, Child.Get_Title, Suffix, Suffix_Last);
+               exit when Suffix_Last = 0;
+            end if;
+         end if;
+
+         Next (Self.Iter);
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
 
    -------------------
    -- Documentation --

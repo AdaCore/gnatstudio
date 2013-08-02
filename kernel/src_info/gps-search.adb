@@ -19,6 +19,7 @@ with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Boyer_Moore;        use GNATCOLL.Boyer_Moore;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
@@ -26,6 +27,7 @@ with Glib.Convert;
 with Interfaces;                  use Interfaces;
 
 package body GPS.Search is
+   Me : constant Trace_Handle := Create ("SEARCH");
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
@@ -1001,5 +1003,43 @@ package body GPS.Search is
          return P1.all = P2.all;
       end if;
    end Equals;
+
+   --------------------
+   -- Compute_Suffix --
+   --------------------
+
+   procedure Compute_Suffix
+     (Self        : Search_Pattern;
+      Context     : Search_Context;
+      Text        : String;
+      Suffix      : in out Ada.Strings.Unbounded.Unbounded_String;
+      Suffix_Last : in out Natural)
+   is
+      pragma Unreferenced (Self);
+      T : constant String := To_String (Suffix);
+   begin
+      if T = "" then
+         Suffix := To_Unbounded_String
+           (Text (Context.Finish + 1 .. Text'Last));
+         Suffix_Last := Length (Suffix);
+      else
+         for S in 1 .. Suffix_Last loop
+            if Context.Finish + S > Text'Last then
+               Suffix_Last := S - 1;
+               exit;
+            else
+               if T (S) /= Text (Context.Finish + S) then
+                  Suffix_Last := S - 1;
+                  exit;
+               end if;
+            end if;
+         end loop;
+
+         if Suffix_Last = 0 then
+            Trace (Me, "No suffix completion, previous candidate was "
+                   & T & " and new attempt was " & Text);
+         end if;
+      end if;
+   end Compute_Suffix;
 
 end GPS.Search;
