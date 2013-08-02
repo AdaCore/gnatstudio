@@ -70,11 +70,12 @@ package GPS.Kernel.Search is
    --  by the user.
 
    Provider_Filenames  : constant String := "File names";
-   Provider_Actions    : constant String := "actions";
+   Provider_Actions    : constant String := "Actions";
    Provider_Builds     : constant String := "Build";
    Provider_Opened_Win : constant String := "Opened";
    Provider_Entities   : constant String := "Entities";
    Provider_Sources    : constant String := "Sources";
+   Provider_Bookmarks  : constant String := "Bookmarks";
 
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider

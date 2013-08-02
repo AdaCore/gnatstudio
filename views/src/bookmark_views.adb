@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
@@ -60,8 +61,10 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
 with Tooltips;
@@ -239,6 +242,165 @@ package body Bookmark_Views is
      (Tooltip  : not null access Bookmark_View_Tooltips;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+
+   ------------
+   -- Search --
+   ------------
+
+   type Bookmarks_Search_Provider is new Kernel_Search_Provider
+   with record
+      Pattern : GPS.Search.Search_Pattern_Access;
+      List    : Bookmark_List.List_Node;
+   end record;
+   overriding function Documentation
+     (Self    : not null access Bookmarks_Search_Provider) return String
+     is ("Search amongst all bookmarks");
+   overriding procedure Set_Pattern
+     (Self    : not null access Bookmarks_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding procedure Next
+     (Self     : not null access Bookmarks_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean);
+   overriding function Display_Name
+     (Self     : not null access Bookmarks_Search_Provider) return String
+     is (Provider_Bookmarks);
+   overriding function Complete_Suffix
+     (Self      : not null access Bookmarks_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String;
+
+   type Bookmarks_Search_Result is new Kernel_Search_Result with record
+      Bookmark : Bookmark_Data_Access;
+   end record;
+   overriding procedure Execute
+     (Self       : not null access Bookmarks_Search_Result;
+      Give_Focus : Boolean);
+   overriding function Full
+     (Self       : not null access Bookmarks_Search_Result)
+     return Gtk.Widget.Gtk_Widget;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+     (Self    : not null access Bookmarks_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last)
+   is
+      pragma Unreferenced (Limit);
+   begin
+      Self.Pattern := Search_Pattern_Access (Pattern);
+      Self.List := First (Bookmark_Views_Module.List);
+   end Set_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self     : not null access Bookmarks_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean)
+   is
+      C        : Search_Context;
+      Bookmark : Bookmark_Data_Access;
+      S        : String_Access;
+   begin
+      if Self.List = Null_Node then
+         Has_Next := False;
+         Result := null;
+      else
+         Has_Next := True;
+         Bookmark := Data (Self.List);
+
+         C := Self.Pattern.Start (Bookmark.Name.all);
+         if C /= GPS.Search.No_Match then
+            S := new String'(Bookmark.Name.all);
+            Result := new Bookmarks_Search_Result'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => C.Score,
+               Short    => S,
+               Long     => null,
+               Id       => S,
+               Bookmark => Bookmark);
+            Self.Adjust_Score (Result);
+         end if;
+
+         Self.List := Next (Self.List);
+      end if;
+   end Next;
+
+   ---------------------
+   -- Complete_Suffix --
+   ---------------------
+
+   overriding function Complete_Suffix
+     (Self      : not null access Bookmarks_Search_Provider;
+      Pattern   : not null access GPS.Search.Search_Pattern'Class)
+      return String
+   is
+      use Ada.Strings.Unbounded;
+      Suffix      : Unbounded_String;
+      Suffix_Last : Natural := 0;
+      C           : Search_Context;
+      Bookmark    : Bookmark_Data_Access;
+   begin
+      Self.Set_Pattern (Pattern);
+
+      while Self.List /= Null_Node loop
+         Bookmark := Data (Self.List);
+
+         C := Self.Pattern.Start (Bookmark.Name.all);
+         if C /= GPS.Search.No_Match then
+            Self.Pattern.Compute_Suffix
+              (C, Bookmark.Name.all, Suffix, Suffix_Last);
+            exit when Suffix_Last = 0;
+         end if;
+
+         Self.List := Next (Self.List);
+      end loop;
+
+      return Slice (Suffix, 1, Suffix_Last);
+   end Complete_Suffix;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self       : not null access Bookmarks_Search_Result;
+      Give_Focus : Boolean)
+   is
+      Ignore : Boolean;
+      pragma Unreferenced (Ignore, Give_Focus);
+   begin
+      if Self.Bookmark /= null then
+         Ignore := Go_To (Self.Bookmark.Marker, Self.Kernel);
+         Push_Marker_In_History (Self.Kernel, Clone (Self.Bookmark.Marker));
+      end if;
+   end Execute;
+
+   ----------
+   -- Full --
+   ----------
+
+   overriding function Full
+     (Self       : not null access Bookmarks_Search_Result)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Label : Gtk_Label;
+   begin
+      Gtk_New
+        (Label,
+         "<b>Name:</b> " & Self.Bookmark.Name.all & ASCII.LF &
+         "<b>Location:</b> " & To_String (Self.Bookmark.Marker));
+      Label.Set_Use_Markup (True);
+      return Gtk_Widget (Label);
+   end Full;
 
    -------------
    -- Destroy --
@@ -1057,7 +1219,8 @@ package body Bookmark_Views is
                              New_Class (Get_Scripts (Kernel), "Bookmark");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Command            : Interactive_Command_Access;
+      Command   : Interactive_Command_Access;
+      P         : Kernel_Search_Provider_Access;
 
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
@@ -1133,6 +1296,9 @@ package body Bookmark_Views is
         (Kernel, "delete", 0, 0, Command_Handler'Access, Bookmark_Class);
       Register_Command
         (Kernel, "goto", 0, 0, Command_Handler'Access, Bookmark_Class);
+
+      P := new Bookmarks_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
    end Register_Module;
 
 end Bookmark_Views;
