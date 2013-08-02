@@ -133,6 +133,13 @@ NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
   view was also removed since its features are now available through the
   global search field.
 
+NF-60-M531-032 GB: SPARK 2014 support (2013-07-30)
+
+  SPARK 2014 toolset is available from GNATbench platform installing the
+  GNATbench SPARK implementation plug-in.
+  To run SPARK 2014 actions use the Prove menus available if SPARK 2014 is
+  installed at GNATbench startup and if the Ada perspective is selected.
+
 NF-60-M530-024 GPS: only save changed preferences (2013-07-04)
 
   GPS will now only save those preferences that have been modified into
