@@ -133,6 +133,11 @@ NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
   view was also removed since its features are now available through the
   global search field.
 
+NF-60-M531-036 GPS: tooltips for Spark 2014 and Ada 2012 aspects (2013-08-03)
+
+  Spark 2014 and some Ada 2012 aspects are now supported in tooltips (aspects
+  associated with Ada 2012 concurrent types are not supported yet).
+
 NF-60-M531-032 SPARK 2014 support (2013-07-30)
 
   The SPARK 2014 toolset is now supported from both GPS and GNATbench.
