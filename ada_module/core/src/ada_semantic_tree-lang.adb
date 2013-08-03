@@ -343,7 +343,7 @@ package body Ada_Semantic_Tree.Lang is
             J := J + 1;
          end loop;
 
-         --  Use the first line to known the left margin
+         --  Use the first line to compute the left margin
 
          while J <= S'Last and then S (J) = ' ' loop
             Left_Margin := Left_Margin + 1;
@@ -624,13 +624,12 @@ package body Ada_Semantic_Tree.Lang is
 
       --  Append aspects to the output
 
-      if Get_Construct (Node).Category in Type_Category
-        or else Get_Construct (Node).Category in Data_Category
-        or else Get_Construct (Node).Category in Subprogram_Category
+      if Get_Construct (Node).Category
+        in Type_Category | Data_Category | Subprogram_Category
       then
          declare
             Sub_Iter  : Construct_Tree_Iterator :=
-                          Next (Tree, Node, Jump_Into);
+              Next (Tree, Node, Jump_Into);
             Construct : access Simple_Construct_Information;
          begin
             while Is_Parent_Scope (Node, Sub_Iter) loop
