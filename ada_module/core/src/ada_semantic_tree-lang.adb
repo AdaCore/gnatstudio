@@ -327,6 +327,58 @@ package body Ada_Semantic_Tree.Lang is
          return Result (Str'First .. Index);
       end Remove_Blanks;
 
+      function Filter_Aspects (S : String) return String;
+      --  Use the first non-empty line of S to compute the number of spaces of
+      --  the left margin of the text stored in S, and use that value to remove
+      --  the left margin of all the lines of text stored in S.
+
+      function Filter_Aspects (S : String) return String is
+         Result      : Unbounded_String;
+         J           : Natural := S'First;
+         Left_Margin : Natural := 0;
+      begin
+         --  Skip initial returns (if any)
+
+         while J <= S'Last and then S (J) = ASCII.LF loop
+            J := J + 1;
+         end loop;
+
+         --  Use the first line to known the left margin
+
+         while J <= S'Last and then S (J) = ' ' loop
+            Left_Margin := Left_Margin + 1;
+            J := J + 1;
+         end loop;
+
+         while J <= S'Last loop
+            while J <= S'Last and then S (J) /= ASCII.LF loop
+               Append (Result, S (J));
+               J := J + 1;
+            end loop;
+
+            exit when J > S'Last;
+
+            Append (Result, S (J));  -- Appending ASCII.LF
+            J := J + 1;
+
+            --  Skip left margin
+
+            declare
+               Left_Count : Natural := 0;
+            begin
+               while J <= S'Last
+                 and then S (J) = ' '
+                 and then Left_Count < Left_Margin
+               loop
+                  Left_Count := Left_Count + 1;
+                  J := J + 1;
+               end loop;
+            end;
+         end loop;
+
+         return To_String (Result);
+      end Filter_Aspects;
+
       Has_Parameter : Boolean := False;
 
    begin
@@ -567,6 +619,36 @@ package body Ada_Semantic_Tree.Lang is
                   Append (Result, "'Class");
                end if;
             end if;
+         end;
+      end if;
+
+      --  Append aspects to the output
+
+      if Get_Construct (Node).Category in Type_Category
+        or else Get_Construct (Node).Category in Data_Category
+        or else Get_Construct (Node).Category in Subprogram_Category
+      then
+         declare
+            Sub_Iter  : Construct_Tree_Iterator :=
+                          Next (Tree, Node, Jump_Into);
+            Construct : access Simple_Construct_Information;
+         begin
+            while Is_Parent_Scope (Node, Sub_Iter) loop
+               Construct := Get_Construct (Sub_Iter);
+
+               if Construct.Category = Cat_Aspect then
+                  Append (Result,
+                    ASCII.LF &
+                    "<b>Aspects:</b>" & ASCII.LF &
+                    Filter_Aspects
+                      (Buffer.all
+                        (Construct.Sloc_Start.Index ..
+                           Construct.Sloc_End.Index)));
+                  exit;
+               end if;
+
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
          end;
       end if;
 
