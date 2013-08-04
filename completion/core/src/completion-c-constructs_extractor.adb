@@ -174,15 +174,28 @@ package body Completion.C.Constructs_Extractor is
          Prefix   : GNAT.Strings.String_Access;
       end record;
 
+      package Entities_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => General_Entity);
       package Files_List is new Ada.Containers.Vectors
         (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
+
+      type Stages is (Stage_1, Stage_2, Stage_End);
+      --  In stage 1 we search for proposals iterating through all the entities
+      --  visible available through the transitive closure of the request for
+      --  completions (that is, we search for proposals traversing all the
+      --  include files). In stage 2 we search for global proposals which
+      --  were not added to the list of proposal during stage 1.
 
       type Construct_Iterator_Wrapper is new
         Completion_List_Pckg.Virtual_List_Component_Iterator
       with record
+         Stage    : Stages;
          Resolver : access C_Completion_Resolver;
          Prefix   : GNAT.Strings.String_Access;
 
+         --  Components associated with Stage 1
+
+         Entities        : Entities_List.Vector;
          Processed_Files : Files_List.Vector;
          Queued_Files    : Files_List.Vector;
          --  List of processed files and queue of pending files. The whole list
@@ -195,6 +208,10 @@ package body Completion.C.Constructs_Extractor is
          Cursor            : Entities_In_File_Cursor;
          In_First_Entity   : Boolean;
          Is_Valid_Proposal : Boolean;
+
+         --  Components associated with Stage 2
+
+         Project_Cursor    : Entities_In_Project_Cursor;
       end record;
 
       overriding function At_End
@@ -223,11 +240,7 @@ package body Completion.C.Constructs_Extractor is
       overriding function At_End
         (It : Construct_Iterator_Wrapper) return Boolean is
       begin
-         --  True if we have processed all the entities of the current
-         --  file and we have also finished processing all the files
-
-         return At_End (It.Cursor)
-           and then Natural (It.Queued_Files.Length) = 0;
+         return It.Stage = Stage_End;
       end At_End;
 
       -----------
@@ -242,8 +255,9 @@ package body Completion.C.Constructs_Extractor is
                     Wrapper.Resolver.Kernel.Databases;
          Result : Construct_Iterator_Wrapper;
       begin
+         Result.Stage    := Stage_1;
          Result.Resolver := Wrapper.Resolver;
-         Result.Prefix := Wrapper.Prefix;
+         Result.Prefix   := Wrapper.Prefix;
 
          Result.Processed_Files.Append (Get_File (Wrapper.Context));
          Result.Cursor := Db.Entities_In_File (Get_File (Wrapper.Context));
@@ -311,6 +325,32 @@ package body Completion.C.Constructs_Extractor is
       overriding procedure Next (It : in out Construct_Iterator_Wrapper) is
 
          function Has_Prefix (Name : String) return Boolean;
+         --  Returns True if Name has prefix It.Prefix
+
+         function Contains (E : General_Entity) return Boolean;
+         --  Return True if It.Entities contains E
+
+         --------------
+         -- Contains --
+         --------------
+
+         function Contains (E : General_Entity) return Boolean is
+            Cursor : Entities_List.Cursor := It.Entities.First;
+         begin
+            while Entities_List.Has_Element (Cursor) loop
+               if Entities_List.Element (Cursor) = E then
+                  return True;
+               end if;
+
+               Entities_List.Next (Cursor);
+            end loop;
+
+            return False;
+         end Contains;
+
+         ----------------
+         -- Has_Prefix --
+         ----------------
 
          function Has_Prefix (Name : String) return Boolean is
          begin
@@ -327,53 +367,88 @@ package body Completion.C.Constructs_Extractor is
          use type Files_List.Cursor;
 
       begin
-         --  Processing the first entity we must not move the cursor
+         case It.Stage is
+            when Stage_1 =>
+               --  Processing the first entity we must not move the cursor
 
-         if It.In_First_Entity then
-            It.In_First_Entity := False;
+               if It.In_First_Entity then
+                  It.In_First_Entity := False;
 
-         elsif not At_End (It.Cursor) then
-            Next (It.Cursor);
-         end if;
+               elsif not At_End (It.Cursor) then
+                  Next (It.Cursor);
+               end if;
 
-         loop
-            --  Iterate through entities of the current file appending include
-            --  files to the queue of files to be processed and searching for
-            --  a global entity whose prefix matches
+               loop
+                  --  Iterate through entities of the current file appending
+                  --  include files to the queue of files to be processed and
+                  --  searching for a global entity whose prefix matches
 
-            while not At_End (It.Cursor) loop
-               E := Get (It.Cursor);
+                  while not At_End (It.Cursor) loop
+                     E := Get (It.Cursor);
 
-               if Db.Get_Display_Kind (E) = "include file" then
-                  Decl := Db.Get_Declaration (E);
+                     if Db.Get_Display_Kind (E) = "include file" then
+                        Decl := Db.Get_Declaration (E);
 
-                  if not It.Processed_Files.Contains (Decl.Loc.File)
-                    and then not It.Queued_Files.Contains (Decl.Loc.File)
-                  then
-                     It.Queued_Files.Append (Decl.Loc.File);
+                        if not It.Processed_Files.Contains (Decl.Loc.File)
+                          and then not It.Queued_Files.Contains (Decl.Loc.File)
+                        then
+                           It.Queued_Files.Append (Decl.Loc.File);
+                        end if;
+                     end if;
+
+                     if Has_Prefix (Db.Get_Name (E)) then
+                        It.Entities.Append (E);
+                        return;  --  Proposal found!
+                     end if;
+
+                     Next (It.Cursor);
+                  end loop;
+
+                  --  Next file
+
+                  if Natural (It.Queued_Files.Length) = 0 then
+                     It.Stage := Stage_2;
+                     It.Project_Cursor :=
+                       Db.All_Entities_From_Prefix
+                         (It.Prefix.all, Is_Partial => True);
+
+                     while not At_End (It.Project_Cursor) loop
+                        if not Contains (Get (It.Project_Cursor)) then
+                           return;
+                        end if;
+
+                        Next (It.Project_Cursor);
+                     end loop;
+
+                     It.Stage := Stage_End;
+                     return;
                   end if;
-               end if;
 
-               if Has_Prefix (Db.Get_Name (E)) then
-                  return;  --  Proposal found!
-               end if;
+                  It.Cursor :=
+                    Db.Entities_In_File (It.Queued_Files.First_Element);
 
-               Next (It.Cursor);
-            end loop;
+                  --  Move the file to the list of processed files
 
-            --  Next file
+                  It.Processed_Files.Append (It.Queued_Files.First_Element);
+                  It.Queued_Files.Delete_First;
+               end loop;
 
-            if Natural (It.Queued_Files.Length) = 0 then
-               return;
-            end if;
+            when Stage_2 =>
+               Next (It.Project_Cursor);
 
-            It.Cursor := Db.Entities_In_File (It.Queued_Files.First_Element);
+               while not At_End (It.Project_Cursor) loop
+                  if not Contains (Get (It.Project_Cursor)) then
+                     return;
+                  end if;
 
-            --  Move the file to the list of processed files
+                  Next (It.Project_Cursor);
+               end loop;
 
-            It.Processed_Files.Append (It.Queued_Files.First_Element);
-            It.Queued_Files.Delete_First;
-         end loop;
+               It.Stage := Stage_End;
+
+            when Stage_End =>
+               null;
+         end case;
 
       exception
          when E : others =>
