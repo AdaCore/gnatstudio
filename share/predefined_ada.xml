@@ -3927,7 +3927,8 @@ address values.  If the configuration pragma `Allow_Integer_Address' is
 given, then integer expressions may be used anywhere a value of type
 `System.Address' is required.  The effect is to introduce an implicit
 unchecked conversion from the integer value to type `System.Address'.
-The following example compiles without errors:
+The reverse case of using an address where an integer type is required
+is handled analogously.  The following example compiles without errors:
 
 pragma Allow_Integer_Address;
 with System; use System;
@@ -3939,6 +3940,8 @@ for Y use at 16#3230#;
 m : Address := 16#4000#;
 n : constant Address := 4000;
 p : constant Address := Address (X + Y);
+v : Integer := y'Address;
+w : constant Integer := Integer (Y'Address);
 type R is new integer;
 RR : R := 1000;
 Z : Integer;
