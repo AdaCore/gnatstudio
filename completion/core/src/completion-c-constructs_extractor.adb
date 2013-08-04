@@ -294,13 +294,20 @@ package body Completion.C.Constructs_Extractor is
       overriding function Get
         (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class is
       begin
-         if At_End (This.Cursor) then
-            return Null_C_Completion_Proposal;
-         else
-            return New_C_Completion_Proposal
-              (Resolver => This.Resolver,
-               Entity   => Get (This.Cursor));
-         end if;
+         case This.Stage is
+            when Stage_1 =>
+               return New_C_Completion_Proposal
+                 (Resolver => This.Resolver,
+                  Entity   => Get (This.Cursor));
+
+            when Stage_2 =>
+               return New_C_Completion_Proposal
+                 (Resolver => This.Resolver,
+                  Entity   => Get (This.Project_Cursor));
+
+            when Stage_End =>
+               return Null_C_Completion_Proposal;
+         end case;
       end Get;
 
       -----------------------------
