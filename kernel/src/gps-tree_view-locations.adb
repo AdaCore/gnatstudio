@@ -41,8 +41,15 @@ package body GPS.Tree_View.Locations is
    function On_Button_Press
      (Self  : access GPS_Locations_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean;
-   --  Handle "button-press" event. Emit "action-clicked" or "location-clicked"
-   --  signal when click is done on action column or location column.
+   --  Handle "button-press" event. It selects row on press of 3-rd mouse
+   --  button to interact with contextual menu correctly.
+
+   function On_Button_Release
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean;
+   --  Handle "button-release" event. Emit "action-clicked" or
+   --  "location-clicked" signal when click is done on action column or
+   --  location column.
 
    function On_Row_Expanded_Idle
      (Self : GPS_Locations_Tree_View) return Boolean;
@@ -191,6 +198,12 @@ package body GPS.Tree_View.Locations is
          GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
            (On_Button_Press'Access),
          After => False);
+      GPS_Locations_Tree_View_Boolean_Callbacks.Connect
+        (Self,
+         Signal_Button_Release_Event,
+         GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
+           (On_Button_Release'Access),
+         After => False);
 
       Gtk_New (Self.Sort, -Model);
       GPS.Location_View_Filter.Gtk_New
@@ -227,12 +240,59 @@ package body GPS.Tree_View.Locations is
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
+
+   begin
+      if Get_Button (Event) = 3 and Get_Event_Type (Event) = Button_Press then
+         --  Handling of contextual menu is unable to select item in Locations
+         --  view, thus do this explicitly.
+
+         Self.Grab_Focus;
+
+         --  If there is no selection, select the item under the cursor
+
+         Self.Get_Path_At_Pos
+           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
+
+         if Path /= Null_Gtk_Tree_Path then
+            if not Self.Get_Selection.Path_Is_Selected (Path) then
+               Self.Get_Selection.Unselect_All;
+               Self.Get_Selection.Select_Path (Path);
+            end if;
+
+            Path_Free (Path);
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+
+         return False;
+   end On_Button_Press;
+
+   -----------------------
+   -- On_Button_Release --
+   -----------------------
+
+   function On_Button_Release
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean
+   is
+      X         : constant Gint := Gint (Event.Button.X);
+      Y         : constant Gint := Gint (Event.Button.Y);
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
       Cell_Rect : Gdk_Rectangle;
       Back_Rect : Gdk_Rectangle;
 
    begin
       if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Press
+        and then Get_Event_Type (Event) = Button_Release
       then
          Self.Get_Path_At_Pos
            (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
@@ -260,8 +320,6 @@ package body GPS.Tree_View.Locations is
                return False;
 
             else
-               Self.Get_Selection.Select_Path (Path);
-
                if Column = Self.Action_Column then
                   Self.Action_Clicked (Path, Get_Iter (Self.Get_Model, Path));
 
@@ -275,23 +333,6 @@ package body GPS.Tree_View.Locations is
          end if;
 
          return True;
-
-      else
-         Self.Grab_Focus;
-
-         --  If there is no selection, select the item under the cursor
-
-         Self.Get_Path_At_Pos
-           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
-         if Path /= Null_Gtk_Tree_Path then
-            if not Self.Get_Selection.Path_Is_Selected (Path) then
-               Self.Get_Selection.Unselect_All;
-               Self.Get_Selection.Select_Path (Path);
-            end if;
-
-            Path_Free (Path);
-         end if;
       end if;
 
       return False;
@@ -301,7 +342,7 @@ package body GPS.Tree_View.Locations is
          Trace (Exception_Handle, E);
 
          return False;
-   end On_Button_Press;
+   end On_Button_Release;
 
    -----------------------------------
    -- On_Lowerst_Model_Row_Inserted --
