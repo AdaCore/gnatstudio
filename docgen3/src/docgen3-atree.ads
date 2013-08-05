@@ -185,7 +185,8 @@ private package Docgen3.Atree is
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
       Name     : String) return Entity_Id;
-   --  Tree node constructors
+   --  Tree node constructors. New_Internal_Entity is currently used only to
+   --  build the entity associated with the Standard scope.
 
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor

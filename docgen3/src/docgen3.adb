@@ -256,6 +256,7 @@ package body Docgen3 is
 
       if not Context.Options.Skip_C_Files then
          Prepend_C_Header_Files;
+         Trace (Me, "Number of files to process: " & Src_Files.Length'Img);
       end if;
 
       Docgen3.Time.Reset;
@@ -352,8 +353,16 @@ package body Docgen3 is
                      Alias :=
                        Find_Unique_Entity
                          (Get_Location (Database, LL.Get_Alias (E)));
-                     pragma Assert (Present (Alias));
-                     Set_Alias (E, Alias);
+
+                     --  Alias should be present. However, using the sources
+                     --  of the gnat project there is an entity for which
+                     --  LL.Get_Alias() seems to be erroneously decorated.
+                     --  May be a bug in Xref/ALI: to be investigated???
+
+                     if Present (Alias) then
+                        Set_Alias (E, Alias);
+                     end if;
+
                   end if;
                end Set_Alias;
 

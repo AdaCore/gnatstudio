@@ -44,11 +44,12 @@ package body Docgen3.Atree is
    --  location of Entity.
 
    function Internal_New_Entity
-     (Context : access constant Docgen_Context;
-      Lang    : Language_Access;
-      E       : General_Entity;
-      Loc     : General_Location;
-      Name    : String := "") return Entity_Id;
+     (Context     : access constant Docgen_Context;
+      Lang        : Language_Access;
+      E           : General_Entity;
+      Loc         : General_Location;
+      Name        : String := "";
+      Is_Internal : Boolean := False) return Entity_Id;
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
@@ -736,7 +737,8 @@ package body Docgen3.Atree is
       Lang    : Language_Access;
       E       : General_Entity;
       Loc     : General_Location;
-      Name    : String := "") return Entity_Id
+      Name    : String := "";
+      Is_Internal : Boolean := False) return Entity_Id
    is
       Db : General_Xref_Database renames Context.Database;
 
@@ -974,7 +976,7 @@ package body Docgen3.Atree is
            Kind            => Kind,
 
            Is_Incomplete_Or_Private_Type => False,
-           Is_Internal       => False,
+           Is_Internal       => Is_Internal,
            Is_Tagged_Type    => False,
            Is_Private        => False,
            Is_Partial_View   => False,
@@ -1203,18 +1205,15 @@ package body Docgen3.Atree is
       Language : Language_Access;
       Name     : String) return Entity_Id
    is
-      New_E : Entity_Id;
    begin
-      New_E :=
+      return
         Internal_New_Entity
-          (Context => Context,
-           Lang    => Language,
-           E       => No_General_Entity,
-           Loc     => No_Location,
-           Name    => Name);
-      New_E.Is_Internal := True;
-
-      return New_E;
+          (Context     => Context,
+           Lang        => Language,
+           E           => No_General_Entity,
+           Loc         => No_Location,
+           Name        => Name,
+           Is_Internal => True);
    end New_Internal_Entity;
 
    --------
@@ -1932,7 +1931,8 @@ package body Docgen3.Atree is
       if No (E) then
          return "";
 
-      --  Internal entity (currently used only to represent the standard scope)
+      --  Internal entity are not fully decorated (currently used only to
+      --  represent the standard scope)
 
       elsif E.Is_Internal then
          Append_Line

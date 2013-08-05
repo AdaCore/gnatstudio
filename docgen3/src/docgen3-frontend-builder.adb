@@ -655,16 +655,21 @@ package body Docgen3.Frontend.Builder is
          In_Ada_Lang : constant Boolean :=
                          Lang.all in Language.Ada.Ada_Language'Class;
 
-         procedure Build_New_Entity;
-         --  Local routine which factorize code used to allocate a new
+         function Build_New_Entity return Unique_Entity_Id;
+         --  Local routine which factorizes code used to allocate a new
          --  entity
 
-         procedure Build_New_Entity is
+         function Build_New_Entity return Unique_Entity_Id is
+            Entity : constant Entity_Id :=
+                       New_Entity (Context, Lang, E, E_Loc);
          begin
-            Entity :=
-              new Unique_Entity_Info'
-                    (Entity => New_Entity (Context, Lang, E, E_Loc),
-                     Is_New => True);
+            if No (Entity) then
+               return No_Entity;
+            else
+               return
+                 new Unique_Entity_Info'(Entity => Entity,
+                                         Is_New => True);
+            end if;
          end Build_New_Entity;
 
          --  Local variables
@@ -696,7 +701,7 @@ package body Docgen3.Frontend.Builder is
                     new Unique_Entity_Info'(Entity  => Prev_E,
                                             Is_New  => False);
                else
-                  Build_New_Entity;
+                  Entity := Build_New_Entity;
                end if;
 
                return;
@@ -717,7 +722,9 @@ package body Docgen3.Frontend.Builder is
                Prev_E : Entity_Id;
 
             begin
-               if Kind = E_Include_File then
+               if Kind = E_Include_File
+                 or else Kind = E_Unknown
+               then
                   return;
                end if;
 
@@ -731,9 +738,12 @@ package body Docgen3.Frontend.Builder is
                     new Unique_Entity_Info'(Entity => Prev_E,
                                             Is_New => False);
                else
-                  Build_New_Entity;
+                  Entity := Build_New_Entity;
 
-                  if LL.Get_Location (Get_Entity (Entity)).File /= File then
+                  if Present (Entity)
+                    and then
+                      LL.Get_Location (Get_Entity (Entity)).File /= File
+                  then
                      Set_Ref_File (Get_Entity (Entity), File);
                   end if;
                end if;
@@ -783,7 +793,8 @@ package body Docgen3.Frontend.Builder is
 
       function Present (Entity : Unique_Entity_Id) return Boolean is
       begin
-         return Entity /= No_Entity;
+         return Entity /= No_Entity
+           and then Present (Entity.Entity);
       end Present;
 
       ---------------
@@ -1221,29 +1232,39 @@ package body Docgen3.Frontend.Builder is
             Enter_Scope (E);
 
             for J in Formals'Range loop
-               Get_Unique_Entity
-                 (Formal, Context, File, Formals (J).Parameter);
 
-               --  Formals (J).Kind ???
-               --  Is_Full_View is erroneusly set in formals ???
-               if Present (Formal) then
-                  Set_Kind (Formal, E_Formal);
-                  Set_Scope (Formal, E);
+               --  Handle weird case found processing the file gimple.h of the
+               --  gcc sources: the entity associated with a function is also
+               --  associated with one of its formals. It seems a bug in the
+               --  generated LI file. To be investigated???
 
-                  Append_To_Scope (Current_Scope, Formal);
-                  Append_To_File_Entities (Formal);
-
-                  pragma Assert (Is_New (Formal)
-                                 or else In_Generic_Scope);
-                  --  For generic formals we probably should force the
-                  --  generation of a new entity???
-
-                  Append_To_Map (Formal);
-                  --  Local variables defined in the body of this
-                  --  subprogram.
+               if Get_LL_Entity (E) = Formals (J).Parameter then
+                  null;
 
                else
-                  null;
+                  Get_Unique_Entity
+                    (Formal, Context, File, Formals (J).Parameter);
+
+                  if Present (Formal) then
+                     pragma Assert
+                       (LL.Get_Entity (Get_Entity (Formal))
+                        = Formals (J).Parameter);
+
+                     Set_Kind (Formal, E_Formal);
+                     Set_Scope (Formal, E);
+
+                     Append_To_Scope (Current_Scope, Formal);
+                     Append_To_File_Entities (Formal);
+
+                     pragma Assert
+                       (Is_New (Formal) or else In_Generic_Scope);
+                     --  For generic formals we probably should force the
+                     --  generation of a new entity???
+
+                     Append_To_Map (Formal);
+                     --  Local variables defined in the body of this
+                     --  subprogram.
+                  end if;
                end if;
             end loop;
 
