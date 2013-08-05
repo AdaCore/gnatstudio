@@ -69,6 +69,7 @@ with Src_Editor_View;            use Src_Editor_View;
 with Traces;                     use Traces;
 with Vsearch;                    use Vsearch;
 with UTF8_Utils;
+with GPS.Editors;
 
 package body Src_Contexts is
    use type GNATCOLL.Xref.Visible_Column;
@@ -1982,6 +1983,8 @@ package body Src_Contexts is
       Match_From      : Gtk_Text_Iter;
       Match_Up_To     : Gtk_Text_Iter;
       Found           : Boolean;
+      Cursor_Line     : Editable_Line_Type;
+      Cursor_Column   : Character_Offset_Type;
 
    begin
       Get_Selection_Bounds
@@ -2002,6 +2005,15 @@ package body Src_Contexts is
 
       if Found then
          Push_Current_Editor_Location_In_History (Kernel);
+         Get_Iter_Position
+           (Editor.Get_Buffer, Match_Up_To, Cursor_Line, Cursor_Column);
+
+         Editor.Set_Cursor_Location
+           (Line        => Cursor_Line,
+            Column      => Cursor_Column,
+            Force_Focus => False,
+            Centering   => GPS.Editors.Minimal,
+            Extend_Selection => False);
          Select_Region (Get_Buffer (Editor), Match_Up_To, Match_From);
 
          Center_Cursor (Get_View (Editor));
