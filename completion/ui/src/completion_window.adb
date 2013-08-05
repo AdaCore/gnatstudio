@@ -35,7 +35,6 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Scrollbar;             use Gtk.Scrollbar;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
@@ -65,7 +64,7 @@ with Commands.Interactive;      use Commands.Interactive;
 
 package body Completion_Window is
 
-   Max_Window_Width : constant := 300;
+   Max_Window_Width : constant := 330;
    --  Maximum width of the window, in pixels
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -1874,8 +1873,6 @@ package body Completion_Window is
       end if;
 
       Show_All (Window);
-
-      Hide (Get_Vscrollbar (Window.Explorer.Tree_Scroll));
 
       Grab_Focus (Window.Text);
 
