@@ -1006,6 +1006,7 @@ package body GVD_Module is
          return;
       end if;
 
+      --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Locals (Process.Debugger) & '`',
@@ -1033,6 +1034,7 @@ package body GVD_Module is
          return;
       end if;
 
+      --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Args (Process.Debugger) & '`',
@@ -1060,6 +1062,7 @@ package body GVD_Module is
          return;
       end if;
 
+      --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Registers (Process.Debugger) & '`',
