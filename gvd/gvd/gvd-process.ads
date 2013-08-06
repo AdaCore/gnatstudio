@@ -110,6 +110,9 @@ package GVD.Process is
       --  various filters. It is only initialized in the range
       --  Current_Output'First .. Current_Output_Pos - 1
 
+      Current_Output_Pos      : Natural := 1;
+      --  Position in Current_Output to insert new text.
+
       Exiting                 : Boolean := False;
       --  True if the debugger is exiting.
 
@@ -129,9 +132,6 @@ package GVD.Process is
 
       Has_Temporary_Breakpoint : Boolean := True;
       --  Whether there exists a temporary breakpoint in Breakpoints.
-
-      Current_Output_Pos      : Natural := 1;
-      --  Position in Current_Output to insert new text.
 
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
