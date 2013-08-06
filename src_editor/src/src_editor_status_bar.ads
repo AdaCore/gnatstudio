@@ -24,7 +24,6 @@ with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View; use Src_Editor_View;
 with Gtk.Label;
 with Gtk.Image;
-with Gtk.Separator;
 with Gtk.Handlers;
 with Gtk.Widget;
 
@@ -61,7 +60,6 @@ private
 
    type Frame_Separator is record
       Label     : Gtk.Widget.Gtk_Widget;  --  label or image
-      Separator : Gtk.Separator.Gtk_Separator;
    end record;
 
    type Frames_Array is array (Natural range <>) of Frame_Separator;

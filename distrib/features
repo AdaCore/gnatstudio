@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M806-016 GPS: reorganize editor toolbars (2013-08-06)
+
+  Changed the order of buttons and text in the status bar to avoid
+  flickering when the location is changed or a selection is made, since
+  we now display the amount of selected text.
+
 NF-60-M731-021 GPS: prevent possible locations for views (2013-07-31)
 
   GPS now adds a restriction as to where editors and views can be put.

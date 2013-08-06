@@ -121,7 +121,6 @@ package body Src_Editor_Status_Bar is
       if Bar.Buffer_Info_Frames /= null then
          for J in Bar.Buffer_Info_Frames'Range loop
             Remove (Bar, Bar.Buffer_Info_Frames (J).Label);
-            Remove (Bar, Bar.Buffer_Info_Frames (J).Separator);
          end loop;
 
          Unchecked_Free (Bar.Buffer_Info_Frames);
@@ -175,13 +174,6 @@ package body Src_Editor_Status_Bar is
          else
             Bar.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup ("");
          end if;
-
-         Gtk_New_Vseparator (Bar.Buffer_Info_Frames (J).Separator);
-         Pack_End
-           (Bar,
-            Bar.Buffer_Info_Frames (J).Separator,
-            Expand => False,
-            Fill => False);
 
          Pack_End
            (Bar,
@@ -410,9 +402,9 @@ package body Src_Editor_Status_Bar is
          Lines := Get_Line (The_End) - Get_Line (Start) + 1;
          Offset := Get_Offset (The_End) - Get_Offset (Start);
          Bar.Cursor_Loc_Label.Set_Text
-            (Pos & " ("
+            ("("
              & Image (Integer (Lines), Min_Width => 1) & " lines,"
-             & Offset'Img & " chars)");
+             & Offset'Img & " chars) " & Pos);
       else
          Bar.Cursor_Loc_Label.Set_Text (Pos);
       end if;
@@ -494,63 +486,45 @@ package body Src_Editor_Status_Bar is
       Bar.Box := Box;
 
       --  Avoid resizing the main window whenever a label is changed
-      Set_Resize_Mode (Bar, Resize_Queue);
-
-      --  Line:Column number area...
-      Gtk_New (Event_Box);
-
-      Pack_End (Bar, Event_Box, Expand => False, Fill => False);
-      Gtk_New (Bar.Cursor_Loc_Label, "1:1");
-      Add (Event_Box, Bar.Cursor_Loc_Label);
-
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Bar);
-
-      --  Setup a minimal size for the line:column area, to avoid too much
-      --  resizing.
-
-      declare
-         Layout : constant Pango_Layout :=
-                    Create_Pango_Layout (Bar.Cursor_Loc_Label, "99999:999");
-         Width, Height : Gint;
-      begin
-         Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
-         Get_Pixel_Size (Layout, Width, Height);
-         Set_Size_Request (Event_Box, Width, Height);
-         Unref (Layout);
-      end;
-
-      --  Modified file area...
-      if Show_Modified_Unmodified_In_Status_Bar then
-         Gtk_New_Vseparator (Separator);
-         Pack_End (Bar, Separator, Expand => False, Fill => False);
-
-         Gtk_New (Bar.Modified_Label);
-         Pack_End
-           (Bar, Bar.Modified_Label, Expand => False, Fill => True);
-      end if;
-
-      --  Read only file area...
-      Gtk_New_Vseparator (Separator);
-      Pack_End (Bar, Separator, Expand => False, Fill => False);
-      Gtk_New (Event_Box);
-      Pack_End
-        (Bar, Event_Box, Expand => False, Fill => True);
-      Gtk_New (Bar.Read_Only_Label);
-      Add (Event_Box, Bar.Read_Only_Label);
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event,
-         On_Read_Only_Pressed'Access, Bar);
+      Bar.Set_Resize_Mode (Resize_Queue);
 
       --  Function location area
       Gtk_New (Bar.Function_Label);
-      Set_Ellipsize (Bar.Function_Label, Ellipsize_Start);
-      Set_Alignment (Bar.Function_Label, 0.0, 0.5);
-      Bar.Pack_Start
-        (Bar.Function_Label, Expand => True, Fill => True);
+      Bar.Function_Label.Set_Ellipsize (Ellipsize_Start);
+      Bar.Function_Label.Set_Alignment (0.0, 0.5);
+      Bar.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Bar.Function_Label,
          Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
+
+      Gtk_New_Vseparator (Separator);
+      Bar.Pack_Start (Separator, Expand => False, Fill => False);
+
+      --  Line:Column number area...
+      Gtk_New (Event_Box);
+      Bar.Pack_Start (Event_Box, Expand => False, Fill => True, Padding => 5);
+      Gtk_New (Bar.Cursor_Loc_Label, "1:1");
+      Event_Box.Add (Bar.Cursor_Loc_Label);
+      Object_Return_Callback.Object_Connect
+        (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Bar);
+
+      Gtk_New_Vseparator (Separator);
+      Pack_Start (Bar, Separator, Expand => False, Fill => False);
+
+      --  Modified file area...
+      if Show_Modified_Unmodified_In_Status_Bar then
+         Gtk_New (Bar.Modified_Label);
+         Bar.Pack_Start (Bar.Modified_Label, Expand => False, Fill => False);
+      end if;
+
+      --  Read only file area...
+      Gtk_New (Bar.Read_Only_Label);
+      Gtk_New (Event_Box);
+      Event_Box.Add (Bar.Read_Only_Label);
+      Bar.Pack_Start (Event_Box, Expand => False, Fill => False);
+      Object_Return_Callback.Object_Connect
+        (Event_Box, Signal_Button_Press_Event,
+         On_Read_Only_Pressed'Access, Bar);
 
       Bar.Cursor_Handler := Bar_Callback.Connect
         (Bar.Buffer,
