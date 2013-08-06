@@ -436,7 +436,7 @@ package body GVD.Scripts is
          if Process.Current_Command /= null then
             Set_Return_Value
               (Data,
-               Is_Break_Command
+               Breakpoints_Changed
                  (Process.Debugger, Process.Current_Command.all));
          else
             Set_Return_Value (Data, False);

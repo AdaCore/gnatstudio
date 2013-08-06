@@ -128,8 +128,6 @@ package Debugger.Gdb.C is
       Var_Name : String;
       Value    : String) return String;
 
-   overriding function Start (Debugger : access Gdb_C_Language) return String;
-
    overriding function Get_Language_Debugger_Context
      (Lang : access Gdb_C_Language)
       return Language.Debugger.Language_Debugger_Context;

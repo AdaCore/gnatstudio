@@ -1304,42 +1304,40 @@ package body Debugger.Gdb is
             Str         : constant String :=
                             Send (Debugger, "info line", Mode => Internal);
             Matched     : Match_Array (0 .. 2);
-            File_First  : Natural := 0;
-            File_Last   : Positive;
-            Line        : Natural := 0;
-            First, Last : Natural;
-            Addr_First,
-            Addr_Last   : Natural;
+            File        : Unbounded_String;
+            Line        : Natural;
+            Addr        : Address_Type;
+            pragma Unreferenced (Line, Addr);
 
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
-            Found_File_Name
-              (Debugger,
-               Str, File_First, File_Last, First, Last, Line,
-               Addr_First, Addr_Last);
+            Found_File_Name (Debugger, Str, File, Line, Addr);
 
-            if First /= 0 then
-               Match
-                 (GNAT_Binder_File_Pattern,
-                  Str (File_First .. File_Last), Matched);
+            if Length (File) /= 0 then
+               declare
+                  F     : constant String := To_String (File);
+                  First : Natural;
+               begin
+                  Match (GNAT_Binder_File_Pattern, F, Matched);
 
-               --  If we find a file that looks like a GNAT binder file, load
-               --  the corresponding main file.
+                  --  If we find a file that looks like a GNAT binder file,
+                  --  load the corresponding main file.
 
-               if Matched (0) /= No_Match then
-                  First := Matched (0).First + 2;
+                  if Matched (0) /= No_Match then
+                     First := Matched (0).First + 2;
 
-                  if Str (First) = '_' then
-                     First := First + 1;
+                     if F (First) = '_' then
+                        First := First + 1;
+                     end if;
+
+                     Send
+                       (Debugger,
+                        "info line " &
+                          F (First .. Matched (0).Last) & ":1",
+                        Mode => Internal);
+                     return;
                   end if;
-
-                  Send
-                    (Debugger,
-                     "info line " &
-                     Str (First .. Matched (0).Last) & ":1",
-                     Mode => Internal);
-                  return;
-               end if;
+               end;
             end if;
 
             Send (Debugger, "info line", Mode => Internal);
@@ -1436,15 +1434,7 @@ package body Debugger.Gdb is
    overriding procedure Attach_Process
      (Debugger : access Gdb_Debugger;
       Process  : String;
-      Mode     : Command_Type := Hidden)
-   is
-      File_First  : Natural := 0;
-      File_Last   : Positive;
-      Line        : Natural := 0;
-      First, Last : Natural;
-      Addr_First,
-      Addr_Last   : Natural;
-
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
@@ -1460,7 +1450,11 @@ package body Debugger.Gdb is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str : constant String := Send (Debugger, "up", Mode => Internal);
+            Str  : constant String := Send (Debugger, "up", Mode => Internal);
+            File : Unbounded_String;
+            Line : Natural;
+            Addr : Address_Type;
+            pragma Unreferenced (Line, Addr);
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
 
@@ -1473,12 +1467,9 @@ package body Debugger.Gdb is
 
             exit when Str = "Initial frame selected; you cannot go up.";
 
-            Found_File_Name
-              (Debugger,
-               Str, File_First, File_Last, First, Last, Line,
-               Addr_First, Addr_Last);
+            Found_File_Name (Debugger, Str, File, Line, Addr);
 
-            exit when First /= 0;
+            exit when Length (File) /= 0;
          end;
       end loop;
 
@@ -1599,10 +1590,7 @@ package body Debugger.Gdb is
             if Debugger.Has_Start_Cmd = 1 then
                Send (Debugger, "start " & Module, Mode => Mode);
             else
-               Send
-                 (Debugger,
-                  Start (Language_Debugger_Access (Get_Language (Debugger))) &
-                    " " & Module, Mode => Mode);
+               Send (Debugger, "begin " & Module, Mode => Mode);
             end if;
          end;
 
@@ -1610,10 +1598,7 @@ package body Debugger.Gdb is
          if Debugger.Has_Start_Cmd = 1 then
             Send (Debugger, "start " & Arguments, Mode => Mode);
          else
-            Send
-              (Debugger,
-               Start (Language_Debugger_Access (Get_Language (Debugger))) &
-                 " " & Arguments, Mode => Mode);
+            Send (Debugger, "begin " & Arguments, Mode => Mode);
          end if;
       end if;
 
@@ -1767,7 +1752,7 @@ package body Debugger.Gdb is
    -- Is_Break_Command --
    ----------------------
 
-   overriding function Is_Break_Command
+   overriding function Breakpoints_Changed
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
@@ -1791,7 +1776,7 @@ package body Debugger.Gdb is
         or else Starts_With (Command, "condition")
         or else Starts_With (Command, "set break-command")
         or else Starts_With (Command, "change-break");
-   end Is_Break_Command;
+   end Breakpoints_Changed;
 
    ----------------
    -- Stack_Down --
@@ -2627,12 +2612,9 @@ package body Debugger.Gdb is
    overriding procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
-      Name_First  : out Natural;
-      Name_Last   : out Positive;
-      First, Last : out Natural;
+      Name        : out Unbounded_String;
       Line        : out Natural;
-      Addr_First  : out Natural;
-      Addr_Last   : out Natural)
+      Addr        : out GVD.Types.Address_Type)
    is
       pragma Unreferenced (Debugger);
 
@@ -2644,6 +2626,11 @@ package body Debugger.Gdb is
       Addr_Index : Natural := 3;
 
    begin
+      --  Default values if nothing better is found
+      Name := Null_Unbounded_String;
+      Line := 0;
+      Addr := Invalid_Address;
+
       --  Search for the last file reference in the output. There might be
       --  several of them, for instance when we hit a breakpoint with an
       --  associated 'up' command.
@@ -2657,9 +2644,6 @@ package body Debugger.Gdb is
          Start := Matched (0).Last + 1;
       end loop;
 
-      First := Matched (0).First;
-      Last  := Matched (0).Last;
-
       if Matched (0) = No_Match then
          --  Try another regexp
          --  This regexp takes longer to execute when the output has a lot of
@@ -2668,13 +2652,7 @@ package body Debugger.Gdb is
 
          Match (File_Name_Pattern2, Str, Matched);
 
-         Addr_First := 0;
-         Addr_Last  := 0;
-
          if Matched (0) = No_Match then
-            Name_First := 0;
-            Name_Last  := 1;
-            Line       := 0;
             return;
          end if;
 
@@ -2686,21 +2664,15 @@ package body Debugger.Gdb is
 
          Line_Index := 1;
          Addr_Index := 0;
-
-         First := Matched (0).First;
-         Last  := Matched (0).Last;
       end if;
 
-      if Last < Str'Last and then Str (Last + 1) = ASCII.LF then
-         Last := Last + 1;
-      end if;
-
-      Name_First := Matched (Name_Index).First;
-      Name_Last  := Matched (Name_Index).Last;
+      Set_Unbounded_String
+        (Name, Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
 
       if Addr_Index /= 0 then
-         Addr_First := Matched (Addr_Index).First;
-         Addr_Last  := Matched (Addr_Index).Last;
+         Addr :=
+           String_To_Address
+             (Str (Matched (Addr_Index).First .. Matched (Addr_Index).Last));
       end if;
 
       Line := Natural'Value
@@ -3663,12 +3635,6 @@ package body Debugger.Gdb is
          --  Fill the breakpoints extra information
          if VxWorks_Version (Debugger) = Vx653 then
             Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
-
-         else
-            for J in 1 .. Num_Breakpoints loop
-               Br (J).Scope := No_Scope;
-               Br (J).Action := No_Action;
-            end loop;
          end if;
 
          return Br;
@@ -3791,12 +3757,9 @@ package body Debugger.Gdb is
    overriding function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String
    is
-      File_First  : Natural := 0;
-      File_Last   : Positive;
-      Line        : Natural := 0;
-      First, Last : Natural;
-      Addr_First,
-      Addr_Last   : Natural;
+      File : Unbounded_String;
+      Line : Natural;
+      Addr : Address_Type;
 
    begin
       --  Given that we no longer process graphic events when sending
@@ -3816,15 +3779,12 @@ package body Debugger.Gdb is
       begin
          Restore_Language (Debugger);
          Set_Parse_File_Name (Get_Process (Debugger), True);
-         Found_File_Name
-           (Debugger,
-            Str, File_First, File_Last, First, Last, Line,
-            Addr_First, Addr_Last);
+         Found_File_Name (Debugger, Str, File, Line, Addr);
 
-         if First = 0 then
+         if Length (File) = 0 then
             return File_Name;
          else
-            return Str (File_First .. File_Last);
+            return To_String (File);
          end if;
       end;
    end Find_File;
@@ -4516,5 +4476,60 @@ package body Debugger.Gdb is
          Send (Debugger, "tty " & TTY, Mode => Hidden);
       end if;
    end Set_TTY;
+
+   overriding procedure Filter_Output
+     (Debugger : access Gdb_Debugger;
+      Mode     : GVD.Types.Command_Type;
+      Str      : String;
+      Result   : out Unbounded_String)
+   is
+      pragma Unreferenced (Debugger, Mode);
+      First, Last : Integer := 0;
+   begin
+      --  Strip lines starting with ^Z^Z.
+      Outer_Loop :
+      for J in Str'First + 1 .. Str'Last loop
+         if Str (J) = ASCII.SUB and then Str (J - 1) = ASCII.SUB then
+            First := J - 1;
+
+            for K in J + 1 .. Str'Last loop
+               if Str (K) = ASCII.LF then
+                  Last := K;
+                  exit Outer_Loop;
+               end if;
+            end loop;
+
+            Last := Str'Last;
+            exit Outer_Loop;
+         end if;
+      end loop Outer_Loop;
+
+      if First = 0 then
+         Set_Unbounded_String (Result, Str);
+      else
+         Set_Unbounded_String (Result, Str (Str'First .. First - 1));
+         Append (Result, Str (Last + 1 .. Str'Last));
+      end if;
+   end Filter_Output;
+
+   ---------------------
+   -- Is_Quit_Command --
+   ---------------------
+
+   overriding function Is_Quit_Command
+     (Debugger : access Gdb_Debugger;
+      Command : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
+      Quit     : constant String := "quit     ";
+   begin
+      if Command'Length <= Quit'Length
+        and then Command = Quit (1 .. Command'Length)
+      then
+         return True;
+      else
+         return False;
+      end if;
+   end Is_Quit_Command;
 
 end Debugger.Gdb;

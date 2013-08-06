@@ -46,6 +46,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
+with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
@@ -83,6 +84,7 @@ with Toolchains_Old;             use Toolchains_Old;
 with GNATCOLL.Traces;
 with Traces;                     use Traces;
 with XML_Utils;                  use XML_Utils;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 package body GVD.Process is
    Me      : constant Debug_Handle := Create ("GVD.Process");
@@ -654,12 +656,9 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class;
       Mode    : GVD.Types.Command_Type)
    is
-      File_First  : Natural := 0;
-      File_Last   : Positive;
-      Line        : Natural := 0;
-      First, Last : Natural := 0;
-      Addr_First  : Natural := 0;
-      Addr_Last   : Natural;
+      File : Unbounded_String;
+      Line : Natural;
+      Addr : Address_Type;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -673,32 +672,24 @@ package body GVD.Process is
            (Process.Debugger,
             Process.Current_Output
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
-            File_First, File_Last, First, Last, Line,
-            Addr_First, Addr_Last);
+            File, Line, Addr);
 
-         --  We have to make a temporary copy of the address, since
-         --  the call to Load_File below might modify the current_output
-         --  of the process, and thus make the address inaccessible afterwards.
-
-         if Addr_First /= 0 then
-            Process.Pc := String_To_Address
-              (Process.Current_Output (Addr_First .. Addr_Last));
+         if Addr /= Invalid_Address then
+            Process.Pc := Addr;
          end if;
       end if;
 
       --  Do we have a file name or line number indication?
 
-      if File_First /= 0 then
+      if Length (File) /= 0 then
          --  Override the language currently defined in the editor
 
          declare
             File_Name : constant Virtual_File :=
-                          To_Local
-                            (Create
-                               (+Process.Current_Output
-                                  (File_First .. File_Last),
-                                Get_Nickname (Debug_Server),
-                                Normalize => True));
+              To_Local
+                (Create (+To_String (File),
+                         Get_Nickname (Debug_Server),
+                         Normalize => True));
          begin
             Load_File (Process.Editor_Text, File_Name);
          end;
@@ -721,7 +712,7 @@ package body GVD.Process is
       --  set up correctly.
       --  If there is no breakpoint defined, we force an update.
 
-      if File_First /= 0 then
+      if Length (File) /= 0 then
          if Process.Breakpoints = null then
             Update_Breakpoints (Process, Force => True);
 
@@ -781,7 +772,6 @@ package body GVD.Process is
       Tmp_Str        : GNAT.Strings.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Paren_Count);
-      First, Last    : Natural := 0;
       Last_Match     : Natural := 0;
       Offset         : Natural := 0;
       --  Offset from the start of the buffer to start the matching
@@ -789,6 +779,8 @@ package body GVD.Process is
       Min_Size       : Natural;
       New_Size       : Natural;
       Str_Match      : Boolean;
+      Result         : Unbounded_String;
+      Mode           : GVD.Types.Command_Type;
 
    begin
       --  Replace current output
@@ -899,34 +891,14 @@ package body GVD.Process is
 
       --  Do not show the output if we have an internal or hidden command
 
-      case Get_Command_Mode (Get_Process (Process.Debugger)) is
+      Mode := Get_Command_Mode (Get_Process (Process.Debugger));
+
+      case Mode is
          when User | GVD.Types.Visible =>
-            --  Strip every line starting with ^Z^Z.
-            --  Note that this is GDB specific ???
+            Filter_Output (Process.Debugger, Mode, Str, Result);
 
-            Outer_Loop :
-            for J in Str'First + 1 .. Str'Last loop
-               if Str (J) = ASCII.SUB and then Str (J - 1) = ASCII.SUB then
-                  First := J - 1;
-
-                  for K in J + 1 .. Str'Last loop
-                     if Str (K) = ASCII.LF then
-                        Last := K;
-                        exit Outer_Loop;
-                     end if;
-                  end loop;
-
-                  Last := Str'Last;
-                  exit Outer_Loop;
-               end if;
-            end loop Outer_Loop;
-
-            if First = 0 then
-               Output_Text (Process, Str, Set_Position => True);
-            else
-               Output_Text (Process, Str (Str'First .. First - 1));
-               Output_Text
-                 (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
+            if Length (Result) > 0 then
+               Output_Text (Process, To_String (Result), Set_Position => True);
             end if;
 
          when Hidden | Internal =>
@@ -1054,14 +1026,10 @@ package body GVD.Process is
       Process.Descriptor.Debugger_Name := new String'(Debugger_Name);
 
       case Kind is
-         when Gdb_Type =>
+         when GVD.Types.Gdb =>
             Process.Debugger := new Gdb_Debugger;
-         when others =>
-            null;
-         --  in case other debugger kinds are added:
-         --  when others =>
-         --     Set_Busy (Process, False);
-         --     raise Debugger_Not_Supported;
+         when GVD.Types.Gdb_MI =>
+            Process.Debugger := new Gdb_MI_Debugger;
       end case;
 
       --  Spawn the debugger
@@ -1290,13 +1258,16 @@ package body GVD.Process is
       if Process.Debugger /= null
         and then Get_Process (Process.Debugger) /= null
       then
+         if Command_In_Process (Get_Process (Process.Debugger)) then
+            Set_Busy (Process, False);
+         end if;
+
          Close (Process.Debugger);
       end if;
 
       Process.Debugger := null;
 
       if Process.Timeout_Id /= 0 then
-         Set_Busy (Process, False);
          Glib.Main.Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
       end if;
@@ -1398,7 +1369,6 @@ package body GVD.Process is
       Mode           : Command_Type;
       Output         : String_Access_Access)
    is
-      Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
       Busy            : Boolean;
@@ -1491,9 +1461,7 @@ package body GVD.Process is
       if Looking_At (Lowered_Command, First, "graph") then
          Process_Graph_Command (Debugger, Command, Mode);
 
-      elsif Lowered_Command'Length in 1 .. Quit_String'Length
-        and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
-      then
+      elsif Is_Quit_Command (Debugger.Debugger, Lowered_Command) then
          if Busy
            and then not Separate_Execution_Window (Debugger.Debugger)
          then

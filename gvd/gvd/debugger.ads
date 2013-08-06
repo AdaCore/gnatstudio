@@ -30,7 +30,7 @@ with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package Debugger is
 
@@ -304,30 +304,23 @@ package Debugger is
    procedure Found_File_Name
      (Debugger    : access Debugger_Root;
       Str         : String;
-      Name_First  : out Natural;
-      Name_Last   : out Positive;
-      First, Last : out Natural;
+      Name        : out Unbounded_String;
       Line        : out Natural;
-      Addr_First  : out Natural;
-      Addr_Last   : out Natural);
+      Addr        : out GVD.Types.Address_Type);
    --  Search for a file name, line or address indication in Str.
    --  Str is a string output by the debugger, that might contain a reference
    --  to a specific file and line, that we want to display in the code editor
    --  window.
-   --  On output, the name of the file is Str (Name_First .. Name_Last), and
-   --  the line is Line.
-   --  Set Name_First to 0 if no file name was found, and set Line to 0 if
-   --  no line was found.
-   --  Set Addr_First to 0 if not file name was found.
-   --  First and Last point to the slice of Str that should be stripped from
-   --  the output. They are reset to zero when no slice should be stripped.
-   --  Note that the last reference to a file or a line should be used, in case
-   --  multiple references are found in Str.
+   --  Name is set to Null_Unbounded_String is no filename was found.
+   --  Line is set to 0 is not found.
+   --  Addr is set to Invalid_Address if none found.
    --
    --  Implementation Note: This could have been done by adding another output
    --  filter to the debugger, that would take care of parsing the output.
    --  However, since display a file requires multiple operations, it seemed
    --  better to do it in GVD.Process.Text_Output_Handler.
+   --  Note that the last reference to a file or a line should be used, in case
+   --  multiple references are found in Str.
 
    type Frame_Info_Type is
      (Location_Not_Found,
@@ -495,10 +488,11 @@ package Debugger is
       Command  : String) return Command_Category is abstract;
    --  Return the kind of command associated with Command
 
-   function Is_Break_Command
+   function Breakpoints_Changed
      (Debugger : access Debugger_Root;
-      Command : String) return Boolean is abstract;
-   --  Return True if Command changes the list of breakpoints.
+      Command  : String) return Boolean is abstract;
+   --  Return True if the list of breakpoints has likely changed after
+   --  Command has run.
 
    function Is_Started (Debugger : access Debugger_Root)
      return Boolean;
@@ -936,6 +930,22 @@ package Debugger is
    --  debugged to TTY (e.g "/dev/pts/2").
    --  If not supported, raise Unknown_Command.
 
+   procedure Filter_Output
+     (Debugger : access Debugger_Root;
+      Mode     : GVD.Types.Command_Type;
+      Str      : String;
+      Result   : out Unbounded_String);
+   --  Filter Str from any e.g. internal strings, return filtered output
+   --  in Result. Default procedure returns Str.
+
+   function Is_Quit_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean;
+   --  Return true if Command will close the debugger.
+   --  Default implementation always returns False.
+   --  Note that Command is assumed to be all lower case, the caller is
+   --  responsible for ensuring that.
+
    function Continuation_Line
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger is currently handling a multiple line command.
@@ -962,6 +972,12 @@ private
    package Language_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Language.Language_Access, Language."=");
 
+   type Debugger_State is
+     (Idle,              --  Debugger is waiting for the next command
+      Sync_Wait,         --  Command sent, waiting for result before returning
+      Async_Wait         --  Command sent, waiting for result without blocking
+     );
+
    type Debugger_Root is abstract tagged record
       Kernel       : Kernel_Handle;
       Process      : Process_Proxies.Process_Proxy_Access := null;
@@ -977,10 +993,15 @@ private
       The_Language : Language_Lists.Cursor := Language_Lists.No_Element;
       --  The current language
 
-      Is_Started  : Boolean := False;
+      Is_Started : Boolean := False;
       --  True when the debugger session has been started (ie the execution
       --  of the debuggee has started, and the user can now use commands like
       --  Next, Step, ...)
+
+      State : Debugger_State := Idle;
+      --  State of the debugger and its debuggee.
+      --  See Debugger_State for more details.
+      --  ??? Consider merging Is_Started and State
 
       Command_Queue : Command_Access := null;
       --  The list of commands to be processed after the next call to wait.

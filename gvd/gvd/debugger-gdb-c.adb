@@ -968,18 +968,6 @@ package body Debugger.Gdb.C is
       return "set variable " & Var_Name & " = " & Value;
    end Set_Variable;
 
-   -----------
-   -- Start --
-   -----------
-
-   overriding function Start
-     (Debugger : access Gdb_C_Language) return String
-   is
-      pragma Unreferenced (Debugger);
-   begin
-      return "tbreak main" & ASCII.LF & "run";
-   end Start;
-
    --------------
    -- Get_Name --
    --------------

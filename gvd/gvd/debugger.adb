@@ -22,7 +22,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
+with GNAT.Regpat;                use GNAT.Regpat;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Glib;                       use Glib;
@@ -266,6 +267,7 @@ package body Debugger is
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access)
    is
+      Process    : Visual_Debugger;
       Descriptor : Process_Descriptor_Access;
       Success    : Boolean;
       CL         : Arg_List := Create (Debugger_Name);
@@ -297,6 +299,13 @@ package body Debugger is
 
       Set_Descriptor (Debugger.Process, Descriptor);
       Set_Is_Started (Debugger, False);
+
+      --  Install a callback on the debugger's output file descriptor
+
+      Process := GVD.Process.Convert (Debugger);
+      pragma Assert (Process.Timeout_Id = 0);
+      Process.Timeout_Id := Debugger_Timeout.Timeout_Add
+        (Debug_Timeout, Output_Available'Access, Process);
    end General_Spawn;
 
    ---------------------
@@ -306,22 +315,15 @@ package body Debugger is
    procedure Found_File_Name
      (Debugger    : access Debugger_Root;
       Str         : String;
-      Name_First  : out Natural;
-      Name_Last   : out Positive;
-      First, Last : out Natural;
+      Name        : out Unbounded_String;
       Line        : out Natural;
-      Addr_First  : out Natural;
-      Addr_Last   : out Natural)
+      Addr        : out GVD.Types.Address_Type)
    is
       pragma Unreferenced (Debugger, Str);
    begin
-      First      := 0;
-      Last       := 0;
-      Name_First := 0;
-      Name_Last  := 1;
-      Line       := 0;
-      Addr_First := 0;
-      Addr_Last  := 1;
+      Name := Null_Unbounded_String;
+      Line := 0;
+      Addr := Invalid_Address;
    end Found_File_Name;
 
    ----------------------
@@ -386,9 +388,44 @@ package body Debugger is
    -- Output_Available --
    ----------------------
 
+   Line_Regexp : constant Pattern_Matcher := Compile ("^.*?\n");
+   --  Matches a complete line
+
    function Output_Available (Process : Visual_Debugger) return Boolean is
       Debugger : constant Debugger_Access := Process.Debugger;
       Mode     : Command_Type;
+      Match    : Expect_Match;
+
+      procedure Flush_Async_Output;
+      --  Check whether we got an asynchronous output from the debugger
+      --  and flush all lines found.
+
+      ------------------------
+      -- Flush_Async_Output --
+      ------------------------
+
+      procedure Flush_Async_Output is
+      begin
+         loop
+            Wait (Get_Process (Debugger), Match, Line_Regexp, Timeout => 1);
+            exit when Match <= 0;
+
+            if Active (Me) then
+               declare
+                  S : constant String :=
+                    Strip_CR (Expect_Out (Get_Process (Debugger)));
+               begin
+                  --  Reduce noise in output
+                  if S /= (1 => ASCII.LF) then
+                     Trace (Me, "async output: " & S);
+                  end if;
+               end;
+            end if;
+
+            --  Should we do anything more here??? Note that filters
+            --  have already been called automatically by GNAT.Expect
+         end loop;
+      end Flush_Async_Output;
 
    begin
       --  Get everything that is available (and transparently call the
@@ -405,11 +442,29 @@ package body Debugger is
          return False;
       end if;
 
+      case Debugger.State is
+         when Async_Wait =>
+            --  Continue processing below
+            null;
+
+         when Idle =>
+            Flush_Async_Output;
+            return True;
+
+         when Sync_Wait =>
+            --  In therory this shouldn't happen since calls are blocking
+            --  and this subprogram will never get a chance to be called
+            return True;
+      end case;
+
+      pragma Assert (Debugger.State = Async_Wait);
+
       if Wait_Prompt (Debugger, Timeout => 1) then
          Debugger.Continuation_Line := False;
-         Glib.Main.Remove (Process.Timeout_Id);
-         Process.Timeout_Id := 0;
          Mode := Get_Command_Mode (Get_Process (Debugger));
+
+         Debugger.State := Idle;
+         Flush_Async_Output;
 
          --  Put back the standard cursor
 
@@ -425,6 +480,7 @@ package body Debugger is
 
          declare
             Current_Command : constant String := Get_Command (Process);
+            Bp_Changed      : Boolean;
             Result          : Boolean;
             pragma Unreferenced (Result);
 
@@ -434,10 +490,14 @@ package body Debugger is
             if Process_Command (Debugger) then
                --  ??? register if needed for some of the hooks
                --  before returning
-               return False;
+               return True;
             end if;
 
             Final_Post_Process (Process, Mode);
+
+            --  Compute Bp_Changed before running hooks and e.g. running
+            --  other debugger commands as a side effect.
+            Bp_Changed := Breakpoints_Changed (Debugger, Current_Command);
 
             case Command_Kind (Debugger, Current_Command) is
                when Load_Command =>
@@ -451,21 +511,16 @@ package body Debugger is
                   null;
             end case;
 
-            Update_Breakpoints
-              (Process,
-               Force => Is_Break_Command (Debugger, Current_Command));
+            Update_Breakpoints (Process, Force => Bp_Changed);
 
             --  In case a command has been queued while handling the signals
             --  and breakpoints above.
 
             Result := Process_Command (Debugger);
          end;
-
-         return False;
-
-      else
-         return True;
       end if;
+
+      return True;
 
    exception
       when E : others =>
@@ -581,21 +636,21 @@ package body Debugger is
      (Debugger : access Debugger_Root'Class;
       Mode     : Command_Type)
    is
-      Process  : Visual_Debugger;
-      Kind     : Command_Category;
-      Is_Break : Boolean;
-      Result   : Boolean;
+      Process    : Visual_Debugger;
+      Kind       : Command_Category;
+      Bp_Changed : Boolean;
+      Result     : Boolean;
       pragma Unreferenced (Result);
 
    begin
+      Process := GVD.Process.Convert (Debugger);
+
       --  See also Output_Available for similar handling.
       Set_Command_In_Process (Get_Process (Debugger), False);
 
-      Process := GVD.Process.Convert (Debugger);
-
       if Process /= null then
          Kind := Command_Kind (Debugger, Process.Current_Command.all);
-         Is_Break := Is_Break_Command
+         Bp_Changed := Breakpoints_Changed
            (Debugger, Process.Current_Command.all);
 
          Free (Process.Current_Command);
@@ -624,7 +679,7 @@ package body Debugger is
                   null;
             end case;
 
-            Update_Breakpoints (Process, Force => Is_Break);
+            Update_Breakpoints (Process, Force => Bp_Changed);
          end if;
 
          if Mode >= Visible then
@@ -699,11 +754,14 @@ package body Debugger is
 
          case Mode is
             when Invisible_Command =>
+               Debugger.State := Sync_Wait;
+
                if Last > Cmd'Last and then Wait_For_Prompt then
                   --  Only wait for the prompt on the last command when
                   --  there are multiple commands separated by ASCII.LF
                   Wait_Prompt (Debugger_Access (Debugger));
                   Debugger.Continuation_Line := False;
+                  Debugger.State := Idle;
                   Send_Internal_Post (Debugger, Mode);
                end if;
 
@@ -712,19 +770,17 @@ package body Debugger is
                   if not Async_Commands then
                      --  Synchronous handling of commands, simple case
 
+                     Debugger.State := Sync_Wait;
                      Wait_Prompt (Debugger_Access (Debugger));
                      Debugger.Continuation_Line := False;
+                     Debugger.State := Idle;
                      Send_Internal_Post (Debugger, Mode);
 
                   else
-                     --  Asynchronous handling of commands, install a
-                     --  callback on the debugger's output file descriptor.
+                     --  Asynchronous handling of commands, done in
+                     --  Output_Available.
 
-                     Process := GVD.Process.Convert (Debugger);
-                     pragma Assert (Process.Timeout_Id = 0);
-
-                     Process.Timeout_Id := Debugger_Timeout.Timeout_Add
-                       (Debug_Timeout, Output_Available'Access, Process);
+                     Debugger.State := Async_Wait;
                   end if;
 
                else
@@ -1339,5 +1395,32 @@ package body Debugger is
    begin
       return Vx_None;
    end VxWorks_Version;
+
+   -------------------
+   -- Filter_Output --
+   -------------------
+
+   procedure Filter_Output
+     (Debugger : access Debugger_Root;
+      Mode     : GVD.Types.Command_Type;
+      Str      : String;
+      Result   : out Unbounded_String)
+   is
+      pragma Unreferenced (Debugger, Mode);
+   begin
+      Set_Unbounded_String (Result, Str);
+   end Filter_Output;
+
+   ---------------------
+   -- Is_Quit_Command --
+   ---------------------
+
+   function Is_Quit_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean is
+      pragma Unreferenced (Debugger, Command);
+   begin
+      return False;
+   end Is_Quit_Command;
 
 end Debugger;

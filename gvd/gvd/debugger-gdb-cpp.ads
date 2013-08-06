@@ -128,9 +128,6 @@ package Debugger.Gdb.Cpp is
       Var_Name : String;
       Value    : String) return String;
 
-   overriding function Start
-     (Debugger : access Gdb_Cpp_Language) return String;
-
    overriding function Get_Language_Debugger_Context
      (Lang : access Gdb_Cpp_Language)
       return Language.Debugger.Language_Debugger_Context;

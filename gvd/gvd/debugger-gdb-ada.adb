@@ -1138,18 +1138,6 @@ package body Debugger.Gdb.Ada is
       return "set variable " & Var_Name & " := " & Value;
    end Set_Variable;
 
-   -----------
-   -- Start --
-   -----------
-
-   overriding function Start
-     (Debugger : access Gdb_Ada_Language) return String
-   is
-      pragma Unreferenced (Debugger);
-   begin
-      return "begin";
-   end Start;
-
    ---------------------------
    -- Can_Tooltip_On_Entity --
    ---------------------------

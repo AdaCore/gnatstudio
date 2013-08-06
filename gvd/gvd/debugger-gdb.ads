@@ -73,12 +73,9 @@ package Debugger.Gdb is
    overriding procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
-      Name_First  : out Natural;
-      Name_Last   : out Positive;
-      First, Last : out Natural;
+      Name        : out Unbounded_String;
       Line        : out Natural;
-      Addr_First  : out Natural;
-      Addr_Last   : out Natural);
+      Addr        : out GVD.Types.Address_Type);
 
    overriding procedure Found_Frame_Info
      (Debugger    : access Gdb_Debugger;
@@ -191,7 +188,7 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Command_Category;
 
-   overriding function Is_Break_Command
+   overriding function Breakpoints_Changed
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean;
 
@@ -392,6 +389,16 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return Boolean;
 
    overriding procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String);
+
+   overriding procedure Filter_Output
+     (Debugger : access Gdb_Debugger;
+      Mode     : GVD.Types.Command_Type;
+      Str      : String;
+      Result   : out Unbounded_String);
+
+   overriding function Is_Quit_Command
+     (Debugger : access Gdb_Debugger;
+      Command : String) return Boolean;
 
 private
 

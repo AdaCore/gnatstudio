@@ -187,26 +187,9 @@ package body Debugger.Gdb.Cpp is
       Temporary : Boolean := False;
       Unhandled : Boolean := False) return String
    is
-      pragma Unreferenced (Debugger, Unhandled);
-
-      function Temp (S : String) return String;
-      --  Take into account Temporary and return appropriate gdb command
-
-      function Temp (S : String) return String is
-      begin
-         if Temporary then
-            return "t" & S;
-         else
-            return S;
-         end if;
-      end Temp;
-
+      pragma Unreferenced (Debugger, Unhandled, Name);
    begin
-      if Name = "" then
-         return Temp ("break __raise_exception");
-      else
-         return Temp ("catch " & Name);
-      end if;
+      return (if Temporary then "t" else "") & "catch throw";
    end Break_Exception;
 
    ----------------
@@ -631,20 +614,6 @@ package body Debugger.Gdb.Cpp is
    begin
       return Set_Variable (Lang_C'Access, Var_Name, Value);
    end Set_Variable;
-
-   -----------
-   -- Start --
-   -----------
-
-   overriding function Start
-     (Debugger : access Gdb_Cpp_Language) return String
-   is
-      pragma Unreferenced (Debugger);
-
-      Lang_C : aliased Gdb_C_Language;
-   begin
-      return Start (Lang_C'Access);
-   end Start;
 
    --------------
    -- Get_Name --
