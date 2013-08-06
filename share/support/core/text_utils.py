@@ -297,6 +297,9 @@ def lines_with_digit (buffer, loc, max=None):
 
    return max
 
+#  Create /Edit/Rectangle menu in correct position
+GPS.Menu.create("/Edit/Rectangle", ref="Redo", add_before=0)
+
 @interactive ("Editor", "Source editor", "/Edit/Rectangle/Serialize")
 @with_save_excursion
 def serialize (increment=1):
