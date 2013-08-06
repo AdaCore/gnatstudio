@@ -17,11 +17,9 @@
 
 with Ada.Strings.Hash;
 
-with GNAT.OS_Lib;
-with GNAT.Strings;                     use GNAT.Strings;
-
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -30,6 +28,7 @@ with GPS.Scripts;
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
+   Me : constant Trace_Handle := Create ("CORE_KERNEL");
 
    -----------------------
    -- Get_Doc_Directory --
@@ -106,25 +105,17 @@ package body GPS.Core_Kernels is
    -------------
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class) is
-      Valgrind : String_Access := GNAT.OS_Lib.Getenv ("VALGRIND");
    begin
-      --  Most of the rest if for the sake of memory leaks checkin, and since
-      --  it can take a while for big projects we do not do this in normal
-      --  times.
-      if Valgrind.all /= ""
-        and then Valgrind.all /= "no"
-      then
+      Trace (Me, "MANU Destroying Core kernel");
 
-         GNATCOLL.Scripts.Destroy (Self.Scripts);
+      GNATCOLL.Scripts.Destroy (Self.Scripts);
 
-         --  Destroy the entities database after we have finalized the
-         --  scripting languages, in case some class instances were still
-         --  owning references to entities
+      --  Destroy the entities database after we have finalized the
+      --  scripting languages, in case some class instances were still
+      --  owning references to entities
 
-         Standard.Xref.Destroy (Self.Database);
-      end if;
-
-      Free (Valgrind);
+      Trace (Me, "MANU Closing xref database");
+      Standard.Xref.Destroy (Self.Database);
 
       Projects.Destroy (Self.Registry);
 

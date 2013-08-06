@@ -27,6 +27,7 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
@@ -2557,12 +2558,23 @@ package body Xref is
    procedure Destroy (Self : in out General_Xref_Database) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (General_Xref_Database_Record'Class, General_Xref_Database);
+      Valgrind : GNAT.Strings.String_Access;
    begin
       if Active (SQLITE) then
          Self.Xref.Free;
          Self.Xref := null;
       else
-         Old_Entities.Destroy (Self.Entities);
+         --  Most of the rest if for the sake of memory leaks checkin, and
+         --  since it can take a while for big projects we do not do this
+         --  in normal times.
+
+         Valgrind := GNAT.OS_Lib.Getenv ("VALGRIND");
+         if Valgrind.all /= ""
+           and then Valgrind.all /= "no"
+         then
+            Old_Entities.Destroy (Self.Entities);
+         end if;
+         Free (Valgrind);
       end if;
 
       Free (Self.Constructs);

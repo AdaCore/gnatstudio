@@ -1141,7 +1141,7 @@ package body GPS.Kernel is
 
       --  Handle.Symbols.Display_Stats;
 
-      GPS.Core_Kernels.Destroy (Handle);
+      GPS.Core_Kernels.Destroy (Core_Kernel_Record (Handle.all)'Access);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
