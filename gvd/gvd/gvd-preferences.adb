@@ -90,9 +90,9 @@ package body GVD.Preferences is
         (Manager => Prefs,
          Name    => XML_Prefix & "Debugger-Kind",
          Label   => -"Debugger Kind",
-         Page    => "",
+         Page    => General,
          Doc     => -"Kind of debugger spawned by GPS",
-         Default => GVD.Types.Gdb_Type);
+         Default => GVD.Types.Gdb);
 
       Editor_Show_Line_With_Code := Create
         (Manager   => Prefs,
