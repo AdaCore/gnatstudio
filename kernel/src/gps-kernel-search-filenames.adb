@@ -312,7 +312,8 @@ package body GPS.Kernel.Search.Filenames is
          Result.Score := 100 * Result.Score - File.Base_Name'Length;
          Self.Adjust_Score (Result);
 
-         return False;  --  Stop looking
+         return False;  --  return that result and wait till next call to Next
+                        --  to keep looking
       end Callback;
 
       F : Virtual_File;

@@ -965,6 +965,26 @@ package body GPS.Search is
           Kind            => Kind);
    end Build;
 
+   ------------------------
+   -- Get_Case_Sensitive --
+   ------------------------
+
+   function Get_Case_Sensitive
+     (Pattern    : not null access Search_Pattern'Class) return Boolean is
+   begin
+      return Pattern.Case_Sensitive;
+   end Get_Case_Sensitive;
+
+   --------------------
+   -- Get_Whole_Word --
+   --------------------
+
+   function Get_Whole_Word
+     (Pattern    : not null access Search_Pattern'Class) return Boolean is
+   begin
+      return Pattern.Whole_Word;
+   end Get_Whole_Word;
+
    --------------
    -- Get_Kind --
    --------------

@@ -117,7 +117,11 @@ package GPS.Search is
    function Get_Text
       (Pattern    : not null access Search_Pattern'Class) return String;
    function Get_Kind
-      (Pattern    : not null access Search_Pattern'Class) return Search_Kind;
+     (Pattern    : not null access Search_Pattern'Class) return Search_Kind;
+   function Get_Case_Sensitive
+     (Pattern    : not null access Search_Pattern'Class) return Boolean;
+   function Get_Whole_Word
+     (Pattern    : not null access Search_Pattern'Class) return Boolean;
    --  Return the text searched by the user.
 
    function Start
@@ -201,7 +205,7 @@ package GPS.Search is
       Short    : GNAT.Strings.String_Access;
       Long     : GNAT.Strings.String_Access;
       Id       : GNAT.Strings.String_Access;
-      Provider : not null access Search_Provider'Class;  --  do not free
+      Provider : access Search_Provider'Class;  --  do not free
    end record;
    type Search_Result_Access is access all Search_Result'Class;
    --  This type describes a match, as would be displayed in a dialog or a

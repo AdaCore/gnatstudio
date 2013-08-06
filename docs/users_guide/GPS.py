@@ -8716,6 +8716,37 @@ class Search(object):
 
     Iterations are meant to be done in the background, so they are split into
     small units.
+
+    It is possible to create your own search providers (which would be fully
+    included in the omni-search of GPS) by subclassing this class, as in::
+
+          class MySearchResult(GPS.Search_Result):
+              def __init__(self, str):
+                  self.short = str
+                  self.long = "Long description: %s" % str
+
+              def show(self):
+                  print "Showing a search result: '%s'" % self.short
+
+          class MySearchProvider(GPS.Search):
+              def __init__(self):
+                  # Override default so that we can build instances of our class
+                  pass
+
+              def set_pattern(self, pattern, flags):
+                  self.pattern = pattern
+                  self.flags = flags
+                  self.current = 0
+
+              def get(self):
+                  if self.current == 3:
+                      return (False, None)   # no more matches
+                  self.current += 1
+                  return (True,  # might have more matches
+                          MySearchResult("<b>match</b> %d for '%s' (flags=%d)"
+                                         % (self.current, self.pattern, self.flags)))
+
+          GPS.Search.register("MySearch", MySearchProvider())
     """
 
     FUZZY = 1

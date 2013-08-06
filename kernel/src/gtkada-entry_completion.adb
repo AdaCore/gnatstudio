@@ -464,6 +464,7 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.On_Activate (On_Entry_Activate'Access, Self);
       Self.GEntry.Set_Placeholder_Text ("search");
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
+      Self.GEntry.Set_Name (String (Name));
 
       if Completion_In_Popup then
          Gtk_New (Self.Popup, Window_Popup);

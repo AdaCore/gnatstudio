@@ -63,6 +63,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Histories;                use Histories;
 with System;
+with System.Address_Image;
 
 package body GPS.Search.GUI is
    Me : constant Trace_Handle := Create ("SEARCH");
@@ -179,39 +180,17 @@ package body GPS.Search.GUI is
    -- Scripts --
    -------------
 
-   type Provider_Property_Record is new Instance_Property_Record with record
-      Provider : Search_Provider_Access;
-      Pattern  : Search_Pattern_Access;
-   end record;
-   type Provider_Property is access all Provider_Property_Record'Class;
-   overriding procedure Destroy (Prop : in out Provider_Property_Record);
-
-   type Result_Property_Record is new Instance_Property_Record with record
-      Result : Search_Result_Access;
-   end record;
-   type Result_Property is access all Result_Property_Record'Class;
-   overriding procedure Destroy (Prop : in out Result_Property_Record);
-
-   function Get_Search_Provider
-     (Data : Callback_Data'Class; Num : Positive)
-      return Search_Provider_Access;
-   function Get_Search_Result
-     (Data : Callback_Data'Class; Num : Positive)
-      return Search_Result_Access;
-   --  Retrieve the provider or result information from the given parameter
+   type Flags is mod 2 ** 16;
+   Fuzzy          : constant Flags := 1;
+   Substrings     : constant Flags := 2;
+   Regexp         : constant Flags := 4;
+   Case_Sensitive : constant Flags := 8;
+   Whole_Word     : constant Flags := 16;
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when the preferences change
-
-   procedure Search_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   procedure Search_Result_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Handlers for the shell commands
 
    function Create_Search_Instance
      (Script   : not null access Scripting_Language_Record'Class;
@@ -223,11 +202,73 @@ package body GPS.Search.GUI is
       return Class_Instance;
    --  Create a new class instance for GPS.Search or GPS.Search_Result
 
+   function Get_Search_Provider
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Provider_Access;
+   function Get_Search_Result
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Result_Access;
+   --  Retrieve the provider or result information from the given parameter
+
+   procedure Search_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   procedure Search_Result_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   procedure Search_Result_Setters
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handlers for the shell commands
+
+   type Python_Search_Provider is new Kernel_Search_Provider with record
+      Name : GNAT.Strings.String_Access;
+      Inst : aliased Instance_List;
+   end record;
+   type Python_Search_Provider_Access
+      is access all Python_Search_Provider'Class;
+   overriding procedure Free (Self : in out Python_Search_Provider);
+   overriding procedure Set_Pattern
+     (Self    : not null access Python_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding procedure Next
+     (Self     : not null access Python_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean);
+   overriding function Display_Name
+     (Self     : not null access Python_Search_Provider) return String
+     is (Self.Name.all);
+
+   type Python_Search_Result is new Kernel_Search_Result with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Python_Search_Result;
+      Give_Focus : Boolean);
+
    procedure Set_Search_Pattern
      (Data   : Callback_Data'Class;
       Num    : Positive;
       Search : Search_Pattern_Access);
    --  Update the search pattern stored in the instance's data
+
+   type Provider_Property_Record is new Instance_Property_Record with record
+      Provider : Search_Provider_Access;
+      Pattern  : Search_Pattern_Access;
+   end record;
+   type Provider_Property is access all Provider_Property_Record'Class;
+   overriding procedure Destroy (Prop : in out Provider_Property_Record);
+   overriding function Get_Instances
+     (Self : Provider_Property_Record) return Instance_List_Access;
+
+   type Result_Property_Record is new Instance_Property_Record with record
+      Result : Search_Result_Access;
+   end record;
+   type Result_Property is access all Result_Property_Record'Class;
+   overriding procedure Destroy (Prop : in out Result_Property_Record);
+   overriding function Get_Instances
+     (Self : Result_Property_Record) return Instance_List_Access;
 
    -------------------
    -- Documentation --
@@ -844,8 +885,20 @@ package body GPS.Search.GUI is
    is
       Search_Class : constant Class_Type :=
         New_Class (Get_Kernel (Script), "Search");
-      Inst : constant Class_Instance := New_Instance (Script, Search_Class);
+      Inst : Class_Instance;
    begin
+      if Provider = null then
+         return No_Class_Instance;
+      end if;
+
+      if Provider.all in Python_Search_Provider'Class then
+         Inst := Get (Python_Search_Provider (Provider.all).Inst, Script);
+         if Inst /= No_Class_Instance then
+            return Inst;
+         end if;
+      end if;
+
+      Inst := New_Instance (Script, Search_Class);
       Set_Data
         (Inst, "Search",
          Provider_Property_Record'
@@ -865,10 +918,21 @@ package body GPS.Search.GUI is
    is
       Result_Class : constant Class_Type :=
         New_Class (Get_Kernel (Script), "Search_Result");
-      Inst : constant Class_Instance := New_Instance (Script, Result_Class);
+      Inst : Class_Instance := No_Class_Instance;
    begin
-      Set_Data
-        (Inst, "Search_Result", Result_Property_Record'(Result => Result));
+      if Result /= null then
+         if Result.all in Python_Search_Result'Class then
+            Inst := Get (Python_Search_Result (Result.all).Inst, Script);
+            if Inst /= No_Class_Instance then
+               return Inst;
+            end if;
+         end if;
+
+         Inst := New_Instance (Script, Result_Class);
+         Set_Data
+           (Inst, "Search_Result", Result_Property_Record'(Result => Result));
+      end if;
+
       return Inst;
    end Create_Search_Result_Instance;
 
@@ -877,7 +941,8 @@ package body GPS.Search.GUI is
    -------------------------
 
    function Get_Search_Provider
-     (Data : Callback_Data'Class; Num : Positive) return Search_Provider_Access
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Provider_Access
    is
       Search_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search");
@@ -904,15 +969,40 @@ package body GPS.Search.GUI is
    is
       Result_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search_Result");
-      Inst : constant Class_Instance := Nth_Arg (Data, Num, Result_Class);
+      Inst : constant Class_Instance :=
+        Nth_Arg (Data, Num, Result_Class, Allow_Null => True);
       Props : Result_Property;
    begin
       if Inst /= No_Class_Instance then
          Props := Result_Property
            (Instance_Property'(Get_Data (Inst, "Search_Result")));
-         if Props /= null then
-            return Props.Result;
+
+         if Props = null then
+            Set_Data
+              (Inst, "Search_Result", Result_Property_Record'(Result => null));
+            Props := Result_Property
+              (Instance_Property'(Get_Data (Inst, "Search_Result")));
          end if;
+
+         if Props.Result = null then
+            --  Always ensure we create a proper search result for Ada.
+
+            Props.Result := new Python_Search_Result'
+              (Kernel   => Get_Kernel (Data),
+               Inst     => Null_Instance_List,
+               Score    => 100,
+               Short    => new String'(""),
+               Long     => null,
+               Id       => new String'(""),
+               Provider => null);
+            --  Provider is set in the handler for "next", before returning
+            --  the type to Ada.
+
+            Set (Python_Search_Result (Props.Result.all).Inst,
+                 Get_Script (Inst), Inst);
+         end if;
+
+         return Props.Result;
       end if;
       return null;
    end Get_Search_Result;
@@ -956,15 +1046,53 @@ package body GPS.Search.GUI is
       end if;
    end Destroy;
 
+   -------------------
+   -- Get_Instances --
+   -------------------
+
+   overriding function Get_Instances
+     (Self : Result_Property_Record) return Instance_List_Access is
+   begin
+      if Self.Result /= null
+        and then Self.Result.all in Python_Search_Result'Class
+      then
+         return Python_Search_Result (Self.Result.all).Inst'Access;
+      else
+         return null;
+      end if;
+   end Get_Instances;
+
+   -------------------
+   -- Get_Instances --
+   -------------------
+
+   overriding function Get_Instances
+     (Self : Provider_Property_Record) return Instance_List_Access is
+   begin
+      if Self.Provider /= null
+        and then Self.Provider.all in Python_Search_Provider'Class
+      then
+         return Python_Search_Provider (Self.Provider.all).Inst'Access;
+      else
+         return null;
+      end if;
+   end Get_Instances;
+
    -------------
    -- Destroy --
    -------------
 
    overriding procedure Destroy (Prop : in out Result_Property_Record) is
+      Res : Search_Result_Access := Prop.Result;
    begin
-      Trace (Me, "Freeing search_result");
-      if Prop.Result /= null then
-         Free (Prop.Result);
+      if Res /= null then
+         --  Freeing the result will in turn free the instance, which will
+         --  again call this function. So make this procedure reentrant.
+         Prop.Result := null;
+
+         Trace (Me, "Freeing search_result "
+                & System.Address_Image (Res.all'Address));
+         Free (Res);
       end if;
    end Destroy;
 
@@ -976,12 +1104,6 @@ package body GPS.Search.GUI is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      type Flags is mod 2 ** 16;
-      Fuzzy          : constant Flags := 1;
-      --  Substrings     : constant Flags := 2;
-      Regexp         : constant Flags := 4;
-      Case_Sensitive : constant Flags := 8;
-      Whole_Word     : constant Flags := 16;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Use GPS.Search.lookup to create instances");
@@ -1026,15 +1148,9 @@ package body GPS.Search.GUI is
 
                Set_Return_Value_As_List (Data, 2);
                Set_Return_Value (Data, Has_Next);
-
-               if Result /= null then
-                  Set_Return_Value
-                    (Data,
-                     Create_Search_Result_Instance
-                       (Get_Script (Data), Result));
-               else
-                  Set_Return_Value (Data, No_Class_Instance);
-               end if;
+               Set_Return_Value
+                 (Data,
+                  Create_Search_Result_Instance (Get_Script (Data), Result));
             end if;
          end;
 
@@ -1047,6 +1163,21 @@ package body GPS.Search.GUI is
                Set_Return_Value
                  (Data, Create_Search_Instance (Get_Script (Data), Provider));
             end if;
+         end;
+
+      elsif Command = "register" then
+         declare
+            Name : constant String := Nth_Arg (Data, 1);
+            Inst : constant Class_Instance := Nth_Arg (Data, 2);
+            Provider : Python_Search_Provider_Access;
+         begin
+            Provider := new Python_Search_Provider;
+            Provider.Name := new String'(Name);
+            Provider.Inst := Null_Instance_List;
+            Set (Provider.Inst, Get_Script (Inst), Inst);
+            Provider.Kernel := Get_Kernel (Data);
+
+            Registry.Register (Provider);
          end;
       end if;
    end Search_Commands_Handler;
@@ -1102,6 +1233,169 @@ package body GPS.Search.GUI is
          end;
       end if;
    end Search_Result_Commands_Handler;
+
+   ---------------------------
+   -- Search_Result_Setters --
+   ---------------------------
+
+   procedure Search_Result_Setters
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+   begin
+      if Command = "short" then
+         declare
+            Result : constant Search_Result_Access :=
+              Get_Search_Result (Data, 1);
+         begin
+            if Result.Id /= Result.Short
+              and then Result.Short /= Result.Long
+            then
+               Free (Result.Short);
+            end if;
+
+            Result.Short := new String'(Nth_Arg (Data, 2));
+         end;
+
+      elsif Command = "long" then
+         declare
+            Result : constant Search_Result_Access :=
+              Get_Search_Result (Data, 1);
+         begin
+            if Result.Id /= Result.Long
+              and then Result.Short /= Result.Long
+            then
+               Free (Result.Long);
+            end if;
+
+            Result.Long := new String'(Nth_Arg (Data, 2));
+         end;
+      end if;
+   end Search_Result_Setters;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Python_Search_Provider) is
+   begin
+      Free (Self.Name);
+   end Free;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+     (Self    : not null access Python_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last)
+   is
+      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      Result : Class_Instance;
+      pragma Unreferenced (Limit, Result);
+   begin
+      for J in Inst'Range loop
+         if Inst (J) /= No_Class_Instance then
+
+            declare
+               Sub  : constant Subprogram_Type :=
+                 Get_Method (Inst (J), "set_pattern");
+               Args : Callback_Data'Class :=
+                 Create (Get_Script (Inst (J)), 2);
+               P    : Flags := 0;
+            begin
+               Set_Nth_Arg (Args, 1, Pattern.Get_Text);
+
+               case Pattern.Get_Kind is
+               when GPS.Search.Full_Text =>
+                  P := P or Flags'(Substrings);
+               when GPS.Search.Regexp =>
+                  P := P or Flags'(Regexp);
+               when GPS.Search.Fuzzy | GPS.Search.Approximate =>
+                  P := P or Flags'(Fuzzy);
+               end case;
+
+               if Pattern.Get_Case_Sensitive then
+                  P := P or Flags'(Case_Sensitive);
+               end if;
+
+               if Pattern.Get_Whole_Word then
+                  P := P or Flags'(Whole_Word);
+               end if;
+
+               Set_Nth_Arg (Args, 2, Natural (P));
+
+               Result := Execute (Sub, Args);
+               Free (Args);
+            end;
+            exit;
+         end if;
+      end loop;
+   end Set_Pattern;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self     : not null access Python_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean)
+   is
+      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+   begin
+      for J in Inst'Range loop
+         if Inst (J) /= No_Class_Instance then
+            declare
+               Sub : constant Subprogram_Type := Get_Method (Inst (J), "get");
+               Args : Callback_Data'Class := Create (Get_Script (Inst (J)), 0);
+               List : List_Instance'Class := Execute (Sub, Args);
+            begin
+               Has_Next := Nth_Arg (List, 1);
+               Result := Get_Search_Result (List, 2);
+
+               if Result /= null then
+                  Result.Provider := Search_Provider_Access (Self);
+                  Self.Adjust_Score (Result);
+               end if;
+
+               Free (List);
+               Free (Args);
+            end;
+            exit;
+         end if;
+      end loop;
+   end Next;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Python_Search_Result;
+      Give_Focus : Boolean)
+   is
+      pragma Unreferenced (Give_Focus);
+      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      Sub  : Subprogram_Type;
+   begin
+      for J in Inst'Range loop
+         if Inst (J) /= No_Class_Instance then
+            Sub := Get_Method (Inst (J), "show");
+            if Sub /= null then
+               declare
+                  Args : Callback_Data'Class :=
+                    Create (Get_Script (Inst (J)), 0);
+                  B    : constant Boolean := Execute (Sub, Args);
+                  pragma Unreferenced (B);
+               begin
+                  Free (Args);
+               end;
+            end if;
+         end if;
+      end loop;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1223,12 +1517,19 @@ package body GPS.Search.GUI is
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "next",
+        (Kernel.Scripts, "get",
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
         (Kernel.Scripts, "lookup",
          Params        => (1 => Param ("name")),
+         Static_Method => True,
+         Class         => Search_Class,
+         Handler       => Search_Commands_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "register",
+         Params        => (1 => Param ("name"),
+                           2 => Param ("provider")),
          Static_Method => True,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);
@@ -1245,12 +1546,12 @@ package body GPS.Search.GUI is
         (Kernel.Scripts, "short",
           Class   => Search_Result_Class,
           Getter  => Search_Result_Commands_Handler'Access,
-          Setter  => null);
+          Setter  => Search_Result_Setters'Access);
       Register_Property
         (Kernel.Scripts, "long",
           Class   => Search_Result_Class,
           Getter  => Search_Result_Commands_Handler'Access,
-          Setter  => null);
+          Setter  => Search_Result_Setters'Access);
    end Register_Module;
 
 end GPS.Search.GUI;
