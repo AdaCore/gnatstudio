@@ -497,9 +497,6 @@ package body Src_Editor_Status_Bar is
         (Bar.Function_Label,
          Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
 
-      Gtk_New_Vseparator (Separator);
-      Bar.Pack_Start (Separator, Expand => False, Fill => False);
-
       --  Line:Column number area...
       Gtk_New (Event_Box);
       Bar.Pack_Start (Event_Box, Expand => False, Fill => True, Padding => 5);
