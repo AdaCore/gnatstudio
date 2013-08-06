@@ -145,19 +145,19 @@ package GVD.Types is
       Num         : Breakpoint_Identifier;
       --  breakpoint number (internal to the debugger)
 
-      The_Type    : Breakpoint_Type;
+      The_Type    : Breakpoint_Type := Breakpoint;
       --  The type of breakpoint
 
-      Disposition : Breakpoint_Disposition;
+      Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
-      Enabled     : Boolean;
+      Enabled     : Boolean := True;
       --  Whether the breakpoint is currently enabled
 
-      Address     : Address_Type;
+      Address     : Address_Type := Invalid_Address;
       --  The address of the breakpoint.
 
-      Trigger     : Watchpoint_Trigger;
+      Trigger     : Watchpoint_Trigger := Write;
       --  The action that causes the watchpoint to break the program.  The
       --  value set here is valid only for watchpoints.
 
@@ -165,32 +165,32 @@ package GVD.Types is
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      --  The file name that contains the breakpoint.
-      --  Must be stored as an absolute file name.
-
       Except      : GNAT.Strings.String_Access;
       --  Name of the exception on which we break
 
       Subprogram  : GNAT.Strings.String_Access;
       --  Name of the subprogram we stop in.
 
+      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      --  The file name that contains the breakpoint.
+      --  Must be stored as an absolute file name.
+
       Line        : Integer := 0;
       --  The line that contains the breakpoint
-
-      Ignore      : Natural := 0;
-      --  Number of hits that will be ignored before actually stopping
 
       Condition   : GNAT.Strings.String_Access;
       --  Condition on which this breakpoint is activated
 
+      Ignore      : Natural := 0;
+      --  Number of hits that will be ignored before actually stopping
+
       Commands    : GNAT.Strings.String_Access;
       --  Commands to execute when the debugger stops at this breakpoint
 
-      Scope       : Scope_Type;
+      Scope       : Scope_Type := No_Scope;
       --  The scope of the breakpoint
 
-      Action      : Action_Type;
+      Action      : Action_Type := No_Action;
       --  The action of the breakpoint
    end record;
    --  Information for a specific breakpoint
@@ -227,9 +227,7 @@ package GVD.Types is
 
    type Launch_Method is (None, Current_Debugger, New_Debugger);
 
-   type Debugger_Type is
-     (Gdb_Type,
-      VMS_Type);
+   type Debugger_Type is (Gdb, Gdb_MI);
    --  Type of debugger handled.
 
    type Program_Descriptor is record
