@@ -1508,9 +1508,13 @@ Classes
 
    .. automethod:: GPS.Search.__init__
 
+   .. automethod:: GPS.Search.get
+
    .. automethod:: GPS.Search.lookup
 
    .. automethod:: GPS.Search.next
+
+   .. automethod:: GPS.Search.register
 
    .. automethod:: GPS.Search.search
 

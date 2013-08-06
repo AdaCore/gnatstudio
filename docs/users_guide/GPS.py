@@ -8817,6 +8817,18 @@ class Search(object):
         """
 
     @staticmethod
+    def register(name, factory):
+        """
+        Register a new custom search.
+        This will be available to users via the omni-search in GPS, or
+        of course via the GPS.Search class.
+
+        :param name: a string
+        :param factory: an instance of GPS.Search that will be reused
+           every time the user starts a new search.
+        """
+
+    @staticmethod
     def search(context, pattern, flags=SUBSTRINGS):
         """
         A high-level wrapper around lookup and set_pattern to make python
