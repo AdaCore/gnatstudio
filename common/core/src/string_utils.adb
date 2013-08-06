@@ -648,7 +648,7 @@ package body String_Utils is
      (S                 : String;
       Max_String_Length : Positive := 20) return String
    is
-      Ellipsis_UTF8 : constant UTF8_String :=
+      Ellipsis_UTF8 : constant Basic_Types.UTF8_String :=
                         Character'Val (16#E2#) & Character'Val (16#80#)
                         & Character'Val (16#A6#);
       --  UTF8 encoding for the ellipsis character (8230 in Decimal)

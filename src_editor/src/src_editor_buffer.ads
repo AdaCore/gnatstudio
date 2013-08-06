@@ -1082,7 +1082,7 @@ package Src_Editor_Buffer is
 
    function Get_Typed_Chars
      (Buffer : access Source_Buffer_Record'Class;
-      N      : Positive) return UTF8_String;
+      N      : Positive) return Basic_Types.UTF8_String;
    --  Returns the N last typed characters
 
    function Get_Timestamp

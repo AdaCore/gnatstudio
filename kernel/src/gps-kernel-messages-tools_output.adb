@@ -317,8 +317,8 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    procedure Parse_File_Locations
      (Kernel            : access Kernel_Handle_Record'Class;
-      Text              : UTF8_String;
-      Category          : Glib.UTF8_String;
+      Text              : Basic_Types.UTF8_String;
+      Category          : Basic_Types.UTF8_String;
       Highlight         : Boolean := False;
       Styles            : Builder_Message_Styles :=
         (others => null);
@@ -350,7 +350,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : UTF8_String;
+      Text                    : Basic_Types.UTF8_String;
       Category                : String;
       Highlight               : Boolean := False;
       Styles                  : Builder_Message_Styles := (others => null);

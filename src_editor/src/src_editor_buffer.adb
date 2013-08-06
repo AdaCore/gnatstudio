@@ -484,7 +484,8 @@ package body Src_Editor_Buffer is
    procedure Highlight_Parenthesis (Buffer : Source_Buffer);
    --  Highlight the matching parenthesis that are next to the cursor, if any
 
-   function Conversion_Error_Message (Charset : String) return UTF8_String;
+   function Conversion_Error_Message
+     (Charset : String) return Basic_Types.UTF8_String;
    --  Return the location category corresponding to errors when converting
    --  to Charset.
 
@@ -2377,7 +2378,7 @@ package body Src_Editor_Buffer is
       end if;
 
       declare
-         Slice       : constant UTF8_String :=
+         Slice       : constant Basic_Types.UTF8_String :=
            Get_Slice (Buffer, Start_Iter, End_Iter);
          User_Action : Action_Type;
       begin
@@ -3884,7 +3885,8 @@ package body Src_Editor_Buffer is
    -- Conversion_Error_Message --
    ------------------------------
 
-   function Conversion_Error_Message (Charset : String) return UTF8_String is
+   function Conversion_Error_Message
+     (Charset : String) return Basic_Types.UTF8_String is
    begin
       return -"Error converting from UTF8 to " & Charset;
    end Conversion_Error_Message;
@@ -8119,7 +8121,7 @@ package body Src_Editor_Buffer is
 
    function Get_Typed_Chars
      (Buffer : access Source_Buffer_Record'Class;
-      N      : Positive) return UTF8_String is
+      N      : Positive) return Basic_Types.UTF8_String is
    begin
       if N > Buffer.Index then
          --  No enough characters in buffer, we cannot support conservative
@@ -8128,7 +8130,7 @@ package body Src_Editor_Buffer is
 
       else
          declare
-            S    : UTF8_String (1 .. N * 6);
+            S    : Basic_Types.UTF8_String (1 .. N * 6);
             --  An UTF-8 character expand of max 6 bytes
             Last : Natural := 0;
          begin

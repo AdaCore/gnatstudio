@@ -56,6 +56,8 @@ package Basic_Types is
    procedure Free is new Ada.Unchecked_Deallocation
      (Unchecked_String, Unchecked_String_Access);
 
+   subtype UTF8_String is String;
+
    function Is_Equal
      (List1, List2   : GNAT.OS_Lib.Argument_List;
       Case_Sensitive : Boolean := True;

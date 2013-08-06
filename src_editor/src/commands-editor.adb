@@ -27,6 +27,7 @@ use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Glib;              use Glib;
 
 package body Commands.Editor is
 
@@ -182,7 +183,7 @@ package body Commands.Editor is
    -- Get_Text --
    --------------
 
-   function Get_Text (Item : Editor_Command) return UTF8_String is
+   function Get_Text (Item : Editor_Command) return Basic_Types.UTF8_String is
    begin
       return Item.Current_Text (1 .. Item.Current_Text_Size);
    end Get_Text;
@@ -191,7 +192,9 @@ package body Commands.Editor is
    -- Set_Text --
    --------------
 
-   procedure Set_Text (Item : Editor_Command; Text : UTF8_String) is
+   procedure Set_Text
+     (Item : Editor_Command;
+      Text : Basic_Types.UTF8_String) is
    begin
       while Text'Length > Item.Current_Text_Total_Length loop
          Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
@@ -214,7 +217,7 @@ package body Commands.Editor is
 
    procedure Add_Text
      (Item         : Editor_Command;
-      UTF8         : UTF8_String;
+      UTF8         : Basic_Types.UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
       Start_Column : Character_Offset_Type := 0)
    is
@@ -533,7 +536,7 @@ package body Commands.Editor is
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type;
-      Text         : UTF8_String;
+      Text         : Basic_Types.UTF8_String;
       Force_End    : Boolean := False)
    is
    begin

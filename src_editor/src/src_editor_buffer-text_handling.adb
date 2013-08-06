@@ -186,7 +186,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Line_Begin   : Editable_Line_Type;
       Column_Begin : Character_Offset_Type;
       Line_End     : Editable_Line_Type;
-      Column_End   : Character_Offset_Type) return UTF8_String
+      Column_End   : Character_Offset_Type) return Basic_Types.UTF8_String
    is
       Iter_Begin, Iter_End : Gtk_Text_Iter;
    begin
@@ -229,7 +229,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Line   : Editable_Line_Type := 0;
       Column : Character_Offset_Type := 0;
       Before : Integer := -1;
-      After  : Integer := -1) return UTF8_String
+      After  : Integer := -1) return Basic_Types.UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;
@@ -311,7 +311,7 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       procedure Replace_Text
         (Ln, F, L : Natural;
-         Replace  : UTF8_String);
+         Replace  : Basic_Types.UTF8_String);
       --  Replace text callback. Note that we do not use Ln, F, L here as these
       --  are values from the parsed buffer which is a single word here. We use
       --  instead the Line, First and Last variable below which represent the
@@ -340,7 +340,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
       procedure Replace_Text
         (Ln, F, L : Natural;
-         Replace  : UTF8_String)
+         Replace  : Basic_Types.UTF8_String)
       is
          pragma Unreferenced (Ln);
          Length : constant Natural := Natural (UTF8_Strlen (Replace));
@@ -492,8 +492,8 @@ package body Src_Editor_Buffer.Text_Handling is
       if First /= Column then
          --  We have a word, set casing
          declare
-            W : constant UTF8_String := Get_Slice (W_Start, W_End);
-            B : constant UTF8_String :=
+            W : constant Basic_Types.UTF8_String := Get_Slice (W_Start, W_End);
+            B : constant Basic_Types.UTF8_String :=
                   Get_Typed_Chars (Buffer, Integer (Column - First));
          begin
             if UTF8_Strdown (W) = UTF8_Strdown (B) then

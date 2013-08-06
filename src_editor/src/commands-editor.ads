@@ -17,7 +17,6 @@
 
 --  This package implements commands related to the editor
 
-with Glib;              use Glib;
 with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;

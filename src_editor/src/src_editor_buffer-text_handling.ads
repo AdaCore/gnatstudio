@@ -28,7 +28,7 @@ package Src_Editor_Buffer.Text_Handling is
       Line_Begin   : Editable_Line_Type;
       Column_Begin : Character_Offset_Type;
       Line_End     : Editable_Line_Type;
-      Column_End   : Character_Offset_Type) return UTF8_String;
+      Column_End   : Character_Offset_Type) return Basic_Types.UTF8_String;
    --  Return the characters between given positions.
    --  ??? Isn't it the same as Src_Editor_Buffer.Get_Text ?
 
@@ -37,7 +37,7 @@ package Src_Editor_Buffer.Text_Handling is
       Line   : Editable_Line_Type := 0;
       Column : Character_Offset_Type := 0;
       Before : Integer := -1;
-      After  : Integer := -1) return UTF8_String;
+      After  : Integer := -1) return Basic_Types.UTF8_String;
    --  Return the characters around given position.
    --  If Line is 0, then the contents of the current selection is returned
 

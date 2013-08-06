@@ -148,7 +148,7 @@ package body GPS.Search.GUI is
 
    procedure On_Toggle_Provider
      (Self : access Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path : UTF8_String);
+      Path : Basic_Types.UTF8_String);
    --  Called when a provider is enabled or disabled in the settings
 
    procedure On_Reorder_Provider
@@ -665,7 +665,7 @@ package body GPS.Search.GUI is
 
    procedure On_Toggle_Provider
      (Self : access Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path : UTF8_String)
+      Path : Basic_Types.UTF8_String)
    is
       T        : constant Settings_Toggle := Settings_Toggle (Self);
       Iter     : Gtk_Tree_Iter;

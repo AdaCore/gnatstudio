@@ -26,8 +26,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Glib;         use Glib;
-
 with GNAT.Strings; use GNAT.Strings;
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;

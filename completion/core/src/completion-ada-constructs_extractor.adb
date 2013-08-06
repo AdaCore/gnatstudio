@@ -370,6 +370,8 @@ package body Completion.Ada.Constructs_Extractor is
       Db : access Xref.General_Xref_Database_Record'Class)
       return Basic_Types.Character_Offset_Type
    is
+      use Glib;
+
       Max_Param_Length     : Glong := 0;
       Current_Param_Length : Glong := 0;
       Construct            : constant access Simple_Construct_Information :=
