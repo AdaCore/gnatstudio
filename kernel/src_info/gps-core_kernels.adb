@@ -19,7 +19,6 @@ with Ada.Strings.Hash;
 
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
@@ -28,7 +27,6 @@ with GPS.Scripts;
 with Language_Handlers;                use Language_Handlers;
 
 package body GPS.Core_Kernels is
-   Me : constant Trace_Handle := Create ("CORE_KERNEL");
 
    -----------------------
    -- Get_Doc_Directory --
@@ -106,15 +104,12 @@ package body GPS.Core_Kernels is
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class) is
    begin
-      Trace (Me, "MANU Destroying Core kernel");
-
       GNATCOLL.Scripts.Destroy (Self.Scripts);
 
       --  Destroy the entities database after we have finalized the
       --  scripting languages, in case some class instances were still
       --  owning references to entities
 
-      Trace (Me, "MANU Closing xref database");
       Standard.Xref.Destroy (Self.Database);
 
       Projects.Destroy (Self.Registry);
