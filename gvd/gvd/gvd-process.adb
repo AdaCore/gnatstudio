@@ -46,7 +46,6 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
-with Debugger.VMS;               use Debugger.VMS;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
@@ -1057,8 +1056,8 @@ package body GVD.Process is
       case Kind is
          when Gdb_Type =>
             Process.Debugger := new Gdb_Debugger;
-         when VMS_Type =>
-            Process.Debugger := new VMS_Debugger;
+         when others =>
+            null;
          --  in case other debugger kinds are added:
          --  when others =>
          --     Set_Busy (Process, False);
