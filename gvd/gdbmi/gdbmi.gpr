@@ -1,0 +1,20 @@
+with "../../shared";
+
+project gdbmi is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use Shared'Object_Dir;
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-m");
+   end Builder;
+
+   package Compiler renames Shared.Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
+   package IDE renames Shared.IDE;
+
+end gdbmi;
