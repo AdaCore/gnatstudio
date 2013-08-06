@@ -42,6 +42,7 @@ with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
@@ -318,6 +319,11 @@ package body Src_Contexts is
       Matches     : Match_Result_Array_Access;
       Buffer      : Src_Editor_Buffer.Source_Buffer);
    --  Replace all search mathes in given Buffer with Replacement
+
+   procedure Focus_To_Editor
+     (Editor     : MDI_Child;
+      Give_Focus : Boolean);
+   --  Make Editor visible. If Give_Focus then raise it's window too.
 
    -----------------
    -- Scan_Buffer --
@@ -1380,6 +1386,21 @@ package body Src_Contexts is
       return Search_Context_Access (Result);
    end Current_Selection_Factory;
 
+   ---------------------
+   -- Focus_To_Editor --
+   ---------------------
+
+   procedure Focus_To_Editor
+     (Editor     : MDI_Child;
+      Give_Focus : Boolean) is
+   begin
+      Raise_Child (Editor, Give_Focus);
+
+      if Give_Focus then
+         Present (Gtk_Window (Get_Toplevel (Editor)));
+      end if;
+   end Focus_To_Editor;
+
    ------------
    -- Search --
    ------------
@@ -1451,7 +1472,7 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Child);
 
-      Raise_Child (Child, Give_Focus);
+      Focus_To_Editor (Child, Give_Focus);
 
       declare
          Buffer      : constant Gtk_Text_Buffer :=
@@ -2087,7 +2108,7 @@ package body Src_Contexts is
       Context.Current_File := To_Unbounded_String
         (Get_Filename (Buffer).Display_Full_Name);
 
-      Raise_Child (Child, Give_Focus);
+      Focus_To_Editor (Child, Give_Focus);
 
       if not Context.All_Occurrences then
          Found := Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
@@ -2321,7 +2342,7 @@ package body Src_Contexts is
       Replacement     : constant Replacement_Pattern
         := Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
    begin
-      Raise_Child (Child, Give_Focus);
+      Focus_To_Editor (Child, Give_Focus);
       Editor := Get_Source_Box_From_MDI (Child);
 
       if Context.All_Occurrences then
