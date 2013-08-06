@@ -1255,8 +1255,29 @@ package body Debugger.Gdb_MI is
    ---------------
 
    overriding procedure Interrupt (Debugger : access Gdb_MI_Debugger) is
+      Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
+      Descriptor : constant Process_Descriptor_Access :=
+                     Get_Descriptor (Proxy);
+      use GVD;
+
    begin
-      Send (Debugger, "-exec-interrupt", Mode => Internal);
+      --  Should only do this when running under Windows, in native mode,
+      --  with an external execution window, and the debuggee running.
+
+      if Debugger.Debuggee_Pid /= 0           -- valid pid
+        and then Is_Started (Debugger)        -- debuggee started
+        and then Command_In_Process (Proxy)   -- and likely running
+        and then Host = Windows               -- Windows host
+        and then Is_Local (Debug_Server)      -- no remote debugging
+        and then Debugger.Execution_Window    -- external window
+      then
+         GNAT.Expect.TTY.Interrupt (Debugger.Debuggee_Pid);
+      else
+         Interrupt (Descriptor.all);
+         Set_Interrupted (Proxy);
+      end if;
+      --  Consider using -exec-interrupt when not Command_In_Process???
+      --  Send (Debugger, "-exec-interrupt", Mode => Internal);
    end Interrupt;
 
    ------------------
