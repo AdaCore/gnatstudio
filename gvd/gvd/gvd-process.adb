@@ -657,7 +657,7 @@ package body GVD.Process is
       Mode    : GVD.Types.Command_Type)
    is
       File : Unbounded_String;
-      Line : Natural;
+      Line : Natural := 0;
       Addr : Address_Type;
 
    begin
