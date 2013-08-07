@@ -159,20 +159,6 @@ See :ref:`The_Target_Configuration_Dialog`.
     shell. Otherwise, the command will be spawned directly by GPS without any
     shell interpretation.
 
-*Recompute Xref info*
-  .. index:: C
-  .. index:: C++
-
-  Recompute the cross-reference information for Ada, C and C++ source files.
-  :ref:`Support_for_Cross-References`.
-
-*Load xref info in memory*
-  .. index:: C
-  .. index:: C++
-
-  Load all the cross-reference information in memory. This menu is generally
-  not needed, :ref:`Support_for_Cross-References`.
-
 *Settings*
 
   *Targets*

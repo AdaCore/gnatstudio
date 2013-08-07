@@ -1253,12 +1253,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
       project. For instance, if you are using the default GNAT naming scheme,
       you cannot have directories with names ending with ".ads" or ".adb"
 
-  *Load Xref info on project load*
-    .. index:: load xref info on project load
-
-    Whether the Xref information should be automatically loaded into memory when
-    a new project is loaded. :ref:`Support_for_Cross-References`.
-
   *Hidden directories pattern*
     .. index:: hidden directories pattern
 

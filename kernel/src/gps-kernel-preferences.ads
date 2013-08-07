@@ -238,7 +238,10 @@ package GPS.Kernel.Preferences is
    Invalid_Variable_Ref_Background : Color_Preference;
    Generate_Relative_Paths         : Boolean_Preference;
    Trusted_Mode                    : Boolean_Preference;
+
    Automatic_Xrefs_Load            : Boolean_Preference;
+   --  Only when using the old xref engine, null otherwise
+
    Hidden_Directories_Pattern      : String_Preference;
 
    -- Refactoring --

@@ -46,6 +46,7 @@ with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 with Build_Command_Utils;
 with Builder_Facility_Module;
 with Commands.Builder;           use Commands.Builder;
+with Default_Preferences;        use Default_Preferences;
 with Traces;
 with Xref;                       use Xref;
 
@@ -216,7 +217,9 @@ package body Builder_Module is
 
       if Builder_Module_ID.Build_Count = 0 then
          GPS.Kernel.Xref.Compilation_Finished
-           (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
+           (Kernel,
+            C_Only => Automatic_Xrefs_Load /= null
+            and then not Automatic_Xrefs_Load.Get_Pref);
       end if;
    end On_Compilation_Finished;
 
@@ -263,7 +266,8 @@ package body Builder_Module is
    begin
       Trace (Me, "Project view changed, loading xref in memory");
       GPS.Kernel.Xref.Load_Xref_In_Memory
-        (Kernel, C_Only => not Automatic_Xrefs_Load.Get_Pref);
+        (Kernel, C_Only => Automatic_Xrefs_Load /= null
+         and then not Automatic_Xrefs_Load.Get_Pref);
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);

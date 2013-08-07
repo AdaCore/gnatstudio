@@ -78,7 +78,6 @@ class Sqlite_Cross_References(object):
         GPS.parse_xml(self.xml)
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
-        GPS.Hook("gps_started").add(self.on_gps_started)
         GPS.Hook("preferences_changed").add(self.on_preferences_changed)
         self.gnatinspect_launch_registered = False
 
@@ -139,10 +138,6 @@ class Sqlite_Cross_References(object):
 
     def on_preferences_changed(self, hook_name):
         self.trusted_mode = GPS.Preference("Prj-Editor-Trusted-Mode").get()
-
-    def on_gps_started(self, hook):
-        GPS.Menu.create("/Build/Recompute _Xref info",
-             on_activate=lambda x : self.recompute_xref())
 
 
 class GnatInspect_OnExit_Hook(tool_output.OutputParser):

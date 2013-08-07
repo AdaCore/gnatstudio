@@ -1231,15 +1231,17 @@ package body GPS.Kernel.Preferences is
          Label   => -"Fast Project Loading",
          Page    => -"Project");
 
-      Automatic_Xrefs_Load := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Load-Xref-Info-At-Startup",
-         Default => False,
-         Doc     => -("Whether to load the Xref info in memory whenever a"
-           & " new project is loaded into memory, or a new file is"
-           & " compiled."),
-         Label   => -"Load Xref info automatically",
-         Page    => -"Project");
+      if not Active (Xref.SQLITE) then
+         Automatic_Xrefs_Load := Create
+           (Manager => Kernel.Preferences,
+            Name    => "Load-Xref-Info-At-Startup",
+            Default => False,
+            Doc     => -("Whether to load the Xref info in memory whenever a"
+              & " new project is loaded into memory, or a new file is"
+              & " compiled."),
+            Label   => -"Load Xref info automatically",
+            Page    => -"Project");
+      end if;
 
       Hidden_Directories_Pattern := Create
         (Manager => Kernel.Preferences,

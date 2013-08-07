@@ -75,34 +75,6 @@ Here are language specific information about source navigation:
   you browse through the cross-references or view various graphs in GPS.  If
   sources have been modified, you should recompile the modified files.
 
-Loading xref info in memory
----------------------------
-
-.. index:: Load xref info in memory
-
-The cross-reference information, as mentioned above, is generated either by the
-compiler when you recompile your sources, or explicitly when you select the
-menu `Build->Recompute Xref info`.
-
-This information will be loaded in memory automatically by GPS when it needs
-it, and as little as possible, to limit the memory footprint. However, this
-means that some operations, for instance searching for all the references to a
-global entity, will need to parse most, if not all, of the cross-reference
-information. This will slow done the search the first time (and then the
-information is in memory and the search is fast, unless the cross-reference
-information has been regenerated on the disk).
-
-You can select the menu `Build->Load xref info in memory` to force GPS to load
-all the available information immediately in memory. This will speed up future
-queries.
-
-Note that GPS always loads all xref information for C and C++ sources in order
-to provide accurate source navigation, so this menu is mainly relevant for Ada
-sources.
-
-A preference can be set to have GPS load the cross-information automatically on
-startup, :ref:`The_Preferences_Dialog`.
-
 Ada xrefs heuristics
 --------------------
 
