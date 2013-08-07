@@ -142,6 +142,12 @@ package body Ada_Semantic_Tree.Lang is
       --  Append the default initialization expression to Result.
       --  At most Max_Length characters of the default expression are appended.
 
+      function Filter_Aspects (Start_Index, End_Index : Natural) return String;
+      --  Remove the left margin of the text located in the Buffer between
+      --  Start_Index and End_Index; the first non-empty line is used to
+      --  compute the number of spaces of the left margin which is removed
+      --  to all this text.
+
       function Remove_Blanks (Str : String) return String;
       --  Return a string will all blanks characters removed (including tabs &
       --  end of line marks)
@@ -309,6 +315,69 @@ package body Ada_Semantic_Tree.Lang is
             Token_Callback'Unrestricted_Access);
       end Append_Default_Value;
 
+      --------------------
+      -- Filter_Aspects --
+      --------------------
+
+      function Filter_Aspects (Start_Index, End_Index : Natural) return String
+      is
+         Init_Index  : Natural;
+         Result      : Unbounded_String;
+         J           : Natural := Start_Index;
+         Left_Margin : Natural := 0;
+      begin
+         --  Skip initial returns (if any)
+
+         while J <= End_Index and then Buffer.all (J) = ASCII.LF loop
+            J := J + 1;
+         end loop;
+         Init_Index := J;
+
+         --  Use the first line to compute the left margin
+
+         J := Init_Index - 1;
+         while J > Buffer.all'First and then Buffer.all (J) /= ASCII.LF loop
+            J := J - 1;
+            Left_Margin := Left_Margin + 1;
+         end loop;
+
+         J := Init_Index;
+         while J <= End_Index and then Buffer.all (J) = ' ' loop
+            Left_Margin := Left_Margin + 1;
+            J := J + 1;
+         end loop;
+
+         while J <= End_Index loop
+            Append (Result, ' ');
+
+            while J <= End_Index and then Buffer.all (J) /= ASCII.LF loop
+               Append (Result, Buffer.all (J));
+               J := J + 1;
+            end loop;
+
+            exit when J > End_Index;
+
+            Append (Result, Buffer.all (J));  -- Appending ASCII.LF
+            J := J + 1;
+
+            --  Skip left margin
+
+            declare
+               Left_Count : Natural := 0;
+            begin
+               while J <= End_Index
+                 and then Buffer.all (J) = ' '
+                 and then Left_Count < Left_Margin
+               loop
+                  Left_Count := Left_Count + 1;
+                  J := J + 1;
+               end loop;
+            end;
+         end loop;
+
+         return Glib.Convert.Escape_Text (To_String (Result));
+      end Filter_Aspects;
+
       -------------------------
       -- Remove_Extra_Blanks --
       -------------------------
@@ -326,58 +395,6 @@ package body Ada_Semantic_Tree.Lang is
 
          return Result (Str'First .. Index);
       end Remove_Blanks;
-
-      function Filter_Aspects (S : String) return String;
-      --  Use the first non-empty line of S to compute the number of spaces of
-      --  the left margin of the text stored in S, and use that value to remove
-      --  the left margin of all the lines of text stored in S.
-
-      function Filter_Aspects (S : String) return String is
-         Result      : Unbounded_String;
-         J           : Natural := S'First;
-         Left_Margin : Natural := 0;
-      begin
-         --  Skip initial returns (if any)
-
-         while J <= S'Last and then S (J) = ASCII.LF loop
-            J := J + 1;
-         end loop;
-
-         --  Use the first line to compute the left margin
-
-         while J <= S'Last and then S (J) = ' ' loop
-            Left_Margin := Left_Margin + 1;
-            J := J + 1;
-         end loop;
-
-         while J <= S'Last loop
-            while J <= S'Last and then S (J) /= ASCII.LF loop
-               Append (Result, S (J));
-               J := J + 1;
-            end loop;
-
-            exit when J > S'Last;
-
-            Append (Result, S (J));  -- Appending ASCII.LF
-            J := J + 1;
-
-            --  Skip left margin
-
-            declare
-               Left_Count : Natural := 0;
-            begin
-               while J <= S'Last
-                 and then S (J) = ' '
-                 and then Left_Count < Left_Margin
-               loop
-                  Left_Count := Left_Count + 1;
-                  J := J + 1;
-               end loop;
-            end;
-         end loop;
-
-         return To_String (Result);
-      end Filter_Aspects;
 
       Has_Parameter : Boolean := False;
 
@@ -640,9 +657,7 @@ package body Ada_Semantic_Tree.Lang is
                     ASCII.LF &
                     "<b>Aspects:</b>" & ASCII.LF &
                     Filter_Aspects
-                      (Buffer.all
-                        (Construct.Sloc_Start.Index ..
-                           Construct.Sloc_End.Index)));
+                      (Construct.Sloc_Start.Index, Construct.Sloc_End.Index));
                   exit;
                end if;
 
