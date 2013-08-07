@@ -161,7 +161,7 @@ private package Outline_View.Model is
    function Get_Entity
      (Self   : not null access Outline_Model_Record'Class;
       Iter   : Gtk_Tree_Iter;
-      Column : Gint := Spec_Pixbuf_Column) return Entity_Access;
+      Column : Gint := Display_Name_Column) return Entity_Access;
    --  Return the entity designed by this iterator.
    --  If Column is set to Body_Pixbuf_Column, the "body" of the entity is
    --  returned.
@@ -190,8 +190,6 @@ private
    package Sorted_Node_Set is new
      Ada.Containers.Ordered_Sets (Sorted_Node_Access);
 
-   type Order_Kind_Type is (Alphabetical, Positional);
-
    type Sorted_Node is record
       Spec_Entity      : Entity_Persistent_Access;
       Body_Entity      : Entity_Persistent_Access;
@@ -209,9 +207,11 @@ private
       Parent : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
+      --  This is used to build a Gtk_Tree_Path from a node
 
-      Ordered_Index : Sorted_Node_Set.Set;
-      Order_Kind    : Order_Kind_Type;
+      Model : Outline_Model;
+
+      Children : Sorted_Node_Set.Set;
 
       --  We need to copy the following things in order to still be able
       --  to remove the node after it has been deleted from the construct

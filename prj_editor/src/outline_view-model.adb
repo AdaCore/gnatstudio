@@ -42,11 +42,10 @@ package body Outline_View.Model is
    type Entity_Sort_Annotation is new
      Construct_Annotations_Pckg.General_Annotation_Record
    with record
-      Entity : Entity_Persistent_Access;
-      Node   : Sorted_Node_Access;
-      Model  : Outline_Model;
+      Is_Spec : Boolean;
+      Node    : Sorted_Node_Access;
    end record;
-   --  Entity is needed so that Free knows which entity has been freed, since
+   --  Is_Spec is needed so that Free knows which entity has been freed, since
    --  a node can be associated with multiple entities.
 
    overriding procedure Free (Obj : in out Entity_Sort_Annotation);
@@ -169,66 +168,73 @@ package body Outline_View.Model is
    ----------
 
    overriding procedure Free (Obj : in out Entity_Sort_Annotation) is
-      Path : constant Gtk_Tree_Path := Get_Path (Obj.Model, Obj.Node);
+      Model : constant Outline_Model := Obj.Node.Model;
+      Path  : constant Gtk_Tree_Path := Get_Path (Model, Obj.Node);
+      Keep  : constant Boolean :=
+        (Obj.Is_Spec
+         and then Obj.Node.Body_Entity /= Null_Entity_Persistent_Access)
+        or else
+          (not Obj.Is_Spec
+           and then Obj.Node.Spec_Entity /= Null_Entity_Persistent_Access);
    begin
-      if Obj.Node.Spec_Entity = Obj.Entity then
+      if Keep then
+         --  ??? Should we update the sloc ?
+
+         if Path /= Null_Gtk_Tree_Path then
+            Row_Changed (+Model, Path, Get_Iter (+Model, Path));
+         end if;
+
+      else
+         --  Kill the children if any
+         Clear_Nodes (Model, Obj.Node);
+
+         --  Then update next siblings
+
+         if Obj.Node.Prev /= null then
+            Obj.Node.Prev.Next := Obj.Node.Next;
+         end if;
+
+         if Obj.Node.Next /= null then
+            Obj.Node.Next.Prev := Obj.Node.Prev;
+
+            --  ??? We should have means to optimize this loop when suppressing
+            --  multiple nodes
+            declare
+               Cur : Sorted_Node_Access := Obj.Node.Next;
+            begin
+               while Cur /= null loop
+                  Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
+                  Cur := Cur.Next;
+               end loop;
+            end;
+         end if;
+
+         --  Finally, free this node
+
+         if Obj.Node.Parent /= null then
+            Obj.Node.Parent.Children.Delete (Obj.Node);
+         end if;
+
+         --  Now unlink & destroy this node
+
+         if Path /= Null_Gtk_Tree_Path then
+            Row_Deleted (+Model, Path);
+         end if;
+      end if;
+
+      Path_Free (Path);
+
+      if Obj.Is_Spec then
          Unref (Obj.Node.Spec_Entity);
          Obj.Node.Spec_Entity := Null_Entity_Persistent_Access;
       else
          Unref (Obj.Node.Body_Entity);
          Obj.Node.Body_Entity := Null_Entity_Persistent_Access;
       end if;
-      Unref (Obj.Entity);
 
-      --  Keep the node if there is still an entity associated with it
-      if Obj.Node.Spec_Entity /= Null_Entity_Persistent_Access
-        or else Obj.Node.Body_Entity /= Null_Entity_Persistent_Access
-      then
-         if Path /= Null_Gtk_Tree_Path then
-            Row_Changed (+Obj.Model, Path, Get_Iter (+Obj.Model, Path));
-            Path_Free (Path);
-         end if;
-         return;
+      if not Keep then
+         Free (Obj.Node);
       end if;
-
-      --  Kill the children if any
-      Clear_Nodes (Obj.Model, Obj.Node);
-
-      --  Now unlink & destroy this node
-
-      if Path /= Null_Gtk_Tree_Path then
-         Row_Deleted (+Obj.Model, Path);
-         Path_Free (Path);
-      end if;
-
-      --  Then, updated next siblings
-
-      if Obj.Node.Prev /= null then
-         Obj.Node.Prev.Next := Obj.Node.Next;
-      end if;
-
-      if Obj.Node.Next /= null then
-         Obj.Node.Next.Prev := Obj.Node.Prev;
-
-         --  ??? We should have means to optimize this loop when suppressing
-         --  multiple nodes
-         declare
-            Cur : Sorted_Node_Access := Obj.Node.Next;
-         begin
-            while Cur /= null loop
-               Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
-               Cur := Cur.Next;
-            end loop;
-         end;
-      end if;
-
-      --  Finally, free this node
-
-      if Obj.Node.Parent /= null then
-         Obj.Node.Parent.Ordered_Index.Delete (Obj.Node);
-      end if;
-
-      Free (Obj.Node);
    end Free;
 
    ----------------------
@@ -334,38 +340,32 @@ package body Outline_View.Model is
       Comparison : Integer;
 
    begin
-      case Left.Order_Kind is
-         when Alphabetical =>
-            if Sort_Entities (Left.Category)
-              < Sort_Entities (Right.Category)
-            then
+      if Left.Model.Filter.Sorted then
+         --  Alphabetical sort
+         if Sort_Entities (Left.Category) < Sort_Entities (Right.Category) then
+            return True;
+
+         elsif Sort_Entities (Left.Category)
+           = Sort_Entities (Right.Category)
+         then
+            Comparison := Compare (Get (Left.Name).all, Get (Right.Name).all);
+            if Comparison = -1 then
                return True;
-
-            elsif Sort_Entities (Left.Category)
-              = Sort_Entities (Right.Category)
-            then
-               Comparison := Compare
-                 (Get (Left.Name).all, Get (Right.Name).all);
-
-               if Comparison = -1 then
-                  return True;
-
-               elsif Comparison = 0 then
-
-                  --  We need to have a clear and definite way to differenciate
-                  --  constructs, otherwise we'll have errors when adding them
-                  --  to the set. If we can't do that alphabetically, then
-                  --  we fall back to the sloc comparison.
-
-                  return Left.Sloc < Right.Sloc;
-               end if;
+            elsif Comparison = 0 then
+               --  We need to have a clear and definite way to differenciate
+               --  constructs, otherwise we'll have errors when adding them
+               --  to the set. If we can't do that alphabetically, then
+               --  we fall back to the sloc comparison.
+               return Left.Sloc < Right.Sloc;
             end if;
+         end if;
 
-            return False;
+         return False;
 
-         when Positional =>
-            return Left.Sloc < Right.Sloc;
-      end case;
+      else
+         --  Positional sort
+         return Left.Sloc < Right.Sloc;
+      end if;
    end "<";
 
    -------------------
@@ -388,140 +388,146 @@ package body Outline_View.Model is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (New_Obj);
       Annot    : Annotation (Other_Kind);
+      Is_Spec  : Boolean := True;
 
    begin
       if Model = null or else Model.File = null then
          return;
       end if;
 
-      --  Issue: if we have children that would match, we still need to
-      --  insert them. Depending on Group_Spec_And_Body, this might mean
-      --  adding the current node as well.
-      if Construct_Filter (Model, Construct) then
-         --  Compute parent node
+      Root := Get_Node (Model, New_Obj);
 
-         if Model.Filter.Flat_View then
-            Parent_Node := Model.Phantom_Root'Access;
-         else
-            Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
-            if Parent = Null_Construct_Tree_Iterator then
+      if Root = null then
+         --  Issue: if we have children that would match, we still need to
+         --  insert them. Depending on Group_Spec_And_Body, this might mean
+         --  adding the current node as well.
+         if Construct_Filter (Model, Construct) then
+            --  Compute parent node
+
+            if Model.Filter.Flat_View then
                Parent_Node := Model.Phantom_Root'Access;
-            elsif Get_Node (Model, New_Obj) = null then
-               Parent_Node := Get_Node (Model, Parent);
-               if Model.Filter.Group_Spec_And_Body
-                 and then Parent_Node = null
+            else
+               Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
+               if Parent = Null_Construct_Tree_Iterator then
+                  Parent_Node := Model.Phantom_Root'Access;
+               elsif Get_Node (Model, New_Obj) = null then
+                  Parent_Node := Get_Node (Model, Parent);
+                  if Model.Filter.Group_Spec_And_Body
+                    and then Parent_Node = null
+                  then
+                     Parent_Node := Get_Node_Next_Part
+                       (Model, To_Entity_Access (Model.File, Parent));
+                  end if;
+               end if;
+
+               if Parent_Node = null then
+                  --  Parent node might have been filtered
+                  Parent_Node := Model.Phantom_Root'Access;
+               end if;
+            end if;
+
+            --  Add the node for the new object
+
+            E := To_Entity_Access (Model.File, New_Obj);
+            if Model.Filter.Group_Spec_And_Body then
+               Root := Get_Node_Next_Part (Model, E);
+
+               if Root /= null then
+                  if Construct.Is_Declaration then
+                     if Root.Spec_Entity = Null_Entity_Persistent_Access then
+                        Root := null;  --  should not happen, create new node
+                     else
+                        Root.Spec_Entity := To_Entity_Persistent_Access (E);
+                        Is_Spec := True;
+                     end if;
+                  else
+                     if Root.Body_Entity /= Null_Entity_Persistent_Access then
+                        Root := null;  --  should not happen, create new node
+                     else
+                        Root.Body_Entity := To_Entity_Persistent_Access (E);
+                        Is_Spec := False;
+                     end if;
+                  end if;
+
+                  if Root /= null then
+                     --  ??? Should we also update the SLOC ?
+
+                     Path := Get_Path (Model, Root);
+                     Row_Changed (+Model, Path, New_Iter (Root));
+                     Path_Free (Path);
+                  end if;
+               end if;
+            end if;
+
+            if Root = null then
+               Root := new Sorted_Node;
+
+               if not Model.Filter.Group_Spec_And_Body
+                 or else Construct.Is_Declaration
                then
-                  Parent_Node := Get_Node_Next_Part
-                    (Model, To_Entity_Access (Model.File, Parent));
-               end if;
-            end if;
-
-            if Parent_Node = null then
-               --  Parent node might have been filtered
-               Parent_Node := Model.Phantom_Root'Access;
-            end if;
-         end if;
-
-         --  Add the node for the new object
-
-         E := To_Entity_Access (Model.File, New_Obj);
-         if Model.Filter.Group_Spec_And_Body then
-            Root := Get_Node_Next_Part (Model, E);
-
-            if Root /= null then
-               if Construct.Is_Declaration then
-                  if Root.Spec_Entity /= Null_Entity_Persistent_Access then
-                     --   Should not happen
-                     Unref (Root.Spec_Entity);
-                  end if;
                   Root.Spec_Entity := To_Entity_Persistent_Access (E);
+                  Is_Spec := True;
                else
-                  if Root.Body_Entity /= Null_Entity_Persistent_Access then
-                     --   Should not happen
-                     Unref (Root.Body_Entity);
-                  end if;
                   Root.Body_Entity := To_Entity_Persistent_Access (E);
+                  Is_Spec := False;
                end if;
 
-               Path := Get_Path (Model, Root);
-               Row_Changed (+Model, Path, New_Iter (Root));
-               Path_Free (Path);
+               Root.Category := Construct.Category;
+               Root.Name     := Construct.Name;
+               Root.Sloc     := Construct.Sloc_Start;
+               Root.Parent   := Parent_Node;
+               Root.Model    := Outline_Model (Model);
+
+               --  ??? Ordered_Index is only used to do the sorting of the
+               --  tree, perhaps we could be more efficient.
+               Insert
+                 (Container => Root.Parent.Children,
+                  New_Item  => Root,
+                  Position  => Position,
+                  Inserted  => Inserted);
+
+               if Inserted then
+                  if Previous (Position) = Sorted_Node_Set.No_Element then
+                     Root.Index_In_Siblings := 0;
+                  else
+                     Dummy := Element (Previous (Position));
+                     Dummy.Next := Root;
+                     Root.Prev := Dummy;
+                     Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+                  end if;
+
+                  if Has_Element (Next (Position)) then
+                     Dummy := Element (Next (Position));
+                     Root.Next := Dummy;
+                     Dummy.Prev := Root;
+
+                     --  Adjust the indexes for the node and its siblings, to
+                     --  preserve sorting
+                     while Dummy /= null loop
+                        Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+                        Dummy := Dummy.Next;
+                     end loop;
+                  end if;
+
+                  --  Notify the model of the change
+
+                  Path := Get_Path (Model, Root);
+                  Row_Inserted (+Model, Path, New_Iter (Root));
+                  Path_Free (Path);
+               end if;
             end if;
+
+            --  Always set the annotation on the entity, even when reusing the
+            --  node.
+
+            Annot.Other_Val := new Entity_Sort_Annotation'
+              (Construct_Annotations_Pckg.General_Annotation_Record
+               with Node => Root, Is_Spec => Is_Spec);
+            Construct_Annotations_Pckg.Set_Annotation
+              (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
+               Model.Annotation_Key,
+               Annot);
          end if;
-
-         if Root = null then
-            Root := new Sorted_Node;
-
-            if not Model.Filter.Group_Spec_And_Body
-              or else Construct.Is_Declaration
-            then
-               Root.Spec_Entity := To_Entity_Persistent_Access (E);
-            else
-               Root.Body_Entity := To_Entity_Persistent_Access (E);
-            end if;
-
-            Root.Category := Construct.Category;
-            Root.Name     := Construct.Name;
-            Root.Sloc     := Construct.Sloc_Start;
-            Root.Parent   := Parent_Node;
-
-            if Model.Filter.Sorted then
-               Root.Order_Kind := Alphabetical;
-            else
-               Root.Order_Kind := Positional;
-            end if;
-
-            --  ??? Ordered_Index is only used to do the sorting of the tree,
-            --  perhaps we could be more efficient.
-            Insert
-              (Container => Root.Parent.Ordered_Index,
-               New_Item  => Root,
-               Position  => Position,
-               Inserted  => Inserted);
-
-            if Inserted then
-               if Previous (Position) = Sorted_Node_Set.No_Element then
-                  Root.Index_In_Siblings := 0;
-               else
-                  Dummy := Element (Previous (Position));
-                  Dummy.Next := Root;
-                  Root.Prev := Dummy;
-                  Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-               end if;
-
-               if Has_Element (Next (Position)) then
-                  Dummy := Element (Next (Position));
-                  Root.Next := Dummy;
-                  Dummy.Prev := Root;
-
-                  --  Adjust the indexes for the node and its siblings, to
-                  --  preserve sorting
-                  while Dummy /= null loop
-                     Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-                     Dummy := Dummy.Next;
-                  end loop;
-               end if;
-
-               --  Notify the model of the change
-
-               Path := Get_Path (Model, Root);
-               Row_Inserted (+Model, Path, New_Iter (Root));
-               Path_Free (Path);
-            end if;
-         end if;
-
-         --  Always set the annotation on the entity, even when reusing the
-         --  node.
-
-         Annot.Other_Val := new Entity_Sort_Annotation'
-           (Construct_Annotations_Pckg.General_Annotation_Record
-            with Node   => Root,
-                 Entity => To_Entity_Persistent_Access (E),
-                 Model  => Outline_Model (Model));
-         Construct_Annotations_Pckg.Set_Annotation
-           (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
-            Model.Annotation_Key,
-            Annot);
       end if;
 
       --  Then add all its children recursively
@@ -546,7 +552,7 @@ package body Outline_View.Model is
       It : Construct_Tree_Iterator;
    begin
       Model.Clear_Nodes (Model.Phantom_Root'Access);
-      Model.Phantom_Root.Ordered_Index.Clear;
+      Model.Phantom_Root.Children.Clear;
 
       --  Order is important here, in case File=Model.File. This whole blocks
       --  also needs to be called after we clear the tree.
@@ -761,7 +767,7 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Parent);
       end if;
 
-      C := Node.Ordered_Index.First;
+      C := Node.Children.First;
       if Has_Element (C) then
          return New_Iter (Element (C));
       else
@@ -800,7 +806,7 @@ package body Outline_View.Model is
          Node := Get_Sorted_Node (Iter);
       end if;
 
-      return Gint (Node.Ordered_Index.Length);
+      return Gint (Node.Children.Length);
    end N_Children;
 
    ---------------
@@ -815,13 +821,16 @@ package body Outline_View.Model is
       C : Sorted_Node_Set.Cursor;
    begin
       if Node = null then
-         C := Model.Phantom_Root.Ordered_Index.First;
+         C := Model.Phantom_Root.Children.First;
       else
-         C := Node.Ordered_Index.First;
+         C := Node.Children.First;
       end if;
 
       for J in 1 .. Nth loop
-         exit when not Has_Element (C);
+         if not Has_Element (C) then
+            return null;
+         end if;
+
          Next (C);
       end loop;
 
@@ -904,7 +913,7 @@ package body Outline_View.Model is
    function Get_Entity
      (Self   : not null access Outline_Model_Record'Class;
       Iter   : Gtk_Tree_Iter;
-      Column : Gint := Spec_Pixbuf_Column) return Entity_Access
+      Column : Gint := Display_Name_Column) return Entity_Access
    is
       pragma Unreferenced (Self);
       Node   : Sorted_Node_Access;
@@ -981,7 +990,7 @@ package body Outline_View.Model is
       It, It_Next : Sorted_Node_Access;
       BE        : Entity_Persistent_Access;
       Construct : Construct_Tree_Iterator;
-      C         : constant Sorted_Node_Set.Cursor := Root.Ordered_Index.First;
+      C         : constant Sorted_Node_Set.Cursor := Root.Children.First;
    begin
       if Has_Element (C) then
          It := Element (C);
@@ -1086,7 +1095,7 @@ package body Outline_View.Model is
            or else Exists (Node.Spec_Entity)
            or else Exists (Node.Body_Entity)
          then
-            C := Node.Ordered_Index.First;
+            C := Node.Children.First;
             while Has_Element (C) loop
                Update_Node (Element (C));
                Next (C);
