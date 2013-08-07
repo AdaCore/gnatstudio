@@ -549,7 +549,11 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Id.all = Id then
-            return Manager.Queues (J).Queue.First_Element;
+            if Manager.Queues (J).Queue.Is_Empty then
+               return null;
+            else
+               return Manager.Queues (J).Queue.First_Element;
+            end if;
          end if;
       end loop;
 
