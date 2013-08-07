@@ -1592,6 +1592,8 @@ Classes
 
    .. automethod:: GPS.Task.pause
 
+   .. automethod:: GPS.Task.progress
+
    .. automethod:: GPS.Task.resume
 
    .. automethod:: GPS.Task.status
