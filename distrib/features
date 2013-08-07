@@ -141,8 +141,7 @@ NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
 
 NF-60-M531-036 GPS: tooltips for SPARK 2014 and Ada 2012 aspects (2013-08-03)
 
-  SPARK 2014 and most Ada 2012 aspects are now supported in tooltips (aspects
-  associated with Ada 2012 concurrent types are not supported yet).
+  Ada 2012 and SPARK 2014 aspects are now displayed in tooltips.
 
 NF-60-M531-032 SPARK 2014 support (2013-07-30)
 
