@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Containers;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Docgen3.Comment;         use Docgen3.Comment;
@@ -1392,100 +1393,128 @@ package body Docgen3.Backend.Simple is
          --  Local variable
 
          Printout : aliased Unbounded_String;
+         use type Ada.Containers.Count_Type;
 
       --  Start of processing for Process_Node
 
       begin
+         if In_Ada_Language (Entity) then
+            if Is_Package (Entity) then
+               if not Backend.Entities.Pkgs.Contains (Entity) then
+                  Backend.Entities.Pkgs.Append (Entity);
+               end if;
+
+            elsif LL.Is_Subprogram (Entity) then
+               if not Backend.Entities.Subprgs.Contains (Entity) then
+                  Backend.Entities.Subprgs.Append (Entity);
+               end if;
+            end if;
+         end if;
+
          --  Classify the tree nodes in categories
 
          For_All (Get_Entities (Entity).all, Classify_Entity'Access);
 
-         Append_Line (Printout'Access, "Entities");
-         Append_Line (Printout'Access, "========");
-         Append_Line (Printout'Access, "");
+         if Entities.Variables.Length > 0
+           or else Entities.Simple_Types.Length > 0
+           or else Entities.Access_Types.Length > 0
+           or else Entities.Record_Types.Length > 0
+           or else Entities.Interface_Types.Length > 0
+           or else Entities.Tagged_Types.Length > 0
+           or else Entities.CPP_Classes.Length > 0
+           or else Entities.Subprgs.Length > 0
+           or else Entities.Methods.Length > 0
+           or else Entities.CPP_Constructors.Length > 0
+           or else Entities.Pkgs.Length > 0
+         then
+            Append_Line (Printout'Access, "Entities");
+            Append_Line (Printout'Access, "========");
+            Append_Line (Printout'Access, "");
 
-         ReST_Append_List
-           (Printout'Access, Entities.Variables, "Constants & variables");
-         ReST_Append_List
-           (Printout'Access, Entities.Simple_Types, "Simple Types");
-         ReST_Append_List
-           (Printout'Access, Entities.Access_Types, "Access Types");
-         ReST_Append_List
-           (Printout'Access, Entities.Record_Types, "Record Types");
-         ReST_Append_List
-           (Printout'Access, Entities.Interface_Types, "Interface types");
-         ReST_Append_List
-           (Printout'Access, Entities.Tagged_Types, "Tagged types");
-         ReST_Append_List
-           (Printout'Access, Entities.CPP_Classes, "C++ Classes");
-         ReST_Append_List
-           (Printout'Access, Entities.Subprgs, "Subprograms");
-
-         if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Methods, "Dispatching subprograms");
-         else
+              (Printout'Access, Entities.Variables, "Constants & variables");
             ReST_Append_List
-              (Printout'Access, Entities.CPP_Constructors, "Constructors",
-               Use_Full_Name => True);
+              (Printout'Access, Entities.Simple_Types, "Simple Types");
             ReST_Append_List
-              (Printout'Access, Entities.Methods, "Methods",
-               Use_Full_Name => True);
-         end if;
-
-         if In_Ada_Language (Entity) then
+              (Printout'Access, Entities.Access_Types, "Access Types");
             ReST_Append_List
-              (Printout'Access, Entities.Pkgs, "Nested packages");
-         end if;
+              (Printout'Access, Entities.Record_Types, "Record Types");
+            ReST_Append_List
+              (Printout'Access, Entities.Interface_Types, "Interface types");
+            ReST_Append_List
+              (Printout'Access, Entities.Tagged_Types, "Tagged types");
+            ReST_Append_List
+              (Printout'Access, Entities.CPP_Classes, "C++ Classes");
+            ReST_Append_List
+              (Printout'Access, Entities.Subprgs, "Subprograms");
 
-         --  Generate full documentation
+            if In_Ada_Language (Entity) then
+               ReST_Append_List
+                 (Printout'Access, Entities.Methods,
+                  "Dispatching subprograms");
+            else
+               ReST_Append_List
+                 (Printout'Access, Entities.CPP_Constructors, "Constructors",
+                  Use_Full_Name => True);
+               ReST_Append_List
+                 (Printout'Access, Entities.Methods, "Methods",
+                  Use_Full_Name => True);
+            end if;
 
-         For_All
-           (Vector   => Entities.Variables,
-            Printout => Printout'Access,
-            Process  => ReST_Append_Simple_Declaration'Access);
-         For_All
-           (Entities.Simple_Types,
-            Printout'Access,
-            ReST_Append_Simple_Declaration'Access);
-         For_All
-           (Entities.Access_Types,
-            Printout'Access,
-            ReST_Append_Simple_Declaration'Access);
-         For_All
-           (Entities.Record_Types,
-            Printout'Access,
-            ReST_Append_Record_Type_Declaration'Access);
+            if In_Ada_Language (Entity) then
+               ReST_Append_List
+                 (Printout'Access, Entities.Pkgs, "Nested packages");
+            end if;
 
-         if In_Ada_Language (Entity) then
+            --  Generate full documentation
+
             For_All
-              (Entities.Interface_Types,
+              (Vector   => Entities.Variables,
+               Printout => Printout'Access,
+               Process  => ReST_Append_Simple_Declaration'Access);
+            For_All
+              (Entities.Simple_Types,
+               Printout'Access,
+               ReST_Append_Simple_Declaration'Access);
+            For_All
+              (Entities.Access_Types,
+               Printout'Access,
+               ReST_Append_Simple_Declaration'Access);
+            For_All
+              (Entities.Record_Types,
                Printout'Access,
                ReST_Append_Record_Type_Declaration'Access);
-            For_All
-              (Entities.Tagged_Types,
-               Printout'Access,
-               ReST_Append_Record_Type_Declaration'Access);
-            For_All
-              (Entities.Methods,
-               Printout'Access,
-               ReST_Append_Subprogram'Access);
 
-         else
+            if In_Ada_Language (Entity) then
+               For_All
+                 (Entities.Interface_Types,
+                  Printout'Access,
+                  ReST_Append_Record_Type_Declaration'Access);
+               For_All
+                 (Entities.Tagged_Types,
+                  Printout'Access,
+                  ReST_Append_Record_Type_Declaration'Access);
+               For_All
+                 (Entities.Methods,
+                  Printout'Access,
+                  ReST_Append_Subprogram'Access);
+
+            else
+               For_All
+                 (Entities.CPP_Constructors,
+                  Printout'Access,
+                  ReST_Append_Subprogram'Access);
+               For_All
+                 (Entities.Methods,
+                  Printout'Access,
+                  ReST_Append_Subprogram'Access);
+            end if;
+
             For_All
-              (Entities.CPP_Constructors,
-               Printout'Access,
-               ReST_Append_Subprogram'Access);
-            For_All
-              (Entities.Methods,
+              (Entities.Subprgs,
                Printout'Access,
                ReST_Append_Subprogram'Access);
          end if;
-
-         For_All
-           (Entities.Subprgs,
-            Printout'Access,
-            ReST_Append_Subprogram'Access);
 
          declare
             function Get_Filename return String;
@@ -1516,9 +1545,17 @@ package body Docgen3.Backend.Simple is
             if In_Ada_Language (Entity) then
                Labels :=
                  To_Unbounded_String (ReST_Label (Filename))
-                 & ASCII.LF
-                 & ReST_Label (Entity)
                  & ASCII.LF;
+
+               --  For subprograms we do not add here its label to avoid
+               --  generating the label twice since we will append its profile
+               --  (and label). See bellow the call to ReST_Append_Subprogram.
+
+               if Is_Package (Entity) then
+                  Labels := Labels
+                    & ReST_Label (Entity)
+                    & ASCII.LF;
+               end if;
 
             elsif Get_Kind (Entity) = E_Class then
                Labels :=
@@ -1538,6 +1575,10 @@ package body Docgen3.Backend.Simple is
                  & ASCII.LF
                  & To_ReST (Get_Comment (Entity))
                  & ASCII.LF;
+
+               if LL.Is_Subprogram (Entity) then
+                  ReST_Append_Subprogram (Printout'Access, Entity);
+               end if;
 
             elsif Get_Kind (Entity) = E_Class then
                ReST_Append_Src (Header'Access, Entity);
