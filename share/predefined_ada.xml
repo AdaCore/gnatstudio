@@ -3920,8 +3920,8 @@ pragma All_Calls_Remote [(library_unit_name)];
 Syntax:
 pragma Allow_Integer_Address;
 
-This configuration pragma is allowed only if type `System.Address' is a
-private type, which is true in most versions of GNAT. which means that
+In almost all versions of GNAT, `System.Address' is a private type in
+accordance with the implementation advice in the RM. This means that
 integer values, in particular integer literals, are not allowed as
 address values.  If the configuration pragma `Allow_Integer_Address' is
 given, then integer expressions may be used anywhere a value of type
