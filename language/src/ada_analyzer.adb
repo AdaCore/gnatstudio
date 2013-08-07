@@ -2289,7 +2289,8 @@ package body Ada_Analyzer is
                end if;
             end if;
 
-            if Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
+            if Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure |
+                                  Tok_Colon
               or else (Top_Token.Token in Tok_Task | Tok_Protected
                        and then
                        Prev_Prev_Token in Tok_Protected | Tok_Task | Tok_Type)
