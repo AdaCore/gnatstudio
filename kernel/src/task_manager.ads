@@ -29,6 +29,7 @@ with Commands;    use Commands;
 with GNAT.Strings;
 
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package Task_Manager is
 
@@ -143,6 +144,9 @@ private
       Show_Bar     : Boolean := False;
 
       Block_Exit   : Boolean := True;
+
+      Inst : Class_Instance := No_Class_Instance;
+      --  The scripting instance currently wrapping this task
    end record;
    type Task_Queue_Access is access Task_Queue_Record;
 

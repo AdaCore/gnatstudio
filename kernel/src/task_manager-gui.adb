@@ -15,55 +15,42 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
+with Gdk.Event;                 use Gdk.Event;
 with Generic_Stack;
-with Generic_Views;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Main_Window;            use GPS.Main_Window;
-with GPS.Stock_Icons;            use GPS.Stock_Icons;
-with GUI_Utils;                  use GUI_Utils;
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Glib.Main;
-with Glib.Object;                use Glib.Object;
-with Glib.Values;                use Glib.Values;
-with Glib;                       use Glib;
-with Gtk.Alignment;              use Gtk.Alignment;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Button;                 use Gtk.Button;
-with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
-with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Event_Box;              use Gtk.Event_Box;
+with Glib.Object;               use Glib.Object;
+with Glib;                      use Glib;
+with Gtk.Alignment;             use Gtk.Alignment;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Handlers;
-with Gtk.Image;                  use Gtk.Image;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Progress_Bar;           use Gtk.Progress_Bar;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
-with Gtk.Stock;                  use Gtk.Stock;
-with Gtk.Style_Context;          use Gtk.Style_Context;
-with Gtk.Tool_Item;              use Gtk.Tool_Item;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Model.Utils;       use Gtk.Tree_Model.Utils;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.Abstract_List_Model; use Gtkada.Abstract_List_Model;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with String_Utils;               use String_Utils;
-with System.Storage_Elements;    use System.Storage_Elements;
-with System;                     use System;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style_Context;         use Gtk.Style_Context;
+with Gtk.Tool_Item;             use Gtk.Tool_Item;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with String_Utils;              use String_Utils;
 
 package body Task_Manager.GUI is
    Me : constant Trace_Handle := Create ("TASKS");
@@ -74,23 +61,6 @@ package body Task_Manager.GUI is
 
    Refresh_Timeout     : constant := 200;
    --  The timeout to refresh the GUI, in milliseconds
-
-   function Columns_Types return GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
-
-   --  The following list must be synchronized with the array of types
-   --  in Columns_Types.
-
-   Icon_Column             : constant := 0;
-   Command_Name_Column     : constant := 1;
-   Command_Progress_Column : constant := 2;
-   Command_Text_Column     : constant := 3;
-   Command_Button_Column   : constant := 4;
-   Pause_Button_Column     : constant := 5;
 
    -----------------
    -- Local types --
@@ -108,37 +78,6 @@ package body Task_Manager.GUI is
 
    package Task_Manager_Source is new Glib.Main.Generic_Sources
      (Task_Manager_Interface);
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Called when the preferences change
-
-   type Task_Manager_Widget_Record is new Generic_Views.View_Record with record
-      Model            : Task_Manager_Interface;
-      Tree             : Gtk_Tree_View;
-      Dialog           : Gtk_Widget := null;
-      Quit_Button_Col  : Gtk_Tree_View_Column;
-      Pause_Button_Col : Gtk_Tree_View_Column;
-   end record;
-
-   function Initialize
-     (View   : access Task_Manager_Widget_Record'Class)
-      return Gtk_Widget;
-   --  Initialize the view and return the focus widget
-
-   package TM_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Task_Manager_Record",
-      View_Name          => -"Task Manager",
-      Formal_View_Record => Task_Manager_Widget_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Position           => Position_Bottom,
-      Group              => Group_Consoles,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Initialize         => Initialize);
-   use TM_Views;
-   subtype Task_Manager_Widget_Access is TM_Views.View_Access;
 
    type Task_Manager_UI_Record is new Task_Manager_Record with record
       GUI           : Task_Manager_Interface := null;
@@ -163,50 +102,8 @@ package body Task_Manager.GUI is
    --  been changed. If Immediate_Refresh is True, reflect the changes in the
    --  GUI immediately, otherwise do it in a timeout callback.
 
-   type Task_Manager_Model_Record is new
-     Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with
-      record
-         GUI : Task_Manager_Interface;
-         --  This can not be null
-      end record;
-   type Task_Manager_Model is access all Task_Manager_Model_Record'Class;
-   --  GtkTreeModel subprograms
-
-   overriding function Get_Iter
-     (Self : access Task_Manager_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter;
-   overriding function Get_Path
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path;
-   overriding procedure Next
-     (Self : access Task_Manager_Model_Record;
-      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
-   overriding function N_Children
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
-      return Glib.Gint;
-   overriding function Nth_Child
-     (Self   : access Task_Manager_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
-   overriding function Get_N_Columns
-     (Self : access Task_Manager_Model_Record)
-      return Glib.Gint;
-   overriding function Get_Column_Type
-     (Self  : access Task_Manager_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
-   overriding procedure Get_Value
-     (Self   : access Task_Manager_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue);
-   --  See inherited documentation
-
    type Task_Manager_Interface_Record is new Gtk_Box_Record with record
       Kernel                 : Kernel_Handle;
-      Model                  : Task_Manager_Model;
       Manager                : Task_Manager_UI_Access;
 
       Main_Progress_Bar      : Gtk_Progress_Bar;
@@ -221,10 +118,6 @@ package body Task_Manager.GUI is
 
       Progress_Label         : Gtk_Label;
       --  The progress to show
-
-      Close_Button_Pixbuf    : Gdk_Pixbuf;
-      Pause_Button_Pixbuf    : Gdk_Pixbuf;
-      Play_Button_Pixbuf     : Gdk_Pixbuf;
 
       To_Refresh             : Integer_Stack.Simple_Stack;
 
@@ -248,19 +141,10 @@ package body Task_Manager.GUI is
    --  Create the task manager's main progress bar (to be displayed in the GPS
    --  main toolbar).
 
-   procedure Set_Column_Types
-     (View : access Task_Manager_Widget_Record'Class);
-   --  Sets the types of columns to be displayed in the tree_view
-
    procedure On_Progress_Bar_Button_Clicked
      (Object : access GObject_Record'Class;
       Data   : Manager_Index_Record);
    --  Callback for a click on the global progress bar "x" button
-
-   function On_Button_Press_Event
-     (Object : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
-   --  Callback for a "button_press_event" on a tree view
 
    function On_Main_Progress_Button_Press_Event
      (Object : access Gtk_Widget_Record'Class;
@@ -285,10 +169,6 @@ package body Task_Manager.GUI is
 
    procedure Refresh (GUI : Task_Manager_Interface);
    --  Refresh the information in View from the Task_Manager
-
-   procedure Init_Graphics
-     (GUI : access Task_Manager_Interface_Record'Class);
-   --  Initialize the graphic elements needed to render the tree view
 
    type Progress_Data (L, P : Integer) is record
       Fraction        : Gdouble;
@@ -320,11 +200,6 @@ package body Task_Manager.GUI is
      (Manager    : access Task_Manager_Record'Class;
       As_Percent : Boolean) return Progress_Data;
    --  Get the text for the global progress bar
-
-   procedure Refresh_One_Index
-     (GUI   : Task_Manager_Interface;
-      Index : Integer);
-   --  Perform graphical refresh of one command in the GUI
 
    procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface);
    --  Process all pending refreshes
@@ -361,7 +236,6 @@ package body Task_Manager.GUI is
       Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Dialog   : Gtk_Dialog;
       Label    : Gtk_Label;
-      Iface    : Task_Manager_Widget_Access;
       Button, Focus   : Gtk_Widget;
       Response : Gtk_Response_Type;
 
@@ -386,12 +260,6 @@ package body Task_Manager.GUI is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start
         (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
-
-      Iface := new Task_Manager_Widget_Record;
-      Iface.Set_Kernel (Kernel);
-      Iface.Dialog := Gtk_Widget (Dialog);
-      Focus := Initialize (Iface);
-      Pack_Start (Get_Content_Area (Dialog), Iface, Padding => 10);
 
       Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
       Grab_Default (Button);
@@ -444,64 +312,18 @@ package body Task_Manager.GUI is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
+      pragma Unreferenced (Event);
       GUI : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
-      View : Task_Manager_Widget_Access;
-      pragma Unreferenced (View);
+      Action      : constant Action_Record_Access := Lookup_Action
+        (GUI.Kernel, "open Task Manager");
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         View := TM_Views.Get_Or_Create_View (GUI.Kernel, Focus => True);
-      end if;
+      Success := Execute_In_Background (GUI.Kernel, Action);
 
       return False;
    end On_Main_Progress_Button_Press_Event;
-
-   ---------------------------
-   -- On_Button_Press_Event --
-   ---------------------------
-
-   function On_Button_Press_Event
-     (Object : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
-   is
-      Iface : constant Task_Manager_Widget_Access :=
-        Task_Manager_Widget_Access (Object);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-      Path  : Gtk_Tree_Path;
-      Col   : Gtk_Tree_View_Column;
-
-   begin
-      Model := Get_Model (Iface.Tree);
-      Coordinates_For_Event (Iface.Tree, Event, Iter, Col);
-
-      if Iter /= Null_Iter then
-         Path := Get_Path (Model, Iter);
-
-         declare
-            A     : constant Gint_Array := Get_Indices (Path);
-            Index : constant Natural := Natural (A (A'First)) + 1;
-         begin
-            if Event.Button = 1 then
-               if Col = Iface.Quit_Button_Col then
-                  Interrupt_Command (Iface.Model.Manager, Index);
-               elsif Col = Iface.Pause_Button_Col then
-                  if Iface.Model.Manager.Queues (Index).Status = Running then
-                     Pause_Command (Iface.Model.Manager, Index);
-                  else
-                     Resume_Command (Iface.Model.Manager, Index);
-                  end if;
-               end if;
-            end if;
-         end;
-
-         Path_Free (Path);
-      end if;
-
-      return False;
-   end On_Button_Press_Event;
 
    ------------------------------------
    -- On_Progress_Bar_Button_Clicked --
@@ -597,127 +419,6 @@ package body Task_Manager.GUI is
       end if;
    end Refresh;
 
-   ----------------------
-   -- Set_Column_Types --
-   ----------------------
-
-   procedure Set_Column_Types
-     (View : access Task_Manager_Widget_Record'Class)
-   is
-      Tree          : constant Gtk_Tree_View := View.Tree;
-      Col           : Gtk_Tree_View_Column;
-      Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
-      Progress_Rend : Gtk_Cell_Renderer_Progress;
-      Dummy         : Gint;
-      pragma Unreferenced (Dummy);
-
-   begin
-      Set_Rules_Hint (Tree, False);
-
-      Gtk_New (View.Quit_Button_Col);
-      View.Quit_Button_Col.Set_Sizing (Tree_View_Column_Autosize);
-      Gtk_New (Pixbuf_Rend);
-      Pack_End (View.Quit_Button_Col, Pixbuf_Rend, False);
-      Add_Attribute
-        (View.Quit_Button_Col, Pixbuf_Rend, "pixbuf", Command_Button_Column);
-      Dummy := Append_Column (Tree, View.Quit_Button_Col);
-
-      Gtk_New (Col);
-      Col.Set_Sizing (Tree_View_Column_Autosize);
-      Set_Expand (Col, True);
-      Gtk_New (Progress_Rend);
-      Pack_Start (Col, Progress_Rend, False);
-      Add_Attribute (Col, Progress_Rend, "value", Command_Progress_Column);
-      Add_Attribute (Col, Progress_Rend, "text", Command_Text_Column);
-      Dummy := Append_Column (Tree, Col);
-
-      Gtk_New (View.Pause_Button_Col);
-      View.Pause_Button_Col.Set_Sizing (Tree_View_Column_Autosize);
-      Gtk_New (Pixbuf_Rend);
-      Pack_End (View.Pause_Button_Col, Pixbuf_Rend, False);
-      Add_Attribute
-        (View.Pause_Button_Col, Pixbuf_Rend, "pixbuf", Pause_Button_Column);
-      Dummy := Append_Column (Tree, View.Pause_Button_Col);
-   end Set_Column_Types;
-
-   -------------------
-   -- Columns_Types --
-   -------------------
-
-   function Columns_Types return GType_Array is
-   begin
-      return GType_Array'
-        (Icon_Column             => Gdk.Pixbuf.Get_Type,
-         Command_Name_Column     => GType_String,
-         Command_Progress_Column => GType_Int,
-         Command_Text_Column     => GType_String,
-         Command_Button_Column   => Gdk.Pixbuf.Get_Type,
-         Pause_Button_Column     => Gdk.Pixbuf.Get_Type);
-   end Columns_Types;
-
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      View : constant Task_Manager_Widget_Access :=
-        TM_Views.Retrieve_View (Kernel);
-   begin
-      if View /= null then
-         Set_Font_And_Colors
-           (View.Tree, Fixed_Font => False, Pref => Get_Pref (Data));
-      end if;
-   end On_Preferences_Changed;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   function Initialize
-     (View   : access Task_Manager_Widget_Record'Class)
-      return Gtk_Widget
-   is
-      Manager  : constant Task_Manager_Access :=
-        Get_Task_Manager (View.Kernel);
-      GUI      : constant Task_Manager_Interface :=
-                   Task_Manager_UI_Access (Manager).GUI;
-      Scrolled : Gtk_Scrolled_Window;
-   begin
-      Initialize_Hbox (View);
-
-      --  Initialize the tree
-
-      View.Model := GUI;
-
-      Gtk_New (View.Tree, GUI.Model);
-      Set_Enable_Search (View.Tree, False);
-
-      Set_Name (View.Tree, "Task Manager Tree");  --  For testsuite
-
-      Set_Column_Types (View);
-      Set_Headers_Visible (View.Tree, False);
-
-      Gtk_New (Scrolled);
-      Set_Policy
-        (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Add (Scrolled, View.Tree);
-
-      Add (View, Scrolled);
-
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name  => "task_manager.preferences_changed",
-                Watch => GObject (View));
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
-
-      View.Tree.On_Button_Press_Event (On_Button_Press_Event'Access, View);
-
-      return Gtk_Widget (View.Tree);
-   end Initialize;
-
    ---------------
    -- Pop_State --
    ---------------
@@ -730,173 +431,6 @@ package body Task_Manager.GUI is
          Dummy := Execute (Manager.Pop_Command);
       end if;
    end Pop_State;
-
-   --------------
-   -- Get_Iter --
-   --------------
-
-   overriding function Get_Iter
-     (Self : access Task_Manager_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-   begin
-      if Path = Null_Gtk_Tree_Path then
-         return Null_Iter;
-      end if;
-
-      declare
-         Indices : constant Glib.Gint_Array :=
-            Gtk.Tree_Model.Get_Indices (Path);
-            Index_1 : Integer_Address;
-      begin
-         if Indices'Length = 0 then
-            return Null_Iter;
-         end if;
-
-         Index_1 := Integer_Address (Indices (Indices'First));
-
-         if Self.GUI.Manager = null
-           or else Self.GUI.Manager.Queues = null
-           or else Index_1 >= Self.GUI.Manager.Queues'Length
-         then
-            return Null_Iter;
-
-         else
-            return Init_Tree_Iter
-              (Stamp       => 1,
-               User_Data_1 => To_Address (Index_1 + 1),
-               User_Data_2 => System.Null_Address,
-               User_Data_3 => System.Null_Address);
-         end if;
-      end;
-   end Get_Iter;
-
-   --------------
-   -- Get_Path --
-   --------------
-
-   overriding function Get_Path
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
-   is
-      pragma Unreferenced (Self);
-      Result : Gtk_Tree_Path;
-
-   begin
-      if Iter = Null_Iter then
-         raise Program_Error with "Get_Path with null iter";
-      end if;
-
-      Gtk_New (Result);
-      Append_Index (Result, Gint (To_Integer (Get_User_Data_1 (Iter)) - 1));
-      return Result;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Path_Free (Result);
-         Gtk_New (Result, "");
-         return Result;
-   end Get_Path;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding procedure Next
-     (Self : access Task_Manager_Model_Record;
-      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
-      Old_Index : constant Integer_Address :=
-                    To_Integer (Get_User_Data_1 (Iter));
-   begin
-      if Self.GUI.Manager = null
-        or else Self.GUI.Manager.Queues = null
-        or else Old_Index >= Self.GUI.Manager.Queues'Length
-      then
-         Iter := Null_Iter;
-
-      else
-         Iter := Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address (Old_Index + 1),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
-      end if;
-   end Next;
-
-   ----------------
-   -- N_Children --
-   ----------------
-
-   overriding function N_Children
-     (Self : access Task_Manager_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
-      return Glib.Gint is
-   begin
-      if Iter = Null_Iter
-        and then Self.GUI.Manager /= null
-        and then Self.GUI.Manager.Queues /= null
-      then
-         return Self.GUI.Manager.Queues'Length;
-      end if;
-
-      return 0;
-   end N_Children;
-
-   ---------------
-   -- Nth_Child --
-   ---------------
-
-   overriding function Nth_Child
-     (Self   : access Task_Manager_Model_Record;
-      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
-      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
-   is
-      Iter : Gtk_Tree_Iter;
-   begin
-      if Parent = Null_Iter
-        and then Self.GUI /= null
-        and then Self.GUI.Manager /= null
-        and then Self.GUI.Manager.Queues /= null
-        and then N <= Self.GUI.Manager.Queues'Length
-      then
-         Iter := Init_Tree_Iter
-           (Stamp       => 1,
-            User_Data_1 => To_Address (Integer_Address (N) + 1),
-            User_Data_2 => System.Null_Address,
-            User_Data_3 => System.Null_Address);
-
-         return Iter;
-      end if;
-
-      return Null_Iter;
-   end Nth_Child;
-
-   -------------------
-   -- Get_N_Columns --
-   -------------------
-
-   overriding function Get_N_Columns
-     (Self : access Task_Manager_Model_Record) return Glib.Gint
-   is
-      pragma Unreferenced (Self);
-   begin
-      return Columns_Types'Length;
-   end Get_N_Columns;
-
-   ---------------------
-   -- Get_Column_Type --
-   ---------------------
-
-   overriding function Get_Column_Type
-     (Self  : access Task_Manager_Model_Record;
-      Index : Glib.Gint) return Glib.GType
-   is
-      pragma Unreferenced (Self);
-      T : constant GType_Array := Columns_Types;
-   begin
-      return T (Guint (Index));
-   end Get_Column_Type;
 
    --------------------
    -- On_GUI_Destroy --
@@ -914,134 +448,8 @@ package body Task_Manager.GUI is
    begin
       --  If the graphics have been initialized, free them now
 
-      if GUI.Close_Button_Pixbuf /= null then
-         Unref (GUI.Close_Button_Pixbuf);
-         Unref (GUI.Pause_Button_Pixbuf);
-         Unref (GUI.Play_Button_Pixbuf);
-      end if;
-
       Unregister_Timeout (GUI);
-
-      if GUI.Model /= null then
-         Unref (GUI.Model);
-         GUI.Model := null;
-      end if;
    end On_GUI_Destroy;
-
-   -------------------
-   -- Init_Graphics --
-   -------------------
-
-   procedure Init_Graphics
-     (GUI : access Task_Manager_Interface_Record'Class)
-   is
-   begin
-      if GUI.Close_Button_Pixbuf /= null
-        or else GUI.Main_Progress_Bar = null
-      then
-         --  Already initialized or cannot initialize now
-         return;
-      end if;
-
-      GUI.Close_Button_Pixbuf := Render_Icon
-        (GUI.Main_Progress_Bar, Stock_Close, Icon_Size_Menu);
-      GUI.Pause_Button_Pixbuf := Render_Icon
-        (GUI.Main_Progress_Bar, Stock_Media_Pause, Icon_Size_Menu);
-      GUI.Play_Button_Pixbuf := Render_Icon
-        (GUI.Main_Progress_Bar, Stock_Media_Play, Icon_Size_Menu);
-   end Init_Graphics;
-
-   ---------------
-   -- Get_Value --
-   ---------------
-
-   overriding procedure Get_Value
-     (Self   : access Task_Manager_Model_Record;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue)
-   is
-      Index      : constant Integer_Address :=
-                     To_Integer (Get_User_Data_1 (Iter));
-      Task_Queue : Task_Queue_Access;
-      Length     : Integer;
-      Command    : Command_Access;
-   begin
-      if Iter = Null_Iter then
-         raise Program_Error with "Null iter";
-      end if;
-
-      if Index = 0 then
-         raise Program_Error with "Null index";
-      end if;
-
-      if Self.GUI.Manager.Queues = null
-        or else Index > Self.GUI.Manager.Queues'Length
-      then
-         return;
-      end if;
-
-      Task_Queue := Self.GUI.Manager.Queues
-        (Self.GUI.Manager.Queues'First - 1 + Integer (Index));
-
-      Length := Integer (Task_Queue.Queue.Length);
-
-      if Length /= 0 then
-         Command := Task_Queue.Queue.First_Element;
-
-         case Column is
-            when Command_Name_Column =>
-               Init (Value, GType_String);
-               Set_String (Value, Commands.Name (Command));
-
-            when Command_Progress_Column =>
-               Init (Value, GType_Int);
-               Set_Int
-                 (Value,
-                  Gint
-                    (Get_Fraction (Self.GUI.Manager, Integer (Index)) *
-                       100.0));
-
-            when Command_Text_Column =>
-               Init (Value, GType_String);
-
-               declare
-                  Data : constant Progress_Data :=
-                    Get_Progress_Text
-                      (Task_Manager_Access (Self.GUI.Manager),
-                       Integer (Index), False, True);
-               begin
-                  Set_String
-                    (Value, Data.Text & " " & Data.Progress_Text);
-               end;
-
-            when Command_Button_Column =>
-               Init_Graphics (Self.GUI);
-               Init (Value, Gdk.Pixbuf.Get_Type);
-               Set_Object (Value, GObject (Self.GUI.Close_Button_Pixbuf));
-
-            when Pause_Button_Column =>
-               Init_Graphics (Self.GUI);
-               Init (Value, Gdk.Pixbuf.Get_Type);
-
-               if Task_Queue.Status = Paused then
-                  Set_Object (Value, GObject (Self.GUI.Play_Button_Pixbuf));
-               else
-                  Set_Object (Value, GObject (Self.GUI.Pause_Button_Pixbuf));
-               end if;
-
-            when others =>
-               Init (Value, Gdk.Pixbuf.Get_Type);
-               Set_Object (Value, null);
-         end case;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Init (Value, GType_String);
-         Set_String (Value, "");
-   end Get_Value;
 
    ------------------------
    -- Unregister_Timeout --
@@ -1066,14 +474,9 @@ package body Task_Manager.GUI is
       Index   : Integer)
    is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
-      Iter : constant Gtk_Tree_Iter :=
-               Nth_Child (GUI.Model, Null_Iter, Gint (Index - 1));
-      Path : constant Gtk_Tree_Path := Get_Path (GUI.Model, Iter);
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Row_Inserted (+GUI.Model, Path, Iter);
-      Path_Free (Path);
       Refresh (GUI);
 
       if GUI.Manager.Queues (Index).Show_Bar then
@@ -1092,19 +495,9 @@ package body Task_Manager.GUI is
       Index   : Integer)
    is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
-      Path : Gtk_Tree_Path;
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Gtk_New_First (Path);
-
-      for J in 2 .. Index loop
-         Next (Path);
-      end loop;
-
-      Row_Deleted (+GUI.Model, Path);
-      Path_Free (Path);
-
       Refresh (GUI);
 
       if GUI.Manager.Queues (Index).Show_Bar then
@@ -1113,22 +506,6 @@ package body Task_Manager.GUI is
 
       Unregister_Timeout (GUI);
    end Queue_Removed;
-
-   -----------------------
-   -- Refresh_One_Index --
-   -----------------------
-
-   procedure Refresh_One_Index
-     (GUI   : Task_Manager_Interface;
-      Index : Integer)
-   is
-      Iter : constant Gtk_Tree_Iter :=
-               Nth_Child (GUI.Model, Null_Iter, Gint (Index - 1));
-      Path : constant Gtk_Tree_Path := Get_Path (GUI.Model, Iter);
-   begin
-      Row_Changed (+GUI.Model, Path, Iter);
-      Path_Free (Path);
-   end Refresh_One_Index;
 
    -------------------------------
    -- Process_Pending_Refreshes --
@@ -1140,7 +517,6 @@ package body Task_Manager.GUI is
    begin
       while not Is_Empty (GUI.To_Refresh) loop
          Pop (GUI.To_Refresh, Index);
-         Refresh_One_Index (GUI, Index);
       end loop;
    end Process_Pending_Refreshes;
 
@@ -1175,7 +551,6 @@ package body Task_Manager.GUI is
       GUI : constant Task_Manager_Interface := Manager.GUI;
    begin
       if Immediate_Refresh then
-         Refresh_One_Index (GUI, Index);
          Refresh (GUI);
 
       else
@@ -1386,7 +761,6 @@ package body Task_Manager.GUI is
    function Create (Kernel : Kernel_Handle) return Task_Manager_Access is
       Manager : Task_Manager_Access;
       View : Task_Manager_Interface;
-      Model : constant Task_Manager_Model := new Task_Manager_Model_Record;
       Image   : Gtk_Image;
       VBox     : Gtk_Box;
       HBox    : Gtk_Box;
@@ -1450,12 +824,8 @@ package body Task_Manager.GUI is
            (On_Main_Progress_Button_Press_Event'Access),
          View);
 
-      Gtkada.Abstract_List_Model.Initialize (Model);
-      Model.GUI := View;
-
       View.Kernel  := Kernel;
       View.Manager := Task_Manager_UI_Access (Manager);
-      View.Model   := Model;
 
       Task_Manager_Handler.Connect
         (View,
@@ -1506,10 +876,6 @@ package body Task_Manager.GUI is
       Item    : Gtk_Tool_Item;
       Space   : Gtk_Separator_Tool_Item;
    begin
-      TM_Views.Register_Module
-        (Kernel,
-         ID        => new Task_Manager_Module_Record,
-         Menu_Name => -"Views/Tas_ks");
       Add_Hook
         (Kernel, Before_Exit_Action_Hook,
          Wrapper (On_Exit_Hook'Access),

@@ -9055,6 +9055,14 @@ class Task(object):
         """Resume the paused task"""
         pass  # implemented in Ada
 
+    def progress(self):
+        """
+        Return the current progress of the task
+
+        :return: A list containing the current step and the total steps
+        """
+        pass  # implemented in Ada
+
     def status(self):
         """
         Return the status of the task

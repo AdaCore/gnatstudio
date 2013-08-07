@@ -30,6 +30,30 @@ package body Task_Manager.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the Task commands
 
+   function Get_Or_Create_Instance
+     (Data  : in out Callback_Data'Class;
+      Queue : in out Task_Queue_Record;
+      Index : Integer) return Class_Instance;
+   --  Return the script instance wrapping this Queue. Create it if it does
+   --  not exist.
+
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
+
+   function Get_Or_Create_Instance
+     (Data  : in out Callback_Data'Class;
+      Queue : in out Task_Queue_Record;
+      Index : Integer) return Class_Instance is
+   begin
+      if Queue.Inst = No_Class_Instance then
+         Queue.Inst := New_Instance (Get_Script (Data), Task_Class);
+      end if;
+
+      Set_Data (Queue.Inst, Task_Class, Index);
+      return Queue.Inst;
+   end Get_Or_Create_Instance;
+
    --------------------------
    -- Task_Command_Handler --
    --------------------------
@@ -41,6 +65,7 @@ package body Task_Manager.Shell is
       Task_Inst : Class_Instance;
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       C         : Command_Access;
+      Progress  : Progress_Record;
    begin
       if Manager = null then
          return;
@@ -54,8 +79,8 @@ package body Task_Manager.Shell is
          end if;
 
          for J in Manager.Queues.all'Range loop
-            Task_Inst := New_Instance (Get_Script (Data), Task_Class);
-            Set_Data (Task_Inst, Task_Class, J);
+            Task_Inst := Get_Or_Create_Instance
+              (Data, Manager.Queues (J).all, J);
             Set_Return_Value (Data, Task_Inst);
          end loop;
 
@@ -76,6 +101,16 @@ package body Task_Manager.Shell is
          Set_Return_Value
            (Data,
             Manager.Queues (Get_Data (Task_Inst, Task_Class)).Status'Img);
+
+      elsif Command = "progress" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         C := Manager.Queues
+           (Get_Data (Task_Inst, Task_Class)).Queue.First_Element;
+         Progress := C.Progress;
+
+         Set_Return_Value_As_List (Data);
+         Set_Return_Value (Data, Progress.Current);
+         Set_Return_Value (Data, Progress.Total);
 
       elsif Command = "name" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
@@ -112,6 +147,8 @@ package body Task_Manager.Shell is
         (Kernel, "name", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "status", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "progress", 0, 0, Task_Command_Handler'Access, Task_Class);
    end Register_Commands;
 
 end Task_Manager.Shell;
