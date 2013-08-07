@@ -91,10 +91,6 @@ private package Outline_View.Model is
    type Sorted_Node_Access is access all Sorted_Node;
    pragma No_Strict_Aliasing (Sorted_Node_Access);
 
-   function Get_Entity
-     (Node : Sorted_Node_Access) return Entity_Persistent_Access;
-   --  Return the entity designed by this node
-
    -------------------------------
    --  GtkTreeModel subprograms --
    -------------------------------
@@ -197,7 +193,17 @@ private
    type Order_Kind_Type is (Alphabetical, Positional);
 
    type Sorted_Node is record
-      Entity      : Entity_Persistent_Access;
+      Spec_Entity      : Entity_Persistent_Access;
+      Body_Entity      : Entity_Persistent_Access;
+      --  A node might be associated to up to two construct entities (the
+      --  spec and the body of an Ada entity). We keep pointers to these so
+      --  that the node is only freed when both entities are freed, but kept
+      --  if only one of them changes (for instance adding a parameter to a
+      --  spec creates a new construct entity, and thus a new node, but we
+      --  should still preserve the original node for the body).
+      --
+      --  Either of these might be null, but not both. When not grouping
+      --  spec and body, the body will always be null.
 
       Prev, Next   : Sorted_Node_Access;
       Parent : Sorted_Node_Access;
@@ -207,7 +213,7 @@ private
       Ordered_Index : Sorted_Node_Set.Set;
       Order_Kind    : Order_Kind_Type;
 
-      --  We need to remove the following things in order to still be able
+      --  We need to copy the following things in order to still be able
       --  to remove the node after it has been deleted from the construct
       --  tree.
       Category     : Language_Category;

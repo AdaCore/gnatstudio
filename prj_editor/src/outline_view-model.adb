@@ -42,9 +42,12 @@ package body Outline_View.Model is
    type Entity_Sort_Annotation is new
      Construct_Annotations_Pckg.General_Annotation_Record
    with record
-      Node  : Sorted_Node_Access;
-      Model : Outline_Model;
+      Entity : Entity_Persistent_Access;
+      Node   : Sorted_Node_Access;
+      Model  : Outline_Model;
    end record;
+   --  Entity is needed so that Free knows which entity has been freed, since
+   --  a node can be associated with multiple entities.
 
    overriding procedure Free (Obj : in out Entity_Sort_Annotation);
 
@@ -168,6 +171,26 @@ package body Outline_View.Model is
    overriding procedure Free (Obj : in out Entity_Sort_Annotation) is
       Path : constant Gtk_Tree_Path := Get_Path (Obj.Model, Obj.Node);
    begin
+      if Obj.Node.Spec_Entity = Obj.Entity then
+         Unref (Obj.Node.Spec_Entity);
+         Obj.Node.Spec_Entity := Null_Entity_Persistent_Access;
+      else
+         Unref (Obj.Node.Body_Entity);
+         Obj.Node.Body_Entity := Null_Entity_Persistent_Access;
+      end if;
+      Unref (Obj.Entity);
+
+      --  Keep the node if there is still an entity associated with it
+      if Obj.Node.Spec_Entity /= Null_Entity_Persistent_Access
+        or else Obj.Node.Body_Entity /= Null_Entity_Persistent_Access
+      then
+         if Path /= Null_Gtk_Tree_Path then
+            Row_Changed (+Obj.Model, Path, Get_Iter (+Obj.Model, Path));
+            Path_Free (Path);
+         end if;
+         return;
+      end if;
+
       --  Kill the children if any
       Clear_Nodes (Obj.Model, Obj.Node);
 
@@ -205,7 +228,6 @@ package body Outline_View.Model is
          Obj.Node.Parent.Ordered_Index.Delete (Obj.Node);
       end if;
 
-      Unref (Obj.Node.Entity);
       Free (Obj.Node);
    end Free;
 
@@ -403,14 +425,41 @@ package body Outline_View.Model is
          --  Add the node for the new object
 
          E := To_Entity_Access (Model.File, New_Obj);
-         if Model.Filter.Group_Spec_And_Body
-           and then Get_Node_Next_Part (Model, E) /= null
-         then
-            --  Already have a node for the other part
-            Root := null;
-         else
+         if Model.Filter.Group_Spec_And_Body then
+            Root := Get_Node_Next_Part (Model, E);
+
+            if Root /= null then
+               if Construct.Is_Declaration then
+                  if Root.Spec_Entity /= Null_Entity_Persistent_Access then
+                     --   Should not happen
+                     Unref (Root.Spec_Entity);
+                  end if;
+                  Root.Spec_Entity := To_Entity_Persistent_Access (E);
+               else
+                  if Root.Body_Entity /= Null_Entity_Persistent_Access then
+                     --   Should not happen
+                     Unref (Root.Body_Entity);
+                  end if;
+                  Root.Body_Entity := To_Entity_Persistent_Access (E);
+               end if;
+
+               Path := Get_Path (Model, Root);
+               Row_Changed (+Model, Path, New_Iter (Root));
+               Path_Free (Path);
+            end if;
+         end if;
+
+         if Root = null then
             Root := new Sorted_Node;
-            Root.Entity   := To_Entity_Persistent_Access (E);
+
+            if not Model.Filter.Group_Spec_And_Body
+              or else Construct.Is_Declaration
+            then
+               Root.Spec_Entity := To_Entity_Persistent_Access (E);
+            else
+               Root.Body_Entity := To_Entity_Persistent_Access (E);
+            end if;
+
             Root.Category := Construct.Category;
             Root.Name     := Construct.Name;
             Root.Sloc     := Construct.Sloc_Start;
@@ -421,14 +470,6 @@ package body Outline_View.Model is
             else
                Root.Order_Kind := Positional;
             end if;
-
-            Annot.Other_Val := new Entity_Sort_Annotation'
-              (Construct_Annotations_Pckg.General_Annotation_Record
-               with Node => Root, Model => Outline_Model (Model));
-            Construct_Annotations_Pckg.Set_Annotation
-              (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
-               Model.Annotation_Key,
-               Annot);
 
             --  ??? Ordered_Index is only used to do the sorting of the tree,
             --  perhaps we could be more efficient.
@@ -468,6 +509,19 @@ package body Outline_View.Model is
                Path_Free (Path);
             end if;
          end if;
+
+         --  Always set the annotation on the entity, even when reusing the
+         --  node.
+
+         Annot.Other_Val := new Entity_Sort_Annotation'
+           (Construct_Annotations_Pckg.General_Annotation_Record
+            with Node   => Root,
+                 Entity => To_Entity_Persistent_Access (E),
+                 Model  => Outline_Model (Model));
+         Construct_Annotations_Pckg.Set_Annotation
+           (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
+            Model.Annotation_Key,
+            Annot);
       end if;
 
       --  Then add all its children recursively
@@ -480,16 +534,6 @@ package body Outline_View.Model is
          It := Next (Get_Tree (Model.File), It, Jump_Over);
       end loop;
    end Add_Recursive;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity
-     (Node : Sorted_Node_Access) return Entity_Persistent_Access is
-   begin
-      return Node.Entity;
-   end Get_Entity;
 
    --------------
    -- Set_File --
@@ -625,13 +669,9 @@ package body Outline_View.Model is
       Entity : constant Entity_Access := Get_Entity (Self, Iter, Column);
       It     : Construct_Tree_Iterator;
    begin
-      if Column = Spec_Pixbuf_Column then
-         It := To_Construct_Tree_Iterator (Entity);
-         Init (Value, Gdk.Pixbuf.Get_Type);
-         Set_Object
-           (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
-
-      elsif Column = Body_Pixbuf_Column then
+      if Column = Spec_Pixbuf_Column
+         or else Column = Body_Pixbuf_Column
+      then
          Init (Value, Gdk.Pixbuf.Get_Type);
 
          if Entity = Null_Entity_Access then
@@ -866,38 +906,33 @@ package body Outline_View.Model is
       Iter   : Gtk_Tree_Iter;
       Column : Gint := Spec_Pixbuf_Column) return Entity_Access
    is
+      pragma Unreferenced (Self);
+      Node   : Sorted_Node_Access;
       E      : Entity_Persistent_Access;
-      E2, E3 : Entity_Access;
    begin
       if Iter = Null_Iter then
          return Null_Entity_Access;
       end if;
 
-      E := Get_Entity (Get_Sorted_Node (Iter));
+      Node := Get_Sorted_Node (Iter);
+
+      if Column = Body_Pixbuf_Column then
+         E := Node.Body_Entity;
+      elsif Column = Spec_Pixbuf_Column then
+         E := Node.Spec_Entity;
+      else
+         if Node.Spec_Entity /= Null_Entity_Persistent_Access then
+            E := Node.Spec_Entity;
+         else
+            E := Node.Body_Entity;
+         end if;
+      end if;
+
       if E = Null_Entity_Persistent_Access or else not Exists (E) then
          return Null_Entity_Access;
       end if;
 
-      E3 := To_Entity_Access (E);
-
-      if Self.Filter.Group_Spec_And_Body
-        and then Column = Body_Pixbuf_Column
-      then
-         E2 := Find_Next_Part (Get_Tree_Language (Get_File (E)), E3);
-
-         --  Only show the "other" part if it is in the same file, otherwise
-         --  it is irrelevant.
-         if E3 = E2
-           or else Get_File (E3) /= Get_File (E2)
-         then
-            return Null_Entity_Access;
-         else
-            return E2;
-         end if;
-
-      else
-         return E3;
-      end if;
+      return To_Entity_Access (E);
    end Get_Entity;
 
    ---------------------
@@ -943,7 +978,8 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
    is
-      It        : Sorted_Node_Access;
+      It, It_Next : Sorted_Node_Access;
+      BE        : Entity_Persistent_Access;
       Construct : Construct_Tree_Iterator;
       C         : constant Sorted_Node_Set.Cursor := Root.Ordered_Index.First;
    begin
@@ -951,17 +987,30 @@ package body Outline_View.Model is
          It := Element (C);
 
          while It /= null loop
-            Construct := To_Construct_Tree_Iterator
-              (To_Entity_Access (It.Entity));
-
             --  Deleting the annotation will have as effect the destruction of
             --  the node, which is why we need to iterate before.
-            It := It.Next;
+            It_Next := It.Next;
 
-            Construct_Annotations_Pckg.Free_Annotation
-              (Get_Annotation_Container
-                 (Get_Tree (Model.File), Construct).all,
-               Model.Annotation_Key);
+            BE := It.Body_Entity;
+
+            if It.Spec_Entity /= Null_Entity_Persistent_Access then
+               Construct := To_Construct_Tree_Iterator
+                 (To_Entity_Access (It.Spec_Entity));
+               Construct_Annotations_Pckg.Free_Annotation
+                 (Get_Annotation_Container
+                    (Get_Tree (Model.File), Construct).all,
+                  Model.Annotation_Key);
+            end if;
+
+            if BE /= Null_Entity_Persistent_Access then
+               Construct := To_Construct_Tree_Iterator (To_Entity_Access (BE));
+               Construct_Annotations_Pckg.Free_Annotation
+                 (Get_Annotation_Container
+                    (Get_Tree (Model.File), Construct).all,
+                  Model.Annotation_Key);
+            end if;
+
+            It := It_Next;
          end loop;
       end if;
    end Clear_Nodes;
@@ -1027,11 +1076,16 @@ package body Outline_View.Model is
       procedure Update_Node (Node : Sorted_Node_Access) is
          C   : Sorted_Node_Set.Cursor;
       begin
-         if Exists (Node.Entity) then
-            Node.Sloc := Get_Construct (Node.Entity).Sloc_Start;
+         if Exists (Node.Spec_Entity) then
+            Node.Sloc := Get_Construct (Node.Spec_Entity).Sloc_Start;
+         elsif Exists (Node.Body_Entity) then
+            Node.Sloc := Get_Construct (Node.Body_Entity).Sloc_Start;
          end if;
 
-         if Node = Model.Phantom_Root'Access or else Exists (Node.Entity) then
+         if Node = Model.Phantom_Root'Access
+           or else Exists (Node.Spec_Entity)
+           or else Exists (Node.Body_Entity)
+         then
             C := Node.Ordered_Index.First;
             while Has_Element (C) loop
                Update_Node (Element (C));
