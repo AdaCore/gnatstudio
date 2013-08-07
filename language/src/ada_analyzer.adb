@@ -809,6 +809,14 @@ package body Ada_Analyzer is
       --  Performs indentation after a call to Handle_Word_Token, and before
       --  tokens are pushed or popped.
 
+      procedure Finish_Aspect_Clause
+        (P, Line : Natural; Done : out Boolean);
+      --  We are at the end of an aspect clause, so pop the stack,
+      --  call corresponding callbacks.
+      --  Done is set to True if processing should stop after this call.
+      --  P points to the first character in Buffer after the aspect clause.
+      --  Line is the current line.
+
       procedure Next_Word
         (P           : in out Natural;
          L           : in out Natural;
@@ -1894,6 +1902,35 @@ package body Ada_Analyzer is
          Pop (Stack, Value);
       end Pop;
 
+      --------------------------
+      -- Finish_Aspect_Clause --
+      --------------------------
+
+      procedure Finish_Aspect_Clause
+        (P, Line : Natural; Done : out Boolean)
+      is
+         Prec_Saved : constant Natural := Prec;
+      begin
+         Aspect_Clause := False;
+         Done := False;
+
+         --  Pop aspect clause
+         --  Set Prec so that Pop will use the proper index/column
+         Prec := Prev_Char (P);
+         Pop (Tokens);
+         Prec := Prec_Saved;
+
+         if Callback /= null then
+            Start_Of_Line := Line_Start (Buffer, Prec);
+
+            Done := Callback
+              (Aspect_Text,
+               Aspect_Clause_Sloc,
+               (Line, Prec - Start_Of_Line + 1, Prec),
+               False);
+         end if;
+      end Finish_Aspect_Clause;
+
       -----------------------
       -- Handle_Word_Token --
       -----------------------
@@ -2253,6 +2290,9 @@ package body Ada_Analyzer is
             end if;
 
             if Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
+              or else (Top_Token.Token in Tok_Task | Tok_Protected
+                       and then
+                       Prev_Prev_Token in Tok_Protected | Tok_Task | Tok_Type)
               or else (Top_Token.Token = No_Token
                        and then Prev_Token
                          not in Tok_Semicolon | Tok_Limited |
@@ -2412,6 +2452,14 @@ package body Ada_Analyzer is
 
                      Top_Token.In_Declaration := True;
                end case;
+
+               if Aspect_Clause then
+                  Finish_Aspect_Clause (Prec, Line_Count, Done => Finish);
+
+                  if Finish then
+                     return;
+                  end if;
+               end if;
 
             elsif Reserved = Tok_Begin then
                if Top_Token.In_Declaration then
@@ -3589,8 +3637,7 @@ package body Ada_Analyzer is
          -----------------------
 
          procedure Pop_And_Set_Local
-           (Stack : in out Token_Stack.Simple_Stack)
-         is
+           (Stack : in out Token_Stack.Simple_Stack) is
          begin
             Pop (Stack);
 
@@ -4191,24 +4238,11 @@ package body Ada_Analyzer is
                      Right_Assignment := False;
 
                      if Aspect_Clause then
-                        Aspect_Clause := False;
+                        Finish_Aspect_Clause (P, L, Done => Terminated);
+                        Local_Top_Token := Top (Tokens);
 
-                        --  Pop aspect clause
-                        Prec := Prev_Char (P);
-                        Pop_And_Set_Local (Tokens);
-
-                        if Callback /= null then
-                           Start_Of_Line := Line_Start (Buffer, Prec);
-
-                           if Callback
-                             (Aspect_Text,
-                              Aspect_Clause_Sloc,
-                              (L, Prec - Start_Of_Line + 1, Prec),
-                              False)
-                           then
-                              Terminated := True;
-                              return;
-                           end if;
+                        if Terminated then
+                           return;
                         end if;
                      end if;
 
