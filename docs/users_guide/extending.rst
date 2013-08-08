@@ -467,14 +467,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     *Search results highlighting*
       Color for highlighting the search results in the text of source editors.
 
-    *Cursor color*
-      Color used for the cursor in editors and interactive consoles
-
-    *Cursor aspect ratio*
-      Defines the size of the cursor, relatively to characters. 100 means the
-      cursor will occupy the same size as a character, 10 means it will only
-      occupy 10% of the size occupies by a character.
-
   *Ada*
     .. index:: Ada
 
