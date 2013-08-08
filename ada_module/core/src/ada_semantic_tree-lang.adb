@@ -655,7 +655,15 @@ package body Ada_Semantic_Tree.Lang is
               Next (Tree, Node, Jump_Into);
             Construct : access Simple_Construct_Information;
          begin
-            while Is_Parent_Scope (Node, Sub_Iter) loop
+            --  At current stage there is a lack of homongeneity in the
+            --  constructs tree for aspects because aspects associated with
+            --  object declarations (ie. Cat_Variable) are not defined in their
+            --  scope. For example, in the following code see that Cat_Variable
+            --  is the unique case in which the construct node containing the
+            --  aspects returns false for the predicate "Is_Parent_Scope (Node,
+            --  Sub_Iter)". To be investigated???
+
+            if Get_Construct (Node).Category = Cat_Variable then
                Construct := Get_Construct (Sub_Iter);
 
                if Construct.Category = Cat_Aspect then
@@ -664,11 +672,24 @@ package body Ada_Semantic_Tree.Lang is
                     "<b>Aspects:</b>" & ASCII.LF &
                     Filter_Aspects
                       (Construct.Sloc_Start.Index, Construct.Sloc_End.Index));
-                  exit;
                end if;
+            else
+               while Is_Parent_Scope (Node, Sub_Iter) loop
+                  Construct := Get_Construct (Sub_Iter);
 
-               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-            end loop;
+                  if Construct.Category = Cat_Aspect then
+                     Append (Result,
+                       ASCII.LF &
+                       "<b>Aspects:</b>" & ASCII.LF &
+                       Filter_Aspects
+                         (Construct.Sloc_Start.Index,
+                          Construct.Sloc_End.Index));
+                     exit;
+                  end if;
+
+                  Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+               end loop;
+            end if;
          end;
       end if;
 
