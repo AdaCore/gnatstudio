@@ -495,6 +495,12 @@ package body Ada_Semantic_Tree.Lang is
                           (Result, "<span foreground="""
                            & Color_For_Optional_Param & """>[");
                      end if;
+                  else
+                     if not Raw_Format then
+                        --  Keep the parameters aligned, in case some are
+                        --  optional and start with '['
+                        Append (Result, " ");
+                     end if;
                   end if;
 
                   Current_Affected_Type_Length :=

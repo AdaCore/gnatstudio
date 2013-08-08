@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M808-007: GPS: parameters not aligned in tooltips
+  Problem:    When you display the tooltip for a subprogram with optional
+              parameters, the alignment is broken because the lines for the
+              optional parameters start with '['.
+  Workaround: This is only a slight visual bug
+
 - M718-016: GB cannot revert modified or upgrade unmodified builder targets
   Problem:    Reverting an ada builder target keep it unchanged.
               Unmodified ada builder target are not automatically updated when
