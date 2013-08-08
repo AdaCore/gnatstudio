@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;
 with GPS.Intl;                         use GPS.Intl;
 with GNAT.Strings;                     use GNAT.Strings;
 with UTF8_Utils;
