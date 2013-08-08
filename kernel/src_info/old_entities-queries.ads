@@ -465,10 +465,6 @@ package Old_Entities.Queries is
    --
    --  Nothing is done if Ref does not point to a dispatching call.
    --  This procedure does not propagate any exception.
-   --
-   --  Warning: Although there is a new version of this routine in xref
-   --    it cannot be removed yet since there is still dependency on it
-   --    from package Entities.Commands.
 
    ---------------
    -- Full_Name --
