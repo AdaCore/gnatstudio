@@ -19,9 +19,7 @@ def get_css_provider(buf):
 
 @interactive("Editor",  name="Apply editor's css to GPS")
 def apply_css():
-    print "IN APPLY CSS BIATCH"
     buf = GPS.EditorBuffer.get()
     text = buf.get_chars()
-    print "CSS : ", text
     p = get_css_provider(buf)
     p.load_from_data(text)
