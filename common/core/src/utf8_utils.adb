@@ -17,6 +17,7 @@
 
 with GNATCOLL.Iconv;       use GNATCOLL.Iconv;
 with GNAT.Decode_UTF8_String;
+with Config;
 
 package body UTF8_Utils is
 
@@ -33,8 +34,10 @@ package body UTF8_Utils is
    procedure Open is
    begin
       if not Is_Opened then
-         Locale_To_UTF_8 := Iconv_Open (To_Code => UTF8, From_Code => Locale);
-         UTF_8_To_Locale := Iconv_Open (From_Code => UTF8, To_Code => Locale);
+         Locale_To_UTF_8 := Iconv_Open
+           (To_Code => UTF8, From_Code => Config.Default_Charset);
+         UTF_8_To_Locale := Iconv_Open
+           (From_Code => UTF8, To_Code => Config.Default_Charset);
          Is_Opened := True;
       end if;
    end Open;
