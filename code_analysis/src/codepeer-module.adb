@@ -1306,6 +1306,12 @@ package body CodePeer.Module is
             CodePeer.Module.Bridge.Inspection (Module);
             Kernel.Set_Build_Mode (Mode);
 
+         when Audit_Trail =>
+            Module.Review_Message (Module.Bridge_Message, Module.Bridge_File);
+
+         when Load_Bridge_Results =>
+            Module.Load (Module.Bridge_File);
+
          when None => null;
       end case;
 
@@ -1641,9 +1647,7 @@ package body CodePeer.Module is
          Input_Sources.File.Open (+File.Full_Name, Input);
          Reader.Parse (Input, Message.Audit_V2, Message.Audit_V3);
          Input_Sources.File.Close (Input);
-
          Message.Audit_Loaded := True;
-
          Module.Review_Message (Message);
 
       else

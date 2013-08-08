@@ -99,10 +99,12 @@ private
      array (CodePeer.Message_Ranking_Level)
        of GPS.Styles.UI.Style_Access;
 
-   type CodePeer_Action is (None, Load_UI);
+   type CodePeer_Action is (None, Load_UI, Audit_Trail, Load_Bridge_Results);
    --  Actions related to codepeer handling:
    --   - None: no action registered
    --   - Load_UI: load CodePeer UI
+   --   - Audit_Trail: load audit trail after gps_codepeer_bridge has run
+   --   - Load_Bridge_Results: load codepeer messages after gps_codepeer_bridge
 
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
@@ -129,6 +131,12 @@ private
       Action           : CodePeer_Action := None;
       --  Indicate possible action to be performed when a build target is
       --  finished.
+
+      Bridge_File : Virtual_File;
+      --  File used to communicate with gps_codepeer_bridge
+
+      Bridge_Message : Message_Access;
+      --  Message used to communicate with gps_codepere_bridge
    end record;
 
    function Codepeer_Output_Directory

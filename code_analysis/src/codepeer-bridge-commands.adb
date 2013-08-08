@@ -187,6 +187,10 @@ package body CodePeer.Bridge.Commands is
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute
+        (Database_Node,
+         "display_progress",
+         "true");
+      XML_Utils.Set_Attribute
         (Inspection_Node, "output_file", +Export_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.

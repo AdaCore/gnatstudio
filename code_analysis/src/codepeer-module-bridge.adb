@@ -19,34 +19,13 @@ with Ada.Calendar;       use Ada.Calendar;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with GPS.Kernel.Console; use GPS.Kernel;
 with GPS.Kernel.Project;
-with GPS.Kernel.Timeout;
 with GPS.Intl;           use GPS.Intl;
 
-with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
-
 with CodePeer.Bridge.Commands;
+with CodePeer.Shell_Commands;
 
 package body CodePeer.Module.Bridge is
-
-   type Bridge_Mode is (Add_Audit, Audit_Trail, Inspection);
-
-   type Bridge_Context (Mode : Bridge_Mode) is
-     new GPS.Kernel.Timeout.Callback_Data_Record with record
-      Module    : CodePeer.Module.CodePeer_Module_Id;
-      File_Name : Virtual_File;
-
-      case Mode is
-         when Inspection =>
-            null;
-
-         when Add_Audit | Audit_Trail =>
-            Message : CodePeer.Message_Access;
-      end case;
-   end record;
-
-   overriding procedure Destroy (Data : in out Bridge_Context);
 
    Audit_Request_File_Name      : constant Filesystem_String :=
       "audit_trail_request.xml";
@@ -58,11 +37,6 @@ package body CodePeer.Module.Bridge is
       "inspection_request.xml";
    Inspection_Reply_File_Name   : constant Filesystem_String :=
       "inspection_reply.xml";
-
-   procedure On_Bridge_Exit
-     (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer);
-   --  Called when gps_codepeer_bridge program execution is done
 
    ----------------------
    -- Add_Audit_Record --
@@ -78,7 +52,6 @@ package body CodePeer.Module.Bridge is
       Object_Directory  : Virtual_File;
       Command_File_Name : Virtual_File;
       Success           : Boolean;
-      CL                : Arg_List;
       Ids               : Natural_Sets.Set;
       pragma Warnings (Off, Success);
 
@@ -127,31 +100,17 @@ package body CodePeer.Module.Bridge is
                Message.Audit_V3.First_Element.Comment);
       end case;
 
-      --  Run gps_codepeer_bridge
-
-      CL := Create ("gps_codepeer_bridge");
-      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
-
-      GPS.Kernel.Timeout.Launch_Process
-        (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-         CL            => CL,
-         Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
-         Directory     => Object_Directory,
-         Callback_Data =>
-           new Bridge_Context'(Add_Audit, Module, No_File, Message),
-         Success       => Success,
-         Exit_Cb       => On_Bridge_Exit'Access);
+      Module.Action := None;
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel_Handle (Module.Kernel),
+         CodePeer.Shell_Commands.Build_Target
+           (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
+         Force       => True,
+         Extra_Args  => +Command_File_Name.Full_Name.all,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Add_Audit_Record;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Data : in out Bridge_Context) is
-   begin
-      null;
-   end Destroy;
 
    ----------------
    -- Inspection --
@@ -159,28 +118,20 @@ package body CodePeer.Module.Bridge is
 
    procedure Inspection (Module : CodePeer.Module.CodePeer_Module_Id) is
       Project           : constant Project_Type :=
-                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
       Object_Directory  : constant Virtual_File := Project.Object_Dir;
       Command_File_Name : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory,
-                               Inspection_Request_File_Name);
+        Create_From_Dir (Object_Directory, Inspection_Request_File_Name);
       Reply_File_Name   : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory, Inspection_Reply_File_Name);
+        Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
       DB_File_Name      : constant Virtual_File :=
-                            Create_From_Dir
-                              (Codepeer_Database_Directory (Project),
-                               "Sqlite.db");
+        Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
       Output_Directory  : constant Virtual_File :=
-                            Codepeer_Output_Directory (Project);
-      CL                : Arg_List;
+        Codepeer_Output_Directory (Project);
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
    begin
-      CL := Create ("gps_codepeer_bridge");
-
       if not Is_Directory (Output_Directory) then
          Module.Kernel.Insert
            (-"cannot find CodePeer output directory: " &
@@ -195,60 +146,24 @@ package body CodePeer.Module.Bridge is
             < Reply_File_Name.File_Time_Stamp
       then
          Module.Load (Reply_File_Name);
-
       else
-         Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
          --  Generate command file
 
          CodePeer.Bridge.Commands.Inspection
             (Command_File_Name, Output_Directory, Reply_File_Name);
 
-         --  Run gps_codepeer_bridge
-
-         GPS.Kernel.Timeout.Launch_Process
-           (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-            CL            => CL,
-            Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
-            Directory     => Object_Directory,
-            Callback_Data => new Bridge_Context'
-              (Inspection, Module, Reply_File_Name),
-            Success       => Success,
-            Exit_Cb       => On_Bridge_Exit'Access);
+         Module.Action := Load_Bridge_Results;
+         Module.Bridge_File := Reply_File_Name;
+         CodePeer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            CodePeer.Shell_Commands.Build_Target
+              (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
+            Force       => True,
+            Extra_Args  => +Command_File_Name.Full_Name.all,
+            Build_Mode  => "codepeer",
+            Synchronous => False);
       end if;
    end Inspection;
-
-   --------------------
-   -- On_Bridge_Exit --
-   --------------------
-
-   procedure On_Bridge_Exit
-     (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer)
-   is
-      Context : Bridge_Context'Class
-        renames Bridge_Context'Class (Process.Callback_Data.all);
-
-   begin
-      if Status = 0 then
-         case Context.Mode is
-            when Inspection =>
-               Context.Module.Load (Context.File_Name);
-
-            when Audit_Trail =>
-               Context.Module.Review_Message
-                 (Context.Message, Context.File_Name);
-
-            when Add_Audit =>
-               null;
-         end case;
-
-      else
-         Context.Module.Get_Kernel.Insert
-           ("gps_codepeer_bridge execution failed",
-            True,
-            GPS.Kernel.Error);
-      end if;
-   end On_Bridge_Exit;
 
    ----------------------------------
    -- Remove_Inspection_Cache_File --
@@ -290,7 +205,6 @@ package body CodePeer.Module.Bridge is
       Command_File_Name  : Virtual_File;
       Reply_File_Name    : Virtual_File;
       Mode               : constant String := Module.Kernel.Get_Build_Mode;
-      CL                 : Arg_List;
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
@@ -317,19 +231,17 @@ package body CodePeer.Module.Bridge is
 
       --  Run gps_codepeer_bridge
 
-      CL := Create ("gps_codepeer_bridge");
-      Append_Argument (CL, +Command_File_Name.Full_Name.all, One_Arg);
-
-      GPS.Kernel.Timeout.Launch_Process
-        (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
-         CL            => CL,
-         Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
-         Directory     => Object_Directory,
-         Callback_Data =>
-           new Bridge_Context'
-           (Audit_Trail, Module, Reply_File_Name, Message),
-         Success       => Success,
-         Exit_Cb       => On_Bridge_Exit'Access);
+      Module.Action := Audit_Trail;
+      Module.Bridge_File := Reply_File_Name;
+      Module.Bridge_Message := Message;
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel_Handle (Module.Kernel),
+         CodePeer.Shell_Commands.Build_Target
+           (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
+         Force       => True,
+         Extra_Args  => +Command_File_Name.Full_Name.all,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Review_Message;
 
