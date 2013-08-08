@@ -17,6 +17,7 @@
 
 with Basic_Types;
 with GPS.Intl;                         use GPS.Intl;
+with GNAT.Strings;                     use GNAT.Strings;
 with UTF8_Utils;
 
 package body Builder_Facility_Module.UTF8_Converters is
@@ -44,9 +45,7 @@ package body Builder_Facility_Module.UTF8_Converters is
       Item    : String;
       Command : Command_Access)
    is
-      use type Basic_Types.Unchecked_String_Access;
-      Output : Basic_Types.Unchecked_String_Access;
-      Len    : Natural;
+      Output : GNAT.Strings.String_Access;
       Valid  : Boolean;
 
    begin
@@ -58,7 +57,7 @@ package body Builder_Facility_Module.UTF8_Converters is
       --  especially given that we are supporting third-party compilers, build
       --  scripts, etc. Therefore, we call Unknown_To_UTF8.
 
-      UTF8_Utils.Unknown_To_UTF8 (Item, Output, Len, Valid);
+      UTF8_Utils.Unknown_To_UTF8 (Item, Output, Valid);
 
       if Valid then
          if Output = null then
@@ -66,7 +65,7 @@ package body Builder_Facility_Module.UTF8_Converters is
               (Item, Command);
          else
             Tools_Output_Parser (Self.all).Parse_Standard_Output
-              (Output (1 .. Len), Command);
+              (Output.all, Command);
          end if;
       else
          Self.Kernel.Insert
@@ -74,7 +73,7 @@ package body Builder_Facility_Module.UTF8_Converters is
             Mode => GPS.Kernel.Error);
       end if;
 
-      Basic_Types.Free (Output);
+      Free (Output);
    end Parse_Standard_Output;
 
    ---------

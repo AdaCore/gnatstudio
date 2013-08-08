@@ -15,13 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
-
-with Glib.Error;           use Glib.Error;
-with Glib.Convert;         use Glib.Convert;
-with Glib.Unicode;         use Glib.Unicode;
+with GNATCOLL.Iconv;       use GNATCOLL.Iconv;
+with GNAT.Decode_UTF8_String;
 
 package body UTF8_Utils is
+
+   Locale_To_UTF_8 : Iconv_T;
+   UTF_8_To_Locale : Iconv_T;
+   Is_Opened       : Boolean := False;
+
+   procedure Open;
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open is
+   begin
+      if not Is_Opened then
+         Locale_To_UTF_8 := Iconv_Open (To_Code => UTF8, From_Code => Locale);
+         UTF_8_To_Locale := Iconv_Open (From_Code => UTF8, To_Code => Locale);
+         Is_Opened := True;
+      end if;
+   end Open;
 
    ---------------------
    -- Unknown_To_UTF8 --
@@ -29,79 +45,45 @@ package body UTF8_Utils is
 
    procedure Unknown_To_UTF8
      (Input   : String;
-      Output  : out Unchecked_String_Access;
-      Len     : out Natural;
-      Success : out Boolean)
-   is
-      Valid       : Boolean;
-      Invalid_Pos : Natural;
+      Output  : out String_Access;
+      Success : out Boolean) is
    begin
       Output := null;
-      Len := 0;
       Success := True;
 
       --  First check if the string is already UTF-8
-      UTF8_Validate (Input, Valid, Invalid_Pos);
-
-      if Valid then
+      if GNAT.Decode_UTF8_String.Validate_Wide_Wide_String (Input) then
          --  The string is UTF-8, nothing to do
          return;
-
-      else
-         --  The string is not valid UTF-8, assume it is encoded using the
-         --  locale.
-
-         declare
-            Tentative     : chars_ptr;
-            Read, Written : aliased Natural;
-            Error         : aliased GError := null;
-
-         begin
-            Tentative := Locale_To_UTF8
-              (Input, Read'Access, Written'Access, Error'Unchecked_Access);
-
-            if Error = null then
-               --  There was no error in converting, return the converted
-               --  string.
-
-               Output := To_Unchecked_String (Tentative);
-               Len := Written;
-
-            else
-               Error_Free (Error);
-               --  ??? We could make some use of the error message
-
-               --  Locale_To_UTF8 does not clarify whether Tentative is
-               --  allocated some memory or not in case of failure. In doubt,
-               --  check here.
-
-               if Tentative /= Null_Ptr then
-                  Free (Tentative);
-               end if;
-
-               --  We could not convert everything
-               Success := False;
-               return;
-            end if;
-         end;
       end if;
+
+      --  The string is not valid UTF-8, assume it is encoded using the locale.
+
+      begin
+         Open;
+         Output := new String'(Iconv (Locale_To_UTF_8, Input));
+      exception
+         when Invalid_Sequence_Error | Incomplete_Sequence_Error =>
+            Reset (Locale_To_UTF_8);
+            Success := False;
+      end;
    end Unknown_To_UTF8;
 
    function Unknown_To_UTF8
      (Input   : String;
-      Success : access Boolean) return Glib.UTF8_String
+      Success : access Boolean) return UTF8_String
    is
-      Output : Unchecked_String_Access;
-      Len    : Natural;
+      Output : String_Access;
    begin
-      Unknown_To_UTF8 (Input, Output, Len, Success.all);
+
+      Unknown_To_UTF8 (Input, Output, Success.all);
 
       if Success.all then
-         if Len = 0 then
+         if Output = null then
             return Input;
          else
             declare
-               S : constant String := Output (1 .. Len);
+               S : constant String := Output.all;
             begin
                Free (Output);
                return S;
@@ -114,7 +96,7 @@ package body UTF8_Utils is
    end Unknown_To_UTF8;
 
    function Unknown_To_UTF8
-     (Input : String) return Glib.UTF8_String
+     (Input : String) return UTF8_String
    is
       Success : aliased Boolean;
       S       : constant String := Unknown_To_UTF8 (Input, Success'Access);
@@ -130,14 +112,10 @@ package body UTF8_Utils is
    -- UTF8_To_Locale --
    --------------------
 
-   function UTF8_To_Locale (Input : Glib.UTF8_String) return String is
-      S : constant String := Locale_From_UTF8 (Input);
+   function UTF8_To_Locale (Input : UTF8_String) return String is
    begin
-      if S = "" then
-         return Input;
-      else
-         return S;
-      end if;
+      Open;
+      return Iconv (UTF_8_To_Locale, Input);
    end UTF8_To_Locale;
 
 end UTF8_Utils;

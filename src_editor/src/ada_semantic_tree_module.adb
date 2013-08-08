@@ -21,7 +21,6 @@ with GNAT.Strings;                 use GNAT.Strings;
 
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
-with Basic_Types;                  use Basic_Types;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
@@ -95,8 +94,7 @@ package body Ada_Semantic_Tree_Module is
    is
       Editor  : Gtkada.MDI.MDI_Child;
       Tmp     : String_Access;
-      Tmp2    : Unchecked_String_Access;
-      Len     : Natural;
+      Tmp2    : String_Access;
       Success : Boolean;
       pragma Unreferenced (Success);
 
@@ -114,12 +112,11 @@ package body Ada_Semantic_Tree_Module is
       --  Ensure result is UTF8 encoded
 
       Tmp := Read_File (File);
-      Unknown_To_UTF8 (Tmp.all, Tmp2, Len, Success);
+      Unknown_To_UTF8 (Tmp.all, Tmp2, Success);
 
       if Tmp2 /= null then
          Free (Tmp);
-         Tmp := new String'(Tmp2 (1 .. Len));
-         Free (Tmp2);
+         Tmp := Tmp2;
       end if;
 
       return Tmp;

@@ -379,20 +379,18 @@ package body Language.Tree.Database is
       File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
    is
       Tmp     : GNAT.Strings.String_Access;
-      Tmp2    : Unchecked_String_Access;
-      Len     : Natural;
+      Tmp2    : GNAT.Strings.String_Access;
       Success : Boolean;
       pragma Unreferenced (Provider);
    begin
       --  Ensure result is UTF8 encoded
 
       Tmp := Read_File (File);
-      Unknown_To_UTF8 (Tmp.all, Tmp2, Len, Success);
+      Unknown_To_UTF8 (Tmp.all, Tmp2, Success);
 
       if Tmp2 /= null then
          Free (Tmp);
-         Tmp := new String'(Tmp2 (1 .. Len));
-         Free (Tmp2);
+         Tmp := Tmp2;
 
       elsif not Success then
          --  the string is not valid utf-8

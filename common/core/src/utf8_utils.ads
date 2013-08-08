@@ -18,14 +18,13 @@
 --  This package provides a set of high-level subprograms for handling UTF8
 --  encoding
 
-with Glib;
-with Basic_Types; use Basic_Types;
-
+with Basic_Types;  use Basic_Types;
+with GNAT.Strings; use GNAT.Strings;
 package UTF8_Utils is
 
    function Unknown_To_UTF8
      (Input   : String;
-      Success : access Boolean) return Glib.UTF8_String;
+      Success : access Boolean) return UTF8_String;
    --  Transform a string of unknown encoding to UTF-8.
    --  The heuristics used is the following:
    --    - if S already contains valid UTF-8, assume it is already encoded
@@ -35,14 +34,13 @@ package UTF8_Utils is
    --  Success is set to False if the conversion failed.
 
    function Unknown_To_UTF8
-     (Input   : String) return Glib.UTF8_String;
+     (Input   : String) return UTF8_String;
    --  Same as above, but return "<could not convert to UTF8>" if the
    --  conversion could not be done.
 
    procedure Unknown_To_UTF8
      (Input   : String;
-      Output  : out Unchecked_String_Access;
-      Len     : out Natural;
+      Output  : out String_Access;
       Success : out Boolean);
    --  Same as above, but return Output as Unchecked_String_Access for
    --  efficiency. Output is still in UTF8 format, and the caller is
@@ -53,7 +51,7 @@ package UTF8_Utils is
    --  Warning: Never reference Output (Output'Range) or Output'Last,
    --  use Output (1 .. Len) and Len instead.
 
-   function UTF8_To_Locale (Input : Glib.UTF8_String) return String;
+   function UTF8_To_Locale (Input : UTF8_String) return String;
    --  Convert Input to the GPS locale (ie, the contents of the environment
    --  variable CHARSET, defaulting to ISO-8859-1).
    --  If Input could not be converted, Input is returned as-is.

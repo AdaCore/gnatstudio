@@ -659,11 +659,10 @@ package body Src_Contexts is
          Start := Start + Natural (Start_Column) - 1;
 
          declare
-            UTF8  : Unchecked_String_Access;
-            Len   : Natural;
+            UTF8  : GNAT.Strings.String_Access;
             Valid : Boolean;
          begin
-            UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, Len, Valid);
+            UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, Valid);
             if Valid then
                if UTF8 = null then
                   --  This means that Buffer is already UTF8: use it
@@ -674,7 +673,7 @@ package body Src_Contexts is
                else
                   --  Use UTF8
                   Scan_Buffer
-                    (UTF8 (1 .. Len), Start, Context, Callback, Scope,
+                    (UTF8.all, Start, Context, Callback, Scope,
                      Lexical_State, Lang, Start_Line, Start_Column,
                      Was_Partial);
                   Free (UTF8);
@@ -2514,12 +2513,11 @@ package body Src_Contexts is
                       (Replace_String, Case_Preserving);
             begin
                declare
-                  UTF8  : Unchecked_String_Access;
-                  U_Len : Natural;
+                  UTF8  : GNAT.Strings.String_Access;
                   Valid : Boolean;
                begin
                   Buffer := Read_File (File);
-                  UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, U_Len, Valid);
+                  UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, Valid);
                   if Valid then
                      if UTF8 /= null then
                         --  This means that Buffer is not already UTF8, and
@@ -2528,8 +2526,7 @@ package body Src_Contexts is
                         Previously_Was_UTF8 := False;
 
                         Free (Buffer);
-                        Buffer := new String'(UTF8 (1 .. U_Len));
-                        Free (UTF8);
+                        Buffer := UTF8;
                      end if;
                   end if;
                end;

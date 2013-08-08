@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Regpat;
-
+with GNAT.Strings;                    use GNAT.Strings;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Glib.Convert;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
@@ -614,12 +614,11 @@ package body GPS.Kernel.Messages.Tools_Output is
    is
       pragma Unreferenced (Quiet);
 
-      Output : Unchecked_String_Access;
-      Len    : Natural;
+      Output : GNAT.Strings.String_Access;
       Valid  : Boolean;
       Styles : Builder_Message_Styles;
    begin
-      Unknown_To_UTF8 (Text, Output, Len, Valid);
+      Unknown_To_UTF8 (Text, Output, Valid);
       if not Valid then
          Kernel.Insert
            (-"Locations.parse: could not convert input to UTF8",
@@ -653,7 +652,7 @@ package body GPS.Kernel.Messages.Tools_Output is
          else
             Parse_File_Locations
               (Kernel                  => Kernel,
-               Text                    => Output (1 .. Len),
+               Text                    => Output.all,
                Category                => Category,
                Highlight               => Highlight,
                Styles                  => Styles,

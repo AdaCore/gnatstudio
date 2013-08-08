@@ -906,15 +906,14 @@ package body Codefix_Module is
       Session  : Codefix_Session;
       Valid    : Boolean;
       S        : String_Access;
-      Output   : Unchecked_String_Access;
-      Len      : Natural;
+      Output   : String_Access;
 
    begin
       if Command = "parse" then
          Name_Parameters (Data, Parse_Cmd_Parameters);
 
          S := new String'(Nth_Arg (Data, 2));
-         Unknown_To_UTF8 (S.all, Output, Len, Valid);
+         Unknown_To_UTF8 (S.all, Output, Valid);
 
          if not Valid then
             Set_Error_Msg (Data, -"Could not convert input to UTF8");
@@ -934,7 +933,7 @@ package body Codefix_Module is
             else
                Activate_Codefix
                  (Get_Kernel (Data),
-                  Output               => Output (1 .. Len),
+                  Output               => Output.all,
                   Category             => Nth_Arg (Data, 1),
                   File_Location_Regexp => Nth_Arg (Data, 3, ""),
                   File_Index           => Nth_Arg (Data, 4, -1),
