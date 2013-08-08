@@ -76,6 +76,12 @@ package GPS.Tree_View.Locations is
      (Self : not null access GPS_Locations_Tree_View_Record'Class);
    --  Sets sorting by location mode
 
+   procedure Location_Clicked
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
+   --  Emits "location-clicked" signal.
+
    Signal_Action_Clicked   : constant Glib.Signal_Name;
    --  Emitted on click in action column.
    --  procedure Handler

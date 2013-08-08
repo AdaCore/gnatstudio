@@ -67,12 +67,6 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Emits "action-clicked" signal.
 
-   procedure Location_Clicked
-     (Self : not null access GPS_Locations_Tree_View_Record'Class;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
-   --  Emits "location-clicked" signal.
-
    package View_Idles is
      new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
 

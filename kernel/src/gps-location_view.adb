@@ -1525,17 +1525,13 @@ package body GPS.Location_View is
    -- On_Row_Deleted --
    --------------------
 
-   procedure On_Row_Deleted
-     (Self : access Location_View_Record'Class)
-   is
+   procedure On_Row_Deleted (Self : access Location_View_Record'Class) is
    begin
-      if Get_History (Get_History (Self.Kernel).all,
-                      Hist_Locations_Auto_Close)
+      if Get_History (Get_History (Self.Kernel).all, Hist_Locations_Auto_Close)
+        and then Get_Iter_First (Self.View.Get_Model) = Null_Iter
       then
-         if Get_Iter_First (Self.View.Get_Model) = Null_Iter then
-            Self.Do_Not_Delete_Messages_On_Exit := True;
-            Destroy (Self);
-         end if;
+         Self.Do_Not_Delete_Messages_On_Exit := True;
+         Destroy (Self);
       end if;
    end On_Row_Deleted;
 
@@ -1596,20 +1592,30 @@ package body GPS.Location_View is
          Get_Messages_Container (View.Kernel).Remove_Category
            (Get_String (Model, Iter, Category_Column),
             Locations_Message_Flags);
+         Path_Free (Path);
       elsif Get_Depth (Path) = 2 then
          Get_Messages_Container (View.Kernel).Remove_File
            (Get_String (Model, Iter, Category_Column),
             Get_File (Model, Iter, File_Column),
             Locations_Message_Flags);
+         Path_Free (Path);
       elsif Get_Depth (Path) >= 3 then
          Get_Value (Model, Iter, Message_Column, Value);
          Message := Message_Access
            (Message_Conversions.To_Pointer (Get_Address (Value)));
          Glib.Values.Unset (Value);
          Message.Remove;
+
+         --  We just selected a new row,
+         Path_Free (Path);
+         Get_Selected (Get_Selection (View.View), Model, Iter);
+         if Iter /= Null_Iter then
+            Path := Get_Path (Model, Iter);
+            View.View.Location_Clicked (Path, Iter);
+            Path_Free (Path);
+         end if;
       end if;
 
-      Path_Free (Path);
       return Commands.Success;
    end Execute;
 
