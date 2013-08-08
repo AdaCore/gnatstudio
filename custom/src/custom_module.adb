@@ -1427,31 +1427,47 @@ package body Custom_Module is
             Filter_A : Action_Filter;
             Subprogram : constant Subprogram_Type := Nth_Arg (Data, 2, null);
 
-            Item : Gtk_Menu_Item;
-            Sep  : Gtk_Separator_Menu_Item;
-            Last : Integer := Path'First - 1;
+            Item  : Gtk_Menu_Item;
+            Sep   : Gtk_Separator_Menu_Item;
+            Menu  : Gtk_Menu;
+            Index : Integer := Path'First - 1;
+            Last  : Natural := Path'Last;
 
          begin
+            --  If Path ends with '/' it meats that empty submenu need to be
+            --  created.
+
+            if Path (Last) = '/' and Path (Last - 1) /= '\' then
+               Last := Last - 1;
+            end if;
+
             --  Take into account backslashes when extracting components of the
             --  menu path.
-            for J in reverse Path'Range loop
+            for J in reverse Path'First .. Last loop
                if Path (J) = '/'
                  and then (J = Path'First
                            or else Path (J - 1) /= '\')
                then
-                  Last := J;
+                  Index := J;
                   exit;
                end if;
             end loop;
 
-            if Path'Length > 0 and then Path (Last + 1) = '-' then
+            if Path'Length > 0 and then Path (Index + 1) = '-' then
                Gtk_New (Sep);
                Item := Gtk_Menu_Item (Sep);
+
             else
                if Group = "" then
                   Gtk.Menu_Item.Gtk_New_With_Mnemonic
                     (Item,
-                     Label => Unprotect (Path (Last + 1 .. Path'Last)));
+                     Label => Unprotect (Path (Index + 1 .. Last)));
+
+                  if Last /= Path'Last then
+                     Gtk_New (Menu);
+                     Item.Set_Submenu (Menu);
+                  end if;
+
                else
                   declare
                      Inserted : Boolean;
@@ -1468,7 +1484,7 @@ package body Custom_Module is
                      Gtk.Radio_Menu_Item.Gtk_New_With_Mnemonic
                        (Menu,
                         Group => List,
-                        Label => Unprotect (Path (Last + 1 .. Path'Last)));
+                        Label => Unprotect (Path (Index + 1 .. Last)));
 
                      List := Get_Group (Menu);
 
@@ -1501,7 +1517,7 @@ package body Custom_Module is
 
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path => Path (Path'First .. Last - 1),
+               Parent_Path => Path (Path'First .. Index - 1),
                Item        => Item,
                Ref_Item    => Nth_Arg (Data, 3, ""),
                Add_Before  => Nth_Arg (Data, 4, True),
