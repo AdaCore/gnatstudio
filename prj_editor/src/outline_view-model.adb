@@ -176,6 +176,7 @@ package body Outline_View.Model is
         or else
           (not Obj.Is_Spec
            and then Obj.Node.Spec_Entity /= Null_Entity_Persistent_Access);
+      Cur : Sorted_Node_Access;
    begin
       if Keep then
          --  ??? Should we update the sloc ?
@@ -197,16 +198,11 @@ package body Outline_View.Model is
          if Obj.Node.Next /= null then
             Obj.Node.Next.Prev := Obj.Node.Prev;
 
-            --  ??? We should have means to optimize this loop when suppressing
-            --  multiple nodes
-            declare
-               Cur : Sorted_Node_Access := Obj.Node.Next;
-            begin
-               while Cur /= null loop
-                  Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
-                  Cur := Cur.Next;
-               end loop;
-            end;
+            Cur := Obj.Node.Next;
+            while Cur /= null loop
+               Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
+               Cur := Cur.Next;
+            end loop;
          end if;
 
          --  Finally, free this node
@@ -434,7 +430,7 @@ package body Outline_View.Model is
 
                if Root /= null then
                   if Construct.Is_Declaration then
-                     if Root.Spec_Entity = Null_Entity_Persistent_Access then
+                     if Root.Spec_Entity /= Null_Entity_Persistent_Access then
                         Root := null;  --  should not happen, create new node
                      else
                         Root.Spec_Entity := To_Entity_Persistent_Access (E);
@@ -552,7 +548,6 @@ package body Outline_View.Model is
       It : Construct_Tree_Iterator;
    begin
       Model.Clear_Nodes (Model.Phantom_Root'Access);
-      Model.Phantom_Root.Children.Clear;
 
       --  Order is important here, in case File=Model.File. This whole blocks
       --  also needs to be called after we clear the tree.
@@ -987,41 +982,39 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
    is
-      It, It_Next : Sorted_Node_Access;
+      It        : Sorted_Node_Access;
       BE        : Entity_Persistent_Access;
       Construct : Construct_Tree_Iterator;
-      C         : constant Sorted_Node_Set.Cursor := Root.Children.First;
+      Tree      : constant Construct_Tree := Get_Tree (Model.File);
    begin
-      if Has_Element (C) then
-         It := Element (C);
+      while not Root.Children.Is_Empty loop
+         --  Start from the last element, so that the loop in Free which
+         --  reindexes the elements has no effect
 
-         while It /= null loop
-            --  Deleting the annotation will have as effect the destruction of
-            --  the node, which is why we need to iterate before.
-            It_Next := It.Next;
+         It := Root.Children.Last_Element;
 
-            BE := It.Body_Entity;
+         --  We delete the annotations, which will also free the node when
+         --  both entities have been deleted. In case there is only a spec
+         --  entity, the node will be freed before we do the test for the body,
+         --  so we need to capture the body first.
 
-            if It.Spec_Entity /= Null_Entity_Persistent_Access then
-               Construct := To_Construct_Tree_Iterator
-                 (To_Entity_Access (It.Spec_Entity));
-               Construct_Annotations_Pckg.Free_Annotation
-                 (Get_Annotation_Container
-                    (Get_Tree (Model.File), Construct).all,
-                  Model.Annotation_Key);
-            end if;
+         BE := It.Body_Entity;
 
-            if BE /= Null_Entity_Persistent_Access then
-               Construct := To_Construct_Tree_Iterator (To_Entity_Access (BE));
-               Construct_Annotations_Pckg.Free_Annotation
-                 (Get_Annotation_Container
-                    (Get_Tree (Model.File), Construct).all,
-                  Model.Annotation_Key);
-            end if;
+         if It.Spec_Entity /= Null_Entity_Persistent_Access then
+            Construct := To_Construct_Tree_Iterator
+              (To_Entity_Access (It.Spec_Entity));
+            Construct_Annotations_Pckg.Free_Annotation
+              (Get_Annotation_Container (Tree, Construct).all,
+               Model.Annotation_Key);
+         end if;
 
-            It := It_Next;
-         end loop;
-      end if;
+         if BE /= Null_Entity_Persistent_Access then
+            Construct := To_Construct_Tree_Iterator (To_Entity_Access (BE));
+            Construct_Annotations_Pckg.Free_Annotation
+              (Get_Annotation_Container (Tree, Construct).all,
+               Model.Annotation_Key);
+         end if;
+      end loop;
    end Clear_Nodes;
 
    ----------
