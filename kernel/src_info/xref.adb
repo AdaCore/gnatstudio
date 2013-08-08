@@ -199,7 +199,8 @@ package body Xref is
                Profile : constant String := Get_Profile
                  (Tree_Lang, Ent,
                   Color_For_Optional_Param => Color_For_Optional_Param,
-                  Raw_Format => Raw_Format);
+                  Raw_Format => Raw_Format,
+                  With_Aspects => True);
 
             begin
                if Comment /= "" then

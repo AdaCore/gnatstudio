@@ -67,7 +67,8 @@ package Language.Tree.Database is
      (Lang       : access Tree_Language;
       Entity     : Entity_Access;
       Color_For_Optional_Param : String := "#555555";
-      Raw_Format : Boolean := False) return String;
+      Raw_Format   : Boolean := False;
+      With_Aspects : Boolean := False) return String;
    --  Return a formatted view of the profile of this construct - if any.
    --  For example, for subprogram, this would return
    --       [(parameters)][return type]     on one line.
@@ -77,6 +78,8 @@ package Language.Tree.Database is
    --  inserted (and the profile can be used as-is in e.g. code).
    --  If Raw_Format is false, optional parameters are highlighted with
    --  Color_For_Optional_Param, which must be of the form "#dddddd".
+   --  If With_Aspects is true and the profile has aspects then they are
+   --  appended at the end of the returned string.
 
    function Get_Declaration
      (Lang   : access Tree_Language;

@@ -108,10 +108,11 @@ package body Ada_Semantic_Tree.Lang is
    -----------------
 
    overriding function Get_Profile
-     (Lang       : access Ada_Tree_Language;
-      Entity     : Entity_Access;
+     (Lang         : access Ada_Tree_Language;
+      Entity       : Entity_Access;
       Color_For_Optional_Param : String;
-      Raw_Format : Boolean := False) return String
+      Raw_Format   : Boolean := False;
+      With_Aspects : Boolean := False) return String
    is
       Tree                 : constant Construct_Tree :=
                                Get_Tree (Get_File (Entity));
@@ -647,8 +648,9 @@ package body Ada_Semantic_Tree.Lang is
 
       --  Append aspects to the output
 
-      if Get_Construct (Node).Category
-        in Type_Category | Data_Category | Subprogram_Category
+      if With_Aspects
+        and then Get_Construct (Node).Category
+                   in Type_Category | Data_Category | Subprogram_Category
       then
          declare
             Sub_Iter  : Construct_Tree_Iterator :=

@@ -113,12 +113,14 @@ package body Language.Tree.Database is
    -----------------
 
    function Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
+     (Lang         : access Tree_Language;
+      Entity       : Entity_Access;
       Color_For_Optional_Param : String := "#555555";
-      Raw_Format : Boolean := False) return String
+      Raw_Format   : Boolean := False;
+      With_Aspects : Boolean := False) return String
    is
       pragma Unreferenced (Color_For_Optional_Param);
+      pragma Unreferenced (With_Aspects);
 
       Tree   : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
