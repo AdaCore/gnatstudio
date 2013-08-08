@@ -344,6 +344,12 @@ NF-60-LB29-006 GPS: use ellipsis in window titles (2012-11-28)
   using most of the notebook widths, thus hidding the others. This behavior
   is controlled by a new preference Window/Homogeneous Tabs.
 
+NF-60-LB28-008 GPS: progress bar when running gps_codepeer_bridge (2013-08-08)
+
+  After running codepeer, gps_codepeer_bridge is launched to load messages,
+  which can take a long time on large sources. A progress bar is now displayed
+  during this phase to give feedback to the user.
+
 NF-60-LB26-025 GPS: clickable qualified name in editor status bars (2012-12-13)
 
   The name of the current subprogram, as displayed in the editors status bars,
