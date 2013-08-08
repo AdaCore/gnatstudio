@@ -319,9 +319,7 @@ package body Xref is
       Ref       : General_Entity_Reference;
       On_Callee : access function
         (Callee, Primitive_Of : General_Entity) return Boolean;
-      Filter    : Reference_Kind_Filter := null;
-      Policy    : Dispatching_Menu_Policy)
-
+      Filter    : Reference_Kind_Filter := null)
    is
       use type Old_Entities.Reference_Kind;
 
@@ -332,25 +330,34 @@ package body Xref is
       --  Handle cases in which no action is needed
 
       if Entity = No_General_Entity
-        or else Policy = Never
-          or else not Dbase.Is_Dispatching_Call (Ref)
+        or else not Dbase.Is_Dispatching_Call (Ref)
       then
          return;
       end if;
 
       if Active (SQLITE) then
          declare
-            function Tagged_Type (E : Entity_Information)
-               return Entity_Information;
+            function Tagged_Type
+              (E : Entity_Information) return Entity_Information;
+            --  ???
 
             function Should_Show (E : Entity_Information) return Boolean;
+            --  ???
 
-            function Tagged_Type (E : Entity_Information)
-               return Entity_Information is
+            -----------------
+            -- Tagged_Type --
+            -----------------
+
+            function Tagged_Type
+              (E : Entity_Information) return Entity_Information is
             begin
                return Dbase.Xref.Declaration
                  (Dbase.Xref.Method_Of (E)).Location.Entity;
             end Tagged_Type;
+
+            -----------------
+            -- Should_Show --
+            -----------------
 
             function Should_Show (E : Entity_Information) return Boolean is
                R : References_Cursor;
@@ -437,18 +444,17 @@ package body Xref is
               Filter = Reference_Is_Body'Access;
 
          begin
-
             if Filter /= null then
                P := Proxy_Filter'Unrestricted_Access;
             end if;
 
             Old_Entities.Queries.For_Each_Dispatching_Call
-              (Entity    => Entity.Old_Entity,
-               Ref       => Ref.Old_Ref,
-               On_Callee => Proxy'Access,
-               Filter    => P,
+              (Entity      => Entity.Old_Entity,
+               Ref         => Ref.Old_Ref,
+               On_Callee   => Proxy'Access,
+               Filter      => P,
                Need_Bodies => Need_Bodies,
-               Policy    => Policy);
+               From_Memory => True);
          end;
       end if;
    end For_Each_Dispatching_Call;

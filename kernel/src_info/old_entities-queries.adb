@@ -2765,7 +2765,7 @@ package body Old_Entities.Queries is
         (Callee, Primitive_Of : Entity_Information) return Boolean;
       Filter    : Reference_Filter_Function := null;
       Need_Bodies : Boolean := False;
-      Policy    : Dispatching_Menu_Policy)
+      From_Memory : Boolean)
    is
       Db    : Entities_Database;
       Iter  : Entity_Reference_Iterator;
@@ -2773,10 +2773,9 @@ package body Old_Entities.Queries is
       F     : Reference_Kind_Filter;
    begin
       if Entity /= null
-        and then Policy /= Never
         and then Get_Kind (Ref) = Dispatching_Call
       then
-         if Policy = From_Memory then
+         if From_Memory then
             Db := Get_Database (Get_File (Get_Declaration_Of (Entity)));
             Freeze (Db);
          end if;
@@ -2819,7 +2818,7 @@ package body Old_Entities.Queries is
 
          Destroy (Iter);
 
-         if Policy = From_Memory then
+         if From_Memory then
             Thaw (Db);
          end if;
       end if;
@@ -2828,7 +2827,7 @@ package body Old_Entities.Queries is
       when E : others =>
          Trace (Traces.Exception_Handle, "Unexpected exception: "
                 & Exception_Information (E));
-         if Policy = From_Memory then
+         if From_Memory then
             Thaw (Db);
          end if;
    end For_Each_Dispatching_Call;

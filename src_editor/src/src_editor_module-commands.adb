@@ -35,7 +35,6 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
@@ -107,8 +106,7 @@ package body Src_Editor_Module.Commands is
            (Dbase     => Db,
             Entity    => Get_Entity (Context),
             Ref       => Get_Closest_Ref (Context),
-            On_Callee => On_Callee'Access,
-            Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
+            On_Callee => On_Callee'Access);
 
          Pop_State (Get_Kernel (Context));
 

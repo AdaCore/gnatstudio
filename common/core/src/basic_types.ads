@@ -95,14 +95,6 @@ package Basic_Types is
    -- Entities --
    --------------
 
-   type Dispatching_Menu_Policy is (Never, From_Memory, Accurate);
-   for Dispatching_Menu_Policy'Size use Interfaces.C.int'Size;
-   pragma Convention (C, Dispatching_Menu_Policy);
-   --  The list of possible behaviours for the contextual menu on dispatching
-   --  calls. From_Memory relies on information already parsed in memory, and
-   --  might not be accurate. Accurate will possibly load other LI files, but
-   --  might be much slower as a result
-
    type File_Error_Reporter_Record is abstract tagged null record;
    type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
    procedure Error

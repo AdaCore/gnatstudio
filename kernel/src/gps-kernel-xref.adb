@@ -613,8 +613,7 @@ package body GPS.Kernel.Xref is
                                 (Entity    => Get_Entity (Refs),
                                  Ref       => Ref,
                                  Filter    => Reference_Is_Declaration'Access,
-                                 On_Callee => On_Callee'Access,
-                                 Policy    => Basic_Types.Accurate);
+                                 On_Callee => On_Callee'Access);
                               Decrease_Indent (Me);
                               exit For_Each_Entity when Stop;
                            end;

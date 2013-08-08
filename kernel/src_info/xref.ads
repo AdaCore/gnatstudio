@@ -242,8 +242,7 @@ package Xref is
       Ref       : General_Entity_Reference;
       On_Callee : access function
                     (Callee, Primitive_Of : General_Entity) return Boolean;
-      Filter    : Reference_Kind_Filter := null;
-      Policy    : Basic_Types.Dispatching_Menu_Policy);
+      Filter    : Reference_Kind_Filter := null);
    --  If Ref references a dispatching call then call On_Callee with all the
    --  overridding primitives (that is, all the primitives that might possibly
    --  be called instead of Entity). For example, if you have:

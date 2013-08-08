@@ -1255,8 +1255,6 @@ package body Src_Editor_Box is
    is
       Item   : Gtk_Menu_Item;
       Label  : Gtk_Label;
-      Pref   : constant Dispatching_Menu_Policy :=
-                 Submenu_For_Dispatching_Calls.Get_Pref;
       Count  : Natural := 0;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Xref_Db : constant General_Xref_Database := Kernel.Databases;
@@ -1346,28 +1344,12 @@ package body Src_Editor_Box is
 
       Ensure_Context_Up_To_Date (Context);
 
-      --  ??? Should be removed when we get rid of the old LI engine.
-
-      if Pref = From_Memory then
-         Gtk_New (Label, -"<i>Partial information only</i>");
-         Set_Use_Markup (Label, True);
-         Set_Alignment (Label, 0.0, 0.5);
-         Gtk_New (Item);
-         Add (Item, Label);
-         Set_Sensitive (Item, False);
-         Add (Menu, Item);
-      end if;
-
-      --  Warning: Force_Freeze is unused in the new implementation
-      --  and will be eventually removed as argument???
-
       Xref.For_Each_Dispatching_Call
         (Dbase     => Xref_Db,
          Entity    => Get_Entity (Context),
          Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
-         Filter    => Filter,
-         Policy    => Pref);
+         Filter    => Filter);
 
       E_Set.Iterate (Fill_Menu'Access);
 

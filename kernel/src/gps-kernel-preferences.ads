@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;              use Basic_Types;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with Language;
@@ -123,10 +122,6 @@ package GPS.Kernel.Preferences is
    package Vdiff_Modes_Prefs is new
      Default_Preferences.Enums.Generics (Vdiff_Modes);
 
-   package Dispatching_Menu_Policy_Prefs is new
-     Default_Preferences.Enums.Generics
-       (Dispatching_Menu_Policy);
-
    type Strip_Trailing_Blanks_Policy is (Never, Autodetect, Always);
    package Strip_Trailing_Blanks_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Strip_Trailing_Blanks_Policy);
@@ -220,9 +215,6 @@ package GPS.Kernel.Preferences is
    Highlight_Column          : Integer_Preference;
    Speed_Column_Policy       : Speed_Column_Policy_Prefs.Preference;
    Use_ACL                   : Boolean_Preference;
-
-   Submenu_For_Dispatching_Calls : Dispatching_Menu_Policy_Prefs.Preference;
-   --  Of type Dispatching_Menu_Policy
 
    -- External Commands --
    List_Processes            : String_Preference;

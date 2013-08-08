@@ -406,29 +406,6 @@ package body GPS.Kernel.Preferences is
          Default => False,
          Page    => -"General");
 
-      Submenu_For_Dispatching_Calls := Dispatching_Menu_Policy_Prefs.Create
-        (Manager => Kernel.Preferences,
-         Name  => "Submenu-For-Dispatching",
-         Label => -"Submenu for dispatching calls",
-         Doc   => -("If you are using a GNAT version more recent than"
-           & " 2007-09-21, cross-references on dispatching calls can"
-           & " list all the subprograms that might be called at run time."
-           & " However, computing this info might take some time, and the"
-           & " preference lets you chose how GPS should behave:"
-           & ASCII.LF
-           & "Never: no special submenu is displayed for dispatching calls"
-           & ASCII.LF
-           & "From Memory: only the information already available in memory"
-              & " is used. Some possible subprograms will not be listed"
-           & ASCII.LF
-           & "Accurate: GPS will reload the cross-references information"
-           & " from the disk as needed. This might result in long delays"
-           & " (up to several seconds) if lots of information needs to be"
-           & " loaded. This method is always used when computing"
-           & " dispatching information in call graphs."),
-         Page    => -"Editor",
-         Default => From_Memory);
-
       Auto_Save := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Auto-Save",
