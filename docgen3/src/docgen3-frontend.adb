@@ -678,6 +678,7 @@ package body Docgen3.Frontend is
             Idx           : Natural;
             Index         : Natural;
             Lines_Skipped : Natural;
+            Par_Count     : Natural;
 
          begin
             --  Displace the pointer to the beginning of the declaration
@@ -709,10 +710,20 @@ package body Docgen3.Frontend is
                  To_Unbounded_String (Buffer.all (From .. Index - 1));
             end if;
 
+            --  Parenthesis count used to handle access to subprogram types
+
+            Par_Count := 0;
+
             Idx := Index;
             while Idx < Buffer'Last
-              and then Buffer (Idx) /= ';'
+              and then (Par_Count > 0 or else Buffer (Idx) /= ';')
             loop
+               if Buffer (Idx) = '(' then
+                  Par_Count := Par_Count + 1;
+               elsif Buffer (Idx) = ')' then
+                  Par_Count := Par_Count - 1;
+               end if;
+
                Idx := Idx + 1;
             end loop;
 

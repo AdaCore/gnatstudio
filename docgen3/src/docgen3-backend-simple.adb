@@ -704,13 +704,19 @@ package body Docgen3.Backend.Simple is
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Simple_Types,
-               "Types",
+               "Simple types",
+               Filter => Filter);
+
+            ReST_Append_List
+              (Printout'Access,
+               Backend.Entities.Access_Types,
+               "Access types",
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Record_Types,
-               "Records",
+               "Record types",
                Filter => Filter);
 
             ReST_Append_List

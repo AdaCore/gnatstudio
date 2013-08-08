@@ -118,6 +118,9 @@ package body Docgen3.Frontend.Builder is
       function In_Ada_Language
         (Entity : Unique_Entity_Id) return Boolean;
 
+      function Is_Access_Type
+        (Entity : Unique_Entity_Id) return Boolean;
+
       function Is_Class_Or_Record_Type
         (Entity : Unique_Entity_Id) return Boolean;
 
@@ -530,6 +533,16 @@ package body Docgen3.Frontend.Builder is
       begin
          return In_Ada_Language (Get_Entity (Entity));
       end In_Ada_Language;
+
+      -------------
+      -- Is_Type --
+      -------------
+
+      function Is_Access_Type (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return LL.Is_Type (Get_Entity (Entity))
+           and then LL.Is_Access (Get_Entity (Entity));
+      end Is_Access_Type;
 
       -----------------------------
       -- Is_Class_Or_Record_Type --
@@ -1290,6 +1303,11 @@ package body Docgen3.Frontend.Builder is
 
          elsif Get_Kind (E) = E_Interface then
             Decorate_Record_Type (E);
+
+         --  Decorate access to subprogram types
+
+         elsif Is_Access_Type (E) then
+            Decorate_Subprogram (E);
          end if;
       end Complete_Decoration;
 
