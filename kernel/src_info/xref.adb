@@ -2625,7 +2625,12 @@ package body Xref is
       Ref  : Entity_Reference;
    begin
       if Active (SQLITE) then
-         Self.Xref.References (Entity.Entity, Cursor => Iter);
+         Self.Xref.References
+           (Entity.Entity, Cursor => Iter,
+            Include_Implicit => True,
+            Include_All => True,
+            Kinds       => "");
+
          while Has_Element (Iter) loop
             Ref := Element (Iter);
             if Ref.Is_End_Of_Scope then
