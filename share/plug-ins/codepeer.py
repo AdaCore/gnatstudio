@@ -465,6 +465,18 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>%X</arg>
        </command-line>
     </target>
+
+    <target model="codepeer" category="CodePeer"
+            name="CodePeer Bridge" messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gps_codepeer_bridge</arg>
+       </command-line>
+    </target>
   </CODEPEER>
 """
 
