@@ -118,7 +118,7 @@ GtkEntry.search {
 
 #notes-frame * {
     background-color: @completion-notes-color;
-    color: @compahaletions-notes-text-color;
+    color: @completions-notes-text-color;
     text-shadow: none;
 }
 
