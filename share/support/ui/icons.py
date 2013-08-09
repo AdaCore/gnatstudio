@@ -188,29 +188,29 @@ XML = r"""<?xml version="1.0"?>
 
     <!-- Entities -->
 
-    <icon id="gps-entity-package"         file="16px/entities/square_x.png" />
-    <icon id="gps-entity-subprogram"      file="16px/entities/circle_x.png" />
-    <icon id="gps-entity-type"            file="16px/entities/triangle_x.png" />
-    <icon id="gps-entity-variable"        file="16px/entities/dot_x.png" />
-    <icon id="gps-entity-generic"         file="16px/entities/diamond_x.png" />
+    <icon id="gps-entity-package"         file="svg/square_x.svg" />
+    <icon id="gps-entity-subprogram"      file="svg/circle_x.svg" />
+    <icon id="gps-entity-type"            file="svg/triangle_x.svg" />
+    <icon id="gps-entity-variable"        file="svg/dot_x.svg" />
+    <icon id="gps-entity-generic"         file="svg/diamond_x.svg" />
 
-    <icon id="gps-entity-package-spec"         file="16px/entities/square_xs.png" />
-    <icon id="gps-entity-subprogram-spec"      file="16px/entities/circle_xs.png" />
-    <icon id="gps-entity-type-spec"            file="16px/entities/triangle_xs.png" />
-    <icon id="gps-entity-variable-spec"        file="16px/entities/dot_xs.png" />
-    <icon id="gps-entity-generic-spec"         file="16px/entities/diamond_xs.png" />
+    <icon id="gps-entity-package-spec"         file="svg/square_xs.svg" />
+    <icon id="gps-entity-subprogram-spec"      file="svg/circle_xs.svg" />
+    <icon id="gps-entity-type-spec"            file="svg/triangle_xs.svg" />
+    <icon id="gps-entity-variable-spec"        file="svg/dot_xs.svg" />
+    <icon id="gps-entity-generic-spec"         file="svg/diamond_xs.svg" />
 
-    <icon id="gps-entity-package-private"         file="16px/entities/square.png" />
-    <icon id="gps-entity-subprogram-private"      file="16px/entities/circle.png" />
-    <icon id="gps-entity-type-private"            file="16px/entities/triangle.png" />
-    <icon id="gps-entity-variable-private"        file="16px/entities/dot.png" />
-    <icon id="gps-entity-generic-private"         file="16px/entities/diamond.png" />
+    <icon id="gps-entity-package-private"         file="svg/square.svg" />
+    <icon id="gps-entity-subprogram-private"      file="svg/circle.svg" />
+    <icon id="gps-entity-type-private"            file="svg/triangle.svg" />
+    <icon id="gps-entity-variable-private"        file="svg/dot.svg" />
+    <icon id="gps-entity-generic-private"         file="svg/diamond.svg" />
 
-    <icon id="gps-entity-package-private-spec"         file="16px/entities/square_s.png" />
-    <icon id="gps-entity-subprogram-private-spec"      file="16px/entities/circle_s.png" />
-    <icon id="gps-entity-type-private-spec"            file="16px/entities/triangle_s.png" />
-    <icon id="gps-entity-variable-private-spec"        file="16px/entities/dot_s.png" />
-    <icon id="gps-entity-generic-private-spec"         file="16px/entities/diamond_s.png" />
+    <icon id="gps-entity-package-private-spec"         file="svg/square_s.svg" />
+    <icon id="gps-entity-subprogram-private-spec"      file="svg/circle_s.svg" />
+    <icon id="gps-entity-type-private-spec"            file="svg/triangle_s.svg" />
+    <icon id="gps-entity-variable-private-spec"        file="svg/dot_s.svg" />
+    <icon id="gps-entity-generic-private-spec"         file="svg/diamond_s.svg" />
 
     <icon id="gps-entity-package-protected"         file="16px/entities/square_p.png" />
     <icon id="gps-entity-subprogram-protected"      file="16px/entities/circle_p.png" />
@@ -226,7 +226,7 @@ XML = r"""<?xml version="1.0"?>
 
     <!-- Aliases icons -->
 
-    <icon id="gps-alias"              file="16px/entities/diamond_x_blue.png" />
+    <icon id="gps-alias"              file="svg/diamond_x_blue.svg" />
 
     <!-- VCS icons -->
 

@@ -61,6 +61,10 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
+with Cairo; use Cairo;
+with Glib.Object; use Glib.Object;
+with Gdk.Visual; use Gdk.Visual;
+with Gtk.Scrollbar;
 
 package body Completion_Window is
 
@@ -107,6 +111,16 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Callback for a key_press_event on the text view
+
+   function Window_On_Draw
+     (Widget : access Gtk_Widget_Record'Class;
+      Cr     : Cairo_Context) return Boolean;
+   --  Callback for a draw_event on the tree view
+
+   procedure Window_On_Screen_Changed
+     (Self            : access Gtk_Widget_Record'Class;
+      Previous_Screen : access Gdk.Screen.Gdk_Screen_Record'Class);
+   --  Callback for a screen changed event on the tree view
 
    procedure Insert_Text_Handler
      (Window : access Completion_Window_Record'Class;
@@ -586,7 +600,7 @@ package body Completion_Window is
 
    begin
       if Explorer.Iter.At_End then
-         --  Hide the "computing" row.
+
          Explorer.Model.Set
            (Explorer.Computing_Iter, Shown_Column, False);
 
@@ -617,8 +631,12 @@ package body Completion_Window is
                end if;
             end if;
          end;
+
          return True;
       end if;
+
+      Explorer.Model.Set
+        (Explorer.Computing_Iter, Shown_Column, True);
 
       if not Explorer.Iter.Is_Valid then
          --  Since we don't know what happened before, we have to assume that
@@ -775,15 +793,10 @@ package body Completion_Window is
       --  Browse through the completion possibilities and filter out the
       --  lines that don't match.
       Curr := Window.Explorer.Model.Get_Iter_First;
-      while Curr /= Null_Iter loop
-         Window.Explorer.Model.Set (Curr, Shown_Column, False);
-         Window.Explorer.Model.Next (Curr);
-      end loop;
-
-      Curr := Window.Explorer.Model.Get_Iter_First;
       while Curr /= Null_Iter
         and then Window.Explorer.Shown < Window.Explorer.Number_To_Show
       loop
+         Window.Explorer.Model.Set (Curr, Shown_Column, False);
          declare
             Text : constant String
               := Window.Explorer.Model.Get_String (Curr, Completion_Column);
@@ -803,8 +816,14 @@ package body Completion_Window is
          Window.Explorer.Model.Set (Curr, Shown_Column, False);
          Window.Explorer.Model.Next (Curr);
       end loop;
-      Window.Explorer.Model.Set
-        (Window.Explorer.Computing_Iter, Shown_Column, True);
+
+      if
+        Window.Explorer.Shown < Window.Explorer.Number_To_Show
+        and then not Window.Explorer.Iter.At_End
+      then
+         Window.Explorer.Model.Set
+           (Window.Explorer.Computing_Iter, Shown_Column, True);
+      end if;
 
       Window.Explorer.Model_Filter.Refilter;
 
@@ -1584,6 +1603,20 @@ package body Completion_Window is
          return False;
    end On_Key_Press;
 
+   procedure Add_Rounded_Class
+     (Self : access Gtk_Widget_Record'Class);
+
+   procedure Add_Rounded_Class
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      Screen : constant Gdk_Screen := Self.Get_Screen;
+      use Gdk;
+   begin
+      if Screen.Get_Rgba_Visual /= Null_Visual then
+         Get_Style_Context (Self).Add_Class ("window-rounded");
+      end if;
+   end Add_Rounded_Class;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1622,6 +1655,7 @@ package body Completion_Window is
       Gtk.Tree_Model_Filter.Gtk_New (Explorer.Model_Filter, +Explorer.Model);
       Gtk_New (Explorer.View, Explorer.Model_Filter);
       Explorer.Model_Filter.Set_Visible_Column (Shown_Column);
+      Explorer.View.Set_Name ("completion-view");
 
       Set_Headers_Visible (Explorer.View, False);
 
@@ -1632,8 +1666,8 @@ package body Completion_Window is
       Pack_Start (Col, Pix, False);
       Add_Attribute (Col, Pix, "pixbuf", Icon_Column);
 
-      Gtk_New (Col);
-      Dummy := Append_Column (Explorer.View, Col);
+--        Gtk_New (Col);
+--        Dummy := Append_Column (Explorer.View, Col);
 
       Gtk_New (Text);
       Pack_Start (Col, Text, True);
@@ -1642,11 +1676,14 @@ package body Completion_Window is
       Gtk_New (Explorer.Tree_Scroll);
       Set_Shadow_Type (Explorer.Tree_Scroll, Shadow_None);
       Set_Policy (Explorer.Tree_Scroll, Policy_Automatic, Policy_Automatic);
+
+      Explorer.Tree_Scroll.Set_Name ("completion-scroll");
       Add (Explorer.Tree_Scroll, Explorer.View);
 
       Gtk_New (Frame);
       Add (Frame, Explorer.Tree_Scroll);
-
+      Frame.Set_Name ("completion-frame");
+      Add_Rounded_Class (Frame);
       Pack_Start (Explorer, Frame, True, True, 0);
 
       Explorer.Info := new Information_Array (1 .. 1024);
@@ -1683,6 +1720,30 @@ package body Completion_Window is
       Completion_Window.Initialize (Window, Kernel);
    end Gtk_New;
 
+   function Window_On_Draw
+     (Widget : access Gtk_Widget_Record'Class;
+      Cr     : Cairo_Context) return Boolean
+   is
+      pragma Unreferenced (Widget, Cr);
+   begin
+      return False;
+   end Window_On_Draw;
+
+   procedure Window_On_Screen_Changed
+     (Self            : access Gtk_Widget_Record'Class;
+      Previous_Screen : access Gdk.Screen.Gdk_Screen_Record'Class)
+   is
+      pragma Unreferenced (Previous_Screen);
+      Screen : constant Gdk_Screen := Self.Get_Screen;
+      Visual : Gdk_Visual;
+      use Gdk;
+   begin
+      Visual := Screen.Get_Rgba_Visual;
+      if Visual /= Null_Visual then
+         Self.Set_Visual (Visual);
+         Get_Style_Context (Self).Add_Class ("window-rounded");
+      end if;
+   end Window_On_Screen_Changed;
    ----------------
    -- Initialize --
    ----------------
@@ -1694,8 +1755,8 @@ package body Completion_Window is
       Dummy   : Gint;
       Frame   : Gtk_Frame;
       Scroll  : Gtk_Scrolled_Window;
-
       pragma Unreferenced (Dummy);
+      use Gdk;
    begin
       Gtk_New (Window.Explorer, Kernel);
 
@@ -1704,14 +1765,28 @@ package body Completion_Window is
 
       Gtk.Window.Initialize (Window, Window_Popup);
 
-      Add (Window, Window.Explorer);
-
       Set_Decorated (Window, False);
+
+      Window.Set_App_Paintable (True);
+      Window.On_Draw (Window_On_Draw'Access);
+      Window.On_Screen_Changed (Window_On_Screen_Changed'Access);
+
+      Window_On_Screen_Changed (Window, null);
+
+      Add (Window, Window.Explorer);
 
       --  Create the Notes window
 
       Gtk_New (Window.Notes_Window, Window_Popup);
+      Window.Set_Name ("completion-window");
       Get_Style_Context (Window.Notes_Window).Add_Class ("tooltip");
+      Window.Notes_Window.Set_Name ("notes-window");
+
+      Window.Notes_Window.Set_App_Paintable (True);
+      Window.Notes_Window.On_Draw (Window_On_Draw'Access);
+      Window.Notes_Window.On_Screen_Changed (Window_On_Screen_Changed'Access);
+
+      Window_On_Screen_Changed (Window.Notes_Window, null);
 
       Gtk_New (Frame);
 
@@ -1719,6 +1794,9 @@ package body Completion_Window is
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scroll);
       Add (Window.Notes_Window, Frame);
+
+      Frame.Set_Name ("notes-frame");
+      Add_Rounded_Class (Frame);
 
       Add (Scroll, Window.Explorer.Notes_Container);
    end Initialize;
@@ -1807,8 +1885,8 @@ package body Completion_Window is
          Unref (Layout);
 
          Max_Width := Char_Width * 20;
-         Max_Height := Char_Height * 20;
-         Notes_Window_Width := Max_Width * 2;
+         Max_Height := Char_Height * 15;
+         Notes_Window_Width := Gint (Float (Max_Width) * 2.0);
       end;
 
       --  Compute the real width and height of the window
@@ -1859,7 +1937,7 @@ package body Completion_Window is
         (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
-         Move (Window.Notes_Window, X + Width, Y);
+         Move (Window.Notes_Window, X + Width + 5, Y);
 
       else
          --  Make sure the Notes window doesn'Gt overlap the tree view
@@ -1869,10 +1947,12 @@ package body Completion_Window is
               (Window.Notes_Window, Notes_Window_Width, Height);
          end if;
 
-         Move (Window.Notes_Window, X - Notes_Window_Width, Y);
+         Move (Window.Notes_Window, X - Notes_Window_Width + 5, Y);
       end if;
 
       Show_All (Window);
+
+      Gtk.Scrollbar.Hide (Get_Hscrollbar (Window.Explorer.Tree_Scroll));
 
       Grab_Focus (Window.Text);
 

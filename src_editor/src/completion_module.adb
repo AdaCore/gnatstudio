@@ -827,14 +827,6 @@ package body Completion_Module is
             then
                Kernel.Push_State (Busy);
 
-               --  At this point, we want to be as close as possible to the
-               --  state of the file where the completion occures - that's
-               --  why we force an update of its contents.
-
-               Update_Contents
-                 (Get_Construct_Database (Kernel),
-                  Get_Filename (Buffer));
-
                Data.The_Text := Get_String (Buffer);
 
                Completion_Module.Has_Smart_Completion := True;

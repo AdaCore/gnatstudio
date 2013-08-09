@@ -13,7 +13,6 @@
    @define-color theme_tooltip_bg_color yellow;
 */
 
-
 * {
   
    /* Reduce the size of the scroll arrows in notebooks */
@@ -69,6 +68,58 @@ GtkEntry.search {
 
 .completion-list {
    /* The list of possible completions, in a completion entry */
+}
+@define-color middle-gray #888888;
+@define-color completion-border-color shade (@theme_bg_color, 0.7);
+/*mix(@theme_bg_color, @middle-gray, 0.5);*/
+@define-color completion-selected-color mix(@theme_bg_color, @middle-gray, 0.5);
+@define-color completion-background-color shade(@theme_bg_color, 1.10);
+@define-color completion-notes-color mix(shade(@theme_bg_color, 1.40), @middle-gray, 0.2);
+@define-color completions-notes-text-color mix(@theme_fg_color, @middle-gray, 0.2);
+
+#completion-frame {
+    border-style:solid;
+    border-width:1px;
+    border-color: @completion-border-color;
+    background-color: @completion-background-color;
+    margin: 5px;
+    padding: 5px;
+}
+
+.window-rounded {
+    border-radius: 4;
+}
+
+#completion-scroll {
+    margin: 5px;
+    padding: 5px;
+}
+
+#completion-view {
+    background-color: @completion-background-color;
+}
+
+#completion-view:selected {
+    background-color: @completion-selected-color;
+    border-radius: 5px;
+    color:@theme_fg_color;
+}
+
+#notes-window {
+    padding:20px;
+    margin:20px;
+}
+
+#notes-frame {
+    border-color: @completion-border-color;
+    background-color: @completion-notes-color;
+    padding: 5px;
+}
+
+#notes-frame * {
+    background-color: @completion-notes-color;
+    color: @compahaletions-notes-text-color;
+    text-shadow: none;
 }
 
 /*
