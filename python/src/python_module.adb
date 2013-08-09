@@ -114,6 +114,12 @@ package body Python_Module is
       return XML_Utils.Node_Ptr;
    --  An Ada wrapper for a view created in Python
 
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Support functions for the MDI
+
    ----------------
    -- Initialize --
    ----------------
@@ -193,6 +199,8 @@ package body Python_Module is
         (Kernel,
          new Python_Module_Record,
          Menu_Name  => -"Consoles/_Python");
+
+      Register_Desktop_Functions (null, Load_Desktop'Access);
 
       MDI := New_Class (Get_Scripts (Kernel), "MDI");
 
@@ -497,6 +505,42 @@ package body Python_Module is
       return N;
    end Save_Desktop;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      Script : constant Scripting_Language :=
+        Lookup_Scripting_Language (Get_Scripts (User), Python_Name);
+      Data : Callback_Data'Class := Create (Script, 2);
+      Inst : Class_Instance;
+   begin
+      Trace (Me, "MANU Load_Desktop tag=" & Node.Tag.all);
+      Set_Nth_Arg (Data, 1, Node.Tag.all);
+      Set_Nth_Arg (Data, 2, Node.Value.all);
+      Data.Execute_Command ("modules.Module_Metaclass.load_desktop");
+
+      Inst := Return_Value (Data);
+      Free (Data);
+
+      if Inst /= No_Class_Instance then
+         return Get_Child (Inst);
+      end if;
+
+      return null;
+
+   exception
+      when E : Error_In_Command =>
+         Trace (Me, E);
+         Free (Data);
+         return null;
+   end Load_Desktop;
+
    --------------------------------
    -- Python_GUI_Command_Handler --
    --------------------------------
@@ -525,6 +569,11 @@ package body Python_Module is
             Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
             Put (Get_MDI (Get_Kernel (Data)), Child, Position);
             Set_Focus_Child (Child);
+
+            Set_Return_Value
+              (Data,
+               Create_MDI_Window_Instance
+                 (Get_Script (Data), Get_Kernel (Data), Child));
          end if;
       end if;
    end Python_GUI_Command_Handler;

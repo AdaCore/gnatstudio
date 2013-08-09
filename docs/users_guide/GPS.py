@@ -6872,6 +6872,8 @@ class MDI(object):
             An easier alternative is to use the modules.py support script in
             GPS, which handles this parameter automatically on your behalf.
 
+        :return: the instance of GPS.MDIWindow that was created
+
         .. code-block:: python
 
            from gi.repository import Gtk

@@ -1031,6 +1031,15 @@ package body GPS.Main_Window is
       return Inst;
    end Create_MDI_Window_Instance;
 
+   ---------------
+   -- Get_Child --
+   ---------------
+
+   function Get_Child (Inst : Class_Instance) return MDI_Child is
+   begin
+      return MDI_Child (Glib.Object.GObject'(Get_Data (Inst)));
+   end Get_Child;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------

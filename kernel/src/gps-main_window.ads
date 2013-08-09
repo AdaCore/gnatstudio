@@ -106,4 +106,7 @@ package GPS.Main_Window is
       Child  : access MDI_Child_Record'Class) return Class_Instance;
    --  Create a class instance wrapping child
 
+   function Get_Child (Inst : Class_Instance) return MDI_Child;
+   --  Return the child stored in an instance of GPS.MDIWindow
+
 end GPS.Main_Window;

@@ -41,6 +41,17 @@ class Module_Metaclass(type):
             for m in Module_Metaclass.modules:
                 m()._setup()
 
+    @staticmethod
+    def load_desktop(name, data):
+        """
+        Support for loading desktop data.
+        This is called directly by Ada (python_module.adb)
+        """
+        for m in Module_Metaclass.modules:
+            child = m()._load_desktop(name, data)
+            if child:
+                return child
+
 
 GPS.Hook("gps_started").add(Module_Metaclass.setup_all_modules)
 
@@ -117,13 +128,17 @@ class Module(object):
         """
         return ""
 
-    # def load_desktop(self, data):
-    #     """
-    #     Override this function to handle loading of the desktop when GPS
-    #     loads a project.
-    #     This function is passed the data that was saved via save_desktop(),
-    #     and should create the new window in GPS, if it can.
-    #     """
+    def load_desktop(self, child, data):
+        """
+        This function is called when loading a widget from the desktop. It
+        receives a newly created widget, and the data returned by
+        save_desktop() that can be used to initialize the widget.
+
+        :param child: a newly created instance of GPS.MDIWindow, that
+            contains the view created by self.create_view()
+        :param data: a string, as returned by save_desktop
+        """
+        pass
 
     #########################################
     # Singleton
@@ -192,15 +207,24 @@ class Module(object):
             self.__disconnect_hook(h)
         self.teardown()
 
-    def __save_desktop(self, child):
+    def _save_desktop(self, child):
         return ("%s.%s" % (self.__class__.__module__,
                            self.__class__.__name__),
                 self.save_desktop(child) or "")
 
-    def get_view(self, allow_create=True):
+    def _load_desktop(self, name, data):
+        if name == "%s.%s" % (self.__class__.__module__,
+                              self.__class__.__name__):
+            child = self.get_child(allow_create=True)
+            self.load_desktop(child, data)
+            return child
+
+    def get_child(self, allow_create=True):
         """
         Retrieve an existing view. If none exists and allow_create is True,
         a new one is created by calling create_view, and adding it to the MDI.
+
+        :return: an instance of GPS.MDIWindow
         """
 
         # ??? Should store the view directly in self, but we need to monitor
@@ -209,7 +233,7 @@ class Module(object):
             child = GPS.MDI.get(self.view_title)
             if child:
                 child.raise_window()
-                return child.get_child()
+                return child
             elif allow_create:
                 view = self.create_view()
                 if view:
@@ -218,8 +242,19 @@ class Module(object):
                         position=self.mdi_position,
                         group=self.mdi_group,
                         title=self.view_title,
-                        save_desktop=self.__save_desktop)
-                return view
+                        save_desktop=self._save_desktop)
+                    return child
+        return None
+
+    def get_view(self, allow_create=True):
+        """
+        Retrieve an existing view. See get_child()
+
+        :return: an instance of Gtk.Widget
+        """
+        child = self.get_child(allow_create=allow_create)
+        if child:
+            return child.get_child()
         return None
 
 
@@ -236,6 +271,9 @@ if False:
     def teardown(self):
         remove_interactive(menu="/Tools/Views/Close %s" % self.view_title)
         remove_interactive(menu="/Tools/Views/%s" % self.view_title)
+
+    def load_desktop(self, child, data):
+        print "Loading desktop for child=%s" % (child, )
 
     def preferences_changed(self):
         print "preferences changed"
