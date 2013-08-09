@@ -120,7 +120,7 @@ xml_gnatprove = """<?xml version="1.0"?>
                        tip="Only failed proof attempts"/>
           <combo-entry label="all" value="all"
                        tip="All proof attempts"/>
-          <combo-entry label="detailed" value="detailed"
+          <combo-entry label="statistics" value="statistics"
                        tip="Detailed proof attempts"/>
         </combo>
          <combo label="One proof by" switch="--proof" noswitch="no_split"
