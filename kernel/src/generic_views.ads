@@ -251,6 +251,11 @@ package Generic_Views is
       --  The following subprograms need to be in the spec so that we can get
       --  access to them from callbacks in the body
 
+      type Local_Formal_MDI_Child is new Formal_MDI_Child with null record;
+      overriding function Save_Desktop
+        (Self : not null access Local_Formal_MDI_Child)
+         return XML_Utils.Node_Ptr;
+
       procedure On_Open_View
         (Widget : access Glib.Object.GObject_Record'Class;
          Kernel : GPS.Kernel.Kernel_Handle);
@@ -265,11 +270,6 @@ package Generic_Views is
          User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
       Load_Desktop_Access : constant
         GPS.Kernel.MDI.Load_Desktop_Function := Load_Desktop'Access;
-      function Save_Desktop
-        (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-         User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
-      Save_Desktop_Access : constant
-        GPS.Kernel.MDI.Save_Desktop_Function := Save_Desktop'Access;
       --  Support functions for the MDI
 
       procedure On_Display_Local_Config

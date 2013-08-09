@@ -449,7 +449,7 @@ package body Generic_Views is
          end if;
 
          --  Child does not exist yet, create it
-         Child := new Formal_MDI_Child;
+         Child := new Local_Formal_MDI_Child;
          Initialize (Child, W,
                      Default_Width  => 215,
                      Default_Height => 600,
@@ -496,11 +496,10 @@ package body Generic_Views is
       -- Save_Desktop --
       ------------------
 
-      function Save_Desktop
-        (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-         User   : Kernel_Handle) return Node_Ptr
+      overriding function Save_Desktop
+        (Self : not null access Local_Formal_MDI_Child) return Node_Ptr
       is
-         pragma Unreferenced (User);
+         Widget : constant Gtk_Widget := Get_Widget (Self);
          N : Node_Ptr;
          Tb : constant Boolean := Local_Toolbar or else Local_Config;
       begin
@@ -641,7 +640,7 @@ package body Generic_Views is
             Kernel      => Kernel,
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
-         Register_Desktop_Functions (Save_Desktop_Access, Load_Desktop_Access);
+         Register_Desktop_Functions (null, Load_Desktop_Access);
 
          if Menu_Name /= "" then
             Register_Open_Menu

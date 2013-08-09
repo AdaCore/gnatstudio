@@ -127,7 +127,6 @@ package body Src_Editor_Module is
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
-
    overriding procedure Tab_Contextual
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -136,6 +135,8 @@ package body Src_Editor_Module is
       return Standard.Commands.Command_Queue;
    overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
+   overriding function Save_Desktop
+     (Self  : not null access Editor_Child_Record) return Node_Ptr;
    --  See inherited documentation
 
    function Source_File_Hook
@@ -180,10 +181,6 @@ package body Src_Editor_Module is
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
    --  Support functions for the MDI
 
    procedure On_Open_File
@@ -813,22 +810,19 @@ package body Src_Editor_Module is
    -- Save_Desktop --
    ------------------
 
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return Node_Ptr
+   overriding function Save_Desktop
+     (Self  : not null access Editor_Child_Record) return Node_Ptr
    is
       N, Child : Node_Ptr;
       Line     : Editable_Line_Type;
       Column   : Character_Offset_Type;
-      Editor   : Source_Editor_Box;
       File     : Virtual_File;
       Pref     : Editor_Desktop_Policy;
+      Editor   : constant Source_Editor_Box :=
+        Source_Editor_Box (Self.Get_Widget);
+      Kernel   : constant Kernel_Handle := Self.Kernel;
 
    begin
-      if Widget.all not in Source_Editor_Box_Record'Class then
-         return null;
-      end if;
-
       begin
          Pref := Save_Editor_Desktop.Get_Pref;
       exception
@@ -840,7 +834,6 @@ package body Src_Editor_Module is
          return null;
       end if;
 
-      Editor := Source_Editor_Box (Widget);
       File   := Get_Filename (Editor);
 
       --  ??? For now, save with desktop only local files
@@ -850,8 +843,8 @@ package body Src_Editor_Module is
       end if;
 
       if Pref = From_Project and then
-        (Get_Registry (User).Tree.Status /= From_File
-         or else Get_Registry (User).Tree.Info (File).Project = No_Project)
+        (Get_Registry (Kernel).Tree.Status /= From_File or else
+         Get_Registry (Kernel).Tree.Info (File).Project = No_Project)
       then
          return null;
       end if;
@@ -2768,7 +2761,7 @@ package body Src_Editor_Module is
          Kernel      => Kernel,
          Module_Name => Src_Editor_Module_Name,
          Priority    => Default_Priority);
-      Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
+      Register_Desktop_Functions (null, Load_Desktop'Access);
 
       Add_Hook (Kernel, Open_File_Action_Hook,
                 Wrapper (Source_File_Hook'Access),

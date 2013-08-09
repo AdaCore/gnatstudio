@@ -68,7 +68,6 @@ with GPS.Editors.GtkAda;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with Traces;                    use Traces;
 
-with Glib.Xml_Int;
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
@@ -870,6 +869,21 @@ package body GPS.Kernel.MDI is
       Kernel_Desktop.Register_Desktop_Functions (Unch (Save), Unch (Load));
    end Register_Desktop_Functions;
 
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   overriding function Save_Desktop
+     (Self : not null access GPS_MDI_Child_Record) return Glib.Xml_Int.Node_Ptr
+   is
+      function Unch is new Ada.Unchecked_Conversion
+        (XML_Utils.Node_Ptr, Glib.Xml_Int.Node_Ptr);
+      N : constant XML_Utils.Node_Ptr :=
+        Save_Desktop (GPS_MDI_Child_Record'Class (Self.all)'Access);
+   begin
+      return Unch (N);
+   end Save_Desktop;
+
    ---------------------
    -- Get_XML_Content --
    ---------------------
@@ -1555,5 +1569,15 @@ package body GPS.Kernel.MDI is
          Module_Name => "General_UI",
          Priority    => Default_Priority);
    end Register_Module;
+
+   ------------
+   -- Kernel --
+   ------------
+
+   function Kernel
+     (Self : not null access GPS_MDI_Child_Record) return Kernel_Handle is
+   begin
+      return Get_Module_From_Child (MDI_Child (Self)).Get_Kernel;
+   end Kernel;
 
 end GPS.Kernel.MDI;

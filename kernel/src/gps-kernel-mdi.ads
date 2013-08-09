@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Commands;
 with Default_Preferences;
+with Glib.Xml_Int;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Glib.Main;
 with Gtk.Accel_Group;
@@ -157,6 +158,14 @@ package GPS.Kernel.MDI is
       Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
 
+   overriding function Save_Desktop
+     (Self : not null access GPS_MDI_Child_Record)
+      return Glib.Xml_Int.Node_Ptr;
+   function Save_Desktop
+     (Self : not null access GPS_MDI_Child_Record) return XML_Utils.Node_Ptr
+     is (null);
+   --  Replaces the version from GtkAda, since Node_Ptr is of a different type
+
    procedure Load_Perspective
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String);
@@ -181,6 +190,10 @@ package GPS.Kernel.MDI is
    --  Return the MDI associated with Handle.
    --  Use the Put function below instead of the one in GtkAda.MDI to
    --  associated a widget with a GPS module
+
+   function Kernel
+     (Self : not null access GPS_MDI_Child_Record) return Kernel_Handle;
+   --  Return a handle to the GPS kernel.
 
    function Get_Module_From_Child
      (Child : Gtkada.MDI.MDI_Child) return Module_ID;
