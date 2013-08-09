@@ -372,6 +372,8 @@ private package Docgen3.Atree is
         (E : Entity_Id) return General_Entity;
       function Get_Full_View
         (E : Entity_Id) return General_Entity;
+      function Get_Instance_Of
+        (E : Entity_Id) return General_Entity;
       function Get_Kind
         (E : Entity_Id) return Entity_Kind;
       function Get_Location
@@ -502,6 +504,7 @@ private
          Etype         : General_Entity;
          Pointed_Type  : General_Entity;
          Alias         : General_Entity;
+         Instance_Of   : General_Entity;
 
          Has_Methods   : Boolean;
 

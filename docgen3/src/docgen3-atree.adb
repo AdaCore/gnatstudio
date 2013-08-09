@@ -796,6 +796,7 @@ package body Docgen3.Atree is
          else
             New_E.Xref.Is_Generic    := Is_Generic (Db, E);
             New_E.Xref.Is_Subprogram := Is_Subprogram (Db, E);
+            New_E.Xref.Instance_Of   := Instance_Of (Db, E);
 
             if New_E.Xref.Is_Subprogram then
                New_E.Xref.Is_Abstract := Xref.Is_Abstract (Db, E);
@@ -952,6 +953,7 @@ package body Docgen3.Atree is
              Etype         => No_General_Entity,
              Pointed_Type  => No_General_Entity,
              Alias         => No_General_Entity,
+             Instance_Of   => No_General_Entity,
 
              Has_Methods   => False,
 
@@ -1530,6 +1532,12 @@ package body Docgen3.Atree is
       begin
          return E.Xref.Full_View;
       end Get_Full_View;
+
+      function Get_Instance_Of
+        (E : Entity_Id) return General_Entity is
+      begin
+         return E.Xref.Instance_Of;
+      end Get_Instance_Of;
 
       function Get_Kind (E : Entity_Id) return Entity_Kind is
       begin
@@ -2189,6 +2197,14 @@ package body Docgen3.Atree is
          Append_Line
            (LL_Prefix
             & " Is_Generic");
+
+      elsif Present (E.Xref.Instance_Of) then
+         Append_Line
+           (LL_Prefix
+            & "Instance_Of: "
+            & Image (Get_Location (Db, E.Xref.Instance_Of))
+            & ":"
+            & Get_Name (Db, E.Xref.Instance_Of));
       end if;
 
       if With_Src then
