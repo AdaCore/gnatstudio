@@ -71,6 +71,8 @@ package body Completion_Window is
    Max_Window_Width : constant := 330;
    --  Maximum width of the window, in pixels
 
+   Notes_Window_Left_Padding : constant := 5;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
 
@@ -168,6 +170,10 @@ package body Completion_Window is
    procedure Adjust_Selected (Window : access Completion_Window_Record'Class);
    --  Show only the items that begin with the current pattern filter.
    --  Delete the window if there is no item to show.
+
+   procedure Add_Rounded_Class
+     (Self : access Gtk_Widget_Record'Class);
+   --  Add a css class for round windows to the Self widget
 
    procedure Free (X : in out Information_Record);
    --  Free memory associated to X
@@ -1603,8 +1609,9 @@ package body Completion_Window is
          return False;
    end On_Key_Press;
 
-   procedure Add_Rounded_Class
-     (Self : access Gtk_Widget_Record'Class);
+   -----------------------
+   -- Add_Rounded_Class --
+   -----------------------
 
    procedure Add_Rounded_Class
      (Self : access Gtk_Widget_Record'Class)
@@ -1666,9 +1673,6 @@ package body Completion_Window is
       Pack_Start (Col, Pix, False);
       Add_Attribute (Col, Pix, "pixbuf", Icon_Column);
 
---        Gtk_New (Col);
---        Dummy := Append_Column (Explorer.View, Col);
-
       Gtk_New (Text);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "markup", Markup_Column);
@@ -1720,6 +1724,10 @@ package body Completion_Window is
       Completion_Window.Initialize (Window, Kernel);
    end Gtk_New;
 
+   --------------------
+   -- Window_On_Draw --
+   --------------------
+
    function Window_On_Draw
      (Widget : access Gtk_Widget_Record'Class;
       Cr     : Cairo_Context) return Boolean
@@ -1728,6 +1736,10 @@ package body Completion_Window is
    begin
       return False;
    end Window_On_Draw;
+
+   ------------------------------
+   -- Window_On_Screen_Changed --
+   ------------------------------
 
    procedure Window_On_Screen_Changed
      (Self            : access Gtk_Widget_Record'Class;
@@ -1744,6 +1756,7 @@ package body Completion_Window is
          Get_Style_Context (Self).Add_Class ("window-rounded");
       end if;
    end Window_On_Screen_Changed;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1886,7 +1899,7 @@ package body Completion_Window is
 
          Max_Width := Char_Width * 20;
          Max_Height := Char_Height * 15;
-         Notes_Window_Width := Gint (Float (Max_Width) * 2.0);
+         Notes_Window_Width := Max_Width * 2;
       end;
 
       --  Compute the real width and height of the window
@@ -1937,7 +1950,8 @@ package body Completion_Window is
         (Window.Notes_Window, Notes_Window_Width, Height);
 
       if Root_Width - (X + Width + 4) > Notes_Window_Width then
-         Move (Window.Notes_Window, X + Width + 5, Y);
+         Move (Window.Notes_Window, X + Width
+               + Notes_Window_Left_Padding, Y);
 
       else
          --  Make sure the Notes window doesn'Gt overlap the tree view
@@ -1947,7 +1961,8 @@ package body Completion_Window is
               (Window.Notes_Window, Notes_Window_Width, Height);
          end if;
 
-         Move (Window.Notes_Window, X - Notes_Window_Width + 5, Y);
+         Move (Window.Notes_Window, X - Notes_Window_Width
+               + Notes_Window_Left_Padding, Y);
       end if;
 
       Show_All (Window);
