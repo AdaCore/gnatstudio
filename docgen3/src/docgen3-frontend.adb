@@ -91,10 +91,12 @@ package body Docgen3.Frontend is
       --  Return the indexes to the first word in Buffer located before Index
 
       function Search_Backward
-        (Word : String;
-         From : Natural) return Natural;
-      --  Search backward in Buffer (starting at index From) for the index
-      --  of Word (in lowercase).
+        (From   : Natural;
+         Word_1 : String;
+         Word_2 : String := "") return Natural;
+      --  Case insensitive search backward in Buffer (starting at index
+      --  From) for the index of the first occurrence of Word_1 (or Word_2
+      --  if present).
 
       function Skip_Blanks_Backward (Index : Natural) return Natural;
       --  Displace Idx backwards skipping character ' '
@@ -524,7 +526,7 @@ package body Docgen3.Frontend is
             --  here. Must be improved???
 
             Prev_Word_Begin :=
-              Search_Backward ("type", From => Entity_Index - 1);
+              Search_Backward (From => Entity_Index - 1, Word_1 => "type");
 
             --  Append tabulation
 
@@ -700,7 +702,9 @@ package body Docgen3.Frontend is
             --  here. Must be improved???
 
             Index :=
-              Search_Backward ("type", From => Index - 1);
+              Search_Backward (From => Index - 1,
+                Word_1 => "type",
+                Word_2 => "subtype");
 
             --  Append tabulation
 
@@ -1368,19 +1372,20 @@ package body Docgen3.Frontend is
       ---------------------
 
       function Search_Backward
-        (Word : String;
-         From : Natural) return Natural
+        (From   : Natural;
+         Word_1 : String;
+         Word_2 : String := "") return Natural
       is
-         Lowercase_Word  : constant String := To_Lower (Word);
-         Idx             : Natural := From;
-         Prev_Word_Begin : Natural := Buffer.all'First;
-         Prev_Word_End   : Natural;
+         Lowercase_Word_1 : constant String := To_Lower (Word_1);
+         Lowercase_Word_2 : constant String := To_Lower (Word_2);
+         Idx              : Natural := From;
+         Prev_Word_Begin  : Natural := Buffer.all'First;
+         Prev_Word_End    : Natural;
 
       begin
-         --  Locate the beginning of the type declaration. This is a
-         --  naive approach used in the prototype since it does not
-         --  handle the word "type" located in a comment. A backward
-         --  parser is required here. Must be improved???
+         --  Locate the beginning of the type declaration. This is a naive
+         --  approach used in the prototype since we do not skip comments.
+         --  A backward parser is required here. Must be improved???
 
          loop
             while Idx > Buffer.all'First
@@ -1402,7 +1407,12 @@ package body Docgen3.Frontend is
             exit when Idx = Buffer.all'First
               or else
                 To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End))
-                  = Lowercase_Word;
+                  = Lowercase_Word_1
+
+              or else (Word_2 /= ""
+                and then
+                  To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End))
+                    = Lowercase_Word_2);
          end loop;
 
          return Prev_Word_Begin;
