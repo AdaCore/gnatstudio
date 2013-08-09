@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
@@ -98,5 +99,11 @@ package GPS.Main_Window is
    function Is_Any_Menu_Open
      (Window : access GPS_Window_Record) return Boolean;
    --  Returns True if any of the main menu bar's menus are visible
+
+   function Create_MDI_Window_Instance
+     (Script : not null access Scripting_Language_Record'Class;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Child  : access MDI_Child_Record'Class) return Class_Instance;
+   --  Create a class instance wrapping child
 
 end GPS.Main_Window;

@@ -134,6 +134,14 @@ def with_save_excursion(fn):
     return do_work
 
 
+def remove_interactive(menu="", name="", contextual=""):
+    """
+    Undo the effects of make_interactive.
+    """
+    # ??? Not implemented yet
+    pass
+
+
 def make_interactive(callback, category="General", filter="", menu="", key="",
                      contextual="", name="", before="", after=""):
     """

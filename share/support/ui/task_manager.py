@@ -6,8 +6,9 @@ This plugin implements the "Task Manager" view.
 
 
 import GPS
+from modules import Module
 from gi.repository import Gtk, GLib
-from gps_utils import interactive
+from gps_utils import make_interactive
 
 COL_LABEL = 0
 COL_PROGRESS = 1
@@ -18,9 +19,17 @@ COL_TASK_ID = 5
 
 REFRESH_EVERY = 250 # milliseconds
 
-class Task_Manager ():
+class Task_Manager(Module):
+    view_title = "Task Manager"
 
-    def __init__(self):
+    def setup(self):
+        make_interactive(
+            self.get_view,
+            category="Views",
+            name="open Task Manager",
+            menu="/Tools/Views/Tasks", before="Windows")
+
+    def create_view(self):
         self.box = Gtk.VBox()
         self.scroll = Gtk.ScrolledWindow()
         self.store = Gtk.ListStore(str, int, str, str, str, str)
@@ -61,6 +70,8 @@ class Task_Manager ():
 
         # Remove the refresh on destroy
         self.view.connect("destroy", self.__on_destroy)
+
+        return self.box
 
     def __task_from_row(self, path):
         """ Return the GPS.Task corresponding to the row at path.
@@ -165,20 +176,3 @@ class Task_Manager ():
         for t in tasks:
             self.__add_one_task(tasks[t])
 
-
-@interactive("Views",
-    name="open Task Manager", menu="/Tools/Views/Tasks", before="Windows")
-def launch_task_manager():
-    """Open the Task Manager view"""
-    child = GPS.MDI.get("Task Manager")
-    if child:
-        # Task manager already open? raise it
-        child.raise_window()
-    else:
-        # Create the task manager and raise it
-        t = Task_Manager()
-        GPS.MDI.add(t.box,
-            position=GPS.MDI.POSITION_BOTTOM,
-            group=GPS.MDI.GROUP_CONSOLES,
-            title="Task Manager", short="Task Manager")
-        child = GPS.MDI.get("Task Manager").raise_window()

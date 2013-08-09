@@ -6836,7 +6836,7 @@ class MDI(object):
     # constants to be used in GPS.MDI.add()
 
     @staticmethod
-    def add(widget, title="", short="", group=0, position=0):
+    def add(widget, title="", short="", group=0, position=0, save_desktop=None):
         """
         This function is only available if pygobject could be loaded in the
         python shell. You must install this library first, see the documentation
@@ -6852,7 +6852,6 @@ class MDI(object):
         :param widget: A widget, created by pygobject
         :param title: A string
         :param short: A string
-
         :param group: An integer, see the constants MDI.GROUP_*
             This indicates to which logical group the widget belongs (the
             default group should be reserved for editors). You can create
@@ -6862,6 +6861,16 @@ class MDI(object):
             specify the initial location of the newly created notebook.
             When other widgets of the same group exist, the widget is put
             on top of them.
+        :param save_desktop: A function that should be called when GPS saves
+            the desktop into XML. This function receives the GPS.MDIWindow
+            as a parameter, and should return a tuple of two elements:
+                (name, data)
+            where name is a unique identifier for this window, and data is
+            a string containing additional data to be saved (and later
+            restored). One suggestion is to encode any python data through
+            json and send the resulting string as data.
+            An easier alternative is to use the modules.py support script in
+            GPS, which handles this parameter automatically on your behalf.
 
         .. code-block:: python
 
