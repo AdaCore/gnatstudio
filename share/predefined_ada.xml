@@ -283,7 +283,7 @@ This aspect is equivalent to pragma `Favor_Top_Level'.
 
    <ASPECT id = "0" name = "Global" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent pragma `Global'.
+This aspect is equivalent to pragma `Global'.
       </DOC>
    </ASPECT>
 
@@ -310,6 +310,18 @@ addressable. See C.6.
       <DOC>
 Declare that the components of an array or record type, or an
 array object, are independently addressable. See C.6.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Initial_Condition" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Initial_Condition'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Initializes" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Initializes'.
       </DOC>
    </ASPECT>
 
@@ -514,6 +526,12 @@ Procedure to read a value from a stream for a given type. See
 layout
 
 See Layout. See 13.5.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Refined_State" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Refined_State'.
       </DOC>
    </ASPECT>
 
@@ -3819,6 +3837,13 @@ sequence).
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Abstract_State" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.4.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Ada_05" origin = "GNAT RM">
       <DOC>
 Syntax:
@@ -4968,6 +4993,13 @@ Reference Manual for details.
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Depends" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 6.1.5.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Detect_Blocking" origin = "Ada RM">
       <DOC>
 Syntax:
@@ -5674,6 +5706,13 @@ the VAX float format, as follows:
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Global" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 6.1.4.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Ident" origin = "GNAT RM">
       <DOC>
 Syntax:
@@ -6071,6 +6110,13 @@ prohibiting tight packing).
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Initial_Condition" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.6.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Initialize_Scalars" origin = "GNAT RM">
       <DOC>
 Syntax:
@@ -6126,6 +6172,13 @@ larger. It may also cause an increase in the amount of stack required,
 so it is probably a good idea to turn on stack checking (see
 description of stack checking in the GNAT Pro User's Guide) when using
 this pragma.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Initializes" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.5.
       </DOC>
    </PRAGMA>
 
@@ -8304,6 +8357,13 @@ compatibility purposes. It is equivalent to:
 pragma Profile (Ravenscar);
 
 which is the preferred method of setting the `Ravenscar' profile.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Refined_State" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.2.2.
       </DOC>
    </PRAGMA>
 
