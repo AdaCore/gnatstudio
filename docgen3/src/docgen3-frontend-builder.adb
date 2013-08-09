@@ -1256,7 +1256,8 @@ package body Docgen3.Frontend.Builder is
 
                else
                   Get_Unique_Entity
-                    (Formal, Context, File, Formals (J).Parameter);
+                    (Formal, Context, File, Formals (J).Parameter,
+                     Forced => True);
 
                   if Present (Formal) then
                      pragma Assert
