@@ -31,6 +31,7 @@ with Language.Tree.Database;  use Language.Tree.Database;
 with String_Utils;            use String_Utils;
 with Templates_Parser;        use Templates_Parser;
 with Traces;                  use Traces;
+with Xref.Docgen;             use Xref.Docgen;
 
 package body Docgen3.Backend.Simple is
    Me : constant Debug_Handle := Create ("Docgen3.1-Backend");
@@ -654,6 +655,13 @@ package body Docgen3.Backend.Simple is
          --  Generate the ReST file Filename with this Header containing an
          --  index with all the files of Src_Files.
 
+         procedure Generate_Instances_Index
+           (List      : access EInfo_List.Vector;
+            Filename  : String;
+            Header    : String);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with the tree of dependencies of Ada tagged types.
+
          procedure Generate_Tagged_Types_Tree_Index
            (Filename  : String;
             Header    : String);
@@ -665,6 +673,9 @@ package body Docgen3.Backend.Simple is
 
          function Get_C_And_CPP_Src_Files return Files_List.Vector;
          --  Return the list of C & C++ source files of the project
+
+         function Has_Instances (List : EInfo_List.Vector) return Boolean;
+         --  Return true if List has the instance of some generic
 
          -----------------------
          -- Generate_Entities --
@@ -797,6 +808,82 @@ package body Docgen3.Backend.Simple is
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Files_Index;
+
+         ------------------------------
+         -- Generate_Instances_Index --
+         ------------------------------
+
+         procedure Generate_Instances_Index
+           (List     : access EInfo_List.Vector;
+            Filename : String;
+            Header   : String)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
+            Tmpl        : constant Virtual_File :=
+                            Get_Template
+                              (Get_Share_Dir (Backend.Context.Kernel),
+                               Tmpl_Entities);
+            Cursor1     : EInfo_List.Cursor;
+            E1          : Entity_Id;
+            Printout    : aliased Unbounded_String;
+            Translation : Translate_Set;
+
+         begin
+            Append_Line (Printout'Access, Header);
+            Append_Line (Printout'Access, Header_U);
+            Append_Line (Printout'Access, "");
+
+            Cursor1 := List.First;
+            while EInfo_List.Has_Element (Cursor1) loop
+               E1 := EInfo_List.Element (Cursor1);
+
+               --  Locate a generic
+
+               if LL.Is_Generic (E1) then
+                  ReST_Append_Reference
+                    (Printout => Printout'Access,
+                     Entity   => E1,
+                     Prefix   => "- ");
+                  Append_Line (Printout'Access, "");
+
+                  --  Append all its instantiations
+
+                  declare
+                     LL_E1   : constant General_Entity := LL.Get_Entity (E1);
+                     Cursor2 : EInfo_List.Cursor := List.First;
+                     E2      : Entity_Id;
+                  begin
+                     while EInfo_List.Has_Element (Cursor2) loop
+                        E2 := EInfo_List.Element (Cursor2);
+
+                        if Present (LL.Get_Instance_Of (E2))
+                          and then LL.Get_Instance_Of (E2) = LL_E1
+                        then
+                           ReST_Append_Reference
+                             (Printout => Printout'Access,
+                              Entity   => E2,
+                              Prefix   => "  - ");
+                           Append_Line (Printout'Access, "");
+                        end if;
+
+                        EInfo_List.Next (Cursor2);
+                     end loop;
+                  end;
+               end if;
+
+               EInfo_List.Next (Cursor1);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Instances_Index;
 
          --------------------------------
          -- Generate_Tagged_Types_Tree --
@@ -1032,6 +1119,31 @@ package body Docgen3.Backend.Simple is
             return Result;
          end Get_C_And_CPP_Src_Files;
 
+         -------------------
+         -- Has_Instances --
+         -------------------
+
+         function Has_Instances
+           (List : EInfo_List.Vector) return Boolean
+         is
+            Cursor : EInfo_List.Cursor;
+            E      : Entity_Id;
+
+         begin
+            Cursor := List.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               E := EInfo_List.Element (Cursor);
+
+               if Present (LL.Get_Instance_Of (E)) then
+                  return True;
+               end if;
+
+               EInfo_List.Next (Cursor);
+            end loop;
+
+            return False;
+         end Has_Instances;
+
          --  Local variables
 
          Printout      : aliased Unbounded_String;
@@ -1093,6 +1205,32 @@ package body Docgen3.Backend.Simple is
                   Generate_Tagged_Types_Tree_Index
                     (Filename => Filename,
                      Header   => "Ada derivations tree (tagged types)");
+                  Append_Line (Printout'Access, "   " & Filename);
+               end;
+            end if;
+
+            if Has_Instances (Backend.Entities.Pkgs) then
+               declare
+                  Filename : constant String := "ada_pkg_instances_idx";
+               begin
+                  Generate_Instances_Index
+                    (List     => Backend.Entities.Pkgs'Access,
+                     Filename => Filename,
+                     Header   =>
+                       "Ada generic packages and their instantiations");
+                  Append_Line (Printout'Access, "   " & Filename);
+               end;
+            end if;
+
+            if Has_Instances (Backend.Entities.Subprgs) then
+               declare
+                  Filename : constant String := "ada_subp_instances_idx";
+               begin
+                  Generate_Instances_Index
+                    (List     => Backend.Entities.Subprgs'Access,
+                     Filename => Filename,
+                     Header   =>
+                       "Ada generic subprograms and their instantiations");
                   Append_Line (Printout'Access, "   " & Filename);
                end;
             end if;
@@ -1541,7 +1679,7 @@ package body Docgen3.Backend.Simple is
 
             Doc_Dir     : constant Virtual_File :=
                             Get_Doc_Directory (Backend.Context.Kernel);
-            Filename    : constant String := Get_Filename;
+            Filename    : constant String := To_Lower (Get_Filename);
             ReST_Header : constant String (Filename'Range) := (others => '*');
             ReST_File   : constant Filesystem_String :=
                             To_Destination_Name (Filesystem_String (Filename));
@@ -1553,11 +1691,14 @@ package body Docgen3.Backend.Simple is
                  To_Unbounded_String (ReST_Label (Filename))
                  & ASCII.LF;
 
-               --  For subprograms we do not add here its label to avoid
-               --  generating the label twice since we will append its profile
-               --  (and label). See bellow the call to ReST_Append_Subprogram.
+               --  For subprograms and instantiations we do not add here its
+               --  label to avoid generating the label twice since we will
+               --  append its profile (and label). See bellow the call to
+               --  ReST_Append_Subprogram.
 
-               if Is_Package (Entity) then
+               if Is_Package (Entity)
+                 and then not Present (LL.Get_Instance_Of (Entity))
+               then
                   Labels := Labels
                     & ReST_Label (Entity)
                     & ASCII.LF;
@@ -1582,7 +1723,10 @@ package body Docgen3.Backend.Simple is
                  & To_ReST (Get_Comment (Entity))
                  & ASCII.LF;
 
-               if LL.Is_Subprogram (Entity) then
+               if Present (LL.Get_Instance_Of (Entity)) then
+                  ReST_Append_Simple_Declaration (Printout'Access, Entity);
+
+               elsif LL.Is_Subprogram (Entity) then
                   ReST_Append_Subprogram (Printout'Access, Entity);
                end if;
 

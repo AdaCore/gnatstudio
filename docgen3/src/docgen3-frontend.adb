@@ -152,6 +152,9 @@ package body Docgen3.Frontend is
          function Get_Declaration_Source return Unbounded_String;
          --  Retrieve the source of the declaration E
 
+         function Get_Instance_Source return Unbounded_String;
+         --  Retrieve the source of the generic instance E
+
          function Get_Record_Type_Source
            (Loc          : General_Location;
             Is_Full_View : Boolean := False) return Unbounded_String;
@@ -200,6 +203,79 @@ package body Docgen3.Frontend is
 
             return Printout;
          end Get_Declaration_Source;
+
+         -------------------------
+         -- Get_Instance_Source --
+         -------------------------
+
+         function Get_Instance_Source return Unbounded_String is
+            Printout      : Unbounded_String;
+            From          : Natural;
+            Idx           : Natural;
+            Index         : Natural;
+            Lines_Skipped : Natural;
+            Par_Count     : Natural;
+
+         begin
+            --  Displace the pointer to the beginning of the declaration
+            Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => LL.Get_Location (E).Line - 1,
+               Index         => Index,
+               Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (LL.Get_Location (E).Column),
+               Index         => Index);
+
+            --  Locate the beginning of the type declaration. This is a naive
+            --  approach used in the prototype since it does not handle the
+            --  word "type" located in a comment. A backward parser is required
+            --  here. Must be improved???
+
+            if LL.Is_Subprogram (E) then
+               Index :=
+                 Search_Backward (From => Index - 1,
+                   Word_1 => "procedure",
+                   Word_2 => "function");
+            else
+               Index :=
+                 Search_Backward (From => Index - 1,
+                   Word_1 => "package");
+            end if;
+
+            --  Append tabulation
+
+            if Buffer (Index - 1) = ' ' then
+               From := Skip_Blanks_Backward (Index - 1);
+               Printout :=
+                 To_Unbounded_String (Buffer.all (From .. Index - 1));
+            end if;
+
+            --  Parenthesis count used to handle access to subprogram types
+
+            Par_Count := 0;
+
+            Idx := Index;
+            while Idx < Buffer'Last
+              and then (Par_Count > 0 or else Buffer (Idx) /= ';')
+            loop
+               if Buffer (Idx) = '(' then
+                  Par_Count := Par_Count + 1;
+               elsif Buffer (Idx) = ')' then
+                  Par_Count := Par_Count - 1;
+               end if;
+
+               Idx := Idx + 1;
+            end loop;
+
+            Printout :=
+              Printout & To_Unbounded_String (Buffer (Index .. Idx));
+
+            return Printout;
+         end Get_Instance_Source;
 
          ----------------------------
          -- Get_Record_Type_Source --
@@ -764,6 +840,11 @@ package body Docgen3.Frontend is
 
          elsif Get_Kind (E) = E_Variable then
             Set_Src (E, Get_Declaration_Source);
+
+         --  Instantiations of generic packages and subprograms
+
+         elsif Present (LL.Get_Instance_Of (E)) then
+            Set_Src (E, Get_Instance_Source);
 
          else
             Set_Src (E,
