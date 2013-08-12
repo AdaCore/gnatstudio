@@ -202,14 +202,6 @@ package body GPS.Search.GUI is
       return Class_Instance;
    --  Create a new class instance for GPS.Search or GPS.Search_Result
 
-   function Get_Search_Provider
-     (Data : Callback_Data'Class; Num : Positive)
-      return Search_Provider_Access;
-   function Get_Search_Result
-     (Data : Callback_Data'Class; Num : Positive)
-      return Search_Result_Access;
-   --  Retrieve the provider or result information from the given parameter
-
    procedure Search_Commands_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -246,6 +238,7 @@ package body GPS.Search.GUI is
    overriding procedure Execute
      (Self : not null access Python_Search_Result;
       Give_Focus : Boolean);
+   overriding procedure Free (Self : in out Python_Search_Result);
 
    procedure Set_Search_Pattern
      (Data   : Callback_Data'Class;
@@ -269,6 +262,14 @@ package body GPS.Search.GUI is
    overriding procedure Destroy (Prop : in out Result_Property_Record);
    overriding function Get_Instances
      (Self : Result_Property_Record) return Instance_List_Access;
+
+   function Get_Search_Provider
+     (Data : Callback_Data'Class; Num : Positive)
+      return Search_Provider_Access;
+   function Get_Search_Result
+     (Data : Callback_Data'Class; Num : Positive)
+      return Result_Property;
+   --  Retrieve the provider or result information from the given parameter
 
    -------------------
    -- Documentation --
@@ -358,7 +359,7 @@ package body GPS.Search.GUI is
          return;
       end if;
 
-      --  If we are in the process of processing the current provider
+      --  If we are processing the current provider
 
       if Self.Provider.Enabled
         and then Self.Current_Returned < Self.Current'First
@@ -965,7 +966,7 @@ package body GPS.Search.GUI is
 
    function Get_Search_Result
      (Data : Callback_Data'Class; Num : Positive)
-      return Search_Result_Access
+      return Result_Property
    is
       Result_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search_Result");
@@ -1002,7 +1003,7 @@ package body GPS.Search.GUI is
                  Get_Script (Inst), Inst);
          end if;
 
-         return Props.Result;
+         return Props;
       end if;
       return null;
    end Get_Search_Result;
@@ -1196,23 +1197,23 @@ package body GPS.Search.GUI is
 
       elsif Command = "show" then
          declare
-            Result : constant Search_Result_Access :=
+            Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
             if Result /= null then
-               Result.Execute (Give_Focus => True);
+               Result.Result.Execute (Give_Focus => True);
             end if;
          end;
 
       elsif Command = "short" then
          declare
-            Result : constant Search_Result_Access :=
+            Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
             if Result /= null
-              and then Result.Short /= null
+              and then Result.Result.Short /= null
             then
-               Set_Return_Value (Data, Result.Short.all);
+               Set_Return_Value (Data, Result.Result.Short.all);
             else
                Set_Return_Value (Data, String'(""));
             end if;
@@ -1220,13 +1221,13 @@ package body GPS.Search.GUI is
 
       elsif Command = "long" then
          declare
-            Result : constant Search_Result_Access :=
+            Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
             if Result /= null
-              and then Result.Long /= null
+              and then Result.Result.Long /= null
             then
-               Set_Return_Value (Data, Result.Long.all);
+               Set_Return_Value (Data, Result.Result.Long.all);
             else
                Set_Return_Value (Data, String'(""));
             end if;
@@ -1245,30 +1246,30 @@ package body GPS.Search.GUI is
    begin
       if Command = "short" then
          declare
-            Result : constant Search_Result_Access :=
+            Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Id /= Result.Short
-              and then Result.Short /= Result.Long
+            if Result.Result.Id /= Result.Result.Short
+              and then Result.Result.Short /= Result.Result.Long
             then
-               Free (Result.Short);
+               Free (Result.Result.Short);
             end if;
 
-            Result.Short := new String'(Nth_Arg (Data, 2));
+            Result.Result.Short := new String'(Nth_Arg (Data, 2));
          end;
 
       elsif Command = "long" then
          declare
-            Result : constant Search_Result_Access :=
+            Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Id /= Result.Long
-              and then Result.Short /= Result.Long
+            if Result.Result.Id /= Result.Result.Long
+              and then Result.Result.Short /= Result.Result.Long
             then
-               Free (Result.Long);
+               Free (Result.Result.Long);
             end if;
 
-            Result.Long := new String'(Nth_Arg (Data, 2));
+            Result.Result.Long := new String'(Nth_Arg (Data, 2));
          end;
       end if;
    end Search_Result_Setters;
@@ -1344,6 +1345,7 @@ package body GPS.Search.GUI is
       Has_Next : out Boolean)
    is
       Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      R    : Result_Property;
    begin
       for J in Inst'Range loop
          if Inst (J) /= No_Class_Instance then
@@ -1353,9 +1355,15 @@ package body GPS.Search.GUI is
                List : List_Instance'Class := Execute (Sub, Args);
             begin
                Has_Next := Nth_Arg (List, 1);
-               Result := Get_Search_Result (List, 2);
 
-               if Result /= null then
+               --  If the result class is pure python, this will wrap it inside
+               --  an Ada class, unless it has already been done when setting
+               --  the 'short' and 'long' fields. This ensures the pure python
+               --  instance can be used from Ada transparently.
+               R := Get_Search_Result (List, 2);
+
+               if R /= null then
+                  Result := R.Result;
                   Result.Provider := Search_Provider_Access (Self);
                   Self.Adjust_Score (Result);
                end if;
@@ -1396,6 +1404,26 @@ package body GPS.Search.GUI is
          end if;
       end loop;
    end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Python_Search_Result) is
+      Instances : constant Instance_Array := Get_Instances (Self.Inst);
+      Result    : Result_Property;
+   begin
+      for Inst in Instances'Range loop
+         Result := Result_Property
+           (Instance_Property'(Get_Data (Instances (Inst), "Search_Result")));
+
+         if Result /= null then
+            Result.Result := null;
+         end if;
+      end loop;
+
+      Free (Self.Inst);
+   end Free;
 
    ---------------------
    -- Register_Module --
