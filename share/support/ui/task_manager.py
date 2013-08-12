@@ -17,8 +17,6 @@ COL_CANCEL_PIXBUF = 3
 COL_PLAYPAUSE_PIXBUF = 4
 COL_TASK_ID = 5
 
-REFRESH_EVERY = 250 # milliseconds
-
 class Task_Manager(Module):
     view_title = "Task Manager"
 
@@ -62,56 +60,62 @@ class Task_Manager(Module):
             cell, "stock_id", COL_PLAYPAUSE_PIXBUF)
         self.view.append_column(self.playpause_col)
 
-        # schedule automatic refresh
-        self.__source_id = GPS.Timeout(REFRESH_EVERY, self.__refresh)
-
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
-        # Remove the refresh on destroy
-        self.view.connect("destroy", self.__on_destroy)
-
         return self.box
+
+    def task_started(self, task):
+        """
+        Add one task to the tree view.
+        :param task: a GPS.Task.
+        """
+        if task.visible:
+            iter = self.store.append()
+            self.__update_row(iter, task)
+
+    def task_changed(self, task):
+        if task.visible:
+            iter = self.__iter_from_task(task)
+            if not iter:
+                # Task might have started before this plugin registered
+                iter = self.store.append()
+
+            self.__update_row(iter, task)
+
+    def task_terminated(self, task):
+        if task.visible:
+            iter = self.__iter_from_task(task)
+            if iter:
+                self.store.remove(iter)
 
     def __task_from_row(self, path):
         """ Return the GPS.Task corresponding to the row at path.
             Verify before that the task does exist.
         """
-
-        try:
-            task_str = self.store[path][COL_TASK_ID]
-            for task in GPS.Task.list():
-                if str(task) == task_str:
-                    return task
-
-            return None
-        except:
-            return None
+        task_id = self.store[path][COL_TASK_ID]
+        for task in GPS.Task.list():
+            if task_id == str(id(task)):
+                return task
+        return None
 
     def __on_click(self, view, event):
         """ Called on a button press on the view """
-        if event.button != 1:
-            return
-
-        results = self.view.get_path_at_pos(event.x, event.y)
-
-        if results:
-            path, col, x, y = results
-            if col == self.close_col:
-                task = self.__task_from_row(path)
-                if task:
-                    task.interrupt()
-            elif col == self.playpause_col:
-                task = self.__task_from_row(path)
-                if task:
-                    if task.status() == "RUNNING":
-                        task.pause()
-                    else:
-                        task.resume()
-
-    def __on_destroy(self, object):
-        """ Called when the tree view is being destroyed. """
-        self.__source_id.remove()
+        if event.button == 1:
+            results = self.view.get_path_at_pos(event.x, event.y)
+            if results:
+                path, col, x, y = results
+                if col == self.close_col:
+                    task = self.__task_from_row(path)
+                    if task:
+                        task.interrupt()
+                elif col == self.playpause_col:
+                    task = self.__task_from_row(path)
+                    if task:
+                        if task.status() == "RUNNING":
+                            task.pause()
+                        else:
+                            task.resume()
 
     def __update_row(self, iter, task):
         """ Refresh the data in iter """
@@ -132,47 +136,17 @@ class Task_Manager(Module):
             "%s / %s" % (progress[0], progress[1]),
             "gtk-close",
             status_icon,
-            str(task)]
+            str(id(task))]
 
-    def __add_one_task(self, task):
-        """ Add one task to the tree view. task is a GPS.Task. """
-        iter = self.store.append()
-        self.__update_row(iter, task)
-
-    def __refresh(self, timeout):
-        """ Refresh the view """
-
-        tasks = {} # keys: task id; values: tasks
-        tasks_updated = []
-
-        for t in GPS.Task.list():
-            tasks[str(t)] = t
-
-        # browse all rows currently displayed
-
+    def __iter_from_task(self, task):
+        """
+        return the GtkTreeIter from a task.
+        """
         iter = self.store.get_iter_first()
-
+        s = str(id(task))
         while iter:
             task_id = self.store.get_value(iter, COL_TASK_ID)
-
-            if not task_id in tasks:
-                # if the iter is not in the list of current tasks,
-                # remove it and start from the top.
-                if task_id in tasks_updated:
-                    iter = self.store.iter_next(iter)
-                else:
-                    self.store.remove(iter)
-                    iter = self.store.get_iter_first()
-            else:
-                # iter is representing a task: update the data for this task
-                self.__update_row(iter, tasks[task_id])
-                tasks_updated.append(task_id)
-                tasks.pop(task_id)
-                iter = self.store.iter_next(iter)
-
-        # We have browsed all rows. Now, all items in tasks are those that
-        # are not yet in the tree: add them now
-
-        for t in tasks:
-            self.__add_one_task(tasks[t])
-
+            if s == task_id:
+                return iter
+            iter = self.store.iter_next(iter)
+        return None

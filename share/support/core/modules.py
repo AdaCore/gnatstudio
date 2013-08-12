@@ -72,6 +72,10 @@ class Module(object):
         "file_edited",
         "project_changed",   # not called for the initial project
         "compilation_finished")
+    auto_connect_hooks_with_no_hook_arg = (
+        "task_started",
+        "task_changed",
+        "task_terminated")
     # As a special case, if you class has a subprogram with a name of any
     # of the hooks below, that function will automatically be connected to
     # the hook (and disconnected when the module is teared down.
@@ -179,11 +183,28 @@ class Module(object):
             setattr(self, "__%s" % hook_name, internal)
             GPS.Hook(hook_name).add(getattr(self, "__%s" % hook_name))
 
+    def __connect_hook_with_no_hook_arg(self, hook_name):
+        """
+        Connects a method of the object with a hook, and ensure the function
+        will be called without the hook as a first parameter.
+        """
+        pref = getattr(self, hook_name, None)  # a bound method
+        if pref:
+            GPS.Hook(hook_name).add(pref)
+
     def __disconnect_hook(self, hook_name):
         """
         Disconnect a hook connected with __connect_hook.
         """
         p = getattr(self, "__%s" % hook_name, None)
+        if p:
+            GPS.Hook(hook_name).remove(p)
+
+    def __disconnect_hook(self, hook_name):
+        """
+        Disconnect a hook connected with __connect_hook.
+        """
+        p = getattr(self, hook_name, None)
         if p:
             GPS.Hook(hook_name).remove(p)
 
@@ -200,11 +221,15 @@ class Module(object):
             self.view_title = self.__class__.__name__.replace("_", " ")
         for h in self.auto_connect_hooks:
             self.__connect_hook(h)
+        for h in self.auto_connect_hooks_with_no_hook_arg:
+            self.__connect_hook_with_no_hook_arg(h)
         self.setup()
 
     def _teardown(self):
         for h in self.auto_connect_hooks:
             self.__disconnect_hook(h)
+        for h in self.auto_connect_hooks_with_no_hook_arg:
+            self.__disconnect_hook_with_no_hook_arg(h)
         self.teardown()
 
     def _save_desktop(self, child):

@@ -389,7 +389,6 @@ package body Task_Manager is
             Manager.Passive_Index := 1;
          end if;
 
-         Queue_Added (Manager, 1);
          return 1;
 
       else
@@ -398,6 +397,7 @@ package body Task_Manager is
                if Manager.Queues (J).Id /= null
                  and then Manager.Queues (J).Id.all = Queue_Id
                then
+                  Manager.Queues (J).Show_Bar := Show_Bar;
                   return J;
                end if;
             end loop;
@@ -423,7 +423,6 @@ package body Task_Manager is
 
                Manager.Passive_Index := Manager.Passive_Index + 1;
 
-               Queue_Added (Manager, Manager.Queues'First);
                return Manager.Queues'First;
 
             else
@@ -439,8 +438,6 @@ package body Task_Manager is
 
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
-
-               Queue_Added (Manager, Manager.Queues'Last);
 
                return Manager.Queues'Last;
             end if;
@@ -492,6 +489,8 @@ package body Task_Manager is
 
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
+
+      Queue_Added (Manager, Task_Queue);
 
       Run (Manager, Active);
    end Add_Command;

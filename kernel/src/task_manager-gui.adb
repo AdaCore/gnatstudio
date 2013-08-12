@@ -21,10 +21,10 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
@@ -51,6 +51,7 @@ with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with String_Utils;              use String_Utils;
+with Task_Manager.Shell;        use Task_Manager.Shell;
 
 package body Task_Manager.GUI is
    Me : constant Trace_Handle := Create ("TASKS");
@@ -76,11 +77,17 @@ package body Task_Manager.GUI is
    type Task_Manager_Interface is access all
      Task_Manager_Interface_Record'Class;
 
+   type Refresh_Data is record
+      GUI : Task_Manager_Interface;
+      Index : Integer;
+   end record;
+
    package Task_Manager_Source is new Glib.Main.Generic_Sources
-     (Task_Manager_Interface);
+     (Refresh_Data);
 
    type Task_Manager_UI_Record is new Task_Manager_Record with record
       GUI           : Task_Manager_Interface := null;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
    end record;
    type Task_Manager_UI_Access is access all Task_Manager_UI_Record'Class;
 
@@ -129,6 +136,10 @@ package body Task_Manager.GUI is
       D     : Task_Manager_Interface;
       Index : Integer;
    end record;
+
+   function From_Callback_Data_Task
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   --  Convert a task_hook_type data from python to Ada
 
    -----------------------
    -- Local subprograms --
@@ -204,7 +215,7 @@ package body Task_Manager.GUI is
    procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface);
    --  Process all pending refreshes
 
-   function GUI_Refresh_Cb (GUI : Task_Manager_Interface) return Boolean;
+   function GUI_Refresh_Cb (Data : Refresh_Data) return Boolean;
    --  Timeout callback that refreshes the GUI
 
    procedure Unregister_Timeout (GUI : Task_Manager_Interface);
@@ -476,6 +487,7 @@ package body Task_Manager.GUI is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
+      Data : aliased Task_Hooks_Args := (Hooks_Data with Queue_ID => Index);
    begin
       Refresh (GUI);
 
@@ -484,6 +496,13 @@ package body Task_Manager.GUI is
       end if;
 
       Unregister_Timeout (GUI);
+
+      begin
+         Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access);
+      exception
+         when others =>
+            null;
+      end;
    end Queue_Added;
 
    -------------------
@@ -497,7 +516,15 @@ package body Task_Manager.GUI is
       GUI  : constant Task_Manager_Interface := Manager.GUI;
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
+      Data : aliased Task_Hooks_Args := (Hooks_Data with Queue_ID => Index);
    begin
+      begin
+         Run_Hook (Manager.Kernel, Task_Terminated_Hook, Data'Access);
+      exception
+         when others =>
+            null;
+      end;
+
       Refresh (GUI);
 
       if GUI.Manager.Queues (Index).Show_Bar then
@@ -524,17 +551,26 @@ package body Task_Manager.GUI is
    -- GUI_Refresh_Cb --
    --------------------
 
-   function GUI_Refresh_Cb (GUI : Task_Manager_Interface) return Boolean is
+   function GUI_Refresh_Cb (Data : Refresh_Data) return Boolean is
+      Hook_Data : aliased Task_Hooks_Args :=
+        (Hooks_Data with Queue_ID => Data.Index);
    begin
-      Process_Pending_Refreshes (GUI);
-      Refresh (GUI);
+      begin
+         Run_Hook (Data.GUI.Kernel, Task_Changed_Hook, Hook_Data'Access);
+      exception
+         when others =>
+            null;
+      end;
 
-      GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+      Process_Pending_Refreshes (Data.GUI);
+      Refresh (Data.GUI);
+
+      Data.GUI.Timeout_Cb := Glib.Main.No_Source_Id;
       return False;
    exception
       when E : others =>
          Trace (Me, E);
-         GUI.Timeout_Cb := Glib.Main.No_Source_Id;
+         Data.GUI.Timeout_Cb := Glib.Main.No_Source_Id;
          return False;
    end GUI_Refresh_Cb;
 
@@ -551,6 +587,13 @@ package body Task_Manager.GUI is
       GUI : constant Task_Manager_Interface := Manager.GUI;
    begin
       if Immediate_Refresh then
+         declare
+            Data : aliased Task_Hooks_Args :=
+              (Hooks_Data with Queue_ID => Index);
+         begin
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Data'Access);
+         end;
+
          Refresh (GUI);
 
       else
@@ -564,7 +607,7 @@ package body Task_Manager.GUI is
             GUI.Timeout_Cb := Task_Manager_Source.Timeout_Add
               (Interval => Refresh_Timeout,
                Func     => GUI_Refresh_Cb'Access,
-               Data     => GUI);
+               Data     => (GUI => GUI, Index => Index));
          end if;
       end if;
    end Queue_Changed;
@@ -771,6 +814,7 @@ package body Task_Manager.GUI is
       Manager := new Task_Manager_UI_Record;
       View := new Task_Manager_Interface_Record;
       Task_Manager_UI_Access (Manager).GUI := View;
+      Task_Manager_UI_Access (Manager).Kernel := Kernel;
 
       Initialize_Hbox (View, Homogeneous => False);
       Get_Style_Context (View).Add_Class ("gps-task-manager");
@@ -864,6 +908,39 @@ package body Task_Manager.GUI is
       Destroy (Get_Task_Manager (Get_Kernel (Module)));
    end Destroy;
 
+   -----------------------------
+   -- From_Callback_Data_Task --
+   -----------------------------
+
+   function From_Callback_Data_Task
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Task_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Task");
+      Inst : constant Class_Instance := Nth_Arg (Data, 2);
+      Id   : constant Integer := Get_Data (Inst, Task_Class);
+   begin
+      return Task_Hooks_Args'(Hooks_Data with Queue_ID => Id);
+   end From_Callback_Data_Task;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Task_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      pragma Unreferenced (Hook);
+      D       : constant Callback_Data_Access :=
+                   new Callback_Data'Class'(Create (Script, 1));
+   begin
+      Set_Nth_Arg (D.all, 1, Get_Or_Create_Instance (D.all, Data.Queue_ID));
+      return D;
+   end Create_Callback_Data;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -880,6 +957,14 @@ package body Task_Manager.GUI is
         (Kernel, Before_Exit_Action_Hook,
          Wrapper (On_Exit_Hook'Access),
          Name => "task_manager.on_exit");
+
+      Register_Hook_Data_Type
+        (Kernel, Task_Hook_Type,
+         Args_Creator => From_Callback_Data_Task'Access);
+
+      Register_Hook_No_Return (Kernel, Task_Started_Hook, Task_Hook_Type);
+      Register_Hook_No_Return (Kernel, Task_Terminated_Hook, Task_Hook_Type);
+      Register_Hook_No_Return (Kernel, Task_Changed_Hook, Task_Hook_Type);
 
       --  Create the main progress bar in the main toolbar
       Manager := Create (Kernel_Handle (Kernel));

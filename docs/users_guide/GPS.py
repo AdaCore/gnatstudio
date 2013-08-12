@@ -6370,6 +6370,18 @@ The available hooks are:
   You should run this hook to request that the macro currently being replayed
   be stopped. No more events should be processed as part of this macro
 
+- task_started(task)
+- task_changed(task)
+- task_terminated(task)
+
+  These hooks are called when a new background task is started, when an
+  existing task's status is changed (either it has made progressed, was
+  paused,...), or when a task is terminated. task_changed might be called
+  asynchronously; for efficiency, GPS will not necessary emit it for every
+  progress made by the task when this progress is fast.
+
+  Each of these hooks receives an instance of :class:`GPS.Task` as parameter.
+
 - variable_changed(hookname)
 
   Hook called when one of the scenario variables has been renamed, removed or
@@ -9037,6 +9049,12 @@ class Task(object):
     are the same tasks that are visible through the GPS Task Manager.
 
     Note that the classes represented with this class cannot be stored.
+    """
+
+    visible = False
+    """
+    Whether the task has a visible progress bar in GPS's toolbar or the
+    task manager.
     """
 
     def interrupt(self):

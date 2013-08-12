@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Scripts;
 with GPS.Kernel;
 
 package Task_Manager.Shell is
@@ -22,5 +23,11 @@ package Task_Manager.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the task manager commands
+
+   function Get_Or_Create_Instance
+     (Data  : GNATCOLL.Scripts.Callback_Data'Class;
+      Index : Integer) return GNATCOLL.Scripts.Class_Instance;
+   --  Return the script instance wrapping this Queue. Create it if it does
+   --  not exist.
 
 end Task_Manager.Shell;

@@ -17,12 +17,34 @@
 
 --  This package handles the GUI part of the task manager
 
-with GPS.Kernel; use GPS.Kernel;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
 package Task_Manager.GUI is
 
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Initialize support for the task manager view, and reg
+
+   -----------
+   -- Hooks --
+   -----------
+
+   Task_Hook_Type : constant Hook_Type := "task_hooks";
+   type Task_Hooks_Args is new Hooks_Data with record
+      Queue_ID : Integer;
+   end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Task_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  Hooks that take a preference in parameter
+
+   Task_Started_Hook : constant Hook_Name := To_Hook_Name ("task_started");
+   Task_Terminated_Hook : constant Hook_Name :=
+     To_Hook_Name ("task_terminated");
+   Task_Changed_Hook : constant Hook_Name := To_Hook_Name ("task_changed");
 
 end Task_Manager.GUI;
