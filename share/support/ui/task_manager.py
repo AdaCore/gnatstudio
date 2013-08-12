@@ -20,6 +20,9 @@ COL_TASK_ID = 5
 class Task_Manager(Module):
     view_title = "Task Manager"
 
+    def __init__(self):
+        self.store = None
+
     def setup(self):
         make_interactive(
             self.get_view,
@@ -28,14 +31,14 @@ class Task_Manager(Module):
             menu="/Tools/Views/Tasks", before="Windows")
 
     def create_view(self):
-        self.box = Gtk.VBox()
-        self.scroll = Gtk.ScrolledWindow()
+        box = Gtk.VBox()
+        scroll = Gtk.ScrolledWindow()
         self.store = Gtk.ListStore(str, int, str, str, str, str)
         self.view = Gtk.TreeView(self.store)
         self.view.set_headers_visible(False)
 
-        self.scroll.add(self.view)
-        self.box.pack_start(self.scroll, True, True, 0)
+        scroll.add(self.view)
+        box.pack_start(scroll, True, True, 0)
 
         # Initialize the tree view
 
@@ -63,19 +66,19 @@ class Task_Manager(Module):
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
-        return self.box
+        return box
 
     def task_started(self, task):
         """
         Add one task to the tree view.
         :param task: a GPS.Task.
         """
-        if task.visible:
+        if self.store and task.visible:
             iter = self.store.append()
             self.__update_row(iter, task)
 
     def task_changed(self, task):
-        if task.visible:
+        if self.store and task.visible:
             iter = self.__iter_from_task(task)
             if not iter:
                 # Task might have started before this plugin registered
@@ -84,7 +87,7 @@ class Task_Manager(Module):
             self.__update_row(iter, task)
 
     def task_terminated(self, task):
-        if task.visible:
+        if self.store and task.visible:
             iter = self.__iter_from_task(task)
             if iter:
                 self.store.remove(iter)
