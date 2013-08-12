@@ -49,6 +49,11 @@ package body Docgen3.Backend.Simple is
    procedure Clear (Entities : in out Collected_Entities);
    --  Clear all the lists used to classify the tree nodes in categories
 
+   function Get_Name
+     (E : Entity_Id; Use_Full_Name : Boolean := False) return String;
+   --  Return the name of an entity. When Use_Full_Name is false, for Ada
+   --  operators return the name enclosed in string quotes (ie. "+").
+
    function Get_Unique_Name (E : Entity_Id) return String;
    --  For types return the full name of E; for subprograms return the full
    --  name of E concatenated with the line where E is defined (to handle
@@ -285,12 +290,7 @@ package body Docgen3.Backend.Simple is
               or else (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
             then
                Append (Printout, "   * :ref:`");
-
-               if Use_Full_Name then
-                  Append (Printout, Get_Full_Name (E));
-               else
-                  Append (Printout, Get_Short_Name (E));
-               end if;
+               Append (Printout, Get_Name (E, Use_Full_Name));
 
                Append_Line (Printout,
                             " <"
@@ -415,12 +415,10 @@ package body Docgen3.Backend.Simple is
          Suffix   : String := "") is
       begin
          Append (Printout, Prefix & " :ref:`");
-
-         if Get_Language (Entity).all in Language.Cpp.Cpp_Language'Class then
-            Append (Printout, Get_Full_Name (Entity));
-         else
-            Append (Printout, Get_Short_Name (Entity));
-         end if;
+         Append (Printout,
+           Get_Name (Entity,
+             Use_Full_Name =>
+               Get_Language (Entity).all in Language.Cpp.Cpp_Language'Class));
 
          Append_Line (Printout,
            " <"
@@ -489,9 +487,9 @@ package body Docgen3.Backend.Simple is
          E        : Entity_Id)
       is
          Name   : constant String :=
-                    (if In_C_Or_CPP_Language (E) and then LL.Is_Primitive (E)
-                     then Get_Full_Name (E)
-                     else Get_Short_Name (E));
+                    Get_Name (E,
+                      Use_Full_Name =>
+                        In_C_Or_CPP_Language (E) and then LL.Is_Primitive (E));
          Header : constant String (Name'Range) := (others => '=');
 
       begin
@@ -633,13 +631,13 @@ package body Docgen3.Backend.Simple is
      (Backend : in out Simple_Backend;
       Update_Global_Index : Boolean)
    is
-      procedure Generate_Global_Index;
+      procedure Generate_Global_Indexes;
 
-      ---------------------------
-      -- Generate_Global_Index --
-      ---------------------------
+      -----------------------------
+      -- Generate_Global_Indexes --
+      -----------------------------
 
-      procedure Generate_Global_Index is
+      procedure Generate_Global_Indexes is
 
          procedure Generate_Entities_Index
            (Filename : String;
@@ -1304,15 +1302,64 @@ package body Docgen3.Backend.Simple is
               Parse (+Tmpl.Full_Name, Translation, Cached => True));
 
          Stop (My_Delay, Generate_Global_Index_Time);
-      end Generate_Global_Index;
+      end Generate_Global_Indexes;
 
    --  Start of processing for Finalize
 
    begin
       if Update_Global_Index then
-         Generate_Global_Index;
+         Generate_Global_Indexes;
       end if;
    end Finalize;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (E : Entity_Id;
+      Use_Full_Name : Boolean := False) return String is
+   begin
+      if Use_Full_Name then
+         return Get_Full_Name (E);
+
+      elsif not LL.Is_Subprogram (E)
+        or else In_C_Or_CPP_Language (E)
+      then
+         return Get_Short_Name (E);
+
+      --  Handle Ada operators
+
+      else
+         declare
+            Name : constant String := Get_Short_Name (E);
+         begin
+            if Name = "+"
+              or else Name = "-"
+              or else Name = "*"
+              or else Name = "/"
+              or else Name = "&"
+              or else Name = "="
+              or else Name = "<"
+              or else Name = ">"
+              or else Name = "<="
+              or else Name = ">="
+              or else Name = "**"
+              or else Name = "not"
+              or else Name = "and"
+              or else Name = "or"
+              or else Name = "xor"
+              or else Name = "mod"
+              or else Name = "rem"
+              or else Name = "abs"
+            then
+               return """" & Name & """";
+            else
+               return Name;
+            end if;
+         end;
+      end if;
+   end Get_Name;
 
    ---------------------
    -- Get_Unique_Name --

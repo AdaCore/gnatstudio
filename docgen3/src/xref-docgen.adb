@@ -1388,8 +1388,8 @@ package body Xref.Docgen is
                --   Self.Xref.Comment
                --     (Buffer, Entity.Entity, Context.Syntax, Form);
 
-               S1 : constant String := -- JM: This one has the comment!
-                 Glib.Convert.Escape_Text (To_String (C_Result.Text));
+               S1 : constant String := To_String (C_Result.Text);
+
             begin
                Append (Result, S1 & ASCII.LF);
 
