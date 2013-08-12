@@ -307,7 +307,6 @@ package body Bookmark_Views is
    is
       C        : Search_Context;
       Bookmark : Bookmark_Data_Access;
-      S        : String_Access;
    begin
       if Self.List = Null_Node then
          Has_Next := False;
@@ -318,16 +317,35 @@ package body Bookmark_Views is
 
          C := Self.Pattern.Start (Bookmark.Name.all);
          if C /= GPS.Search.No_Match then
-            S := new String'(Bookmark.Name.all);
             Result := new Bookmarks_Search_Result'
               (Kernel   => Self.Kernel,
                Provider => Self,
                Score    => C.Score,
-               Short    => S,
-               Long     => null,
-               Id       => S,
+               Short    => new String'
+                 (Self.Pattern.Highlight_Match (Bookmark.Name.all, C)),
+               Long     => new String'(To_String (Bookmark.Marker)),
+               Id       => new String'(Bookmark.Name.all),
                Bookmark => Bookmark);
             Self.Adjust_Score (Result);
+
+         else
+            declare
+               Loc : constant String := To_String (Bookmark.Marker);
+            begin
+               C := Self.Pattern.Start (Loc);
+               if C /= GPS.Search.No_Match then
+                  Result := new Bookmarks_Search_Result'
+                    (Kernel   => Self.Kernel,
+                     Provider => Self,
+                     Score    => C.Score,
+                     Short    => new String'(Bookmark.Name.all),
+                     Long     => new String'
+                       (Self.Pattern.Highlight_Match (Loc, C)),
+                     Id       => new String'(Bookmark.Name.all),
+                     Bookmark => Bookmark);
+                  Self.Adjust_Score (Result);
+               end if;
+            end;
          end if;
 
          Self.List := Next (Self.List);
