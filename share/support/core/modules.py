@@ -1,12 +1,42 @@
 """
-This package provides high-level features on top of GPS.Module to make
-them more python friendly.
+This package provides high-level features that help extend GPS.
+It makes it easy to connect to the GPS hooks, or to create new
+views that can be saved as part of the desktop and restored when
+GPS is restarted.
+
+Here is an example of use for this package::
+
+  from gps_utils import remove_interactive, make_interactive
+  from gi.repository import Gtk, GLib
+
+  class My_Module(Module):
+    def setup(self):
+        # Create menus when this module is setup.
+        # It is better to call make_interactive here than use the @interactive
+        # decorator on the method. The latter would take effect even if the
+        # module is never initialized.
+
+        make_interactive(
+            self.get_view,
+            menu="/Tools/Views/%s" % self.view_title)
+
+    def teardown(self):
+        # Undo the effect of setup()
+        remove_interactive(menu="/Tools/Views/%s" % self.view_title)
+
+    def preferences_changed(self):
+        # A method automatically connected to the homonym hook
+        print "preferences changed"
+
+    def create_view(self):
+        box = Gtk.VBox()
+        button = Gtk.Button("Button")
+        box.pack_start(button, False, False, 0)
+        return box
 """
 
 
 import GPS
-from gi.repository import Gtk, GLib
-from gps_utils import remove_interactive, make_interactive
 
 
 class Module_Metaclass(type):
@@ -281,37 +311,3 @@ class Module(object):
         if child:
             return child.get_child()
         return None
-
-
-if False:
-  class My_Module(Module):
-    def setup(self):
-        make_interactive(
-            self.interactive_teardown,
-            menu="/Tools/Views/Close %s" % self.view_title)
-        make_interactive(
-            self.get_view,
-            menu="/Tools/Views/%s" % self.view_title)
-
-    def teardown(self):
-        remove_interactive(menu="/Tools/Views/Close %s" % self.view_title)
-        remove_interactive(menu="/Tools/Views/%s" % self.view_title)
-
-    def load_desktop(self, child, data):
-        print "Loading desktop for child=%s" % (child, )
-
-    def preferences_changed(self):
-        print "preferences changed"
-
-    def project_changed(self):
-        print "project changed"
-
-    def create_view(self):
-        box = Gtk.VBox()
-        button = Gtk.Button("Button")
-        box.pack_start(button, False, False, 0)
-        return box
-
-    def interactive_teardown(self):
-        self._teardown()
-
