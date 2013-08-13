@@ -259,7 +259,8 @@ package body Casing_Exceptions is
 
       function Get_Label (Str : String) return String is
          Success : aliased Boolean;
-         Name    : String := Krunch (Unknown_To_UTF8 (Str, Success'Access));
+         Name    : constant String :=
+           Krunch (Unknown_To_UTF8 (Str, Success'Access));
       begin
          if not Success then
             return "<>";
@@ -267,17 +268,17 @@ package body Casing_Exceptions is
 
          case Creator.Casing is
             when Lower =>
-               Set_Case (No_Casing_Exception, Name, Lower);
-               return "Casing/Lower " & Escape_Text (Name);
+               return "Casing/Lower " &
+                 Escape_Text (Set_Case (No_Casing_Exception, Name, Lower));
             when Upper =>
-               Set_Case (No_Casing_Exception, Name, Upper);
-               return "Casing/Upper " & Escape_Text (Name);
+               return "Casing/Upper " &
+                 Escape_Text (Set_Case (No_Casing_Exception, Name, Upper));
             when Mixed =>
-               Mixed_Case (Name, False);
-               return "Casing/Mixed " & Escape_Text (Name);
+               return "Casing/Mixed " &
+                 Escape_Text (Mixed_Case (Name, False));
             when Smart_Mixed =>
-               Mixed_Case (Name, True);
-               return "Casing/Smart Mixed " & Escape_Text (Name);
+               return "Casing/Smart Mixed " &
+                 Escape_Text (Mixed_Case (Name, True));
          end case;
       end Get_Label;
 
@@ -298,14 +299,14 @@ package body Casing_Exceptions is
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      procedure Execute (Str : in out String);
+      procedure Execute (Str : String);
       --  Execute the casing command for the given string
 
       -------------
       -- Execute --
       -------------
 
-      procedure Execute (Str : in out String) is
+      procedure Execute (Str : String) is
       begin
          case Command.Casing is
             when Upper       =>
@@ -313,28 +314,18 @@ package body Casing_Exceptions is
             when Lower       =>
                Set_Casing (Context.Context, To_Lower (Str));
             when Mixed       =>
-               Mixed_Case (Str, False);
-               Set_Casing (Context.Context, Str);
+               Set_Casing (Context.Context, Mixed_Case (Str, False));
             when Smart_Mixed =>
-               Mixed_Case (Str, True);
-               Set_Casing (Context.Context, Str);
+               Set_Casing (Context.Context, Mixed_Case (Str, True));
          end case;
       end Execute;
 
    begin
       if Has_Entity_Name_Information (Context.Context) then
-         declare
-            Str : String := Entity_Name_Information (Context.Context);
-         begin
-            Execute (Str);
-         end;
+         Execute (Entity_Name_Information (Context.Context));
 
       elsif Has_Area_Information (Context.Context) then
-         declare
-            Str : String := Text_Information (Context.Context);
-         begin
-            Execute (Str);
-         end;
+         Execute (Text_Information (Context.Context));
       end if;
       return Commands.Success;
    end Execute;

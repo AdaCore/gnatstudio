@@ -270,9 +270,8 @@ package body Language_Handlers is
          begin
             for Index in Result'Range loop
                Result (Index) := new String'
-                 (Get_Name (Handler.Languages
-                  (Index - 1 + Handler.Languages'First).Lang));
-               Mixed_Case (Result (Index).all);
+                 (Mixed_Case (Get_Name (Handler.Languages
+                  (Index - 1 + Handler.Languages'First).Lang)));
             end loop;
 
             if Sorted then

@@ -37,8 +37,8 @@ package body Language_Handlers.GUI is
    is
       Combo     : Gtk_Combo_Box_Text;
       Languages : Argument_List := Known_Languages (Handler, Sorted => True);
-      Project_Lang : String :=
-        Get_Language_From_File (Handler, File, From_Project_Only => True);
+      Project_Lang : constant String := Mixed_Case
+        (Get_Language_From_File (Handler, File, From_Project_Only => True));
 
    begin
       Gtk_New (Combo);
@@ -46,7 +46,6 @@ package body Language_Handlers.GUI is
       if Project_Lang = "" then
          Combo.Append_Text (-"(From project) unknown");
       else
-         Mixed_Case (Project_Lang);
          Combo.Append_Text (-"(From project) " & Project_Lang);
       end if;
 

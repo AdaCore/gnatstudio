@@ -4798,9 +4798,13 @@ package body Ada_Analyzer is
                   --  keyword, so to avoid upsetting users we never change
                   --  casing of some.
                   if To_Lower (Str (1 .. Str_Len)) /= "some" then
-                     Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
                      Replace_Text
-                       (Prec, Current + 1, Line_Count, Str (1 .. Str_Len));
+                       (Prec,
+                        Current + 1,
+                        Line_Count,
+                        Set_Case (Case_Exceptions,
+                                  Str (1 .. Str_Len),
+                                  Casing));
                   end if;
             end case;
          end if;

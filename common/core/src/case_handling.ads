@@ -42,7 +42,8 @@ package Case_Handling is
    --    underscore to upper-case, all other characters are set to lower-case.
    --  - Smart_Mixed: As Mixed but never force an upper-case to lower-case.
 
-   procedure Mixed_Case (S : in out UTF8_String; Smart : Boolean := False);
+   function Mixed_Case
+     (S : UTF8_String; Smart : Boolean := False) return UTF8_String;
    --  Return S with a casing matching Ada style: upper case after an
    --  underscore or a dot.
    --  If smart is set, do not change upper-case letters in S
@@ -57,10 +58,10 @@ package Case_Handling is
 
    No_Casing_Exception : aliased constant Casing_Exceptions;
 
-   procedure Set_Case
+   function Set_Case
      (C      : Casing_Exceptions;
-      Word   : in out UTF8_String;
-      Casing : Casing_Type);
+      Word   : UTF8_String;
+      Casing : Casing_Type) return UTF8_String;
    --  Change the case of Str as specified by Casing. This routine also
    --  checks for case exceptions.
 

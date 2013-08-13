@@ -106,12 +106,7 @@ package body Default_Preferences.Enums is
       Gtk_New (Combo);
 
       for K in Pref.Choices'Range loop
-         declare
-            S : String := Pref.Choices (K).all;
-         begin
-            Mixed_Case (S);
-            Combo.Append_Text (S);
-         end;
+         Combo.Append_Text (Mixed_Case (Pref.Choices (K).all));
 
          if K = Pref.Enum_Value + Pref.Choices'First then
             Combo.Set_Active (Idx);
@@ -224,12 +219,7 @@ package body Default_Preferences.Enums is
          Gtk_New (Combo);
 
          for K in Enumeration'Range loop
-            declare
-               S : String := Enumeration'Image (K);
-            begin
-               Mixed_Case (S);
-               Combo.Append_Text (S);
-            end;
+            Combo.Append_Text (Mixed_Case (Enumeration'Image (K)));
 
             if Enumeration'Pos (K) = V then
                Combo.Set_Active (Idx);
@@ -260,11 +250,10 @@ package body Default_Preferences.Enums is
       overriding function Get_Pref
         (Pref : access Preference_Record) return String
       is
-         S : String := Enumeration'Image
+         S : constant String := Enumeration'Image
            (Enumeration'Val (Enum_Preference (Pref).Enum_Value));
       begin
-         Mixed_Case (S);
-         return S;
+         return Mixed_Case (S);
       end Get_Pref;
 
       --------------

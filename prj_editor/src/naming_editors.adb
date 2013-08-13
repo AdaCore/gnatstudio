@@ -101,8 +101,8 @@ package body Naming_Editors is
             --  Create the new page
 
             Last := Editor.Pages'Last;
-            Editor.Pages (Last).Language := new String'(Supported (L).all);
-            Mixed_Case (Editor.Pages (Last).Language.all);
+            Editor.Pages (Last).Language :=
+              new String'(Mixed_Case (Supported (L).all));
             Editor.Pages (Last).Naming := Naming;
 
             Gtk_New (Label, Editor.Pages (Last).Language.all);

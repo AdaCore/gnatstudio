@@ -266,8 +266,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       case With_Casing is
          when Mixed | Smart_Mixed =>
-            New_String := Text;
-            Mixed_Case (New_String);
+            return Mixed_Case (Text);
 
          when Upper =>
             for J in Text'Range loop
@@ -340,8 +339,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       begin
          case This.Word_Case is
             when Mixed =>
-               New_String := Str;
-               Mixed_Case (New_String);
+               return Mixed_Case (Str);
 
             when Upper =>
                for J in Str'Range loop

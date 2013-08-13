@@ -19,6 +19,7 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with Glib.Unicode;               use Glib.Unicode;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 package body Case_Handling is
 
@@ -46,14 +47,17 @@ package body Case_Handling is
    -- Mixed_Case --
    ----------------
 
-   procedure Mixed_Case (S : in out UTF8_String; Smart : Boolean := False) is
+   function Mixed_Case
+     (S : UTF8_String; Smart : Boolean := False) return UTF8_String
+   is
       Do_Upper : Boolean;
       Index    : Natural := S'First;
       Last     : Natural;
       C        : Gunichar;
+      X        : UTF8_String := S;
    begin
       if S'Length = 0 then
-         return;
+         return S;
       end if;
 
       Do_Upper := True;
@@ -81,9 +85,9 @@ package body Case_Handling is
 
          else
             if Do_Upper then
-               Unichar_To_UTF8 (To_Upper (C), S (Index .. S'Last), Last);
+               Unichar_To_UTF8 (To_Upper (C), X (Index .. S'Last), Last);
             elsif not Smart then
-               Unichar_To_UTF8 (To_Lower (C), S (Index .. S'Last), Last);
+               Unichar_To_UTF8 (To_Lower (C), X (Index .. S'Last), Last);
             end if;
 
             Do_Upper := False;
@@ -91,85 +95,89 @@ package body Case_Handling is
 
          Index := UTF8_Next_Char (S, Index);
       end loop;
+
+      return X;
    end Mixed_Case;
 
    ---------------
    --  Set_Case --
    ---------------
 
-   procedure Set_Case
+   function Set_Case
      (C      : Casing_Exceptions;
-      Word   : in out UTF8_String;
-      Casing : Casing_Type)
+      Word   : UTF8_String;
+      Casing : Casing_Type) return UTF8_String
    is
-      procedure Set_Substring_Exception
-        (Word   : in out String;
-         L_Word : String);
-      --  Apply substring exception to word if possible and set Found to true
-      --  in this case.
+      function Set_Substring_Exception (Word : UTF8_String) return UTF8_String;
+      --  Apply substring exception to word if possible.
 
       -----------------------------
       -- Set_Substring_Exception --
       -----------------------------
 
-      procedure Set_Substring_Exception
-        (Word   : in out String;
-         L_Word : String)
+      function Set_Substring_Exception
+        (Word : UTF8_String) return UTF8_String
       is
          procedure Apply (Substring : String);
          --  Check if a substring exception exists for this substring and
          --  apply it.
+
+         Result : Unbounded_String;
 
          -----------
          -- Apply --
          -----------
 
          procedure Apply (Substring : String) is
+            --  Set L_Str with the key for Str in the exception hash table
+            L_Word : constant String := UTF8_Strdown (Substring);
             N : W_Node;
          begin
-            N := String_Hash_Table.Get (C.S.all, Substring);
+            N := String_Hash_Table.Get (C.S.all, L_Word);
 
-            if N.Word /= null then
-               Word (Substring'Range) := N.Word.all;
+            if N.Word = null then
+               Append (Result, Substring);
+            else
+               Append (Result, N.Word.all);
             end if;
          end Apply;
 
-         First : Natural;
+         First : Natural := Word'First - 1;
       begin
-         First := L_Word'First - 1;
+         if C.S = null then
+            return Word;
+         end if;
 
          --  Look for all substring in this word
 
-         for K in L_Word'Range loop
-            if L_Word (K) = '_' then
-               Apply (L_Word (First + 1 .. K - 1));
+         for K in Word'Range loop
+            if Word (K) = '_' then
+               Apply (Word (First + 1 .. K - 1));
                First := K;
+               Append (Result, '_');
             end if;
          end loop;
 
          --  Apply to the last one
 
-         Apply (L_Word (First + 1 .. L_Word'Last));
+         Apply (Word (First + 1 .. Word'Last));
+
+         return To_String (Result);
       end Set_Substring_Exception;
 
-      L_Word : String (Word'Range);
       N      : W_Node;
    begin
       if Casing = Unchanged then
          --  Nothing to do in this case
-         return;
+         return Word;
       end if;
-
-      --  Set L_Str with the key for Str in the exception hash table
-
-      L_Word := UTF8_Strdown (Word);
 
       --  Now we check for the case exception for this word. If found we
       --  just return the record casing, if not set we set the word casing
       --  according to the rule set in Casing.
 
       if C.E /= null then
-         N := String_Hash_Table.Get (C.E.all, L_Word);
+         N := String_Hash_Table.Get (C.E.all, UTF8_Strdown (Word));
       end if;
 
       if N.Word = null then
@@ -177,30 +185,25 @@ package body Case_Handling is
 
          case Casing is
             when Unchanged =>
-               null;
+               return Set_Substring_Exception (Word);
 
             when Upper =>
-               Word := UTF8_Strup (L_Word);
+               return Set_Substring_Exception (UTF8_Strup (Word));
 
             when Lower =>
-               Word := L_Word;
+               return Set_Substring_Exception (UTF8_Strdown (Word));
 
             when Mixed =>
-               Mixed_Case (Word);
+               return Set_Substring_Exception (Mixed_Case (Word));
 
             when Smart_Mixed =>
-               Mixed_Case (Word, Smart => True);
+               return Set_Substring_Exception
+                 (Mixed_Case (Word, Smart => True));
          end case;
-
-         --  Check now for substring exceptions
-
-         if C.S /= null then
-            Set_Substring_Exception (Word, L_Word);
-         end if;
 
       else
          --  We have found a case exception
-         Word := N.Word.all;
+         return N.Word.all;
       end if;
    end Set_Case;
 
