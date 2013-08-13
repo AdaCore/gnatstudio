@@ -11,7 +11,7 @@ See menu Prove.
 ## No user customization below this line
 ############################################################################
 
-import GPS, os_utils, os.path, tool_output, re, gps_utils
+import GPS, os_utils, os.path, tool_output, re, gps_utils, json
 
 xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
@@ -199,7 +199,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--show-tag</arg>
           <arg>-U</arg>
        </command-line>
        <output-parsers>
@@ -220,7 +219,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--show-tag</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -240,7 +238,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--show-tag</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
        </command-line>
@@ -262,7 +259,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--show-tag</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -282,7 +278,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>--show-tag</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
        <output-parsers>
@@ -354,8 +349,6 @@ Default_colors = {
 
 Pref_Names = {}
 
-Tag_regex = re.compile("\[(.*)\]$")
-
 Overlays = {
     "trace" : "gnatprove_trace_overlay",
     "error" : "gnatprove_error_overlay",
@@ -417,17 +410,14 @@ class GNATprove_Message(GPS.Message):
     messages. In particular, a gnatprove message can have an explanation
     attached, which is shown in the form of a path."""
 
-    def __init__(self, category, f, line, col, text, flags):
+    def __init__(self, category, f, line, col, text, flags,tracefile=""):
         """initialize state for GNATprove_Message"""
-        match = Tag_regex.search(text)
-        if match:
-            self.tag = match.group(1)
-            text = text[0:match.start()-1]
-        else:
-            self.tag = None
         GPS.Message.__init__(self, category, f, line, col, text, flags)
         self.trace_visible = False
         self.lines = []
+        if tracefile != "":
+            objdirs = GPS.Project.root().object_dirs()
+            self.tracefile = os.path.join(objdirs[0], "gnatprove", tracefile)
         self.is_info_message = (text.find("info:") != -1)
         self.highlight_message()
         self.load_trace_if_needed()
@@ -435,15 +425,13 @@ class GNATprove_Message(GPS.Message):
         gnatprove_plug.add_msg(self)
 
     def load_trace_if_needed(self):
-        if not self.is_info_message and self.tag:
-            fn = self.compute_trace_filename()
-            if os.path.isfile(fn):
-                self.parse_trace_file(fn)
-                if len(self.lines) > 0:
-                    self.set_subprogram(
-                        lambda m : m.toggle_trace(),
-                        "gps-semantic-check",
-                        "show path information")
+        if os.path.isfile(self.tracefile):
+            self.parse_trace_file()
+            if len(self.lines) > 0:
+                self.set_subprogram(
+                    lambda m : m.toggle_trace(),
+                    "gps-semantic-check",
+                    "show path information")
 
     def highlight_message(self):
         msg_buffer = GPS.EditorBuffer.get(self.get_file())
@@ -464,19 +452,6 @@ class GNATprove_Message(GPS.Message):
                 overlay = get_overlay(buf,"trace")
                 buf.remove_overlay(overlay)
         self.trace_visible = False
-
-    def compute_trace_filename(self):
-        """compute the trace file name in which the path information is
-           stored
-        """
-        objdirs = GPS.Project.root().object_dirs()
-        gnatprove_dir = os.path.join(objdirs[0], "gnatprove")
-        fn = "%(file)s_%(line)d_%(col)d_%(tag)s.trace" % \
-             { "file" : os.path.basename(self.get_file().name()),
-               "line" : self.get_line(),
-               "col"  : self.get_column(),
-               "tag"  : self.tag }
-        return os.path.join(gnatprove_dir, fn)
 
     def clear_highlighting(self):
         """simply remove all overlays. Note that this will also affect the
@@ -502,11 +477,11 @@ class GNATprove_Message(GPS.Message):
             gnatprove_plug.register_trace(self)
             self.show_trace()
 
-    def parse_trace_file(self, fn):
+    def parse_trace_file(self):
         """parse the trace file (a list of file:line information) and store it
             in the list self.lines
         """
-        with open(fn,"r") as f:
+        with open(self.tracefile,"r") as f:
             for line in f:
                 sl = line.split(':')
                 if len(sl) >= 2:
@@ -543,27 +518,55 @@ class GNATprove_Parser(tool_output.OutputParser):
         # output. See GNATprove_Parser.on_stdout.
         self.clear_messages = True
 
+    def error_msg_from_json(self,msg):
+        """Given a JSON dict that contains the data for a message, print a
+        corresponding "compiler-like" message on the GPS Console"""
+        text = msg["file"] + ":" + str(msg["line"]) + ":" + str(msg["col"]) +\
+                ": " + msg["message"] + "\n"
+        GPS.Console("Messages").write(text)
+
     def on_stdout(self,text):
         # On the first message, we assume the tool has been run; clear the
         # locations view of the gnatprove messages.
         if self.clear_messages:
             self.clear_messages = False
             gnatprove_plug.clean_locations_view()
-        GPS.Console("Messages").write(text)
         lines = text.splitlines()
         for line in lines:
-            sl = line.split(':')
-            if len(sl) >= 4:
-                message_text = ':'.join(sl[3:]).strip()
-                message_text = message_text.replace('<','&lt;')
-                message_text = message_text.replace('>','&gt;')
+            try:
+                # we first try to parse a JSON dict
+                msg = json.loads(line)
+                # it actually was a JSON dict, we print something that looks
+                # like regular GNATProve output on the console
+                self.error_msg_from_json(msg)
+                if msg.has_key("tracefile"):
+                    tracefile = msg["tracefile"]
+                else:
+                    tracefile = ""
                 m = GNATprove_Message(
                         toolname,
-                        GPS.File(sl[0]),
-                        int(sl[1]),
-                        int(sl[2]),
-                        message_text,
-                        0)
+                        GPS.File(msg["file"]),
+                        msg["line"],
+                        msg["col"],
+                        msg["message"],
+                        0,
+                        tracefile=tracefile)
+            except ValueError:
+                # it's a non-JSON message
+                # we can print it as-is
+                GPS.Console("Messages").write(line + "\n")
+                # we try to parse a file:line:msg format
+                sl = line.split(':',3)
+                if len(sl) == 4:
+                    message_text = sl[3].replace('<','&lt;')
+                    message_text = message_text.replace('>','&gt;')
+                    m = GNATprove_Message(
+                            toolname,
+                            GPS.File(sl[0]),
+                            int(sl[1]),
+                            int(sl[2]),
+                            message_text,
+                            0)
 
 def is_subp_decl_context(self):
     """Check whether the given context is the context of a subprogram
