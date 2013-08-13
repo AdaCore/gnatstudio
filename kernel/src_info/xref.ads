@@ -460,8 +460,9 @@ package Xref is
    function End_Of_Scope
      (Self   : access General_Xref_Database_Record;
       Entity : General_Entity) return General_Location;
-   --  Return the end of scope location for this entity.
-   --  ??? Not clear whether we return the end of scope for the spec or body.
+   --  For type declaration return the location of their syntax scope; for
+   --  Ada packages and subprograms return the location of the end of scope
+   --  of their body.
 
    function Get_Caller
      (Ref : General_Entity_Reference) return General_Entity;

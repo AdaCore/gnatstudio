@@ -217,6 +217,12 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Comment_Result;
    function Get_IDepth_Level
      (E : Entity_Id) return Natural;
+
+   function Get_End_Of_Spec_Loc
+     (E : Entity_Id) return General_Location;
+   --  At current stage this attribute is set only for E_Package and
+   --  E_Generic_Package entities
+
    function Get_Entities
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Error_Msg
@@ -368,6 +374,8 @@ private package Docgen3.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Child_Types
         (E : Entity_Id) return access EInfo_List.Vector;
+      function Get_End_Of_Scope_Loc
+        (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return General_Entity;
       function Get_Full_View
@@ -494,25 +502,26 @@ private package Docgen3.Atree is
 private
    type Xref_Info is
       record
-         Entity        : General_Entity;
-         Full_View     : General_Entity;
-         Loc           : General_Location;
-         Body_Loc      : General_Location;
-         Ekind         : Entity_Kind;
-         Scope_E       : General_Entity;
-         Scope_Loc     : General_Location;
-         Etype         : General_Entity;
-         Pointed_Type  : General_Entity;
-         Alias         : General_Entity;
-         Instance_Of   : General_Entity;
-
-         Has_Methods   : Boolean;
+         Alias            : General_Entity;
+         Body_Loc         : General_Location;
+         Ekind            : Entity_Kind;
+         End_Of_Scope_Loc : General_Location;
+         Entity           : General_Entity;
+         Etype            : General_Entity;
+         Full_View        : General_Entity;
+         Instance_Of      : General_Entity;
+         Loc              : General_Location;
+         Pointed_Type     : General_Entity;
+         Scope_E          : General_Entity;
+         Scope_Loc        : General_Location;
 
          Parent_Types  : aliased EInfo_List.Vector;
          --  Parent types of tagged types (or base classes of C++ classes)
 
          Child_Types   : aliased EInfo_List.Vector;
          --  Derivations of tagged types (or C++ classes)
+
+         Has_Methods   : Boolean;
 
          Is_Abstract   : Boolean;
          Is_Access     : Boolean;
@@ -567,6 +576,9 @@ private
 
          Alias           : Entity_Id;
          Scope           : Entity_Id;
+
+         End_Of_Spec_Loc : General_Location;
+         --  Set only on E_Package and E_Generic_Package entities
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;

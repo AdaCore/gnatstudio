@@ -126,11 +126,21 @@ package body Docgen3.Frontend is
               Buffer   => Buffer,
               Location => LL.Get_Location (E)));
 
-         --           Set_Doc (E,
-         --             Db.Get_Docgen_Documentation
-         --               (Handler => Lang_Handler,
-         --                Buffer  => Buffer,
-         --                Entity  => LL.Get_Entity (E)));
+         --  For packages, if no documentation was found then we try locating
+         --  the documentation immediately after the package spec. Required to
+         --  retrieve the documentation of some GNATCOLL nested packages.
+
+         if Get_Doc (E) = No_Comment_Result
+           and then Is_Package (E)
+         then
+            Set_Doc (E,
+              Xref.Docgen.Get_Docgen_Documentation
+                (Self =>
+                   General_Xref_Database_Record (Context.Database.all)'Access,
+                 Handler  => Context.Lang_Handler,
+                 Buffer   => Buffer,
+                 Location => Get_End_Of_Spec_Loc (E)));
+         end if;
 
          if Is_Partial_View (E) then
             Set_Full_View_Doc (E,

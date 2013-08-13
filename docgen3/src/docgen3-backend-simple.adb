@@ -1342,6 +1342,7 @@ package body Docgen3.Backend.Simple is
               or else Name = "="
               or else Name = "<"
               or else Name = ">"
+              or else Name = "/="
               or else Name = "<="
               or else Name = ">="
               or else Name = "**"
@@ -1764,11 +1765,22 @@ package body Docgen3.Backend.Simple is
               & ReST_Header & ASCII.LF;
 
             if In_Ada_Language (Entity) then
-               Header :=
-                 Header
-                 & ASCII.LF
-                 & To_ReST (Get_Comment (Entity))
-                 & ASCII.LF;
+               if Get_Kind (Entity) = E_Generic_Package then
+                  Header :=
+                    Header
+                    & ASCII.LF
+                    & "Generic package."
+                    & ASCII.LF
+                    & ASCII.LF
+                    & To_ReST (Get_Comment (Entity))
+                    & ASCII.LF;
+               else
+                  Header :=
+                    Header
+                    & ASCII.LF
+                    & To_ReST (Get_Comment (Entity))
+                    & ASCII.LF;
+               end if;
 
                if Present (LL.Get_Instance_Of (Entity)) then
                   ReST_Append_Simple_Declaration (Printout'Access, Entity);

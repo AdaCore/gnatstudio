@@ -437,14 +437,11 @@ package body Docgen3.Atree is
       return E.Doc;
    end Get_Doc;
 
-   ----------------------
-   -- Get_IDepth_Level --
-   ----------------------
-
-   function Get_IDepth_Level (E : Entity_Id) return Natural is
+   function Get_End_Of_Spec_Loc
+     (E : Entity_Id) return General_Location is
    begin
-      return E.Idepth_Level;
-   end Get_IDepth_Level;
+      return E.End_Of_Spec_Loc;
+   end Get_End_Of_Spec_Loc;
 
    ------------------
    -- Get_Entities --
@@ -499,6 +496,15 @@ package body Docgen3.Atree is
    begin
       return E.Full_View_Src;
    end Get_Full_View_Src;
+
+   ----------------------
+   -- Get_IDepth_Level --
+   ----------------------
+
+   function Get_IDepth_Level (E : Entity_Id) return Natural is
+   begin
+      return E.Idepth_Level;
+   end Get_IDepth_Level;
 
    ---------------------------
    -- Get_Inherited_Methods --
@@ -766,6 +772,8 @@ package body Docgen3.Atree is
          New_E.Xref.Etype     := Get_Type_Of (Db, E);
          New_E.Xref.Body_Loc  := Get_Body (Db, E);
 
+         New_E.Xref.End_Of_Scope_Loc := End_Of_Scope (Db, E);
+
          New_E.Xref.Is_Type   := Xref.Is_Type (Db, E);
 
          --  (Ada) Interfaces are NOT decorated as types by Xref???
@@ -903,6 +911,28 @@ package body Docgen3.Atree is
             end if;
          end if;
 
+         if Is_Package (New_E) then
+            declare
+               Cursor : Entity_Reference_Iterator;
+               Ref    : General_Entity_Reference;
+            begin
+               Find_All_References
+                 (Db, Cursor, LL.Get_Entity (New_E), Include_All => True);
+               while not At_End (Cursor) loop
+                  Ref := Get (Cursor);
+
+                  if Get_Display_Kind (Ref) = "end of spec" then
+                     New_E.End_Of_Spec_Loc := Get_Location (Ref);
+                     exit;
+                  end if;
+
+                  Next (Cursor);
+               end loop;
+
+               Destroy (Cursor);
+            end;
+         end if;
+
       exception
          when E : others =>
             Trace (Exception_Handle, E);
@@ -943,17 +973,18 @@ package body Docgen3.Atree is
            Language => Lang,
            Ref_File => Loc.File,
            Xref => Xref_Info'(
-             Entity        => E,
-             Full_View     => No_General_Entity,
-             Loc           => Loc,
-             Body_Loc      => No_Location,
-             Ekind         => Kind,
-             Scope_E       => No_General_Entity,
-             Scope_Loc     => No_Location,
-             Etype         => No_General_Entity,
-             Pointed_Type  => No_General_Entity,
-             Alias         => No_General_Entity,
-             Instance_Of   => No_General_Entity,
+             Alias            => No_General_Entity,
+             Body_Loc         => No_Location,
+             Ekind            => Kind,
+             End_Of_Scope_Loc => No_Location,
+             Entity           => E,
+             Etype            => No_General_Entity,
+             Full_View        => No_General_Entity,
+             Instance_Of      => No_General_Entity,
+             Loc              => Loc,
+             Pointed_Type     => No_General_Entity,
+             Scope_E          => No_General_Entity,
+             Scope_Loc        => No_Location,
 
              Has_Methods   => False,
 
@@ -975,6 +1006,7 @@ package body Docgen3.Atree is
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
            Alias           => No_Entity,
            Scope           => No_Entity,
+           End_Of_Spec_Loc => No_Location,
            Kind            => Kind,
 
            Is_Incomplete_Or_Private_Type => False,
@@ -1523,6 +1555,12 @@ package body Docgen3.Atree is
          return E.Xref.Child_Types'Access;
       end Get_Child_Types;
 
+      function Get_End_Of_Scope_Loc
+        (E : Entity_Id) return General_Location is
+      begin
+         return E.Xref.End_Of_Scope_Loc;
+      end Get_End_Of_Scope_Loc;
+
       function Get_Entity (E : Entity_Id) return General_Entity is
       begin
          return E.Xref.Entity;
@@ -2028,10 +2066,22 @@ package body Docgen3.Atree is
          & "Full Name: "
          & Get (E.Full_Name).all);
 
+      if E.End_Of_Spec_Loc /= No_Location then
+         Append_Line
+           (LL_Prefix
+            & "End_Of_Spec_Loc: " & Image (E.End_Of_Spec_Loc));
+      end if;
+
       if E.Xref.Body_Loc /= No_Location then
          Append_Line
            (LL_Prefix
             & "Body_Loc: " & Image (E.Xref.Body_Loc));
+      end if;
+
+      if E.Xref.End_Of_Scope_Loc /= No_Location then
+         Append_Line
+           (LL_Prefix
+            & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
       end if;
 
       if Present (LL.Get_Full_View (E)) then
