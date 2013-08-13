@@ -74,20 +74,15 @@ class Task_Manager(Module):
         :param task: a GPS.Task.
         """
         if self.store and task.visible:
-            iter = self.store.append()
-            self.__update_row(iter, task)
-
-    def task_changed(self, task):
-        if self.store and task.visible:
             iter = self.__iter_from_task(task)
             if not iter:
-                # Task might have started before this plugin registered
                 iter = self.store.append()
-
             self.__update_row(iter, task)
 
+    task_changed = task_started
+
     def task_terminated(self, task):
-        if self.store and task.visible:
+        if self.store:
             iter = self.__iter_from_task(task)
             if iter:
                 self.store.remove(iter)
