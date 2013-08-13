@@ -1938,7 +1938,7 @@ package body Docgen2 is
          --  ??? Completely Ada specific ?
          while Nxt <= Doc'Last loop
             C := UTF8_Get_Char (Doc (Nxt .. Doc'Last));
-            Tmp := UTF8_Next_Char (Doc, Nxt);
+            Tmp := UTF8_Utils.UTF8_Next_Char (Doc, Nxt);
             if Tmp < Doc'Last then
                Next_C := UTF8_Get_Char (Doc (Tmp .. Doc'Last));
             end if;

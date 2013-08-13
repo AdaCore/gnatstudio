@@ -486,7 +486,7 @@ package body Find_Utils is
             end if;
          end if;
 
-         J := UTF8_Next_Char (Buffer, J);
+         J := UTF8_Utils.UTF8_Next_Char (Buffer, J);
       end loop;
    end To_Line_Column;
 

@@ -20,7 +20,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with String_Utils;              use String_Utils;
 with GNAT.OS_Lib;
-with Glib.Convert;              use Glib.Convert;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body File_Utils is
 

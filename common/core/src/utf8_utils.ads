@@ -56,4 +56,15 @@ package UTF8_Utils is
    --  variable CHARSET, defaulting to ISO-8859-1).
    --  If Input could not be converted, Input is returned as-is.
 
+   function Locale_To_UTF8 (Input : String) return UTF8_String;
+   --  Convert Input from the GPS locale (ie, the contents of the environment
+   --  variable CHARSET, defaulting to ISO-8859-1).
+   --  If Input could not be converted, Input is returned as-is.
+
+   function UTF8_Next_Char (Str : UTF8_String; Index : Natural) return Natural;
+   --  Find the start of the next UTF8 character after the Index-th byte.
+   --  Index has to be on the start of a character.
+   --  Index is set to a value greater than Str'Last if there is no more
+   --  character.
+
 end UTF8_Utils;

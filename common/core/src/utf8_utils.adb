@@ -121,4 +121,39 @@ package body UTF8_Utils is
       return Iconv (UTF_8_To_Locale, Input);
    end UTF8_To_Locale;
 
+   --------------------
+   -- Locale_To_UTF8 --
+   --------------------
+
+   function Locale_To_UTF8 (Input : String) return UTF8_String is
+   begin
+      Open;
+      return Iconv (Locale_To_UTF_8, Input);
+   end Locale_To_UTF8;
+
+   --------------------
+   -- UTF8_Next_Char --
+   --------------------
+
+   function UTF8_Next_Char
+     (Str : UTF8_String; Index : Natural) return Natural
+   is
+      Byte : constant Character := Str (Index);
+   begin
+      case Byte is
+         when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
+            return Index + 2;
+         when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
+            return Index + 3;
+         when Character'Val (16#F0#) .. Character'Val (16#F7#) =>
+            return Index + 4;
+         when Character'Val (16#F8#) .. Character'Val (16#FB#) =>
+            return Index + 5;
+         when Character'Val (16#FC#) .. Character'Val (16#FD#) =>
+            return Index + 6;
+         when others =>
+            return Index + 1;
+      end case;
+   end UTF8_Next_Char;
+
 end UTF8_Utils;
