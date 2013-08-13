@@ -1047,6 +1047,23 @@ package body Docgen3.Atree is
       return New_E;
    end Internal_New_Entity;
 
+   -----------------------------
+   -- Is_Class_Or_Record_Type --
+   -----------------------------
+
+   function Is_Class_Or_Record_Type (E : Entity_Id) return Boolean is
+   begin
+      pragma Assert (Present (E)
+        and then Get_Kind (E) /= E_Unknown);
+
+      return E.Xref.Ekind = E_Abstract_Record_Type
+        or else E.Xref.Ekind = E_Record_Type
+        or else E.Kind = E_Tagged_Record_Type
+        or else E.Kind = E_Interface
+        or else E.Kind = E_Class
+        or else E.Kind = E_Class_Wide_Type;
+   end Is_Class_Or_Record_Type;
+
    ------------------
    -- Is_Full_View --
    ------------------
@@ -1095,22 +1112,16 @@ package body Docgen3.Atree is
       return E.Is_Private;
    end Is_Private;
 
-   --------------------
-   -- Is_Record_Type --
-   --------------------
+   ------------------------
+   -- Is_Standard_Entity --
+   ------------------------
 
-   function Is_Class_Or_Record_Type (E : Entity_Id) return Boolean is
+   function Is_Standard_Entity
+     (E : Entity_Id) return Boolean is
    begin
-      pragma Assert (Present (E)
-        and then Get_Kind (E) /= E_Unknown);
-
-      return E.Xref.Ekind = E_Abstract_Record_Type
-        or else E.Xref.Ekind = E_Record_Type
-        or else E.Kind = E_Tagged_Record_Type
-        or else E.Kind = E_Interface
-        or else E.Kind = E_Class
-        or else E.Kind = E_Class_Wide_Type;
-   end Is_Class_Or_Record_Type;
+      return E.Is_Internal
+        and then Get_Short_Name (E) = Std_Entity_Name;
+   end Is_Standard_Entity;
 
    ---------------
    -- Is_Tagged --
@@ -1873,12 +1884,13 @@ package body Docgen3.Atree is
    ---------------
 
    function To_String
-     (E             : Entity_Id;
-      Prefix        : String := "";
-      With_Full_Loc : Boolean := False;
-      With_Src      : Boolean := False;
-      With_Doc      : Boolean := False;
-      With_Errors   : Boolean := False) return String
+     (E              : Entity_Id;
+      Prefix         : String := "";
+      With_Full_Loc  : Boolean := False;
+      With_Src       : Boolean := False;
+      With_Doc       : Boolean := False;
+      With_Errors    : Boolean := False;
+      With_Unique_Id : Boolean := False) return String
    is
       LL_Prefix : constant String := "xref: ";
       Printout  : aliased Unbounded_String;
@@ -1941,10 +1953,13 @@ package body Docgen3.Atree is
          Name : constant String :=
                   (if With_Full_Name then Get_Full_Name (Entity)
                                      else Get_Short_Name (Entity));
+         UID  : constant String :=
+                  (if not With_Unique_Id then ""
+                   else "[" & To_String (Get_Unique_Id (Entity)) & "] ");
       begin
          Append_Line
            (Prefix
-            & "[" & To_String (Get_Unique_Id (Entity)) & "] "
+            & UID
             & Name
             & " ["
             & Image (LL.Get_Location (Entity))
@@ -1992,16 +2007,21 @@ package body Docgen3.Atree is
          return To_String (Printout);
       end if;
 
-      Append_Line
-        ("*** "
-         & To_String (E.Id)
-         & ": "
-         & Get (E.Short_Name).all
-         & " ("
-         & E.Kind'Img
-         & ":"
-         & E.Xref.Ekind'Img
-         & ")");
+      declare
+         UID : constant String :=
+                 (if With_Unique_Id then To_String (E.Id) & ": "
+                                    else "");
+      begin
+         Append_Line
+           ("*** "
+            & UID
+            & Get (E.Short_Name).all
+            & " ("
+            & E.Kind'Img
+            & ":"
+            & E.Xref.Ekind'Img
+            & ")");
+      end;
 
       --  Synthesized attributes
 
@@ -2358,8 +2378,11 @@ package body Docgen3.Atree is
    procedure pn (E : Entity_Id) is
    begin
       GNAT.IO.Put_Line
-        (To_String (E, With_Src => True, With_Doc => True,
-                       With_Full_Loc => True));
+        (To_String (E,
+           With_Src => True,
+           With_Doc => True,
+           With_Full_Loc => True,
+           With_Unique_Id => True));
    end pn;
 
    ---------

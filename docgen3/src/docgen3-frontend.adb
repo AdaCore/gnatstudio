@@ -126,12 +126,14 @@ package body Docgen3.Frontend is
               Buffer   => Buffer,
               Location => LL.Get_Location (E)));
 
-         --  For packages, if no documentation was found then we try locating
-         --  the documentation immediately after the package spec. Required to
-         --  retrieve the documentation of some GNATCOLL nested packages.
+         --  For nested packages, if no documentation was found then we try
+         --  locating the documentation immediately after the package spec.
+         --  Required to retrieve the documentation of some GNATCOLL nested
+         --  packages.
 
          if Get_Doc (E) = No_Comment_Result
            and then Is_Package (E)
+           and then not Is_Standard_Entity (Get_Scope (E))
          then
             Set_Doc (E,
               Xref.Docgen.Get_Docgen_Documentation
@@ -521,6 +523,11 @@ package body Docgen3.Frontend is
                         Is_Interface := True;
                      elsif Token = Tok_Null then
                         Is_Null := True;
+                     end if;
+
+                  elsif Prev_Token = Tok_Limited then
+                     if Token = Tok_Interface then
+                        Is_Interface := True;
                      end if;
 
                   elsif (Prev_Token = Tok_Is or else Prev_Token = Tok_Abstract)

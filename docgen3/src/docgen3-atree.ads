@@ -46,6 +46,7 @@ with Docgen3.Comment;         use Docgen3.Comment;
 with Xref.Docgen;             use Xref.Docgen;
 
 private package Docgen3.Atree is
+   Std_Entity_Name : constant String := "Standard";
 
    type Entity_Info_Record is private;
    type Entity_Id is access all Entity_Info_Record;
@@ -266,20 +267,23 @@ private package Docgen3.Atree is
    function In_C_Or_CPP_Language
      (E : Entity_Id) return Boolean;
 
+   function Is_Class_Or_Record_Type
+     (E : Entity_Id) return Boolean;
+   --  Return True for Ada record types (including tagged types and interface
+   --  types), C structs and C++ classes
+   function Is_Full_View
+     (E : Entity_Id) return Boolean;
    function Is_Incomplete_Or_Private_Type
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
    function Is_Partial_View
      (E : Entity_Id) return Boolean;
-   function Is_Full_View
-     (E : Entity_Id) return Boolean;
    function Is_Private
      (E : Entity_Id) return Boolean;
-   function Is_Class_Or_Record_Type
+   function Is_Standard_Entity
      (E : Entity_Id) return Boolean;
-   --  Return True for Ada record types (including tagged types and interface
-   --  types), C structs and C++ classes
+   --  Return true if E represents the Standard scope (the outermost entity)
    function Is_Tagged_Type
      (E : Entity_Id) return Boolean;
 
@@ -484,12 +488,13 @@ private package Docgen3.Atree is
    --  (gdb) Using pns print all the elements of V
 
    function To_String
-     (E             : Entity_Id;
-      Prefix        : String := "";
-      With_Full_Loc : Boolean := False;
-      With_Src      : Boolean := False;
-      With_Doc      : Boolean := False;
-      With_Errors   : Boolean := False) return String;
+     (E              : Entity_Id;
+      Prefix         : String := "";
+      With_Full_Loc  : Boolean := False;
+      With_Src       : Boolean := False;
+      With_Doc       : Boolean := False;
+      With_Errors    : Boolean := False;
+      With_Unique_Id : Boolean := False) return String;
    --  Returns a string containing all the information associated with E.
    --  Prefix is used by routines of package Docgen3.Treepr to generate the
    --  bar which represents the enclosing scopes. If With_Full_Loc is true then
@@ -497,7 +502,10 @@ private package Docgen3.Atree is
    --  With_Src is true then the source retrieved from the sources is added to
    --  the output; if With_Doc is true then the documentation retrieved from
    --  sources is added to the output; if With_Errors is true then the errors
-   --  reported on the node are added to the output.
+   --  reported on the node are added to the output; if With_Unique_Id is true
+   --  then the unique identifier of E as well as the unique identifier of all
+   --  the entities associated with E (ie. Parent, Scope, etc.) is added to
+   --  the output.
 
 private
    type Xref_Info is

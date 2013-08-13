@@ -970,7 +970,7 @@ package body Docgen3.Frontend.Builder is
                         New_Internal_Entity
                           (Context  => Context,
                            Language => Lang,
-                           Name     => "Standard");
+                           Name     => Std_Entity_Name);
       use Scopes_Stack;
 
       procedure Append_To_File_Entities (E : Unique_Entity_Id);
