@@ -19,9 +19,10 @@
 --  services to change the casing of a word (identifier or keyword) and
 --  to handle a set of casing exceptions.
 
-with Glib;        use Glib;
+with Basic_Types;        use Basic_Types;
 
-with String_Hash;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Wide_Wide_Hash;
 
 package Case_Handling is
 
@@ -93,30 +94,28 @@ package Case_Handling is
 
 private
 
-   type Word_Access is access String;
-
-   type W_Node is record
+   type W_Node (Size : Natural) is record
       Read_Only : Boolean;
       --  Set to True if this case exception is read only (can't be removed).
       --  Such case exception comes from a global .xml files.
-      Word      : Word_Access;
+      Word      : Wide_Wide_String (1 .. Size);
    end record;
 
-   Null_Node : constant W_Node := (False, null);
-
-   procedure Free (N : in out W_Node);
-
-   package Casing_Exception_Table is new String_Hash (W_Node, Free, Null_Node);
+   package Casing_Exception_Table is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => Wide_Wide_String,
+      Element_Type    => W_Node,
+      Hash            => Ada.Strings.Wide_Wide_Hash,
+      Equivalent_Keys => "=");
    use Casing_Exception_Table;
 
-   type Exceptions_Table is access String_Hash_Table.Instance;
+   type Exceptions_Table is access Map;
    --  Exception Word handler, each exception is inserted into this hash
    --  table. The key is the word in lower-case, the associated
    --  value is the word with the right casing.
 
    type Casing_Exceptions is record
-      E : Exceptions_Table := new String_Hash_Table.Instance;
-      S : Exceptions_Table := new String_Hash_Table.Instance;
+      E : Exceptions_Table := new Map;
+      S : Exceptions_Table := new Map;
    end record;
 
    No_Casing_Exception : aliased constant Casing_Exceptions :=

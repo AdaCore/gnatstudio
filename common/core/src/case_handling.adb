@@ -15,11 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Wide_Wide_Latin_1;
 
-with Glib.Unicode;               use Glib.Unicode;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
+with Ada.Strings.Wide_Wide_Unbounded;   use Ada.Strings.Wide_Wide_Unbounded;
+with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
 
 package body Case_Handling is
 
@@ -32,16 +35,67 @@ package body Case_Handling is
    procedure Remove_Exception (HTable : Exceptions_Table; Str : String);
    --  Remove str exception from the HTable
 
-   ----------
-   -- Free --
-   ----------
+   function Mixed_Case
+     (Image : Wide_Wide_String;
+      Smart : Boolean := False) return Wide_Wide_String;
+   --  The same as one in package specification, but on Wide_Wide_String.
 
-   procedure Free (N : in out W_Node) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (String, Word_Access);
+   ----------------
+   -- Mixed_Case --
+   ----------------
+
+   function Mixed_Case
+     (Image : Wide_Wide_String;
+      Smart : Boolean := False) return Wide_Wide_String
+   is
+      package Latin_1 renames Ada.Characters.Wide_Wide_Latin_1;
+
+      Do_Upper : Boolean;
+      C        : Wide_Wide_Character;
+      Result : Unbounded_Wide_Wide_String;
    begin
-      Unchecked_Free (N.Word);
-   end Free;
+      if Image'Length = 0 then
+         return Image;
+      end if;
+
+      Do_Upper := True;
+
+      for Index in Image'Range loop
+         C := Image (Index);
+
+         if C = '.'
+           or else C = '_'
+           or else C = ' '
+           or else C = '('
+           or else C = ')'
+           or else C = '+'
+           or else C = '-'
+           or else C = '*'
+           or else C = '/'
+           or else C = ','
+           or else C = ';'
+           or else C = '''
+           or else C = Latin_1.HT
+           or else C = Latin_1.LF
+           or else C = Latin_1.CR
+         then
+            Do_Upper := True;
+            Append (Result, C);
+         else
+            if Do_Upper then
+               Append (Result, Ada.Wide_Wide_Characters.Handling.To_Upper (C));
+            elsif not Smart then
+               Append (Result, To_Lower (C));
+            else
+               Append (Result, C);
+            end if;
+
+            Do_Upper := False;
+         end if;
+      end loop;
+
+      return To_Wide_Wide_String (Result);
+   end Mixed_Case;
 
    ----------------
    -- Mixed_Case --
@@ -50,53 +104,9 @@ package body Case_Handling is
    function Mixed_Case
      (S : UTF8_String; Smart : Boolean := False) return UTF8_String
    is
-      Do_Upper : Boolean;
-      Index    : Natural := S'First;
-      Last     : Natural;
-      C        : Gunichar;
-      X        : UTF8_String := S;
+      Image  : constant Wide_Wide_String := Decode (S);
    begin
-      if S'Length = 0 then
-         return S;
-      end if;
-
-      Do_Upper := True;
-
-      while Index <= S'Last loop
-         C := UTF8_Get_Char (S (Index .. S'Last));
-
-         if C = Character'Pos ('.')
-           or else C = Character'Pos ('_')
-           or else C = Character'Pos (' ')
-           or else C = Character'Pos ('(')
-           or else C = Character'Pos (')')
-           or else C = Character'Pos ('+')
-           or else C = Character'Pos ('-')
-           or else C = Character'Pos ('*')
-           or else C = Character'Pos ('/')
-           or else C = Character'Pos (',')
-           or else C = Character'Pos (';')
-           or else C = Character'Pos (''')
-           or else C = Character'Pos (ASCII.HT)
-           or else C = Character'Pos (ASCII.LF)
-           or else C = Character'Pos (ASCII.CR)
-         then
-            Do_Upper := True;
-
-         else
-            if Do_Upper then
-               Unichar_To_UTF8 (To_Upper (C), X (Index .. S'Last), Last);
-            elsif not Smart then
-               Unichar_To_UTF8 (To_Lower (C), X (Index .. S'Last), Last);
-            end if;
-
-            Do_Upper := False;
-         end if;
-
-         Index := UTF8_Next_Char (S, Index);
-      end loop;
-
-      return X;
+      return Encode (Mixed_Case (Image, Smart));
    end Mixed_Case;
 
    ---------------
@@ -108,7 +118,8 @@ package body Case_Handling is
       Word   : UTF8_String;
       Casing : Casing_Type) return UTF8_String
    is
-      function Set_Substring_Exception (Word : UTF8_String) return UTF8_String;
+      function Set_Substring_Exception
+        (Word : Wide_Wide_String) return UTF8_String;
       --  Apply substring exception to word if possible.
 
       -----------------------------
@@ -116,36 +127,37 @@ package body Case_Handling is
       -----------------------------
 
       function Set_Substring_Exception
-        (Word : UTF8_String) return UTF8_String
+        (Word : Wide_Wide_String) return UTF8_String
       is
-         procedure Apply (Substring : String);
+         procedure Apply (Substring : Wide_Wide_String);
          --  Check if a substring exception exists for this substring and
          --  apply it.
 
-         Result : Unbounded_String;
+         Result : Unbounded_Wide_Wide_String;
 
          -----------
          -- Apply --
          -----------
 
-         procedure Apply (Substring : String) is
+         procedure Apply (Substring : Wide_Wide_String) is
             --  Set L_Str with the key for Str in the exception hash table
-            L_Word : constant String := UTF8_Strdown (Substring);
-            N : W_Node;
-         begin
-            N := String_Hash_Table.Get (C.S.all, L_Word);
+            L_Word  : constant Wide_Wide_String := To_Lower (Substring);
 
-            if N.Word = null then
-               Append (Result, Substring);
+            Pos : Cursor;
+         begin
+            Pos := C.S.Find (L_Word);
+
+            if Has_Element (Pos) then
+               Append (Result, Element (Pos).Word);
             else
-               Append (Result, N.Word.all);
+               Append (Result, Substring);
             end if;
          end Apply;
 
          First : Natural := Word'First - 1;
       begin
          if C.S = null then
-            return Word;
+            return Encode (Word);
          end if;
 
          --  Look for all substring in this word
@@ -162,10 +174,12 @@ package body Case_Handling is
 
          Apply (Word (First + 1 .. Word'Last));
 
-         return To_String (Result);
+         return Encode (To_Wide_Wide_String (Result));
       end Set_Substring_Exception;
 
-      N      : W_Node;
+      Image  : constant Wide_Wide_String := Decode (Word);
+      L_Str  : constant Wide_Wide_String := To_Lower (Image);
+      N      : Cursor;
    begin
       if Casing = Unchanged then
          --  Nothing to do in this case
@@ -177,33 +191,33 @@ package body Case_Handling is
       --  according to the rule set in Casing.
 
       if C.E /= null then
-         N := String_Hash_Table.Get (C.E.all, UTF8_Strdown (Word));
+         N := C.E.Find (L_Str);
       end if;
 
-      if N.Word = null then
+      if not Has_Element (N) then
          --  No case exception for this word, apply standard rules
 
          case Casing is
             when Unchanged =>
-               return Set_Substring_Exception (Word);
+               return Set_Substring_Exception (Image);
 
             when Upper =>
-               return Set_Substring_Exception (UTF8_Strup (Word));
+               return Set_Substring_Exception (To_Upper (Image));
 
             when Lower =>
-               return Set_Substring_Exception (UTF8_Strdown (Word));
+               return Set_Substring_Exception (L_Str);
 
             when Mixed =>
-               return Set_Substring_Exception (Mixed_Case (Word));
+               return Set_Substring_Exception (Mixed_Case (Image));
 
             when Smart_Mixed =>
                return Set_Substring_Exception
-                 (Mixed_Case (Word, Smart => True));
+                 (Mixed_Case (Image, Smart => True));
          end case;
 
       else
          --  We have found a case exception
-         return N.Word.all;
+         return Encode (Element (N).Word);
       end if;
    end Set_Case;
 
@@ -214,10 +228,11 @@ package body Case_Handling is
    procedure Add_Exception
      (HTable    : Exceptions_Table;
       Str       : String;
-      Read_Only : Boolean) is
+      Read_Only : Boolean)
+   is
+      Image : constant Wide_Wide_String := Decode (Str);
    begin
-      String_Hash_Table.Set
-        (HTable.all, To_Lower (Str), (Read_Only, new String'(Str)));
+      HTable.Include (To_Lower (Image), (Image'Length, Read_Only, Image));
    end Add_Exception;
 
    procedure Add_Exception
@@ -248,13 +263,12 @@ package body Case_Handling is
      (HTable : Exceptions_Table;
       Str    : String)
    is
-      L_Str : constant String := To_Lower (Str);
-      N     : W_Node;
+      Image : constant Wide_Wide_String := Decode (Str);
+      L_Str : constant Wide_Wide_String := To_Lower (Image);
+      Pos   : Cursor := HTable.Find (L_Str);
    begin
-      N := String_Hash_Table.Get (HTable.all, L_Str);
-
-      if not N.Read_Only then
-         String_Hash_Table.Remove (HTable.all, L_Str);
+      if Has_Element (Pos) and then not Element (Pos).Read_Only then
+         HTable.Delete (Pos);
       end if;
    end Remove_Exception;
 
@@ -280,19 +294,19 @@ package body Case_Handling is
 
    procedure Destroy (C : in out Casing_Exceptions) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_Hash_Table.Instance, Exceptions_Table);
+        (Map, Exceptions_Table);
    begin
       --  Word exceptions
 
       if C.E /= null then
-         String_Hash_Table.Reset (C.E.all);
+         C.E.Clear;
          Unchecked_Free (C.E);
       end if;
 
       --  Substring exceptions
 
       if C.S /= null then
-         String_Hash_Table.Reset (C.S.all);
+         C.S.Clear;
          Unchecked_Free (C.S);
       end if;
    end Destroy;
