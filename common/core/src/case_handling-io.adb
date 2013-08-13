@@ -30,6 +30,8 @@
 --  <substring>  : A substring exception. A substring is defined as a part
 --                 of the word separated by underscores.
 
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 
 with Traces;         use Traces;
@@ -101,8 +103,7 @@ package body Case_Handling.IO is
    is
       File, Ada_Child : Node_Ptr;
       Child           : Node_Ptr;
-      Iter            : String_Hash_Table.Cursor;
-      N               : W_Node;
+      Iter            : Cursor;
 
    begin
       if C.E = null and then C.S = null then
@@ -121,40 +122,44 @@ package body Case_Handling.IO is
       --  Word exceptions
 
       if C.E /= null then
-         String_Hash_Table.Get_First (C.E.all, Iter);
+         Iter := C.E.First;
 
-         loop
-            N := String_Hash_Table.Get_Element (Iter);
-            exit when N = Null_Node;
+         while Has_Element (Iter) loop
+            declare
+               use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+               N : constant W_Node := Element (Iter);
+            begin
+               if not N.Read_Only then
+                  Child       := new Node;
+                  Child.Tag   := new String'("word");
+                  Child.Value := new String'(Encode (N.Word));
+                  Add_Child (Ada_Child, Child);
+               end if;
 
-            if not N.Read_Only then
-               Child       := new Node;
-               Child.Tag   := new String'("word");
-               Child.Value := new String'(N.Word.all);
-               Add_Child (Ada_Child, Child);
-            end if;
-
-            String_Hash_Table.Get_Next (C.E.all, Iter);
+               Next (Iter);
+            end;
          end loop;
       end if;
 
       --  Substring exceptions
 
       if C.S /= null then
-         String_Hash_Table.Get_First (C.S.all, Iter);
+         Iter := C.S.First;
 
-         loop
-            N := String_Hash_Table.Get_Element (Iter);
-            exit when N = Null_Node;
+         while Has_Element (Iter) loop
+            declare
+               use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+               N : constant W_Node := Element (Iter);
+            begin
+               if not N.Read_Only then
+                  Child       := new Node;
+                  Child.Tag   := new String'("substring");
+                  Child.Value := new String'(Encode (N.Word));
+                  Add_Child (Ada_Child, Child);
+               end if;
 
-            if not N.Read_Only then
-               Child       := new Node;
-               Child.Tag   := new String'("substring");
-               Child.Value := new String'(N.Word.all);
-               Add_Child (Ada_Child, Child);
-            end if;
-
-            String_Hash_Table.Get_Next (C.S.all, Iter);
+               Next (Iter);
+            end;
          end loop;
       end if;
 
