@@ -17,6 +17,7 @@ COL_CANCEL_PIXBUF = 3
 COL_PLAYPAUSE_PIXBUF = 4
 COL_TASK_ID = 5
 
+
 class Task_Manager_Widget():
     """ A widget containing a task manager """
 
