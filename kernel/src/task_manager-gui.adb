@@ -127,8 +127,6 @@ package body Task_Manager.GUI is
       Progress_Label         : Gtk_Label;
       --  The progress to show
 
-      To_Refresh             : Integer_List.List;
-
       Timeout_Cb             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  The registered refresh timeout callback
    end record;
@@ -474,7 +472,10 @@ package body Task_Manager.GUI is
          Glib.Main.Remove (GUI.Timeout_Cb);
          GUI.Timeout_Cb := Glib.Main.No_Source_Id;
       end if;
-      GUI.To_Refresh.Clear;
+
+      for J in GUI.Manager.Queues'Range loop
+         GUI.Manager.Queues (J).To_Refresh := False;
+      end loop;
    end Unregister_Timeout;
 
    -----------------
@@ -547,11 +548,12 @@ package body Task_Manager.GUI is
       --  Store items to refresh in a temporary variable, to avoid
       --  looping on GUI.To_Refresh while potentially modifying it.
 
-      for Elem of GUI.To_Refresh loop
-         To_Refresh.Append (Elem);
+      for J in GUI.Manager.Queues'Range loop
+         if GUI.Manager.Queues (J).To_Refresh then
+            To_Refresh.Append (J);
+            GUI.Manager.Queues (J).To_Refresh := False;
+         end if;
       end loop;
-
-      GUI.To_Refresh.Clear;
 
       for Index of To_Refresh loop
          declare
@@ -611,7 +613,7 @@ package body Task_Manager.GUI is
       else
          --  Add the index to the list of indexes to be refreshed
 
-         GUI.To_Refresh.Append (Index);
+         GUI.Manager.Queues (Index).To_Refresh := True;
 
          --  Register the timeout callback
 
