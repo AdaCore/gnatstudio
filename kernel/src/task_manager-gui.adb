@@ -619,15 +619,19 @@ package body Task_Manager.GUI is
       else
          --  Add the index to the list of indexes to be refreshed
 
-         GUI.Manager.Queues (Index).To_Refresh := True;
+         if GUI.Manager.Queues /= null
+           and then Index in GUI.Manager.Queues'Range
+         then
+            GUI.Manager.Queues (Index).To_Refresh := True;
 
-         --  Register the timeout callback
+            --  Register the timeout callback
 
-         if GUI.Timeout_Cb = Glib.Main.No_Source_Id then
-            GUI.Timeout_Cb := Task_Manager_Source.Timeout_Add
-              (Interval => Refresh_Timeout,
-               Func     => GUI_Refresh_Cb'Access,
-               Data     => (GUI => GUI, Index => Index));
+            if GUI.Timeout_Cb = Glib.Main.No_Source_Id then
+               GUI.Timeout_Cb := Task_Manager_Source.Timeout_Add
+                 (Interval => Refresh_Timeout,
+                  Func     => GUI_Refresh_Cb'Access,
+                  Data     => (GUI => GUI, Index => Index));
+            end if;
          end if;
       end if;
    end Queue_Changed;
