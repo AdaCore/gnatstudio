@@ -580,7 +580,6 @@ package body VCS_View.Explorer is
          return;
       end if;
 
-      Push_State (Kernel, Busy);
       if File_Status_List.Length (Status) > 1 then
          Sort_Id := Freeze_Sort (Explorer.Model);
       end if;
@@ -607,7 +606,6 @@ package body VCS_View.Explorer is
       if File_Status_List.Length (Status) > 1 then
          Thaw_Sort (Explorer.Model, Sort_Id);
       end if;
-      Pop_State (Kernel);
    end Display_File_Status;
 
    --------------------
