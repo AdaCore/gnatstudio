@@ -17,28 +17,19 @@ COL_CANCEL_PIXBUF = 3
 COL_PLAYPAUSE_PIXBUF = 4
 COL_TASK_ID = 5
 
-class Task_Manager(Module):
-    view_title = "Task Manager"
+class Task_Manager_Widget():
+    """ A widget containing a task manager """
 
     def __init__(self):
         self.store = None
-
-    def setup(self):
-        make_interactive(
-            self.get_view,
-            category="Views",
-            name="open Task Manager",
-            menu="/Tools/Views/Tasks", before="Windows")
-
-    def create_view(self):
-        box = Gtk.VBox()
+        self.box = Gtk.VBox()
         scroll = Gtk.ScrolledWindow()
         self.store = Gtk.ListStore(str, int, str, str, str, str)
         self.view = Gtk.TreeView(self.store)
         self.view.set_headers_visible(False)
 
         scroll.add(self.view)
-        box.pack_start(scroll, True, True, 0)
+        self.box.pack_start(scroll, True, True, 0)
 
         # Initialize the tree view
 
@@ -66,26 +57,38 @@ class Task_Manager(Module):
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
-        return box
+        self.__on_task_changed_hook = GPS.Hook(
+            "task_changed").add(self.__task_changed)
+        self.__on_task_terminated_hook = GPS.Hook(
+            "task_terminated").add(self.__task_terminated)
 
-    def task_started(self, task):
+        self.box.connect("destroy", self.__destroy)
+
+        # Initial fill: we need to do this, since the widget will not get
+        # notifications for tasks that have started before it is created
+
+        for t in GPS.Task.list():
+            self.__task_changed(t)
+
+    def __destroy(self):
+        GPS.Hook("task_changed").remove(self.__on_task_changed_hook)
+        GPS.Hook("task_terminated").remove(self.__on_task_terminated_hook)
+
+    def __task_terminated(self, task):
+        iter = self.__iter_from_task(task)
+        if iter:
+            self.store.remove(iter)
+
+    def __task_changed(self, task):
         """
         Add one task to the tree view.
         :param task: a GPS.Task.
         """
-        if self.store and task.visible:
+        if task.visible:
             iter = self.__iter_from_task(task)
             if not iter:
                 iter = self.store.append()
             self.__update_row(iter, task)
-
-    task_changed = task_started
-
-    def task_terminated(self, task):
-        if self.store:
-            iter = self.__iter_from_task(task)
-            if iter:
-                self.store.remove(iter)
 
     def __task_from_row(self, path):
         """ Return the GPS.Task corresponding to the row at path.
@@ -148,3 +151,23 @@ class Task_Manager(Module):
                 return iter
             iter = self.store.iter_next(iter)
         return None
+
+
+class Task_Manager(Module):
+    """ A GPS module, providing a view that wraps around a task manager """
+
+    view_title = "Task Manager"
+
+    def __init__(self):
+        self.widget = None
+
+    def setup(self):
+        make_interactive(
+            self.get_view,
+            category="Views",
+            name="open Task Manager",
+            menu="/Tools/Views/Tasks", before="Windows")
+
+    def create_view(self):
+        self.widget = Task_Manager_Widget()
+        return self.widget.box
