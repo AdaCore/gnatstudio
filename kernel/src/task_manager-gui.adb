@@ -541,9 +541,28 @@ package body Task_Manager.GUI is
    procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface) is
       Index : Integer;
       use Integer_Stack;
+
+      To_Refresh : Integer_Stack.Simple_Stack;
    begin
+      --  Store items to refresh in a temporary variable, to avoid
+      --  looping on GUI.To_Refresh while potentially modifying it.
+
       while not Is_Empty (GUI.To_Refresh) loop
          Pop (GUI.To_Refresh, Index);
+         Push (To_Refresh, Index);
+      end loop;
+
+      while not Is_Empty (To_Refresh) loop
+         Pop (To_Refresh, Index);
+         declare
+            Hook_Data : aliased Task_Hooks_Args :=
+              (Hooks_Data with Queue_ID => Index);
+         begin
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Hook_Data'Access);
+         exception
+            when others =>
+               null;
+         end;
       end loop;
    end Process_Pending_Refreshes;
 
@@ -552,16 +571,7 @@ package body Task_Manager.GUI is
    --------------------
 
    function GUI_Refresh_Cb (Data : Refresh_Data) return Boolean is
-      Hook_Data : aliased Task_Hooks_Args :=
-        (Hooks_Data with Queue_ID => Data.Index);
    begin
-      begin
-         Run_Hook (Data.GUI.Kernel, Task_Changed_Hook, Hook_Data'Access);
-      exception
-         when others =>
-            null;
-      end;
-
       Process_Pending_Refreshes (Data.GUI);
       Refresh (Data.GUI);
 
