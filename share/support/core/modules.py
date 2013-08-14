@@ -37,6 +37,7 @@ Here is an example of use for this package::
 
 
 import GPS
+from gi.repository import GLib
 
 
 class Module_Metaclass(type):
