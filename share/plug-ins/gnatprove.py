@@ -418,6 +418,8 @@ class GNATprove_Message(GPS.Message):
         if tracefile != "":
             objdirs = GPS.Project.root().object_dirs()
             self.tracefile = os.path.join(objdirs[0], "gnatprove", tracefile)
+        else:
+            self.tracefile = ""
         self.is_info_message = (text.find("info:") != -1)
         self.highlight_message()
         self.load_trace_if_needed()
@@ -505,6 +507,13 @@ class GNATprove_Message(GPS.Message):
                     GPS.EditorLocation(buf, sloc.line(), 1),
                     GPS.EditorLocation(buf, sloc.line(), 1))
 
+# this variable is used to clear GNATprove messages whenever a new
+# builder action is run. It is too early to do it in the menu entry
+# callbacks, so we have to do it when starting to parse the tool
+# output. See GNATprove_Parser.on_stdout.
+# This variable cannot be a member of GNATprove_Parser, because we don't have
+# access to the instance in this plugin.
+should_clear_messages = True
 
 class GNATprove_Parser(tool_output.OutputParser):
     """Class that parses messages of the gnatprove tool, and creates
@@ -512,11 +521,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
-        # this variable is used to clear GNATprove messages whenever a new
-        # builder action is run. It is too early to do it in the menu entry
-        # callbacks, so we have to do it when starting to parse the tool
-        # output. See GNATprove_Parser.on_stdout.
-        self.clear_messages = True
+        should_clear_messages = True
 
     def error_msg_from_json(self,msg):
         """Given a JSON dict that contains the data for a message, print a
@@ -528,8 +533,9 @@ class GNATprove_Parser(tool_output.OutputParser):
     def on_stdout(self,text):
         # On the first message, we assume the tool has been run; clear the
         # locations view of the gnatprove messages.
-        if self.clear_messages:
-            self.clear_messages = False
+        global should_clear_messages
+        if should_clear_messages:
+            should_clear_messages = False
             gnatprove_plug.clean_locations_view()
         lines = text.splitlines()
         for line in lines:
@@ -605,6 +611,8 @@ def is_msg_context(self):
 
 # It's more convenient to define these callbacks outside of the plugin class
 def generic_on_prove(target):
+    global should_clear_messages
+    should_clear_messages = True
     GPS.BuildTarget(target).execute(synchronous=False)
 
 def on_prove_all(self):
