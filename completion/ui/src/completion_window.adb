@@ -533,6 +533,7 @@ package body Completion_Window is
       if Explorer = null
         or else Explorer.Info = null
         or else not Explorer.Has_Idle_Computation
+        or else Explorer.Completion_Window.In_Destruction
       then
          return False;
       end if;
@@ -550,7 +551,7 @@ package body Completion_Window is
             then
                Remove (Explorer.Idle_Computation);
                Explorer.Completion_Window.In_Destruction := True;
-               Explorer.Completion_Window.Destroy;
+               Explorer.Completion_Window.Delete;
                return False;
             end if;
          end;
@@ -857,7 +858,7 @@ package body Completion_Window is
            and then Window.Volatile
          then
             --  If there is no entry in the tree, destroy the window
-            Destroy (Window);
+            Window.Delete;
          else
             if not Get_Visible (Window) then
                declare
