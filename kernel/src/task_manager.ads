@@ -147,6 +147,9 @@ private
 
       Inst : Class_Instance := No_Class_Instance;
       --  The scripting instance currently wrapping this task
+
+      To_Refresh : Boolean := False;
+      --  Whether we should refresh the GUI for this queue
    end record;
    type Task_Queue_Access is access Task_Queue_Record;
 
