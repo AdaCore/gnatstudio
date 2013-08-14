@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
+
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -30,7 +32,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Gdk.Event;                 use Gdk.Event;
-with Generic_Stack;
 with Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
@@ -71,8 +72,6 @@ package body Task_Manager.GUI is
    overriding procedure Destroy (Module : in out Task_Manager_Module_Record);
    --  Called when the module is destroyed
 
-   package Integer_Stack is new Generic_Stack (Integer);
-
    type Task_Manager_Interface_Record is tagged;
    type Task_Manager_Interface is access all
      Task_Manager_Interface_Record'Class;
@@ -109,6 +108,8 @@ package body Task_Manager.GUI is
    --  been changed. If Immediate_Refresh is True, reflect the changes in the
    --  GUI immediately, otherwise do it in a timeout callback.
 
+   package Integer_List is new Ada.Containers.Doubly_Linked_Lists (Integer);
+
    type Task_Manager_Interface_Record is new Gtk_Box_Record with record
       Kernel                 : Kernel_Handle;
       Manager                : Task_Manager_UI_Access;
@@ -126,7 +127,7 @@ package body Task_Manager.GUI is
       Progress_Label         : Gtk_Label;
       --  The progress to show
 
-      To_Refresh             : Integer_Stack.Simple_Stack;
+      To_Refresh             : Integer_List.List;
 
       Timeout_Cb             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  The registered refresh timeout callback
@@ -473,7 +474,7 @@ package body Task_Manager.GUI is
          Glib.Main.Remove (GUI.Timeout_Cb);
          GUI.Timeout_Cb := Glib.Main.No_Source_Id;
       end if;
-      Integer_Stack.Clear (GUI.To_Refresh);
+      GUI.To_Refresh.Clear;
    end Unregister_Timeout;
 
    -----------------
@@ -498,7 +499,8 @@ package body Task_Manager.GUI is
       Unregister_Timeout (GUI);
 
       begin
-         Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access);
+         Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access,
+                   Set_Busy => False);
       exception
          when others =>
             null;
@@ -519,7 +521,8 @@ package body Task_Manager.GUI is
       Data : aliased Task_Hooks_Args := (Hooks_Data with Queue_ID => Index);
    begin
       begin
-         Run_Hook (Manager.Kernel, Task_Terminated_Hook, Data'Access);
+         Run_Hook (Manager.Kernel, Task_Terminated_Hook, Data'Access,
+                   Set_Busy => False);
       exception
          when others =>
             null;
@@ -539,26 +542,24 @@ package body Task_Manager.GUI is
    -------------------------------
 
    procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface) is
-      Index : Integer;
-      use Integer_Stack;
-
-      To_Refresh : Integer_Stack.Simple_Stack;
+      To_Refresh : Integer_List.List;
    begin
       --  Store items to refresh in a temporary variable, to avoid
       --  looping on GUI.To_Refresh while potentially modifying it.
 
-      while not Is_Empty (GUI.To_Refresh) loop
-         Pop (GUI.To_Refresh, Index);
-         Push (To_Refresh, Index);
+      for Elem of GUI.To_Refresh loop
+         To_Refresh.Append (Elem);
       end loop;
 
-      while not Is_Empty (To_Refresh) loop
-         Pop (To_Refresh, Index);
+      GUI.To_Refresh.Clear;
+
+      for Index of To_Refresh loop
          declare
             Hook_Data : aliased Task_Hooks_Args :=
               (Hooks_Data with Queue_ID => Index);
          begin
-            Run_Hook (GUI.Kernel, Task_Changed_Hook, Hook_Data'Access);
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Hook_Data'Access,
+                      Set_Busy => False);
          exception
             when others =>
                null;
@@ -601,7 +602,8 @@ package body Task_Manager.GUI is
             Data : aliased Task_Hooks_Args :=
               (Hooks_Data with Queue_ID => Index);
          begin
-            Run_Hook (GUI.Kernel, Task_Changed_Hook, Data'Access);
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Data'Access,
+                      Set_Busy => False);
          end;
 
          Refresh (GUI);
@@ -609,7 +611,7 @@ package body Task_Manager.GUI is
       else
          --  Add the index to the list of indexes to be refreshed
 
-         Integer_Stack.Push (GUI.To_Refresh, Index);
+         GUI.To_Refresh.Append (Index);
 
          --  Register the timeout callback
 
