@@ -138,3 +138,7 @@ GtkEntry.search {
 -GtkWidget-link-color: @link_color;
 -GtkWidget-visited-link-color: @link_color;
 */
+
+/* Use the following to change the color of the selection
+GtkTextView:selected { background : pink ; color : black }
+*/
