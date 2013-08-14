@@ -473,9 +473,11 @@ package body Task_Manager.GUI is
          GUI.Timeout_Cb := Glib.Main.No_Source_Id;
       end if;
 
-      for J in GUI.Manager.Queues'Range loop
-         GUI.Manager.Queues (J).To_Refresh := False;
-      end loop;
+      if GUI.Manager.Queues /= null then
+         for J in GUI.Manager.Queues'Range loop
+            GUI.Manager.Queues (J).To_Refresh := False;
+         end loop;
+      end if;
    end Unregister_Timeout;
 
    -----------------
@@ -545,6 +547,10 @@ package body Task_Manager.GUI is
    procedure Process_Pending_Refreshes (GUI : Task_Manager_Interface) is
       To_Refresh : Integer_List.List;
    begin
+      if GUI.Manager.Queues = null then
+         return;
+      end if;
+
       --  Store items to refresh in a temporary variable, to avoid
       --  looping on GUI.To_Refresh while potentially modifying it.
 
