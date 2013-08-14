@@ -27,3 +27,4 @@ of Mac OS X.
 Once you have X11 running, if you are launching GPS from a regular Terminal,
 you first need to call
   export DISPLAY=:0
+
