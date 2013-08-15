@@ -28,6 +28,13 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="asm">gcc</compiler>
   </toolchain_default>
 
+  <toolchain name="arm-wrs-vxworks">
+    <debugger>arm-wrs-vxworks6-gdb</debugger>
+    <cpp_filt>c++filtarm</cpp_filt>
+    <compiler lang="c">ccarm</compiler>
+    <compiler lang="c++">c++arm</compiler>
+  </toolchain>
+
   <toolchain name="powerpc-wrs-vxworks">
     <cpp_filt>c++filtppc</cpp_filt>
     <compiler lang="c">ccppc</compiler>
