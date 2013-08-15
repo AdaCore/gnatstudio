@@ -80,6 +80,9 @@ package body Docgen3.Frontend.Builder is
       --  If this is a new entity the remove it; otherwise no action is
       --  performed since there are references to it in the tree.
 
+      function Get_End_Of_Syntax_Scope_Loc
+        (Entity : Unique_Entity_Id) return General_Location;
+
       function Get_Entity
         (Entity : Unique_Entity_Id) return Entity_Id;
 
@@ -94,6 +97,9 @@ package body Docgen3.Frontend.Builder is
 
       function Get_LL_Full_View
         (Entity : Unique_Entity_Id) return General_Entity;
+
+      function Get_LL_Location
+        (Entity : Unique_Entity_Id) return General_Location;
 
       function Get_LL_Scope
         (Entity : Unique_Entity_Id) return General_Entity;
@@ -141,6 +147,9 @@ package body Docgen3.Frontend.Builder is
       --  True if the tree entity was allocated when this unique Entity was
       --  built
 
+      function Is_Generic
+        (Entity : Unique_Entity_Id) return Boolean;
+
       function Is_Package
         (Entity : Unique_Entity_Id) return Boolean;
 
@@ -167,6 +176,9 @@ package body Docgen3.Frontend.Builder is
 
       function Present (Entity : Unique_Entity_Id) return Boolean;
       --  Return True if Entity /= No_Entity
+
+      procedure Remove_From_Scope (E : Unique_Entity_Id);
+      --  Remove E from its current scope
 
       procedure Set_Alias
         (Entity : Unique_Entity_Id; Value : Entity_Id);
@@ -446,6 +458,16 @@ package body Docgen3.Frontend.Builder is
          end if;
       end Free;
 
+      ---------------------------------
+      -- Get_End_Of_Syntax_Scope_Loc --
+      ---------------------------------
+
+      function Get_End_Of_Syntax_Scope_Loc
+        (Entity : Unique_Entity_Id) return General_Location is
+      begin
+         return Get_End_Of_Syntax_Scope_Loc (Get_Entity (Entity));
+      end Get_End_Of_Syntax_Scope_Loc;
+
       ----------------
       -- Get_Entity --
       ----------------
@@ -494,6 +516,16 @@ package body Docgen3.Frontend.Builder is
       begin
          return LL.Get_Full_View (Get_Entity (Entity));
       end Get_LL_Full_View;
+
+      ---------------------
+      -- Get_LL_Location --
+      ---------------------
+
+      function Get_LL_Location
+        (Entity : Unique_Entity_Id) return General_Location is
+      begin
+         return LL.Get_Location (Get_Entity (Entity));
+      end Get_LL_Location;
 
       ------------------
       -- Get_LL_Scope --
@@ -581,6 +613,16 @@ package body Docgen3.Frontend.Builder is
       begin
          return Is_Full_View (Get_Entity (Entity));
       end Is_Full_View;
+
+      ----------------
+      -- Is_Generic --
+      ----------------
+
+      function Is_Generic
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return LL.Is_Generic (Get_Entity (Entity));
+      end Is_Generic;
 
       -----------------------------------
       -- Is_Incomplete_Or_Private_Type --
@@ -810,6 +852,16 @@ package body Docgen3.Frontend.Builder is
            and then Present (Entity.Entity);
       end Present;
 
+      -----------------------
+      -- Remove_From_Scope --
+      -----------------------
+
+      procedure Remove_From_Scope (E : Unique_Entity_Id) is
+      begin
+         Remove_From_Scope (Get_Entity (E));
+         Set_Scope (Get_Entity (E), Atree.No_Entity);
+      end Remove_From_Scope;
+
       ---------------
       -- Set_Alias --
       ---------------
@@ -928,6 +980,10 @@ package body Docgen3.Frontend.Builder is
       function Current_Scope_Depth return Natural;
       --  Return the depth of the stack
 
+      function Enclosing_Generic_Scope return Unique_Entity_Id;
+      --  Return the innermost generic scope (or No_Entity if we are not in
+      --  a generic scope)
+
       procedure Enter_Scope (Scope : Unique_Entity_Id);
       --  Push Scope
 
@@ -945,7 +1001,7 @@ package body Docgen3.Frontend.Builder is
       --  is currently open (i.e. it appears somewhere in the scope stack).
 
       function In_Generic_Scope return Boolean;
-      --  Return true if some enclosing scopes is generic
+      --  Return true if some enclosing scope is generic
 
       procedure Register_Std_Entity (E : Unique_Entity_Id);
       --  Register in the package the entity used to represent the standard
@@ -980,8 +1036,7 @@ package body Docgen3.Frontend.Builder is
       --  Complete the decoration of entity E
 
       procedure Update_Scopes_Stack (New_E : Unique_Entity_Id);
-      --  Update the contents of the scope stack trusting on the Scope provided
-      --  by Xref (if available)
+      --  Update the top of the scope stack (if required)
 
       -----------------------------
       -- Append_To_File_Entities --
@@ -998,11 +1053,48 @@ package body Docgen3.Frontend.Builder is
 
       procedure Complete_Decoration (E : Unique_Entity_Id) is
 
+         procedure Decorate_Generic_Formals (E : Unique_Entity_Id);
+         --  Complete the decoration of a subprogram entity
+
          procedure Decorate_Record_Type (E : Unique_Entity_Id);
          --  Complete the decoration of a record type entity
 
-         procedure Decorate_Subprogram (E : Unique_Entity_Id);
+         procedure Decorate_Subprogram_Formals (E : Unique_Entity_Id);
          --  Complete the decoration of a subprogram entity
+
+         ------------------------------
+         -- Decorate_Generic_Formals --
+         ------------------------------
+
+         procedure Decorate_Generic_Formals (E : Unique_Entity_Id) is
+            Formals : constant Xref.Entity_Array :=
+                       Formal_Parameters (Context.Database, Get_LL_Entity (E));
+            Formal  : Unique_Entity_Id;
+
+         begin
+            Enter_Scope (E);
+
+            for J in Formals'Range loop
+               Get_Unique_Entity
+                 (Formal, Context, File, Formals (J),
+                  Forced => True);
+
+               --  Generic formals have been already (erroneously) processed
+               --  because we could not identify them as formals. Now we
+               --  move them to their correct scope and complete their
+               --  decoration.
+
+               pragma Assert (not Is_New (Formal));
+               Remove_From_Scope (Formal);
+
+               Set_Kind (Formal, E_Generic_Formal);
+               Set_Scope (Formal, E);
+
+               Append_To_Scope (Current_Scope, Formal);
+            end loop;
+
+            Exit_Scope;
+         end Decorate_Generic_Formals;
 
          --------------------------
          -- Decorate_Record_Type --
@@ -1127,14 +1219,14 @@ package body Docgen3.Frontend.Builder is
                            --  For inherited primitives defined in other
                            --  files/scopes we cannot set their scope.
 
-                           Decorate_Subprogram (Method);
+                           Decorate_Subprogram_Formals (Method);
                            Append_Inherited_Method (E, Method);
 
                         else
                            Append_To_Enclosing_Scope (E, Method);
                            Append_To_File_Entities (Method);
 
-                           Decorate_Subprogram (Method);
+                           Decorate_Subprogram_Formals (Method);
                            Append_Method (E, Method);
                         end if;
 
@@ -1144,14 +1236,14 @@ package body Docgen3.Frontend.Builder is
                            Append_To_Scope (E, Method);
                            Append_To_File_Entities (Method);
 
-                           Decorate_Subprogram (Method);
+                           Decorate_Subprogram_Formals (Method);
                            Append_Method (E, Method);
 
                         --  For inherited primitives defined in other
                         --  scopes we cannot set their scope.
 
                         else
-                           Decorate_Subprogram (Method);
+                           Decorate_Subprogram_Formals (Method);
                            Append_Inherited_Method (E, Method);
                         end if;
 
@@ -1232,11 +1324,11 @@ package body Docgen3.Frontend.Builder is
             end;
          end Decorate_Record_Type;
 
-         -------------------------
-         -- Decorate_Subprogram --
-         -------------------------
+         ---------------------------------
+         -- Decorate_Subprogram_Formals --
+         ---------------------------------
 
-         procedure Decorate_Subprogram (E : Unique_Entity_Id) is
+         procedure Decorate_Subprogram_Formals (E : Unique_Entity_Id) is
             Formals : constant Xref.Parameter_Array :=
                         Parameters (Context.Database, Get_LL_Entity (E));
             Formal  : Unique_Entity_Id;
@@ -1283,7 +1375,7 @@ package body Docgen3.Frontend.Builder is
             end loop;
 
             Exit_Scope;
-         end Decorate_Subprogram;
+         end Decorate_Subprogram_Formals;
 
       --  Start of processing for Complete_Decoration
 
@@ -1292,14 +1384,20 @@ package body Docgen3.Frontend.Builder is
             if Is_Class_Or_Record_Type (E) then
                Decorate_Record_Type (E);
 
-               --  Although formals are available in the list of
-               --  entities of the file we are traversing, it is not
-               --  easy to identify and set the scope of formals just
-               --  traversing these entities since some entities do
-               --  not have its Xref.Scope entity available.
+            elsif Is_Generic (E) then
+               Decorate_Generic_Formals (E);
 
-            elsif Is_Subprogram (E) then
-               Decorate_Subprogram (E);
+               if Is_Subprogram (E) then
+                  Decorate_Subprogram_Formals (E);
+               end if;
+
+            --  Although formals are available in the list of entities of the
+            --  file we are traversing, it is not easy to identify and set
+            --  the scope of formals just traversing these entities since
+            --  some entities do not have its Xref.Scope entity available.
+
+            elsif Is_Subprogram (E) or else Is_Generic (E) then
+               Decorate_Subprogram_Formals (E);
             end if;
 
          elsif Get_Kind (E) = E_Interface then
@@ -1308,7 +1406,7 @@ package body Docgen3.Frontend.Builder is
          --  Decorate access to subprogram types
 
          elsif Is_Access_Type (E) then
-            Decorate_Subprogram (E);
+            Decorate_Subprogram_Formals (E);
          end if;
       end Complete_Decoration;
 
@@ -1320,20 +1418,56 @@ package body Docgen3.Frontend.Builder is
          Scope_Id : Entity_Id;
 
       begin
-         if Get_LL_Scope (New_E) = No_General_Entity then
-            Set_Scope (New_E, Current_Scope);
+         pragma Assert (In_Ada_Lang);
 
-            --  More work needed with generic types since in some cases
-            --  the scope is set???
+         if In_Generic_Scope then
+            declare
+               Loc : constant General_Location :=
+                       Get_LL_Location (New_E);
 
-            --  Fails also in subprogram GNATCOLL.Projects.Initialize
-            --  but I cannot see why???
-            --                pragma Assert (Current_Scope = Std_Entity
-            --                                 or else In_Generic_Scope);
-            --   or else Current_Scope.Xref.Is_Generic);
-            --   or else New_E.Kind = E_Access_Type);
+               Scope         : Unique_Entity_Id;
+               End_Scope_Loc : General_Location;
+            begin
+               Scope := Enclosing_Generic_Scope;
+               End_Scope_Loc := Get_End_Of_Syntax_Scope_Loc (Scope);
 
-         else
+               while Loc.Line > End_Scope_Loc.Line loop
+                  while Current_Scope /= Scope loop
+                     Exit_Scope;
+                  end loop;
+
+                  Exit_Scope;
+
+                  exit when not In_Generic_Scope;
+
+                  Scope := Enclosing_Generic_Scope;
+                  End_Scope_Loc := Get_End_Of_Syntax_Scope_Loc (Scope);
+               end loop;
+            end;
+         end if;
+
+         --  Update the scopes stack using the reliable value provided by
+         --  Xref (if available)
+
+         --  We do not use such value when the entity is declared in a
+         --  generic package since Xref references the scope enclosing
+         --  the generic package (which is wrong!)
+
+         if In_Generic_Scope then
+            return;
+         end if;
+
+         --  Skip the full view of incomplete or private types
+         --  because their Xref.Scope references the partial
+         --  view (instead of referencing its syntax scope)
+
+         if Is_Incomplete_Or_Private_Type (New_E)
+           and then Is_Full_View (New_E)
+         then
+            return;
+         end if;
+
+         if Present (Get_LL_Scope (New_E)) then
             if In_Open_Scopes (Get_LL_Scope (New_E)) then
                while Get_LL_Scope (New_E)
                  /= Get_LL_Entity (Current_Scope)
@@ -1466,24 +1600,7 @@ package body Docgen3.Frontend.Builder is
             --  Decorate the new entity
 
             if In_Ada_Lang then
-
-               --  Update the scopes stack using the reliable value provided by
-               --  the low level (ie. Xref).
-
-               if Present (Get_LL_Scope (New_E)) then
-
-                  --  Skip the full view of incomplete or private types because
-                  --  their Xref.Scope references the partial view (instead of
-                  --  referencing its syntax scope)
-
-                  if Is_Incomplete_Or_Private_Type (New_E)
-                    and then Is_Full_View (New_E)
-                  then
-                     null;
-                  else
-                     Update_Scopes_Stack (New_E);
-                  end if;
-               end if;
+               Update_Scopes_Stack (New_E);
 
                if not Is_New (New_E)
                  and then Kind_In (Get_Kind (New_E), E_Formal,
@@ -1700,6 +1817,23 @@ package body Docgen3.Frontend.Builder is
       begin
          return Natural (Stack.Length);
       end Current_Scope_Depth;
+
+      function Enclosing_Generic_Scope return Unique_Entity_Id is
+         Last : constant Integer :=
+           Current_Scope_Depth - 2; -- Skip standard
+         use type Ada.Containers.Count_Type;
+         S : Unique_Entity_Id;
+      begin
+         for J in 0 .. Last loop
+            S := Stack.Element (Natural (J));
+
+            if LL.Is_Generic (Get_Entity (S)) then
+               return S;
+            end if;
+         end loop;
+
+         return Unique_Entity_Allocator.No_Entity;
+      end Enclosing_Generic_Scope;
 
       procedure Enter_Scope (Scope : Unique_Entity_Id) is
       begin

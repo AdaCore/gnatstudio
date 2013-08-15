@@ -219,7 +219,7 @@ private package Docgen3.Atree is
    function Get_IDepth_Level
      (E : Entity_Id) return Natural;
 
-   function Get_End_Of_Spec_Loc
+   function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location;
    --  At current stage this attribute is set only for E_Package and
    --  E_Generic_Package entities
@@ -302,6 +302,8 @@ private package Docgen3.Atree is
       V2 : Entity_Kind;
       V3 : Entity_Kind;
       V4 : Entity_Kind) return Boolean;
+
+   procedure Remove_From_Scope (E : Entity_Id);
 
    procedure Set_Alias
      (E : Entity_Id; Value : Entity_Id);
@@ -585,8 +587,8 @@ private
          Alias           : Entity_Id;
          Scope           : Entity_Id;
 
-         End_Of_Spec_Loc : General_Location;
-         --  Set only on E_Package and E_Generic_Package entities
+         End_Of_Syntax_Scope_Loc : General_Location;
+         --  Not set on subprogram declarations
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;

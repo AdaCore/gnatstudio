@@ -991,8 +991,10 @@ package body Docgen3.Backend.Simple is
                function Gen_Suffix return String;
                function Gen_Suffix return String is
                begin
-                  if Get_Kind (E) = E_Interface then
-                     return " *(Interface)*";
+                  if Get_Kind (E) = E_Generic_Formal then
+                     return " *(generic formal)*";
+                  elsif Get_Kind (E) = E_Interface then
+                     return " *(interface)*";
                   elsif LL.Is_Abstract (E) then
                      return " *(abstract)*";
                   else

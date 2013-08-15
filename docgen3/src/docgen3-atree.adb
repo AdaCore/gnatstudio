@@ -437,11 +437,11 @@ package body Docgen3.Atree is
       return E.Doc;
    end Get_Doc;
 
-   function Get_End_Of_Spec_Loc
+   function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location is
    begin
-      return E.End_Of_Spec_Loc;
-   end Get_End_Of_Spec_Loc;
+      return E.End_Of_Syntax_Scope_Loc;
+   end Get_End_Of_Syntax_Scope_Loc;
 
    ------------------
    -- Get_Entities --
@@ -922,7 +922,7 @@ package body Docgen3.Atree is
                   Ref := Get (Cursor);
 
                   if Get_Display_Kind (Ref) = "end of spec" then
-                     New_E.End_Of_Spec_Loc := Get_Location (Ref);
+                     New_E.End_Of_Syntax_Scope_Loc := Get_Location (Ref);
                      exit;
                   end if;
 
@@ -931,6 +931,9 @@ package body Docgen3.Atree is
 
                Destroy (Cursor);
             end;
+
+         elsif not LL.Is_Subprogram (New_E) then
+            New_E.End_Of_Syntax_Scope_Loc := LL.Get_End_Of_Scope_Loc (New_E);
          end if;
 
       exception
@@ -1006,8 +1009,8 @@ package body Docgen3.Atree is
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
            Alias           => No_Entity,
            Scope           => No_Entity,
-           End_Of_Spec_Loc => No_Location,
            Kind            => Kind,
+           End_Of_Syntax_Scope_Loc => No_Location,
 
            Is_Incomplete_Or_Private_Type => False,
            Is_Internal       => Is_Internal,
@@ -1279,6 +1282,21 @@ package body Docgen3.Atree is
       return E /= null;
    end Present;
 
+   -----------------------
+   -- Remove_From_Scope --
+   -----------------------
+
+   procedure Remove_From_Scope (E : Entity_Id) is
+      Scope  : constant Entity_Id := Get_Scope (E);
+      Cursor : EInfo_List.Cursor;
+   begin
+      pragma Assert (Present (Scope));
+      pragma Assert (Get_Entities (Scope).Contains (E));
+
+      Cursor := Scope.Entities.Find (E);
+      Scope.Entities.Delete (Cursor);
+   end Remove_From_Scope;
+
    ---------------
    -- Set_Alias --
    ---------------
@@ -1457,11 +1475,6 @@ package body Docgen3.Atree is
 
    procedure Set_Scope (E : Entity_Id; Value : Entity_Id) is
    begin
-      --  Assertion temporarily disabled since it cannot be fulfilled with
-      --  C++ sources because of the current management of entities defined
-      --  in header files ???
-      --      pragma Assert (No (E.Scope) or else E.Scope = Value);
-
       pragma Assert (Value /= E); --  Avoid circularity
       E.Scope := Value;
    end Set_Scope;
@@ -2086,10 +2099,10 @@ package body Docgen3.Atree is
          & "Full Name: "
          & Get (E.Full_Name).all);
 
-      if E.End_Of_Spec_Loc /= No_Location then
+      if E.End_Of_Syntax_Scope_Loc /= No_Location then
          Append_Line
            (LL_Prefix
-            & "End_Of_Spec_Loc: " & Image (E.End_Of_Spec_Loc));
+            & "End_Of_Syntax_Scope_Loc: " & Image (E.End_Of_Syntax_Scope_Loc));
       end if;
 
       if E.Xref.Body_Loc /= No_Location then

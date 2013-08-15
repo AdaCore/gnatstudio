@@ -141,7 +141,7 @@ package body Docgen3.Frontend is
                    General_Xref_Database_Record (Context.Database.all)'Access,
                  Handler  => Context.Lang_Handler,
                  Buffer   => Buffer,
-                 Location => Get_End_Of_Spec_Loc (E)));
+                 Location => Get_End_Of_Syntax_Scope_Loc (E)));
          end if;
 
          if Is_Partial_View (E) then
@@ -336,9 +336,11 @@ package body Docgen3.Frontend is
             Is_Null      : Boolean := False;
             Tagged_Null  : Boolean := False;
             With_Null    : Boolean := False;
+            With_Private : Boolean := False;
 
             type Tokens is
               (Tok_Unknown,
+               --  Reserved words
                Tok_Abstract,
                Tok_And,
                Tok_Aliased,
@@ -355,7 +357,11 @@ package body Docgen3.Frontend is
                Tok_Tagged,
                Tok_Type,
                Tok_When,
-               Tok_With);
+               Tok_With,
+               --  Other tokens
+               Tok_Left_Paren,
+               Tok_Right_Paren,
+               Tok_Semicolon);
 
             Prev_Token : Tokens := Tok_Unknown;
             Token      : Tokens := Tok_Unknown;
@@ -558,6 +564,12 @@ package body Docgen3.Frontend is
                   then
                      With_Null := True;
 
+                  elsif Prev_Token = Tok_With
+                    and then Token = Tok_Private
+                  then
+                     With_Private := True;
+                     pragma Assert (With_Private);
+
                   elsif (Is_Null
                            or else Tagged_Null
                            or else With_Null
@@ -568,15 +580,24 @@ package body Docgen3.Frontend is
                   end if;
 
                elsif Entity = Operator_Text then
+                  Prev_Token := Token;
+
                   if S = "(" then
+                     Token := Tok_Left_Paren;
                      Par_Count := Par_Count + 1;
+
                   elsif S = ")" then
+                     Token := Tok_Right_Paren;
                      Par_Count := Par_Count - 1;
+
                   elsif S = ";" then
+                     Token := Tok_Semicolon;
+
                      if Par_Count = 0 then
-                        return Prev_Token = Tok_Private
-                          or else End_Record_Found
-                          or else Is_Interface;
+                        return End_Record_Found
+                          or else Is_Interface
+                          or else (With_Private
+                                     and then Prev_Token = Tok_Private);
                      end if;
                   end if;
                end if;
@@ -693,8 +714,9 @@ package body Docgen3.Frontend is
             -- CB --
             --------
 
-            Par_Count : Natural := 0;
-            Last_Idx  : Natural := 0;
+            In_Profile : Boolean := False;
+            Last_Idx   : Natural := 0;
+            Par_Count  : Natural := 0;
 
             function CB
               (Entity         : Language_Entity;
@@ -723,13 +745,24 @@ package body Docgen3.Frontend is
                if Entity = Comment_Text then
                   return False; --  continue
 
+               elsif Entity = Keyword_Text then
+                  declare
+                     Keyword : constant String := To_Lower (S);
+                  begin
+                     if Keyword = "procedure"
+                       or else Keyword = "function"
+                     then
+                        In_Profile := True;
+                     end if;
+                  end;
+
                elsif Entity = Operator_Text then
                   if S = "(" then
                      Par_Count := Par_Count + 1;
                   elsif S = ")" then
                      Par_Count := Par_Count - 1;
                   elsif S = ";" then
-                     if Par_Count = 0 then
+                     if In_Profile and then Par_Count = 0 then
                         return True;
                      end if;
                   end if;
@@ -742,6 +775,7 @@ package body Docgen3.Frontend is
                   return True;
             end CB;
 
+            From          : Natural;
             Index         : Natural;
             Lines_Skipped : Natural;
 
@@ -755,6 +789,29 @@ package body Docgen3.Frontend is
                Lines         => LL.Get_Location (E).Line - 1,
                Index         => Index,
                Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (LL.Get_Location (E).Column),
+               Index         => Index);
+
+            if LL.Is_Generic (E) then
+               Index :=
+                 Search_Backward (From => Index - 1,
+                   Word_1 => "generic");
+            else
+               Index :=
+                 Search_Backward (From => Index - 1,
+                   Word_1 => "procedure",
+                   Word_2 => "function");
+            end if;
+
+            --  Append tabulation
+
+            if Buffer.all (Index - 1) = ' ' then
+               From := Skip_Blanks_Backward (Index - 1);
+               Printout := Printout & Buffer.all (From .. Index - 1);
+            end if;
 
             Parse_Entities
               (Lang, Buffer.all (Index .. Buffer'Last),
