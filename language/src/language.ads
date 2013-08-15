@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
-with Glib;
 with Case_Handling;
 with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
@@ -133,7 +132,7 @@ package Language is
    --  efficiency.
 
    function Is_Word_Char
-     (Lang : access Language_Root; Char : Glib.Gunichar) return Boolean;
+     (Lang : access Language_Root; Char : Wide_Wide_Character) return Boolean;
    --  Return True if Char belongs to the set of characters that compose a
    --  keyword for this language. By default, this returns true for letters,
    --  digits and underscore characters.
@@ -612,7 +611,7 @@ package Language is
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
-      Buffer : Glib.UTF8_String;
+      Buffer : UTF8_String;
       Result : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
@@ -784,7 +783,7 @@ package Language is
 
    procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
       Callback          : access procedure (Token : Token_Record;
@@ -795,7 +794,7 @@ package Language is
 
    function Parse_Reference_Backwards
      (Lang              : access Language_Root;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0) return String;
    --  Return a string containing a reference to a value, looking backwards

@@ -45,7 +45,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
-with String_Utils;              use String_Utils;
+with Glib_String_Utils;         use Glib_String_Utils;
 with Traces;                    use Traces;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;

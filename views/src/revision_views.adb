@@ -63,6 +63,7 @@ with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
 with String_List_Utils;          use String_List_Utils;
 with String_Utils;               use String_Utils;
+with Glib_String_Utils;          use Glib_String_Utils;
 with Traces;                     use Traces;
 
 package body Revision_Views is

@@ -283,7 +283,7 @@ package body Language.Cpp is
    overriding
    procedure Parse_Tokens_Backwards
      (Lang         : access Cpp_Language;
-      Buffer       : Glib.UTF8_String;
+      Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type := 0;
       Callback     : access procedure (Token : Token_Record;

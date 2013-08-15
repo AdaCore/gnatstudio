@@ -28,6 +28,7 @@ with XML_Utils;
 
 with Language_Handlers;
 with GPS.Kernel;
+with Ada.Strings.Wide_Wide_Maps;  use Ada.Strings.Wide_Wide_Maps;
 
 package Language.Custom is
 
@@ -61,7 +62,8 @@ package Language.Custom is
      (Lang : access Custom_Language) return GNAT.Strings.String_List;
 
    overriding function Is_Word_Char
-     (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean;
+     (Lang : access Custom_Language;
+      Char : Wide_Wide_Character) return Boolean;
 
    overriding function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access;
@@ -108,7 +110,7 @@ package Language.Custom is
 
    overriding procedure Parse_Constructs
      (Lang   : access Custom_Language;
-      Buffer : Glib.UTF8_String;
+      Buffer : UTF8_String;
       Result : out Construct_List);
 
    overriding procedure Format_Buffer
@@ -313,9 +315,6 @@ private
       Comment : Boolean := True;
       Clean   : Boolean := False) return String;
 
-   type Gunichar_Array is array (Natural range <>) of Glib.Gunichar;
-   type Gunichar_Array_Access is access Gunichar_Array;
-
    type Custom_Language is new Language_Root with record
       Categories       : Explorer_Categories_Access;
       Keywords         : GNAT.Expect.Pattern_Matcher_Access;
@@ -330,7 +329,7 @@ private
       Parse_Entities   : Parse_Entities_Proc;
       Parent           : Language_Access;
       Next             : Custom_Language_Access;
-      Word_Chars       : Gunichar_Array_Access;
+      Word_Chars       : Wide_Wide_Character_Set;
    end record;
 
 end Language.Custom;

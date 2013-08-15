@@ -1299,7 +1299,9 @@ package body Completion_Window is
 
          Result := True;
          while Result
-           and then Is_Word_Char (Window.Lang, Get_Char (Text_End)) loop
+           and then Is_Word_Char
+             (Window.Lang, Wide_Wide_Character'Val (Get_Char (Text_End)))
+         loop
             Forward_Char (Text_End, Result);
          end loop;
 

@@ -1321,7 +1321,8 @@ package body C_Analyzer is
 
          while Index < Buffer'Last
            and then Is_Entity_Letter
-             (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
+             (Wide_Wide_Character'Val
+                (UTF8_Get_Char (Buffer (Index .. Buffer'Last))))
          loop
             Prev := Index;
             Next_Char;

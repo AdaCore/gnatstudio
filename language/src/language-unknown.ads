@@ -26,7 +26,7 @@ package Language.Unknown is
 
    overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
-      Buffer : Glib.UTF8_String;
+      Buffer : UTF8_String;
       Result : out Construct_List);
 
    overriding procedure Parse_Entities

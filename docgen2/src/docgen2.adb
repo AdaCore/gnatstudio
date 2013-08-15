@@ -24,6 +24,7 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
+with Glib_String_Utils;        use Glib_String_Utils;
 
 with Basic_Types;
 with Commands;                  use Commands;
@@ -1945,7 +1946,7 @@ package body Docgen2 is
 
             --  While we have entity letters or dots surrounded by entity
             --  letters, then we move on. Else, we analyze the word.
-            if not String_Utils.Is_Entity_Letter (C)
+            if not Is_Entity_Letter (C)
               and then
                 (C /= Character'Pos ('.')
                  or else Tmp > Doc'Last

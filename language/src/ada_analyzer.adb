@@ -348,6 +348,18 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package
 
+   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean;
+   --  Temporary function, should be removed after get rid of Glib
+
+   ----------------------
+   -- Is_Entity_Letter --
+   ----------------------
+
+   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean is
+   begin
+      return Is_Entity_Letter (Wide_Wide_Character'Val (Char));
+   end Is_Entity_Letter;
+
    ---------------
    -- Get_Token --
    ---------------

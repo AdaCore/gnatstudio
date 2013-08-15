@@ -18,6 +18,8 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
@@ -163,8 +165,6 @@ package body Language.Custom is
         (Explorer_Categories, Explorer_Categories_Access);
       procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
         (Project_Field_Array, Project_Field_Array_Access);
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Gunichar_Array, Gunichar_Array_Access);
    begin
       if Lang.Categories /= null then
          Language.Free (Lang.Categories.all);
@@ -175,7 +175,6 @@ package body Language.Custom is
       GNAT.Strings.Free (Lang.Keywords_Regexp);
       GNAT.Strings.Free (Lang.Keywords_List);
       Free (Lang.Name);
-      Unchecked_Free (Lang.Word_Chars);
 
       if Lang.Context /= Null_Context'Access then
          Free (Lang.Context);
@@ -607,10 +606,7 @@ package body Language.Custom is
 
       Node := Find_Tag (Top.Child, "Wordchars");
       if Node /= null then
-         Lang.Word_Chars := new Gunichar_Array (Node.Value'Range);
-         for N in Node.Value'Range loop
-            Lang.Word_Chars (N) := Character'Pos (Node.Value (N));
-         end loop;
+         Lang.Word_Chars := To_Set (Decode (Node.Value.all));
       end if;
 
       Parent := Find_Tag (Top.Child, "Categories");
@@ -1024,23 +1020,14 @@ package body Language.Custom is
    ------------------
 
    overriding function Is_Word_Char
-     (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean
-   is
-      use type Glib.Gunichar;
+     (Lang : access Custom_Language;
+      Char : Wide_Wide_Character) return Boolean is
    begin
       if Is_Entity_Letter (Char) then
          return True;
       end if;
 
-      if Lang.Word_Chars /= null then
-         for C in Lang.Word_Chars'Range loop
-            if Char = Lang.Word_Chars (C) then
-               return True;
-            end if;
-         end loop;
-      end if;
-
-      return False;
+      return Is_In (Char, Lang.Word_Chars);
    end Is_Word_Char;
 
 end Language.Custom;

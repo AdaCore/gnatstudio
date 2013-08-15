@@ -61,7 +61,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
-with String_Utils;              use String_Utils;
+with Glib_String_Utils;         use Glib_String_Utils;
 with Traces;
 
 with Completion_Window;         use Completion_Window;

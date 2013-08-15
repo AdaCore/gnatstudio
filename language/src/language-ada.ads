@@ -81,7 +81,7 @@ package Language.Ada is
    overriding
    procedure Parse_Constructs
      (Lang   : access Ada_Language;
-      Buffer : Glib.UTF8_String;
+      Buffer : UTF8_String;
       Result : out Construct_List);
 
    overriding
@@ -271,7 +271,7 @@ package Language.Ada is
 
    overriding procedure Parse_Tokens_Backwards
      (Lang              : access Ada_Language;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
       Callback          :
@@ -280,7 +280,7 @@ package Language.Ada is
 
    overriding function Parse_Reference_Backwards
      (Lang              : access Ada_Language;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0) return String;
 

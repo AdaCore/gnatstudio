@@ -21,13 +21,14 @@ with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
 
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
-with Glib.Unicode;               use Glib, Glib.Unicode;
+with UTF8_Utils;                 use UTF8_Utils;
 
 package body String_Utils is
    use type GNATCOLL.Xref.Visible_Column;
@@ -673,7 +674,8 @@ package body String_Utils is
          Second_Half := S'Last;
 
          for J in 1 .. (Max_String_Length - Ellipsis_UTF8'Length - 1) / 2 loop
-            Second_Half := UTF8_Find_Prev_Char (S, Second_Half);
+            --            Second_Half := UTF8_Find_Prev_Char (S, Second_Half);
+            null;
          end loop;
 
          if First_Half > S'Last
@@ -967,27 +969,19 @@ package body String_Utils is
    -- Is_Entity_Letter --
    ----------------------
 
-   function Is_Entity_Letter (Char : Gunichar) return Boolean is
+   function Is_Entity_Letter (Char : Wide_Wide_Character) return Boolean is
    begin
-      return Char = Character'Pos ('_') or else Is_Alnum (Char)
-        or else Unichar_Type (Char) = Unicode_Lowercase_Letter
-        or else Unichar_Type (Char) = Unicode_Uppercase_Letter;
+      return Char = '_' or else Is_Alphanumeric (Char);
    end Is_Entity_Letter;
 
    ------------------------
    -- Is_Operator_Letter --
    ------------------------
 
-   function Is_Operator_Letter (Char : Gunichar) return Boolean is
+   function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean is
    begin
       case Char is
-         when Character'Pos ('<')
-              | Character'Pos ('=')
-              | Character'Pos ('>')
-              | Character'Pos ('+')
-              | Character'Pos ('-')
-              | Character'Pos ('*')
-              | Character'Pos ('/') =>
+         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
             return True;
 
          when others =>
@@ -995,19 +989,19 @@ package body String_Utils is
       end case;
    end Is_Operator_Letter;
 
-   function Is_File_Letter (Char : Glib.Gunichar) return Boolean is
+   function Is_File_Letter (Char : Wide_Wide_Character) return Boolean is
    begin
-      if Unichar_Type (Char) = Unicode_Control then
+      if Is_Control (Char) then
          return False;
       end if;
 
       case Char is
-         when Character'Pos ('<')
-              | Character'Pos ('/')
-              | Character'Pos ('\')
-              | Character'Pos ('>')
-              | Character'Pos ('"')
-              | Character'Pos (' ') =>
+         when '<'
+              | '/'
+              | '\'
+              | '>'
+              | '"'
+              | ' ' =>
             return False;
 
          when others =>
@@ -1248,7 +1242,7 @@ package body String_Utils is
    -- Compare --
    -------------
 
-   function Compare (A, B : String) return Glib.Gint is
+   function Compare (A, B : String) return Integer is
    begin
       if A < B then
          return -1;
@@ -1259,7 +1253,7 @@ package body String_Utils is
       end if;
    end Compare;
 
-   function Compare (A, B : Integer) return Glib.Gint is
+   function Compare (A, B : Integer) return Integer is
    begin
       if A < B then
          return -1;

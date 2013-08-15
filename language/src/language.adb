@@ -360,7 +360,9 @@ package body Language is
       --  on the side might be displayed properly.
 
       if not Is_Word_Char
-        (Language_Access (Lang), UTF8_Get_Char (Buffer (First .. Buffer'Last)))
+        (Language_Access (Lang),
+         Wide_Wide_Character'Val
+           (UTF8_Get_Char (Buffer (First .. Buffer'Last))))
       then
          Entity := Normal_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
@@ -398,7 +400,8 @@ package body Language is
 
       while Next_Char <= Buffer'Last
         and then Is_Entity_Letter
-          (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
+          (Wide_Wide_Character'Val
+             (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last))))
       loop
          Tmp := UTF8_Next_Char (Buffer, Next_Char);
          Column := Column + (Tmp - Next_Char);
@@ -874,7 +877,7 @@ package body Language is
    ------------------
 
    function Is_Word_Char
-     (Lang : access Language_Root; Char : Glib.Gunichar) return Boolean
+     (Lang : access Language_Root; Char : Wide_Wide_Character) return Boolean
    is
       pragma Unreferenced (Lang);
    begin

@@ -83,7 +83,7 @@ package Language.C is
    overriding
    procedure Parse_Constructs
      (Lang    : access C_Language;
-      Buffer  : Glib.UTF8_String;
+      Buffer  : UTF8_String;
       Result  : out Construct_List);
 
    overriding

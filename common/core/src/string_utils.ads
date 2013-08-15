@@ -20,7 +20,6 @@
 
 with GNAT.Strings;
 with Interfaces.C.Strings;
-with Glib;
 with Basic_Types; use Basic_Types;
 
 package String_Utils is
@@ -215,15 +214,15 @@ package String_Utils is
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
 
-   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean;
+   function Is_Entity_Letter (Char : Wide_Wide_Character) return Boolean;
    pragma Inline (Is_Entity_Letter);
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
-   function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
+   function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean;
    --  Return True if the given letter is a valid operator
 
-   function Is_File_Letter (Char : Glib.Gunichar) return Boolean;
+   function Is_File_Letter (Char : Wide_Wide_Character) return Boolean;
    pragma Inline (Is_File_Letter);
    --  Return True if the given letter is a valid letter for a file name.
 
@@ -311,8 +310,8 @@ package String_Utils is
    --  the character's ASCII hexadecimal code. For example a space is encoded
    --  as %20.
 
-   function Compare (A, B : String) return Glib.Gint;
-   function Compare (A, B : Integer) return Glib.Gint;
+   function Compare (A, B : String) return Integer;
+   function Compare (A, B : Integer) return Integer;
    --  Return -1 if A<B, 1 if A>B and 0 otherwise. This routine is useful for
    --  model specific sorting. The second version does the same comparing
    --  integers. Even if not using string, it is better to keep this routine

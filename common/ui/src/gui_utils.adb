@@ -80,6 +80,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
+with Glib_String_Utils;         use Glib_String_Utils;
 with System;                    use System;
 with Traces;                    use Traces;
 

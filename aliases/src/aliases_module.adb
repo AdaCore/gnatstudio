@@ -95,6 +95,7 @@ with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
 with Traces;                   use Traces;
 with XML_Parsers;
+with Glib_String_Utils;        use Glib_String_Utils;
 
 with Aliases_Module.Scripts;
 
