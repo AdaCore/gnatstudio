@@ -36,6 +36,7 @@ with Code_Coverage.Gcov;
 with Code_Coverage.GNATcov;
 with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with UTF8_Utils;                   use UTF8_Utils;
 
 package body Coverage_GUI is
 
@@ -153,13 +154,16 @@ package body Coverage_GUI is
 
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             declare
+               Text : String_Access;
                Lang : constant Language_Access :=
                         Get_Language_From_File (Handler, Src_File);
             begin
                if Lang /= Unknown_Lang then
+                  Text := Read_File (Src_File);
                   Add_Subprogram_Info
                     (File_Node, To_Construct_Tree
-                       (Read_File (Src_File).all, Lang));
+                       (Locale_To_UTF8 (Text.all), Lang));
+                  Free (Text);
                end if;
             end;
          end if;
