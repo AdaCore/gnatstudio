@@ -22,6 +22,8 @@ with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;     use GNATCOLL.Scripts.Utils;
@@ -649,43 +651,30 @@ package body String_Utils is
      (S                 : String;
       Max_String_Length : Positive := 20) return String
    is
-      Ellipsis_UTF8 : constant Basic_Types.UTF8_String :=
-                        Character'Val (16#E2#) & Character'Val (16#80#)
-                        & Character'Val (16#A6#);
+      Ellipsis : constant Wide_Wide_Character :=
+        Wide_Wide_Character'Val (8230);
       --  UTF8 encoding for the ellipsis character (8230 in Decimal)
 
-      First_Half          : Natural;
-      Second_Half         : Natural;
+      Image : constant Wide_Wide_String := Decode (S);
 
    begin
-      if S'Length <= Max_String_Length then
+      if Image'Length <= Max_String_Length then
          return S;
       end if;
 
-      if Max_String_Length <= Ellipsis_UTF8'Length then
-         return S (S'First .. S'First + Max_String_Length - 1);
+      if Max_String_Length <= 3 then
+         return Encode
+           (Image (Image'First .. Image'First + Max_String_Length - 1));
       else
-         First_Half := S'First;
-
-         for J in 1 .. (Max_String_Length - Ellipsis_UTF8'Length + 1) / 2 loop
-            First_Half := UTF8_Next_Char (S, First_Half);
-         end loop;
-
-         Second_Half := S'Last;
-
-         for J in 1 .. (Max_String_Length - Ellipsis_UTF8'Length - 1) / 2 loop
-            --            Second_Half := UTF8_Find_Prev_Char (S, Second_Half);
-            null;
-         end loop;
-
-         if First_Half > S'Last
-           or else Second_Half < S'First
-         then
-            return S;
-         else
-            return S (S'First .. First_Half - 1)
-              & Ellipsis_UTF8 & S (Second_Half .. S'Last);
-         end if;
+         declare
+            Half   : constant Positive := (Max_String_Length - 1) / 2;
+            Result : constant Wide_Wide_String :=
+              Image (Image'First .. Image'First + Half - 1) &
+              Ellipsis &
+              Image (Image'Last - Half + 1 .. Image'Last);
+         begin
+            return Encode (Result);
+         end;
       end if;
    end Krunch;
 
