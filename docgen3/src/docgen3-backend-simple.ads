@@ -48,17 +48,18 @@ private package Docgen3.Backend.Simple is
 
 private
    type Collected_Entities is record
-      Pkgs             : aliased EInfo_List.Vector;
-      Variables        : EInfo_List.Vector;
       Access_Types     : EInfo_List.Vector;
-      Simple_Types     : EInfo_List.Vector;
-      Record_Types     : EInfo_List.Vector;
-      Tagged_Types     : EInfo_List.Vector;
-      Interface_Types  : EInfo_List.Vector;
-      Subprgs          : aliased EInfo_List.Vector;
-      Methods          : EInfo_List.Vector;
       CPP_Classes      : EInfo_List.Vector;
       CPP_Constructors : EInfo_List.Vector;
+      Generic_Formals  : EInfo_List.Vector;
+      Interface_Types  : EInfo_List.Vector;
+      Methods          : EInfo_List.Vector;
+      Pkgs             : aliased EInfo_List.Vector;
+      Record_Types     : EInfo_List.Vector;
+      Simple_Types     : EInfo_List.Vector;
+      Subprgs          : aliased EInfo_List.Vector;
+      Tagged_Types     : EInfo_List.Vector;
+      Variables        : EInfo_List.Vector;
    end record;
 
    type Simple_Backend is new Docgen3.Backend.Docgen3_Backend with record

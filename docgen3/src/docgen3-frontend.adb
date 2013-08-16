@@ -795,7 +795,12 @@ package body Docgen3.Frontend is
                Columns       => Natural (LL.Get_Location (E).Column),
                Index         => Index);
 
-            if LL.Is_Generic (E) then
+            if Is_Generic_Formal (E) then
+               Index :=
+                 Search_Backward (From => Index - 1,
+                   Word_1 => "with");
+
+            elsif LL.Is_Generic (E) then
                Index :=
                  Search_Backward (From => Index - 1,
                    Word_1 => "generic");

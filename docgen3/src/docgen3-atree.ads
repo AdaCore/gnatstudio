@@ -259,9 +259,6 @@ private package Docgen3.Atree is
    function Get_Unique_Id
      (E : Entity_Id) return Natural;
 
-   function Has_Formals
-     (E : Entity_Id) return Boolean;
-
    function In_Ada_Language
      (E : Entity_Id) return Boolean;
    function In_C_Or_CPP_Language
@@ -272,6 +269,8 @@ private package Docgen3.Atree is
    --  Return True for Ada record types (including tagged types and interface
    --  types), C structs and C++ classes
    function Is_Full_View
+     (E : Entity_Id) return Boolean;
+   function Is_Generic_Formal
      (E : Entity_Id) return Boolean;
    function Is_Incomplete_Or_Private_Type
      (E : Entity_Id) return Boolean;
@@ -321,6 +320,8 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_Full_View_Src
      (E : Entity_Id; Value : Unbounded_String);
+   procedure Set_Is_Generic_Formal
+     (E : Entity_Id);
    procedure Set_Is_Partial_View
      (E : Entity_Id);
    procedure Set_Is_Private
@@ -593,12 +594,13 @@ private
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
 
+         Is_Generic_Formal : Boolean;
          Is_Incomplete_Or_Private_Type : Boolean;
-         Is_Internal     : Boolean;
-         Is_Partial_View : Boolean;
-         Is_Private      : Boolean;
-         Is_Tagged_Type  : Boolean;
-         Idepth_Level    : Natural;
+         Is_Internal       : Boolean;
+         Is_Partial_View   : Boolean;
+         Is_Private        : Boolean;
+         Is_Tagged_Type    : Boolean;
+         Idepth_Level      : Natural;
          --  Inheritance depth level of a tagged type
 
          Doc               : Comment_Result;
@@ -671,9 +673,9 @@ private
    pragma Inline (Get_Short_Name);
    pragma Inline (Get_Src);
    pragma Inline (Get_Unique_Id);
-   pragma Inline (Has_Formals);
    pragma Inline (In_Ada_Language);
    pragma Inline (In_C_Or_CPP_Language);
+   pragma Inline (Is_Generic_Formal);
    pragma Inline (Is_Incomplete_Or_Private_Type);
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
@@ -692,6 +694,7 @@ private
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
+   pragma Inline (Set_Is_Generic_Formal);
    pragma Inline (Set_Is_Partial_View);
    pragma Inline (Set_Is_Private);
    pragma Inline (Set_Is_Tagged_Type);

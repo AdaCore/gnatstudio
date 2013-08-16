@@ -183,6 +183,9 @@ package body Docgen3.Frontend.Builder is
       procedure Set_Alias
         (Entity : Unique_Entity_Id; Value : Entity_Id);
 
+      procedure Set_Is_Generic_Formal
+        (Entity : Unique_Entity_Id);
+
       procedure Set_Kind
         (Entity : Unique_Entity_Id; Value : Entity_Kind);
 
@@ -277,6 +280,7 @@ package body Docgen3.Frontend.Builder is
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
       pragma Inline (Set_Alias);
+      pragma Inline (Set_Is_Generic_Formal);
       pragma Inline (Set_Kind);
       pragma Inline (Set_Parent);
       pragma Inline (Set_Scope);
@@ -872,6 +876,16 @@ package body Docgen3.Frontend.Builder is
          Set_Alias (Get_Entity (Entity), Value);
       end Set_Alias;
 
+      ---------------------------
+      -- Set_Is_Generic_Formal --
+      ---------------------------
+
+      procedure Set_Is_Generic_Formal
+        (Entity : Unique_Entity_Id) is
+      begin
+         Set_Is_Generic_Formal (Get_Entity (Entity));
+      end Set_Is_Generic_Formal;
+
       --------------
       -- Set_Kind --
       --------------
@@ -1087,8 +1101,14 @@ package body Docgen3.Frontend.Builder is
                pragma Assert (not Is_New (Formal));
                Remove_From_Scope (Formal);
 
-               Set_Kind (Formal, E_Generic_Formal);
+               Set_Is_Generic_Formal (Formal);
                Set_Scope (Formal, E);
+
+               --  Adding minimum decoration to undecorated generic formals
+
+               if Get_Kind (Formal) = E_Unknown then
+                  Set_Kind (Formal, E_Generic_Formal);
+               end if;
 
                Append_To_Scope (Current_Scope, Formal);
             end loop;

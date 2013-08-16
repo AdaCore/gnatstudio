@@ -245,6 +245,22 @@ package body Docgen3.Backend.Simple is
          Use_Full_Name : Boolean  := False;
          Filter        : List_Filter_Kind := None)
       is
+         function Gen_Suffix (E : Entity_Id) return String;
+         function Gen_Suffix (E : Entity_Id) return String is
+         begin
+            if LL.Is_Generic (E) then
+               return " *(generic)*";
+            elsif Is_Generic_Formal (E) then
+               return " *(generic formal)*";
+            elsif Get_Kind (E) = E_Interface then
+               return " *(interface)*";
+            elsif LL.Is_Abstract (E) then
+               return " *(abstract)*";
+            else
+               return "";
+            end if;
+         end Gen_Suffix;
+
          Cursor : EInfo_List.Cursor;
          E      : Entity_Id;
          Found  : Boolean;
@@ -293,10 +309,11 @@ package body Docgen3.Backend.Simple is
                Append (Printout, Get_Name (E, Use_Full_Name));
 
                Append_Line (Printout,
-                            " <"
-                            & Get_Unique_Name (E)
-                            & ">` "
-                            & Image (LL.Get_Location (E)));
+                 " <"
+                 & Get_Unique_Name (E)
+                 & ">` "
+                 & Image (LL.Get_Location (E))
+                 & Gen_Suffix (E));
             end if;
 
             EInfo_List.Next (Cursor);
@@ -501,6 +518,12 @@ package body Docgen3.Backend.Simple is
             Append_Line (Printout, "");
 
             ReST_Append_Src (Printout, E);
+
+            if Is_Generic_Formal (E) then
+               Append_Line (Printout, "Generic formal.");
+               Append_Line (Printout, "");
+            end if;
+
             ReST_Append_Comment (Printout, E);
          end if;
       end ReST_Append_Subprogram;
@@ -991,7 +1014,7 @@ package body Docgen3.Backend.Simple is
                function Gen_Suffix return String;
                function Gen_Suffix return String is
                begin
-                  if Get_Kind (E) = E_Generic_Formal then
+                  if Is_Generic_Formal (E) then
                      return " *(generic formal)*";
                   elsif Get_Kind (E) = E_Interface then
                      return " *(interface)*";
@@ -1498,16 +1521,69 @@ package body Docgen3.Backend.Simple is
       is
          Entities : aliased Collected_Entities;
 
+         procedure Append_Generic_Formal
+           (Printout : access Unbounded_String;
+            E        : Entity_Id);
+         --  Append to Printout the reStructured output of a generic formal
+
          procedure Classify_Entity (E : Entity_Id);
          --  Classify the entity in one of the following categories: Method,
          --  subprogram, tagged type, record type, type, variable or package.
+
+         ---------------------------
+         -- Append_Generic_Formal --
+         ---------------------------
+
+         procedure Append_Generic_Formal
+           (Printout : access Unbounded_String;
+            E        : Entity_Id) is
+         begin
+            if Is_Package (E) then
+               null;  --  unsupported yet???
+
+            elsif Get_Kind (E) = E_Variable then
+               ReST_Append_Simple_Declaration (Printout, E);
+
+            elsif LL.Is_Type (E) then
+               if Is_Class_Or_Record_Type (E) then
+                  ReST_Append_Record_Type_Declaration (Printout, E);
+               else
+                  ReST_Append_Simple_Declaration (Printout, E);
+               end if;
+
+            elsif LL.Is_Subprogram (E) then
+               ReST_Append_Subprogram (Printout, E);
+
+            --  Here we cover generic formals which are not fully decorated
+            --  We assume that the output associated with these missing
+            --  cases is simple. More work needed here???
+
+            else
+               ReST_Append_Simple_Declaration (Printout, E);
+            end if;
+         end Append_Generic_Formal;
 
          ---------------------
          -- Classify_Entity --
          ---------------------
 
+         In_Pkg_Generic_Formals : Boolean := True;
+
          procedure Classify_Entity (E : Entity_Id) is
          begin
+            --  Package generic formals are stored at the beginning of the
+            --  list of entities
+
+            if In_Pkg_Generic_Formals then
+               if Is_Generic_Formal (E) then
+                  Entities.Generic_Formals.Append (E);
+                  Backend.Entities.Generic_Formals.Append (E);
+                  return;
+               end if;
+
+               In_Pkg_Generic_Formals := False;
+            end if;
+
             if Is_Package (E) then
                Entities.Pkgs.Append (E);
                Backend.Entities.Pkgs.Append (E);
@@ -1515,6 +1591,33 @@ package body Docgen3.Backend.Simple is
             elsif Get_Kind (E) = E_Variable then
                Entities.Variables.Append (E);
                Backend.Entities.Variables.Append (E);
+
+            elsif LL.Is_Type (E) then
+               if Get_Kind (E) = E_Class then
+                  Entities.CPP_Classes.Append (E);
+                  Backend.Entities.CPP_Classes.Append (E);
+
+               elsif Is_Tagged_Type (E) then
+                  if Get_Kind (E) = E_Interface then
+                     Entities.Interface_Types.Append (E);
+                     Backend.Entities.Interface_Types.Append (E);
+                  else
+                     Entities.Tagged_Types.Append (E);
+                     Backend.Entities.Tagged_Types.Append (E);
+                  end if;
+
+               elsif Is_Class_Or_Record_Type (E) then
+                  Entities.Record_Types.Append (E);
+                  Backend.Entities.Record_Types.Append (E);
+
+               elsif LL.Is_Access (E) then
+                  Entities.Access_Types.Append (E);
+                  Backend.Entities.Access_Types.Append (E);
+
+               else
+                  Entities.Simple_Types.Append (E);
+                  Backend.Entities.Simple_Types.Append (E);
+               end if;
 
             elsif LL.Is_Subprogram (E) then
 
@@ -1553,34 +1656,6 @@ package body Docgen3.Backend.Simple is
                   Entities.Subprgs.Append (E);
                   Backend.Entities.Subprgs.Append (E);
                end if;
-
-            elsif LL.Is_Type (E) then
-               if Get_Kind (E) = E_Class then
-                  Entities.CPP_Classes.Append (E);
-                  Backend.Entities.CPP_Classes.Append (E);
-
-               elsif Is_Tagged_Type (E) then
-                  if Get_Kind (E) = E_Interface then
-                     Entities.Interface_Types.Append (E);
-                     Backend.Entities.Interface_Types.Append (E);
-                  else
-                     Entities.Tagged_Types.Append (E);
-                     Backend.Entities.Tagged_Types.Append (E);
-                  end if;
-
-               elsif Is_Class_Or_Record_Type (E) then
-                  Entities.Record_Types.Append (E);
-                  Backend.Entities.Record_Types.Append (E);
-
-               elsif LL.Is_Access (E) then
-                  Entities.Access_Types.Append (E);
-                  Backend.Entities.Access_Types.Append (E);
-
-               else
-                  Entities.Simple_Types.Append (E);
-                  Backend.Entities.Simple_Types.Append (E);
-               end if;
-
             end if;
          end Classify_Entity;
 
@@ -1609,22 +1684,25 @@ package body Docgen3.Backend.Simple is
 
          For_All (Get_Entities (Entity).all, Classify_Entity'Access);
 
-         if Entities.Variables.Length > 0
-           or else Entities.Simple_Types.Length > 0
-           or else Entities.Access_Types.Length > 0
-           or else Entities.Record_Types.Length > 0
-           or else Entities.Interface_Types.Length > 0
-           or else Entities.Tagged_Types.Length > 0
+         if Entities.Access_Types.Length > 0
            or else Entities.CPP_Classes.Length > 0
-           or else Entities.Subprgs.Length > 0
-           or else Entities.Methods.Length > 0
            or else Entities.CPP_Constructors.Length > 0
+           or else Entities.Generic_Formals.Length > 0
+           or else Entities.Interface_Types.Length > 0
+           or else Entities.Methods.Length > 0
            or else Entities.Pkgs.Length > 0
+           or else Entities.Record_Types.Length > 0
+           or else Entities.Simple_Types.Length > 0
+           or else Entities.Subprgs.Length > 0
+           or else Entities.Tagged_Types.Length > 0
+           or else Entities.Variables.Length > 0
          then
             Append_Line (Printout'Access, "Entities");
             Append_Line (Printout'Access, "========");
             Append_Line (Printout'Access, "");
 
+            ReST_Append_List
+              (Printout'Access, Entities.Generic_Formals, "Generic formals");
             ReST_Append_List
               (Printout'Access, Entities.Variables, "Constants & variables");
             ReST_Append_List
@@ -1662,6 +1740,10 @@ package body Docgen3.Backend.Simple is
 
             --  Generate full documentation
 
+            For_All
+              (Vector   => Entities.Generic_Formals,
+               Printout => Printout'Access,
+               Process  => Append_Generic_Formal'Access);
             For_All
               (Vector   => Entities.Variables,
                Printout => Printout'Access,

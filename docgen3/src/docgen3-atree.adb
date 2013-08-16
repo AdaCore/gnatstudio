@@ -653,24 +653,6 @@ package body Docgen3.Atree is
       return False;
    end Has_Duplicated_Entities;
 
-   -----------------
-   -- Has_Formals --
-   -----------------
-
-   function Has_Formals (E : Entity_Id) return Boolean is
-   begin
-      pragma Assert (Present (E)
-         and then Get_Kind (E) /= E_Unknown);
-
-      return E.Kind = E_Procedure
-        or else E.Kind = E_Abstract_Procedure
-        or else E.Kind = E_Generic_Procedure
-        or else E.Kind = E_Function
-        or else E.Kind = E_Abstract_Function
-        or else E.Kind = E_Generic_Function
-        or else E.Kind = E_Entry;
-   end Has_Formals;
-
    ---------------------
    -- In_Ada_Language --
    ---------------------
@@ -1012,6 +994,7 @@ package body Docgen3.Atree is
            Kind            => Kind,
            End_Of_Syntax_Scope_Loc => No_Location,
 
+           Is_Generic_Formal => False,
            Is_Incomplete_Or_Private_Type => False,
            Is_Internal       => Is_Internal,
            Is_Tagged_Type    => False,
@@ -1077,6 +1060,15 @@ package body Docgen3.Atree is
         and then LL.Get_Body_Loc (E).Line
                    < LL.Get_Location (E).Line;
    end Is_Full_View;
+
+   -----------------------
+   -- Is_Generic_Formal --
+   -----------------------
+
+   function Is_Generic_Formal (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Generic_Formal;
+   end Is_Generic_Formal;
 
    -----------------------------------
    -- Is_Incomplete_Or_Private_Type --
@@ -1386,6 +1378,15 @@ package body Docgen3.Atree is
       pragma Assert (E.Full_View_Src = Null_Unbounded_String);
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
+
+   ---------------------------
+   -- Set_Is_Generic_Formal --
+   ---------------------------
+
+   procedure Set_Is_Generic_Formal (E : Entity_Id) is
+   begin
+      E.Is_Generic_Formal := True;
+   end Set_Is_Generic_Formal;
 
    ---------------------------------------
    -- Set_Is_Incomplete_Or_Private_Type --
@@ -1795,6 +1796,7 @@ package body Docgen3.Atree is
             return E_Function;
 
          elsif Kind = "generic formal" then
+            --  In practice this value is never returned by Xref. Xref bug???
             return E_Generic_Formal;
 
          elsif Kind = "generic package" then
@@ -2077,6 +2079,10 @@ package body Docgen3.Atree is
 
       if E.Is_Tagged_Type then
          Append_Line ("Is_Tagged");
+      end if;
+
+      if E.Is_Generic_Formal then
+         Append_Line ("Is_Generic_Formal");
       end if;
 
       --  Output information retrieved from Xref
