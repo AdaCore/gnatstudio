@@ -356,8 +356,14 @@ package body Ada_Analyzer is
    ----------------------
 
    function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean is
+      use Glib;
    begin
-      return Is_Entity_Letter (Wide_Wide_Character'Val (Char));
+      --  ??? Work around Constraint_Error when Char = #FFFFFFFF
+      if Char = Glib.Gunichar'Last then
+         return False;
+      else
+         return Is_Entity_Letter (Wide_Wide_Character'Val (Char));
+      end if;
    end Is_Entity_Letter;
 
    ---------------
