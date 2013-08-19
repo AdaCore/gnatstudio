@@ -691,6 +691,8 @@ def on_prove_subp(self):
     # A mild consequence is that --limit-subp does not appear in the editable
     # box shown to the user, even if appears in the uneditable argument list
     # displayed below it.
+    global should_clear_messages
+    should_clear_messages = True
     loc = compute_subp_sloc(self)
     if loc:
         target = GPS.BuildTarget(prove_subp)
