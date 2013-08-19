@@ -1848,7 +1848,7 @@ package body Default_Preferences is
    begin
       if Active (Me) then
          Trace (Me, "Theme search path is " & (+Search_Path));
-         Trace (Me, "Active theme is " & Default);
+         Trace (Me, "System's default theme is " & Default);
       end if;
 
       Ret.Current := Natural'Last;

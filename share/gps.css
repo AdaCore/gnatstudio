@@ -87,7 +87,7 @@ GtkEntry.search {
 }
 
 .window-rounded {
-    border-radius: 4;
+    border-radius: 4px;
 }
 
 #completion-scroll {

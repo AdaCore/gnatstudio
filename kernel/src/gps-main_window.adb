@@ -376,6 +376,9 @@ package body GPS.Main_Window is
          Theme := Gtk_Theme.Get_Pref;
 
          if Theme.Directory /= null then
+            Trace (Me, "Setting gtk+ theme to '"
+                   & Theme.Name.all & "', directory='"
+                   & Theme.Directory.all & "'");
             Glib.Properties.Set_Property
               (Gtk.Settings.Get_Default,
                Gtk.Settings.Gtk_Theme_Name_Property,

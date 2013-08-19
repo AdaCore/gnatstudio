@@ -19,7 +19,6 @@ import gps_utils
 
 themes = [
    {"name": "Default",
-    "@theme": "Adwaita",
     "@theme_bg_color": None,           # the background color for windows
     "@theme_fg_color": None,           # default color for the text
     "@theme_selected_bg_color": None,  # selection in trees or menus
@@ -74,7 +73,6 @@ themes = [
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
    },
    {"name": "iPlastic",
-    "@theme": "Adwaita",
     "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(238,238,238)"),
     "Src-Editor-Current-Line-Color":         "rgb(140,140,140)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(0,0,0)", "rgb(238,238,238)"),
