@@ -1396,9 +1396,16 @@ package body GPS.Main_Window is
       --------------
 
       function Info_Str return String is
+         V : Virtual_File;
       begin
          if Info /= "" then
-            return " - " & Info;
+            V := Create (+Info);
+            if V.Is_Regular_File then
+               return " - " & V.Display_Base_Name
+                 & " - " & (+V.Dir_Name);
+            else
+               return " - " & Info;
+            end if;
          end if;
 
          return "";
@@ -1419,10 +1426,8 @@ package body GPS.Main_Window is
 
    begin
       Set_Title
-        (Window, "GPS" &
-         (-" - (") &
-         Get_Project (Window.Kernel).Name &
-         Remote_Str & " project)" & Info_Str);
+        (Window, "GPS" & Info_Str & " - "
+         & Get_Project (Window.Kernel).Name & " project" & Remote_Str);
    end Reset_Title;
 
    function Is_Any_Menu_Open
