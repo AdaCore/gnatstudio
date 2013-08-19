@@ -520,7 +520,6 @@ package body Python_Module is
       Data : Callback_Data'Class := Create (Script, 2);
       Inst : Class_Instance;
    begin
-      Trace (Me, "MANU Load_Desktop tag=" & Node.Tag.all);
       Set_Nth_Arg (Data, 1, Node.Tag.all);
       Set_Nth_Arg (Data, 2, Node.Value.all);
       Data.Execute_Command ("modules.Module_Metaclass.load_desktop");
