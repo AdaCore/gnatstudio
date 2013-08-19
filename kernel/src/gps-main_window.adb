@@ -20,6 +20,7 @@ with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
+with Cairo;                     use Cairo;
 with Gdk.Display;               use Gdk.Display;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.RGBA;                  use Gdk.RGBA;
@@ -43,7 +44,7 @@ with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Style_Context;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Css_Provider;          use Gtk.Css_Provider;
@@ -194,6 +195,12 @@ package body GPS.Main_Window is
       Main_Window : Gtk.Window.Gtk_Window;
    end record;
    --  Generic User Interface object
+
+   function On_Draw_Toolbar_Box
+     (Self : access Gtk_Widget_Record'Class;
+      Cr   : Cairo_Context) return Boolean;
+   --  Drawing the background of the toolbar box, so that the main progress
+   --  bar and omni-search have a proper background.
 
    overriding function Query_User
      (UI            : User_Interface;
@@ -426,7 +433,7 @@ package body GPS.Main_Window is
          if Tooltips_Background.Get_Pref = White_RGBA then
             --  Fallback to default color
             if Tooltips_Background_Provider /= null then
-               Gtk.Style_Context.Remove_Provider_For_Screen
+               Remove_Provider_For_Screen
                  (Get_Default_Screen (Get_Default),
                   +Tooltips_Background_Provider);
                Tooltips_Background_Provider := null;
@@ -435,7 +442,7 @@ package body GPS.Main_Window is
          else
             if Tooltips_Background_Provider = null then
                Gtk_New (Tooltips_Background_Provider);
-               Gtk.Style_Context.Add_Provider_For_Screen
+               Add_Provider_For_Screen
                  (Get_Default_Screen (Get_Default),
                   +Tooltips_Background_Provider,
                   Priority => Gtk.Style_Provider.Priority_User);
@@ -455,6 +462,22 @@ package body GPS.Main_Window is
 
       Configure_MDI (Kernel, P);
    end Preferences_Changed;
+
+   -------------------------
+   -- On_Draw_Toolbar_Box --
+   -------------------------
+
+   function On_Draw_Toolbar_Box
+     (Self : access Gtk_Widget_Record'Class;
+      Cr   : Cairo_Context) return Boolean is
+   begin
+      Render_Background
+        (Get_Style_Context (Self),
+         Cr, 0.0, 0.0,
+         Gdouble (Get_Allocated_Width (Self)),
+         Gdouble (Get_Allocated_Height (Self)));
+      return False;
+   end On_Draw_Toolbar_Box;
 
    ----------------
    -- Initialize --
@@ -557,6 +580,8 @@ package body GPS.Main_Window is
       Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
       Main_Window.Toolbar_Box.Set_Name ("toolbar-box");
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
+      Get_Style_Context (Main_Window.Toolbar_Box).Add_Class ("toolbar");
+      Main_Window.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
 
       Gtk_New (Main_Window.Toolbar);
       Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);

@@ -45,10 +45,8 @@ with Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pango.Layout;              use Pango.Layout;
@@ -977,8 +975,6 @@ package body Task_Manager.GUI is
    is
       Align   : Gtk_Alignment;
       Manager : Task_Manager_Access;
-      Item    : Gtk_Tool_Item;
-      Space   : Gtk_Separator_Tool_Item;
    begin
       Add_Hook
         (Kernel, Before_Exit_Action_Hook,
@@ -1000,22 +996,10 @@ package body Task_Manager.GUI is
       --  Display the main progress bar in the GPS main toolbar
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
+      Align.Set_Padding (0, 0, 0, 10);  --  to the right
       Align.Add (Task_Manager_UI_Access (Manager).GUI);
-
-      Gtk_New (Item);
-      Item.Set_Homogeneous (False);
-      Item.Add (Align);
-      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert
-        (Item,
-         Get_Toolbar_Separator_Position (Kernel, Before_Debug) + 2);
-
-      --  An extra space between the progress bar and the omni-search, so that
-      --  the close button is more closely associated with the progress bar.
-      Gtk_New (Space);
-      Space.Set_Draw (False);
-      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert
-        (Space,
-         Get_Toolbar_Separator_Position (Kernel, Before_Debug) + 3);
+      GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End
+        (Align, Expand => False);
    end Register_Module;
 
 end Task_Manager.GUI;

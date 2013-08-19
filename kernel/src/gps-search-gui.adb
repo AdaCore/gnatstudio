@@ -36,7 +36,6 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 
@@ -1437,7 +1436,6 @@ package body GPS.Search.GUI is
       Align   : Gtk_Alignment;
       Vbox    : Gtk_Vbox;
       Command : Global_Search_Command_Access;
-      Item    : Gtk_Tool_Item;
       P       : Kernel_Search_Provider_Access;
       Search_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "Search");
@@ -1498,13 +1496,10 @@ package body GPS.Search.GUI is
       P := new GPS.Kernel.Search.Sources.Sources_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
 
-      Gtk_New (Item);
-      Item.Set_Visible_Vertical (False);
-      Item.Set_Homogeneous (False);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
-      Item.Add (Align);
-
-      GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert (Item);
+      Align.Set_Padding (0, 0, 0, 10);  --  to the right
+      GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End
+        (Align, Expand => False);
 
       Gtk_New
          (Module.Search,
