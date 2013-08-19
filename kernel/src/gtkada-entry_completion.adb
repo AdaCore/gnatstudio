@@ -1207,6 +1207,7 @@ package body Gtkada.Entry_Completion is
    procedure Popup (Self : not null access Gtkada_Entry_Record) is
       Toplevel : Gtk_Widget;
       Status : Gdk_Grab_Status;
+      W      : Gtk_Widget;
    begin
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
          Resize_Popup (Self, Height_Only => False);
@@ -1275,6 +1276,11 @@ package body Gtkada.Entry_Completion is
       end if;
 
       Self.Notes_Popup.Hide;
+
+      W := Self.GEntry.Get_Toplevel;
+      if W /= null and then W.all in Gtk_Window_Record'Class then
+         Gtk_Window (W).Present;
+      end if;
 
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard
