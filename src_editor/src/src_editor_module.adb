@@ -2898,12 +2898,14 @@ package body Src_Editor_Module is
                  Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
+         UR.Undo_Button.Set_Homogeneous (False);
          Set_Tooltip_Text (UR.Undo_Button, -"Undo Previous Action");
          Set_Sensitive (UR.Undo_Button, False);
          Insert (Toolbar, UR.Undo_Button,
                  Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
          Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
+         UR.Redo_Button.Set_Homogeneous (False);
          Set_Tooltip_Text (UR.Redo_Button, -"Redo Previous Action");
          Set_Sensitive (UR.Redo_Button, False);
          Insert (Toolbar, UR.Redo_Button,
@@ -3040,6 +3042,7 @@ package body Src_Editor_Module is
          Button : Gtk_Tool_Button;
       begin
          Gtk_New_From_Stock (Button, Stock_New);
+         Button.Set_Homogeneous (False);
          Set_Tooltip_Text (Button, -"Create a New File");
          Insert (Toolbar, Button, 0);
          Kernel_Callback.Connect
@@ -3047,6 +3050,7 @@ package body Src_Editor_Module is
             On_New_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Open);
+         Button.Set_Homogeneous (False);
          Set_Tooltip_Text (Button, -"Open a File");
          Insert (Toolbar, Button, 1);
          Kernel_Callback.Connect
@@ -3054,6 +3058,7 @@ package body Src_Editor_Module is
             On_Open_File'Access, Kernel_Handle (Kernel));
 
          Gtk_New_From_Stock (Button, Stock_Save);
+         Button.Set_Homogeneous (False);
          Set_Tooltip_Text (Button, -"Save Current File");
          Insert (Toolbar, Button, 2);
          Kernel_Callback.Connect

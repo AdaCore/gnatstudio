@@ -51,6 +51,7 @@ with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Pango.Layout;              use Pango.Layout;
 with String_Utils;              use String_Utils;
 with Task_Manager.Shell;        use Task_Manager.Shell;
 
@@ -861,10 +862,12 @@ package body Task_Manager.GUI is
       Gtk_New (View.Task_Label, "");
       View.Task_Label.Set_Alignment (0.0, 0.5);
       View.Task_Label.Override_Font (Small_Font.Get_Pref);
+      View.Task_Label.Set_Ellipsize (Ellipsize_End);
       Label_Box.Pack_Start (View.Task_Label, Expand => False);
 
       Gtk_New (View.Progress_Label, "");
       View.Progress_Label.Set_Alignment (1.0, 0.5);
+      View.Progress_Label.Set_Ellipsize (Ellipsize_End);
       View.Progress_Label.Override_Font (Small_Font.Get_Pref);
       Label_Box.Pack_End (View.Progress_Label, Expand => False);
 
@@ -1000,6 +1003,7 @@ package body Task_Manager.GUI is
       Align.Add (Task_Manager_UI_Access (Manager).GUI);
 
       Gtk_New (Item);
+      Item.Set_Homogeneous (False);
       Item.Add (Align);
       GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert
         (Item,

@@ -1499,6 +1499,8 @@ package body GPS.Search.GUI is
       Register_Provider_And_Action (Kernel, P);
 
       Gtk_New (Item);
+      Item.Set_Visible_Vertical (False);
+      Item.Set_Homogeneous (False);
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       Item.Add (Align);
 

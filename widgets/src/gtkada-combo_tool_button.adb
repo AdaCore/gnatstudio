@@ -445,6 +445,7 @@ package body Gtkada.Combo_Tool_Button is
       Get_Style_Context (Self).Add_Class ("gps-combo-tool-button");
 
       Self.Set_Stock_Id (Stock_Id);
+      Self.Set_Homogeneous (False);
       Self.Items    := Strings_Vector.Empty_Vector;
       Self.Selected := Strings_Vector.No_Index;
       Self.Stock_Id := To_Unbounded_String (Stock_Id);
