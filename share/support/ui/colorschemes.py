@@ -206,7 +206,9 @@ class Color_Theme_Switcher(object):
 
         with gps_utils.freeze_prefs():
            GPS.Preference(self.gtkpref_name).set(colors)
-           GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
+
+           if theme.get("@theme"):
+               GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
            self.__for_each_pref(theme, lambda k, v: GPS.Preference(k).set(v))
 
         self.__set_gtk_properties()
