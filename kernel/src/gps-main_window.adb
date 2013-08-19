@@ -127,7 +127,8 @@ package body GPS.Main_Window is
    Rename_Cmd_Parameter : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Short_Cst'Access);
 
-   type Toolbar_Icons_Size is (Hide_Toolbar, Small_Icons, Large_Icons);
+   type Toolbar_Icons_Size
+      is (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
    package Toolbar_Icons_Size_Preferences is new
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
@@ -393,33 +394,30 @@ package body GPS.Main_Window is
         or else P = Preference (Pref_Toolbar_Style)
       then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
-         when Hide_Toolbar =>
-            Set_Size_Request (Win.Toolbar_Box, -1, 0);
-            Set_Child_Visible (Win.Toolbar_Box, False);
-            Hide (Win.Toolbar_Box);
+         when Text_Only =>
+            Win.Toolbar_Box.Set_Child_Visible (True);
+            Win.Toolbar_Box.Show_All;
+            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
+            Get_Toolbar (Kernel).Set_Style (Toolbar_Text);
 
-         when Small_Icons  =>
-            Set_Size_Request (Win.Toolbar_Box, -1, -1);
-            Set_Child_Visible (Win.Toolbar_Box, True);
-            Show_All (Win.Toolbar_Box);
-            Set_Icon_Size (Win.Toolbar, Icon_Size_Menu);
+         when Text_And_Icons =>
+            Win.Toolbar_Box.Set_Child_Visible (True);
+            Win.Toolbar_Box.Show_All;
+            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
+            Get_Toolbar (Kernel).Set_Style (Toolbar_Both);
 
-         when Large_Icons  =>
-            Set_Size_Request (Win.Toolbar_Box, -1, -1);
-            Set_Child_Visible (Win.Toolbar_Box, True);
-            Show_All (Win.Toolbar_Box);
-            Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
+         when Small_Icons =>
+            Win.Toolbar_Box.Set_Child_Visible (True);
+            Win.Toolbar_Box.Show_All;
+            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
+            Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
+
+         when Large_Icons =>
+            Win.Toolbar_Box.Set_Child_Visible (True);
+            Win.Toolbar_Box.Show_All;
+            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Large_Toolbar);
+            Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
          end case;
-      end if;
-
-      if P = null
-        or else P = Preference (Toolbar_Show_Text)
-      then
-         if Toolbar_Show_Text.Get_Pref then
-            Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
-         else
-            Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
-         end if;
       end if;
 
       if P = null
@@ -501,8 +499,8 @@ package body GPS.Main_Window is
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
          Name    => "General-Toolbar-Style",
-         Label   => -"Tool bar style",
-         Page    => -"",
+         Label   => -"Toolbar style",
+         Page    => -"Windows",
          Doc     => -("Indicates how the tool bar should be displayed"),
          Default => Small_Icons);
 
@@ -563,6 +561,7 @@ package body GPS.Main_Window is
       Gtk_New (Main_Window.Toolbar);
       Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
       Set_Style (Main_Window.Toolbar, Toolbar_Icons);
+      Main_Window.Toolbar.Set_Show_Arrow (True);
       Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
 
       Gtk_New (Tool_Item);

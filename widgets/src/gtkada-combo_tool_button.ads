@@ -21,15 +21,14 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Gdk.Device;
 with Glib;                     use Glib;
 with Glib.Main;
-with Gtk.Button;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Tool_Item;
+with Gtk.Tool_Button;
 
 package Gtkada.Combo_Tool_Button is
 
    type Gtkada_Combo_Tool_Button_Record is new
-     Gtk.Tool_Item.Gtk_Tool_Item_Record with private;
+     Gtk.Tool_Button.Gtk_Tool_Button_Record with private;
    type Gtkada_Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
@@ -100,13 +99,13 @@ private
      (Natural, Ada.Strings.Unbounded.Unbounded_String);
 
    type Gtkada_Combo_Tool_Button_Record is new
-     Gtk.Tool_Item.Gtk_Tool_Item_Record with record
+     Gtk.Tool_Button.Gtk_Tool_Button_Record with record
       Items       : Strings_Vector.Vector;
       Selected    : Strings_Vector.Extended_Index;
       Menu        : Gtk_Menu;
-      Stock_Id    : Unbounded_String;
 
-      Button        : Gtk.Button.Gtk_Button;
+      Stock_Id    : Unbounded_String;
+      --  The default stock id, when items do not provide one.
 
       Popup_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Popup_Device  : Gdk.Device.Gdk_Device;

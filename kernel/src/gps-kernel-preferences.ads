@@ -145,7 +145,6 @@ package GPS.Kernel.Preferences is
    Use_Native_Dialogs     : Boolean_Preference;
    Splash_Screen          : Boolean_Preference;
    Display_Welcome        : Boolean_Preference;
-   Toolbar_Show_Text      : Boolean_Preference;
    Auto_Save              : Boolean_Preference;
    Save_Desktop_On_Exit   : Boolean_Preference;
    Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;

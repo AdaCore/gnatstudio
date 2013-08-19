@@ -26,14 +26,12 @@ with Gdk.Device;               use Gdk.Device;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Window;               use Gdk.Window;
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.Button;               use Gtk.Button;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Icon_Factory;         use Gtk.Icon_Factory;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Style_Context;        use Gtk.Style_Context;
-with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
@@ -45,8 +43,7 @@ package body Gtkada.Combo_Tool_Button is
 
    Class_Record : aliased Ada_GObject_Class := Uninitialized_Class;
    Signals : constant chars_ptr_array :=
-     (1 => New_String (String (Signal_Clicked)),
-      2 => New_String (String (Signal_Selection_Changed)));
+     (1 => New_String (String (Signal_Selection_Changed)));
 
    ---------------
    -- Menu_Item --
@@ -110,9 +107,6 @@ package body Gtkada.Combo_Tool_Button is
       Push_In : out Boolean;
       Widget  : Gtkada_Combo_Tool_Button);
 
-   procedure On_Toolbar_Reconfigured
-     (Self : access Gtk_Tool_Item_Record'Class);
-
    procedure On_Menu_Item_Activated
      (Item   : access Menu_Item_Record'Class;
       Widget : Gtkada_Combo_Tool_Button);
@@ -124,6 +118,22 @@ package body Gtkada.Combo_Tool_Button is
    function On_Draw
      (Self : access GObject_Record'Class;
       Cr   : Cairo.Cairo_Context) return Boolean;
+
+   function Get_Button
+     (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
+      return Gtk_Widget;
+   --  Return the internal button widget used by a GtkToolButton.
+
+   ----------------
+   -- Get_Button --
+   ----------------
+
+   function Get_Button
+     (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
+      return Gtk_Widget is
+   begin
+      return Self.Get_Child;
+   end Get_Button;
 
    -------------
    -- Popdown --
@@ -201,7 +211,7 @@ package body Gtkada.Combo_Tool_Button is
    begin
       if not B.Items.Is_Empty then
          Icon_Size_Lookup (B.Get_Icon_Size, W, H, Result);
-         B.Button.Get_Allocation (Alloc);
+         B.Get_Allocation (Alloc);
          Get_Style_Context (B).Render_Arrow
            (Cr    => Cr,
             Angle => Gdouble (Ada.Numerics.Pi),
@@ -255,7 +265,7 @@ package body Gtkada.Combo_Tool_Button is
 
          Tmp := On_Long_Click (B);
       end if;
-      return True;
+      return False;
    end On_Button_Press;
 
    -----------------------
@@ -287,7 +297,7 @@ package body Gtkada.Combo_Tool_Button is
          B.Popup_Device := null;
       end if;
 
-      return True;
+      return False;
    end On_Button_Release;
 
    ----------------------------
@@ -303,8 +313,8 @@ package body Gtkada.Combo_Tool_Button is
       Obj : GObject;
    begin
       Obj := Get_User_Data (Event.Window);
-      if Obj /= null and then Obj.all in Gtk_Menu_Item_Record'Class then
-         B.Menu.Select_Item (Gtk_Menu_Item (Obj));
+      if Obj /= null and then Obj.all in Menu_Item_Record'Class then
+         B.Menu.Select_Item (Menu_Item (Obj));
       end if;
 
       if B.Popup_Device /= null then
@@ -402,36 +412,6 @@ package body Gtkada.Combo_Tool_Button is
       Widget_Callback.Emit_By_Name (Widget, Signal_Clicked);
    end On_Menu_Item_Activated;
 
-   -----------------------------
-   -- On_Toolbar_Reconfigured --
-   -----------------------------
-
-   procedure On_Toolbar_Reconfigured
-     (Self : access Gtk_Tool_Item_Record'Class)
-   is
-      S : constant Gtkada_Combo_Tool_Button :=
-        Gtkada_Combo_Tool_Button (Self);
-      Image : Gtk_Image;
-      Item  : Menu_Item;
-   begin
-      if S.Button.Get_Child /= null then
-         S.Button.Remove (S.Button.Get_Child);
-      end if;
-
-      Item := Menu_Item (S.Menu.Get_Active);
-      if Item /= null and then Item.Stock_Id /= "" then
-         Gtk_New (Image, To_String (Item.Stock_Id), S.Get_Icon_Size);
-      else
-         Gtk_New (Image, To_String (S.Stock_Id), S.Get_Icon_Size);
-      end if;
-
-      Image.Set_Alignment (0.5, 0.5);
-      S.Button.Add (Image);
-
-      S.Button.Set_Relief (S.Get_Relief_Style);
-      Image.Show_All;
-   end On_Toolbar_Reconfigured;
-
    -------------
    -- Gtk_New --
    -------------
@@ -456,7 +436,7 @@ package body Gtkada.Combo_Tool_Button is
 
    begin
       Initialize_Class_Record
-        (Ancestor     => Gtk.Tool_Item.Get_Type,
+        (Ancestor     => Gtk.Tool_Button.Get_Type,
          Signals      => Signals,
          Class_Record => Class_Record,
          Type_Name    => "GtkadaComboToolButton");
@@ -464,20 +444,17 @@ package body Gtkada.Combo_Tool_Button is
 
       Get_Style_Context (Self).Add_Class ("gps-combo-tool-button");
 
-      Gtk_New (Self.Button);
-      Self.Add (Self.Button);
-
+      Self.Set_Stock_Id (Stock_Id);
       Self.Items    := Strings_Vector.Empty_Vector;
       Self.Selected := Strings_Vector.No_Index;
       Self.Stock_Id := To_Unbounded_String (Stock_Id);
 
       Self.Clear_Items;  --  Creates the menu
 
-      Self.Button.On_Button_Press_Event (On_Button_Press'Access, Self);
-      Self.Button.On_Button_Release_Event (On_Button_Release'Access, Self);
-      Self.Button.On_Draw (On_Draw'Access, Self, After => True);
-
-      Self.On_Toolbar_Reconfigured (On_Toolbar_Reconfigured'Access);
+      Get_Button (Self).On_Button_Press_Event (On_Button_Press'Access, Self);
+      Get_Button (Self).On_Button_Release_Event
+        (On_Button_Release'Access, Self);
+      Self.On_Draw (On_Draw'Access, Self, After => True);
    end Initialize;
 
    --------------
@@ -536,8 +513,14 @@ package body Gtkada.Combo_Tool_Button is
             Widget.Menu.Set_Active (Guint (J));
             M_Item := Menu_Item (Widget.Menu.Get_Active);
             M_Item.Set_Highlight (True);
-            On_Toolbar_Reconfigured (Widget);  --  updates the icon
             Widget.Selected := J;
+
+            --  Change the toolbar icon
+            if M_Item /= null and then M_Item.Stock_Id /= "" then
+               Widget.Set_Stock_Id (To_String (M_Item.Stock_Id));
+            else
+               Widget.Set_Stock_Id (To_String (Widget.Stock_Id));
+            end if;
 
             Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);
             return;

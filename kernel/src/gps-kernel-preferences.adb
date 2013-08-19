@@ -397,15 +397,6 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Page    => -"General");
 
-      Toolbar_Show_Text := Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Toolbar-Text",
-         Label   => -"Show text in tool bar",
-         Doc     => -("Enabled if tool bar should show both text and icons,"
-                      & " Disabled if it should only show icons"),
-         Default => False,
-         Page    => -"General");
-
       Auto_Save := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Auto-Save",
