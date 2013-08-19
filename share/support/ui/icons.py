@@ -31,6 +31,7 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-clear-entry"        label="Clear Entry" file="svg/clear_entry.svg" />
     <icon id="gtk-print"              label="Print" file="svg/print.svg" />
     <icon id="gtk-clear"              label="Clean" file="svg/clean.svg" />
+    <icon id="gtk-media-play"         file="svg/run.svg" />
 
     <icon id="gps-edit"               label="Edit" file="svg/edit.svg" />
     <icon id="gps-environment"        label="Environment" file="svg/environment.svg" />

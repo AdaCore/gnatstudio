@@ -127,18 +127,18 @@ class Task_Manager_Widget():
         status = task.status()
         status_icon = "gtk-media-pause"
         if status == "PAUSED":
-            status_icon = "gtk-media_play"
+            status_icon = "gtk-media-play"
 
         if progress[1] > 0:
             progress_percent = (progress[0] * 100) / progress[1]
 
         self.store[iter] = [
-            task.name(),
-            progress_percent,
-            "%s / %s" % (progress[0], progress[1]),
-            "gtk-close",
-            status_icon,
-            str(id(task))]
+            task.name(),       # COL_LABEL
+            progress_percent,  # COL_PROGRESS
+            "%s / %s" % (progress[0], progress[1]),  # COL_PROGRESS_TEXT
+            "gtk-close",       # COL_CANCEL_PIXBUF
+            status_icon,       # COL_PLAYPAUSE_PIXBUF
+            str(id(task))]     # COL_TASK_ID
 
     def __iter_from_task(self, task):
         """
