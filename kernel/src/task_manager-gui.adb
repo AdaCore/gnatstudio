@@ -1009,6 +1009,8 @@ package body Task_Manager.GUI is
         (Item,
          Get_Toolbar_Separator_Position (Kernel, Before_Debug) + 2);
 
+      --  An extra space between the progress bar and the omni-search, so that
+      --  the close button is more closely associated with the progress bar.
       Gtk_New (Space);
       Space.Set_Draw (False);
       GPS_Window (Get_Main_Window (Kernel)).Toolbar.Insert

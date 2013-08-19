@@ -137,8 +137,6 @@ package body GVD_Module is
       File_Hook                      : File_Edited_Hook;
       Lines_Hook                     : Lines_Revealed_Hook;
 
-      Space_Separator                : Gtk_Separator_Tool_Item;
-
       Cont_Button,
       Step_Button,
       Next_Button,
@@ -464,16 +462,13 @@ package body GVD_Module is
       Window  : constant Gtk_Window := Get_Main_Window (Kernel);
 
       Pos : constant Gint := Get_Toolbar_Separator_Position
-        (Kernel, Before_Debug) + 1;
+        (Kernel, Before_Debug);
    begin
       if GVD_Module_ID.Cont_Button /= null then
          return;
       end if;
 
-      Gtk_New (GVD_Module_ID.Space_Separator);
-      Set_Draw (GVD_Module_ID.Space_Separator, True);
-      Insert (Toolbar, GVD_Module_ID.Space_Separator, Pos);
-      Show_All (GVD_Module_ID.Space_Separator);
+      Gtk_Separator_Tool_Item (Toolbar.Get_Nth_Item (Pos)).Set_Draw (True);
 
       Gtk_New_From_Stock (GVD_Module_ID.Cont_Button, "gps-debugger-run");
       Set_Name (GVD_Module_ID.Cont_Button, "gps-debugger-run-button");
@@ -544,7 +539,11 @@ package body GVD_Module is
 
    begin
       if Toolbar /= null and then GVD_Module_ID.Cont_Button /= null then
-         Remove (Toolbar, GVD_Module_ID.Space_Separator);
+         Gtk_Separator_Tool_Item
+           (Toolbar.Get_Nth_Item
+              (Get_Toolbar_Separator_Position (Kernel, Before_Debug)))
+             .Set_Draw (False);
+
          Remove (Toolbar, GVD_Module_ID.Cont_Button);
          Remove (Toolbar, GVD_Module_ID.Step_Button);
          Remove (Toolbar, GVD_Module_ID.Next_Button);

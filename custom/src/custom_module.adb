@@ -905,7 +905,6 @@ package body Custom_Module is
 
          else
             Gtk_New (Space);
-            Set_Draw (Space, True);
             Show_All (Space);
             Insert (Get_Toolbar (Kernel),
                     Space,

@@ -2893,7 +2893,6 @@ package body Src_Editor_Module is
          Space : Gtk_Separator_Tool_Item;
       begin
          Gtk_New (Space);
-         Set_Draw (Space, True);
          Insert (Toolbar, Space,
                  Get_Toolbar_Separator_Position (Kernel, Before_Build));
 

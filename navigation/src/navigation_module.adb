@@ -1190,7 +1190,6 @@ package body Navigation_Module is
                 Name => "navigation.maker_added");
 
       Gtk_New (Space);
-      Set_Draw (Space, True);
       Insert (Toolbar, Space,
               Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
@@ -1214,10 +1213,6 @@ package body Navigation_Module is
       Navigation_Module (Navigation_Module_ID).Forward_Button :=
         Gtk_Widget (Button);
 
-      Gtk_New (Space);
-      Set_Draw (Space, True);
-      Insert (Toolbar, Space,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build));
       Add_Hook
         (Kernel  => Kernel,
          Hook    => Project_View_Changed_Hook,
