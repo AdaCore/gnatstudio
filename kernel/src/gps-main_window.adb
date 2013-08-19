@@ -593,18 +593,15 @@ package body GPS.Main_Window is
       Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
 
       Gtk_New (Tool_Item);
+      Tool_Item.Set_Name ("build separator");
       Main_Window.Toolbar.Insert (Tool_Item);
       Main_Window.Build_Separator := Gtk_Tool_Item (Tool_Item);
 
       Gtk_New (Tool_Item);
+      Tool_Item.Set_Name ("debug separator");
       Tool_Item.Set_Draw (False);  --  made visible when enabling the debugger
       Main_Window.Toolbar.Insert (Tool_Item);
       Main_Window.Debug_Separator := Gtk_Tool_Item (Tool_Item);
-
-      Gtk_New (Tool_Item);
-      Tool_Item.Set_Expand (True);
-      Tool_Item.Set_Draw (False);
-      Main_Window.Toolbar.Insert (Tool_Item);
 
       Add (Vbox, Main_Window.MDI);
 

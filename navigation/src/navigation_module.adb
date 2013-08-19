@@ -1190,6 +1190,7 @@ package body Navigation_Module is
                 Name => "navigation.maker_added");
 
       Gtk_New (Space);
+      Space.Set_Name ("navigation module");
       Insert (Toolbar, Space,
               Get_Toolbar_Separator_Position (Kernel, Before_Build));
 

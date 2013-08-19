@@ -2893,6 +2893,7 @@ package body Src_Editor_Module is
          Space : Gtk_Separator_Tool_Item;
       begin
          Gtk_New (Space);
+         Space.Set_Name ("from editor");
          Insert (Toolbar, Space,
                  Get_Toolbar_Separator_Position (Kernel, Before_Build));
 

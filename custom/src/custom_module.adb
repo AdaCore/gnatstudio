@@ -905,6 +905,7 @@ package body Custom_Module is
 
          else
             Gtk_New (Space);
+            Space.Set_Name ("from action " & Action);
             Show_All (Space);
             Insert (Get_Toolbar (Kernel),
                     Space,
