@@ -512,7 +512,6 @@ package body Task_Manager is
          while Has_Element (Node) loop
             if Element (Node) = Command then
                Interrupt_Command (Manager, J);
-               Manager.Queues (J).Status := Completed;
 
                if J >= Manager.Passive_Index then
                   Manager.Minimal_Passive_Priority := 0;
@@ -520,11 +519,15 @@ package body Task_Manager is
                   Manager.Minimal_Active_Priority := 0;
                end if;
 
-               Free (Manager.Queues (J).Queue);
+               if Manager.Queues /= null then
+                  if Manager.Queues (J) /= null then
+                     Free (Manager.Queues (J).Queue);
+                  end if;
 
-               for K in Manager.Queues'Range loop
-                  Manager.Queues (K).Current_Priority := 0;
-               end loop;
+                  for K in Manager.Queues'Range loop
+                     Manager.Queues (K).Current_Priority := 0;
+                  end loop;
+               end if;
 
                return;
             end if;
