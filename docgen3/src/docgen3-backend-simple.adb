@@ -15,23 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Containers;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with Docgen3.Comment;         use Docgen3.Comment;
-with Docgen3.Time;            use Docgen3.Time;
-with Docgen3.Utils;           use Docgen3.Utils;
-with Language;                use Language;
-with Language.Ada;            use Language.Ada;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Basic_Types;              use Basic_Types;
+with Docgen3.Comment;          use Docgen3.Comment;
+with Docgen3.Frontend;         use Docgen3.Frontend;
+with Docgen3.Time;             use Docgen3.Time;
+with Docgen3.Utils;            use Docgen3.Utils;
+with GNAT.Strings;             use GNAT.Strings;
+with Language;                 use Language;
+with Language.Ada;             use Language.Ada;
 with Language.C;
 with Language.Cpp;
-with Language.Tree;           use Language.Tree;
-with Language.Tree.Database;  use Language.Tree.Database;
-with String_Utils;            use String_Utils;
-with Templates_Parser;        use Templates_Parser;
-with Traces;                  use Traces;
-with Xref.Docgen;             use Xref.Docgen;
+with Language.Tree;            use Language.Tree;
+with Language.Tree.Database;   use Language.Tree.Database;
+with String_Utils;             use String_Utils;
+with Templates_Parser;         use Templates_Parser;
+with Traces;                   use Traces;
+with Xref.Docgen;              use Xref.Docgen;
 
 package body Docgen3.Backend.Simple is
    Me : constant Debug_Handle := Create ("Docgen3.1-Backend");
@@ -39,7 +42,8 @@ package body Docgen3.Backend.Simple is
    type Template_Kind is
      (Tmpl_Entities,        --  Entities index
       Tmpl_Files_Index,     --  Files index
-      Tmpl_Global_Index     --  Global index
+      Tmpl_Global_Index,    --  Global index
+      Tmpl_Src_File         --  Source file
      );
 
    -----------------------
@@ -48,6 +52,9 @@ package body Docgen3.Backend.Simple is
 
    procedure Clear (Entities : in out Collected_Entities);
    --  Clear all the lists used to classify the tree nodes in categories
+
+   function File_Containing (E : Entity_Id) return String;
+   --  Returns the name of the backend file containing the documentation of E
 
    function Get_Name
      (E : Entity_Id; Use_Full_Name : Boolean := False) return String;
@@ -64,7 +71,12 @@ package body Docgen3.Backend.Simple is
      (System_Dir : Virtual_File;
       Kind       : Template_Kind) return Virtual_File;
 
-   function To_Destination_Name
+   function To_Html_Name
+     (Basename : Filesystem_String) return Filesystem_String;
+
+   function To_Listing_Name (Basename : String) return String;
+
+   function To_ReST_Name
      (Basename : Filesystem_String) return Filesystem_String;
 
    ----------
@@ -336,6 +348,19 @@ package body Docgen3.Backend.Simple is
       begin
          ReST_Append_Label (Printout, E);
 
+         --  Append labels to all the components. Required to facilitate
+         --  navigation from the annotated sources listing.
+
+         declare
+            Cursor : EInfo_List.Cursor;
+         begin
+            Cursor := Get_Entities (E).First;
+            while EInfo_List.Has_Element (Cursor) loop
+               ReST_Append_Label (Printout, EInfo_List.Element (Cursor));
+               EInfo_List.Next (Cursor);
+            end loop;
+         end;
+
          Append_Line (Printout, Name);
          Append_Line (Printout, Header);
          Append_Line (Printout, "");
@@ -513,6 +538,23 @@ package body Docgen3.Backend.Simple is
          if Get_Src (E) /= Null_Unbounded_String then
             ReST_Append_Label (Printout, E);
 
+            --  Append labels to all the formals. Required to facilitate
+            --  navigation from the annotated sources listing.
+
+            declare
+               Cursor : EInfo_List.Cursor;
+               Formal : Entity_Id;
+            begin
+               Cursor := Get_Entities (E).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Formal := EInfo_List.Element (Cursor);
+                  exit when Get_Kind (Formal) /= E_Formal;
+
+                  ReST_Append_Label (Printout, Formal);
+                  EInfo_List.Next (Cursor);
+               end loop;
+            end;
+
             Append_Line (Printout, Name);
             Append_Line (Printout, Header);
             Append_Line (Printout, "");
@@ -646,6 +688,59 @@ package body Docgen3.Backend.Simple is
       Entities.CPP_Constructors.Clear;
    end Clear;
 
+   ---------------------
+   -- File_Containing --
+   ---------------------
+
+   function File_Containing (E : Entity_Id) return String is
+      S : Entity_Id;
+
+   begin
+      if In_Ada_Language (E) then
+
+         --  For inherited primitives defined in other files/scopes we could
+         --  not set their scope (cf. Decorate_Record_Type).
+
+         if No (Get_Scope (E)) then
+            return "";
+
+         elsif Is_Standard_Entity (Get_Scope (E)) then
+            return To_Lower (+LL.Get_Location (E).File.Base_Name);
+
+         elsif Get_Kind (E) = E_Package then
+            return To_Lower (Get_Full_Name (E));
+
+         else
+            S := Get_Scope (E);
+
+            while Present (S)
+              and then Get_Kind (S) /= E_Package
+            loop
+               S := Get_Scope (S);
+            end loop;
+
+            if No (S)
+              or else Is_Standard_Entity (S)
+              or else Is_Standard_Entity (Get_Scope (S))
+            then
+               return To_Lower (+LL.Get_Location (E).File.Base_Name);
+            else
+               return To_Lower (Get_Full_Name (S));
+            end if;
+         end if;
+
+      --  C/C++ language. In this case we are not covering all cases since
+      --  we still don't support C/C++ annotated sources.
+
+      else
+         if Get_Kind (E) = E_Class then
+            return To_Lower (Get_Short_Name (E));
+         else
+            return To_Lower (+LL.Get_Location (E).File.Base_Name);
+         end if;
+      end if;
+   end File_Containing;
+
    --------------
    -- Finalize --
    --------------
@@ -654,13 +749,256 @@ package body Docgen3.Backend.Simple is
      (Backend : in out Simple_Backend;
       Update_Global_Index : Boolean)
    is
+      procedure Generate_Annotated_Ada_Sources;
+      --  Generate html annotated Ada sources
+
       procedure Generate_Global_Indexes;
+      --  Generate ???
+
+      function Get_Ada_Src_Files return Files_List.Vector;
+      --  Return the list of Ada source files of the project
+
+      -----------------------
+      -- Get_Ada_Src_Files --
+      -----------------------
+
+      function Get_Ada_Src_Files return Files_List.Vector is
+         File       : GNATCOLL.VFS.Virtual_File;
+         File_Index : Files_List.Cursor;
+         Lang       : Language_Access;
+         Result     : Files_List.Vector;
+
+      begin
+         File_Index := Backend.Src_Files.First;
+
+         while Files_List.Has_Element (File_Index) loop
+            File := Files_List.Element (File_Index);
+            Lang :=
+              Backend.Context.Lang_Handler.Get_Language_From_File (File);
+
+            if Lang.all in Language.Ada.Ada_Language'Class then
+               Result.Append (File);
+            end if;
+
+            Files_List.Next (File_Index);
+         end loop;
+
+         return Result;
+      end Get_Ada_Src_Files;
+
+      ------------------------------------
+      -- Generate_Annotated_Ada_Sources --
+      ------------------------------------
+
+      procedure Generate_Annotated_Ada_Sources is
+
+         procedure Process_File (File : GNATCOLL.VFS.Virtual_File);
+         procedure Process_File (File : GNATCOLL.VFS.Virtual_File) is
+            Lang : constant Language_Access :=
+              Get_Language_From_File (Backend.Context.Lang_Handler, File);
+
+            Printout : aliased Unbounded_String;
+            Buffer   : GNAT.Strings.String_Access;
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+            --  Callback for entity parser
+
+            function To_Label (S : String) return String;
+            --  Html labels generated by Sphynx replace several characters
+            --  This routine takes care of performing the same changes to
+            --  generate references to the correct labels.
+
+            function To_Label (S : String) return String is
+               Result : String := S;
+            begin
+               for J in Result'Range loop
+                  if Result (J) = '.'
+                    or Result (J) = '_'
+                  then
+                     Result (J) := '-';
+                  end if;
+               end loop;
+
+               return Result;
+            end To_Label;
+
+            --------
+            -- CB --
+            --------
+
+            Last_Idx : Natural := 0;
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               pragma Unreferenced (Partial_Entity);
+
+               --  use Basic_Types;
+            begin
+               --  Print all text between previous call and current one
+               if Last_Idx /= 0 then
+                  Append (Printout'Access,
+                    Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+
+               --  For all entities that are not identifiers, print them
+               --  directly
+
+               if Entity = Keyword_Text then
+                  Append (Printout'Access,
+                    "<b>"
+                    & Buffer (Sloc_Start.Index .. Sloc_End.Index)
+                    & "</b>");
+
+               elsif Entity = Comment_Text then
+                  Append (Printout'Access,
+                    "<i>"
+                    & Buffer (Sloc_Start.Index .. Sloc_End.Index)
+                    & "</i>");
+
+               elsif Entity not in Identifier_Entity then
+                  Append (Printout'Access,
+                    Buffer (Sloc_Start.Index .. Sloc_End.Index));
+
+               --  If entity is an identifier or a partial identifier, then try
+               --  to find its corresponding Entity_Info
+               else
+                  declare
+                     Str_Quote : constant String := """";
+                     Loc : constant General_Location :=
+                       (File   => File,
+                        Line   => Sloc_Start.Line,
+                        Column => Visible_Column_Type (Sloc_Start.Column));
+                     E   : Entity_Id;
+                  begin
+                     E := Find_Unique_Entity (Loc);
+
+                     --  Cannot generate the reference if we don't know the
+                     --  file where the entity is defined.
+
+                     if Present (E)
+                       and then File_Containing (E) /= ""
+                     then
+                        Append (Printout'Access,
+                          "<a href="
+                          & Str_Quote
+                          & File_Containing (E) & ".html"
+                          & "#"
+                          & To_Label (Get_Unique_Name (E))
+                          & Str_Quote
+                          & ">"
+                          & Buffer (Sloc_Start.Index .. Sloc_End.Index)
+                          & "</a>");
+
+                     else
+                        Append (Printout'Access,
+                          Buffer (Sloc_Start.Index .. Sloc_End.Index));
+                     end if;
+                  end;
+               end if;
+
+               return False;
+            end CB;
+
+            Filename    : constant String := "hsrc_" & (+File.Base_Name);
+            Translation : Translate_Set;
+            Tmpl        : constant Virtual_File :=
+                            Get_Template
+                              (Get_Share_Dir (Backend.Context.Kernel),
+                               Tmpl_Src_File);
+
+         begin
+            Append_Line (Printout'Access, "<!DOCTYPE html>");
+            Append_Line (Printout'Access, "<html>");
+            Append_Line (Printout'Access, "<body>");
+            Append_Line (Printout'Access, "<pre>");
+
+            Buffer := File.Read_File;
+
+            Parse_Entities
+              (Lang, Buffer.all (Buffer'First .. Buffer'Last),
+               CB'Unrestricted_Access);
+
+            Free (Buffer);
+
+            Append_Line (Printout'Access, "</pre>");
+            Append_Line (Printout'Access, "</body>");
+            Append_Line (Printout'Access, "</html>");
+
+            Insert (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_Html_Name (Filesystem_String (Filename)),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+
+            --  Generate the associated ReST file
+
+            declare
+               Html_Filename : constant String :=
+                 String (To_Html_Name (Filesystem_String (Filename)));
+               Fname  : constant String := To_Listing_Name (+File.Base_Name);
+               Header : constant String (Fname'Range) := (others => '*');
+            begin
+               Printout := Null_Unbounded_String;
+
+               Append_Line (Printout'Access, Header);
+               Append_Line (Printout'Access, Fname);
+               Append_Line (Printout'Access, Header);
+               Append_Line (Printout'Access, "");
+               Append_Line (Printout'Access, ".. raw:: html");
+               Append_Line (Printout'Access, "      :file: " & Html_Filename);
+               Append_Line (Printout'Access, "");
+
+               Insert (Translation, Assoc ("PRINTOUT", Printout));
+
+               Write_To_File
+                 (Context   => Backend.Context,
+                  Directory => Get_Doc_Directory (Backend.Context.Kernel),
+                  Filename  => To_ReST_Name (Filesystem_String (Fname)),
+                  Text =>
+                    Parse (+Tmpl.Full_Name, Translation, Cached => True));
+            end;
+         end Process_File;
+
+         Src_Files  : aliased Files_List.Vector;
+         File       : GNATCOLL.VFS.Virtual_File;
+         File_Index : Files_List.Cursor;
+      begin
+         Src_Files := Get_Ada_Src_Files;
+
+         File_Index := Src_Files.First;
+         while Files_List.Has_Element (File_Index) loop
+            File := Files_List.Element (File_Index);
+            Process_File (File);
+
+            Files_List.Next (File_Index);
+         end loop;
+      end Generate_Annotated_Ada_Sources;
 
       -----------------------------
       -- Generate_Global_Indexes --
       -----------------------------
 
       procedure Generate_Global_Indexes is
+
+         procedure Generate_Annotated_Files_Index
+           (Filename  : String;
+            Header    : String;
+            Src_Files : Files_List.Vector);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with all the annotated files correspoding to the Src_Files.
 
          procedure Generate_Entities_Index
            (Filename : String;
@@ -689,14 +1027,61 @@ package body Docgen3.Backend.Simple is
          --  Generate the ReST file Filename with this Header containing an
          --  index with the tree of dependencies of Ada tagged types.
 
-         function Get_Ada_Src_Files return Files_List.Vector;
-         --  Return the list of Ada source files of the project
-
          function Get_C_And_CPP_Src_Files return Files_List.Vector;
          --  Return the list of C & C++ source files of the project
 
          function Has_Instances (List : EInfo_List.Vector) return Boolean;
          --  Return true if List has the instance of some generic
+
+         ------------------------------------
+         -- Generate_Annotated_Files_Index --
+         ------------------------------------
+
+         procedure Generate_Annotated_Files_Index
+           (Filename  : String;
+            Header    : String;
+            Src_Files : Files_List.Vector)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
+            Printout_H  : aliased Unbounded_String;
+            Printout    : aliased Unbounded_String;
+            Translation : Translate_Set;
+            Tmpl        : constant Virtual_File :=
+                            Get_Template
+                              (Get_Share_Dir (Backend.Context.Kernel),
+                               Tmpl_Files_Index);
+            File        : GNATCOLL.VFS.Virtual_File;
+            File_Index  : Files_List.Cursor;
+
+         begin
+            Printout_H :=
+              Printout
+              & Header & ASCII.LF
+              & Header_U & ASCII.LF;
+
+            File_Index := Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+
+               Printout :=
+                 Printout
+                 & "   " & To_Listing_Name (+File.Base_Name) & ASCII.LF;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("HEADER", Printout_H));
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Annotated_Files_Index;
 
          -----------------------
          -- Generate_Entities --
@@ -720,12 +1105,6 @@ package body Docgen3.Backend.Simple is
               & Header   & ASCII.LF
               & Header_U & ASCII.LF
               & ASCII.LF;
-
-            ReST_Append_List
-              (Printout'Access,
-               Backend.Entities.Pkgs,
-               "Packages",
-               Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
@@ -753,12 +1132,6 @@ package body Docgen3.Backend.Simple is
 
             ReST_Append_List
               (Printout'Access,
-               Backend.Entities.Subprgs,
-               "Subprograms",
-               Filter => Filter);
-
-            ReST_Append_List
-              (Printout'Access,
                Backend.Entities.Tagged_Types,
                "Tagged types",
                Filter => Filter);
@@ -769,20 +1142,32 @@ package body Docgen3.Backend.Simple is
                "C++ Classes",
                Filter => Filter);
 
+            ReST_Append_List
+              (Printout'Access,
+               Backend.Entities.Subprgs,
+               "Subprograms",
+               Filter => Filter);
+
+            ReST_Append_List
+              (Printout'Access,
+               Backend.Entities.Pkgs,
+               "Packages",
+               Filter => Filter);
+
             Insert
               (Translation, Assoc ("PRINTOUT", Printout));
 
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Entities_Index;
 
-         --------------------
-         -- Generate_Files --
-         --------------------
+         --------------------------
+         -- Generate_Files_Index --
+         --------------------------
 
          procedure Generate_Files_Index
            (Filename  : String;
@@ -825,7 +1210,7 @@ package body Docgen3.Backend.Simple is
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Files_Index;
@@ -901,7 +1286,7 @@ package body Docgen3.Backend.Simple is
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Instances_Index;
@@ -1081,38 +1466,10 @@ package body Docgen3.Backend.Simple is
             Write_To_File
               (Context   => Backend.Context,
                Directory => Get_Doc_Directory (Backend.Context.Kernel),
-               Filename  => To_Destination_Name (Filesystem_String (Filename)),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Tagged_Types_Tree_Index;
-
-         -----------------------
-         -- Get_Ada_Src_Files --
-         -----------------------
-
-         function Get_Ada_Src_Files return Files_List.Vector is
-            File       : GNATCOLL.VFS.Virtual_File;
-            File_Index : Files_List.Cursor;
-            Lang       : Language_Access;
-            Result     : Files_List.Vector;
-
-         begin
-            File_Index := Backend.Src_Files.First;
-
-            while Files_List.Has_Element (File_Index) loop
-               File := Files_List.Element (File_Index);
-               Lang :=
-                 Backend.Context.Lang_Handler.Get_Language_From_File (File);
-
-               if Lang.all in Language.Ada.Ada_Language'Class then
-                  Result.Append (File);
-               end if;
-
-               Files_List.Next (File_Index);
-            end loop;
-
-            return Result;
-         end Get_Ada_Src_Files;
 
          -----------------------------
          -- Get_C_And_CPP_Src_Files --
@@ -1167,6 +1524,18 @@ package body Docgen3.Backend.Simple is
             return False;
          end Has_Instances;
 
+         -----------------------
+         -- New_Index_Section --
+         -----------------------
+
+         procedure New_Index_Section (Printout : access Unbounded_String);
+         procedure New_Index_Section (Printout : access Unbounded_String) is
+         begin
+            Append_Line (Printout, ".. toctree::");
+            Append_Line (Printout, "   :maxdepth: 1");
+            Append_Line (Printout, "");
+         end New_Index_Section;
+
          --  Local variables
 
          Printout      : aliased Unbounded_String;
@@ -1198,24 +1567,27 @@ package body Docgen3.Backend.Simple is
          Has_Ada_Files := Natural (Src_Files.Length) > 0;
 
          if Has_Ada_Files then
+            New_Index_Section (Printout'Access);
+
+            Files_Vector_Sort.Sort (Src_Files);
+
             declare
-               Filename : constant String := "ada_files_idx";
+               Filename : constant String := "ada_lst_files";
             begin
-               Files_Vector_Sort.Sort (Src_Files);
-               Generate_Files_Index
+               Generate_Annotated_Files_Index
                  (Src_Files => Src_Files,
                   Filename  => Filename,
-                  Header    => "Ada source files");
+                  Header    => "Ada annotated sources");
                Append_Line (Printout'Access, "   " & Filename);
             end;
 
             declare
-               Filename : constant String := "ada_entities_idx";
+               Filename : constant String := "ada_files_idx";
             begin
-               Generate_Entities_Index
-                 (Filename => Filename,
-                  Header   => "Ada entities",
-                  Filter   => Lang_Ada);
+               Generate_Files_Index
+                 (Src_Files => Src_Files,
+                  Filename  => Filename,
+                  Header    => "Ada entities per file");
                Append_Line (Printout'Access, "   " & Filename);
             end;
 
@@ -1227,7 +1599,7 @@ package body Docgen3.Backend.Simple is
                begin
                   Generate_Tagged_Types_Tree_Index
                     (Filename => Filename,
-                     Header   => "Ada derivations tree (tagged types)");
+                     Header   => "Ada tagged types (derivations tree)");
                   Append_Line (Printout'Access, "   " & Filename);
                end;
             end if;
@@ -1258,6 +1630,16 @@ package body Docgen3.Backend.Simple is
                end;
             end if;
 
+            declare
+               Filename : constant String := "ada_entities_idx";
+            begin
+               Generate_Entities_Index
+                 (Filename => Filename,
+                  Header   => "All Ada entities",
+                  Filter   => Lang_Ada);
+               Append_Line (Printout'Access, "   " & Filename);
+            end;
+
             Printout := Printout & ASCII.LF;
          end if;
 
@@ -1265,6 +1647,8 @@ package body Docgen3.Backend.Simple is
          Has_C_Files := Natural (Src_Files.Length) > 0;
 
          if Has_C_Files then
+            New_Index_Section (Printout'Access);
+
             declare
                Filename : constant String := "c_files_idx";
             begin
@@ -1272,7 +1656,7 @@ package body Docgen3.Backend.Simple is
                Generate_Files_Index
                  (Src_Files => Src_Files,
                   Filename  => Filename,
-                  Header    => "C & C++ source files");
+                  Header    => "C & C++ entities per file");
                Append_Line (Printout'Access, "   " & Filename);
             end;
 
@@ -1281,7 +1665,7 @@ package body Docgen3.Backend.Simple is
             begin
                Generate_Entities_Index
                  (Filename => Filename,
-                  Header   => "C & C++ entities",
+                  Header   => "All C & C++ entities",
                   Filter   => Lang_C_CPP);
                Append_Line (Printout'Access, "   " & Filename);
             end;
@@ -1290,6 +1674,8 @@ package body Docgen3.Backend.Simple is
          end if;
 
          if Has_Ada_Files and Has_C_Files then
+            New_Index_Section (Printout'Access);
+
             Src_Files := Backend.Src_Files;
             if Natural (Src_Files.Length) > 0 then
                declare
@@ -1322,7 +1708,7 @@ package body Docgen3.Backend.Simple is
          Write_To_File
            (Context   => Backend.Context,
             Directory => Get_Doc_Directory (Backend.Context.Kernel),
-            Filename  => To_Destination_Name ("index"),
+            Filename  => To_ReST_Name ("index"),
             Text =>
               Parse (+Tmpl.Full_Name, Translation, Cached => True));
 
@@ -1332,6 +1718,8 @@ package body Docgen3.Backend.Simple is
    --  Start of processing for Finalize
 
    begin
+      Generate_Annotated_Ada_Sources;
+
       if Update_Global_Index then
          Generate_Global_Indexes;
       end if;
@@ -1419,6 +1807,9 @@ package body Docgen3.Backend.Simple is
          when Tmpl_Global_Index =>
             return Create_From_Dir
               (System_Dir, "docgen3/index.tmpl");
+         when Tmpl_Src_File =>
+            return Create_From_Dir
+              (System_Dir, "docgen3/src.tmpl");
       end case;
    end Get_Template;
 
@@ -1793,28 +2184,12 @@ package body Docgen3.Backend.Simple is
          end if;
 
          declare
-            function Get_Filename return String;
-            --  Return the filename associatd with the output of this node
-
-            function Get_Filename return String is
-            begin
-               if Scope_Level = 0 then
-                  return +Tree.File.Base_Name;
-
-               elsif Get_Kind (Entity) = E_Class then
-                  return Get_Short_Name (Entity);
-
-               else
-                  return Get_Full_Name (Entity);
-               end if;
-            end Get_Filename;
-
             Doc_Dir     : constant Virtual_File :=
                             Get_Doc_Directory (Backend.Context.Kernel);
-            Filename    : constant String := To_Lower (Get_Filename);
+            Filename    : constant String := File_Containing (Entity);
             ReST_Header : constant String (Filename'Range) := (others => '*');
             ReST_File   : constant Filesystem_String :=
-                            To_Destination_Name (Filesystem_String (Filename));
+                            To_ReST_Name (Filesystem_String (Filename));
             Labels      : Unbounded_String;
             Header      : aliased Unbounded_String;
          begin
@@ -1973,15 +2348,35 @@ package body Docgen3.Backend.Simple is
       Stop (My_Delay, Generate_Doc_Time);
    end Process_File;
 
-   -------------------------
-   -- To_Destination_Name --
-   -------------------------
+   ---------------------
+   -- To_Listing_Name --
+   ---------------------
 
-   function To_Destination_Name
+   function To_Listing_Name (Basename : String) return String is
+   begin
+      return "lst_" & Basename;
+   end To_Listing_Name;
+
+   ------------------
+   -- To_Html_Name --
+   ------------------
+
+   function To_Html_Name
+     (Basename : Filesystem_String) return Filesystem_String
+   is
+   begin
+      return Basename & ".html";
+   end To_Html_Name;
+
+   ------------------
+   -- To_ReST_Name --
+   ------------------
+
+   function To_ReST_Name
      (Basename : Filesystem_String) return Filesystem_String
    is
    begin
       return Basename & ".rst";
-   end To_Destination_Name;
+   end To_ReST_Name;
 
 end Docgen3.Backend.Simple;

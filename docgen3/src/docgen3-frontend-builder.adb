@@ -1172,6 +1172,7 @@ package body Docgen3.Frontend.Builder is
                   for J in Discrim'Range loop
                      Get_Unique_Entity (Entity, Context, File, Discrim (J));
                      Set_Kind (Entity, E_Discriminant);
+                     Append_To_Scope (E, Entity);
                      Append_To_Map (Entity);
                      Append_Discriminant (E, Entity);
                      pragma Assert (Is_New (Entity));
