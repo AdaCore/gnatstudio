@@ -496,13 +496,19 @@ package body GPS.Main_Window is
       Menu_Item : Gtk_Menu_Item;
       Tool_Item : Gtk_Separator_Tool_Item;
 
-      procedure Init_Menu;
-      procedure Init_Menu is
+      procedure Init_Menu (Item : Gtk_Menu_Item);
+      --  Initialize top level menu Menu_Item
+
+      ---------------
+      -- Init_Menu --
+      ---------------
+
+      procedure Init_Menu (Item : Gtk_Menu_Item) is
       begin
-         Append (Main_Window.Menu_Bar, Menu_Item);
+         Append (Main_Window.Menu_Bar, Item);
          Gtk_New (Menu);
          Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-         Set_Submenu (Menu_Item, Menu);
+         Set_Submenu (Item, Menu);
       end Init_Menu;
 
    begin
@@ -553,22 +559,22 @@ package body GPS.Main_Window is
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_File");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Edit");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Project");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Build");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Debug");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Tools");
-      Init_Menu;
+      Init_Menu (Menu_Item);
 
       Gtk_New_With_Mnemonic (Menu_Item, -"_Window");
       Append (Main_Window.Menu_Bar, Menu_Item);
