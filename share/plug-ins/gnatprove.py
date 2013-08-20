@@ -432,7 +432,7 @@ class GNATprove_Message(GPS.Message):
             if len(self.lines) > 0:
                 self.set_subprogram(
                     lambda m : m.toggle_trace(),
-                    "gps-semantic-check",
+                    "gps-gnatprove-path",
                     "show path information")
 
     def highlight_message(self):

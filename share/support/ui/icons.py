@@ -280,6 +280,7 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-custom-build"       label="Custom build" file="svg/buildcustom.svg" />
 
     <icon id="gps-semantic-check"       label="Semantic check"  file="svg/gnatcheck.svg" />
+    <icon id="gps-gnatprove-path"       label="Show Path" file="svg/gnatprove-path.svg" />
 
     <icon id="gps-metric"             label="Metrics"  file="svg/gnatmetric.svg" />
     <icon id="gps-test"               label="Test"  file="svg/gnattest.svg" />
