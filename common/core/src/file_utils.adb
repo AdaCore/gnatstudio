@@ -199,4 +199,21 @@ package body File_Utils is
       return Result;
    end URL_List_To_Files;
 
+   --------------------
+   -- UTF8_Full_Name --
+   --------------------
+
+   function UTF8_Full_Name (File : Virtual_File) return UTF8_String is
+      Ok     : aliased Boolean;
+      Image  : constant String := Display_Full_Name (File);
+      Result : constant UTF8_String := Unknown_To_UTF8 (Image, Ok'Access);
+   begin
+      if Ok then
+         return Result;
+      else
+         --  Convert file name as it would Latin-1 string
+         return Latin_1_To_UTF8 (Image);
+      end if;
+   end UTF8_Full_Name;
+
 end File_Utils;

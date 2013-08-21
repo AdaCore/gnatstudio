@@ -83,6 +83,7 @@ with String_Utils;              use String_Utils;
 with Glib_String_Utils;         use Glib_String_Utils;
 with System;                    use System;
 with Traces;                    use Traces;
+with File_Utils;                use File_Utils;
 
 package body GUI_Utils is
 
@@ -730,7 +731,7 @@ package body GUI_Utils is
    begin
       Initialize
         (Gtk_Menu_Item (Menu_Item),
-         Krunch (Display_Full_Name (Create (+Label)), 60));
+         Krunch (UTF8_Full_Name (Create (+Label)), 60));
       Menu_Item.Full_Path := Path;
    end Initialize;
 

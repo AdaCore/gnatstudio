@@ -67,4 +67,7 @@ package UTF8_Utils is
    --  Index is set to a value greater than Str'Last if there is no more
    --  character.
 
+   function Latin_1_To_UTF8 (Input : String) return UTF8_String;
+   --  Convert Latin_1 string to UTF-8.
+
 end UTF8_Utils;

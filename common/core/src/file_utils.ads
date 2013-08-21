@@ -17,6 +17,7 @@
 
 --  This package should eventually be merged with GNAT.OS_Lib
 
+with Basic_Types;  use Basic_Types;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package File_Utils is
@@ -62,6 +63,9 @@ package File_Utils is
    function URL_List_To_Files (URL_List : String) return File_Array_Access;
    --  Convert list of URLs in form "file:///path/file" to file array.
    --  Files in list are separated by CR/LF characters.
+
+   function UTF8_Full_Name (File : Virtual_File) return UTF8_String;
+   --  Try to convert file name to utf-8 string
 
 private
 

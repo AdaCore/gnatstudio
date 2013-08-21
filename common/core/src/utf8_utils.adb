@@ -23,6 +23,7 @@ package body UTF8_Utils is
 
    Locale_To_UTF_8 : Iconv_T;
    UTF_8_To_Locale : Iconv_T;
+   Latin1_To_UTF_8 : Iconv_T;
    Is_Opened       : Boolean := False;
 
    procedure Open;
@@ -38,6 +39,8 @@ package body UTF8_Utils is
            (To_Code => UTF8, From_Code => Config.Default_Charset);
          UTF_8_To_Locale := Iconv_Open
            (From_Code => UTF8, To_Code => Config.Default_Charset);
+         Latin1_To_UTF_8 := Iconv_Open
+           (From_Code => ISO_8859_1, To_Code => UTF8);
          Is_Opened := True;
       end if;
    end Open;
@@ -155,5 +158,15 @@ package body UTF8_Utils is
             return Index + 1;
       end case;
    end UTF8_Next_Char;
+
+   ---------------------
+   -- Latin_1_To_UTF8 --
+   ---------------------
+
+   function Latin_1_To_UTF8 (Input : String) return UTF8_String is
+   begin
+      Open;
+      return Iconv (Latin1_To_UTF_8, Input);
+   end Latin_1_To_UTF8;
 
 end UTF8_Utils;
