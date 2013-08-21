@@ -865,7 +865,8 @@ package body Docgen2 is
                           (Kind => Docgen3.Short,
                            With_Comments => True),
                         Skip_C_Files    => False,
-                        Display_Time    => True));
+                        Display_Time    => True,
+                        Process_Bodies  => Options.Process_Body_Files));
          return;
       end if;
 
@@ -921,7 +922,8 @@ package body Docgen2 is
                             (Kind => Docgen3.Short,
                              With_Comments => True),
                           Skip_C_Files    => False,
-                          Display_Time    => True),
+                          Display_Time    => True,
+                          Process_Bodies  => Options.Process_Body_Files),
             Recursive => Recursive);
          return;
       end if;

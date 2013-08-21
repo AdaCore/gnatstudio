@@ -69,6 +69,7 @@ package body Docgen3.Frontend is
       In_C_Lang     : constant Boolean := not In_Ada_Lang;
 
       Buffer           : GNAT.Strings.String_Access;
+      Buffer_Body      : GNAT.Strings.String_Access;
       C_Headers_Buffer : GNAT.Strings.String_Access;
       Buffers_Swapped  : Boolean;
 
@@ -151,6 +152,25 @@ package body Docgen3.Frontend is
                    General_Xref_Database_Record (Context.Database.all)'Access,
                  Handler => Context.Lang_Handler,
                  Buffer  => Buffer,
+                 Location => LL.Get_Body_Loc (E)));
+         end if;
+
+         --  If no documentation is available in the spec of a subprogram and
+         --  we are allowed to retrieve documentation from the body then we
+         --  try retrieving it!
+
+         if Get_Doc (E) = No_Comment_Result
+           and then Context.Options.Process_Bodies
+           and then Buffer_Body /= null
+           and then LL.Is_Subprogram (E)
+           and then Present (LL.Get_Body_Loc (E))
+         then
+            Set_Doc (E,
+              Xref.Docgen.Get_Docgen_Documentation
+                (Self =>
+                   General_Xref_Database_Record (Context.Database.all)'Access,
+                 Handler  => Context.Lang_Handler,
+                 Buffer   => Buffer_Body,
                  Location => LL.Get_Body_Loc (E)));
          end if;
       end Ada_Get_Doc;
@@ -1613,6 +1633,20 @@ package body Docgen3.Frontend is
       EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
 
       Buffer := File.Read_File;
+
+      if Is_Spec_File (Context.Kernel, File)
+        and then Context.Options.Process_Bodies
+      then
+         declare
+            P_Tree : Project_Tree_Access renames Context.Kernel.Registry.Tree;
+            Body_File : constant Virtual_File := P_Tree.Other_File (File);
+
+         begin
+            if Body_File /= File then
+               Buffer_Body := Body_File.Read_File;
+            end if;
+         end;
+      end if;
 
       if False then
          if Present (File_Entities.Tree_Root) then

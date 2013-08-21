@@ -145,7 +145,8 @@ package body GPS.CLI_Scripts is
                Skip_C_Files    => Skip_C_Files,
                Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
                                    With_Comments),
-               Display_Time    => False);
+               Display_Time    => False,
+               Process_Bodies  => False);
          begin
             Docgen3.Process_Project_Files
               (Kernel    => Kernel,

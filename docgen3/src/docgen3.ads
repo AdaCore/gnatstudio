@@ -69,6 +69,9 @@ package Docgen3 is
       --  Internal flag used to enable an extra output with the time consumed
       --  by the docgen components processing files. Used to identify which
       --  components of Docgen3 must be optimized.
+
+      Process_Bodies : Boolean;
+      --  True to enable processing of body files
    end record;
 
    procedure Process_Single_File
