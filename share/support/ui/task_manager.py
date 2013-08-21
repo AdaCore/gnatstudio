@@ -10,12 +10,11 @@ from modules import Module
 from gi.repository import Gtk, GLib
 from gps_utils import make_interactive
 
-COL_LABEL = 0
-COL_PROGRESS = 1
-COL_PROGRESS_TEXT = 2
-COL_CANCEL_PIXBUF = 3
-COL_PLAYPAUSE_PIXBUF = 4
-COL_TASK_ID = 5
+COL_PROGRESS = 0
+COL_PROGRESS_TEXT = 1
+COL_CANCEL_PIXBUF = 2
+COL_PLAYPAUSE_PIXBUF = 3
+COL_TASK_ID = 4
 
 
 class Task_Manager_Widget():
@@ -25,7 +24,7 @@ class Task_Manager_Widget():
         self.store = None
         self.box = Gtk.VBox()
         scroll = Gtk.ScrolledWindow()
-        self.store = Gtk.ListStore(str, int, str, str, str, str)
+        self.store = Gtk.ListStore(int, str, str, str, str)
         self.view = Gtk.TreeView(self.store)
         self.view.set_headers_visible(False)
 
@@ -40,12 +39,8 @@ class Task_Manager_Widget():
         self.close_col.add_attribute(cell, "stock_id", COL_CANCEL_PIXBUF)
         self.view.append_column(self.close_col)
 
-        self.view.append_column(
-            Gtk.TreeViewColumn("Task", Gtk.CellRendererText(), text=COL_LABEL))
-
         col = Gtk.TreeViewColumn("Progress", Gtk.CellRendererProgress(),
             value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
-        col.set_expand(True)
         self.view.append_column(col)
 
         self.playpause_col = Gtk.TreeViewColumn("Play Pause")
@@ -133,9 +128,8 @@ class Task_Manager_Widget():
             progress_percent = (progress[0] * 100) / progress[1]
 
         self.store[iter] = [
-            task.name(),       # COL_LABEL
             progress_percent,  # COL_PROGRESS
-            "%s / %s" % (progress[0], progress[1]),  # COL_PROGRESS_TEXT
+            "%s %s / %s" % (task.name(), progress[0], progress[1]),  # COL_PROGRESS_TEXT
             "gtk-close",       # COL_CANCEL_PIXBUF
             status_icon,       # COL_PLAYPAUSE_PIXBUF
             str(id(task))]     # COL_TASK_ID
