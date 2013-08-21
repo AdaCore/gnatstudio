@@ -1142,6 +1142,7 @@ package body VCS_Module is
 
       if Show and then M.Explorer_Child = null then
          Gtk_New (Child, M.Explorer,
+                  Areas          => Central_Only,
                   Group          => Group_VCS_Explorer,
                   Module         => VCS_Explorer_Module_Id);
          M.Explorer_Child := MDI_Child (Child);
