@@ -284,7 +284,7 @@ package body Gtkada.Combo_Tool_Button is
       if B.Popup_Timeout /= No_Source_Id then
          Remove (B.Popup_Timeout);
          B.Popup_Timeout := No_Source_Id;
-         Widget_Callback.Emit_By_Name (B, Signal_Clicked);
+         --  Widget_Callback.Emit_By_Name (B, Signal_Clicked);
 
       else
          --  We already performed the long click, so don't do the default
