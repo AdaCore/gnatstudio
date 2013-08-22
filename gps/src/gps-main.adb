@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Environment_Variables;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -801,6 +802,7 @@ procedure GPS.Main is
       loop
          case Getopt ("-version -help P: -server= -hide " &
                       "-debug? -debugger= -host= -target= -load= -eval= " &
+                      "X: "  &
                       "-readonly -traceoff= -traceon= -tracefile= -tracelist",
                       Parser => Parser)
          is
@@ -938,6 +940,27 @@ procedure GPS.Main is
                   end case;
                end;
 
+            when 'X' =>
+               declare
+                  Param : constant String := Parameter (Parser);
+                  Set : Boolean := False;
+               begin
+                  for P in Param'First + 1 .. Param'Last - 1 loop
+                     if Param (P) = '=' then
+                        Set := True;
+                        Ada.Environment_Variables.Set
+                          (Name => Param (Param'First .. P - 1),
+                           Value => Param (P + 1 .. Param'Last));
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Set then
+                     raise GNAT.Command_Line.Invalid_Parameter with
+                       "Invalid value for -X, should be VAR=VALUE";
+                  end if;
+               end;
+
             when 'P' =>
                --  Although this isn't costly, we must not resolve symbolic
                --  links for project names unless Fast Project Loading mode is
@@ -999,6 +1022,8 @@ procedure GPS.Main is
         & (-"   --eval=lang:cmd     Execute a command written in the") & LF
         & (-"                       language lang. This is executed") & LF
         & (-"                       before the --load command") & LF
+        & (-"   -XVAR=VALUE         Specify a value for a scenario variable")
+        & LF
         & (-"   --readonly          Open all files in read-only mode") & LF
         & (-"   --server=port       Start GPS in server mode, opening a") & LF
         & (-"                       socket on the given port") & LF

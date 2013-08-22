@@ -42,6 +42,11 @@ NF-60-M807-066 GPS: new plug-in modules.py (2013-08-12)
   makes it possible to create new views that are saved in the desktop and
   restored when GPS is restarted.
 
+NF-60-M806-037 GPS: new command line -X (2013-08-22)
+
+  This new switch is similar to -X in gprbuid, and can be used to set the
+  value of the scenario variables found in your project.
+
 NF-60-M806-016 GPS: reorganize editor toolbars (2013-08-06)
 
   Changed the order of buttons and text in the status bar to avoid

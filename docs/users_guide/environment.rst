@@ -34,6 +34,7 @@ The command line options are::
                          language lang
      --eval=lang:file    Execute an in-line script written in the
                          language lang
+     -XVAR=VALUE         Specify a value for a scenario variable
      --readonly          Open all files in read-only mode
      --server=port       Start GPS in server mode, opening a socket on the
                          given port
