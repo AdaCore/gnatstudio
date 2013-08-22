@@ -315,7 +315,6 @@ package body Buffer_Views is
      (View  : access GObject_Record'Class;
       Event : Gdk_Event_Button) return Boolean
    is
-      Ev : constant Gdk_Event := To_Event (Event'Unrestricted_Access);
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
@@ -352,7 +351,7 @@ package body Buffer_Views is
                if Event.The_Type = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
                elsif Event.The_Type = Button_Press then
-                  Child_Drag_Begin (Child => Child, Event => Ev);
+                  Child_Drag_Begin (Child => Child, Event => Event);
                   Raise_Child (Child, Give_Focus => True);
                   Trace (Me, "Child should now have the focus");
                end if;

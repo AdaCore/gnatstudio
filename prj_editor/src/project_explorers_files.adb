@@ -195,8 +195,8 @@ package body Project_Explorers_Files is
    --  Remove the idle calls for filling the file view
 
    function File_Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Explorer : access GObject_Record'Class;
+      Event    : Gdk_Event_Button) return Boolean;
    --  Callback for the "button_press" event on the file view
 
    function File_Key_Press
@@ -847,20 +847,10 @@ package body Project_Explorers_Files is
 
       Set_Headers_Visible (Explorer.File_Tree, False);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.File_Tree,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (File_Button_Press'Access),
-         Slot_Object => Explorer,
-         After       => False);
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.File_Tree,
-         Signal_Button_Release_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (File_Button_Press'Access),
-         Slot_Object => Explorer,
-         After       => False);
+      Explorer.File_Tree.On_Button_Press_Event
+        (File_Button_Press'Access, Explorer);
+      Explorer.File_Tree.On_Button_Release_Event
+        (File_Button_Press'Access, Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
@@ -1206,8 +1196,8 @@ package body Project_Explorers_Files is
    -----------------------
 
    function File_Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (Explorer : access GObject_Record'Class;
+      Event    : Gdk_Event_Button) return Boolean
    is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin

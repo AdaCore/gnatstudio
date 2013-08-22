@@ -576,18 +576,18 @@ package body Project_Explorers_Common is
       Child     : access MDI_Explorer_Child_Record'Class;
       Tree      : access Gtk_Tree_View_Record'Class;
       Model     : Gtk_Tree_Store;
-      Event     : Gdk_Event;
+      Event     : Gdk_Event_Button;
       Add_Dummy : Boolean) return Boolean
    is
       Iter         : Gtk_Tree_Iter;
       Path         : Gtk_Tree_Path;
       Line, Column : Gint;
    begin
-      if Get_Button (Event) = 1 then
+      if Event.Button = 1 then
          Iter := Find_Iter_For_Event (Tree, Event);
 
          if Iter /= Null_Iter then
-            if Get_Event_Type (Event) /= Button_Release then
+            if Event.The_Type /= Button_Release then
                --  Set cursor to pointed position before open menu, etc
                Path := Get_Path (Model, Iter);
                Set_Cursor (Tree, Path, null, False);
@@ -601,7 +601,7 @@ package body Project_Explorers_Common is
                when Directory_Node | Project_Node | Category_Node =>
                   Cancel_Child_Drag (Child);
 
-                  if Get_Event_Type (Event) = Gdk_2button_Press then
+                  if Event.The_Type = Gdk_2button_Press then
                      declare
                         Path    : Gtk_Tree_Path;
                         Ignore  : Boolean;
@@ -627,8 +627,8 @@ package body Project_Explorers_Common is
                   return False;
 
                when File_Node =>
-                  if Get_Event_Type (Event) = Gdk_2button_Press
-                    or else Get_Event_Type (Event) = Gdk_3button_Press
+                  if Event.The_Type = Gdk_2button_Press
+                    or else Event.The_Type = Gdk_3button_Press
                   then
                      Cancel_Child_Drag (Child);
                      Open_File_Editor
@@ -638,7 +638,7 @@ package body Project_Explorers_Common is
                         Column => 0);
                      return True;
 
-                  elsif Get_Event_Type (Event) = Button_Press then
+                  elsif Event.The_Type = Button_Press then
 
                      declare
                         use type Gtk.Target_List.Gtk_Target_List;
@@ -671,7 +671,7 @@ package body Project_Explorers_Common is
                when Entity_Node =>
                   Cancel_Child_Drag (Child);
 
-                  if Get_Event_Type (Event) = Button_Release then
+                  if Event.The_Type = Button_Release then
                      Line := Get_Int (Model, Iter, Line_Column);
                      Column := Get_Int (Model, Iter, Column_Column);
 

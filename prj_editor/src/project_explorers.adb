@@ -395,8 +395,8 @@ package body Project_Explorers is
    --  Called every time a node is collapsed
 
    function Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Explorer : access GObject_Record'Class;
+      Event    : Gdk_Event_Button) return Boolean;
    --  Called every time a row is clicked
    --  ??? It is actually called twice in that case: a first time when the
    --  mouse button is pressed and a second time when it is released.
@@ -663,8 +663,8 @@ package body Project_Explorers is
    ------------------
 
    function Button_Press
-     (Explorer : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (Explorer : access GObject_Record'Class;
+      Event    : Gdk_Event_Button) return Boolean
    is
       T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
@@ -766,18 +766,8 @@ package body Project_Explorers is
          Widget_Callback.To_Marshaller (Collapse_Row_Cb'Access),
          Explorer);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.Tree,
-         Signal_Button_Release_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
-         Slot_Object => Explorer,
-         After       => False);
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.Tree,
-         Signal_Button_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
-         Slot_Object => Explorer,
-         After       => False);
+      Explorer.Tree.On_Button_Release_Event (Button_Press'Access, Explorer);
+      Explorer.Tree.On_Button_Press_Event (Button_Press'Access, Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,

@@ -239,7 +239,7 @@ package Project_Explorers_Common is
       Child     : access MDI_Explorer_Child_Record'Class;
       Tree      : access Gtk_Tree_View_Record'Class;
       Model     : Gtk_Tree_Store;
-      Event     : Gdk_Event;
+      Event     : Gdk_Event_Button;
       Add_Dummy : Boolean) return Boolean;
    --  If the Event is a button click, expand the node or jump to the
    --  location accordingly, and return whether the event should be propagated.
