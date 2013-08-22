@@ -68,6 +68,7 @@ package body Docgen3.Frontend is
                         Lang.all in Language.Ada.Ada_Language'Class;
       In_C_Lang     : constant Boolean := not In_Ada_Lang;
 
+      Body_File        : Virtual_File := No_File;
       Buffer           : GNAT.Strings.String_Access;
       Buffer_Body      : GNAT.Strings.String_Access;
       C_Headers_Buffer : GNAT.Strings.String_Access;
@@ -165,13 +166,34 @@ package body Docgen3.Frontend is
            and then (LL.Is_Subprogram (E) or else Get_Kind (E) = E_Formal)
            and then Present (LL.Get_Body_Loc (E))
          then
-            Set_Doc (E,
-              Xref.Docgen.Get_Docgen_Documentation
-                (Self =>
-                   General_Xref_Database_Record (Context.Database.all)'Access,
-                 Handler  => Context.Lang_Handler,
-                 Buffer   => Buffer_Body,
-                 Location => LL.Get_Body_Loc (E)));
+            if LL.Get_Body_Loc (E).File = Body_File then
+               Set_Doc (E,
+                 Xref.Docgen.Get_Docgen_Documentation
+                   (Self     => General_Xref_Database_Record
+                                  (Context.Database.all)'Access,
+                    Handler  => Context.Lang_Handler,
+                    Buffer   => Buffer_Body,
+                    Location => LL.Get_Body_Loc (E)));
+
+            --  Retrieve documentation located in separate compilation unit
+
+            elsif Present (LL.Get_Body_Loc (E)) then
+               declare
+                  Buffer : GNAT.Strings.String_Access;
+               begin
+                  Buffer := LL.Get_Body_Loc (E).File.Read_File;
+
+                  Set_Doc (E,
+                    Xref.Docgen.Get_Docgen_Documentation
+                      (Self     => General_Xref_Database_Record
+                                     (Context.Database.all)'Access,
+                       Handler  => Context.Lang_Handler,
+                       Buffer   => Buffer,
+                       Location => LL.Get_Body_Loc (E)));
+
+                  Free (Buffer);
+               end;
+            end if;
 
             if Get_Doc (E) /= No_Comment_Result then
                Set_Is_Doc_From_Body (E);
@@ -1643,11 +1665,14 @@ package body Docgen3.Frontend is
       then
          declare
             P_Tree : Project_Tree_Access renames Context.Kernel.Registry.Tree;
-            Body_File : constant Virtual_File := P_Tree.Other_File (File);
 
          begin
+            Body_File := P_Tree.Other_File (File);
+
             if Body_File /= File then
                Buffer_Body := Body_File.Read_File;
+            else
+               Body_File := No_File;
             end if;
          end;
       end if;
