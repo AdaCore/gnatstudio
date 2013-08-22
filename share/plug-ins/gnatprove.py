@@ -522,6 +522,8 @@ class GNATprove_Parser(tool_output.OutputParser):
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
         should_clear_messages = True
+        regex = "([^:]+):([0-9]+):([0-9]+):(.*)"
+        self.comp_msg_regex = re.compile(regex)
 
     def error_msg_from_json(self,msg):
         """Given a JSON dict that contains the data for a message, print a
@@ -562,16 +564,17 @@ class GNATprove_Parser(tool_output.OutputParser):
                 # we can print it as-is
                 GPS.Console("Messages").write(line + "\n")
                 # we try to parse a file:line:msg format
-                sl = line.split(':',3)
-                if len(sl) == 4:
-                    message_text = sl[3].replace('<','&lt;')
-                    message_text = message_text.replace('>','&gt;')
+                m = re.match(self.comp_msg_regex, line)
+                if m:
+                    fn, line, col, msg_text = m.group(1,2,3,4)
+                    msg_text = msg_text.replace('<','&lt;')
+                    msg_text = msg_text.replace('>','&gt;')
                     m = GNATprove_Message(
                             toolname,
-                            GPS.File(sl[0]),
-                            int(sl[1]),
-                            int(sl[2]),
-                            message_text,
+                            GPS.File(fn),
+                            int(line),
+                            int(col),
+                            msg_text,
                             0)
 
 def is_subp_decl_context(self):
