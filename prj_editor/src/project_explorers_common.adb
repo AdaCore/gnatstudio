@@ -660,7 +660,9 @@ package body Project_Explorers_Common is
                         Child.Dnd_From_File :=
                           Get_File (Model, Iter, File_Column);
 
-                        Child_Drag_Begin (Child, Event);
+                        Child_Drag_Begin
+                          (Child, Event,
+                           Areas => Central_Only);  --  editors
                      end if;
                      return False;
 

@@ -351,7 +351,9 @@ package body Buffer_Views is
                if Event.The_Type = Gdk_2button_Press then
                   Raise_Child (Child, Give_Focus => True);
                elsif Event.The_Type = Button_Press then
-                  Child_Drag_Begin (Child => Child, Event => Event);
+                  Child_Drag_Begin
+                    (Child => Child, Event => Event,
+                     Areas => Child.Get_Allowed_Areas);
                   Raise_Child (Child, Give_Focus => True);
                   Trace (Me, "Child should now have the focus");
                end if;
