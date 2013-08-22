@@ -6258,3 +6258,8 @@
    obj:*libiconv*
    fun:libiconv_open
 }
+{
+   Pixman on linux
+   Memcheck:Cond
+   obj:*libpixman*
+}
