@@ -994,6 +994,7 @@ package body Docgen3.Atree is
            Kind            => Kind,
            End_Of_Syntax_Scope_Loc => No_Location,
 
+           Is_Doc_From_Body  => False,
            Is_Generic_Formal => False,
            Is_Incomplete_Or_Private_Type => False,
            Is_Internal       => Is_Internal,
@@ -1060,6 +1061,15 @@ package body Docgen3.Atree is
         and then LL.Get_Body_Loc (E).Line
                    < LL.Get_Location (E).Line;
    end Is_Full_View;
+
+   ----------------------
+   -- Is_Doc_From_Body --
+   ----------------------
+
+   function Is_Doc_From_Body (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Doc_From_Body;
+   end Is_Doc_From_Body;
 
    -----------------------
    -- Is_Generic_Formal --
@@ -1378,6 +1388,15 @@ package body Docgen3.Atree is
       pragma Assert (E.Full_View_Src = Null_Unbounded_String);
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
+
+   --------------------------
+   -- Set_Is_Doc_From_Body --
+   --------------------------
+
+   procedure Set_Is_Doc_From_Body (E : Entity_Id) is
+   begin
+      E.Is_Doc_From_Body := True;
+   end Set_Is_Doc_From_Body;
 
    ---------------------------
    -- Set_Is_Generic_Formal --
@@ -2312,6 +2331,10 @@ package body Docgen3.Atree is
 
       if With_Doc then
          if E.Doc /= No_Comment_Result then
+            if E.Is_Doc_From_Body then
+               Append_Line ("Is_Doc_From_Body");
+            end if;
+
             Append_Line ("Doc.Line:" & E.Doc.Start_Line'Img);
             Append_Line ("Doc.Text: " & To_String (E.Doc.Text));
          end if;

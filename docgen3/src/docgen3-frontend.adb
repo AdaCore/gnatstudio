@@ -162,7 +162,7 @@ package body Docgen3.Frontend is
          if Get_Doc (E) = No_Comment_Result
            and then Context.Options.Process_Bodies
            and then Buffer_Body /= null
-           and then LL.Is_Subprogram (E)
+           and then (LL.Is_Subprogram (E) or else Get_Kind (E) = E_Formal)
            and then Present (LL.Get_Body_Loc (E))
          then
             Set_Doc (E,
@@ -172,6 +172,10 @@ package body Docgen3.Frontend is
                  Handler  => Context.Lang_Handler,
                  Buffer   => Buffer_Body,
                  Location => LL.Get_Body_Loc (E)));
+
+            if Get_Doc (E) /= No_Comment_Result then
+               Set_Is_Doc_From_Body (E);
+            end if;
          end if;
       end Ada_Get_Doc;
 
@@ -1665,6 +1669,7 @@ package body Docgen3.Frontend is
          end if;
       end if;
 
+      Free (Buffer_Body);
       Free (Buffer);
    end Add_Documentation_From_Sources;
 
@@ -2095,8 +2100,21 @@ package body Docgen3.Frontend is
                --  located before the location of the next parameter.
 
                else
-                  Param_End_Line :=
-                    LL.Get_Location (EInfo_List.Element (Cursor)).Line;
+                  --  Subprogram documentation retrieved from the body
+
+                  if Is_Doc_From_Body (Param) then
+                     pragma Assert
+                       (Present
+                          (LL.Get_Body_Loc (EInfo_List.Element (Cursor))));
+                     Param_End_Line :=
+                       LL.Get_Body_Loc (EInfo_List.Element (Cursor)).Line;
+
+                  --  Subprogram documentation retrieved from the spec
+
+                  else
+                     Param_End_Line :=
+                       LL.Get_Location (EInfo_List.Element (Cursor)).Line;
+                  end if;
                end if;
 
                if Get_Doc (Param).Start_Line < Param_End_Line then
