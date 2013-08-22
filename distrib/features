@@ -33,7 +33,7 @@ NF-60-M817-003 GPS: window title now lists the base name first (2013-08-19)
 
 NF-60-M816-002 GPS: display text only in the toolbar (2013-08-19)
 
-  There is no a new preference to set the toolbar style to "text only".
+  There is a new preference to set the toolbar style to "text only".
 
 NF-60-M807-066 GPS: new plug-in modules.py (2013-08-12)
 
