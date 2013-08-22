@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M821-028: GPS: do not use default project when projet not found
+  Problem:    When the project specified with -P on the command line is not
+              found, GPS would default to loading a default project (or if the
+              current directory contains only one, it would load that one),
+              instead of displaying an error message.
+  Workaround: None needed, although it is useful to check the name of the
+              projet that was loaded in the GPS title bar.
+
 - M808-007: GPS: parameters not aligned in tooltips
   Problem:    When you display the tooltip for a subprogram with optional
               parameters, the alignment is broken because the lines for the

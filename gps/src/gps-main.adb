@@ -1716,10 +1716,21 @@ procedure GPS.Main is
            and then not Is_Regular_File (Project_Name)
          then
             --  We can finally search on ADA_PROJECT_PATH, which is now known
-            Project_Name := Locate_Regular_File
-              (Base_Name (Project_Name),
-               Get_Registry (GPS_Main.Kernel)
-                 .Environment.Predefined_Project_Path);
+
+            declare
+               P : constant Virtual_File := Locate_Regular_File
+                 (Base_Name (Project_Name),
+                  Get_Registry (GPS_Main.Kernel)
+                  .Environment.Predefined_Project_Path);
+            begin
+               if P /= No_File then
+                  Project_Name := P;
+               else
+                  --  Keep the user project, which will display an error in
+                  --  GPS.
+                  null;
+               end if;
+            end;
          end if;
 
          if Project_Name = No_File then
