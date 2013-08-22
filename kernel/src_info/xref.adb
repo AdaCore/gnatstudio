@@ -3787,11 +3787,8 @@ package body Xref is
          --  desktop for instance).
          --  ??? We really should not be doing anything until the project has
          --  been computed.
-         Trace (Me, "Set up xref database: :memory:");
-         if Self.Xref = null then
-            Trace (Me, "Set up xref database: :memory:");
-         end if;
 
+         Trace (Me, "Set up xref database: :memory:");
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
       else
          --  When loading a new project, we need to reset the cache containing

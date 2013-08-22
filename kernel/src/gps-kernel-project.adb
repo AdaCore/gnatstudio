@@ -846,9 +846,11 @@ package body GPS.Kernel.Project is
 
       elsif not Same_Project then
          Kernel.Insert (-"Cannot find project file "
-                        & Display_Full_Name (Project),
+                        & Display_Full_Name (Project) & ASCII.LF,
                         Mode => Error, Add_LF => False);
          Ignore := Load_Desktop (Kernel);
+
+         Xref.Project_Changed (Kernel.Databases);
       end if;
    end Load_Project;
 
