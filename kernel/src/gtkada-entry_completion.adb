@@ -589,6 +589,7 @@ package body Gtkada.Entry_Completion is
       Box.Pack_Start (Self.Settings, Expand => False);
 
       Gtk_New (Self.Settings_Case_Sensitive, -"Case Sensitive");
+      Self.Settings_Case_Sensitive.Set_Name ("global-search-case-sensitive");
       Associate (Get_History (Kernel).all,
                  Name & "-case_sensitive",
                  Self.Settings_Case_Sensitive,
@@ -596,6 +597,7 @@ package body Gtkada.Entry_Completion is
       Self.Settings.Pack_Start (Self.Settings_Case_Sensitive, Expand => False);
 
       Gtk_New (Self.Settings_Whole_Word, -"Whole Word");
+      Self.Settings_Whole_Word.Set_Name ("global-search-whole-word");
       Associate (Get_History (Kernel).all,
                  Name & "-whole_word",
                  Self.Settings_Whole_Word,
