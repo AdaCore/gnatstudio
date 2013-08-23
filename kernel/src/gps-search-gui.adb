@@ -1506,7 +1506,7 @@ package body GPS.Search.GUI is
           Kernel              => Kernel,
           Name                => "global_search",
           Completion_In_Popup => True,
-          Case_Sensitive      => True,
+          Case_Sensitive      => False,
           Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
 
