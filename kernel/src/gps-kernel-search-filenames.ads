@@ -47,28 +47,51 @@ package GPS.Kernel.Search.Filenames is
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
 private
+   type Search_Step is
+     (User_File,
+      Project_Sources,
+      Runtime_Sources,
+      Project_Files,
+      Other_Files);
+
+   type Search_Data (Step : Search_Step := Project_Sources) is record
+      case Step is
+         when User_File =>
+            null;
+         when Project_Sources =>
+            Index : Integer;  --  Last file tested in .Files
+         when Runtime_Sources =>
+            Runtime_Index : Integer; --  Last runtime file tested
+         when Project_Files =>
+            Iter : GNATCOLL.Projects.Project_Iterator;
+         when Other_Files =>
+            Files_In_Dir : GNATCOLL.VFS.File_Array_Access;
+            Dirs_Index : Integer;  --  Current dir being tested
+            File_Index : Integer;  --  Last file tested
+      end case;
+   end record;
+
    type Filenames_Search_Provider is new Kernel_Search_Provider with record
       Pattern : GPS.Search.Search_Pattern_Access;
       Pattern_Needs_Free : Boolean := False;
 
       Line, Column : Natural := 0;  --  from pattern
       Match_Directory : Boolean;  --  whether to match directory part
-      Files   : GNATCOLL.VFS.File_Array_Access;
-      Index   : Integer;  --  last file tested
+      Files       : GNATCOLL.VFS.File_Array_Access;
+      Runtime     : GNATCOLL.VFS.File_Array_Access;
+      Source_Dirs : GNATCOLL.VFS.File_Array_Access;
+
+      Data : Search_Data;
 
       Seen : GPS.Kernel.File_Sets.Set;
       --  Files already returned, to avoid duplicates (in particular the
       --  list of runtime files could include duplicates)
-
-      Runtime : GNATCOLL.VFS.File_Array_Access;
-      Runtime_Index : Natural;  --  last runtime file tested
    end record;
 
    type Filenames_Search_Result is new Kernel_Search_Result with record
       File : GNATCOLL.VFS.Virtual_File;
       Line, Column : Natural := 0;
    end record;
-
    overriding procedure Execute
      (Self       : not null access Filenames_Search_Result;
       Give_Focus : Boolean);
