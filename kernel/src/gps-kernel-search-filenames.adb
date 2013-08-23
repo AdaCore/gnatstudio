@@ -479,7 +479,7 @@ package body GPS.Kernel.Search.Filenames is
          UTF8     => UTF8,
          UTF8_Len => Length,
          Props    => Props);
-      if UTF8 /= null then
+      if UTF8 /= Gtkada.Types.Null_Ptr then
          Tmp := new String'(Value (UTF8, size_t (Length)));
          Free (UTF8);
       end if;
