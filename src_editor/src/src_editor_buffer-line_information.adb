@@ -164,6 +164,11 @@ package body Src_Editor_Buffer.Line_Information is
       C : Message_List.Cursor;
       use Message_List;
    begin
+      if Data = null then
+         --  Defensive code, this should not happen
+         return False;
+      end if;
+
       for K in Data'Range loop
          C := Data (K).Messages.First;
 
