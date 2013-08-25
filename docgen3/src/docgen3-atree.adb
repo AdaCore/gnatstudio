@@ -1323,9 +1323,6 @@ package body Docgen3.Atree is
 
    procedure Set_Doc (E : Entity_Id; Value : Comment_Result) is
    begin
-      pragma Assert
-        (E.Doc = No_Comment_Result
-           or else Value = No_Comment_Result);
       E.Doc := Value;
    end Set_Doc;
 

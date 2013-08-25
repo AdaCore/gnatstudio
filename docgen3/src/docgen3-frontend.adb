@@ -23,6 +23,8 @@ with Docgen3.Utils;            use Docgen3.Utils;
 with Docgen3.Errout;           use Docgen3.Errout;
 with Docgen3.Frontend.Builder; use Docgen3.Frontend.Builder;
 with Docgen3.Time;             use Docgen3.Time;
+with GNAT.Expect;
+with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;
 with Language;                 use Language;
@@ -85,6 +87,9 @@ package body Docgen3.Frontend is
 
       procedure CPP_Get_Source (E : Entity_Id);
       --  Retrieve the C/C++ source associated with E
+
+      procedure Filter_Doc (E : Entity_Id);
+      --  Filter the documentation using the user-defined filter
 
       procedure Previous_Word
         (Index           : Natural;
@@ -1518,6 +1523,80 @@ package body Docgen3.Frontend is
          end if;
       end CPP_Get_Source;
 
+      ----------------
+      -- Filter_Doc --
+      ----------------
+
+      procedure Filter_Doc (E : Entity_Id) is
+         use type GNAT.Expect.Pattern_Matcher_Access;
+
+      begin
+         if Get_Doc (E) = No_Comment_Result
+           or else Context.Options.Comments_Filter = null
+         then
+            return;
+         end if;
+
+         declare
+            Doc     : Comment_Result := Get_Doc (E);
+            S       : constant String := To_String (Doc.Text);
+            Matches : Match_Array (0 .. 0);
+            New_Doc : Unbounded_String;
+            F       : Natural;
+            L       : Natural;
+
+         begin
+            L := S'First;
+
+            while L <= S'Last loop
+
+               --  Identify the next comment line
+
+               F := L;
+
+               while L <= S'Last and then S (L) /= ASCII.LF loop
+                  L := L + 1;
+               end loop;
+
+               --  Apply to it the user-defined filter
+
+               declare
+                  Line : constant String := S (F .. L - 1);
+
+               begin
+                  Match
+                    (Context.Options.Comments_Filter.all, Line, Matches);
+
+                  --  If the line has the pattern then remove from it
+                  --  the matching pattern and append it to the new
+                  --  block of comments
+
+                  if Matches (0) /= No_Match then
+                     declare
+                        F1 : constant Natural := Matches (0).First;
+                        L1 : constant Natural := Matches (0).Last;
+
+                        Filtered_Line : constant String :=
+                          Line (Line'First .. F1 - 1) &
+                          Line (L1 + 1 .. Line'Last);
+                     begin
+                        Append (New_Doc, Filtered_Line & ASCII.LF);
+                     end;
+                  end if;
+               end;
+
+               --  Skip line terminators
+
+               while L <= S'Last and then S (L) = ASCII.LF loop
+                  L := L + 1;
+               end loop;
+            end loop;
+
+            Doc.Text := New_Doc;
+            Set_Doc (E, Doc);
+         end;
+      end Filter_Doc;
+
       -------------------
       -- Previous_Word --
       -------------------
@@ -1692,6 +1771,8 @@ package body Docgen3.Frontend is
             For_All (File_Entities.All_Entities, CPP_Get_Doc'Access);
             For_All (File_Entities.All_Entities, CPP_Get_Source'Access);
          end if;
+
+         For_All (File_Entities.All_Entities, Filter_Doc'Access);
       end if;
 
       Free (Buffer_Body);
