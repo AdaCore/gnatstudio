@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
 with Gtk.Editable;
@@ -55,14 +56,20 @@ package body Generic_Views is
    --  Return the index of the separator that right aligns items, or -1 if
    --  there is none.
 
+   function Report_Filter_Changed_Idle
+     (View : Abstract_View_Access) return Boolean;
    procedure Report_Filter_Changed (View : access GObject_Record'Class);
-   --  Report a change in the filter panel
+   --  Report a change in the filter panel. This is done in an idle so that
+   --  if the user types fast we do not refresh too much.
 
    procedure Get_Filter_Preferred_Width
      (Widget       : System.Address;
       Minimum_Size : out Glib.Gint;
       Natural_Size : out Glib.Gint);
    pragma Convention (C, Get_Filter_Preferred_Width);
+
+   package View_Sources is new Glib.Main.Generic_Sources
+     (Abstract_View_Access);
 
    Filter_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
@@ -93,6 +100,26 @@ package body Generic_Views is
       View.Kernel := Kernel_Handle (Kernel);
    end Set_Kernel;
 
+   --------------------------------
+   -- Report_Filter_Changed_Idle --
+   --------------------------------
+
+   function Report_Filter_Changed_Idle
+     (View : Abstract_View_Access) return Boolean
+   is
+   begin
+      View.Filter_Changed
+        (Pattern => View.Filter.Pattern.Get_Text,
+         Options => (Regexp =>
+                         View.Filter.Regexp /= null
+                     and then View.Filter.Regexp.Get_Active,
+                     Negate => View.Filter.Negate /= null
+                     and then View.Filter.Negate.Get_Active));
+
+      View.Filter.Timeout := Glib.Main.No_Source_Id;
+      return False;
+   end Report_Filter_Changed_Idle;
+
    ---------------------------
    -- Report_Filter_Changed --
    ---------------------------
@@ -100,15 +127,11 @@ package body Generic_Views is
    procedure Report_Filter_Changed (View : access GObject_Record'Class) is
       V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
-      if V.Filter /= null then
-         V.Filter_Changed
-           (Pattern => V.Filter.Pattern.Get_Text,
-            Options => (Regexp =>
-                          V.Filter.Regexp /= null
-                          and then V.Filter.Regexp.Get_Active,
-                        Negate =>
-                          V.Filter.Negate /= null
-                          and then V.Filter.Negate.Get_Active));
+      if V.Filter /= null
+        and then V.Filter.Timeout = Glib.Main.No_Source_Id
+      then
+         V.Filter.Timeout := View_Sources.Idle_Add
+           (Report_Filter_Changed_Idle'Access, Data => V);
       end if;
    end Report_Filter_Changed;
 

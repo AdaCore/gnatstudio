@@ -22,6 +22,7 @@
 
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
+with Glib.Main;
 with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
@@ -293,6 +294,7 @@ private
       Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Regexp  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
       Negate  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
+      Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
      end record;
    type Filter_Panel is access all Filter_Panel_Record'Class;
 
