@@ -1927,7 +1927,7 @@ package body Src_Editor_View is
 
       if Gint (X) <= View.Speed_Bar_Width
         and then
-          ((Event_Type = Button_Press and then Get_Button (Event) = 1)
+          ((Event_Type = Button_Release and then Get_Button (Event) = 1)
            or else Event_Type = Motion_Notify)
       then
          --  This is  a click or a drag on the speed bar
