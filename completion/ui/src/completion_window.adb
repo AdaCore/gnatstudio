@@ -550,7 +550,6 @@ package body Completion_Window is
               and then Explorer.Completion_Window.Volatile
             then
                Remove (Explorer.Idle_Computation);
-               Explorer.Completion_Window.In_Destruction := True;
                Explorer.Completion_Window.Delete;
                return False;
             end if;
