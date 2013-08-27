@@ -1936,7 +1936,6 @@ package body Ada_Analyzer is
          --  Set Prec so that Pop will use the proper index/column
          Prec := Prev_Char (P);
          Pop (Tokens);
-         Prec := Prec_Saved;
 
          if Callback /= null then
             Start_Of_Line := Line_Start (Buffer, Prec);
@@ -1947,6 +1946,8 @@ package body Ada_Analyzer is
                (Line, Prec - Start_Of_Line + 1, Prec),
                False);
          end if;
+
+         Prec := Prec_Saved;
       end Finish_Aspect_Clause;
 
       -----------------------
@@ -1996,6 +1997,14 @@ package body Ada_Analyzer is
          Temp.Sloc.Column := Prec - Start_Of_Line + 1;
          Temp.Sloc.Index  := Prec;
          Temp.Visibility  := Top_Token.Visibility_Section;
+
+         if Reserved = Tok_Is and then Aspect_Clause then
+            Finish_Aspect_Clause (Prec, Line_Count, Done => Finish);
+
+            if Finish then
+               return;
+            end if;
+         end if;
 
          if Callback /= null then
             Finish := Call_Callback
@@ -2472,14 +2481,6 @@ package body Ada_Analyzer is
 
                      Top_Token.In_Declaration := True;
                end case;
-
-               if Aspect_Clause then
-                  Finish_Aspect_Clause (Prec, Line_Count, Done => Finish);
-
-                  if Finish then
-                     return;
-                  end if;
-               end if;
 
             elsif Reserved = Tok_Begin then
                if Top_Token.In_Declaration then
