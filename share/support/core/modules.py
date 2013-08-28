@@ -37,6 +37,7 @@ Here is an example of use for this package::
 
 
 import GPS
+import gps_utils
 from gi.repository import GLib
 
 
