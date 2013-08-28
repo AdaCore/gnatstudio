@@ -40,28 +40,6 @@
 }
 */
 
-/* Uncomment this if you want to use the Adwaita style for notebooks (a color
- * border at the top of the active tab), but use a different color for the
- * notebook that currently has the keyboard focus.
- */
-/*
-@define-color gps_active_tab red;
-.notebook.mdifocused tab:active{
-   background-image: linear-gradient(to bottom,
-                                     @gps_active_tab,
-                                     @gps_active_tab 2px,
-                                     @button_gradient_color_a 3px,
-                                     @theme_base_color);
-}
-.notebook.mdifocused tab.top:active {
-   border-image-source: -gtk-gradient(linear,
-                                      left top, left bottom,
-                                      from(@gps_active_tab),
-                                      to (@borders));
-}
-*/
-
-
 /* When the MDI tabs are displayed on the left or on the right, we do not
  * want an extra space at the top, before the first tab
  */

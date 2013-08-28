@@ -135,6 +135,9 @@ package body GPS.Main_Window is
 
    Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
 
+   Theme_Specific_Css_Provider : Gtk_Css_Provider;
+   --  Provider for the gps-<theme>.css file
+
    Tooltips_Background_Provider : Gtk.Css_Provider.Gtk_Css_Provider;
    --  Global variable used to override the background color for tooltips
 
@@ -368,6 +371,7 @@ package body GPS.Main_Window is
       pragma Unreferenced (Dead);
       Theme : Theme_Descr;
       Err   : aliased GError;
+      Theme_Css : Virtual_File;
 
    begin
       if P = null
@@ -389,6 +393,33 @@ package body GPS.Main_Window is
            (Gtk.Settings.Get_Default,
             Gtk.Settings.Gtk_Application_Prefer_Dark_Theme_Property,
             Theme.Dark);
+
+         if Theme_Specific_Css_Provider = null then
+            Gtk_New (Theme_Specific_Css_Provider);
+            Gtk.Style_Context.Add_Provider_For_Screen
+              (Get_Default_Screen (Get_Default),
+               +Theme_Specific_Css_Provider,
+               Priority => Gtk.Style_Provider.Priority_Settings);
+         end if;
+
+         Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir
+           ("gps-" & (+Theme.Name.all) & ".css");
+         if not Theme_Css.Is_Regular_File then
+            Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
+            Theme_Css := Kernel.Get_Share_Dir.Create_From_Dir
+              ("gps-" & (+Theme.Name.all) & ".css");
+         end if;
+
+         if not Theme_Css.Is_Regular_File then
+            Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
+         elsif not Theme_Specific_Css_Provider.Load_From_Path
+           (+Theme_Css.Full_Name.all, Err'Access)
+         then
+            Trace (Me, "Error loading " & Theme_Css.Display_Full_Name & ": "
+                   & Get_Message (Err));
+         else
+            Trace (Me, "Loaded " & Theme_Css.Display_Full_Name);
+         end if;
       end if;
 
       if P = null
