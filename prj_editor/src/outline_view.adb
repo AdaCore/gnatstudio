@@ -74,6 +74,7 @@ with Language.Tree.Database; use Language.Tree.Database;
 with Outline_View.Model; use Outline_View.Model;
 
 package body Outline_View is
+
    type Outline_View_Module_Record is new Module_ID_Record with record
       Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
    end record;
@@ -604,7 +605,7 @@ package body Outline_View is
                Goto_Entity (Get_Entity (Model, Iter, Body_Pixbuf_Column),
                             Is_Spec => False);
             else
-               Editor.Cursor_Goto (Location);
+               Editor.Cursor_Goto (Location, Raise_View => True);
                Select_Text (Buffer, Location, End_Location);
             end if;
          end;
@@ -633,6 +634,7 @@ package body Outline_View is
             else
                Goto_Entity (Get_Entity (Model, Iter), Is_Spec => True);
             end if;
+            return True;
          end if;
       end if;
       return False;
