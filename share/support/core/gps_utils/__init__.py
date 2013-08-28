@@ -26,7 +26,10 @@ GPS.MDI.POSITION_RIGHT = 4
 
 def get_focused_widget():
     toplevel = GPS.MDI.current().pywidget().get_toplevel()
-    return toplevel.get_focus()
+    if isinstance(toplevel, Gtk.Window):
+        return toplevel.get_focus()
+    else:
+        return toplevel
 
 
 def filter_text_actions(context):
