@@ -65,6 +65,7 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Search;                 use GPS.Search;
@@ -644,7 +645,7 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
       Self.GEntry.On_Focus_Out_Event (On_Focus_Out'Access, Self);
 
-      Self.GEntry.Grab_Focus;
+      Grab_Toplevel_Focus (Get_MDI (Kernel), Self.GEntry);
 
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
@@ -1287,7 +1288,7 @@ package body Gtkada.Entry_Completion is
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard
       if not Self.GEntry.Has_Focus then
-         Self.GEntry.Grab_Focus;
+         Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.GEntry);
       end if;
    end Popup;
 

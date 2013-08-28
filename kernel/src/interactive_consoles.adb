@@ -1023,7 +1023,7 @@ package body Interactive_Consoles is
             --  Preserve the focus on the console after an interactive
             --  execution.
 
-            Grab_Focus (Console.View);
+            Grab_Toplevel_Focus (Get_MDI (Console.Kernel), Console.View);
 
             --  Output is done via the scripting language already
             return "";
@@ -1903,7 +1903,7 @@ package body Interactive_Consoles is
          End_Mark := Create_Mark (Console.Buffer, "", Last_Iter);
 
          Console.Waiting_For_Input := True;
-         Grab_Focus (Get_View (Console));
+         Grab_Toplevel_Focus (Get_MDI (Console.Kernel), Get_View (Console));
          Gtk.Main.Main;
          Console.Waiting_For_Input := False;
 

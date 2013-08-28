@@ -74,6 +74,7 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -1919,5 +1920,24 @@ package body GUI_Utils is
          Model.Remove (Iter);
       end loop;
    end Remove_Child_Nodes;
+
+   -------------------------
+   -- Grab_Toplevel_Focus --
+   -------------------------
+
+   procedure Grab_Toplevel_Focus
+     (MDI    : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Win : Gtk_Widget;
+   begin
+      MDI.Set_Focus_Child (Widget);
+
+      Win := Widget.Get_Toplevel;
+      if Win /= null and then Win.all in Gtk_Window_Record'Class then
+         Present (Gtk_Window (Win));
+      end if;
+      Widget.Grab_Focus;
+   end Grab_Toplevel_Focus;
 
 end GUI_Utils;

@@ -54,6 +54,7 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtk.Window;
+with Gtkada.MDI;
 with String_List_Utils;
 
 package GUI_Utils is
@@ -86,6 +87,18 @@ package GUI_Utils is
    --  Darken or lighten a color depending on its current luminosity. The goal
    --  is to obtain a contrast between the two
    --  The returned color has been allocated
+
+   -----------
+   -- Focus --
+   -----------
+
+   procedure Grab_Toplevel_Focus
+     (MDI    : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Grab the focus on the widget and its toplevel window.
+   --  Simply caliing Grab_Focus would not change the toplevel window, so the
+   --  actual keyboard focus would not be given directly to the widget until
+   --  the user explicitly changes the active toplevel window.
 
    -------------
    -- Buttons --

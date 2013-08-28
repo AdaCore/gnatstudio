@@ -451,22 +451,6 @@ package body Src_Editor_Box is
       Get_Buffer_Factory (Kernel).Get (Filename).Current_View.Center;
    end Go_To_Closest_Match;
 
-   ----------------
-   -- Grab_Focus --
-   ----------------
-
-   overriding procedure Grab_Focus
-     (Editor : access Source_Editor_Box_Record)
-   is
-      Child : constant MDI_Child := Find_Child (Editor.Kernel, Editor);
-   begin
-      if Child /= null then
-         Raise_Child (Child);
-      end if;
-
-      Grab_Focus (Editor.Source_View);
-   end Grab_Focus;
-
    -----------------
    -- To_Box_Line --
    -----------------
@@ -1943,7 +1927,7 @@ package body Src_Editor_Box is
 
       if Is_Valid_Position (Editor.Source_Buffer, Editable_Line, Column) then
          if Force_Focus then
-            Grab_Focus (Editor);
+            Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor);
          end if;
 
          Set_Cursor_Position
@@ -1966,7 +1950,7 @@ package body Src_Editor_Box is
          --  ??? Consider going to the last column instead of the first
 
          if Force_Focus then
-            Grab_Focus (Editor);
+            Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor);
          end if;
 
          Set_Cursor_Position

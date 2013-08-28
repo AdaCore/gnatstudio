@@ -188,9 +188,6 @@ package Src_Editor_Box is
    --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).
 
-   overriding procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
-   --  Set the focus on the source view
-
    procedure Update_Subprogram_Name
      (Box : not null access Source_Editor_Box_Record'Class);
    --  Update the name of the current subprogram

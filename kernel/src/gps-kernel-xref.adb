@@ -24,6 +24,7 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                     use GPS.Kernel;
@@ -889,7 +890,7 @@ package body GPS.Kernel.Xref is
 
       if Count > 0 then
          Grab_Default (OK_Button);
-         Grab_Focus (OK_Button);
+         Grab_Toplevel_Focus (Get_MDI (Self.Kernel), OK_Button);
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK then
