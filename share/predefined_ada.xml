@@ -2979,9 +2979,9 @@ storage order as the parent type.
 
 If a component of S has itself a record or array type, then it shall
 also have a `Scalar_Storage_Order' attribute definition clause. In
-addition, if the component does not start on a byte boundary, then the
-scalar storage order specified for S and for the nested component type
-shall be identical.
+addition, if the component is a packed array, or does not start on a
+byte boundary, then the scalar storage order specified for S and for
+the nested component type shall be identical.
 
 If S appears as the type of a record or array component, the
 enclosing record or array shall also have a `Scalar_Storage_Order'
