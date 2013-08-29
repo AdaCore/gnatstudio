@@ -1,10 +1,5 @@
 """
-This file provides support for using the GNATprove tool.
-
-GNATprove is a tool to apply automatic program proof to Ada programs.
-This plugin allows the user to perform a proof run and integrate its output
-into GPS.
-See menu Prove.
+This file provides support for using the SPARK 2014 toolset.
 """
 
 ############################################################################
@@ -82,7 +77,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
 xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
-    <doc_path>share/doc/gnatprove</doc_path>
+    <doc_path>share/doc/spark</doc_path>
 
     <documentation_file>
       <name>html/ug/index.html</name>
@@ -332,7 +327,7 @@ xml_gnatprove = """<?xml version="1.0"?>
 
 # constants that are required by the plug-in
 toolname             = "gnatprove"
-prefix               = "Prove"
+prefix               = "SPARK"
 menu_prefix          = "/" + prefix
 prove_all            = "Prove All"
 prove_root_project   = "Prove Root Project"
