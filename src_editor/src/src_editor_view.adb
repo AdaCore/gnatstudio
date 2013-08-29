@@ -2108,9 +2108,7 @@ package body Src_Editor_View is
       use Interfaces.C.Strings;
    begin
       if not Active (Testsuite_Handle) then
-         if not (View.Get_Realized)
-           or else not View.Get_Editable
-         then
+         if not (View.Get_Realized) then
             return True;
          end if;
       end if;
@@ -2123,21 +2121,25 @@ package body Src_Editor_View is
 
       if Key /= GDK_Control_L and then Key /= GDK_Control_R then
          Ignore := View.Position_Set_Explicitely (Reset => True);
-      end if;
+      else
+         --  If we are not pressing the Ctrl key, check whether we are
+         --  pressing a graphical key
 
-      if not Get_Editable (View) then
-         declare
-            Str : constant String := Interfaces.C.Strings.Value
-              (Event.Key.String);
-         begin
-            if Str'Length >= 1 then
-               Insert
-                 (View.Kernel,
-                  -"Warning: attempting to edit a read-only editor.",
-                  Mode => Error);
-            end if;
-         end;
-         return False;
+         if not Get_Editable (View) then
+            declare
+               Str : constant String := Interfaces.C.Strings.Value
+                 (Event.Key.String);
+            begin
+               if Str'Length >= 1 then
+                  Insert
+                    (View.Kernel,
+                     -"Warning: attempting to edit a read-only editor.",
+                     Mode => Error);
+
+                  return False;
+               end if;
+            end;
+         end if;
       end if;
 
       --  Special case for cancelling selection
