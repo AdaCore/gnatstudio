@@ -109,9 +109,10 @@ package body GUI_Utils is
    package Tree_Column_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Model_Column);
 
-   package Widget_Sources is new Glib.Main.Generic_Sources (Gtk_Widget);
-
+--     package Widget_Sources is new Glib.Main.Generic_Sources (Gtk_Widget);
+--
    function Idle_Grab_Focus (Widget : Gtk_Widget) return Boolean;
+   pragma Unreferenced (Idle_Grab_Focus);
    --  Give the focus to widget (called from an idle loop)
 
    procedure Toggle_Callback
@@ -1965,11 +1966,18 @@ package body GUI_Utils is
       --  getting a grab_focus(null) later. In particular, pressing shift-F3
       --  in a floating window would not properly give the focus to the
       --  omni-search.
+      --  ??? This seems to work on simple examples (floating editor, floating
+      --  Locations view, so the scenario above needs to be refined.
+      --  Perhaps we need to understand who emits tha
 
       if not Widget.Has_Focus then
          Widget.Grab_Focus;
-         Id := Widget_Sources.Idle_Add
-           (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
+
+         --  ??? The code below is not complete: we need to catch the case
+         --  when the widget is destroyed before the idle callback is
+         --  called, and unregister the idle to avoid the dangling pointer.
+--           Id := Widget_Sources.Idle_Add
+--             (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
       end if;
    end Grab_Toplevel_Focus;
 

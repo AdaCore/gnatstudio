@@ -1210,7 +1210,13 @@ package body Src_Editor_Module is
                Interactive   => not Force,
                Always_Reload => Force);
 
+            --  An editor exists: raise the child and Present its
+            --  toplevel window. This is useful for instance when
+            --  invoking the "Open From Project" omnisearch from a
+            --  floating window.
+
             Raise_Child (Child2, Focus);
+            Present (Gtk_Window (Child2.Get_Toplevel));
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
             Jump_To_Location;
