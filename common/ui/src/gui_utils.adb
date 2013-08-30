@@ -28,6 +28,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Glib.Main;
 with Glib.Values;               use Glib.Values;
 
 with Gdk;                       use Gdk;
@@ -107,6 +108,11 @@ package body GUI_Utils is
      (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
    package Tree_Column_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Model_Column);
+
+   package Widget_Sources is new Glib.Main.Generic_Sources (Gtk_Widget);
+
+   function Idle_Grab_Focus (Widget : Gtk_Widget) return Boolean;
+   --  Give the focus to widget (called from an idle loop)
 
    procedure Toggle_Callback
      (Render : access GObject_Record'Class;
@@ -1921,6 +1927,16 @@ package body GUI_Utils is
       end loop;
    end Remove_Child_Nodes;
 
+   ---------------------
+   -- Idle_Grab_Focus --
+   ---------------------
+
+   function Idle_Grab_Focus (Widget : Gtk_Widget) return Boolean is
+   begin
+      Grab_Focus (Widget);
+      return False;
+   end Idle_Grab_Focus;
+
    -------------------------
    -- Grab_Toplevel_Focus --
    -------------------------
@@ -1930,14 +1946,28 @@ package body GUI_Utils is
       Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Win : Gtk_Widget;
+      Id : Glib.Main.G_Source_Id;
+      pragma Unreferenced (Id);
    begin
       MDI.Set_Focus_Child (Widget);
 
       Win := Widget.Get_Toplevel;
       if Win /= null and then Win.all in Gtk_Window_Record'Class then
-         Present (Gtk_Window (Win));
+         Gtk_Window (Win).Present;
+      else
+         Win := MDI.Get_Toplevel;
+         if Win /= null and then Win.all in Gtk_Window_Record'Class then
+            Gtk_Window (Win).Present;
+         end if;
       end if;
-      Widget.Grab_Focus;
+
+      --  Grab the focus in an idle, since otherwise it seems that we are
+      --  getting a grab_focus(null) later. In particular, pressing shift-F3
+      --  in a floating window would not properly give the focus to the
+      --  omni-search.
+
+      Id := Widget_Sources.Idle_Add
+        (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
    end Grab_Toplevel_Focus;
 
 end GUI_Utils;
