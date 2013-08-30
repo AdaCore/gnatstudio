@@ -1952,12 +1952,22 @@ package body GUI_Utils is
    begin
       MDI.Set_Focus_Child (Widget);
 
-      Win := Widget.Get_Toplevel;
-      if Win /= null and then Win.all in Gtk_Window_Record'Class then
+      --  Do not Present a window if it hasn't been realized yet:
+      --  this would give the window its default size as defined in
+      --  GPS.Main_Window rather than the one coming from the desktop
+      --  saved in the MDI.
+
+      if Win /= null
+        and then Win.Get_Realized
+        and then Win.all in Gtk_Window_Record'Class
+      then
          Gtk_Window (Win).Present;
       else
          Win := MDI.Get_Toplevel;
-         if Win /= null and then Win.all in Gtk_Window_Record'Class then
+         if Win /= null
+           and then Win.Get_Realized
+           and then Win.all in Gtk_Window_Record'Class
+         then
             Gtk_Window (Win).Present;
          end if;
       end if;
