@@ -60,6 +60,7 @@ with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with System;
 with System.Address_Image;
@@ -523,10 +524,10 @@ package body GPS.Search.GUI is
    ---------------
 
    procedure On_Escape (Self : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Self);
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
    begin
       if Module.Previous_Focus /= null then
-         Module.Previous_Focus.Grab_Focus;
+         Grab_Toplevel_Focus (Get_MDI (S.Get_Kernel), Module.Previous_Focus);
       end if;
 
       Reset;
@@ -551,7 +552,7 @@ package body GPS.Search.GUI is
       --  that of the global search entry.
 
       if Module.Previous_Focus /= null then
-         Module.Previous_Focus.Grab_Focus;
+         Grab_Toplevel_Focus (Get_MDI (S.Get_Kernel), Module.Previous_Focus);
       end if;
 
       Reset;

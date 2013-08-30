@@ -1967,6 +1967,7 @@ package body GUI_Utils is
       --  omni-search.
 
       if not Widget.Has_Focus then
+         Widget.Grab_Focus;
          Id := Widget_Sources.Idle_Add
            (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
       end if;
