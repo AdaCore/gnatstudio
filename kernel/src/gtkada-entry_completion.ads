@@ -109,10 +109,11 @@ private
    type History_Key_Access is access all Histories.History_Key;
 
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
-      GEntry           : Gtkada.Search_Entry.Gtkada_Search_Entry;
-      Completion       : GPS.Search.Search_Provider_Access;
-      Pattern          : GPS.Search.Search_Pattern_Access;
-      Kernel           : GPS.Kernel.Kernel_Handle;
+      GEntry             : Gtkada.Search_Entry.Gtkada_Search_Entry;
+      Completion         : GPS.Search.Search_Provider_Access;
+      Default_Completion : GPS.Search.Search_Provider_Access;
+      Pattern            : GPS.Search.Search_Pattern_Access;
+      Kernel             : GPS.Kernel.Kernel_Handle;
 
       Idle             : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Need_Clear       : Boolean := False;

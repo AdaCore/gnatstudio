@@ -456,6 +456,7 @@ package body Gtkada.Entry_Completion is
       Gtk.Box.Initialize_Vbox (Self, Homogeneous => False);
 
       Self.Completion := GPS.Search.Search_Provider_Access (Completion);
+      Self.Default_Completion := Self.Completion;
       Self.Kernel := Kernel_Handle (Kernel);
       Self.Name := new History_Key'(Name);
 
@@ -771,7 +772,15 @@ package body Gtkada.Entry_Completion is
 
                case Get_Provider_Column_Role (M, Iter) is
                   when Role_Provider =>
-                     Self.Set_Completion (Result.Provider);
+                     if Result.Provider = Self.Completion then
+                        --  Back to all providers
+                        Self.Set_Completion (Self.Default_Completion);
+
+                     else
+                        --  Restrict to just one provider
+                        Self.Set_Completion (Result.Provider);
+                     end if;
+
                      On_Entry_Changed (Self);
 
                   when Role_To_Locations =>
