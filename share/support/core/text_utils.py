@@ -117,10 +117,10 @@ def toggle_editor_wrapping():
     v = buffer.current_view()
     from pygps import get_widgets_by_type
     text_view = get_widgets_by_type(Gtk.TextView, v.pywidget())[0]
-    if text_view.get_wrap_mode() == Gtk.WRAP_NONE:
-        text_view.set_wrap_mode(Gtk.WRAP_WORD)
+    if text_view.get_wrap_mode() == Gtk.WrapMode(0):
+        text_view.set_wrap_mode(Gtk.WrapMode(2))
     else:
-        text_view.set_wrap_mode(Gtk.WRAP_NONE)
+        text_view.set_wrap_mode(Gtk.WrapMode(0))
 
 
 @interactive ("Editor", in_ada_file, name="subprogram box")
