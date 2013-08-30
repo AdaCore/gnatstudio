@@ -10,6 +10,26 @@ import GPS, os_utils, os.path, tool_output, re, gps_utils, json
 
 xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
+    <action name="Examine All Action" category="GNATprove" output="none">
+       <shell lang="python">GPS.BuildTarget("Examine All").execute(synchronous=False)</shell>
+    </action>
+    <action name="Examine Root Project Action" category="GNATprove" output="none">
+       <shell lang="python">GPS.BuildTarget("Examine Root Project").execute(synchronous=False)</shell>
+    </action>
+    <action name="Examine File Action" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">GPS.BuildTarget("Examine File").execute(synchronous=False)</shell>
+    </action>
+    <action name="Examine Subprogram Action" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">spark2014.on_examine_subp(GPS.current_context())</shell>
+    </action>
     <action name="Prove All Action" category="GNATprove" output="none">
        <shell lang="python">GPS.BuildTarget("Prove All").execute(synchronous=False)</shell>
     </action>
@@ -23,6 +43,13 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        </filter_and>
        <shell lang="python">GPS.BuildTarget("Prove File").execute(synchronous=False)</shell>
     </action>
+    <action name="Prove Subprogram Action" category="GNATprove" output="none">
+       <filter_and>
+          <filter language="Ada" />
+          <filter id="Source editor" />
+       </filter_and>
+       <shell lang="python">spark2014.on_prove_subp(GPS.current_context())</shell>
+    </action>
     <action name="Prove Line Action" category="GNATprove" output="none">
        <filter_and>
           <filter language="Ada" />
@@ -30,22 +57,27 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        </filter_and>
        <shell lang="python">GPS.BuildTarget("Prove Line").execute(synchronous=False)</shell>
     </action>
+    <action name="Show Report" category="GNATprove" output="none">
+        <shell lang="python">spark2014.on_show_report(GPS.current_context())</shell>
+    </action>
     <action name="Clean Proofs Action" category="GNATprove" output="none">
         <shell lang="python">GPS.BuildTarget("Clean Proofs").execute(synchronous=False)</shell>
     </action>
-    <action name="Prove Subprogram Action" category="GNATprove" output="none">
-       <filter_and>
-          <filter language="Ada" />
-          <filter id="Source editor" />
-       </filter_and>
-       <shell lang="python">gnatprove.on_prove_subp(GPS.current_context())</shell>
-    </action>
     <action name="Remove Editor Highlighting Action" category="GNATprove" output="none">
-       <shell lang="python">gnatprove.on_clear_highlighting(GPS.current_context())</shell>
+       <shell lang="python">spark2014.on_clear_highlighting(GPS.current_context())</shell>
     </action>
 
     <submenu before="Window">
-      <Title>_Prove</Title>
+      <Title>_SPARK</Title>
+        <menu action="Examine All Action">
+          <Title>Examine All</Title>
+        </menu>
+        <menu action="Examine Root Project Action">
+          <Title>Examine Root Project</Title>
+        </menu>
+        <menu action="Examine File Action">
+          <Title>Examine File</Title>
+        </menu>
         <menu action="Prove All Action">
           <Title>Prove All</Title>
         </menu>
@@ -63,14 +95,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         </menu>
     </submenu>
 
-    <contextual action="Prove File Action">
-      <Title>Prove/Prove File</Title>
+    <contextual action="Examine File Action">
+      <Title>SPARK/Examine File</Title>
     </contextual>
-    <contextual action="Prove Line Action">
-      <Title>Prove/Prove Line</Title>
+    <contextual action="Examine Subprogram Action">
+      <Title>SPARK/Examine Subprogram</Title>
+    </contextual>
+    <contextual action="Prove File Action">
+      <Title>SPARK/Prove File</Title>
     </contextual>
     <contextual action="Prove Subprogram Action">
-      <Title>Prove/Prove Subprogram</Title>
+      <Title>SPARK/Prove Subprogram</Title>
+    </contextual>
+    <contextual action="Prove Line Action">
+      <Title>SPARK/Prove Line</Title>
     </contextual>
   </GNATPROVE>
 """
@@ -102,10 +140,10 @@ xml_gnatprove = """<?xml version="1.0"?>
                tip="Main mode of formal verification" >
             <combo-entry label="check" value="check"
                          tip="Check SPARK restrictions for code where SPARK_Mode=On"/>
-            <combo-entry label="prove" value="prove"
-                         tip="Prove subprogram contracts and absence of run-time errors"/>
             <combo-entry label="flow" value="flow"
                          tip="Prove object initialization, globals and depends contracts"/>
+            <combo-entry label="prove" value="prove"
+                         tip="Prove subprogram contracts and absence of run-time errors"/>
             <combo-entry label="all" value="all"
                          tip="Activates all modes"/>
          </combo>
@@ -141,27 +179,33 @@ xml_gnatprove = """<?xml version="1.0"?>
       </switches>
     </tool>
 
-    <target-model name="gnatprove">
-       <description>Target model for GNATprove</description>
+    <target-model name="gnatprove-examine">
+       <description>Target model for GNATprove Examine commands</description>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=flow</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="3">
+         <title column="1" line="1" >General</title>
+         <check label="Ignore cached results" switch="-f" column="1"
+                tip="All actions are redone entirely, including compilation and proof" />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved" />
+       </switches>
+    </target-model>
+
+    <target-model name="gnatprove-prove">
+       <description>Target model for GNATprove Prove commands</description>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
        </command-line>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="2" lines="4">
          <title column="1" line="1" >General</title>
-         <combo label="Mode" switch="--mode" noswitch="prove"
-               separator="=" column="1"
-               tip="Main mode of formal verification" >
-            <combo-entry label="check" value="check"
-                         tip="Check SPARK restrictions for code where SPARK_Mode=On"/>
-            <combo-entry label="prove" value="prove"
-                         tip="Prove subprogram contracts and absence of run-time errors"/>
-            <combo-entry label="flow" value="flow"
-                         tip="Prove object initialization, globals and depends contracts"/>
-            <combo-entry label="all" value="all"
-                         tip="Activates all modes"/>
-         </combo>
          <check label="Ignore cached results" switch="-f" column="1"
                 tip="All actions are redone entirely, including compilation and proof" />
          <check label="Report checks proved" switch="--report=all" column="1"
@@ -185,7 +229,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </switches>
     </target-model>
 
-    <target model="gnatprove" name="Prove All" category="GNATprove">
+    <target model="gnatprove-examine" name="Examine All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -193,6 +237,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
        </command-line>
@@ -205,7 +250,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </output-parsers>
     </target>
 
-    <target model="gnatprove" name="Prove Root Project" category="GNATprove">
+    <target model="gnatprove-examine" name="Examine Root Project" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -213,6 +258,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -224,7 +270,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </output-parsers>
     </target>
 
-    <target model="gnatprove" name="Prove File" category="GNATprove">
+    <target model="gnatprove-examine" name="Examine File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -232,6 +278,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
@@ -245,7 +292,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </output-parsers>
     </target>
 
-    <target model="gnatprove" name="Prove Subprogram" category="GNATprove">
+    <target model="gnatprove-examine" name="Examine Subprogram" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -253,6 +300,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -264,7 +312,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </output-parsers>
     </target>
 
-    <target model="gnatprove" name="Prove Line" category="GNATprove">
+    <target model="gnatprove-prove" name="Prove All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -272,6 +320,90 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Root Project" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove File" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Subprogram" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-prove" name="Prove Line" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
@@ -327,13 +459,20 @@ xml_gnatprove = """<?xml version="1.0"?>
 
 # constants that are required by the plug-in
 toolname             = "gnatprove"
+obj_subdir_name      = toolname
+report_file_name     = toolname + ".out"
 prefix               = "SPARK"
 menu_prefix          = "/" + prefix
+examine_all          = "Examine All"
+examine_root_project = "Examine Root Project"
+examine_file         = "Examine File"
+examine_subp         = "Examine Subprogram"
 prove_all            = "Prove All"
 prove_root_project   = "Prove Root Project"
 prove_file           = "Prove File"
-prove_line           = "Prove Line"
 prove_subp           = "Prove Subprogram"
+prove_line           = "Prove Line"
+show_report          = "Show Report"
 clean_up             = "Clean Proofs"
 clear_highlighting   = "Remove Editor Highlighting"
 
@@ -412,7 +551,7 @@ class GNATprove_Message(GPS.Message):
         self.lines = []
         if tracefile != "":
             objdirs = GPS.Project.root().object_dirs()
-            self.tracefile = os.path.join(objdirs[0], "gnatprove", tracefile)
+            self.tracefile = os.path.join(objdirs[0], obj_subdir_name, tracefile)
         else:
             self.tracefile = ""
         self.is_info_message = (text.find("info:") != -1)
@@ -483,7 +622,6 @@ class GNATprove_Message(GPS.Message):
                 sl = line.split(':')
                 if len(sl) >= 2:
                     self.lines.append(GPS.FileLocation(GPS.File(sl[0]),int(sl[1]), 1))
-
 
     def show_trace(self):
         """show the trace of the message. If necessary, read the associated
@@ -608,28 +746,40 @@ def is_msg_context(self):
     return isinstance(self, GPS.FileContext)
 
 # It's more convenient to define these callbacks outside of the plugin class
-def generic_on_prove(target):
+def generic_on_analyze(target):
     global should_clear_messages
     should_clear_messages = True
     GPS.BuildTarget(target).execute(synchronous=False)
 
+def on_examine_all(self):
+    generic_on_analyze(examine_all)
+
+def on_examine_root_project(self):
+    generic_on_analyze(examine_root_project)
+
+def on_examine_file(self):
+    generic_on_analyze(examine_file)
+
 def on_prove_all(self):
-    generic_on_prove(prove_all)
+    generic_on_analyze(prove_all)
 
 def on_prove_root_project(self):
-    generic_on_prove(prove_root_project)
+    generic_on_analyze(prove_root_project)
 
 def on_prove_file(self):
-    generic_on_prove(prove_file)
+    generic_on_analyze(prove_file)
 
 def on_prove_line(self):
-    generic_on_prove(prove_line)
+    generic_on_analyze(prove_line)
+
+def on_show_report(self):
+    gnatprove_plug.show_report()
 
 def on_clear_highlighting(self):
     gnatprove_plug.clear_highlighting()
 
 def on_clean_up(self):
-    generic_on_prove(clean_up)
+    generic_on_analyze(clean_up)
 
 def mk_loc_string (sloc):
     locstring = os.path.basename(sloc.file().name()) + ":" + str(sloc.line())
@@ -681,29 +831,52 @@ def compute_subp_sloc(self):
     else:
         return None
 
-def on_prove_subp(self):
-    """execute the "prove subprogram" action on the the given subprogram entity
+def generic_action_on_subp(self,action):
+    """execute the action on the the given subprogram entity
     """
-    # The argument --limit-subp is not defined in the prove_subp build target,
-    # because we have no means of designating the proper location at that point.
-    # A mild consequence is that --limit-subp does not appear in the editable
-    # box shown to the user, even if appears in the uneditable argument list
-    # displayed below it.
+    # The argument --limit-subp is not defined in the examine_subp/prove_subp
+    # build targets, because we have no means of designating the proper
+    # location at that point.  A mild consequence is that --limit-subp does not
+    # appear in the editable box shown to the user, even if appears in the
+    # uneditable argument list displayed below it.
     global should_clear_messages
     should_clear_messages = True
     loc = compute_subp_sloc(self)
     if loc:
-        target = GPS.BuildTarget(prove_subp)
+        target = GPS.BuildTarget(action)
         target.execute(
             extra_args="--limit-subp="+mk_loc_string (loc),
             synchronous=False)
+
+def on_examine_subp(self):
+    """execute the "examine subprogram" action on the the given subprogram
+       entity
+    """
+    generic_action_on_subp(self,examine_subp)
+
+def on_prove_subp(self):
+    """execute the "prove subprogram" action on the the given subprogram entity
+    """
+    generic_action_on_subp(self,prove_subp)
 
 class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
     def __init__(self):
         GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
-        GPS.Menu.create(menu_prefix + "/" + prove_all, on_prove_all)
+        GPS.Menu.create(
+            menu_prefix + "/" + examine_all,
+            on_examine_all)
+        GPS.Menu.create(
+            menu_prefix + "/" + examine_root_project,
+            on_examine_root_project)
+        GPS.Menu.create(
+            menu_prefix + "/" + examine_file,
+            on_examine_file,
+            filter = gps_utils.in_ada_file)
+        GPS.Menu.create(
+            menu_prefix + "/" + prove_all,
+            on_prove_all)
         GPS.Menu.create(
             menu_prefix + "/" + prove_root_project,
             on_prove_root_project)
@@ -712,11 +885,20 @@ class GNATProve_Plugin:
             on_prove_file,
             filter = gps_utils.in_ada_file)
         GPS.Menu.create(
+            menu_prefix + "/" + show_report,
+            on_show_report)
+        GPS.Menu.create(
             menu_prefix + "/" + clean_up,
             on_clean_up)
         GPS.Menu.create(
             menu_prefix + "/" + clear_highlighting,
             on_clear_highlighting)
+        GPS.Contextual(prefix + "/" + examine_file).create(
+            on_activate = on_examine_file,
+            filter = gps_utils.in_ada_file)
+        GPS.Contextual(prefix + "/" + examine_subp).create(
+            on_activate = on_examine_subp,
+            filter = gps_utils.in_ada_file)
         GPS.Contextual(prefix + "/" + prove_file).create(
             on_activate = on_prove_file,
             filter = gps_utils.in_ada_file)
@@ -739,6 +921,14 @@ class GNATProve_Plugin:
     def clear_messages(self):
         """reset the list of messages"""
         self.messages = []
+
+    def show_report(self):
+        """show report produced in gnatprove/gnatprove.out"""
+        objdirs = GPS.Project.root().object_dirs()
+        report_file = os.path.join(objdirs[0], obj_subdir_name, report_file_name)
+        buf = GPS.EditorBuffer.get(GPS.File(report_file))
+        v = buf.current_view()
+        GPS.MDI.get_by_child(v).raise_window()
 
     def clear_highlighting(self):
         """delete the traces for all registered messages"""
@@ -768,3 +958,12 @@ gnatprove = os_utils.locate_exec_on_path(toolname)
 
 if gnatprove:
     gnatprove_plug = GNATProve_Plugin()
+
+# Check for SPARK 2005 toolchain: spark
+spark2005 = os_utils.locate_exec_on_path ("spark")
+
+# Rename menu into "SPARK 2014" if there is already a menu "SPARK" for SPARK
+# 2005 toolset.
+
+if spark2005:
+    prefix = "SPARK 2014"
