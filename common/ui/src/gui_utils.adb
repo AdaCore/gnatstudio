@@ -1966,8 +1966,10 @@ package body GUI_Utils is
       --  in a floating window would not properly give the focus to the
       --  omni-search.
 
-      Id := Widget_Sources.Idle_Add
-        (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
+      if not Widget.Has_Focus then
+         Id := Widget_Sources.Idle_Add
+           (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
+      end if;
    end Grab_Toplevel_Focus;
 
 end GUI_Utils;
