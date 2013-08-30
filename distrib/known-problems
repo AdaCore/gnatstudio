@@ -35,6 +35,12 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               of GNATbench.
   Workaround: Restart Eclipse and retry the operation.
 
+- M716-011: GB: Toolchain changes lost after restart
+  Problem:    After a GNAT-PRO upgrade, updating the toolchains list using the
+              Scan button is lost after GNATbench restart.
+  Workaround: Remove the upgraded toolchain, restart GNATbench, ask for a
+              toolchains scan and finally restart again GNATbench.
+
 - M712-034: GPS: can't open view or editor from another perspective
   Problem:    If you open an editor in the Debug perspective, then move it
               in a place such that it is no longer visible when you switch to
