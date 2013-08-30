@@ -57,7 +57,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        </filter_and>
        <shell lang="python">GPS.BuildTarget("Prove Line").execute(synchronous=False)</shell>
     </action>
-    <action name="Show Report" category="GNATprove" output="none">
+    <action name="Show Report Action" category="GNATprove" output="none">
         <shell lang="python">spark2014.on_show_report(GPS.current_context())</shell>
     </action>
     <action name="Clean Proofs Action" category="GNATprove" output="none">
@@ -86,6 +86,9 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         </menu>
         <menu action="Prove File Action">
           <Title>Prove File</Title>
+        </menu>
+        <menu action="Show Report Action">
+          <Title>Show Report</Title>
         </menu>
         <menu action="Clean Proofs Action">
           <Title>Clean Proofs</Title>
