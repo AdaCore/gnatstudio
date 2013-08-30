@@ -330,12 +330,12 @@ package Debugger is
    procedure Found_Frame_Info
      (Debugger    : access Debugger_Root;
       Str         : String;
-      First, Last : out Natural;
+      Frame       : out Unbounded_String;
       Message     : out Frame_Info_Type);
    --  Search for a callstack frame indication in Str.
-   --  First is set to 0 if no such frame is found, and to the beginning of
-   --  the substring otherwise. Last is set to the end of the substring if
-   --  there is one.
+   --  Message is set to No_Debug_Info if no frame info found, and Frame
+   --  to Null_Unbounded_String.
+   --  Otherwise Frame contains the string corresponding to the frame number.
 
    function Source_Files_List
      (Debugger : access Debugger_Root) return GNAT.Strings.String_List;

@@ -1785,6 +1785,7 @@ package body Debugger.Gdb_MI is
          --  Parse "^done,lines=[{pc="0x...",line=".."},...]"
 
          Result := False;
+         Lines := null;
 
          --  Skip first five tokens (^done,lines=)
 
@@ -1815,15 +1816,17 @@ package body Debugger.Gdb_MI is
       end Parse_List_Lines;
 
    begin
-      Result := False;
+      Result := True;
 
       --  We cache the result of -symbol-list-lines for the last file queried,
       --  since Lines_With_Code is typically called for a line subset rather
       --  than the whole file.
+      --  Note that we always set Result to True since -symbol-list-lines
+      --  is always supported. If it returns an error, it typically means
+      --  that no info is available for this file, so no point in trying
+      --  again later.
 
-      if Debugger.Cached_File = File then
-         Result := True;
-      else
+      if Debugger.Cached_File /= File then
          declare
             --  Send the gdb command to get the list of lines with code.
             --  The call to "Format_Pathname" is to work a bug in some versions
@@ -1834,28 +1837,30 @@ package body Debugger.Gdb_MI is
                Mode => Internal);
             Tokens : Token_List := Build_Tokens (S);
             Cached_Lines : Line_Array_Access;
+            Success : Boolean;
 
          begin
-            Parse_List_Lines (Tokens, Cached_Lines, Result);
+            Parse_List_Lines (Tokens, Cached_Lines, Success);
             Clear_Token_List (Tokens);
+            Free (Debugger.Cached_Lines);
 
-            if Result then
-               Free (Debugger.Cached_Lines);
+            if Success then
                Debugger.Cached_Lines := Cached_Lines;
-               Debugger.Cached_File := File;
+            else
+               Debugger.Cached_Lines := new Line_Array'(1 .. 0 => False);
             end if;
+
+            Debugger.Cached_File := File;
          end;
       end if;
 
-      if Result then
-         for Val in Lines'Range loop
-            if Val in Debugger.Cached_Lines'Range then
-               Lines (Val) := Debugger.Cached_Lines (Val);
-            else
-               Lines (Val) := False;
-            end if;
-         end loop;
-      end if;
+      for Val in Lines'Range loop
+         if Val in Debugger.Cached_Lines'Range then
+            Lines (Val) := Debugger.Cached_Lines (Val);
+         else
+            Lines (Val) := False;
+         end if;
+      end loop;
    end Lines_With_Code;
 
    --------------------------
@@ -1949,17 +1954,44 @@ package body Debugger.Gdb_MI is
    ----------------------
 
    overriding procedure Found_Frame_Info
-     (Debugger    : access Gdb_MI_Debugger;
-      Str         : String;
-      First, Last : out Natural;
-      Message     : out Frame_Info_Type)
+     (Debugger : access Gdb_MI_Debugger;
+      Str      : String;
+      Frame    : out Unbounded_String;
+      Message  : out Frame_Info_Type)
    is
-      pragma Unreferenced (Debugger, Str);
+      pragma Unreferenced (Str);
+
    begin
-      --  ???? implement
-      First := 0;
-      Last  := 0;
-      Message := Location_Not_Found;
+      --  ??? Call Debugger.Gdb.Found_Frame_Info first and if no result
+      --  then do the following:
+
+      declare
+         use Token_Lists;
+         S : constant String := Send
+           (Debugger, "-stack-info-frame", Mode => Internal);
+         Tokens : Token_List := Build_Tokens (S);
+         C      : Token_Lists.Cursor;
+
+      begin
+         C := Find_Identifier (First (Tokens), "level");
+
+         if C = No_Element then
+            Message := Location_Not_Found;
+            Frame   := Null_Unbounded_String;
+         else
+            Next (C, 2);
+            Set_Unbounded_String (Frame, Element (C).Text.all);
+            C := Find_Identifier (C, "line");
+
+            if C = No_Element then
+               Message := No_Debug_Info;
+            else
+               Message := Location_Found;
+            end if;
+         end if;
+
+         Clear_Token_List (Tokens);
+      end;
    end Found_Frame_Info;
 
    -----------------------

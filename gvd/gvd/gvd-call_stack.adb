@@ -56,6 +56,7 @@ with GVD_Module;             use GVD_Module;
 with Process_Proxies;        use Process_Proxies;
 with Traces;                 use Traces;
 with XML_Utils;              use XML_Utils;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package body GVD.Call_Stack is
 
@@ -385,9 +386,10 @@ package body GVD.Call_Stack is
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
    is
       S           : Call_Stack;
-      First, Last : Natural := 0;
+      Frame       : Unbounded_String;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
       Path        : Gtk_Tree_Path;
+
    begin
       if Process.Stack /= null then
          S := Call_Stack (Process.Stack);
@@ -396,11 +398,11 @@ package body GVD.Call_Stack is
            (Process.Debugger,
             Process.Current_Output
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
-            First, Last, Frame_Info);
+            Frame, Frame_Info);
 
          if Frame_Info = Location_Found then
             S.Block := True;
-            Gtk_New (Path, Process.Current_Output (First .. Last));
+            Gtk_New (Path, To_String (Frame));
             Select_Path (Get_Selection (S.Tree), Path);
             Path_Free (Path);
             S.Block := False;

@@ -2684,10 +2684,10 @@ package body Debugger.Gdb is
    ----------------------
 
    overriding procedure Found_Frame_Info
-     (Debugger    : access Gdb_Debugger;
-      Str         : String;
-      First, Last : out Natural;
-      Message     : out Frame_Info_Type)
+     (Debugger : access Gdb_Debugger;
+      Str      : String;
+      Frame    : out Unbounded_String;
+      Message  : out Frame_Info_Type)
    is
       pragma Unreferenced (Debugger);
 
@@ -2696,9 +2696,10 @@ package body Debugger.Gdb is
       Match (Frame_Pattern, Str, Matched);
 
       if Matched (1) /= No_Match then
-         First := Matched (1).First;
-         Last  := Matched (1).Last;
+         Set_Unbounded_String
+           (Frame, Str (Matched (1).First .. Matched (1).Last));
          Match (Frame_Pattern_With_File, Str, Matched);
+
          if Matched (1) /= No_Match then
             Message := Location_Found;
          else
@@ -2706,8 +2707,7 @@ package body Debugger.Gdb is
          end if;
 
       else
-         First := 0;
-         Last  := 0;
+         Frame := Null_Unbounded_String;
          Message := Location_Not_Found;
       end if;
    end Found_Frame_Info;

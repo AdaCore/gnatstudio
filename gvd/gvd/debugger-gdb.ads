@@ -78,10 +78,10 @@ package Debugger.Gdb is
       Addr        : out GVD.Types.Address_Type);
 
    overriding procedure Found_Frame_Info
-     (Debugger    : access Gdb_Debugger;
-      Str         : String;
-      First, Last : out Natural;
-      Message     : out Frame_Info_Type);
+     (Debugger : access Gdb_Debugger;
+      Str      : String;
+      Frame    : out Unbounded_String;
+      Message  : out Frame_Info_Type);
 
    overriding function Source_Files_List
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List;

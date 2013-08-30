@@ -333,13 +333,12 @@ package body Debugger is
    procedure Found_Frame_Info
      (Debugger    : access Debugger_Root;
       Str         : String;
-      First, Last : out Natural;
+      Frame       : out Unbounded_String;
       Message     : out Frame_Info_Type)
    is
       pragma Unreferenced (Debugger, Str);
    begin
-      First := 0;
-      Last  := 0;
+      Frame := Null_Unbounded_String;
       Message := Location_Not_Found;
    end Found_Frame_Info;
 
