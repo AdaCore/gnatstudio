@@ -314,7 +314,7 @@ package body Breakpoints_Pkg is
       Pack_Start (Breakpoints.Vbox8, Breakpoints.Hbox14, False, True, 0);
 
       Gtk_New_With_Entry (Breakpoints.Exception_Name);
-      Breakpoints.Exception_Name.Append_Text ("All exceptions");
+      Breakpoints.Exception_Name.Append_Text ("All Ada exceptions");
       Breakpoints.Exception_Name.Set_Active (0);
       Pack_Start
         (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);

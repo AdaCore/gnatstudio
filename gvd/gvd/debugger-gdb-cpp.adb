@@ -177,21 +177,6 @@ package body Debugger.Gdb.Cpp is
       return Record_Field_Name (Cpp_Lang, Name, Field);
    end Record_Field_Name;
 
-   ---------------------
-   -- Break Exception --
-   ---------------------
-
-   overriding function Break_Exception
-     (Debugger  : access Gdb_Cpp_Language;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String
-   is
-      pragma Unreferenced (Debugger, Unhandled, Name);
-   begin
-      return (if Temporary then "t" else "") & "catch throw";
-   end Break_Exception;
-
    ----------------
    -- Parse_Type --
    ----------------

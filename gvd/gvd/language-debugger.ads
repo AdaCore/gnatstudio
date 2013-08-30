@@ -128,19 +128,6 @@ package Language.Debugger is
       return Language_Debugger_Context is abstract;
    --  Return the language/Debugger context.
 
-   ------------------------
-   -- Exception Handling --
-   ------------------------
-
-   function Break_Exception
-     (Debugger  : access Language_Debugger;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String;
-   --  Return the command used in the current debugger/language to break
-   --  on exception. If name is null, break should occur on all exceptions.
-   --  The default implementation returns a null String.
-
 private
    type Language_Debugger is abstract new Language_Root with record
       The_Debugger : Debugger_Access;

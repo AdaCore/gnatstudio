@@ -15,10 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings;           use Ada.Strings;
-with GNATCOLL.Tribooleans;  use GNATCOLL.Tribooleans;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with Items.Arrays;          use Items.Arrays;
@@ -158,63 +156,6 @@ package body Debugger.Gdb.Ada is
    begin
       return Record_Field_Name (Ada_Lang, Name, Field);
    end Record_Field_Name;
-
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   overriding function Break_Exception
-     (Debugger  : access Gdb_Ada_Language;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String
-   is
-      Break   : aliased constant String := "break";
-      Catch   : aliased constant String := "catch";
-
-      Command : access constant String := Break'Access;
-
-   begin
-      if Debugger.Use_Catch_For_Exceptions = Indeterminate then
-         --  Check whether we should use "catch" or "break" to set a breakpoint
-         --  on exceptions. The former is the newer syntax, but wasn't
-         --  supported in older versions of the debugger
-
-         declare
-            Help : constant String := Send_Full
-              (Get_Debugger (Debugger), "help catch");
-         begin
-            Debugger.Use_Catch_For_Exceptions :=
-              To_TriBoolean (Index (Help, "catch exception") >= 1);
-         end;
-      end if;
-
-      if Debugger.Use_Catch_For_Exceptions = GNATCOLL.Tribooleans.True then
-         Command := Catch'Access;
-      end if;
-
-      if Unhandled then
-         if Temporary then
-            return "t" & Command.all & " exception unhandled";
-         else
-            return Command.all & " exception unhandled";
-         end if;
-
-      elsif Name /= "" and then Name /= "all" then
-         if Temporary then
-            return "t" & Command.all & " exception " & Name;
-         else
-            return Command.all & " exception " & Name;
-         end if;
-
-      else
-         if Temporary then
-            return "t" & Command.all & " exception";
-         else
-            return Command.all & " exception";
-         end if;
-      end if;
-   end Break_Exception;
 
    ----------------
    -- Parse_Type --

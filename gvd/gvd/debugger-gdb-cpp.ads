@@ -93,12 +93,6 @@ package Debugger.Gdb.Cpp is
       Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive);
 
-   overriding function Break_Exception
-     (Debugger  : access Gdb_Cpp_Language;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String;
-
    overriding procedure Parse_Array_Type
      (Lang         : access Gdb_Cpp_Language;
       Type_Str     : String;

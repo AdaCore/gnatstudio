@@ -137,23 +137,6 @@ package body Debugger.Gdb.C is
       return Record_Field_Name (C_Lang, Name, Field);
    end Record_Field_Name;
 
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   overriding function Break_Exception
-     (Debugger  : access Gdb_C_Language;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String
-   is
-      pragma Unreferenced (Debugger, Name, Temporary, Unhandled);
-   begin
-      --  ??? Unsupported, should we raise an exception, so that the menu
-      --  can be disabled ?
-      return "";
-   end Break_Exception;
-
    -----------------------------
    -- C_Detect_Composite_Type --
    -----------------------------

@@ -49,19 +49,4 @@ package body Language.Debugger is
       return The_Language.The_Debugger;
    end Get_Debugger;
 
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   function Break_Exception
-     (Debugger  : access Language_Debugger;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String
-   is
-      pragma Unreferenced (Debugger, Name, Temporary, Unhandled);
-   begin
-      return "";
-   end Break_Exception;
-
 end Language.Debugger;

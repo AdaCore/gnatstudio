@@ -24,7 +24,6 @@ with Items.Arrays;
 with Language; use Language;
 with Language.Debugger;
 with GNAT.Expect;
-with GNATCOLL.Tribooleans;
 
 package Debugger.Gdb.Ada is
 
@@ -94,12 +93,6 @@ package Debugger.Gdb.Ada is
       Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive);
 
-   overriding function Break_Exception
-     (Debugger  : access Gdb_Ada_Language;
-      Name      : String  := "";
-      Temporary : Boolean := False;
-      Unhandled : Boolean := False) return String;
-
    overriding procedure Parse_Array_Type
      (Lang         : access Gdb_Ada_Language;
       Type_Str     : String;
@@ -139,14 +132,7 @@ package Debugger.Gdb.Ada is
 private
 
    type Gdb_Ada_Language is new
-     Language.Debugger.Language_Debugger with
-      record
-         Use_Catch_For_Exceptions : GNATCOLL.Tribooleans.Triboolean :=
-           GNATCOLL.Tribooleans.Indeterminate;
-         --  Whether we should use "catch" or "break" to set a breakpoint on
-         --  exceptions. This is initialized the first time we set a breakpoint
-         --  on exception
-      end record;
+     Language.Debugger.Language_Debugger with null record;
 
    overriding function Get_Name (Lang : access Gdb_Ada_Language) return String;
    --  See inherited documentation

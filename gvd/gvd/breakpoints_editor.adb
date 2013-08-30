@@ -351,9 +351,9 @@ package body Breakpoints_Editor is
       M := -View.Editor.Exception_Name.Get_Model;
       M.Clear;
       Add_Unique_Combo_Entry
-        (View.Editor.Exception_Name, -"All exceptions");
+        (View.Editor.Exception_Name, -"All Ada exceptions");
       Add_Unique_Combo_Entry
-        (View.Editor.Exception_Name, -"All assertions");
+        (View.Editor.Exception_Name, -"Ada assertions");
 
       --  Reset the Exception page
       Set_Sensitive (View.Editor.Hbox4, True);
@@ -553,10 +553,10 @@ package body Breakpoints_Editor is
 
          if Br.Except.all = "all" then
             Set_Active_Text
-              (View.Editor.Exception_Name, -"All exceptions");
+              (View.Editor.Exception_Name, -"All Ada exceptions");
          elsif Br.Except.all = "unhandled" then
             Set_Active_Text
-              (View.Editor.Exception_Name, -"All exceptions");
+              (View.Editor.Exception_Name, -"All Ada exceptions");
             Set_Active (View.Editor.Stop_Not_Handled_Exception, True);
          else
             Add_Unique_Combo_Entry
@@ -824,7 +824,7 @@ package body Breakpoints_Editor is
       --  should not be translated.
       --  This explains why some are preceded by '-'.
 
-      if Name = -"All exceptions" then
+      if Name = -"All Ada exceptions" then
          Break_Exception
            (Process.Debugger,
             Name      => "",
@@ -832,7 +832,7 @@ package body Breakpoints_Editor is
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
 
-      elsif Name = -"All assertions" then
+      elsif Name = -"Ada assertions" then
          Break_Subprogram
            (Process.Debugger,
             Name      => "assert",
@@ -1053,9 +1053,9 @@ package body Breakpoints_Editor is
          if Exception_Arr'Length > 0 then
             Set_Sensitive (View.Editor.Hbox4, True);
             Add_Unique_Combo_Entry
-              (View.Editor.Exception_Name, -"All exceptions");
+              (View.Editor.Exception_Name, -"All Ada exceptions");
             Add_Unique_Combo_Entry
-              (View.Editor.Exception_Name, -"All assertions");
+              (View.Editor.Exception_Name, -"Ada assertions");
 
             for J in Exception_Arr'Range loop
                Add_Unique_Combo_Entry

@@ -39,8 +39,6 @@ with GVD.Process;               use GVD.Process;
 with GVD.Scripts;               use GVD.Scripts;
 with GVD.Trace;                 use GVD.Trace;
 with GVD.Types;                 use GVD.Types;
-with Language.Debugger;         use Language.Debugger;
-with Language;                  use Language;
 with MI.Lexer;                  use MI.Lexer;
 with Process_Proxies;           use Process_Proxies;
 with Remote;                    use Remote;
@@ -960,9 +958,7 @@ package body Debugger.Gdb_MI is
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String :=
-                    Break_Exception
-                      (Language_Debugger_Access (Get_Language (Debugger)));
+            Cmd : constant String := "catch exception";
             S   : constant String := Send (Debugger, Cmd);
 
          begin
@@ -1448,9 +1444,9 @@ package body Debugger.Gdb_MI is
       Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger,
-            Break_Exception
-              (Language_Debugger_Access (Get_Language (Debugger)),
-               Name, Temporary, Unhandled),
+            (if Temporary then "t" else "") & "catch exception" &
+            (if Unhandled then " unhandled"
+             elsif Name /= "" and then Name /= "all" then " " & Name else ""),
             Mode => Mode);
    end Break_Exception;
 

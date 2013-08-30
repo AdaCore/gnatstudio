@@ -25,6 +25,7 @@ with Gtk.Window;
 with Language.Debugger;
 with GVD.Types;
 with GNATCOLL.VFS;
+with GNATCOLL.Tribooleans;
 
 package Debugger.Gdb is
 
@@ -464,6 +465,12 @@ private
       Cached_File  : GNATCOLL.VFS.Virtual_File;
       Cached_Lines : Line_Array_Access;
       --  Caches to speed up calls to Lines_With_Code
+
+      Use_Catch_For_Exceptions : GNATCOLL.Tribooleans.Triboolean :=
+        GNATCOLL.Tribooleans.Indeterminate;
+      --  Whether we should use "catch" or "break" to set a breakpoint on
+      --  exceptions. This is initialized the first time we set a breakpoint
+      --  on exception
    end record;
 
    procedure Internal_Parse_Value

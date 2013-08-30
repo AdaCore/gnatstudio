@@ -277,6 +277,60 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return Version_Number;
    --  Return the GDB version number.
 
+   function Break_Exception_Cmd
+     (Debugger  : access Gdb_Debugger;
+      Name      : String := "";
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False) return String;
+   --  Return the GDB command corresponding to a break on exception, given
+   --  Name/Temporary/Unhandled.
+
+   -------------------------
+   -- Break_Exception_Cmd --
+   -------------------------
+
+   function Break_Exception_Cmd
+     (Debugger  : access Gdb_Debugger;
+      Name      : String := "";
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False) return String
+   is
+      Break   : aliased constant String := "break";
+      Catch   : aliased constant String := "catch";
+      Command : access constant String := Break'Access;
+
+      use GNATCOLL.Tribooleans;
+
+   begin
+      if Debugger.Use_Catch_For_Exceptions = Indeterminate then
+         --  Check whether we should use "catch" or "break" to set a
+         --  breakpoint on exceptions. The former is the newer syntax, but
+         --  wasn't supported in older versions of the debugger.
+
+         declare
+            Help : constant String := Send_Full (Debugger, "help catch");
+         begin
+            Debugger.Use_Catch_For_Exceptions :=
+              To_TriBoolean (Index (Help, "catch exception") >= 1);
+         end;
+      end if;
+
+      if Debugger.Use_Catch_For_Exceptions = GNATCOLL.Tribooleans.True then
+         Command := Catch'Access;
+      end if;
+
+      if Unhandled then
+         return (if Temporary then "t" else "") &
+           Command.all & " exception unhandled";
+      elsif Name /= "" and then Name /= "all" then
+         return (if Temporary then "t" else "") &
+           Command.all & " exception " & Name;
+      else
+         return (if Temporary then "t" else "") &
+           Command.all & " exception";
+      end if;
+   end Break_Exception_Cmd;
+
    ---------------------
    -- Get_GDB_Version --
    ---------------------
@@ -1279,9 +1333,7 @@ package body Debugger.Gdb is
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String :=
-                    Break_Exception
-                      (Language_Debugger_Access (Get_Language (Debugger)));
+            Cmd : constant String := Break_Exception_Cmd (Debugger);
             S   : constant String := Send (Debugger, Cmd);
 
          begin
@@ -1923,9 +1975,7 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger,
-            Break_Exception
-              (Language_Debugger_Access (Get_Language (Debugger)),
-               Name, Temporary, Unhandled),
+            Break_Exception_Cmd (Debugger, Name, Temporary, Unhandled),
             Mode => Mode);
    end Break_Exception;
 
