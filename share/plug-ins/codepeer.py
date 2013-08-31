@@ -329,6 +329,30 @@ xml_codepeer = """<?xml version="1.0"?>
        </switches>
     </target-model>
 
+    <target-model name="codepeer_msg_reader" category="">
+       <description>Generate messages with codepeer</description>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>-output-msg-only</arg>
+          <arg>-out</arg>
+          <arg>codepeer.out</arg>
+       </command-line>
+       <icon>gps-build-all</icon>
+       <switches command="%(tool_name)s" columns="1" lines="2">
+         <check label="CSV output" switch="-csv"
+                column="1" tip="generate output in CSV format, suitable for spreadsheets" />
+         <combo label="Security" switch="-security" noswitch="disabled"
+               separator=" " column="1" column-span="2"
+               tip="Enable security filter on messages. Disabled: no security filter (all messages are output). Normal: output only security relevant messages. Full: same as normal, plus run-time checks related messages" >
+            <combo-entry label="Disabled" value="disabled" />
+            <combo-entry label="Normal" value="normal" />
+            <combo-entry label="Full" value="full" />
+         </combo>
+       </switches>
+    </target-model>
+
     <target model="generate_scil" category="CodePeer" name="Generate SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
@@ -463,6 +487,24 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-output-only</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer_msg_reader" category="CodePeer"
+            name="Generate CodePeer CSV" messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <icon>gps-compile</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>-output-msg-only</arg>
+          <arg>-csv</arg>
+          <arg>-out</arg>
+          <arg>codepeer.csv</arg>
        </command-line>
     </target>
 
