@@ -10679,3 +10679,12 @@ def visual_diff(file1, file2, file3=''):
     :param file3: A string
     """
     pass  # implemented in Ada
+
+def xref_frozen():
+    """
+    Return true if the xref database is frozen.
+
+    .. seealso:: :func:`GPS.freeze_xref`
+    """
+    pass  # implemented in Ada
+

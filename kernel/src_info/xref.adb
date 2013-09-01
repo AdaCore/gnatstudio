@@ -2596,14 +2596,31 @@ package body Xref is
    function Freeze
      (Self : access General_Xref_Database_Record) return Database_Lock is
    begin
-      if not Active (SQLITE) then
+      if Active (SQLITE) then
+         Self.Freeze_Count := Self.Freeze_Count + 1;
+         return No_Lock;
+      else
          Old_Entities.Freeze (Self.Entities);
          return (Constructs =>
                    Old_Entities.Lock_Construct_Heuristics (Self.Entities));
-      else
-         return No_Lock;
       end if;
    end Freeze;
+
+   ------------
+   -- Frozen --
+   ------------
+
+   function Frozen
+     (Self : access General_Xref_Database_Record) return Boolean
+   is
+      use Old_Entities;
+   begin
+      if Active (SQLITE) then
+         return Self.Freeze_Count > 0;
+      else
+         return Old_Entities.Frozen (Self.Entities) /= Create_And_Update;
+      end if;
+   end Frozen;
 
    ----------
    -- Thaw --
@@ -2613,7 +2630,9 @@ package body Xref is
      (Self : access General_Xref_Database_Record;
       Lock : in out Database_Lock) is
    begin
-      if not Active (SQLITE) then
+      if Active (SQLITE) then
+         Self.Freeze_Count := Self.Freeze_Count - 1;
+      else
          Old_Entities.Thaw (Self.Entities);
          Old_Entities.Unlock_Construct_Heuristics (Lock.Constructs);
       end if;

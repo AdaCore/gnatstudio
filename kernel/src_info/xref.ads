@@ -88,6 +88,8 @@ package Xref is
 
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
 
+      Freeze_Count : Integer := 0;
+      --  Used to implement freeze of the DB
    end record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
@@ -766,6 +768,10 @@ package Xref is
      (Self : access General_Xref_Database_Record;
       Lock : in out Database_Lock);
    --  Freeze the update of the xref database
+
+   function Frozen
+     (Self : access General_Xref_Database_Record) return Boolean;
+   --  Return frozen state of the xref database
 
    -------------
    -- private --
