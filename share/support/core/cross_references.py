@@ -88,7 +88,7 @@ class Sqlite_Cross_References(object):
         """ Launch recompilation of the cross references """
 
         # The testsuite can disable gnatinspect in some cases
-        if self.disable_gnatinspect:
+        if self.disable_gnatinspect or GPS.xref_frozen():
             return
 
         # The project might not exist, for instance when GPS is loading the
