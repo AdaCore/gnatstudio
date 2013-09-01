@@ -491,7 +491,7 @@ xml_codepeer = """<?xml version="1.0"?>
     </target>
 
     <target model="codepeer_msg_reader" category="CodePeer"
-            name="Generate CodePeer CSV" messages_category="CodePeer">
+            name="Generate CSV Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-compile</icon>
