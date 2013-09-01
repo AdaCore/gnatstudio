@@ -87,7 +87,8 @@ class Sqlite_Cross_References(object):
     def recompute_xref(self):
         """ Launch recompilation of the cross references """
 
-        # The testsuite can disable gnatinspect in some cases
+        # The testsuite can disable gnatinspect in some cases.
+        # Similarly if the DB xref is frozen, do nothing.
         if self.disable_gnatinspect or GPS.xref_frozen():
             return
 
