@@ -51,7 +51,7 @@ package CodePeer.Module is
    procedure Load
      (Self : access Module_Id_Record'Class;
       File : Virtual_File);
-   --  Loads code review results from file, creates CodePeer Report window
+   --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 
    procedure Review_Message
@@ -99,12 +99,14 @@ private
      array (CodePeer.Message_Ranking_Level)
        of GPS.Styles.UI.Style_Access;
 
-   type CodePeer_Action is (None, Load_UI, Audit_Trail, Load_Bridge_Results);
+   type CodePeer_Action is
+     (None, Load_UI, Audit_Trail, Load_Bridge_Results, Load_CSV);
    --  Actions related to codepeer handling:
    --   - None: no action registered
    --   - Load_UI: load CodePeer UI
    --   - Audit_Trail: load audit trail after gps_codepeer_bridge has run
    --   - Load_Bridge_Results: load codepeer messages after gps_codepeer_bridge
+   --   - Load_CSV: load CSV file after codepeer run
 
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
