@@ -12,7 +12,7 @@ all: ug tutorial gps_pg relnotes
 static:
 
 gps_pg:
-	make -C programers_guide html
+	make -C programmers_guide html
 
 relnotes:
 	make -C release_notes singlehtml
