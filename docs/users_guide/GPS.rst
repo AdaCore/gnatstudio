@@ -54,6 +54,7 @@ Functions
 .. autofunction:: thaw_xref
 .. autofunction:: unset_busy
 .. autofunction:: version
+.. autofunction:: xref_frozen
 
 Classes
 -------
