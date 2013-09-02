@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M902-008 GPS: better error for invalid project names (2013-09-02)
+
+  The error message when creating a new project with an invalid name now
+  indicates that the name cannot be an Ada reserved word.
+
 NF-60-M817-003 GPS: window title now lists the base name first (2013-08-19)
 
   The GPS window's title has been changed slightly, so that the base name of
