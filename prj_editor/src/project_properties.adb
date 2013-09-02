@@ -4285,7 +4285,8 @@ package body Project_Properties is
          if not Is_Valid_Project_Name (Get_Safe_Text (Editor.Name)) then
             Ignore := Message_Dialog
               (Msg         => (-"Invalid name for the project ") &
-               (-"(only letters, digits and underscores)"),
+               (-"(only letters, digits and underscores ") &
+               (-"and cannot be an Ada reserved word)"),
                Buttons     => Button_OK,
                Dialog_Type => Error,
                Title       => -"Error",

@@ -141,7 +141,8 @@ package body Creation_Wizard is
             end if;
 
             return -("Invalid name for the project "
-                     & "(only letters, digits and underscores)");
+                     & "(only letters, digits and underscores "
+                     & "and cannot be an Ada reserved word)");
          end if;
       end;
 
