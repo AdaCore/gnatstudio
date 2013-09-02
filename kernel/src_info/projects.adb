@@ -116,36 +116,113 @@ package body Projects is
    ---------------------------
 
    function Is_Valid_Project_Name (Name : String) return Boolean is
-   begin
-      if Name'Length = 0
-        or else (Name (Name'First) not in 'a' .. 'z'
-                 and then Name (Name'First) not in 'A' .. 'Z')
-      then
-         return False;
-      end if;
+      Start  : Natural;
+      Finish : Natural;
 
-      for N in Name'First + 1 .. Name'Last loop
-         if Name (N) not in 'a' .. 'z'
-           and then Name (N) not in 'A' .. 'Z'
-           and then Name (N) not in '0' .. '9'
-           and then Name (N) /= '_'
-           and then Name (N) /= '.'
+      function Is_Ada_Identifier (S : String) return Boolean;
+      --  Returns True iff S has the syntax of an Ada identifier and is not an
+      --  Ada95 reserved word.
+
+      -----------------------
+      -- Is_Ada_Identifier --
+      -----------------------
+
+      function Is_Ada_Identifier (S : String) return Boolean is
+         Underscore : Boolean := False;
+      begin
+         --  An Ada identifier cannot be empty and must start with a letter
+
+         if S'Length = 0 or else
+            (S (S'First) not in 'a' .. 'z' and then
+             S (S'First) not in 'A' .. 'Z')
          then
             return False;
          end if;
-      end loop;
+
+         for J in S'First + 1 .. S'Last loop
+            if S (J) = '_' then
+               --  An Ada identifier cannot have two consecutive underscores
+
+               if Underscore then
+                  return False;
+               end if;
+
+               Underscore := True;
+
+            else
+               Underscore := False;
+
+               --  An Ada identifier is made only of letters, digits and
+               --  underscores (already treated).
+
+               if S (J) not in 'a' .. 'z' and then
+                  S (J) not in 'A' .. 'Z' and then
+                  S (J) not in '0' .. '9'
+               then
+                  return False;
+               end if;
+            end if;
+         end loop;
+
+         --  An Ada identifier cannot ends with an underscore
+
+         if Underscore then
+            return False;
+         end if;
+
+         Name_Len := S'Length;
+         Name_Buffer (1 .. Name_Len) := S;
+
+         --  A project name cannot be an Ada95 reserved word
+
+         if Is_Keyword_Name (Name_Find) then
+            return False;
+         end if;
+
+         --  All checks have succeeded
+
+         return True;
+      end Is_Ada_Identifier;
+
+   begin
+      --  A project name cannot be empty of ends with a dot
+
+      if Name'Length = 0 or else Name (Name'Last) = '.' then
+         return False;
+      end if;
 
       if not Keywords_Initialized then
          Scans.Initialize_Ada_Keywords;
          Keywords_Initialized := True;
       end if;
 
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
+      Start := Name'First;
 
-      if Is_Keyword_Name (Name_Find) then
-         return False;
-      end if;
+      loop
+         Finish := Start - 1;
+         while Finish < Name'Last and then
+               Name (Finish + 1) /= '.'
+         loop
+            Finish := Finish + 1;
+         end loop;
+
+         declare
+            OK : constant Boolean :=
+                    Is_Ada_Identifier (Name (Start .. Finish));
+         begin
+            --  A project name needs to be an Ada identifier and cannot be an
+            --  Ada95 reserved word.
+
+            if not OK then
+               return False;
+            end if;
+         end;
+
+         Start := Finish + 2;
+         exit when Start > Name'Last;
+      end loop;
+
+      --  All checks have succeeded
 
       return True;
    end Is_Valid_Project_Name;
