@@ -3974,6 +3974,13 @@ RR : R := 1000;
 Z : Integer;
 for Z'Address use RR;
 end AddrAsInt;
+
+Note that pragma `Allow_Integer_Address' is ignored if `System.Address'
+is not a private type. In implementations of `GNAT' where
+System.Address is a visible integer type (notably the implementations
+for `OpenVMS'), this pragma serves no purpose but is ignored rather
+than rejected to allow common sets of sources to be used in the two
+situations.
       </DOC>
    </PRAGMA>
 
