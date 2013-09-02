@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M902-029: GPS: invalid project names accepted
+  Problem:    GPS accepted invalid project names such as "name__toto",
+              "name_", "name.", "name.3com", "name._child" or "name.all".
+  Workaround: Always enter valid project names.
+
 - M821-028: GPS: do not use default project when projet not found
   Problem:    When the project specified with -P on the command line is not
               found, GPS would default to loading a default project (or if the
