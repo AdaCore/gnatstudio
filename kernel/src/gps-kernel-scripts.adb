@@ -104,8 +104,6 @@ package body GPS.Kernel.Scripts is
 
    type GPS_Properties is access all GPS_Properties_Record'Class;
    overriding procedure Destroy (Prop : in out GPS_Properties_Record);
-   overriding function Get_Instances
-     (Prop : GPS_Properties_Record) return Instance_List_Access;
    --  See inherited documentation
 
    procedure On_Console_Destroy
@@ -1946,26 +1944,6 @@ package body GPS.Kernel.Scripts is
             --  This might also destroy the class instance Data.Location.File
       end case;
    end Destroy;
-
-   -------------------
-   -- Get_Instances --
-   -------------------
-
-   overriding function Get_Instances
-     (Prop : GPS_Properties_Record) return Instance_List_Access is
-   begin
-      case Prop.Typ is
-         when Contexts =>
-            if Prop.Context.Data.Data /= null then
-               return Prop.Context.Data.Data.Instances;
-            end if;
-
-         when Files | Entities | Projects | File_Locations =>
-            null;
-      end case;
-
-      return null;
-   end Get_Instances;
 
    --------------
    -- On_Click --

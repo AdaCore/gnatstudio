@@ -252,16 +252,12 @@ package body GPS.Search.GUI is
    end record;
    type Provider_Property is access all Provider_Property_Record'Class;
    overriding procedure Destroy (Prop : in out Provider_Property_Record);
-   overriding function Get_Instances
-     (Self : Provider_Property_Record) return Instance_List_Access;
 
    type Result_Property_Record is new Instance_Property_Record with record
       Result : Search_Result_Access;
    end record;
    type Result_Property is access all Result_Property_Record'Class;
    overriding procedure Destroy (Prop : in out Result_Property_Record);
-   overriding function Get_Instances
-     (Self : Result_Property_Record) return Instance_List_Access;
 
    function Get_Search_Provider
      (Data : Callback_Data'Class; Num : Positive)
@@ -1046,38 +1042,6 @@ package body GPS.Search.GUI is
          Free (Prop.Pattern);
       end if;
    end Destroy;
-
-   -------------------
-   -- Get_Instances --
-   -------------------
-
-   overriding function Get_Instances
-     (Self : Result_Property_Record) return Instance_List_Access is
-   begin
-      if Self.Result /= null
-        and then Self.Result.all in Python_Search_Result'Class
-      then
-         return Python_Search_Result (Self.Result.all).Inst'Access;
-      else
-         return null;
-      end if;
-   end Get_Instances;
-
-   -------------------
-   -- Get_Instances --
-   -------------------
-
-   overriding function Get_Instances
-     (Self : Provider_Property_Record) return Instance_List_Access is
-   begin
-      if Self.Provider /= null
-        and then Self.Provider.all in Python_Search_Provider'Class
-      then
-         return Python_Search_Provider (Self.Provider.all).Inst'Access;
-      else
-         return null;
-      end if;
-   end Get_Instances;
 
    -------------
    -- Destroy --
