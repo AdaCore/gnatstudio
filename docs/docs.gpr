@@ -4,7 +4,7 @@ project Docs is
 
    for Languages use ("rest", "Python");
    for Object_Dir use ".";
-   for Source_Dirs use ("programers_guide", "tutorial", "users_guide");
+   for Source_Dirs use ("programmers_guide", "tutorial", "users_guide");
 
    package Naming is
       for Implementation_Suffix ("rest") use ".rst";
