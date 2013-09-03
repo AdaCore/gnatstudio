@@ -623,6 +623,26 @@ package body Outline_View is
             Iter   => Iter,
             Column => Col);
 
+         --  Verify that we are not clicking on an expander. If this is the
+         --  case, let the click through.
+
+         declare
+            Path : Gtk_Tree_Path;
+            Rect : Gdk_Rectangle;
+         begin
+            Path := Model.Get_Path (Iter);
+
+            View.Tree.Get_Cell_Area (Path   => Path,
+                                     Column => Col,
+                                     Rect   => Rect);
+
+            Path_Free (Path);
+
+            if Rect.X > Gint (Event.X) then
+               return False;
+            end if;
+         end;
+
          if Iter /= Null_Iter then
             Path := Get_Path (Model, Iter);
             Set_Cursor (View.Tree, Path, null, False);
