@@ -30,6 +30,7 @@ gnatinspect.db*
 *-loc.xml
 config.log
 config.status
+design/tests/M806-002/result.out
 design/tests/F221-006/hello.adb.redo_0
 design/tests/F221-006/hello.adb.redo_1
 design/tests/F221-006/hello.adb.redo_2

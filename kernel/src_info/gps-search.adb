@@ -25,6 +25,7 @@ with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with Glib.Convert;
 with Interfaces;                  use Interfaces;
+with Traces;
 
 package body GPS.Search is
    Me : constant Trace_Handle := Create ("SEARCH");
@@ -668,6 +669,7 @@ package body GPS.Search is
 
    procedure Free (Self : in out Search_Result) is
    begin
+      Trace (Traces.Testsuite_Handle, "Free Search_Result");
       if Self.Id /= Self.Short and then Self.Id /= Self.Long then
          Free (Self.Id);
       end if;

@@ -913,8 +913,7 @@ package body GPS.Search.GUI is
       Result   : Search_Result_Access)
       return Class_Instance
    is
-      Result_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Script), "Search_Result");
+      Result_Class : Class_Type;
       Inst : Class_Instance := No_Class_Instance;
    begin
       if Result /= null then
@@ -925,9 +924,14 @@ package body GPS.Search.GUI is
             end if;
          end if;
 
+         Result_Class := New_Class (Get_Kernel (Script), "Search_Result");
          Inst := New_Instance (Script, Result_Class);
          Set_Data
            (Inst, "Search_Result", Result_Property_Record'(Result => Result));
+
+         if Result.all in Python_Search_Result'Class then
+            Set (Python_Search_Result (Result.all).Inst, Script, Inst);
+         end if;
       end if;
 
       return Inst;
@@ -1387,6 +1391,7 @@ package body GPS.Search.GUI is
       end loop;
 
       Free (Self.Inst);
+      Free (Search_Result (Self));
    end Free;
 
    ---------------------
