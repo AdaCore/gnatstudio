@@ -852,6 +852,7 @@ package body Xref is
             Tree_Lang : Tree_Language_Access;
             Decl      : Entity_Access;
             Node      : Construct_Tree_Iterator;
+            Cat       : Language_Category;
          begin
             Node_From_Entity
                (Db, Db.Lang_Handler, Entity.Loc, Result, Tree_Lang);
@@ -860,12 +861,13 @@ package body Xref is
                Decl := Get_Declaration
                   (Get_Tree_Language (Get_File (Result)), Result);
                Node := To_Construct_Tree_Iterator (Decl);
+               Cat := Get_Construct (Node).Category;
                return (Loc => (File   => Get_File_Path (Get_File (Decl)),
                                Line   => Get_Construct (Node).Sloc_Entity.Line,
                                Column => Visible_Column_Type
                                  (Get_Construct (Node).Sloc_Entity.Column)),
                        Body_Is_Full_Declaration =>
-                         Get_Construct (Node).Category = Cat_Type,
+                         Cat = Cat_Type or else Cat = Cat_Class,
                        Name =>
                          To_Unbounded_String
                            (Get (Get_Construct (Node).Name).all));
