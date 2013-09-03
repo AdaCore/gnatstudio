@@ -25,10 +25,10 @@ with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with Glib.Convert;
 with Interfaces;                  use Interfaces;
-with Traces;
 
 package body GPS.Search is
    Me : constant Trace_Handle := Create ("SEARCH");
+   Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM");
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
@@ -669,7 +669,7 @@ package body GPS.Search is
 
    procedure Free (Self : in out Search_Result) is
    begin
-      Trace (Traces.Testsuite_Handle, "Free Search_Result");
+      Trace (Memcheck_Handle, "Free Search_Result");
       if Self.Id /= Self.Short and then Self.Id /= Self.Long then
          Free (Self.Id);
       end if;
