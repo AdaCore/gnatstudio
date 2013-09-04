@@ -98,7 +98,8 @@ package body Docgen3.Frontend is
       --  Return the indexes to the first word in Buffer located before Index
 
       function Search_Backward
-        (From   : Natural;
+        (Lines_Skipped : out Natural;
+         From   : Natural;
          Word_1 : String;
          Word_2 : String := "") return Natural;
       --  Case insensitive search backward in Buffer (starting at index
@@ -131,7 +132,9 @@ package body Docgen3.Frontend is
                 General_Xref_Database_Record (Context.Database.all)'Access,
               Handler  => Context.Lang_Handler,
               Buffer   => Buffer,
-              Location => LL.Get_Location (E)));
+              Location => LL.Get_Location (E),
+              End_Loc  => (if not LL.Is_Subprogram (E) then No_Location
+                           else Get_End_Of_Syntax_Scope_Loc (E))));
 
          --  For nested packages, if no documentation was found then we try
          --  locating the documentation immediately after the package spec.
@@ -300,12 +303,14 @@ package body Docgen3.Frontend is
 
             if LL.Is_Subprogram (E) then
                Index :=
-                 Search_Backward (From => Index - 1,
+                 Search_Backward (Lines_Skipped,
+                   From   => Index - 1,
                    Word_1 => "procedure",
                    Word_2 => "function");
             else
                Index :=
-                 Search_Backward (From => Index - 1,
+                 Search_Backward (Lines_Skipped,
+                   From   => Index - 1,
                    Word_1 => "package");
             end if;
 
@@ -691,7 +696,9 @@ package body Docgen3.Frontend is
             --  here. Must be improved???
 
             Prev_Word_Begin :=
-              Search_Backward (From => Entity_Index - 1, Word_1 => "type");
+              Search_Backward (Lines_Skipped,
+                From   => Entity_Index - 1,
+                Word_1 => "type");
 
             --  Append tabulation
 
@@ -765,6 +772,7 @@ package body Docgen3.Frontend is
             -- CB --
             --------
 
+            Start_Line : Natural;
             In_Profile : Boolean := False;
             Last_Idx   : Natural := 0;
             Par_Count  : Natural := 0;
@@ -790,9 +798,6 @@ package body Docgen3.Frontend is
                Last_Idx := Sloc_End.Index;
                Append (S);
 
-               --  if Entity = Block_Text then  --  identifier???
-               --     return False; --  continue
-
                if Entity = Comment_Text then
                   return False; --  continue
 
@@ -814,6 +819,11 @@ package body Docgen3.Frontend is
                      Par_Count := Par_Count - 1;
                   elsif S = ";" then
                      if In_Profile and then Par_Count = 0 then
+                        Set_End_Of_Syntax_Scope_Loc (E,
+                          General_Location'
+                            (File => File,
+                             Line => Start_Line + Sloc_End.Line - 1,
+                             Column => Visible_Column_Type (Sloc_End.Column)));
                         return True;
                      end if;
                   end if;
@@ -848,19 +858,24 @@ package body Docgen3.Frontend is
 
             if Is_Generic_Formal (E) then
                Index :=
-                 Search_Backward (From => Index - 1,
+                 Search_Backward (Lines_Skipped,
+                   From   => Index - 1,
                    Word_1 => "with");
 
             elsif LL.Is_Generic (E) then
                Index :=
-                 Search_Backward (From => Index - 1,
+                 Search_Backward (Lines_Skipped,
+                   From   => Index - 1,
                    Word_1 => "generic");
             else
                Index :=
-                 Search_Backward (From => Index - 1,
+                 Search_Backward (Lines_Skipped,
+                   From   => Index - 1,
                    Word_1 => "procedure",
                    Word_2 => "function");
             end if;
+
+            Start_Line := LL.Get_Location (E).Line - Lines_Skipped;
 
             --  Append tabulation
 
@@ -908,7 +923,8 @@ package body Docgen3.Frontend is
             --  here. Must be improved???
 
             Index :=
-              Search_Backward (From => Index - 1,
+              Search_Backward (Lines_Skipped,
+                From   => Index - 1,
                 Word_1 => "type",
                 Word_2 => "subtype");
 
@@ -1657,7 +1673,8 @@ package body Docgen3.Frontend is
       ---------------------
 
       function Search_Backward
-        (From   : Natural;
+        (Lines_Skipped : out Natural;
+         From   : Natural;
          Word_1 : String;
          Word_2 : String := "") return Natural
       is
@@ -1668,6 +1685,8 @@ package body Docgen3.Frontend is
          Prev_Word_End    : Natural;
 
       begin
+         Lines_Skipped := 0;
+
          --  Locate the beginning of the type declaration. This is a naive
          --  approach used in the prototype since we do not skip comments.
          --  A backward parser is required here. Must be improved???
@@ -1675,15 +1694,19 @@ package body Docgen3.Frontend is
          loop
             while Idx > Buffer.all'First
               and then (Buffer (Idx) = ' '
-                        or else Buffer (Idx) = ASCII.LF)
+                          or else Buffer (Idx) = ASCII.LF)
             loop
+               if Buffer (Idx) = ASCII.LF then
+                  Lines_Skipped := Lines_Skipped + 1;
+               end if;
+
                Idx := Idx - 1;
             end loop;
             Prev_Word_End := Idx;
 
             while Idx > Buffer.all'First
               and then (Buffer (Idx) /= ' '
-                        and then Buffer (Idx) /= ASCII.LF)
+                          and then Buffer (Idx) /= ASCII.LF)
             loop
                Idx := Idx - 1;
             end loop;
@@ -1762,14 +1785,17 @@ package body Docgen3.Frontend is
          end if;
 
       else
-         --  Retrieve the documentation (if any) and sources
+         --  Retrieve the sources and their documentation (if any). It must
+         --  be retrieved in this order because for subprogram declarations
+         --  Get_Source takes care of completing the entity decoration of
+         --  some tree attributes which are not available through Xref.
 
          if In_Ada_Lang then
-            For_All (File_Entities.All_Entities, Ada_Get_Doc'Access);
             For_All (File_Entities.All_Entities, Ada_Get_Source'Access);
+            For_All (File_Entities.All_Entities, Ada_Get_Doc'Access);
          else pragma Assert (In_C_Lang);
-            For_All (File_Entities.All_Entities, CPP_Get_Doc'Access);
             For_All (File_Entities.All_Entities, CPP_Get_Source'Access);
+            For_All (File_Entities.All_Entities, CPP_Get_Doc'Access);
          end if;
 
          For_All (File_Entities.All_Entities, Filter_Doc'Access);
@@ -2199,8 +2225,14 @@ package body Docgen3.Frontend is
                --  any) must be located before the location of the full comment
                --  of the subprogram.
 
+               --  ??? This code fails if the subprogram is a function and
+               --  there is documentation for the returned value because it
+               --  is handled as if it were the documentation of the last
+               --  formal.
+
                if not EInfo_List.Has_Element (Cursor) then
-                  Param_End_Line := Get_Doc (Subp).Start_Line;
+                  Param_End_Line :=
+                    Get_End_Of_Syntax_Scope_Loc (Subp).Line;
 
                --  Case 2: For other parameters their comment must be
                --  located before the location of the next parameter.

@@ -893,6 +893,12 @@ package body Docgen3.Atree is
             end if;
          end if;
 
+         --  Store the location of the end of scope. For subprogram specs
+         --  this information is not provided by Xref but it is needed by the
+         --  frontend of Docgen to retrieve comments located after the spec;
+         --  hence this attribute is currently set as part of retrieving the
+         --  source of the subprogram specification.
+
          if Is_Package (New_E) then
             declare
                Cursor : Entity_Reference_Iterator;
@@ -1325,6 +1331,16 @@ package body Docgen3.Atree is
    begin
       E.Doc := Value;
    end Set_Doc;
+
+   ---------------------------------
+   -- Set_End_Of_Syntax_Scope_Loc --
+   ---------------------------------
+
+   procedure Set_End_Of_Syntax_Scope_Loc
+     (E : Entity_Id; Loc : General_Location) is
+   begin
+      E.End_Of_Syntax_Scope_Loc := Loc;
+   end Set_End_Of_Syntax_Scope_Loc;
 
    ----------------------
    -- Set_IDepth_Level --
@@ -2060,6 +2076,11 @@ package body Docgen3.Atree is
          Append_Entity ("Scope: ", E.Scope);
       end if;
 
+      if E.End_Of_Syntax_Scope_Loc /= No_Location then
+         Append_Line
+           ("End_Of_Syntax_Scope_Loc: " & Image (E.End_Of_Syntax_Scope_Loc));
+      end if;
+
       if Present (E.Alias) then
          Append_Entity ("Alias: ", E.Alias);
       end if;
@@ -2120,12 +2141,6 @@ package body Docgen3.Atree is
         (LL_Prefix
          & "Full Name: "
          & Get (E.Full_Name).all);
-
-      if E.End_Of_Syntax_Scope_Loc /= No_Location then
-         Append_Line
-           (LL_Prefix
-            & "End_Of_Syntax_Scope_Loc: " & Image (E.End_Of_Syntax_Scope_Loc));
-      end if;
 
       if E.Xref.Body_Loc /= No_Location then
          Append_Line

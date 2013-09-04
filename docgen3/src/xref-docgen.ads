@@ -80,7 +80,8 @@ package Xref.Docgen is
      (Self     : access General_Xref_Database_Record;
       Handler  : Language_Handlers.Language_Handler;
       Buffer   : GNAT.Strings.String_Access;
-      Location : General_Location) return Comment_Result;
+      Location : General_Location;
+      End_Loc  : General_Location := No_Location) return Comment_Result;
    --  Retrieve the documentation associated with Entity
 
    function Get_Docgen_Src

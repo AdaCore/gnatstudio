@@ -314,6 +314,8 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_IDepth_Level
      (E : Entity_Id);
+   procedure Set_End_Of_Syntax_Scope_Loc
+     (E : Entity_Id; Loc : General_Location);
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
    procedure Set_Full_View_Comment

@@ -108,7 +108,8 @@ package body Xref.Docgen is
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
          Language : Language_Syntax;
-         Format   : Formatting := Text) return Comment_Result;
+         Format   : Formatting := Text;
+         End_Loc  : General_Location := No_Location) return Comment_Result;
       --  Returns the comment (extracted from the source file) for the entity.
       --  This is looked for just before or just after the declaration of the
       --  entity.
@@ -925,7 +926,8 @@ package body Xref.Docgen is
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
          Language : Language_Syntax;
-         Format   : Formatting := Text) return Comment_Result
+         Format   : Formatting := Text;
+         End_Loc  : General_Location := No_Location) return Comment_Result
       is
          pragma Unreferenced (Self);
 
@@ -954,10 +956,14 @@ package body Xref.Docgen is
 
          if Aux_Buffer /= null then
             declare
-               Result : constant Comment_Result := Extract_Comment  -- JM???
+               Result : constant Comment_Result := Extract_Comment
                  (Buffer            => Aux_Buffer.all,
                   Decl_Start_Line   => Location.Line,
                   Decl_Start_Column => Integer (Location.Column),
+                  Decl_End_Line     => (if End_Loc = No_Location then -1
+                                           else End_Loc.Line),
+                  Decl_End_Column   => (if End_Loc = No_Location then -1
+                                           else Integer (End_Loc.Column)),
                   Language          => Language,
                   Format            => Format);
             begin
@@ -1226,7 +1232,8 @@ package body Xref.Docgen is
       Buffer         : GNAT.Strings.String_Access;
       Location       : General_Location;
       Form           : Formatting;
-      With_Text_Decl : Boolean := True) return Comment_Result;
+      With_Text_Decl : Boolean := True;
+      End_Loc        : General_Location := No_Location) return Comment_Result;
 
    function Doc_From_LI_Src
      (Self    : access General_Xref_Database_Record;
@@ -1358,7 +1365,8 @@ package body Xref.Docgen is
       Buffer         : GNAT.Strings.String_Access;
       Location       : General_Location;
       Form           : Formatting;
-      With_Text_Decl : Boolean := True) return Comment_Result
+      With_Text_Decl : Boolean := True;
+      End_Loc        : General_Location := No_Location) return Comment_Result
    is
       pragma Unreferenced (With_Text_Decl);
 
@@ -1381,6 +1389,7 @@ package body Xref.Docgen is
                    (Self     => Xref_Database (Self.Xref.all),
                     Buffer   => Buffer,
                     Location => Location,
+                    End_Loc  => End_Loc,
                     Language => Context.Syntax,
                     Format   => Form);
 
@@ -1429,13 +1438,14 @@ package body Xref.Docgen is
      (Self     : access General_Xref_Database_Record;
       Handler  : Language_Handlers.Language_Handler;
       Buffer   : GNAT.Strings.String_Access;
-      Location : General_Location) return Comment_Result
+      Location : General_Location;
+      End_Loc  : General_Location := No_Location) return Comment_Result
    is
    begin
       return
         Doc_From_LI
           (Self, Handler, Buffer, Location,
-           Form => Text, With_Text_Decl => False);
+           End_Loc => End_Loc, Form => Text, With_Text_Decl => False);
    end Get_Docgen_Documentation;
 
    ---------------------
