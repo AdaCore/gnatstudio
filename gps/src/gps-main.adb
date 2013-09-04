@@ -449,6 +449,11 @@ procedure GPS.Main is
       --  that the variable content is converted to Utf8. This is needed for
       --  all variables used to build pathnames.
 
+      function Get_Env (Name : String; Default_Value : Integer) return Integer;
+      --  Returns the environment variable named Name.
+      --  If the environment value is not set or is not an integer value then
+      --  Default_Value is returned.
+
       -------------
       -- Get_Env --
       -------------
@@ -470,6 +475,27 @@ procedure GPS.Main is
          end if;
       end Get_Env;
 
+      -------------
+      -- Get_Env --
+      -------------
+
+      function Get_Env (Name : String;
+                        Default_Value : Integer) return Integer is
+         Tmp : String_Access := Getenv (Name);
+         Return_Value : Integer := Default_Value;
+      begin
+         if Tmp.all /= "" then
+            begin
+               Return_Value := Integer'Value (Tmp.all);
+            exception
+               when Constraint_Error =>
+                  null;
+            end;
+         end if;
+         Free (Tmp);
+         return Return_Value;
+      end Get_Env;
+
       Dir_Created : Boolean := False;
       File        : File_Type;
       Charset     : String_Access;
@@ -487,7 +513,10 @@ procedure GPS.Main is
 
       GNATCOLL.Memory.Configure
         (Activate_Monitor => Tmp.all /= "",
-         Disable_Free     => Tmp2.all /= "");
+         Disable_Free     => Tmp2.all /= "",
+         Stack_Trace_Depth => 30,
+         Memory_Free_Pattern => Get_Env ("GPS_MEMORY_FREE_PATTERN", 256)
+         );
 
       Free (Tmp);
       Free (Tmp2);

@@ -114,6 +114,14 @@ settings in GPS:
   amount of memory is allocated, through the `GPS.debug_memory_usage` python
   command.
 
+*GPS_MEMORY_FREE_PATTERN*
+  .. index:: GPS_MEMORY_FREE_PATTERN
+
+  If set within the range of 0..255, GPS will add special code on every
+  allocation and deallocation, thus slowing things down a bit. On deallocation,
+  it fills freed memory with this pattern.
+  Useful for dangling pointers debugging. 
+
 *GPS_PYTHONHOME*
   .. index:: GPS_PYTHONHOME
 
