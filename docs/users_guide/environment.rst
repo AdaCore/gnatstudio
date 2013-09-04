@@ -392,6 +392,20 @@ Solving Problems
 This section addresses some common problems that may arise when using or
 installing GPS.
 
+*GPS crashes on some GNU/Linux distributions at start up*
+
+  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
+  looks like:
+
+    [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
+    [UNEXPECTED_EXCEPTION] 1/17 Unexpected exception: Exception name: CONSTRAINT_ERROR
+    _UNEXPECTED_EXCEPTION_ Message: gtk-image.adb:281 access check failed
+
+  Then it means either that there is a conflict with
+  :file:`~/.local/share/mime/mime.cache`: removing this file will solve this
+  conflict; or that you need to install the shared-mime-info package on
+  your system.
+
 *Non-privileged users cannot start GPS*
   Q: I have installed GPS originally as super user, and ran GPS successfully,
   but normal users can't.
@@ -527,31 +541,3 @@ installing GPS.
   *Using space key to input non-breakable space character* and then select
   *Usual space at any level* and then close the dialogs.
 
-*GPS crashes on some GNU/Linux distributions at start up*
-
-  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
-  looks like:
-
-    [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
-    [UNEXPECTED_EXCEPTION] 1/17 Unexpected exception: Exception name: CONSTRAINT_ERROR
-    _UNEXPECTED_EXCEPTION_ Message: gtk-image.adb:281 access check failed
-
-  Then it means either that there is a conflict with
-  :file:`~/.local/share/mime/mime.cache`: removing this file will solve this
-  conflict; or that you need to install the shared-mime-info package on
-  your system.
-
-*GPS requires a display depth of at least 24 bits*
-
-  GPS requires a display depth of at least 24 bits per pixel. This can be an
-  issue when using Windows remotely, since the Remote Desktop feature is
-  capped by default at 16 bits per pixels. However, the system provides ways
-  to remove this cap in most cases. Here is how to do this on Windows Server 2003::
-
-    `http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/
-    <http://www.compdigitec.com/labs/2009/03/07/enabling-24-bit-colour-rdp-in-windows-2003/>`_
-
-  And on Windows XP::
-
-    `https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows
-    <https://blogs.oracle.com/ThinkThin/entry/24_bit_rdp_under_windows>`_
