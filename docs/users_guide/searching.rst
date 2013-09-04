@@ -106,7 +106,7 @@ On this screen shot, you can see three entry fields:
     in actual code, or to only search strings and comments, and ignore the
     code.
 
-  *Files From All Project*
+  *Files From Projects*
 
     Search in all the files from the project, including files from project
     dependencies. The *Scope* entry is described in the `Files...` section
