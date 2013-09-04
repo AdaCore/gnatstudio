@@ -106,7 +106,7 @@ On this screen shot, you can see three entry fields:
     in actual code, or to only search strings and comments, and ignore the
     code.
 
-  *Files From Project*
+  *Files From All Project*
 
     Search in all the files from the project, including files from project
     dependencies. The *Scope* entry is described in the `Files...` section
@@ -115,7 +115,10 @@ On this screen shot, you can see three entry fields:
   *Files From Current Project*
 
     Search in all the files from the currently selected project, defaulting on
-    the root project if there is no project currently selected.
+    the root project if there is no project currently selected. The currently
+    selected project might be the one to which the source file belongs (if you
+    are in an editor), or the selected project (if you are in the Project view)
+    for instance.
     The *Scope* entry is described in the `Files...` section above.
 
   *Files From Runtime*

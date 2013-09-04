@@ -3120,7 +3120,7 @@ package body Src_Editor_Module is
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
-         Label             => -"Files From Project",
+         Label             => -"Files From All Projects",
          Factory           => Files_From_Project_Factory'Access,
          Extra_Information => Selector,
          Id                => Src_Editor_Module_Id,
