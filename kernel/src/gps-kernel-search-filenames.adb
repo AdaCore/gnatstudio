@@ -257,7 +257,13 @@ package body GPS.Kernel.Search.Filenames is
             (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
          C : Search_Context;
       begin
-         if not Self.Seen.Contains (F) then
+         --  As a special case, we systematically omit .o files, in case the
+         --  object_dir is part of the source_dirs. Such files will make the
+         --  overview very slow, and are of little interest in editors...
+
+         if F.File_Extension /= ".o"
+           and then not Self.Seen.Contains (F)
+         then
             C := Self.Pattern.Start (Text);
             if C /= GPS.Search.No_Match then
                Continue := Callback (Text, C, F);
