@@ -24,14 +24,19 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gtk-new"                label="New" file="svg/newdocument.svg" />
     <icon id="gtk-open"               label="Open" file="svg/folder.svg" />
     <icon id="gtk-redo"               label="Redo" file="svg/redo.svg" />
-    <icon id="gtk-save"               label="Save" file="svg/save.svg" />
+    <icon id="gtk-save"               label="Save" file="svg/save.svg">
+       <alternate   file="svg/save-12.svg" size="Icon_Size_Local_Toolbar" />
+    </icon>
     <icon id="gtk-undo"               label="Undo" file="svg/undo.svg" />
     <icon id="gtk-preferences"        label="Preferences" file="svg/settings.svg" />
     <icon id="gtk-close"              label="Close" file="svg/close.svg" />
     <icon id="gps-clear-entry"        label="Clear Entry" file="svg/clear_entry.svg" />
     <icon id="gtk-print"              label="Print" file="svg/print.svg" />
-    <icon id="gtk-clear"              label="Clean" file="svg/clean.svg" />
+    <icon id="gtk-clear"              label="Clean" file="svg/clean.svg">
+       <alternate   file="svg/clean-12.svg" size="Icon_Size_Local_Toolbar" />
+    </icon>
     <icon id="gtk-media-play"         file="svg/run.svg" />
+    <icon id="gtk-remove"             label="Remove" file="svg/minus.svg" />
 
     <icon id="gps-edit"               label="Edit" file="svg/edit.svg" />
     <icon id="gps-environment"        label="Environment" file="svg/environment.svg" />
@@ -118,7 +123,10 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-file"              file="16px/file.png" />
     <icon id="gps-file-modified"     file="16px/file_pencil.png" />
 
-    <icon id="gps-configMenu"        file="svg/menu.svg"/>
+    <icon id="gps-configMenu"        file="svg/menu.svg">
+       <alternate   file="svg/menu-12.svg" size="Icon_Size_Local_Toolbar" />
+    </icon>
+
     <icon id="gps-stopTask"          file="svg/close.svg"/>
     <icon id="gps-expandAll"         file="9px/expand_12.png"/>
     <icon id="gps-collapseAll"       file="9px/collapse_12.png"/>
@@ -264,7 +272,9 @@ XML = r"""<?xml version="1.0"?>
 
     <!--  Builder icons -->
 
-    <icon id="gps-clean"              label="Clean" file="svg/clean.svg" />
+    <icon id="gps-clean"              label="Clean" file="svg/clean.svg">
+       <alternate   file="svg/clean-12.svg" size="Icon_Size_Local_Toolbar" />
+    </icon>
     <icon id="gps-build-all"          label="Build all" file="svg/buildall.svg" />
     <icon id="gps-compile"            label="Build main" file="svg/compile.svg" />
     <icon id="gps-build"            label="Build main" file="svg/build.svg" />

@@ -17,6 +17,10 @@ for icon in os.listdir(dir):
                           "stop-color:#FFFFFF;stop-opacity:0.8")
         txt = txt.replace("stop-color:#000000;stop-opacity:0.6",
                           "stop-color:#FFFFFF;stop-opacity:0.7")
+
+        txt = txt.replace("stop-color:#010101;stop-opacity:0.6",
+                          "stop-color:#FEFEFE;stop-opacity:0.7")
+        txt = txt.replace("stop-color:#010101;stop-opacity:0.7",
+                          "stop-color:#FEFEFE;stop-opacity:0.8")
+
         file(os.path.join(outdir, icon), "w").write(txt)
-
-

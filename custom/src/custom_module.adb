@@ -1187,6 +1187,8 @@ package body Custom_Module is
                         Size := Gtk.Enums.Icon_Size_Menu;
                      elsif S = "Icon_Size_Small_Toolbar" then
                         Size := Gtk.Enums.Icon_Size_Small_Toolbar;
+                     elsif S = "Icon_Size_Local_Toolbar" then
+                        Size := Icon_Size_Local_Toolbar;
                      elsif S = "Icon_Size_Large_Toolbar" then
                         Size := Gtk.Enums.Icon_Size_Large_Toolbar;
                      else
