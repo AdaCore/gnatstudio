@@ -185,6 +185,10 @@ package body UTF8_Utils is
       Output_Index : Positive := Output'First;
       Result       : Iconv_Result;
    begin
+      if Input = "" then
+         return True;
+      end if;
+
       loop
          Iconv (Object, Input, Input_Index, Output, Output_Index, Result);
 
