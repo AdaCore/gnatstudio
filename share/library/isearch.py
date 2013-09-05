@@ -59,6 +59,7 @@ pattern is modified, and will slow things down a little
 
 
 from GPS import *
+from gps_utils import interactive
 
 Preference('Plugins/isearch/highlightnext').create(
     'Highlight next matches',
@@ -91,40 +92,6 @@ try:
     has_pygtk = 1
 except:
     has_pygtk = 0
-
-def on_gps_started (hook_name):
-  # When executing the action, store the result of Isearch() in a variable so
-  # that we do not get the instance displayed in the GPS console
-  parse_xml ("""
-  <action name='""" + isearch_action_name + """' category="Editor" output="none">
-     <description>This action provides an incremental search facility: once activated, each character you type is added to the search pattern, and GPS jumps to the next occurrence of the pattern</description>
-     <filter id="Source editor" />
-     <shell lang="python">i=isearch.Isearch()</shell>
-  </action>
-  <action name='"""
-  + isearch_backward_action_name
-  + """' category="Editor"
-          output="none">
-     <description>This action provides a backward incremental search facility:
-once activated, each character you type is added to the search pattern, and GPS
-jumps to the stack occurrence of the pattern</description>
-     <filter id="Source editor" />
-     <shell lang="python">i=isearch.Isearch (backward=1)</shell>
-  </action>
-
- <menu action='"""
-              + isearch_backward_action_name
-              + """' after="Find Or Replace...">
-    <title>"""
-              + isearch_backward_menu
-              + """</title>
- </menu>
- <menu action='""" + isearch_action_name
-              + """' after="Find Or Replace...">
-    <title>""" + isearch_menu
-              + """</title>
- </menu>
-""")
 
 
 class Isearch(CommandWindow):
@@ -419,4 +386,32 @@ class Isearch(CommandWindow):
         self.editor.unselect()
 
 
-Hook('gps_started').add(on_gps_started)
+@interactive(name=isearch_action_name,
+             category='Editor',
+             menu=isearch_menu,
+             after='Find Or Replace...',
+             filter='Source editor')
+def interactive_search():
+    """
+    This action provides an incremental search facility: once activated,
+    each character you type is added to the search pattern, and GPS jumps
+    to the next occurrence of the pattern.
+    """
+    Isearch()
+
+
+@interactive(name=isearch_backward_action_name,
+             category="Editor",
+             menu=isearch_backward_menu,
+             after='Find Or Replace...',
+             filter="Source editor")
+def interactive_search_backward():
+    """
+    This action provides a backward incremental search facility:
+    once activated, each character you type is added to the search pattern, and
+    GPS jumps to the stack occurrence of the pattern.
+    """
+    Isearch(backward=True)
+
+
+
