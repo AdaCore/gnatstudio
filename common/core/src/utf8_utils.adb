@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Iconv;       use GNATCOLL.Iconv;
-with GNAT.Decode_UTF8_String;
 with Config;
 
 package body UTF8_Utils is
@@ -24,9 +23,14 @@ package body UTF8_Utils is
    Locale_To_UTF_8 : Iconv_T;
    UTF_8_To_Locale : Iconv_T;
    Latin1_To_UTF_8 : Iconv_T;
+   UTF_8_To_UTF_32 : Iconv_T;
    Is_Opened       : Boolean := False;
 
    procedure Open;
+   --  Initialize internal data if not yet initialized
+
+   function Validate (Object : Iconv_T; Input : Byte_Sequence) return Boolean;
+   --  Check if convertion of Text is possible using given Object
 
    ----------
    -- Open --
@@ -41,6 +45,8 @@ package body UTF8_Utils is
            (From_Code => UTF8, To_Code => Config.Default_Charset);
          Latin1_To_UTF_8 := Iconv_Open
            (From_Code => ISO_8859_1, To_Code => UTF8);
+         UTF_8_To_UTF_32 := Iconv_Open
+           (From_Code => UTF8, To_Code => UTF32);
          Is_Opened := True;
       end if;
    end Open;
@@ -54,25 +60,23 @@ package body UTF8_Utils is
       Output  : out String_Access;
       Success : out Boolean) is
    begin
+      Open;
       Output := null;
       Success := True;
 
       --  First check if the string is already UTF-8
-      if GNAT.Decode_UTF8_String.Validate_Wide_Wide_String (Input) then
+      if Validate (UTF_8_To_UTF_32, Input) then
          --  The string is UTF-8, nothing to do
          return;
       end if;
 
       --  The string is not valid UTF-8, assume it is encoded using the locale.
 
-      begin
-         Open;
+      if Validate (Locale_To_UTF_8, Input) then
          Output := new String'(Iconv (Locale_To_UTF_8, Input));
-      exception
-         when Invalid_Sequence_Error | Incomplete_Sequence_Error =>
-            Reset (Locale_To_UTF_8);
-            Success := False;
-      end;
+      else
+         Success := False;
+      end if;
    end Unknown_To_UTF8;
 
    function Unknown_To_UTF8
@@ -168,5 +172,32 @@ package body UTF8_Utils is
       Open;
       return Iconv (Latin1_To_UTF_8, Input);
    end Latin_1_To_UTF8;
+
+   --------------
+   -- Validate --
+   --------------
+
+   function Validate
+     (Object : Iconv_T; Input : Byte_Sequence) return Boolean
+   is
+      Output       : Byte_Sequence (1 .. 4096);
+      Input_Index  : Positive := Input'First;
+      Output_Index : Positive := Output'First;
+      Result       : Iconv_Result;
+   begin
+      loop
+         Iconv (Object, Input, Input_Index, Output, Output_Index, Result);
+
+         case Result is
+            when Invalid_Multibyte_Sequence | Incomplete_Multibyte_Sequence =>
+               return False;
+            when Success =>
+               return True;
+            when Full_Buffer =>
+               --  Continue convertion by rewriting output buffer
+               Output_Index := Output'First;
+         end case;
+      end loop;
+   end Validate;
 
 end UTF8_Utils;
