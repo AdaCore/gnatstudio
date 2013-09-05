@@ -4231,6 +4231,12 @@ package body Src_Editor_Buffer is
             Delete (Autosaved_File (Original_Filename), Result);
          end if;
 
+         if Filename /= Original_Filename then
+            --  We have just "saved as" with a new file name: tell GPS that
+            --  this file is now open
+            File_Edited (Buffer.Kernel, Filename);
+         end if;
+
          Buffer.Modified_Auto := False;
       end if;
 
