@@ -13,6 +13,15 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               "name_", "name.", "name.3com", "name._child" or "name.all".
   Workaround: Always enter valid project names.
 
+- M827-001: Missing cross-reference on package name in separate
+  Problem:    Clicking on the name of the parameter inside a "separate(Foo)"
+              statement has no effect, and does not go to the declaration of
+              Foo.
+              This was a missing information from the compiler, so an update
+              to the compiler is needed.
+  Workaround: Search for the name of the package in the omni-search (the global
+              search box in the toolbar).
+
 - M821-028: GPS: do not use default project when projet not found
   Problem:    When the project specified with -P on the command line is not
               found, GPS would default to loading a default project (or if the
