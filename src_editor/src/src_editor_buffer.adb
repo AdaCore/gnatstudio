@@ -592,7 +592,7 @@ package body Src_Editor_Buffer is
       if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File) and then Is_Parent (File, Edited) then
             Dest := Create_From_Dir
-              (Files_2_Hooks_Args (Data.all).Renamed,
+              (Files_2_Hooks_Args (Data.all).Renamed.Dir,
                Relative_Path (Edited, File));
             Hook.Buffer.Filename := Dest;
             Hook.Buffer.Filename_Changed;
