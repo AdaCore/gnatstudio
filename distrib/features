@@ -81,6 +81,13 @@ NF-60-M712-004 GPS: syntax highlighting of aspects (2013-07-29)
   configurable via the preferences, so that these are easily found when
   editing source files.
 
+NF-60-M711-059 GPS: do not save Locations by default (2013-09-06)
+
+  By default, the contents of the locations window is no longer saved when
+  GPS exits (and restored when it restarts), because it sometimes
+  resulted in very long loading times. The saving can be reactivated by
+  using the local configuration menu in the toolbar of the Locations window.
+
 NF-60-M711-028 GPS: tooltip while scrolling in editors (2013-07-11)
 
   When manipulating an editor scrollbar with the mouse, a tooltip is

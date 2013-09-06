@@ -139,7 +139,6 @@ package body GPS.Location_View is
       Do_Not_Delete_Messages_On_Exit : Boolean := False;
       --  Protection against reentrancy
    end record;
-
    overriding procedure Create_Toolbar
      (View    : not null access Location_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
@@ -1252,6 +1251,14 @@ package body GPS.Location_View is
          & "automatically when it becomes empty."));
       Associate (Get_History (View.Kernel).all,
                  Hist_Locations_Auto_Close, Check, Default => True);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Save locations in desktop");
+      Check.Set_Tooltip_Text
+        (-("Whether the contents of the Locations view should be saved"
+         & " in the desktop, and restored when GPS is restarted."));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Locations_Save_In_Desktop, Check, Default => False);
       Menu.Add (Check);
    end Create_Menu;
 

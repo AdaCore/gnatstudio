@@ -28,7 +28,7 @@ with Interfaces;                  use Interfaces;
 
 package body GPS.Search is
    Me : constant Trace_Handle := Create ("SEARCH");
-   Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM");
+   Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM", Off);
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
    type Match_Array_Access is access GNAT.Regpat.Match_Array;

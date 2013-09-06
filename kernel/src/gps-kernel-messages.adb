@@ -15,47 +15,40 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed.Hash;
+with Ada.Containers;            use Ada.Containers;
+with Ada.Strings.Fixed.Hash;    use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Conversion;
 
 with Glib.Convert;
 
-with GPS.Kernel.Hooks;
+with Basic_Types;               use Basic_Types;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GPS.Editors;               use GPS.Editors;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Project;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles; use GPS.Kernel.Styles;
-with Projects;
-with Traces;
-with XML_Parsers;
-with XML_Utils;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Styles.UI;             use GPS.Styles, GPS.Styles.UI;
+with Histories;                 use Histories;
+with Projects;                  use Projects;
+with XML_Parsers;               use XML_Parsers;
+with XML_Utils;                 use XML_Utils;
 
 package body GPS.Kernel.Messages is
+   Me : constant Trace_Handle := Create ("MSG");
 
-   use Ada;
-   use Ada.Containers;
-   use Ada.Strings;
-   use Ada.Strings.Fixed;
-   use Ada.Strings.Unbounded;
-   use Ada.Tags;
-   use Basic_Types;
    use Category_Maps;
    use File_Maps;
-   use GPS.Editors;
-   use GPS.Kernel.Hooks;
-   use GPS.Kernel.Project;
-   use GPS.Styles;
-   use GPS.Styles.UI;
    use Listener_Vectors;
    use Node_Vectors;
    use Note_Maps;
-   use Projects;
    use Sort_Order_Hint_Maps;
-   use Traces;
-   use XML_Parsers;
-   use XML_Utils;
 
    procedure On_Project_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
@@ -185,12 +178,12 @@ package body GPS.Kernel.Messages is
    --  Return file where save messages for current project
 
    function To_Address is
-     new Unchecked_Conversion (Messages_Container_Access, System.Address);
+     new Ada.Unchecked_Conversion (Messages_Container_Access, System.Address);
    function To_Messages_Container_Access is
-     new Unchecked_Conversion (System.Address, Messages_Container_Access);
+     new Ada.Unchecked_Conversion (System.Address, Messages_Container_Access);
 
    procedure Free is new Ada.Unchecked_Deallocation
-       (GPS.Editors.Line_Information.Line_Information_Record, Action_Item);
+     (GPS.Editors.Line_Information.Line_Information_Record, Action_Item);
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
@@ -1049,6 +1042,13 @@ package body GPS.Kernel.Messages is
       File              : Virtual_File;
 
    begin
+      if not Get_History
+        (Get_History (Self.Kernel).all, Hist_Locations_Save_In_Desktop)
+      then
+         Trace (Me, "Not loading " & Messages_File.Display_Full_Name);
+         return;
+      end if;
+
       if Messages_File.Is_Regular_File then
          Parse (Messages_File, Root_XML_Node, Error);
       end if;
@@ -1170,7 +1170,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1214,7 +1214,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1253,7 +1253,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1293,7 +1293,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1333,7 +1333,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1363,7 +1363,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1394,7 +1394,7 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
@@ -1424,13 +1424,12 @@ package body GPS.Kernel.Messages is
 
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             Next (Listener_Position);
          end loop;
       end Notify_Listeners_About_Message_Removed;
-
    end Notifiers;
 
    -----------------------------
@@ -1761,8 +1760,8 @@ package body GPS.Kernel.Messages is
       Recursive : Boolean)
    is
 
-      procedure Free is
-        new Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Abstract_Message'Class, Message_Access);
 
       Parent         : Node_Access := Message.Parent;
       Index          : constant Positive :=
@@ -1865,7 +1864,9 @@ package body GPS.Kernel.Messages is
    ----------
 
    procedure Save (Self : not null access Messages_Container'Class) is
-      use type GNATCOLL.Projects.Project_Status;
+      F : constant Virtual_File := Self.Get_Message_File;
+      Success : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       --  Save messages only for ordinary projects (not empty nor default)
@@ -1873,10 +1874,13 @@ package body GPS.Kernel.Messages is
       if GPS.Kernel.Project.Get_Registry (Self.Kernel).Tree.Status
         = GNATCOLL.Projects.From_File
       then
-         Self.Save
-           (Self.Get_Message_File,
-            (True, True),
-            False);
+         if Get_History
+           (Get_History (Self.Kernel).all, Hist_Locations_Save_In_Desktop)
+         then
+            Self.Save (F, (True, True), False);
+         elsif F.Is_Regular_File then
+            F.Delete (Success);
+         end if;
       end if;
    end Save;
 

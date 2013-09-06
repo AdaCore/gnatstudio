@@ -39,8 +39,13 @@ with GNATCOLL.VFS;
 with GPS.Styles;
 with GPS.Styles.UI;
 with GPS.Editors.Line_Information;
+with Histories;
 
 package GPS.Kernel.Messages is
+
+   Hist_Locations_Save_In_Desktop : constant Histories.History_Key :=
+     "locations-save-in-desktop";
+   --  Whether we should save the locations between GPS sessions.
 
    type Messages_Container (<>) is tagged limited private;
 
