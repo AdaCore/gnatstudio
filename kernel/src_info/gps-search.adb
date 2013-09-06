@@ -1055,7 +1055,6 @@ package body GPS.Search is
       Suffix      : in out Ada.Strings.Unbounded.Unbounded_String;
       Suffix_Last : in out Natural)
    is
-      pragma Unreferenced (Self);
       T : constant String := To_String (Suffix);
    begin
       if T = "" then
@@ -1068,7 +1067,13 @@ package body GPS.Search is
                Suffix_Last := S - 1;
                exit;
             else
-               if T (S) /= Text (Context.Finish + S) then
+               if (Self.Case_Sensitive
+                   and then T (S) /= Text (Context.Finish + S))
+                 or else
+                   (not Self.Case_Sensitive
+                    and then To_Lower (T (S)) /=
+                      To_Lower (Text (Context.Finish + S)))
+               then
                   Suffix_Last := S - 1;
                   exit;
                end if;
