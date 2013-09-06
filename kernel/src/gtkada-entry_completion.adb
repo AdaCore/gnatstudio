@@ -892,15 +892,17 @@ package body Gtkada.Entry_Completion is
          Widget_Callback.Emit_By_Name (Self, Signal_Escape);
 
       elsif Event.Keyval = GDK_Tab then
-         declare
-            Suffix : constant String :=
-              Self.Completion.Complete_Suffix (Self.Pattern);
-            Position : Gint := -1;
-         begin
-            Self.GEntry.Insert_Text (Suffix, Position);
-            Self.GEntry.Set_Position (-1);
-            return True;
-         end;
+         if Self.Pattern /= null then
+            declare
+               Suffix : constant String :=
+                 Self.Completion.Complete_Suffix (Self.Pattern);
+               Position : Gint := -1;
+            begin
+               Self.GEntry.Insert_Text (Suffix, Position);
+               Self.GEntry.Set_Position (-1);
+               return True;
+            end;
+         end if;
 
       elsif Event.Keyval = GDK_KP_Down
          or else Event.Keyval = GDK_Down
