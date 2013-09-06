@@ -194,8 +194,6 @@ private package Docgen3.Atree is
 
    procedure Append_Derivation
      (E : Entity_Id; Value : Entity_Id);
-   procedure Append_Discriminant
-     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Inherited_Method
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
@@ -211,8 +209,6 @@ private package Docgen3.Atree is
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
    function Get_Derivations
-     (E : Entity_Id) return access EInfo_List.Vector;
-   function Get_Discriminants
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Doc
      (E : Entity_Id) return Comment_Result;
@@ -626,9 +622,6 @@ private
          Full_View_Src   : Unbounded_String;
          --  Source code associated with this entity (and its full-view)
 
-         Discriminants   : aliased EInfo_List.Vector;
-         --  Record type discriminants (if any)
-
          Entities        : aliased EInfo_List.Vector;
          --  Entities defined in the scope of this entity. For example, all
          --  the entities defined in the scope of a package, all the components
@@ -651,7 +644,6 @@ private
       end record;
 
    pragma Inline (Append_Derivation);
-   pragma Inline (Append_Discriminant);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
    pragma Inline (Append_Progenitor);
@@ -660,7 +652,6 @@ private
    pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);
    pragma Inline (Get_Derivations);
-   pragma Inline (Get_Discriminants);
    pragma Inline (Get_Doc);
    pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_Entities);

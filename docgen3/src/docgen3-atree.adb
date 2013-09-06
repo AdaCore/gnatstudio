@@ -69,15 +69,6 @@ package body Docgen3.Atree is
       end if;
    end Append_Derivation;
 
-   -------------------------
-   -- Append_Discriminant --
-   -------------------------
-
-   procedure Append_Discriminant (E : Entity_Id; Value : Entity_Id) is
-   begin
-      E.Discriminants.Append (Value);
-   end Append_Discriminant;
-
    -----------------------------
    -- Append_Inherited_Method --
    -----------------------------
@@ -417,16 +408,6 @@ package body Docgen3.Atree is
    begin
       return E.Derivations'Access;
    end Get_Derivations;
-
-   -----------------------
-   -- Get_Discriminants --
-   -----------------------
-
-   function Get_Discriminants
-     (E : Entity_Id) return access EInfo_List.Vector is
-   begin
-      return E.Discriminants'Access;
-   end Get_Discriminants;
 
    -------------
    -- Get_Doc --
@@ -1019,7 +1000,6 @@ package body Docgen3.Atree is
            Src               => Null_Unbounded_String,
            Full_View_Src     => Null_Unbounded_String,
 
-           Discriminants     => <>,
            Entities          => <>,
            Inherited_Methods => <>,
            Methods           => <>,
@@ -1540,15 +1520,6 @@ package body Docgen3.Atree is
          Result := Process (E_Info, Scope_Level);
 
          if Result = OK then
-            if Is_Class_Or_Record_Type (E_Info) then
-               Cursor := Get_Discriminants (E_Info).First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);
-
-                  EInfo_List.Next (Cursor);
-               end loop;
-            end if;
-
             Cursor := Get_Entities (E_Info).First;
             while EInfo_List.Has_Element (Cursor) loop
                Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);

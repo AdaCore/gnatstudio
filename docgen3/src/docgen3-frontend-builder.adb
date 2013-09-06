@@ -49,9 +49,6 @@ package body Docgen3.Frontend.Builder is
       procedure Append_Child_Type
         (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
 
-      procedure Append_Discriminant
-        (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
-
       procedure Append_Inherited_Method
         (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
 
@@ -249,7 +246,6 @@ package body Docgen3.Frontend.Builder is
       end record;
 
       pragma Inline (Append_Child_Type);
-      pragma Inline (Append_Discriminant);
       pragma Inline (Append_Inherited_Method);
       pragma Inline (Append_Method);
       pragma Inline (Append_Parent_Type);
@@ -356,16 +352,6 @@ package body Docgen3.Frontend.Builder is
       begin
          LL.Append_Child_Type (Get_Entity (Entity), Get_Entity (Value));
       end Append_Child_Type;
-
-      -------------------------
-      -- Append_Discriminant --
-      -------------------------
-
-      procedure Append_Discriminant
-        (Entity : Unique_Entity_Id; Value : Unique_Entity_Id) is
-      begin
-         Append_Discriminant (Get_Entity (Entity), Get_Entity (Value));
-      end Append_Discriminant;
 
       -----------------------------
       -- Append_Inherited_Method --
@@ -1161,6 +1147,8 @@ package body Docgen3.Frontend.Builder is
                end loop;
             end Append_Parent_And_Progenitors;
 
+         --  Start of processing for Decorate_Record_Type
+
          begin
             if In_Ada_Lang then
                declare
@@ -1171,11 +1159,10 @@ package body Docgen3.Frontend.Builder is
                begin
                   for J in Discrim'Range loop
                      Get_Unique_Entity (Entity, Context, File, Discrim (J));
+                     pragma Assert (Is_New (Entity));
+
                      Set_Kind (Entity, E_Discriminant);
                      Append_To_Scope (E, Entity);
-                     Append_To_Map (Entity);
-                     Append_Discriminant (E, Entity);
-                     pragma Assert (Is_New (Entity));
                      Append_To_Map (Entity);
                   end loop;
                end;
