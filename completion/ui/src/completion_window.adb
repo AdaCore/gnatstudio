@@ -1294,16 +1294,6 @@ package body Completion_Window is
          Get_Iter_At_Mark
            (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
 
-         --  Forward Text_End iter to end of identifier
-
-         Result := True;
-         while Result
-           and then Is_Word_Char
-             (Window.Lang, Wide_Wide_Character'Val (Get_Char (Text_End)))
-         loop
-            Forward_Char (Text_End, Result);
-         end loop;
-
          --  Perform the delete
 
          Window.In_Deletion := True;
