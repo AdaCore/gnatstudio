@@ -80,6 +80,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               file, GPS takes a long time to complete.
   Workaround: None known.
 
+- M604-030: GPS refill a comment after end-of-package
+  Problem:    If you try to refill a comment that is located after the end
+              of the package, GPS does not do anything.
+  Workaround: Add an empty line after the comment.
+
 - M604-029: GPS: wrong casing in comments when at end of buffer
   Problem:    Comments entered when the cursor is at the end of the buffer
               are incorrectly cased.
