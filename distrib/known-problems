@@ -13,6 +13,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               "name_", "name.", "name.3com", "name._child" or "name.all".
   Workaround: Always enter valid project names.
 
+- M902-009: Complete Block not working on new files
+  Problem:    Create a new file, save it to an Ada file: operations working
+              on blocks, such as "Complete Block" might not function.
+  Workaround: Close the editor for this file after saving it, and reopen it.
+
 - M827-001: Missing cross-reference on package name in separate
   Problem:    Clicking on the name of the parameter inside a "separate(Foo)"
               statement has no effect, and does not go to the declaration of
