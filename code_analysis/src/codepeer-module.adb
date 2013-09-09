@@ -1840,7 +1840,7 @@ package body CodePeer.Module is
                     Image (Message),
                     Message_Ranking_Level'Pos (Message.Ranking),
                     Flags,
-                    Allow_Auto_Jump_To_First => False);
+                    Allow_Auto_Jump_To_First => True);
                Style   : constant Style_Access :=
                  Module.Message_Styles (Message.Ranking);
 
