@@ -474,6 +474,7 @@ package body GVD.Call_Stack is
      (View : access Call_Stack_Record; New_State : Debugger_State)
    is
       Iter : Gtk_Tree_Iter;
+      Prev : Boolean;
    begin
       if New_State = Debug_Busy then
          --  The debugger is now executing a command that will likely change
@@ -481,7 +482,13 @@ package body GVD.Call_Stack is
          --  keep a visible call stack displayed.
 
          if Is_Execution_Command (Get_Process (View)) then
+            --  Calling Clear might cause the selection to jump from row to
+            --  row, causing a query of every frame info. To prevent this,
+            --  set the Block flag.
+            Prev := View.Block;
+            View.Block := True;
             Clear (View.Model);
+            View.Block := Prev;
 
             Append (View.Model, Iter, Null_Iter);
             Set (View.Model, Iter, Frame_Num_Column, 0);
