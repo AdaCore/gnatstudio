@@ -369,6 +369,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Force the loading of all xref in memory, through
               /Build/Load Xref In Memory.
 
+- LA04-032 GB: GPR file corrupted viewing Ada project's GNATbench properties.
+  Problem:    Clicking OK when viewing the GNATbench properties of an Ada
+              project can corrupt the GNAT project file of this Ada project.
+  Workaround: Undo the GNAT project file change.
+
 - L806-019: Ada 2012 aspect in type declaration corrupts completion & outline
   Problem:    If an aspect is used in a type declaration, it corrupts the
               completion database. The outline view may also be frozen.
