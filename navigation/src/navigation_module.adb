@@ -30,7 +30,6 @@ with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -1146,16 +1145,16 @@ package body Navigation_Module is
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
-      Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body",
-                     Stock_Convert, On_Other_File'Access);
+      Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body", "",
+                     On_Other_File'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu (Kernel, Navigate, -"_Start Of Statement",
-                     Stock_Go_Up, On_Start_Statement'Access,
+                     "", On_Start_Statement'Access,
                      null, GDK_Up, Mod1_Mask,
                      Filter => Src_Action_Context);
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
-                     Stock_Go_Down, On_End_Statement'Access,
+                     "", On_End_Statement'Access,
                      null, GDK_Down, Mod1_Mask,
                      Filter => Src_Action_Context);
       Register_Menu (Kernel, Navigate, -"Pre_vious Subprogram", "",

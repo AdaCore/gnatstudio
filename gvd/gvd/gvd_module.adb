@@ -77,6 +77,7 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
 with GVD.Process;               use GVD.Process;
 with GVD.Scripts;               use GVD.Scripts;
+with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
 with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
@@ -2532,7 +2533,7 @@ package body GVD_Module is
                      On_Finish'Access, null, GDK_F7, Sensitive => False);
       Register_Menu (Kernel, Debug, -"_Continue", "",
                      On_Continue'Access, null, GDK_F8, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"_Interrupt", Stock_Stop,
+      Register_Menu (Kernel, Debug, -"_Interrupt", GPS_Stop_Task,
                      On_Interrupt'Access, null,
                      GDK_backslash, Control_Mask, Sensitive => False);
       Gtk_New (Sepitem);

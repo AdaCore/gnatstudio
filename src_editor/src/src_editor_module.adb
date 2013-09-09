@@ -2813,7 +2813,7 @@ package body Src_Editor_Module is
          GDK_LC_s, Control_Mask,
          Ref_Item => -"Save More");
       Register_Menu
-        (Kernel, File, -"Save _As...", Stock_Save_As,
+        (Kernel, File, -"Save _As...", "",
          On_Save_As'Access,
          Ref_Item => -"Save More");
 
@@ -3010,7 +3010,6 @@ package body Src_Editor_Module is
       Register_Menu (Kernel,
                      Parent_Path => Navigate,
                      Text        => -"Goto _Line...",
-                     Stock_Image => Stock_Jump_To,
                      Command     => Command,
                      Callback    => null,
                      Accel_Key   => GDK_LC_g,
@@ -3021,7 +3020,7 @@ package body Src_Editor_Module is
          Action => Command,
          Filter => Line_Numbers_Area_Filter);
 
-      Register_Menu (Kernel, Navigate, -"Goto _Declaration", Stock_Home,
+      Register_Menu (Kernel, Navigate, -"Goto _Declaration", "",
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
       Register_Menu (Kernel, Navigate, -"Goto _Body", "",
                      On_Goto_Body'Access, Ref_Item => -"Goto Line...");

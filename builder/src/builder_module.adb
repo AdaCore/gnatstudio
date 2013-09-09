@@ -27,7 +27,6 @@ with Glib.Object;                use Glib.Object;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
@@ -42,6 +41,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
+with GPS.Stock_Icons;            use GPS.Stock_Icons;
 
 with Build_Command_Utils;
 with Builder_Facility_Module;
@@ -311,7 +311,8 @@ package body Builder_Module is
       Gtk_New (Sep);
       Register_Menu (Kernel, Tools, Sep);
       Register_Menu
-        (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
+        (Kernel, Tools, -"_Interrupt", GPS_Stop_Task,
+         On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
 
       Add_Hook
