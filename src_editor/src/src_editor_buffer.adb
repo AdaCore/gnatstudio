@@ -6946,14 +6946,26 @@ package body Src_Editor_Buffer is
          end if;
 
          --  Replace selected text with the new one
+         --  Pouet Pouet
 
          if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
             Replace_Slice
               (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
          else
             Replace_Slice
-              (Buffer, From_Line, 1, To_Line, To_Length, To_String (New_Text));
+              (Buffer, From_Line, 1, To_Line, To_Length,
+               To_String (New_Text));
          end if;
+
+         declare
+            Iter : Gtk_Text_Iter;
+            Dummy : Boolean;
+         begin
+            Buffer.Get_Iter_At_Mark (Iter, Buffer.Get_Insert);
+            Backward_Line (Iter, Dummy);
+            Forward_To_Line_End (Iter, Dummy);
+            Buffer.Place_Cursor (Iter);
+         end;
 
       exception
          when E : others =>
