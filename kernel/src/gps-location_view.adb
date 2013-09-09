@@ -377,7 +377,7 @@ package body GPS.Location_View is
       Expand_Category
         (Location_View_Access
            (Location_Views.Get_Or_Create_View
-              (Self.Kernel, Focus => False)),
+              (Self.Kernel, Focus => Auto)),
          Ada.Strings.Unbounded.To_String (Category),
          Auto);
    end Category_Added;
