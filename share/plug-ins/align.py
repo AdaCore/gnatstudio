@@ -340,7 +340,7 @@ def align_arrows ():
          top = buffer.get_mark ("top").location()
          bottom = buffer.get_mark ("bottom").location()
          chars = buffer.get_chars (top, bottom)
-         level = -1
+         level = 0
          for k in range(len(chars)):
             if chars[k] == '(':
                level = level + 1

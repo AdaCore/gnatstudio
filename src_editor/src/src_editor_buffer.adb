@@ -100,6 +100,7 @@ with Traces;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
+with Ada.Text_IO;
 
 package body Src_Editor_Buffer is
 
@@ -3675,10 +3676,13 @@ package body Src_Editor_Buffer is
            Strip_Blanks.Get_Pref;
       begin
          if File /= GNATCOLL.VFS.No_File then
+            Ada.Text_IO.Put_Line (String (File.Full_Name.all));
             GPS.Properties.Get_Property
               (Prop, File, Strip_Blanks_Property_Name, Found);
 
             if Found then
+               Ada.Text_IO.Put_Line ("PROPERTY FOUND WITH VALUE : "
+                                     & Boolean'Value (Prop.Value.all)'Img);
                Buffer.Strip_Trailing_Blanks :=
                  Boolean'Value (Prop.Value.all);
 
