@@ -20,6 +20,7 @@ can't be integrated into GPS.
 
 import GPS
 import os.path
+from gps_utils import interactive
 from vcs import *
 
 def from_git_root (filename):
@@ -81,6 +82,7 @@ actions = [
  { ACTION: "Update project (recursively)", LABEL: "Project/Update project (recursively)"  },
 ]
 
+
 XML = r"""<?xml version="1.0" ?>
 <GPS>
    <!-- Git status -->
@@ -104,7 +106,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <action name="generic_git_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <shell lang="python">git_support.from_git_root ("$1")</shell>
+      <shell lang="python">git.from_git_root ("$1")</shell>
       <external>git --no-pager show HEAD:%1</external>
       <shell>dump "%1" TRUE</shell>
       <external>diff --normal -p %1 $1</external>
@@ -185,7 +187,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <action name="generic_git_revision" show-command="false" output="none" category="">
       <shell output="">echo "Getting $2 at revision $1"</shell>
-      <shell lang="python">git_support.from_git_root ("$2")</shell>
+      <shell lang="python">git.from_git_root ("$2")</shell>
       <external>git --no-pager show "$1:%1"</external>
       <shell>base_name "$2"</shell>
       <shell>dump "%2" FALSE</shell>
