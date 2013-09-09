@@ -68,7 +68,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="Window">
-      <Title>_SPARK</Title>
+      <Title>_SPARK 2014</Title>
         <menu action="Examine All Action">
           <Title>Examine All</Title>
         </menu>
@@ -99,19 +99,19 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </submenu>
 
     <contextual action="Examine File Action">
-      <Title>SPARK/Examine File</Title>
+      <Title>SPARK 2014/Examine File</Title>
     </contextual>
     <contextual action="Examine Subprogram Action">
-      <Title>SPARK/Examine Subprogram</Title>
+      <Title>SPARK 2014/Examine Subprogram</Title>
     </contextual>
     <contextual action="Prove File Action">
-      <Title>SPARK/Prove File</Title>
-    </contextual>
-    <contextual action="Prove Subprogram Action">
-      <Title>SPARK/Prove Subprogram</Title>
+      <Title>SPARK 2014/Prove File</Title>
     </contextual>
     <contextual action="Prove Line Action">
-      <Title>SPARK/Prove Line</Title>
+      <Title>SPARK 2014/Prove Line</Title>
+    </contextual>
+    <contextual action="Prove Subprogram Action">
+      <Title>SPARK 2014/Prove Subprogram</Title>
     </contextual>
   </GNATPROVE>
 """
