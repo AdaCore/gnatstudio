@@ -18,6 +18,14 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               on blocks, such as "Complete Block" might not function.
   Workaround: Close the editor for this file after saving it, and reopen it.
 
+- M830-046: Reloading an invalid project loses current project
+  Problem:    If you edit the current project file manually but introduce a
+              syntax error, GPS will display the list of error messages in the
+              Locations window, and automatically load a different project
+              (named 'Empty'). As a result, you can no longer Reload the
+              project after fixing the syntax error.
+  Workaround: Use /Projects/Recent to reload the previous project.
+
 - M827-001: Missing cross-reference on package name in separate
   Problem:    Clicking on the name of the parameter inside a "separate(Foo)"
               statement has no effect, and does not go to the declaration of

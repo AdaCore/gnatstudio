@@ -601,6 +601,11 @@ package body GPS.Kernel.Project is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
+      Remove_Category
+        (Get_Messages_Container (Kernel),
+         Category => Location_Category,
+         Flags    => Empty_Message_Flags);
+
       begin
          Kernel.Registry.Tree.Reload_If_Needed
            (Reloaded, Report_Error'Unrestricted_Access);
@@ -659,6 +664,11 @@ package body GPS.Kernel.Project is
 
    begin
       Trace (Me, "Load_Project " & Project.Display_Full_Name);
+
+      Remove_Category
+        (Get_Messages_Container (Kernel),
+         Category => Location_Category,
+         Flags    => Empty_Message_Flags);
 
       --  Are we reloading the same project ?
       if Get_Registry (Kernel).Tree.Status = From_File
