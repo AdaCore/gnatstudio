@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Containers;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Basic_Types;              use Basic_Types;
 with Docgen3.Comment;          use Docgen3.Comment;
 with Docgen3.Frontend;         use Docgen3.Frontend;
@@ -43,6 +42,7 @@ package body Docgen3.Backend.Simple is
      (Tmpl_Entities,        --  Entities index
       Tmpl_Files_Index,     --  Files index
       Tmpl_Global_Index,    --  Global index
+      Tmpl_Prj_Files_Index, --  Project files index
       Tmpl_Src_File         --  Source file
      );
 
@@ -1021,6 +1021,12 @@ package body Docgen3.Backend.Simple is
          --  Generate the ReST file Filename with this Header containing an
          --  index with the tree of dependencies of Ada tagged types.
 
+         procedure Generate_Project_Files_Index
+           (Filename  : String;
+            Header    : String);
+         --  Generate the ReST file Filename with this Header containing an
+         --  index with all the files of Src_Files.
+
          procedure Generate_Tagged_Types_Tree_Index
            (Filename  : String;
             Header    : String);
@@ -1290,6 +1296,62 @@ package body Docgen3.Backend.Simple is
                Text =>
                  Parse (+Tmpl.Full_Name, Translation, Cached => True));
          end Generate_Instances_Index;
+
+         ----------------------------------
+         -- Generate_Project_Files_Index --
+         ----------------------------------
+
+         procedure Generate_Project_Files_Index
+           (Filename  : String;
+            Header    : String)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
+            Printout_H  : aliased Unbounded_String;
+            Printout    : aliased Unbounded_String;
+            Translation : Translate_Set;
+            Tmpl        : constant Virtual_File :=
+                            Get_Template
+                              (Get_Share_Dir (Backend.Context.Kernel),
+                               Tmpl_Prj_Files_Index);
+            Prj_Index   : Project_Files_List.Cursor;
+            Prj_Srcs    : Project_Files;
+
+         begin
+            Printout_H :=
+              Printout
+              & Header & ASCII.LF
+              & Header_U & ASCII.LF;
+
+            Prj_Index := Backend.Context.Prj_Files.First;
+            while Project_Files_List.Has_Element (Prj_Index) loop
+               Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+               declare
+                  Prj_Name : constant String := Name (Prj_Srcs.Project);
+                  Filename : constant String := "prj__" & To_Lower (Prj_Name);
+               begin
+                  Generate_Files_Index
+                    (Src_Files => Prj_Srcs.Src_Files.all,
+                     Filename  => Filename,
+                     Header    => Prj_Name);
+                  Append_Line (Printout'Access, "   " & Filename);
+               end;
+
+               Project_Files_List.Next (Prj_Index);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("HEADER", Printout_H));
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Project_Files_Index;
 
          --------------------------------
          -- Generate_Tagged_Types_Tree --
@@ -1673,13 +1735,22 @@ package body Docgen3.Backend.Simple is
             Printout := Printout & ASCII.LF;
          end if;
 
-         if Has_Ada_Files and Has_C_Files then
-            New_Index_Section (Printout'Access);
+         New_Index_Section (Printout'Access);
 
+         declare
+            Filename : constant String := "prj_files_idx";
+         begin
+            Generate_Project_Files_Index
+              (Filename  => Filename,
+               Header    => "Projects source files");
+            Append_Line (Printout'Access, "   " & Filename);
+         end;
+
+         if Has_Ada_Files and Has_C_Files then
             Src_Files := Backend.Src_Files;
             if Natural (Src_Files.Length) > 0 then
                declare
-                  Filename : constant String := "all_files_idx";
+                  Filename : constant String := "ada_files_idx";
                begin
                   Files_Vector_Sort.Sort (Src_Files);
                   Generate_Files_Index
@@ -1807,6 +1878,9 @@ package body Docgen3.Backend.Simple is
          when Tmpl_Global_Index =>
             return Create_From_Dir
               (System_Dir, "docgen3/index.tmpl");
+         when Tmpl_Prj_Files_Index =>
+            return Create_From_Dir
+              (System_Dir, "docgen3/prj_index.tmpl");
          when Tmpl_Src_File =>
             return Create_From_Dir
               (System_Dir, "docgen3/src.tmpl");

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Basic_Types;              use Basic_Types;
 with Docgen3.Comment;          use Docgen3.Comment;
 with Docgen3.Utils;            use Docgen3.Utils;

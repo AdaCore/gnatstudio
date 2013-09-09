@@ -38,9 +38,7 @@
 --      package (excluding the routines of package LL).
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
-with GNATCOLL.Xref;           use GNATCOLL.Xref;
 with Language;                use Language;
 with Docgen3.Comment;         use Docgen3.Comment;
 with Xref.Docgen;             use Xref.Docgen;

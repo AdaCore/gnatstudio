@@ -19,7 +19,6 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.HTable;
-with GNATCOLL.Xref;
 with Basic_Types;             use Basic_Types;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Language.Ada;
@@ -317,7 +316,6 @@ package body Docgen3.Frontend.Builder is
          function Equivalent_Keys
            (Left, Right : General_Location) return Boolean
          is
-            use type GNATCOLL.Xref.Visible_Column;
          begin
             return Left.File = Right.File
               and then Left.Line = Right.Line
@@ -1337,50 +1335,58 @@ package body Docgen3.Frontend.Builder is
          ---------------------------------
 
          procedure Decorate_Subprogram_Formals (E : Unique_Entity_Id) is
-            Formals : constant Xref.Parameter_Array :=
-                        Parameters (Context.Database, Get_LL_Entity (E));
-            Formal  : Unique_Entity_Id;
 
          begin
+            --  No extra action needed if we are processing the formals of the
+            --  body
+
+            if not Is_New (E) then
+               return;
+            end if;
+
             Enter_Scope (E);
 
-            for J in Formals'Range loop
+            declare
+               Formals : constant Xref.Parameter_Array :=
+                           Parameters (Context.Database, Get_LL_Entity (E));
+               Formal  : Unique_Entity_Id;
 
-               --  Handle weird case found processing the file gimple.h of the
-               --  gcc sources: the entity associated with a function is also
-               --  associated with one of its formals. It seems a bug in the
-               --  generated LI file. To be investigated???
+            begin
+               for J in Formals'Range loop
 
-               if Get_LL_Entity (E) = Formals (J).Parameter then
-                  null;
+                  --  Handle weird case found processing the file gimple.h of
+                  --  the gcc sources: the entity associated with a function is
+                  --  also associated with one of its formals. It seems a bug
+                  --  in the generated LI file. To be investigated???
 
-               else
-                  Get_Unique_Entity
-                    (Formal, Context, File, Formals (J).Parameter,
-                     Forced => True);
+                  if Get_LL_Entity (E) = Formals (J).Parameter then
+                     null;
 
-                  if Present (Formal) then
-                     pragma Assert
-                       (LL.Get_Entity (Get_Entity (Formal))
-                        = Formals (J).Parameter);
+                  else
+                     Get_Unique_Entity
+                       (Formal, Context, File, Formals (J).Parameter,
+                        Forced => True);
 
-                     Set_Kind (Formal, E_Formal);
-                     Set_Scope (Formal, E);
+                     if Present (Formal)
+                       and then (Is_New (Formal) or else In_Generic_Scope)
+                     then
+                        pragma Assert
+                          (LL.Get_Entity (Get_Entity (Formal))
+                           = Formals (J).Parameter);
 
-                     Append_To_Scope (Current_Scope, Formal);
-                     Append_To_File_Entities (Formal);
+                        Set_Kind (Formal, E_Formal);
+                        Set_Scope (Formal, E);
 
-                     pragma Assert
-                       (Is_New (Formal) or else In_Generic_Scope);
-                     --  For generic formals we probably should force the
-                     --  generation of a new entity???
+                        Append_To_Scope (Current_Scope, Formal);
+                        Append_To_File_Entities (Formal);
 
-                     Append_To_Map (Formal);
-                     --  Local variables defined in the body of this
-                     --  subprogram.
+                        Append_To_Map (Formal);
+                        --  Local variables defined in the body of this
+                        --  subprogram.
+                     end if;
                   end if;
-               end if;
-            end loop;
+               end loop;
+            end;
 
             Exit_Scope;
          end Decorate_Subprogram_Formals;
@@ -1745,9 +1751,11 @@ package body Docgen3.Frontend.Builder is
                end if;
 
                Append_To_Scope (Current_Scope, New_E);
-               Append_To_File_Entities (New_E);
 
-               Complete_Decoration (New_E);
+               if Is_New (New_E) then
+                  Append_To_File_Entities (New_E);
+                  Complete_Decoration (New_E);
+               end if;
 
                if In_Ada_Lang then
                   if Get_Kind (New_E) = E_Enumeration_Type then

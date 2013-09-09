@@ -17,12 +17,12 @@
 
 with Ada.Unchecked_Deallocation;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
 with Docgen3.Atree;           use Docgen3.Atree;
 with Docgen3.Backend;         use Docgen3.Backend;
-with Docgen3.Files;           use Docgen3.Files;
 with Docgen3.Frontend;        use Docgen3.Frontend;
 with Docgen3.Time;            use Docgen3.Time;
 with Docgen3.Treepr;          use Docgen3.Treepr;
@@ -48,7 +48,7 @@ package body Docgen3 is
    procedure Process_Files
      (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
-      Src_Files           : in out Files_List.Vector;
+      Prj_Files           : in out Project_Files_List.Vector;
       Update_Global_Index : Boolean);
    --  This subprogram factorizes the functionality shared by routines
    --  Process_Single_File and Process_Project_Files. It processes all
@@ -61,7 +61,7 @@ package body Docgen3 is
    procedure Process_Files
      (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
-      Src_Files           : in out Files_List.Vector;
+      Prj_Files           : in out Project_Files_List.Vector;
       Update_Global_Index : Boolean)
    is
       Database     : constant General_Xref_Database := Kernel.Databases;
@@ -70,6 +70,10 @@ package body Docgen3 is
       procedure Check_Src_Files;
       --  Check the contents of Src_Files and remove from the list those files
       --  which can not be processed
+
+      function Number_Of_Files
+        (Prj_Files : in out Project_Files_List.Vector) return Natural;
+      --  Return the total number of source files stored in Prj_Files
 
       procedure Prepend_C_Header_Files;
       --  Prepend to Src_Files all the C and C++ files specified in "#include"
@@ -158,30 +162,66 @@ package body Docgen3 is
          --  Local variables
 
          File_Index : Files_List.Cursor;
-         Num_Files  : Natural := Natural (Src_Files.Length);
+         Prj_Index  : Project_Files_List.Cursor;
+         Prj_Srcs   : Project_Files;
 
       --  Start of processing for Check_Files
 
       begin
-         Trace (Me, "Initial number of files: " & Num_Files'Img);
-         File_Index := Src_Files.First;
-         while Files_List.Has_Element (File_Index) loop
-            if Skip_File (File_Index) then
-               Remove_Element (Src_Files, File_Index);
-            else
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               if Skip_File (File_Index) then
+                  Remove_Element (Prj_Srcs.Src_Files.all, File_Index);
+               else
+                  Files_List.Next (File_Index);
+               end if;
+            end loop;
+
+            Project_Files_List.Next (Prj_Index);
+         end loop;
+      end Check_Src_Files;
+
+      ---------------------
+      -- Number_Of_Files --
+      ---------------------
+
+      function Number_Of_Files
+        (Prj_Files : in out Project_Files_List.Vector) return Natural
+      is
+         Count      : Natural := 0;
+         File_Index : Files_List.Cursor;
+         Prj_Index  : Project_Files_List.Cursor;
+         Prj_Srcs   : Project_Files;
+
+      --  Start of processing for Check_Files
+
+      begin
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               Count := Count + 1;
                Files_List.Next (File_Index);
-            end if;
+            end loop;
+
+            Project_Files_List.Next (Prj_Index);
          end loop;
 
-         Num_Files := Natural (Src_Files.Length);
-         Trace (Me, "Number of files to process: " & Num_Files'Img);
-      end Check_Src_Files;
+         return Count;
+      end Number_Of_Files;
 
       ----------------------------
       -- Prepend_C_Header_Files --
       ----------------------------
 
       procedure Prepend_C_Header_Files is
+         Prj_Srcs : Project_Files;
 
          procedure Prepend_Include_Files (File : Virtual_File);
          procedure Prepend_Include_Files (File : Virtual_File) is
@@ -196,9 +236,11 @@ package body Docgen3 is
                Loc := Get_Location (Database, E);
 
                if Xref.Get_Display_Kind (Database, E) = "include file"
-                 and then not Src_Files.Contains (Loc.File)
+                 and then not Prj_Srcs.Src_Files.Contains (Loc.File)
+                  --  should check if the file is included in other
+                  --  subprojects (to avoid duplication)???
                then
-                  Src_Files.Prepend (Loc.File);
+                  Prj_Srcs.Src_Files.Prepend (Loc.File);
                end if;
 
                Cursor.Next;
@@ -207,19 +249,27 @@ package body Docgen3 is
 
          File_Index : Files_List.Cursor;
          Lang       : Language_Access;
+         Prj_Index  : Project_Files_List.Cursor;
 
       begin
-         File_Index := Src_Files.First;
-         while Files_List.Has_Element (File_Index) loop
-            Lang :=
-              Get_Language_From_File
-                (Lang_Handler, Files_List.Element (File_Index));
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
 
-            if Lang.all in Language.C.C_Language'Class then
-               Prepend_Include_Files (Files_List.Element (File_Index));
-            end if;
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               Lang :=
+                 Get_Language_From_File
+                   (Lang_Handler, Files_List.Element (File_Index));
 
-            Files_List.Next (File_Index);
+               if Lang.all in Language.C.C_Language'Class then
+                  Prepend_Include_Files (Files_List.Element (File_Index));
+               end if;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            Project_Files_List.Next (Prj_Index);
          end loop;
       end Prepend_C_Header_Files;
 
@@ -234,8 +284,8 @@ package body Docgen3 is
 
       Backend : Docgen3_Backend'Class := New_Backend;
       Context : aliased Docgen_Context_Ptr :=
-                          new Docgen_Context'
-                             (Kernel, Database, Lang_Handler, Options);
+                  new Docgen_Context'
+                        (Kernel, Database, Lang_Handler, Options, Prj_Files);
 
    --  Start of processing for Process_Files
 
@@ -249,15 +299,17 @@ package body Docgen3 is
 
       Check_Src_Files;
 
-      if Src_Files.Is_Empty then
+      if Number_Of_Files (Prj_Files) = 0 then
          Trace (Me, "No files to process");
          return;
       end if;
 
       if not Context.Options.Skip_C_Files then
          Prepend_C_Header_Files;
-         Trace (Me, "Number of files to process: " & Src_Files.Length'Img);
       end if;
+
+      Trace (Me,
+        "Number of files to process: " & Number_Of_Files (Prj_Files)'Img);
 
       Docgen3.Time.Reset;
 
@@ -278,54 +330,71 @@ package body Docgen3 is
       --  Process all the files
 
       declare
-         Num_Files  : constant Natural := Natural (Src_Files.Length);
+         Num_Files  : constant Natural := Number_Of_Files (Prj_Files);
          Count      : Natural := 0;
          File_Index : Files_List.Cursor;
+         All_Files  : Files_List.Vector;
+         --  Used to avoid processing a file twice
+
          All_Trees  : Frontend.Tree_List.Vector;
+         Prj_Index  : Project_Files_List.Cursor;
+         Prj_Srcs   : Project_Files;
 
       begin
-         File_Index := Src_Files.First;
-         while Files_List.Has_Element (File_Index) loop
-            Count := Count + 1;
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
 
-            declare
-               Current_File  : Virtual_File
-                                 renames Files_List.Element (File_Index);
-               Tree          : aliased Tree_Type;
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               Count := Count + 1;
 
-            begin
-               --  Progress notification: currently using GNAT.IO but this
-               --  must be improved???
+               declare
+                  Current_File  : Virtual_File
+                                    renames Files_List.Element (File_Index);
+                  Tree          : aliased Tree_Type;
 
-               GNAT.IO.Put_Line
-                 (Count'Img & "/" & To_String (Num_Files)
-                  & ": "
-                  & (+Current_File.Base_Name));
+               begin
+                  --  Progress notification: currently using GNAT.IO but this
+                  --  must be improved???
 
-               Tree :=
-                 Frontend.Build_Tree
-                   (Context => Context,
-                    File    => Current_File);
+                  GNAT.IO.Put_Line
+                    (Count'Img & "/" & To_String (Num_Files)
+                     & ": "
+                     & (+Current_File.Base_Name));
 
-               if Options.Tree_Output.Kind /= None then
-                  if Options.Tree_Output.Kind = Short then
-                     Treepr.Print_Short_Tree
-                       (Context     => Context,
-                        Tree        => Tree'Access,
-                        With_Scopes => True);
-                  else
-                     Treepr.Print_Full_Tree
-                       (Context     => Context,
-                        Tree        => Tree'Access,
-                        With_Scopes => True);
+                  if not All_Files.Contains (Current_File) then
+                     Tree :=
+                       Frontend.Build_Tree
+                         (Context => Context,
+                          File    => Current_File);
+
+                     if Options.Tree_Output.Kind /= None then
+                        if Options.Tree_Output.Kind = Short then
+                           Treepr.Print_Short_Tree
+                             (Context     => Context,
+                              Tree        => Tree'Access,
+                              With_Scopes => True);
+                        else
+                           Treepr.Print_Full_Tree
+                             (Context     => Context,
+                              Tree        => Tree'Access,
+                              With_Scopes => True);
+                        end if;
+                     end if;
+
+                     All_Files.Append (Current_File);
+                     All_Trees.Append (Tree);
                   end if;
-               end if;
+               end;
 
-               All_Trees.Append (Tree);
-            end;
+               Files_List.Next (File_Index);
+            end loop;
 
-            Files_List.Next (File_Index);
+            Project_Files_List.Next (Prj_Index);
          end loop;
+
+         All_Files.Clear;
 
          if Tree_List.Has_Element (All_Trees.First) then
 
@@ -418,6 +487,8 @@ package body Docgen3 is
    is
       P         : Project_Type := Project;
       Src_Files : Files_List.Vector;
+      Prj_Files : Project_Files_List.Vector;
+      Prj_Srcs  : Project_Files;
 
    begin
       Trace (Me, "Process_Project_Files");
@@ -426,15 +497,46 @@ package body Docgen3 is
          P := Kernel.Registry.Tree.Root_Project;
       end if;
 
-      declare
-         Source_Files  : File_Array_Access := P.Source_Files (Recursive);
-      begin
-         for J in Source_Files'Range loop
-            Src_Files.Append (Source_Files (J));
-         end loop;
+      Prj_Srcs.Src_Files := new Files_List.Vector;
 
-         Unchecked_Free (Source_Files);
-      end;
+      if not Recursive then
+         declare
+            Source_Files  : File_Array_Access := P.Source_Files;
+         begin
+            Prj_Srcs.Project := P;
+
+            for J in Source_Files'Range loop
+               Prj_Srcs.Src_Files.Append (Source_Files (J));
+            end loop;
+
+            Unchecked_Free (Source_Files);
+            Prj_Files.Append (Prj_Srcs);
+         end;
+      else
+         declare
+            Prj_Iter : Project_Iterator := P.Start_Reversed;
+
+         begin
+            while Current (Prj_Iter) /= No_Project loop
+               Prj_Srcs.Project := Current (Prj_Iter);
+
+               declare
+                  Source_Files : File_Array_Access :=
+                                   Prj_Srcs.Project.Source_Files;
+               begin
+                  for J in Source_Files'Range loop
+                     Prj_Srcs.Src_Files.Append (Source_Files (J));
+                  end loop;
+
+                  Unchecked_Free (Source_Files);
+               end;
+
+               Prj_Files.Append (Prj_Srcs);
+
+               Next (Prj_Iter);
+            end loop;
+         end;
+      end if;
 
       --  Clear the internal structures of the frontend
       Frontend.Initialize;
@@ -442,10 +544,10 @@ package body Docgen3 is
       Process_Files
         (Kernel    => Core_Kernel (Kernel),
          Options   => Options,
-         Src_Files => Src_Files,
+         Prj_Files => Prj_Files,
          Update_Global_Index => True);
 
-      Src_Files.Clear;
+      Src_Files.Clear; -- Free???
    end Process_Project_Files;
 
    -------------------------
@@ -460,23 +562,140 @@ package body Docgen3 is
       Other_File : constant Virtual_File :=
                      Kernel.Registry.Tree.Other_File (File);
       Src_Files  : Files_List.Vector;
+      Prj_Files  : Project_Files_List.Vector;
+      Prj_Srcs   : Project_Files;
+
    begin
       Trace (Me, "Process_Single_File");
-      Src_Files.Append (File);
+
+      Prj_Srcs.Project := No_Project;
+      Prj_Srcs.Src_Files := new Files_List.Vector;
+      Prj_Srcs.Src_Files.Append (File);
 
       if Other_File /= File
         and then Is_Regular_File (Other_File)
       then
-         Src_Files.Append (Other_File);
+         Prj_Srcs.Src_Files.Append (Other_File);
       end if;
+
+      Prj_Files.Append (Prj_Srcs);
 
       Process_Files
         (Kernel    => Core_Kernel (Kernel),
          Options   => Options,
-         Src_Files => Src_Files,
+         Prj_Files => Prj_Files,
          Update_Global_Index => False);
 
       Src_Files.Clear;
    end Process_Single_File;
+
+   -----------
+   -- Files --
+   -----------
+
+   package body Files is
+
+      --------------
+      -- Filename --
+      --------------
+
+      function Filename (File : Virtual_File) return Filesystem_String is
+         Ext  : constant Filesystem_String := File.File_Extension;
+         Base : constant Filesystem_String := File.Base_Name;
+         Name : constant Filesystem_String :=
+           Base (Base'First .. Base'Last - Ext'Length);
+      begin
+         return Name;
+      end Filename;
+
+      ---------------
+      -- Less_Than --
+      ---------------
+
+      function Less_Than (Left, Right : Virtual_File) return Boolean is
+      begin
+         return To_Lower (+Base_Name (Left)) < To_Lower (+Base_Name (Right));
+      end Less_Than;
+
+      --------------------
+      -- Remove_Element --
+      --------------------
+
+      procedure Remove_Element
+        (List   : in out Files_List.Vector;
+         Cursor : in out Files_List.Cursor)
+      is
+         Prev : constant Files_List.Extended_Index :=
+           Files_List.To_Index (Cursor);
+      begin
+         List.Delete (Cursor);
+         Cursor := List.To_Cursor (Prev);
+      end Remove_Element;
+
+   end Files;
+
+   -------------------
+   -- Write_To_File --
+   -------------------
+
+   procedure Write_To_File
+     (Context   : access constant Docgen_Context;
+      Directory : Virtual_File;
+      Filename  : Filesystem_String;
+      Text      : access Unbounded_String)
+   is
+      Name   : Virtual_File;
+      Output : Writable_File;
+
+   begin
+      if not Is_Directory (Directory) then
+         Directory.Make_Dir;
+      end if;
+
+      Name   := Create_From_Dir (Directory, Filename);
+      Output := Name.Write_File;
+
+      if Output = Invalid_File then
+         Context.Kernel.Messages_Window.Insert
+           ("Could not create " & Name.Display_Full_Name,
+            Mode => GPS.Messages_Windows.Error);
+         return;
+      end if;
+
+      Write (Output, To_String (Text.all));
+      Close (Output);
+   end Write_To_File;
+
+   -------------------
+   -- Write_To_File --
+   -------------------
+
+   procedure Write_To_File
+     (Context   : access constant Docgen_Context;
+      Directory : Virtual_File;
+      Filename  : Filesystem_String;
+      Text      : String)
+   is
+      Name   : Virtual_File;
+      Output : Writable_File;
+
+   begin
+      if not Is_Directory (Directory) then
+         Directory.Make_Dir;
+      end if;
+
+      Name   := Create_From_Dir (Directory, Filename);
+      Output := Name.Write_File;
+
+      if Output = Invalid_File then
+         Context.Kernel.Messages_Window.Insert
+           ("Could not create " & Name.Display_Full_Name,
+            Mode => GPS.Messages_Windows.Error);
+         return;
+      end if;
+
+      Write (Output, Text);
+      Close (Output);
+   end Write_To_File;
 
 end Docgen3;

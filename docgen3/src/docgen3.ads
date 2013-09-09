@@ -15,13 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GNAT.Expect;
-with GPS.Core_Kernels;  use GPS.Core_Kernels;
+with GPS.Core_Kernels;       use GPS.Core_Kernels;
 with GNATCOLL.Traces;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with Language_Handlers; use Language_Handlers;
-with Xref;              use Xref;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Xref;          use GNATCOLL.Xref;
+with Language_Handlers;      use Language_Handlers;
+with Xref;                   use Xref;
 
 package Docgen3 is
    DOCGEN_V31 : constant GNATCOLL.Traces.Trace_Handle :=
@@ -92,6 +95,42 @@ package Docgen3 is
 
 private
 
+   --  Package containing utility routines for Virtual Files
+
+   --  This package is defined here to avoid a circular dependency
+   --  problem if defined as a private child package (depencency caused by
+   --  the declaration of Docgen3_Context)
+
+   package Files is
+
+      package Files_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
+
+      function Less_Than
+        (Left, Right : GNATCOLL.VFS.Virtual_File) return Boolean;
+      package Files_Vector_Sort is new Files_List.Generic_Sorting
+        ("<" => Less_Than);
+
+      function Filename (File : Virtual_File) return Filesystem_String;
+      --  Return the name of File without extension
+
+      procedure Remove_Element
+        (List   : in out Files_List.Vector;
+         Cursor : in out Files_List.Cursor);
+      --  Remove element located at Cursor and place the cursor just after its
+      --  current position
+
+      type Project_Files is record
+         Project   : Project_Type;
+         Src_Files : access Files_List.Vector;
+      end record;
+
+      package Project_Files_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => Project_Files);
+
+   end Files;
+   use Files;
+
    --  Docgen context for processing. This structure avoids passing the
    --  same unmodified parameters along internal routines of Docgen; in
    --  addition it avoids computing several times these values.
@@ -101,8 +140,23 @@ private
       Database     : General_Xref_Database;
       Lang_Handler : Language_Handler;
       Options      : Docgen_Options;
+      Prj_Files    : Project_Files_List.Vector;
    end record;
 
    type Docgen_Context_Ptr is access Docgen_Context;
+
+   procedure Write_To_File
+     (Context   : access constant Docgen_Context;
+      Directory : Virtual_File;
+      Filename  : Filesystem_String;
+      Text      : access Unbounded_String);
+   --  Write the contents of Printout in the specified file
+
+   procedure Write_To_File
+     (Context   : access constant Docgen_Context;
+      Directory : Virtual_File;
+      Filename  : Filesystem_String;
+      Text      : String);
+   --  Write the contents of Printout in the specified file
 
 end Docgen3;

@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with Docgen3.Files;         use Docgen3.Files;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Docgen3.Time is
 

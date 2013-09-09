@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Docgen3.Atree;           use Docgen3.Atree;
-with Docgen3.Files;           use Docgen3.Files;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Docgen3.Comment;         use Docgen3.Comment;
 with Language;                use Language;

@@ -19,9 +19,6 @@
 --  frontend retrieves blocks of comments from the sources, parses such blocks
 --  and generates structured comments composed of tags and their attributes.
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GNATCOLL.Xref;           use GNATCOLL.Xref;
-
 private package Docgen3.Comment is
 
    type Structured_Comment is private;

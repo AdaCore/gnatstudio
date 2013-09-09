@@ -22,8 +22,7 @@
 --  For details on sphynx read:
 --    http://sphinx-doc.org
 
-with Docgen3.Atree;     use Docgen3.Atree;
-with Docgen3.Files;     use Docgen3.Files;
+with Docgen3.Atree; use Docgen3.Atree;
 
 private package Docgen3.Backend.Simple is
 
