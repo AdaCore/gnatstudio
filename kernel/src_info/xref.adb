@@ -557,9 +557,13 @@ package body Xref is
                ELoc : constant Entity_Reference
                  := Self.Xref.Declaration (Entity.Entity).Location;
             begin
-               Entity.Loc := (Line => ELoc.Line,
-                              Column => ELoc.Column,
-                              File => ELoc.File);
+               if ELoc /= No_Entity_Reference then
+                  Entity.Loc := (Line => ELoc.Line,
+                                 Column => ELoc.Column,
+                                 File => ELoc.File);
+               else
+                  Entity.Loc := No_Location;
+               end if;
             end;
 
          else
