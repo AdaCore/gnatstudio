@@ -6946,7 +6946,6 @@ package body Src_Editor_Buffer is
          end if;
 
          --  Replace selected text with the new one
-         --  Pouet Pouet
 
          if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
             Replace_Slice
