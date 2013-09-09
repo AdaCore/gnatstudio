@@ -3377,7 +3377,6 @@ package body Src_Editor_Buffer is
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
-      --  what is this about i dont undfe
 
       if Pref = null
         or else Pref = Preference (Blocks_Style)
