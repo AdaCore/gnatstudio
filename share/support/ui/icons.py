@@ -22,7 +22,9 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-navigate-forward"   label="Forward" file="svg/right.svg" />
     <icon id="gps-navigate-back"      label="Back" file="svg/left.svg" />
     <icon id="gtk-new"                label="New" file="svg/newdocument.svg" />
-    <icon id="gtk-open"               label="Open" file="svg/folder.svg" />
+    <icon id="gtk-open"               label="Open" file="svg/folder.svg">
+       <alternate   file="svg/folder-12.svg" size="Icon_Size_Local_Toolbar" />
+    </icon>
     <icon id="gtk-redo"               label="Redo" file="svg/redo.svg" />
     <icon id="gtk-save"               label="Save" file="svg/save.svg">
        <alternate   file="svg/save-12.svg" size="Icon_Size_Local_Toolbar" />
@@ -37,6 +39,7 @@ XML = r"""<?xml version="1.0"?>
     </icon>
     <icon id="gtk-media-play"         file="svg/run.svg" />
     <icon id="gtk-remove"             label="Remove" file="svg/minus.svg" />
+    <icon id="gtk-add"                label="Add" file="svg/plus.svg" />
 
     <icon id="gps-edit"               label="Edit" file="svg/edit.svg" />
     <icon id="gps-environment"        label="Environment" file="svg/environment.svg" />
