@@ -82,6 +82,9 @@ package Vsearch is
    --  This procedure immediately emits the kernel signal
    --  "search_functions_changed".
    --
+   --  The Label an include %p for the current project (as understood by the
+   --  search dialog).
+   --
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
    --  information like a list of files to search.

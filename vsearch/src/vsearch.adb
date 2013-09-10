@@ -63,6 +63,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -73,6 +74,8 @@ with Commands.Generic_Asynchronous;
 with Default_Preferences;       use Default_Preferences;
 with Generic_List;
 with GUI_Utils;                 use GUI_Utils;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Templates;
 with GNATCOLL.VFS;
 with Histories;                 use Histories;
 with Traces;                    use Traces;
@@ -226,11 +229,28 @@ package body Vsearch is
       Result  : out Command_Return_Type);
    --  Perform an atomic replace operation.
 
+   function Substitute_Label
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Label  : String) return String;
+   --  Substitute macros in the label of the search contexts.
+
    function On_Focus_In
      (Self : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Focus) return Boolean;
    --  Select the full text of an entry when it gains the focus, to help users
    --  clear the entry.
+
+   procedure Set_Selected_Project
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
+   --  Set the current project, from the information in Context.
+   --  This also refreshes the 'context' combo box.
+
+   procedure Refresh_Context_Combo
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Update the context_combo, so that missing contexts are added, and the
+   --  label of existing ones is updated to show the next context (macro
+   --  substitution,...)
 
    procedure Free (D : in out Idle_Search_Data);
    --  Free memory associated with D.
@@ -813,7 +833,7 @@ package body Vsearch is
       use Widget_List;
       Data    : constant Search_Module_Data :=
                   Find_Module
-                    (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+                    (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
 
       Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
       Options : Search_Options;
@@ -888,7 +908,7 @@ package body Vsearch is
    is
       Data     : constant Search_Module_Data :=
                    Find_Module
-                     (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+                     (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
       Toplevel : Gtk_Widget := Get_Toplevel (Vsearch);
       Found    : Boolean;
       Has_Next : Boolean;
@@ -1263,7 +1283,7 @@ package body Vsearch is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
       Data    : constant Search_Module_Data :=
                   Find_Module
-                    (Vsearch.Kernel, Get_Active_Text (Vsearch.Context_Combo));
+                    (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
       Replace : Boolean;
 
    begin
@@ -1557,16 +1577,20 @@ package body Vsearch is
       Set_Active (Search.Regexp_Check, Options.Regexp);
    end New_Predefined_Regexp;
 
-   ------------------------------
-   -- Search_Functions_Changed --
-   ------------------------------
+   ---------------------------
+   -- Refresh_Context_Combo --
+   ---------------------------
 
-   procedure Search_Functions_Changed
+   procedure Refresh_Context_Combo
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Vsearch : constant Vsearch_Access := Vsearch_Module_Id.Search;
-      Num     : Positive := 1;
-      Last_Id : Module_ID;
+      Num : Positive := 1;
+      Store : constant Gtk_List_Store :=
+        Gtk_List_Store'(-Vsearch.Context_Combo.Get_Model);
+      Id_Col : constant Gint := Vsearch.Context_Combo.Get_Id_Column;
+      Iter  : Gtk_Tree_Iter;
+      Found : Boolean;
    begin
       loop
          declare
@@ -1575,17 +1599,40 @@ package body Vsearch is
          begin
             exit when Data = No_Search;
 
-            Add_Unique_Combo_Entry (Vsearch.Context_Combo, Data.Label.all);
+            Found := False;
+            Iter := Store.Get_Iter_First;
+            while Iter /= Null_Iter loop
+               --  The id is the un-substituted label
+               if Get_String (Store, Iter, Id_Col) = Data.Label.all then
+                  --  Update the text, after substituting macros.
+                  Store.Set
+                    (Iter, 0, Substitute_Label (Kernel, Data.Label.all));
+                  Found := True;
+                  exit;
+               end if;
+               Store.Next (Iter);
+            end loop;
 
-            Last_Id := Data.Id;
+            if not Found then
+               Vsearch.Context_Combo.Append
+                 (Id   => Data.Label.all,
+                  Text => Substitute_Label (Kernel, Data.Label.all));
+            end if;
+
             Num := Num + 1;
          end;
       end loop;
+   end Refresh_Context_Combo;
 
-      Add_Unique_Combo_Entry
-        (Vsearch.Context_Combo,
-         Search_Context_From_Module (Last_Id, Kernel).Label.all,
-         Select_Text => True);
+   ------------------------------
+   -- Search_Functions_Changed --
+   ------------------------------
+
+   procedure Search_Functions_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+   begin
+      Refresh_Context_Combo (Kernel);
    end Search_Functions_Changed;
 
    -----------------
@@ -2128,37 +2175,6 @@ package body Vsearch is
          Raise_Child (Child);
       end if;
 
-      if Reset_Entries then
-         --  ??? Temporarily: reset the entry. The correct fix would be to
-         --  separate the find and replace tabs, so that having a default
-         --  entry in this combo doesn't look strange when the combo is
-         --  insensitive.
-
-         declare
-            Vsearch  : constant Vsearch_Access := Vsearch_Module_Id.Search;
-         begin
-            if Context = null then
-               if Module /= null then
-                  declare
-                     Search : constant Search_Module_Data :=
-                       Search_Context_From_Module
-                         (Module, Vsearch.Kernel, Has_Multiline_Selection);
-                  begin
-                     if Search /= No_Search then
-                        Add_Unique_Combo_Entry
-                          (Vsearch.Context_Combo, Search.Label.all, True);
-                     end if;
-                  end;
-               end if;
-            else
-               Add_Unique_Combo_Entry
-                 (Vsearch.Context_Combo, Context.all, True);
-            end if;
-
-            Grab_Focus (Vsearch.Pattern_Combo.Get_Child);
-         end;
-      end if;
-
       if Has_Selection then
          --  Restore multiline selection
          if Has_Multiline_Selection then
@@ -2176,14 +2192,94 @@ package body Vsearch is
                                Left_Gravity => False);
       end if;
 
-      if Has_Project_Information (Selected) then
-         Vsearch_Module_Id.Search.Project := Project_Information (Selected);
-      else
-         Vsearch_Module_Id.Search.Project := GNATCOLL.Projects.No_Project;
+      Set_Selected_Project (Kernel, Selected);
+
+      if Reset_Entries then
+         --  ??? Temporarily: reset the entry. The correct fix would be to
+         --  separate the find and replace tabs, so that having a default
+         --  entry in this combo doesn't look strange when the combo is
+         --  insensitive.
+
+         declare
+            Vsearch : constant Vsearch_Access := Vsearch_Module_Id.Search;
+            Success : Boolean;
+            pragma Unreferenced (Success);
+         begin
+            if Context = null then
+               if Module /= null then
+                  declare
+                     Search : constant Search_Module_Data :=
+                       Search_Context_From_Module
+                         (Module, Kernel, Has_Multiline_Selection);
+                  begin
+                     if Search /= No_Search then
+                        Success := Vsearch.Context_Combo.Set_Active_Id
+                          (Search.Label.all);
+                     end if;
+                  end;
+               end if;
+            else
+               Success := Vsearch.Context_Combo.Set_Active_Id (Context.all);
+            end if;
+
+            Grab_Focus (Vsearch.Pattern_Combo.Get_Child);
+         end;
       end if;
 
       return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
+
+   ----------------------
+   -- Substitute_Label --
+   ----------------------
+
+   function Substitute_Label
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Label  : String) return String
+   is
+      function Substitution (Param : String; Quoted : Boolean) return String;
+      function Substitution (Param : String; Quoted : Boolean) return String is
+         pragma Unreferenced (Quoted);
+      begin
+         if Param = "p" then
+            if Get_Selected_Project (Kernel) =
+              GNATCOLL.Projects.No_Project
+            then
+               return Get_Project (Kernel).Name;
+            else
+               return Get_Selected_Project (Kernel).Name;
+            end if;
+         end if;
+         return "%" & Param;
+      end Substitution;
+   begin
+      return GNATCOLL.Templates.Substitute
+        (Label,
+         Delimiter => '%',
+         Callback  => Substitution'Unrestricted_Access,
+         Recursive => False);
+   end Substitute_Label;
+
+   --------------------------
+   -- Set_Selected_Project --
+   --------------------------
+
+   procedure Set_Selected_Project
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context) is
+   begin
+      if Has_Project_Information (Context) then
+         Vsearch_Module_Id.Search.Project := Project_Information (Context);
+      elsif Has_File_Information (Context) then
+         Vsearch_Module_Id.Search.Project :=
+           Get_Project_Tree (Kernel).Info
+           (File_Information (Context)).Project;
+      else
+         Vsearch_Module_Id.Search.Project := GNATCOLL.Projects.No_Project;
+      end if;
+
+      Refresh_Context_Combo (Kernel);
+   end Set_Selected_Project;
 
    --------------------------
    -- Get_Selected_Project --
