@@ -348,7 +348,7 @@ package body Coverage_GUI is
          if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
             List_File_Uncovered_Lines
               (Kernel, Sort_Arr (J), False,
-               Allow_Auto_Jump_To_First => False);
+               Allow_Auto_Jump_To_First => True);
          end if;
       end loop;
    end List_Project_Uncovered_Lines;
