@@ -52,28 +52,28 @@ package Docgen3 is
 
    type Docgen_Options is record
 
-      Comments_Filter : GNAT.Expect.Pattern_Matcher_Access;
+      Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
       --  User-defined regular expression to filter comments
 
-      Report_Errors   : Report_Errors_Kind;
+      Report_Errors   : Report_Errors_Kind := Errors_And_Warnings;
       --  Enables reporting errors and warnings on missing documentation,
       --  duplicated tags, etc.
 
-      Skip_C_Files    : Boolean;
+      Skip_C_Files    : Boolean := True;
       --  Used to force skip processing C and C++ files (since, although the
       --  project may have or reference these files we may not be interested
       --  in the addition of those files to the generated documentation).
 
-      Tree_Output     : Tree_Output_Type;
+      Tree_Output     : Tree_Output_Type := (Full, True);
       --  Internal switch used to enable generating tree listings. Used to
       --  write regression tests.
 
-      Display_Time    : Boolean;
+      Display_Time    : Boolean := False;
       --  Internal flag used to enable an extra output with the time consumed
       --  by the docgen components processing files. Used to identify which
       --  components of Docgen3 must be optimized.
 
-      Process_Bodies : Boolean;
+      Process_Bodies : Boolean := False;
       --  True to enable processing of body files
    end record;
 
