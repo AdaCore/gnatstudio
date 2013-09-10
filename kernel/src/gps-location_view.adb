@@ -791,6 +791,7 @@ package body GPS.Location_View is
 
       if V.Idle_Expand_Handler /= No_Source_Id then
          Glib.Main.Remove (V.Idle_Expand_Handler);
+         V.Idle_Expand_Handler := No_Source_Id;
       end if;
    end On_Destroy;
 

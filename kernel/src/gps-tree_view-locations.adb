@@ -61,6 +61,9 @@ package body GPS.Tree_View.Locations is
    --  Handle "query-tooltip" request. Shows tooltip when the size of the
    --  renderer is larger than its visible size in the view.
 
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed.
+
    procedure Action_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -148,6 +151,7 @@ package body GPS.Tree_View.Locations is
       Glib.Object.G_New (Self, Class_Record);
 
       GPS.Tree_View.Initialize (Self, Model);  --  initial parent fields
+      Self.On_Destroy (On_Destroy'Access);
 
       Self.Set_Rules_Hint (False);
       Self.Set_Headers_Visible (False);
@@ -204,6 +208,19 @@ package body GPS.Tree_View.Locations is
         (Self.Filter, To_Interface (Self.Sort));
       Self.Set_Source_Model (Self.Filter);
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
+      S : constant GPS_Locations_Tree_View := GPS_Locations_Tree_View (Self);
+   begin
+      if S.On_Row_Expanded_Handler /= No_Source_Id then
+         Glib.Main.Remove (S.On_Row_Expanded_Handler);
+         S.On_Row_Expanded_Handler := No_Source_Id;
+      end if;
+   end On_Destroy;
 
    ----------------------
    -- Location_Clicked --
