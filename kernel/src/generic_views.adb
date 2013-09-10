@@ -348,6 +348,17 @@ package body Generic_Views is
          Menu.Popup; --   (Func => Position_Local_Config'Access);
       end On_Display_Local_Config;
 
+      -----------
+      -- Close --
+      -----------
+
+      procedure Close
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      is
+      begin
+         Close_Child (Child_From_View (Retrieve_View (Kernel)));
+      end Close;
+
       ---------------------
       -- Child_From_View --
       ---------------------

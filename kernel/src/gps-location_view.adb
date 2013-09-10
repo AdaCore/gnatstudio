@@ -1538,7 +1538,7 @@ package body GPS.Location_View is
         and then Get_Iter_First (Self.View.Get_Model) = Null_Iter
       then
          Self.Do_Not_Delete_Messages_On_Exit := True;
-         Destroy (Self);
+         Location_Views.Close (Self.Kernel);
       end if;
    end On_Row_Deleted;
 

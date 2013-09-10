@@ -248,6 +248,10 @@ package Generic_Views is
       --  already created by Register_Module, so this procedure is only useful
       --  for additional menus to open the same view.
 
+      procedure Close
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+      --  Close the view
+
    private
       --  The following subprograms need to be in the spec so that we can get
       --  access to them from callbacks in the body
