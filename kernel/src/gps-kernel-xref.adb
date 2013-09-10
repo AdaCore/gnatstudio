@@ -28,6 +28,7 @@ with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                     use GPS.Kernel;
+with Glib.Convert;                   use Glib.Convert;
 with Glib.Object;                    use Glib.Object;
 with GUI_Utils;                      use GUI_Utils;
 with Gtk.Box;                        use Gtk.Box;
@@ -42,7 +43,6 @@ with Gtk.Tree_Store;                 use Gtk.Tree_Store;
 with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtkada.Handlers;                use Gtkada.Handlers;
-with Language.Tree.Database;         use Language.Tree.Database;
 with Old_Entities.Queries;
 with Old_Entities.Values;
 with System;                         use System;
@@ -924,5 +924,186 @@ package body GPS.Kernel.Xref is
    begin
       Response (Gtk_Dialog (Widget), Gtk_Response_OK);
    end Row_Activated;
+
+   -------------------
+   -- Add_Parameter --
+   -------------------
+
+   overriding procedure Add_Parameter
+     (Self    : access HTML_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Self.Has_Parameter then
+         Append (Self.Text, ASCII.LF & " ");
+      else
+         Append (Self.Text, "<b>Parameters:</b>" & ASCII.LF & " ");
+         Self.Has_Parameter := True;
+      end if;
+
+      if Default = "" then
+         --  Keep the parameters aligned, in case some are
+         --  optional and start with '['
+         Append (Self.Text, " ");
+      else
+         Append (Self.Text, "<span foreground=""");
+         Append (Self.Text, Self.Color_For_Optional_Param);
+         Append (Self.Text, """>[");
+      end if;
+
+      Append (Self.Text, Escape_Text (Name));
+      Append (Self.Text, " : <b>");
+      Append (Self.Text, Mode);
+      Append (Self.Text, "</b>");
+      Append (Self.Text, Escape_Text (Of_Type));
+
+      if Default /= "" then
+         Append (Self.Text, " :=");
+         Append (Self.Text, Escape_Text (Default));
+         Append (Self.Text, "]</span>");
+      end if;
+   end Add_Parameter;
+
+   ----------------
+   -- Add_Result --
+   ----------------
+
+   overriding procedure Add_Result
+     (Self    : access HTML_Profile_Formater;
+      Mode    : String;
+      Of_Type : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Self.Has_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Parameter := False;
+      end if;
+      Append (Self.Text, "<b>Return:</b>" & ASCII.LF & " <b>");
+      Append (Self.Text, Mode);
+      Append (Self.Text, "</b> ");
+      Append (Self.Text, Escape_Text (Of_Type));
+   end Add_Result;
+
+   ------------------
+   -- Add_Variable --
+   ------------------
+
+   overriding procedure Add_Variable
+     (Self    : access HTML_Profile_Formater;
+      Mode    : String;
+      Of_Type : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      Append (Self.Text, "<b>Type: ");
+      Append (Self.Text, Mode);
+      Append (Self.Text, "</b> ");
+      Append (Self.Text, Escape_Text (Of_Type));
+   end Add_Variable;
+
+   -----------------
+   -- Add_Aspects --
+   -----------------
+
+   overriding procedure Add_Aspects
+     (Self : access HTML_Profile_Formater;
+      Text : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Self.Has_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Parameter := False;
+      end if;
+      Append (Self.Text, ASCII.LF & "<b>Aspects:</b>" & ASCII.LF);
+      Append (Self.Text, Escape_Text (Text));
+   end Add_Aspects;
+
+   ------------------
+   -- Add_Comments --
+   ------------------
+
+   overriding procedure Add_Comments
+     (Self : access HTML_Profile_Formater;
+      Text : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Self.Has_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Parameter := False;
+      end if;
+      if Length (Self.Text) = 0 then
+         Append (Self.Text, Escape_Text (Text));
+      else
+         Self.Text := Escape_Text (Text) & ASCII.LF & Self.Text;
+      end if;
+   end Add_Comments;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   overriding function Get_Text
+     (Self : access HTML_Profile_Formater) return String
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Self.Has_Parameter then
+         Append (Self.Text, ASCII.LF);
+         Self.Has_Parameter := False;
+      end if;
+
+      return To_String (Self.Text);
+   end Get_Text;
+
+   -------------------
+   -- Documentation --
+   -------------------
+
+   function Documentation
+     (Self             : General_Xref_Database;
+      Handler          : Language_Handlers.Language_Handler;
+      Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
+      Raw_Format       : Boolean := False;
+      Check_Constructs : Boolean := True) return String
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      if Raw_Format then
+         declare
+            Formater : aliased Text_Profile_Formater;
+         begin
+            Self.Documentation
+              (Handler          => Handler,
+               Entity           => Entity,
+               Formater         => Formater'Access,
+               Check_Constructs => Check_Constructs);
+
+            return Formater.Get_Text;
+         end;
+      else
+         declare
+            Formater : aliased HTML_Profile_Formater;
+         begin
+            Formater.Color_For_Optional_Param :=
+              To_Unbounded_String (Color_For_Optional_Param);
+
+            Self.Documentation
+              (Handler          => Handler,
+               Entity           => Entity,
+               Formater         => Formater'Access,
+               Check_Constructs => Check_Constructs);
+
+            return Formater.Get_Text;
+         end;
+      end if;
+   end Documentation;
 
 end GPS.Kernel.Xref;

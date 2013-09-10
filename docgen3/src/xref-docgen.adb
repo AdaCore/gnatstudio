@@ -1549,6 +1549,7 @@ package body Xref.Docgen is
          Tree_Lang : Tree_Language_Access;
          Buffer    : GNAT.Strings.String_Access;
          Node      : Construct_Tree_Iterator;
+         Formater  : aliased Text_Profile_Formater;
       begin
          Xref_Duplicate.Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
 
@@ -1561,6 +1562,8 @@ package body Xref.Docgen is
 
          --  If the constructs have been properly loaded
          if Get_Construct (Node).Sloc_Start.Index /= 0 then
+            Get_Profile (Tree_Lang, Ent, Formater'Access);
+
             declare
                C_Result : constant Comment_Result :=
                  Extract_Comment
@@ -1572,9 +1575,7 @@ package body Xref.Docgen is
                     Format            => Form);
 
                Comment : constant String := To_String (C_Result.Text);
-               Profile : constant String :=
-                           Get_Profile
-                            (Tree_Lang, Ent, Raw_Format => Raw_Format);
+               Profile : constant String := Formater.Get_Text;
 
             begin
                if Comment /= "" then

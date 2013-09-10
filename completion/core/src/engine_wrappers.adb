@@ -17,6 +17,7 @@
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Xref;                    use Xref;
+with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 
 package body Engine_Wrappers is
 

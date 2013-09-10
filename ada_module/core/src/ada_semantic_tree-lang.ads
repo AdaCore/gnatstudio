@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
+with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
+with Language.Profile_Formaters;  use Language.Profile_Formaters;
 
 package Ada_Semantic_Tree.Lang is
 
@@ -38,12 +39,11 @@ package Ada_Semantic_Tree.Lang is
      (Lang    : access Ada_Tree_Language;
       File    : Structured_File_Access;
       Index   : String_Index_Type) return Entity_Reference_Details;
-   overriding function Get_Profile
-     (Lang         : access Ada_Tree_Language;
-      Entity       : Entity_Access;
-      Color_For_Optional_Param : String;
-      Raw_Format   : Boolean := False;
-      With_Aspects : Boolean := False) return String;
+   overriding procedure Get_Profile
+     (Lang       : access Ada_Tree_Language;
+      Entity     : Entity_Access;
+      Formater   : access Profile_Formater'Class;
+      With_Aspects : Boolean := False);
    overriding procedure Diff
      (Lang               : access Ada_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;

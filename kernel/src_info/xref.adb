@@ -20,6 +20,7 @@ pragma Ada_2012;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with ALI_Parser;
 with Glib.Convert;
@@ -147,16 +148,15 @@ package body Xref is
    -- Documentation --
    -------------------
 
-   function Documentation
+   procedure Documentation
      (Self             : access General_Xref_Database_Record;
       Handler          : Language_Handlers.Language_Handler;
       Entity           : General_Entity;
-      Color_For_Optional_Param : String := "#555555";
-      Raw_Format       : Boolean := False;
-      Check_Constructs : Boolean := True) return String
+      Formater         : access Profile_Formater'Class;
+      Check_Constructs : Boolean := True)
    is
-      function Doc_From_Constructs return String;
-      function Doc_From_LI return String;
+      function Doc_From_Constructs return Boolean;
+      procedure Doc_From_LI;
 
       Decl : constant General_Location :=
         Get_Declaration (Self, Entity).Loc;
@@ -164,14 +164,11 @@ package body Xref is
         Language.Get_Language_Context
           (Get_Language_From_File (Handler, Source_Filename => Decl.File));
 
-      Form : constant Formatting :=
-        (if Raw_Format then Text else HTML);
-
       -------------------------
       -- Doc_From_Constructs --
       -------------------------
 
-      function Doc_From_Constructs return String is
+      function Doc_From_Constructs return Boolean is
          Ent       : Entity_Access;
          Tree_Lang : Tree_Language_Access;
          Buffer    : GNAT.Strings.String_Access;
@@ -180,7 +177,7 @@ package body Xref is
          Node_From_Entity (Self, Handler, Decl, Ent, Tree_Lang);
 
          if Ent = Null_Entity_Access then
-            return "";
+            return False;
          end if;
 
          Buffer := Get_Buffer (Get_File (Ent));
@@ -194,28 +191,18 @@ package body Xref is
                    (Buffer            => Buffer.all,
                     Decl_Start_Index  => Get_Construct (Node).Sloc_Start.Index,
                     Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
-                    Language          => Context.Syntax,
-                    Format            => Form);
-               Profile : constant String := Get_Profile
-                 (Tree_Lang, Ent,
-                  Color_For_Optional_Param => Color_For_Optional_Param,
-                  Raw_Format => Raw_Format,
-                  With_Aspects => True);
-
+                    Language          => Context.Syntax);
             begin
+               Get_Profile (Tree_Lang, Ent, Formater, With_Aspects => True);
+
                if Comment /= "" then
-                  if Profile /= "" then
-                     return Glib.Convert.Escape_Text (Comment)
-                       & ASCII.LF & ASCII.LF & Profile;
-                  else
-                     return Glib.Convert.Escape_Text (Comment);
-                  end if;
-               else
-                  return Profile;
+                  Formater.Add_Comments (Comment);
                end if;
+
+               return True;
             end;
          else
-            return "";
+            return False;
          end if;
       end Doc_From_Constructs;
 
@@ -223,33 +210,27 @@ package body Xref is
       -- Doc_From_LI --
       -----------------
 
-      function Doc_From_LI return String is
+      procedure Doc_From_LI is
          Buffer : GNAT.Strings.String_Access;
          Loc    : Old_Entities.File_Location;
          Result : Unbounded_String;
       begin
          if Active (SQLITE) then
             if Entity.Entity /= No_Entity then
-               Append
-                 (Result,
-                  Glib.Convert.Escape_Text
-                    (Self.Xref.Comment (Entity.Entity, Context.Syntax, Form))
-                  & ASCII.LF
-                  & Self.Xref.Text_Declaration (Entity.Entity, Form)
-                  & ASCII.LF);
-
-               return To_String
-                 (Ada.Strings.Unbounded.Trim
-                    (Result,
-                     Left => Ada.Strings.Maps.Null_Set,
-                     Right => Ada.Strings.Maps.To_Set
-                       (' ' & ASCII.HT & ASCII.LF & ASCII.CR)));
+               Formater.Add_Comments
+                 (Ada.Strings.Fixed.Trim
+                    (Self.Xref.Comment (Entity.Entity, Context.Syntax)
+                     & ASCII.LF
+                     & Self.Xref.Text_Declaration (Entity.Entity),
+                  Left  => Ada.Strings.Maps.Null_Set,
+                  Right => Ada.Strings.Maps.To_Set
+                    (' ' & ASCII.HT & ASCII.LF & ASCII.CR)));
             end if;
          else
             Buffer := Decl.File.Read_File;
 
             if Buffer = null then
-               return "";
+               return;
             end if;
 
             Result := To_Unbounded_String
@@ -258,8 +239,7 @@ package body Xref is
                     (Buffer            => Buffer.all,
                      Decl_Start_Line   => Decl.Line,
                      Decl_Start_Column => Integer (Decl.Column),
-                     Language          => Context.Syntax,
-                     Format            => Form)));
+                     Language          => Context.Syntax)));
 
             if Result = "" and then Entity.Old_Entity /= null then
                Find_Next_Body
@@ -275,32 +255,24 @@ package body Xref is
                        (Buffer            => Buffer.all,
                         Decl_Start_Line   => Loc.Line,
                         Decl_Start_Column => Integer (Loc.Column),
-                        Language          => Context.Syntax,
-                        Format            => Form));
+                        Language          => Context.Syntax));
                end if;
             end if;
 
             Free (Buffer);
-            return To_String (Result);
+            Formater.Add_Comments (To_String (Result));
          end if;
-
-         return "";
       end Doc_From_LI;
 
    --  Start of processing for Documentation
 
    begin
       if not Check_Constructs then
-         return Doc_From_LI;
+         Doc_From_LI;
       else
-         declare
-            R : constant String := Doc_From_Constructs;
-         begin
-            if R = "" then
-               return Doc_From_LI;
-            end if;
-            return R;
-         end;
+         if not Doc_From_Constructs then
+            Doc_From_LI;
+         end if;
       end if;
 
       --  If still not found, we used to default to also searching just before

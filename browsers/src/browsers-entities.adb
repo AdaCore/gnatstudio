@@ -62,6 +62,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with Traces;                    use Traces;
 with Xref;                      use Xref;
 
@@ -598,8 +599,9 @@ package body Browsers.Entities is
             begin
                Set_Return_Value
                  (Data,
-                  Kernel.Databases.Documentation
-                    (Kernel.Get_Language_Handler,
+                  Documentation
+                    (Kernel.Databases,
+                     Kernel.Get_Language_Handler,
                      Entity => Entity,
                      Raw_Format => not Extended));
             end;

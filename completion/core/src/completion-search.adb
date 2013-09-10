@@ -27,6 +27,7 @@ with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Xref;                           use Xref;
+with GPS.Kernel.Xref;                use GPS.Kernel.Xref;
 
 package body Completion.Search is
 

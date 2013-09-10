@@ -32,6 +32,7 @@ with Project_Explorers_Common;    use Project_Explorers_Common;
 with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with Language.Profile_Formaters;  use Language.Profile_Formaters;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -667,8 +668,9 @@ package body Outline_View.Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Entity : constant Entity_Access := Get_Entity (Self, Iter, Column);
-      It     : Construct_Tree_Iterator;
+      Entity   : constant Entity_Access := Get_Entity (Self, Iter, Column);
+      It       : Construct_Tree_Iterator;
+      Formater : aliased Text_Profile_Formater;
    begin
       if Column = Spec_Pixbuf_Column
          or else Column = Body_Pixbuf_Column
@@ -691,12 +693,13 @@ package body Outline_View.Model is
             if Self.Filter.Show_Profile
               and then Get_Construct (It).Category in Subprogram_Category
             then
+               Get_Profile
+                 (Lang         => Get_Tree_Language (Self.File),
+                  Entity       => Entity,
+                  Formater     => Formater'Access);
+
                declare
-                  Profile : constant String :=
-                    Get_Profile
-                    (Get_Tree_Language (Self.File),
-                     Entity,
-                     Raw_Format => True);
+                  Profile : constant String := Formater.Get_Text;
                begin
                   Set_String
                     (Value, Escape_Text (Get (Get_Construct (It).Name).all)

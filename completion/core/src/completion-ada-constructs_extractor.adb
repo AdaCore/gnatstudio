@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Language.Ada;                      use Language.Ada;
+with Language.Profile_Formaters;        use Language.Profile_Formaters;
 with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
 with Glib.Unicode;                      use Glib.Unicode;
@@ -315,14 +316,20 @@ package body Completion.Ada.Constructs_Extractor is
 
          return "";
       elsif Proposal.From_Accept_Statement then
-         return Get_Label (Proposal, Db)
-           & " " & Ada_Tree_Lang.Get_Profile
-           (Get_Entity (Proposal.View), Raw_Format => True)
-           & " do"
-           & ASCII.LF
-           & "null;"
-           & ASCII.LF
-           & "end " &  Get_Label (Proposal, Db) & ";";
+         declare
+            Formater : aliased Text_Profile_Formater;
+         begin
+            Ada_Tree_Lang.Get_Profile
+              (Entity       => Get_Entity (Proposal.View),
+               Formater     => Formater'Access);
+            return Get_Label (Proposal, Db)
+              & " " & Formater.Get_Text
+              & " do"
+              & ASCII.LF
+              & "null;"
+              & ASCII.LF
+              & "end " &  Get_Label (Proposal, Db) & ";";
+         end;
       else
          return Get_Label (Proposal, Db);
       end if;

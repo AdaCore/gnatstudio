@@ -18,6 +18,7 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -137,8 +138,9 @@ package body Entities_Tooltips_Utility is
    is
    begin
       return  Get_Instance (Kernel.Databases, Ref)
-        & Kernel.Databases.Documentation
-        (Handler => Kernel.Get_Language_Handler,
+        & Documentation
+        (Self    => Kernel.Databases,
+         Handler => Kernel.Get_Language_Handler,
          Color_For_Optional_Param =>
            To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
          Entity  => Entity);
@@ -153,8 +155,9 @@ package body Entities_Tooltips_Utility is
       Entity      : Entity_Access) return String
    is
    begin
-      return Kernel.Databases.Documentation
-        (Handler => Kernel.Get_Language_Handler,
+      return Documentation
+        (Self    => Kernel.Databases,
+         Handler => Kernel.Get_Language_Handler,
          Color_For_Optional_Param =>
            To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
          Entity  => From_Constructs (Entity));

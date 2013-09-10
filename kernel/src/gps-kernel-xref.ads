@@ -23,6 +23,7 @@ with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 with Gtk.Widget;
 with Xref;          use Xref;
+with Language.Profile_Formaters; use Language.Profile_Formaters;
 
 package GPS.Kernel.Xref is
 
@@ -177,6 +178,19 @@ package GPS.Kernel.Xref is
    --  Return the type associated with an entity. This is the type that should
    --  be used when creating the tree model.
 
+   function Documentation
+     (Self             : General_Xref_Database;
+      Handler          : Language_Handlers.Language_Handler;
+      Entity           : General_Entity;
+      Color_For_Optional_Param : String := "#555555";
+      Raw_Format       : Boolean := False;
+      Check_Constructs : Boolean := True) return String;
+   --  Return the documentation (tooltips,...) for the entity.
+   --  If Raw_Format is False, the documentation is formated in HTML (using
+   --  Color_For_Optional_Param to highlight optional parameters).
+   --  Check_Constructs should be False to disable the use of the constructs
+   --  database.
+
 private
 
    type GPS_General_Xref_Database_Record is new General_Xref_Database_Record
@@ -187,5 +201,34 @@ private
    type GPS_Xref_Database is new Extended_Xref_Database with record
       Kernel : Kernel_Handle;
    end record;
+
+   type HTML_Profile_Formater is new Profile_Formater with record
+      Text          : Ada.Strings.Unbounded.Unbounded_String;
+      Has_Parameter : Boolean := False;
+      Color_For_Optional_Param : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
+   overriding procedure Add_Parameter
+     (Self    : access HTML_Profile_Formater;
+      Name    : String;
+      Mode    : String;
+      Of_Type : String;
+      Default : String);
+   overriding procedure Add_Result
+     (Self    : access HTML_Profile_Formater;
+      Mode    : String;
+      Of_Type : String);
+   overriding procedure Add_Variable
+     (Self    : access HTML_Profile_Formater;
+      Mode    : String;
+      Of_Type : String);
+   overriding procedure Add_Aspects
+     (Self : access HTML_Profile_Formater;
+      Text : String);
+   overriding procedure Add_Comments
+     (Self : access HTML_Profile_Formater;
+      Text : String);
+   overriding function Get_Text
+     (Self : access HTML_Profile_Formater) return String;
 
 end GPS.Kernel.Xref;

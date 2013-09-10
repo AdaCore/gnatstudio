@@ -15,18 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Calendar;          use Ada.Calendar;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
-
-with Glib.Convert; use Glib.Convert;
 
 with Language.Unknown;       use Language.Unknown;
 
 with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Language.Tree.Database is
 
@@ -112,14 +110,12 @@ package body Language.Tree.Database is
    -- Get_Profile --
    -----------------
 
-   function Get_Profile
-     (Lang         : access Tree_Language;
-      Entity       : Entity_Access;
-      Color_For_Optional_Param : String := "#555555";
-      Raw_Format   : Boolean := False;
-      With_Aspects : Boolean := False) return String
+   procedure Get_Profile
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      Formater   : access Profile_Formater'Class;
+      With_Aspects : Boolean := False)
    is
-      pragma Unreferenced (Color_For_Optional_Param);
       pragma Unreferenced (With_Aspects);
 
       Tree   : constant Construct_Tree :=
@@ -128,7 +124,6 @@ package body Language.Tree.Database is
         Get_Buffer (Get_File (Entity));
       Node   : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
-      Result    : Unbounded_String;
       Language  : constant Language_Access :=
         Get_Language (Tree_Language'Class (Lang.all)'Access);
       Type_Start, Type_End : Source_Location;
@@ -138,40 +133,20 @@ package body Language.Tree.Database is
       if Get_Construct (Node).Category in Subprogram_Category then
          declare
             Sub_Iter : Construct_Tree_Iterator := Next (Tree, Node, Jump_Into);
-            Has_Parameter : Boolean := False;
-            Longest : Integer := 0;
+            Longest  : Natural := 0;
          begin
-            if not Raw_Format then
-               while Is_Parent_Scope (Node, Sub_Iter) loop
-                  if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                     Longest := Integer'Max
-                       (Longest, Get (Get_Construct (Sub_Iter).Name)'Length);
-                  end if;
-                  Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
-               end loop;
+            while Is_Parent_Scope (Node, Sub_Iter) loop
+               if Get_Construct (Sub_Iter).Category = Cat_Parameter then
+                  Longest := Integer'Max
+                    (Longest, Get (Get_Construct (Sub_Iter).Name)'Length);
+               end if;
+               Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
+            end loop;
 
-               Sub_Iter := Next (Tree, Node, Jump_Into);
-            end if;
+            Sub_Iter := Next (Tree, Node, Jump_Into);
 
             while Is_Parent_Scope (Node, Sub_Iter) loop
                if Get_Construct (Sub_Iter).Category = Cat_Parameter then
-                  if not Has_Parameter then
-                     Has_Parameter := True;
-
-                     if Raw_Format then
-                        Append (Result, "(");
-                     else
-                        Append (Result, "<b>Parameters:</b>" & ASCII.LF);
-                     end if;
-
-                  else
-                     if Raw_Format then
-                        Append (Result, "; ");
-                     else
-                        Append (Result, ASCII.LF);
-                     end if;
-                  end if;
-
                   Get_Referenced_Entity
                     (Language,
                      Buffer.all,
@@ -182,30 +157,29 @@ package body Language.Tree.Database is
 
                   declare
                      Name : constant String :=
-                       Escape_Text (Get (Get_Construct (Sub_Iter).Name).all);
+                       Get (Get_Construct (Sub_Iter).Name).all;
+                     Padded_Name : constant String :=
+                       Name & ((Longest - Name'Length) * ' ');
                   begin
-                     Append (Result, Name);
-
-                     if not Raw_Format then
-                        Append (Result, (1 .. Longest - Name'Length => ' '));
+                     if Success then
+                        Formater.Add_Parameter
+                          (Name    => Padded_Name,
+                           Mode    => "",
+                           Of_Type =>
+                             Buffer (Type_Start.Index .. Type_End.Index),
+                           Default => "");
+                     else
+                        Formater.Add_Parameter
+                          (Name    => Padded_Name,
+                           Mode    => "",
+                           Of_Type => "???",
+                           Default => "");
                      end if;
                   end;
-
-                  if Success then
-                     Append
-                       (Result, " : " & Escape_Text
-                          (Buffer (Type_Start.Index .. Type_End.Index)));
-                  else
-                     Append (Result, " : ???");
-                  end if;
                end if;
 
                Sub_Iter := Next (Tree, Sub_Iter, Jump_Over);
             end loop;
-
-            if Raw_Format and then Has_Parameter then
-               Append (Result, ")");
-            end if;
          end;
 
          Get_Referenced_Entity
@@ -217,14 +191,9 @@ package body Language.Tree.Database is
             Success);
 
          if Success then
-            if Raw_Format then
-               Append (Result, " return ");
-            else
-               Append (Result, "<b>Return:</b>" & ASCII.LF);
-            end if;
-
-            Append (Result,
-                    Escape_Text (Buffer (Type_Start.Index .. Type_End.Index)));
+            Formater.Add_Result
+              (Mode    => "",
+               Of_Type => Buffer (Type_Start.Index .. Type_End.Index));
          end if;
 
       elsif Get_Construct (Node).Category in Data_Category then
@@ -240,20 +209,12 @@ package body Language.Tree.Database is
                Success);
 
             if Success then
-               if Raw_Format then
-                  Append (Result, " ");
-               else
-                  Append (Result, "<b>Type:</b>" & ASCII.LF);
-               end if;
-
-               Append
-                 (Result,
-                  Escape_Text (Buffer (Var_Start.Index .. Var_End.Index)));
+               Formater.Add_Variable
+                 (Mode    => "",
+                  Of_Type => Buffer (Var_Start.Index .. Var_End.Index));
             end if;
          end;
       end if;
-
-      return To_String (Result);
    end Get_Profile;
 
    ---------------------

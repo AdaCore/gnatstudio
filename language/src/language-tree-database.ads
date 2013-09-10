@@ -31,6 +31,7 @@ with Construct_Tries;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Language.Profile_Formaters; use Language.Profile_Formaters;
 
 package Language.Tree.Database is
 
@@ -63,23 +64,19 @@ package Language.Tree.Database is
      (Tree : access Tree_Language) return Language_Access is abstract;
    --  Return the language associated to this tree.
 
-   function Get_Profile
+   procedure Get_Profile
      (Lang       : access Tree_Language;
       Entity     : Entity_Access;
-      Color_For_Optional_Param : String := "#555555";
-      Raw_Format   : Boolean := False;
-      With_Aspects : Boolean := False) return String;
+      Formater   : access Profile_Formater'Class;
+      With_Aspects : Boolean := False);
    --  Return a formatted view of the profile of this construct - if any.
    --  For example, for subprogram, this would return
    --       [(parameters)][return type]     on one line.
    --  For a variable, it would be:
    --       : [type]    on one line
-   --  If Raw_Format is true, then no formatting characters or tag will be
-   --  inserted (and the profile can be used as-is in e.g. code).
-   --  If Raw_Format is false, optional parameters are highlighted with
-   --  Color_For_Optional_Param, which must be of the form "#dddddd".
    --  If With_Aspects is true and the profile has aspects then they are
    --  appended at the end of the returned string.
+   --  Formater is responsible for formating and keep resulting text.
 
    function Get_Declaration
      (Lang   : access Tree_Language;
