@@ -38,7 +38,7 @@ package body Language.Profile_Formaters is
          Append (Self.Text, "(");
          Self.Has_Parameter := True;
       else
-         Append (Self.Text, ";");
+         Append (Self.Text, "; ");
       end if;
 
       Append (Self.Text, Trim (Name, Ada.Strings.Right));
