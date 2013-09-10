@@ -101,6 +101,8 @@ package GPS.Search is
    --  embed any context.
    --  Allow_Highlight should be True if results should highlight the matching
    --  characters.
+   --  If the kind is a regular expression, but the pattern is invalid, this
+   --  function falls back to a Full_Text search.
 
    function Build
       (Pattern    : not null access Search_Pattern'Class;

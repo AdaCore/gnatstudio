@@ -287,12 +287,15 @@ package body GPS.Search is
    is
       S : constant Integer :=
         (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : constant Integer :=
-        (if End_Index = -1 then Buffer'Last else End_Index);
+      F : Integer := (if End_Index = -1 then Buffer'Last else End_Index);
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
       Context : Search_Context;
    begin
+      --  Avoid an exception when calling Match
+      if F = 0 then
+         F := Positive'Last;
+      end if;
       Match (Self.Pattern.all, Buffer, Self.Matches.all, S, F);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
@@ -916,22 +919,33 @@ package body GPS.Search is
                Flags := Flags or Case_Insensitive;
             end if;
 
-            if Whole_Word then
-               Re := new GNAT.Regpat.Pattern_Matcher'
-                 (Compile (WD & Pattern & WD, Flags));
-            else
-               Re := new GNAT.Regpat.Pattern_Matcher'
-                 (Compile (Pattern, Flags));
-            end if;
+            begin
+               if Whole_Word then
+                  Re := new GNAT.Regpat.Pattern_Matcher'
+                    (Compile (WD & Pattern & WD, Flags));
+               else
+                  Re := new GNAT.Regpat.Pattern_Matcher'
+                    (Compile (Pattern, Flags));
+               end if;
 
-            return new Regexp_Search'
-              (Pattern        => Re,
-               Text           => new String'(Pattern),
-               Allow_Highlight => False,
-               Case_Sensitive => Case_Sensitive,
-               Whole_Word     => Whole_Word,
-               Kind           => Kind,
-               Matches        => new Match_Array (0 .. Paren_Count (Re.all)));
+               return new Regexp_Search'
+                 (Pattern        => Re,
+                  Text           => new String'(Pattern),
+                  Allow_Highlight => False,
+                  Case_Sensitive => Case_Sensitive,
+                  Whole_Word     => Whole_Word,
+                  Kind           => Kind,
+                  Matches      => new Match_Array (0 .. Paren_Count (Re.all)));
+
+            exception
+               when GNAT.Regpat.Expression_Error =>
+                  return Build
+                    (Pattern         => Pattern,
+                     Case_Sensitive  => Case_Sensitive,
+                     Whole_Word      => Whole_Word,
+                     Kind            => Full_Text,
+                     Allow_Highlight => Allow_Highlight);
+            end;
       end case;
    end Build;
 
