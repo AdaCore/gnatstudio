@@ -323,7 +323,9 @@ package body GPS.Kernel.Search.Filenames is
 
          when Other_Files =>
             --  Test all files in the current directory
-            while Self.Data.File_Index < Self.Data.Files_In_Dir'Last loop
+            while Self.Data.Files_In_Dir /= null
+               and then Self.Data.File_Index < Self.Data.Files_In_Dir'Last
+            loop
                Self.Data.File_Index := Self.Data.File_Index + 1;
                Check (Self.Data.Files_In_Dir (Self.Data.File_Index));
                exit For_Each_Step when not Continue;
