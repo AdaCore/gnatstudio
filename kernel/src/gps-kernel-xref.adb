@@ -985,7 +985,7 @@ package body GPS.Kernel.Xref is
       end if;
       Append (Self.Text, "<b>Return:</b>" & ASCII.LF & " <b>");
       Append (Self.Text, Mode);
-      Append (Self.Text, "</b> ");
+      Append (Self.Text, "</b>");
       Append (Self.Text, Escape_Text (Of_Type));
    end Add_Result;
 
