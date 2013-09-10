@@ -1041,7 +1041,7 @@ package body GPS.Kernel.Xref is
       if Length (Self.Text) = 0 then
          Append (Self.Text, Escape_Text (Text));
       else
-         Self.Text := Escape_Text (Text) & ASCII.LF & Self.Text;
+         Self.Text := Escape_Text (Text) & ASCII.LF & ASCII.LF & Self.Text;
       end if;
    end Add_Comments;
 

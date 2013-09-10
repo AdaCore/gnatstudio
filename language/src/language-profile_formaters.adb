@@ -89,8 +89,7 @@ package body Language.Profile_Formaters is
       use Ada.Strings.Unbounded;
    begin
       Append (Self.Text, " ");
-      Append (Self.Text, Trim (Mode, Ada.Strings.Right));
-      Append (Self.Text, " ");
+      Append (Self.Text, Mode);
       Append (Self.Text, Of_Type);
    end Add_Variable;
 
@@ -120,8 +119,11 @@ package body Language.Profile_Formaters is
          Append (Self.Text, ")");
          Self.Has_Parameter := False;
       end if;
-      Append (Self.Text, ASCII.LF);
-      Append (Self.Text, Text);
+      if Length (Self.Text) = 0 then
+         Append (Self.Text, Text);
+      else
+         Self.Text := Text & ASCII.LF & ASCII.LF & Self.Text;
+      end if;
    end Add_Comments;
 
    --------------
