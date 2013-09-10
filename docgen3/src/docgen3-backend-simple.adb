@@ -68,8 +68,8 @@ package body Docgen3.Backend.Simple is
    --  inherited from a parent type defined in another file).
 
    function Get_Template
-     (System_Dir : Virtual_File;
-      Kind       : Template_Kind) return Virtual_File;
+     (Resources_Dir : Virtual_File;
+      Kind          : Template_Kind) return Virtual_File;
 
    function To_Html_Name
      (Basename : Filesystem_String) return Filesystem_String;
@@ -78,6 +78,32 @@ package body Docgen3.Backend.Simple is
 
    function To_ReST_Name
      (Basename : Filesystem_String) return Filesystem_String;
+
+   function Get_Resources_Dir
+     (Kernel : Core_Kernel) return Virtual_File;
+   --  Return the directory containing the resources for this backend
+
+   -----------------------
+   -- Get_Resourcse_Dir --
+   -----------------------
+
+   function Get_Resources_Dir
+     (Kernel : Core_Kernel) return Virtual_File is
+      Src_Dir : GNATCOLL.VFS.Virtual_File :=
+        Create_From_Dir
+          (Get_Share_Dir (Kernel), "docgen3");
+   begin
+      --  Special case: check for this in order to be able to work
+      --  in the development environment
+
+      if not Src_Dir.Is_Directory then
+         Src_Dir := Create_From_Dir
+           (Get_Share_Dir (Kernel).Get_Parent,
+            "docgen3/resources/");
+      end if;
+
+      return Src_Dir;
+   end Get_Resources_Dir;
 
    ----------
    -- ReST --
@@ -913,7 +939,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
                             Get_Template
-                              (Get_Share_Dir (Backend.Context.Kernel),
+                              (Get_Resources_Dir (Backend.Context.Kernel),
                                Tmpl_Src_File);
 
          begin
@@ -1054,7 +1080,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
                             Get_Template
-                              (Get_Share_Dir (Backend.Context.Kernel),
+                              (Get_Resources_Dir (Backend.Context.Kernel),
                                Tmpl_Files_Index);
             File        : GNATCOLL.VFS.Virtual_File;
             File_Index  : Files_List.Cursor;
@@ -1103,7 +1129,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
               Get_Template
-                (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Entities);
+                (Get_Resources_Dir (Backend.Context.Kernel), Tmpl_Entities);
 
          begin
             Printout :=
@@ -1186,7 +1212,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
                             Get_Template
-                              (Get_Share_Dir (Backend.Context.Kernel),
+                              (Get_Resources_Dir (Backend.Context.Kernel),
                                Tmpl_Files_Index);
             File        : GNATCOLL.VFS.Virtual_File;
             File_Index  : Files_List.Cursor;
@@ -1233,7 +1259,7 @@ package body Docgen3.Backend.Simple is
             Header_U    : constant String (Header'Range) := (others => '=');
             Tmpl        : constant Virtual_File :=
                             Get_Template
-                              (Get_Share_Dir (Backend.Context.Kernel),
+                              (Get_Resources_Dir (Backend.Context.Kernel),
                                Tmpl_Entities);
             Cursor1     : EInfo_List.Cursor;
             E1          : Entity_Id;
@@ -1311,7 +1337,7 @@ package body Docgen3.Backend.Simple is
             Translation : Translate_Set;
             Tmpl        : constant Virtual_File :=
                             Get_Template
-                              (Get_Share_Dir (Backend.Context.Kernel),
+                              (Get_Resources_Dir (Backend.Context.Kernel),
                                Tmpl_Prj_Files_Index);
             Prj_Index   : Project_Files_List.Cursor;
             Prj_Srcs    : Project_Files;
@@ -1498,7 +1524,7 @@ package body Docgen3.Backend.Simple is
 
             Tmpl   : constant Virtual_File :=
                        Get_Template
-                         (Get_Share_Dir (Backend.Context.Kernel),
+                         (Get_Resources_Dir (Backend.Context.Kernel),
                           Tmpl_Entities);
 
             Cursor      : EInfo_List.Cursor;
@@ -1604,7 +1630,7 @@ package body Docgen3.Backend.Simple is
          Translation   : Translate_Set;
          Tmpl          : constant Virtual_File :=
                            Get_Template
-                             (Get_Share_Dir (Backend.Context.Kernel),
+                             (Get_Resources_Dir (Backend.Context.Kernel),
                               Tmpl_Global_Index);
          Src_Files     : aliased Files_List.Vector;
          My_Delay      : Delay_Time;
@@ -1865,25 +1891,25 @@ package body Docgen3.Backend.Simple is
    ------------------
 
    function Get_Template
-     (System_Dir : Virtual_File;
+     (Resources_Dir : Virtual_File;
       Kind       : Template_Kind) return Virtual_File is
    begin
       case Kind is
          when Tmpl_Entities =>
             return Create_From_Dir
-              (System_Dir, "docgen3/entities.tmpl");
+              (Resources_Dir, "entities.tmpl");
          when Tmpl_Files_Index =>
             return Create_From_Dir
-              (System_Dir, "docgen3/files_index.tmpl");
+              (Resources_Dir, "files_index.tmpl");
          when Tmpl_Global_Index =>
             return Create_From_Dir
-              (System_Dir, "docgen3/index.tmpl");
+              (Resources_Dir, "index.tmpl");
          when Tmpl_Prj_Files_Index =>
             return Create_From_Dir
-              (System_Dir, "docgen3/prj_index.tmpl");
+              (Resources_Dir, "prj_index.tmpl");
          when Tmpl_Src_File =>
             return Create_From_Dir
-              (System_Dir, "docgen3/src.tmpl");
+              (Resources_Dir, "src.tmpl");
       end case;
    end Get_Template;
 
@@ -1908,7 +1934,7 @@ package body Docgen3.Backend.Simple is
       is
          Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
            Create_From_Dir
-             (Get_Share_Dir (Kernel), "docgen3/support/");
+             (Get_Resources_Dir (Kernel), "support/");
          Dst_Dir : constant GNATCOLL.VFS.Virtual_File :=
            Get_Doc_Directory (Kernel);
          Success : Boolean;
@@ -1940,7 +1966,7 @@ package body Docgen3.Backend.Simple is
    is
       Tmpl    : constant Virtual_File :=
                   Get_Template
-                   (Get_Share_Dir (Backend.Context.Kernel), Tmpl_Entities);
+                   (Get_Resources_Dir (Backend.Context.Kernel), Tmpl_Entities);
       Translation : Translate_Set;
 
       procedure For_All
