@@ -1617,6 +1617,7 @@ package body Vsearch is
                Vsearch.Context_Combo.Append
                  (Id   => Data.Label.all,
                   Text => Substitute_Label (Kernel, Data.Label.all));
+               Found := Vsearch.Context_Combo.Set_Active_Id (Data.Label.all);
             end if;
 
             Num := Num + 1;
