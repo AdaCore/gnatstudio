@@ -4658,6 +4658,13 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
+    def get_extend_selection(self):
+        """
+        :return: A boolean, whether the user is currently performing a
+           selection. This should impact cursor movements (since moving
+           the cursor should extend the selection).
+        """
+
     def is_subprogram(self):
         """
         Whether the entity is a subprogram, procedure or function.
@@ -4982,6 +4989,17 @@ class Entity(object):
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
+
+    def set_extend_selection(self, extend):
+        """
+        Sets the mode for cursor movement. When the parameter is true,
+        moving the cursor extends the selection (for instance shift+cursor
+        keys, or the Emacs mode of setting the mark with ctrl-space and
+        then moving the cursor). When the parameter is false, cursor
+        movement cancels the selection.
+
+        :param extend: A boolean
+        """
 
     def show(self):
         """

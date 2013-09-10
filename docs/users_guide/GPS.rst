@@ -797,9 +797,13 @@ Classes
 
    .. automethod:: GPS.EditorView.cursor
 
+   .. automethod:: GPS.EditorView.get_extend_selection
+
    .. automethod:: GPS.EditorView.goto
 
    .. automethod:: GPS.EditorView.is_read_only
+
+   .. automethod:: GPS.EditorView.set_extend_selection
 
    .. automethod:: GPS.EditorView.set_read_only
 
