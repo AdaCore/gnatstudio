@@ -2564,4 +2564,26 @@ package body Src_Editor_View is
       end if;
    end Set_Position_Set_Explicitely;
 
+   --------------------------
+   -- Get_Extend_Selection --
+   --------------------------
+
+   function Get_Extend_Selection
+     (Self : access Source_View_Record) return Boolean
+   is
+   begin
+      return Self.Extend_Selection;
+   end Get_Extend_Selection;
+
+   --------------------------
+   -- Set_Extend_Selection --
+   --------------------------
+
+   procedure Set_Extend_Selection
+     (Self : access Source_View_Record; Extend_Selection : Boolean)
+   is
+   begin
+      Self.Extend_Selection := Extend_Selection;
+   end Set_Extend_Selection;
+
 end Src_Editor_View;

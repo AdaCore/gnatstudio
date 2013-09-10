@@ -362,6 +362,18 @@ package GPS.Editors is
    --  Get_User_Data needs to be used to convert to a MDI_Child -- this is
    --  to prevent the need for a No_Strict_Aliasing pragma on MDI_Child).
 
+   function Get_Extend_Selection
+     (This : Editor_View) return Boolean is abstract;
+   --  Get the value of the Extend_Selection property. This property determines
+   --  if any movement command will extend the selection without any modifiers
+   --  or not. Note that for user-defined actions, this depends on the user
+   --  actually reading this flag and implementing the correct behavior
+
+   procedure Set_Extend_Selection
+     (This : Editor_View; Extend_Selection : Boolean) is abstract;
+   --  Set the value of the Extend_Selection property. Default value is False,
+   --  which means, editor commands don't extend the user's selection.
+
    package View_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_View'Class);
 
@@ -1063,6 +1075,12 @@ private
 
    overriding function Buffer
      (This : Dummy_Editor_View) return Editor_Buffer'Class;
+
+   overriding function Get_Extend_Selection
+     (This : Dummy_Editor_View) return Boolean is (False);
+
+   overriding procedure Set_Extend_Selection
+     (This : Dummy_Editor_View; Extend_Selection : Boolean) is null;
 
    Nil_Editor_View : constant Editor_View'Class :=
      Dummy_Editor_View'(Controlled with others => <>);

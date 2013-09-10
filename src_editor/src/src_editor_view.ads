@@ -181,6 +181,18 @@ package Src_Editor_View is
    --  a location. This flag will not do anything on editors that are already
    --  open and scrolled.
 
+   function Get_Extend_Selection
+     (Self : access Source_View_Record) return Boolean;
+   --  Get the value of the Extend_Selection property. This property determines
+   --  if any movement command will extend the selection without any modifiers
+   --  or not. Note that for user-defined actions, this depends on the user
+   --  actually reading this flag and implementing the correct behavior
+
+   procedure Set_Extend_Selection
+     (Self : access Source_View_Record; Extend_Selection : Boolean);
+   --  Set the value of the Extend_Selection property. Default value is False,
+   --  which means, editor commands don't extend the user's selection.
+
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
@@ -323,6 +335,8 @@ private
       Cursor_Needs_Change          : Boolean := False;
       --  Whether we just entered hyper mode, and the cursor aspect needs
       --  to be changed.
+
+      Extend_Selection             : Boolean := False;
    end record;
 
 end Src_Editor_View;

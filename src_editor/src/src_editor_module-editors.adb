@@ -540,6 +540,12 @@ package body Src_Editor_Module.Editors is
    pragma Convention (C, On_View_Destroyed);
    --  Called when the gtk+ object is destroyed, to reset internal fields
 
+   overriding function Get_Extend_Selection
+     (This : Src_Editor_View) return Boolean;
+
+   overriding procedure Set_Extend_Selection
+     (This : Src_Editor_View; Extend_Selection : Boolean);
+
    ------------------------
    -- Src_Editor_Overlay --
    ------------------------
@@ -2358,6 +2364,26 @@ package body Src_Editor_Module.Editors is
          Unchecked_Free (This.Mark.Mark);
       end if;
    end Delete;
+
+   --------------------------
+   -- Get_Extend_Selection --
+   --------------------------
+
+   overriding function Get_Extend_Selection
+     (This : Src_Editor_View) return Boolean is
+   begin
+      return This.Contents.Box.Get_View.Get_Extend_Selection;
+   end Get_Extend_Selection;
+
+   --------------------------
+   -- Set_Extend_Selection --
+   --------------------------
+
+   overriding procedure Set_Extend_Selection
+     (This : Src_Editor_View; Extend_Selection : Boolean) is
+   begin
+      This.Contents.Box.Get_View.Set_Extend_Selection (Extend_Selection);
+   end Set_Extend_Selection;
 
    -------------------
    -- Set_Read_Only --

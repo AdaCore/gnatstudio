@@ -2301,6 +2301,13 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location
               (Get_Script (Data), Get_View (Data, 1).Cursor));
+
+      elsif Command = "get_extend_selection" then
+         Data.Set_Return_Value (Get_View (Data, 1).Get_Extend_Selection);
+
+      elsif Command = "set_extend_selection" then
+         Get_View (Data, 1).Set_Extend_Selection (Nth_Arg (Data, 2));
+
       end if;
    end View_Cmds;
 
@@ -2738,6 +2745,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_read_only", 0, 1, View_Cmds'Access, EditorView);
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel, "set_extend_selection", 0, 1, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel, "get_extend_selection", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "goto", 1, 2, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);

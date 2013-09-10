@@ -952,13 +952,14 @@ def set_mark_command (location = None):
     """Set mark at LOCATION (or current cursor if LOCATION is unspecified)
       This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position. See also the action 'Cancel mark command'"""
     if not location:
-       location = GPS.EditorBuffer.get ().current_view ().cursor ()
+        location = GPS.EditorBuffer.get().current_view().cursor()
+    location.buffer().current_view().set_extend_selection(True)
     if has_pygtk:
-        location.create_mark ("selection_bound")
-        override_key_bindings (select = True)
+        location.create_mark("selection_bound")
+        override_key_bindings(select = True)
     else:
-        location.create_mark ("emacs_selection_bound")
-        GPS.Hook ("location_changed").add (on_location_changed)
+        location.create_mark("emacs_selection_bound")
+        GPS.Hook("location_changed").add(on_location_changed)
 
 @interactive ("Editor", "Source editor", name="Cancel mark command")
 def cancel_mark_command (buffer = None):
@@ -966,6 +967,7 @@ def cancel_mark_command (buffer = None):
       Remove the emacs-emulation mark in the current editor. See also the action 'Set mark command'"""
     if not buffer:
        buffer = GPS.EditorBuffer.get ()
+    buffer.current_view().set_extend_selection(False)
     try:
        buffer.unselect ()
        if has_pygtk:

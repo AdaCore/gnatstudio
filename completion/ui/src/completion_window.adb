@@ -404,7 +404,7 @@ package body Completion_Window is
          Explorer.Has_Idle_Computation := False;
       end if;
       Empty_Notes_Container (Explorer);
-      Clear (Explorer.Model);
+      Explorer.Model.Clear;
       Explorer.Shown := 0;
       Free_Info (Explorer);
       Explorer.Info := new Information_Array (1 .. 1024);
@@ -423,7 +423,6 @@ package body Completion_Window is
          Remove (Explorer.Idle_Computation);
          Explorer.Has_Idle_Computation := False;
       end if;
-
       Free_Info (Explorer);
    end Delete;
 

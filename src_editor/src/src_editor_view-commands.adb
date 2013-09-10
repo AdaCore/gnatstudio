@@ -143,7 +143,13 @@ package body Src_Editor_View.Commands is
          Get_Iter_At_Mark (Buffer, Iter, Mark);
          Move_Iter (Iter, Command.Kind, Command.Step, Column);
          Move_Mark (Buffer, Mark, Iter);
-         Place_Cursor (Buffer, Iter);
+
+         if View.Get_Extend_Selection then
+            Move_Mark (Buffer, Buffer.Get_Insert, Iter);
+         else
+            Place_Cursor (Buffer, Iter);
+         end if;
+
          View.Scroll_To_Cursor_Location;
 
          for Cursor of Get_Multi_Cursors (Buffer) loop
