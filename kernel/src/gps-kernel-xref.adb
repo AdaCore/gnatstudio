@@ -1002,7 +1002,7 @@ package body GPS.Kernel.Xref is
    begin
       Append (Self.Text, "<b>Type: ");
       Append (Self.Text, Mode);
-      Append (Self.Text, "</b> ");
+      Append (Self.Text, "</b>");
       Append (Self.Text, Escape_Text (Of_Type));
    end Add_Variable;
 
