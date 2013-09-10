@@ -503,9 +503,14 @@ package body GVD.Call_Stack is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : access Call_Stack_Record) is
+     (View : access Call_Stack_Record)
+   is
+      Prev : Boolean;
    begin
+      Prev := View.Block;
+      View.Block := True;
       Clear (View.Model);
+      View.Block := Prev;
    end On_Process_Terminated;
 
    ------------
