@@ -80,6 +80,11 @@ package Gtkada.Tree_View is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Converts model filter path into model store iter
 
+   function Get_Store_Path_For_Filter_Path
+     (Self        : access Tree_View_Record'Class;
+      Filter_Path : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+
    function Get_Filter_Path_For_Store_Iter
      (Self       : access Tree_View_Record'Class;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
