@@ -810,6 +810,17 @@ package body Src_Editor_Buffer.Line_Information is
                Free (Buffer.Extra_Information (J).Info);
                Buffer.Extra_Information (J).Info :=
                  new Line_Information_Record'(Info (Info'First));
+
+               if Buffer.Extra_Information (J).Tooltip /= null then
+                  Free (Buffer.Extra_Information (J).Tooltip);
+               end if;
+
+               if Buffer.Extra_Information (J).Icon /= null then
+                  Free (Buffer.Extra_Information (J).Icon);
+               end if;
+
+               Buffer.Extra_Information (J).Tooltip := new String'(Tooltip);
+               Buffer.Extra_Information (J).Icon := new String'(Icon);
                Found := True;
                exit;
             end if;
