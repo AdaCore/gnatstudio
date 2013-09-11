@@ -32,7 +32,7 @@ with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 with Docgen3;
 with Xref;              use Xref;
 
-procedure Docgen is
+procedure GNATdoc is
 
    Cmdline               : Command_Line_Configuration;
    Project_Name          : aliased GNAT.Strings.String_Access;
@@ -111,4 +111,4 @@ begin
    --  Destroy all
    GPS.CLI_Utils.Destroy_Kernel_Context (Kernel);
 
-end Docgen;
+end GNATdoc;
