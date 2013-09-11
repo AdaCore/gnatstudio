@@ -35,6 +35,8 @@ package body Src_Printing.Win32_Printer is
 
    use Src_Editor_Buffer;
 
+   Me : constant Trace_Handle :=  Create ("Src_Printing.Win32_Printer");
+
    function Noncollated_Copies (PD : PrintDlg) return INT;
    --  Controller for collating loops. If the user selects collating, returns
    --  1; otherwise returns the number of copies requested.
