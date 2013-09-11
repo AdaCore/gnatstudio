@@ -1,0 +1,40 @@
+/*
+ * Custom styling for GPS when using the Adwaita style
+ */
+
+/* Change the color border at the top of the active tab, when it has keyboard
+ * focus
+ */
+
+@define-color gps_active_tab green;
+
+.notebook.mdifocused tab.top:active,
+.notebook.mdifocused tab.bottom:active {
+   background-image: linear-gradient(to bottom,
+                                     @gps_active_tab,
+                                     @gps_active_tab 2px,
+                                     @button_gradient_color_a 3px,
+                                     @theme_base_color);
+   border-image-source: -gtk-gradient(linear,
+                                      left top, left bottom,
+                                      from(@gps_active_tab),
+                                      to (@borders));
+}
+.notebook.mdifocused tab.left:active,
+.notebook.mdifocused tab.right:active {
+   background-image: linear-gradient(to right,
+                                     @gps_active_tab,
+                                     @gps_active_tab 2px,
+                                     @button_gradient_color_a 3px,
+                                     @theme_base_color);
+   border-image-source: -gtk-gradient(linear,
+                                      left top, right top,
+                                      from(@gps_active_tab),
+                                      to (@borders));
+}
+
+
+/* .mdi tab GtkLabel { opacity: 0.8 }
+   .mdifocused tab GtkLabel { opacity: 1.0 }
+*/
+
