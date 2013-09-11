@@ -419,6 +419,7 @@ package body GVD.Source_Editor.GPS is
       Result : Boolean := False;
       Found  : Boolean := False;
       Index  : Natural;
+      File   : Virtual_File;
 
    begin
       --  Add new breakpoints to the column information.
@@ -442,9 +443,18 @@ package body GVD.Source_Editor.GPS is
                A (L).Image := Line_Has_Breakpoint_Pixbuf;
                A (L).Associated_Command := Command_Access (Other_Command);
 
+               --  Try to resolve file when it is not present to handle
+               --  relocation of project.
+
+               File := Br (J).File;
+
+               if not File.Is_Regular_File then
+                  File := Kernel.Create_From_Base (File.Full_Name);
+               end if;
+
                Add_Line_Information
                  (Kernel,
-                  Br (J).File,
+                  File,
                   Breakpoints_Column_Id,
                   new Line_Information_Array'(A));
 
@@ -496,9 +506,19 @@ package body GVD.Source_Editor.GPS is
                   end if;
 
                   A (L).Associated_Command := Command_Access (Other_Command);
+
+                  --  Try to resolve file when it is not present to handle
+                  --  relocation of project.
+
+                  File := Editor.Current_Breakpoints (J).File;
+
+                  if not File.Is_Regular_File then
+                     File := Kernel.Create_From_Base (File.Full_Name);
+                  end if;
+
                   Add_Line_Information
                     (Kernel,
-                     Editor.Current_Breakpoints (J).File,
+                     File,
                      Breakpoints_Column_Id,
                      new Line_Information_Array'(A));
                end;
