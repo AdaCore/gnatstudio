@@ -37,6 +37,10 @@ with Histories;
 
 package Gtkada.Entry_Completion is
 
+   Max_Idle_Duration : constant Duration := 0.03;
+   --  Maximum time spent in the idle callback to insert the possible
+   --  completions.
+
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 

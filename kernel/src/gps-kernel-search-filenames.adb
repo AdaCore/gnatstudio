@@ -15,16 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
 
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gtk.Label;                 use Gtk.Label;
+with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Types;              use Gtkada.Types;
 
 with GPS.Intl;                  use GPS.Intl;
@@ -36,6 +39,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
 
 package body GPS.Kernel.Search.Filenames is
+   Me : constant Trace_Handle := Create ("SEARCH.FILENAMES");
 
    type Hook_Project_View_Changed is new Function_No_Args with record
       Provider : access Filenames_Search_Provider;
@@ -136,6 +140,7 @@ package body GPS.Kernel.Search.Filenames is
          when User_File =>
             Self.Data := (Step => User_File);
          when Project_Sources =>
+            Trace (Me, "Will parse name of project sources");
             if Self.Files = null then
                Self.Files :=
                  Get_Project (Self.Kernel).Source_Files (Recursive => True);
@@ -144,6 +149,7 @@ package body GPS.Kernel.Search.Filenames is
               (Step  => Project_Sources,
                Index => Self.Files'First - 1);
          when Runtime_Sources =>
+            Trace (Me, "Will parse name of runtime sources");
             if Self.Runtime = null then
                Self.Runtime := new File_Array'
                  (Get_Registry (Self.Kernel).Environment
@@ -153,10 +159,12 @@ package body GPS.Kernel.Search.Filenames is
               (Step          => Runtime_Sources,
                Runtime_Index => Self.Runtime'First - 1);
          when Project_Files =>
+            Trace (Me, "Will parse name of project files");
             Self.Data :=
               (Step  => Project_Files,
                Iter  => Get_Project (Self.Kernel).Start (Recursive => True));
          when Other_Files =>
+            Trace (Me, "Will parse name of files in source_dirs");
             if Self.Source_Dirs = null then
                Self.Source_Dirs := new File_Array'
                  (Get_Project (Self.Kernel).Source_Dirs (Recursive => True));
@@ -274,6 +282,7 @@ package body GPS.Kernel.Search.Filenames is
 
       F : Virtual_File;
       Prj : Project_Type;
+      Start : constant Ada.Calendar.Time := Clock;
    begin
       Has_Next := True;
 
@@ -297,6 +306,8 @@ package body GPS.Kernel.Search.Filenames is
 
          when Project_Sources =>
             while Self.Data.Index < Self.Files'Last loop
+               exit For_Each_Step when Clock - Start >
+                 Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Index := Self.Data.Index + 1;
                Check (Self.Files (Self.Data.Index));
                exit For_Each_Step when not Continue;
@@ -305,6 +316,8 @@ package body GPS.Kernel.Search.Filenames is
 
          when Runtime_Sources =>
             while Self.Data.Runtime_Index < Self.Runtime'Last loop
+               exit For_Each_Step when Clock - Start >
+                 Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Runtime_Index := Self.Data.Runtime_Index + 1;
                Check (Self.Runtime (Self.Data.Runtime_Index));
                exit For_Each_Step when not Continue;
@@ -324,8 +337,10 @@ package body GPS.Kernel.Search.Filenames is
          when Other_Files =>
             --  Test all files in the current directory
             while Self.Data.Files_In_Dir /= null
-               and then Self.Data.File_Index < Self.Data.Files_In_Dir'Last
+              and then Self.Data.File_Index < Self.Data.Files_In_Dir'Last
             loop
+               exit For_Each_Step when Clock - Start >
+                 Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.File_Index := Self.Data.File_Index + 1;
                Check (Self.Data.Files_In_Dir (Self.Data.File_Index));
                exit For_Each_Step when not Continue;

@@ -78,10 +78,6 @@ with Interfaces.C.Strings;       use Interfaces.C.Strings;
 package body Gtkada.Entry_Completion is
    Me : constant Trace_Handle := Create ("SEARCH");
 
-   Max_Idle_Duration : constant Duration := 0.05;
-   --  Maximum time spent in the idle callback to insert the possible
-   --  completions.
-
    Do_Grabs : constant Boolean := False;
    --  Whether to attempt grabbing the pointer
 
@@ -1078,6 +1074,7 @@ package body Gtkada.Entry_Completion is
       Start    : Time;
       Count    : Natural := 0;
       Inserted : Boolean := False;
+      Matched  : Natural := 0;
    begin
       Self.Completion.Next (Result => Result, Has_Next => Has_Next);
 
@@ -1091,11 +1088,16 @@ package body Gtkada.Entry_Completion is
          if Result /= null then
             Insert_Proposal (Self, Result);
             Inserted := True;
+            Matched := Matched + 1;
          end if;
 
          if not Has_Next then
             Self.Idle := No_Source_Id;
-            Trace (Me, "No more after" & Count'Img);
+            if Active (Me) then
+               Trace (Me, "No more match for this provider "
+                      & Count'Img & " chunks ("
+                      & Matched'Img & " matches)");
+            end if;
             return False;
          end if;
 
@@ -1103,10 +1105,14 @@ package body Gtkada.Entry_Completion is
 
          exit when Clock - Start > Max_Idle_Duration;
 
+         Result := null;
          Self.Completion.Next (Result => Result, Has_Next => Has_Next);
       end loop;
 
-      Trace (Me, "Inserted" & Count'Img & " matches");
+      if Active (Me) then
+         Trace (Me, "Tested" & Count'Img & " chunks ("
+                & Matched'Img & " matches)");
+      end if;
 
       if Inserted then
          Resize_Popup (Self, Height_Only => True);
