@@ -46,7 +46,6 @@ with Gtkada.Handlers;                use Gtkada.Handlers;
 with Old_Entities.Queries;
 with Old_Entities.Values;
 with System;                         use System;
-with Traces;
 
 package body GPS.Kernel.Xref is
    use Xref;
@@ -395,7 +394,7 @@ package body GPS.Kernel.Xref is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Result := Failure;
    end Examine_Ancestors_Idle;
 
@@ -469,7 +468,7 @@ package body GPS.Kernel.Xref is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
    end Examine_Ancestors_Call_Graph;
 
@@ -907,7 +906,7 @@ package body GPS.Kernel.Xref is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
 
          if Dialog /= null then
             Destroy (Dialog);

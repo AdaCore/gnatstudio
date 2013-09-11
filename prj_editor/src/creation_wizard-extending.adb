@@ -43,7 +43,6 @@ with Projects;                 use Projects;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
-with Traces;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
@@ -550,7 +549,7 @@ package body Creation_Wizard.Extending is
       pragma Unreferenced (Command, Ignore);
 
    begin
-      if Active (Traces.Testsuite_Handle) then
+      if Active (Testsuite_Handle) then
          --  No confirmation dialog in the testsuite
          Response := Gtk_Response_Yes;
       else

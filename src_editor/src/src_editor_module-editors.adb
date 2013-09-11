@@ -20,7 +20,7 @@ with System;
 
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
 with Gdk.RGBA;                  use Gdk.RGBA;
@@ -51,14 +51,13 @@ with Find_Utils;                use Find_Utils;
 with Language;                  use Language;
 with Language.Tree;
 with Src_Contexts;              use Src_Contexts;
-with Traces;                    use Traces;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Module.Editors is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle :=
+   Me : constant Trace_Handle :=
           Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
 
    type Buffer_Reference is record

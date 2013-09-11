@@ -56,7 +56,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with UTF8_Utils;                use UTF8_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 package body Directory_Tree is
 
@@ -99,7 +99,7 @@ package body Directory_Tree is
 
    end Init_Graphics;
 
-   Me : constant Debug_Handle := Create ("Directory_Tree");
+   Me : constant Trace_Handle := Create ("Directory_Tree");
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);
@@ -573,7 +573,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Directory_Cb;
 
    ----------------------
@@ -632,7 +632,7 @@ package body Directory_Tree is
       Remove_Directory (Selector, Recursive => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Remove_Directory_Cb;
 
    -----------------------------
@@ -837,7 +837,7 @@ package body Directory_Tree is
       Destroy (Dialog);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Create_Directory_Cb;
 
    ---------------------------------
@@ -1226,7 +1226,7 @@ package body Directory_Tree is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Read_Directory;
 
@@ -1592,7 +1592,7 @@ package body Directory_Tree is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Button_Press;
 
@@ -1611,7 +1611,7 @@ package body Directory_Tree is
         (T.File_Tree, T.File_Model, Event, True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end File_Button_Press;
 
@@ -1660,7 +1660,7 @@ package body Directory_Tree is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Refresh;
 
    -------------------

@@ -28,7 +28,7 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with Toolchains_Old;         use Toolchains_Old;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
-with Traces;                 use Traces;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
 with String_Diff;            use String_Diff;
@@ -38,7 +38,7 @@ package body Diff_Utils2 is
    use Diff_Chunk_List;
    use Diff_Head_List;
 
-   Me : constant Debug_Handle := Create ("diff_utils2");
+   Me : constant Trace_Handle := Create ("diff_utils2");
 
    type Ptr_Match_Array is access all Match_Array;
    type String_Array is array (Natural range <>) of String_Access;
@@ -291,7 +291,7 @@ package body Diff_Utils2 is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
    end Diff;
@@ -394,7 +394,7 @@ package body Diff_Utils2 is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Close (File);
          return Diff_Chunk_List.Null_List;
    end Diff;
@@ -522,7 +522,7 @@ package body Diff_Utils2 is
          return Ret;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Close (Descriptor);
          return Diff_Chunk_List.Null_List;
    end Diff3;

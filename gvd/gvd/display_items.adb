@@ -41,13 +41,13 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;
 with Ada.Exceptions;      use Ada.Exceptions;
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 package body Display_Items is
 
    use type GNAT.Strings.String_Access;
 
-   Me : constant Debug_Handle := Create ("Display_Items");
+   Me : constant Trace_Handle := Create ("Display_Items");
 
    ---------------------
    -- Local Constants --
@@ -227,7 +227,7 @@ package body Display_Items is
             Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
          exception
             when E : Language.Unexpected_Type | Constraint_Error =>
-               Trace (Exception_Handle,
+               Trace (Me,
                       "Exception when getting type of entity: "
                       & Exception_Information (E));
                Item.Entity := null;
@@ -1135,7 +1135,7 @@ package body Display_Items is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Button_Click;
 

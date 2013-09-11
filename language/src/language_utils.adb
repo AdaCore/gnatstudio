@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;   use GNAT.Strings;
-with Traces;         use Traces;
-
+with GNAT.Strings;    use GNAT.Strings;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Glib.Convert;
 
 package body Language_Utils is
+   Me : constant Trace_Handle := Create ("LANGUAGES");
 
    ---------------------------
    -- Parse_File_Constructs --
@@ -44,7 +44,7 @@ package body Language_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Free (Buffer);
    end Parse_File_Constructs;
 

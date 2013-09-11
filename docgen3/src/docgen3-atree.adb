@@ -23,11 +23,12 @@ with Language.Ada;
 with Language.C;
 with Language.Tree;               use Language.Tree;
 with Language.Tree.Database;      use Language.Tree.Database;
-with Traces;                      use Traces;
+with GNATCOLL.Traces;                      use GNATCOLL.Traces;
 
 with GNAT.IO; --  For output of debugging routines
 
 package body Docgen3.Atree is
+   Me : constant Trace_Handle := Create ("DOCGEN.ATREE");
 
    Unique_Id : Natural := 0;
    --  Internal counter used to associate an unique identifier to all the
@@ -907,7 +908,7 @@ package body Docgen3.Atree is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             return;
       end Complete_Decoration;
 

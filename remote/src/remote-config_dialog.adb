@@ -72,14 +72,14 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 
 with Remote.Db;                  use Remote, Remote.Db;
 with Remote_Module;              use Remote_Module;
 
 package body Remote.Config_Dialog is
 
-   Me : constant Debug_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("Remote");
 
    ------------------------
    -- Server list dialog --
@@ -583,7 +583,7 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Path_Grab_Focus;
 
    ---------------------
@@ -694,7 +694,7 @@ package body Remote.Config_Dialog is
       Show_All (Widget.Table);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Add_Path_Clicked;
 
    ----------------------------
@@ -707,7 +707,7 @@ package body Remote.Config_Dialog is
       On_Changed (W.Widget.Dialog, False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Remove_Path_Clicked;
 
    ---------------------
@@ -1735,7 +1735,7 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Selection_Changed;
 
    -------------------------
@@ -1791,7 +1791,7 @@ package body Remote.Config_Dialog is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Add_Machine_Clicked;
 
    ---------------------
@@ -1827,7 +1827,7 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Restore_Clicked;
 
    --------------------
@@ -1874,7 +1874,7 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Remove_Clicked;
 
    ---------------------------

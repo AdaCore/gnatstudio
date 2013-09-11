@@ -32,11 +32,12 @@ with Creation_Wizard;           use Creation_Wizard;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
+   Me : constant Trace_Handle := Create ("WIZARD");
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
       Last_Selected : Integer := -1;
@@ -150,7 +151,7 @@ package body Creation_Wizard.Selector is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Create_New_Project;
 

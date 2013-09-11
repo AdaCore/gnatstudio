@@ -38,7 +38,7 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Projects;
-with Traces;                        use Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with Xref;                          use Xref;
 
 with GNATStack.CI_Editors;
@@ -48,6 +48,7 @@ with GNATStack.Module.Editors;
 with GNATStack.Shell_Commands;
 
 package body GNATStack.Module is
+   Me : constant Trace_Handle := Create ("GNATSTACK");
 
    use GPS.Editors.Line_Information;
    use GPS.Intl;
@@ -501,7 +502,7 @@ package body GNATStack.Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Analyze_Stack_Usage;
 
    -----------------------------
@@ -587,7 +588,7 @@ package body GNATStack.Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Compilation_Finished;
 
    ------------------------
@@ -661,7 +662,7 @@ package body GNATStack.Module is
            ("Unable to load stack usage information.",
             True,
             GPS.Kernel.Error);
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Load_Data;
 
    -----------------------

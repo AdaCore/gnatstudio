@@ -23,7 +23,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 
@@ -62,8 +64,6 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
-with Traces;                    use Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with XML_Viewer;
 
 with Switches_Parser;           use Switches_Parser;
@@ -72,7 +72,7 @@ with XML_Utils.GtkAda;          use XML_Utils.GtkAda;
 
 package body Custom_Module is
 
-   Me : constant Debug_Handle := Create ("custom_module");
+   Me : constant Trace_Handle := Create ("custom_module");
 
    type Custom_Module_ID_Record is new Module_ID_Record with null record;
 
@@ -336,7 +336,7 @@ package body Custom_Module is
       Free (C);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Dynamic_Menu_Activate;
 
    --------------------
@@ -1334,7 +1334,7 @@ package body Custom_Module is
       Add_Child ("/", Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Customize;
 
    -----------------
@@ -1362,7 +1362,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Activate;
 
    ------------------------------
@@ -1580,7 +1580,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Menu_Handler;
 
    --------------------------------
@@ -1766,7 +1766,7 @@ package body Custom_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Contextual_Handler;
 
    --------------------------

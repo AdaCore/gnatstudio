@@ -43,14 +43,14 @@ with Language;               use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Refactoring.Services;   use Refactoring.Services;
 with Refactoring.Performers; use Refactoring.Performers;
-with Traces;                 use Traces;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Xref;                   use Xref;
 
 package body Refactoring.Subprograms is
 
-   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
+   Me : constant Trace_Handle := Create ("Refactor.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
 
@@ -797,7 +797,7 @@ package body Refactoring.Subprograms is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Failure;
    end Extract_Method;
 

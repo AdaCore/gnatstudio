@@ -29,6 +29,7 @@ with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
+with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
@@ -63,6 +64,9 @@ with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
 
 package GPS.Kernel is
+
+   Testsuite_Handle : constant GNATCOLL.Traces.Trace_Handle :=
+      GNATCOLL.Traces.Create ("TESTSUITE", Default => GNATCOLL.Traces.Off);
 
    type Kernel_Handle_Record is
      new GPS.Core_Kernels.Core_Kernel_Record with private;

@@ -25,18 +25,16 @@ with String_Utils;          use String_Utils;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with Language;              use Language;
 with Code_Analysis_GUI;     use Code_Analysis_GUI;
 with Code_Coverage.Gcov;    use Code_Coverage.Gcov;
 with Code_Coverage.GNATcov; use Code_Coverage.GNATcov;
 with Coverage_GUI;
 
-with Traces; use Traces;
-
 package body Code_Coverage is
 
-   Me : constant Debug_Handle := Create ("CODE_COVERAGE", GNATCOLL.Traces.On);
+   Me : constant Trace_Handle := Create ("CODE_COVERAGE", GNATCOLL.Traces.On);
 
    Int_Image_Pad : constant Positive := 5;
    --  Size of padding wanted with GNATCOLL.Utils.Image

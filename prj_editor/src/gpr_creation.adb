@@ -17,7 +17,7 @@
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with HTables;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -28,7 +28,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body GPR_Creation is
 
-   Me : constant Debug_Handle := Create ("Creator");
+   Me : constant Trace_Handle := Create ("Creator");
 
    type File_Info_Record is record
       Src_Dir_Index : Integer;

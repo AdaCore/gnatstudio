@@ -46,12 +46,13 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
-with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 
 package body XML_Viewer is
+   Me : constant Trace_Handle := Create ("XML");
 
    Name_Cst      : aliased constant String := "name";
    Filename_Cst  : aliased constant String := "filename";
@@ -262,7 +263,7 @@ package body XML_Viewer is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Null_Iter;
    end Node_Parser;
 
@@ -366,7 +367,7 @@ package body XML_Viewer is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Button_Press;
 

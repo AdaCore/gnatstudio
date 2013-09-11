@@ -21,6 +21,7 @@ with Generic_Views;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
@@ -76,12 +77,11 @@ with Projects;                     use Projects;
 with Remote;                       use Remote;
 with Switches_Editors;             use Switches_Editors;
 with System;
-with Traces;                       use Traces;
 with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
 
-   Me : constant Debug_Handle := Create ("Project_Viewers");
+   Me : constant Trace_Handle := Create ("Project_Viewers");
 
    type Project_Editor_Page_Array is array (Natural range <>)
      of Project_Editor_Page;
@@ -499,7 +499,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Select_Row;
 
@@ -818,7 +818,7 @@ package body Project_Viewers is
       Edit_Properties (Project, Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Project_Properties;
 
    -----------------------
@@ -835,7 +835,7 @@ package body Project_Viewers is
       Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save_All_Projects;
 
    -------------
@@ -990,7 +990,7 @@ package body Project_Viewers is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Edit_Multiple_Switches;
 
    --------------------
@@ -1015,7 +1015,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return null;
    end Widget_Factory;
 
@@ -1049,7 +1049,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Project_Editor;
 
@@ -1095,7 +1095,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return null;
    end Widget_Factory;
 
@@ -1122,7 +1122,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Project_Editor;
 

@@ -27,7 +27,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with System;                    use System;
@@ -79,15 +79,14 @@ with String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
-with Traces;                    use Traces;
 with Xref;                      use Xref;
 
 package body GPS.Kernel is
 
-   Me        : constant Debug_Handle := Create ("gps_kernel");
-   Ref_Me    : constant Debug_Handle :=
+   Me        : constant Trace_Handle := Create ("gps_kernel");
+   Ref_Me    : constant Trace_Handle :=
                  Create ("Contexts.Ref", GNATCOLL.Traces.Off);
-   Create_Me : constant Debug_Handle :=
+   Create_Me : constant Trace_Handle :=
                  Create ("Contexts.Mem", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
@@ -858,7 +857,7 @@ package body GPS.Kernel is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          if Active (Create_Me) then
             GNATCOLL.Traces.Decrease_Indent (Create_Me);
          end if;
@@ -881,7 +880,7 @@ package body GPS.Kernel is
          end if;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Adjust;
 
    ----------------

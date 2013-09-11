@@ -42,14 +42,14 @@ with GPS.Kernel;               use GPS.Kernel;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 
 with Language.Ada;             use Language.Ada;
 
 package body Src_Editor_Buffer.Line_Information is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
+   Me : constant Trace_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
    type Line_Info_Note_Record is new Abstract_Note with record
       Data : Line_Info_Width_Array_Access;

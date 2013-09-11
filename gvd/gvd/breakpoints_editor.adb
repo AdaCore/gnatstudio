@@ -68,7 +68,6 @@ with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Process_Proxies;  use Process_Proxies;
-with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
@@ -234,10 +233,6 @@ package body Breakpoints_Editor is
 
          List := List.Next;
       end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Edit_Breakpoints;
 
    ----------------------------
@@ -592,10 +587,6 @@ package body Breakpoints_Editor is
       Set_Sensitive (View.Editor.Advanced_Location, True);
       Set_Sensitive (View.Editor.Remove, True);
       Set_Sensitive (View.Editor.View, True);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Breakpoint_Row_Selection_Change;
 
    ------------------------
@@ -644,10 +635,6 @@ package body Breakpoints_Editor is
       end if;
 
       return False;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end Breakpoint_Clicked;
 
    -------------------------
@@ -1069,10 +1056,6 @@ package body Breakpoints_Editor is
       end;
 
       Set_Busy (Process, False);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Load_Exception_List_Clicked;
 
    -----------------------
@@ -1114,10 +1097,6 @@ package body Breakpoints_Editor is
                   N      => Gint (Selection)));
          end if;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Remove_Clicked;
 
    ---------------------
@@ -1141,10 +1120,6 @@ package body Breakpoints_Editor is
             Process.Breakpoints (Selection).Line,
             GObject (Process));
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_View_Clicked;
 
    ------------------------------------
@@ -1162,10 +1137,6 @@ package body Breakpoints_Editor is
          On_Remove_Clicked (Object);
       end if;
       return False;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end On_Breakpoints_Key_Press_Event;
 
 end Breakpoints_Editor;

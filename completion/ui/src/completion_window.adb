@@ -49,8 +49,7 @@ with Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
-with Traces;                    use Traces;
-
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 with Xref;
@@ -67,6 +66,7 @@ with Gdk.Visual; use Gdk.Visual;
 with Gtk.Scrollbar;
 
 package body Completion_Window is
+   Me : constant Trace_Handle := Create ("COMPLETION");
 
    Max_Window_Width : constant := 330;
    --  Maximum width of the window, in pixels
@@ -493,7 +493,7 @@ package body Completion_Window is
            (Idle_Compute'Access, Completion_Explorer_Access (Explorer));
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Expand_Selection;
 
    -------------------------
@@ -755,7 +755,7 @@ package body Completion_Window is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Idle_Expand;
 
@@ -899,7 +899,7 @@ package body Completion_Window is
          end if;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Mark_Set_Handler;
 
    ----------------------------
@@ -914,7 +914,7 @@ package body Completion_Window is
    begin
       Delete (Window);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Viewport_Moved_Handler;
 
    -------------------------
@@ -954,7 +954,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Insert_Text_Handler;
 
    --------------------------------
@@ -981,7 +981,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Before_Delete_Text_Handler;
 
    -------------------------
@@ -1013,7 +1013,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Delete_Text_Handler;
 
    -----------------------
@@ -1030,7 +1030,7 @@ package body Completion_Window is
 
       return False;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end On_Button_Pressed;
 
@@ -1061,7 +1061,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Window_Selection_Changed;
 
    ---------------------------
@@ -1081,7 +1081,7 @@ package body Completion_Window is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Explorer_Destroyed;
 
@@ -1131,7 +1131,7 @@ package body Completion_Window is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Explorer_Selection_Changed;
 
    ------------------
@@ -1147,7 +1147,7 @@ package body Completion_Window is
       Delete (Window);
       return False;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end On_Focus_Out;
 
@@ -1596,7 +1596,7 @@ package body Completion_Window is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Key_Press;
 

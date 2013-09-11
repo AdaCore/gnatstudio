@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNATCOLL.Projects;                      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
+with GNATCOLL.Traces;                        use GNATCOLL.Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
@@ -54,7 +55,6 @@ with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
 with Projects;                               use Projects;
-with Traces;                                 use Traces;
 with Code_Coverage;                          use Code_Coverage;
 with Code_Analysis;                          use Code_Analysis;
 with Code_Analysis_GUI;                      use Code_Analysis_GUI;
@@ -63,6 +63,7 @@ with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Coverage_GUI;                           use Coverage_GUI;
 
 package body Code_Analysis_Module is
+   Me : constant Trace_Handle := Create ("CODE_ANALYSIS");
 
    Src_File_Cst : aliased constant String := "src";
    --  Constant String that represents the name of the source file parameter
@@ -503,7 +504,7 @@ package body Code_Analysis_Module is
       Set_Return_Value (Data, Instance);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Shell_Get_Command;
 
    ----------------------------------
@@ -578,7 +579,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report
         (CB_Data.Kernel, Analysis, CB_Data.Project, CB_Data.File);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Gcov_File_Info_From_Menu;
 
    -----------------------------------
@@ -656,7 +657,7 @@ package body Code_Analysis_Module is
         (Get_Kernel (Data), Analysis, Prj_Name, Src_File);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Gcov_File_Info_From_Shell;
 
    ------------------------------------
@@ -721,7 +722,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report (CB_Data.Kernel, Analysis, CB_Data.Project);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Gcov_Project_Info_From_Menu;
 
    --------------------------------------
@@ -777,7 +778,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (Get_Kernel (Data), Analysis, Prj_Name);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Gcov_Project_Info_From_Shell;
 
    ---------------------------------------
@@ -815,7 +816,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh Report of Analysis
       Show_Analysis_Report (CB_Data.Kernel, Analysis);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_All_Gcov_Project_Info_From_Menu;
 
    ------------------------------------------
@@ -851,7 +852,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (Get_Kernel (Data), Analysis);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_All_Gcov_Project_Info_From_Shell;
 
    -------------------------------------------
@@ -900,7 +901,7 @@ package body Code_Analysis_Module is
       --  Build/Refresh the Coverage Report
       Show_Analysis_Report (Get_Kernel (Data), Analysis);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Show_All_Coverage_Information_From_Shell;
 
    ----------------------------------------------
@@ -923,7 +924,7 @@ package body Code_Analysis_Module is
       Hide_All_Coverage_Information (Get_Kernel (Data), Analysis.Projects);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Hide_All_Coverage_Information_From_Shell;
 
    -------------------------------------
@@ -946,7 +947,7 @@ package body Code_Analysis_Module is
       Show_Analysis_Report (Get_Kernel (Data), Analysis);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Show_Analysis_Report_From_Shell;
 
    ------------------------------------
@@ -966,7 +967,7 @@ package body Code_Analysis_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Show_Analysis_Report_From_Menu;
 
    --------------------------
@@ -1217,7 +1218,7 @@ package body Code_Analysis_Module is
       Destroy_All_Analyzes (Get_Kernel (Data));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Destroy_All_Analyzes_From_Shell;
 
    ------------------------------
@@ -1233,7 +1234,7 @@ package body Code_Analysis_Module is
    begin
       Destroy_All_Analyzes (Kernel_Handle (Kernel));
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Project_Changing_Hook;
 
    ----------------------------
@@ -1372,7 +1373,7 @@ package body Code_Analysis_Module is
       Add_Project_Coverage_Annotations (CB_Data.Kernel, Prj_Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Show_Project_Coverage_Information_From_Menu;
 
    -------------------------------------------------
@@ -1394,7 +1395,7 @@ package body Code_Analysis_Module is
       Remove_Project_Coverage_Annotations (CB_Data.Kernel, Project_Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Hide_Project_Coverage_Information_From_Menu;
 
    ----------------------------------------------
@@ -1438,7 +1439,7 @@ package body Code_Analysis_Module is
       Add_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Show_File_Coverage_Information_From_Menu;
 
    ----------------------------------------------
@@ -1462,7 +1463,7 @@ package body Code_Analysis_Module is
       Remove_File_Coverage_Annotations (CB_Data.Kernel, File_Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Hide_File_Coverage_Information_From_Menu;
 
    ---------------------------
@@ -1539,7 +1540,7 @@ package body Code_Analysis_Module is
       Free_File (File_Node);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Remove_File_From_Menu;
 
    ------------------------------
@@ -1590,7 +1591,7 @@ package body Code_Analysis_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Remove_Project_From_Menu;
 
    --------------------
@@ -1761,7 +1762,7 @@ package body Code_Analysis_Module is
    begin
       Show_Analysis_Report (Kernel, Get_Or_Create);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Single_View_Menu;
 
    -------------------------------
@@ -1785,7 +1786,7 @@ package body Code_Analysis_Module is
             File     => No_File));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_All_Projects_Menu;
 
    ----------------------------------
@@ -1814,7 +1815,7 @@ package body Code_Analysis_Module is
             File     => No_File));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_Current_Project_Menu;
 
    -------------------------------
@@ -1845,7 +1846,7 @@ package body Code_Analysis_Module is
             File     => File));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_Current_File_Menu;
 
    ----------------------------
@@ -1862,7 +1863,7 @@ package body Code_Analysis_Module is
       Destroy_All_Analyzes (Kernel, False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Clear_Coverage_Menu;
 
    ---------------------------
@@ -1986,7 +1987,7 @@ package body Code_Analysis_Module is
 
       Dump_To_File (Analysis, File_Dump);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Dump_To_File_From_Shell;
 
    -------------------------------
@@ -2036,7 +2037,7 @@ package body Code_Analysis_Module is
          Root_Node.Child);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Load_From_File_From_Shell;
 
    ----------

@@ -71,12 +71,12 @@ with Language_Handlers;        use Language_Handlers;
 with Remote;                   use Remote;
 with Toolchains;               use Toolchains;
 with Toolchains.Known;         use Toolchains.Known;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with XML_Utils;                use XML_Utils;
 
 package body Toolchains_Editor is
 
-   Me : constant Debug_Handle := Traces.Create ("Toolchains_Editor");
+   Me : constant Trace_Handle := Create ("Toolchains_Editor");
 
    type Toolchains_Module_Record is new Module_ID_Record with null record;
    type Toolchains_Module is access all Toolchains_Module_Record'Class;
@@ -1245,7 +1245,7 @@ package body Toolchains_Editor is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Tool_Value_Changed;
 
    --------------
@@ -1340,7 +1340,7 @@ package body Toolchains_Editor is
       Update_Details (Editor);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Lang_Clicked;
 
    ----------------------------
@@ -1372,7 +1372,7 @@ package body Toolchains_Editor is
       Update_Details (Editor);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_No_Compiler_Clicked;
 
    --------------------------

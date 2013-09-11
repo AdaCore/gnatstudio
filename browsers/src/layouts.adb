@@ -21,10 +21,10 @@ with Gdk.Rectangle; use Gdk.Rectangle;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Line_Sweep;    use Line_Sweep;
 with Browsers.Canvas; use Browsers.Canvas;
---  with Traces;        use Traces;
+--  with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
 package body Layouts is
---     Me : constant Debug_Handle := Create ("Layout");
+--     Me : constant Trace_Handle := Create ("Layout");
 
    Max_Iterations : constant Natural := 21;
    --  Maximum number of iterations in Sort_Barycenter.

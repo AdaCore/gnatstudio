@@ -27,7 +27,7 @@ with Commands.Interactive;  use Commands, Commands.Interactive;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
-with Traces;                use Traces;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GPS.Intl;              use GPS.Intl;
 with Refactoring.Performers; use Refactoring.Performers;
 with Refactoring.Services;   use Refactoring.Services;
@@ -42,7 +42,7 @@ with Ada_Semantic_Tree;      use Ada_Semantic_Tree;
 with Xref;                   use Xref;
 
 package body Refactoring.Parameters is
-   Me : constant Debug_Handle := Create ("Refactor.Params");
+   Me : constant Trace_Handle := Create ("Refactor.Params");
 
    Location_Cst               : aliased constant String := "location";
 

@@ -22,7 +22,6 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Tree_Selection; use Gtk.Tree_Selection;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Widget; use Gtk.Widget;
-with Traces; use Traces;
 
 package body List_Select_Pkg.Callbacks is
 
@@ -49,9 +48,6 @@ package body List_Select_Pkg.Callbacks is
       Get_Selected (S, Model, Iter);
       Set_Text
         (List_Select.The_Entry, Trim (Get_String (Model, Iter, 0), Left));
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end On_Clist_Select_Row;
 
    ---------------------------
@@ -69,10 +65,6 @@ package body List_Select_Pkg.Callbacks is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-         return False;
    end On_Clist_Button_Press;
 
    ---------------------------
@@ -83,9 +75,6 @@ package body List_Select_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end On_The_Entry_Activate;
 
    -------------------
@@ -96,9 +85,6 @@ package body List_Select_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end On_Ok_Clicked;
 
    -----------------------
@@ -112,9 +98,6 @@ package body List_Select_Pkg.Callbacks is
    begin
       Set_Text (List_Select.The_Entry, "");
       Gtk.Main.Main_Quit;
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end On_Cancel_Clicked;
 
    ---------------------
@@ -133,9 +116,6 @@ package body List_Select_Pkg.Callbacks is
       Dummy := Message_Dialog
         (List_Select.Help_Text.all,
          Buttons => Button_OK);
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
    end On_Help_Clicked;
 
    ---------------------
@@ -151,10 +131,6 @@ package body List_Select_Pkg.Callbacks is
       --  The widget must not be destroyed here since it will still be accessed
       --  by the subprogram that created it.
       return True;
-   exception
-      when E : others =>
-         Trace (Traces.Exception_Handle, E);
-         return False;
    end On_Delete_Event;
 
 end List_Select_Pkg.Callbacks;

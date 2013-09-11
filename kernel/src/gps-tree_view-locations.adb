@@ -28,7 +28,6 @@ with Gtk.Tooltip;              use Gtk.Tooltip;
 with Gtk.Widget;               use Gtk.Widget;
 
 with GPS.Location_View.Listener; use GPS.Location_View.Listener;
-with Traces;                     use Traces;
 
 package body GPS.Tree_View.Locations is
 
@@ -275,12 +274,6 @@ package body GPS.Tree_View.Locations is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-
-         return False;
    end On_Button_Press;
 
    -----------------------
@@ -347,12 +340,6 @@ package body GPS.Tree_View.Locations is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-
-         return False;
    end On_Button_Release;
 
    -----------------------------------

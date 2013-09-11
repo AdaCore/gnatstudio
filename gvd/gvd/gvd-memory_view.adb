@@ -70,7 +70,6 @@ with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
 with GVD.Scripts;              use GVD.Scripts;
 with GVD.Views;                use GVD.Views;
-with Traces;                   use Traces;
 
 with Gtk.Text_Tag;          use Gtk.Text_Tag;
 with Gdk.Window;            use Gdk.Window;
@@ -1544,10 +1543,6 @@ package body GVD.Memory_View is
 
          List := List.Next;
       end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Examine_Memory;
 
    --------------------
@@ -1631,8 +1626,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Display_Memory (View, Get_Text (View.Editor.Address_Entry));
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Address_Entry_Activate;
 
    -----------------------------
@@ -1645,9 +1638,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Display_Memory (View, Get_Text (View.Editor.Address_Entry));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Address_View_Clicked;
 
    ---------------------------
@@ -1660,9 +1650,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Update_Display (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Size_Entry_Changed;
 
    ---------------------------
@@ -1675,9 +1662,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Update_Display (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Data_Entry_Changed;
 
    ---------------------------
@@ -1690,9 +1674,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Update_Display (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Show_Ascii_Toggled;
 
    ---------------------
@@ -1705,9 +1686,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Page_Up (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Pgup_Clicked;
 
    ---------------------
@@ -1720,9 +1698,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Page_Down (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Pgdn_Clicked;
 
    -----------------------------
@@ -1788,10 +1763,6 @@ package body GVD.Memory_View is
       end case;
 
       return False;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end On_View_Key_Press_Event;
 
    ----------------------------------
@@ -1821,10 +1792,6 @@ package body GVD.Memory_View is
       end if;
 
       return False;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-      return False;
    end On_View_Button_Release_Event;
 
    -----------------------
@@ -1835,9 +1802,6 @@ package body GVD.Memory_View is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
       Apply_Changes (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Submit_Clicked;
 
    ----------------------
@@ -1856,9 +1820,6 @@ package body GVD.Memory_View is
       end if;
 
       Update_Display (View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Reset_Clicked;
 
    -----------------------
@@ -1873,10 +1834,6 @@ package body GVD.Memory_View is
       Update_Display (View);
 
       return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end On_Button_Release;
 
 end GVD.Memory_View;

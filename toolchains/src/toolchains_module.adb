@@ -21,7 +21,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
@@ -36,6 +36,7 @@ with Toolchains_Dialog;         use Toolchains_Dialog;
 with Builder_Facility_Module;
 
 package body Toolchains_Module is
+   Me : constant Trace_Handle := Create ("TOOLCHAINS");
 
    type Toolchains_Property is new Property_Record with record
       Active           : Boolean;
@@ -108,7 +109,7 @@ package body Toolchains_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Save;
 
    ----------

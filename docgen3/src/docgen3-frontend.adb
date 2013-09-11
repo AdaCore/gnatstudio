@@ -30,12 +30,12 @@ with Language;                 use Language;
 with Language.Ada;
 with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 with Xref;
 
 package body Docgen3.Frontend is
-   Me : constant Debug_Handle := Create ("Docgen3.1-Frontend");
+   Me : constant Trace_Handle := Create ("Docgen3.1-Frontend");
 
    ----------------------
    -- Local_Subrograms --
@@ -660,7 +660,7 @@ package body Docgen3.Frontend is
                return False; --  Continue
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 
@@ -831,7 +831,7 @@ package body Docgen3.Frontend is
                return False;
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 
@@ -1138,7 +1138,7 @@ package body Docgen3.Frontend is
                return False;
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 
@@ -1269,7 +1269,7 @@ package body Docgen3.Frontend is
                return False;
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 
@@ -1404,7 +1404,7 @@ package body Docgen3.Frontend is
                return False;
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 
@@ -2415,7 +2415,7 @@ package body Docgen3.Frontend is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return No_Tree;
    end Build_Tree;
 

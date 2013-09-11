@@ -54,7 +54,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Language;                  use Language;
-with Traces;
 
 package body GPS.Kernel.Preferences is
    Me : constant Trace_Handle := Create ("GPS_KERNEL");
@@ -222,7 +221,7 @@ package body GPS.Kernel.Preferences is
             when E : Invalid_Parameter =>
                Set_Error_Msg (Data, Exception_Message (E));
             when E : others =>
-               Trace (Traces.Exception_Handle, E);
+               Trace (Me, E);
          end;
 
       elsif Command = "create" then

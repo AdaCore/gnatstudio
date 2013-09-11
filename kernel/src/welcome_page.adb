@@ -29,12 +29,13 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body Welcome_Page is
+   Me : constant Trace_Handle := Create ("WELCOME");
 
    type Pic_Data is record
       Image     : Gtk_Image;
@@ -93,7 +94,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Overview;
 
@@ -111,8 +112,8 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
-      return False;
+         Trace (Me, E);
+         return False;
    end On_Tutorial;
 
    -----------
@@ -129,7 +130,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_UG;
 
@@ -163,7 +164,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Enter;
 
@@ -180,7 +181,7 @@ package body Welcome_Page is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Leave;
 

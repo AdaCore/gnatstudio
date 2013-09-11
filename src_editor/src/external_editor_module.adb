@@ -24,6 +24,9 @@ pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
@@ -41,13 +44,10 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains_Old;            use Toolchains_Old;
-with Traces;                    use Traces;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body External_Editor_Module is
 
-   Me : constant Debug_Handle := Create ("External_Editor_Module");
+   Me : constant Trace_Handle := Create ("External_Editor_Module");
 
    Timeout : constant Guint := 500;
    --  Timeout in millisecond to check the external editor processes.
@@ -740,7 +740,7 @@ package body External_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Get_Kernel (Context.Context));
          return Commands.Failure;
    end Execute;

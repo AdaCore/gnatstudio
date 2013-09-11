@@ -41,7 +41,7 @@ with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Intl;                         use GPS.Intl;
 with Projects;                         use Projects;
 with String_List_Utils;                use String_List_Utils;
-with Traces;                           use Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -54,6 +54,7 @@ with UTF8_Utils;                       use UTF8_Utils;
 with VCS.Branching_Commands; use VCS.Branching_Commands;
 
 package body Log_Utils is
+   Me : constant Trace_Handle := Create ("LOG_UTILS");
 
    function Check_Handler
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -124,7 +125,7 @@ package body Log_Utils is
          Load_Mapper (Mapper, Mapping);
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             Button := Message_Dialog
               (Msg     =>
                  (-"The file") & ASCII.LF & Display_Full_Name (Mapping)

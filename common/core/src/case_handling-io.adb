@@ -34,13 +34,13 @@ with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 
-with Traces;         use Traces;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with XML_Utils;   use XML_Utils;
 with XML_Parsers;
 
 package body Case_Handling.IO is
 
-   Me : constant Debug_Handle := Create ("Case_Handling.IO");
+   Me : constant Trace_Handle := Create ("Case_Handling.IO");
 
    ---------------------
    -- Load_Exceptions --
@@ -78,7 +78,7 @@ package body Case_Handling.IO is
                elsif Child.Tag.all = "substring" then
                   Add_Substring_Exception (C, Child.Value.all, Read_Only);
                else
-                  Trace (Exception_Handle,
+                  Trace (Me,
                          "Unknown casing exceptions node " & Child.Tag.all);
                end if;
                Child := Child.Next;
@@ -89,7 +89,7 @@ package body Case_Handling.IO is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Load_Exceptions;
 
    ---------------------
@@ -168,7 +168,7 @@ package body Case_Handling.IO is
       Free (File);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save_Exceptions;
 
 end Case_Handling.IO;

@@ -70,7 +70,6 @@ with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
 with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
-with Traces;
 
 package body Commands.Custom is
 
@@ -1449,7 +1448,7 @@ package body Commands.Custom is
 
       exception
          when E : others =>
-            Trace (Traces.Exception_Handle, E);
+            Trace (Me, E);
             Insert (Command.Kernel,
                     -("An unexpected error occurred while executing the custom"
                       & " command. See the log file for more information."),

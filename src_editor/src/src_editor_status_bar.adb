@@ -52,11 +52,10 @@ with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module; use Src_Editor_Module;
 with String_Utils; use String_Utils;
-with Traces;
 
 package body Src_Editor_Status_Bar is
 
---     Me : constant Trace_Handle := Create ("Src_Editor_Status_Bar");
+   Me : constant Trace_Handle := Create ("Src_Editor_Status_Bar");
 
    Show_Modified_Unmodified_In_Status_Bar : constant Boolean := False;
    --  Whether to show the modified/unmodified/saved status in the status bar.
@@ -201,7 +200,7 @@ package body Src_Editor_Status_Bar is
       Disconnect (Bar.Buffer, Bar.Buffer_Info_Handler);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Bar_Destroy;
 
    ----------------------------
@@ -368,7 +367,7 @@ package body Src_Editor_Status_Bar is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Read_Only_Pressed;
 
@@ -449,7 +448,7 @@ package body Src_Editor_Status_Bar is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Cursor_Position_Changed_Handler;
 
    -------------

@@ -25,6 +25,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -44,7 +45,6 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with Toolchains_Old;             use Toolchains_Old;
-with Traces;                     use Traces;
 with UTF8_Utils;                 use UTF8_Utils;
 
 with Gexpect.Db;                 use Gexpect, Gexpect.Db;
@@ -55,7 +55,7 @@ package body GPS.Kernel.Remote is
    -- Module --
    ------------
 
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Remote");
+   Me : constant Trace_Handle := Create ("GPS.Kernel.Remote");
 
    type Remote_Module_Record is new Module_ID_Record with record
       Kernel            : Kernel_Handle;
@@ -472,7 +472,7 @@ package body GPS.Kernel.Remote is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Project_Changing;
 
    -------------------
@@ -488,7 +488,7 @@ package body GPS.Kernel.Remote is
       return False;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end Reload_Prj_Cb;
 
@@ -787,7 +787,7 @@ package body GPS.Kernel.Remote is
          end if;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end;
    end Synchronize;
 

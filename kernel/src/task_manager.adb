@@ -16,11 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Glib.Main;        use Glib.Main;
-with Traces;           use Traces;
-
---  with Task_Manager.GUI; use Task_Manager.GUI;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Task_Manager is
+   Me : constant Trace_Handle := Create ("TASK");
 
    Timeout : constant := 100;
 
@@ -88,7 +87,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Failure;
    end Safe_Execute;
 
@@ -129,7 +128,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Active_Incremental;
 
@@ -157,7 +156,7 @@ package body Task_Manager is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Passive_Incremental;
 

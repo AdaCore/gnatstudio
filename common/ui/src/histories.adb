@@ -37,12 +37,12 @@ with Gtk.Widget;          use Gtk.Widget;
 
 with GUI_Utils;           use GUI_Utils;
 with XML_Utils;           use XML_Utils;
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with XML_Parsers;
 
 package body Histories is
 
-   Me : constant Debug_Handle := Create ("Histories");
+   Me : constant Trace_Handle := Create ("Histories");
 
    use History_Hash.String_Hash_Table;
 
@@ -242,7 +242,7 @@ package body Histories is
             exception
                when E : others =>
                   Value := null;
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
             end;
 
             if Value /= null then

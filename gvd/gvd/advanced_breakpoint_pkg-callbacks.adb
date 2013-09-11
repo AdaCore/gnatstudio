@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Traces;   use Traces;
 with Gtk.Main; use Gtk.Main;
 
 package body Advanced_Breakpoint_Pkg.Callbacks is
@@ -30,9 +29,6 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       null;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Start_Record_Clicked;
 
    ----------------------------
@@ -45,9 +41,6 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       null;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Stop_Record_Clicked;
 
    ----------------------
@@ -63,9 +56,6 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       Editor.Response_Action := Gtk_Response_Apply;
       Hide (Object);
       Main_Quit;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Apply_Clicked;
 
    ----------------------
@@ -81,9 +71,6 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       Editor.Response_Action := Gtk_Response_Close;
       Hide (Object);
       Main_Quit;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Close_Clicked;
 
 end Advanced_Breakpoint_Pkg.Callbacks;

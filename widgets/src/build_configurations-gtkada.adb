@@ -48,7 +48,6 @@ with Gtk.Widget;               use Gtk.Widget;
 
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
-with Traces;                   use Traces;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
@@ -507,10 +506,6 @@ package body Build_Configurations.Gtkada is
          Pack_Start (Hbox, UI.Icon_Entry, False, False, 0);
          Show_All (UI.Icon_Entry);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Icon_Selected;
 
    -------------------------

@@ -34,7 +34,6 @@ with Toolchains_Old;            use Toolchains_Old;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with Traces;                    use Traces;
 
 package body Toolchains_Dialog is
 
@@ -81,9 +80,6 @@ package body Toolchains_Dialog is
       D.Active := Get_Active (Gtk_Check_Button (Toggle));
       Set_Sensitive (D.Frame, D.Active);
       On_Changed (Toggle, D);
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Activate_Toggled;
 
    -------------------
@@ -96,10 +92,6 @@ package body Toolchains_Dialog is
    is
    begin
       D.Xrefs_Subdir := Get_Active (Gtk_Check_Button (Toggle));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Xrefs_Toggled;
 
    ----------------
@@ -183,10 +175,6 @@ package body Toolchains_Dialog is
             end if;
          end if;
       end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Browse;
 
    -------------

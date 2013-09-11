@@ -44,7 +44,7 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
@@ -64,7 +64,7 @@ package body CodePeer.Module is
    use type GPS.Editors.Editor_Mark'Class;
    use type GPS.Editors.Editor_Buffer'Class;
 
-   Me : constant Debug_Handle := Create ("CodePeer");
+   Me : constant Trace_Handle := Create ("CodePeer");
 
    type Module_Context is record
       Module  : CodePeer_Module_Id;

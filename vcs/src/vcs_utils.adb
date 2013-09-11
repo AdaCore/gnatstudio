@@ -27,9 +27,10 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 package body VCS_Utils is
+   Me : constant Trace_Handle := Create ("VCS_UTILS");
 
    use type GNAT.Strings.String_Access;
 
@@ -214,7 +215,7 @@ package body VCS_Utils is
             end if;
 
          exception
-            when E : others => Trace (Exception_Handle, E);
+            when E : others => Trace (Me, E);
          end;
 
          Iter := File_Status_List.Next (Iter);

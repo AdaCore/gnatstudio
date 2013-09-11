@@ -57,7 +57,7 @@ with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Enums;         use Pango.Enums;
 
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with Histories;           use Histories;
 with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
@@ -66,7 +66,7 @@ with GNATCOLL.Iconv;      use GNATCOLL.Iconv;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 
 package body Interactive_Consoles is
-   Me : constant Debug_Handle := Create ("Console");
+   Me : constant Trace_Handle := Create ("Console");
 
    package Console_Idle is new Glib.Main.Generic_Sources (Interactive_Console);
 
@@ -761,7 +761,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_Handler;
 
@@ -817,7 +817,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Release_Handler;
 
@@ -851,7 +851,7 @@ package body Interactive_Consoles is
          Set_Policy (Console.Scrolled, Policy_Automatic, Policy_Automatic);
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Size_Allocate_Handler;
 
    --------------------------------
@@ -905,7 +905,7 @@ package body Interactive_Consoles is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Selection_Received_Handler;
 
    --------------------------
@@ -938,7 +938,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Delete_Event_Handler;
 
@@ -1033,7 +1033,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return "";
    end Default_Command_Handler;
 
@@ -1221,7 +1221,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_Handler;
 
@@ -1365,7 +1365,7 @@ package body Interactive_Consoles is
       C.Internal_Insert := False;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Mark_Set_Handler;
 
    ----------------
@@ -1779,7 +1779,7 @@ package body Interactive_Consoles is
       end loop;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Insert_And_Execute;
 
    ---------------------

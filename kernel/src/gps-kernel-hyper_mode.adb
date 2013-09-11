@@ -23,8 +23,7 @@ with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
 with Gtk.Handlers; use Gtk.Handlers;
 
-with Traces; use Traces;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.Kernel.Preferences;
 
@@ -33,7 +32,7 @@ package body GPS.Kernel.Hyper_Mode is
    Watch_Timeout : constant := 100;
    --  The interval at which to watch for hyper mode, in milliseconds
 
-   Me : constant Debug_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
 
    type Hyper_Mode_Data_Record is record
       Kernel                   : Kernel_Handle;
@@ -158,7 +157,7 @@ package body GPS.Kernel.Hyper_Mode is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Watch_Timeout_Cb;
 
@@ -202,7 +201,7 @@ package body GPS.Kernel.Hyper_Mode is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Enter_Notify_Event_Cb;
 
@@ -229,7 +228,7 @@ package body GPS.Kernel.Hyper_Mode is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Leave_Notify_Event_Cb;
 
@@ -341,7 +340,7 @@ package body GPS.Kernel.Hyper_Mode is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_Event_Cb;
 
@@ -367,7 +366,7 @@ package body GPS.Kernel.Hyper_Mode is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Release_Event_Cb;
 
@@ -404,7 +403,7 @@ package body GPS.Kernel.Hyper_Mode is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_Event_Cb;
 
@@ -431,7 +430,7 @@ package body GPS.Kernel.Hyper_Mode is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Release_Event_Cb;
 
@@ -457,7 +456,7 @@ package body GPS.Kernel.Hyper_Mode is
       Unchecked_Free (X);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Destroy;
 
 end GPS.Kernel.Hyper_Mode;

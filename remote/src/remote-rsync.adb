@@ -47,7 +47,7 @@ with Password_Manager;      use Password_Manager;
 with Remote.Db;             use Remote.Db;
 with Remote_Module;         use Remote_Module;
 with String_Utils;          use String_Utils;
-with Traces;                use Traces;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.VFS_Types;    use GNATCOLL.VFS_Types;
 
@@ -57,7 +57,7 @@ with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 
 package body Remote.Rsync is
 
-   Me : constant Debug_Handle := Create ("remote_sync_module");
+   Me : constant Trace_Handle := Create ("remote_sync_module");
 
    type Return_Data is record
       Status : Integer;
@@ -792,7 +792,7 @@ package body Remote.Rsync is
       Trace (Me, "rsync status is" & Integer'Image (Status));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Rsync_Terminated;
 
 end Remote.Rsync;

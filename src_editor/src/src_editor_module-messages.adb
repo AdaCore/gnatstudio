@@ -22,7 +22,7 @@ with GPS.Editors; use GPS.Editors;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
-with Traces;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 
 with Src_Editor_Box; use Src_Editor_Box;
 
@@ -30,10 +30,10 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Messages is
+   Me : constant Trace_Handle := Create ("SRC_MSG");
 
    use Style_Maps;
    use Style_Sets;
-   use Traces;
 
    type On_File_Edited_Hook_Record
      (Manager : not null access Highlighting_Manager'Class) is
@@ -92,7 +92,7 @@ package body Src_Editor_Module.Messages is
         (GPS.Kernel.Standard_Hooks.File_Hooks_Args (Data.all).File);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute;
 
    -----------------

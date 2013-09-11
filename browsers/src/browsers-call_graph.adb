@@ -73,12 +73,12 @@ with GPS.Kernel;                    use GPS.Kernel;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Std_Dialogs;                   use Std_Dialogs;
-with Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Generic_List;
 with Xref;                          use Xref;
 
 package body Browsers.Call_Graph is
+   Me : constant Trace_Handle := Create ("CALL_GRAPH");
    use type GNATCOLL.Xref.Visible_Column;
 
    References_Command_Class_Name : constant String := "ReferencesCommand";
@@ -982,7 +982,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
    end Examine_Ancestors_Call_Graph;
 
@@ -1278,7 +1278,7 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
-               Trace (Traces.Exception_Handle, E);
+               Trace (Me, E);
                Destroy (Data.Iter);
          end;
       else
@@ -1287,7 +1287,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Find_All_References_Internal;
 
    ----------------------------------
@@ -1341,7 +1341,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Contextual_Factory;
 
    ----------------------------
@@ -1386,7 +1386,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Find_All_References;
 
    -----------------------------
@@ -1597,7 +1597,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Call_Graph_Command_Handler;
 
    --------------------------------
@@ -1718,7 +1718,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
@@ -1817,7 +1817,7 @@ package body Browsers.Call_Graph is
                        -"Internal error when creating the call graph for "
                        & Entity_Name_Information (Context.Context),
                        Mode => Error);
-               Trace (Traces.Exception_Handle, E);
+               Trace (Me, E);
                Pop_State (Get_Kernel (Context.Context));
                return Commands.Failure;
          end;
@@ -1833,7 +1833,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
@@ -1867,7 +1867,7 @@ package body Browsers.Call_Graph is
                  -"Internal error when creating the call graph for "
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;

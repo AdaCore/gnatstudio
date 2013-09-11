@@ -18,17 +18,15 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 
-with Traces;                    use Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-
 package body GPS.Kernel.Modules is
 
-   Me : constant Debug_Handle :=
+   Me : constant Trace_Handle :=
           Create ("GPS.Kernel.Modules", GNATCOLL.Traces.Off);
 
    procedure Free (Module : in out Module_ID);

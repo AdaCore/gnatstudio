@@ -18,6 +18,7 @@
 with Ada.Calendar;          use Ada.Calendar;
 
 with GNAT.Strings;                 use GNAT.Strings;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
@@ -26,11 +27,11 @@ with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
-with Traces;                       use Traces;
 with Time_Utils;                   use Time_Utils;
 with UTF8_Utils;                   use UTF8_Utils;
 
 package body Ada_Semantic_Tree_Module is
+   Me : constant Trace_Handle := Create ("TREE");
 
    use GPS.Kernel;
 
@@ -139,7 +140,7 @@ package body Ada_Semantic_Tree_Module is
         (Get_Construct_Database (Kernel), Std_Entities_Files);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Register_Module;
 
 end Ada_Semantic_Tree_Module;

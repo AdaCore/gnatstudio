@@ -25,9 +25,8 @@ with GPS.Kernel;      use GPS.Kernel;
 with GPS.Kernel.Messages;
 with GPS.Intl;        use GPS.Intl;
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
-with Traces;          use Traces;
 with Code_Analysis;   use Code_Analysis;
 
 package Coverage_GUI is
@@ -53,7 +52,7 @@ package Coverage_GUI is
      (GPS.Kernel.Messages.Editor_Side => True,
       GPS.Kernel.Messages.Locations   => True);
 
-   Binary_Coverage_Trace : constant Debug_Handle :=
+   Binary_Coverage_Trace : constant Trace_Handle :=
                           Create ("BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
    Binary_Coverage_Mode  : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode

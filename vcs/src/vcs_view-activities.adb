@@ -40,7 +40,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
@@ -49,6 +49,7 @@ with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with Gtk.Handlers;
 
 package body VCS_View.Activities is
+   Me : constant Trace_Handle := Create ("ACTIVITIES");
 
    ---------------------
    -- Local constants --
@@ -169,9 +170,6 @@ package body VCS_View.Activities is
       Save_Activities (K);
 
       Refresh (Get_Explorer (K, False, False));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Edited_Callback;
 
    ---------------
@@ -830,7 +828,7 @@ package body VCS_View.Activities is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Context_Func;
 
    -------------
@@ -882,7 +880,7 @@ package body VCS_View.Activities is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute;
 
    ----------------

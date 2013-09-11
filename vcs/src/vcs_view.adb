@@ -37,7 +37,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
-with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
 
@@ -201,9 +200,6 @@ package body VCS_View is
    begin
       --  Reset the context
       Set_Current_Context (Explorer, No_Context);
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end Selection_Changed;
 
    ------------------
@@ -241,11 +237,6 @@ package body VCS_View is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end Button_Press;
 
    ---------------------
@@ -565,9 +556,6 @@ package body VCS_View is
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
    begin
       Save_Cache (Explorer.Kernel, Get_Status_Cache);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
 
    -----------------
@@ -593,11 +581,6 @@ package body VCS_View is
    begin
       Do_Delete (Explorer.all);
       return True;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end On_Delete;
 
    -------------------------
@@ -849,8 +832,6 @@ package body VCS_View is
       else
          Expand_All (Get_Explorer (Kernel));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Expand_All;
 
    --------------------------
@@ -869,8 +850,6 @@ package body VCS_View is
       else
          Collapse_All (Get_Explorer (Kernel));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Collapse_All;
 
    --------------------------------------
@@ -889,8 +868,6 @@ package body VCS_View is
       else
          Select_Files_Same_Status (Get_Explorer (Kernel));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Select_Files_Same_Status;
 
    -----------------

@@ -43,7 +43,6 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Remote;                  use Remote;
 with String_Utils;            use String_Utils;
-with Traces;
 with Commands;                use Commands;
 
 package body Expect_Interface is
@@ -1179,7 +1178,7 @@ package body Expect_Interface is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Custom_Spawn_Handler;
 
    -----------------------

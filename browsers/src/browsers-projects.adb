@@ -29,6 +29,7 @@ with Pango.Layout;
 
 with Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -39,14 +40,13 @@ with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Prj;
-with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Vsearch;                use Vsearch;
 
 package body Browsers.Projects is
 
-   Me : constant Debug_Handle := Create ("Browsers.Projects");
+   Me : constant Trace_Handle := Create ("Browsers.Projects");
 
    type Project_Browser_Module is new Module_ID_Record with null record;
 
@@ -385,7 +385,7 @@ package body Browsers.Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel);
    end Examine_Project_Hierarchy;
 
@@ -432,7 +432,7 @@ package body Browsers.Projects is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel);
    end Examine_Ancestor_Project_Hierarchy;
 

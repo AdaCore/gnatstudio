@@ -20,7 +20,6 @@ with Ada.Unchecked_Deallocation;
 with Commands;          use Commands;
 with Projects;          use Projects;
 with Task_Manager;      use Task_Manager;
-with Traces;            use Traces;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
@@ -237,9 +236,6 @@ package body GPS.Kernel.Commands is
             Queue_Name,
             Block_Exit => False);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Do_On_Each_File;
 
    ----------

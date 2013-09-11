@@ -24,14 +24,14 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with XML_Utils;                  use XML_Utils;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Kernel.Properties is
 
    use Properties_Hash.String_Hash_Table;
 
-   Me : constant Debug_Handle := Create ("Properties");
+   Me : constant Trace_Handle := Create ("Properties");
 
    function Get_Properties_Filename
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
@@ -412,7 +412,7 @@ package body GPS.Kernel.Properties is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Restore_Persistent_Properties;
 
    ----------------------------

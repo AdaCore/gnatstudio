@@ -44,14 +44,14 @@ with GPS.Kernel;                use GPS.Kernel;
 with Language_Handlers;         use Language_Handlers;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with Histories;                 use Histories;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Switches_Editors is
 
-   Me : constant Debug_Handle := Create ("Switches_Editors");
+   Me : constant Trace_Handle := Create ("Switches_Editors");
 
    -----------------------
    -- Local subprograms --
@@ -276,7 +276,7 @@ package body Switches_Editors is
       end loop;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Revert_To_Default;
 
    ----------------------------
@@ -708,7 +708,7 @@ package body Switches_Editors is
       end loop;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Fill_Editor;
 
    -------------

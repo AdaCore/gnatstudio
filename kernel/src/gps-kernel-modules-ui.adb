@@ -23,7 +23,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
@@ -67,14 +67,13 @@ with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with File_Utils;
 with System;                    use System;
-with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
 
-   Me : constant Debug_Handle :=
+   Me : constant Trace_Handle :=
           Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
 
    type Contextual_Menu_User_Data is record
@@ -655,7 +654,7 @@ package body GPS.Kernel.Modules.UI is
    exception
       when E : others =>
          Pop_State (Action.Kernel);
-         Trace (Exception_Handle, "Unexpected exception while executing "
+         Trace (Me, "Unexpected exception while executing "
                 & Action.Name.all & " " & Exception_Information (E));
    end Contextual_Action;
 
@@ -1034,7 +1033,7 @@ package body GPS.Kernel.Modules.UI is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Destroy (Menu);
          Menu := null;
    end Create_Contextual_Menu;
@@ -1091,7 +1090,7 @@ package body GPS.Kernel.Modules.UI is
       return Menu;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return null;
    end Create_Contextual_Menu;
 
@@ -1279,7 +1278,7 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute_Command;
 
    -------------
@@ -1523,7 +1522,7 @@ package body GPS.Kernel.Modules.UI is
 
       Set_Sensitive (Gtk_Widget (Item), Filter_Matches (Command.Filter, Ctxt));
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Map_Menu;
 
    -----------------------
@@ -1565,7 +1564,7 @@ package body GPS.Kernel.Modules.UI is
       Show_All (Data.Menu);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Menu_Button_Press;
 
    ---------------------------

@@ -17,10 +17,9 @@
 
 with Ada.Unchecked_Conversion;
 with Debugger;             use Debugger;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with GPS.Main_Window;      use GPS.Main_Window;
 with Process_Proxies;      use Process_Proxies;
-with Traces;               use Traces;
 
 package body GVD.Trace is
 
@@ -61,7 +60,7 @@ package body GVD.Trace is
 
    procedure Output_Line (Str : String) is
    begin
-      Traces.Trace (Me (User), Str);
+      GNATCOLL.Traces.Trace (Me (User), Str);
    end Output_Line;
 
    -----------------
@@ -98,13 +97,13 @@ package body GVD.Trace is
          case Str (J) is
             when ASCII.LF =>
                if not Had_Output then
-                  Traces.Trace (Me (Mode), Prefix
+                  GNATCOLL.Traces.Trace (Me (Mode), Prefix
                          & Direction_String (Kind)
                          & Output (Output'First .. Index - 1)
                          & '"');
                   Had_Output := True;
                else
-                  Traces.Trace (Me (Mode), Prefix & "..."
+                  GNATCOLL.Traces.Trace (Me (Mode), Prefix & "..."
                          & Direction_String (Kind)
                          & Output (Output'First .. Index - 1)
                          & '"');
@@ -126,12 +125,12 @@ package body GVD.Trace is
 
       if Index > Output'First then
          if not Had_Output then
-            Traces.Trace (Me (Mode), Prefix
+            GNATCOLL.Traces.Trace (Me (Mode), Prefix
                    & Direction_String (Kind)
                    & Output (Output'First .. Index - 1)
                    & '"');
          else
-            Traces.Trace (Me (Mode), Prefix & "..."
+            GNATCOLL.Traces.Trace (Me (Mode), Prefix & "..."
                    & Direction_String (Kind)
                    & Output (Output'First .. Index - 1)
                    & '"');

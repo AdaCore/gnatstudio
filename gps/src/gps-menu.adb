@@ -30,6 +30,7 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
@@ -43,9 +44,9 @@ with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with Projects;               use Projects;
-with Traces;                 use Traces;
 
 package body GPS.Menu is
+   Me : constant Trace_Handle := Create ("MENU");
 
    Project_History_Key : constant Histories.History_Key := "project_files";
    --  Key to use in the kernel histories to store the most recently opened
@@ -98,9 +99,6 @@ package body GPS.Menu is
       pragma Unreferenced (Widget);
    begin
       GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Exit;
 
    -------------------
@@ -130,7 +128,7 @@ package body GPS.Menu is
            ("Cannot change to directory: " &
             Dir.Display_Full_Name,
             Mode => Error);
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Change_Dir;
 
    -----------------
@@ -147,7 +145,7 @@ package body GPS.Menu is
       Ignore := Save_MDI_Children (Kernel, Force => False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Save_All;
 
    ---------------------
@@ -161,7 +159,7 @@ package body GPS.Menu is
    begin
       Save_Desktop (Kernel);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Save_Desktop;
 
    -------------
@@ -200,7 +198,7 @@ package body GPS.Menu is
       Load_Project (Callback.Kernel, Create (+Item));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Activate;
 
    ------------------------
@@ -222,7 +220,7 @@ package body GPS.Menu is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Project_Changed;
 
    --------------------
@@ -290,7 +288,7 @@ package body GPS.Menu is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Open_Project;
 
    ----------------------------
@@ -320,7 +318,7 @@ package body GPS.Menu is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Open_Remote_Project;
 
    --------------------
@@ -335,7 +333,7 @@ package body GPS.Menu is
    begin
       Edit_Preferences (Kernel);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Preferences;
 
    ---------------------------

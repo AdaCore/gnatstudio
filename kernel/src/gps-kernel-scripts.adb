@@ -66,7 +66,6 @@ with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
 with Projects;                use Projects;
 with String_List_Utils;
-with Traces;
 with Xref;                    use Xref;
 
 package body GPS.Kernel.Scripts is
@@ -1453,7 +1452,7 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
 
-      if Active (Traces.Testsuite_Handle) then
+      if Active (Testsuite_Handle) then
          Register_Command
            (Kernel, "contextual_menu",
             Class        => Get_Context_Class (Kernel),

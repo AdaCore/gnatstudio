@@ -26,6 +26,7 @@ with GNAT.Strings;
 
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
@@ -51,7 +52,6 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
-with Traces;                     use Traces;
 with Generic_List;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
@@ -59,8 +59,8 @@ with Config;
 
 package body Help_Module is
 
-   Me        : constant Debug_Handle := Create ("GPS.Kernel.Help");
-   Shell_Doc : constant Debug_Handle := Create ("Shell_Doc");
+   Me        : constant Trace_Handle := Create ("GPS.Kernel.Help");
+   Shell_Doc : constant Trace_Handle := Create ("Shell_Doc");
 
    Template_Index   : constant Filesystem_String := "help_index.html";
    Index_File       : constant Filesystem_String := "gps_index.xml";
@@ -738,7 +738,7 @@ package body Help_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_HTML;
 
    ----------------
@@ -969,7 +969,7 @@ package body Help_Module is
       Free (Contents);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_About;
 
    ----------------

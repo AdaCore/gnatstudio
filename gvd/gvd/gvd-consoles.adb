@@ -56,12 +56,12 @@ with Histories;              use Histories;
 with Interactive_Consoles;   use Interactive_Consoles;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
-with Traces;                 use Traces;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 
 package body GVD.Consoles is
+   Me : constant Trace_Handle := Create ("CONSOLES");
 
-   ANSI_Support : constant Debug_Handle :=
+   ANSI_Support : constant Trace_Handle :=
                    Create ("GVD.ANSI_Support", GNATCOLL.Traces.Off);
 
    Regexp_Any : constant Pattern_Matcher :=
@@ -315,8 +315,6 @@ package body GVD.Consoles is
          String_History.Wind
            (Get_Process (C).Command_History, String_History.Forward);
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Grab_Focus;
 
    ----------------------
@@ -482,7 +480,7 @@ package body GVD.Consoles is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Allocate_TTY;
 
    ---------------

@@ -96,7 +96,6 @@ with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
-with Traces;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
@@ -572,7 +571,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Execute;
 
    -------------
@@ -605,7 +604,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Execute;
 
    ----------------------
@@ -946,7 +945,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Edition_Timeout;
 
@@ -1247,7 +1246,7 @@ package body Src_Editor_Buffer is
       return False;
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Cursor_Stop_Hook;
 
@@ -1605,7 +1604,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Changed_Handler;
 
    ----------------------
@@ -1670,7 +1669,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Mark_Set_Handler;
 
    --------------------
@@ -1689,7 +1688,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Insert_Text_Cb;
 
    -----------------------
@@ -1802,7 +1801,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end After_Insert_Text;
 
    ------------------------
@@ -2039,7 +2038,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Before_Insert_Text;
 
    ---------------------
@@ -2119,7 +2118,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end After_Delete_Range;
 
    -------------------------
@@ -2435,7 +2434,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Before_Delete_Range;
 
    -----------------------------
@@ -3877,7 +3876,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Success := False;
    end Load_File;
 
@@ -4164,7 +4163,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
 
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor.
@@ -4242,7 +4241,7 @@ package body Src_Editor_Buffer is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Save_To_File;
 
    ------------------
@@ -6555,7 +6554,7 @@ package body Src_Editor_Buffer is
             g_free (C_Str);
          end if;
 
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Do_Indentation;
 
@@ -6968,7 +6967,7 @@ package body Src_Editor_Buffer is
 
       exception
          when E : others =>
-            Trace (Traces.Exception_Handle, E);
+            Trace (Me, E);
       end Refill_Comments;
 
       -----------------------
@@ -7111,7 +7110,7 @@ package body Src_Editor_Buffer is
 
       exception
          when E : others =>
-            Trace (Traces.Exception_Handle, E);
+            Trace (Me, E);
       end Refill_Plain_Text;
 
       -------------------

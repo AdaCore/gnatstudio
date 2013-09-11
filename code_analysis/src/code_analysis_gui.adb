@@ -36,7 +36,6 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with Traces;                     use Traces;
 with Basic_Types;                use Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 with Coverage_GUI;               use Coverage_GUI;
@@ -231,8 +230,6 @@ package body Code_Analysis_GUI is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
       Expand_All (View.Tree);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Expand_All_From_Report;
 
    ------------------------------
@@ -245,8 +242,6 @@ package body Code_Analysis_GUI is
       View : constant Code_Analysis_View := Code_Analysis_View (Object);
    begin
       Collapse_All (View.Tree);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Collapse_All_From_Report;
 
    --------------------
@@ -270,8 +265,6 @@ package body Code_Analysis_GUI is
       Expand_To_Path (View.Tree, Path);
       Select_Path (Get_Selection (View.Tree), Path);
       Path_Free (Path);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Show_Full_Tree;
 
    -----------------------------
@@ -296,8 +289,6 @@ package body Code_Analysis_GUI is
 
          Show_All (View.Empty_Board);
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Files;
 
    -----------------------------------
@@ -321,8 +312,6 @@ package body Code_Analysis_GUI is
 
          Show_All (View.Empty_Board);
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Show_Flat_List_Of_Subprograms;
 
    ---------------------
@@ -368,9 +357,6 @@ package body Code_Analysis_GUI is
       end if;
 
       return False;
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end On_Double_Click;
 
    ----------------------

@@ -20,9 +20,10 @@ with XML_Utils; use XML_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;
 
-with Traces;   use Traces;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package body Switches_Parser is
+   Me : constant Trace_Handle := Create ("SWITCHES");
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function.
@@ -645,7 +646,7 @@ package body Switches_Parser is
          end loop;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end Parse_Popup_Or_Main;
 
    begin

@@ -19,6 +19,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Numerics.Generic_Elementary_Functions;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -63,11 +64,10 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
-with Traces;                    use Traces;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
-   Me : constant Debug_Handle := Create ("Browser.Entities");
+   Me : constant Trace_Handle := Create ("Browser.Entities");
 
    package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
    use Num;
@@ -722,7 +722,7 @@ package body Browsers.Entities is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
@@ -1306,7 +1306,7 @@ package body Browsers.Entities is
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Find_Parent_Or_Child_Types;
 
    -----------------------
@@ -1321,7 +1321,7 @@ package body Browsers.Entities is
            (Type_Item (Item).Entity, Recursive => False),
          Parents => True);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Find_Parent_Types;
 
    ----------------------
@@ -1349,7 +1349,7 @@ package body Browsers.Entities is
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Find_Child_Types;
 
    -------------------------

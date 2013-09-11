@@ -27,14 +27,14 @@ with XML_Utils;             use XML_Utils;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
 with String_Utils;          use String_Utils;
-with Traces;                use Traces;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with VCS_View;              use VCS_View;
 with VCS_View_API;          use VCS_View_API;
 with XML_Parsers;
 
 package body VCS_Status is
 
-   Me : constant Debug_Handle := Create ("VCS_Status");
+   Me : constant Trace_Handle := Create ("VCS_Status");
 
    VCS_Cache_Filename : constant Filesystem_String := "vcs_cache.xml";
 
@@ -240,7 +240,7 @@ package body VCS_Status is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save_Cache;
 
    ----------------
@@ -359,7 +359,7 @@ package body VCS_Status is
                if Child.Tag.all = "file_status" then
                   Parse_Status (Child);
                else
-                  Trace (Exception_Handle,
+                  Trace (Me,
                          "Unknown activity node " & Child.Tag.all);
                end if;
                Child := Child.Next;
@@ -370,7 +370,7 @@ package body VCS_Status is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Load_Cache;
 
 end VCS_Status;

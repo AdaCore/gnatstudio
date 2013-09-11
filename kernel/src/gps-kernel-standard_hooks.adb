@@ -23,12 +23,12 @@ with Gtk.Main;
 
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Traces;             use Traces;
 with OS_Utils;           use OS_Utils;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 package body GPS.Kernel.Standard_Hooks is
 
-   Me : constant Debug_Handle := Create ("Standard_Hooks");
+   Me : constant Trace_Handle := Create ("Standard_Hooks");
 
    Open_File_Hook_Type           : constant Hook_Type :=
                                      "open_file_action_hooks";

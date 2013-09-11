@@ -67,11 +67,11 @@ with Language;               use Language;
 with Pixmaps_IDE;            use Pixmaps_IDE;
 with Std_Dialogs;            use Std_Dialogs;
 with String_Utils;           use String_Utils;
-with Traces;                 use Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with XML_Utils;              use XML_Utils;
 
 package body GVD.Canvas is
-   Me : constant Debug_Handle := Create ("Canvas");
+   Me : constant Trace_Handle := Create ("Canvas");
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("("                  --  paren 1: whole command except dynamic attributes
@@ -546,7 +546,7 @@ package body GVD.Canvas is
                   Next (Iter);
                end loop;
 
-               Traces.Trace (Me, "Saving debugger canvas properties");
+               GNATCOLL.Traces.Trace (Me, "Saving debugger canvas properties");
                Set_Property
                  (Kernel     => Get_Kernel (Old),
                   File       => Get_Executable (Process.Debugger),
@@ -803,7 +803,8 @@ package body GVD.Canvas is
       end if;
 
    exception
-      when E : Constraint_Error => Traces.Trace (Exception_Handle, E);
+      when E : Constraint_Error =>
+         GNATCOLL.Traces.Trace (Me, E);
          --  Usually because Find_Item returned a null value
          GVD.Trace.Output_Error
            (Process.Window.Kernel, (-" Error while processing: ") & Cmd);
@@ -844,7 +845,8 @@ package body GVD.Canvas is
       Refresh_Canvas (Get_Canvas (C));
 
    exception
-      when E : others => Traces.Trace (Exception_Handle, E);
+      when E : others =>
+         GNATCOLL.Traces.Trace (Me, E);
    end On_Data_Refresh;
 
    -----------------
@@ -931,9 +933,6 @@ package body GVD.Canvas is
       Recompute_All_Aliases (Get_Process (C));
 
       Refresh_Data_Window (Get_Process (C));
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Change_Detect_Aliases;
 
    ------------------------
@@ -943,8 +942,6 @@ package body GVD.Canvas is
    procedure Display_Expression (Canvas : access Gtk_Widget_Record'Class) is
    begin
       Display_Expression (Get_Process (GVD_Canvas (Canvas)));
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Display_Expression;
 
    ------------------------
@@ -1075,9 +1072,6 @@ package body GVD.Canvas is
       --  Create graphic contexts
 
       Initialize_GC (C);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Realize;
 
    ---------------------------
@@ -1256,7 +1250,7 @@ package body GVD.Canvas is
          Item_Updated (Get_Canvas (Canvas), Canvas.Selected_Item);
          Canvas.Selected_Component := null;
          Canvas.Selected_Item := null;
-         Traces.Trace (Me, "Unselect_All");
+         GNATCOLL.Traces.Trace (Me, "Unselect_All");
       end if;
    end Unselect_All;
 
@@ -1711,9 +1705,6 @@ package body GVD.Canvas is
            (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
          Update_Variable (Widget, Item);
       end if;
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Set_Value;
 
    --------------
@@ -1728,9 +1719,6 @@ package body GVD.Canvas is
    begin
       Set_Visibility (Item.Component, True, Recursive => True);
       Update_Resize_Display (Item.Item, True);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Show_All;
 
    ---------------------
@@ -1775,9 +1763,6 @@ package body GVD.Canvas is
 
    begin
       Dereference_In_Comp (Get_Entity (Item.Item), Get_Name (Item.Item));
-   exception
-      when E : others =>
-         Traces.Trace (Exception_Handle, E);
    end Dereference_All;
 
    ----------------------
@@ -1806,9 +1791,6 @@ package body GVD.Canvas is
       pragma Unreferenced (Widget);
    begin
       Display_Items.Update (Item.Item, Redisplay_Canvas => True);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Update_Variable;
 
    --------------------
@@ -1825,9 +1807,6 @@ package body GVD.Canvas is
         (Get_Debugger (Item.Item),
          "graph undisplay" & Integer'Image (Get_Num (Item.Item)),
          Output_Command => True);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Undisplay_Item;
 
    -------------------------
@@ -1844,9 +1823,6 @@ package body GVD.Canvas is
         (Item.Item,
          not Get_Auto_Refresh (Item.Item),
          True);
-
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end Toggle_Refresh_Mode;
 
    --------------------
@@ -1863,8 +1839,6 @@ package body GVD.Canvas is
       if Process /= null and then Process.Debugger /= null then
          Attach_To_Data_Window (Process, Create_If_Necessary => True);
       end if;
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Data_Window;
 
    ---------------------

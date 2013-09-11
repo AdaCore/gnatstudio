@@ -17,6 +17,7 @@
 
 with GNAT.OS_Lib;
 with GNAT.Strings;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Gdk.Types;                 use Gdk.Types;
@@ -88,7 +89,6 @@ with List_Select_Pkg;           use List_Select_Pkg;
 with Process_Proxies;           use Process_Proxies;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors;               use GPS.Editors;
@@ -96,7 +96,7 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with Xref;                      use Xref;
 
 package body GVD_Module is
-   Me : constant Debug_Handle := Create ("GVD_MODULE");
+   Me : constant Trace_Handle := Create ("GVD_MODULE");
 
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
@@ -665,7 +665,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Add_Symbols;
 
    ---------------
@@ -729,7 +729,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Attach;
 
    ---------------
@@ -765,7 +765,7 @@ package body GVD_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Detach;
 
    -------------
@@ -789,7 +789,7 @@ package body GVD_Module is
       Step_Into (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Step;
 
    -------------------------
@@ -813,7 +813,7 @@ package body GVD_Module is
       Step_Into_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Step_Instruction;
 
    -------------
@@ -837,7 +837,7 @@ package body GVD_Module is
       Step_Over (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Next;
 
    -------------------------
@@ -861,7 +861,7 @@ package body GVD_Module is
       Step_Over_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Next_Instruction;
 
    ---------------
@@ -885,7 +885,7 @@ package body GVD_Module is
       Finish (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Finish;
 
    -----------------
@@ -909,7 +909,7 @@ package body GVD_Module is
       Continue (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Continue;
 
    -------------
@@ -933,7 +933,7 @@ package body GVD_Module is
       Kill_Process (Process.Debugger, Mode => GVD.Types.Visible);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Kill;
 
    ------------------
@@ -985,7 +985,7 @@ package body GVD_Module is
       --  tricky when handling an internal command.
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Interrupt;
 
    -----------------------
@@ -1013,7 +1013,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Display_Locals;
 
    ---------------------
@@ -1041,7 +1041,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Display_Args;
 
    ---------------------
@@ -1069,7 +1069,7 @@ package body GVD_Module is
          Output_Command => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Display_Regs;
 
    ---------------------------
@@ -1093,7 +1093,7 @@ package body GVD_Module is
       Display_Expression (Process);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Display_Expression;
 
    -------------------
@@ -1240,7 +1240,7 @@ package body GVD_Module is
       Start_Program (Process);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Start;
 
    -------------------------
@@ -1314,7 +1314,7 @@ package body GVD_Module is
       Destroy (Dialog);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Connect_To_Board;
 
    -------------------------
@@ -1380,7 +1380,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Debug_Executable;
 
    ------------------
@@ -1429,7 +1429,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_Core;
 
    ----------------------------
@@ -1703,7 +1703,7 @@ package body GVD_Module is
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
          return null;
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Pop_State (Kernel);
          return null;
    end Tooltip_Handler;
@@ -1878,7 +1878,7 @@ package body GVD_Module is
       Debug_Terminate (Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Pop_State (Kernel);
    end On_Debug_Terminate;
 
@@ -1894,7 +1894,7 @@ package body GVD_Module is
       Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Pop_State (Kernel);
    end On_Debug_Terminate_Current;
 
@@ -1964,7 +1964,7 @@ package body GVD_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Start_Continue;
 
    -------------
@@ -2066,7 +2066,7 @@ package body GVD_Module is
       Create_Debugger_Columns (Kernel_Handle (Kernel), D.File);
 
    exception
-      when E : others =>  Trace (Exception_Handle, E);
+      when E : others =>  Trace (Me, E);
          Close_Debugger (Get_Current_Process (Hook.Top));
    end Execute;
 
@@ -2169,7 +2169,7 @@ package body GVD_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Close_Debugger (Process);
    end Execute;
 
@@ -2296,7 +2296,7 @@ package body GVD_Module is
       Show_All (Menu);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          Debug_Terminate (Kernel_Handle (Kernel));
    end On_View_Changed;
 

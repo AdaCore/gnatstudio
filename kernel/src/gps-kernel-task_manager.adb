@@ -21,7 +21,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Task_Manager.Shell;        use Task_Manager.Shell;
-with Traces;
 with Commands.Custom;           use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is
@@ -268,7 +267,7 @@ package body GPS.Kernel.Task_Manager is
             Result := Execute (Command);
          exception
             when E : others =>
-               Trace (Traces.Exception_Handle, E);
+               Trace (Me, E);
                Result := Failure;
          end;
 

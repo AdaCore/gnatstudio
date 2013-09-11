@@ -21,6 +21,7 @@ with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
@@ -47,12 +48,11 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with XML_Parsers;                use XML_Parsers;
 
-with Traces;                     use Traces;
 with Language;                   use Language;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Navigation_Module is
-   Me : constant Debug_Handle := Create ("Navigation");
+   Me : constant Trace_Handle := Create ("Navigation");
 
    Max_Locations_In_History : constant := 200;
    --  Maximum number of locations stored in the history
@@ -826,7 +826,7 @@ package body Navigation_Module is
       Refresh_Location_Buttons (Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Back;
 
    ----------------
@@ -843,7 +843,7 @@ package body Navigation_Module is
       Refresh_Location_Buttons (Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Forward;
 
    ------------------------
@@ -897,7 +897,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Start_Statement;
 
    ----------------------
@@ -950,7 +950,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_End_Statement;
 
    ------------------------
@@ -994,7 +994,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Next_Subprogram;
 
    --------------------
@@ -1010,7 +1010,7 @@ package body Navigation_Module is
       Next_Item (Kernel, False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Next_Result;
 
    ----------------------------
@@ -1052,7 +1052,7 @@ package body Navigation_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Previous_Subprogram;
 
    ------------------------
@@ -1068,7 +1068,7 @@ package body Navigation_Module is
       Next_Item (Kernel, True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Previous_Result;
 
    -------------------
@@ -1104,7 +1104,7 @@ package body Navigation_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel);
    end On_Other_File;
 

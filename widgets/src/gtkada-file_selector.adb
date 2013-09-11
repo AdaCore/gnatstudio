@@ -59,12 +59,12 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
 with Gexpect.Db;                use Gexpect, Gexpect.Db;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with Unchecked_Deallocation;
 
 package body Gtkada.File_Selector is
 
-   Me : constant Debug_Handle := Create ("Gtkada.File_Selector");
+   Me : constant Trace_Handle := Create ("Gtkada.File_Selector");
 
    Directories_Hist_Key : constant Histories.History_Key := "directories";
    --  Key used in the history

@@ -47,7 +47,7 @@ with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with String_List_Utils;         use String_List_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with UTF8_Utils;                use UTF8_Utils;
 with VCS;                       use VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -56,6 +56,7 @@ with VCS_Module;                use VCS_Module;
 with VCS_View;                  use VCS_View;
 
 package body VCS_Activities_View_API is
+   Me : constant Trace_Handle := Create ("VCS_ACTIVITIES");
 
    procedure Commit_Activity
      (Kernel   : not null access Kernel_Handle_Record'Class;
@@ -218,7 +219,7 @@ package body VCS_Activities_View_API is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return No_Context;
    end Context_Factory;
 
@@ -355,7 +356,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, Toggle_Group_Commit'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Toggle_Group_Commit;
 
    -----------------------------
@@ -371,7 +372,7 @@ package body VCS_Activities_View_API is
    begin
       On_Create_Activity (Kernel);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Create_Activity;
 
    -----------------------------
@@ -386,7 +387,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, On_Delete_Activity'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Delete_Activity;
 
    -----------------------
@@ -433,7 +434,7 @@ package body VCS_Activities_View_API is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Add_To_Activity;
 
    --------------------------------
@@ -460,7 +461,7 @@ package body VCS_Activities_View_API is
 
       Commit_Activity (Kernel, Activity);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Commit_As_Activity;
 
    ----------------------------------
@@ -487,7 +488,7 @@ package body VCS_Activities_View_API is
          end;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Remove_From_Activity;
 
    ---------------------------
@@ -522,7 +523,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, Query_Status_Activity'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Query_Status_Activity;
 
    ---------------------
@@ -560,7 +561,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, Update_Activity'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Update_Activity;
 
    ---------------------
@@ -615,7 +616,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, Commit_Activity'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Commit_Activity;
 
    -------------------
@@ -647,7 +648,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, Diff_Activity'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Diff_Activity;
 
    -----------------
@@ -709,7 +710,7 @@ package body VCS_Activities_View_API is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Edit_Log;
 
    -------------------
@@ -741,7 +742,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, On_Remove_Log'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Remove_Log;
 
    ---------------------------------
@@ -856,7 +857,7 @@ package body VCS_Activities_View_API is
    begin
       Apply (Context, On_Build_Patch_File'Access);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Menu_Build_Patch_File;
 
    -------------------
@@ -948,7 +949,7 @@ package body VCS_Activities_View_API is
       Query_Activities_Files (Explorer, Kernel, True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Query_Status;
 
    ------------------------------------

@@ -176,7 +176,7 @@ package body Vdiff2_Module.Utils is
       end loop;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Append;
 
    -------------------------
@@ -1050,7 +1050,7 @@ package body Vdiff2_Module.Utils is
       Trace (Me, "End Show_Differences3");
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Show_Differences3;
 
    ---------------------

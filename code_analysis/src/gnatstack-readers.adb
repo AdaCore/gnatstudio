@@ -14,9 +14,11 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with Traces;
+
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GNATStack.Readers is
+   Me : constant Trace_Handle := Create ("GNATSTACK");
 
    use Ada.Strings.Unbounded;
    use Subprogram_Information_Maps;
@@ -979,7 +981,7 @@ package body GNATStack.Readers is
 
       exception
          when X : Constraint_Error =>
-            Traces.Trace (Traces.Exception_Handle, X);
+            Trace (Me, X);
       end Compute_Subprogram_Map_And_External_Set;
 
    begin

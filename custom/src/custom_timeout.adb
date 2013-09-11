@@ -21,14 +21,15 @@ with Glib;               use Glib;
 with Glib.Main;          use Glib.Main;
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 with Custom_Module;      use Custom_Module;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Traces;             use Traces;
 
 package body Custom_Timeout is
+   Me : constant Trace_Handle := Create ("CUSTOM");
 
    Timeout_Cst         : aliased constant String := "timeout";
    Action_Cst          : aliased constant String := "action";
@@ -115,7 +116,7 @@ package body Custom_Timeout is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return True;
    end Callback;
 

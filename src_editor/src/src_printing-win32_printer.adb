@@ -23,7 +23,7 @@ with Src_Editor_Buffer.Text_Handling;
 
 with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Text_IO;
 with Pango.Font;
@@ -317,7 +317,7 @@ package body Src_Printing.Win32_Printer is
          Old_Mode := SetBkMode (PD.DC, Old_Mode);
          Result := DeleteDC (PD.DC);
 
-         Trace (Exception_Handle,
+         Trace (Me,
                 "Unexpected exception: " & Exception_Information (Error));
    end Print;
 

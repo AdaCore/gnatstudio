@@ -84,12 +84,12 @@ with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Glib_String_Utils;         use Glib_String_Utils;
 with System;                    use System;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with File_Utils;                use File_Utils;
 
 package body GUI_Utils is
 
-   Me : constant Debug_Handle := Create ("GUI_Utils");
+   Me : constant Trace_Handle := Create ("GUI_Utils");
 
    Busy_Cursor : Gdk.Gdk_Cursor;
    --  A global variable, allocated once and never freed
@@ -352,7 +352,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_For_Contextual_Menu;
 
@@ -414,7 +414,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_For_Contextual_Menu;
 
@@ -496,7 +496,7 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             return False;
       end Key_Press_For_Contextual_Menu;
 
@@ -548,7 +548,7 @@ package body GUI_Utils is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             return False;
       end Button_Press_For_Contextual_Menu;
 
@@ -677,7 +677,7 @@ package body GUI_Utils is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Radio_Callback;
 
    -------------------------------
@@ -712,7 +712,7 @@ package body GUI_Utils is
       Set_Value (M, Iter, Data, Text_Value);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Edited_Callback;
 
    -------------
@@ -1030,7 +1030,7 @@ package body GUI_Utils is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_In_Grab;
 

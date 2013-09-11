@@ -19,6 +19,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 with Glib.Object;              use Glib.Object;
 with XML_Utils;                use XML_Utils;
@@ -56,12 +57,11 @@ with Pango.Enums;              use Pango.Enums;
 with Config;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
-with Traces;                   use Traces;
 with XML_Parsers;
 
 package body Default_Preferences is
 
-   Me : constant Debug_Handle := Create ("Default_Prefs");
+   Me : constant Trace_Handle := Create ("Default_Prefs");
 
    use Preferences_Maps;
    use type Gdk.Gdk_Font;
@@ -922,7 +922,7 @@ package body Default_Preferences is
    exception
       when E : others =>
          Manager.Loading_Prefs := False;
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Load_Preferences;
 
    ----------------------
@@ -957,7 +957,7 @@ package body Default_Preferences is
       Print (File, File_Name, Success);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save_Preferences;
 
    ------------------

@@ -17,10 +17,12 @@
 
 with Ada.Containers.Vectors;
 with Language.Cpp;     use Language.Cpp;
-with Traces;           use Traces;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Xref;             use Xref;
 
 package body Completion.C.Constructs_Extractor is
+   Me : constant Trace_Handle := Create ("COMPLETION.C");
+
    Resolver_ID : constant String := "CNST_C  ";
 
    use Completion_List_Pckg;
@@ -459,7 +461,7 @@ package body Completion.C.Constructs_Extractor is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             raise;
       end Next;
 

@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Traces;  use Traces;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 
 package body Codefix.Errors_Parser is
 
-   Me : constant Debug_Handle := Create ("Codefix");
+   Me : constant Trace_Handle := Create ("Codefix");
 
    -------------------
    -- Get_Solutions --
@@ -65,7 +65,7 @@ package body Codefix.Errors_Parser is
             end if;
          exception
             when E : Codefix_Panic | Obsolescent_Fix =>
-               Traces.Trace
+               Trace
                  (Handle => Me,
                   E      => E,
                   Msg    => "Cannot propose a fix.");

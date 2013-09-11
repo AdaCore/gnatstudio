@@ -20,7 +20,7 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib.Main;                 use Glib, Glib.Main;
 with Glib.Object;               use Glib.Object;
@@ -44,13 +44,12 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
-with Traces;                    use Traces;
 
 package body KeyManager_Module.Macros is
 
-   Me                  : constant Debug_Handle := Create ("Keymanager.Macros");
+   Me                  : constant Trace_Handle := Create ("Keymanager.Macros");
 
-   Mouse_Macro_Support : constant Debug_Handle :=
+   Mouse_Macro_Support : constant Trace_Handle :=
                            Create
                              ("Keymanager.Mouse_Macro", GNATCOLL.Traces.Off);
    --  ??? For now disable by default since this is a work in progress
@@ -276,7 +275,7 @@ package body KeyManager_Module.Macros is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Macro_Command_Handler;
 
    -------------
@@ -470,7 +469,7 @@ package body KeyManager_Module.Macros is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Play_Macro_Timer;
 
@@ -588,7 +587,7 @@ package body KeyManager_Module.Macros is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Load_Macro;
 
    -------------------
@@ -629,7 +628,7 @@ package body KeyManager_Module.Macros is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Save_Macro;
 
    ----------------
@@ -742,7 +741,7 @@ package body KeyManager_Module.Macros is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end General_Event_Handler;
 

@@ -32,12 +32,12 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 package body Src_Editor_Module.Markers is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Markers");
+   Me : constant Trace_Handle := Create ("Markers");
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, File_Marker);

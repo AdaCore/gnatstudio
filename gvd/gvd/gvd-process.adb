@@ -81,14 +81,13 @@ with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
 with Toolchains_Old;             use Toolchains_Old;
-with GNATCOLL.Traces;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with XML_Utils;                  use XML_Utils;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 package body GVD.Process is
-   Me      : constant Debug_Handle := Create ("GVD.Process");
-   Verbose : constant Debug_Handle :=
+   Me      : constant Trace_Handle := Create ("GVD.Process");
+   Verbose : constant Trace_Handle :=
                Create ("GVD.Process.Verbose", GNATCOLL.Traces.Off);
 
    type GPS_Proxy is new Process_Proxy with record
@@ -227,7 +226,7 @@ package body GVD.Process is
    is
       Breaks : Node_Ptr;
    begin
-      Traces.Trace (Me, "Saving breakpoints for future sessions");
+      GNATCOLL.Traces.Trace (Me, "Saving breakpoints for future sessions");
       if Property.Breakpoints /= null then
          for B in reverse Property.Breakpoints'Range loop
             declare
@@ -320,7 +319,8 @@ package body GVD.Process is
       end Get_String;
 
    begin
-      Traces.Trace (Me, "Restoring breakpoints from previous session");
+      GNATCOLL.Traces.Trace
+        (Me, "Restoring breakpoints from previous session");
       Breaks := From.Child;
       while Breaks /= null loop
          Count := Count + 1;
@@ -973,8 +973,6 @@ package body GVD.Process is
    begin
       Proc.Debugger_Text := null;
       Close_Debugger (Proc);
-   exception
-      when E : others => Traces.Trace (Exception_Handle, E);
    end On_Console_Destroy;
 
    ---------------
@@ -1098,7 +1096,7 @@ package body GVD.Process is
 
    exception
       when Process_Died =>
-         Traces.Trace (Me, "could not launch the debugger");
+         GNATCOLL.Traces.Trace (Me, "could not launch the debugger");
          Set_Busy (Process, False);
          Buttons :=
            Message_Dialog
@@ -1196,7 +1194,7 @@ package body GVD.Process is
          return;
       end if;
 
-      Traces.Trace (Me, "Closing Debugger");
+      GNATCOLL.Traces.Trace (Me, "Closing Debugger");
       while Debugger_List /= null
         and then Debugger_List.Debugger /= GObject (Process)
       loop
@@ -1216,7 +1214,7 @@ package body GVD.Process is
 
       if Preserve_State_On_Exit.Get_Pref then
          if Process.Breakpoints /= null then
-            Traces.Trace (Me, "Saving breakpoints in properties");
+            GNATCOLL.Traces.Trace (Me, "Saving breakpoints in properties");
             --  Take into account breakpoints that have been set manually
             --  through the console, when the breakpoints window is not shown.
 
@@ -1414,7 +1412,8 @@ package body GVD.Process is
       Busy := Command_In_Process (Get_Process (Debugger.Debugger));
 
       if Output /= null and then Busy then
-         Traces.Trace (Me, "Process_User_Command: Debugger is already busy");
+         GNATCOLL.Traces.Trace
+           (Me, "Process_User_Command: Debugger is already busy");
          return;
       end if;
 
@@ -1916,7 +1915,8 @@ package body GVD.Process is
       return Process;
 
    exception
-      when E : others => Traces.Trace (Exception_Handle, E);
+      when E : others =>
+         GNATCOLL.Traces.Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
          return Process;
    end Spawn;
@@ -2101,9 +2101,9 @@ package body GVD.Process is
             end;
          end loop;
 
-         Traces.Trace (Verbose, "Setting Source_Dirs:");
+         GNATCOLL.Traces.Trace (Verbose, "Setting Source_Dirs:");
          for D in Dirs'First .. Dirs_Index - 1 loop
-            Traces.Trace (Verbose, "   " & Dirs (D).all);
+            GNATCOLL.Traces.Trace (Verbose, "   " & Dirs (D).all);
          end loop;
 
          Project.Set_Attribute
@@ -2111,9 +2111,9 @@ package body GVD.Process is
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
 
-         Traces.Trace (Verbose, "Setting Source_Files:");
+         GNATCOLL.Traces.Trace (Verbose, "Setting Source_Files:");
          for B in Bases'First .. Bases_Index - 1 loop
-            Traces.Trace (Verbose, "   " & Bases (B).all);
+            GNATCOLL.Traces.Trace (Verbose, "   " & Bases (B).all);
          end loop;
 
          Project.Set_Attribute
@@ -2121,9 +2121,9 @@ package body GVD.Process is
             Values             => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
 
-         Traces.Trace (Verbose, "Setting Languages:");
+         GNATCOLL.Traces.Trace (Verbose, "Setting Languages:");
          for L in Langs'First .. Lang_Index - 1 loop
-            Traces.Trace (Verbose, "   " & Langs (L).all);
+            GNATCOLL.Traces.Trace (Verbose, "   " & Langs (L).all);
          end loop;
 
          if Lang_Index = Langs'First then

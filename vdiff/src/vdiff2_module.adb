@@ -27,15 +27,15 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Vdiff2_Module is
 
-   Me : constant Debug_Handle := Create ("Vdiff2_Module");
+   Me : constant Trace_Handle := Create ("Vdiff2_Module");
 
    use Diff_Head_List;
 

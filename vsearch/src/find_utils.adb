@@ -22,7 +22,7 @@ with Glib.Unicode;              use Glib.Unicode;
 with GNATCOLL.Boyer_Moore;      use GNATCOLL.Boyer_Moore;
 with GNATCOLL.Xref;
 with GPS.Kernel;                use GPS.Kernel;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
@@ -34,7 +34,7 @@ with UTF8_Utils;                use UTF8_Utils;
 package body Find_Utils is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Find_Utils");
+   Me : constant Trace_Handle := Create ("Find_Utils");
 
    procedure Free_Pattern_Matcher is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);

@@ -18,19 +18,18 @@
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with GNAT.Regpat;                use GNAT.Regpat;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
-with Traces;
 with Coverage_GUI;               use Coverage_GUI;
 
 package body Code_Coverage.GNATcov is
 
-   GNATcov_Code_Coverage_Module_Trace : constant Traces.Debug_Handle
+   GNATcov_Code_Coverage_Module_Trace : constant Trace_Handle
      := GNATCOLL.Traces.Create
        ("GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
 
@@ -159,7 +158,7 @@ package body Code_Coverage.GNATcov is
                Line_Coverage.Status := Branch_Covered;
 
             when others =>
-               GNATCOLL.Traces.Trace
+               Trace
                  (GNATcov_Code_Coverage_Module_Trace,
                   "unexpected character: "
                   & File_Contents (Line_Matches (2).First));

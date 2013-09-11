@@ -23,7 +23,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with Commands.Socket;         use Commands.Socket;
 with Commands;                use Commands;
 with GPS.Intl;                use GPS.Intl;
@@ -33,7 +33,7 @@ with GNAT.Strings;
 
 package body Socket_Module is
 
-   Me : constant Debug_Handle := Create ("Socket_Module");
+   Me : constant Trace_Handle := Create ("Socket_Module");
 
    Socket_Module_ID   : GPS.Kernel.Modules.Module_ID;
    Socket_Module_Name : constant String := "Socket";
@@ -319,7 +319,7 @@ package body Socket_Module is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Idle_Read;
 
@@ -377,7 +377,7 @@ package body Socket_Module is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Idle_Accept;
 
@@ -419,7 +419,7 @@ package body Socket_Module is
       when Socket_Error | End_Error =>
          Trace (Me, "Communication error, closing socket.");
 
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Socket_Command_Handler;
 
    -----------------------------------
@@ -534,7 +534,7 @@ package body Socket_Module is
          Handler       => Socket_Static_Command_Handler'Access);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Register_Module;
 
 end Socket_Module;

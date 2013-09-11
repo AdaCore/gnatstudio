@@ -23,6 +23,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -87,14 +88,13 @@ with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Toolchains_Editor;         use Toolchains_Editor;
-with Traces;                    use Traces;
 with Namet;
 with Wizards;                   use Wizards;
 
 package body Project_Properties is
    use Widget_List;
 
-   Me : constant Debug_Handle := Create ("Project_Properties");
+   Me : constant Trace_Handle := Create ("Project_Properties");
 
    type Attribute_Editor_Record;
    type Attribute_Editor is access all Attribute_Editor_Record'Class;

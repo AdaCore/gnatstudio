@@ -42,6 +42,7 @@ with Fname;                   use Fname;
 with Generic_Views;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
@@ -57,12 +58,11 @@ with Histories;               use Histories;
 with Namet;                   use Namet;
 with Pango.Layout;            use Pango.Layout;
 with Projects;                use Projects;
-with Traces;                  use Traces;
 with Xref;                    use Xref;
 
 package body Browsers.Dependency_Items is
 
-   Me : constant Debug_Handle := Create ("Browsers.Dependency");
+   Me : constant Trace_Handle := Create ("Browsers.Dependency");
 
    type Dependency_Browser_Module is new Module_ID_Record with null record;
    Dependency_Browser_Module_ID : Module_ID;
@@ -573,7 +573,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
    end Examine_Dependencies;
 
@@ -609,7 +609,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Clean;
    end Destroy_Idle;
 
@@ -655,7 +655,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Examine_Ancestors_Idle;
 
@@ -720,7 +720,7 @@ package body Browsers.Dependency_Items is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
          Destroy (Data.Iter);
    end Examine_From_Dependencies;

@@ -59,11 +59,11 @@ with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
 with Remote.Db;              use Remote.Db;
 with Gexpect.Db;             use Gexpect, Gexpect.Db;
-with Traces;                 use Traces;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 
 package body Remote.View is
 
-   Me : constant Debug_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("Remote");
 
    subtype Config_Servers is Server_Type range GPS_Server .. Debug_Server;
 
@@ -776,7 +776,7 @@ package body Remote.View is
       Set_Sensitive (User.View.Apply_Button, Modified);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Combo_Changed;
 
    ----------------
@@ -1024,7 +1024,7 @@ package body Remote.View is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Config_List_Clicked;
 
    ----------------------------

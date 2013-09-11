@@ -27,6 +27,7 @@ with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System.Assertions;
@@ -93,7 +94,6 @@ with Histories;                use Histories;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
-with Traces;                   use Traces;
 with XML_Parsers;
 with Glib_String_Utils;        use Glib_String_Utils;
 
@@ -108,7 +108,7 @@ package body Aliases_Module is
                      return String
                      renames SU.To_String;
 
-   Me : constant Debug_Handle := Create ("Aliases");
+   Me : constant Trace_Handle := Create ("Aliases");
 
    Special : constant Character := '%';
 
@@ -552,7 +552,7 @@ package body Aliases_Module is
          Trace (Me, "No aliases file " & Filename.Display_Full_Name);
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Free (File);
    end Parse_File;
 
@@ -1040,7 +1040,7 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Failure;
    end Execute;
 
@@ -1166,7 +1166,7 @@ package body Aliases_Module is
       Highlight_Expansion_Range (Ed, Start, Last);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Alias_Selection_Changed;
 
    -------------------
@@ -1226,7 +1226,7 @@ package body Aliases_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Alias_Renamed;
 
    -------------------
@@ -1256,7 +1256,7 @@ package body Aliases_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Alias_Deleted;
 
    -------------------
@@ -1268,7 +1268,7 @@ package body Aliases_Module is
       Add_New_Alias (Alias_Editor (Editor), "_new_", Selected => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Alias_Created;
 
    -----------------------
@@ -1293,7 +1293,7 @@ package body Aliases_Module is
            not Get_Boolean (Ed.Variables_Model, Iter, 3));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Param_Env_Changed;
 
    -------------------------
@@ -1451,7 +1451,7 @@ package body Aliases_Module is
       Update_Vars (Alias_Editor (Editor));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Expansion_Inserted;
 
    -----------------------
@@ -1475,7 +1475,7 @@ package body Aliases_Module is
       Update_Vars (Alias_Editor (Editor));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Expansion_Deleted;
 
    -------------------------------
@@ -1534,7 +1534,7 @@ package body Aliases_Module is
       Insert (Buffer, Iter, It.Special);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Insert_Special;
 
    ------------------------
@@ -1584,7 +1584,7 @@ package body Aliases_Module is
       return Menu;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return Menu;
    end Contextual_Factory;
 
@@ -1965,7 +1965,7 @@ package body Aliases_Module is
       Destroy (Editor);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Edit_Aliases;
 
    -----------------------------------
@@ -2038,7 +2038,7 @@ package body Aliases_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Invalid_Expansion;
    end Special_Entities;
 

@@ -23,7 +23,9 @@ with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Basic_Types;
 
@@ -46,15 +48,13 @@ with Histories;                  use Histories;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with System;
-with Traces;                     use Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with XML_Utils;                  use XML_Utils;
 with Xref;                       use Xref;
 
 package body Python_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me  : constant Debug_Handle := Create ("Python_Module");
+   Me  : constant Trace_Handle := Create ("Python_Module");
 
    type Hash_Index is range 0 .. 100000;
    function Hash is new String_Utils.Hash (Hash_Index);

@@ -54,7 +54,6 @@ with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
 with Process_Proxies;        use Process_Proxies;
-with Traces;                 use Traces;
 with XML_Utils;              use XML_Utils;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
@@ -210,9 +209,6 @@ package body GVD.Call_Stack is
 
          List := List.Next;
       end loop;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Call_Stack;
 
    --------------------------
@@ -238,9 +234,6 @@ package body GVD.Call_Stack is
               (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
             GVD.Types.Visible);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Selection_Changed;
 
    -----------------

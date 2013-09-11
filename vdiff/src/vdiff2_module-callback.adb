@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Arg_Lists;            use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Gtk.Window;                        use Gtk.Window;
@@ -32,7 +32,6 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with Traces;                            use Traces;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
@@ -113,8 +112,6 @@ package body Vdiff2_Module.Callback is
             Visual_Diff (Side_By_Side, File1, File2, File3);
          end;
       end;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Compare_Three_Files;
 
    --------------------------
@@ -161,9 +158,6 @@ package body Vdiff2_Module.Callback is
 
          Visual_Diff (Side_By_Side, File1, File2);
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Compare_Two_Files;
 
    -------------------------
@@ -248,9 +242,6 @@ package body Vdiff2_Module.Callback is
             end;
          end;
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Merge_Three_Files;
 
    ------------------------
@@ -314,9 +305,6 @@ package body Vdiff2_Module.Callback is
             end if;
          end;
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Merge_Two_Files;
 
    ---------------
@@ -482,9 +470,6 @@ package body Vdiff2_Module.Callback is
             Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
             Node);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end File_Closed_Cb;
 
    ------------------------------
@@ -508,8 +493,6 @@ package body Vdiff2_Module.Callback is
          Show_Differences3 (Kernel, Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Preferences_Changed;
 
    -------------

@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
@@ -34,7 +32,6 @@ with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with String_Utils;
-with Traces;
 with Language; use Language;
 
 package body Xref is
@@ -384,7 +381,7 @@ package body Xref is
 
          exception
             when E : others =>
-               Trace (Traces.Exception_Handle, "Unexpected exception: "
+               Trace (Me, "Unexpected exception: "
                       & Exception_Information (E));
          end;
 

@@ -26,6 +26,7 @@ with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -64,9 +65,9 @@ with String_Hash;
 with String_List_Utils;          use String_List_Utils;
 with String_Utils;               use String_Utils;
 with Glib_String_Utils;          use Glib_String_Utils;
-with Traces;                     use Traces;
 
 package body Revision_Views is
+   Me : constant Trace_Handle := Create ("REVISIONS");
 
    Root_Color_Name : constant String := "blue";
 
@@ -256,7 +257,7 @@ package body Revision_Views is
 
       Add_Link_If_Not_Present (View, Log_1, Log_2);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Link_Command_Handler;
 
    -----------------------------
@@ -279,7 +280,7 @@ package body Revision_Views is
    begin
       Add_Log_If_Not_Present (View, Log, Expand);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Log_Command_Handler;
 
    ----------------------------------
@@ -305,7 +306,7 @@ package body Revision_Views is
 
       String_Hash_Table.Set (View.Syms, Key, List);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Revision_Command_Handler;
 
    -----------------------------
@@ -468,7 +469,7 @@ package body Revision_Views is
          Destroy (View);
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Clear_View_Command_Handler;
 
    -----------------------------

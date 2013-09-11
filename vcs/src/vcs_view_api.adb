@@ -59,7 +59,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
@@ -73,6 +73,7 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body VCS_View_API is
+   Me : constant Trace_Handle := Create ("VCS.VIEW");
    use type GNAT.Strings.String_Access;
 
    -----------------------
@@ -573,8 +574,6 @@ package body VCS_View_API is
       else
          On_Remove_Project (Explorer, "No project");
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Project;
 
    ----------------------------
@@ -590,8 +589,6 @@ package body VCS_View_API is
       Explorer : constant VCS_Explorer_View_Access := Get_Explorer (Kernel);
    begin
       Clear (Explorer);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Clear_Explorer;
 
    ---------------------
@@ -1413,9 +1410,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (List);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_ChangeLog;
 
    ----------------------
@@ -1451,9 +1445,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (List);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_Log;
 
    ------------------------
@@ -1485,8 +1476,6 @@ package body VCS_View_API is
       end if;
 
       Destroy (Dialog);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Create_Tag;
 
    ------------------------
@@ -1524,8 +1513,6 @@ package body VCS_View_API is
       end if;
 
       Destroy (Dialog);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Switch_Tag;
 
    ---------------------
@@ -1610,9 +1597,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Log;
 
    --------------------
@@ -1638,9 +1622,6 @@ package body VCS_View_API is
       end if;
 
       On_Log_Action (Context, Commit, Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Commit;
 
    -------------------
@@ -1756,9 +1737,6 @@ package body VCS_View_API is
       Open (Ref, List.all);
       Get_Status (Ref, List.all);
       Unchecked_Free (List);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Open;
 
    -----------------
@@ -1773,9 +1751,6 @@ package body VCS_View_API is
       Files : File_Array_Access := Get_Selected_Files (Context);
    begin
       On_Log_Action (Context, Add, Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add;
 
    -------------------------------------
@@ -1795,9 +1770,6 @@ package body VCS_View_API is
 
       Ref := Get_Current_Ref (Context);
       Add (Ref, (1 => Dir), Log => "", Commit => False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_Directory_No_Commit;
 
    ---------------------------
@@ -1830,9 +1802,6 @@ package body VCS_View_API is
       end if;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Add_No_Commit;
 
    --------------------
@@ -1865,9 +1834,6 @@ package body VCS_View_API is
       end if;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Revert;
 
    ----------------------
@@ -1900,9 +1866,6 @@ package body VCS_View_API is
       end if;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Resolved;
 
    --------------------
@@ -1917,9 +1880,6 @@ package body VCS_View_API is
       Files : File_Array_Access := Get_Selected_Files (Context);
    begin
       On_Log_Action (Context, Remove, Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove;
 
    ----------------------------------------
@@ -1940,9 +1900,6 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
 
       Remove (Ref, (1 => Dir), Log => "", Commit => False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Directory_No_Commit;
 
    ------------------------------
@@ -1975,9 +1932,6 @@ package body VCS_View_API is
       end if;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_No_Commit;
 
    ----------------------
@@ -2010,9 +1964,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Annotate;
 
    -----------------------------
@@ -2044,9 +1995,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Annotate;
 
    --------------------
@@ -2079,9 +2027,6 @@ package body VCS_View_API is
       end if;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update;
 
    -------------------
@@ -2102,8 +2047,6 @@ package body VCS_View_API is
          Merge (Ref, Files.all, Tag_Information (Context));
          Unchecked_Free (Files);
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Merge;
 
    ------------------------
@@ -2132,9 +2075,6 @@ package body VCS_View_API is
       Open_Explorer (Kernel, Context);
       Get_Status (Get_Current_Ref (Context), Files.all);
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status;
 
    -----------------
@@ -2202,9 +2142,6 @@ package body VCS_View_API is
    begin
       Process_Dirs
         (Context, Recursive => False, Update => True, Get_Status => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Dir;
 
    ----------------------------------
@@ -2219,9 +2156,6 @@ package body VCS_View_API is
    begin
       Process_Dirs
         (Context, Recursive => True, Update => True, Get_Status => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Dir_Recursive;
 
    ----------------------------
@@ -2236,9 +2170,6 @@ package body VCS_View_API is
    begin
       Process_Dirs
         (Context, Recursive => False, Update => False, Get_Status => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Dir;
 
    --------------------------------------
@@ -2253,9 +2184,6 @@ package body VCS_View_API is
    begin
       Process_Dirs
         (Context, Recursive => True, Update => False, Get_Status => True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Dir_Recursive;
 
    --------------------
@@ -2298,8 +2226,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Update_Project (Context, False);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Project;
 
    --------------------------------------
@@ -2313,8 +2239,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Update_Project (Context, True);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Project_Recursive;
 
    -------------------------
@@ -2440,8 +2364,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       List_Project_Files (Context, False);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_List_Project_Files;
 
    ------------------------------------------
@@ -2455,8 +2377,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       List_Project_Files (Context, True);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_List_Project_Files_Recursive;
 
    ------------------------
@@ -2497,8 +2417,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Get_Status_Project (Context, False);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Project;
 
    ------------------------------------------
@@ -2512,8 +2430,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Get_Status_Project (Context, True);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Get_Status_Project_Recursive;
 
    ------------------
@@ -2546,9 +2462,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff;
 
    --------------------------
@@ -2581,9 +2494,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Working;
 
    ----------------------------
@@ -2612,9 +2522,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Base_Head;
 
    ----------------------
@@ -2766,9 +2673,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log;
 
    ---------------------------
@@ -2802,8 +2706,6 @@ package body VCS_View_API is
       end loop;
 
       Unchecked_Free (Files);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log_Text;
 
    --------------------------
@@ -2864,9 +2766,6 @@ package body VCS_View_API is
 
       GNAT.Strings.Free (Revision);
       Unchecked_Free (Files);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_Log_Rev;
 
    --------------------------------
@@ -2886,8 +2785,6 @@ package body VCS_View_API is
             File_Information (Context),
             Revision_Information (Context));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_View_File_Revision;
 
    ---------------------------
@@ -2901,8 +2798,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Comparison (Context, True);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Specific;
 
    -------------------
@@ -2916,8 +2811,6 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       Comparison (Context, False);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff2;
 
    ----------------------
@@ -2936,8 +2829,6 @@ package body VCS_View_API is
       then
          Diff_Tag (Ref, File_Information (Context), Tag_Information (Context));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Tag;
 
    ---------------------------------
@@ -2961,8 +2852,6 @@ package body VCS_View_API is
             Version_1 => Other_Revision_Information (Context),
             Version_2 => Revision_Information (Context));
       end if;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Other_Revision;
 
    ----------------
@@ -3141,9 +3030,6 @@ package body VCS_View_API is
       Open_Explorer (Kernel, No_Context);
       Explorer := Get_Explorer (Kernel);
       Query_Project_Files (Explorer, Kernel, Get_Project (Kernel), True, True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Query_Status_For_Project;
 
    ----------------
@@ -3163,9 +3049,6 @@ package body VCS_View_API is
       Update (Ref, Dirs.all);
 
       Unchecked_Free (Dirs);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Update_All;
 
    ---------------------
@@ -3188,7 +3071,8 @@ package body VCS_View_API is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Me, E);
          return No_Context;
    end Context_Factory;
 

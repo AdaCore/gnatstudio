@@ -21,6 +21,7 @@ with GNAT.Calendar;          use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
 with GNAT.IO;                use GNAT.IO;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
@@ -49,10 +50,9 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
-with Traces;                 use Traces;
 
 package body GPS.Kernel.Console is
-   Me : constant Debug_Handle := Traces.Create ("CONSOLE");
+   Me : constant Trace_Handle := Create ("CONSOLE");
 
    Command_Clear_Messages_Name : constant String := "Messages clear";
    Command_Clear_Messages_Tip : constant String :=

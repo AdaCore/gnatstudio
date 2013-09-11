@@ -32,7 +32,7 @@ with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
@@ -94,7 +94,6 @@ with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with Task_Manager.GUI;
-with Traces;                           use Traces;
 with Welcome;                          use Welcome;
 with Welcome_Page;                     use Welcome_Page;
 
@@ -161,82 +160,83 @@ procedure GPS.Main is
    use GPS.Main_Window;
    use type Glib.Gint;
 
-   Me        : constant Debug_Handle := Create ("GPS");
+   Me        : constant Trace_Handle := Create ("GPS");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
+   Gtk_Errors : constant Trace_Handle := Create ("GTK");
 
-   Docgen2_Trace          : constant Debug_Handle :=
+   Docgen2_Trace          : constant Trace_Handle :=
                               Create ("MODULE.Docgen2", GNATCOLL.Traces.On);
-   Refactor_Trace         : constant Debug_Handle :=
+   Refactor_Trace         : constant Trace_Handle :=
                               Create ("MODULE.Refactor", GNATCOLL.Traces.On);
-   Python_Trace           : constant Debug_Handle :=
+   Python_Trace           : constant Trace_Handle :=
                               Create ("MODULE.Python", GNATCOLL.Traces.On);
-   Call_Graph_Trace       : constant Debug_Handle :=
+   Call_Graph_Trace       : constant Trace_Handle :=
                               Create ("MODULE.Call_Graph", GNATCOLL.Traces.On);
-   Dependency_Trace       : constant Debug_Handle :=
+   Dependency_Trace       : constant Trace_Handle :=
                               Create ("MODULE.Dependency", GNATCOLL.Traces.On);
-   Project_Browser_Trace  : constant Debug_Handle :=
+   Project_Browser_Trace  : constant Trace_Handle :=
                         Create ("MODULE.Project_Browser", GNATCOLL.Traces.On);
-   Entities_Browser_Trace : constant Debug_Handle :=
+   Entities_Browser_Trace : constant Trace_Handle :=
                         Create ("MODULE.Entities_Browser", GNATCOLL.Traces.On);
-   Revision_Views_Trace   : constant Debug_Handle :=
+   Revision_Views_Trace   : constant Trace_Handle :=
                         Create ("MODULE.Revision_Views", GNATCOLL.Traces.On);
-   Aliases_Trace          : constant Debug_Handle :=
+   Aliases_Trace          : constant Trace_Handle :=
                         Create ("MODULE.Aliases", GNATCOLL.Traces.On);
-   Project_Explorer_Trace : constant Debug_Handle :=
+   Project_Explorer_Trace : constant Trace_Handle :=
                         Create ("MODULE.Project_Explorer", GNATCOLL.Traces.On);
-   Files_Explorer_Trace   : constant Debug_Handle :=
+   Files_Explorer_Trace   : constant Trace_Handle :=
                         Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
-   External_Editor_Trace  : constant Debug_Handle :=
+   External_Editor_Trace  : constant Trace_Handle :=
                         Create ("MODULE.External_Editor", GNATCOLL.Traces.On);
-   VCS_Trace              : constant Debug_Handle :=
+   VCS_Trace              : constant Trace_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
 
-   Custom_Trace           : constant Debug_Handle :=
+   Custom_Trace           : constant Trace_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
-   Project_Templates_Trace : constant Debug_Handle :=
+   Project_Templates_Trace : constant Trace_Handle :=
                        Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
-   Code_Analysis_Trace    : constant Debug_Handle :=
+   Code_Analysis_Trace    : constant Trace_Handle :=
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
-   CodePeer_Trace         : constant Debug_Handle :=
+   CodePeer_Trace         : constant Trace_Handle :=
                               Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
-   GNATStack_Trace        : constant Debug_Handle :=
+   GNATStack_Trace        : constant Trace_Handle :=
                               Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
-   Codefix_Trace          : constant Debug_Handle :=
+   Codefix_Trace          : constant Trace_Handle :=
                               Create ("MODULE.Codefix", GNATCOLL.Traces.On);
-   Builder_Trace          : constant Debug_Handle :=
+   Builder_Trace          : constant Trace_Handle :=
                               Create ("MODULE.Builder", GNATCOLL.Traces.On);
-   GVD_Trace              : constant Debug_Handle :=
+   GVD_Trace              : constant Trace_Handle :=
                               Create ("MODULE.GVD", GNATCOLL.Traces.On);
-   GNATTest_Trace         : constant Debug_Handle :=
+   GNATTest_Trace         : constant Trace_Handle :=
                               Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
-   Startup_Trace          : constant Debug_Handle :=
+   Startup_Trace          : constant Trace_Handle :=
                               Create ("MODULE.Startup", GNATCOLL.Traces.On);
-   VFS_Trace              : constant Debug_Handle :=
+   VFS_Trace              : constant Trace_Handle :=
                               Create ("MODULE.VFS", GNATCOLL.Traces.On);
-   Help_Trace             : constant Debug_Handle :=
+   Help_Trace             : constant Trace_Handle :=
                               Create ("MODULE.Help", GNATCOLL.Traces.On);
-   Scenario_View_Trace    : constant Debug_Handle :=
+   Scenario_View_Trace    : constant Trace_Handle :=
                               Create ("MODULE.SCENARIO", GNATCOLL.Traces.On);
-   Project_Viewer_Trace   : constant Debug_Handle :=
+   Project_Viewer_Trace   : constant Trace_Handle :=
                       Create ("MODULE.Project_Viewer", GNATCOLL.Traces.On);
-   Project_Properties_Trace : constant Debug_Handle :=
+   Project_Properties_Trace : constant Trace_Handle :=
                       Create ("MODULE.Project_Properties", GNATCOLL.Traces.On);
-   CPP_Trace              : constant Debug_Handle :=
+   CPP_Trace              : constant Trace_Handle :=
                               Create ("MODULE.CPP", GNATCOLL.Traces.On);
-   Outline_View_Trace     : constant Debug_Handle :=
+   Outline_View_Trace     : constant Trace_Handle :=
                               Create ("MODULE.Outline", GNATCOLL.Traces.On);
-   Call_Graph_View_Trace  : constant Debug_Handle :=
+   Call_Graph_View_Trace  : constant Trace_Handle :=
                       Create ("MODULE.Call_Graph_View", GNATCOLL.Traces.On);
-   Clipboard_View_Trace   : constant Debug_Handle :=
+   Clipboard_View_Trace   : constant Trace_Handle :=
                       Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
-   Toolchains_Trace       : constant Debug_Handle :=
+   Toolchains_Trace       : constant Trace_Handle :=
                       Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
-   Toolchains_Editor_Trace  : constant Debug_Handle :=
+   Toolchains_Editor_Trace  : constant Trace_Handle :=
                       Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
-   Elaboration_Browser_Trace : constant Debug_Handle :=
+   Elaboration_Browser_Trace : constant Trace_Handle :=
      Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
 
-   Check_Color_Depth : constant Debug_Handle :=
+   Check_Color_Depth : constant Trace_Handle :=
      Create ("CHECK_COLOR_DEPTH", GNATCOLL.Traces.On);
 
    --  If any of these debug handles is active, the correponding module
@@ -315,20 +315,20 @@ procedure GPS.Main is
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
 
-   procedure Default_Gtk_Exception_Handler
+   procedure Default_Gtk_Mer
      (Occurrence : Ada.Exceptions.Exception_Occurrence);
    --  Called when an Ada callback raises an exception, to log it.
 
    -----------------------------------
-   -- Default_Gtk_Exception_Handler --
+   -- Default_Gtk_Mer --
    -----------------------------------
 
-   procedure Default_Gtk_Exception_Handler
+   procedure Default_Gtk_Mer
      (Occurrence : Ada.Exceptions.Exception_Occurrence)
    is
    begin
-      Traces.Trace (Traces.Exception_Handle, Occurrence);
-   end Default_Gtk_Exception_Handler;
+      Trace (Gtk_Errors, Occurrence);
+   end Default_Gtk_Mer;
 
    ---------------------
    -- Clean_Parameter --
@@ -506,7 +506,7 @@ procedure GPS.Main is
 
    begin
       Gtk.Handlers.Set_On_Exception
-        (Default_Gtk_Exception_Handler'Unrestricted_Access);
+        (Default_Gtk_Mer'Unrestricted_Access);
 
       Tmp  := Getenv ("GPS_MEMORY_MONITOR");
       Tmp2 := Getenv ("GPS_MEMORY_CHECK");
@@ -1139,7 +1139,7 @@ procedure GPS.Main is
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Execute_Batch;
 
    ------------------
@@ -1883,7 +1883,7 @@ procedure GPS.Main is
    exception
       when E : others =>
          Unexpected_Exception := True;
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
 
          if Is_Regular_File (Pid_File) then
             Str := Pid_File;
@@ -2015,5 +2015,5 @@ begin
 
 exception
    when E : others =>
-      Trace (Exception_Handle, E);
+      Trace (Me, E);
 end GPS.Main;

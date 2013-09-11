@@ -30,12 +30,12 @@ with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Projects;                  use Projects;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Language_Handlers is
 
-   Me : constant Debug_Handle := Create ("Language_Handlers");
+   Me : constant Trace_Handle := Create ("Language_Handlers");
 
    function Get_Index_From_Language
      (Handler       : access Language_Handler_Record'Class;

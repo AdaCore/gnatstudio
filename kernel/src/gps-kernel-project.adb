@@ -18,7 +18,9 @@
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with GNAT.Strings;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
@@ -29,8 +31,6 @@ with Projects;                         use Projects;
 with Basic_Types;
 with XML_Utils;                        use XML_Utils;
 with Remote;                           use Remote;
-with Traces;                           use Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with Prj;
 with Types;                            use Types;
 
@@ -50,7 +50,7 @@ with Xref;
 
 package body GPS.Kernel.Project is
 
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Project");
+   Me : constant Trace_Handle := Create ("GPS.Kernel.Project");
 
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
@@ -290,7 +290,7 @@ package body GPS.Kernel.Project is
       Add_Child (Node, Child);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save;
 
    ----------

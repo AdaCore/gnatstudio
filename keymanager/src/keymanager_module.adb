@@ -62,7 +62,6 @@ with GPS.Kernel;                       use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
-with Traces;
 
 with XML_Utils;               use XML_Utils;
 with XML_Parsers;
@@ -525,7 +524,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Debug_Event_Handler;
 
    ----------
@@ -1248,7 +1247,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Process_Key_Event;
 
@@ -1302,7 +1301,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Insert (Kernel, -"Could not parse " &
                  Filename.Display_Full_Name, Mode => Error);
    end Load_Custom_Keys;
@@ -1829,7 +1828,7 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
-      if Active (Traces.Testsuite_Handle) then
+      if Active (Testsuite_Handle) then
          Register_Command
             (Get_Scripts (Kernel), "send_key_event",
             (Param ("keyval"),

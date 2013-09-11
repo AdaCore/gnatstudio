@@ -24,11 +24,11 @@ with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
 with GNAT.Strings;                    use GNAT.Strings;
 with GNAT.UTF_32;                     use GNAT.UTF_32;
 
-with Traces;       use Traces;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body XML_Utils is
 
-   Me : constant Debug_Handle := Create ("XML_Utils");
+   Me : constant Trace_Handle := Create ("XML_Utils");
 
    procedure Skip_Blanks (Buf : String; Index : in out Natural);
    --  Skip blanks, LF and CR, starting at Index. Index is updated to the

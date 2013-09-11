@@ -47,7 +47,6 @@ with Build_Command_Utils;
 with Builder_Facility_Module;
 with Commands.Builder;           use Commands.Builder;
 with Default_Preferences;        use Default_Preferences;
-with Traces;
 with Xref;                       use Xref;
 
 package body Builder_Module is
@@ -167,7 +166,7 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Compute_Xref;
 
    ----------------------------
@@ -182,7 +181,7 @@ package body Builder_Module is
       GPS.Kernel.Xref.Load_Xref_In_Memory (Kernel, C_Only => False);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Load_Xref_In_Memory;
 
    -----------------------------
@@ -255,7 +254,7 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Tools_Interrupt;
 
    ---------------------
@@ -270,7 +269,7 @@ package body Builder_Module is
          and then not Automatic_Xrefs_Load.Get_Pref);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_View_Changed;
 
    ---------------------

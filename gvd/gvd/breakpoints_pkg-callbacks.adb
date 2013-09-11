@@ -17,7 +17,6 @@
 
 with Glib.Object;        use Glib.Object;
 with Gtk.Tree_Model;     use Gtk.Tree_Model;
-with Traces;             use Traces;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -36,9 +35,6 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Location_Selected_Toggled;
 
    -----------------------------------
@@ -56,9 +52,6 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, True);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Subprogam_Selected_Toggled;
 
    ---------------------------------
@@ -75,9 +68,6 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, True);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Address_Selected_Toggled;
 
    --------------------------------
@@ -94,9 +84,6 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Regexp_Selected_Toggled;
 
 end Breakpoints_Pkg.Callbacks;

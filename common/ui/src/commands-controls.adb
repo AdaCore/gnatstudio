@@ -17,10 +17,7 @@
 
 with Glib;           use Glib;
 with Glib.Values;    use Glib.Values;
-
 with Gtk.Widget;     use Gtk.Widget;
-
-with Traces;         use Traces;
 
 package body Commands.Controls is
 
@@ -78,9 +75,6 @@ package body Commands.Controls is
       pragma Unreferenced (Params);
    begin
       Undo (Command.The_Queue);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Undo;
 
    -------------
@@ -96,9 +90,6 @@ package body Commands.Controls is
       pragma Unreferenced (Params);
    begin
       Redo (Command.The_Queue);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Redo;
 
    -------------

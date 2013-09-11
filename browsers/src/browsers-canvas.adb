@@ -82,10 +82,11 @@ with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Layouts;                           use Layouts;
-with Traces;                            use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with XML_Utils;                         use XML_Utils;
 
 package body Browsers.Canvas is
+   Me : constant Trace_Handle := Create ("CANVAS");
 
    Zoom_Levels : constant array (Positive range <>) of Gdouble :=
                    (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
@@ -190,7 +191,7 @@ package body Browsers.Canvas is
    --  Close an item when the user presses on the title bar button
 
    procedure Dump
-     (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
+     (Me : Trace_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
    pragma Warnings (Off, Dump);
    --  For debugging purposes, dump the tree to Me
 
@@ -975,7 +976,8 @@ package body Browsers.Canvas is
 
       return False;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Me, E);
 
          if State_Pushed then
             Pop_State (Kernel);
@@ -1674,7 +1676,7 @@ package body Browsers.Canvas is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Button_Click;
 
@@ -1937,7 +1939,7 @@ package body Browsers.Canvas is
    ----------
 
    procedure Dump
-     (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0)
+     (Me : Trace_Handle; Tree : Active_Area_Tree; Indent : Natural := 0)
    is
       Id : constant String := (1 .. Indent => ' ');
    begin

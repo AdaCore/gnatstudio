@@ -38,7 +38,7 @@ with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Tooltips;                  use Tooltips;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GPS.Editors;               use GPS.Editors;
@@ -47,7 +47,7 @@ with Xref;                      use Xref;
 package body Src_Editor_Box.Tooltips is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Editor.Tooltips");
+   Me : constant Trace_Handle := Create ("Editor.Tooltips");
 
    type Editor_Tooltips is new Standard.Tooltips.Tooltips with record
       Box : Source_Editor_Box;
@@ -117,7 +117,7 @@ package body Src_Editor_Box.Tooltips is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Editor.Kernel);
    end Get_Declaration_Info;
 
@@ -380,7 +380,7 @@ package body Src_Editor_Box.Tooltips is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return null;
    end Create_Contents;
 

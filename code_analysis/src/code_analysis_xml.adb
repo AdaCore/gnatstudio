@@ -16,15 +16,16 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with Code_Coverage;           use Code_Coverage;
 
 with Language.Tree.Database;  use Language.Tree.Database;
 with Projects;                use Projects;
-with Traces;                  use Traces;
 
 with UTF8_Utils;              use UTF8_Utils;
 
 package body Code_Analysis_XML is
+   Me : constant Trace_Handle := Create ("CODE_ANALYSIS");
 
    procedure Dump_Project
      (Prj_Node : Project_Access;
@@ -160,7 +161,7 @@ package body Code_Analysis_XML is
 
    exception
       when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Parse_Desktop_XML;
 
    --------------------

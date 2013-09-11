@@ -22,6 +22,7 @@ with Ada.Strings.Hash;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -92,12 +93,11 @@ with Remote;                    use Remote;
 with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
-with Traces;                    use Traces;
 with Vsearch;                   use Vsearch;
 
 package body Project_Explorers is
 
-   Me : constant Debug_Handle := Create ("Project_Explorers");
+   Me : constant Trace_Handle := Create ("Project_Explorers");
 
    type Explorer_Module_Record is new Module_ID_Record with null record;
    Explorer_Module_ID : Module_ID := null;
@@ -681,7 +681,7 @@ package body Project_Explorers is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press;
 
@@ -698,7 +698,7 @@ package body Project_Explorers is
       return On_Key_Press (T.Kernel, T.Tree, Event);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press;
 
@@ -1513,7 +1513,7 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
@@ -1587,7 +1587,7 @@ package body Project_Explorers is
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Expand_File_Node;
 
    ----------------------
@@ -1703,7 +1703,7 @@ package body Project_Explorers is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Idle_Scroll_To;
 
@@ -1798,7 +1798,7 @@ package body Project_Explorers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          T.Expanding := False;
    end Expand_Row_Cb;
 
@@ -2386,7 +2386,7 @@ package body Project_Explorers is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Refresh;
 
    -----------------------------

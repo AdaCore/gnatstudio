@@ -18,6 +18,7 @@
 with Ada.Unchecked_Deallocation; use Ada;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
@@ -68,11 +69,12 @@ with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with Tooltips;                   use Tooltips;
-with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
+   Me : constant Trace_Handle := Create ("FILES");
+
    Explorer_Files_Module_Id     : Module_ID;
 
    File_View_Shows_Only_Project : constant History_Key :=
@@ -733,7 +735,7 @@ package body Project_Explorers_Files is
 
       when E : others =>
          Pop_State (D.Explorer.Kernel);
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Read_Directory;
 
@@ -1086,7 +1088,7 @@ package body Project_Explorers_Files is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -1113,7 +1115,7 @@ package body Project_Explorers_Files is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return True;
    end Expose_Event_Cb;
 
@@ -1176,7 +1178,7 @@ package body Project_Explorers_Files is
       T.Expanding := False;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end File_Tree_Expand_Row_Cb;
 
    ----------------------------
@@ -1280,7 +1282,7 @@ package body Project_Explorers_Files is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Refresh;
 
    -------------------

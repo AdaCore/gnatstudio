@@ -28,7 +28,6 @@ with Gtk.Label;                 use Gtk.Label;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
 package body Completion_Utils is
@@ -62,8 +61,6 @@ package body Completion_Utils is
          User_Data.Location.File_Path,
          User_Data.Location.Line,
          User_Data.Location.Column);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Location_Button_Clicked;
 
    -----------------------

@@ -51,13 +51,13 @@ with Language.Debugger;          use Language.Debugger;
 with Process_Proxies;            use Process_Proxies;
 with Remote;                     use Remote;
 with String_Utils;               use String_Utils;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 
 package body Debugger is
 
    use String_History, Language_Lists;
 
-   Me : constant Debug_Handle := Create ("Debugger");
+   Me : constant Trace_Handle := Create ("Debugger");
 
    Debug_Timeout : constant Guint := 100;
    --  Timeout in millisecond to check input from the underlying debugger
@@ -526,7 +526,7 @@ package body Debugger is
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
 
-         Traces.Trace (Exception_Handle, E);
+         Trace (Me, E);
 
          if Process.Timeout_Id > 0 then
             Glib.Main.Remove (Process.Timeout_Id);

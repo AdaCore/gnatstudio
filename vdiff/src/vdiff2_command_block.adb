@@ -21,7 +21,7 @@ with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
@@ -32,7 +32,7 @@ package body Vdiff2_Command_Block is
    use Diff_Head_List;
    use Diff_Chunk_List;
 
-   Me : constant Debug_Handle := Create ("VDiff2_Command");
+   Me : constant Trace_Handle := Create ("VDiff2_Command");
    Id : Diff_Head_List_Access;
 
    ------------

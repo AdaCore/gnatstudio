@@ -43,7 +43,7 @@ with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
 with String_Utils;                 use String_Utils;
-with Traces;                       use Traces;
+with GNATCOLL.Traces;                       use GNATCOLL.Traces;
 with VCS.Branching_Commands;       use VCS.Branching_Commands;
 with VCS_Activities;               use VCS_Activities;
 with VCS_Module;                   use VCS_Module;
@@ -61,7 +61,7 @@ package body VCS.Generic_VCS is
 
    use type GNAT.Strings.String_Access;
 
-   Me : constant Debug_Handle := Create ("Generic_VCS");
+   Me : constant Trace_Handle := Create ("Generic_VCS");
    Revision_Handling_Queue : constant String := "Revision View";
 
    Max_Matches : constant := 64;
@@ -1298,7 +1298,7 @@ package body VCS.Generic_VCS is
                            & (-"could not parse regular expression: ")
                            & ASCII.LF & Value.all,
                            Mode => Error);
-                        Trace (Exception_Handle, E);
+                        Trace (Me, E);
                   end;
                end if;
 
@@ -1319,7 +1319,7 @@ package body VCS.Generic_VCS is
                         & ASCII.LF & "could not parse regular expression: "
                         & ASCII.LF & Value.all,
                         Mode => Error);
-                     Trace (Exception_Handle, E);
+                     Trace (Me, E);
                end;
             end if;
 

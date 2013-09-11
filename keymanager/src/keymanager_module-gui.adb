@@ -70,9 +70,10 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Intl;                use GPS.Intl;
 with GUI_Utils;               use GUI_Utils;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body KeyManager_Module.GUI is
+   Me : constant Trace_Handle := Create ("KEYMGR");
    use Key_Htable;
 
    Action_Column     : constant := 0;
@@ -482,7 +483,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Selection_Changed;
 
    -------------------------
@@ -520,7 +521,7 @@ package body KeyManager_Module.GUI is
         or else N_Children (Model, Iter) > 0;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return True;
    end Action_Is_Visible;
 
@@ -765,7 +766,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Grab_Key;
 
    -------------------
@@ -801,7 +802,7 @@ package body KeyManager_Module.GUI is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Remove_Key;
 
    ------------------
@@ -1007,7 +1008,7 @@ package body KeyManager_Module.GUI is
       Destroy (Editor);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Edit_Keys;
 
    -----------------------

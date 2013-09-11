@@ -32,14 +32,13 @@ with Language.Ada;
 with Language.C;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with Traces;
 with Templates_Parser;        use Templates_Parser;
 with Xref.Docgen;             use Xref.Docgen;
 
 with GNAT.IO;  -- to be removed???
 
 package body Docgen3 is
-   Me : constant Traces.Debug_Handle := Create ("Docgen3.1");
+   Me : constant Trace_Handle := Create ("Docgen3.1");
 
    -----------------------
    -- Local Subprograms --
@@ -472,7 +471,7 @@ package body Docgen3 is
    exception
       when E : others =>
          Free (Context);
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Process_Files;
 
    ---------------------------

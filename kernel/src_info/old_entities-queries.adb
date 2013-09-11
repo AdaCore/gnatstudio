@@ -34,7 +34,6 @@ with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with Traces;
 
 package body Old_Entities.Queries is
    use type GNATCOLL.Xref.Visible_Column;
@@ -1136,7 +1135,7 @@ package body Old_Entities.Queries is
          Destroy (Children);
       exception
          when E : others =>
-            Trace (Traces.Exception_Handle, E);
+            Trace (Me, E);
             Thaw (Iter.Deps.Db);
       end Add_Children_Of;
 
@@ -2825,7 +2824,7 @@ package body Old_Entities.Queries is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, "Unexpected exception: "
+         Trace (Me, "Unexpected exception: "
                 & Exception_Information (E));
          if From_Memory then
             Thaw (Db);

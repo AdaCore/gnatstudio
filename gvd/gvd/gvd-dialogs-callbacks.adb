@@ -25,7 +25,6 @@ with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with GPS.Intl;              use GPS.Intl;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
-with Traces;                use Traces;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
 
@@ -64,9 +63,6 @@ package body GVD.Dialogs.Callbacks is
                Force_Send      => True,
                Wait_For_Prompt => False);
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Question_Yes_Clicked;
 
    -----------------------------
@@ -98,9 +94,6 @@ package body GVD.Dialogs.Callbacks is
                Force_Send      => True,
                Wait_For_Prompt => False);
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Question_No_Clicked;
 
    ----------------------------
@@ -165,9 +158,6 @@ package body GVD.Dialogs.Callbacks is
                Empty_Buffer    => False,
                Wait_For_Prompt => False);
       end;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Question_OK_Clicked;
 
    -------------------------------
@@ -209,9 +199,6 @@ package body GVD.Dialogs.Callbacks is
                   Empty_Buffer    => False,
                   Wait_For_Prompt => False);
       end case;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Question_Close_Clicked;
 
 end GVD.Dialogs.Callbacks;

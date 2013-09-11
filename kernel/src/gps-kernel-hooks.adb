@@ -19,7 +19,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib.Object;               use Glib.Object;
 
@@ -27,11 +27,10 @@ with Generic_List;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Traces;                    use Traces;
 
 package body GPS.Kernel.Hooks is
 
-   Me : constant Debug_Handle :=
+   Me : constant Trace_Handle :=
       Create ("Hooks", Default => GNATCOLL.Traces.Off);
 
    use GNAT.Strings;
@@ -1207,7 +1206,7 @@ package body GPS.Kernel.Hooks is
          end if;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Run_Hook;
 
    --------------
@@ -1284,7 +1283,7 @@ package body GPS.Kernel.Hooks is
          end if;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Run_Hook;
 
    ----------------------------
@@ -1336,7 +1335,7 @@ package body GPS.Kernel.Hooks is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Run_Hook_Until_Success;
 
@@ -1390,7 +1389,7 @@ package body GPS.Kernel.Hooks is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Run_Hook_Until_Failure;
 
@@ -1451,7 +1450,7 @@ package body GPS.Kernel.Hooks is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return "";
    end Run_Hook_Until_Not_Empty;
 
@@ -1513,7 +1512,7 @@ package body GPS.Kernel.Hooks is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Empty_Any_Type;
    end Run_Hook_Until_Not_Empty;
 

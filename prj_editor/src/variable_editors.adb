@@ -47,11 +47,11 @@ with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 
 package body Variable_Editors is
 
-   Me : constant Debug_Handle := Create ("Variable_Editors");
+   Me : constant Trace_Handle := Create ("Variable_Editors");
 
    New_Value_Name : constant String := -"<Enter value name>";
    --  Name used for the new variables
@@ -588,7 +588,7 @@ package body Variable_Editors is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Update_Variable;
 

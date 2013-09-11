@@ -20,14 +20,14 @@ with Gtk.Enums;  use Gtk.Enums;
 
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
-with Traces; use Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GPS.Styles.UI is
 
    use Gdk;
    use GNAT.Strings;
 
-   Me : constant Debug_Handle := Create ("Styles");
+   Me : constant Trace_Handle := Create ("Styles");
 
    procedure Allocate_Color
      (Name : String; Color : out Gdk_RGBA);

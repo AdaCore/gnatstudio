@@ -17,7 +17,7 @@
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with Interfaces.C.Strings;
 
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Cairo.Surface;              use Cairo.Surface;
@@ -71,7 +71,6 @@ with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Traces;                     use Traces;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 
@@ -88,9 +87,9 @@ with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 
 package body Src_Editor_View is
 
-   Me : constant Debug_Handle := Create ("Editor_View");
+   Me : constant Trace_Handle := Create ("Editor_View");
 
-   Trace_Override_Middle_Click_Paste : constant Debug_Handle :=
+   Trace_Override_Middle_Click_Paste : constant Trace_Handle :=
      Create ("OVERRIDE_MIDDLE_CLICK_PASTE", GNATCOLL.Traces.On);
    --  When this is On, we do our own handling of middle mouse click to
    --  implement paste on Unix platforms. The default handling of the Xserver
@@ -516,7 +515,7 @@ package body Src_Editor_View is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Button_Press;
 
@@ -536,7 +535,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Delete;
 
@@ -552,7 +551,7 @@ package body Src_Editor_View is
       Modify_Font (View, Default_Style.Get_Pref_Font);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Realize_Cb;
 
    -----------------------
@@ -630,7 +629,7 @@ package body Src_Editor_View is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Line_Highlight_Redraw;
 
@@ -654,7 +653,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -676,7 +675,7 @@ package body Src_Editor_View is
       Invalidate_Window (User);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Buffer_Information_Change_Handler;
 
    ---------------------------------
@@ -693,7 +692,7 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Side_Columns_Change_Handler;
 
    ----------------------------------------
@@ -711,7 +710,7 @@ package body Src_Editor_View is
       Register_Idle_Column_Redraw (User);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
@@ -732,7 +731,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Idle_Column_Redraw;
 
@@ -773,7 +772,7 @@ package body Src_Editor_View is
       User.Current_Line := Line;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Change_Handler;
 
    ---------------------------
@@ -792,7 +791,7 @@ package body Src_Editor_View is
            Cursor_Screen_Position (Source_View (View));
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Size_Allocated_Before;
 
    --------------------
@@ -818,7 +817,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Size_Allocated;
 
    ----------------------------
@@ -831,7 +830,7 @@ package body Src_Editor_View is
    begin
       Prevent_CR_Insertion (Buffer, True);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Paste_Clipboard_Before;
 
    --------------------------------
@@ -849,7 +848,7 @@ package body Src_Editor_View is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Speed_Bar_Size_Allocate_Cb;
 
    ----------------------------
@@ -956,7 +955,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return True;
    end Side_Area_Expose_Event_Cb;
 
@@ -1222,7 +1221,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Expose_Event_Cb;
 
@@ -1251,7 +1250,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Focus_Out_Event_Cb;
 
@@ -1274,7 +1273,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Focus_In_Event_Cb;
 
@@ -1554,7 +1553,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Connect_Expose;
 
@@ -1636,7 +1635,7 @@ package body Src_Editor_View is
       Source.Highlight_Current := Source.Current_Line_Color /= White_RGBA;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute;
 
    --------------------------
@@ -1681,7 +1680,7 @@ package body Src_Editor_View is
    begin
       Invalidate_Window (Hook.View);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute;
 
    -------------------------------
@@ -1946,7 +1945,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Speed_Bar_Button_Press_Event_Cb;
 
@@ -1962,7 +1961,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Speed_Bar_Button_Release_Event_Cb;
 
@@ -1995,7 +1994,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Release_Event_Cb;
 
@@ -2084,7 +2083,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_Event_Cb;
 
@@ -2252,7 +2251,7 @@ package body Src_Editor_View is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_Event_Cb;
 
@@ -2490,7 +2489,7 @@ package body Src_Editor_View is
       Src_View.Scrolling := False;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Scroll;
 
    ---------------

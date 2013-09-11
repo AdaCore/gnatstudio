@@ -17,6 +17,7 @@
 
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Main;                use Gdk.Main;
@@ -46,9 +47,9 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with KeyManager_Module;       use KeyManager_Module;
-with Traces;                  use Traces;
 
 package body Command_Window is
+   Me : constant Trace_Handle := Create ("COMMAND");
 
    type Rectangle is record
       X, Y, Width, Height : Gint;
@@ -324,7 +325,7 @@ package body Command_Window is
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Destroy;
 
    -----------------
@@ -341,7 +342,7 @@ package body Command_Window is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Focus_In;
 
@@ -360,7 +361,7 @@ package body Command_Window is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Focus_Out;
 
@@ -382,7 +383,7 @@ package body Command_Window is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Parent_Configure;
 

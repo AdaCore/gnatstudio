@@ -67,7 +67,7 @@ with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with Vsearch;                    use Vsearch;
 with UTF8_Utils;
 with GPS.Editors;
@@ -75,7 +75,7 @@ with GPS.Editors;
 package body Src_Contexts is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Src_Contexts");
+   Me : constant Trace_Handle := Create ("Src_Contexts");
 
    function Guess_Casing (S : String) return Casing_Type;
    --  Guess the casing which is used in S.
@@ -1520,7 +1520,7 @@ package body Src_Contexts is
       end;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Found := False;
          Continue := False;
          return;
@@ -1622,7 +1622,7 @@ package body Src_Contexts is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Replace;
 
@@ -2123,7 +2123,7 @@ package body Src_Contexts is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Found := False;
          Continue := False;
          return;
@@ -2613,7 +2613,7 @@ package body Src_Contexts is
       return not Context.All_Occurrences and then Found;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Replace;
 

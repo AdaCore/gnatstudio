@@ -19,7 +19,7 @@ with GNAT.Strings;
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with Traces;              use Traces;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
@@ -29,7 +29,7 @@ package body Commands.VCS is
 
    use type GNAT.Strings.String_Access;
 
-   Me : constant Debug_Handle := Create ("Command.VCS");
+   Me : constant Trace_Handle := Create ("Command.VCS");
 
    ----------
    -- Free --

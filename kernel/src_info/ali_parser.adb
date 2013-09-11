@@ -33,7 +33,6 @@ with Old_Entities;              use Old_Entities;
 with Glib.Convert;              use Glib.Convert;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
-with Traces;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Time_Utils;                use Time_Utils;
 
@@ -1085,7 +1084,7 @@ package body ALI_Parser is
             exception
                when E : others =>
                   Trace
-                    (Traces.Exception_Handle, "Unexpected error while parsing "
+                    (Me, "Unexpected error while parsing "
                      & Display_Full_Name (Get_LI_Filename (LI)) & ": "
                      & Exception_Information (E));
             end Process_Entity_Ref;
@@ -2784,7 +2783,7 @@ package body ALI_Parser is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, "Unexpected error while parsing "
+         Trace (Me, "Unexpected error while parsing "
                 & Display_Full_Name (Get_LI_Filename (LI)) & ": "
                 & Exception_Information (E));
          return False;

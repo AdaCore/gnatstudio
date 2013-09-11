@@ -48,9 +48,10 @@ with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 package body Welcome is
+   Me : constant Trace_Handle := Create ("WELCOME");
 
    function On_New_Project
      (Screen : access Gtk_Widget_Record'Class) return Boolean;
@@ -335,10 +336,6 @@ package body Welcome is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
       return Create_New_Project (S.Kernel);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end On_New_Project;
 
    ------------------------
@@ -353,9 +350,6 @@ package body Welcome is
          Clear => False);
       --  ??? What if the filesystem path is non-UTF8?
       Response (S, Gtk_Response_OK);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Default_Project;
 
    ---------------------
@@ -393,7 +387,8 @@ package body Welcome is
       return True;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Me, E);
          Button := Message_Dialog
            ((-"Project file ")
             & Display_Full_Name (Project_Name) & (-" couldn't be loaded"),
@@ -418,9 +413,6 @@ package body Welcome is
       if Dir /= No_File then
          Set_Text (S.Default_Dir, Display_Full_Name (Dir));
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Browse_Default;
 
    --------------------
@@ -461,7 +453,8 @@ package body Welcome is
       Pop_State (S.Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Me, E);
          Pop_State (S.Kernel);
    end On_Browse_Load;
 
@@ -478,9 +471,6 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, False);
       Set_Sensitive (S.Default_Dir, True);
       Set_Sensitive (S.Default_Browse, True);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Default_Project_Clicked;
 
    -------------------------------
@@ -496,9 +486,6 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, False);
       Set_Sensitive (S.Default_Dir, False);
       Set_Sensitive (S.Default_Browse, False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Create_Project_Clicked;
 
    -----------------------------
@@ -514,9 +501,6 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, True);
       Set_Sensitive (S.Default_Dir, False);
       Set_Sensitive (S.Default_Browse, False);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Open_Project_Clicked;
 
 end Welcome;

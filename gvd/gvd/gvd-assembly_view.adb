@@ -58,9 +58,10 @@ with GVD.Types;               use GVD.Types;
 with GVD.Views;               use GVD.Views;
 with GVD_Module;              use GVD_Module;
 with String_Utils;            use String_Utils;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 
 package body GVD.Assembly_View is
+   Me : constant Trace_Handle := Create ("ASSEMBLY");
 
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
@@ -795,10 +796,6 @@ package body GVD.Assembly_View is
       end case;
 
       return False;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-         return False;
    end Key_Press_Cb;
 
    ----------------------
@@ -962,7 +959,8 @@ package body GVD.Assembly_View is
       Set_Busy (Process, False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others =>
+         Trace (Me, E);
          Set_Busy (Process, False);
    end On_Frame_Changed;
 
@@ -1072,8 +1070,6 @@ package body GVD.Assembly_View is
 
          List := List.Next;
       end loop;
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Assembly;
 
    -----------------------------
@@ -1206,9 +1202,6 @@ package body GVD.Assembly_View is
       end if;
 
       Update (Hook.View);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Execute;
 
 end GVD.Assembly_View;

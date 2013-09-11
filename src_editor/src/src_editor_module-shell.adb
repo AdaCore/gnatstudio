@@ -67,14 +67,14 @@ with Src_Editor_Module.Editors; use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Src_Editor_Module.Shell is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Editor.Shell");
+   Me : constant Trace_Handle := Create ("Editor.Shell");
 
    Editor_Location_Class_Name : constant String := "EditorLocation";
 
@@ -491,7 +491,7 @@ package body Src_Editor_Module.Shell is
          end;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Delete_Child;
 
    --------------------
@@ -513,7 +513,7 @@ package body Src_Editor_Module.Shell is
          end if;
       end loop;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Raise_Child;
 
    -----------------------------------

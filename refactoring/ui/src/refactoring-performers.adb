@@ -25,10 +25,11 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Refactoring.Performers is
+   Me : constant Trace_Handle := Create ("REFACTORING.PERFORMERS");
    use Location_Arrays;
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with
@@ -167,7 +168,7 @@ package body Refactoring.Performers is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Free (Data);
    end Get_All_Locations;
 

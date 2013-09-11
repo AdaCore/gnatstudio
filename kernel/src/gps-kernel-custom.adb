@@ -22,18 +22,18 @@ with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with XML_Utils;                 use XML_Utils;
-with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with String_Hash;
 
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with XML_Parsers;
 
 package body GPS.Kernel.Custom is
 
-   Me            : constant Debug_Handle := Create ("Kernel.Custom");
+   Me            : constant Trace_Handle := Create ("Kernel.Custom");
    XML_Extension : constant Filesystem_String := ".xml";
 
    use Scripts_Hash.String_Hash_Table;

@@ -66,13 +66,14 @@ with GPS.Intl;                    use GPS.Intl;
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
-with Traces;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
 
 with Generic_List;
 
 package body Call_Graph_Views is
+
+   Me : constant Trace_Handle := Create ("CALLGRAPH");
 
    ---------------
    -- Constants --
@@ -590,7 +591,7 @@ package body Call_Graph_Views is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Key_Press;
 
@@ -643,7 +644,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press;
 
@@ -672,7 +673,7 @@ package body Call_Graph_Views is
       return False;
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_On_List;
 
@@ -775,7 +776,7 @@ package body Call_Graph_Views is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Selection_Changed;
 
    ---------------------
@@ -870,7 +871,7 @@ package body Call_Graph_Views is
       Thaw_Sort (M, Column);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
 
@@ -889,7 +890,7 @@ package body Call_Graph_Views is
       Remove (Gtk_Tree_Store'(-Model), Iter);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Remove_Entity;
 
    ----------------
@@ -903,7 +904,7 @@ package body Call_Graph_Views is
       Clear (Model);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Clear_View;
 
    ------------------
@@ -915,7 +916,7 @@ package body Call_Graph_Views is
       Gtk.Tree_View.Collapse_All (Callgraph_View_Access (Object).Tree);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Collapse_All;
 
    --------------------------

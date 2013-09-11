@@ -27,10 +27,9 @@ with Gtk.Widget; use Gtk.Widget;
 
 with Gtkada.Handlers; use Gtkada.Handlers;
 
-with Traces; use Traces;
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Src_Editor_Buffer.Hyper_Mode; use Src_Editor_Buffer.Hyper_Mode;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
@@ -41,7 +40,7 @@ package body Src_Editor_View.Hyper_Mode is
 
    use type Gtk.Handlers.Handler_Id;
 
-   Me : constant Debug_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create ("hyper_mode", GNATCOLL.Traces.Off);
 
    ---------------
    -- Callbacks --
@@ -211,7 +210,7 @@ package body Src_Editor_View.Hyper_Mode is
       return True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press_Event_Cb;
 
@@ -280,7 +279,7 @@ package body Src_Editor_View.Hyper_Mode is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Motion_Notify_Event_Cb;
 

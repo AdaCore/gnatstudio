@@ -58,10 +58,9 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Search;                use GPS.Search;
-with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
-with GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
 
@@ -86,8 +85,8 @@ with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
 
-   Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
-   Modes_Trace : constant Debug_Handle :=
+   Me          : constant Trace_Handle := Create ("Builder_Facility_Module");
+   Modes_Trace : constant Trace_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
    Main_Menu : constant String := '/' & (-"_Build") & '/';
@@ -796,7 +795,7 @@ package body Builder_Facility_Module is
       Refresh_Graphical_Elements;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_View_Changed;
 
    -----------------------------
@@ -1179,7 +1178,7 @@ package body Builder_Facility_Module is
          null, False, False, Default, Data.Main, False);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Button_Or_Menu_Click;
 
    --------------------
@@ -1204,7 +1203,7 @@ package body Builder_Facility_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Combo_Click;
 
    ------------------------
@@ -1580,7 +1579,7 @@ package body Builder_Facility_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Build_Manager;
 
    ----------------------
@@ -1608,7 +1607,7 @@ package body Builder_Facility_Module is
       pragma Warnings (On);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Modes_Manager;
 
    -----------------------
@@ -1655,7 +1654,7 @@ package body Builder_Facility_Module is
    begin
       Auxiliary_Console (Kernel, Background => False, Shadow => True);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Shadow_Console;
 
    ---------------------------
@@ -1669,7 +1668,7 @@ package body Builder_Facility_Module is
    begin
       Auxiliary_Console (Kernel, Background => True, Shadow => False);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Background_Console;
 
    ---------------------

@@ -86,8 +86,6 @@ package body Coverage_GUI is
    exception
       when GNATCOLL.VFS.VFS_Invalid_File_Error =>
          null;
-
-      when E : others => Trace (Exception_Handle, E);
    end Add_Gcov_Project_Info;
 
    ------------------------
@@ -278,8 +276,6 @@ package body Coverage_GUI is
    begin
       Remove_Line_Information_Column
         (Kernel, File_Node.Name, CodeAnalysis_Cst);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Remove_File_Coverage_Annotations;
 
    -------------------------------

@@ -41,10 +41,11 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with Projects;                  use Projects;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard is
+   Me : constant Trace_Handle := Create ("WIZARD");
 
    procedure Advanced_Prj_Location
      (Widget : access Gtk_Widget_Record'Class;
@@ -421,7 +422,7 @@ package body Creation_Wizard is
       when Invalid_Project_Page =>
          Pop_State (Get_Kernel (Wiz));
 
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Perform_Finish;
 
    -----------------
@@ -462,7 +463,7 @@ package body Creation_Wizard is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Destroy (Wiz);
          return GNATCOLL.VFS.No_File;
    end Run;

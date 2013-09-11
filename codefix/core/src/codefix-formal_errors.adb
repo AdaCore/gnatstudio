@@ -31,7 +31,7 @@ use Codefix.Text_Manager.Spark_Commands;
 
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects;                          use Projects;
-with Traces;                            use Traces;
+with GNATCOLL.Traces;                            use GNATCOLL.Traces;
 with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 with GNATCOLL.Xref;
@@ -113,7 +113,7 @@ package body Codefix.Formal_Errors is
 
    exception
       when E : Constraint_Error =>
-         Trace (Exception_Handle,
+         Trace (Create ("CODEFIX.EXCEPTIONS"),
                 "Unexpected exception " & Exception_Information (E)
                & " on message '" & Error_Line & "'");
          Free (This);

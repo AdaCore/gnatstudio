@@ -78,12 +78,12 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;
 with GNATCOLL.VFS;
 with Histories;                 use Histories;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 
 package body Vsearch is
-   Me : constant Debug_Handle := Create ("Vsearch");
+   Me : constant Trace_Handle := Create ("Vsearch");
 
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
@@ -601,7 +601,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Float_Vsearch;
 
    -------------------
@@ -620,7 +620,7 @@ package body Vsearch is
       Gdk_Raise (Get_Window (Get_Main_Window (Vsearch.Kernel)));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Close_Vsearch;
 
    ----------
@@ -712,7 +712,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
 
@@ -758,7 +758,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Free (Data.Replace_With);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -1025,7 +1025,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Vsearch.Kernel);
    end Internal_Search;
 
@@ -1094,7 +1094,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Search_Previous;
 
    -------------------
@@ -1106,7 +1106,7 @@ package body Vsearch is
       Internal_Search (Vsearch_Access (Object), True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Search_All;
 
    ----------------
@@ -1136,7 +1136,7 @@ package body Vsearch is
       Set_Sensitive (Vsearch.Replace_Button, False);
       Set_Sensitive (Vsearch.Replace_Search_Button, False);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Replace;
 
    -----------------------
@@ -1166,7 +1166,7 @@ package body Vsearch is
       On_Search (Object);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Replace_Search;
 
    --------------------
@@ -1247,7 +1247,7 @@ package body Vsearch is
       Set_Sensitive (Vsearch.Replace_Button, False);
       Set_Sensitive (Vsearch.Replace_Search_Button, False);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Replace_All;
 
    ----------------------
@@ -1340,7 +1340,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Context_Combo_Changed;
 
    -------------------------
@@ -1420,7 +1420,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Set_First_Next_Mode_Cb;
 
    -----------------------------
@@ -1459,7 +1459,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press;
 
@@ -1498,7 +1498,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press_Replace;
 
@@ -2014,7 +2014,7 @@ package body Vsearch is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end On_Delete;
 
@@ -2035,7 +2035,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Receive_Text;
 
    ---------------------------
@@ -2324,7 +2324,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Search_Next_Cb;
 
    ------------------------
@@ -2341,7 +2341,7 @@ package body Vsearch is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Search_Previous_Cb;
 
    ----------
@@ -2854,7 +2854,7 @@ package body Vsearch is
       Run_Hook (Kernel, Search_Reset_Hook);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Reset_Search;
 
 end Vsearch;

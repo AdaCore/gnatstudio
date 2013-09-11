@@ -50,10 +50,10 @@ with GUI_Utils;             use GUI_Utils;
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
-with Traces;                use Traces;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
 package body GVD.Dialogs is
-   Me : constant Debug_Handle := Create ("GVD.Dialogs");
+   Me : constant Trace_Handle := Create ("GVD.Dialogs");
 
    generic
       with procedure Attach
@@ -219,7 +219,7 @@ package body GVD.Dialogs is
       Attach (Process, Create_If_Necessary => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Open_View;
 
    ----------------------------
@@ -378,7 +378,7 @@ package body GVD.Dialogs is
 
       return False;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end On_Thread_Button_Release;
 
@@ -833,7 +833,7 @@ package body GVD.Dialogs is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return True;
    end Delete_Dialog;
 

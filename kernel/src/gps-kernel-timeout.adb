@@ -25,6 +25,7 @@ pragma Warnings (On);
 with GNAT.Regpat;                use GNAT.Regpat;
 with System;                     use System;
 
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -46,11 +47,10 @@ with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Time_Utils;                 use Time_Utils;
-with Traces;                     use Traces;
 
 package body GPS.Kernel.Timeout is
 
-   Me : constant Debug_Handle := Create ("Timeout");
+   Me : constant Trace_Handle := Create ("Timeout");
 
    type Console_Process_Data is new GObject_Record with record
       CL                   : Arg_List;
@@ -248,7 +248,7 @@ package body GPS.Kernel.Timeout is
 
                exception
                   when E : others =>
-                     Trace (Exception_Handle, E);
+                     Trace (Me, E);
                end;
             end if;
 
@@ -348,7 +348,7 @@ package body GPS.Kernel.Timeout is
 
          exception
             when E : others =>
-               Trace (Exception_Handle, (E));
+               Trace (Me, (E));
          end;
       end if;
    end Cleanup;
@@ -466,7 +466,7 @@ package body GPS.Kernel.Timeout is
          return False;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Cleanup (Data);
          return False;
    end Process_Cb;
@@ -495,7 +495,7 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Cleanup (Process);
          return "";
    end Data_Handler;
@@ -647,7 +647,7 @@ package body GPS.Kernel.Timeout is
       Success := True;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel);
          Success := False;
    end Launch_Process;
@@ -715,7 +715,7 @@ package body GPS.Kernel.Timeout is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Success := False;
    end Launch_Process;
 
@@ -816,7 +816,7 @@ package body GPS.Kernel.Timeout is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Delete_Handler;
 

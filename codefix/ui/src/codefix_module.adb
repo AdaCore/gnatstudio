@@ -52,8 +52,8 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Traces;                    use Traces;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib;                      use Glib;
 with GPS.Editors;               use GPS.Editors;
@@ -61,7 +61,7 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body Codefix_Module is
 
-   Me          : constant Debug_Handle := Create ("Codefix_Module");
+   Me          : constant Trace_Handle := Create ("Codefix_Module");
 
    Codefix_Class_Name       : constant String := "Codefix";
    Codefix_Error_Class_Name : constant String := "CodefixError";
@@ -286,7 +286,7 @@ package body Codefix_Module is
             Mode => GPS.Kernel.Error);
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Fix;
 
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
@@ -527,7 +527,7 @@ package body Codefix_Module is
       Free (Errors_Found);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Activate_Codefix;
 
    -----------------------------
@@ -562,7 +562,7 @@ package body Codefix_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Compilation_Finished_Cb;
 
    -------------------------
@@ -695,7 +695,7 @@ package body Codefix_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Append_To_Menu;
 
    ---------------------
@@ -791,7 +791,7 @@ package body Codefix_Module is
 
       Initialize_Parsers (Codefix_Module_ID.Codefix_Processor);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Register_Module;
 
    ---------------------------

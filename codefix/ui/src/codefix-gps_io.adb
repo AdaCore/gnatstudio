@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Traces;             use Traces;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
 package body Codefix.GPS_Io is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
+   Me : constant Trace_Handle := Create ("Codefix.GPS_IO");
 
    ------------------
    -- Get_New_Mark --

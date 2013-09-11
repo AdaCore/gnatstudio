@@ -37,13 +37,13 @@ with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
-with Traces;                      use Traces;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body Docgen2_Module is
 
-   Me : constant Debug_Handle := Create ("Docgen");
+   Me : constant Trace_Handle := Create ("Docgen");
 
    Docgen_Module_Id : GPS.Kernel.Modules.Module_ID;
 
@@ -205,7 +205,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end On_Preferences_Changed;
 
    -------------
@@ -226,7 +226,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Commands.Failure;
    end Execute;
 
@@ -249,7 +249,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Commands.Failure;
    end Execute;
 
@@ -279,7 +279,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end File_Commands_Handler;
 
    ------------------------------
@@ -310,7 +310,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Project_Commands_Handler;
 
    -----------------------
@@ -356,7 +356,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Choose_Menu_Current_File;
 
    -------------------------
@@ -377,7 +377,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Choose_Menu_Project;
 
    -----------------------------------
@@ -398,7 +398,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Choose_Menu_Project_Recursive;
 
    ----------------------
@@ -429,7 +429,7 @@ package body Docgen2_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
    end Choose_Menu_File;
 
    ---------------------

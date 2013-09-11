@@ -18,6 +18,7 @@
 with GNAT.Strings;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
@@ -30,7 +31,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Traces;                    use Traces;
 with XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
@@ -38,7 +38,7 @@ with Remote.View;
 
 package body Remote_Module is
 
-   Me : constant Debug_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("Remote");
 
    type Remote_Module_Record is new Module_ID_Record with record
       Database : Remote.Db.Remote_Db_Type_Access;

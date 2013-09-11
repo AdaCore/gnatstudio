@@ -25,12 +25,12 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with Gtk.Window; use Gtk.Window;
 
 with GPS.Kernel.Standard_Hooks;
-with Traces;            use Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 package body DDE is
 
-   Me : constant Debug_Handle := Create ("DDE");
+   Me : constant Trace_Handle := Create ("DDE");
 
    type DDE_Operation is (Unsupported, FileOpen);
    --  DDE operations supported by GPS

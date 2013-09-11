@@ -30,15 +30,15 @@ with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
 with Password_Manager;     use Password_Manager;
 with String_Utils;         use String_Utils;
 with GNATCOLL.Arg_Lists;   use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with GNATCOLL.Utils;       use GNATCOLL.Utils;
-with Traces;               use Traces;
 with User_Interface_Tools; use User_Interface_Tools;
 
 with Gexpect.Db;           use Gexpect.Db;
 
 package body GNAT.Expect.TTY.Remote is
 
-   Me : constant Debug_Handle := Create ("GNAT.Expect.TTY.Remote");
+   Me : constant Trace_Handle := Create ("GNAT.Expect.TTY.Remote");
 
    Finalized : Boolean := False;
 

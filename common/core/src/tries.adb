@@ -20,11 +20,11 @@ with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System.Memory; use System.Memory;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Traces; use Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Tries is
 
-   Me : constant Debug_Handle := Create ("Tries");
+   Me : constant Trace_Handle := Create ("Tries");
 
    pragma Warnings (Off);
    --  These 4 UCs are safe aliasing-wise, so kill warning

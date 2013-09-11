@@ -33,9 +33,10 @@ with Pango.Font;               use Pango.Font;
 with Logo_Boxes;               use Logo_Boxes;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Wizards is
+   Me : constant Trace_Handle := Create ("WIZARDS");
 
    Min_Toc_Width : constant Gint := 100;
    --  Minimal width, in pixels, for the TOC area, when it is displayed.
@@ -244,7 +245,7 @@ package body Wizards is
         (Get_Contents (Wiz), Full_Req.Width, Full_Req.Height);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Add_Page;
 
    ------------------
@@ -274,7 +275,7 @@ package body Wizards is
          Unchecked_Free (W.Pages);
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Destroy;
 
    ---------
@@ -292,7 +293,7 @@ package body Wizards is
 
       Set_Current_Page (W, W.Current_Page);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Map;
 
    ------------------
@@ -427,7 +428,7 @@ package body Wizards is
       Update_Buttons_Sensitivity (Wiz);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Set_Current_Page;
 
    ---------------------
@@ -464,7 +465,7 @@ package body Wizards is
       Set_Current_Page (W, W.Current_Page + 1);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Next_Page;
 
    -------------------
@@ -476,7 +477,7 @@ package body Wizards is
    begin
       Set_Current_Page (W, W.Current_Page - 1);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Previous_Page;
 
    ---------------
@@ -488,7 +489,7 @@ package body Wizards is
    begin
       Perform_Finish (W);
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Finish;
 
    ---------------

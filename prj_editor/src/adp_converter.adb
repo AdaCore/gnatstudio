@@ -18,7 +18,7 @@
 with GPR_Creation;              use GPR_Creation;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -26,7 +26,7 @@ with Projects;                  use Projects;
 
 package body Adp_Converter is
 
-   Me : constant Debug_Handle := Create ("Adp_wizard");
+   Me : constant Trace_Handle := Create ("Adp_wizard");
 
    function Get_Attribute_Value
      (Buffer : String_Access; Attr : String) return String;

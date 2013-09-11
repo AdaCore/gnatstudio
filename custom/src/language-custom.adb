@@ -29,7 +29,7 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Glib;
 with Glib.Module;             use Glib.Module;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 
 --  ??? Would be nice if languages registered themselves somewhere instead
 --  of having a static knowledge of all the language defined.
@@ -51,7 +51,7 @@ with XML_Utils;                 use XML_Utils;
 
 package body Language.Custom is
 
-   Me : constant Debug_Handle := Create ("Language.Custom");
+   Me : constant Trace_Handle := Create ("Language.Custom");
 
    procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
      (Project_Field_Array, Project_Field_Array_Access);

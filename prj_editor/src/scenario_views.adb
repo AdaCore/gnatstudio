@@ -48,6 +48,7 @@ with Projects;                  use Projects;
 with Generic_Views;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
@@ -65,12 +66,11 @@ with Project_Viewers;           use Project_Viewers;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
-with Traces;                    use Traces;
 with XML_Utils;                 use XML_Utils;
 
 package body Scenario_Views is
 
-   Me : constant Debug_Handle := Create ("Scenario_Views");
+   Me : constant Trace_Handle := Create ("Scenario_Views");
 
    type Scenario_View_Module_Record is new Module_ID_Record with record
       Modes : Gtk_List_Store;
@@ -448,7 +448,7 @@ package body Scenario_Views is
    exception
       when System.Assertions.Assert_Failure =>
          Trace
-           (Exception_Handle,
+           (Me,
             "Scenario variable not found: " & External_Name (Var));
          return null;
    end Add_Possible_Values;

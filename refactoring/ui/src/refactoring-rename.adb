@@ -43,10 +43,11 @@ with Histories;                  use Histories;
 with Refactoring.UI;             use Refactoring.UI;
 with Refactoring.Performers;     use Refactoring.Performers;
 with Refactoring.Services;       use Refactoring.Services;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with Xref;                       use Xref;
 
 package body Refactoring.Rename is
+   Me : constant Trace_Handle := Create ("RENAME");
 
    use Location_Arrays;
 
@@ -412,7 +413,7 @@ package body Refactoring.Rename is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Destroy (Dialog);
          return Failure;
    end Execute;

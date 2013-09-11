@@ -32,11 +32,11 @@ with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
 with String_Utils;             use String_Utils;
 with Templates_Parser;         use Templates_Parser;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 
 package body Docgen3.Backend.Simple is
-   Me : constant Debug_Handle := Create ("Docgen3.1-Backend");
+   Me : constant Trace_Handle := Create ("Docgen3.1-Backend");
 
    type Template_Kind is
      (Tmpl_Entities,        --  Entities index

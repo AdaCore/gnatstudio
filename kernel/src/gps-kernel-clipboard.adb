@@ -21,6 +21,7 @@ with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with Glib.Types;                 use Glib.Types;
 with Glib.Object;                use Glib.Object;
 with Gtk.Clipboard;              use Gtk.Clipboard;
@@ -35,14 +36,13 @@ with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with Traces;                     use Traces;
 with GUI_Utils;                  use GUI_Utils;
 with XML_Utils;                  use XML_Utils;
 with XML_Parsers;
 
 package body GPS.Kernel.Clipboard is
 
-   Me : constant Debug_Handle := Create ("Clipboard");
+   Me : constant Trace_Handle := Create ("Clipboard");
 
    Clipboard_Size_Pref : Integer_Preference;
 

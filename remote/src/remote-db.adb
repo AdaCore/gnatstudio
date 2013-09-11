@@ -31,12 +31,12 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with Basic_Types;          use Basic_Types;
 with Interactive_Consoles; use Interactive_Consoles;
 with Password_Manager;     use Password_Manager;
-with Traces;               use Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with XML_Utils;            use XML_Utils;
 
 package body Remote.Db is
 
-   Me : constant Debug_Handle := Create ("Remote");
+   Me : constant Trace_Handle := Create ("Remote");
 
    Prompt_Regexp : constant Pattern_Matcher :=
                      Compile

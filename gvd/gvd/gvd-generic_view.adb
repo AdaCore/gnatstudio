@@ -18,7 +18,6 @@
 with Ada.Tags;            use Ada.Tags;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
-with GNATCOLL.Traces;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
@@ -30,7 +29,7 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 with String_Utils;        use String_Utils;
-with Traces;              use Traces;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
 
 package body GVD.Generic_View is
    Me : constant GNATCOLL.Traces.Trace_Handle := Create ("GVD");
@@ -109,7 +108,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end On_Destroy;
 
       ---------------------------
@@ -149,7 +148,7 @@ package body GVD.Generic_View is
          Trace (Me, "On_Debugger_Terminate, done closing view " & Module_Name);
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end On_Debugger_Terminate;
 
       --------------------
@@ -303,7 +302,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end On_Update;
 
       -------------------
@@ -324,7 +323,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end State_Changed;
 
       ------------------------
@@ -345,7 +344,7 @@ package body GVD.Generic_View is
          end if;
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end Process_Terminated;
 
       --------------------------------

@@ -23,7 +23,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GPS.Kernel;
 with GPS.Kernel.Preferences;
 
-with Traces;      use Traces;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
 package Vdiff2_Module.Utils is
@@ -126,7 +126,7 @@ package Vdiff2_Module.Utils is
 
 private
 
-   Me                   : constant Debug_Handle := Create ("VDiff2_Utils");
+   Me                   : constant Trace_Handle := Create ("VDiff2_Utils");
    Default_Style        : constant String       := "default_diff";
    Old_Style            : constant String       := "old_diff";
    Append_Style         : constant String       := "append_diff";

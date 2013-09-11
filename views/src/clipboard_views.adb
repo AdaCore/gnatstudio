@@ -54,11 +54,12 @@ with GUI_Utils;                 use GUI_Utils;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
-with Traces;                    use Traces;
 
 with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body Clipboard_Views is
+   Me : constant Trace_Handle := Create ("CLIPBOARD");
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
@@ -292,7 +293,7 @@ package body Clipboard_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press;
 
@@ -403,7 +404,7 @@ package body Clipboard_Views is
          end if;
       end loop;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Refresh;
 
    ----------------

@@ -45,7 +45,7 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Traces;                   use Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with System.Assertions;        use System.Assertions;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
@@ -56,7 +56,7 @@ with GNATCOLL.VFS;
 
 package body Theme_Manager_Module is
 
-   Me : constant Debug_Handle := Create ("Themes");
+   Me : constant Trace_Handle := Create ("Themes");
 
    Active_Themes : String_Preference;
 
@@ -340,7 +340,7 @@ package body Theme_Manager_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Selection_Changed;
 
    ---------
@@ -409,7 +409,7 @@ package body Theme_Manager_Module is
          end;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Selection_Toggled;
 
    ----------

@@ -87,7 +87,6 @@ with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
-with Traces;
 
 with Xref; use Xref;
 
@@ -308,7 +307,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          Pop_State (Kernel_Handle (Kernel));
    end Goto_Declaration_Or_Body;
 
@@ -518,7 +517,7 @@ package body Src_Editor_Box is
          Box.Source_Buffer.Get_Filename.Display_Base_Name);
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end Filename_Changed_Handler;
 
    ----------------------------
@@ -553,7 +552,7 @@ package body Src_Editor_Box is
       end if;
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
    end On_Box_Destroy;
 
    ----------------
@@ -680,7 +679,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Key_Press;
 
@@ -754,7 +753,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Check_Timestamp_Idle;
 
@@ -799,7 +798,7 @@ package body Src_Editor_Box is
       return False;
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Focus_Out;
 
@@ -1455,7 +1454,7 @@ package body Src_Editor_Box is
 
    exception
       when E : others =>
-         Trace (Traces.Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Delete_Callback;
 
@@ -1807,7 +1806,7 @@ package body Src_Editor_Box is
               or else not Interactive
 
               --  No dialog in the testsuite
-              or else Active (Traces.Testsuite_Handle)
+              or else Active (Testsuite_Handle)
             then
                Response := Gtk_Response_No;
 

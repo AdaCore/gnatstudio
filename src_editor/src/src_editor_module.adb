@@ -103,13 +103,13 @@ with Src_Editor_View;                   use Src_Editor_View;
 with Src_Printing.Fabric;
 with String_Utils;                      use String_Utils;
 with UTF8_Utils;                        use UTF8_Utils;
-with Traces;                            use Traces;
+with GNATCOLL.Traces;                            use GNATCOLL.Traces;
 with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Src_Editor_Module");
+   Me : constant Trace_Handle := Create ("Src_Editor_Module");
 
    Hist_Key : constant History_Key := "reopen_files";
    --  Key to use in the kernel histories to store the most recently opened
@@ -405,7 +405,7 @@ package body Src_Editor_Module is
          end loop;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Editor_Destroy;
 
    --------------
@@ -445,7 +445,7 @@ package body Src_Editor_Module is
       UR.Undo_Menu_Item := null;
       UR.Redo_Menu_Item := null;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Toolbar_Destroy_Cb;
 
    -------------------------
@@ -610,7 +610,7 @@ package body Src_Editor_Module is
          Next (Iter);
       end loop;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end File_Saved_Cb;
 
    -----------------------
@@ -637,7 +637,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Cursor_Stopped_Cb;
 
    ------------------------
@@ -668,7 +668,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end File_Edit_Callback;
 
@@ -763,7 +763,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return null;
    end Load_Desktop;
 
@@ -1433,7 +1433,7 @@ package body Src_Editor_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Open_File;
 
    -------------------------
@@ -1463,7 +1463,7 @@ package body Src_Editor_Module is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Open_Remote_File;
 
    --------------
@@ -1500,7 +1500,7 @@ package body Src_Editor_Module is
          Initial_Dir => Dir);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_New_File;
 
    -------------
@@ -1517,7 +1517,7 @@ package body Src_Editor_Module is
       Save_To_File (Kernel, Success => Success);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Save;
 
    ----------------
@@ -1556,7 +1556,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Save_As;
 
    -------------
@@ -1634,7 +1634,7 @@ package body Src_Editor_Module is
       Src_Printing.Fabric.Create.Print (Source);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Print;
 
    ------------------------
@@ -1674,7 +1674,7 @@ package body Src_Editor_Module is
       Src_Printing.Fabric.Create.Print (Source, Start_Line, End_Line);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Print_Selection;
 
    -------------------
@@ -1693,7 +1693,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Select_All;
 
    --------------------
@@ -1733,7 +1733,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Insert_File;
 
    -----------------
@@ -1748,7 +1748,7 @@ package body Src_Editor_Module is
       New_View (Kernel);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_New_View;
 
    -------------------------
@@ -1773,7 +1773,7 @@ package body Src_Editor_Module is
          Context => Get_Current_Context (Kernel));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Goto_Declaration;
 
    ------------------
@@ -1798,7 +1798,7 @@ package body Src_Editor_Module is
          Context => Get_Current_Context (Kernel));
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Goto_Body;
 
    -----------------------
@@ -1873,7 +1873,7 @@ package body Src_Editor_Module is
       Comment_Uncomment (Kernel, Comment => True);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Comment_Lines;
 
    --------------------
@@ -1892,7 +1892,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Fold_Blocks;
 
    ----------------------
@@ -1911,7 +1911,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Unfold_Blocks;
 
    ------------------------
@@ -1927,7 +1927,7 @@ package body Src_Editor_Module is
       Comment_Uncomment (Kernel, Comment => False);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Uncomment_Lines;
 
    ---------------
@@ -1948,7 +1948,7 @@ package body Src_Editor_Module is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end On_Refill;
 
    ----------------------
@@ -2094,7 +2094,7 @@ package body Src_Editor_Module is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end File_Line_Hook;
 

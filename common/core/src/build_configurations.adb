@@ -18,14 +18,14 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Switches_Parser;
 with String_Utils;    use String_Utils;
-with Traces;          use Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Build_Configurations is
 
    use GNAT.OS_Lib;
    use Target_List;
 
-   Me          : constant Debug_Handle := Create ("Build_Configurations");
+   Me          : constant Trace_Handle := Create ("Build_Configurations");
 
    ------------------------
    -- Local declarations --

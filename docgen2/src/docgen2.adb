@@ -45,7 +45,7 @@ with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with Templates_Parser;          use Templates_Parser;
 with UTF8_Utils;                use UTF8_Utils;
 
@@ -64,7 +64,7 @@ with Xref;                    use Xref;
 package body Docgen2 is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me : constant Debug_Handle := Create ("Docgen");
+   Me : constant Trace_Handle := Create ("Docgen");
 
    Fullnames : constant GNATCOLL.Symbols.Symbol_Table_Access :=
                  GNATCOLL.Symbols.Allocate;
@@ -359,7 +359,7 @@ package body Docgen2 is
 
          exception
             when E : others =>
-               Trace (Exception_Handle, E);
+               Trace (Me, E);
                return True;
          end CB;
 
@@ -823,7 +823,7 @@ package body Docgen2 is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          Thaw (Database, Lock);
          return Failure;
    end Execute;
@@ -2195,7 +2195,7 @@ package body Docgen2 is
             return False;
          exception
             when E : others =>
-               Trace (Exception_Handle, E);
+               Trace (Me, E);
                return True;
          end CB;
 
@@ -2833,7 +2833,7 @@ package body Docgen2 is
                return False;
             exception
                when E : others =>
-                  Trace (Exception_Handle, E);
+                  Trace (Me, E);
                   return True;
             end CB;
 

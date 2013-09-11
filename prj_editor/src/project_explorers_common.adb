@@ -45,13 +45,13 @@ with Language_Handlers;         use Language_Handlers;
 with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with Gtk.Target_List;
 with Gtk.Dnd;
 
 package body Project_Explorers_Common is
 
-   Me : constant Debug_Handle := Create ("Project_Explorers_Common");
+   Me : constant Trace_Handle := Create ("Project_Explorers_Common");
 
    -------------------
    -- Columns_Types --
@@ -940,7 +940,7 @@ package body Project_Explorers_Common is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return No_Project;
    end Get_Project_From_Node;
 

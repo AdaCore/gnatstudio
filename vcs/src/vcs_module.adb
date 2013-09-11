@@ -40,7 +40,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
@@ -199,9 +198,6 @@ package body VCS_Module is
       pragma Unreferenced (Widget);
    begin
       Open_Explorer (Kernel, No_Context);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Open_Interface;
 
    ----------------------------------
@@ -215,9 +211,6 @@ package body VCS_Module is
       pragma Unreferenced (Widget);
    begin
       Open_Activities_Explorer (Kernel, No_Context);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_Open_Activities_Interface;
 
    --------------------
@@ -852,8 +845,6 @@ package body VCS_Module is
       end if;
 
       Parse_Status (Ref, S, Local, Clear_Logs, Dir);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Status_Parse_Handler;
 
    --------------------------
@@ -885,8 +876,6 @@ package body VCS_Module is
       end if;
 
       Parse_Update (Ref, S, Dir);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Update_Parse_Handler;
 
    -------------------------------
@@ -916,8 +905,6 @@ package body VCS_Module is
       File := Ref.Create_From_VCS (Nth_Arg (Data, 2));
 
       Parse_Annotations (Ref, File, S);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Annotations_Parse_Handler;
 
    -----------------------
@@ -959,8 +946,6 @@ package body VCS_Module is
       end loop;
 
       Parse_Log (Ref, File, Escaped (Escaped'First .. Last - 1));
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Log_Parse_Handler;
 
    ----------------------------
@@ -990,8 +975,6 @@ package body VCS_Module is
       File := Ref.Create_From_VCS (Nth_Arg (Data, 2));
 
       Parse_Revision (Ref, File, S);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Revision_Parse_Handler;
 
    --------------------
@@ -1023,9 +1006,6 @@ package body VCS_Module is
       else
          Display_Editor_Status (Kernel_Handle (Kernel), Ref, Status);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end File_Edited_Cb;
 
    --------------------
@@ -1041,8 +1021,6 @@ package body VCS_Module is
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
       M.Reference_Map.Exclude (D.File);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end File_Closed_Cb;
 
    ----------------------------
@@ -1119,9 +1097,6 @@ package body VCS_Module is
            (Get_Activities_Explorer
               (Kernel_Handle (Kernel), Raise_Child => False), D.File);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end File_Status_Changed_Cb;
 
    ------------------

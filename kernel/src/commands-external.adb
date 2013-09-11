@@ -22,14 +22,14 @@ with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GPS.Intl;                   use GPS.Intl;
 with Password_Manager;           use Password_Manager;
 with String_Utils;               use String_Utils;
 
 package body Commands.External is
 
-   Me : constant Debug_Handle := Create ("Commands.External");
+   Me : constant Trace_Handle := Create ("Commands.External");
 
    -----------------------
    -- Local subprograms --
@@ -172,13 +172,13 @@ package body Commands.External is
             Command_Finished (Command, Command.Handler_Success);
 
          exception
-            when E : others => Trace (Exception_Handle, E);
+            when E : others => Trace (Me, E);
          end;
 
          return False;
 
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Atomic_Command;
 

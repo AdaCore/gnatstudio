@@ -46,7 +46,7 @@ with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with Glib_String_Utils;         use Glib_String_Utils;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
@@ -57,6 +57,7 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Explorer is
+   Me : constant Trace_Handle := Create ("VCS.EXPLORER");
 
    --------------------
    -- Local packages --
@@ -771,9 +772,6 @@ package body VCS_View.Explorer is
       end loop;
 
       Refresh (E);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Show_All_Status;
 
    ---------------------
@@ -797,9 +795,6 @@ package body VCS_View.Explorer is
       end loop;
 
       Refresh (E);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Hide_All_Status;
 
    ------------------------
@@ -820,9 +815,6 @@ package body VCS_View.Explorer is
       end if;
 
       Refresh (E);
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Toggle_Show_Status;
 
    ------------------
@@ -958,7 +950,7 @@ package body VCS_View.Explorer is
       end;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Context_Func;
 
    -------------
@@ -992,7 +984,7 @@ package body VCS_View.Explorer is
          end;
       end if;
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Execute;
 
    -------------------

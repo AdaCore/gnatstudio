@@ -42,7 +42,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
-with Traces;                    use Traces;
+with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with OS_Utils;
@@ -51,7 +51,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 package body VFS_Module is
 
    VFS_Module_Name : constant String := "VFS_Module";
-   Me              : constant Debug_Handle := Create (VFS_Module_Name);
+   Me              : constant Trace_Handle := Create (VFS_Module_Name);
    VFS_Module_Id   : Module_ID;
 
    Dir_Cst               : aliased constant String := "dir";

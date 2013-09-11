@@ -21,8 +21,6 @@ with Glib.Object;   use Glib.Object;
 
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
-with Traces;          use Traces;
-
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
@@ -212,8 +210,6 @@ package body Project_Templates.GPS is
       pragma Unreferenced (Widget, Cancelled);
    begin
       Launch_Dialog (Kernel, Gtk_Widget (Kernel.Get_Main_Window), Cancelled);
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end On_New_From_Template;
 
    --------------------

@@ -18,20 +18,14 @@
 with Ada.Unchecked_Deallocation;
 with System;
 
-with Glib.Values;
-with Gtk.Handlers;
+with Glib.Values;      use Glib, Glib.Values;
+with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.Widget;
-
-with Traces;
 
 package body GPS.Tree_View is
 
-   use Glib;
-   use Glib.Values;
-   use Gtk.Handlers;
    use Gtk.Tree_Model;
    use Gtk.Tree_View;
-   use Traces;
 
    procedure Finalize (Node : in out Node_Record);
    --  Finalize and deallocate all children nodes recursively.
@@ -265,11 +259,6 @@ package body GPS.Tree_View is
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         return False;
    end On_Idle;
 
    ----------------
@@ -301,9 +290,6 @@ package body GPS.Tree_View is
 
       Finalize (Self.Root.all);
       Free (Self.Root);
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Destroy;
 
    ----------------------------------
@@ -328,10 +314,6 @@ package body GPS.Tree_View is
       Node.Parent.Children.Delete (Indices (Indices'Last));
       Finalize (Node.all);
       Free (Node);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Lowest_Model_Row_Deleted;
 
    -----------------------------------
@@ -359,10 +341,6 @@ package body GPS.Tree_View is
       Parent.Children.Insert (Indices (Indices'Last), Node);
 
       Self.On_Lowest_Model_Row_Inserted (Path, Iter, Node);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Lowest_Model_Row_Inserted;
 
    -------------------------------------
@@ -401,10 +379,6 @@ package body GPS.Tree_View is
       end loop;
 
       Node.Children := Aux;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Lowest_Model_Rows_Reordered;
 
    ----------------------
@@ -436,10 +410,6 @@ package body GPS.Tree_View is
       end;
 
       Path_Free (Lowest_Path);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Row_Collapsed;
 
    ---------------------
@@ -510,10 +480,6 @@ package body GPS.Tree_View is
       end loop;
 
       Path_Free (Child_Path);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Row_Expanded;
 
    -------------------------------------------
@@ -569,10 +535,6 @@ package body GPS.Tree_View is
            (Func => On_Idle'Access,
             Data => Self);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
    end On_Source_Model_Row_Has_Child_Toggled;
 
    ----------------------

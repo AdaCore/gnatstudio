@@ -20,6 +20,7 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.Expect;                use GNAT.Expect;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Case_Handling;              use Case_Handling;
@@ -37,9 +38,9 @@ with Language_Handlers;          use Language_Handlers;
 with Naming_Editors;             use Naming_Editors;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
-with Traces;                     use Traces;
 
 package body Cpp_Module is
+   Me : constant Trace_Handle := Create ("CPP");
 
    C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
    C_Use_Tabs              : Boolean_Preference;
@@ -190,7 +191,7 @@ package body Cpp_Module is
         (Kernel, "c++", C_Naming_Scheme_Editor'Access);
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Register_Module;
 
 end Cpp_Module;

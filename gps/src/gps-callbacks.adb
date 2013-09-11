@@ -19,13 +19,13 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Traces;                    use Traces;
 
 package body GPS.Callbacks is
 
-   Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
+   Gtk_Trace : constant Trace_Handle := Create ("Gtk+");
 
    -------------
    -- Gtk_Log --
@@ -50,7 +50,7 @@ package body GPS.Callbacks is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Gtk_Trace, E);
    end Gtk_Log;
 
    --------------------
@@ -75,7 +75,7 @@ package body GPS.Callbacks is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Gtk_Trace, E);
          return False;
    end On_GPS_Started;
 
@@ -95,9 +95,6 @@ package body GPS.Callbacks is
          C := MDI_Child (To_Object (Child, 1));
          Set_Main_Title (Kernel, C);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Title_Changed;
 
    --------------------
@@ -147,9 +144,6 @@ package body GPS.Callbacks is
       if Started then
          Context_Changed (Kernel);
       end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
    end Child_Selected;
 
 end GPS.Callbacks;

@@ -24,12 +24,9 @@ with Gtk.Handlers;
 with Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
-with GPS.Intl;
-with Traces;
+with GPS.Intl;                   use GPS.Intl;
 
 package body GNATStack.Call_Tree_Views is
-
-   use GPS.Intl;
 
    function On_Button_Press
      (Self  : access Call_Tree_View_Record'Class;
@@ -157,12 +154,6 @@ package body GNATStack.Call_Tree_Views is
       else
          return False;
       end if;
-
-   exception
-      when E : others =>
-         Traces.Trace (Traces.Exception_Handle, E);
-
-         return False;
    end On_Button_Press;
 
 end GNATStack.Call_Tree_Views;

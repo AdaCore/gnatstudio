@@ -31,7 +31,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with Log_Utils;                  use Log_Utils;
 with Projects;                   use Projects;
 with String_Hash;
-with Traces;                     use Traces;
+with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
 with VCS_View;                   use VCS_View;
 with VCS_View_API;               use VCS_View_API;
@@ -39,7 +39,7 @@ with XML_Parsers;
 
 package body VCS_Activities is
 
-   Me : constant Debug_Handle := Create ("VCS_Activities");
+   Me : constant Trace_Handle := Create ("VCS_Activities");
 
    Activities_Filename : constant Filesystem_String := "activities.xml";
 
@@ -216,7 +216,7 @@ package body VCS_Activities is
                if Child.Tag.all = "activity" then
                   Parse_Activity (Child);
                else
-                  Trace (Exception_Handle,
+                  Trace (Me,
                          "Unknown activity node " & Child.Tag.all);
                end if;
                Child := Child.Next;
@@ -227,7 +227,7 @@ package body VCS_Activities is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Load_Activities;
 
    ---------------------
@@ -292,7 +292,7 @@ package body VCS_Activities is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
    end Save_Activities;
 
    ------------------

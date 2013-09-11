@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -68,13 +69,12 @@ with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
 with Tooltips;
-with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
 package body Bookmark_Views is
 
-   Me : constant Debug_Handle := Create ("Bookmarks");
+   Me : constant Trace_Handle := Create ("Bookmarks");
 
    Icon_Column     : constant := 0;
    Name_Column     : constant := 1;
@@ -577,7 +577,7 @@ package body Bookmark_Views is
                Start_Editing => True);
          end if;
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others => Trace (Me, E);
       end Edit_Selected;
 
    begin
@@ -587,7 +587,7 @@ package body Bookmark_Views is
 
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Start_Editing_Idle;
 
@@ -756,7 +756,7 @@ package body Bookmark_Views is
       return False;
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return False;
    end Button_Press;
 

@@ -22,13 +22,13 @@ with GNAT.HTable;
 with Basic_Types;             use Basic_Types;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Language.Ada;
-with Traces;                  use Traces;
+with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with Xref.Docgen;             use Xref.Docgen;
 with Xref;
 with GNAT.IO;
 
 package body Docgen3.Frontend.Builder is
-   Me : constant Debug_Handle := Create ("Docgen3.1-Frontend-Builder");
+   Me : constant Trace_Handle := Create ("Docgen3.1-Frontend-Builder");
 
    -----------------------------
    -- Unique_Entity_Allocator --
@@ -797,7 +797,7 @@ package body Docgen3.Frontend.Builder is
 
       exception
          when E : others =>
-            Trace (Exception_Handle, E);
+            Trace (Me, E);
             return;
       end Get_Unique_Entity;
 
@@ -1776,7 +1776,7 @@ package body Docgen3.Frontend.Builder is
       return Get_Entity (Std_Entity);
    exception
       when E : others =>
-         Trace (Exception_Handle, E);
+         Trace (Me, E);
          return Atree.No_Entity;
    end Build_File_Tree;
 

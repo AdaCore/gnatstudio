@@ -32,12 +32,12 @@ with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Shared_Macros;           use GPS.Shared_Macros;
-with Traces;                      use Traces;
+with GNATCOLL.Traces;                      use GNATCOLL.Traces;
 with GNAT.Strings;
 
 package body Build_Command_Utils is
 
-   Me : constant Debug_Handle := Create ("Build_Command_Manager");
+   Me : constant Trace_Handle := Create ("Build_Command_Manager");
 
    Max_Number_Of_Mains : constant := 128;
    --  The maximum number of Mains that we accept to display in the Menus

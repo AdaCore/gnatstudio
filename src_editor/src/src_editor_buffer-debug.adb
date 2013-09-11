@@ -19,7 +19,7 @@ with Ada.Tags;
 
 with GNAT.Strings; use GNAT.Strings;
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib.Object; use Glib.Object;
@@ -30,20 +30,19 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
-with Traces; use Traces;
-with GNATCOLL.Traces;
-with Gtk.Text_Tag; use Gtk.Text_Tag;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
-with Language; use Language;
-with Commands.Editor; use Commands.Editor;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Language;           use Language;
+with Commands.Editor;    use Commands.Editor;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 
 package body Src_Editor_Buffer.Debug is
 
-   Me : constant Debug_Handle := Create ("buffer_debug", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle := Create ("buffer_debug", GNATCOLL.Traces.Off);
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class

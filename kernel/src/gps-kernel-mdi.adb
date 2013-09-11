@@ -20,6 +20,8 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.Strings;             use GNAT.Strings;
 
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Object;              use Glib.Object;
@@ -65,16 +67,13 @@ with GPS.Main_Window;          use GPS.Main_Window;
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
 
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with Traces;                    use Traces;
-
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
 
 package body GPS.Kernel.MDI is
 
-   Me : constant Debug_Handle := Create ("gps_kernel.mdi");
+   Me : constant Trace_Handle := Create ("gps_kernel.mdi");
 
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
    package Tabs_Position_Preferences is new
@@ -1201,7 +1200,7 @@ package body GPS.Kernel.MDI is
       end if;
 
    exception
-      when E : others => Trace (Exception_Handle, E);
+      when E : others => Trace (Me, E);
          return False;
    end Load_Desktop;
 
