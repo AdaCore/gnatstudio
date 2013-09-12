@@ -21,7 +21,6 @@ with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with ALI_Parser;
-with Glib.Convert;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
@@ -231,12 +230,11 @@ package body Xref is
             end if;
 
             Result := To_Unbounded_String
-              (Glib.Convert.Escape_Text
-                 (Extract_Comment
-                    (Buffer            => Buffer.all,
-                     Decl_Start_Line   => Decl.Line,
-                     Decl_Start_Column => Integer (Decl.Column),
-                     Language          => Context.Syntax)));
+              (Extract_Comment
+                 (Buffer            => Buffer.all,
+                  Decl_Start_Line   => Decl.Line,
+                  Decl_Start_Column => Integer (Decl.Column),
+                  Language          => Context.Syntax));
 
             if Result = "" and then Entity.Old_Entity /= null then
                Find_Next_Body
