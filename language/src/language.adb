@@ -17,13 +17,15 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Glib.Unicode;                use Glib, Glib.Unicode;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Wide_Wide_Characters.Unicode; use Ada.Wide_Wide_Characters.Unicode;
+with Ada.Characters.Wide_Wide_Latin_1;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with String_Utils;                use String_Utils;
+with UTF8_Utils;                  use UTF8_Utils;
 
 package body Language is
 
@@ -203,7 +205,7 @@ package body Language is
                         Keywords (Language_Access (Lang));
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
       Matched       : Match_Array (0 .. 1);
-      C             : Gunichar;
+      C             : Wide_Wide_Character;
       Tmp           : Natural;
       Found         : Boolean;
 
@@ -361,8 +363,7 @@ package body Language is
 
       if not Is_Word_Char
         (Language_Access (Lang),
-         Wide_Wide_Character'Val
-           (UTF8_Get_Char (Buffer (First .. Buffer'Last))))
+           UTF8_Get_Char (Buffer (First .. Buffer'Last)))
       then
          Entity := Normal_Text;
          Next_Char := UTF8_Next_Char (Buffer, First);
@@ -371,7 +372,7 @@ package body Language is
          while Next_Char <= Buffer'Last loop
             C := UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last));
 
-            exit when C = Character'Pos (ASCII.LF)
+            exit when C = Ada.Characters.Wide_Wide_Latin_1.LF
               or else not Is_Space (C);
 
             Tmp := UTF8_Next_Char (Buffer, Next_Char);
@@ -400,8 +401,7 @@ package body Language is
 
       while Next_Char <= Buffer'Last
         and then Is_Entity_Letter
-          (Wide_Wide_Character'Val
-             (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last))))
+          (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
          Tmp := UTF8_Next_Char (Buffer, Next_Char);
          Column := Column + (Tmp - Next_Char);
@@ -487,9 +487,9 @@ package body Language is
    ----------------------
 
    procedure Parse_Constructs
-     (Lang        : access Language_Root;
-      Buffer      : Glib.UTF8_String;
-      Result      : out Construct_List)
+     (Lang   : access Language_Root;
+      Buffer : UTF8_String;
+      Result : out Construct_List)
    is
       Matches     : Match_Array (0 .. 10);
       Categories  : constant Explorer_Categories :=
@@ -946,7 +946,7 @@ package body Language is
 
    procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
       --   ??? This analysis should be done when looking for comments !!!
@@ -982,7 +982,7 @@ package body Language is
 
    function Parse_Reference_Backwards
      (Lang              : access Language_Root;
-      Buffer            : Glib.UTF8_String;
+      Buffer            : UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0) return String
    is

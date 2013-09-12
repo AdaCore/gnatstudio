@@ -17,7 +17,7 @@
 
 with GNAT.Strings;    use GNAT.Strings;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
-with Glib.Convert;
+with UTF8_Utils;      use UTF8_Utils;
 
 package body Language_Utils is
    Me : constant Trace_Handle := Create ("LANGUAGES");
@@ -38,7 +38,7 @@ package body Language_Utils is
       if Buffer /= null then
          --  ??? The call to Locale_To_UTF8 is not optimal
          Parse_Constructs
-           (Lang, Glib.Convert.Locale_To_UTF8 (Buffer.all), Result);
+           (Lang, Locale_To_UTF8 (Buffer.all), Result);
          Free (Buffer);
       end if;
 

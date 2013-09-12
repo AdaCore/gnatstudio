@@ -17,10 +17,10 @@
 
 with GNAT.Strings; use GNAT.Strings;
 with String_Utils; use String_Utils;
-with Glib.Unicode; use Glib.Unicode;
 with Indent_Stack;
 with Generic_Stack;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with UTF8_Utils;     use UTF8_Utils;
 
 package body C_Analyzer is
 
@@ -1321,8 +1321,7 @@ package body C_Analyzer is
 
          while Index < Buffer'Last
            and then Is_Entity_Letter
-             (Wide_Wide_Character'Val
-                (UTF8_Get_Char (Buffer (Index .. Buffer'Last))))
+                (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
          loop
             Prev := Index;
             Next_Char;

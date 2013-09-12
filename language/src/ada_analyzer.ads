@@ -20,7 +20,7 @@
 --  Typical use of this package includes: source highlighting, block folding,
 --  source reformatting, ...
 
-with Glib;
+with Basic_Types;   use Basic_Types;
 with Language;      use Language;
 with Case_Handling; use Case_Handling;
 with GNATCOLL.Symbols;
@@ -32,7 +32,7 @@ package Ada_Analyzer is
    ----------------------
 
    procedure Analyze_Ada_Source
-     (Buffer              : Glib.UTF8_String;
+     (Buffer              : UTF8_String;
       Symbols             : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params       : Indent_Parameters;
       Format              : Boolean               := True;

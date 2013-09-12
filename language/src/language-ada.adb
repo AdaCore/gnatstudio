@@ -15,10 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
+
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with Glib.Unicode;              use Glib.Unicode;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
@@ -26,6 +27,7 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Ada_Analyzer;              use Ada_Analyzer;
 with String_Utils;              use String_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body Language.Ada is
 
@@ -553,7 +555,7 @@ package body Language.Ada is
 
    overriding procedure Parse_Constructs
      (Lang   : access Ada_Language;
-      Buffer : Glib.UTF8_String;
+      Buffer : UTF8_String;
       Result : out Construct_List)
    is
       Constructs : aliased Construct_List;
@@ -793,7 +795,7 @@ package body Language.Ada is
 
    overriding procedure Parse_Tokens_Backwards
      (Lang         : access Ada_Language;
-      Buffer       : Glib.UTF8_String;
+      Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type := 0;
       Callback     : access procedure (Token : Token_Record;
@@ -842,7 +844,7 @@ package body Language.Ada is
 
                         exit;
                      else
-                        Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+                        Offset := UTF8_Prev_Char (Buffer, Offset);
                      end if;
                   else
                      Close_Found := True;
@@ -857,7 +859,7 @@ package body Language.Ada is
                   null;
             end case;
 
-            Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+            Offset := UTF8_Prev_Char (Buffer, Offset);
          end loop;
       end Skip_String;
 
@@ -873,7 +875,7 @@ package body Language.Ada is
       begin
          Incomplete_String := False;
 
-         Local_Offset := UTF8_Find_Prev_Char (Buffer, Local_Offset);
+         Local_Offset := UTF8_Prev_Char (Buffer, Local_Offset);
 
          while Local_Offset > Offset_Limit loop
             case Buffer (Local_Offset) is
@@ -881,13 +883,13 @@ package body Language.Ada is
                   Skip_String (Local_Offset, Incomplete_String);
 
                when ''' =>
-                  Local_Offset := UTF8_Find_Prev_Char
+                  Local_Offset := UTF8_Prev_Char
                     (Buffer, Local_Offset);
-                  Local_Offset := UTF8_Find_Prev_Char
+                  Local_Offset := UTF8_Prev_Char
                     (Buffer, Local_Offset);
 
                when '-' =>
-                  Prev_Offset := UTF8_Find_Prev_Char
+                  Prev_Offset := UTF8_Prev_Char
                     (Buffer, Local_Offset);
 
                   if Prev_Offset > Offset_Limit
@@ -908,7 +910,7 @@ package body Language.Ada is
                   null;
             end case;
 
-            Local_Offset := UTF8_Find_Prev_Char
+            Local_Offset := UTF8_Prev_Char
               (Buffer, Local_Offset);
          end loop;
       end Skip_Comment_Line;
@@ -1007,7 +1009,7 @@ package body Language.Ada is
 
       declare
          Prev_Offset : constant Integer :=
-                         UTF8_Find_Prev_Char (Buffer, Offset);
+                         UTF8_Prev_Char (Buffer, Offset);
          Next_Offset : Integer;
       begin
          if Prev_Offset > Buffer'First then
@@ -1095,9 +1097,9 @@ package body Language.Ada is
                   Local_Offset : Integer := Offset;
                begin
                   Local_Offset :=
-                    UTF8_Find_Prev_Char (Buffer, Local_Offset);
+                    UTF8_Prev_Char (Buffer, Local_Offset);
 
-                  if not Is_Alnum
+                  if not Is_Alphanumeric
                     (UTF8_Get_Char (Buffer (Local_Offset .. Offset)))
                   then
                      Token.Tok_Type := No_Token;
@@ -1105,7 +1107,7 @@ package body Language.Ada is
 
                   if Local_Offset > Offset_Limit then
                      Local_Offset :=
-                       UTF8_Find_Prev_Char (Buffer, Local_Offset);
+                       UTF8_Prev_Char (Buffer, Local_Offset);
                   end if;
 
                   if Local_Offset > Offset_Limit then
@@ -1274,7 +1276,7 @@ package body Language.Ada is
 
                if (Next_Ind in Buffer'Range
                    and then
-                     (Is_Alnum
+                     (Is_Alphanumeric
                         (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))))
                  or else
                    (Next_Ind not in Buffer'Range
@@ -1293,12 +1295,12 @@ package body Language.Ada is
                end if;
          end case;
 
-         Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+         Offset := UTF8_Prev_Char (Buffer, Offset);
       end loop;
 
       if Stop then
          --  If we stopped before doing the prev offset
-         Offset := UTF8_Find_Prev_Char (Buffer, Offset);
+         Offset := UTF8_Prev_Char (Buffer, Offset);
       end if;
 
       Handle_Token (Token, Offset, Stop);
@@ -1310,7 +1312,7 @@ package body Language.Ada is
 
    overriding function Parse_Reference_Backwards
      (Lang         : access Ada_Language;
-      Buffer       : Glib.UTF8_String;
+      Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type := 0) return String
    is

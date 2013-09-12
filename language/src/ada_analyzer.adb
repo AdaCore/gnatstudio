@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Glib.Unicode;            use Glib.Unicode;
 with GNAT.Regpat;             use GNAT.Regpat;
 
 with Generic_Stack;
@@ -26,6 +25,7 @@ with String_Utils;            use String_Utils;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with UTF8_Utils; use UTF8_Utils;
 
 package body Ada_Analyzer is
 
@@ -347,24 +347,6 @@ package body Ada_Analyzer is
 
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package
-
-   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean;
-   --  Temporary function, should be removed after get rid of Glib
-
-   ----------------------
-   -- Is_Entity_Letter --
-   ----------------------
-
-   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean is
-      use Glib;
-   begin
-      --  ??? Work around Constraint_Error when Char = #FFFFFFFF
-      if Char = Glib.Gunichar'Last then
-         return False;
-      else
-         return Is_Entity_Letter (Wide_Wide_Character'Val (Char));
-      end if;
-   end Is_Entity_Letter;
 
    ---------------
    -- Get_Token --
@@ -695,7 +677,7 @@ package body Ada_Analyzer is
    --  Regular expression for SPARK keywords
 
    procedure Analyze_Ada_Source
-     (Buffer              : Glib.UTF8_String;
+     (Buffer              : UTF8_String;
       Symbols             : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params       : Indent_Parameters;
       Format              : Boolean               := True;
@@ -706,7 +688,7 @@ package body Ada_Analyzer is
       Indent_Offset       : Natural               := 0;
       Case_Exceptions     : Casing_Exceptions     := No_Casing_Exception;
       Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null)
+      return Boolean := null)
    is
       ---------------
       -- Constants --
@@ -968,7 +950,7 @@ package body Ada_Analyzer is
 
       function Prev_Char (P : Natural) return Natural is
       begin
-         return UTF8_Find_Prev_Char (Buffer, P);
+         return UTF8_Prev_Char (Buffer, P);
       end Prev_Char;
 
       ---------------
