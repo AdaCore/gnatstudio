@@ -22,7 +22,6 @@ with Unicode.CES;           use Unicode.CES;
 with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Glib;                  use Glib;
 with Input_Sources;         use Input_Sources;
 with Input_Sources.Mmap;    use Input_Sources.Mmap;
 with Input_Sources.Strings; use Input_Sources.Strings;
@@ -302,7 +301,7 @@ package body XML_Readers is
    ------------------
 
    procedure Parse_Buffer
-     (Buffer     : Glib.UTF8_String;
+     (Buffer     : XML_Utils.UTF8_String;
       Tree       : out XML_Utils.Node_Ptr;
       Error      : out Unicode.CES.Byte_Sequence_Access;
       From_File  : String := "<input>";
