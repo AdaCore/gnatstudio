@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Decode_UTF8_String;
 with GNATCOLL.Iconv;       use GNATCOLL.Iconv;
 with Config;
 
@@ -138,6 +139,19 @@ package body UTF8_Utils is
       return Iconv (Locale_To_UTF_8, Input);
    end Locale_To_UTF8;
 
+   -------------------
+   -- UTF8_Get_Char --
+   -------------------
+
+   function UTF8_Get_Char (Input : UTF8_String) return Wide_Wide_Character is
+      Next   : Positive := Input'First;
+      Result : Wide_Wide_Character;
+   begin
+      GNAT.Decode_UTF8_String.Decode_Wide_Wide_Character
+        (Input, Next, Result);
+      return Result;
+   end UTF8_Get_Char;
+
    --------------------
    -- UTF8_Next_Char --
    --------------------
@@ -162,6 +176,24 @@ package body UTF8_Utils is
             return Index + 1;
       end case;
    end UTF8_Next_Char;
+
+   --------------------
+   -- UTF8_Prev_Char --
+   --------------------
+
+   function UTF8_Prev_Char
+     (Str : UTF8_String; Index : Positive) return Natural
+   is
+      Result : Natural := Index - 1;
+   begin
+      while Result in Str'Range and then
+        Str (Result) in Character'Val (16#80#) .. Character'Val (16#BF#)
+      loop
+         Result := Result - 1;
+      end loop;
+
+      return Result;
+   end UTF8_Prev_Char;
 
    ---------------------
    -- Latin_1_To_UTF8 --

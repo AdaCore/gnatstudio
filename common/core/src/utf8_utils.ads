@@ -67,6 +67,15 @@ package UTF8_Utils is
    --  Index is set to a value greater than Str'Last if there is no more
    --  character.
 
+   function UTF8_Prev_Char
+     (Str : UTF8_String; Index : Positive) return Natural;
+   --  Find the start of the previous UTF8 character before the Index-th byte.
+   --  Index has to be on the start of a character.
+   --  Index is set to 0 if there is no more character.
+
+   function UTF8_Get_Char (Input : UTF8_String) return Wide_Wide_Character;
+   --  Return first character of UTF8_String
+
    function Latin_1_To_UTF8 (Input : String) return UTF8_String;
    --  Convert Latin_1 string to UTF-8.
 
