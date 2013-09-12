@@ -3717,7 +3717,7 @@ package body Src_Editor_Buffer is
               (Prop, File, Strip_Lines_Property_Name, Found);
 
             if Found then
-               Buffer.Strip_Trailing_Blanks :=
+               Buffer.Strip_Trailing_Lines :=
                  Boolean'Value (Prop.Value.all);
                return;
             end if;
