@@ -1,55 +1,77 @@
-*******************************
-Description of the Main Windows
-*******************************
+.. index:: windows; main
 
-.. index:: main windows
+******************************
+Description of the Main Window
+******************************
 
+The GNAT Programming Studio has one main window, where most
+of your work will be performed. However, it is also very flexible
+in how it lets you organize your desktop, which will be discussed
+in a later section (:ref:`Multiple_Document_Interface`).
+
+But there are also various other windows that might pop up at
+various times, and this section documents them.
+
+.. index:: welcome dialog
+.. index:: windows; welcome dialog
 .. _The_Welcome_Dialog:
 
 The Welcome Dialog
 ==================
 
-.. index:: welcome dialog
-.. index:: screen shot
-.. image:: welcome.jpg
+.. image:: welcome.png
+.. index:: command line; -P
 
-When starting GPS, a welcome dialog is displayed by default, giving the
-following choices:
+When it starts, GPS is looking for a project file to load, so that it knows
+where to find the sources of your project. This project is in general specified
+on the command line (via a :command:`-P` switch). Alternatively, if the current
+directory only contains one project file, GPS will select it automatically.
+Finally, if you specify the name of a source file to edit, GPS will load
+a default project and start the editing immediately.
+if no project file can be found, GPS displays a welcome dialog, which gives you
+the following choices:
 
-*Create new project from template*
-  If you select this option and then click the `OK` button, GPS will
+:guilabel:`Create new project from template`
+  If you select this option and then click the :guilabel:`OK` button, GPS will
   launch an assistant to create a project using one of the predefined project
-  templates.
+  templates. This makes it easy to create GtkAda-based applications, or
+  applications using the Ada Web Server, for instance.
 
-*Start with default project in directory*
-  .. index:: project
+.. index:: project; default
 
-  If you select this option and click on the `OK` button, GPS will
+:guilabel:`Start with default project in directory`
+
+  If you select this option and click on the :guilabel:`OK` button, GPS will
   first look for a project called :file:`default.gpr` in the current directory
-  and load it if found. Otherwise, it will copy in
-  the current directory the default project found under
-  :file:`<prefix>/share/gps/default.gpr` and load it.
-  GPS will remove this copy when exiting or loading another project, if the
-  copy has not been modified during the session.
+  and load it if found. Otherwise, it will copy in the current directory the
+  default project found under :file:`<prefix>/share/gps/default.gpr` and load
+  it.  GPS will remove this temporary copy when exiting or loading another
+  project, if the copy has not been modified during the session.
+
+  The default project will contain all the Ada source files from the given
+  directory (assuming they use the default GNAT naming scheme :file:`.ads`
+  and :file:`.adb`).
 
   If the current directory is not writable, GPS will instead load directly
-  `<prefix>/share/gps/readonly.gpr`. In this case, GPS will work in a
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS will work in a
   degraded mode, where some capabilities will not work (such as building and
-  source navigation).
+  source navigation). This project does not contain any sources.
 
-*Create new project with wizard*
-  .. index:: project
+.. index:: project; wizard
 
-  Selecting this option and clicking on the `OK` button will start a
+:guilabel:`Create new project with wizard`
+
+  Selecting this option and clicking on the :guilabel:`OK` button will start a
   wizard allowing you to specify most of the properties for a new project. Once
   the project is created, GPS will save it and load it automatically.
-  See :ref:`The_Project_Wizard` for more details on the project wizard.
+  See :ref:`The_Project_Wizard` for more details.
 
-  Several kinds of wizard are available. Depending on the kind of project,
-  you will get asked different type of information. In the end, GPS will create
-  one or more project files, and automatically load them.
+  There are several kinds of wizards, ranging from creating a single project,
+  to creating a set of project that attempt to adapt to an existing directory
+  layout. The list of pages in the wizard will depend on the kind of project
+  you want to create.
 
-  One of the wizard, "From existing Ada sources", will try and import a set of
+  One of the wizard, :guilabel:`Project Tree`, will try and import a set of
   sources and object files, and attempt to create one or more project files so
   that building your application through these project files will put the
   objects in the same directory they are currently in. If you have not compiled
@@ -59,374 +81,194 @@ following choices:
   the latter is only authorized in a single project file, not across various
   project files.
 
-*Open existing project*
-  .. index:: project
+.. index:: project; load existing project
 
-  You can select an existing project by clicking on the `Browse` button,
-  or by using a previously loaded project listed in the combo box. When a
-  project is selected, clicking on the `OK` button will load this
+:guilabel:`Open existing project`
+
+  You can select an existing project by clicking on the :guilabel:`Browse`
+  button, or by using a previously loaded project listed in the combo box. When
+  a project is selected, click on the :guilabel:`OK` button to load this
   project and open the main window.
 
-*Always show this dialog when GPS starts*
-  If unset, the welcome dialog won't be shown in future sessions.
-  In this case, GPS will behave as follows: it will first look for a
-  `-P` switch on the command line, and load the corresponding project if
-  present.
-  Then, it will look for a project file in the current directory and will
-  load the first project file found.
+:guilabel:`Always show this dialog when GPS starts`
 
-  If no project file can be found in the current directory, GPS will start
-  with the default project.
+  If unset, the welcome dialog won't be shown in future sessions.  In this
+  case, GPS will behave as follows: it will first look for a :command:`-P`
+  switch on the command line, and load the corresponding project if present;
+  otherwise, it will look for a project file in the current directory and will
+  load it if there is only of them; if no project file was loaded, GPS will
+  start with the default project, as if you had selected :guilabel:`Start with
+  default project in directory` in the welcome dialog.
 
-  To reset this property, go to the menu `Edit->Preferences`.
-  .. index:: preferences
+  .. index:: preferences; display welcome window
 
-  :ref:`The_Preferences_Dialog`.
+  To reset this property, go to the menu :menuselection:`Edit --> Preferences`.
 
-*Quit*
+:guilabel:`Quit`
   If you click on this button, GPS will terminate immediately.
 
-.. index:: command line
-
-When you specify a -P switch on the command line, or if there is only one
-project file in the current directory, GPS will start immediately with
-the project file specified, instead of displaying the welcome dialog.
-
-In addition, if you specify source files on the command line, GPS will also
-start immediately, using the default project if no project is specified.
-
-By default, files specified on the command line are taken as is and can
-be absolute or relative pathnames. In addition, if you prepend a filename
-with the `=` character, then GPS will look for the file in the source
-search path of the project.
-
+.. index:: tip of the day
+.. index:: windows; tip of the day
 .. _The_Tip_of_the_Day:
 
 The Tip of the Day
 ==================
 
-.. index:: tip of the day
+.. image:: tip-of-the-day.png
 
-This dialog displays short tips on how to make the most efficient use of
-GPS. You can click on the `Previous` and `Next` buttons to access
-all tips, and close the dialog by either clicking on the `Close` button
-or pressing the :kbd:`ESC` key.
+This dialog displays short tips on how to make the most efficient use of the
+GNAT Programming Studio. You can click on the :guilabel:`Previous` and
+:guilabel:`Next` buttons to access all tips, and close the dialog by either
+clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
 
-You can also disable this dialog by unchecking the `Display Tip of the Day on startup` check box. If you would like to reenable this dialog, you
-can go to the `Edit->Preferences` dialog.
+.. index:: preferences; tip of the day
 
-.. index:: preferences
-.. index:: screen shot
+You can also disable this dialog by unchecking the :guilabel:`Display Tip of
+the Day on startup` check box. If you would like to reenable this dialog, you
+can go to the :menuselection:`Edit --> Preferences` dialog.
 
-:ref:`The_Preferences_Dialog`.
 
-.. image:: tip-of-the-day.jpg
-
+.. index:: menu bar
+.. index:: windows; menu bar
 .. _The_Menu_Bar:
 
 The Menu Bar
 ============
 
-.. index:: menu bar
+.. image:: menubar.png
 
-This is a standard menu bar that gives access to all the global
-functionalities of GPS. It is usually easier to access a given functionality
-using the various contextual menus provided throughout GPS: these menus
-give direct access to the most relevant actions given the current context
-(e.g. a project, a directory, a file, an entity, ...). Contextual menus
-pop up when the right mouse button is clicked or when using the special
-:kbd:`open contextual menu` key on most PC keyboards.
+This is a standard menu bar that gives access to all the global functionalities
+of GPS. It is usually easier to access a given functionality using the various
+contextual menus provided throughout GPS: these menus give direct access to the
+most relevant actions given the current context (e.g. a project, a directory, a
+file, an entity, ...). Contextual menus pop up when the right mouse button is
+clicked or when using the special :kbd:`open contextual menu` key on most PC
+keyboards.
 
 The menu bar gives access to the following items:
 
-*File*
-  :ref:`The_File_Menu`.
+* :menuselection:`File` (:ref:`The_File_Menu`)
 
-*Edit*
-  :ref:`The_Edit_Menu`.
+* :menuselection:`Edit` (:ref:`The_Edit_Menu`)
 
-*Navigate*
-  :ref:`The_Navigate_Menu`.
+* :menuselection:`Navigate` (:ref:`The_Navigate_Menu`)
 
-*VCS*
-  :ref:`The_VCS_Menu`.
+* :menuselection:`VCS` (:ref:`The_VCS_Menu`)
 
-*Project*
-  :ref:`The_Project_Menu`.
+* :menuselection:`Project` (:ref:`The_Project_Menu`)
 
-*Build*
-  :ref:`The_Build_Menu`.
+* :menuselection:`Build` (:ref:`The_Build_Menu`)
 
-*Debug*
-  :ref:`The_Debug_Menu`.
+* :menuselection:`Debug` (:ref:`The_Debug_Menu`)
 
-*Tools*
-  :ref:`The_Tools_Menu`.
+* :menuselection:`Tools` (:ref:`The_Tools_Menu`)
 
-*SPARK*
+* :menuselection:`SPARK`
+
   If the SPARK toolset is installed on your system and available on your
   PATH, then this menu is available. See
-  `Help->SPARK->Reference->Using SPARK with GPS` for more details.
+  :menuselection:`Help-->SPARK-->Reference-->Using SPARK with GPS`
+  for more details.
 
-*CodePeer*
+* :menuselection:`CodePeer`
+
   If the CodePeer toolset is installed on your system and available on your
   PATH, then this menu is available. See your CodePeer documentation for more
   details.
 
-*Window*
-  :ref:`Multiple_Document_Interface`.
+* :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
 
-*Help*
-  :ref:`The_Help_Menu`.
+* :menuselection:`Help` (:ref:`The_Help_Menu`)
 
+.. index:: tool bar
 .. _The_Tool_Bar:
 
 The Tool Bar
 ============
 
-.. index:: tool bar
+.. image:: toolbar.png
 
 The tool bar provides shortcuts via buttons to some typical actions:
-creating a new file, opening a file, saving the current file;
-undo/redo last editing; go to previous/next location;
 
-.. index:: build
+* creating a new file
+* opening an existing file (see laso the omni-search on the right of the bar)
+* saving the current file
+* undo / redo last editing
+* go to previous or next saved location
+* multiple customizable buttons to build, clean or run your project
+  :index:`build; toolbar buttons`
+* when a debugger is started, multiple buttons to stop and continue the
+  debugger, step to the next instruction,...
+  :index:`debugger; toolbar buttons`
 
-select build mode, compile file, build project, clean project;
+.. index:: progress bar
+.. index:: tool bar; progress bar
 
-.. index:: debugger
+When GPS is performing background actions, like loading the cross-reference
+information, compiling or indeed all actions involving external processes,
+a progress bar is displayed in the toolbar. This shows when the current
+task(s) will be completed. A small :guilabel:`interrupt` button can be clicked
+on to interrupt all background tasks. Clicking on the progress bar will
+open the :guilabel:`Tasks` view (:ref:`The_Task_Manager`).
 
-start/continue the debugging session, step/next execution, finish
-current procedure.
+.. index:: omni-search
+.. index:: seealso: search; omni-search
 
-The icon on the far right of the tool bar will be animated to indicate that an
-action (e.g. a build or a search) is going on in the background.
+The final item in the toolbar is the omni-search (:ref:`omni_search`). This is
+a search field that will search the text you type in various contexts in GPS,
+like filenames (for convenient access to the source files), the entities
+referenced in your application, your code,...
 
 .. _The_Work_Space:
 
-The Work Space
-==============
+The Workspace
+=============
 
-.. index:: work space
-.. index:: MDI
+.. index:: windows; workspace
+.. index:: see: desktop; Multiple Document Interface
+.. index:: see: MDI; Multiple Document Interface
 .. index:: Multiple Document Interface
 
 The whole work space is based on a multiple document interface,
-:ref:`Multiple_Document_Interface`.
+:ref:`Multiple_Document_Interface`. It can contain any number of
+windows, the most important of which are probably the editors. However,
+GPS also provides a large number of views that can be added to the
+workspace. The following sections will list them all.
 
-The Project View
-================
+Common features of the views
+----------------------------
 
-.. index:: project view
-.. index:: project view
-.. index:: project
+.. index:: windows; local toolbar
 
-The project view provides a representation of the various components of your
-project hierarchy, as listed below.
-It is displayed by default on the left side of the main window, and can
-be selected by using the `Project->Project View` or
-`Tools->Views->Project` menu items.
+Some of the view have their own local toolbar that contains shortcuts
+to the most often used features of the view.
 
-.. index:: drag-n-drop
+.. index:: windows; local settings menu
 
-Under Windows, it is possible to drop files (coming e.g. from the Explorer)
-in the project view with the following behavior: a project file dropped
-will be loaded; any other file will be opened in a new source editor.
+To the right of these local toolbars, there is often a button to open
+a local settings menu. This menu can contain more actions that can be
+performed in this view, or various configuration settings that affect
+the behavior or the display of the view.
 
-.. index:: screen shot
-.. image:: project-view.jpg
-.. index:: interactive search
+.. index:: menu; Tools
 
-The project view, as well as the file and outline view provide an
-interactive search capability allowing you to quickly
-search in the information currently displayed. The default key
-to start an interactive search is :kbd:`control-f`.
-
-.. _Interactive_Search:
-
-This will open a small window
-at the bottom of the view where you can interactively type names.
-The first matching name in the tree will be selected while you type it.
-You can then also use the :kbd:`up` and :kbd:`down` keys to navigate through
-all the items matching the current text.
-
-The various components that are displayed are:
-
-*projects*
-  .. index:: project view
-
-  All the sources you are working with are put under
-  control of projects. These projects are a way to store the switches to
-  use for the various tools, as well as a number of other properties.
-
-  They can be organized into a project hierarchy, where a root project
-  can import other projects, with their own set of sources.
-
-  Initially, a default project is created, that includes all the sources
-  in the current directory.
-
-  The `Project View` displays this project hierarchy: the top node
-  is the root project of your application (generally, this is where the
-  source file that contains the main subprogram will be located). Then a node
-  is displayed for each imported project, and recursively for their own imported
-  projects.
-
-  A given project might appear multiple times in the
-  `Project View`, if it is imported by several other projects.
-
-  There exists a second display for this project view, which lists all projects
-  with no hierarchy: all projects appear only once in the view, at the top
-  level. This display might be useful for deep project hierarchies, to make it
-  easier to find projects in the project view.
-
-  .. index:: Show flat view
-
-  This display is activated through the contextual menu entry
-  `Show flat view`, which acts as a switch between the two displays.
-
-  A special icon with a pen mark is displayed if the project
-  was modified, but not saved yet. You can choose to save it at any time
-  by right-clicking on it. GPS will remind you to save it before any
-  compilation, or save it automatically, if the corresponding preference
-  is saved.
-
-*directories*
-
-  .. index:: directory
-  .. index:: Windows
-
-  The files inside a project can be organized into several physical
-  directories on the disk. These directories are displayed under each
-  project node in the `Project View`
-
-  .. index:: Show absolute paths
-
-  You can chose whether you want to see the absolute path names for the
-  directories or paths relative to the location of the project. This is done
-  through the `Show absolute paths` contextual menu.
-
-  Special nodes are created for object and executables directories. No
-  files are shown for these.
-
-  .. index:: Show hidden directories
-
-  The contextual menu entry `Show hidden directories` can be used to filter
-  the directories considered as hidden. This can be used to not display the
-  version control directories like :file:`CVS` or :file:`.svn` for example.
-
-*files*
-
-  .. index:: file
-  .. index:: file view
-
-  The source files themselves are stored in the directories, and
-  displayed under the corresponding nodes. Note that
-  only the source files that actually belong to the
-  project (i.e. are written in a language supported by that project and
-  follow its naming scheme) are actually visible.
-  For more information on supported languages, :ref:`Supported_Languages`.
-
-  A given file might appear multiple times in the `Project View`,
-  if the project it belongs to is imported by several other projects.
-
-  If you left click on a file and keep the button pressed, you can drop it
-  anywhere in GPS to open an editor at that location.
-
-*entities*
-
-  .. index:: entity
-
-  If you open the node for a source file, the file is parsed by one of the
-  fast parsers integrated in GPS so that all entities declared in
-  the project can be shown. These entities are grouped into various
-  categories, which depend on the language. Typical categories include
-  subprograms, packages, types, variables, tasks, ...
-
-Double-clicking on a file, or simple clicking on any entity will open
-a source editor and display respectively the first line in this file
-or the line on which the entity is defined.
-
-You can also drag a file anywhere into GPS. This will open a new editor
-if the file is not already edited, or move the existing editor otherwise.
-If you press :kbd:`shift` at the same time, and the file is already edited,
-a new view of the existing editor is created instead.
-
-.. index:: search
-.. index:: find
-
-If you open the search dialog through the `Navigate->Find or Replace...`
-menu, you have the possibility to search for anything in the project view,
-either a file or an entity. Note that searching for an entity can be slow
-if you have lots of files, and/or big files.
-
-.. index:: view
-.. index:: locate in project view
-
-A contextual menu, named `Locate in Project View`, is also provided when
-inside a source editor. This will automatically search for the first entry for
-this file in the project view. This contextual menu is also available in other
-modules, e.g. when selecting a file in the `Dependency Browser`.
-
-The configuration variables
----------------------------
-
-.. index:: configuration variable
-.. index:: project variable
-.. index:: variable
-.. index:: GNAT
-.. index:: project file
-.. index:: project
-
-As described in the GNAT User's Guide, the project files can be
-configured through external variables (typically environment
-variables). This means that e.g. the exact list of source files, or the
-exact switches to use to compile the application can be changed when
-the value of these external variables is changed.
-
-GPS provides a simple access to these variables, through a window
-called the `Scenario View`. These variables are called
-`Configuration Variables`, since they provide various scenarios for
-the same set of project files.
-
-.. index:: screen shot
-.. image:: scenario-view.jpg
-
-A combo box is displayed in this area for each environment
-variable the project depends on. The current value of the variable can
-be set simply by selecting it from the pop-down window that appears
-when you click on the arrow on the right of the variable name
-
-.. index:: project view
-
-New variables can be added through the contextual menu
-`Project->Add Configuration Variable` in the `Project View`.
-The list of possible values for a variable can be changed by clicking on the
-button on the left of the variable's name.
-
-Whenever you change the value of one of the variables, the project is
-automatically recomputed, and the list of source files or directories
-is changed dynamically to reflect the new status of the
-project. Starting a new compilation at that point will use the new
-switches, and all the aspects of GPS are immediately affected
-according to the new setup.
+Some views are part of the default desktop, and thus are visible by default.
+The other views can always be opened through one of the submenus of the
+:menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
 
 Icons for source language entities
-----------------------------------
-
-.. index:: icons for source language entities
+__________________________________
 
 Entities in the source code are presented with representative icons within the
-various GPS views (the *Outline*, *Project*, and *Entity* views, for example).
-These icons indicate both the language categories of the entities, such as
-packages and methods, as well as compile-time visibility.  In addition, the
-icons distinguish entity declarations from other entities.  The same icons are
-used for all programming languages supported by the viewers, with
+various GPS views (the :guilabel:`Outline` and :guilabel:`Project` views, for
+example).  These icons indicate both the language categories of the entities,
+such as packages and methods, as well as compile-time visibility.  In addition,
+the icons distinguish entity declarations from other entities.  The same icons
+are used for all programming languages supported by the viewers, with
 language-specific interpretations for both compile-time visibility and
 recognizing declarations.
 
-There are five language categories used for all supported languages: *package*,
-*subprogram*, *type*, *variable*, and *generic*.  The icons corresponding to
-these language categories are as follows.
+There are five language categories used for all supported languages:
 
 * The *package* category's icon is a square.
 
@@ -447,7 +289,6 @@ these language categories are as follows.
 * The *generic* category's  icon is a diamond.
 
   .. image:: diamond_x.png
-
 
 These basic icons are enhanced with decorators, when appropriate, to indicate
 compile-time visibility constraints and to distinguish declarations from
@@ -489,33 +330,220 @@ Two triangle icons will therefore appear for the two occurrences of the type
 name, one with the additional decorator indicating the 'private' compile-time
 visibility.
 
+.. index:: project view
+.. index:: windows; project view
+
+The :guilabel:`Project` view
+----------------------------
+
+.. image:: project-view.png
+.. image:: project-view-flat.png
+
+The project view provides a representation of the various components of your
+project, as listed below.  It is displayed by default on the left side of the
+workspace, and can be selected by using the :menuselection:`Project-->Project
+View` or :menuselection:`Tools-->Views-->Project` menu items.
+
+.. index:: drag-and-drop
+
+On Windows, it is possible to drop files (coming for instance from the Windows
+Explorer) directly in the project view. If you drop a project file, it will be
+loaded by GPS and replace the current project; if you drop a source file, it is
+opened in a new editor.
+
+.. index:: search; interactive search in trees
+.. _Interactive_Search:
+
+The project view, as well as the file and outline view provide an interactive
+search capability allowing you to quickly search in the information currently
+displayed. Just start typing the text to search when the view has the focus.
+Note however, that the contents of the :guilabel:`Project` view is computed
+lazily, so not all files are known to this search capability.
+
+This will open a small window at the bottom of the view where you can
+interactively type names.  The first matching name in the tree will be selected
+while you type it.  You can then also use the :kbd:`up` and :kbd:`down` keys to
+navigate through all the items matching the current text.
+
+The various components that are displayed are:
+
+*projects*
+
+  All the sources you are working with are put under control of projects. These
+  projects are a way to store the switches to use for the various tools, as
+  well as a number of other properties like the naming schemes for the sources.
+  They can be organized into a project hierarchy, where a root project can
+  import other projects, each with their own set of sources (see :ref:`The_Welcome_Dialog`
+  on how projects are loaded in GPS).
+
+  The :guilabel:`Project` view displays this project hierarchy: the top node is
+  the root project of your application (generally, this is where the source
+  file that contains the main subprogram will be located). Then a node is
+  displayed for each imported project, and recursively for their own imported
+  projects.
+
+  A given project might appear multiple times in the view, if it is imported by
+  several other projects.
+
+  A special icon with a pen mark is displayed if the project was modified, but
+  not saved yet. You can choose to save it at any time by right-clicking on it.
+  GPS will remind you to save it before any compilation, or save it
+  automatically, if the corresponding preference is saved.
+
+  There exists a second display for this project view, which lists all projects
+  with no hierarchy: all projects appear only once in the view, at the top
+  level. This display might be useful for deep project hierarchies, to make it
+  easier to find projects in the project view. This display is activated
+  through the local settings menu to the right of the :guilabel:`Project` view
+  toolbar.
+
+  .. index:: project view; flat view
+
+*directories*
+
+  The files in a project are organized into several physical
+  directories on the disk. These directories are displayed under each
+  project node in the :guilabel:`Project` view
+
+  .. index:: project view; absolute paths
+
+  You can chose whether you want to see the absolute path names for the
+  directories or paths relative to the location of the project. This is done
+  using the local settings menu :guilabel:`Show absolute paths` of the
+  :guilabel:`Project` view. In all cases, the tooltip that is displayed when
+  the mouse hovers a file or directory will show the full path.
+
+  Special nodes are created for object and executables directories. No
+  files are shown for these.
+
+  .. index:: Show hidden directories
+
+  The local setting :guilabel:`Show hidden directories` can be used to filter
+  the directories considered as hidden. This can be used to hide the version
+  control directories like :file:`CVS` or :file:`.svn` for example.
+
+*files*
+
+  The source files themselves are contained in the directories, and displayed
+  under the corresponding nodes. Note that only the source files that actually
+  belong to the project (i.e. are written in a language supported by that
+  project and that follow its naming scheme) are actually visible.  For more
+  information on supported languages, see :ref:`Supported_Languages`.
+
+  A given file might appear multiple times in the :guilabel:`Project` view,
+  if the project it belongs to is imported by several other projects.
+
+  You can also drag a file anywhere into GPS. This will open a new editor if
+  the file is not already edited, or move the existing editor otherwise.  If
+  you press :kbd:`shift` at the same time, and the file is already edited, a
+  new view of the existing editor is created instead.
+
+*entities*
+
+  If you open the node for a source file, the file is parsed by one of the
+  fast parsers integrated in GPS so that all entities declared in
+  the file can be shown. These entities are grouped into various
+  categories, which depend on the language. Typical categories include
+  subprograms, packages, types, variables, tasks, ...
+
+  Double-clicking on a file, or simple clicking on any entity will open a
+  source editor and display respectively the first line in this file or the
+  line on which the entity is defined.
+
+.. index:: search; project view
+
+If you open the search dialog through the :menuselection:`Navigate-->Find or
+Replace...` menu, you have the possibility to search for anything in the
+:guilabel:`Project` view, either a file or an entity. Note that searching for
+an entity can be slow if you have lots of files, and/or big files.
+
+.. index:: locate in project view
+
+A contextual menu, named :guilabel:`Locate in Project View`, is also provided
+in source editors. This will automatically search for the first entry for this
+file in the :guilabel:`Project` view. This contextual menu is also available in
+other modules, e.g. when selecting a file in the :guilabel:`Dependency Browser`.
+
+.. index:: project; reload
+
+The local toolbar of the :guilabel:`Project` view contains a convenient button
+to reload the project. This is useful when you have created or removed source
+files from other applications, and want to let GPS know that there might have
+been changed on the file system that impact the contents of the current
+project.
+
+.. index:: project; scenario variables
+.. index:: windows; scenario view
+.. index:: see: scenario; project; scenario variables
+
+The :guilabel:`Scenario` view
+-----------------------------
+
+.. image:: scenario-view.png
+
+As described in the GNAT User's Guide, the project files can be configured
+through external variables (typically environment variables). This means that
+e.g. the exact list of source files, or the exact switches used to compile the
+application can be changed when the value of these external variables is
+changed.
+
+GPS provides a simple access to these variables, through a window called the
+:guilabel:`Scenario` View. These variables are called `Scenario Variables`, since
+they provide various scenarios for the same set of project files.
+
+Each such variable is listed on its own line, along with its current value. You
+can change the current value by clicking on it, and then selecting the new value
+among the valid ones that pop up. GPS does not remember the current value from
+one session to the next. Instead, the variables' initial values come from the
+project files themselves (where a default value can be specified) or from the
+environment in which GPS is started, just as is the case when spawning command
+line tools like :command:`gprbuild`.
+
+Whenever you change the value of one of the variables, the project is
+automatically recomputed, and the list of source files or directories is
+changed dynamically to reflect the new status of the project. Starting a new
+compilation at that point will use the new switches, and all the aspects of GPS
+are immediately affected according to the new setup.
+
+New scenario variables can be created by selecting the :guilabel:`+` icon
+in the local toolbar of the :guilabel:`Scenario` view. You can also edit the
+list of possible values for a variable by clicking on the :guilabel:`edit`
+button in that toolbar, and of course delete an existing variable by
+clicking on the :guilabel:`-` button.
+
+Note that any of these changes impacts the actual project file (:file:`.gpr`),
+so you might not want to do that if the project file was written manually (the
+impacts can be significant).
+
+.. index:: build; build modes
+
+The first line in the :guilabel:`Scenario` view is the current mode. This
+impacts various aspects of the build, including compiler switches and object
+directories (see :ref:`The_Build_Mode`).
+As for scenario variables, the mode can be changed by clicking on the value
+and selecting a new value in the popup window.
+
+.. index:: windows; files view
 .. _The_File_View:
 
-The File View
-=============
+The :guilabel:`Files` View
+--------------------------
 
-.. index:: File View
+.. image:: file-view.png
 
-In addition to the `Project View`, GPS also provides a
-`File View` through the `Tools->Views->Files` menu.
-
-.. index:: screen shot
-.. image:: file-view.jpg
+In addition to the :guilabel:`Project` view, GPS also provides a
+:guilabel:`Files` view through the :menuselection:`Tools-->Views-->Files` menu.
 
 In this view, directories are displayed exactly as they are organized
-physically on the disk (including Windows drives).
+physically on the disk (including Windows drives).  Each source file can also
+be explored as described in :ref:`The_Project_View`.  Drag and drop of files is
+also possible from the files view, to conveniently open a file.
 
-By default, the `File View` will display all the files that exist on the disk.
-Filters can be set through the contextual menu to only show the files and
-directories that belong to the project hierarchy by using the contextual menu
-`Show files from project only`.
+By default, the :guilabel:`Files` view will display all the files that exist on
+the disk. Filters can be set through the local settings menu to restrict the
+display to the files and directories that belong to the project (use the
+:guilabel:`Show files from project only` menu).
 
-Each source file can also be explored as described in :ref:`The_Project_View`.
-Drag and drop of files is also possible from the files view, to conveniently
-open a file.
-
-The contextual menu also allow you to create, rename and delete files and
-directories. Some of those operations are also available from the Project View.
 
 .. _The_Entity_View:
 

@@ -1,0 +1,28 @@
+@import "sphinxdoc.css";
+
+.menuselection {
+   background-color: #f2f2f2;   /*  same as .kbd */
+   border-bottom: 1px solid #ddd;  /* same as .kbd */
+   color: #333;  /* same as .kbd */
+}
+
+/* same as in release notes */
+h1, h2, h3, h4 {color: #369}
+h2 { margin-top: 60px; margin-bottom: 20px}
+h3 { margin-bottom: 15px }
+
+div.bodywrapper {
+   /* Limit width to make more readable */
+   max-width: 1000px;
+}
+
+div.sphinxsidebar {
+   width: auto;
+   max-width: 400px;
+}
+.toctree-l1 a, .toctree-l2 a, .toctree-l3 a,
+.toctree-l1 a tt, .toctree-l2 a tt, .toctree-l3 a tt
+{
+   color: #369;
+}
+

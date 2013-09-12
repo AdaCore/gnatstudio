@@ -694,12 +694,12 @@ These commands are:
   Open (or raise if it is already open) the project view on the left side
   of the GPS window.
 
+.. index:: ! project; wizard
+
 .. _The_Project_Wizard:
 
 The Project Wizard
 ==================
-
-.. index:: project wizard
 
 The project wizard allows you to create in a few steps a new project file.  It
 has a number of pages, each dedicated to editing a specific set of attributes

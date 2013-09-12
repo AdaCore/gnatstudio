@@ -13,9 +13,8 @@ Environment
 Command Line Options
 ====================
 
-.. index:: command line
-.. index:: options
-.. index:: example
+.. index:: ! command line
+.. index:: see: options; command line
 
 The command line options are::
 
@@ -52,6 +51,11 @@ The command line options are::
 
   `tools_host` corresponds to a remote host's nickname as defined in
   :ref:`Setup_the_remote_servers`.
+
+By default, files specified on the command line are taken as is and can
+be absolute or relative pathnames. In addition, if you prepend a filename
+with the `=` character, then GPS will look for the file in the source
+search path of the project.
 
 .. _Environment_Variables:
 
