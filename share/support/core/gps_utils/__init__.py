@@ -275,6 +275,10 @@ def is_writable (context):
    return context.is_writable
 
 
+def in_editor(context):
+    return context.module_name == "Source_Editor"
+
+
 def in_xml_file(context):
    """Returns True if the focus is in an XML editor"""
    if not hasattr(context, "in_xml_file"):

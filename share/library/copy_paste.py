@@ -33,6 +33,7 @@ Note that line numbers will be aligned to the biggest one, e.g.
 ############################################################################
 
 import GPS
+import gps_utils
 
 GPS.Preference ("Plugins/copy paste/stdmenu").create (
   "Contextual menu", "boolean",
@@ -91,12 +92,9 @@ def on_area (context):
    end = buf.selection_end()
    return start != end
 
-def on_source_editor (context):
-   return context.module_name == "Source_Editor"
-
 def on_source_editor_area (context):
    global grey_out_contextual
-   return on_source_editor (context) and \
+   return gps_utils.in_editor(context) and \
      (grey_out_contextual or on_area (context))
 
 def on_copy (context):
@@ -118,7 +116,7 @@ def on_gps_started (hook):
          ref="Copy", add_before=True)
       GPS.Contextual ("Paste in editor").create \
         (on_activate=on_paste, group=-1, \
-         filter=on_source_editor, label=lambda x : "Paste",
+         filter=gps_utils.in_editor, label=lambda x : "Paste",
          ref="Copy", add_before=False)
       if copy_with_line_numbers_contextual:
          GPS.Contextual ("Copy with line numbers").create \
@@ -126,7 +124,7 @@ def on_gps_started (hook):
             group=-1, visibility_filter=on_area, \
             ref="Cut in editor")
       GPS.Contextual ("sep_group_in_editor").create \
-        (on_activate=None, group=-1, filter=on_source_editor,
+        (on_activate=None, group=-1, filter=gps_utils.in_editor,
          ref="Paste in editor", add_before=False)
       GPS.Contextual ("Copy in editor").create \
         (on_activate=on_copy, filter=on_source_editor_area, group=-1, \

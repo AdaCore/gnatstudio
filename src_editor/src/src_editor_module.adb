@@ -2975,7 +2975,7 @@ package body Src_Editor_Module is
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Menu
         (Kernel, Edit, -"Format Selectio_n", "",
-         null, Command, GDK_Tab,
+         null, Command,
          Ref_Item   => "Insert File...",
          Add_Before => False,
          Filter     => Src_Action_Context and Is_Not_Makefile);

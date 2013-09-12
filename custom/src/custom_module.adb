@@ -57,6 +57,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
@@ -1872,6 +1873,26 @@ package body Custom_Module is
             Action      => String'(Get_Data (Inst, Action_Class)),
             Default_Key => Nth_Arg (Data, 2));
 
+      elsif Command = "execute_if_possible" then
+         Inst := Nth_Arg (Data, 1, Action_Class);
+
+         declare
+            Action : constant Action_Record_Access :=
+              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
+            Context : constant Selection_Context :=
+              Get_Current_Context (Get_Kernel (Data));
+         begin
+            if Context /= No_Context
+              and then Filter_Matches (Action.Filter, Context)
+            then
+               Launch_Foreground_Command
+                 (Get_Kernel (Data), Action.Command, Destroy_On_Exit => False);
+               Set_Return_Value (Data, True);
+            else
+               Set_Return_Value (Data, False);
+            end if;
+         end;
+
       elsif Command = "menu" then
          Name_Parameters (Data, (1 => Path_Cst'Access,
                                  2 => Ref_Cst'Access,
@@ -1965,6 +1986,10 @@ package body Custom_Module is
          Class         => Action_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 4,
+         Handler       => Action_Handler'Access);
+      Register_Command
+        (Kernel, "execute_if_possible",
+         Class         => Action_Class,
          Handler       => Action_Handler'Access);
       Register_Command
         (Kernel, "key",

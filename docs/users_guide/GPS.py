@@ -244,27 +244,34 @@ class Action(GUI):
         can bind keys and menus to it. The function should not require any
         argument, since it will be called with none.
 
-        ``filter`` is either the name of a predefined filter (a string), or a
-        subprogram that receives the context as a parameter, and should return
-        True if the command can be executed within that context. This is used
-        to disable menu items when they are not available.
-
-        ``category`` is the category of the command in the /Edit/Key Shortcuts
-        dialog.
-
-        ``description`` is the description of the command that appears in that
-        dialog. If you are using python, a convenient value is
-        on_activate.__doc__, which avoids duplicating the comment.
-
         The package gps_utils.py provides a somewhat more convenient python
         interface to make function interactives (see gps_utils.interactive).
 
         :param on_activate: A subprogram
+
         :param filter: A string or subprogram
+           This is either the name of a predefined filter (a string), or a
+           subprogram that receives the context as a parameter, and should return
+           True if the command can be executed within that context. This is used
+           to disable menu items when they are not available.
+
         :param category: A string
+           The category of the command in the /Edit/Key Shortcuts dialog.
+
         :param description: A string
+           The description of the command that appears in that
+           dialog. If you are using python, a convenient value is
+           on_activate.__doc__, which avoids duplicating the comment.
         """
         pass  # implemented in Ada
+
+    def execute_if_possible(self):
+        """
+        Execute the action if its filter matches the current context. If it
+        could be executed, True is returned, otherwise False is returned.
+
+        :return: A boolean
+        """
 
     def key(self, key):
         """
