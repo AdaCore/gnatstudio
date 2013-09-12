@@ -1254,10 +1254,10 @@ package body GPS.Location_View is
                  Hist_Locations_Auto_Close, Check, Default => True);
       Menu.Add (Check);
 
-      Gtk_New (Check, -"Save locations in desktop");
+      Gtk_New (Check, -"Save locations on exit");
       Check.Set_Tooltip_Text
         (-("Whether the contents of the Locations view should be saved"
-         & " in the desktop, and restored when GPS is restarted."));
+         & " and restored when GPS is restarted."));
       Associate (Get_History (View.Kernel).all,
                  Hist_Locations_Save_In_Desktop, Check, Default => False);
       Menu.Add (Check);
