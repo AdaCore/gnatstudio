@@ -68,7 +68,7 @@ package UTF8_Utils is
    --  character.
 
    function UTF8_Prev_Char
-     (Str : UTF8_String; Index : Positive) return Natural;
+     (Str : UTF8_String; Index : Natural) return Natural;
    --  Find the start of the previous UTF8 character before the Index-th byte.
    --  Index has to be on the start of a character.
    --  Index is set to 0 if there is no more character.

@@ -182,10 +182,14 @@ package body UTF8_Utils is
    --------------------
 
    function UTF8_Prev_Char
-     (Str : UTF8_String; Index : Positive) return Natural
+     (Str : UTF8_String; Index : Natural) return Natural
    is
-      Result : Natural := Index - 1;
+      Result : Integer := Index - 1;
    begin
+      if Index not in Str'Range then
+         return Index;
+      end if;
+
       while Result in Str'Range and then
         Str (Result) in Character'Val (16#80#) .. Character'Val (16#BF#)
       loop
