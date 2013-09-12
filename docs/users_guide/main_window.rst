@@ -544,100 +544,97 @@ the disk. Filters can be set through the local settings menu to restrict the
 display to the files and directories that belong to the project (use the
 :guilabel:`Show files from project only` menu).
 
-
-.. _The_Entity_View:
-
-The Entity View
-===============
-
-.. index:: Entity View
-
-GPS provides an `Entity View` which allows you to browse and quickly find all
-Ada entities referenced in the currently loaded project hierarchy. This view
-can be accessed through the `Tools->Views->Entities` menu.
-
-.. index:: screen shot
-.. image:: entity-view.jpg
-
-This view is divided in three parts: a `Pattern` entry, a tree view, and a
-documentation view.
-
-To query an entity, enter a search pattern in the `Pattern` entry. The tree
-view then shows a list of all known entities which start with this pattern.
-When an entry is selected in the tree, the documentation view displays the
-documentation corresponding to the selected entity.
-
-When the `File View` has the focus, using the up/down arrow keys changes the
-selection in the tree, and pressing the Enter key opens an editor to the
-declaration of the selected entity. It is also possible to jump to this
-location by double-clicking on the line in the tree, or by clicking on the
-hyperlink in the documentation view.
-
-Note that the view shows the entities that are currently loaded in memory, see
-:ref:`Support_for_Cross-References`.
-
+.. index:: windows, windows view
 .. _The_Window_View:
 
-The Window View
-===============
+The :guilabel:`Windows` view
+----------------------------
 
-.. index:: Window View
+.. image:: windows-view1.png
+.. image:: windows-view2.png
 
-The `Window View` displays the currently opened windows.  It is opened through
-the `Tools->Views->Windows` menu.
+The :guilabel:`Windows` view displays the currently opened windows.  It is
+opened through the :menuselection:`Tools-->Views-->Windows` menu.
 
-It can display the opened windows in one of two ways:
+In the contextual menu, you can configure the display in one of two ways:
 
 * Sorted alphabetically
-* Organized by notebooks, as in the GPS window itself. This latter view
-  is mostly useful if you have lots of windows open
+* Organized by notebooks, as in the GPS window itself. This view
+  is mostly useful if you have lots of opened windows.
 
-The mode is selected through the contextual menu.
-
-You can also choose, through this contextual menu, whether only the source
+You can also choose, through the contextual menu, whether only the source
 editors should be visible, or whether all windows should be displayed.
 
-This window allows you to quickly select and focus on a particular window, by
+This view allows you to quickly select and focus on a particular window, by
 clicking on the corresponding line with the left mouse button. If you click and
 leave the mouse button pressed, this starts a drag and drop operation so that
 you can also move the window to some other place in the desktop (see the
-description of the MDI earlier in this document).
+description of the :ref:`Multiple_Document_Interface`)
 
 Multiple windows can be selected by clicking with the mouse while pressing the
 control or shift keys. The Window view provides a contextual menu to easily
 close all selected windows at once, which is a very fast way to cleanup your
 desktop after you have finished working on a task.
 
+.. index:: windows, outline
+.. index:: outline view
 .. _The_Outline_View:
 
-The Outline View
-================
+The :guilabel:`Outline` view
+----------------------------
 
-.. index:: Outline View
+.. image:: outline-view1.png
+.. image:: outline-view2.png
+.. image:: outline-view3.png
 
-The Outline View, which you can choose to activate through the
-`Tools->Views->Outline` menu, shows the contents of the current file.
+The :guilabel:`Outline` view, which you can choose to activate through the
+:menuselection:`Tools-->Views-->Outline` menu, shows the contents of the
+current file.
 
-.. index:: screen shot
+The exact semantics depends on the language you are seeing. For Ada, C and C++
+files, this is the list of entities that are declared at the global level in
+your current file (Ada packages, C++ classes, subprograms, Ada types, ...).
 
-.. image:: outline-view.jpg
-
-The exact meaning of this depends on the language you are seeing. For Ada, C
-and C++ files, this is the list of entities that are declared at the global
-level in your current file (Ada packages, C++ classes, subprograms, Ada types,
-...).
+The contents of this view is refreshed every time the current editor is
+modified.
 
 Clicking on any entity in this view will automatically jump to the right line
-in the file, including if your file has been slightly modified since the
-outline view was last refreshed.
+in the file (either to the spec or the body).
 
-To refresh the contents of the view, select the `Refresh` entry in the
-contextual menu (right-click anywhere in the outline view).  The Outline View
-is updated automatically after editing, saving the file, or switching to a
-different editor.
+The local settings menu contains multiple check boxes that alter the display
+of the outline view:
 
-There are several preferences associated with the
-:ref:`outline view <Outline_Preferences>`.
+* :guilabel:`Show profiles` indicates whether the list of parameters of the
+  subprograms should be displayed. This is in particular useful for languages
+  that allow overriding of entities.
+
+* :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks, entries
+  and protected types` controls the display of specific categories of entities.
+
+* :guilabel:`Show specifications` indicates whether GPS should display a line
+  for the specification (declaration) of entities, in addition to the location
+  of their bodies.
+
+* :guilabel:`Sort alphabetically` controls the order in which the entities are
+  displayed (either alphabetically or in the same order as in the source file)
+
+* :guilabel:`Flat View` controls whether the entities are always displayed at
+  the top level of the outline view. When this is disabled, nested subprograms
+  are displayed below the subprogram in the scope of which they are declared.
+
+* :guilabel:`Group spec and body` can be enabled to display up to two icons on
+  each line (one for the spec, one for the body in case both occur in the
+  file). You can then click directly on one or the other icon to go directly to
+  that location. If you click on the name of the entity you are first taken to
+  its declaration, unless this is already the current location in the editor in
+  which case you are moved to the body.
+
+* :guilabel:`Dynamic link with editor`: If this option is set, the current
+  subprogram will be selected in the outline view every time the cursor
+  position changes in the current editor.  This option requires some
+  computation for GPS, and you might want to avoid the slow down by disabling
+  it.
+
 
 .. _The_Clipboard_View:
 

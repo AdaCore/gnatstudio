@@ -1252,38 +1252,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     are not displayed by default in the project view, and are not taken into
     account for VCS operations working on directories.
 
-* **Outline**
-
-  .. _Outline_Preferences:
-
-  *Font*
-    You can choose a specific font for the outline view. Typically, this will
-    be used to use a slightly smaller font than in the editor, so that you can
-    see more entities at once on the screen.
-
-  *Show Profiles*
-    For some of the languages, in particular Ada, GPS can display the profile
-    (list of parameters) for the subprograms. This can be used to differentiate
-    between overloaded entities (ie entities with the same name). Disabling
-    this preference will only show the entity name.
-
-  *Sort alphabetically*
-    If this preference is activated, the entities will be sorted alphabetically
-    in the outline view. If disabled, they will be displayed in the order they
-    are found in the source file.
-
-  *Link with Editor*
-    If this option is set, the current subprogram will be selected in the
-    outline view every time the cursor position changes in the current editor.
-    This option requires some computation for GPS, and you might want to avoid
-    the slow down by disabling it.
-
-  *Show file name*
-    If this option is set, the outline view will show the name of the file on
-    its first line, and indent slightly all following lines. If this option is
-    unset, this will save some screen real estate, but you will have to look at
-    the current editor to see what file is descrived in the Outline View.
-
 * **Documentation**
   .. _Documention_Preferences:
 
