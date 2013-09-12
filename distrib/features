@@ -95,6 +95,13 @@ NF-60-M711-059 GPS: do not save Locations by default (2013-09-06)
   resulted in very long loading times. The saving can be reactivated by
   using the local configuration menu in the toolbar of the Locations window.
 
+NF-60-M711-042 GPS: <tab> also aligns selected lines (2013-09-12)
+
+  By default, if multiple lines are selected and you press <tab>, GPS
+  will also align the colons (:), use clauses (use), arrows (=>) and
+  assignments (:=) in these lines. This behavior can be deactivated
+  by a new preference in the Editors section.
+
 NF-60-M711-028 GPS: tooltip while scrolling in editors (2013-07-11)
 
   When manipulating an editor scrollbar with the mouse, a tooltip is
