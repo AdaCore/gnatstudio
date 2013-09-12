@@ -18,7 +18,6 @@
 pragma Ada_2012;
 
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
-with Glib.Convert;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
@@ -1283,7 +1282,7 @@ package body Xref.Docgen is
                --     (Buffer, Entity.Entity, Context.Syntax, Form);
 
                S1 : constant String := -- JM: This one has the comment!
-                 Glib.Convert.Escape_Text (To_String (C_Result.Text));
+                 To_String (C_Result.Text);
                S2 : constant String :=
                  Self.Xref.Text_Declaration (Entity.Entity, Form);
             begin
@@ -1322,10 +1321,6 @@ package body Xref.Docgen is
                  Decl_Start_Column => Integer (Decl.Column),
                  Language          => Context.Syntax,
                  Format            => Form);
-
-            C_Result.Text :=
-              To_Unbounded_String
-                (Glib.Convert.Escape_Text (To_String (C_Result.Text)));
 
             if Result = "" and then Entity.Old_Entity /= null then
                Find_Next_Body
@@ -1483,7 +1478,7 @@ package body Xref.Docgen is
 --                  (Buffer, Entity.Entity, Context.Syntax, Form);
 
             S1 : constant String := -- JM: This one has the comment!
-              Glib.Convert.Escape_Text (To_String (C_Result.Text));
+              To_String (C_Result.Text);
 --                  (Self.Xref.Comment_Src
 --                       (Buffer, Entity.Entity, Context.Syntax, Form));
          begin
@@ -1580,10 +1575,10 @@ package body Xref.Docgen is
             begin
                if Comment /= "" then
                   if Profile /= "" then
-                     return Glib.Convert.Escape_Text (Comment)
+                     return Comment
                        & ASCII.LF & ASCII.LF & Profile;
                   else
-                     return Glib.Convert.Escape_Text (Comment);
+                     return Comment;
                   end if;
                else
                   return Profile;
@@ -1623,7 +1618,7 @@ package body Xref.Docgen is
 --                        (Buffer, Entity.Entity, Context.Syntax, Form);
 
                   S1 : constant String := -- This one has the comment!
-                    Glib.Convert.Escape_Text (To_String (C_Result.Text));
+                    To_String (C_Result.Text);
 --                        (Self.Xref.Comment
 --                           (Buffer, Entity.Entity, Context.Syntax, Form));
                   S2 : constant String :=
@@ -1660,8 +1655,7 @@ package body Xref.Docgen is
                     Language          => Context.Syntax,
                     Format            => Form);
             begin
-               Result := To_Unbounded_String
-                 (Glib.Convert.Escape_Text (To_String (C_Result.Text)));
+               Result := C_Result.Text;
             end;
 
             if Result = "" and then Entity.Old_Entity /= null then
