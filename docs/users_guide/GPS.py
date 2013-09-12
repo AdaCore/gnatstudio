@@ -4460,6 +4460,14 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
+    def get_extend_selection(self):
+        """
+
+        :return: A boolean, whether the user is currently performing a
+           selection. This should impact cursor movements (since moving
+           the cursor should extend the selection).
+        """
+
     def goto(self, location, extend_selection):
         """
         Moves the cursor at the given location. Each view of a particular
@@ -4482,6 +4490,17 @@ class EditorView(GUI):
         .. seealso:: :func:`GPS.EditorBuffer.is_read_only`
         """
         pass  # implemented in Ada
+
+    def set_extend_selection(self, extend):
+        """
+        Sets the mode for cursor movement. When the parameter is true,
+        moving the cursor extends the selection (for instance shift+cursor
+        keys, or the Emacs mode of setting the mark with ctrl-space and
+        then moving the cursor). When the parameter is false, cursor
+        movement cancels the selection.
+
+        :param extend: A boolean
+        """
 
     def set_read_only(self, read_only=True):
         """
@@ -4657,13 +4676,6 @@ class Entity(object):
         :return: A string
         """
         pass  # implemented in Ada
-
-    def get_extend_selection(self):
-        """
-        :return: A boolean, whether the user is currently performing a
-           selection. This should impact cursor movements (since moving
-           the cursor should extend the selection).
-        """
 
     def is_subprogram(self):
         """
@@ -4989,17 +5001,6 @@ class Entity(object):
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
-
-    def set_extend_selection(self, extend):
-        """
-        Sets the mode for cursor movement. When the parameter is true,
-        moving the cursor extends the selection (for instance shift+cursor
-        keys, or the Emacs mode of setting the mark with ctrl-space and
-        then moving the cursor). When the parameter is false, cursor
-        movement cancels the selection.
-
-        :param extend: A boolean
-        """
 
     def show(self):
         """
@@ -6893,8 +6894,10 @@ class MDI(object):
             on top of them.
         :param save_desktop: A function that should be called when GPS saves
             the desktop into XML. This function receives the GPS.MDIWindow
-            as a parameter, and should return a tuple of two elements:
+            as a parameter, and should return a tuple of two elements::
+
                 (name, data)
+
             where name is a unique identifier for this window, and data is
             a string containing additional data to be saved (and later
             restored). One suggestion is to encode any python data through
