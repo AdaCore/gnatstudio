@@ -30,7 +30,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Basic_Types;               use Basic_Types;
 with Old_Entities.Queries;      use Old_Entities.Queries;
 with Old_Entities;              use Old_Entities;
-with Glib.Convert;              use Glib.Convert;
 with Projects;                  use Projects;
 with Remote;                    use Remote;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -39,6 +38,7 @@ with Time_Utils;                use Time_Utils;
 with ALI;                       use ALI;
 with Types;                     use Types;
 with Namet;                     use Namet;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body ALI_Parser is
    Me          : constant Trace_Handle := Create ("ALI", Off);
