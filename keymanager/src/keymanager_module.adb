@@ -188,6 +188,11 @@ package body KeyManager_Module is
       --  Last_Command) is returned. Last_User_Command is freed whenever a
       --  command different from Last_Command is executed by the user.
 
+      Current_Command : Cst_String_Access;
+      --  Stores the command just after it has been launched. Used as a
+      --  temporary storing field for Last_Command to avoid setting
+      --  Last_Command before the end of the command execution
+
       GUI_Running : Boolean := False;
       --  Whether the GUI is currently running. This affect the locations
       --  where messages are displayed.
@@ -1172,6 +1177,10 @@ package body KeyManager_Module is
                elsif Command.Command /= null then
                   Compute_Context;
 
+                  Keymanager_Module.Last_Command :=
+                    Keymanager_Module.Current_Command;
+                  Keymanager_Module.Current_Command := null;
+
                   if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
                     and then Execute_In_Background
                       (Kernel  => Kernel,
@@ -1185,8 +1194,8 @@ package body KeyManager_Module is
                      then
                         Free (Keymanager_Module.Last_User_Command);
                      end if;
-                     Keymanager_Module.Last_Command :=
-                        Cst_String_Access (Binding.Action);
+                     Keymanager_Module.Current_Command :=
+                       Cst_String_Access (Binding.Action);
                      Found_Action := True;
                      Keymanager_Module.Repeat_Count := 1;
                   end if;
