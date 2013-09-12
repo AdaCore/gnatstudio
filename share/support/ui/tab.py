@@ -44,7 +44,7 @@ def smart_tab():
 
     # If multiple lines are selected, perform various alignments
 
-    if tabs_align_selection:
+    if tabs_align_selection.get():
         start = editor.selection_start()
         end = editor.selection_end()
 
