@@ -44,7 +44,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Name_Attribute          : constant String := "name";
    Previous_Attribute      : constant String := "previous";
    Rank_Attribute          : constant String := "rank";
-   Status_Attribute        : constant String := "status";
 
    -----------------
    -- End_Element --
@@ -92,11 +91,12 @@ package body CodePeer.Bridge.Inspection_Readers is
    -----------
 
    procedure Parse
-     (Self    : in out Reader;
-      Input   : in out Input_Sources.Input_Source'Class;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Tree    : out Code_Analysis.Code_Analysis_Tree;
-      Version : out Supported_Format_Version)
+     (Self     : in out Reader;
+      Input    : in out Input_Sources.Input_Source'Class;
+      Kernel   : GPS.Kernel.Kernel_Handle;
+      Tree     : out Code_Analysis.Code_Analysis_Tree;
+      Messages : out CodePeer.Message_Maps.Map;
+      Version  : out Supported_Format_Version)
    is
       Root_Project : Code_Analysis.Project_Access;
 
@@ -107,6 +107,7 @@ package body CodePeer.Bridge.Inspection_Readers is
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new CodePeer.Project_Data;
       Self.Message_Categories.Clear;
+      Self.Messages.Clear;
       Root_Project :=
         Code_Analysis.Get_Or_Create
           (Self.Projects,
@@ -115,8 +116,9 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Self.Parse (Input);
 
-      Tree := Self.Projects;
-      Version := Self.Version;
+      Tree     := Self.Projects;
+      Version  := Self.Version;
+      Messages := Self.Messages;
    end Parse;
 
    -------------------
@@ -159,9 +161,6 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       function Get_Optional_Column return Positive;
       --  Returns value of "column" attribute is specified and 1 instead.
-
-      function Status return Audit_Status_Kinds;
-      --  Returns value of "status" attribute if specified or 'Unclassified'.
 
       ------------
       -- Checks --
@@ -288,22 +287,6 @@ package body CodePeer.Bridge.Inspection_Readers is
 
          return Result;
       end Merged;
-
-      ------------
-      -- Status --
-      ------------
-
-      function Status return Audit_Status_Kinds is
-         Index : constant Integer := Attrs.Get_Index (Status_Attribute);
-
-      begin
-         if Index = -1 then
-            return Unclassified;
-
-         else
-            return CodePeer.Audit_Status_Kinds'Value (Attrs.Get_Value (Index));
-         end if;
-      end Status;
 
    begin
       if Self.Ignore_Depth /= 0 then
@@ -434,7 +417,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                        CodePeer.High,
                        CodePeer.Message_Ranking_Level'Value
                          (Attrs.Get_Value (Rank_Attribute)),
-                       Status,
+                       Unclassified,
                        new String'(Attrs.Get_Value ("text")),
                        False,
                        CodePeer.Audit_V2_Vectors.Empty_Vector,
@@ -443,6 +426,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                        1,
                        1,
                        null);
+                  Self.Messages.Insert (Message.Id, Message);
             end case;
 
             if Attrs.Get_Index ("from_file") /= -1 then

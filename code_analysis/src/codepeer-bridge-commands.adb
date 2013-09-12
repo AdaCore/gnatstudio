@@ -164,9 +164,10 @@ package body CodePeer.Bridge.Commands is
    ----------------
 
    procedure Inspection
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      Export_File_Name  : Virtual_File)
+     (Command_File_Name    : Virtual_File;
+      Output_Directory     : Virtual_File;
+      Inspection_File_Name : Virtual_File;
+      Status_File_Name     : Virtual_File)
    is
       Database_Node   : XML_Utils.Node_Ptr :=
                           new XML_Utils.Node'
@@ -191,7 +192,11 @@ package body CodePeer.Bridge.Commands is
          "display_progress",
          "true");
       XML_Utils.Set_Attribute
-        (Inspection_Node, "output_file", +Export_File_Name.Full_Name);
+        (Inspection_Node, "output_file", +Inspection_File_Name.Full_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+      XML_Utils.Set_Attribute
+        (Inspection_Node, "status_file", +Status_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Inspection_Node);

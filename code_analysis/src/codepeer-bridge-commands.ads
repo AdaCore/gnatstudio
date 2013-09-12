@@ -24,9 +24,10 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 package CodePeer.Bridge.Commands is
 
    procedure Inspection
-     (Command_File_Name : Virtual_File;
-      Output_Directory  : Virtual_File;
-      Export_File_Name  : Virtual_File);
+     (Command_File_Name    : Virtual_File;
+      Output_Directory     : Virtual_File;
+      Inspection_File_Name : Virtual_File;
+      Status_File_Name     : Virtual_File);
    --  Generates command file for export inspection information from the
    --  database.
 

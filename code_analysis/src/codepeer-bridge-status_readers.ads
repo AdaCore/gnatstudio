@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2013, AdaCore                     --
+--                        Copyright (C) 2013, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,66 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-private with Ada.Containers.Hashed_Maps;
-
 with Input_Sources;
 private with Sax.Attributes;
 with Sax.Readers;
 private with Unicode.CES;
 
-with GPS.Kernel;
-with Code_Analysis;
-
-package CodePeer.Bridge.Inspection_Readers is
+package CodePeer.Bridge.Status_Readers is
 
    type Reader is new Sax.Readers.Reader with private;
 
    procedure Parse
      (Self     : in out Reader;
       Input    : in out Input_Sources.Input_Source'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
-      Tree     : out Code_Analysis.Code_Analysis_Tree;
-      Messages : out CodePeer.Message_Maps.Map;
-      Version  : out Supported_Format_Version);
+      Messages : CodePeer.Message_Maps.Map);
 
 private
 
-   function Hash (Item : Natural) return Ada.Containers.Hash_Type;
-
-   package Message_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Message_Category_Access, Hash, "=", "=");
-
-   package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Annotation_Category_Access, Hash, "=");
-
-   package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Entry_Point_Information_Access, Hash, "=");
-
    type Reader is new Sax.Readers.Reader with record
-      Kernel                : GPS.Kernel.Kernel_Handle;
-
-      Version               : Supported_Format_Version;
-      --  Version number of interchange format.
-      --
-      --   1 - default value
-      --   2 - is_warning attribute is reported by CodePeer
-      --   3 - new content of audit records
-
-      Ignore_Depth          : Natural := 0;
+      Ignore_Depth : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
       --  of newer version when GPS module supports.
-
-      Projects              : Code_Analysis.Code_Analysis_Tree;
-      Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
-      Message_Categories    : Message_Category_Maps.Map;
-      Annotation_Categories : Annotation_Category_Maps.Map;
-      Entry_Point_Map       : Entry_Point_Maps.Map;
-      File_Node             : Code_Analysis.File_Access;
-      Subprogram_Node       : Code_Analysis.Subprogram_Access;
-      Subprogram_Data       : CodePeer.Subprogram_Data_Access;
-      Object_Race           : CodePeer.Object_Race_Information;
-      Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
-      Messages              : CodePeer.Message_Maps.Map;
+      Messages     : CodePeer.Message_Maps.Map;
    end record;
 
    overriding procedure Start_Element
@@ -90,4 +51,4 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
 
-end CodePeer.Bridge.Inspection_Readers;
+end CodePeer.Bridge.Status_Readers;

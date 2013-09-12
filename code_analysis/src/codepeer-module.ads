@@ -49,8 +49,9 @@ package CodePeer.Module is
    --  ??? missing comments on all types and procedures of this package
 
    procedure Load
-     (Self : access Module_Id_Record'Class;
-      File : Virtual_File);
+     (Self            : access Module_Id_Record'Class;
+      Inspection_File : Virtual_File;
+      Status_File     : Virtual_File);
    --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 
@@ -134,8 +135,9 @@ private
       --  Indicate possible action to be performed when a build target is
       --  finished.
 
-      Bridge_File : Virtual_File;
-      --  File used to communicate with gps_codepeer_bridge
+      Inspection_File : Virtual_File;
+      Status_File     : Virtual_File;
+      --  Files is used to communicate with gps_codepeer_bridge
 
       Bridge_Message : Message_Access;
       --  Message used to communicate with gps_codepere_bridge

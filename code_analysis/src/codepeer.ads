@@ -124,6 +124,9 @@ package CodePeer is
    package Message_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Access);
 
+   package Message_Maps is
+     new Ada.Containers.Ordered_Maps (Positive, Message_Access);
+
    -------------------
    --  Annotations  --
    -------------------

@@ -28,15 +28,17 @@ with CodePeer.Shell_Commands;
 package body CodePeer.Module.Bridge is
 
    Audit_Request_File_Name      : constant Filesystem_String :=
-      "audit_trail_request.xml";
+     "audit_trail_request.xml";
    Audit_Reply_File_Name        : constant Filesystem_String :=
-      "audit_trail_reply.xml";
+     "audit_trail_reply.xml";
    Add_Audit_File_Name          : constant Filesystem_String :=
-      "add_audit_record.xml";
+     "add_audit_record.xml";
    Inspection_Request_File_Name : constant Filesystem_String :=
-      "inspection_request.xml";
+     "inspection_request.xml";
    Inspection_Reply_File_Name   : constant Filesystem_String :=
-      "inspection_reply.xml";
+     "inspection_data.xml";
+   Review_Status_File_Name      : constant Filesystem_String :=
+     "review_status_data.xml";
 
    ----------------------
    -- Add_Audit_Record --
@@ -124,6 +126,8 @@ package body CodePeer.Module.Bridge is
         Create_From_Dir (Object_Directory, Inspection_Request_File_Name);
       Reply_File_Name   : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
+      Status_File_Name  : constant Virtual_File :=
+        Create_From_Dir (Object_Directory, Review_Status_File_Name);
       DB_File_Name      : constant Virtual_File :=
         Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
       Output_Directory  : constant Virtual_File :=
@@ -145,15 +149,19 @@ package body CodePeer.Module.Bridge is
          and then DB_File_Name.File_Time_Stamp
             < Reply_File_Name.File_Time_Stamp
       then
-         Module.Load (Reply_File_Name);
+         Module.Load (Reply_File_Name, Status_File_Name);
       else
          --  Generate command file
 
          CodePeer.Bridge.Commands.Inspection
-            (Command_File_Name, Output_Directory, Reply_File_Name);
+           (Command_File_Name,
+            Output_Directory,
+            Reply_File_Name,
+            Status_File_Name);
 
          Module.Action := Load_Bridge_Results;
-         Module.Bridge_File := Reply_File_Name;
+         Module.Inspection_File := Reply_File_Name;
+         Module.Status_File := Status_File_Name;
          CodePeer.Shell_Commands.Build_Target_Execute
            (Kernel_Handle (Module.Kernel),
             CodePeer.Shell_Commands.Build_Target
@@ -232,7 +240,7 @@ package body CodePeer.Module.Bridge is
       --  Run gps_codepeer_bridge
 
       Module.Action := Audit_Trail;
-      Module.Bridge_File := Reply_File_Name;
+      Module.Inspection_File := Reply_File_Name;
       Module.Bridge_Message := Message;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),

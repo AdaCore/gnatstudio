@@ -48,6 +48,7 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
+with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs_V2;
 with CodePeer.Message_Review_Dialogs_V3;
 with CodePeer.Messages_Reports;
@@ -687,14 +688,12 @@ package body CodePeer.Module is
    ----------
 
    procedure Load
-     (Self : access Module_Id_Record'Class;
-      File : Virtual_File)
+     (Self            : access Module_Id_Record'Class;
+      Inspection_File : Virtual_File;
+      Status_File     : Virtual_File)
    is
       use type CodePeer.Messages_Reports.Messages_Report;
       use type Code_Analysis.Code_Analysis_Tree;
-
-      Input   : Input_Sources.File.File_Input;
-      Reader  : CodePeer.Bridge.Inspection_Readers.Reader;
 
       procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
       --  ???
@@ -728,6 +727,8 @@ package body CodePeer.Module is
          Project.Files.Iterate (Process_File'Access);
       end Process_Project;
 
+      Messages : CodePeer.Message_Maps.Map;
+
    begin
       if Self.Report_Subwindow /= null then
          --  Destroy old report window if present
@@ -744,14 +745,43 @@ package body CodePeer.Module is
 
       --  Load code review information
 
-      if File.Is_Regular_File then
-         Input_Sources.File.Open (+File.Full_Name, Input);
-         Reader.Parse
-           (Input,
-            GPS.Kernel.Kernel_Handle (Self.Kernel),
-            Self.Tree,
-            Self.Version);
-         Input_Sources.File.Close (Input);
+      if Inspection_File.Is_Regular_File then
+         declare
+            Input   : Input_Sources.File.File_Input;
+            Reader  : CodePeer.Bridge.Inspection_Readers.Reader;
+
+         begin
+            Input_Sources.File.Open (+Inspection_File.Full_Name, Input);
+            Reader.Parse
+              (Input,
+               GPS.Kernel.Kernel_Handle (Self.Kernel),
+               Self.Tree,
+               Messages,
+               Self.Version);
+            Input_Sources.File.Close (Input);
+         end;
+
+         if Self.Version = 3 then
+            --  Load messages' review status data.
+
+            if Status_File.Is_Regular_File then
+               declare
+                  Input   : Input_Sources.File.File_Input;
+                  Reader  : CodePeer.Bridge.Status_Readers.Reader;
+
+               begin
+                  Input_Sources.File.Open (+Status_File.Full_Name, Input);
+                  Reader.Parse (Input, Messages);
+                  Input_Sources.File.Close (Input);
+               end;
+
+            else
+               Self.Kernel.Insert
+                 (Status_File.Display_Full_Name &
+                  (-" does not exist. Review information is absent."),
+                  Mode => GPS.Kernel.Error);
+            end if;
+         end if;
 
          --  Create codepeer report window
 
@@ -800,7 +830,7 @@ package body CodePeer.Module is
 
       else
          Self.Kernel.Insert
-           (File.Display_Full_Name &
+           (Inspection_File.Display_Full_Name &
             (-" does not exist. Please perform a full analysis first"),
             Mode => GPS.Kernel.Error);
       end if;
@@ -989,7 +1019,7 @@ package body CodePeer.Module is
          end if;
       end;
 
-      Module.Bridge_File :=
+      Module.Inspection_File :=
         Create_From_Dir (Project.Object_Dir, "codepeer.csv");
       Module.Action := Load_CSV;
       CodePeer.Shell_Commands.Build_Target_Execute
@@ -1381,13 +1411,14 @@ package body CodePeer.Module is
             end;
 
          when Audit_Trail =>
-            Module.Review_Message (Module.Bridge_Message, Module.Bridge_File);
+            Module.Review_Message
+              (Module.Bridge_Message, Module.Inspection_File);
 
          when Load_Bridge_Results =>
-            Module.Load (Module.Bridge_File);
+            Module.Load (Module.Inspection_File, Module.Status_File);
 
          when Load_CSV =>
-            Module.Load_CSV (Module.Bridge_File);
+            Module.Load_CSV (Module.Inspection_File);
 
          when None => null;
       end case;
