@@ -100,6 +100,8 @@ def expand_alias_action():
     the editor
     """
     ed_buffer = EditorBuffer.get()
+    if is_in_alias_expansion(ed_buffer):
+        return
     ed_buffer.start_undo_group()
     cursor_loc = ed_buffer.current_view().cursor().forward_char(-1)
     start_loc = goto_word_start(cursor_loc)
