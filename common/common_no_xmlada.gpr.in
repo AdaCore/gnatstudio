@@ -1,8 +1,6 @@
-with "gtkada";
 with "../gnatlib/src/gnatcoll_sqlite.gpr";
 with "../gnat";
 with "../shared";
-with "../gnatlib/src/gnatcoll_gtk";
 
 project Common is
 
