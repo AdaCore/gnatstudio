@@ -1,5 +1,5 @@
-Using the GNAT Programming Studio
-=================================
+.. image:: gps-main.png
+
 
 .. toctree::
    :numbered:
