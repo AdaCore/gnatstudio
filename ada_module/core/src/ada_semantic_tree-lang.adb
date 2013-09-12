@@ -21,8 +21,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with GNAT.Strings;
 
-with Glib.Convert;            use Glib.Convert;
-
 with Diffing;
 with Language.Ada;                    use Language.Ada;
 with Ada_Semantic_Tree.Parts;         use Ada_Semantic_Tree.Parts;
@@ -378,7 +376,7 @@ package body Ada_Semantic_Tree.Lang is
             end;
          end loop;
 
-         return Glib.Convert.Escape_Text (To_String (Result));
+         return To_String (Result);
       end Filter_Aspects;
 
       --------------

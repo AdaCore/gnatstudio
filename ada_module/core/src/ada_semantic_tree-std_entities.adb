@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Convert; use Glib.Convert;
-
 with XML_Utils;   use XML_Utils;
 with XML_Parsers; use XML_Parsers;
 with Ada.Unchecked_Deallocation;
@@ -57,7 +55,7 @@ package body Ada_Semantic_Tree.Std_Entities is
    end record;
 
    overriding function Get_Name
-     (E : access Std_Entity_Record) return Glib.UTF8_String;
+     (E : access Std_Entity_Record) return Basic_Types.UTF8_String;
 
    overriding function Get_Category
      (E : access Std_Entity_Record) return Language_Category;
@@ -177,13 +175,11 @@ package body Ada_Semantic_Tree.Std_Entities is
          if Kind = A_Pragma or else Kind = An_Attribute
            or else Kind = An_Aspect then
             if Is_Standard_Ada then
-               New_Element.Documentation :=
-                 new String'
-                   ("<b>Ada Standard</b>" & ASCII.LF & Escape_Text (Doc.all));
+               New_Element.Origin := Ada_Standard;
+               New_Element.Documentation := new String'(Doc.all);
             else
-               New_Element.Documentation :=
-                 new String'
-                   ("<b>GNAT specific</b>" & ASCII.LF & Escape_Text (Doc.all));
+               New_Element.Origin := GNAT_Specific;
+               New_Element.Documentation := new String'(Doc.all);
             end if;
          end if;
 
@@ -286,6 +282,7 @@ package body Ada_Semantic_Tree.Std_Entities is
       New_Assistant.Standard_Entity := new Std_Description_Record'
         (Name          => new String'("Standard"),
          Documentation => null,
+         Origin        => Ada_Standard,
          Index         => new String'("standard"),
          Category      => Cat_Package);
 
@@ -622,7 +619,7 @@ package body Ada_Semantic_Tree.Std_Entities is
    --------------
 
    overriding function Get_Name
-     (E : access Std_Entity_Record) return Glib.UTF8_String is
+     (E : access Std_Entity_Record) return Basic_Types.UTF8_String is
    begin
       return E.Desc.Name.all;
    end Get_Name;

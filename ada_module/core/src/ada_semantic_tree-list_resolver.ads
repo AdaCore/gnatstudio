@@ -19,7 +19,6 @@
 --  list of entities, in particular parameters.
 
 with GNAT.Strings;     use GNAT.Strings;
-with Glib;
 
 package Ada_Semantic_Tree.List_Resolver is
 
@@ -99,7 +98,7 @@ package Ada_Semantic_Tree.List_Resolver is
    Null_Actual_Parameter : constant Actual_Parameter;
 
    function Get_Actual_Parameter
-     (Buffer      : access Glib.UTF8_String;
+     (Buffer      : access UTF8_String;
       Param_Start : String_Index_Type;
       Param_End   : String_Index_Type) return Actual_Parameter;
    --  Created an actual parameter out of a piece of code - param start and

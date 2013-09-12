@@ -370,7 +370,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    --------------------------
 
    function Get_Actual_Parameter
-     (Buffer      : access Glib.UTF8_String;
+     (Buffer      : access UTF8_String;
       Param_Start : String_Index_Type;
       Param_End   : String_Index_Type) return Actual_Parameter
    is

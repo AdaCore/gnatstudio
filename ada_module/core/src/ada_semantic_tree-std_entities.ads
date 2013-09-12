@@ -80,11 +80,15 @@ package Ada_Semantic_Tree.Std_Entities is
 
 private
 
+   type Origin_Kind is
+     (Default, Ada_Standard, GNAT_Specific);
+
    type Std_Description_Record is record
       Name          : String_Access;
       Documentation : String_Access;
       Index         : String_Access;
       Category      : Language_Category := Cat_Unknown;
+      Origin        : Origin_Kind := Default;
    end record;
 
    type Std_Description is access all Std_Description_Record;
