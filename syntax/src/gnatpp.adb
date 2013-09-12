@@ -25,6 +25,7 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with Language;                  use Language;
 with Line_Buffers;              use Line_Buffers;
 with Case_Handling;             use Case_Handling;
+with UTF8_Utils;
 
 procedure Gnatpp is
    subtype String_Access is GNAT.Strings.String_Access;
@@ -62,6 +63,19 @@ begin
    Buffer := new String (1 .. Integer (File_Length (F)));
    Length := Read (F, Buffer.all'Address, Buffer'Length);
    Close (F);
+
+   declare
+      UTF8_Text : String_Access;
+      Ok        : Boolean;
+   begin
+      UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8_Text, Ok);
+
+      if Ok and UTF8_Text /= null then
+         Free (Buffer);
+         Buffer := UTF8_Text;
+      end if;
+   end;
+
    New_Buffer := To_Line_Buffer (Buffer.all);
 
    if File_Extension (Name) = ".c" then
