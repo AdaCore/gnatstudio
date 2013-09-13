@@ -33,6 +33,31 @@ import sys
 # __all__ = ["notebook", "project", "tree"]
 
 
+def print_children_tree(w):
+    """
+    Prints a tree of the widget w and all its children, recursively
+    """
+    import pprint
+    ct = get_children_tree(w)
+    print pprint.pformat(ct)
+
+
+def get_children_tree(w):
+    """
+    Returns a tree of widgets for which w is the root
+    """
+    if hasattr(w, "get_children"):
+        ch = w.get_children()
+    else:
+        ch = []
+    if ch:
+        return (w, map(get_children_tree, ch))
+    else:
+        return w
+
+
+
+
 def delayed_exit(delay=200):
     """Exit GPS after a small timeout.
      This should be used instead of GPS.exit() in contexts where a command
