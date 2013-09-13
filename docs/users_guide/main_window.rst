@@ -251,10 +251,100 @@ performed in this view, or various configuration settings that affect
 the behavior or the display of the view.
 
 .. index:: menu; Tools
+.. index:: menu; Tools --> Views
 
 Some views are part of the default desktop, and thus are visible by default.
 The other views can always be opened through one of the submenus of the
 :menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
+
+Common features of the browsers
+-------------------------------
+
+A number of the views described below are interactive displays called
+browsers. They represent their information as boxes that can be manipulated
+with the mouse, and provide the following additional capabilities:
+
+* Scrolling
+
+  When a lot of items are displayed in the canvas, the currently visible area
+  might be too small to display all of them. In this case, scrollbars will be
+  added on the sides, so that you can make other items visible. Scrolling can
+  also be done with the arrow keys.
+
+* Layout
+
+  A basic layout algorithm is used to organize the items. This algorithm is
+  layer oriented: items with no parents are put in the first layer, then their
+  direct children are put in the second layer, and so on. Depending on the type
+  of browser, these layers are organized either vertically or horizontally.
+  This algorithm tries to preserve as much as possible the positions of the
+  items that were moved interactively.
+
+  The :guilabel:`Refresh layout` button in the local toolbar can be used
+  to recompute the layout of items at any time, even for items that were
+  previously moved interactively.
+
+* Interactive moving of items
+
+  Items can be moved interactively with the mouse. Click and drag the item by
+  clicking on its title bar. The links will still be displayed during the move,
+  so that you can check whether it overlaps any other item. If you are trying
+  to move the item outside of the visible part of the browser, the latter will
+  be scrolled.
+
+* Selecting items
+
+  Items can be selected by clicking on them. Multiple items can be selected
+  by holding the :kbd:`control` key while clicking in the item. Alternatively,
+  you can click and drag the mouse inside the background of the browser. All
+  the items found in the selection rectangle when the mouse is released will be
+  selected.
+
+  Selected items are drawn with a different title bar color. All items linked
+  to them also use a different title bar color, as well as the links. This is
+  the most convenient way to understand the relationships between items when
+  lots of them are present in the browser.
+
+  Buttons in the local toolbar are provided to remove either the selected
+  items, or on the contrary the ones that are not selected.
+
+* Links
+
+  Items can be linked together, and will remain connected when items are moved.
+  Different types of links exist, see the description of the various browsers.
+
+  The local toolbar provides a button to hide the display of the links. This
+  will keep the canvas more readable, at the cost of losing some information.
+  You can also hide only a subset of the links. Even when the links are hidden,
+  if you select an item then the items linked to it will still be highlighted.
+
+* Exporting :index:`image` :index:`callgraph; export`
+
+  The entire contents of a browser can be exported as a :guilabel:`PNG` or
+  :guilabel:`SVG` images using the entry :guilabel:`Export to...` in the local
+  toolbar.
+
+* Zooming
+
+  Several different zoom levels are available. The local toolbar provides
+  multiple buttons to change the zoom level: :guilabel:`zoom in`,
+  :guilabel:`zoom out` and :guilabel:`zoom`.  The latter is used to select
+  directly the zoom level you want.
+
+  This zooming capability is generally useful when lots of items are displayed
+  in the browser, to get a more general view of the layout and the
+  relationships between the items.
+
+* Hyper-links
+
+  Some of the items will contain hyper links, displayed in blue by default, and
+  underlined. Clicking on these will generally display new items.
+
+* contextual menus
+
+  Right-clicking on items will bring a contextual menu with actions that can be
+  performed on that item. These actions are specific to the kind of item you
+  clicked on.
 
 Icons for source language entities
 __________________________________
@@ -338,6 +428,8 @@ The :guilabel:`Project` view
 
 .. image:: project-view.png
 .. image:: project-view-flat.png
+.. index:: menu; project --> project view
+.. index:: menu; tools --> views --> project
 
 The project view provides a representation of the various components of your
 project, as listed below.  It is displayed by default on the left side of the
@@ -451,6 +543,7 @@ The various components that are displayed are:
   line on which the entity is defined.
 
 .. index:: search; project view
+.. index:: menu; navigate --> find or replace
 
 If you open the search dialog through the :menuselection:`Navigate-->Find or
 Replace...` menu, you have the possibility to search for anything in the
@@ -530,6 +623,7 @@ The :guilabel:`Files` View
 --------------------------
 
 .. image:: file-view.png
+.. index:: menu; tools --> views --> files
 
 In addition to the :guilabel:`Project` view, GPS also provides a
 :guilabel:`Files` view through the :menuselection:`Tools-->Views-->Files` menu.
@@ -552,6 +646,7 @@ The :guilabel:`Windows` view
 
 .. image:: windows-view1.png
 .. image:: windows-view2.png
+.. index:: menu; tools --> views --> windows
 
 The :guilabel:`Windows` view displays the currently opened windows.  It is
 opened through the :menuselection:`Tools-->Views-->Windows` menu.
@@ -586,6 +681,7 @@ The :guilabel:`Outline` view
 .. image:: outline-view1.png
 .. image:: outline-view2.png
 .. image:: outline-view3.png
+.. index:: menu; tools --> views --> outline
 
 The :guilabel:`Outline` view, which you can choose to activate through the
 :menuselection:`Tools-->Views-->Outline` menu, shows the contents of the
@@ -636,81 +732,95 @@ of the outline view:
   it.
 
 
+.. index: windows; clipboard
 .. _The_Clipboard_View:
 
-The Clipboard View
-==================
+The :guilabel:`Clipboard` view
+------------------------------
 
-.. index:: clipboard view
+.. image:: clipboard.png
 
 GPS has an advanced mechanism for handling copy/paste operations.
 
-When you select the menus `Edit->Copy` or `Edit->Cut`, GPS adds the current
-selection to the clipboard. As opposed to what lots of applications do, it
-doesn't discard the previous contents of the clipboard, but save it for future
-usage. It saves a number of entries this way, up to 10 by default.  This value
-is configurable through the `Clipboard Size` preference.
+.. index:: preferences; clipboard size
+.. index:: menu; edit --> copy
+.. index:: menu; edit --> cut
 
-When you select the menu `Edit->Paste`, GPS will paste the last entry made in
-the clipboard at the current location in the editor.
+When you select the menus :menuselection:`Edit-->Copy` or
+:menuselection:`Edit-->Cut`, GPS adds the current selection to the clipboard.
+As opposed to what lots of applications do, it doesn't discard the previous
+contents of the clipboard, but save it for future usage. It saves a number of
+entries this way, up to 10 by default.  This value is configurable through the
+:guilabel:`Clipboard Size` preference.
 
-If you immediately select `Edit->Paste Previous`, this newly inserted text will
-be removed, and GPS will instead insert the second to last entry added to the
-clipboard. You can keep selecting the same menu to get access to older entries.
+.. index:: menu; edit --> paste
+.. index:: menu; edit --> paste previous
+
+When you select the menu :menuselection:`Edit-->Paste`, GPS will paste the last
+entry made in the clipboard at the current location in the editor.  If you
+immediately select :menuselection:`Edit-->Paste Previous`, this newly inserted
+text will be removed, and GPS will instead insert the second to last entry
+added to the clipboard. You can keep selecting the same menu to get access to
+older entries.
 
 This is a very powerful mechanism, since it means you can copy several distinct
 lines from a place in an editor, move to an other editor and paste all these
 separate lines, without having to go back and forth between the two editors.
 
-The `Clipboard View` provides a graphical mean of seeing what is currently
-stored in the clipboard. It appears as a list of lines, each of which is
-associated with one level of the clipboard. The text that shows in these lines
-is the first line of the selection at that level that contains non blank
+.. index:: menu; tools --> views --> clipboard
+
+The :guilabel:`Clipboard` view provides a graphical mean of seeing what is
+currently stored in the clipboard. It can be opened via
+:menuselection:`Tools-->Views-->Clipboard`.
+
+It appears as a list of lines, each of which
+is associated with one level of the clipboard. The text that shows in these
+lines is the first line of the selection at that level that contains non blank
 characters. Leading characters are discarded. `[...]` is prepended or appended
 in case the selection has been truncated.
 
-If you bring the mouse over a line in the `Clipboard View`, a tooltip will pop
-up showing the entire selection corresponding to the line by opposition to the
-possibly truncated one.
+If you bring the mouse over a line in the :guilabel:`Clipboard` view, a tooltip
+will pop up showing the entire selection corresponding to the line by
+opposition to the possibly truncated one.
 
 In addition, one of the lines has an arrow on its left. This indicates the line
-that will be pasted when you select the menu `Edit->Paste`. If you select
-instead the menu `Edit->Paste Previous`, then the line below that one will be
-inserted instead.
+that will be pasted when you select the menu :menuselection:`Edit-->Paste`. If
+you select instead the menu :menuselection:`Edit-->Paste Previous`, then the
+line below that one will be inserted instead.
 
 If you double-click on any of these lines, GPS will insert the corresponding
 text in the current editor, and make the line you clicked on the current line,
-so that selecting `Edit->Paste` or the equivalent shortcut will now insert that
-line.
+so that selecting :menuselection:`Edit-->Paste` or the equivalent shortcut will
+now insert that line.
 
-The contextual menu in the clipboard view provides one entry, which is `Append
-To Previous`. If you select this entry, the select line will be append to the
-one below, and removed from the clipboard. This means that selection
-`Edit->Paste` will in fact paste the two entries at the same time. This is in
-particular useful when you want to copy lines from separate places in the
-initial file, merge them, and then paste them together one or more times later
-on, through a single operation.
+The contextual menu in the clipboard view provides one entry, which is
+:guilabel:`Append To Previous`. If you select this entry, the select line will
+be append to the one below, and removed from the clipboard. This means that
+selection :menuselection:`Edit-->Paste` will in fact paste the two entries at
+the same time.  This is in particular useful when you want to copy lines from
+separate places in the initial file, merge them, and then paste them together
+one or more times later on, through a single operation.
 
 The Clipboard View content is preserved between GPS sessions. As an exception,
 huge entries are removed and replaced with an entry saying "[Big entry has been
 removed]".
 
+.. index:: windows; call trees
+.. index:: windows; callgraph browser
+.. index:: callgraph
 .. _The_Callgraph_View:
 
-The Callgraph View
-==================
+The :guilabel:`Call trees` view and :guilabel:`Callgraph` browser
+-----------------------------------------------------------------
 
-.. index:: callgraph
+These two views play a similar role.  They display the same information about
+entities, but in two different ways: the callgraph view displays the
+information in a tree, easily navigable and perhaps easier to manipulate when
+lots of entities are involved; the callgraph browser displays the information
+as graphical boxes that can be manipulated on the screen, and is best suited to
+generate a diagram that can be later exported to your own documents.
 
-The callgraph view plays a role similar the callgraph browser. They display the
-same information about entities, but in two different ways: the callgraph view
-displays the information in a tree, easily navigable and perhaps easier to
-manipulate when lots of entities are involved; the callgraph browser displays
-the information as graphical boxes that can be manipulated on the screen, and
-is best suited to generate a diagram that can be later exported to your own
-documents.
-
-This callgraph view is used to display the information about what subprograms
+These views are used to display the information about what subprograms
 are called by a given entity, and, opposite, what entities are calling a given
 entity.
 
@@ -720,9 +830,18 @@ sources, but could occur through dynamic dispatching. This of course depends on
 what arguments are passed to the caller at run time, and it is possible that
 the subprogram is in fact never dispatched to.
 
-This view is automatically displayed when you select one of the contextual
-menus `... calls` and `... is called by`. Every time you select one of these
-menus, a new view is opened to display that entity.
+.. index:: contextual menu; calls
+.. index:: contextual menu; called by
+
+Call Trees
+__________
+
+.. image:: calltree.png
+
+The :guilabel:`Call trees` are displayed when you select one of the contextual
+menus :menuselection:`<entity> calls` and :menuselection:`<entity> is called
+by`. Every time you select one of these menus, a new view is opened to display
+that entity.
 
 Whenever you expand a node from the tree by clicking on the small expander
 arrow on the left of the line, further callgraph information is computed for
@@ -735,26 +854,87 @@ On the right side of the main tree, a list displays the locations of calls for
 the selected entity. Clicking on entries in this list opens editors showing the
 corresponding location.
 
-The Callgraph View supports keyboard navigation: `Up` and `Down` keys navigate
-between listed locations, `Left` collapses the current level, `Right` expands
-the current level, and `Return` jumps to the currently selected location.
+The :guilabel:`Calltree` supports keyboard navigation: :kbd:`Up` and
+:kbd:`Down` keys navigate between listed locations, :kbd:`Left` collapses the
+current level, :kbd:`Right` expands the current level, and :kbd:`Return` jumps
+to the currently selected location.
 
-The callgraph view is automatically saved in the desktop, and restored the next
-time you restart GPS. However, the information displayed in these might no
-longer be accurate at this stage, since it shows the status of the callgraph
-during the last GPS session.
+The contents of the calltree is not restored the next time GPS is restarted,
+because its contents might be misleading if the sources have changed in-between,
+and GPS would be wasting time loading the information again.
 
-Left-clicking on a line in the Call Tree brings up a contextual menu with the
-following entries:
+Right-clicking on a line in the :guilabel:`Calltree` brings up a contextual
+menu with the following entries:
 
-*Collapse all*
+:menuselection:`Collapse all`
   Collapse all the entities in the Callgraph View.
 
-*Remove entity*
+:menuselection:`Remove entity`
   Remove the selected entity from the Callgraph View.
 
-*Clear Call Trees*
+:menuselection:`Clear Call Trees`
   Remove all entries from the Callgraph View.
+
+.. _Call_Graph:
+
+Callgraph browser
+_________________
+
+.. image:: callgraph.png
+.. image:: call-graph.jpg
+
+The callgraph shows graphically the relationship between subprogram callers and
+callees. A link between two items indicate that one of them is calling the
+other.
+
+.. index:: renaming entities; in callgraph
+
+A special handling is provided for renaming entities (in Ada): if a subprogram
+is a renaming of another one, both items will be displayed in the browser, with
+a special hashed link between the two. Since the renaming subprogram doesn't
+have a proper body, you will then need to ask for the subprograms called by the
+renamed to get the list.
+
+In this browser, clicking on the right arrow in the title bar will display all
+the entities that are called by the selected item.
+
+Clicking on the left arrow will display all the entities that call the selected
+item (i.e. its callers).
+
+.. index:: contextual menu; browsers --> calls
+.. index:: contextual menu; browsers --> calls (recursively)
+.. index:: contextual menu; browsers --> called by
+
+This browser is generally opened by right-clicking on the name of an entity in
+source editors or :guilabel:`Project` view, and selecting one of
+:menuselection:`Browsers--><entity> calls`, :menuselection:`Browsers--><entity>
+calls (recursive)` or :menuselection:`Browsers--><entity> is called by`.
+
+All boxes in this browser list several information: the location of their
+declaration, and the list of all their references in the other entities
+currently displayed in the browser. If you close the box for an entity that
+calls them, the matching references are also hidden, to keep the contents of
+the browser simpler.
+
+If you right-click on the title of one of the entity boxes, you will get the
+same contextual menu as when you click on the name of an entity in an editor,
+with the additional items:
+
+* :guilabel:`Go To Spec`
+  Selecting this item will open a source editor that displays the
+  declaration of the entity.
+
+* :guilabel:`Go To Body`
+  Selecting this item will open a source editor that displays the
+  body of the entity.
+
+* :guilabel:`Locate in Project View`
+  Selecting this menu entry will move the focus to the project view,
+  and select the first node representing the file in which the entity is
+  declared. This makes it easier to see which other entities are
+  declared in the same file.
+
+
 
 .. _Bookmarks:
 
