@@ -13,6 +13,13 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               "name_", "name.", "name.3com", "name._child" or "name.all".
   Workaround: Always enter valid project names.
 
+- M902-014: Search in 'Current Project' fails from editor
+  Problem:    One of the 'scope' in the search dialog is "Files From Current
+              Project". But this current project was not set properly when
+              an editor had the focus when the dialog is opened, and therefore
+              this could lead to surprising results.
+  Workaround: Select the project in the Project view, and then open the dialog
+
 - M902-009: Complete Block not working on new files
   Problem:    Create a new file, save it to an Ada file: operations working
               on blocks, such as "Complete Block" might not function.
