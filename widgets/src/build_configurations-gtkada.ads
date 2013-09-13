@@ -26,6 +26,7 @@ with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
@@ -76,7 +77,7 @@ package Build_Configurations.Gtkada is
 
 private
 
-   type Target_UI_Record is new Gtk_Hbox_Record with record
+   type Target_UI_Record is new Gtk_Scrolled_Window_Record with record
       Registry       : Build_Config_Registry_Access;
       Target         : Target_Access;
 

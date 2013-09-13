@@ -33,7 +33,6 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -275,7 +274,8 @@ package body Build_Configurations.Gtkada is
    begin
       Target_UI := new Target_UI_Record;
       Target_UI.Registry := Registry;
-      Initialize_Vbox (Target_UI);
+      Gtk.Scrolled_Window.Initialize (Target_UI);
+      Target_UI.Set_Policy (Policy_Automatic, Policy_Automatic);
    end Gtk_New;
 
    ------------------
@@ -522,21 +522,25 @@ package body Build_Configurations.Gtkada is
       Hbox          : Gtk_Hbox;
       Label         : Gtk_Label;
       Main_Hbox     : Gtk_Hbox;
-      Box           : Target_UI_Access;
+      Box           : Gtk_Box;
       Combo         : Gtk_Combo_Box_Text;
       Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Locations_Frame : Gtk_Frame;
       Button        : Gtk_Button;
       Buttons_Vbox  : Gtk_Vbox;
+      Scrolled      : Target_UI_Access;
 
    begin
+      Gtk_New (Scrolled, UI.Registry);
+
       --  Global box
 
-      Gtk_New (Box, UI.Registry);
+      Gtk_New_Vbox (Box);
+      Scrolled.Add (Box);
 
-      Box.Target := Target;
-      Box.History := History;
+      Scrolled.Target := Target;
+      Scrolled.History := History;
 
       if not Single then
          Gtk_New_Hbox (Top_Box);
@@ -565,9 +569,9 @@ package body Build_Configurations.Gtkada is
          Pack_Start (Top_Box, Combo, True, True, 0);
 
          Pack_Start (Box, Top_Box, False, False, 0);
-         Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
-         Set_Editable (Box.Model_Entry, False);
-         Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
+         Scrolled.Model_Entry := Gtk_Entry (Get_Child (Combo));
+         Set_Editable (Scrolled.Model_Entry, False);
+         Set_Text (Scrolled.Model_Entry, To_String (Target.Model.Name));
 
          --  Connect to a change in the model combo
 
@@ -606,13 +610,13 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 1,
                  Xoptions      => Expand or Fill);
 
-         Gtk_New (Box.Launch_Combo);
+         Gtk_New (Scrolled.Launch_Combo);
          for J in Launch_Mode_Type loop
-            Append_Text (Box.Launch_Combo, Beautify (J'Img));
+            Append_Text (Scrolled.Launch_Combo, Beautify (J'Img));
          end loop;
 
          Set_Tooltip_Text
-           (Box.Launch_Combo,
+           (Scrolled.Launch_Combo,
             -("Specify the launch mode for this target:" & ASCII.LF &
               "    Manually: target launched explicitly by the user, with" &
               ASCII.LF &
@@ -629,7 +633,7 @@ package body Build_Configurations.Gtkada is
              ));
 
          Gtk_New_Hbox (Hbox);
-         Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
+         Pack_Start (Hbox, Scrolled.Launch_Combo, False, False, 0);
 
          Attach (Table,
                  Child         => Hbox,
@@ -663,11 +667,11 @@ package body Build_Configurations.Gtkada is
                     Bottom_Attach => 3,
                     Xoptions      => Expand or Fill);
 
-            Gtk_New (Box.Multiple_Targets);
-            Set_Tooltip_Text (Box.Multiple_Targets, Descr);
+            Gtk_New (Scrolled.Multiple_Targets);
+            Set_Tooltip_Text (Scrolled.Multiple_Targets, Descr);
 
             Gtk_New_Hbox (Hbox);
-            Pack_Start (Hbox, Box.Multiple_Targets, False, False, 0);
+            Pack_Start (Hbox, Scrolled.Multiple_Targets, False, False, 0);
 
             Attach (Table,
                     Child         => Hbox,
@@ -687,20 +691,20 @@ package body Build_Configurations.Gtkada is
          Gtk_New (Label, "Display target");
          Set_Label_Widget (Locations_Frame, Label);
 
-         Gtk_New (Box.Icon_Check, "in the toolbar");
-         Pack_Start (Buttons_Vbox, Box.Icon_Check, False, False, 3);
+         Gtk_New (Scrolled.Icon_Check, "in the toolbar");
+         Pack_Start (Buttons_Vbox, Scrolled.Icon_Check, False, False, 3);
 
-         Gtk_New (Box.Menu_Check, "in the main menu");
-         Pack_Start (Buttons_Vbox, Box.Menu_Check, False, False, 3);
+         Gtk_New (Scrolled.Menu_Check, "in the main menu");
+         Pack_Start (Buttons_Vbox, Scrolled.Menu_Check, False, False, 3);
 
-         Gtk_New (Box.Project_Contextual_Menu_Check,
+         Gtk_New (Scrolled.Project_Contextual_Menu_Check,
                   "in contextual menus for projects");
-         Pack_Start (Buttons_Vbox, Box.Project_Contextual_Menu_Check,
+         Pack_Start (Buttons_Vbox, Scrolled.Project_Contextual_Menu_Check,
                      False, False, 3);
 
-         Gtk_New (Box.File_Contextual_Menu_Check,
+         Gtk_New (Scrolled.File_Contextual_Menu_Check,
                   "in contextual menus for files");
-         Pack_Start (Buttons_Vbox, Box.File_Contextual_Menu_Check,
+         Pack_Start (Buttons_Vbox, Scrolled.File_Contextual_Menu_Check,
                      False, False, 3);
 
          Gtk_New_Hbox (Hbox);
@@ -718,19 +722,19 @@ package body Build_Configurations.Gtkada is
 
          Gtk_New_Hbox (Hbox);
          Gtk_New
-           (Box.Icon_Button,
+           (Scrolled.Icon_Button,
             Stock_Id => To_String (Icons_List (Icons_List'First)));
-         Pack_Start (Hbox, Box.Icon_Button, False, False, 0);
+         Pack_Start (Hbox, Scrolled.Icon_Button, False, False, 0);
 
          Icon_Callback.Connect
-           (Box.Icon_Button, Signal_Selection_Changed,
-            On_Icon_Selected'Access, Box);
+           (Scrolled.Icon_Button, Signal_Selection_Changed,
+            On_Icon_Selected'Access, Scrolled);
          for J in Icons_List'Range loop
             Add_Item
-              (Box.Icon_Button,
+              (Scrolled.Icon_Button,
                To_String (Icons_List (J)), To_String (Icons_List (J)));
          end loop;
-         Add_Item (Box.Icon_Button, "custom", "gtk-new");
+         Add_Item (Scrolled.Icon_Button, "custom", "gtk-new");
 
          Attach (Table,
                  Child         => Hbox,
@@ -742,7 +746,7 @@ package body Build_Configurations.Gtkada is
 
          --  Initialize the options
 
-         Set_Active (Box.Launch_Combo,
+         Set_Active (Scrolled.Launch_Combo,
                      Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
 
          declare
@@ -755,75 +759,77 @@ package body Build_Configurations.Gtkada is
             end if;
 
             --  Try to select the icon
-            Select_Item (Box.Icon_Button, To_String (Icon));
+            Select_Item (Scrolled.Icon_Button, To_String (Icon));
 
             --  If unsuccessful, then select the custom icon, and set the
             --  text in the entry.
-            if Get_Selected_Item (Box.Icon_Button) /= To_String (Icon) then
+            if Get_Selected_Item (Scrolled.Icon_Button) /=
+              To_String (Icon)
+            then
                --  Selecting the "custom" item will create the Icon_Entry
                --  widget.
-               Select_Item (Box.Icon_Button, "custom");
-               Box.Icon_Entry.Set_Text (To_String (Icon));
+               Select_Item (Scrolled.Icon_Button, "custom");
+               Scrolled.Icon_Entry.Set_Text (To_String (Icon));
             end if;
          end;
 
-         Set_Active (Box.Icon_Check, Target.Properties.In_Toolbar);
-         Set_Active (Box.Menu_Check, Target.Properties.In_Menu);
-         Set_Active (Box.Project_Contextual_Menu_Check,
+         Set_Active (Scrolled.Icon_Check, Target.Properties.In_Toolbar);
+         Set_Active (Scrolled.Menu_Check, Target.Properties.In_Menu);
+         Set_Active (Scrolled.Project_Contextual_Menu_Check,
                      Target.Properties.In_Contextual_Menu_For_Projects);
-         Set_Active (Box.File_Contextual_Menu_Check,
+         Set_Active (Scrolled.File_Contextual_Menu_Check,
                      Target.Properties.In_Contextual_Menu_For_Files);
-         Box.Multiple_Targets.Set_Text
+         Scrolled.Multiple_Targets.Set_Text
            (To_String (Target.Properties.Target_Type));
       end if;
 
       --  Add the switches frame
 
-      Gtk_New (Box.Frame);
+      Gtk_New (Scrolled.Frame);
 
       if Single then
-         Set_Shadow_Type (Box.Frame, Shadow_None);
+         Set_Shadow_Type (Scrolled.Frame, Shadow_None);
       else
          Gtk_New (Label);
          Set_Use_Markup (Label, True);
          Set_Markup (Label, "Command line");
-         Set_Label_Widget (Box.Frame, Label);
+         Set_Label_Widget (Scrolled.Frame, Label);
       end if;
 
-      Pack_Start (Box, Box.Frame, True, True, 0);
+      Pack_Start (Box, Scrolled.Frame, True, True, 0);
 
-      Set_Switches (Box);
+      Set_Switches (Scrolled);
 
       if Single then
          Object_Connect
-           (Widget      => Get_Entry (Box.Editor),
+           (Widget      => Get_Entry (Scrolled.Editor),
             Name        => Gtk.Editable.Signal_Changed,
             Cb          => On_Entry_Changed'Access,
             Slot_Object => UI,
             After       => True);
 
-         Gtk_New (Box.Expanded_Entry);
+         Gtk_New (Scrolled.Expanded_Entry);
 
          if UI.Expand_Cmd_Line = null then
             Set_Text
-              (Get_Buffer (Box.Expanded_Entry),
-               Get_Text (Get_Entry (Box.Editor)));
+              (Get_Buffer (Scrolled.Expanded_Entry),
+               Get_Text (Get_Entry (Scrolled.Editor)));
          else
             Set_Text
-              (Get_Buffer (Box.Expanded_Entry),
-               UI.Expand_Cmd_Line (Get_Text (Get_Entry (Box.Editor))));
+              (Get_Buffer (Scrolled.Expanded_Entry),
+               UI.Expand_Cmd_Line (Get_Text (Get_Entry (Scrolled.Editor))));
          end if;
 
-         Set_Editable (Box.Expanded_Entry, False);
-         Set_Sensitive (Box.Expanded_Entry, False);
-         Set_Wrap_Mode (Box.Expanded_Entry, Wrap_Word);
+         Set_Editable (Scrolled.Expanded_Entry, False);
+         Set_Sensitive (Scrolled.Expanded_Entry, False);
+         Set_Wrap_Mode (Scrolled.Expanded_Entry, Wrap_Word);
          Gtk_New (Options_Frame);
          Set_Shadow_Type (Options_Frame, Shadow_None);
-         Add (Options_Frame, Box.Expanded_Entry);
+         Add (Options_Frame, Scrolled.Expanded_Entry);
          Pack_Start (Box, Options_Frame, True, True, 0);
       end if;
 
-      return Box;
+      return Scrolled;
    end Switches_For_Target;
 
    --------------------------
@@ -904,7 +910,7 @@ package body Build_Configurations.Gtkada is
          Set_Transient_For (Dialog, Parent);
       end if;
 
-      Set_Default_Size (Dialog, 750, 550);
+      Set_Default_Size (Dialog, 1024, 620);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
@@ -1099,7 +1105,7 @@ package body Build_Configurations.Gtkada is
          Set_Transient_For (Dialog, Parent);
       end if;
 
-      Set_Default_Size (Dialog, 650, 450);
+--      Set_Default_Size (Dialog, 650, 450);
 
       UI := new Mode_UI_Record;
       Initialize_Hbox (UI);
@@ -1431,7 +1437,7 @@ package body Build_Configurations.Gtkada is
          Set_Transient_For (Dialog, Parent);
       end if;
 
-      Set_Default_Size (Dialog, 600, 0);
+--      Set_Default_Size (Dialog, 600, 0);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);

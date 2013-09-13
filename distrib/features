@@ -29,6 +29,11 @@ NF-60-M913-009 GPS: persistent contents of Debug/Connect To Board (2013-09-13)
   is now restored every time the dialog is displayed, avoiding the need to
   enter the same information every time.
 
+NF-60-M913-008 GPS: Build/Settings/Target window now resizable (2013-09-13)
+
+  The window to edit the build targets now has a smaller default size, and is
+  resizable. It should now fit better on smaller screens.
+
 NF-60-M904-022 GPS: search dialog shows name of current project (2013-09-10)
 
   The search dialog provides a 'Scope' to search only in the source files of
