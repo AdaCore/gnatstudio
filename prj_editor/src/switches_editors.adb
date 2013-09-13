@@ -450,7 +450,8 @@ package body Switches_Editors is
                      Attr_Name := To_Unbounded_String ("default_switches");
                      if Project.Has_Attribute
                        (Attribute_Pkg_List'(Build
-                        (Tool.Project_Package.all, "switches")))
+                        (Tool.Project_Package.all, "switches")),
+                        Index => Tool.Project_Index.all)
                      then
                         Attr_Name := To_Unbounded_String ("switches");
                      end if;
