@@ -423,7 +423,7 @@ def delete_line ():
     # Do the deletion
     buffer.delete (start, end)
 
-def kill_line (location = None, count=1):
+def kill_line(location = None, count=1):
    """ Kills the end of the line on which LOCATION is.
        If LOCATION is unspecified, the current cursor location in the current
        editor is used.
@@ -437,28 +437,29 @@ def kill_line (location = None, count=1):
        whole lines are deleted, including newline characters."""
 
    if not location:
-      location = GPS.EditorBuffer.get ().current_view ().cursor ()
-   buffer = location.buffer ()
+      location = GPS.EditorBuffer.get().current_view().cursor()
+
+   buffer = location.buffer()
    start  = location
 
-   append          = GPS.last_command() == "kill-line"
-   GPS.set_last_command ("kill-line")
+   append = GPS.last_command() == "kill line"
 
    # In case the current location points to a line terminator we just cut it
    if count == 1 and start.get_char() == "\n":
-      buffer.cut (start, start, append)
+      buffer.cut(start, start, append)
    else:
       bol = start
-      for line in range (1, count + 1):
-         end       = bol.end_of_line ()
-         str       = buffer.get_chars (start, end)
-         strip_str = str.rstrip ()
-         if count == 1 \
-          and len (str) > 0 \
-          and str [len (str) - 1] == '\n' and strip_str != "":
-            end = end.forward_char (-1)
-         bol = end+1
-      buffer.cut (start, end, append)
+      for line in range(1, count + 1):
+         end       = bol.end_of_line()
+         str       = buffer.get_chars(start, end)
+         strip_str = str.rstrip()
+         if (count == 1
+             and len(str) > 0
+             and str[len (str) - 1] == '\n' and strip_str != ""):
+            end = end.forward_char(-1)
+         bol = end + 1
+
+      buffer.cut(start, end, append)
 
 ################################################
 ## Moving the cursor
