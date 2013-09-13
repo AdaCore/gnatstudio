@@ -1564,9 +1564,14 @@ package body Src_Editor_Module.Editors is
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class
    is
+      Iter : Gtk_Text_Iter;
    begin
-      return Create_Editor_Location
-        (This, Editable_Line_Type (Line), Character_Offset_Type (Column));
+      Get_Iter_At_Screen_Position
+        (This.Contents.Buffer,
+         Iter,
+         Editable_Line_Type (Line),
+         Column);
+      return Create_Editor_Location (This, Iter);
    exception
       when Editor_Exception =>
          declare
