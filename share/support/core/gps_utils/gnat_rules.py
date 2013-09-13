@@ -353,7 +353,7 @@ class gnatMakeProc:
 # did not manage to correctly parse the gnatmake output.
 
 xmlCompilerHead = """
-   <tool name="Gnatmake" package="Builder" index="ada">
+   <tool name="Builder" package="Builder" index="ada">
       <language>Ada</language>
       <initial-cmd-line></initial-cmd-line>
       <switches columns="2">
@@ -434,7 +434,7 @@ xmlCompilerHead = """
 
           <check label="Debug Information" switch="-g" line="2" column="2"
                  tip="Debug Information" />
-          <dependency master-page="Gnatmake" slave-page="Ada"
+          <dependency master-page="Builder" slave-page="Ada"
                       master-switch="-g" slave-switch="-g"
                       master-status="on" slave-status="on" />
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
@@ -599,7 +599,7 @@ xmlCompilerTrailer="""
       <switches lines="1">
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
-         <dependency master-page="Gnatmake" slave-page="Ada Linker"
+         <dependency master-page="Builder" slave-page="Ada Linker"
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
 
