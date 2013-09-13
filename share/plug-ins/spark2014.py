@@ -138,7 +138,7 @@ xml_gnatprove = """<?xml version="1.0"?>
       <language>Ada</language>
       <switches columns="2" lines="3" switch_char="-">
         <title line="1">Proof</title>
-         <combo label="Main mode" switch="--mode" noswitch="prove"
+         <combo label="Main mode" switch="--mode" noswitch="all"
                separator="=" column="1"
                tip="Main mode of formal verification" >
             <combo-entry label="check" value="check"
