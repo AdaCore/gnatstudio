@@ -80,6 +80,17 @@ when editing other languages
    becomes
        A         := 2;
        Long_Name := 3;
+
+ - Aligning end-of-line comments (Ada, C++ and Python)
+   For example,
+
+         A := 2;  --Foo
+         B_Long := 3;     --   bar
+
+   becomes
+
+         A := 2;      --  Foo
+         B_Long := 3; --  bar
 """
 
 
@@ -92,7 +103,8 @@ import sys
 import GPS
 from gps_utils import *
 
-def range_align_on (top, bottom, sep, replace_with=None):
+
+def range_align_on(top, bottom, sep, replace_with=None):
    """Align each line from top to bottom, aligning, for each line, sep in
       the same column. For instance:
           a sep b
@@ -385,8 +397,24 @@ def align_formal_params():
    buffer_align_on (sep=":\s*(((in\s+out|out|in|access) )?)",
                     replace_with=" : \\1")
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Record representation clause", name="Align record representation clause")
-def align_record_rep_clause ():
+
+@interactive(category="Ada",
+             filter=in_rw_ada_file,
+             contextual="Align/Record representation clause",
+             name="Align record representation clause")
+def align_record_rep_clause():
    """Aligns the various parts of a record representation clause"""
-   buffer_align_on (sep=" at ")
-   buffer_align_on (sep=" range ")
+   buffer_align_on(sep=" at ")
+   buffer_align_on(sep=" range ")
+
+
+@interactive(category="Ada",
+             filter=in_rw_ada_file,
+             contextual="Align/End of line comments",
+             name="Align end of line comments")
+def align_end_of_line_comments():
+    """Align end of line comments"""
+    buffer_align_on(sep=" --\s*", replace_with=" --  ")
+    buffer_align_on(sep=" //\s*", replace_with=" // ")
+    buffer_align_on(sep=" #\s*", replace_with=" # ")
+

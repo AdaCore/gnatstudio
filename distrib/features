@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M913-030 GPS: align end-of-line comments (2013-09-13)
+
+  The align.py plugin now provides a solution to align end of line comments.
+
 NF-60-M913-009 GPS: persistent contents of Debug/Connect To Board (2013-09-13)
 
   The contents of the dialog to connect to a board (target name and protocol)
