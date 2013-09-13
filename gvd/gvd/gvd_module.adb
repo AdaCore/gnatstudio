@@ -105,6 +105,9 @@ package body GVD_Module is
 
    Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
+   History_Target_Name : constant History_Key := "gvd-target-name";
+   History_Protocol : constant History_Key := "gvd-protocol";
+
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
    type File_Edited_Hook_Record is new Function_With_Args with record
@@ -1280,6 +1283,8 @@ package body GVD_Module is
 
       Gtk_New (Ent_Target);
       Set_Width_Chars (Ent_Target, 20);
+      Ent_Target.Set_Text
+        (Most_Recent (Get_History (Kernel), History_Target_Name));
       Attach (Table, Ent_Target, 1, 2, 0, 1);
       Grab_Focus (Ent_Target);
       Set_Activates_Default (Ent_Target, True);
@@ -1289,6 +1294,8 @@ package body GVD_Module is
       Attach (Table, Label, 0, 1, 1, 2, Xpadding => 3, Ypadding => 3);
 
       Gtk_New (Ent_Protocol);
+      Ent_Protocol.Set_Text
+        (Most_Recent (Get_History (Kernel), History_Protocol));
       Set_Width_Chars (Ent_Protocol, 20);
       Attach (Table, Ent_Protocol, 1, 2, 1, 2);
       Set_Activates_Default (Ent_Protocol, True);
@@ -1304,6 +1311,14 @@ package body GVD_Module is
            new String'(Get_Text (Ent_Target));
          Process.Descriptor.Protocol :=
            new String'(Get_Text (Ent_Protocol));
+
+         Add_To_History
+           (Get_History (Kernel).all, History_Target_Name,
+            Get_Text (Ent_Target));
+         Add_To_History
+           (Get_History (Kernel).all, History_Protocol,
+            Get_Text (Ent_Protocol));
+
          Connect_To_Target
            (Process.Debugger,
             Process.Descriptor.Remote_Target.all,

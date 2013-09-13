@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M913-009 GPS: persistent contents of Debug/Connect To Board (2013-09-13)
+
+  The contents of the dialog to connect to a board (target name and protocol)
+  is now restored every time the dialog is displayed, avoiding the need to
+  enter the same information every time.
+
 NF-60-M904-022 GPS: search dialog shows name of current project (2013-09-10)
 
   The search dialog provides a 'Scope' to search only in the source files of
