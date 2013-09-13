@@ -121,3 +121,7 @@ COMPLETION_ADVANCED=no
 
 --  Debug handles related to the editor
 buffer_debug=no
+
+--  Active in development mode
+
+PREVENT_ALIGN_ON_TAB=no

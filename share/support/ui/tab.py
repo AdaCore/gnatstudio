@@ -17,12 +17,13 @@ import aliases
 import align
 from gi.repository import Gtk
 
-tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
-tabs_align_selection.create(
-    "Align selection on tab", "boolean",
-    "Whether <tab> should also align arrows, use clauses and assignments (:=)"
-    " when multiple lines are selected.",
-    True)
+if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
+    tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
+    tabs_align_selection.create(
+        "Align selection on tab", "boolean",
+        "Whether <tab> should also align arrows, use clauses and assignments (:=)"
+        " when multiple lines are selected.",
+        True)
 
 @interactive(name='smart tab',
              category='Editor',
@@ -44,15 +45,16 @@ def smart_tab():
 
     # If multiple lines are selected, perform various alignments
 
-    if tabs_align_selection.get():
-        start = editor.selection_start()
-        end = editor.selection_end()
+    if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
+        if tabs_align_selection.get():
+            start = editor.selection_start()
+            end = editor.selection_end()
 
-        if abs(start.line() - end.line()) >= 1:
-            align.align_colons()
-            align.align_arrows()
-            align.align_use_clauses()
-            align.align_assignments()
+            if abs(start.line() - end.line()) >= 1:
+                align.align_colons()
+                align.align_arrows()
+                align.align_use_clauses()
+                align.align_assignments()
 
     # Otherwise, reformat the current selection
 
