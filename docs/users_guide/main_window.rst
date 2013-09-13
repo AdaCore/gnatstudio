@@ -420,6 +420,46 @@ Two triangle icons will therefore appear for the two occurrences of the type
 name, one with the additional decorator indicating the 'private' compile-time
 visibility.
 
+
+
+.. index:: windows; messages
+.. index:: messages
+.. index:: console
+.. _The_Messages_Window:
+
+The :guilabel:`Messages` window
+-------------------------------
+
+.. image:: messages.png
+
+The Messages window is used by GPS to display information and feedback about
+operations, such as build output, information about processes launched, error
+messages.
+
+This is a read-only window, which means that only output is available, no input
+is possible.
+
+Its local toolbar contains buttons to :guilabel:`Clear` the contents of the
+window, as well as to :guilabel:`Save` and :guilabel:`Load` from files.
+
+In general the output of the compilation is displayed in the
+:guilabel:`Messages` window, but will also be parsed and displayed more
+conveniently in the :guilabel:`Locations` window (:ref:`The_Locations_View`).
+
+When a compilation finishes, GPS also displays the total elapsed time. If the
+process ended with errors, GPS will display the total progress (as is also
+displayed in the progress bar in the GPS toolbar), which is convenient to see
+how many files were compiled successfully.
+
+.. index:: menu; tools --> views --> messages
+
+The :guilabel:`Messages` window can not be closed, because it might contain
+important messages at any time. However, it might happen that it has been
+closed anyway, and in this case it can be reopened with the
+:menuselection:`Tools-->Views-->Messages` menu.
+
+
+
 .. index:: project view
 .. index:: windows; project view
 
@@ -976,33 +1016,6 @@ the name.
 You can delete an existing bookmark by right clicking on the line, and select
 :guilabel:`Delete bookmark` in the contextual menu.
 
-.. _The_Messages_Window:
-
-The Messages Window
-===================
-
-.. index:: messages
-.. index:: messages window
-.. index:: build
-.. index:: errors
-
-The Messages window is used by GPS to display information and feedback about
-operations, such as build output, information about processes launched, error
-messages.
-
-.. index:: screen shot
-.. image:: messages.jpg
-
-This is a read-only window, which means that only output is available, no input
-is possible.
-
-.. index:: execution window
-.. index:: execution
-.. index:: shell window
-.. index:: shell
-
-For an input/output window, see :ref:`The_Execution_Window` and also
-:ref:`The_Shell_and_Python_Windows`.
 
 .. _The_Shell_and_Python_Windows:
 
