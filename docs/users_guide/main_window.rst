@@ -934,14 +934,14 @@ with the additional items:
   declared. This makes it easier to see which other entities are
   declared in the same file.
 
-
-
+.. index:: windows; bookmarks
+.. index:: bookmark
 .. _Bookmarks:
 
-Bookmarks
-=========
+The :guilabel:`Bookmarks` view
+------------------------------
 
-.. index:: bookmark
+.. image:: bookmarks.png
 
 Bookmarks are a convenient way to remember places in your code or in your
 environment so that you can go back to them at any point in the future.  These
@@ -955,20 +955,26 @@ refering to the same place. Likewise if you close and reopen the file.
 However, when the file is modified outside of GPS, the bookmark will not be
 aware of that change, and will thus reference another place in the file.
 
-The menu `Edit->Create Bookmark` allows you to create a bookmark at the current
-location (either in the editor, or the browser for instance).
+.. index:: menu; edit --> create bookmark
+
+The menu :menuselection:`Edit-->Create Bookmark` allows you to create a
+bookmark at the current location (either in the editor, or the browser for
+instance).
+
+.. index:: menu; tools --> views --> bookmarks
 
 All the bookmarks you have created will be visible in the
-`Tools->Views->Bookmarks` window. Clicking on the small icon to the left side
-of each line will immediately jump to that bookmark.
+:menuselection:`Tools-->Views-->Bookmarks` window. Clicking on the line will
+immediately open an editor with the cursor at that position.
 
 You can rename a bookmark so that it is easier to remember what it refers to.
-To do so, open the Bookmarks window, and click twice on the line of the
-bookmark. This will change the way the name is displayed, so that you can edit
-it in place. Press :kbd:`enter` when you are done modifying the name.
+To do so, open the :guilabel:`Bookmarks` window, and right-click twice on the
+line of the bookmark. Select then the :guilabel:`Rename bookmark` menu so that
+you can edit the name in place.  Press :kbd:`enter` when you are done modifying
+the name.
 
 You can delete an existing bookmark by right clicking on the line, and select
-`Delete bookmark` in the contextual menu.
+:guilabel:`Delete bookmark` in the contextual menu.
 
 .. _The_Messages_Window:
 
