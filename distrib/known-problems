@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M906-012: Missing cross-reference on synchronized interface
+  Problem:    When a type is derived from a synchronized interface, there is
+              no link to its parent interface (in particular in the Entities
+              browser).
+              This was a missing information from the compiler, so an update
+              to the compiler is needed.
+  Workaround: None found.
+
 - M902-029: GPS: invalid project names accepted
   Problem:    GPS accepted invalid project names such as "name__toto",
               "name_", "name.", "name.3com", "name._child" or "name.all".
