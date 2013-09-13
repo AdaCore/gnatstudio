@@ -145,10 +145,16 @@ package body CodePeer.Module.Bridge is
       end if;
 
       if DB_File_Name.Is_Regular_File
-         and then Reply_File_Name.Is_Regular_File
-         and then DB_File_Name.File_Time_Stamp
-            < Reply_File_Name.File_Time_Stamp
+        and then Reply_File_Name.Is_Regular_File
+        and then (DB_File_Name.File_Time_Stamp
+                    < Reply_File_Name.File_Time_Stamp
+                  or (Status_File_Name.Is_Regular_File
+                      and then DB_File_Name.File_Time_Stamp
+                        < Status_File_Name.File_Time_Stamp))
       then
+         --  Inspection data file and review status data files are up to date,
+         --  and can be loaded without run of gps_codepeer_bridge.
+
          Module.Load (Reply_File_Name, Status_File_Name);
       else
          --  Generate command file
