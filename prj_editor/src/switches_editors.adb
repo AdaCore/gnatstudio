@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Strings;              use GNAT.Strings;
@@ -342,6 +343,7 @@ package body Switches_Editors is
       is
          Is_Default_Value : Boolean;
          To_Remove        : Boolean := False;
+         Attr_Name        : Unbounded_String;
       begin
          --  Language not supported => Ignore the attribute.
          --  We shouldn't remove it, since it might have been added by another
@@ -444,29 +446,41 @@ package body Switches_Editors is
                         Changed := True;
                      end if;
 
-                  elsif Args'Length /= 0 then
-                     Trace (Me, "Changing default switches for "
-                            & Tool.Project_Package.all
-                            & " " & Tool.Project_Index.all);
-                     Project.Set_Attribute
-                       (Scenario  => Scenario_Variables,
-                        Attribute => Attribute_Pkg_List'(Build
-                          (Tool.Project_Package.all, "default_switches")),
-                        Values    => Args.all,
-                        Index     => Tool.Project_Index.all,
-                        Prepend   => False);
-                     Changed := True;
-
                   else
-                     Trace (Me, "Removing default switches for "
-                            & Tool.Project_Package.all & " "
-                            & Tool.Project_Index.all);
-                     Project.Delete_Attribute
-                       (Scenario  => Scenario_Variables,
-                        Attribute => Attribute_Pkg_List'(Build
-                          (Tool.Project_Package.all, "default_switches")),
-                        Index     => Tool.Project_Index.all);
-                     Changed := True;
+                     Attr_Name := To_Unbounded_String ("default_switches");
+                     if Project.Has_Attribute
+                       (Attribute_Pkg_List'(Build
+                        (Tool.Project_Package.all, "switches")))
+                     then
+                        Attr_Name := To_Unbounded_String ("switches");
+                     end if;
+
+                     if Args'Length /= 0 then
+                        Trace (Me, "Changing default switches for "
+                               & Tool.Project_Package.all
+                               & " " & Tool.Project_Index.all);
+                        Project.Set_Attribute
+                          (Scenario  => Scenario_Variables,
+                           Attribute => Attribute_Pkg_List'(Build
+                             (Tool.Project_Package.all,
+                                  To_String (Attr_Name))),
+                           Values    => Args.all,
+                           Index     => Tool.Project_Index.all,
+                           Prepend   => False);
+                        Changed := True;
+
+                     else
+                        Trace (Me, "Removing default switches for "
+                               & Tool.Project_Package.all & " "
+                               & Tool.Project_Index.all);
+                        Project.Delete_Attribute
+                          (Scenario  => Scenario_Variables,
+                           Attribute => Attribute_Pkg_List'(Build
+                             (Tool.Project_Package.all,
+                              To_String (Attr_Name))),
+                           Index     => Tool.Project_Index.all);
+                        Changed := True;
+                     end if;
                   end if;
                end if;
 

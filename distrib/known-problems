@@ -8,6 +8,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M913-006: GPS: editing switches always modified Default_Switches
+  Problem:    If you project contains a Compiler'Switches attribute, and you
+              edit the project to add new switches, then GPS adds a
+              Compiler'Default_Switches attribute instead of editing
+              Compiler'Switches. But then Default_Switches is ignored by
+              gprbuild.
+  Workaround: use Default_Switches("ada") instead of Switches("ada") when
+              you edit a project manually.
+
 - M906-012: Missing cross-reference on synchronized interface
   Problem:    When a type is derived from a synchronized interface, there is
               no link to its parent interface (in particular in the Entities
