@@ -6659,8 +6659,8 @@ and causes LOCAL_NAME to be placed in the STATIC_STRING_EXPRESSION
 section of the executable (assuming the linker doesn't rename the
 section).
 
-The compiler normally places library-level objects in standard
-sections depending on their type: procedures and functions generally go
+The compiler normally places library-level entities in standard
+sections depending on the class: procedures and functions generally go
 in the `.text' section, initialized variables in the `.data' section
 and uninitialized variables in the `.bss' section.
 
