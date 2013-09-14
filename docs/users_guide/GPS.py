@@ -6901,11 +6901,8 @@ class MDI(object):
             on top of them.
         :param save_desktop: A function that should be called when GPS saves
             the desktop into XML. This function receives the GPS.MDIWindow
-            as a parameter, and should return a tuple of two elements::
-
-                (name, data)
-
-            where name is a unique identifier for this window, and data is
+            as a parameter, and should return a tuple of two elements
+            (name, data) where name is a unique identifier for this window, and data is
             a string containing additional data to be saved (and later
             restored). One suggestion is to encode any python data through
             json and send the resulting string as data.

@@ -607,7 +607,7 @@ project.
 
 .. index:: project; scenario variables
 .. index:: windows; scenario view
-.. index:: see: scenario; project; scenario variables
+.. index:: scenario
 
 The :guilabel:`Scenario` view
 -----------------------------
