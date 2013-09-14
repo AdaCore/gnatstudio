@@ -3,7 +3,12 @@
 
 from GPS import *
 import types
-from gi.repository import Gtk
+
+# The autodoc may not have visibility on gi.repository
+try:
+   from gi.repository import Gtk
+except:
+   pass
 
 import GPS
 GPS.MDI.GROUP_DEFAULT = 0
