@@ -1,6 +1,6 @@
 with "../shared";
 
-project Docgen_Resources is
+project Docgen2_Resources is
 
    for Source_Dirs use
      ("resources/", "resources/support/", "resources/custom/");
@@ -21,4 +21,4 @@ project Docgen_Resources is
 
    package Ide renames Shared.Ide;
 
-end Docgen_Resources;
+end Docgen2_Resources;
