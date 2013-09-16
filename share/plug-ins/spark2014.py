@@ -8,20 +8,34 @@ This file provides support for using the SPARK 2014 toolset.
 
 import GPS, os_utils, os.path, tool_output, re, gps_utils, json
 
+# We create the actions and menus in XML instead of python to share the same
+# source for GPS and GNATbench (which only understands the XML input for now).
+
+# Filter "In Subprogram Context" should be used ideally for actions
+#   Examine Subprogram Action
+#   Prove Subprogram Action
+#   Prove Line Action
+# but the associated python function is_subp_context returns False currently
+# in all cases. The issue seems to be that self.entity() returns None for
+# the current context, to be corrected???
+
 xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
+    <filter name="In Subprogram Context" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.is_subp_context(GPS.current_context())" />
+
     <action name="Examine All Action" category="GNATprove" output="none">
-       <shell lang="python">GPS.BuildTarget("Examine All").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_examine_all(GPS.current_context())</shell>
     </action>
     <action name="Examine Root Project Action" category="GNATprove" output="none">
-       <shell lang="python">GPS.BuildTarget("Examine Root Project").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_examine_root_project(GPS.current_context())</shell>
     </action>
     <action name="Examine File Action" category="GNATprove" output="none">
        <filter_and>
           <filter language="Ada" />
           <filter id="Source editor" />
        </filter_and>
-       <shell lang="python">GPS.BuildTarget("Examine File").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_examine_file(GPS.current_context())</shell>
     </action>
     <action name="Examine Subprogram Action" category="GNATprove" output="none">
        <filter_and>
@@ -31,17 +45,17 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        <shell lang="python">spark2014.on_examine_subp(GPS.current_context())</shell>
     </action>
     <action name="Prove All Action" category="GNATprove" output="none">
-       <shell lang="python">GPS.BuildTarget("Prove All").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_prove_all(GPS.current_context())</shell>
     </action>
     <action name="Prove Root Project Action" category="GNATprove" output="none">
-       <shell lang="python">GPS.BuildTarget("Prove Root Project").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_prove_root_project(GPS.current_context())</shell>
     </action>
     <action name="Prove File Action" category="GNATprove" output="none">
        <filter_and>
           <filter language="Ada" />
           <filter id="Source editor" />
        </filter_and>
-       <shell lang="python">GPS.BuildTarget("Prove File").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_prove_file(GPS.current_context())</shell>
     </action>
     <action name="Prove Subprogram Action" category="GNATprove" output="none">
        <filter_and>
@@ -55,13 +69,13 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
           <filter language="Ada" />
           <filter id="Source editor" />
        </filter_and>
-       <shell lang="python">GPS.BuildTarget("Prove Line").execute(synchronous=False)</shell>
+       <shell lang="python">spark2014.on_prove_line(GPS.current_context())</shell>
     </action>
     <action name="Show Report Action" category="GNATprove" output="none">
         <shell lang="python">spark2014.on_show_report(GPS.current_context())</shell>
     </action>
     <action name="Clean Proofs Action" category="GNATprove" output="none">
-        <shell lang="python">GPS.BuildTarget("Clean Proofs").execute(synchronous=False)</shell>
+        <shell lang="python">spark2014.on_clean_up(GPS.current_context())</shell>
     </action>
     <action name="Remove Editor Highlighting Action" category="GNATprove" output="none">
        <shell lang="python">spark2014.on_clear_highlighting(GPS.current_context())</shell>
@@ -78,6 +92,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <menu action="Examine File Action">
           <Title>Examine File</Title>
         </menu>
+        <menu><title/></menu>
         <menu action="Prove All Action">
           <Title>Prove All</Title>
         </menu>
@@ -87,6 +102,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <menu action="Prove File Action">
           <Title>Prove File</Title>
         </menu>
+        <menu><title/></menu>
         <menu action="Show Report Action">
           <Title>Show Report</Title>
         </menu>
@@ -107,11 +123,11 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <contextual action="Prove File Action">
       <Title>SPARK 2014/Prove File</Title>
     </contextual>
-    <contextual action="Prove Line Action">
-      <Title>SPARK 2014/Prove Line</Title>
-    </contextual>
     <contextual action="Prove Subprogram Action">
       <Title>SPARK 2014/Prove Subprogram</Title>
+    </contextual>
+    <contextual action="Prove Line Action">
+      <Title>SPARK 2014/Prove Line</Title>
     </contextual>
   </GNATPROVE>
 """
@@ -866,52 +882,8 @@ class GNATProve_Plugin:
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
     def __init__(self):
-        GPS.Menu.create(menu_prefix, ref = "Window", add_before = True)
-        GPS.Menu.create(
-            menu_prefix + "/" + examine_all,
-            on_examine_all)
-        GPS.Menu.create(
-            menu_prefix + "/" + examine_root_project,
-            on_examine_root_project)
-        GPS.Menu.create(
-            menu_prefix + "/" + examine_file,
-            on_examine_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Menu.create(
-            menu_prefix + "/" + prove_all,
-            on_prove_all)
-        GPS.Menu.create(
-            menu_prefix + "/" + prove_root_project,
-            on_prove_root_project)
-        GPS.Menu.create(
-            menu_prefix + "/" + prove_file,
-            on_prove_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Menu.create(
-            menu_prefix + "/" + show_report,
-            on_show_report)
-        GPS.Menu.create(
-            menu_prefix + "/" + clean_up,
-            on_clean_up)
-        GPS.Menu.create(
-            menu_prefix + "/" + clear_highlighting,
-            on_clear_highlighting)
-        GPS.Contextual(prefix + "/" + examine_file).create(
-            on_activate = on_examine_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + examine_subp).create(
-            on_activate = on_examine_subp,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + prove_file).create(
-            on_activate = on_prove_file,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + prove_line).create(
-            on_activate = on_prove_line,
-            filter = gps_utils.in_ada_file)
-        GPS.Contextual(prefix + "/" + prove_subp).create(
-            on_activate = on_prove_subp,
-            filter = gps_utils.in_ada_file)
         GPS.parse_xml(xml_gnatprove)
+        GPS.parse_xml(xml_gnatprove_menus)
         self.messages = []
         self.trace_msg = None
 
