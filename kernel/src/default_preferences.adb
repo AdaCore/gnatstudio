@@ -882,7 +882,7 @@ package body Default_Preferences is
          Old_Prefs_File := Create_From_Dir (File_Name.Dir, "preferences");
 
          if Is_Regular_File (Old_Prefs_File) then
-            GNATCOLL.VFS.Copy (File_Name, Old_Prefs_File.Full_Name.all, Ign);
+            GNATCOLL.VFS.Copy (Old_Prefs_File, File_Name.Full_Name, Ign);
          end if;
       end if;
 
@@ -1831,6 +1831,16 @@ package body Default_Preferences is
          if Tmp = null then
             Ret.Themes := new Theme_Descr_Array (1 .. 1);
          else
+            --  There are themes defined already: check that we are not
+            --  adding a theme twice
+
+            for J in Ret.Themes'Range loop
+               if Ret.Themes (J).Name.all = Name then
+                  --  This theme is already registered, do nothing
+                  return;
+               end if;
+            end loop;
+
             Ret.Themes := new Theme_Descr_Array (Tmp'First .. Tmp'Last + 1);
             Ret.Themes (Tmp'Range) := Tmp.all;
             Unchecked_Free (Tmp);
@@ -1848,9 +1858,12 @@ package body Default_Preferences is
                Dark      => Dark);
          end if;
 
-         if Default = Ret.Themes (Ret.Themes'Last).Name.all
-           or else (Ret.Current = Natural'Last
-                    and then Ret.Themes (Ret.Themes'Last).Name.all = "Adwaita")
+         if not Dark
+           and then
+             (Default = Ret.Themes (Ret.Themes'Last).Name.all
+              or else (Ret.Current = Natural'Last
+                       and then
+                       Ret.Themes (Ret.Themes'Last).Name.all = "Adwaita"))
          then
             Ret.Current := Ret.Themes'Last;
          end if;
@@ -1909,6 +1922,11 @@ package body Default_Preferences is
          Add_Theme ("gtk-win32", Dark => False);
          Add_Theme ("gtk-win32-xp", Dark => False);
          Add_Theme ("gtk-win32-classic", Dark => False);
+
+         --  In the development environment on Windows, Gtk.Rc.Get_Theme_Dir
+         --  does not find the Adwaita theme: add it here.
+         Add_Theme ("Adwaita", Dark => False);
+         Add_Theme ("Adwaita", Dark => True);
       end if;
 
       Add_Theme ("Raleigh", Dark => False);

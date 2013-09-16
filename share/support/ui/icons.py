@@ -348,7 +348,7 @@ class Icon_Provider(object):
         self.__on_preferences_changed(None)
 
     def __on_preferences_changed(self, h):
-        t = GPS.Preference("Gtk-Theme-Name").get()
+        t = GPS.Preference("GPS6-Gtk-Theme-Name").get()
         if t != self.current_theme:
             self.current_theme = t
             GPS.parse_xml(XML)

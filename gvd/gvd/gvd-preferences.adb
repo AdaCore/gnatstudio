@@ -88,7 +88,7 @@ package body GVD.Preferences is
 
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
-         Name    => XML_Prefix & "Debugger-Kind",
+         Name    => "GPS6-" & XML_Prefix & "Debugger-Kind",
          Label   => -"Debugger kind",
          Page    => General,
          Doc     => -"Kind of debugger spawned by GPS",

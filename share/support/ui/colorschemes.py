@@ -92,7 +92,7 @@ themes = [
 class Color_Theme_Switcher(object):
 
     pref_name = "General/ColorTheme"
-    pref_gtk_theme = "Gtk-Theme-Name"
+    pref_gtk_theme = "GPS6-Gtk-Theme-Name"
     gtkpref_name = "/ColorTheme gtk+"
 
     def __init__(self):
