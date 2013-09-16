@@ -247,7 +247,7 @@ package body GPS.Kernel.MDI is
    begin
       MDI_Opaque := Create
         (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Opaque",
+         Name    => "GPS6-MDI-Opaque",
          Default => Config.Default_Opaque_MDI,
          Doc     => -("Whether items will be resized or moved opaquely when"
                       & " not maximized"),
@@ -326,7 +326,7 @@ package body GPS.Kernel.MDI is
 
       Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Title-Bars",
+         Name  => "GPS6-Window-Title-Bars",
          Label => -"Show title bars",
          Page  => -"Windows",
          Doc   => -("Whether the windows should have their own title bars."
@@ -336,7 +336,7 @@ package body GPS.Kernel.MDI is
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Tabs-Policy",
+         Name  => "GPS6-Window-Tabs-Policy",
          Label => -"Notebook tabs policy",
          Page  => -"Windows",
          Doc   => -"When the notebook tabs should be displayed",
@@ -344,7 +344,7 @@ package body GPS.Kernel.MDI is
 
       Pref_Tabs_Position := Tabs_Position_Preferences.Create
         (Get_Preferences (Kernel),
-         Name  => "Window-Tabs-Position",
+         Name  => "GPS6-Window-Tabs-Position",
          Label => -"Notebook tabs position",
          Page  => -"Windows",
          Doc   => -("Where the tabs should be displayed relative to the"

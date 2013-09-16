@@ -561,7 +561,7 @@ package body GPS.Main_Window is
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
-         Name    => "General-Toolbar-Style",
+         Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Toolbar style",
          Page    => -"Windows",
          Doc     => -("Indicates how the tool bar should be displayed"),

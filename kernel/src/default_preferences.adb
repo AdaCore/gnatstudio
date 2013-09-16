@@ -874,7 +874,18 @@ package body Default_Preferences is
    is
       File, Node : Node_Ptr;
       Err        : String_Access;
+      Old_Prefs_File : Virtual_File;
+      Ign        : Boolean;
    begin
+      --  Attempt to import the "preferences" file
+      if not Is_Regular_File (File_Name) then
+         Old_Prefs_File := Create_From_Dir (File_Name.Dir, "preferences");
+
+         if Is_Regular_File (Old_Prefs_File) then
+            GNATCOLL.VFS.Copy (File_Name, Old_Prefs_File.Full_Name.all, Ign);
+         end if;
+      end if;
+
       if Is_Regular_File (File_Name) then
          Manager.Loading_Prefs := True;
          XML_Parsers.Parse (File_Name, File, Err);
