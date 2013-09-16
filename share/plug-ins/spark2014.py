@@ -11,18 +11,10 @@ import GPS, os_utils, os.path, tool_output, re, gps_utils, json
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
 
-# Filter "In Subprogram Context" should be used ideally for actions
-#   Examine Subprogram Action
-#   Prove Subprogram Action
-#   Prove Line Action
-# but the associated python function is_subp_context returns False currently
-# in all cases. The issue seems to be that self.entity() returns None for
-# the current context, to be corrected???
-
 xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
-    <filter name="In Subprogram Context" language="Ada" shell_lang="python"
-        shell_cmd="spark2014.is_subp_context(GPS.current_context())" />
+    <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.inside_subp_context(GPS.current_context())" />
 
     <action name="Examine All Action" category="GNATprove" output="none">
        <shell lang="python">spark2014.on_examine_all(GPS.current_context())</shell>
@@ -38,10 +30,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        <shell lang="python">spark2014.on_examine_file(GPS.current_context())</shell>
     </action>
     <action name="Examine Subprogram Action" category="GNATprove" output="none">
-       <filter_and>
-          <filter language="Ada" />
-          <filter id="Source editor" />
-       </filter_and>
+       <filter id="Inside Subprogram Context" />
        <shell lang="python">spark2014.on_examine_subp(GPS.current_context())</shell>
     </action>
     <action name="Prove All Action" category="GNATprove" output="none">
@@ -58,17 +47,11 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
        <shell lang="python">spark2014.on_prove_file(GPS.current_context())</shell>
     </action>
     <action name="Prove Subprogram Action" category="GNATprove" output="none">
-       <filter_and>
-          <filter language="Ada" />
-          <filter id="Source editor" />
-       </filter_and>
+       <filter id="Inside Subprogram Context" />
        <shell lang="python">spark2014.on_prove_subp(GPS.current_context())</shell>
     </action>
     <action name="Prove Line Action" category="GNATprove" output="none">
-       <filter_and>
-          <filter language="Ada" />
-          <filter id="Source editor" />
-       </filter_and>
+       <filter id="Inside Subprogram Context" />
        <shell lang="python">spark2014.on_prove_line(GPS.current_context())</shell>
     </action>
     <action name="Show Report Action" category="GNATprove" output="none">
@@ -729,6 +712,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                             msg_text,
                             0)
 
+# not used anymore. kept for possible future use.
 def is_subp_decl_context(self):
     """Check whether the given context is the context of a subprogram
        declaration."""
@@ -742,6 +726,7 @@ def is_subp_decl_context(self):
     else:
         return False
 
+# not used anymore. kept for possible future use.
 def is_subp_body_context(self):
     """Check whether the given context is the context of a subprogram
        body."""
@@ -755,6 +740,7 @@ def is_subp_body_context(self):
     else:
         return False
 
+# not used anymore. kept for possible future use.
 def is_subp_context(self):
     """Check whether the given context is the context of a subprogram
        body or declaration."""
@@ -807,8 +793,7 @@ def mk_loc_string (sloc):
 def subprogram_start(cursor):
    """Return the start of the subprogram that we are currently in"""
    # This function has been copied and modified from plug-in "expanded_code"
-   blocks = {"CAT_PROCEDURE":1, "CAT_FUNCTION":1, "CAT_ENTRY":1,
-             "CAT_PROTECTED":1, "CAT_TASK":1, "CAT_PACKAGE":1}
+   blocks = {"CAT_PROCEDURE":1, "CAT_FUNCTION":1}
 
    if cursor.block_type() == "CAT_UNKNOWN":
       return None
@@ -849,6 +834,13 @@ def compute_subp_sloc(self):
         return entity.declaration()
     else:
         return None
+
+def inside_subp_context(self):
+    """Return True if the context is inside a subprogram declaration or body"""
+    if compute_subp_sloc(self):
+        return 1
+    else:
+        return 0
 
 def generic_action_on_subp(self,action):
     """execute the action on the the given subprogram entity
