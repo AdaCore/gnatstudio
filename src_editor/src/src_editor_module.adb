@@ -2980,8 +2980,8 @@ package body Src_Editor_Module is
          Add_Before => False,
          Filter     => Src_Action_Context and Is_Not_Makefile);
       Register_Action
-        (Kernel, "Format selection",
-         Command, -"Format the current line or selection",
+        (Kernel, "Autoindent selection",
+         Command, -"Automatically indent the current line or selection",
          Category => "Editor",
          Filter   => Src_Action_Context);
 

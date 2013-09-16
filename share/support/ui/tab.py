@@ -25,7 +25,7 @@ if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
         " when multiple lines are selected.",
         True)
 
-@interactive(name='smart tab',
+@interactive(name='Format selection',
              category='Editor',
              filter="Source editor",
              key='Tab')
@@ -33,6 +33,11 @@ def smart_tab():
     """
     This action is the default binding for the tab key, and will
     apply different behaviors depending on the current context.
+
+    When expanding aliases, <tab> will move to the next field.
+    Otherwise, when multiple lines are selected it will try to align
+    special sequences like ":", "=>", "use" and ":=".
+    Finally, it will automatically indent the selected lines.
     """
 
     editor = GPS.EditorBuffer.get()
@@ -58,7 +63,7 @@ def smart_tab():
 
     # Otherwise, reformat the current selection
 
-    action = GPS.Action("Format selection")
+    action = GPS.Action("Autoindent selection")
     action.execute_if_possible()
 
 
