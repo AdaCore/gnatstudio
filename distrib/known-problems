@@ -50,6 +50,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               project after fixing the syntax error.
   Workaround: Use /Projects/Recent to reload the previous project.
 
+- M828-019: GPS: Unable to save file switch setting
+  Problem:    Edited switches for individual files are not saved in
+              multilanguage project.
+  Workaround: edit the project manually.
+
 - M827-001: Missing cross-reference on package name in separate
   Problem:    Clicking on the name of the parameter inside a "separate(Foo)"
               statement has no effect, and does not go to the declaration of
