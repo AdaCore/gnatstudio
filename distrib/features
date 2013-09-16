@@ -377,6 +377,11 @@ NF-60-LC21-017 GPS: Update to Scenario View (2013-01-08)
 
   The Scenario view has been updated to a more usable tree rendering.
 
+NF-60-LC17-029 GPS: use separate file for CodePeer's audit data (2013-09-16)
+
+  CodePeer's audit data for messages are stored in separate file, to improve
+  performance of loading it on subsequence GPS run.
+
 NF-60-LC06-024 GPS: Locations view has a toolbar (2012-12-06)
 
   Actions such as "clear locations", or the filter panel were now moved into
