@@ -439,8 +439,17 @@ package body Browsers.Canvas is
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure (Hook.Browser.Canvas, Annotation_Font => Annotation_Font);
+      Configure
+        (Hook.Browser.Canvas,
+         Annotation_Font => Annotation_Font,
+         Background => Browsers_Bg_Color.Get_Pref);
       Free (Annotation_Font);
+
+      if Pref = null
+        or else Pref = Preference (Browsers_Bg_Color)
+      then
+         Need_Refresh := True;
+      end if;
 
       Image_Canvas (Hook.Browser.Canvas).Draw_Grid :=
         Browsers_Draw_Grid.Get_Pref;
