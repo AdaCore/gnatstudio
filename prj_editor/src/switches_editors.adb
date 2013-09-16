@@ -532,7 +532,9 @@ package body Switches_Editors is
          Tool : Tool_Properties_Record;
       begin
          for P in Switches.Pages'Range loop
-            if Switches.Pages (P) /= null then
+            if Switches.Pages (P) /= null and then
+              Switches.Pages (P).Get_Visible
+            then
                Tool := Get_Tool_Properties
                  (Switches.Kernel, Switches.Pages (P).Tool_Name.all);
                if Tool /= No_Tool then
