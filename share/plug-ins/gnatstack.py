@@ -17,7 +17,7 @@ if tool != "":
   <target-model name="gnatstack" category="">
     <description>Run GNATStack for analysis</description>
     <command-line>
-      <arg>gnat</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
       <arg>stack</arg>
       <arg>-pi</arg>
       <arg>-Q</arg>
@@ -34,7 +34,7 @@ if tool != "":
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <command-line>
-      <arg>gnat</arg>
+      <arg>%attr(ide'gnat,gnat)</arg>
       <arg>stack</arg>
       <arg>-pi</arg>
       <arg>-Q</arg>
