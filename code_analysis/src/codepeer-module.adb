@@ -824,6 +824,11 @@ package body CodePeer.Module is
          Self.Update_Location_View;
          Self.Fill_Object_Races;
 
+         --  Raise Locations view
+
+         GPS.Kernel.MDI.Get_MDI
+           (Self.Kernel).Find_MDI_Child_By_Name ("Locations").Raise_Child;
+
          --  Raise report window
 
          Self.Report_Subwindow.Raise_Child;
