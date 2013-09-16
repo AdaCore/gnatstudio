@@ -118,6 +118,7 @@ package body ALI_Parser is
       'c'    => Completion_Of_Private_Or_Incomplete_Type,
       'd'    => Discriminant,
       'e'    => End_Of_Spec,
+      'E'    => Implicit,
       'i'    => Implicit,
       'k'    => Parent_Package,
       'l'    => Label,
