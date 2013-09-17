@@ -801,25 +801,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Background color",
          Page    => -"Browsers");
 
-      Browsers_Bg_Image := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Browsers-Bg-Image",
-         Label   => -"Background image",
-         Page    => "",
-         Doc     =>
-           -("Image to draw in the background of browsers. If left empty,"
-             & " no image is drawn. Using a large image will slow down"
-             & " performances"),
-         Default => "");
-
-      Browsers_Draw_Grid := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Browsers-Draw-Grid",
-         Default => True,
-         Doc     => -"Whether a grid should be displayed in the browsers",
-         Page    => "",
-         Label   => -"Draw grid");
-
       Browsers_Hyper_Link_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Browsers-Hyper-Link-Color",

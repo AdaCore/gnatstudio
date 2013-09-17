@@ -352,6 +352,13 @@ with the mouse, and provide the following additional capabilities:
   performed on that item. These actions are specific to the kind of item you
   clicked on.
 
+* Grid
+
+  By default, a grid (small dots) is displayed in the background of the
+  browsers.  Using the local settings menu, it is possible to hide the grid
+  (:guilabel:`Draw grid`) and to force items to align on the grid
+  (:guilabel:`Align on grid`).
+
 Icons for source language entities
 __________________________________
 

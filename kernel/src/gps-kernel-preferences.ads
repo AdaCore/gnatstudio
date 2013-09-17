@@ -246,8 +246,6 @@ package GPS.Kernel.Preferences is
 
    -- Browsers --
    Browsers_Bg_Color         : Color_Preference;
-   Browsers_Bg_Image         : String_Preference;
-   Browsers_Draw_Grid        : Boolean_Preference;
    Browsers_Hyper_Link_Color : Color_Preference;
    Selected_Link_Color       : Color_Preference;
    Unselected_Link_Color     : Color_Preference;

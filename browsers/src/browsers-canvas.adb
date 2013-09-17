@@ -21,7 +21,6 @@ with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Glib;                              use Glib;
-with Glib.Error;                        use Glib.Error;
 with Glib.Graphs;                       use Glib.Graphs;
 with Glib.Main;                         use Glib.Main;
 with Glib.Object;                       use Glib.Object;
@@ -39,7 +38,6 @@ with Pango.Font;                        use Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
 
 with Gdk;                               use Gdk;
-with Gdk.Cairo;                         use Gdk.Cairo;
 with Gdk.Event;                         use Gdk.Event;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gdk.RGBA;                          use Gdk.RGBA;
@@ -79,7 +77,6 @@ with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Layouts;                           use Layouts;
@@ -98,6 +95,7 @@ package body Browsers.Canvas is
 
    Hist_Align_On_Grid : constant History_Key := "browsers-align-on-grid";
    Hist_Straight_Links : constant History_Key := "browsers-straight-links";
+   Hist_Draw_Grid : constant History_Key := "browsers-draw-grid";
 
    Zoom_Duration : constant := 0.25;
    --  Duration of the zoom animation
@@ -177,6 +175,9 @@ package body Browsers.Canvas is
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links
 
+   procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
+   --  Toggle the drawing of the grid, and refresh the canvas.
+
    procedure Set_Root (Browser : access Gtk_Widget_Record'Class);
    --  Remove all unselected items
 
@@ -213,26 +214,13 @@ package body Browsers.Canvas is
    --  Callbacks for the title bar buttons of Arrow_item
 
    type Image_Canvas_Record is new
-     Gtkada.Canvas.Interactive_Canvas_Record with
-   record
-      Background        : Gdk.Pixbuf.Gdk_Pixbuf;
-      Scaled_Background : Gdk.Pixbuf.Gdk_Pixbuf;
-      Draw_Grid         : Boolean;
-   end record;
+     Gtkada.Canvas.Interactive_Canvas_Record with null record;
    type Image_Canvas is access all Image_Canvas_Record'Class;
 
    overriding function Get_Window
      (Canvas : access Image_Canvas_Record) return Gdk.Gdk_Window;
    --  Override Gtk.Widget.Get_Window, so that a different Window can be
    --  returned if needed (e.g. when exporting the canvas).
-
-   overriding procedure Draw_Grid
-     (Canvas : access Image_Canvas_Record;
-      Cr     : Cairo_Context);
-
-   overriding procedure Draw_Background
-     (Canvas : access Image_Canvas_Record;
-      Cr     : Cairo_Context);
 
    procedure Foreach_Active_Area
      (Str : String;
@@ -280,37 +268,6 @@ package body Browsers.Canvas is
    begin
       return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
    end Get_Window;
-
-   ---------------
-   -- Draw_Grid --
-   ---------------
-
-   overriding procedure Draw_Grid
-     (Canvas : access Image_Canvas_Record;
-      Cr     : Cairo_Context)
-   is
-   begin
-      if Canvas.Draw_Grid then
-         Draw_Grid (Interactive_Canvas_Record (Canvas.all)'Access, Cr);
-      end if;
-   end Draw_Grid;
-
-   ---------------------
-   -- Draw_Background --
-   ---------------------
-
-   overriding procedure Draw_Background
-     (Canvas : access Image_Canvas_Record;
-      Cr     : Cairo_Context)
-   is
-   begin
-      if Canvas.Background = null then
-         Draw_Background (Interactive_Canvas_Record (Canvas.all)'Access, Cr);
-      else
-         Gdk.Cairo.Set_Source_Pixbuf (Cr, Canvas.Background, 0.0, 0.0);
-         Cairo.Paint (Cr);
-      end if;
-   end Draw_Background;
 
    ----------------
    -- Initialize --
@@ -364,6 +321,10 @@ package body Browsers.Canvas is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Browser);
 
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Browser.Kernel).all,
+         Hist_Draw_Grid, Default_Value => True);
+
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
       Add_Hook
@@ -394,10 +355,6 @@ package body Browsers.Canvas is
       if B.Close_Pixmap /= null then
          Unref (B.Close_Pixmap);
       end if;
-
-      if Image_Canvas (B.Canvas).Background /= null then
-         Unref (Image_Canvas (B.Canvas).Background);
-      end if;
    end Destroyed;
 
    -------------
@@ -409,51 +366,9 @@ package body Browsers.Canvas is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
-      Error           : GError;
+      pragma Unreferenced (Kernel, Data);
       Iter            : Item_Iterator;
-      Annotation_Font : Pango_Font_Description;
-      Need_Refresh    : Boolean := False;
-      Pref   : constant Preference := Get_Pref (Data);
-
-      use type Gdk.Gdk_GC;
    begin
-      Annotation_Font := Copy (Default_Font.Get_Pref_Font);
-      Set_Size
-        (Annotation_Font,
-         Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure
-        (Hook.Browser.Canvas,
-         Annotation_Font => Annotation_Font,
-         Background => Browsers_Bg_Color.Get_Pref);
-      Free (Annotation_Font);
-
-      if Pref = null
-        or else Pref = Preference (Browsers_Bg_Color)
-      then
-         Need_Refresh := True;
-      end if;
-
-      Image_Canvas (Hook.Browser.Canvas).Draw_Grid :=
-        Browsers_Draw_Grid.Get_Pref;
-
-      if Image_Canvas (Hook.Browser.Canvas).Background /= null then
-         Unref (Image_Canvas (Hook.Browser.Canvas).Background);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Browsers_Bg_Image)
-      then
-         if Browsers_Bg_Image.Get_Pref /= "" then
-            Gdk_New_From_File
-              (Image_Canvas (Hook.Browser.Canvas).Background,
-               Filename => Browsers_Bg_Image.Get_Pref,
-               Error    => Error);
-         else
-            Image_Canvas (Hook.Browser.Canvas).Background := null;
-         end if;
-      end if;
-
       Refresh_Layout_Orientation (Hook.Browser);
 
       Iter := Start (Hook.Browser.Canvas);
@@ -464,7 +379,6 @@ package body Browsers.Canvas is
                       Item.Title_Layout;
          begin
             if Layout /= null then
-               Need_Refresh := True;
                Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
             end if;
          end;
@@ -472,9 +386,7 @@ package body Browsers.Canvas is
          Next (Iter);
       end loop;
 
-      if Need_Refresh then
-         Refresh_Canvas (Hook.Browser.Canvas);
-      end if;
+      Toggle_Draw_Grid (Hook.Browser);
    end Execute;
 
    --------------------------------
@@ -686,6 +598,17 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          Change_Align_On_Grid'Access, View);
+
+      Gtk_New (Check, Label => -"Draw grid");
+      Check.Set_Tooltip_Text
+        (-"Whether to draw a grid in the background");
+      Associate
+        (Get_History (View.Kernel).all, Hist_Draw_Grid,
+         Check, Default => True);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         Toggle_Draw_Grid'Access, View);
 
       Gtk_New (Check, Label => -"Straight links");
       Check.Set_Tooltip_Text
@@ -1059,6 +982,35 @@ package body Browsers.Canvas is
       Refresh_Canvas (Get_Canvas (View));
    end Toggle_Orthogonal;
 
+   ----------------------
+   -- Toggle_Draw_Grid --
+   ----------------------
+
+   procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class) is
+      View  : constant General_Browser := General_Browser (Browser);
+      Grid            : Guint := Gtkada.Canvas.Default_Grid_Size;
+      Annotation_Font : Pango_Font_Description;
+   begin
+      Annotation_Font := Copy (Default_Font.Get_Pref_Font);
+      Set_Size
+        (Annotation_Font,
+         Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
+
+      if not Get_History (Get_History (View.Kernel).all, Hist_Draw_Grid) then
+         Grid := 0;
+      end if;
+
+      Configure
+        (View.Canvas,
+         Annotation_Font => Annotation_Font,
+         Grid_Size       => Grid,
+         Background      => Browsers_Bg_Color.Get_Pref);
+
+      Free (Annotation_Font);
+
+      Refresh_Canvas (Get_Canvas (View));
+   end Toggle_Draw_Grid;
+
    -------------
    -- Zoom_In --
    -------------
@@ -1420,7 +1372,6 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Layout, Width, Height);
    begin
-      Trace (Me, "MANU Browser_Item.Resize_And_Draw");
       Cairo.Rectangle
         (Cr,
          Gdouble (Xoffset),
