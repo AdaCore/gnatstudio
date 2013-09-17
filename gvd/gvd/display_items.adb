@@ -537,7 +537,9 @@ package body Display_Items is
          Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
       end if;
 
-      --  Keep some space for the shadow (3d look)
+      --  Force a minimal size, so that the item is at least visible
+      Alloc_Width := Gint'Max (50, Alloc_Width);
+      Alloc_Height := Gint'Max (20, Alloc_Height);
 
       Set_Screen_Size (Item, Alloc_Width + 1, Alloc_Height + 1);
 
@@ -1576,7 +1578,7 @@ package body Display_Items is
          For_Each_Item (Get_Canvas (Process), Update_On_Auto_Refresh'Access);
       end if;
 
-      --  Now that everything has been redimensionned, we can finish to
+      --  Now that everything has been resized, we can finish to
       --  manipulate the aliases
       For_Each_Item (Get_Canvas (Process), Recompute_Sizes'Access);
    end Recompute_All_Aliases;
