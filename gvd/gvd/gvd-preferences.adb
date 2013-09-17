@@ -90,7 +90,7 @@ package body GVD.Preferences is
         (Manager => Prefs,
          Name    => "GPS6-" & XML_Prefix & "Debugger-Kind",
          Label   => -"Debugger kind",
-         Page    => General,
+         Page    => "",
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 
