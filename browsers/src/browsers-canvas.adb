@@ -372,6 +372,7 @@ package body Browsers.Canvas is
       Execute (Hook.all, Browser.Kernel, Data => null);
 
       Change_Align_On_Grid (Browser);
+      Toggle_Orthogonal (Browser);
    end Initialize;
 
    ---------------
