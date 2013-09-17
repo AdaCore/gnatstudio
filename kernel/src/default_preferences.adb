@@ -1835,7 +1835,9 @@ package body Default_Preferences is
             --  adding a theme twice
 
             for J in Ret.Themes'Range loop
-               if Ret.Themes (J).Name.all = Name then
+               if Ret.Themes (J).Name.all = Name
+                 and then Ret.Themes (J).Dark = Dark
+               then
                   --  This theme is already registered, do nothing
                   return;
                end if;
