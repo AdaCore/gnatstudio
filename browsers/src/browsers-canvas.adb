@@ -324,6 +324,9 @@ package body Browsers.Canvas is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Browser.Kernel).all,
          Hist_Draw_Grid, Default_Value => True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Browser.Kernel).all,
+         Hist_Straight_Links, Default_Value => True);
 
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
