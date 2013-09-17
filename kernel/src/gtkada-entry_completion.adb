@@ -359,7 +359,7 @@ package body Gtkada.Entry_Completion is
             when Role_Provider =>
                Res := Convert (Get_Address (Child, Child_It, Column_Data));
                Set_String
-                 (Value, Res.Provider.Display_Name & " ("
+                 (Value, "<b>" & Res.Provider.Display_Name & "</b> ("
                   & Image (Res.Provider.Count, Min_Width => 0) & ")");
             when Role_To_Locations =>
                Set_String (Value,
@@ -542,14 +542,16 @@ package body Gtkada.Entry_Completion is
         (Render, "markup", Column_Provider);
 
       --  ??? Should onnect to preferences_changed for the color
-      Get_Style_Context (Self.View).Get_Background_Color
-        (Gtk_State_Flag_Normal, Color);
+      Get_Style_Context (Self.View).Get_Color (Gtk_State_Flag_Normal, Color);
       Set_Property
         (Render, Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
-         Shade_Or_Lighten (Color, 0.3));
-      Set_Property
-        (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
-         Shade_Or_Lighten (Color, 0.05));
+         Shade_Or_Lighten (Color, 0.1));
+
+      --  ??? Setting a background on the provider column does not render
+      --  very well when the window is non-resizing, which is the default
+--        Set_Property
+--          (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
+--           Shade_Or_Lighten (Color, 0.05));
       Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
