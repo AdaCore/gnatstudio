@@ -24,6 +24,7 @@ with Gdk.Event;
 with Gtkada.Canvas;
 with Debugger;
 with Language;
+with Cairo;
 
 package Display_Items is
 
@@ -124,11 +125,16 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas.
 
    procedure Update
-     (Item    : access Display_Item_Record'Class;
+     (Item             : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False);
    --  Unconditionally update the value of Item after parsing the new value.
    --  This does not redraw the canvas or the item on the canvas, unless
    --  Redisplay_Canvas is True
+
+   overriding procedure Draw
+     (Item : access Display_Item_Record;
+      Cr   : Cairo.Cairo_Context);
+   --  See imherited documentation
 
    function Get_Component
      (Item      : access Display_Item_Record;

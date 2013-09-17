@@ -20,6 +20,7 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo;                     use Cairo;
+with Cairo.Region;              use Cairo.Region;
 with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with Glib;                      use Glib;
@@ -97,14 +98,11 @@ package body Browsers.Elaborations is
    overriding procedure Destroy (Item : in out Unit_Item_Record) is null;
    --  See doc for inherited subprograms
 
-   overriding procedure Resize_And_Draw
-     (Item             : access Unit_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   overriding procedure Compute_Size
+     (Item          : not null access Unit_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int);
    --  See doc for inherited subprograms
 
    procedure On_Compilation_Finished
@@ -190,27 +188,8 @@ package body Browsers.Elaborations is
 
       Initialize (Item, Browser);
       Set_Title (Item, Name);
+      Recompute_Size (Item);
    end Initialize;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   overriding procedure Resize_And_Draw
-     (Item             : access Unit_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
-   begin
-      Resize_And_Draw
-        (Browser_Item_Record (Item.all)'Access, Cr,
-         Width, Height,
-         Width_Offset,
-         Height_Offset, Xoffset, Yoffset, Layout);
-   end Resize_And_Draw;
 
    ----------------
    -- Initialize --
@@ -273,13 +252,13 @@ package body Browsers.Elaborations is
                   Prev_Unit,
                   Next_Unit,
                   Descr => Kind_Image (Kind (Next)));
-               Refresh (Next_Unit);
+               Browser.Get_Canvas.Refresh (Next_Unit);
                Prev_Unit := Next_Unit;
             end;
          end if;
       end loop;
 
-      Refresh (Item_After);
+      Browser.Get_Canvas.Refresh (Item_After);
    end Fill_Elaborate_All;
 
    ------------------
@@ -323,8 +302,8 @@ package body Browsers.Elaborations is
                end;
             end if;
 
-            Refresh (Item_A);
-            Refresh (Item_B);
+            Browser.Get_Canvas.Refresh (Item_A);
+            Browser.Get_Canvas.Refresh (Item_B);
          end;
       end loop;
 
@@ -411,5 +390,22 @@ package body Browsers.Elaborations is
          return Unit_Name;
       end if;
    end Strip_Unit_Kind;
+
+   ------------------
+   -- Compute_Size --
+   ------------------
+
+   overriding procedure Compute_Size
+     (Item          : not null access Unit_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int) is
+   begin
+      Compute_Size
+        (Browser_Item_Record (Item.all)'Access, Layout, Width, Height,
+         Title_Box);
+      Width := Title_Box.Width;
+      Height := Height + 10;
+   end Compute_Size;
 
 end Browsers.Elaborations;

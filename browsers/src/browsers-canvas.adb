@@ -42,6 +42,7 @@ with Gdk;                               use Gdk;
 with Gdk.Cairo;                         use Gdk.Cairo;
 with Gdk.Event;                         use Gdk.Event;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+with Gdk.RGBA;                          use Gdk.RGBA;
 with Gdk.Rectangle;                     use Gdk.Rectangle;
 with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
@@ -134,9 +135,6 @@ package body Browsers.Canvas is
    procedure Zoom_Level
      (Item : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Zoom directly to a specific level (Data.Zoom)
-
-   procedure Realized (Browser : access Gtk_Widget_Record'Class);
-   --  Callback for the "realized" signal
 
    function Key_Press
      (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
@@ -361,10 +359,6 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser, Signal_Destroy, Destroyed'Access, Browser);
 
-      Widget_Callback.Object_Connect
-        (Browser.Canvas, Gtk.Widget.Signal_Realize,
-         Widget_Callback.To_Marshaller (Realized'Access), Browser);
-
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Browser.Canvas, Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
@@ -398,18 +392,6 @@ package body Browsers.Canvas is
 
       if B.Close_Pixmap /= null then
          Unref (B.Close_Pixmap);
-      end if;
-
-      if B.Item_Style /= null then
-         Unref (B.Item_Style);
-      end if;
-
-      if B.Item_Style_Parent_Linked /= null then
-         Unref (B.Item_Style_Parent_Linked);
-      end if;
-
-      if B.Item_Style_Child_Linked /= null then
-         Unref (B.Item_Style_Child_Linked);
       end if;
 
       if Image_Canvas (B.Canvas).Background /= null then
@@ -483,7 +465,6 @@ package body Browsers.Canvas is
             if Layout /= null then
                Need_Refresh := True;
                Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
-               Refresh (Item);
             end if;
          end;
 
@@ -532,25 +513,6 @@ package body Browsers.Canvas is
       end case;
       return False;
    end Key_Press;
-
-   --------------
-   -- Realized --
-   --------------
-
-   procedure Realized (Browser : access Gtk_Widget_Record'Class) is
-      B      : constant General_Browser := General_Browser (Browser);
-      Hook   : Preferences_Hook_Record;
-
-   begin
-      if B.Item_Style = null then
-         B.Selected_Link_Color := Selected_Link_Color.Get_Pref;
-         B.Unselected_Link_Color := Unselected_Link_Color.Get_Pref;
-
-         B.Item_Style := Copy (Get_Style (B.Canvas));
-         Hook.Browser := B;
-         Hook.Execute (null, Data => null);
-      end if;
-   end Realized;
 
    ----------------
    -- Get_Canvas --
@@ -1154,18 +1116,6 @@ package body Browsers.Canvas is
    end To_Browser;
 
    ---------------
-   -- Highlight --
-   ---------------
-
-   procedure Highlight (Item : access Browser_Item_Record) is
-      Cr : Cairo_Context;
-   begin
-      Cr := Create (Item);
-      Redraw_Title_Bar (Browser_Item (Item), Cr);
-      Destroy (Cr);
-   end Highlight;
-
-   ---------------
    -- Draw_Link --
    ---------------
 
@@ -1176,9 +1126,9 @@ package body Browsers.Canvas is
       Edge_Number : Glib.Gint;
       Show_Annotation : Boolean := True)
    is
-      Browser : constant General_Browser := To_Browser (Canvas);
    begin
       if not Show_Annotation then
+         Set_Source_Color (Cr, Black_RGBA);
          Draw_Link (Canvas, Canvas_Link_Access (Link), Cr, Edge_Number, False);
 
          return;
@@ -1190,9 +1140,9 @@ package body Browsers.Canvas is
          if not Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
            and then not Is_Selected (Canvas, Canvas_Item (Get_Dest (Link)))
          then
-            Set_Source_Color (Cr, Browser.Unselected_Link_Color);
+            Set_Source_Color (Cr, Black_RGBA);
          else
-            Set_Source_Color (Cr, Browser.Selected_Link_Color);
+            Set_Source_Color (Cr, Selected_Link_Color.Get_Pref);
          end if;
 
          Draw_Link
@@ -1275,14 +1225,12 @@ package body Browsers.Canvas is
             Reset (Browser_Item (Get_Dest (Link)),
                    Parent_Removed => True,
                    Child_Removed  => False);
-            Refresh (Browser_Item (Get_Dest (Link)));
          end if;
 
          if Get_Dest (Link) = Vertex_Access (User) then
             Reset (Browser_Item (Get_Src (Link)),
                    Parent_Removed => False,
                    Child_Removed  => True);
-            Refresh (Browser_Item (Get_Src (Link)));
          end if;
 
          return True;
@@ -1300,6 +1248,7 @@ package body Browsers.Canvas is
             To => Canvas_Item (User));
 
          Remove (Get_Canvas (B), User);
+         Refresh_Canvas (Get_Canvas (B));
       end if;
    end Close_Item;
 
@@ -1322,9 +1271,6 @@ package body Browsers.Canvas is
       Button_Width  : Gint;
       Button_Height : Gint;
       X, Y, W, H    : Gint;
-      Base          : Cairo_Color;
-      Color         : Cairo_Color;
-      Ptrn          : Cairo_Pattern;
 
    begin
       Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
@@ -1338,9 +1284,7 @@ package body Browsers.Canvas is
         (Num + 1) * (Margin + Button_Width);
 
       --  No title ? Don't draw any button
-      if Item.Title_Layout = null
-        or else Surface (Item) = Null_Surface
-      then
+      if Item.Title_Layout = null then
          return;
       end if;
 
@@ -1352,58 +1296,11 @@ package body Browsers.Canvas is
          Gdk_Rectangle'(X, Y, Button_Width, Button_Height),
          Cb);
 
-      --  Button's background
-      Rounded_Rectangle
-        (Cr,
-         Gdouble (X), Gdouble (Y),
-         Gdouble (Button_Width), Gdouble (Button_Height),
-         2.0);
-      Ptrn := Cairo.Pattern.Create_Linear
-        (0.0, Gdouble (Y), 0.0, Gdouble (Y + Button_Height - 1));
-
-      Base := White_RGBA;
-
-      Color := Lighten (Base, 0.3);
-      Cairo.Pattern.Add_Color_Stop_Rgb
-        (Ptrn, 0.0, Color.Red, Color.Green, Color.Blue);
-      Color := Shade (Base, 0.05);
-      Cairo.Pattern.Add_Color_Stop_Rgb
-        (Ptrn, 1.0, Color.Red, Color.Green, Color.Blue);
-      Set_Source (Cr, Ptrn);
-      Destroy (Ptrn);
-      Cairo.Fill (Cr);
-
-      --  Button's borders
-      Draw_Shadow
-        (Cr            => Cr,
-         Widget        => Get_Browser (Item),
-         Shadow_Type   => Shadow_Out,
-         X             => X - Gint (Border.Left),
-         Y             => Y - Gint (Border.Top),
-         Width         => Button_Width + Gint (Border.Left + Border.Right),
-         Height        => Button_Height + Gint (Border.Top + Border.Bottom),
-         Corner_Radius => 2.0);
-
-      --  The icon
       X := X + (Button_Width - Get_Width (Pixbuf)) / 2;
       Y := Item.Title_Coord.Y +
         (Item.Title_Coord.Height - Get_Height (Pixbuf)) / 2;
       Draw_Pixbuf (Cr, Pixbuf, X, Y);
    end Draw_Title_Bar_Button;
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Item : access Browser_Item_Record) return Cairo.Cairo_Context
-   is
-      Ret : Cairo_Context;
-   begin
-      Ret := Create (Surface (Item));
-      Set_Line_Width (Ret, 0.5);
-      return Ret;
-   end Create;
 
    ----------------------
    -- Redraw_Title_Bar --
@@ -1427,9 +1324,7 @@ package body Browsers.Canvas is
       Iter   : Item_Iterator;
 
    begin
-      if Item.Title_Layout = null
-        or else Surface (Item) = Null_Surface
-      then
+      if Item.Title_Layout = null then
          return;
       end if;
 
@@ -1488,14 +1383,6 @@ package body Browsers.Canvas is
          Y      => Item.Title_Coord.Y + (Item.Title_Coord.Height - H_L) / 2,
          Layout => Item.Title_Layout);
 
-      --  The separator between the title and the child part
-      Draw_Line
-        (Cr, Black_RGBA,
-         X1     => Item.Title_Coord.X,
-         Y1     => Item.Title_Coord.Y + Item.Title_Coord.Height,
-         X2     => Item.Title_Coord.X + Item.Title_Coord.Width,
-         Y2     => Item.Title_Coord.Y + Item.Title_Coord.Height);
-
       --  And now the buttons
       Draw_Title_Bar_Button
         (Item   => Item,
@@ -1517,134 +1404,42 @@ package body Browsers.Canvas is
       return 0;
    end Get_Last_Button_Number;
 
-   --------------------
-   -- Get_Item_Style --
-   --------------------
-
-   function Get_Item_Style (Item : access Browser_Item_Record) return Gtk_Style
-   is
-      B      : constant General_Browser := Get_Browser (Item);
-      Canvas : constant Interactive_Canvas := Get_Canvas (B);
-      Iter   : Item_Iterator;
-
-   begin
-      if Is_Selected (Canvas, Item) then
-         return B.Item_Style;
-      else
-         Iter := Start (Canvas, Linked_From_Or_To => Canvas_Item (Item));
-         while Get (Iter) /= null loop
-            if Is_Selected (Canvas, Get (Iter)) then
-               if Is_Linked_From (Iter) then
-                  return B.Item_Style_Child_Linked;
-               else
-                  return B.Item_Style_Parent_Linked;
-               end if;
-            end if;
-            Next (Iter);
-         end loop;
-      end if;
-
-      return B.Item_Style;
-   end Get_Item_Style;
-
-   ----------------------------
-   -- Get_Default_Item_Style --
-   ----------------------------
-
-   function Get_Default_Item_Style
-     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style is
-   begin
-      return Item.Browser.Item_Style;
-   end Get_Default_Item_Style;
-
    ---------------------
    -- Resize_And_Draw --
    ---------------------
 
    procedure Resize_And_Draw
      (Item             : access Browser_Item_Record;
-      Cr               : in out Cairo_Context;
+      Cr               : Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      pragma Unreferenced (Layout);
-      Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
-        (Browser_Item (Item));  --  dispatching call
-      Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
-      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
-      W, H          : Gint;
-      Layout_H      : Gint := 0;
-
-      Style_Context : constant Gtk_Style_Context :=
-        Get_Style_Context (Get_Browser (Item));
-      Border        : Gtk.Style.Gtk_Border;
-      The_Border    : Gtk.Style.Gtk_Border;
-
-      use Gdk;
-
+      pragma Unreferenced (Layout, Width, Height);
    begin
-      Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
-      Style_Context.Get_Border (Gtk_State_Flag_Normal, The_Border);
-      Border := The_Border;
+      Trace (Me, "MANU Browser_Item.Resize_And_Draw");
+      Cairo.Rectangle
+        (Cr,
+         Gdouble (Xoffset),
+         Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height + Yoffset),
+         Gdouble (Item.Get_Coord.Width - Width_Offset),
+         Gdouble (Item.Get_Coord.Height - Item.Title_Coord.Height
+           - Item.Title_Coord.Y - Height_Offset));
 
-      if Item.Title_Layout /= null then
-         Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
-         W := Gint'Max
-           (W + 2 * Margin +
-              Num_Buttons * (Margin + Button_Width),
-            Width);
-         Item.Title_Coord :=
-           (X      => Xoffset + Gint (Border.Right),
-            Y      => Yoffset + Gint (Border.Bottom),
-            Width  => W - Gint (Border.Left + Border.Right),
-            Height =>
-              Gint'Max
-                (Layout_H,
-                 Button_Height + Gint (Border.Top + Border.Bottom)));
+      Set_Source_Color (Cr, White_RGBA);
+      Fill_Preserve (Cr);
 
-         H := Item.Title_Coord.Height + 1 + Height +
-           Gint (Border.Top + Border.Bottom);
-
-      else
-         Item.Title_Coord := (others => 0);
-         W := Width;
-         H := Height;
-      end if;
-
-      W := W + Width_Offset;
-      H := H + Height_Offset;
-
-      --  Actual resize of the item. Let's replace the context, as we're going
-      --  to replace the surface.
-      if Cr /= Cairo.Null_Context then
-         Destroy (Cr);
-      end if;
-      Set_Screen_Size (Browser_Item (Item), W, H);
-      Cr := Create (Item);
-
-      Draw_Rectangle
-        (Cr, White_RGBA,
-         Filled => True,
-         X      => Xoffset,
-         Y      => Layout_H + Yoffset,
-         Width  => W - Width_Offset,
-         Height => H - Layout_H - Height_Offset,
-         Corner_Radius => Gdouble (Margin - Border.Left));
-
-      Draw_Shadow
-        (Cr, Get_Browser (Item), Shadow_Out,
-         X      => Xoffset,
-         Y      => Yoffset,
-         Width  => W - Width_Offset - Xoffset,
-         Height => H - Height_Offset - Yoffset,
-         Corner_Radius => Gdouble (Margin - Border.Left));
+      Set_Line_Width (Cr, 1.0);
+      Set_Source_Color (Cr, Shade (White_RGBA, 0.3));
+      Stroke (Cr);
 
       if Item.Title_Layout /= null then
          Yoffset := Yoffset + Item.Title_Coord.Height + 1;
       end if;
+
+      Redraw_Title_Bar (Browser_Item_Record'Class (Item.all)'Access, Cr);
    end Resize_And_Draw;
 
    ---------------------
@@ -1694,25 +1489,11 @@ package body Browsers.Canvas is
       Canvas      : access Interactive_Canvas_Record'Class;
       Is_Selected : Boolean)
    is
-      pragma Unreferenced (Is_Selected);
+      pragma Unreferenced (Item, Is_Selected);
       --  Call Highlight on Item and all its siblings. If the selection status
       --  has changed, this will result in a change of background color for
       --  these items.
-      Iter : Item_Iterator;
-      It   : Canvas_Item;
    begin
-      Highlight (Browser_Item (Item));
-
-      Iter := Start (Canvas, Canvas_Item (Item));
-      loop
-         It := Get (Iter);
-         exit when It = null;
-
-         Highlight (Browser_Item (It));
-
-         Next (Iter);
-      end loop;
-
       --  We need to redraw the whole canvas, so that the links are correctly
       --  updated. If multiple items are selected, this isn't a problem since
       --  gtk+ will coalesce the two events anyway.
@@ -1729,7 +1510,7 @@ package body Browsers.Canvas is
    begin
       --  Just use the regular Draw method, as hilighting is handled in the
       --  Selected procedure above.
-      Draw (Item, Cr);
+      Draw (Browser_Item_Record'Class (Item.all)'Access, Cr);
    end Draw_Selected;
 
    ----------
@@ -1848,9 +1629,15 @@ package body Browsers.Canvas is
 
             if not Inserted then
                Tmp_Children := Area.Children;
-               Area.Children := new Active_Area_Tree_Array'
-                 (Tmp_Children.all & Tmp);
-               Unchecked_Free (Tmp_Children);
+               if Tmp_Children = null then
+                  Area.Children := new Active_Area_Tree_Array'
+                    (1 .. 1 => Tmp);
+               else
+                  Area.Children := new Active_Area_Tree_Array'
+                    (Tmp_Children.all & Tmp);
+                  Unchecked_Free (Tmp_Children);
+               end if;
+
                Inserted := True;
             end if;
          end if;
@@ -2039,7 +1826,7 @@ package body Browsers.Canvas is
    overriding procedure Destroy (Item : in out Browser_Item_Record) is
    begin
       Reset_Active_Areas (Browser_Item_Record'Class (Item));
-      Destroy (Buffered_Item_Record (Item));
+      Destroy (Canvas_Item_Record (Item));
    end Destroy;
 
    -----------
@@ -2057,25 +1844,92 @@ package body Browsers.Canvas is
          Cb        => Cb);
    end Build;
 
-   -------------
-   -- Refresh --
-   -------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   procedure Refresh (Item : access Browser_Item_Record'Class) is
+   procedure Compute_Size
+     (Item   : not null access Browser_Item_Record;
+      Layout : not null access Pango.Layout.Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int)
+   is
+      pragma Unreferenced (Item, Layout, Title_Box);
+   begin
+      Width := 0;
+      Height := 0;
+   end Compute_Size;
+
+   --------------------
+   -- Recompute_Size --
+   --------------------
+
+   procedure Recompute_Size
+     (Item   : not null access Browser_Item_Record'Class)
+   is
+      Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
+        (Browser_Item (Item));  --  dispatching call
+      Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
+      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
+
+      Layout : Pango_Layout;
+      Width, Height  : Gint;
+      W, H     : Gint := 0;
+      Border : Gtk.Style.Gtk_Border;
+      Layout_H : Gint := 0;
+
+   begin
+      Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
+
+      Layout := Create_Pango_Layout (Get_Browser (Item), "");
+      Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
+
+      Get_Style_Context (Get_Browser (Item)).Get_Border
+        (Gtk_State_Flag_Normal, Border);
+
+      if Item.Title_Layout /= null then
+         Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
+         W := W + 2 * Margin + Num_Buttons * (Margin + Button_Width);
+         Item.Title_Coord :=
+           (X      => Gint (Border.Right),
+            Y      => Gint (Border.Top),
+            Width  => W - Gint (Border.Left + Border.Right),
+            Height =>
+              Gint'Max
+                (Layout_H, Button_Height + Gint (Border.Top + Border.Bottom)));
+      else
+         Item.Title_Coord := (others => 0);
+      end if;
+
+      Compute_Size (Item, Layout, Width, Height, Item.Title_Coord);
+      Unref (Layout);
+
+      H := Item.Title_Coord.Height + 1 + Height +
+        Gint (Border.Top + Border.Bottom);
+
+      Set_Screen_Size (Browser_Item (Item), Width, H);
+   end Recompute_Size;
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context)
+   is
       Xoffset, Yoffset : Gint := 0;
       Layout           : Pango_Layout;
-      Cr               : Cairo_Context;
    begin
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
       Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
 
-      Cr := Cairo.Null_Context;
-      Resize_And_Draw (Item, Cr, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
-      Redraw_Title_Bar (Item, Cr);
-      Destroy (Cr);
+      Resize_And_Draw
+        (Browser_Item_Record'Class (Item.all)'Access,
+         Cr, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
 
       Unref (Layout);
-   end Refresh;
+   end Draw;
 
    --------------------------
    -- Refresh_Linked_Items --
@@ -2086,22 +1940,9 @@ package body Browsers.Canvas is
       Refresh_Parents  : Boolean := False;
       Refresh_Children : Boolean := False)
    is
-      Iter : Item_Iterator :=
-        Start (Get_Canvas (Get_Browser (Item)), Canvas_Item (Item));
-      It   : Browser_Item;
+      pragma Unreferenced (Refresh_Parents, Refresh_Children);
    begin
-      loop
-         It := Browser_Item (Get (Iter));
-         exit when It = null;
-
-         if (Refresh_Children and then not Is_Linked_From (Iter))
-           or else (Refresh_Parents and then Is_Linked_From (Iter))
-         then
-            Refresh (It);
-         end if;
-
-         Next (Iter);
-      end loop;
+      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
    end Refresh_Linked_Items;
 
    ------------

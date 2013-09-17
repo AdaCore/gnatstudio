@@ -129,10 +129,6 @@ package body Display_Items is
       Context : Drawing_Context);
    --  Item.Entity must have been parsed already
 
-   procedure Update_Display (Item : access Display_Item_Record'Class);
-   --  Redraw the contents of item.
-   --  It also warns the canvas that the item has changed.
-
    procedure Dereference_Item
      (Item            : access Display_Item_Record;
       Deref_Component : Generic_Type_Access;
@@ -143,6 +139,9 @@ package body Display_Items is
    --  (X, Y) are relative to the top-left corner of item.
    --  Deref_Component is the component on which the user has clicked and
    --  that is being derefenced.
+
+   procedure Compute_Size (Item : access Display_Item_Record'Class);
+   --  Recompute the size needed by the item
 
    function Search_Item
      (Process : access Visual_Debugger_Record'Class;
@@ -413,7 +412,7 @@ package body Display_Items is
          Constraint_Size (Item.Entity.all);
       end if;
 
-      Update_Display (Item);
+      Compute_Size (Item);
       Refresh_Data_Window (Item.Debugger);
    end Initialize;
 
@@ -487,28 +486,20 @@ package body Display_Items is
       return Found;
    end Find_Item;
 
-   --------------------
-   -- Update_Display --
-   --------------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   procedure Update_Display (Item : access Display_Item_Record'Class)
-   is
+   procedure Compute_Size (Item : access Display_Item_Record'Class) is
       Context                   : constant Drawing_Context :=
                                     Get_Item_Context (Item.Debugger);
-      Box_Context               : constant Box_Drawing_Context :=
-                                    Get_Box_Context (Item.Debugger);
       Valid                     : constant Boolean :=
                                     Item.Entity /= null
                                     and then Is_Valid (Item.Entity);
---        W, H                      : Gint;
-      Cr                        : Cairo_Context;
       Layout                    : Pango_Layout;
       Alloc_Width               : Gint;
       Alloc_Height              : Gint;
       Title_Height, Title_Width : Gint;
-
-      use Gdk;
-
    begin
       Layout := Create_Pango_Layout
         (Get_Canvas (Item.Debugger),
@@ -549,25 +540,54 @@ package body Display_Items is
       --  Keep some space for the shadow (3d look)
 
       Set_Screen_Size (Item, Alloc_Width + 1, Alloc_Height + 1);
-      Cr := Create (Item);
+
+      Unref (Layout);
+   end Compute_Size;
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Item : access Display_Item_Record;
+      Cr   : Cairo.Cairo_Context)
+   is
+      Context                   : constant Drawing_Context :=
+                                    Get_Item_Context (Item.Debugger);
+      Box_Context               : constant Box_Drawing_Context :=
+                                    Get_Box_Context (Item.Debugger);
+      Valid                     : constant Boolean :=
+                                    Item.Entity /= null
+                                    and then Is_Valid (Item.Entity);
+      Layout                    : Pango_Layout;
+      Alloc_Width               : constant Gint := Get_Coord (Item).Width;
+      Alloc_Height              : constant Gint := Get_Coord (Item).Height;
+
+      use Gdk;
+
+   begin
+      Layout := Create_Pango_Layout
+        (Get_Canvas (Item.Debugger),
+         Integer'Image (Item.Num) & ": " & Item.Name.all);
+      Set_Font_Description (Layout, Get_Pref (Title_Font));
 
       if Item.Auto_Refresh then
          Draw_Rectangle
            (Cr, Box_Context.Thaw_Bg_Color,
             Filled => True,
             X      => 0,
-            Y      => Title_Height,
+            Y      => Item.Title_Height,
             Width  => Alloc_Width,
-            Height => Alloc_Height - Title_Height);
+            Height => Alloc_Height - Item.Title_Height);
 
       else
          Draw_Rectangle
            (Cr, Box_Context.Freeze_Bg_Color,
             Filled => True,
             X      => 0,
-            Y      => Title_Height,
+            Y      => Item.Title_Height,
             Width  => Alloc_Width,
-            Height => Alloc_Height - Title_Height);
+            Height => Alloc_Height - Item.Title_Height);
       end if;
 
       Draw_Rectangle
@@ -576,7 +596,7 @@ package body Display_Items is
          X      => 0,
          Y      => 0,
          Width  => Alloc_Width - 1,
-         Height => Title_Height);
+         Height => Item.Title_Height);
 
       Draw_Shadow
         (Cr, Get_Canvas (Item.Debugger),
@@ -589,9 +609,9 @@ package body Display_Items is
       Draw_Line
         (Cr, Box_Context.Black_Color,
          X1     => 0,
-         Y1     => Title_Height,
+         Y1     => Item.Title_Height,
          X2     => Alloc_Width - 1,
-         Y2     => Title_Height);
+         Y2     => Item.Title_Height);
 
       Set_Source_Color (Cr, Box_Context.Black_Color);
       Move_To (Cr, Gdouble (Spacing), Gdouble (Spacing));
@@ -599,7 +619,23 @@ package body Display_Items is
 
       --  First button
 
-      Set_Auto_Refresh (Item, Item.Auto_Refresh);
+      Draw_Rectangle
+        (Cr, Box_Context.Grey_Color,
+         Filled => True,
+         X      => Alloc_Width - 2 * Buttons_Size - 2 * Spacing,
+         Y      => Spacing,
+         Width  => Buttons_Size,
+         Height => Buttons_Size);
+
+      if Item.Auto_Refresh then
+         Draw_Pixbuf
+           (Cr, Box_Context.Auto_Display_Pixmap,
+            Alloc_Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
+      else
+         Draw_Pixbuf
+           (Cr, Box_Context.Locked_Pixmap,
+            Alloc_Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
+      end if;
 
       --  Second button
 
@@ -614,18 +650,18 @@ package body Display_Items is
             Lang   => Get_Language (Item.Debugger.Debugger),
             Mode   => Item.Mode,
             X      => Border_Spacing,
-            Y      => Title_Height + Border_Spacing);
+            Y      => Item.Title_Height + Border_Spacing);
       else
+         Context.Text_Layout.Set_Text (-"Unknown variable");
          Set_Source_Color (Cr, Context.Foreground);
          Move_To
            (Cr, Gdouble (Border_Spacing),
-            Gdouble (Title_Height + Border_Spacing));
+            Gdouble (Item.Title_Height + Border_Spacing));
          Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
       end if;
 
-      Destroy (Cr);
       Unref (Layout);
-   end Update_Display;
+   end Draw;
 
    ----------------------
    -- Update_Component --
@@ -635,43 +671,9 @@ package body Display_Items is
      (Item      : access Display_Item_Record'Class;
       Component : Generic_Type_Access := null)
    is
-      Context     : constant Drawing_Context :=
-                      Get_Item_Context (Item.Debugger);
-      Box_Context : constant Box_Drawing_Context :=
-                      Get_Box_Context (Item.Debugger);
-      Cr          : constant Cairo_Context := Create (Item);
-
+      pragma Unreferenced (Component);
    begin
-      if not Get_Selected (Component) then
-         if Item.Auto_Refresh then
-            Draw_Rectangle
-              (Cr, Box_Context.Thaw_Bg_Color,
-               Filled => True,
-               X      => Get_X (Component.all),
-               Y      => Get_Y (Component.all),
-               Width  => Get_Width (Component.all),
-               Height => Get_Height (Component.all));
-
-         else
-            Draw_Rectangle
-              (Cr, Box_Context.Freeze_Bg_Color,
-               Filled => True,
-               X      => Get_X (Component.all),
-               Y      => Get_Y (Component.all),
-               Width  => Get_Width (Component.all),
-               Height => Get_Height (Component.all));
-         end if;
-      end if;
-
-      Paint
-        (Component.all,
-         Context, Cr,
-         Lang   => Get_Language (Item.Debugger.Debugger),
-         Mode   => Item.Mode,
-         X      => Get_X (Component.all),
-         Y      => Get_Y (Component.all));
-
-      Destroy (Cr);
+      Item.Get_Browser.Get_Canvas.Refresh (Item);
    end Update_Component;
 
    -----------------
@@ -803,9 +805,8 @@ package body Display_Items is
             Hide_Big_Items => not Was_Visible and then Hide_Big);
 
          Constraint_Size (Item.Entity.all);
+         Compute_Size (Item);
       end if;
-
-      Update_Display (Item);
 
       if Redisplay_Canvas then
          Refresh_Data_Window (Item.Debugger);
@@ -1200,30 +1201,8 @@ package body Display_Items is
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
-      Width   : constant Gint := Get_Coord (Item).Width;
-      Context : constant Box_Drawing_Context :=
-                  Get_Box_Context (Item.Debugger);
-      Cr      : constant Cairo_Context := Create (Item);
    begin
       Item.Auto_Refresh := Auto_Refresh;
-
-      Draw_Rectangle
-        (Cr, Context.Grey_Color,
-         Filled => True,
-         X      => Width - 2 * Buttons_Size - 2 * Spacing,
-         Y      => Spacing,
-         Width  => Buttons_Size,
-         Height => Buttons_Size);
-
-      if Item.Auto_Refresh then
-         Draw_Pixbuf
-           (Cr, Context.Auto_Display_Pixmap,
-            Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
-      else
-         Draw_Pixbuf
-           (Cr, Context.Locked_Pixmap,
-            Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
-      end if;
 
       if Update_Value then
          --  If we moved back to the auto-refresh state, force an
@@ -1236,10 +1215,11 @@ package body Display_Items is
             --  Redisplay the item, so that no field is displayed
             --  in red anymore.
             Reset_Recursive (Item);
-            Update_Display (Item);
             Item_Updated (Get_Canvas (Item.Debugger), Item);
          end if;
       end if;
+
+      Item.Get_Browser.Get_Canvas.Refresh (Item);
    end Set_Auto_Refresh;
 
    ----------------------

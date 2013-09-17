@@ -24,6 +24,7 @@ with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Cairo;                     use Cairo;
+with Cairo.Region;              use Cairo.Region;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -153,6 +154,10 @@ package body Browsers.Entities is
       General_Lines,
       Attr_Lines,
       Meth_Lines           : Xref_List;
+
+      Layout_W1, Meth_Layout_W1 : Gint;
+      Layout_H, Meth_Layout_H : Gint;
+      --  Width of the column in the two areas of the item
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
@@ -173,11 +178,14 @@ package body Browsers.Entities is
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
 
-   overriding function Get_Item_Style
-     (Item : access Type_Item_Record) return Gtk.Style.Gtk_Style;
+   overriding procedure Compute_Size
+     (Item          : not null access Type_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int);
    overriding procedure Resize_And_Draw
      (Item             : access Type_Item_Record;
-      Cr               : in out Cairo_Context;
+      Cr               : Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -194,7 +202,6 @@ package body Browsers.Entities is
    overriding procedure Redraw_Title_Bar
      (Item : access Type_Item_Record;
       Cr   : Cairo_Context);
-   overriding procedure Highlight (Item : access Type_Item_Record);
    --  See doc for inherited subprograms
 
    ------------------
@@ -204,9 +211,14 @@ package body Browsers.Entities is
 
    type Generic_Item_Record is new Type_Item_Record with null record;
 
+   overriding procedure Compute_Size
+     (Item          : not null access Generic_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int);
    overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
-      Cr               : in out Cairo_Context;
+      Cr               : Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -798,6 +810,7 @@ package body Browsers.Entities is
       end if;
       Ref (Entity);
       Item.Entity := Entity;
+      Recompute_Size (Item);
    end Initialize;
 
    -------------
@@ -1270,7 +1283,7 @@ package body Browsers.Entities is
          Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
       end if;
 
-      Highlight (Browser_Item (New_Item));
+      Canvas.Refresh (New_Item);
    end Add_Item_And_Link;
 
    --------------------------------
@@ -1282,8 +1295,8 @@ package body Browsers.Entities is
       Members : Xref.Entity_Array;
       Parents : Boolean)
    is
+      B  : constant Type_Browser := Type_Browser (Get_Browser (Item));
       It : constant Type_Item := Type_Item (Item);
-      Cr : Cairo_Context;
    begin
       for P in Members'Range loop
          Add_Item_And_Link
@@ -1298,12 +1311,8 @@ package body Browsers.Entities is
          Set_Children_Shown (It, True);
       end if;
 
-      Cr := Create (Item);
-      Redraw_Title_Bar (Item, Cr);
-      Destroy (Cr);
-
-      Layout (Type_Browser (Get_Browser (Item)), Force => False);
-      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
+      Layout (B, Force => False);
+      Refresh_Canvas (B.Get_Canvas);
 
    exception
       when E : others => Trace (Me, E);
@@ -1332,7 +1341,6 @@ package body Browsers.Entities is
       Children : constant Xref.Entity_Array :=
         Get_Kernel (Get_Browser (Item)).Databases.Child_Types
            (Type_Item (Item).Entity, Recursive => False);
-      Cr    : Cairo_Context;
    begin
       for C in Children'Range loop
          Add_Item_And_Link
@@ -1342,9 +1350,6 @@ package body Browsers.Entities is
       end loop;
 
       Set_Children_Shown (Type_Item (Item), True);
-      Cr := Create (Item);
-      Redraw_Title_Bar (Item, Cr);
-      Destroy (Cr);
       Layout (Type_Browser (Get_Browser (Item)), Force => False);
       Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
 
@@ -1361,6 +1366,8 @@ package body Browsers.Entities is
       Item  : access Browser_Item_Record'Class)
    is
       It : constant Type_Item := Type_Item (Item);
+      Canvas : constant Interactive_Canvas :=
+        Get_Canvas (Get_Browser (It));
    begin
       if Event.Button = 1
         and then Event.The_Type = Button_Release
@@ -1368,37 +1375,32 @@ package body Browsers.Entities is
          It.Inherited_Primitives := not It.Inherited_Primitives;
          Trace (Me, "Hide_Show_Inherited => "
                 & It.Inherited_Primitives'Img);
-         Refresh (It);
-         Item_Updated (Get_Canvas (Get_Browser (It)), It);
+
+         Canvas.Refresh (It);
+         Item_Updated (Canvas, It);
       end if;
    end Hide_Show_Inherited;
 
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   overriding procedure Resize_And_Draw
-     (Item             : access Type_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   overriding procedure Compute_Size
+     (Item          : not null access Type_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      Xoffset : constant Gint := 0;
       W, H                           : Gint;
       Layout_H, Layout_W1, Layout_W2 : Gint;
       Meth_Layout_W1, Meth_Layout_W2 : Gint;
       Meth_Layout_H                  : Gint;
-      Y                              : Gint;
       General_Lines                  : Xref_List;
       Attr_Lines                     : Xref_List;
       Meth_Lines                     : Xref_List;
       Added                          : Boolean;
-      Style_Context                  : Gtk_Style_Context;
-      Color                          : Gdk_RGBA;
-      Border                         : Gtk.Style.Gtk_Border;
    begin
       Add_Line
         (General_Lines, Kernel.Databases.Get_Display_Kind (Item.Entity));
@@ -1440,7 +1442,7 @@ package body Browsers.Entities is
         (Get_Browser (Item), General_Lines, Layout_W1, Layout_W2, Layout_H,
          Layout);
       W := Gint'Max (Width, Layout_W1 + Layout_W2);
-      H := Height + Layout_H;
+      H := Layout_H;
 
       Get_Pixel_Size
         (Get_Browser (Item), Attr_Lines, Layout_W1, Layout_W2, Layout_H,
@@ -1456,38 +1458,14 @@ package body Browsers.Entities is
          + 2 * Margin + Xoffset + Left_Margin);
       H := H + Layout_H + 2 * Margin + Meth_Layout_H;
 
-      Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, Cr, W, H,
-         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
+      Item.Layout_W1 := Layout_W1;
+      Item.Layout_H  := Layout_H;
+      Item.Meth_Layout_W1 := Meth_Layout_W1;
+      Item.Meth_Layout_H  := Meth_Layout_H;
 
-      Y := Margin + Yoffset;
-
-      Display_Lines (Item, Cr, General_Lines, Margin + Xoffset, Y, 0, Layout);
-
-      Display_Lines (Item, Cr, Attr_Lines, Margin + Xoffset + Left_Margin, Y,
-                     Layout_W1, Layout);
-
-      if Layout_H /= 0 and then Meth_Layout_H /= 0 then
-         Y := Y + 2;
-
-         Style_Context := Get_Style_Context (Get_Browser (Item));
-         Style_Context.Get_Color (Gtk_State_Flag_Normal, Color);
-         --  We used to use Gtk.Style.X_Thickness to determine the width of
-         --  the line.  Now we'll use the thickness of the bottom border
-         --  instead.
-         Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
-         Draw_Line
-           (Cr,
-            Color    => Color,
-            X1       => Gint (Border.Bottom),
-            Y1       => Y,
-            X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
-            Y2       => Y);
-         Y := Y + 1;
-      end if;
-
-      Display_Lines (Item, Cr, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
-                     Meth_Layout_W1, Layout);
+      Width := Gint'Max (W, Title_Box.Width);
+      Title_Box.Width := Width;
+      Height := H;
 
       Free (Item.General_Lines);
       Free (Item.Attr_Lines);
@@ -1496,6 +1474,61 @@ package body Browsers.Entities is
       Item.General_Lines := General_Lines;
       Item.Attr_Lines    := Attr_Lines;
       Item.Meth_Lines    := Meth_Lines;
+   end Compute_Size;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   overriding procedure Resize_And_Draw
+     (Item             : access Type_Item_Record;
+      Cr               : Cairo_Context;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   is
+      Y : Gint;
+      Style_Context : Gtk_Style_Context;
+      Border : Gtk.Style.Gtk_Border;
+
+   begin
+      Resize_And_Draw
+        (Arrow_Item_Record (Item.all)'Access, Cr, Width, Height,
+         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
+
+      Y := Margin + Yoffset;
+
+      Display_Lines
+        (Item, Cr, Item.General_Lines, Margin + Xoffset, Y, 0, Layout);
+      Display_Lines
+        (Item, Cr, Item.Attr_Lines, Margin + Xoffset + Left_Margin, Y,
+         Item.Layout_W1, Layout);
+
+      if Item.Layout_H /= 0 and then Item.Meth_Layout_H /= 0 then
+         Y := Y + 2;
+
+         Style_Context := Get_Style_Context (Get_Browser (Item));
+         Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
+
+         --  We used to use Gtk.Style.X_Thickness to determine the width of
+         --  the line.  Now we'll use the thickness of the bottom border
+         --  instead.
+
+         Draw_Line
+           (Cr,
+            Color    => Shade (White_RGBA, 0.3),
+            X1       => Gint (Border.Bottom),
+            Y1       => Y,
+            X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
+            Y2       => Y);
+         Y := Y + 1;
+      end if;
+
+      Display_Lines
+        (Item, Cr, Item.Meth_Lines, Margin + Xoffset + Left_Margin, Y,
+         Item.Meth_Layout_W1, Layout);
    end Resize_And_Draw;
 
    ----------------------
@@ -1545,7 +1578,6 @@ package body Browsers.Entities is
       if Found = null and then Entity /= No_General_Entity then
          Gtk_New (Found, Browser, Entity);
          Put (Get_Canvas (Browser), Found);
-         Refresh (Found);
       end if;
 
       --  Need to always refresh the canvas so that the links are correctly
@@ -1690,26 +1722,27 @@ package body Browsers.Entities is
       Cairo.Restore (Cr);
    end Draw_Straight_Line;
 
-   ---------------
-   -- Highlight --
-   ---------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   overriding procedure Highlight (Item : access Type_Item_Record) is
-      Cr : constant Cairo_Context := Create (Item);
+   overriding procedure Compute_Size
+     (Item          : not null access Generic_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int)
+   is
    begin
-      Redraw_Title_Bar (Browser_Item (Item), Cr);
-      Destroy (Cr);
-   end Highlight;
+      Compute_Size
+        (Type_Item_Record (Item.all)'Access, Layout, Width, Height,
+         Title_Box);
+      Height := Height + Generic_Item_Box_Height_Top;
 
-   -----------------------
-   -- Get_Background_GC --
-   -----------------------
-
-   overriding function Get_Item_Style
-     (Item : access Type_Item_Record) return Gtk.Style.Gtk_Style is
-   begin
-      return Get_Default_Item_Style (Item);
-   end Get_Item_Style;
+      Width := Gint'Max (Width, Title_Box.Width);
+      Title_Box.Width := Width;
+      Width := Width + 4;  --  for the extra top-right rectangle
+      Title_Box.Y := Title_Box.Y + Generic_Item_Box_Height_Top;
+   end Compute_Size;
 
    ---------------------
    -- Resize_And_Draw --
@@ -1717,41 +1750,36 @@ package body Browsers.Entities is
 
    overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
-      Cr               : in out Cairo_Context;
+      Cr               : Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      Browser : constant Browsers.Canvas.General_Browser := Get_Browser (Item);
-      Color   : Gdk.RGBA.Gdk_RGBA;
    begin
-      Yoffset := Yoffset + Generic_Item_Box_Height_Top;
+      Set_Source_Color (Cr, White_RGBA);
+      Cairo.Rectangle
+        (Cr,
+         X      =>
+           Gdouble (Get_Coord (Item).Width - Generic_Item_Box_Width + 1),
+         Y      => 1.0,
+         Width  => Gdouble (Generic_Item_Box_Width - 2),
+         Height => Gdouble (Generic_Item_Box_Height - 2));
+      Fill_Preserve (Cr);
+      Set_Source_Color (Cr, Shade (White_RGBA, 0.3));
+      Stroke (Cr);
+
+      Yoffset := 0;
+      Xoffset := 0;
       Resize_And_Draw
         (Type_Item_Record (Item.all)'Access, Cr,
-         Width, Height + Generic_Item_Box_Height_Top,
-         Width_Offset + Generic_Item_Box_Width_Right,
-         Height_Offset, Xoffset, Yoffset, Layout);
-
-      Get_Background_Color
-        (Get_Style_Context (Browser), Gtk_State_Flag_Normal, Color);
-      Draw_Rectangle
-        (Cr,
-         Color  => Color,
-         Filled => True,
-         X      => Get_Coord (Item).Width - Generic_Item_Box_Width + 1,
-         Y      => 1,
-         Width  => Generic_Item_Box_Width - 2,
-         Height => Generic_Item_Box_Height - 2);
-      Draw_Shadow
-        (Cr,
-         Widget      => Browser,
-         Shadow_Type => Shadow_Out,
-         X           => Get_Coord (Item).Width - Generic_Item_Box_Width,
-         Y           => 0,
-         Width       => Generic_Item_Box_Width,
-         Height      => Generic_Item_Box_Height);
+         Width, Height,
+         Width_Offset  => Width_Offset + 4,
+         Height_Offset => Height_Offset,
+         Xoffset       => Xoffset,
+         Yoffset       => Yoffset,
+         Layout        => Layout);
    end Resize_And_Draw;
 
    ----------

@@ -18,12 +18,11 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
-with Cairo;
+with Cairo.Region;
 
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
-with Gdk.RGBA; use Gdk.RGBA;
 
 with Glib.Object;
 
@@ -31,7 +30,6 @@ with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
-with Gtk.Style;
 with Gtk.Toolbar;
 with Gtk.Widget;
 
@@ -159,7 +157,7 @@ package Browsers.Canvas is
    -- Items --
    -----------
 
-   type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record
      with private;
    type Browser_Item is access all Browser_Item_Record'Class;
    --  The type of items that are put in the canvas. They are associated with
@@ -199,11 +197,26 @@ package Browsers.Canvas is
    --  a null menu, which is the case when creating a current context for
    --  GPS.Kernel.Get_Current_Context.
 
-   procedure Refresh
-     (Item : access Browser_Item_Record'Class);
-   --  Non dispatching variant of the Resize_And_Draw.
-   --  You need to refresh the screen by calling either Item_Updated or
-   --  Refresh_Canvas.
+   procedure Recompute_Size
+     (Item   : not null access Browser_Item_Record'Class);
+   --  Recompute the size of the item (via a dispatching call to Compute_Size
+
+   procedure Compute_Size
+     (Item   : not null access Browser_Item_Record;
+      Layout : not null access Pango.Layout.Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int);
+   --  Compute the size for the item.
+   --  This size should not include the size of the title bar.
+   --
+   --  Title_Box is the minimum area for the title (as if it was displayed at
+   --  the top). Most often, overridings of this procedure will want to at
+   --  least increase the width to be that of the box contents itself.
+
+   overriding procedure Draw
+     (Item : access Browser_Item_Record;
+      Cr   : Cairo.Cairo_Context);
+   --  See inherited documentation
 
    procedure Refresh_Linked_Items
      (Item             : access Browser_Item_Record'Class;
@@ -212,21 +225,9 @@ package Browsers.Canvas is
    --  Refresh either the parents or the children of Item. For each of these,
    --  this calls Refresh above
 
-   procedure Highlight (Item : access Browser_Item_Record);
-   --  Highlight the item, based on its selection status. This method is
-   --  automatically called when the selection status has changed.
-   --  The default is simply to redraw the item with a different background
-   --  (from Get_Background_GC). It doesn't need to call Item_Updated or
-   --  Refresh_Canvas, this is done automatically.
-
-   function Get_Item_Style
-     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style;
-   function Get_Default_Item_Style
-     (Item : access Browser_Item_Record) return Gtk.Style.Gtk_Style;
-
    procedure Resize_And_Draw
      (Item             : access Browser_Item_Record;
-      Cr               : in out Cairo.Cairo_Context;
+      Cr               : Cairo.Cairo_Context;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
@@ -293,12 +294,6 @@ package Browsers.Canvas is
       return Glib.Gint;
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
-
-   function Create
-     (Item : access Browser_Item_Record) return Cairo.Cairo_Context;
-   --  Creates a new Cairo_Context for drawing on the Item.
-   --  This context is owned by the caller and needs to be freed by
-   --  Cairo.Destroy
 
    procedure Redraw_Title_Bar
      (Item : access Browser_Item_Record;
@@ -537,21 +532,6 @@ private
       Canvas                   : Gtkada.Canvas.Interactive_Canvas;
       Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
-      Selected_Link_Color      : Gdk_RGBA;
-      Unselected_Link_Color    : Gdk_RGBA;
-      Item_Style               : Gtk.Style.Gtk_Style;
-      --  The following colors are used from this style:
-      --  Bg[NORMAL|SELECTED]: the background of the item
-      --  Fg[NORMAL|SELECTED]: the border of the item
-      --  Text[NORMAL|SELECTED]: the texts in the item (title)
-      --  Base[NORMAL|SELECTED]: the color of the title's background
-
-      --  Text[ACTIVE] : the tests in the item using hyperlink style
-
-      Item_Style_Parent_Linked : Gtk.Style.Gtk_Style;
-      Item_Style_Child_Linked  : Gtk.Style.Gtk_Style;
-      --  Style used for linked parents/children
-
       Selected_Item            : Gtkada.Canvas.Canvas_Item;
 
       Close_Pixmap             : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -581,7 +561,7 @@ private
       Cr   : Cairo.Cairo_Context);
    --  See doc for inherited subprograms
 
-   type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record
    with record
       Hide_Links : Boolean := False;
       Browser    : General_Browser;

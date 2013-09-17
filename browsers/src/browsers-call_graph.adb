@@ -23,6 +23,7 @@ with GNATCOLL.Xref;
 with GNAT.Strings;                  use GNAT.Strings;
 
 with Cairo;                         use Cairo;
+with Cairo.Region;                  use Cairo.Region;
 
 with Gdk.Event;                     use Gdk.Event;
 
@@ -286,6 +287,8 @@ package body Browsers.Call_Graph is
    with record
       Entity : General_Entity;
       Refs   : Xref_List;
+
+      Col1_Width : Gint;
    end record;
    type Entity_Item is access all Entity_Item_Record'Class;
 
@@ -315,11 +318,14 @@ package body Browsers.Call_Graph is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu);
-   --  Return the context to use for this item
-
+   overriding procedure Compute_Size
+     (Item          : not null access Entity_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int);
    overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
-      Cr                          : in out Cairo.Cairo_Context;
+      Cr                          : Cairo.Cairo_Context;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint;
@@ -605,6 +611,8 @@ package body Browsers.Call_Graph is
       else
          Add_Line (Item.Refs, "<Unresolved>");
       end if;
+
+      Recompute_Size (Item);
    end Initialize;
 
    -------------
@@ -613,7 +621,9 @@ package body Browsers.Call_Graph is
 
    overriding procedure Destroy (Item : in out Entity_Item_Record) is
       Item2    : constant Entity_Item := Item'Unrestricted_Access;
-      Iter     : Item_Iterator := Start (Get_Canvas (Get_Browser (Item2)));
+      Browser  : constant Interactive_Canvas :=
+        Get_Canvas (Get_Browser (Item2));
+      Iter     : Item_Iterator := Start (Browser);
       It       : Canvas_Item;
       Line     : Positive;
       Text     : String_Access;
@@ -654,7 +664,7 @@ package body Browsers.Call_Graph is
             end loop;
 
             if Removed then
-               Refresh (Entity_Item (It));
+               Browser.Refresh (Entity_Item (It));
             end if;
 
             Next (Iter);
@@ -741,7 +751,6 @@ package body Browsers.Call_Graph is
 
          Gtk_New (Child, Browser, Entity, May_Have_To_Dependencies);
          Put (Get_Canvas (Browser), Child);
-         Refresh (Child);
       end if;
 
       return Child;
@@ -761,14 +770,10 @@ package body Browsers.Call_Graph is
       Item          : constant Entity_Item :=
                         Add_Entity_If_Not_Present (Browser, Entity);
       Canvas        : Interactive_Canvas;
-      Cr            : Cairo_Context;
 
    begin
       if not Children_Shown (Item) then
          Set_Children_Shown (Item, True);
-         Cr := Create (Item);
-         Redraw_Title_Bar (Item, Cr);
-         Destroy (Cr);
 
          declare
             Data : constant Examine_Ancestors_Data_Access :=
@@ -788,9 +793,6 @@ package body Browsers.Call_Graph is
 
             --  Data is no longer valid now, since it has been destroyed
          end;
-
-         --  Refresh all linked items, since we have added references in them
-         Refresh_Linked_Items (Item, Refresh_Children => True);
       end if;
 
       if Refresh then
@@ -798,9 +800,10 @@ package body Browsers.Call_Graph is
          --  correct place.
          Layout (Browser, Force => False);
          Canvas := Get_Canvas (Browser);
-         Refresh_Canvas (Canvas);
          Align_Item (Canvas, Item, 0.4, 0.4);
       end if;
+
+      Refresh_Canvas (Canvas);
    end Examine_Entity_Call_Graph;
 
    -------------
@@ -813,9 +816,6 @@ package body Browsers.Call_Graph is
       pragma Unmodified (Data);
    begin
       if not Cancelled then
-         --  Refresh the item, since we might have added links to it
-         Refresh (Data.Item);
-
          if not Data.Link_From_Item then
             Layout (Data.Browser, Force => False);
          end if;
@@ -959,7 +959,6 @@ package body Browsers.Call_Graph is
       Browser : constant Call_Graph_Browser :=
         Callgraph_Views.Get_Or_Create_View (Kernel, Focus => True);
       Data          : Examine_Ancestors_Data_Access;
-      Cr            : Cairo_Context;
    begin
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
@@ -968,9 +967,6 @@ package body Browsers.Call_Graph is
          Link_From_Item => False);
       Data.Item := Add_Entity_If_Not_Present (Data.Browser, Entity);
       Set_Parents_Shown (Data.Item, True);
-      Cr := Create (Surface (Data.Item));
-      Redraw_Title_Bar (Data.Item, Cr);
-      Destroy (Cr);
 
       Examine_Ancestors_Call_Graph
         (Kernel            => Kernel,
@@ -2483,31 +2479,48 @@ package body Browsers.Call_Graph is
       return True;
    end Call;
 
+   ------------------
+   -- Compute_Size --
+   ------------------
+
+   overriding procedure Compute_Size
+     (Item          : not null access Entity_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int)
+   is
+      Ref_W1, Ref_W2, Ref_H : Gint;
+   begin
+      Get_Pixel_Size
+        (Get_Browser (Item), Item.Refs, Ref_W1, Ref_W2, Ref_H,  Layout);
+      Item.Col1_Width := Ref_W1;
+
+      Width := Gint'Max (Ref_W1 + Ref_W2 + 2 * Margin, Title_Box.Width);
+      Title_Box.Width := Width;
+      Height := Ref_H;
+   end Compute_Size;
+
    ---------------------
    -- Resize_And_Draw --
    ---------------------
 
    overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
-      Cr                          : in out Cairo_Context;
+      Cr                          : Cairo_Context;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint;
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      Ref_W1, Ref_W2, Ref_H, Y : Gint;
+      Y : Gint;
    begin
-      Get_Pixel_Size
-        (Get_Browser (Item), Item.Refs, Ref_W1, Ref_W2, Ref_H,  Layout);
-
       Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, Cr,
-         Gint'Max (Ref_W1 + Ref_W2 + 2 * Margin, Width),
-         Height + Ref_H,
+        (Arrow_Item_Record (Item.all)'Access, Cr, Width, Height,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 
       Y := Yoffset + 1;
-      Display_Lines (Item, Cr, Item.Refs, Margin + Xoffset, Y, Ref_W1, Layout);
+      Display_Lines
+        (Item, Cr, Item.Refs, Margin + Xoffset, Y, Item.Col1_Width, Layout);
    end Resize_And_Draw;
 
 end Browsers.Call_Graph;

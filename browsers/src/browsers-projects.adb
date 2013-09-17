@@ -19,13 +19,14 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Cairo;                  use Cairo;
+with Cairo.Region;           use Cairo.Region;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.MDI;             use Gtkada.MDI;
-with Pango.Layout;
+with Pango.Layout;           use Pango.Layout;
 
 with Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
@@ -115,14 +116,11 @@ package body Browsers.Projects is
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu);
-   overriding procedure Resize_And_Draw
-     (Item             : access Browser_Project_Vertex;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   overriding procedure Compute_Size
+     (Item          : not null access Browser_Project_Vertex;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int);
    --  See doc for inherited subprogram
 
    procedure Gtk_New
@@ -235,7 +233,6 @@ package body Browsers.Projects is
       if V = null then
          Gtk_New (V, Browser, Project);
          Put (Get_Canvas (Browser), V);
-         Refresh (V);
       end if;
 
       return V;
@@ -290,6 +287,7 @@ package body Browsers.Projects is
       V.Name := To_Unbounded_String (Project.Name);
 
       Set_Children_Shown (V, not Has_Imported_Projects (Project));
+      Recompute_Size (V);
    end Gtk_New;
 
    -------------------------------
@@ -317,7 +315,6 @@ package body Browsers.Projects is
       is
          Dest : Browser_Project_Vertex_Access;
          Iter : Project_Iterator;
-         Cr   : Cairo_Context;
       begin
          Set_Children_Shown (Src, True);
 
@@ -344,10 +341,6 @@ package body Browsers.Projects is
 
             Next (Iter);
          end loop;
-
-         Cr := Create (Src);
-         Redraw_Title_Bar (Browser_Item (Src), Cr);
-         Destroy (Cr);
       end Process_Project;
 
       Src : Browser_Project_Vertex_Access;
@@ -400,7 +393,6 @@ package body Browsers.Projects is
       Kernel    : constant Kernel_Handle := Get_Kernel (Browser);
       Src, Dest : Browser_Project_Vertex_Access;
       Iter      : Project_Iterator;
-      Cr        : Cairo_Context;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
       Push_State (Kernel, Busy);
@@ -422,10 +414,6 @@ package body Browsers.Projects is
          Next (Iter);
       end loop;
 
-      Cr := Create (Dest);
-      Redraw_Title_Bar (Browser_Item (Dest), Cr);
-      Destroy (Cr);
-
       Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
       Pop_State (Kernel);
@@ -436,44 +424,24 @@ package body Browsers.Projects is
          Pop_State (Kernel);
    end Examine_Ancestor_Project_Hierarchy;
 
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   overriding procedure Resize_And_Draw
-     (Item             : access Browser_Project_Vertex;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   overriding procedure Compute_Size
+     (Item          : not null access Browser_Project_Vertex;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int)
    is
-      --  Project : constant Project_Id :=
-      --        Get_Project_View_From_Name (Item.Name);
-      W, H : Gint;
    begin
-      --  ??? Why is this code commented out
-      --  Set_text (Layout, Project_Path (Project));
-      --  Get_Pixel_Size (Layout, W, H);
-
-      --  Just reserve a little bit of space so that there is something else
-      --  than the title bar
-      W := 0;
-      H := 10;
-
-      Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, Cr,
-         Gint'Max (Width, W + 2 * Margin), H + Height,
-         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
-
-      --  Draw_Layout
-      --    (Drawable => Pixmap (Item),
-      --     GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
-      --     X        => Xoffset + Margin,
-      --     Y        => Yoffset,
-      --     Layout   => Layout);
-   end Resize_And_Draw;
+      --  Reset a little bit of space
+      Compute_Size
+        (Arrow_Item_Record (Item.all)'Access, Layout, Width, Height,
+         Title_Box);
+      Width := Title_Box.Width;
+      Height := Height + 10;
+   end Compute_Size;
 
    ------------------------------
    -- On_Examine_Prj_Hierarchy --

@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M916-026 GPS: support for retina displays in browsers (2013-09-17)
+
+  The display in the various browsers (call graph, entity, debugger,...)
+  is now sharper on retina displays.
+
 NF-60-M913-030 GPS: align end-of-line comments (2013-09-13)
 
   The align.py plugin now provides a solution to align end of line comments.

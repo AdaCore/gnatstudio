@@ -20,6 +20,7 @@ with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib.Object;
 
 with Cairo;                   use Cairo;
+with Cairo.Region;            use Cairo.Region;
 
 with Gdk.Event;               use Gdk.Event;
 
@@ -168,14 +169,11 @@ package body Browsers.Dependency_Items is
       Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for this item
 
-   overriding procedure Resize_And_Draw
-     (Item             : access File_Item_Record;
-      Cr               : in out Cairo.Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   overriding procedure Compute_Size
+     (Item          : not null access File_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int);
    --  See doc for inherited subprogram
 
    ----------------------
@@ -346,7 +344,6 @@ package body Browsers.Dependency_Items is
       B    : constant Dependency_Browser := Dependency_Browser (Browser);
       Iter : Item_Iterator := Start (Get_Canvas (B));
       File : File_Item;
-      Cr   : Cairo_Context;
    begin
       --  All we do for now is check the currently displayed links, and reset
       --  the title bar buttons. It would be too costly to recompute all the
@@ -360,9 +357,8 @@ package body Browsers.Dependency_Items is
 
          Set_Children_Shown (File, False);
          Set_Parents_Shown (File, False);
-         Cr := Create (File);
-         Redraw_Title_Bar (File, Cr);
-         Destroy (Cr);
+
+         B.Get_Canvas.Refresh (File);
 
          Next (Iter);
       end loop;
@@ -501,7 +497,6 @@ package body Browsers.Dependency_Items is
       New_Item      : Boolean;
       Must_Add_Link : Boolean;
       Iter          : File_Iterator;
-      Cr            : Cairo_Context;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -514,14 +509,12 @@ package body Browsers.Dependency_Items is
       if Initial = null then
          Gtk_New (Initial, Browser, File);
          Put (Get_Canvas (Browser), Initial);
-         Refresh (Initial);
       end if;
 
       if not Children_Shown (Initial) then
          Set_Children_Shown (Initial, True);
-         Cr := Create (Initial);
-         Redraw_Title_Bar (Initial, Cr);
-         Destroy (Cr);
+
+         Browser.Get_Canvas.Refresh (Initial);
 
          Iter := Kernel.Databases.Find_Dependencies (File);
 
@@ -553,8 +546,6 @@ package body Browsers.Dependency_Items is
                if New_Item then
                   Put (Get_Canvas (Browser), Item);
                end if;
-
-               Refresh (Item);
             end if;
 
             Iter.Next;
@@ -646,7 +637,7 @@ package body Browsers.Dependency_Items is
                   Src => Child, Dest => Data.Item);
             end if;
 
-            Refresh (Child);
+            Data.Browser.Get_Canvas.Refresh (Child);
          end if;
 
          Data.Iter.Next;
@@ -672,7 +663,6 @@ package body Browsers.Dependency_Items is
       Data          : Examine_Dependencies_Idle_Data;
       Browser       : Dependency_Browser;
       Item          : File_Item;
-      Cr            : Cairo_Context;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -686,13 +676,10 @@ package body Browsers.Dependency_Items is
       if Item = null then
          Gtk_New (Item, Browser, File);
          Put (Get_Canvas (Browser), Item);
-         Refresh (Item);
       end if;
 
       Set_Parents_Shown (Item, True);
-      Cr := Create (Item);
-      Redraw_Title_Bar (Item, Cr);
-      Destroy (Cr);
+      Browser.Get_Canvas.Refresh (Item);
 
       Data := (Iter      => new File_Iterator'
                  (Kernel.Databases.Find_Ancestor_Dependencies (File)),
@@ -1038,6 +1025,7 @@ package body Browsers.Dependency_Items is
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
+      Recompute_Size (Item);
    end Initialize;
 
    -------------------------------
@@ -1125,7 +1113,6 @@ package body Browsers.Dependency_Items is
          if Item = null then
             Gtk_New (Item, B,  Other_File);
             Put (Get_Canvas (B), Item);
-            Refresh (Item);
 
             Layout (B, Force => False);
             Refresh_Canvas (Get_Canvas (B));
@@ -1158,26 +1145,24 @@ package body Browsers.Dependency_Items is
          Project => Project_Of (Item));
    end Contextual_Factory;
 
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
+   ------------------
+   -- Compute_Size --
+   ------------------
 
-   overriding procedure Resize_And_Draw
-     (Item             : access File_Item_Record;
-      Cr               : in out Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
+   overriding procedure Compute_Size
+     (Item          : not null access File_Item_Record;
+      Layout        : not null access Pango_Layout_Record'Class;
+      Width, Height : out Glib.Gint;
+      Title_Box     : in out Cairo_Rectangle_Int) is
    begin
       --  Just reserve a little bit of space so that there is something else
       --  than the title bar.
 
-      Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, Cr,
-         Width, Height + 10,
-         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
-   end Resize_And_Draw;
+      Compute_Size
+        (Arrow_Item_Record (Item.all)'Access, Layout, Width, Height,
+         Title_Box);
+      Width := Title_Box.Width;
+      Height := Height + 10;
+   end Compute_Size;
 
 end Browsers.Dependency_Items;
