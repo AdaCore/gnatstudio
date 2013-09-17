@@ -377,7 +377,7 @@ current contents of the registeres, the local variables, ...
 .. index:: Data Window
 
 This window is not open by default when you start the debugger. It will be
-created automatically when needed (e.g. when using the Debug constextual menu
+created automatically when needed (e.g. when using the Debug contextual menu
 to display a variable). You can also force its display through the menu
 `Debug->Data->Data Window`.
 
