@@ -257,6 +257,9 @@ Some views are part of the default desktop, and thus are visible by default.
 The other views can always be opened through one of the submenus of the
 :menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
 
+
+.. _browsers_features:
+
 Common features of the browsers
 -------------------------------
 
@@ -317,6 +320,9 @@ with the mouse, and provide the following additional capabilities:
   will keep the canvas more readable, at the cost of losing some information.
   You can also hide only a subset of the links. Even when the links are hidden,
   if you select an item then the items linked to it will still be highlighted.
+
+  The local settings menu in browsers has an option :guilabel:`straight links`
+  which can be toggled if you prefer to have orthogonal links.
 
 * Exporting :index:`image` :index:`callgraph; export`
 
@@ -921,7 +927,7 @@ Callgraph browser
 _________________
 
 .. image:: callgraph.png
-.. image:: call-graph.jpg
+.. image:: callgraph_orth.png
 
 The callgraph shows graphically the relationship between subprogram callers and
 callees. A link between two items indicate that one of them is calling the
@@ -973,6 +979,8 @@ with the additional items:
   and select the first node representing the file in which the entity is
   declared. This makes it easier to see which other entities are
   declared in the same file.
+
+See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 
 .. index:: windows; bookmarks
 .. index:: bookmark
