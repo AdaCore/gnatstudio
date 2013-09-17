@@ -2185,7 +2185,12 @@ package body Browsers.Canvas is
          end if;
 
          Layout.Set_Text (Text);
-         Color := Black_RGBA;
+
+         if In_Xref then
+            Color := Browsers_Hyper_Link_Color.Get_Pref;
+         else
+            Color := Black_RGBA;
+         end if;
 
          Set_Source_Color (Cr, Color);
          Move_To (Cr, Gdouble (X2), Gdouble (Y));
