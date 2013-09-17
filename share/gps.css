@@ -28,6 +28,11 @@
 .gps-local-toolbar {  /* local toolbar in the panes/views */
 }
 
+.mdi tab GtkLabel, .mdifocused tab GtkLabel { 
+   color:   @theme_fg_color;
+   opacity: 1.0 
+}
+
 /* Uncomment this if you want to have the same behavior as in previous
  * GPS releases: the active tab of the active notebook gets a blue background
  * to make it quicker to find where keyboard input goes */
