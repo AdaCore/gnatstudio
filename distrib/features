@@ -148,6 +148,11 @@ NF-60-M709-025 GPS: reopen messages window as needed (2013-07-10)
   There are various backdoors in GPS that makes it possible to close the
   Messages window. GPS will now automatically reopen it as needed.
 
+NF-60-M709-011 GPS: update default color scheme (2013-07-10)
+
+  GPS now features a more modern default syntax highlighting color scheme for
+  the code editor.
+
 NF-60-M708-023 GPS: middle-click on tab closes the window (2013-07-08)
 
   This is close to the behavior most web browsers implement and is a
