@@ -33,6 +33,9 @@
                                       to (@borders));
 }
 
+GtkPaned {
+   background-color: @theme_bg_color;
+}
 
 /* .mdi tab GtkLabel { opacity: 0.8 }
    .mdifocused tab GtkLabel { opacity: 1.0 }
