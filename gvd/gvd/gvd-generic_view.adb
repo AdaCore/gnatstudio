@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;            use Ada.Tags;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
 with GPS.Kernel;          use GPS.Kernel;
@@ -80,13 +79,17 @@ package body GVD.Generic_View is
          return Gtk_Widget;
       --  Initialize the view and returns the focus widget.
 
+      type GVD_MDI_Child_Record is new GPS_MDI_Child_Record with null record;
+
       package Views is new Generic_Views.Simple_Views
         (Module_Name        => Module_Name,
          View_Name          => View_Name,
          Formal_View_Record => Formal_View_Record,
-         Formal_MDI_Child   => GPS_MDI_Child_Record,
+         Formal_MDI_Child   => GVD_MDI_Child_Record,
          Reuse_If_Exist     => False,
          Initialize         => Local_Initialize,
+         Local_Config       => Local_Config,
+         Local_Toolbar      => Local_Toolbar,
          Position           => Position,
          Areas              => Areas,
          Commands_Category  => "",  --  No "open ... " command, since we might
@@ -191,8 +194,8 @@ package body GVD.Generic_View is
                Child := Get (Iter);
                exit when Child = null;
 
-               if Get_Widget (Child)'Tag = Formal_View_Record'Tag then
-                  View := Formal_View_Access (Get_Widget (Child));
+               if Child.all in GVD_MDI_Child_Record'Class then
+                  View := Views.View_From_Widget (Get_Widget (Child));
                   exit when Get_Process (View) = null;
                end if;
 
@@ -248,7 +251,7 @@ package body GVD.Generic_View is
             end if;
 
          else
-            Child := Find_MDI_Child (MDI, View);
+            Child := Views.Child_From_View (View);
 
             if Child /= null then
                Raise_Child (Child);

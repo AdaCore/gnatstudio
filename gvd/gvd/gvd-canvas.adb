@@ -175,6 +175,8 @@ package body GVD.Canvas is
       Set_View           => Set_Canvas,
       Group              => Group_Graphs,
       Position           => Position_Top,
+      Local_Config       => True,
+      Local_Toolbar      => True,
       Initialize         => Initialize);
 
    procedure On_Realize (Canvas : access Gtk_Widget_Record'Class);

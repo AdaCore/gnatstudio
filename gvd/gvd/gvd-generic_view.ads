@@ -138,6 +138,10 @@ package GVD.Generic_View is
       --  widget that should receive the focus when the MDI child receives the
       --  focus.
 
+      Local_Toolbar : Boolean := False;
+      Local_Config  : Boolean := False;
+      --  See documentation in generic_views.ads
+
       Group    : Gtkada.MDI.Child_Group;
       Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Right;
       Areas    : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Sides_Only;

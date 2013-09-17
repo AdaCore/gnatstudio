@@ -230,7 +230,7 @@ package Generic_Views is
       function View_From_Widget
         (Widget : not null access Glib.Object.GObject_Record'Class)
          return View_Access;
-      --  WHen using a local toolbar, the actual widget stored in the child is
+      --  When using a local toolbar, the actual widget stored in the child is
       --  not the formal view itself. This function can be used in all cases
       --  to convert from a Child.Get_Widget to a Formal_View
 
