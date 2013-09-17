@@ -1092,33 +1092,35 @@ package body Browsers.Entities is
    is
       use Entity_Arrays;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Discrs : constant Xref.Entity_Array :=
-        Kernel.Databases.Discriminants (Item.Entity);
-      Field : constant Xref.Entity_Array :=
-        Kernel.Databases.Fields (Item.Entity);
       Literals : constant Xref.Entity_Array :=
         Kernel.Databases.Literals (Item.Entity);
-      Fields : Entity_Arrays.List;
 
    begin
-      for D in Discrs'Range loop
-         Add_Type (List, Item, Discrs (D),
-                   -"Discriminant: " & Kernel.Databases.Get_Name (Discrs (D)));
-      end loop;
+      if Literals'Length /= 0 then
+         for F in Literals'Range loop
+            Add_Line (List, Kernel.Databases.Get_Name (Literals (F)));
+         end loop;
 
-      for F in Field'Range loop
-         Entity_Arrays.Append (Fields, Field (F));
-      end loop;
+      else
+         declare
+            Fields : constant Xref.Entity_Array :=
+              Kernel.Databases.Fields (Item.Entity);
+            Discrs : constant Xref.Entity_Array :=
+              Kernel.Databases.Discriminants (Item.Entity);
+         begin
+            for D in Discrs'Range loop
+               Add_Type (List, Item, Discrs (D),
+                         -"Discriminant: "
+                         & Kernel.Databases.Get_Name (Discrs (D)));
+            end loop;
 
-      --  Sort (Fields, Sort_By => Sort_Source_Order);
-
-      for F of Fields loop
-         Add_Type (List, Item, F, Kernel.Databases.Get_Name (F));
-      end loop;
-
-      for F in Literals'Range loop
-         Add_Line (List, Kernel.Databases.Get_Name (Literals (F)));
-      end loop;
+            for F in Fields'Range loop
+               Add_Type
+                 (List, Item, Fields (F),
+                  Kernel.Databases.Get_Name (Fields (F)));
+            end loop;
+         end;
+      end if;
    end Add_Fields;
 
    --------------
@@ -1426,6 +1428,10 @@ package body Browsers.Entities is
       elsif Kernel.Databases.Is_Container (Item.Entity) then
          Add_Package_Contents
            (Kernel, General_Lines, Attr_Lines, Meth_Lines, Item);
+         Add_Fields (Attr_Lines, Item);
+
+      else
+         --  Enumerations, in particular
          Add_Fields (Attr_Lines, Item);
       end if;
 
