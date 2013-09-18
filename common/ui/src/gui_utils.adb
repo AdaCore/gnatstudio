@@ -455,6 +455,15 @@ package body GUI_Utils is
 
    package body User_Contextual_Menus is
 
+      package Pop is new Gtk.Menu.Popup_User_Data (Gdk.Event.Gdk_Event);
+
+      procedure Contextual_Menu_Position_Callback
+        (Menu : not null access Gtk_Menu_Record'Class;
+         X : in out Gint;
+         Y : in out Gint;
+         Push_In : out Boolean;
+         Val : Gdk.Event.Gdk_Event);
+
       function Button_Press_For_Contextual_Menu
         (Widget : access Gtk_Widget_Record'Class;
          Event  : Gdk.Event.Gdk_Event;
@@ -500,6 +509,24 @@ package body GUI_Utils is
             return False;
       end Key_Press_For_Contextual_Menu;
 
+      ---------------------------------------
+      -- Contextual_Menu_Position_Callback --
+      ---------------------------------------
+
+      procedure Contextual_Menu_Position_Callback
+        (Menu : not null access Gtk_Menu_Record'Class;
+         X : in out Gint;
+         Y : in out Gint;
+         Push_In : out Boolean;
+         Val : Gdk.Event.Gdk_Event)
+      is
+         pragma Unreferenced (Menu);
+      begin
+         X := Gint (Val.Button.X_Root);
+         Y := Gint (Val.Button.Y_Root);
+         Push_In := False;
+      end Contextual_Menu_Position_Callback;
+
       --------------------------------------
       -- Button_Press_For_Contextual_Menu --
       --------------------------------------
@@ -529,10 +556,12 @@ package body GUI_Utils is
                --  See comments in Button_Press_For_Contextual_Menu above
 
                if Host = Windows then
-                  Popup (Menu,
+                  Pop.Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
                          Activate_Time => Gdk.Event.Get_Time (Event)
-                           + Guint32 ((Clock - Time_Before_Factory) * 1000));
+                         + Guint32 ((Clock - Time_Before_Factory) * 1000),
+                         Func => Contextual_Menu_Position_Callback'Access,
+                         Data => Event);
                else
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
