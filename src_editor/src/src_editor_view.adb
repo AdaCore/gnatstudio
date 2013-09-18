@@ -1315,11 +1315,18 @@ package body Src_Editor_View is
 
       pragma Unreferenced (Result, X, Y, Info);
    begin
+      --  Do not accept drag data if the view is not editable
+      if not Get_Editable (Source_View (Self)) then
+         Gtk.Handlers.Emit_Stop_By_Name
+           (Object => Self, Name => "drag-data-received");
+
+         return;
+      end if;
+
       --  Handle the special case of When the drop target is
       --  GTK_TEXT_BUFFER_CONTENTS, which means the drop comes from a Gtk
       --  Text View
       if Atom_Name (Data.Get_Target) = "GTK_TEXT_BUFFER_CONTENTS" then
-
          --  Prevent the propagation of the signal, to prevent the original
          --  handler from running
          Gtk.Handlers.Emit_Stop_By_Name
@@ -2193,25 +2200,25 @@ package body Src_Editor_View is
 
       if Key /= GDK_Control_L and then Key /= GDK_Control_R then
          Ignore := View.Position_Set_Explicitely (Reset => True);
-      else
-         --  If we are not pressing the Ctrl key, check whether we are
-         --  pressing a graphical key
+      end if;
 
-         if not Get_Editable (View) then
-            declare
-               Str : constant String := Interfaces.C.Strings.Value
-                 (Event.Key.String);
-            begin
-               if Str'Length >= 1 then
-                  Insert
-                    (View.Kernel,
-                     -"Warning: attempting to edit a read-only editor.",
-                     Mode => Error);
+      --  If we are not pressing the Ctrl key, check whether we are
+      --  pressing a graphical key
 
-                  return False;
-               end if;
-            end;
-         end if;
+      if not Get_Editable (View) then
+         declare
+            Str             : constant String := Interfaces.C.Strings.Value
+              (Event.Key.String);
+         begin
+            if Str'Length >= 1 then
+               Insert
+                 (View.Kernel,
+                  -"Warning : attempting to edit a read-only editor.",
+                  Mode => Error);
+
+               return True;
+            end if;
+         end;
       end if;
 
       --  Special case for cancelling selection
