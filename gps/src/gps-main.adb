@@ -160,8 +160,8 @@ procedure GPS.Main is
    use GPS.Main_Window;
    use type Glib.Gint;
 
-   Me        : constant Trace_Handle := Create ("GPS");
-   Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
+   Me         : constant Trace_Handle := Create ("GPS");
+   Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
    Gtk_Errors : constant Trace_Handle := Create ("GTK");
 
    Docgen2_Trace          : constant Trace_Handle :=
