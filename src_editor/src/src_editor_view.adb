@@ -73,6 +73,10 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
+with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
+with Gtk.Selection_Data;
+with Gdk.Property; use Gdk.Property;
+with Gtk.Dnd; use Gtk.Dnd;
 
 --  Drawing the side info is organized this way:
 --
@@ -149,6 +153,20 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
+
+   procedure View_On_Drag_Data_Received
+     (Self    : access Gtk_Widget_Record'Class;
+      Context : not null access Gdk.Drag_Contexts.Drag_Context_Record'Class;
+      X       : Gint;
+      Y       : Gint;
+      Data    : Gtk.Selection_Data.Gtk_Selection_Data;
+      Info    : Guint;
+      Time    : Guint);
+   --  Callback handling the special case of dragging and dropping when both
+   --  source and destination are a GPS text view. This was messed up by Gtk,
+   --  which was doing a "clever" copy in this case, trying to copy Gtk tags
+   --  along with the content, and inserted the content in chunks which was
+   --  interacting badly with the Insert hooks
 
    function Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -1277,6 +1295,58 @@ package body Src_Editor_View is
          return False;
    end Focus_In_Event_Cb;
 
+   --------------------------------
+   -- View_On_Drag_Data_Received --
+   --------------------------------
+
+   procedure View_On_Drag_Data_Received
+     (Self    : access Gtk_Widget_Record'Class;
+      Context : not null access Gdk.Drag_Contexts.Drag_Context_Record'Class;
+      X       : Gint;
+      Y       : Gint;
+      Data    : Gtk.Selection_Data.Gtk_Selection_Data;
+      Info    : Guint;
+      Time    : Guint)
+   is
+      Result : Boolean;
+      Start_Iter, End_Iter, Drop_Iter : Gtk_Text_Iter;
+      Buffer : Source_Buffer;
+      Mark : Gtk_Text_Mark;
+
+      pragma Unreferenced (Result, X, Y, Info);
+   begin
+      --  Handle the special case of When the drop target is
+      --  GTK_TEXT_BUFFER_CONTENTS, which means the drop comes from a Gtk
+      --  Text View
+      if Atom_Name (Data.Get_Target) = "GTK_TEXT_BUFFER_CONTENTS" then
+
+         --  Prevent the propagation of the signal, to prevent the original
+         --  handler from running
+         Gtk.Handlers.Emit_Stop_By_Name
+           (Object => Self, Name => "drag-data-received");
+
+         Buffer := Source_Buffer (Source_View (Self).Get_Buffer);
+         Buffer.Start_Undo_Group;
+         --  Get the drag destination mark
+         Mark := Buffer.Get_Mark ("gtk_drag_target");
+         Buffer.Get_Iter_At_Mark (Drop_Iter, Mark);
+         Buffer.Get_Selection_Bounds (Start_Iter, End_Iter, Result);
+
+         --  Insert the dragged text at Drop_Iter
+         Buffer.Insert
+           (Drop_Iter, String'(Buffer.Get_Text (Start_Iter, End_Iter)));
+
+         --  Finish the drag action so that the selected text is deleted
+         Finish (Drag_Context (Context), True, True, Guint32 (Time));
+
+         --  Place the cursor at the location of the drag mark
+         Buffer.Get_Iter_At_Mark (Drop_Iter, Mark);
+         Buffer.Place_Cursor (Drop_Iter);
+
+         Buffer.Finish_Undo_Group;
+      end if;
+   end View_On_Drag_Data_Received;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -1364,6 +1434,9 @@ package body Src_Editor_View is
            (Side_Area_Expose_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
+
+      View.On_Drag_Data_Received
+        (View_On_Drag_Data_Received'Access);
 
       Widget_Callback.Object_Connect
         (View.Area, Signal_Size_Allocate,
