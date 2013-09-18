@@ -303,9 +303,12 @@ package body Debugger is
       --  Install a callback on the debugger's output file descriptor
 
       Process := GVD.Process.Convert (Debugger);
-      pragma Assert (Process.Timeout_Id = 0);
-      Process.Timeout_Id := Debugger_Timeout.Timeout_Add
-        (Debug_Timeout, Output_Available'Access, Process);
+
+      if Process /= null then
+         pragma Assert (Process.Timeout_Id = 0);
+         Process.Timeout_Id := Debugger_Timeout.Timeout_Add
+           (Debug_Timeout, Output_Available'Access, Process);
+      end if;
    end General_Spawn;
 
    ---------------------
