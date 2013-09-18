@@ -435,6 +435,14 @@ package body Debugger.Gdb.Ada is
       G              : Generic_Type_Access;
 
    begin
+      --  A special case for strings
+
+      if Looking_At (Type_Str, Tmp_Index, "array (<>) of character") then
+         Result := New_Simple_Type;
+         Set_Type_Name (Result, "character");
+         return;
+      end if;
+
       --  As a special case, if we have (<>) for the dimensions (ie an
       --  unconstrained array), this is treated as an access type and not an
       --  array type).
