@@ -213,7 +213,9 @@ package body Debugger.Gdb.Cpp is
       --  unions, since gdb prints a 'public:' indication at the
       --  beginning of the union (why ?)
 
-      if Looking_At (Type_Str, Index, "class ") then
+      if Looking_At (Type_Str, Index, "class ")
+         or else Looking_At (Type_Str, Index, "struct ")
+      then
          Index := Index + 6; --  skips "class "
          Parse_Class_Type (Lang, Type_Str, Entity, Index, Result);
 

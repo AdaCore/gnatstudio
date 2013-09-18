@@ -591,6 +591,7 @@ package body Debugger.Gdb.C is
       Tmp            : Natural := Index;
       Semi_Colon_Pos : Natural;
       Count          : Natural;
+      Force_Method   : Boolean := False;
 
    begin
       --  Get the field name (last word before ;)
@@ -630,17 +631,27 @@ package body Debugger.Gdb.C is
 
       --  This is probably a pointer to subprogram, as in:
       --     void (*foo) (void)
+      --  Some recent versions of gdb now display:
+      --     void foo(void);
+      --  instead
+
       if Type_Str (Tmp) = ')' then
          Skip_To_Char (Type_Str, Tmp, '(', Step => -1);
-         Skip_To_Char (Type_Str, Tmp, ')', Step => -1);
+         Tmp := Tmp - 1;
+         Skip_Blanks_Backward (Type_Str, Tmp);
 
-         --  Skip array definition if any
-         if Type_Str (Tmp - 1) = ']' then
-            Skip_To_Char (Type_Str, Tmp, '[', Step => -1);
+         if Type_Str (Tmp) = ')' then
+            --  Skip array definition if any
+            if Type_Str (Tmp - 1) = ']' then
+               Skip_To_Char (Type_Str, Tmp, '[', Step => -1);
+            end if;
+            Name_End := Tmp - 1;
+            Skip_To_Char (Type_Str, Tmp, '*', Step => -1);
+         else
+            Name_End := Tmp;
+            Skip_Word (Type_Str, Tmp, Step => -1);
+            Force_Method := True;
          end if;
-
-         Name_End := Tmp - 1;
-         Skip_To_Char (Type_Str, Tmp, '*', Step => -1);
 
       else
          Name_End := Field_End - 1;
@@ -679,10 +690,18 @@ package body Debugger.Gdb.C is
       --  the above generate an extra ptype for "int".
 
       Tmp := Index;
-      C_Detect_Composite_Type
-        (Lang, Type_Str (Index .. Name_Start - 1)
-         & Type_Str (Name_End + 1 .. Field_End - 1),
-         Entity, Tmp, Result);
+
+      if Force_Method then
+         C_Detect_Composite_Type
+           (Lang, Type_Str (Index .. Name_Start - 1) & "(*)"
+            & Type_Str (Name_End + 1 .. Field_End - 1),
+            Entity, Tmp, Result);
+      else
+         C_Detect_Composite_Type
+           (Lang, Type_Str (Index .. Name_Start - 1)
+            & Type_Str (Name_End + 1 .. Field_End - 1),
+            Entity, Tmp, Result);
+      end if;
 
       --  if not an access or array:
       if Result = null then
@@ -790,6 +809,7 @@ package body Debugger.Gdb.C is
 
       while Field <= Num_Fields loop
          Skip_Blanks (Type_Str, Index);
+
          C_Field_Name
            (Lang, Entity,
             Type_Str, Index, Tmp, End_Of_Name, Save, Field_Value);
