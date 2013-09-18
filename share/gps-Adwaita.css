@@ -33,7 +33,7 @@
                                       to (@borders));
 }
 
-GtkPaned {
+.pane-separator {
    background-color: @theme_bg_color;
 }
 
