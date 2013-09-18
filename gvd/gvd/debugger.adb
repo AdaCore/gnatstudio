@@ -806,23 +806,27 @@ package body Debugger is
 
    exception
       when Process_Died =>
-         Process := GVD.Process.Convert (Debugger);
-         Free (Process.Current_Command);
-
-         if Process.Exiting then
-            return;
-         end if;
-
          Trace (Me, "underlying debugger died unexpectedly in 'send'");
-         Button :=
-           Message_Dialog
-             (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
-              (-"The underlying debugger died unexpectedly. Closing it"),
-              Error, Button_OK, Button_OK);
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Set_Busy (Process, False);
-         Unregister_Dialog (Process);
-         Close_Debugger (Process);
+
+         Process := GVD.Process.Convert (Debugger);
+
+         if Process /= null then
+            Free (Process.Current_Command);
+
+            if Process.Exiting then
+               return;
+            end if;
+
+            Button :=
+              Message_Dialog
+                (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
+                 (-"The underlying debugger died unexpectedly. Closing it"),
+                 Error, Button_OK, Button_OK);
+            Set_Busy (Process, False);
+            Unregister_Dialog (Process);
+            Close_Debugger (Process);
+         end if;
    end Send;
 
    ---------------
