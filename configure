@@ -2320,7 +2320,7 @@ SSH_ESCAPE='~'
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
 
 PRINT_CMD="lp"
-OPAQUE_MDI=False
+OPAQUE_MDI=True
 HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
@@ -4521,7 +4521,7 @@ case "${host}" in
   ;;
 
   ## Intel machines where we don't care about the manufacturer
-  i[3456]86-*-*|x86_64-*-* )
+  i[3456]86-*-* | x86_64-*-* )
     machine=intel386
     case "${host}" in
       *-linux-gnu* )

@@ -22,7 +22,7 @@ SSH_ESCAPE='~'
 DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
 
 PRINT_CMD="lp"
-OPAQUE_MDI=False
+OPAQUE_MDI=True
 HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
