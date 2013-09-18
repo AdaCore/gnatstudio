@@ -1396,7 +1396,7 @@ package body Src_Contexts is
       Raise_Child (Editor, Give_Focus);
 
       if Give_Focus then
-         Present (Gtk_Window (Get_Toplevel (Editor)));
+         Present (Gtk_Window (Get_Toplevel (Get_Widget (Editor))));
       end if;
    end Focus_To_Editor;
 
