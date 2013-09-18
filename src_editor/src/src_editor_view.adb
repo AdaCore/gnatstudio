@@ -2206,19 +2206,27 @@ package body Src_Editor_View is
       --  pressing a graphical key
 
       if not Get_Editable (View) then
-         declare
-            Str             : constant String := Interfaces.C.Strings.Value
-              (Event.Key.String);
-         begin
-            if Str'Length >= 1 then
-               Insert
-                 (View.Kernel,
-                  -"Warning : attempting to edit a read-only editor.",
-                  Mode => Error);
-
+         case Key is
+            when GDK_BackSpace .. GDK_Return | GDK_Delete |
+                 GDK_KP_Tab .. GDK_KP_Enter | GDK_KP_Delete =>
                return True;
-            end if;
-         end;
+
+            when others =>
+               declare
+                  Str : constant String := Interfaces.C.Strings.Value
+                    (Event.Key.String);
+               begin
+                  if Str'Length >= 1 then
+                     Insert
+                       (View.Kernel,
+                        -"Warning : attempting to edit a read-only editor.",
+                        Mode => Error);
+
+                     return True;
+                  end if;
+               end;
+         end case;
+
       end if;
 
       --  Special case for cancelling selection
