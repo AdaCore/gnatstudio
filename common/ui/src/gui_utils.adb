@@ -1981,6 +1981,8 @@ package body GUI_Utils is
    begin
       MDI.Set_Focus_Child (Widget);
 
+      Win := Get_Toplevel (Widget);
+
       --  Do not Present a window if it hasn't been realized yet:
       --  this would give the window its default size as defined in
       --  GPS.Main_Window rather than the one coming from the desktop
@@ -2001,22 +2003,8 @@ package body GUI_Utils is
          end if;
       end if;
 
-      --  Grab the focus in an idle, since otherwise it seems that we are
-      --  getting a grab_focus(null) later. In particular, pressing shift-F3
-      --  in a floating window would not properly give the focus to the
-      --  omni-search.
-      --  ??? This seems to work on simple examples (floating editor, floating
-      --  Locations view, so the scenario above needs to be refined.
-      --  Perhaps we need to understand who emits tha
-
       if not Widget.Has_Focus then
          Widget.Grab_Focus;
-
-         --  ??? The code below is not complete: we need to catch the case
-         --  when the widget is destroyed before the idle callback is
-         --  called, and unregister the idle to avoid the dangling pointer.
---           Id := Widget_Sources.Idle_Add
---             (Idle_Grab_Focus'Access, Gtk_Widget (Widget));
       end if;
    end Grab_Toplevel_Focus;
 
