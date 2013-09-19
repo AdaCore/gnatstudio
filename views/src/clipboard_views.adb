@@ -27,9 +27,11 @@ with Glib.Unicode;              use Glib.Unicode;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Widget;                use Gtk.Widget;
@@ -41,6 +43,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -61,10 +64,18 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 package body Clipboard_Views is
    Me : constant Trace_Handle := Create ("CLIPBOARD");
 
+   Command_Append_To_Previous_Name : constant String :=
+     "Clipboard View Append To Previous";
+   Command_Remove_Name : constant String :=
+     "Clipboard View Remove Entry";
+
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
       Current : Gdk_Pixbuf;
    end record;
+   overriding procedure Create_Toolbar
+     (View    : not null access Clipboard_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
      (View   : access Clipboard_View_Record'Class) return Gtk_Widget;
@@ -75,8 +86,10 @@ package body Clipboard_Views is
       View_Name          => "Clipboard",
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
       Formal_View_Record => Clipboard_View_Record,
       Areas              => Gtkada.MDI.Sides_Only);
+   use Generic_View;
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
    procedure On_Clipboard_Changed
@@ -95,15 +108,6 @@ package body Clipboard_Views is
      (Clip  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Context factory when creating contextual menus
 
    function Get_Selected_From_Event
      (View  : access Clipboard_View_Record'Class;
@@ -178,13 +182,18 @@ package body Clipboard_Views is
       Selected : Integer;
       View : constant Clipboard_View_Access :=
         Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
    begin
-      if Context.Event /= null then
-         Selected := Get_Selected_From_Event (View, Context.Event);
-         if Selected /= -1 then
-            Merge_Clipboard
-              (Get_Clipboard (View.Kernel), Selected, Selected + 1);
-            return Success;
+      if View /= null then
+         Get_Selected (View.Tree.Get_Selection, Model, Iter);
+         if Iter /= Null_Iter then
+            Selected := Integer (Get_Int (Model, Iter, 2));
+            if Selected /= -1 then
+               Merge_Clipboard
+                 (Get_Clipboard (View.Kernel), Selected, Selected + 1);
+               return Success;
+            end if;
          end if;
       end if;
       return Failure;
@@ -202,12 +211,17 @@ package body Clipboard_Views is
       Selected : Integer;
       View : constant Clipboard_View_Access :=
         Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
    begin
-      if Context.Event /= null then
-         Selected := Get_Selected_From_Event (View, Context.Event);
-         if Selected /= -1 then
-            Remove_Clipboard_Entry (Get_Clipboard (View.Kernel), Selected);
-            return Success;
+      if View /= null then
+         Get_Selected (View.Tree.Get_Selection, Model, Iter);
+         if Iter /= Null_Iter then
+            Selected := Integer (Get_Int (Model, Iter, 2));
+            if Selected /= -1 then
+               Remove_Clipboard_Entry (Get_Clipboard (View.Kernel), Selected);
+               return Success;
+            end if;
          end if;
       end if;
       return Failure;
@@ -232,25 +246,26 @@ package body Clipboard_Views is
       end if;
    end Get_Selected_From_Event;
 
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
+   --------------------
+   -- Create_Toolbar --
+   --------------------
 
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+   overriding procedure Create_Toolbar
+     (View    : not null access Clipboard_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      pragma Unreferenced
-        (Kernel, Event_Widget, Object, Event, Menu, Context);
-      --  Nothing special in the context, just the module itself so that people
-      --  can still add information if needed
    begin
-      null;
-   end View_Context_Factory;
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Add,
+         Action   => Command_Append_To_Previous_Name);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Remove,
+         Action   => Command_Remove_Name);
+   end Create_Toolbar;
 
    ------------------
    -- Button_Press --
@@ -291,10 +306,6 @@ package body Clipboard_Views is
          end if;
       end if;
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press;
 
    --------------------------
@@ -428,7 +439,7 @@ package body Clipboard_Views is
                                 2 => GType_Int),
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
-         Selection_Mode     => Selection_None,
+         Selection_Mode     => Selection_Single,
          Sortable_Columns   => False,
          Hide_Expander      => True);
       Scrolled.Add (View.Tree);
@@ -443,13 +454,6 @@ package body Clipboard_Views is
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);
-
-      Register_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View.Tree,
-         Object          => View,
-         ID              => Generic_View.Get_Module,
-         Context_Func    => View_Context_Factory'Access);
 
       Add_Hook (View.Kernel, Clipboard_Changed_Hook,
                 Wrapper (On_Clipboard_Changed'Access),
@@ -481,19 +485,18 @@ package body Clipboard_Views is
    begin
       Generic_View.Register_Module
         (Kernel, Menu_Name => -"Views/_Clipboard", Before_Menu => -"Entity");
+
       Command := new Merge_With_Previous_Command;
-      Register_Contextual_Menu
-        (Kernel, "Clipboard View Append To Previous",
-         Action => Command,
-         Filter => Create (Module => "Clipboard_View"),
-         Label  => -"Append To Previous");
+      Register_Action
+        (Kernel, Command_Append_To_Previous_Name, Command,
+         -"Append to previous clipboard entry",
+         Category => -"Clipboard");
 
       Command := new Remove_Entry_Command;
-      Register_Contextual_Menu
-        (Kernel, "Clipboard View Remove Entry",
-         Action => Command,
-         Filter => Create (Module => "Clipboard_View"),
-         Label  => -"Delete entry");
+      Register_Action
+        (Kernel, Command_Remove_Name, Command,
+         -"Remove selected clipboard entry",
+         Category => -"Clipboard");
    end Register_Module;
 
 end Clipboard_Views;
