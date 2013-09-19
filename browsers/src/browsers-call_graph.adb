@@ -382,6 +382,7 @@ package body Browsers.Call_Graph is
       Show_Caller        : Boolean;
       Category           : String_Access;
       Include_Overriding : Boolean;
+      Count              : Natural := 0;
    end record;
 
    type Examine_Ancestors_Data is new Commands_User_Data_Record with record
@@ -1214,6 +1215,7 @@ package body Browsers.Call_Graph is
                exit;
 
             elsif Is_Valid (Data.Filter, Ref) then
+               Data.Count := Data.Count + 1;
                Print_Ref
                  (Data.Kernel,
                   Ref,
@@ -1221,6 +1223,10 @@ package body Browsers.Call_Graph is
                   Data.Category.all,
                   Show_Caller  => Data.Show_Caller,
                   Sort_In_File => False);
+
+               if Data.Count = 1 then
+                  Raise_Locations_Window (Data.Kernel, Give_Focus => False);
+               end if;
             end if;
 
             Count := Count + 1;
@@ -1265,6 +1271,7 @@ package body Browsers.Call_Graph is
                      Iter_Started       => False,
                      Show_Caller        => Show_Caller,
                      Include_Overriding => Include_Overriding,
+                     Count              => 0,
                      Entity             => Info);
 
             Xref_Commands.Create  --  Will destroy Data when done
@@ -1371,7 +1378,7 @@ package body Browsers.Call_Graph is
                   Local_File         => GNATCOLL.VFS.No_File,
                   All_From_Same_File => False),
                Filter           => Filter,
-               Show_Caller      => False);
+               Show_Caller      => True);
          end if;
 
       else
@@ -2054,7 +2061,7 @@ package body Browsers.Call_Graph is
          Local_File         => File,
          All_From_Same_File => False,
          Filter             => Filter,
-         Show_Caller        => False);
+         Show_Caller        => True);
       return Commands.Success;
    end Execute;
 

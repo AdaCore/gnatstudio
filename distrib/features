@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M919-026 GPS: Find All References displays context (2013-09-19)
+
+  When you perform a "Find All References", each reference will also display
+  the context of that reference (in general, the subprogram within which the
+  reference is found).
+
 NF-60-M918-040 GPS: safer saving of files (2013-09-19)
 
   Saving files is now done via a temporary file which is later renamed.

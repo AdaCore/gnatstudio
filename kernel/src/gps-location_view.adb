@@ -157,7 +157,7 @@ package body GPS.Location_View is
 
    package Location_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Location_View_Record",
-      View_Name          => -"Locations",
+      View_Name          => GPS.Kernel.MDI.Locations_View_Name,
       Formal_View_Record => Location_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,

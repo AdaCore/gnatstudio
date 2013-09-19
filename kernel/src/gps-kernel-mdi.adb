@@ -1579,4 +1579,20 @@ package body GPS.Kernel.MDI is
       return Get_Module_From_Child (MDI_Child (Self)).Get_Kernel;
    end Kernel;
 
+   ----------------------------
+   -- Raise_Locations_Window --
+   ----------------------------
+
+   procedure Raise_Locations_Window
+     (Self       : not null access Kernel_Handle_Record'Class;
+      Give_Focus : Boolean := True)
+   is
+      C : constant MDI_Child :=
+        Get_MDI (Self).Find_MDI_Child_By_Name (Locations_View_Name);
+   begin
+      if C /= null then
+         C.Raise_Child (Give_Focus => Give_Focus);
+      end if;
+   end Raise_Locations_Window;
+
 end GPS.Kernel.MDI;
