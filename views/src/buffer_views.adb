@@ -29,6 +29,8 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -42,6 +44,7 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -78,11 +81,22 @@ package body Buffer_Views is
      "Windows_View_Show_Notebooks";
    --  Used to store the current view settings in histories
 
+   Command_Close_Windows_Name : constant String :=
+     "Windows view close selected";
+   Command_Close_Windows_Tip : constant String :=
+     "Close all windows currently selected in the Windows view";
+
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
       File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
+   overriding procedure Create_Toolbar
+     (View    : not null access Buffer_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Buffer_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (View   : access Buffer_View_Record'Class) return Gtk_Widget;
@@ -94,9 +108,12 @@ package body Buffer_Views is
      (Module_Name        => Module_Name,
       View_Name          => "Windows",
       Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
+      Local_Config       => True,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Buffer_View_Record,
       Areas              => Gtkada.MDI.Sides_Only);
+   use Generic_View;
    subtype Buffer_View_Access is Generic_View.View_Access;
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);
@@ -229,16 +246,19 @@ package body Buffer_Views is
       pragma Unreferenced (Command);
       Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
       View        : constant Buffer_View_Access :=
-                      Buffer_View_Access
-                        (Get_Widget
-                           (Find_MDI_Child_By_Tag
-                              (Get_MDI (Kernel), Buffer_View_Record'Tag)));
-      Model       : constant Gtk_Tree_Store := -Get_Model (View.Tree);
+        Generic_View.Retrieve_View (Kernel);
+      Model       : Gtk_Tree_Store;
       Child       : MDI_Child;
       Iter, Iter2 : Gtk_Tree_Iter;
       Count       : Natural := 0;
       CIter       : Child_Iterator := First_Child (Get_MDI (Kernel));
    begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      Model := -Get_Model (View.Tree);
+
       while Get (CIter) /= null loop
          Count := Count + 1;
          Next (CIter);
@@ -364,6 +384,10 @@ package body Buffer_Views is
       end if;
 
       return False;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
    end Button_Press;
 
    --------------------
@@ -547,6 +571,46 @@ package body Buffer_Views is
       Expand_All (V.Tree);
    end Refresh;
 
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Buffer_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+   begin
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Close,
+         Action   => Command_Close_Windows_Name,
+         Tooltip  => Command_Close_Windows_Tip);
+   end Create_Toolbar;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Buffer_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check   : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, Label => -"Show editors only");
+      Associate (Get_History (View.Kernel).all, History_Editors_Only, Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Refresh'Access, Slot_Object => View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, Label => -"Show notebooks");
+      Associate (Get_History (View.Kernel).all, History_Show_Notebooks, Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Refresh'Access, Slot_Object => View);
+      Menu.Add (Check);
+   end Create_Menu;
+
    --------------------------
    -- View_Context_Factory --
    --------------------------
@@ -559,17 +623,15 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Context);
+      pragma Unreferenced (Event_Widget, Context, Kernel, Menu);
       V       : constant Buffer_View_Access := Buffer_View_Access (Object);
       Iter    : Gtk_Tree_Iter;
-      Check   : Gtk_Check_Menu_Item;
    begin
       --  Focus on the window, so that the selection is correctly taken into
       --  account. But do not process the usual callback, since we do not want
       --  to unselect everything and select the Windows View itself
       Handler_Block (Get_MDI (V.Kernel), V.Child_Selected_Id);
-      Raise_Child
-        (Find_MDI_Child (Get_MDI (V.Kernel), V), Give_Focus => True);
+      Raise_Child (Generic_View.Child_From_View (V));
       Handler_Unblock (Get_MDI (V.Kernel), V.Child_Selected_Id);
 
       Iter := Find_Iter_For_Event (V.Tree, Event);
@@ -581,21 +643,6 @@ package body Buffer_Views is
             Unselect_All (Get_Selection (V.Tree));
             Select_Iter (Get_Selection (V.Tree), Iter);
          end if;
-      end if;
-
-      if Menu /= null then
-         Gtk_New (Check, Label => -"Show editors only");
-         Associate (Get_History (Kernel).all, History_Editors_Only, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Slot_Object => V);
-
-         Gtk_New (Check, Label => -"Show notebooks");
-         Associate
-           (Get_History (Kernel).all, History_Show_Notebooks, Check);
-         Append (Menu, Check);
-         Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Slot_Object => V);
       end if;
    end View_Context_Factory;
 
@@ -836,12 +883,10 @@ package body Buffer_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Buffer_View_Record'Tag);
-      View  : Buffer_View_Access;
+      View  : constant Buffer_View_Access :=
+        Generic_View.Retrieve_View (Kernel);
    begin
-      if Child /= null then
-         View := Buffer_View_Access (Get_Widget (Child));
+      if View /= null then
          Set_Font_And_Colors
            (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
@@ -865,11 +910,10 @@ package body Buffer_Views is
         (Get_History (Kernel).all, History_Show_Notebooks, False);
 
       Command := new Close_Command;
-      Register_Contextual_Menu
-        (Kernel, "Windows View Close Windows",
-         Action => Command,
-         Filter => Create (Module => Module_Name),
-         Label  => -"Close selected windows");
+      Register_Action
+        (Kernel, Command_Close_Windows_Name,
+         Command, Command_Close_Windows_Tip,
+         null, -"Windows view");
 
       P := new Opened_Windows_Search;
       Register_Provider_And_Action (Kernel, P);
