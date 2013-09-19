@@ -41,6 +41,7 @@ class Task_Manager_Widget():
 
         col = Gtk.TreeViewColumn("Progress", Gtk.CellRendererProgress(),
             value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
+        col.set_expand(True)
         self.view.append_column(col)
 
         self.playpause_col = Gtk.TreeViewColumn("Play Pause")
