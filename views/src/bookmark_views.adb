@@ -41,7 +41,9 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -81,6 +83,10 @@ package body Bookmark_Views is
    Data_Column     : constant := 2;
    Editable_Column : constant := 3;
 
+   Command_Add_Name    : constant String := "Bookmark Create";
+   Command_Rename_Name : constant String := "Bookmark Rename";
+   Command_Remove_Name : constant String := "Bookmark Remove";
+
    type Bookmark_Data is record
       Marker    : Location_Marker;
       Name      : GNAT.Strings.String_Access;
@@ -108,6 +114,9 @@ package body Bookmark_Views is
       --  Whether we are deleting multiple bookmarks
    end record;
    type Bookmark_View is access all Bookmark_View_Record'Class;
+   overriding procedure Create_Toolbar
+     (View    : not null access Bookmark_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    package Bookmarks_Selection_Foreach is new
      Gtk.Tree_Selection.Selected_Foreach_User_Data (Bookmark_View_Record);
@@ -121,9 +130,11 @@ package body Bookmark_Views is
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
       Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Bookmark_View_Record);
+   use Generic_View;
    subtype Bookmark_View_Access is Generic_View.View_Access;
 
    function Convert is new Ada.Unchecked_Conversion
@@ -520,31 +531,26 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
-      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
+      Model : Gtk_Tree_Model;
       Data  : Bookmark_Data_Access;
       Iter  : Gtk_Tree_Iter;
    begin
-      Iter := Get_Iter_First (Model);
-      View.Deleting := True;
+      if View /= null then
+         View.Deleting := True;
+         View.Tree.Get_Selection.Get_Selected (Model, Iter);
 
-      while Iter /= Null_Iter loop
-         if Iter_Is_Selected (Get_Selection (View.Tree), Iter) then
+         if Iter /= Null_Iter then
             Data := Convert (Get_Address (Model, Iter, Data_Column));
 
             if Data /= null then
                Delete_Bookmark (Get_Kernel (Context.Context), Data.all);
-               Remove (Model, Iter);
-               Iter := Get_Iter_First (Model);
-            else
-               Next (Model, Iter);
+               Remove (-Model, Iter);
             end if;
-         else
-            Next (Model, Iter);
          end if;
-      end loop;
+         View.Deleting := False;
+         Refresh (View);
+      end if;
 
-      View.Deleting := False;
-      Refresh (View);
       return Success;
    end Execute;
 
@@ -602,16 +608,15 @@ package body Bookmark_Views is
       View  : constant Bookmark_View_Access :=
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
 
       Ignore : G_Source_Id;
       pragma Unreferenced (Command, Ignore);
    begin
-      if Context.Event /= null then
-         Iter := Find_Iter_For_Event (View.Tree, Context.Event);
-         if Iter /= Null_Iter then
-            Unselect_All (Get_Selection (View.Tree));
-            Select_Iter (Get_Selection (View.Tree), Iter);
+      if View /= null then
+         View.Tree.Get_Selection.Get_Selected (Model, Iter);
 
+         if Iter /= Null_Iter then
             --  Start the edition in idle mode, since otherwise the tree gains
             --  the focus when the menu is hidden, and stops the edition
             --  immediately.
@@ -681,6 +686,37 @@ package body Bookmark_Views is
       Unchecked_Free (Data.Marker);
       Unchecked_Free (Data);
    end Free;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Bookmark_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Sep    : Gtk_Separator_Tool_Item;
+   begin
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Add,
+         Action   => Command_Add_Name);
+
+      Gtk_New (Sep);
+      Toolbar.Insert (Sep);
+
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Convert,
+         Action   => Command_Rename_Name);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Remove,
+         Action   => Command_Remove_Name);
+   end Create_Toolbar;
 
    --------------------------
    -- View_Context_Factory --
@@ -919,7 +955,6 @@ package body Bookmark_Views is
          Editable_Columns   => (Name_Column => Editable_Column),
          Editable_Callback  => (Name_Column => Edited_Callback'Access),
          Show_Column_Titles => False,
-         Selection_Mode     => Selection_Multiple,
          Sortable_Columns   => True,
          Initial_Sort_On    => 2,
          Merge_Icon_Columns => False,
@@ -1253,18 +1288,16 @@ package body Bookmark_Views is
       Load_Bookmarks (Kernel);
 
       Command := new Rename_Bookmark_Command;
-      Register_Contextual_Menu
-        (Kernel, "Bookmark View Rename Bookmark",
-         Action => Command,
-         Filter => Create (Module => "Bookmark_View"),
-         Label  => -"Rename bookmark");
+      Register_Action
+        (Kernel, Command_Rename_Name, Command,
+         -("Interactively rename the bookmark currently selected in the"
+           & " bookmarks view"), Category => -"Bookmarks");
 
       Command := new Delete_Bookmark_Command;
-      Register_Contextual_Menu
-        (Kernel, "Bookmark View Delete Bookmark",
-         Action => Command,
-         Filter => Create (Module => "Bookmark_View"),
-         Label  => -"Delete bookmark");
+      Register_Action
+        (Kernel, Command_Remove_Name, Command,
+         -"Delete the bookmark currently selected in the bookmarks view",
+         Category => -"Bookmarks");
 
       Command := new Create_Bookmark_Command;
       Register_Menu
@@ -1276,7 +1309,8 @@ package body Bookmark_Views is
          Filter   => Src_Action_Context);
       Register_Action
         (Kernel, "Bookmark Create", Command,
-         -("Create a bookmark at the current location"));
+         -("Create a bookmark at the current location"),
+         Category => -"Bookmarks", Filter => Src_Action_Context);
 
       Command := new Next_Bookmark_Command (Backward => False);
       Register_Action
