@@ -58,6 +58,7 @@ with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
@@ -270,6 +271,11 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path);
    --  Called when a row is expanded by the user
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the preferences change
 
    procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class);
    --  Called when the selection changes in the view
@@ -1468,6 +1474,11 @@ package body Call_Graph_Views is
          Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
          Slot_Object => View);
 
+      Add_Hook (View.Kernel, Preference_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "calltree.preferences_changed",
+                Watch => GObject (View));
+
       Free (Names);
 
       return Gtk_Widget (View.Tree);
@@ -1740,6 +1751,23 @@ package body Call_Graph_Views is
 
       return Commands.Success;
    end Execute;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      View  : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Set_Font_And_Colors
+           (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
+      end if;
+   end Preferences_Changed;
 
    ---------------------
    -- Register_Module --
