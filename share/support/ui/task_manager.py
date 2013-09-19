@@ -156,6 +156,46 @@ class Task_Manager(Module):
 
     def __init__(self):
         self.widget = None
+        GPS.Hook("before_exit_action_hook").add(self.on_exit)
+
+    def on_exit(self, hook):
+        """ Intercept the exit hook, and present a dialog if some tasks
+            are present that should block the exit.
+        """
+        blocking_tasks = [t for t in GPS.Task.list() if t.block_exit()]
+        if not blocking_tasks:
+            return True
+
+        d = Gtk.Dialog(
+            "Tasks are running",
+            flags=Gtk.DialogFlags.MODAL or Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            parent=GPS.MDI.current().pywidget().get_toplevel())
+
+        l = Gtk.Label(
+           "The following tasks are running, do you want to quit GPS?\n"
+           "Warning: Quitting will kill all running tasks")
+        l.set_alignment(0.0, 0.0)
+        d.get_content_area().pack_start(l, False, False, 10)
+
+        t = Task_Manager_Widget()
+        d.get_content_area().pack_start(t.box, True, True, 3)
+
+        quit_button = d.add_button("gtk-quit", Gtk.ResponseType.YES)
+        quit_button.grab_default()
+        cancel_button = d.add_button("gtk-cancel", Gtk.ResponseType.CANCEL)
+
+        d.set_default_size(400, 300)
+        d.show_all()
+        response = d.run()
+
+        d.get_content_area().remove(t.box)
+        d.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            return True
+
+        return False
+
 
     def setup(self):
         make_interactive(

@@ -23,11 +23,9 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
@@ -38,14 +36,12 @@ with Glib;                      use Glib;
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -220,85 +216,8 @@ package body Task_Manager.GUI is
    --  Remove the timeout that refreshes the GUI and clear the list of items
    --  that need to be refreshed.
 
-   function On_Exit_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
-   --  Called before GPS exits
-
    procedure Pop_State (Manager : access Task_Manager_Record'Class);
    --  Push and pop the "busy" state of the task manager
-
-   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
-   procedure Set_GUI
-     (Manager : Task_Manager_Access;
-      GUI     : Gtk_Widget);
-   --  Get and set the active graphical interface for Manager
-
-   ------------------
-   -- On_Exit_Hook --
-   ------------------
-
-   function On_Exit_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
-   is
-      Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
-      Dialog   : Gtk_Dialog;
-      Label    : Gtk_Label;
-      Button, Focus   : Gtk_Widget;
-      Response : Gtk_Response_Type;
-
-      pragma Unreferenced (Data, Focus);
-
-      Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
-   begin
-      if not Has_Running_Commands (Manager, Consider_Silent => False) then
-         return True;
-      end if;
-
-      Gtk_New
-        (Dialog,
-         Title  => -"Tasks are running",
-         Parent => Get_Current_Window (Kernel),
-         Flags  => Modal or Destroy_With_Parent);
-
-      Gtk_New
-        (Label, -"The following tasks are running, do you want to quit GPS?" &
-         ASCII.LF & (-"Warning: Quitting will kill all running tasks"));
-
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start
-        (Get_Content_Area (Dialog), Label, Expand => False, Padding => 10);
-
-      Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
-      Grab_Default (Button);
-      Button := Add_Button (Dialog, -"Don't Quit", Gtk_Response_Cancel);
-
-      Set_Default_Size (Dialog, 400, 300);
-      Show_All (Dialog);
-      Response := Run (Dialog);
-
-      case Response is
-         when Gtk_Response_Cancel =>
-            Destroy (Dialog);
-            Set_GUI (Manager, Previous_Interface);
-            return False;
-
-         when Gtk_Response_Yes =>
-            Destroy (Dialog);
-            Set_GUI (Manager, Previous_Interface);
-            return True;
-
-         when Gtk_Response_None | Gtk_Response_No =>
-            Set_GUI (Manager, Previous_Interface);
-            return False;
-
-         when others =>
-            Destroy (Dialog);
-            Set_GUI (Manager, Previous_Interface);
-            return False;
-      end case;
-   end On_Exit_Hook;
 
    -----------------------------
    -- On_Progress_Bar_Destroy --
@@ -907,24 +826,6 @@ package body Task_Manager.GUI is
    end Create;
 
    -------------
-   -- Get_GUI --
-   -------------
-
-   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget is
-   begin
-      return Gtk_Widget (Task_Manager_UI_Access (Manager).GUI);
-   end Get_GUI;
-
-   -------------
-   -- Set_GUI --
-   -------------
-
-   procedure Set_GUI (Manager : Task_Manager_Access; GUI : Gtk_Widget) is
-   begin
-      Task_Manager_UI_Access (Manager).GUI := Task_Manager_Interface (GUI);
-   end Set_GUI;
-
-   -------------
    -- Destroy --
    -------------
 
@@ -976,11 +877,6 @@ package body Task_Manager.GUI is
       Align   : Gtk_Alignment;
       Manager : Task_Manager_Access;
    begin
-      Add_Hook
-        (Kernel, Before_Exit_Action_Hook,
-         Wrapper (On_Exit_Hook'Access),
-         Name => "task_manager.on_exit");
-
       Register_Hook_Data_Type
         (Kernel, Task_Hook_Type,
          Args_Creator => From_Callback_Data_Task'Access);
