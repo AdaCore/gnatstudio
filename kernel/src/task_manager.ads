@@ -86,14 +86,6 @@ package Task_Manager is
      (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager
 
-   function Has_Running_Commands
-     (Manager         : Task_Manager_Access;
-      Consider_Silent : Boolean) return Boolean;
-   --  Return True if there is one or more command that is Running or Paused.
-   --  If Consider_Silent is True, then all tasks will be considered,
-   --  otherwise tasks that are considered as silent (ie, that have no
-   --  associated progress bar) are not taken into account.
-
    type Command_Array is array (Integer range <>) of Command_Access;
 
    function Get_Scheduled_Commands

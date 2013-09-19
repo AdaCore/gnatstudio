@@ -100,7 +100,9 @@ package body Task_Manager.Shell is
       elsif Command = "block_exit" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
          Id := Get_Data (Task_Inst, Task_Class);
-         Set_Return_Value (Data, Manager.Queues (Id).Block_Exit);
+         Set_Return_Value
+           (Data, Manager.Queues (Id).Block_Exit
+            and then Manager.Queues (Id).Show_Bar);
 
       elsif Command = "visible" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);

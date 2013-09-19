@@ -675,31 +675,6 @@ package body Task_Manager is
       end loop;
    end Interrupt_All_Tasks;
 
-   --------------------------
-   -- Has_Running_Commands --
-   --------------------------
-
-   function Has_Running_Commands
-     (Manager         : Task_Manager_Access;
-      Consider_Silent : Boolean) return Boolean is
-   begin
-      if Manager.Queues = null then
-         return False;
-      end if;
-
-      for J in Manager.Queues'Range loop
-         if Manager.Queues (J).Status in Running .. Paused then
-            if Manager.Queues (J).Block_Exit
-              and then (Consider_Silent or else Manager.Queues (J).Show_Bar)
-            then
-               return True;
-            end if;
-         end if;
-      end loop;
-
-      return False;
-   end Has_Running_Commands;
-
    ----------------------------
    -- Get_Scheduled_Commands --
    ----------------------------
