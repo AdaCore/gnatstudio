@@ -916,17 +916,16 @@ The contents of the calltree is not restored the next time GPS is restarted,
 because its contents might be misleading if the sources have changed in-between,
 and GPS would be wasting time loading the information again.
 
-Right-clicking on a line in the :guilabel:`Calltree` brings up a contextual
-menu with the following entries:
+The local toolbar provides the following buttons:
 
-:menuselection:`Collapse all`
-  Collapse all the entities in the Callgraph View.
+* :guilabel:`Clear`
+  Remove all entries from the Callgraph View.
 
-:menuselection:`Remove entity`
+* :guilabel:`Remove entity`
   Remove the selected entity from the Callgraph View.
 
-:menuselection:`Clear Call Trees`
-  Remove all entries from the Callgraph View.
+* :guilabel:`Collapse all`
+  Collapse all the entities in the Callgraph View.
 
 .. _Call_Graph:
 
