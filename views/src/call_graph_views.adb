@@ -36,15 +36,16 @@ with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Paned;                   use Gtk.Paned;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;     use Gtk.Separator_Menu_Item;
+with Gtk.Separator_Tool_Item;     use Gtk.Separator_Tool_Item;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.List_Store;              use Gtk.List_Store;
+with Gtk.Stock;                   use Gtk.Stock;
+with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -55,6 +56,7 @@ with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
@@ -63,6 +65,7 @@ with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
+with GPS.Stock_Icons;             use GPS.Stock_Icons;
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
@@ -100,6 +103,19 @@ package body Call_Graph_Views is
 
    Computing_Label : constant String := "computing...";
    --  Label used while computing the ancestors call graph
+
+   Command_Clear_Calltree_Name : constant String := "Calltree clear";
+   Command_Clear_Calltree_Tip  : constant String :=
+     "Clear the contents of the call tree";
+
+   Command_Remove_Calltree_Name : constant String :=
+     "Calltree remove selection";
+   Command_Remove_Calltree_Tip  : constant String :=
+     "Remove the selected line from the calltree";
+
+   Command_Collapse_All_Name : constant String := "Calltree collapse all";
+   Command_Collapse_All_Tip  : constant String :=
+     "Close all nodes in the call tree";
 
    -----------------
    -- Local types --
@@ -168,7 +184,9 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
      (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
-   --  Create a new view
+   overriding procedure Create_Toolbar
+     (View    : not null access Callgraph_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    --  Limit to the sides of the MDI, because it can open editors and they
    --  would be displayed on top of the callgraph.
@@ -179,7 +197,9 @@ package body Call_Graph_Views is
       Group              => GPS.Kernel.MDI.Group_Consoles,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Formal_View_Record => Callgraph_View_Record,
+      Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only);
+   use Generic_View;
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
@@ -193,6 +213,22 @@ package body Call_Graph_Views is
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Search for th entities calling the current entity in Context
+
+   type Calltree_Clear_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Calltree_Clear_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Calltree_Remove_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Calltree_Remove_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Calltree_Collapse_All_Command
+      is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Calltree_Collapse_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Ancestors_User_Data is new Commands_User_Data_Record with record
       View           : Callgraph_View_Access;
@@ -274,15 +310,6 @@ package body Call_Graph_Views is
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return View_Type;
    pragma Inline (Get_View_Type);
    --  Returns the View_Type for the entity pointer to by Iter
-
-   procedure Remove_Entity (Object : access Gtk_Widget_Record'Class);
-   --  Remove the selected entity in the Location_View
-
-   procedure Clear_View (Object : access Gtk_Widget_Record'Class);
-   --  Remove all entries from the call trees view
-
-   procedure Collapse_All (Object : access Gtk_Widget_Record'Class);
-   --  Collapse all call trees entries
 
    -------------------
    -- Get_View_Type --
@@ -875,49 +902,100 @@ package body Call_Graph_Views is
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
 
-   -------------------
-   -- Remove_Entity --
-   -------------------
+   --------------------
+   -- Create_Toolbar --
+   --------------------
 
-   procedure Remove_Entity (Object : access Gtk_Widget_Record'Class) is
-      View  : constant Callgraph_View_Access :=
-                Callgraph_View_Access (Object);
+   overriding procedure Create_Toolbar
+     (View    : not null access Callgraph_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      Sep : Gtk_Separator_Tool_Item;
+   begin
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Clear,
+         Action   => Command_Clear_Calltree_Name,
+         Tooltip  => Command_Clear_Calltree_Tip);
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Remove,
+         Action   => Command_Remove_Calltree_Name,
+         Tooltip  => Command_Remove_Calltree_Tip);
+
+      Gtk_New (Sep);
+      Toolbar.Insert (Sep);
+
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => GPS_Collapse_All,
+         Action   => Command_Collapse_All_Name,
+         Tooltip  => Command_Collapse_All_Tip);
+   end Create_Toolbar;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Calltree_Clear_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Get_Kernel (Context.Context));
+      Model : Gtk_Tree_Store;
+   begin
+      if View /= null then
+         Model := -Get_Model (View.Tree);
+         Model.Clear;
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Calltree_Collapse_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         Gtk.Tree_View.Collapse_All (View.Tree);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Calltree_Remove_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Callgraph_View_Access :=
+        Generic_View.Retrieve_View (Get_Kernel (Context.Context));
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
-
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Remove (Gtk_Tree_Store'(-Model), Iter);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Remove_Entity;
-
-   ----------------
-   -- Clear_View --
-   ----------------
-
-   procedure Clear_View (Object : access Gtk_Widget_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-                -Get_Model (Callgraph_View_Access (Object).Tree);
-   begin
-      Clear (Model);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Clear_View;
-
-   ------------------
-   -- Collapse_All --
-   ------------------
-
-   procedure Collapse_All (Object : access Gtk_Widget_Record'Class) is
-   begin
-      Gtk.Tree_View.Collapse_All (Callgraph_View_Access (Object).Tree);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Collapse_All;
+      if View /= null then
+         Get_Selected (Get_Selection (View.Tree), Model, Iter);
+         if Iter /= Null_Iter then
+            Remove (Gtk_Tree_Store'(-Model), Iter);
+         end if;
+      end if;
+      return Commands.Success;
+   end Execute;
 
    --------------------------
    -- View_Context_Factory --
@@ -931,14 +1009,11 @@ package body Call_Graph_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Kernel);
+      pragma Unreferenced (Event_Widget, Kernel, Menu);
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (Object);
-      Model  : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Iter   : Gtk_Tree_Iter;
       Entity : General_Entity;
-      Mitem  : Gtk_Menu_Item;
-      Sep    : Gtk_Separator_Menu_Item;
 
    begin
       Iter := Find_Iter_For_Event (V.Tree, Event);
@@ -952,27 +1027,6 @@ package body Call_Graph_Views is
             Set_File_Information   (Context, Files  => Empty_File_Array);
             Set_Entity_Information (Context, Entity => Entity);
          end if;
-
-         Gtk_New (Mitem, -"Collapse all");
-         Append (Menu, Mitem);
-         Widget_Callback.Object_Connect
-           (Mitem, Gtk.Menu_Item.Signal_Activate, Collapse_All'Access, V);
-
-         if Iter_Depth (Model, Iter) = 0 then
-            Gtk_New (Mitem, -"Remove entity");
-            Append (Menu, Mitem);
-            Widget_Callback.Object_Connect
-              (Mitem, Gtk.Menu_Item.Signal_Activate, Remove_Entity'Access, V);
-         end if;
-
-         Gtk_New (Mitem, -"Clear Call Trees");
-         Append (Menu, Mitem);
-         Widget_Callback.Object_Connect
-           (Mitem, Gtk.Menu_Item.Signal_Activate, Clear_View'Access, V);
-
-         Gtk_New (Sep);
-         Append (Menu, Sep);
-
       else
          Unselect_All (Get_Selection (V.Tree));
       end if;
@@ -1723,6 +1777,23 @@ package body Call_Graph_Views is
          Ref_Item   => "Entity calls",
          Add_Before => False);
 
+      Command := new Calltree_Clear_Command;
+      Register_Action
+        (Kernel, Command_Clear_Calltree_Name,
+         Command, Command_Clear_Calltree_Tip,
+         null, -"Call trees");
+
+      Command := new Calltree_Remove_Command;
+      Register_Action
+        (Kernel, Command_Remove_Calltree_Name,
+         Command, Command_Remove_Calltree_Tip,
+         null, -"Call trees");
+
+      Command := new Calltree_Collapse_All_Command;
+      Register_Action
+        (Kernel, Command_Collapse_All_Name,
+         Command, Command_Collapse_All_Tip,
+         null, -"Call trees");
    end Register_Module;
 
 end Call_Graph_Views;
