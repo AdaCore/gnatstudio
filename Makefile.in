@@ -49,6 +49,7 @@ ifeq ($(OS),Windows_NT)
 		share/plug-ins/_subversion_ \
 		> share/plug-ins/subversion_native_windows.py
 endif
+	$(RM) -f $(sharedir)/gps/GPS_old
 	$(RM) $(sharedir)/gps/library/*.py
 	$(RM) $(sharedir)/gps/library/*.xml
 	$(RM) $(sharedir)/gps/plug-ins/*.py
