@@ -202,8 +202,8 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
    tmark  = top.create_mark ("top")
    bmark  = bottom.create_mark ("bottom")
    if top == bottom:
-      GPS.MDI.dialog ("You must first select the intended text")
-      return
+      GPS.MDI.dialog ("You must first select the intended text (at least two lines)")
+      return False
    try:
       buffer.start_undo_group ()
       buffer.indent (top, bottom)
@@ -216,6 +216,7 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
       buffer.select (top, bottom)
    finally:
       top.buffer().finish_undo_group ()
+   return True
 
 def get_comas(l):
    n=0
@@ -262,8 +263,8 @@ def align_comas ():
    bmark  = bottom.create_mark ("bottom")
 
    if top == bottom:
-      GPS.MDI.dialog ("You must first select the intended text")
-      return
+      GPS.MDI.dialog ("You must first select the intended text (at least two lines)")
+      return False
 
    if top.beginning_of_line() != top:
       top = top.beginning_of_line()
@@ -309,6 +310,8 @@ def align_comas ():
       GPS.Console ().write (str (sys.exc_info ()) + "\n")
    finally:
       top.buffer().finish_undo_group()
+
+   return True
 
 @interactive ("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
               name="Align reserved is")
@@ -414,7 +417,7 @@ def align_record_rep_clause():
              name="Align end of line comments")
 def align_end_of_line_comments():
     """Align end of line comments"""
-    buffer_align_on(sep=" --\s*", replace_with=" --  ")
-    buffer_align_on(sep=" //\s*", replace_with=" // ")
-    buffer_align_on(sep=" #\s*", replace_with=" # ")
+    if buffer_align_on(sep=" --\s*", replace_with=" --  "):
+        buffer_align_on(sep=" //\s*", replace_with=" // ")
+        buffer_align_on(sep=" #\s*", replace_with=" # ")
 
