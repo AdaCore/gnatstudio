@@ -18,7 +18,9 @@
 --  This package handles the editor status bar
 
 with Ada.Unchecked_Deallocation;
-with Gtk.Box; use Gtk.Box;
+
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Event_Box; use Gtk.Event_Box;
 
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View; use Src_Editor_View;
@@ -29,8 +31,8 @@ with Gtk.Widget;
 
 package Src_Editor_Status_Bar is
 
-   type Source_Editor_Status_Bar_Record is new Gtk.Box.Gtk_Hbox_Record
-     with private;
+   type Source_Editor_Status_Bar_Record is
+     new Gtk.Event_Box.Gtk_Event_Box_Record with private;
    type Source_Editor_Status_Bar is access all
      Source_Editor_Status_Bar_Record'Class;
 
@@ -68,8 +70,10 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Frames_Array, Frames_Array_Access);
 
-   type Source_Editor_Status_Bar_Record is new Gtk.Box.Gtk_Hbox_Record
+   type Source_Editor_Status_Bar_Record is
+     new Gtk.Event_Box.Gtk_Event_Box_Record
    with record
+      HBox          : Gtk_Hbox;
       View          : Src_Editor_View.Source_View;
       Buffer        : Src_Editor_Buffer.Source_Buffer;
 

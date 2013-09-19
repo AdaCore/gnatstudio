@@ -57,6 +57,11 @@
    background: shade(@theme_bg_color, 0.9);
    padding: 0px;
 }
+
+.gps-editor-status-bar {
+   background: shade(@theme_base_color, 0.93);
+}
+
 .gps-local-toolbar * {
    margin: 0px;
    padding: 0px;

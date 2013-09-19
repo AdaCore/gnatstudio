@@ -34,7 +34,6 @@ with Glib.Values;
 with Glib; use Glib;
 with Gtk.Arguments; use Gtk.Arguments;
 with Gtk.Enums; use Gtk.Enums;
-with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Image; use Gtk.Image;
 with Gtk.Label; use Gtk.Label;
@@ -119,7 +118,7 @@ package body Src_Editor_Status_Bar is
    begin
       if Bar.Buffer_Info_Frames /= null then
          for J in Bar.Buffer_Info_Frames'Range loop
-            Remove (Bar, Bar.Buffer_Info_Frames (J).Label);
+            Remove (Bar.HBox, Bar.Buffer_Info_Frames (J).Label);
          end loop;
 
          Unchecked_Free (Bar.Buffer_Info_Frames);
@@ -175,7 +174,7 @@ package body Src_Editor_Status_Bar is
          end if;
 
          Pack_End
-           (Bar,
+           (Bar.HBox,
             Bar.Buffer_Info_Frames (J).Label,
             Expand  => False,
             Fill    => True,
@@ -479,7 +478,9 @@ package body Src_Editor_Status_Bar is
       Event_Box      : Gtk_Event_Box;
       Separator      : Gtk_Vseparator;
    begin
-      Gtk.Box.Initialize_Hbox (Bar);
+      Gtk.Event_Box.Initialize (Bar);
+      Gtk_New_Hbox (Bar.HBox);
+      Bar.Add (Bar.HBox);
       Bar.View := View;
       Bar.Buffer := Buffer;
       Bar.Box := Box;
@@ -491,33 +492,35 @@ package body Src_Editor_Status_Bar is
       Gtk_New (Bar.Function_Label);
       Bar.Function_Label.Set_Ellipsize (Ellipsize_Start);
       Bar.Function_Label.Set_Alignment (0.0, 0.5);
-      Bar.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
+      Bar.HBox.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Bar.Function_Label,
          Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
 
       --  Line:Column number area...
       Gtk_New (Event_Box);
-      Bar.Pack_Start (Event_Box, Expand => False, Fill => True, Padding => 5);
+      Bar.HBox.Pack_Start
+        (Event_Box, Expand => False, Fill => True, Padding => 5);
       Gtk_New (Bar.Cursor_Loc_Label, "1:1");
       Event_Box.Add (Bar.Cursor_Loc_Label);
       Object_Return_Callback.Object_Connect
         (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Bar);
 
       Gtk_New_Vseparator (Separator);
-      Pack_Start (Bar, Separator, Expand => False, Fill => False);
+      Pack_Start (Bar.HBox, Separator, Expand => False, Fill => False);
 
       --  Modified file area...
       if Show_Modified_Unmodified_In_Status_Bar then
          Gtk_New (Bar.Modified_Label);
-         Bar.Pack_Start (Bar.Modified_Label, Expand => False, Fill => False);
+         Bar.HBox.Pack_Start
+           (Bar.Modified_Label, Expand => False, Fill => False);
       end if;
 
       --  Read only file area...
       Gtk_New (Bar.Read_Only_Label);
       Gtk_New (Event_Box);
       Event_Box.Add (Bar.Read_Only_Label);
-      Bar.Pack_Start (Event_Box, Expand => False, Fill => False);
+      Bar.HBox.Pack_Start (Event_Box, Expand => False, Fill => False);
       Object_Return_Callback.Object_Connect
         (Event_Box, Signal_Button_Press_Event,
          On_Read_Only_Pressed'Access, Bar);
@@ -543,6 +546,8 @@ package body Src_Editor_Status_Bar is
          Signal_Destroy,
          On_Bar_Destroy'Access,
          User_Data => Source_Editor_Status_Bar (Bar));
+
+      Get_Style_Context (Bar).Add_Class ("gps-editor-status-bar");
    end Initialize;
 
 end Src_Editor_Status_Bar;
