@@ -2338,12 +2338,20 @@ package body GPS.Kernel.Modules.UI is
       Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Stock_Id : String;
       Action   : String;
-      Tooltip  : String)
+      Tooltip  : String := "")
    is
       Button : Action_Tool_Button;
+      A : constant Action_Record_Access :=
+        Lookup_Action (Kernel, Action);
    begin
       Gtk_New (Button, Kernel, Stock_Id, Action);
-      Button.Set_Tooltip_Markup (Tooltip);
+
+      if Tooltip /= "" then
+         Button.Set_Tooltip_Markup (Tooltip);
+      elsif A /= null then
+         Button.Set_Tooltip_Markup (A.Description.all);
+      end if;
+
       Toolbar.Insert (Button);
    end Add_Button;
 

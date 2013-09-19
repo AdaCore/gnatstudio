@@ -58,6 +58,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toggle_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
@@ -1081,6 +1082,12 @@ package body Project_Explorers is
         (Button, Gtk.Tool_Button.Signal_Clicked,
          On_Reload_Project'Access, View);
       Toolbar.Insert (Button);
+
+      Add_Button
+        (Kernel   => View.Kernel,
+         Toolbar  => Toolbar,
+         Stock_Id => Stock_Edit,
+         Action   => "open Project Properties");
    end Create_Toolbar;
 
    -----------------------

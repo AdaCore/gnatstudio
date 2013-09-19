@@ -461,7 +461,7 @@ package GPS.Kernel.Modules.UI is
       Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Stock_Id : String;
       Action   : String;
-      Tooltip  : String);
+      Tooltip  : String := "");
    --  Insert a button in the local toolbar, associated with the given named
    --  action. The action will be lookuped up upon execution, so it is valid
    --  even if it has not been registered yet.

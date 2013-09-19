@@ -239,10 +239,11 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Return the current context for the contextual menu
 
-   procedure On_Project_Properties
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Callback for the Project->Edit Project Properties menu
+   type Edit_Project_Properties_Command
+      is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_Project_Properties_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure Save_All_Projects
      (Widget : access GObject_Record'Class;
@@ -796,30 +797,27 @@ package body Project_Viewers is
       Unchecked_Free (Files);
    end Show_Project;
 
-   ---------------------------
-   -- On_Project_Properties --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Properties
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Edit_Project_Properties_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
       Project : Project_Type;
-
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      if Has_Project_Information (Context) then
-         Project := Project_Information (Context);
+      if Has_Project_Information (Context.Context) then
+         Project := Project_Information (Context.Context);
       else
          Project := Get_Project (Kernel);
       end if;
 
       Edit_Properties (Project, Kernel);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Project_Properties;
+      return Commands.Success;
+   end Execute;
 
    -----------------------
    -- Save_All_Projects --
@@ -1657,9 +1655,13 @@ package body Project_Viewers is
                      Creation_Wizard.Selector.On_New_Project'Access,
                      Ref_Item => -"Open From Host...", Add_Before => False);
 
+      Command := new Edit_Project_Properties_Command;
+      Register_Action
+        (Kernel, "open Project Properties", Command,
+         "Open the project properties editor", null, -"Views");
       Register_Menu
         (Kernel, Project, -"Edit Project _Properties", "",
-         On_Project_Properties'Access, Ref_Item => -"Recent",
+         null, Command => Command, Ref_Item => -"Recent",
          Add_Before => False);
 
       Register_Menu
