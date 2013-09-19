@@ -18,6 +18,7 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
+with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off);
@@ -3917,6 +3918,7 @@ package body Src_Editor_Buffer is
       S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
       Length      : Natural;
       Has_Errors  : Boolean := False;
+      Buttons     : Message_Dialog_Buttons;
 
       procedure New_Line;
       --  Append a new line on U_Buffer
@@ -4053,75 +4055,87 @@ package body Src_Editor_Buffer is
       --  If we observed UTF-8 conversion errors, warn the user
 
       if Has_Errors and then not Internal then
-         declare
-            Ignore : Message_Dialog_Buttons;
-            pragma Unreferenced (Ignore);
-         begin
-            Ignore := Message_Dialog
-              (Msg            =>
-               -("This buffer contains UTF-8 characters which"
-                 & " could not be translated to ") & Buffer.Charset.all
-               & "." & ASCII.LF & ASCII.LF &
-               (-("Some data may be missing in the saved file: check the"
-                  & " Locations View."))
-               & ASCII.LF & ASCII.LF &
-               (-("You may change the character set of this file through"
-                  & " the ""Properties..."" contextual menu.")),
-               Dialog_Type    => Warning,
-               Buttons        => Button_OK,
-               Default_Button => Button_OK,
-               Title          => -"Warning: Conversion Incomplete",
-               Justification  => Justify_Left,
-               Parent         => Get_Current_Window (Buffer.Kernel));
-         end;
+         Buttons := Message_Dialog
+           (Msg            =>
+              -("This buffer contains UTF-8 characters which"
+              & " could not be translated to ") & Buffer.Charset.all
+            & "." & ASCII.LF & ASCII.LF &
+            (-("Some data may be missing in the saved file: check the"
+               & " Locations View."))
+            & ASCII.LF & ASCII.LF &
+            (-("You may change the character set of this file through"
+               & " the ""Properties..."" contextual menu.")),
+            Dialog_Type    => Warning,
+            Buttons        => Button_OK,
+            Default_Button => Button_OK,
+            Title          => -"Warning: Conversion Incomplete",
+            Justification  => Justify_Left,
+            Parent         => Get_Current_Window (Buffer.Kernel));
       end if;
 
       --  The file could not be opened, check whether it is read-only
 
       if Is_Regular_File (Filename) and then not Is_Writable (Filename) then
-         declare
-            Buttons : Message_Dialog_Buttons;
-         begin
-            if not Force then
+         if not Force then
+            Buttons := Message_Dialog
+              (Msg            => -"The file "
+               & Display_Base_Name (Filename) & ASCII.LF
+               & (-"is read-only. Do you want to overwrite it ?"),
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_No,
+               Title          => -"File is read-only",
+               Justification  => Justify_Left,
+               Parent         => Get_Current_Window (Buffer.Kernel));
+         end if;
+
+         if Force or else Buttons = Button_Yes then
+            Force_Write := True;
+            Set_Writable (Filename, True);
+         end if;
+      end if;
+
+      begin
+         FD := Write_File (Filename);
+
+         if FD = Invalid_File then
+            Buffer.Kernel.Insert
+              (-"Could not open file for writing: "
+               & Display_Full_Name (Filename),
+               Mode => GPS.Kernel.Error);
+            Success := False;
+            return;
+         end if;
+
+         Get_String (U_Buffer, S, Length);
+
+         if S /= null then
+            Write (FD, S (1 .. Length));
+         end if;
+
+         U_Buffer := Null_Unbounded_String;
+
+         Close (FD);
+
+      exception
+         when E : Ada.Text_IO.Use_Error =>
+            Trace (Me, E);
+
+            if not Internal then
                Buttons := Message_Dialog
                  (Msg            => -"The file "
                   & Display_Base_Name (Filename) & ASCII.LF
-                  & (-"is read-only. Do you want to overwrite it ?"),
-                  Dialog_Type    => Confirmation,
-                  Buttons        => Button_Yes or Button_No,
-                  Default_Button => Button_No,
-                  Title          => -"File is read-only",
+                  & " could not be saved. This might be a transient disk"
+                  & " problem.",
+                  Dialog_Type    => Warning,
+                  Buttons        => Button_OK,
+                  Default_Button => Button_OK,
+                  Title          => -"File could not be saved",
                   Justification  => Justify_Left,
                   Parent         => Get_Current_Window (Buffer.Kernel));
             end if;
-
-            if Force or else Buttons = Button_Yes then
-               Force_Write := True;
-               Set_Writable (Filename, True);
-            end if;
-         end;
-      end if;
-
-      FD := Write_File (Filename);
-
-      if FD = Invalid_File then
-         Buffer.Kernel.Insert
-           (-"Could not open file for writing: "
-            & Display_Full_Name (Filename),
-            Mode => GPS.Kernel.Error);
-         Success := False;
-         return;
-      end if;
-
-      Get_String (U_Buffer, S, Length);
-
-      if S /= null then
-         Write (FD, S (1 .. Length));
-      end if;
-
-      U_Buffer := Null_Unbounded_String;
-
-      Close (FD);
+            return;
+      end;
 
       --  If the file could be saved, emit the corresponding signal.
       --  Emit the signal only if we are really saving to the buffer's file,

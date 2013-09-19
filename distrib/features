@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-M918-040 GPS: safer saving of files (2013-09-19)
+
+  Saving files is now done via a temporary file which is later renamed.
+  This is safer, and protects against temporary disk issues that would happen
+  just during the actual saving.
+
 NF-60-M916-026 GPS: support for retina displays in browsers (2013-09-17)
 
   The display in the various browsers (call graph, entity, debugger,...)
