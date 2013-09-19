@@ -97,6 +97,11 @@ package body Task_Manager.Shell is
          Id := Get_Data (Task_Inst, Task_Class);
          Set_Return_Value (Data, Manager.Queues (Id).Status'Img);
 
+      elsif Command = "block_exit" then
+         Task_Inst := Nth_Arg (Data, 1, Task_Class);
+         Id := Get_Data (Task_Inst, Task_Class);
+         Set_Return_Value (Data, Manager.Queues (Id).Block_Exit);
+
       elsif Command = "visible" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
          Id := Get_Data (Task_Inst, Task_Class);
@@ -156,6 +161,8 @@ package body Task_Manager.Shell is
         (Kernel, "resume", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "name", 0, 0, Task_Command_Handler'Access, Task_Class);
+      Register_Command
+        (Kernel, "block_exit", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "status", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Property

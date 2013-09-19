@@ -1597,6 +1597,8 @@ Classes
 
    .. automethod:: GPS.Task.interrupt
 
+   .. automethod:: GPS.Task.block_exit
+
    .. automethod:: GPS.Task.list
 
    .. automethod:: GPS.Task.name

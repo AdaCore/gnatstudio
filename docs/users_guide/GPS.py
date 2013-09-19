@@ -9086,6 +9086,14 @@ class Task(object):
         """Interrupt the task"""
         pass  # implemented in Ada
 
+    def block_exit(self):
+        """
+        Return True iff this task should block the exit of GPS
+
+        :return: A boolean
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def list():
         """
