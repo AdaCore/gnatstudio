@@ -4110,9 +4110,8 @@ However, this will not show the documentation in the `Help->Contents` menu,
 which you also might want to do.
 
 To have both results, you should use the `<documentation_file>` tag in an XML
-file. These tags are generally found in the :file:`gps_index.xml` files, as
-documented in :ref:`Adding_New_Help_Files`, but you can in fact add them in any
-of your customization files.
+file. These tags are generally found in a :file:`gps_index.xml` files but you
+can in fact add them in any of your customization files.
 
 The documentation files you display can contain the usual type of html links.
 In addition, GPS will treat specially links starting with '%', and consider
@@ -4170,6 +4169,7 @@ The `<documentation_file>` accepts a number of child nodes:
 
   *after (optional, default="")*
     The name of the menu after which the new entry should be inserted.
+
 
 The following example shows how to create a new entry "item" in the Help
 menu, that will display :file:`file.html`. The latter is searched in the

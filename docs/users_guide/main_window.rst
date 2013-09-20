@@ -178,7 +178,7 @@ The menu bar gives access to the following items:
 
 * :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
 
-* :menuselection:`Help` (:ref:`The_Help_Menu`)
+* :menuselection:`Help`
 
 .. index:: tool bar
 .. _The_Tool_Bar:

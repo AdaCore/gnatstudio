@@ -81,7 +81,7 @@ settings in GPS:
 *GPS_DOC_PATH*
   .. index:: GPS_DOC_PATH
 
-  Set the search path for the documentation. :ref:`Adding_New_Help_Files`.
+  Set the search path for the documentation. :ref:`Adding_Documentation`.
 
 *GPS_CUSTOM_PATH*
   .. index:: GPS_CUSTOM_PATH
