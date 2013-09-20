@@ -473,6 +473,101 @@ closed anyway, and in this case it can be reopened with the
 
 
 
+.. index:: windows; locations
+.. _The_Locations_View:
+
+The :guilabel:`Locations` view
+------------------------------
+
+.. image:: locations-view.png
+
+The :guilabel:`Location` window is used whenever GPS needs to display a list of
+locations in the source files (typically, when performing a global search,
+or displaying compilation results).
+
+The :guilabel:`Locations` shows a hierarchy of categories, which contain files,
+which contain messages at specific locations. The category describes the type
+of messages (search results, build results,...).  Clicking on a location item
+will bring up a file editor at the requested place.
+
+Placing the mouse over an item automatically pop up a tooltip window with full
+text of the message if this text can't be completely shown in the window.
+
+In general, each message in this window is associated with a special
+full line highlighting in the corresponding source editor, as well as a mark
+on the left side of editors to visually navigate between these locations.
+
+The :guilabel:`Locations` view provides a local toolbar with the following
+buttons:
+
+* :guilabel:`Clear` will remove all entries from the window. Depending on
+  your settings, this might also close the window.
+
+* :guilabel:`Remove` will remove the currently selected category, file or
+  message. This of course removes the corresponding highlighting in the
+  source editor.
+
+* :guilabel:`Save` can be used to save the contents of the window to a
+  text file, for later reference. This text file can not be imported by
+  GPS into the locations view later. If you want to reload the contents
+  of the locations (in the case of build errors, for instance), it is
+  better to save and load the contents of the :guilabel:`Messages`
+  window.
+
+* :guilabel:`Expand All` and :guilabel:`Collapse All` can be used
+  to quickly show or hide all messages in this window.
+
+* a filter that can be used to show or hide some of the messages.  Filtering is
+  done on the text of the message itself (either as a text or as a regular
+  expression). It can also be reversed, so that for instance typing `warning`
+  in the filter field and reversing the filter will only show error messages.
+  :index:`build; hiding warning messages`
+
+The local settings menu contains the following entries:
+
+* :guilabel:`Sort by subcategory`
+  Toggle the sorting of the entries by sub-categories. This is useful,
+  for example, for separating the warnings from the errors in the build
+  results. The error messages will appear first. The default is to sort
+  the message by their location.
+
+* :guilabel:`Jump to first location`: Every time a new category is created, as
+  a result of a compilation or a search operation for example, the first entry
+  of that category is automatically selected, and the corresponding editor
+  opened.
+
+* :guilabel:`Warp around on next/previous` controls the behavior of the
+  guilabel:`Previous tag` and :guilabel:`Next tag` menus (see below).
+
+* :guilabel:`Auto close locations` will automatically close this window when
+  it becomes empty.
+
+* :guilabel:`Save locations on exit` controls whether GPS should save and
+  restore the contents of this window between sessions. The loaded contents
+  might not apply the next time, because for instance the source files have
+  changed, or build errors have been fixed, so it might be an inconvenience
+  to automatically reload the messages.
+
+
+.. index:: menu; navigate --> previous tag
+.. index:: menu; navigate --> next tag
+
+To navigate through the locations with the keyboard, GPS provides two menus:
+:menuselection:`Navigate-->Previous Tag` and :menuselection:`Navigate-->Next
+Tag`. Depending on your settings, they might wrap around after reaching the
+first or last message.
+
+It is also possible to bind key shortcuts to these menus via the
+:menuselection:`Edit-->Key Shortcuts` menu.
+
+.. index:: codefix
+.. index:: build; auto fix errors
+
+In some cases, a wrench icon will be visible on the left of a compilation
+message. See :ref:`Code_Fixing` for more information on how to take advantage
+of this icon.
+
+
 .. index:: project view
 .. index:: windows; project view
 
@@ -1041,124 +1136,73 @@ to act on the bookmarks:
 * :guilabel:`Remove` is used to delete the selected bookmark.
 
 
+.. index:: windows; python console
+.. index:: windows; shell console
+.. index:: python; console
 .. _The_Shell_and_Python_Windows:
 
-The Shell and Python Windows
-============================
+The :guilabel:`Shell` and :guilabel:`Python` Windows
+----------------------------------------------------
 
-.. index:: python window
-.. index:: shell
-.. index:: shell window
-.. index:: interactive command
-.. index:: command
+.. image:: shell-window.png
+.. image:: python-window.png
 
 These windows give access to the various scripting languages supported by GPS,
-and allow you to type commands such as editing a file or compiling without
-using the menu items or the mouse.
+and allow you to type interactive commands such as editing a file or compiling
+without using the menu items or the mouse.
 
-An OS shell window is now also available in GPS, providing a simple access to
-the underlying OS shell as defined by the `SHELL` or `COMSPEC` environment
-variables.
+.. index:: menu; tools --> consoles --> GPS Shell
 
-To show the shell consoles, select the menu `Tools->Consoles`.
+The menu :menuselection:`Tools-->Consoles-->GPS Shell` can be used to open the
+shell console. The GPS shell is a custom language that was mostly used when
+GPS did not have python support, and is obsolete at this point.
+
+.. index:: menu; tools --> consoles --> Python
+
+The menu :menuselection:`Tools-->Consoles-->Python` opens the python
+console. Python is the preferred language to customize your GPS (and many
+more details will be provided in later sections of this documentation).
+The console is mostly useful for testing interactive commands before you
+use them in your own scripts.
 
 See :ref:`Scripting_GPS` for more information on using scripting languages
 within GPS.
 
-.. index:: screen shot
-.. index:: key
-.. image:: shell-window.jpg
-
+In both these consoles, GPS provides a history of previously typed commands.
 You can use the :kbd:`up` and :kbd:`down` keys to navigate through the history
 of commands.
 
-.. _The_Locations_View:
 
-The Locations View
-==================
+.. index:: windows; os shell
+.. index:: bash
+.. index:: vi
+.. index:: plug-ins; shell.py
 
-.. index:: location
-.. index:: locations view
-.. index:: search
-.. index:: compilation
-.. index:: build
+The OS shell window
+-------------------
 
-The Location Tree is filled whenever GPS needs to display a list of locations
-in the source files (typically, when performing a global search, compilation
-results, and so on).
+.. image:: os_shell-window.png
+.. index:: menu; tools --> consoles --> OS Shell
 
-.. index:: screen shot
-.. index:: category
-.. index:: file
-.. image:: locations-view.jpg
+An OS shell window is also available in GPS, providing a simple access to the
+underlying OS shell as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
+environment variables.
 
-The Locations View shows a hierarchy of categories, which contain files, which
-contain locations. Clicking on a location item will bring up a file editor at
-the requested place. Right-clicking on file or category items brings up a
-contextual menu allowing you to remove the corresponding node from the view.
-Placing the mouse over an item automatically pop up a tooltip window with full
-text of the item if this text can't be completely shown in the window.
+This console is opened via the :menuselection:`Tools->Consoles->OS Shell`
+menu. This menu is available only if the plug-in :file:`shell.py` was
+loaded in GPS (which is the default).
 
-Every time a new category is created, as a result of a compilation or a search
-operation for example, the first entry of that category is automatically
-selected, and the corresponding editor opened. This behavior can be controlled
-through a preference `Jump To First Location`.
+This console behaves like the standard shell on your system, including
+support for ANSI sequences (and thus color output). For instance, it has been
+used to run :command:`vi` within GPS.
 
-Closing the Locations view will remove from the editors locations that are also
-visible in the Locations view.  If the Locations View is present when exiting
-GPS and the desktop is saved, the locations will be saved as part of the
-desktop for the current project, and will be loaded the next time GPS is
-started on the same project.
+Check the documentation of that plug-in, which lists a few settings that
+might be useful.
 
-.. index:: key
-.. index:: menu
 
-To navigate through the next and previous location (also called `Tag`), you can
-use the menu items `Navigate->Previous Tag` and `Navigate->Next Tag`, or the
-corresponding key bindings.
 
-Left-clicking on a line in the Location Tree brings up a contextual menu with
-the following entries:
 
-*Filter panel*
-  Controls availability of the filter panel at the bottom of the window.
 
-*Sort by subcategory*
-  Toggle the sorting of the entries by sub-categories. This is useful,
-  for example, for separating the warnings from the errors in the build
-  results.
-
-*Expand category*
-  Expand all the files in the current categories.
-
-*Collapse all*
-  Collapse all the categories in the Locations View
-
-*Remove category/file/message*
-  Remove the selected category, file or message from the Locations View.
-  Selected message can be removed using `Locations view->Remove message`
-  key binding also.
-
-*Export messages into text file*
-  Export all messages of the selected category/file into text file.
-
-*Jump to location*
-  Open the location contained in the message, if any.
-
-*Clear Locations View*
-  Remove all entries from the Locations View.
-
-In some cases, a wrench icon will be associated on the left of a compilation
-message. See :ref:`Code_Fixing` for more information on how to make advantage
-of this icon.
-
-The filter panel can be used to filter messages which match (or do not match) a
-text pattern or regular expression. As soon as you type in the text entry, the
-filter is enabled. If you clear the text, the filter is disabled.  The `Close`
-button on the filter panel hides it and cancels the filter.  The `Regexp` check
-button specifies how to use the filter text entry: as plain text or regular
-expression.  The `Hide matched` check button reverts the filter, e.g. switch
-between matching and non-matching items.
 
 .. _The_Execution_Window:
 
