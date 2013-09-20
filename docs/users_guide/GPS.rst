@@ -1595,9 +1595,9 @@ Classes
    .. autoattribute:: GPS.Task.visible
 
 
-   .. automethod:: GPS.Task.interrupt
-
    .. automethod:: GPS.Task.block_exit
+
+   .. automethod:: GPS.Task.interrupt
 
    .. automethod:: GPS.Task.list
 
