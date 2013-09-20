@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
@@ -226,8 +227,9 @@ package body Buffer_Views is
               Get_String (Model, Iter, Data_Column);
          begin
             Gtk_New
-              (Label, "<b>Name:</b> " & Name & ASCII.LF
-               & "<bTitle:</b> " & Title);
+              (Label, "<b>Name:</b> "
+               & Escape_Text (Name) & ASCII.LF
+               & "<b>Title:</b> " & Escape_Text (Title));
             Label.Set_Use_Markup (True);
          end;
       end if;
@@ -338,21 +340,23 @@ package body Buffer_Views is
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
-      Path     : constant Gtk_Tree_Path :=
-                   Get_Path_At_Event (Explorer.Tree, Event);
+      Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
       Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
              & " State=" & Event.State'Img);
 
-      if (Event.State and (Control_Mask or Shift_Mask)) /= 0 then
+      if Event.State /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.
          Grab_Focus (Explorer.Tree);
+         return False;
+      end if;
 
-      elsif Path /= Null_Gtk_Tree_Path then
+      Path := Get_Path_At_Event (Explorer.Tree, Event);
+      if Path /= Null_Gtk_Tree_Path then
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
 
@@ -384,10 +388,6 @@ package body Buffer_Views is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press;
 
    --------------------
@@ -406,7 +406,7 @@ package body Buffer_Views is
       --  breaks the selection of multiple lines
 
       if Child /= null
-        and then Get_Widget (Child) /= Gtk_Widget (V)
+        and then Generic_View.Child_From_View (V) /= Child
       then
          declare
             Selected : constant String := Get_Title (Child);
@@ -697,9 +697,7 @@ package body Buffer_Views is
         (Get_MDI (View.Kernel), Signal_Children_Reorganized, Refresh'Access,
          View);
 
-      View.Tree.On_Button_Press_Event
-         (Call => Button_Press'Access,
-          Slot => View);
+      View.Tree.On_Button_Press_Event (Button_Press'Access, View);
 
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
