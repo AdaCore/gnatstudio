@@ -846,13 +846,17 @@ text in the current editor, and make the line you clicked on the current line,
 so that selecting :menuselection:`Edit-->Paste` or the equivalent shortcut will
 now insert that line.
 
-The contextual menu in the clipboard view provides one entry, which is
-:guilabel:`Append To Previous`. If you select this entry, the select line will
-be append to the one below, and removed from the clipboard. This means that
-selection :menuselection:`Edit-->Paste` will in fact paste the two entries at
-the same time.  This is in particular useful when you want to copy lines from
-separate places in the initial file, merge them, and then paste them together
-one or more times later on, through a single operation.
+The local toolbar in the clipboard view provides two buttons:
+
+* :guilabel:`Append To Previous`. If you select this button, the select line will
+   be append to the one below, and removed from the clipboard. This means that
+   selection :menuselection:`Edit-->Paste` will in fact paste the two entries at
+   the same time.  This is in particular useful when you want to copy lines from
+   separate places in the initial file, merge them, and then paste them together
+   one or more times later on, through a single operation.
+
+* :guilabel:`Remove`. If you select this button, the selected line is removed
+  from the clipboard.
 
 The Clipboard View content is preserved between GPS sessions. As an exception,
 huge entries are removed and replaced with an entry saying "[Big entry has been
@@ -1021,14 +1025,20 @@ All the bookmarks you have created will be visible in the
 :menuselection:`Tools-->Views-->Bookmarks` window. Clicking on the line will
 immediately open an editor with the cursor at that position.
 
-You can rename a bookmark so that it is easier to remember what it refers to.
-To do so, open the :guilabel:`Bookmarks` window, and right-click twice on the
-line of the bookmark. Select then the :guilabel:`Rename bookmark` menu so that
-you can edit the name in place.  Press :kbd:`enter` when you are done modifying
-the name.
+In the :guilabel:`Bookmarks` window, the local toolbar provides three buttons
+to act on the bookmarks:
 
-You can delete an existing bookmark by right clicking on the line, and select
-:guilabel:`Delete bookmark` in the contextual menu.
+* :guilabel:`Create` is similar to the :menuselection:`Edit-->Create Bookmark`
+  and will create a bookmark at the current location. After pressing this
+  button, you can immediately start typing a custom name for the new bookmark
+  (or just press :kbd:`enter` to keep the default name, which is based on the
+  name of the enclosing subprogram).
+
+* :guilabel:`Rename` can be used to rename the currently selected bookmark.
+  Editing is inline, so you can immediately start typing the new name and
+  press :kbd:`enter` when done.
+
+* :guilabel:`Remove` is used to delete the selected bookmark.
 
 
 .. _The_Shell_and_Python_Windows:
