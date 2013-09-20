@@ -570,6 +570,7 @@ of this icon.
 
 .. index:: project view
 .. index:: windows; project view
+.. _The_Project_View:
 
 The :guilabel:`Project` view
 ----------------------------
@@ -624,6 +625,15 @@ The various components that are displayed are:
 
   A given project might appear multiple times in the view, if it is imported by
   several other projects.
+
+  :index:`projects; limited with`
+  Likewise, if you have edited the project manually and have used the
+  :samp:`limited with` construct to have cycles in the project dependencies,
+  the cycle will expand infinitely. For instance, if project :file:`a` imports
+  project :file:`b`, which in turns imports project :file:`a` through a
+  :samp:`limited with` clause, then expanding the node for :file:`a` will show
+  :file:`b`. In turn, expanding the node for :file:`b` will show a node for
+  :file:`a`, and so on.
 
   A special icon with a pen mark is displayed if the project was modified, but
   not saved yet. You can choose to save it at any time by right-clicking on it.
@@ -712,6 +722,63 @@ to reload the project. This is useful when you have created or removed source
 files from other applications, and want to let GPS know that there might have
 been changed on the file system that impact the contents of the current
 project.
+
+.. index:: menu;project --> edit project properties
+
+It also includes a button to graphically edit the attributes of the selected
+project, like the tool switches, the naming schemes,... It behaves similarly
+to the :menuselection:`Project-->Edit Project Properties` menu. See
+:ref:`The_Project_Properties_Editor` for more information.
+
+
+If you right click on a project node, a contextual menu appears which contains,
+among others, the following entries that are useful to understand or modify
+your project:
+
+* :menuselection:`Show projects imported by...`
+* :menuselection:`Show projects depending on...`
+  These two menus will open a new window, the :guilabel:`Project browser`,
+  which displays graphically the relationships between each project in
+  the hierarchy (see :ref:`The_Project_Browser`).
+
+* :menuselection:`Project-->Properties`
+  :index:`menu;project --> edit project properties`
+  This menu opens a new dialog to interactively edit the attributes of the
+  project (tool switches, naming schemes,...) and is similar to the local
+  toolbar button.
+
+* :menuselection:`Project-->Save project...`
+  :index:`project; saving`
+  :index:`menu:project --> save all`
+  This item can be selected to save a single project in the hierarchy after it
+  was modified. Modified but unsaved projects in the hierarchy have a special
+  icon (a pen mark is drawn on top of the standard icon). If you would rather
+  save all the modified projects in a single step, use the menu bar item
+  :menuselection:`Project-->Save All`.
+
+  Any time one or several projects are modified, the contents of the project view
+  is automatically refreshed. No project is automatically saved. This provides a
+  simple way to temporarily test new values for the project attributes.  Unsaved
+  modified projects are shown with a special icon in the project view, displaying
+  a pen mark on top of the standard icon:
+
+  .. image:: project-modified.jpg
+
+* :menuselection:`Project-->Edit source file`
+  This menu will load the project file into an editor, so that you can manually
+  edit it. This should be used if you need to access some features of the
+  project files that are not accessible graphically (renames statements,
+  variables, ...).
+
+* :menuselection:`Project-->Dependencies`
+  This menu opens the dependencies editor for the selected project
+  (:ref:`The_Project_Dependencies_Editor`).
+
+* :menuselection:`Project-->Add scenario variable`
+  This menu item should be used to add new scenario variables to the
+  project (see :ref:`Scenarios_And_Configuration_Variables`). It mighe be more
+  convenient in general to use the :guilabel:`Scenario` view for that purpose.
+
 
 .. index:: project; scenario variables
 .. index:: windows; scenario view
@@ -1200,82 +1267,285 @@ Check the documentation of that plug-in, which lists a few settings that
 might be useful.
 
 
-
-
-
-
+.. index:: run
+.. index:: build; executing application
+.. index:: windows; execution window
 .. _The_Execution_Window:
 
-The Execution Window
-====================
+The Execution window
+--------------------
 
-.. index:: execution
-.. index:: execution window
-.. index:: run
+.. index:: menus; build --> run
 
-Each time a program is launched using the menu `Build->Run`, a new execution
-window is created to provide input and output for this program.
+Each time a program is launched using the menu :menuselection:`Build-->Run`, a
+new execution window is created to provide input and output for this program.
 
 In order to allow post mortem analysis and copy/pasting, the execution windows
-are not destroyed when the application terminates.
-
-.. index:: key
-.. index:: menu
-
-To close an execution window, click on the cross icon on the top right corner
-of the window, or use the menu `File->Close`, or the menu `Window->Close` or
-the key binding :kbd:`Ctrl-W`.
+are not destroyed when the application terminates. It must be closed explictly.
 
 If you close the execution window while the application is still running, a
 dialog window is displayed, asking whether you want to kill the application, or
 to cancel the close operation.
 
-.. _The_Status_Line:
-
-The Status Line
-===============
-
-.. index:: status
-.. index:: status line
-.. index:: status bar
-.. index:: progress bar
-
-The status line is composed of two areas: on the left a status bar and on the
-right a progress bar (displayed only when background tasks are running).
-
-.. index:: build
-
-The progress bar is used to display information about on going operations such
-as builds, searches, or VCS commands. These tasks operate in the background,
-and can be paused/resumed by double clicking on the progress bar: this will
-open :ref:`The_Task_Manager`.  In addition, you can click on the *close* icon
-on the left of the progress bar to interrupt the running task.
-
-.. _The_Task_Manager:
-
-The Task Manager
-================
 
 .. index:: tasks
-.. index:: background tasks
-.. index:: task manager
+.. index:: windows; task manager
+.. _The_Task_Manager:
+
+The :guilabel:`Task Manager`
+----------------------------
+
+.. image:: task-manager.png
 
 The Task Manager window lists all the currently running GPS operations that run
 in the background, such as builds, searches or VCS commands.
 
-The Task Manager is opened by double clicking on the progress bar or using the
-`Tools->Views->Tasks` menu, and can be put anywhere in your desktop.
-
 For each of these tasks, the Task Manager shows the status of the task, and the
-current progress. The execution of theses tasks can be suspended using a
-contextual menu, brought up by right-clicking on a line.
+current progress. The execution of theses tasks can be suspended by clicking on
+the smalle :guilabel:`pause` button next to the task. The tasks can also be
+killed by clicking on the :guilabel:`interrupt` button.
+
+.. index:: menu; tools --> views --> tasks
+
+The Task Manager is opened by double clicking on the progress bar in the main
+toolbar, or using the :menuselection:`Tools->Views->Tasks` menu, and can be put
+anywhere in your desktop.
+
+.. image:: task-manager-exit.png
 
 When exiting GPS, if there are tasks running in the Task Manager, a window will
-display those tasks. You can also bring up a contextual menu on the items in
-this window.  You can force the exit at any time by pressing the confirmation
-button, which will kill all remaining tasks, or continue working in GPS by
-pressing the Cancel button.
+display those tasks. You can force the exit at any time by pressing the
+confirmation button, which will kill all remaining tasks, or continue working
+in GPS by pressing the :guilabel:`Cancel` button.
 
-.. index:: screen shot
-.. image:: task-manager.jpg
 
+
+
+.. index:: windows; project browser
+.. index:: project; viewing dependencies
+.. _The_Project_Browser:
+
+The :guilabel:`Project Browser`
+------------------------------- 
+
+.. image:: project-browser.png
+
+The project browser shows the dependencies between all the projects in the
+project hierarchy. Two items in this browser will be linked if one of them
+imports the other.
+
+It is accessed through the contextual menu in the :guilabel:`Project` view, by
+selecting the :menuselection:`Show projects imported by...` item, when
+right-clicking on a project node.
+
+Clicking on the left arrow in the title bar of the items will display all the
+projects that import that project. Similarly, clicking on the right arrow will
+display all the projects that are imported by that project.
+
+The contextual menu obtained by right-clicking on a project item contains
+several items. Most of them are added by the project editor, and gives direct
+access to editing the properties of the project, adding dependencies...
+
+Some new items are added to the menu:
+
+* :menuselection:`Locate in Project View`
+
+  Selecting this menu will switch the focus to the :guilabel:`Project` view,
+  and highlight the first project node found that matches the project in the
+  browser item.  This is a convenient way to get information like the list of
+  directories or source files for that project.
+
+* :menuselection:`Show projects imported by...`
+
+  This menu plays the same role as the right arrow in the title bar, and
+  display all the projects in the hierarchy that are imported directly by the
+  selected projecto
+
+* :menuselection:`Show projects imported by ... (recursively)`
+
+  This menu will display all the dependencies recursively for the project (i.e.
+  the projects it imports directly, the projects that are imported by them, and
+  so on).
+
+* :menuselection:`Show projects importing...`
+
+  This item plays the same role as the left arrow in the title bar, and
+  displays all the projects that directly import the selected project.
+
+See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+
+
+
+
+.. index:: windows; dependency browser
+.. index:: project; dependencies
+.. _The_Dependency_Browser:
+
+The :guilabel:`Dependency Browser`
+----------------------------------
+
+.. image:: dependency-browser.png
+
+The dependency browser shows the dependencies between source files. Each item
+in the browser represents one source file.
+
+In this browser, clicking on the right arrow in the title bar will display the
+list of files that the selected file depends on. A file depend on another one
+if it explicitly imports it (:samp:`with` statement in Ada, or :samp:`#include`
+in C/C++).  Implicit dependencies are currently not displayed in this browser,
+since the information is accessible by opening the other direct dependencies.
+
+Clicking on the left arrow in the title bar will display the list of files that
+depend on the selected file.
+
+This browser is accessible through the contextual menu in the
+:guilabel:`Project` view, by selecting one of the following items:
+
+* :menuselection:`Show dependencies for ...`
+
+  This has the same effect as clicking on the right arrow for a file already in
+  the browser, and will display the direct dependencies for that file.
+
+* :menuselection:`Show files depending on ...`
+
+  This has the same effect as clicking on the left arrow for a file already in
+  the browser, and will display the list of files that directly depend on that
+  file.
+
+The background contextual menu in the browser adds a few entries to the
+standard menu:
+
+* :menuselection:`Open file...`
+
+  This menu entry will display an external dialog in which you can select the
+  name of a file to analyze.
+
+* :menuselection:`Recompute dependencies`
+
+  This menu entry will check that all links displays in the dependency browser
+  are still valid. If not, they are removed. The arrows in the title bar are
+  also reset if necessary, in case new dependencies were added for the files.
+
+  The browser is not refreshed automatically, since there are lots of cases
+  where the dependencies might change (editing source files, changing the
+  project hierarchy or the value of the scenario variables, ...)
+
+  It also recomputes the layout of the graph, and will change the current
+  position of the boxes.
+
+* :menuselection:`Show system files`
+
+  This menu entry indicates whether standard system files (runtime files for
+  instance in the case of Ada) are displayed in the browser. By default, these
+  files will only be displayed if you explicitly select them through the
+  :menuselection:`Open file` menu, or the contextual menu in the project view.
+
+* :menuselection:`Show implicit dependencies`
+
+  This menu entry indicates whether implicit dependencies should also be
+  displayed for the files. Implicit dependencies are files that are required to
+  compile the selected file, but that are not explicitly imported through a
+  :samp:`with` or :samp:`#include` statement. For instance, the body of
+  generics in Ada is an implicit dependency.  Any time one of the implicit
+  dependencies is modified, the selected file should be recompiled as well.
+
+The contextual menu available by right clicking on an item also adds a
+number of entries:
+
+* :menuselection:`Analyze other file`
+
+  This will open a new item in the browser, displaying the complement file for
+  the selected one. In Ada, this would be the body if you clicked on a spec
+  file, or the opposite. In C, it depends on the naming conventions you
+  specified in the project properties, but you would generally go from a
+  :file:`.h` file to a :file:`.c` file and back.
+
+* :menuselection:`Show dependencies for ...`
+
+  These play the same role as in the project view contextual menu
+
+See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+
+
+.. index:: windows; elaboration circularities
+.. index:: build; elaboration circularities
+.. _Elaboration_Cycles_Browser:
+
+The :guilabel:`Elaboration Circularities` browser
+-------------------------------------------------
+
+.. image:: elaboration-graph.jpg
+
+GPS can detect elaboration cycles reported by build processes, and
+construct a visual representation of elaboration dependencies, in an
+:guilabel:`Elaboration Cycles` browser.
+
+This visual representation represents program units as items in the browsers,
+and direct dependencies between program units as links.
+All units involved in a dependency cycle caused by the presence of a
+pragma Elaborate_All (whether explicit or implicit) are also presented
+in the browser and connected by links with labels "body" and "with".
+
+.. index:: preferences; browsers --> show elaboration cycles
+
+The preference :menuselection:`Browsers-->Show elaboration cycles` controls
+whether to automatically create a graph from cycles listed in build output.
+
+See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+
+
+
+.. index:: windows; entity browser
+.. _Entity_Browser:
+
+The :guilabel:`Entity Browser`
+------------------------------
+
+.. image:: entity-browser.png
+
+The entity browser displays static information about any source entity.  The
+exact content of the items depend on the type of the item. For instance:
+
+* :samp:`Ada record / C struct`
+
+  The list of fields, each as an hyper link, is displayed. Clicking on
+  one of the fields will open a new item for the type.
+
+* :samp:`Ada tagged type / C++ class`
+
+  The list of attributes and methods is displayed. They are also
+  click-able hyper-links.
+
+* :samp:`Subprograms`
+
+  The list of parameters is displayed
+
+* :samp:`Packages`
+
+  The list of all the entities declared in that package is displayed
+
+* and more...
+
+
+This browser is accessible through the contextual menu
+:menuselection:`Browsers-->Examine entity` in the project view and source
+editor, when clicking on an entity.
+
+Most information in the items are clickable (by default, they appear as
+underlined blue text). Clicking on one of these hyper links will open a new
+item in the entity browser for the selected entity.
+
+This browser can display the parent entities for an item. For instance, for a
+C++ class or Ada tagged type, this would be the types it derives from. This is
+accessible by clicking on the up arrow in the title bar of the item.
+
+Likewise, children entities (for instance types that derive from the item) can
+be displayed by clicking on the down arrow in the title bar.
+
+An extra button appear in the title bar for the C++ class or Ada tagged types,
+which toggles whether the inherited methods (or primitive operations in Ada)
+should be displayed. By default, only the new methods, or the ones that
+override an inherited one, are displayed. The parent's methods are not shown,
+unless you click on this title bar button.
+
+See also :ref:`browsers_features` for more capabilities of the GPS browsers.

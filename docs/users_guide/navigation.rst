@@ -165,8 +165,7 @@ The Navigate Menu
 *Goto Entity...*
   .. index:: goto entity
 
-  Open a dialog allowing browsing of the entities loaded in the project.  This
-  dialog functions similarly to :ref:`The_Entity_View`.
+  Open a dialog allowing browsing of the entities loaded in the project.
 
 *Goto File Spec<->Body*
   .. index:: goto file spec/body

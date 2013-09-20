@@ -35,11 +35,6 @@ The list of active items includes:
   *Coverage Report*
     :ref:`Coverage Report <Coverage_Report>`.
 
-  *Entities*
-    Open the Entity View in the bottom area
-
-    :ref:`The_Entity_View`.
-
   *Files*
     Open a file system explorer on the left area.
 
@@ -87,7 +82,7 @@ The list of active items includes:
     :ref:`Call_Graph`.
 
   *Dependency*
-    :ref:`Dependency_Browser`.
+    :ref:`The_Dependency_Browser`.
 
   *Elaboration Cycles*
     :ref:`Elaboration_Cycles_Browser`.

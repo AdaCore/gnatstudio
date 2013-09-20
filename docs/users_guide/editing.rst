@@ -1143,7 +1143,7 @@ Menu entries include the following categories:
   :ref:`Contextual_Menus_for_Source_Navigation`.
 
 *Dependencies*
-  :ref:`Dependency_Browser`.
+  :ref:`The_Dependency_Browser`.
 
 *Entity browsing*
   :ref:`Entity_Browser`.

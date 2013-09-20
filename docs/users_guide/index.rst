@@ -14,7 +14,6 @@
    projects
    searching
    compilation
-   browsing
    debugging
    vcs
    tools
