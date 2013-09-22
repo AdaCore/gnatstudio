@@ -136,7 +136,7 @@ package body GPS.CLI_Scripts is
          declare
             Skip_C_Files  : constant Boolean := Nth_Arg (Data, 1, False);
             Report_Errors : constant String := Nth_Arg (Data, 2, "None");
-            Tree_Output   : constant String := Nth_Arg (Data, 3, "None");
+            Tree_Output   : constant String := Nth_Arg (Data, 3, "Full");
             With_Comments : constant Boolean := Nth_Arg (Data, 4, False);
 
             Options : constant Docgen3.Docgen_Options :=
@@ -146,13 +146,14 @@ package body GPS.CLI_Scripts is
                Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
                                    With_Comments),
                Display_Time    => False,
-               Process_Bodies  => False);
+               Process_Bodies  => False,
+               Show_Private    => True);
          begin
             Docgen3.Process_Project_Files
               (Kernel    => Kernel,
                Options   => Options,
                Project   => Kernel.Registry.Tree.Root_Project,
-               Recursive => False);
+               Recursive => True);
          exception
             when others =>
                Set_Error_Msg (Data, "Error while executing "  & Command);
