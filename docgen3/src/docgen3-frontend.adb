@@ -1662,8 +1662,17 @@ package body Docgen3.Frontend is
         (Entity      : Entity_Id;
          Scope_Level : Natural) return Traverse_Result
       is
-         pragma Unreferenced (Entity, Scope_Level);
+         pragma Unreferenced (Scope_Level);
       begin
+         --  Retrieve the sources and their documentation (if any). Sources
+         --  must be retrieved always before Documentation because for some
+         --  entities Ada_Get_Source completes the decoration of entities
+         --  which are not available through Xref (for example, package
+         --  and subprogram declarations).
+
+         Ada_Get_Source (Entity);
+         Ada_Get_Doc (Entity);
+
          return OK;
       end Process_Node;
 
@@ -1778,24 +1787,16 @@ package body Docgen3.Frontend is
          end;
       end if;
 
-      if False then
+      if In_Ada_Lang then
          if Present (File_Entities.Tree_Root) then
             Traverse_Tree (File_Entities.Tree_Root, Process_Node'Access);
          end if;
 
-      else
-         --  Retrieve the sources and their documentation (if any). It must
-         --  be retrieved in this order because for subprogram declarations
-         --  Get_Source takes care of completing the entity decoration of
-         --  some tree attributes which are not available through Xref.
+         For_All (File_Entities.All_Entities, Filter_Doc'Access);
 
-         if In_Ada_Lang then
-            For_All (File_Entities.All_Entities, Ada_Get_Source'Access);
-            For_All (File_Entities.All_Entities, Ada_Get_Doc'Access);
-         else pragma Assert (In_C_Lang);
-            For_All (File_Entities.All_Entities, CPP_Get_Source'Access);
-            For_All (File_Entities.All_Entities, CPP_Get_Doc'Access);
-         end if;
+      else pragma Assert (In_C_Lang);
+         For_All (File_Entities.All_Entities, CPP_Get_Source'Access);
+         For_All (File_Entities.All_Entities, CPP_Get_Doc'Access);
 
          For_All (File_Entities.All_Entities, Filter_Doc'Access);
       end if;

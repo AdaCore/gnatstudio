@@ -129,6 +129,9 @@ package body Docgen3.Frontend.Builder is
       function Is_Container
         (Entity : Unique_Entity_Id) return Boolean;
 
+      function Is_Decorated
+        (Entity : Unique_Entity_Id) return Boolean;
+
       function Is_Full_View
         (Entity : Unique_Entity_Id) return Boolean;
 
@@ -178,6 +181,9 @@ package body Docgen3.Frontend.Builder is
 
       procedure Set_Alias
         (Entity : Unique_Entity_Id; Value : Entity_Id);
+
+      procedure Set_Is_Decorated
+        (Entity : Unique_Entity_Id);
 
       procedure Set_Is_Generic_Formal
         (Entity : Unique_Entity_Id);
@@ -263,6 +269,7 @@ package body Docgen3.Frontend.Builder is
       pragma Inline (In_Ada_Language);
       pragma Inline (Is_Class_Or_Record_Type);
       pragma Inline (Is_Container);
+      pragma Inline (Is_Decorated);
       pragma Inline (Is_Full_View);
       pragma Inline (Is_Global);
       pragma Inline (Is_Incomplete_Or_Private_Type);
@@ -275,6 +282,7 @@ package body Docgen3.Frontend.Builder is
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
       pragma Inline (Set_Alias);
+      pragma Inline (Set_Is_Decorated);
       pragma Inline (Set_Is_Generic_Formal);
       pragma Inline (Set_Kind);
       pragma Inline (Set_Parent);
@@ -593,6 +601,16 @@ package body Docgen3.Frontend.Builder is
       end Is_Container;
 
       ------------------
+      -- Is_Decorated --
+      ------------------
+
+      function Is_Decorated
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Is_Decorated (Get_Entity (Entity));
+      end Is_Decorated;
+
+      ------------------
       -- Is_Full_View --
       ------------------
 
@@ -859,6 +877,16 @@ package body Docgen3.Frontend.Builder is
       begin
          Set_Alias (Get_Entity (Entity), Value);
       end Set_Alias;
+
+      ----------------------
+      -- Set_Is_Decorated --
+      ----------------------
+
+      procedure Set_Is_Decorated
+        (Entity : Unique_Entity_Id) is
+      begin
+         Set_Is_Decorated (Get_Entity (Entity));
+      end Set_Is_Decorated;
 
       ---------------------------
       -- Set_Is_Generic_Formal --
@@ -1148,7 +1176,7 @@ package body Docgen3.Frontend.Builder is
          --  Start of processing for Decorate_Record_Type
 
          begin
-            if In_Ada_Lang then
+            if In_Ada_Lang and then Get_Kind (E) /= E_Interface then
                declare
                   Discrim : constant Xref.Entity_Array :=
                               Discriminants
@@ -1168,24 +1196,26 @@ package body Docgen3.Frontend.Builder is
 
             --  Check_Record_Components
 
-            declare
-               Components : constant Xref.Entity_Array :=
-                              Fields (Context.Database, Get_LL_Entity (E));
-               Entity     : Unique_Entity_Id;
+            if Get_Kind (E) /= E_Interface then
+               declare
+                  Components : constant Xref.Entity_Array :=
+                                 Fields (Context.Database, Get_LL_Entity (E));
+                  Entity     : Unique_Entity_Id;
 
-            begin
-               for J in Components'Range loop
-                  Get_Unique_Entity (Entity, Context, File, Components (J));
-                  --  In C++ we have here formals of primitives???
-                  Set_Kind (Entity, E_Component);
+               begin
+                  for J in Components'Range loop
+                     Get_Unique_Entity (Entity, Context, File, Components (J));
+                     pragma Assert (Is_New (Entity));
 
-                  Append_To_Scope (E, Entity);
-                  Append_To_File_Entities (Entity);
+                     --  In C++ we have here formals of primitives???
+                     Set_Kind (Entity, E_Component);
 
-                  pragma Assert (Is_New (Entity));
-                  Append_To_Map (Entity);
-               end loop;
-            end;
+                     Append_To_Scope (E, Entity);
+                     Append_To_File_Entities (Entity);
+                     Append_To_Map (Entity);
+                  end loop;
+               end;
+            end if;
 
             if Is_Tagged_Type (E)
               or else Get_Kind (E) = E_Class
@@ -1750,11 +1780,12 @@ package body Docgen3.Frontend.Builder is
                   Append_To_Map (New_E);
                end if;
 
+               Append_To_File_Entities (New_E);
                Append_To_Scope (Current_Scope, New_E);
 
-               if Is_New (New_E) then
-                  Append_To_File_Entities (New_E);
+               if not Is_Decorated (New_E) then
                   Complete_Decoration (New_E);
+                  Set_Is_Decorated (New_E);
                end if;
 
                if In_Ada_Lang then

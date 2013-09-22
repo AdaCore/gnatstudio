@@ -73,8 +73,11 @@ package Docgen3 is
       --  by the docgen components processing files. Used to identify which
       --  components of Docgen3 must be optimized.
 
-      Process_Bodies : Boolean := False;
+      Process_Bodies  : Boolean := False;
       --  True to enable processing of body files
+
+      Show_Private    : Boolean := False;
+      --  Show also private entities
    end record;
 
    procedure Process_Single_File

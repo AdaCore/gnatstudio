@@ -262,6 +262,8 @@ private package Docgen3.Atree is
      (E : Entity_Id) return Boolean;
    --  Return True for Ada record types (including tagged types and interface
    --  types), C structs and C++ classes
+   function Is_Decorated
+     (E : Entity_Id) return Boolean;
    function Is_Full_View
      (E : Entity_Id) return Boolean;
    function Is_Doc_From_Body
@@ -318,6 +320,8 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_Full_View_Src
      (E : Entity_Id; Value : Unbounded_String);
+   procedure Set_Is_Decorated
+     (E : Entity_Id);
    procedure Set_Is_Doc_From_Body
      (E : Entity_Id);
    procedure Set_Is_Generic_Formal
@@ -385,6 +389,8 @@ private package Docgen3.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return General_Entity;
+      function Get_First_Private_Entity_Loc
+        (E : Entity_Id) return General_Location;
       function Get_Full_View
         (E : Entity_Id) return General_Entity;
       function Get_Instance_Of
@@ -441,6 +447,7 @@ private package Docgen3.Atree is
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
+      pragma Inline (Get_First_Private_Entity_Loc);
       pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
@@ -526,6 +533,8 @@ private
          Scope_E          : General_Entity;
          Scope_Loc        : General_Location;
 
+         First_Private_Entity_Loc : General_Location;
+
          Parent_Types  : aliased EInfo_List.Vector;
          --  Parent types of tagged types (or base classes of C++ classes)
 
@@ -594,6 +603,7 @@ private
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
 
+         Is_Decorated      : Boolean;
          Is_Generic_Formal : Boolean;
          Is_Incomplete_Or_Private_Type : Boolean;
          Is_Internal       : Boolean;
@@ -652,6 +662,7 @@ private
    pragma Inline (Get_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_IDepth_Level);
+   pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Full_Name);
@@ -676,6 +687,7 @@ private
    pragma Inline (Is_Incomplete_Or_Private_Type);
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
+   pragma Inline (Is_Decorated);
    pragma Inline (Is_Full_View);
    pragma Inline (Is_Private);
    pragma Inline (Is_Class_Or_Record_Type);
@@ -691,6 +703,7 @@ private
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
+   pragma Inline (Set_Is_Decorated);
    pragma Inline (Set_Is_Doc_From_Body);
    pragma Inline (Set_Is_Generic_Formal);
    pragma Inline (Set_Is_Partial_View);

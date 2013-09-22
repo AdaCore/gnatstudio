@@ -419,6 +419,10 @@ package body Docgen3.Atree is
       return E.Doc;
    end Get_Doc;
 
+   ---------------------------------
+   -- Get_End_Of_Syntax_Scope_Loc --
+   ---------------------------------
+
    function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location is
    begin
@@ -894,6 +898,8 @@ package body Docgen3.Atree is
                   if Get_Display_Kind (Ref) = "end of spec" then
                      New_E.End_Of_Syntax_Scope_Loc := Get_Location (Ref);
                      exit;
+                  elsif Get_Display_Kind (Ref) = "private part" then
+                     New_E.Xref.First_Private_Entity_Loc := Get_Location (Ref);
                   end if;
 
                   Next (Cursor);
@@ -952,6 +958,9 @@ package body Docgen3.Atree is
              End_Of_Scope_Loc => No_Location,
              Entity           => E,
              Etype            => No_General_Entity,
+
+             First_Private_Entity_Loc  => No_Location,
+
              Full_View        => No_General_Entity,
              Instance_Of      => No_General_Entity,
              Loc              => Loc,
@@ -982,6 +991,7 @@ package body Docgen3.Atree is
            Kind            => Kind,
            End_Of_Syntax_Scope_Loc => No_Location,
 
+           Is_Decorated      => False,
            Is_Doc_From_Body  => False,
            Is_Generic_Formal => False,
            Is_Incomplete_Or_Private_Type => False,
@@ -1037,6 +1047,15 @@ package body Docgen3.Atree is
         or else E.Kind = E_Class
         or else E.Kind = E_Class_Wide_Type;
    end Is_Class_Or_Record_Type;
+
+   ------------------
+   -- Is_Decorated --
+   ------------------
+
+   function Is_Decorated (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Decorated;
+   end Is_Decorated;
 
    ------------------
    -- Is_Full_View --
@@ -1383,6 +1402,15 @@ package body Docgen3.Atree is
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
 
+   ----------------------
+   -- Set_Is_Decorated --
+   ----------------------
+
+   procedure Set_Is_Decorated (E : Entity_Id) is
+   begin
+      E.Is_Decorated := True;
+   end Set_Is_Decorated;
+
    --------------------------
    -- Set_Is_Doc_From_Body --
    --------------------------
@@ -1594,6 +1622,12 @@ package body Docgen3.Atree is
       begin
          return E.Xref.Entity;
       end Get_Entity;
+
+      function Get_First_Private_Entity_Loc
+        (E : Entity_Id) return General_Location is
+      begin
+         return E.Xref.First_Private_Entity_Loc;
+      end Get_First_Private_Entity_Loc;
 
       function Get_Full_View (E : Entity_Id) return General_Entity is
       begin
@@ -2074,8 +2108,12 @@ package body Docgen3.Atree is
             Prefix => " - ");
       end if;
 
+      if E.Is_Decorated then
+         Append_Line ("Is_Decorated");
+      end if;
+
       if E.Is_Incomplete_Or_Private_Type then
-         Append_Line (" Is_Incomplete_Or_Private_Type");
+         Append_Line ("Is_Incomplete_Or_Private_Type");
       end if;
 
       if E.Is_Private then

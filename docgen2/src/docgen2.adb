@@ -862,11 +862,12 @@ package body Docgen2 is
             Options => (Comments_Filter => Options.Comments_Filter,
                         Report_Errors   => Docgen3.Errors_Only,
                         Tree_Output     =>
-                          (Kind => Docgen3.Short,
+                          (Kind => Docgen3.Full,
                            With_Comments => True),
                         Skip_C_Files    => False,
                         Display_Time    => True,
-                        Process_Bodies  => Options.Process_Body_Files));
+                        Process_Bodies  => Options.Process_Body_Files,
+                        Show_Private    => Options.Show_Private));
          return;
       end if;
 
@@ -919,11 +920,12 @@ package body Docgen2 is
             Options   => (Comments_Filter => Options.Comments_Filter,
                           Report_Errors   => Docgen3.Errors_Only,
                           Tree_Output     =>
-                            (Kind => Docgen3.Short,
-                             With_Comments => True),
+                            (Kind => Docgen3.Full,
+                             With_Comments => False),
                           Skip_C_Files    => False,
                           Display_Time    => True,
-                          Process_Bodies  => Options.Process_Body_Files),
+                          Process_Bodies  => Options.Process_Body_Files,
+                          Show_Private    => Options.Show_Private),
             Recursive => Recursive);
          return;
       end if;
