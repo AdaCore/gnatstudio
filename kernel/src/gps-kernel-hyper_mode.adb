@@ -337,11 +337,6 @@ package body GPS.Kernel.Hyper_Mode is
       end case;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Key_Press_Event_Cb;
 
    --------------------------
@@ -401,10 +396,6 @@ package body GPS.Kernel.Hyper_Mode is
          end if;
       end if;
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press_Event_Cb;
 
    -----------------------------
@@ -428,10 +419,6 @@ package body GPS.Kernel.Hyper_Mode is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Release_Event_Cb;
 
    ----------------

@@ -8,6 +8,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M923-005: GPS: ctrl-click does not set location history
+  Problem:    When you control-click on an entity in an editor, GPS jumps
+              to the declaration or the body of that entity. However, if you
+              then press "Goto Previous Location" in the toolbar, GPS moves
+              back to the previous location of the toolbar, not to the entity
+              you clicked on.
+  Workaround: do a standard click (to move the cursor) before you do a
+              control-click.
+
 - M913-006: GPS: editing switches always modified Default_Switches
   Problem:    If you project contains a Compiler'Switches attribute, and you
               edit the project to add new switches, then GPS adds a

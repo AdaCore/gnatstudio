@@ -2160,11 +2160,6 @@ package body Src_Editor_View is
       end case;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press_Event_Cb;
 
    ------------------------

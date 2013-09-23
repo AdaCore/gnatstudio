@@ -29,6 +29,7 @@ with Src_Editor_Module; use Src_Editor_Module;
 with Xref;              use Xref;
 
 package body Src_Editor_Buffer.Hyper_Mode is
+
    use type GNATCOLL.Xref.Visible_Column;
 
    -----------------------------
@@ -340,6 +341,15 @@ package body Src_Editor_Buffer.Hyper_Mode is
       --  Fallback on jumping to entity spec/implementation
 
       Get_Iter_Position (Buffer, Entity_Start, Line, Column);
+
+      --  Move the cursor, so that "goto previous location" takes us back to
+      --  the entity location after we jump to its declaration
+
+      Buffer.Set_Cursor_Position
+        (Line             => Line,
+         Column           => Character_Offset_Type (Column),
+         Internal         => False,
+         Extend_Selection => False);
 
       Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
         (Loc         => (File   => Buffer.Filename,
