@@ -317,6 +317,10 @@ package body VCS_Module is
       end Free;
 
    begin
+      if Module.Explorer /= null then
+         Unref (Module.Explorer);
+      end if;
+
       VCS_Module_ID.Registered_VCS.Iterate (Free'Access);
       VCS_Module_ID.Registered_VCS.Clear;
       Clear_Cache (Module.Cached_Status, Free_Memory => True);
@@ -1113,6 +1117,7 @@ package body VCS_Module is
    begin
       if M.Explorer = null then
          Gtk_New (M.Explorer, Kernel);
+         Ref (M.Explorer);
       end if;
 
       if Show and then M.Explorer_Child = null then

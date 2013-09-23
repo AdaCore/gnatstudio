@@ -52,6 +52,9 @@ package body VCS_View is
    procedure Selection_Changed (View  : access Gtk_Widget_Record'Class);
    --  Called when the selection has changed on the explorer
 
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal, connected before
+
    --------------
    -- File_Key --
    --------------
@@ -556,6 +559,7 @@ package body VCS_View is
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
    begin
       Save_Cache (Explorer.Kernel, Get_Status_Cache);
+      On_Destroy (Explorer.all);
    end On_Destroy;
 
    -----------------

@@ -218,10 +218,9 @@ package body GPS.Kernel.Commands is
          Callback         => Callback);
 
       if Old_Command /= null then
-         Set_Data
-           (File_Iterate_Commands.Generic_Asynchronous_Command_Access
-              (Get_Command (Old_Command)),
-            Command_Data);
+         C := File_Iterate_Commands.Generic_Asynchronous_Command_Access
+           (Get_Command (Old_Command));
+         Set_Data (C, Command_Data);  --  Free the old data as well
       else
          File_Iterate_Commands.Create
            (C, Operation_Name,
@@ -246,8 +245,10 @@ package body GPS.Kernel.Commands is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (File_Iterate_Data, File_Iterate_Data_Access);
    begin
-      Unchecked_Free (D.Files);
-      Unchecked_Free (D);
+      if D /= null then
+         Unchecked_Free (D.Files);
+         Unchecked_Free (D);
+      end if;
    end Free;
 
    -------------------------

@@ -94,7 +94,10 @@ package body Commands.Generic_Asynchronous is
      (Command : access Generic_Asynchronous_Command;
       Data    : Data_Type) is
    begin
-      Unchecked_Free (Command.Data);
+      if Command.Data /= null then
+         Free (Command.Data.all);
+         Unchecked_Free (Command.Data);
+      end if;
       Command.Data := new Data_Type'(Data);
    end Set_Data;
 

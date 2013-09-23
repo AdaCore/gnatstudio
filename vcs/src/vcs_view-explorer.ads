@@ -106,24 +106,18 @@ private
 
    overriding function Columns_Types
      (Explorer : access VCS_Explorer_View_Record) return GType_Array;
-
    overriding procedure Do_Delete (Explorer : VCS_Explorer_View_Record);
-   --  ???
-
    overriding procedure Do_Refresh
      (Explorer : access VCS_Explorer_View_Record);
-   --  ???
-
    overriding procedure Do_Fill_Info
      (Explorer  : VCS_Explorer_View_Record;
       Iter      : Gtk_Tree_Iter;
       Line_Info : Line_Record;
       Success   : out Boolean);
-   --  ???
-
    overriding procedure Do_Initialize
      (Explorer : access VCS_Explorer_View_Record;
       Kernel   : Kernel_Handle);
-   --  ???
+   overriding procedure On_Destroy (Self : in out VCS_Explorer_View_Record);
+   --  See inherited documentation
 
 end VCS_View.Explorer;

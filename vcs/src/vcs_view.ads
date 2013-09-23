@@ -90,6 +90,9 @@ package VCS_View is
    procedure Clear (Explorer : access VCS_View_Record'Class);
    --  Clear all the files in the model
 
+   procedure On_Destroy (Self : in out VCS_View_Record) is null;
+   --  Called when Self is destroyed.
+
    function Get_Current_Context
      (Explorer : access VCS_View_Record) return Selection_Context;
 
@@ -148,9 +151,6 @@ package VCS_View is
 
    procedure On_Selected (View : access Gtk_Widget_Record'Class);
    --  Give the focus to the current page tree
-
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal, connected before
 
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;

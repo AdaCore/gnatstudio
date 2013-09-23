@@ -66,6 +66,9 @@ package body Gtkada.Combo_Tool_Button is
      (Item  : access Menu_Item_Record'Class;
       State : Boolean);
 
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when the tool_button is destroyed.
+
    --------------
    -- Handlers --
    --------------
@@ -366,9 +369,12 @@ package body Gtkada.Combo_Tool_Button is
       pragma Unreferenced (Menu);
       Stub : Gtkada_Combo_Tool_Button_Record;
       pragma Unmodified (Stub);
+      Self : constant Gtkada_Combo_Tool_Button :=
+         Gtkada_Combo_Tool_Button (Get_User_Data (Attach_Widget, Stub));
    begin
-      Gtkada_Combo_Tool_Button
-        (Get_User_Data (Attach_Widget, Stub)).Menu := null;
+      if Self.Menu /= null then
+         Detach (Self.Menu);
+      end if;
    end Menu_Detacher;
 
    -------------------
@@ -456,7 +462,22 @@ package body Gtkada.Combo_Tool_Button is
       Get_Button (Self).On_Button_Release_Event
         (On_Button_Release'Access, Self);
       Self.On_Draw (On_Draw'Access, Self, After => True);
+
+      Self.On_Destroy (On_Destroy'Access);
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
+      S : constant Gtkada_Combo_Tool_Button := Gtkada_Combo_Tool_Button (Self);
+   begin
+      if S.Menu /= null then
+         Unref (S.Menu);
+         S.Menu := null;
+      end if;
+   end On_Destroy;
 
    --------------
    -- Add_Item --
@@ -544,6 +565,7 @@ package body Gtkada.Combo_Tool_Button is
       end if;
 
       Gtk_New (Widget.Menu);
+      Ref (Widget.Menu);
       Widget.Menu.Attach_To_Widget (Widget, Menu_Detacher'Access);
 
       --  This is necessary because the menu gets a grab, and on OSX we cannot

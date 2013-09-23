@@ -1979,10 +1979,12 @@ package body C_Analyzer is
       end loop;
 
       Free (Main_File);
+      Clear (Tokens);
 
    exception
       when others =>
          Free (Main_File);
+         Clear (Tokens);
    end Analyze_C_Source;
 
 end C_Analyzer;

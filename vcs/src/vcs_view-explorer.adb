@@ -1025,4 +1025,13 @@ package body VCS_View.Explorer is
         (VCS_View_Access (Get_Explorer (Kernel, False, False)));
    end Get_Selected_Files;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   overriding procedure On_Destroy (Self : in out VCS_Explorer_View_Record) is
+   begin
+      Status_Hash.String_Hash_Table.Reset (Self.Status);
+   end On_Destroy;
+
 end VCS_View.Explorer;

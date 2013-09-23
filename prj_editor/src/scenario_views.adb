@@ -79,6 +79,7 @@ package body Scenario_Views is
       Modes_Help : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    type Scenario_View_Module is access all Scenario_View_Module_Record'Class;
+   overriding procedure Destroy (Self : in out Scenario_View_Module_Record);
    overriding procedure Customize
      (Module : access Scenario_View_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -178,6 +179,15 @@ package body Scenario_Views is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
    --  Deleted selected variable
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : in out Scenario_View_Module_Record) is
+   begin
+      Unref (Self.Modes);
+   end Destroy;
 
    ----------------------------
    -- On_Preferences_Changed --
