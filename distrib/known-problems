@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- M923-015: GPS.Project.object_dirs might return library_dir
+  Problem:    When using the object_dirs() python API, a different result
+              is returned depending on the recursive parameter. The result
+              includes library_dirs when recursive is True and the project
+              is a library project.
+  Workaround: build the object_dir by iterating over the set of loaded
+              projects explicitly.
+
 - M923-005: GPS: ctrl-click does not set location history
   Problem:    When you control-click on an entity in an editor, GPS jumps
               to the declaration or the body of that entity. However, if you

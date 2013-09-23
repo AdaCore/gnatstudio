@@ -267,8 +267,10 @@ package body GPS.Scripts.Projects is
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Object    : constant File_Array :=
-              Object_Path (Project, Recursive, False);
+            Object    : constant File_Array := Object_Path
+              (Project,
+               Recursive           => Recursive,
+               Including_Libraries => False);
          begin
             Set_Return_Value_As_List (Data);
 
