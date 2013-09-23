@@ -98,6 +98,7 @@ package body GVD.Dialogs is
 
    type Thread_View_Record is new Base_Views.Process_View_Record with
       record
+         Scrolled : Gtk_Scrolled_Window;
          Tree     : Gtk.Tree_View.Gtk_Tree_View;
          Get_Info : Get_Info_Subprogram := Info_Threads_Dispatch'Access;
          Switch   : Switch_Subprogram := Thread_Switch_Dispatch'Access;
@@ -537,7 +538,7 @@ package body GVD.Dialogs is
                   Column_Names       => Titles);
                Free (Titles);
 
-               Add (Thread, Thread.Tree);
+               Thread.Scrolled.Add (Thread.Tree);
                Show_All (Thread.Tree);
                Return_Callback.Object_Connect
                  (Thread.Tree, Signal_Button_Release_Event,
@@ -592,13 +593,12 @@ package body GVD.Dialogs is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
-      Scrolled : Gtk_Scrolled_Window;
    begin
       Initialize_Vbox (Thread, Homogeneous => False);
 
-      Gtk_New (Scrolled);
-      Thread.Pack_Start (Scrolled, Expand => True, Fill => True);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Gtk_New (Thread.Scrolled);
+      Thread.Pack_Start (Thread.Scrolled, Expand => True, Fill => True);
+      Thread.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       --  The tree will be created on the first call to Update, since we do not
       --  know yet how many columns are needed.
