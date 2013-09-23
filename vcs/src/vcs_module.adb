@@ -319,6 +319,7 @@ package body VCS_Module is
    begin
       if Module.Explorer /= null then
          Unref (Module.Explorer);
+         Module.Explorer := null;
       end if;
 
       VCS_Module_ID.Registered_VCS.Iterate (Free'Access);
@@ -1148,7 +1149,6 @@ package body VCS_Module is
       if M.Explorer = null or else M.Explorer_Child = null then
          return;
       else
-         Ref (M.Explorer);
          Close_Child (M.Explorer_Child, True);
          M.Explorer_Child := null;
       end if;

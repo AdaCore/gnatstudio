@@ -269,9 +269,9 @@ package body GPS.Core_Kernels is
       Create_Handler (Handler, Self.Symbols);
       Self.Lang_Handler := Handler;
       Self.Create_Registry (Self.Registry);
+      Set_Registry (Self.Lang_Handler, Self.Registry);
       Self.Registry.Tree.Load_Empty_Project (Env => Self.Registry.Environment);
 
-      Set_Registry (Self.Lang_Handler, Self.Registry);
       Self.Create_Database (Self.Database);
       Self.Create_Scripts_Repository (Self.Scripts);
    end Initialize;

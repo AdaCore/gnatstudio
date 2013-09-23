@@ -175,8 +175,7 @@ package body VCS_View is
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          Explorer, After => False);
 
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Explorer, Signal_Destroy, On_Destroy'Access, Explorer);
+      Explorer.On_Destroy (On_Destroy'Access);
 
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.
