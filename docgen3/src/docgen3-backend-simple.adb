@@ -149,7 +149,8 @@ package body Docgen3.Backend.Simple is
 
       procedure ReST_Append_Record_Type_Declaration
         (Printout : access Unbounded_String;
-         E        : Entity_Id);
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context);
       --  Append to Printout the reStructured output of a record type
 
       procedure ReST_Append_Reference
@@ -366,7 +367,8 @@ package body Docgen3.Backend.Simple is
 
       procedure ReST_Append_Record_Type_Declaration
         (Printout : access Unbounded_String;
-         E        : Entity_Id)
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context)
       is
          Name   : constant String := Get_Short_Name (E);
          Header : constant String (Name'Range) := (others => '=');
@@ -392,6 +394,10 @@ package body Docgen3.Backend.Simple is
          Append_Line (Printout, "");
 
          if not Is_Partial_View (E) then
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+         elsif not Context.Options.Show_Private then
             ReST_Append_Src (Printout, E);
             ReST_Append_Comment (Printout, E);
 
@@ -1976,6 +1982,15 @@ package body Docgen3.Backend.Simple is
                                       E_Info   : Entity_Id));
       --  Call subprogram Process for all the elements of Vector
 
+      procedure For_All
+        (Vector   : in out EInfo_List.Vector;
+         Printout : access Unbounded_String;
+         Process  : access procedure
+                             (Printout : access Unbounded_String;
+                              E_Info   : Entity_Id;
+                              Context  : access constant Docgen_Context));
+      --  Call subprogram Process for all the elements of Vector
+
       -------------
       -- For_All --
       -------------
@@ -1992,6 +2007,30 @@ package body Docgen3.Backend.Simple is
          Cursor := Vector.First;
          while EInfo_List.Has_Element (Cursor) loop
             Process (Printout, EInfo_List.Element (Cursor));
+            EInfo_List.Next (Cursor);
+         end loop;
+      end For_All;
+
+      -------------
+      -- For_All --
+      -------------
+
+      procedure For_All
+        (Vector   : in out EInfo_List.Vector;
+         Printout : access Unbounded_String;
+         Process  : access procedure
+                             (Printout : access Unbounded_String;
+                              E_Info   : Entity_Id;
+                              Context  : access constant Docgen_Context))
+      is
+         Cursor  : EInfo_List.Cursor;
+
+      begin
+         Cursor := Vector.First;
+         while EInfo_List.Has_Element (Cursor) loop
+            Process (Printout,
+              E_Info  => EInfo_List.Element (Cursor),
+              Context => Backend.Context);
             EInfo_List.Next (Cursor);
          end loop;
       end For_All;
@@ -2037,7 +2076,8 @@ package body Docgen3.Backend.Simple is
 
             elsif LL.Is_Type (E) then
                if Is_Class_Or_Record_Type (E) then
-                  ReST_Append_Record_Type_Declaration (Printout, E);
+                  ReST_Append_Record_Type_Declaration
+                    (Printout, E, Backend.Context);
                else
                   ReST_Append_Simple_Declaration (Printout, E);
                end if;

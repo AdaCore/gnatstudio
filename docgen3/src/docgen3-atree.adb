@@ -2158,6 +2158,13 @@ package body Docgen3.Atree is
             & "Body_Loc: " & Image (E.Xref.Body_Loc));
       end if;
 
+      if Present (LL.Get_First_Private_Entity_Loc (E)) then
+         Append_Line
+           (LL_Prefix
+            & "First_Private_Entity_Loc: "
+            & Image (LL.Get_First_Private_Entity_Loc (E)));
+      end if;
+
       if E.Xref.End_Of_Scope_Loc /= No_Location then
          Append_Line
            (LL_Prefix

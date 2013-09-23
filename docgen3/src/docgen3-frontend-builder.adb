@@ -91,6 +91,9 @@ package body Docgen3.Frontend.Builder is
       function Get_LL_Entity
         (Entity : Unique_Entity_Id) return General_Entity;
 
+      function Get_LL_First_Private_Entity_Loc
+        (Entity : Unique_Entity_Id) return General_Location;
+
       function Get_LL_Full_View
         (Entity : Unique_Entity_Id) return General_Entity;
 
@@ -262,7 +265,9 @@ package body Docgen3.Frontend.Builder is
       pragma Inline (Get_Kind);
       pragma Inline (Get_Language);
       pragma Inline (Get_LL_Entity);
+      pragma Inline (Get_LL_First_Private_Entity_Loc);
       pragma Inline (Get_LL_Full_View);
+      pragma Inline (Get_LL_Location);
       pragma Inline (Get_LL_Scope);
       pragma Inline (Get_Parent);
       pragma Inline (Get_Scope);
@@ -502,6 +507,16 @@ package body Docgen3.Frontend.Builder is
       begin
          return LL.Get_Entity (Get_Entity (Entity));
       end Get_LL_Entity;
+
+      -------------------------------------
+      -- Get_LL_First_Private_Entity_Loc --
+      -------------------------------------
+
+      function Get_LL_First_Private_Entity_Loc
+        (Entity : Unique_Entity_Id) return General_Location is
+      begin
+         return LL.Get_First_Private_Entity_Loc (Get_Entity (Entity));
+      end Get_LL_First_Private_Entity_Loc;
 
       ----------------------
       -- Get_LL_Full_View --
@@ -1646,7 +1661,17 @@ package body Docgen3.Frontend.Builder is
             if In_Ada_Lang then
                Update_Scopes_Stack (New_E);
 
-               if not Is_New (New_E)
+               if not Context.Options.Show_Private
+                 and then Is_Package (Current_Scope)
+                 and then
+                   Present (Get_LL_First_Private_Entity_Loc (Current_Scope))
+                 and then
+                   Get_LL_Location (New_E).Line >=
+                   Get_LL_First_Private_Entity_Loc (Current_Scope).Line
+               then
+                  Skip_This_Entity := True;
+
+               elsif not Is_New (New_E)
                  and then Kind_In (Get_Kind (New_E), E_Formal,
                                                      E_Discriminant,
                                                      E_Component)

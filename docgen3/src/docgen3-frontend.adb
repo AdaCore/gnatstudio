@@ -153,7 +153,9 @@ package body Docgen3.Frontend is
                  Location => Get_End_Of_Syntax_Scope_Loc (E)));
          end if;
 
-         if Is_Partial_View (E) then
+         if Is_Partial_View (E)
+           and then Context.Options.Show_Private
+         then
             Set_Full_View_Doc (E,
               Xref.Docgen.Get_Docgen_Documentation
                 (Self =>
@@ -974,7 +976,9 @@ package body Docgen3.Frontend is
          elsif Is_Class_Or_Record_Type (E) then
             Set_Src (E, Get_Record_Type_Source (LL.Get_Location (E)));
 
-            if Is_Partial_View (E) then
+            if Is_Partial_View (E)
+              and then Context.Options.Show_Private
+            then
                Set_Full_View_Src (E,
                  Get_Record_Type_Source
                    (LL.Get_Body_Loc (E), Is_Full_View => True));
@@ -2176,7 +2180,9 @@ package body Docgen3.Frontend is
          Parse (S);
 
          if Is_Full_View then
-            Set_Full_View_Comment (E, Comment);
+            if Context.Options.Show_Private then
+               Set_Full_View_Comment (E, Comment);
+            end if;
          else
             Set_Comment (E, Comment);
          end if;
@@ -2338,7 +2344,9 @@ package body Docgen3.Frontend is
             Parse_Doc (Context, Entity, To_String (Get_Doc (Entity).Text));
             Set_Doc (Entity, No_Comment_Result);
 
-            if Is_Partial_View (Entity) then
+            if Is_Partial_View (Entity)
+              and then Context.Options.Show_Private
+            then
                Set_Full_View_Comment (Entity, New_Structured_Comment);
                Parse_Doc
                  (Context      => Context,
