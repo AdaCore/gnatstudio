@@ -1340,6 +1340,19 @@ package body GPS.Kernel.Preferences is
          Default => "#FFFFFF",
          Page    => -"Windows");
 
+      Doc_Search_Before_First := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Doc-Search-Before-First",
+         Label   => -"Leading documentation",
+         Doc     =>
+           -("If this preference is set, GPS will extract the documentation"
+           & " for an entity by first looking at the leading comments, and"
+           & " fallback to the comments after the entity declaration if not"
+           & " found. If the preference is unset, the search order is"
+           & " reversed."),
+         Default => True,
+         Page    => -"Documentation");
+
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;
 

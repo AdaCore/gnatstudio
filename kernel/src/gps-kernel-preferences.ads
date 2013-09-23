@@ -263,6 +263,10 @@ package GPS.Kernel.Preferences is
    ClearCase_Command         : String_Preference;
    Default_VCS               : String_Preference;
 
+   Doc_Search_Before_First   : Boolean_Preference;
+   --  Whether we should look for the documentation of entities first in the
+   --  comments before (and fallback to the comments after), or the opposite
+
    --  Debugger preferences are registered in GVD.Preferences
 
    package Indentation_Kind_Preferences is new

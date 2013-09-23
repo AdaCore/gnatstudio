@@ -447,15 +447,20 @@ package Xref is
    --  True if E is a predefined entity
 
    procedure Documentation
-     (Self             : access General_Xref_Database_Record;
-      Handler          : Language_Handlers.Language_Handler;
-      Entity           : General_Entity;
-      Formater         : access Profile_Formater'Class;
-      Check_Constructs : Boolean := True);
+     (Self              : access General_Xref_Database_Record;
+      Handler           : Language_Handlers.Language_Handler;
+      Entity            : General_Entity;
+      Formater          : access Profile_Formater'Class;
+      Check_Constructs  : Boolean := True;
+      Look_Before_First : Boolean := True);
    --  Return the documentation (tooltips,...) for the entity.
    --  Formater is responsible for formating and keep resulting text.
    --  Check_Constructs should be False to disable the use of the constructs
    --  database.
+   --
+   --  If Look_Before_First is True, the comments are first searched before
+   --  the entity, and if not found after the entity. Otherwise the search
+   --  order is reversed.
 
    function End_Of_Scope
      (Self   : access General_Xref_Database_Record;

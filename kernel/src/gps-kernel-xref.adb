@@ -25,6 +25,7 @@ with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                     use GPS.Kernel;
@@ -1080,10 +1081,11 @@ package body GPS.Kernel.Xref is
             Formater : aliased Text_Profile_Formater;
          begin
             Self.Documentation
-              (Handler          => Handler,
-               Entity           => Entity,
-               Formater         => Formater'Access,
-               Check_Constructs => Check_Constructs);
+              (Handler           => Handler,
+               Entity            => Entity,
+               Formater          => Formater'Access,
+               Check_Constructs  => Check_Constructs,
+               Look_Before_First => Doc_Search_Before_First.Get_Pref);
 
             return Formater.Get_Text;
          end;
@@ -1095,10 +1097,11 @@ package body GPS.Kernel.Xref is
               To_Unbounded_String (Color_For_Optional_Param);
 
             Self.Documentation
-              (Handler          => Handler,
-               Entity           => Entity,
-               Formater         => Formater'Access,
-               Check_Constructs => Check_Constructs);
+              (Handler           => Handler,
+               Entity            => Entity,
+               Formater          => Formater'Access,
+               Check_Constructs  => Check_Constructs,
+               Look_Before_First => Doc_Search_Before_First.Get_Pref);
 
             return Formater.Get_Text;
          end;

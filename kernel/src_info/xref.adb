@@ -145,11 +145,12 @@ package body Xref is
    -------------------
 
    procedure Documentation
-     (Self             : access General_Xref_Database_Record;
-      Handler          : Language_Handlers.Language_Handler;
-      Entity           : General_Entity;
-      Formater         : access Profile_Formater'Class;
-      Check_Constructs : Boolean := True)
+     (Self              : access General_Xref_Database_Record;
+      Handler           : Language_Handlers.Language_Handler;
+      Entity            : General_Entity;
+      Formater          : access Profile_Formater'Class;
+      Check_Constructs  : Boolean := True;
+      Look_Before_First : Boolean := True)
    is
       function Doc_From_Constructs return Boolean;
       procedure Doc_From_LI;
@@ -187,7 +188,8 @@ package body Xref is
                    (Buffer            => Buffer.all,
                     Decl_Start_Index  => Get_Construct (Node).Sloc_Start.Index,
                     Decl_End_Index    => Get_Construct (Node).Sloc_End.Index,
-                    Language          => Context.Syntax);
+                    Language          => Context.Syntax,
+                    Look_Before_First => Look_Before_First);
             begin
                Get_Profile (Tree_Lang, Ent, Formater, With_Aspects => True);
 
@@ -234,7 +236,8 @@ package body Xref is
                  (Buffer            => Buffer.all,
                   Decl_Start_Line   => Decl.Line,
                   Decl_Start_Column => Integer (Decl.Column),
-                  Language          => Context.Syntax));
+                  Language          => Context.Syntax,
+                  Look_Before_First => Look_Before_First));
 
             if Result = "" and then Entity.Old_Entity /= null then
                Find_Next_Body
@@ -250,7 +253,8 @@ package body Xref is
                        (Buffer            => Buffer.all,
                         Decl_Start_Line   => Loc.Line,
                         Decl_Start_Column => Integer (Loc.Column),
-                        Language          => Context.Syntax));
+                        Language          => Context.Syntax,
+                        Look_Before_First => Look_Before_First));
                end if;
             end if;
 
