@@ -19,12 +19,11 @@ import gps_utils
 
 themes = [
    {"name": "Default",
-    "@theme": "Adwaita",
+    "GPS6-Gtk-Theme-Name": "Adwaita",
     "@theme_bg_color": None,           # the background color for windows
     "@theme_fg_color": None,           # default color for the text
     "@theme_selected_bg_color": None,  # selection in trees or menus
-    "@editor_bg_selection": None,      # background for selection in editors
-    "@editor_fg_selection": None,      # foreground for selection in editors
+    "@editor_bg_selection": "#4A90D9",
     "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(255,255,255)"),
     "Src-Editor-Current-Line-Color":         "rgb(209,220,252)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(0,0,0)", "rgb(255,255,255)"),
@@ -39,8 +38,9 @@ themes = [
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(96,97,95)", "transparent")
    },
    {"name": "Darkside",
-    "@theme": "Adwaita (Dark)",
+    "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "#222324",
+    "@editor_bg_selection": "#49483E",
     "General-Default-Style":                 ("${font}", "rgb(186,186,186)", "rgb(34,35,36)"),
     "Src-Editor-Current-Line-Color":         "rgb(48,51,51)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(186,186,186)", "rgb(34,35,36)"),
@@ -55,12 +55,12 @@ themes = [
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
    },
    {"name": "Monokai",
-    "@theme": "Adwaita (Dark)",
+    "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "#272822",
     "@theme_fg_color": "#F8F8F2",
     "@theme_selected_bg_color": "#49483E",
     "@editor_bg_selection": "#49483E",
-    "General-Default-Style":                 ("${font}", "#F8F8F2", "#272822"),
+    "General-Default-Style":                 ("${font}", "rgb(248,248,242)", "rgb(39,40,34)"),
     "Src-Editor-Current-Line-Color":         "rgb(73,72,62)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(248,248,242)", "rgb(39,40,34)"),
     "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
@@ -74,7 +74,8 @@ themes = [
     "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
    },
    {"name": "iPlastic",
-    "@theme": "Adwaita",
+    "GPS6-Gtk-Theme-Name": "Adwaita",
+    "@editor_bg_selection": "#4A90D9",
     "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(238,238,238)"),
     "Src-Editor-Current-Line-Color":         "rgb(140,140,140)",
     "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(0,0,0)", "rgb(238,238,238)"),
