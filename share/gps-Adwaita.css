@@ -37,6 +37,11 @@
    background-color: @theme_bg_color;
 }
 
+/* From d10116eb77b09d8372a82de2e25894371805726c in Adwaita */
+.menu .menuitem:insensitive {
+   background-color: transparent;
+}
+
 
 /* .mdi tab GtkLabel { opacity: 0.8 }
    .mdifocused tab GtkLabel { opacity: 1.0 }
