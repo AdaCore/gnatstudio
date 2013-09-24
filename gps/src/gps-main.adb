@@ -51,6 +51,7 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Main;                         use Gtk.Main;
+with Gtk.Settings;                     use Gtk.Settings;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
@@ -811,6 +812,16 @@ procedure GPS.Main is
          Timeout_Id := Process_Timeout.Timeout_Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
             (GPS_Main.Kernel, null, null, null, null, null, False));
+      end if;
+
+      --  Under Windows, pressing the primary button outside of the slider
+      --  should jump by a page increment.
+
+      if Config.Host = Windows then
+         Set_Property
+           (Gtk.Settings.Get_Default,
+            Gtk_Primary_Button_Warps_Slider_Property,
+            False);
       end if;
    end Init_Settings;
 
