@@ -200,6 +200,7 @@ package body Aliases_Module is
       Alias_Col       : Gtk_Tree_View_Column;
       Show_Read_Only  : Gtk_Check_Button;
       Must_Reindent   : Gtk_Check_Button;
+      Is_New_Interactive : Boolean := False;
 
       Current_Var     : String_Access;
       Highlight_Tag   : Gtk_Text_Tag;
@@ -291,7 +292,8 @@ package body Aliases_Module is
      (Editor    : access Alias_Editor_Record'Class;
       Name      : String;
       Selected  : Boolean := False;
-      Read_Only : Boolean := False);
+      Read_Only : Boolean := False;
+      Is_New_Interactive : Boolean := False);
    --  Add a new entry in the aliases list of the editor
 
    procedure Param_Env_Changed
@@ -1140,7 +1142,7 @@ package body Aliases_Module is
       if Cursor = No_Element then
          Set_Text (Get_Buffer (Ed.Expansion), "");
          Set_Active (Ed.Must_Reindent, False);
-         Set_Editable (Ed.Expansion, False);
+         Set_Editable (Ed.Expansion, Ed.Is_New_Interactive);
          Clear (Ed.Variables_Model);
       else
          declare
@@ -1265,7 +1267,8 @@ package body Aliases_Module is
 
    procedure Alias_Created (Editor : access Gtk_Widget_Record'Class) is
    begin
-      Add_New_Alias (Alias_Editor (Editor), "_new_", Selected => True);
+      Add_New_Alias (Alias_Editor (Editor), "_new_",
+                     Selected => True, Is_New_Interactive => True);
 
    exception
       when E : others => Trace (Me, E);
@@ -1828,7 +1831,8 @@ package body Aliases_Module is
      (Editor    : access Alias_Editor_Record'Class;
       Name      : String;
       Selected  : Boolean := False;
-      Read_Only : Boolean := False)
+      Read_Only : Boolean := False;
+      Is_New_Interactive : Boolean := False)
    is
       procedure Set_Alias
         (Tree, Iter : System.Address;
@@ -1841,6 +1845,7 @@ package body Aliases_Module is
       Path       : Gtk_Tree_Path;
 
    begin
+      Editor.Is_New_Interactive := Is_New_Interactive;
       Append (Editor.Aliases_Model, Alias_Iter, Null_Iter);
 
       if Read_Only then
@@ -1868,6 +1873,7 @@ package body Aliases_Module is
             Get_Column (Editor.Aliases, 0), Start_Editing => True);
          Path_Free (Path);
       end if;
+      Editor.Is_New_Interactive := False;
    end Add_New_Alias;
 
    ---------------------
