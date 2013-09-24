@@ -45,7 +45,6 @@ with Glib.Object;                      use Glib.Object;
 with Glib.Properties;                  use Glib.Properties;
 
 with Gdk.Pixbuf;                       use Gdk.Pixbuf;
-with Gdk.Visual;
 
 with Gtk;                              use Gtk;
 with Gtk.Enums;                        use Gtk.Enums;
@@ -235,9 +234,6 @@ procedure GPS.Main is
                       Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
    Elaboration_Browser_Trace : constant Trace_Handle :=
      Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
-
-   Check_Color_Depth : constant Trace_Handle :=
-     Create ("CHECK_COLOR_DEPTH", GNATCOLL.Traces.On);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -1700,27 +1696,6 @@ procedure GPS.Main is
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
          "(c) 2001-2013 AdaCore" & ASCII.LF);
       Free (About_Contents);
-
-      if not Hide_GPS
-        and then Active (Check_Color_Depth)
-        and then Gdk.Visual.Get_Best_Depth < 16
-      then
-         declare
-            Ignored : Message_Dialog_Buttons;
-            pragma Unreferenced (Ignored);
-         begin
-            Ignored := Gtkada.Dialogs.Message_Dialog
-              (Msg            =>
-                 "GPS requires a display with a minimum color depth"
-               & " of 16 bits (found"
-               & Gdk.Visual.Get_Best_Depth'Img & ")",
-               Dialog_Type    => Error,
-               Buttons        => Button_OK,
-               Default_Button => Button_OK,
-               Title          => "Incompatible display");
-            Gtk.Main.Main_Quit;
-         end;
-      end if;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
       --  default position for notebook tabs, since they can be overriden by
