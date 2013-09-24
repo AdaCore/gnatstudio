@@ -1712,7 +1712,8 @@ procedure GPS.Main is
             Ignored := Gtkada.Dialogs.Message_Dialog
               (Msg            =>
                  "GPS requires a display with a minimum color depth"
-               & " of 16 bits.",
+               & " of 16 bits (found"
+               & Gdk.Visual.Get_Best_Depth'Img & ")",
                Dialog_Type    => Error,
                Buttons        => Button_OK,
                Default_Button => Button_OK,
