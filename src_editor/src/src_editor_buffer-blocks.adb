@@ -75,7 +75,7 @@ package body Src_Editor_Buffer.Blocks is
             Block      := new Block_Record'
               (Indentation_Level => 0,
                Offset_Start      => Column,
-               Stored_Offset     => Column,
+               Stored_Offset     => 0,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
                Name              => Current.Name,
@@ -156,7 +156,9 @@ package body Src_Editor_Buffer.Blocks is
       Result    : Boolean;
 
    begin
-      if Get_Constructs_State (Buffer) = Exact then
+      if Block.Stored_Offset /= 0
+        and Get_Constructs_State (Buffer) = Exact
+      then
          return;
       end if;
 

@@ -836,7 +836,7 @@ package Src_Editor_Buffer is
       Stored_Offset     : Integer := 0;
       --  Stores the last calculated offset of this block. Mainly used to be
       --  able to draw the blocks almost correctly even as we are editing the
-      --  text.
+      --  text. Zero means that value is not calculated.
 
       First_Line        : Editable_Line_Type := 0;
       Last_Line         : Editable_Line_Type := 0;

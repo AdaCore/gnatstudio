@@ -6093,7 +6093,7 @@ package body Src_Editor_Buffer is
          return Block_Record'
            (Indentation_Level => 0,
             Offset_Start      => Current.Sloc_Start.Column,
-            Stored_Offset     => Current.Sloc_Start.Column,
+            Stored_Offset     => 0,
             First_Line      => Editable_Line_Type (Current.Sloc_Start.Line),
             Last_Line         => Editable_Line_Type (Current.Sloc_End.Line),
             Name              => Current.Name,
