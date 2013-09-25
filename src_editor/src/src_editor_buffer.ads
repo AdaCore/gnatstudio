@@ -1045,6 +1045,9 @@ package Src_Editor_Buffer is
    --  Contents (1 .. Length) (as utf8-encoded string)
    --  Never use Free (Contents) directly, use the Free procedure below.
 
+   function To_String (S : Src_String) return String;
+   --  Return the string in Src_String, and the empty string if S is null
+
    procedure Free (S : in out Src_String);
    --  Free the memory associated with S
 

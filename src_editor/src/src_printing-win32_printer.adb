@@ -18,8 +18,6 @@
 --  Win32 version of this file
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Ada.Characters.Latin_1;
-with Src_Editor_Buffer.Text_Handling;
 
 with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
@@ -402,14 +400,12 @@ package body Src_Printing.Win32_Printer is
       Actual_Line_Number    : Editable_Line_Type;
       Actual_Line_Image     : String (1 .. 5);
       Paginated_Line_Number : INT;
-      Content_Length        : INT;
       Result                : BOOL;
       pragma Unreferenced (Result);
 
       package Line_Number_IO is new
         Ada.Text_IO.Integer_IO (Editable_Line_Type);
 
-      use Src_Editor_Buffer.Text_Handling;
    begin
       for Line_Num in 0 .. Lines_Per_Page - 1 loop
          Paginated_Line_Number :=
@@ -423,27 +419,19 @@ package body Src_Printing.Win32_Printer is
          Line_Number_IO.Put (Actual_Line_Image, Actual_Line_Number);
 
          declare
-            Content : constant String := Actual_Line_Image & ": " &
-              Get_Chars (Buffer, Actual_Line_Number);
-
-            use Ada.Characters.Latin_1;
+            Line_String : Src_String := Get_String
+              (Buffer, Actual_Line_Number);
+            Content     : constant String := Actual_Line_Image & ": " &
+              To_String (Line_String);
          begin
-            --  Note that we are truncating rather than wrapping,
-            --  and slicing off the trailing linefeed that
-            --  appears on every line except the last.
-
-            if Content (Content'Last) = LF then
-               Content_Length := Content'Length - 1;
-            else
-               Content_Length := Content'Length;
-            end if;
+            Free (Line_String);
 
             Result := TextOut
               (Printer,
                Offsets.Left,
                (Line_Height * Line_Num) + Offsets.Top,
                Content'Address,
-               INT'Min (Content_Length, Chars_Per_Line));
+               INT'Min (Content'Length, Chars_Per_Line));
          end;
       end loop;
    end Print_Body;

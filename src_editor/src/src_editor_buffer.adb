@@ -756,6 +756,19 @@ package body Src_Editor_Buffer is
       end if;
    end Get_String;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (S : Src_String) return String is
+   begin
+      if S.Length = 0 then
+         return "";
+      else
+         return S.Contents (1 .. S.Length);
+      end if;
+   end To_String;
+
    -------------------------------
    -- Get_Strip_Trailing_Blanks --
    -------------------------------
