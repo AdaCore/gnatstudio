@@ -2755,9 +2755,8 @@ package body Src_Editor_Module.Editors is
                (Kernel          => This.Buffer.Contents.Kernel,
                 All_Occurrences => False,
                 Scope           => Search_Scope'Value (Scope)));
-      Match_From  : Gtk_Text_Iter;
-      Match_Up_To : Gtk_Text_Iter;
       Iter        : Gtk_Text_Iter;
+      From, To    : Editor_Coordinates;
    begin
       Set_Context
         (Context,
@@ -2772,17 +2771,17 @@ package body Src_Editor_Module.Editors is
            (Context           => Context,
             Start_At          => Iter,
             Kernel            => This.Buffer.Contents.Kernel,
+            Match_From        => From,
+            Match_Up_To       => To,
             Search_Backward   => Backward,
             Dialog_On_Failure => Dialog_On_Failure,
-            Match_From        => Match_From,
-            Match_Up_To       => Match_Up_To,
             Found             => Success);
 
          if Success then
             Starts := Src_Editor_Location
-              (Create_Editor_Location (This.Buffer, Match_From));
+              (Create_Editor_Location (This.Buffer, From.Line, From.Col));
             Ends   := Src_Editor_Location
-              (Create_Editor_Location (This.Buffer, Match_Up_To));
+              (Create_Editor_Location (This.Buffer, To.Line, To.Col));
          end if;
       end if;
 

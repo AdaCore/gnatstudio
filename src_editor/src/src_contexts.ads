@@ -102,14 +102,19 @@ package Src_Contexts is
       Scope             : Search_Scope := Whole) return Search_Context_Access;
    --  Same as above, but takes the scope directly in parameter
 
+   type Editor_Coordinates is record
+      Line : Editable_Line_Type;
+      Col  : Character_Offset_Type;
+   end record;
+
    procedure Search_In_Editor
      (Context         : access Current_File_Context;
       Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Dialog_On_Failure : Boolean := True;
-      Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Match_From      : out Editor_Coordinates;
+      Match_Up_To     : out Editor_Coordinates;
       Found           : out Boolean;
       Start_Line      : Editable_Line_Type := 1;
       Start_Column    : Character_Offset_Type := 1;

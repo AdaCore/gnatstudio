@@ -1877,8 +1877,8 @@ package body Src_Contexts is
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Dialog_On_Failure : Boolean := True;
-      Match_From      : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Match_Up_To     : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Match_From      : out Editor_Coordinates;
+      Match_Up_To     : out Editor_Coordinates;
       Found           : out Boolean;
       Start_Line      : Editable_Line_Type := 1;
       Start_Column    : Character_Offset_Type := 1;
@@ -1944,14 +1944,10 @@ package body Src_Contexts is
          Context.End_Line     := Editable_Line_Type (Match.End_Line);
          Context.End_Column   := Match.End_Column;
 
-         Get_Iter_At_Line_Offset
-           (Editor, Match_From,
-            Gint (Get_Buffer_Line (Editor, Context.Begin_Line) - 1),
-            Gint (Context.Begin_Column - 1));
-         Get_Iter_At_Line_Offset
-           (Editor, Match_Up_To,
-            Gint (Get_Buffer_Line (Editor, Context.End_Line) - 1),
-            Gint (Context.End_Column - 1));
+         Match_From := (Line => Context.Begin_Line,
+                        Col  => Context.Begin_Column);
+         Match_Up_To := (Line => Context.End_Line,
+                         Col => Context.End_Column);
 
          Unchecked_Free (Match);
 
@@ -2000,12 +1996,9 @@ package body Src_Contexts is
       Selection_Start : Gtk_Text_Iter;
       Selection_End   : Gtk_Text_Iter;
       Dummy           : Boolean;
-      Match_From      : Gtk_Text_Iter;
-      Match_Up_To     : Gtk_Text_Iter;
+      Match_From      : Editor_Coordinates;
+      Match_Up_To     : Editor_Coordinates;
       Found           : Boolean;
-      Cursor_Line     : Editable_Line_Type;
-      Cursor_Column   : Character_Offset_Type;
-
    begin
       Get_Selection_Bounds
         (Get_Buffer (Editor), Selection_Start, Selection_End, Dummy);
@@ -2025,16 +2018,18 @@ package body Src_Contexts is
 
       if Found then
          Push_Current_Editor_Location_In_History (Kernel);
-         Get_Iter_Position
-           (Editor.Get_Buffer, Match_Up_To, Cursor_Line, Cursor_Column);
 
          Editor.Set_Cursor_Location
-           (Line        => Cursor_Line,
-            Column      => Cursor_Column,
+           (Line        => Match_From.Line,
+            Column      => Match_From.Col,
             Force_Focus => False,
             Centering   => GPS.Editors.Minimal,
             Extend_Selection => False);
-         Select_Region (Get_Buffer (Editor), Match_Up_To, Match_From);
+
+         Select_Region
+           (Get_Buffer (Editor),
+            Match_From.Line, Match_From.Col,
+            Match_Up_To.Line, Match_Up_To.Col);
 
          Center_Cursor (Get_View (Editor));
          return True;

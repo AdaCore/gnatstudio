@@ -5276,6 +5276,10 @@ package body Src_Editor_Buffer is
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type) is
    begin
+      for J in Start_Line .. End_Line loop
+         Unfold_Line (Buffer, J);
+      end loop;
+
       Select_Region
         (Buffer,
          Gint (Get_Buffer_Line (Buffer, Start_Line) - 1),
