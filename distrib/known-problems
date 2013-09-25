@@ -25,6 +25,13 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: do a standard click (to move the cursor) before you do a
               control-click.
 
+- M917-010: GPS: searching in folded lines does not reveal text
+  Problem:    When searching for text in code which contains folded lines,
+              when a match result is found within folded text, the text
+              is not unfolded to reveal the match.
+  Workaround: Unfold all lines using the menu Edit->Unfold all blocks
+              prior to searching.
+
 - M913-006: GPS: editing switches always modified Default_Switches
   Problem:    If you project contains a Compiler'Switches attribute, and you
               edit the project to add new switches, then GPS adds a
