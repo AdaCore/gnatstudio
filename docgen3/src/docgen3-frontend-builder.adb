@@ -22,7 +22,7 @@ with GNAT.HTable;
 with Basic_Types;             use Basic_Types;
 with Docgen3.Utils;           use Docgen3.Utils;
 with Language.Ada;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with Xref.Docgen;             use Xref.Docgen;
 with Xref;
 with GNAT.IO;
@@ -1171,8 +1171,9 @@ package body Docgen3.Frontend.Builder is
                     (Parent, Context, File, Parents (J), Forced => True);
                   Append_Parent_Type (E, Parent);
 
-                  --  The list of parents returned by Xref does not help to
-                  --  differentiate the parent type from the progenitors.
+                  --  The list of parents returned by Xref is not ordered and
+                  --  hence it does not help to differentiate the parent type
+                  --  from the progenitors.
 
                   if In_Ada_Lang then
                      if Get_Kind (Parent) /= E_Interface then

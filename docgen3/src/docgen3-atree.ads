@@ -253,6 +253,10 @@ private package Docgen3.Atree is
    function Get_Unique_Id
      (E : Entity_Id) return Natural;
 
+   function Has_Private_Parent
+     (E : Entity_Id) return Boolean;
+   --  True if E has a parent which is visible only in its full view
+
    function In_Ada_Language
      (E : Entity_Id) return Boolean;
    function In_C_Or_CPP_Language
@@ -320,6 +324,8 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_Full_View_Src
      (E : Entity_Id; Value : Unbounded_String);
+   procedure Set_Has_Private_Parent
+     (E : Entity_Id; Value : Boolean := True);
    procedure Set_Is_Decorated
      (E : Entity_Id);
    procedure Set_Is_Doc_From_Body
@@ -603,12 +609,16 @@ private
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
 
+         Has_Private_Parent : Boolean;
+         --  True if the parent type is only visible in the full view
+
          Is_Decorated      : Boolean;
          Is_Generic_Formal : Boolean;
          Is_Incomplete_Or_Private_Type : Boolean;
          Is_Internal       : Boolean;
          Is_Partial_View   : Boolean;
          Is_Private        : Boolean;
+
          Is_Tagged_Type    : Boolean;
          Idepth_Level      : Natural;
          --  Inheritance depth level of a tagged type
@@ -680,17 +690,18 @@ private
    pragma Inline (Get_Short_Name);
    pragma Inline (Get_Src);
    pragma Inline (Get_Unique_Id);
+   pragma Inline (Has_Private_Parent);
    pragma Inline (In_Ada_Language);
    pragma Inline (In_C_Or_CPP_Language);
+   pragma Inline (Is_Class_Or_Record_Type);
+   pragma Inline (Is_Decorated);
    pragma Inline (Is_Doc_From_Body);
+   pragma Inline (Is_Full_View);
    pragma Inline (Is_Generic_Formal);
    pragma Inline (Is_Incomplete_Or_Private_Type);
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
-   pragma Inline (Is_Decorated);
-   pragma Inline (Is_Full_View);
    pragma Inline (Is_Private);
-   pragma Inline (Is_Class_Or_Record_Type);
    pragma Inline (Is_Tagged_Type);
    pragma Inline (Kind_In);
    pragma Inline (No);
@@ -703,6 +714,7 @@ private
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
+   pragma Inline (Set_Has_Private_Parent);
    pragma Inline (Set_Is_Decorated);
    pragma Inline (Set_Is_Doc_From_Body);
    pragma Inline (Set_Is_Generic_Formal);

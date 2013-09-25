@@ -639,6 +639,15 @@ package body Docgen3.Atree is
       return False;
    end Has_Duplicated_Entities;
 
+   ------------------------
+   -- Has_Private_Parent --
+   ------------------------
+
+   function Has_Private_Parent (E : Entity_Id) return Boolean is
+   begin
+      return E.Has_Private_Parent;
+   end Has_Private_Parent;
+
    ---------------------
    -- In_Ada_Language --
    ---------------------
@@ -990,6 +999,8 @@ package body Docgen3.Atree is
            Scope           => No_Entity,
            Kind            => Kind,
            End_Of_Syntax_Scope_Loc => No_Location,
+
+           Has_Private_Parent => False,
 
            Is_Decorated      => False,
            Is_Doc_From_Body  => False,
@@ -1401,6 +1412,15 @@ package body Docgen3.Atree is
       pragma Assert (E.Full_View_Src = Null_Unbounded_String);
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
+
+   ----------------------------
+   -- Set_Has_Private_Parent --
+   ----------------------------
+
+   procedure Set_Has_Private_Parent (E : Entity_Id; Value : Boolean := True) is
+   begin
+      E.Has_Private_Parent := Value;
+   end Set_Has_Private_Parent;
 
    ----------------------
    -- Set_Is_Decorated --
@@ -2106,6 +2126,10 @@ package body Docgen3.Atree is
            (Vector => Get_Derivations (E),
             Header => "Derivations",
             Prefix => " - ");
+      end if;
+
+      if E.Has_Private_Parent then
+         Append_Line ("Has_Private_Parent");
       end if;
 
       if E.Is_Decorated then

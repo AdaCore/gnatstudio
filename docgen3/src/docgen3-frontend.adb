@@ -224,7 +224,7 @@ package body Docgen3.Frontend is
 
          function Get_Record_Type_Source
            (Loc          : General_Location;
-            Is_Full_View : Boolean := False) return Unbounded_String;
+            Is_Full_View : Boolean) return Unbounded_String;
          --  Retrieve the source of record type E
 
          function Get_Subprogram_Source return Unbounded_String;
@@ -352,7 +352,7 @@ package body Docgen3.Frontend is
 
          function Get_Record_Type_Source
            (Loc          : General_Location;
-            Is_Full_View : Boolean := False) return Unbounded_String
+            Is_Full_View : Boolean) return Unbounded_String
          is
             Printout : Unbounded_String;
 
@@ -492,6 +492,14 @@ package body Docgen3.Frontend is
 
                if Entity = Identifier_Text then
 
+                  --  Check if the parent type is visible in the partial view
+
+                  if not Is_Full_View
+                    and then In_Parent_Part
+                  then
+                     Set_Has_Private_Parent (E, False);
+                  end if;
+
                   --  No action needed if we already know the parent type
 
                   if In_Parent_Part
@@ -569,6 +577,11 @@ package body Docgen3.Frontend is
                            pragma Assert (Present (Parent));
 
                            Set_Parent (E, Parent);
+
+                           if Get_Progenitors (E).all.Contains (Parent) then
+                              Delete_Entity
+                                (Get_Progenitors (E).all, Parent);
+                           end if;
                         end;
                      end if;
 
@@ -651,8 +664,9 @@ package body Docgen3.Frontend is
                      Token := Tok_Semicolon;
 
                      if Par_Count = 0 then
-                        return End_Record_Found
+                        return not Is_Full_View
                           or else Is_Interface
+                          or else End_Record_Found
                           or else (With_Private
                                      and then Prev_Token = Tok_Private);
                      end if;
@@ -715,30 +729,9 @@ package body Docgen3.Frontend is
                From := Prev_Word_Begin;
             end if;
 
-            --  For simple cases (interfaces, incomplete and private types)
-            --  there is no need to use the Ada parser. We just need to locate
-            --  the ';'
-
-            if Is_Incomplete_Or_Private_Type (E)
-              and then not Is_Full_View
-            then
-               declare
-                  Idx : Natural := Entity_Index - 1;
-               begin
-                  while Idx > Buffer'First
-                    and then Buffer (Idx) /= ';'
-                  loop
-                     Idx := Idx + 1;
-                  end loop;
-
-                  Append (Buffer.all (Prev_Word_Begin .. Idx + 1));
-               end;
-
-            else
-               Parse_Entities
-                 (Lang, Buffer.all (From .. Buffer'Last),
-                  CB'Unrestricted_Access);
-            end if;
+            Parse_Entities
+              (Lang, Buffer.all (From .. Buffer'Last),
+               CB'Unrestricted_Access);
 
             return Printout;
          end Get_Record_Type_Source;
@@ -974,14 +967,33 @@ package body Docgen3.Frontend is
             Set_Src (E, Get_Subprogram_Source);
 
          elsif Is_Class_Or_Record_Type (E) then
-            Set_Src (E, Get_Record_Type_Source (LL.Get_Location (E)));
 
-            if Is_Partial_View (E)
-              and then Context.Options.Show_Private
-            then
-               Set_Full_View_Src (E,
+            --  Xref is not able to indicate us if the parent type is visible
+            --  only in the full-view of a private type. Hence we decorate it
+            --  here as visible only in the full-view and Get_Record_Type_Src
+            --  takes care of removing this flag if it is also visible in the
+            --  partial view.
+
+            if Is_Partial_View (E) then
+               Set_Has_Private_Parent (E);
+            end if;
+
+            --  Public full type declaration of a record
+
+            if not Is_Partial_View (E) then
+               Set_Src (E,
                  Get_Record_Type_Source
-                   (LL.Get_Body_Loc (E), Is_Full_View => True));
+                   (LL.Get_Location (E), Is_Full_View => True));
+            else
+               Set_Src (E,
+                 Get_Record_Type_Source
+                   (LL.Get_Location (E), Is_Full_View => False));
+
+               if Context.Options.Show_Private then
+                  Set_Full_View_Src (E,
+                    Get_Record_Type_Source
+                      (LL.Get_Body_Loc (E), Is_Full_View => True));
+               end if;
             end if;
 
          elsif LL.Is_Type (E) then

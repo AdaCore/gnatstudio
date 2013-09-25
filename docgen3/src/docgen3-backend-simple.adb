@@ -431,14 +431,18 @@ package body Docgen3.Backend.Simple is
          then
             if In_Ada_Language (E) then
                if Present (Get_Parent (E)) then
-                  Append_Line (Printout, "- Parent");
+                  if not Has_Private_Parent (E)
+                    or else Context.Options.Show_Private
+                  then
+                     Append_Line (Printout, "- Parent");
 
-                  ReST_Append_Reference
-                    (Printout => Printout,
-                     Entity   => Get_Parent (E),
-                     Prefix   => "   * ");
+                     ReST_Append_Reference
+                       (Printout => Printout,
+                        Entity   => Get_Parent (E),
+                        Prefix   => "   * ");
 
-                  Append_Line (Printout, "");
+                     Append_Line (Printout, "");
+                  end if;
                end if;
 
                ReST_Append_List
