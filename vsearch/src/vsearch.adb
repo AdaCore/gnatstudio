@@ -2223,7 +2223,8 @@ package body Vsearch is
                Success := Vsearch.Context_Combo.Set_Active_Id (Context.all);
             end if;
 
-            Grab_Focus (Vsearch.Pattern_Combo.Get_Child);
+            Grab_Toplevel_Focus
+              (Get_MDI (Kernel), Vsearch.Pattern_Combo.Get_Child);
          end;
       end if;
 
