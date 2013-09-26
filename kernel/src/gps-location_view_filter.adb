@@ -22,6 +22,7 @@ with Basic_Types;
 with GPS.Editors.GtkAda;          use GPS.Editors.GtkAda;
 with GPS.Location_View.Listener;
 with GNATCOLL.Utils;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
 with Glib;                        use Glib;
 with Glib.Values;                 use Glib.Values;
@@ -243,19 +244,8 @@ package body GPS.Location_View_Filter is
 
       P2 := Parent (Child_Model, P);
       if P2 = Null_Iter then
-         --  File rows are displayed only when they have visible messages.
-
-         Child := Children (Child_Model, Iter);
-         while Child /= Null_Iter loop
-            if Is_Visible (Child_Model, Child, Self) then
-               return True;
-            end if;
-            Next (Child_Model, Child);
-         end loop;
-         return False;
-
-      else
-         --  Messages rows are displayed when they match filter.
+         --  File rows are displayed only when they have visible messages,
+         --  or when the file name itself matches
 
          declare
             Text  : constant String := Get_String
@@ -266,6 +256,42 @@ package body GPS.Location_View_Filter is
                Found := GNAT.Regpat.Match (Self.Regexp.all, Text);
             elsif Self.Text /= null then
                Found := Ada.Strings.Fixed.Index (Text, Self.Text.all) /= 0;
+            end if;
+
+            if Found then
+               return True;
+            end if;
+
+            Child := Children (Child_Model, Iter);
+            while Child /= Null_Iter loop
+               if Is_Visible (Child_Model, Child, Self) then
+                  return True;
+               end if;
+               Next (Child_Model, Child);
+            end loop;
+            return False;
+         end;
+
+      else
+         --  Messages rows are displayed when they match filter (or when their
+         --  location does).
+
+         declare
+            Text  : constant String := Get_String
+              (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
+            File : constant Virtual_File :=
+              Get_File
+                (Child_Model, Iter, GPS.Location_View.Listener.File_Column);
+            Found : Boolean := False;
+         begin
+            if Self.Regexp /= null then
+               Found := GNAT.Regpat.Match (Self.Regexp.all, Text)
+                 or else GNAT.Regpat.Match
+                   (Self.Regexp.all, File.Display_Base_Name);
+            elsif Self.Text /= null then
+               Found := Ada.Strings.Fixed.Index (Text, Self.Text.all) /= 0
+                 or else Ada.Strings.Fixed.Index
+                   (Text, File.Display_Base_Name) /= 0;
             else
                return True;
             end if;
