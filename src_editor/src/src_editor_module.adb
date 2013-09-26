@@ -1908,6 +1908,7 @@ package body Src_Editor_Module is
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
+         Get_View (Current).Scroll_To_Cursor_Location;
       end if;
 
    exception
