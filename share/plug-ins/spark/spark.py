@@ -1165,6 +1165,13 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
+     <name>Release_Note_11p1p0.htm</name>
+     <descr>Release Note 11.1</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 11.1</menu>
+  </documentation_file>
+
+  <documentation_file>
      <name>Release_Note_11p0p0.htm</name>
      <descr>Release Note 11.0</descr>
      <category>Spark</category>
