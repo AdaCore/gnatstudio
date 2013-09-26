@@ -275,7 +275,7 @@ package body Build_Configurations.Gtkada is
       Target_UI := new Target_UI_Record;
       Target_UI.Registry := Registry;
       Gtk.Scrolled_Window.Initialize (Target_UI);
-      Target_UI.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Target_UI.Set_Policy (Policy_Never, Policy_Never);
    end Gtk_New;
 
    ------------------

@@ -37,6 +37,7 @@ with Gtk.Radio_Button;       use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Size_Group;         use Gtk.Size_Group;
 with Gtk.Spin_Button;        use Gtk.Spin_Button;
+with Gtk.Style_Context;      use Gtk.Style_Context;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Toggle_Button;      use Gtk.Toggle_Button;
@@ -788,21 +789,36 @@ package body Switches_Chooser.Gtkada is
    is
       Combo                   : Gtk_Combo_Box_Text;
       Widget_For_Command_Line : Gtk_Widget;
+      Scroll                  : Gtk_Scrolled_Window;
+      Table                   : Gtk_Table;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
 
       Initialize (Editor.all, Config);
-      Gtk.Table.Initialize
-        (Editor,
-         Rows        => Guint (Config.Lines) + 1,
-         Columns     => Guint (Config.Columns),
-         Homogeneous => False);
-      Create_Box_For_Popup
-        (Editor    => Editor,
-         Popup     => Main_Window,
-         Table     => Editor,
-         Lines     => Config.Lines,
-         Columns   => Config.Columns);
+      Gtk.Box.Initialize_Vbox (Editor);
+
+      if not Config.Switches.Is_Empty then
+         Gtk_New (Scroll);
+         Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
+
+         Gtk_New
+           (Table,
+            Rows        => Guint (Config.Lines) + 1,
+            Columns     => Guint (Config.Columns),
+            Homogeneous => False);
+
+         Scroll.Set_Size_Request (-1, 120);
+         Scroll.Add (Table);
+
+         Pack_Start (Editor, Scroll, True, True, 2);
+
+         Create_Box_For_Popup
+           (Editor    => Editor,
+            Popup     => Main_Window,
+            Table     => Table,
+            Lines     => Config.Lines,
+            Columns   => Config.Columns);
+      end if;
 
       if History = null then
          Gtk_New (Editor.Ent);
@@ -820,10 +836,7 @@ package body Switches_Chooser.Gtkada is
          begin
             Gtk_New_Hbox (Hbox);
             Pack_Start (Hbox, Widget_For_Command_Line, True, True, 0);
-            Attach (Editor, Hbox,
-                    0, Guint (Config.Columns),
-                    Guint (Config.Lines), Guint (Config.Lines) + 1,
-                    Yoptions => 0);
+            Pack_Start (Editor, Hbox, False, False, 2);
          end;
          Set_Tooltip_Text
            (Editor.Ent,
@@ -836,6 +849,8 @@ package body Switches_Chooser.Gtkada is
       end if;
 
       On_Command_Line_Changed (Editor.all, "");
+
+      Get_Style_Context (Editor).Add_Class ("gps-switches-editor");
    end Initialize;
 
    ---------------

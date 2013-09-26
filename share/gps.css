@@ -62,6 +62,10 @@
    background: shade(@theme_base_color, 0.93);
 }
 
+.gps-switches-editor GtkScrolledWindow {
+   background: @theme_base_color;
+}
+
 .gps-local-toolbar * {
    margin: 0px;
    padding: 0px;

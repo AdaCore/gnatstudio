@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Gtk.GEntry;
-with Gtk.Table;
+with Gtk.Box;
 with Gtk.Widget;
 
 with Histories; use Histories;
@@ -24,7 +24,8 @@ with Histories; use Histories;
 package Switches_Chooser.Gtkada is
 
    package Gtk_Switches_Editors is new Switches_Editors
-     (Gtk.Widget.Gtk_Widget_Record, Gtk.Table.Gtk_Table_Record);
+     (Gtk.Widget.Gtk_Widget_Record,
+      Gtk.Box.Gtk_Vbox_Record);
 
    type Switches_Editor_Record is new Gtk_Switches_Editors.Root_Switches_Editor
    with private;
