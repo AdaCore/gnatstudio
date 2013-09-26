@@ -831,6 +831,10 @@ directories (see :ref:`The_Build_Mode`).
 As for scenario variables, the mode can be changed by clicking on the value
 and selecting a new value in the popup window.
 
+If you are not using build modes and want to save some space on the screen,
+you can use the local settings menu :guilabel:`Show build modes` to disable
+the display.
+
 .. index:: windows; files view
 .. _The_File_View:
 

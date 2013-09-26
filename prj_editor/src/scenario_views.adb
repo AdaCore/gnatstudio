@@ -30,6 +30,8 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.List_Store;           use Gtk.List_Store;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                use Gtk.Stock;
@@ -62,10 +64,10 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;
+with Histories;                 use Histories;
 with Project_Viewers;           use Project_Viewers;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
-with GUI_Utils;                 use GUI_Utils;
 with XML_Utils;                 use XML_Utils;
 
 package body Scenario_Views is
@@ -89,12 +91,16 @@ package body Scenario_Views is
 
    type Scenario_View_Record is new Generic_Views.View_Record with record
       View          : Gtk.Tree_View.Gtk_Tree_View;
-      Scenario_Node : Gtk_Tree_Path;
-      Build_Node    : Gtk_Tree_Path;
+      Scenario_Node : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Build_Node    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+
    end record;
    overriding procedure Create_Toolbar
      (View    : not null access Scenario_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Scenario_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (View    : access Scenario_View_Record'Class)
@@ -112,7 +118,7 @@ package body Scenario_Views is
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => True,
-      Local_Config       => False,
+      Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left);
    use Scenario_Views;
@@ -146,6 +152,9 @@ package body Scenario_Views is
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
+   procedure On_Force_Refresh (View : access GObject_Record'Class);
+   --  Force a refresh of the view when some settings have changed.
+
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -165,6 +174,9 @@ package body Scenario_Views is
      "Scenario delete variable";
    Command_Delete_Variable_Tip : constant String :=
      "Delete the selected variable";
+
+   Hist_Show_Build_Modes : constant History_Key :=
+     "scenario-show-build-modes";
 
    type Command_Edit_Variable is new Interactive_Command with null record;
    overriding function Execute
@@ -216,9 +228,12 @@ package body Scenario_Views is
       View  : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
       Mode  : constant String := String_Hooks_Args (Data.all).Value;
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
-      Build : constant Gtk_Tree_Iter := Model.Get_Iter (View.Build_Node);
+      Build : Gtk_Tree_Iter;
    begin
-      Model.Set (Build, 1, Mode);
+      if View.Build_Node /= Null_Gtk_Tree_Path then
+         Build := Model.Get_Iter (View.Build_Node);
+         Model.Set (Build, 1, Mode);
+      end if;
    end On_Build_Mode_Changed;
 
    ----------------
@@ -229,9 +244,6 @@ package body Scenario_Views is
      (View    : access Scenario_View_Record'Class)
       return Gtk_Widget
    is
-      Module : constant Scenario_View_Module :=
-        Scenario_View_Module (Scenario_Views.Get_Module);
-
       Hook     : Refresh_Hook;
       Scrolled : Gtk_Scrolled_Window;
       Model    : Gtk_Tree_Store;
@@ -239,8 +251,6 @@ package body Scenario_Views is
       Text     : Gtk_Cell_Renderer_Text;
       Combo    : Gtk_Cell_Renderer_Combo;
       Col_Number : Gint;
-      Val      : GValue;
-      Iter     : Gtk_Tree_Iter;
       Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
       pragma Unreferenced (Col_Number);
    begin
@@ -297,26 +307,6 @@ package body Scenario_Views is
       Set_Property (Combo, Has_Entry_Property, False);
 
       Combo.On_Changed (Variable_Value_Changed'Access, View);
-
-      --  Show the build modes
-
-      Model.Append (Iter, Null_Iter);
-      View.Build_Node := Model.Get_Path (Iter);
-      Model.Set (Iter, 0, "Build mode");
-      Model.Set (Iter, 1, View.Kernel.Get_Build_Mode);
-      Model.Set (Iter, 3, True);  --  editable
-      Model.Set (Iter, 4, To_String (Module.Modes_Help));
-      Init (Val, Gtk.List_Store.Get_Type);
-      Set_Object (Val, Module.Modes);
-      Model.Set_Value (Iter, 2, Val);
-      Unset (Val);
-
-      --  Prepare the scenario variables node
-
-      Model.Append (Iter, Null_Iter);
-      View.Scenario_Node := Model.Get_Path (Iter);
-      Model.Set (Iter, 0, "Scenario Variables");
-      Model.Set (Iter, 3, False);  --  not editable
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -541,6 +531,34 @@ package body Scenario_Views is
       return Commands.Success;
    end Execute;
 
+   ----------------------
+   -- On_Force_Refresh --
+   ----------------------
+
+   procedure On_Force_Refresh (View : access GObject_Record'Class) is
+      V : constant Scenario_View := Scenario_View (View);
+      Cmd : Refresh_Hook_Record;
+   begin
+      Cmd.View := V;
+      Cmd.Execute (Kernel => V.Kernel);
+   end On_Force_Refresh;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Scenario_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check    : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, Label => -"Show build modes");
+      Associate (Get_History (View.Kernel).all, Hist_Show_Build_Modes, Check);
+      Menu.Append (Check);
+      Check.On_Toggled (On_Force_Refresh'Access, View);
+   end Create_Menu;
+
    --------------------
    -- Create_Toolbar --
    --------------------
@@ -582,13 +600,17 @@ package body Scenario_Views is
    overriding procedure Execute
      (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class)
    is
+      Module : constant Scenario_View_Module :=
+        Scenario_View_Module (Scenario_Views.Get_Module);
       V      : constant Scenario_View := Hook.View;
       Row    : Guint;
       pragma Unreferenced (Row);
       Iter   : Gtk_Tree_Iter;
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
       Val    : GValue;
-      Scenario : constant Gtk_Tree_Iter := Model.Get_Iter (V.Scenario_Node);
+      Scenario : Gtk_Tree_Iter;
+      Show_Build : constant Boolean :=
+        Get_History (Get_History (V.Kernel).all, Hist_Show_Build_Modes);
    begin
       Trace (Me, "Recomputing list of scenario variables");
 
@@ -599,13 +621,40 @@ package body Scenario_Views is
       --  This also saves some refreshing when the values would be reflected
       --  automatically anyway.
 
-      Remove_Child_Nodes (Model, Scenario);
+      Path_Free (V.Scenario_Node);
+      Path_Free (V.Build_Node);
+      Model.Clear;
+
+      if Show_Build then
+         Model.Append (Iter, Null_Iter);
+         V.Build_Node := Model.Get_Path (Iter);
+         Model.Set (Iter, 0, "Build mode");
+         Model.Set (Iter, 1, V.Kernel.Get_Build_Mode);
+         Model.Set (Iter, 3, True);  --  editable
+         Model.Set (Iter, 4, To_String (Module.Modes_Help));
+         Init (Val, Gtk.List_Store.Get_Type);
+         Set_Object (Val, Module.Modes);
+         Model.Set_Value (Iter, 2, Val);
+         Unset (Val);
+
+         Model.Append (Iter, Null_Iter);
+         V.Scenario_Node := Model.Get_Path (Iter);
+         Model.Set (Iter, 0, "Scenario Variables");
+         Model.Set (Iter, 3, False);  --  not editable
+
+         Scenario := Iter;
+         --  Remove_Child_Nodes (Model, Scenario);
+
+      else
+         V.Build_Node := Null_Gtk_Tree_Path;
+         V.Scenario_Node := Null_Gtk_Tree_Path;
+         Scenario := Null_Iter;
+      end if;
 
       declare
          Scenar_Var : constant Scenario_Variable_Array :=
            Scenario_Variables (Kernel);
          Dummy : Boolean;
-         P : Gtk_Tree_Path;
          pragma Unreferenced (Dummy);
       begin
          if Scenar_Var'Length /= 0 then
@@ -629,9 +678,10 @@ package body Scenario_Views is
                end;
             end loop;
 
-            P := Model.Get_Path (Scenario);
-            Dummy := V.View.Expand_Row (Path => P, Open_All => False);
-            Path_Free (P);
+            if Show_Build then
+               Dummy := V.View.Expand_Row
+                 (Path => V.Scenario_Node, Open_All => False);
+            end if;
          end if;
       end;
    end Execute;
@@ -699,6 +749,9 @@ package body Scenario_Views is
       Scenario_Views.Register_Module
         (Kernel,
          ID        => Module_ID (M));
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Build_Modes, True);
 
       Command := new Command_Edit_Variable;
       Register_Action
