@@ -15,12 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
-with GNAT.Regpat;
-
-with Basic_Types;
 with GPS.Editors.GtkAda;          use GPS.Editors.GtkAda;
 with GPS.Location_View.Listener;
+with GPS.Search;                  use GPS.Search;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
@@ -227,15 +224,12 @@ package body GPS.Location_View_Filter is
       Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self        : Location_View_Filter_Model) return Boolean
    is
-      use type GNAT.Expect.Pattern_Matcher_Access;
-      use type GNAT.Strings.String_Access;
-
       P     : constant Gtk_Tree_Iter := Parent (Child_Model, Iter);
       P2    : Gtk_Tree_Iter;
       Child : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
-      if P = Null_Iter then
+      if P = Null_Iter or else Self.Pattern = null then
          --  Category rows are displayed always, otherwise view doesn't
          --  display any rows at all when model is filled from empty state.
 
@@ -250,15 +244,8 @@ package body GPS.Location_View_Filter is
          declare
             Text  : constant String := Get_String
               (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
-            Found : Boolean := False;
          begin
-            if Self.Regexp /= null then
-               Found := GNAT.Regpat.Match (Self.Regexp.all, Text);
-            elsif Self.Text /= null then
-               Found := Ada.Strings.Fixed.Index (Text, Self.Text.all) /= 0;
-            end if;
-
-            if Found then
+            if Self.Pattern.Start (Text) /= No_Match then
                return True;
             end if;
 
@@ -282,19 +269,11 @@ package body GPS.Location_View_Filter is
             File : constant Virtual_File :=
               Get_File
                 (Child_Model, Iter, GPS.Location_View.Listener.File_Column);
-            Found : Boolean := False;
+            Found : Boolean;
          begin
-            if Self.Regexp /= null then
-               Found := GNAT.Regpat.Match (Self.Regexp.all, Text)
-                 or else GNAT.Regpat.Match
-                   (Self.Regexp.all, File.Display_Base_Name);
-            elsif Self.Text /= null then
-               Found := Ada.Strings.Fixed.Index (Text, Self.Text.all) /= 0
-                 or else Ada.Strings.Fixed.Index
-                   (Text, File.Display_Base_Name) /= 0;
-            else
-               return True;
-            end if;
+            Found := Self.Pattern.Start (Text) /= No_Match
+              or else Self.Pattern.Start (File.Display_Base_Name) /=
+              No_Match;
 
             if Self.Is_Hide then
                Found := not Found;
@@ -315,34 +294,16 @@ package body GPS.Location_View_Filter is
       Is_Regexp    : Boolean;
       Hide_Matched : Boolean)
    is
-      New_Regexp : GNAT.Expect.Pattern_Matcher_Access;
-      New_Text   : GNAT.Strings.String_Access;
-
    begin
-      Basic_Types.Unchecked_Free (Self.Regexp);
-      GNAT.Strings.Free (Self.Text);
+      Free (Self.Pattern);
 
       if Pattern /= "" then
-         if Is_Regexp then
-            begin
-               New_Regexp := new GNAT.Regpat.Pattern_Matcher'
-                 (GNAT.Regpat.Compile (Pattern));
-
-            exception
-               when GNAT.Regpat.Expression_Error =>
-                  New_Regexp := null;
-                  New_Text   := new String'(Pattern);
-            end;
-
-         else
-            New_Text := new String'(Pattern);
-         end if;
+         Self.Pattern := Build
+           (Pattern => Pattern,
+            Kind    => (if Is_Regexp then Regexp else Full_Text));
       end if;
 
-      Self.Regexp  := New_Regexp;
-      Self.Text    := New_Text;
       Self.Is_Hide := Hide_Matched;
-
       Self.Refilter;
    end Set_Pattern;
 

@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-private with GNAT.Expect;
-private with GNAT.Strings;
+with GPS.Search;
 with Gtk.Tree_Model_Filter;
 with Gtk.Tree_Model;
 
@@ -44,8 +43,7 @@ private
    type Location_View_Filter_Model_Record is
      new Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter_Record
    with record
-      Regexp  : GNAT.Expect.Pattern_Matcher_Access;
-      Text    : GNAT.Strings.String_Access;
+      Pattern : GPS.Search.Search_Pattern_Access;
       Is_Hide : Boolean := False;
    end record;
 
