@@ -227,9 +227,10 @@ package body GPS.Location_View_Filter is
       P     : constant Gtk_Tree_Iter := Parent (Child_Model, Iter);
       P2    : Gtk_Tree_Iter;
       Child : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Found : Boolean;
 
    begin
-      if P = Null_Iter or else Self.Pattern = null then
+      if P = Null_Iter then
          --  Category rows are displayed always, otherwise view doesn't
          --  display any rows at all when model is filled from empty state.
 
@@ -245,8 +246,12 @@ package body GPS.Location_View_Filter is
             Text  : constant String := Get_String
               (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
          begin
-            if Self.Pattern.Start (Text) /= No_Match then
-               return True;
+            if Self.Pattern /= null then
+               Found := Self.Pattern.Start (Text) /= No_Match;
+               if Self.Is_Hide then
+                  Found := not Found;
+               end if;
+               return Found;
             end if;
 
             Child := Children (Child_Model, Iter);
@@ -269,17 +274,20 @@ package body GPS.Location_View_Filter is
             File : constant Virtual_File :=
               Get_File
                 (Child_Model, Iter, GPS.Location_View.Listener.File_Column);
-            Found : Boolean;
          begin
-            Found := Self.Pattern.Start (Text) /= No_Match
-              or else Self.Pattern.Start (File.Display_Base_Name) /=
-              No_Match;
+            if Self.Pattern = null then
+               return True;
+            else
+               Found := Self.Pattern.Start (Text) /= No_Match
+                 or else Self.Pattern.Start (File.Display_Base_Name) /=
+                    No_Match;
 
-            if Self.Is_Hide then
-               Found := not Found;
+               if Self.Is_Hide then
+                  Found := not Found;
+               end if;
+
+               return Found;
             end if;
-
-            return Found;
          end;
       end if;
    end Is_Visible;
