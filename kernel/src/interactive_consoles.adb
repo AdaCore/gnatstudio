@@ -331,7 +331,6 @@ package body Interactive_Consoles is
    begin
       if Get_Window (Console.Console) /= null then
          if Grab then
-            Console.Took_Grab := Console.Took_Grab + 1;
             --  Grab only on the first incrementation, so that subsequent calls
             --  to Grab_Events for this console won't grab. Also, if we already
             --  have a grab at the Gtk level (for instance when the user is
@@ -342,24 +341,30 @@ package body Interactive_Consoles is
             --  taken (G305-005). Grab the mouse, keyboard,... so as to avoid
             --  recursive loops in GPS (user selecting a menu
             --  while python is running).
-            if Console.Took_Grab = 1
-              and then Gtk.Main.Grab_Get_Current = null
+
+            if Gtk.Main.Grab_Get_Current = null
+              or else Console.Took_Grab > 0 then
+               Console.Took_Grab := Console.Took_Grab + 1;
+            end if;
+
+            if Gtk.Main.Grab_Get_Current = null
+              and then Console.Took_Grab = 1
             then
-               Ref (Console.Console);
-               Console.Console.Grab_Add;
+                  Ref (Console.Console);
+                  Console.Console.Grab_Add;
             end if;
 
          else
             --  Note: the widget might have been destroyed by the python
             --  command, we need to check that it still exists.
             if Console.Took_Grab = 1 then
+
                Console.Console.Grab_Remove;
                Unref (Console.Console);
             end if;
             if Console.Took_Grab >= 1 then
                Console.Took_Grab := Console.Took_Grab - 1;
             end if;
-
          end if;
       end if;
    end Grab_Events;
