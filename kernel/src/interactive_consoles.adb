@@ -79,7 +79,7 @@ package body Interactive_Consoles is
    with record
       Console   : Interactive_Console;
       Script    : Scripting_Language;
-      Took_Grab : Boolean := False;
+      Took_Grab : Natural := 0;
       Child     : MDI_Child := null;
       --  MDI_Child cached, used in Insert_Error
    end record;
@@ -329,34 +329,37 @@ package body Interactive_Consoles is
    overriding procedure Grab_Events
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean) is
    begin
-      if Grab then
-         Console.Took_Grab := False;
-
-         if Get_Window (Console.Console) /= null then
-            --  If we already have a grab (for instance when the user is
+      if Get_Window (Console.Console) /= null then
+         if Grab then
+            Console.Took_Grab := Console.Took_Grab + 1;
+            --  Grab only on the first incrementation, so that subsequent calls
+            --  to Grab_Events for this console won't grab. Also, if we already
+            --  have a grab at the Gtk level (for instance when the user is
             --  displaying a menu and we are running the python command as a
-            --  filter for that menu), no need to take another. In fact,
-            --  taking another would break the above scenario, since in
-            --  gtkmenu.c the handler for grab_notify cancels the menu when
-            --  another grab is taken (G305-005).
-
-            if Gtk.Main.Grab_Get_Current = null then
-               --  Grab the mouse, keyboard,... so as to avoid recursive loops
-               --  in GPS (user selecting a menu while python is running).
+            --  filter for that menu), no need to take another. In fact, taking
+            --  another would break the above scenario, since in gtkmenu.c the
+            --  handler for grab_notify cancels the menu when another grab is
+            --  taken (G305-005). Grab the mouse, keyboard,... so as to avoid
+            --  recursive loops in GPS (user selecting a menu
+            --  while python is running).
+            if Console.Took_Grab = 1
+              and then Gtk.Main.Grab_Get_Current = null
+            then
                Ref (Console.Console);
-
                Console.Console.Grab_Add;
-               Console.Took_Grab := True;
             end if;
-         end if;
 
-      else
-         --  Note: the widget might have been destroyed by the python command,
-         --  we need to check that it still exists.
+         else
+            --  Note: the widget might have been destroyed by the python
+            --  command, we need to check that it still exists.
+            if Console.Took_Grab = 1 then
+               Console.Console.Grab_Remove;
+               Unref (Console.Console);
+            end if;
+            if Console.Took_Grab >= 1 then
+               Console.Took_Grab := Console.Took_Grab - 1;
+            end if;
 
-         if Console.Took_Grab then
-            Console.Console.Grab_Remove;
-            Unref (Console.Console);
          end if;
       end if;
    end Grab_Events;
