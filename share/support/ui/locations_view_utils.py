@@ -4,8 +4,10 @@
 
 
 import GPS
+import gps_utils
 
-def message_compare (a, b):
+
+def message_compare(a, b):
     """ Comparison function between two messages: compare messages based on
         line, then column, then text.
     """
@@ -33,8 +35,20 @@ def remove_markup(text):
 
     return result
 
-def export_locations_to_editor (menu):
-    """ Export all messages listed in the Locations view to an editor.
+
+def in_locations_filter(context):
+   return context.module_name == "Location_View_Record"
+
+
+@gps_utils.interactive(
+    name="export locations to editor",
+    menu="/File/Locations/_Export Locations to Editor",
+    contextual="Export messages to editor",
+    filter=in_locations_filter,
+    after="Change Directory...")
+def export_locations_to_editor():
+    """
+    Export all messages listed in the Locations view to an editor.
     """
 
     categories = {}
@@ -59,7 +73,7 @@ def export_locations_to_editor (menu):
                 categories[category]={file:[m]}
 
     if not categories:
-        GPS.MDI.dialog ("The Locations view is empty.")
+        GPS.MDI.dialog("The Locations view is empty.")
         return
 
     # Construct a string that we will write in the editor
@@ -90,17 +104,9 @@ def export_locations_to_editor (menu):
 
     # Open an editor
 
-    GPS.execute_action ("/File/New")
+    GPS.execute_action("/File/New")
     buf = GPS.EditorBuffer.get()
 
     # Write the contents
-    buf.insert (GPS.EditorLocation (buf, 1, 1), text)
+    buf.insert(GPS.EditorLocation (buf, 1, 1), text)
 
-def on_filter (context):
-   return context.module_name == "Location View"
-
-GPS.Menu.create("/File/Messages", ref="Change Directory...", add_before=False)
-GPS.Menu.create("/File/Messages/_Export Locations to Editor", export_locations_to_editor)
-GPS.Contextual ("Export messages to editor").create (
-  on_activate=export_locations_to_editor,
-  filter=on_filter)
