@@ -342,6 +342,10 @@ package body Interactive_Consoles is
             --  recursive loops in GPS (user selecting a menu
             --  while python is running).
 
+            --  We only want to increment when either
+            --    * There is a grab and it is from us
+            --      (Grab_Get_Current is not null and Console.Took_Grab > 0)
+            --    * There  is no grab
             if Gtk.Main.Grab_Get_Current = null
               or else Console.Took_Grab > 0 then
                Console.Took_Grab := Console.Took_Grab + 1;
