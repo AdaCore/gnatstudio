@@ -547,25 +547,20 @@ package body GPS.Tree_View.Locations is
       return Result;
    end Signals_Parameters;
 
-   ----------------------
-   -- Sort_By_Location --
-   ----------------------
+   ---------------
+   -- Set_Order --
+   ---------------
 
-   procedure Sort_By_Location
-     (Self : not null access GPS_Locations_Tree_View_Record'Class) is
+   procedure Set_Order
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      File_Order : GPS.Location_View_Sort.File_Sort_Order;
+      Msg_Order  : GPS.Location_View_Sort.Messages_Sort_Order)
+   is
    begin
-      Self.Sort.Set_Order (By_Location);
-   end Sort_By_Location;
-
-   -------------------------
-   -- Sort_By_Subcategory --
-   -------------------------
-
-   procedure Sort_By_Subcategory
-     (Self : not null access GPS_Locations_Tree_View_Record'Class) is
-   begin
-      Self.Sort.Set_Order (By_Weight);
-   end Sort_By_Subcategory;
+      Self.Sort.Set_Order
+        (File_Order => File_Order,
+         Msg_Order  => Msg_Order);
+   end Set_Order;
 
    ---------------------------
    -- To_Lowerst_Model_Iter --

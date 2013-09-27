@@ -57,17 +57,15 @@ package body GPS.Location_View_Sort is
       B     : Gtk_Tree_Iter) return Gint;
    --  Compare A and B in path order.
 
-   function Compare_By_Location
-     (Self : Gtk_Tree_Model;
-      A    : Gtk_Tree_Iter;
-      B    : Gtk_Tree_Iter) return Gint;
-   --  Compares rows in locations order
+   function Compare_Nodes
+     (Child : Gtk_Tree_Model;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter;
+      Self  : Locations_Proxy_Model) return Gint;
+   --  Compares rows
 
-   function Compare_By_Weight
-     (Self : Gtk_Tree_Model;
-      A    : Gtk_Tree_Iter;
-      B    : Gtk_Tree_Iter) return Gint;
-   --  Compares rows in weight order first
+   package Set_Sort is new Set_Default_Sort_Func_User_Data
+     (Locations_Proxy_Model);
 
    -------------
    -- Compare --
@@ -91,120 +89,93 @@ package body GPS.Location_View_Sort is
       return Result;
    end Compare;
 
-   -------------------------
-   -- Compare_By_Location --
-   -------------------------
+   -------------------
+   -- Compare_Nodes --
+   -------------------
 
-   function Compare_By_Location
-     (Self : Gtk_Tree_Model;
-      A    : Gtk_Tree_Iter;
-      B    : Gtk_Tree_Iter) return Gint
+   function Compare_Nodes
+     (Child : Gtk_Tree_Model;
+      A     : Gtk_Tree_Iter;
+      B     : Gtk_Tree_Iter;
+      Self  : Locations_Proxy_Model) return Gint
    is
-      Path  : constant Gtk_Tree_Path := Get_Path (Self, A);
+      Path  : constant Gtk_Tree_Path := Get_Path (Child, A);
       Depth : constant Natural := Natural (Get_Depth (Path));
+      Hint  : Sort_Order_Hint;
 
    begin
-      --  GtkTreeSortModel breaks underlying order of equal rows, so return
-      --  result of compare of last indices to save underlying order.
-
       Path_Free (Path);
 
       if Depth = 2 then
          --  File level node
 
-         case Sort_Order_Hint'Val
-           (Get_Int (Self, A, Sort_Order_Hint_Column))
-         is
-            when Chronological =>
-               return Compare_In_Path_Order (Self, A, B);
+         case Self.File_Order is
+            when Category_Default_Sort =>
+               Hint := Sort_Order_Hint'Val
+                 (Get_Int (Child, A, Sort_Order_Hint_Column));
+
+               case Self.Messages_Order is
+                  when By_Weight =>
+                     case Hint is
+                        when Chronological =>
+                           return Compare
+                             (Child, A, B,
+                              (Compare_In_Weight_Order'Access,
+                               Compare_In_Path_Order'Access));
+
+                        when Sort_Order_Hint'(Alphabetical) =>
+                           return Compare
+                             (Child, A, B,
+                              (Compare_In_Weight_Order'Access,
+                               Compare_In_Base_Name_Order'Access,
+                               Compare_In_Path_Order'Access));
+                     end case;
+
+                  when others =>
+                     case Hint is
+                        when Chronological =>
+                           return Compare_In_Path_Order (Child, A, B);
+
+                        when Sort_Order_Hint'(Alphabetical) =>
+                           return Compare
+                             (Child, A, B,
+                              (Compare_In_Base_Name_Order'Access,
+                               Compare_In_Path_Order'Access));
+                     end case;
+               end case;
 
             when Alphabetical =>
-               return
-                 Compare
-                   (Self,
-                    A,
-                    B,
-                    (Compare_In_Base_Name_Order'Access,
-                     Compare_In_Path_Order'Access));
+               return Compare
+                 (Child, A, B,
+                  (Compare_In_Base_Name_Order'Access,
+                   Compare_In_Path_Order'Access));
          end case;
 
       elsif Depth = 3 then
          --  Message level node
 
-         return
-           Compare
-             (Self,
-              A,
-              B,
-              (Compare_In_Line_Column_Order'Access,
-               Compare_In_Path_Order'Access));
+         case Self.Messages_Order is
+            when By_Location =>
+               return Compare
+                 (Child, A, B,
+                  (Compare_In_Line_Column_Order'Access,
+                   Compare_In_Path_Order'Access));
 
-      else
-         return Compare_In_Path_Order (Self, A, B);
-      end if;
-   end Compare_By_Location;
-
-   -----------------------
-   -- Compare_By_Weight --
-   -----------------------
-
-   function Compare_By_Weight
-     (Self : Gtk_Tree_Model;
-      A    : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B    : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
-   is
-      Path     : constant Gtk_Tree_Path := Get_Path (Self, A);
-      Depth    : Natural;
-
-   begin
-      --  GtkTreeSortModel breaks underling order of equal rows, so return
-      --  result of compare of last indices to save underling order.
-
-      Depth := Natural (Get_Depth (Path));
-      Path_Free (Path);
-
-      if Depth = 2 then
-         --  File level node
-
-         case Sort_Order_Hint'Val
-           (Get_Int (Self, A, Sort_Order_Hint_Column))
-         is
-            when Chronological =>
-               return
-                 Compare
-                   (Self,
-                    A,
-                    B,
-                    (Compare_In_Weight_Order'Access,
-                     Compare_In_Path_Order'Access));
-
-            when Alphabetical =>
-               return
-                 Compare
-                   (Self,
-                    A,
-                    B,
-                    (Compare_In_Weight_Order'Access,
-                     Compare_In_Base_Name_Order'Access,
-                     Compare_In_Path_Order'Access));
+            when By_Weight =>
+               return Compare
+                 (Child, A, B,
+                  (Compare_In_Weight_Order'Access,
+                   Compare_In_Line_Column_Order'Access,
+                   Compare_In_Path_Order'Access));
          end case;
 
-      elsif Depth = 3 then
-         --  Message level node
-
-         return
-           Compare
-             (Self,
-              A,
-              B,
-              (Compare_In_Weight_Order'Access,
-               Compare_In_Line_Column_Order'Access,
-               Compare_In_Path_Order'Access));
-
       else
-         return Compare_In_Path_Order (Self, A, B);
+         --  GtkTreeSortModel breaks underlying order of equal rows, so return
+         --  result of compare of last indices to save underlying order.
+
+         return Compare_In_Path_Order (Child, A, B);
       end if;
-   end Compare_By_Weight;
+   end Compare_Nodes;
 
    --------------------------------
    -- Compare_In_Base_Name_Order --
@@ -326,7 +297,8 @@ package body GPS.Location_View_Sort is
       Model := new Locations_Proxy_Model_Record;
       Gtk.Tree_Model_Sort.Initialize_With_Model
         (Model, Child_Model => To_Interface (Source));
-      Model.Set_Order (By_Location);
+
+      Set_Sort.Set_Default_Sort_Func (Model, Compare_Nodes'Access, Model);
    end Gtk_New;
 
    ---------------
@@ -334,17 +306,16 @@ package body GPS.Location_View_Sort is
    ---------------
 
    procedure Set_Order
-     (Self  : not null access Locations_Proxy_Model_Record'Class;
-      Order : Sort_Order)
+     (Self       : not null access Locations_Proxy_Model_Record'Class;
+      File_Order : File_Sort_Order;
+      Msg_Order  : Messages_Sort_Order)
    is
    begin
-      case Order is
-         when By_Location =>
-            Self.Set_Default_Sort_Func (Compare_By_Location'Access);
+      Self.Messages_Order := Msg_Order;
+      Self.File_Order := File_Order;
 
-         when By_Weight =>
-            Self.Set_Default_Sort_Func (Compare_By_Weight'Access);
-      end case;
+      --  Force a re-sort
+      Set_Sort.Set_Default_Sort_Func (Self, Compare_Nodes'Access, Self);
    end Set_Order;
 
 end GPS.Location_View_Sort;

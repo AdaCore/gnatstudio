@@ -26,7 +26,8 @@ New features in GPS 6.0.0 / GNATbench 2.8.0
 NF-60-M926-036 GPS: filter in Locations matches on file names (2013-09-26)
 
   The filter in the Locations window now matches the location of the messages,
-  not just their text.
+  not just their text. It is also possible to force the alphabetical sorting
+  of file names.
 
 NF-60-M923-010 GPS: Searching for documentation after declaration (2013-09-23)
 

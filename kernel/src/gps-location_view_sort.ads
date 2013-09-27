@@ -22,8 +22,23 @@ with Gtk.Tree_Model;      use Gtk.Tree_Model;
 
 package GPS.Location_View_Sort is
 
+   type Messages_Sort_Order is (By_Location, By_Weight);
+
+   type File_Sort_Order is
+     (Category_Default_Sort,
+      Alphabetical);
+   --  The sort order of files. Each category defines its own default order
+   --  (which is set in the model itself), but users can override it if needed.
+
    type Locations_Proxy_Model_Record is
-     new Gtk_Tree_Model_Sort_Record with null record;
+     new Gtk_Tree_Model_Sort_Record with
+      record
+         Messages_Order : Messages_Sort_Order := By_Location;
+         --  Sort order for locations within a file.
+
+         File_Order : File_Sort_Order := Category_Default_Sort;
+         --  Sort order for files within a category
+      end record;
 
    type Locations_Proxy_Model is
      access all Locations_Proxy_Model_Record'Class;
@@ -35,11 +50,10 @@ package GPS.Location_View_Sort is
    --  Wraps a locations model so that we can provide sorting without changing
    --  the model itself.
 
-   type Sort_Order is (By_Location, By_Weight);
-
    procedure Set_Order
-     (Self  : not null access Locations_Proxy_Model_Record'Class;
-      Order : Sort_Order);
+     (Self       : not null access Locations_Proxy_Model_Record'Class;
+      File_Order : File_Sort_Order;
+      Msg_Order  : Messages_Sort_Order);
    --  Set the sort order for Self.
 
 end GPS.Location_View_Sort;

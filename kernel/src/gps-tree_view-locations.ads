@@ -45,7 +45,7 @@ private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
 private with Gtk.Tree_View_Column;
 with GPS.Location_View_Filter;
-private with GPS.Location_View_Sort;
+with GPS.Location_View_Sort;
 
 package GPS.Tree_View.Locations is
 
@@ -68,13 +68,11 @@ package GPS.Tree_View.Locations is
      (Self  : not null access GPS_Locations_Tree_View_Record'Class;
       Model  : Gtk.Tree_Model.Gtk_Tree_Model);
 
-   procedure Sort_By_Subcategory
-     (Self : not null access GPS_Locations_Tree_View_Record'Class);
-   --  Sets sorting by subcategory mode
-
-   procedure Sort_By_Location
-     (Self : not null access GPS_Locations_Tree_View_Record'Class);
-   --  Sets sorting by location mode
+   procedure Set_Order
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      File_Order : GPS.Location_View_Sort.File_Sort_Order;
+      Msg_Order  : GPS.Location_View_Sort.Messages_Sort_Order);
+   --  Sets sorting order
 
    procedure Location_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;

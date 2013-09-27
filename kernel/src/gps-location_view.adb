@@ -71,6 +71,7 @@ with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
+with GPS.Location_View_Sort;           use GPS.Location_View_Sort;
 with Histories;                        use Histories;
 
 package body GPS.Location_View is
@@ -110,6 +111,8 @@ package body GPS.Location_View is
      "locations-auto-jump-to-first";
    Hist_Locations_Wrap : constant History_Key := "locations-wrap";
    Hist_Locations_Auto_Close : constant History_Key := "locations-auto-close";
+   Hist_Sort_Files_Alphabetical : constant History_Key :=
+     "locations-sort-files-alphabetical";
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
@@ -879,14 +882,26 @@ package body GPS.Location_View is
    --------------------
 
    procedure On_Change_Sort (Self : access Location_View_Record'Class) is
+      Msg_Order  : Messages_Sort_Order;
+      File_Order : File_Sort_Order;
    begin
       if Get_History
         (Get_History (Self.Kernel).all, History_Sort_By_Subcategory)
       then
-         Self.View.Sort_By_Subcategory;
+         Msg_Order := By_Weight;
       else
-         Self.View.Sort_By_Location;
+         Msg_Order := By_Location;
       end if;
+
+      if Get_History
+        (Get_History (Self.Kernel).all, Hist_Sort_Files_Alphabetical)
+      then
+         File_Order := Alphabetical;
+      else
+         File_Order := Category_Default_Sort;
+      end if;
+
+      Self.View.Set_Order (File_Order, Msg_Order);
    end On_Change_Sort;
 
    ----------------------
@@ -1218,8 +1233,22 @@ package body GPS.Location_View is
       Check : Gtk_Check_Menu_Item;
    begin
       Gtk_New (Check, -"Sort by subcategory");
+      Check.Set_Tooltip_Text
+        (-("Sort messages by their subcategory (error vs warning messages for"
+         & " instance). This also impacts the default sort order for files"));
       Associate (Get_History (View.Kernel).all,
                  History_Sort_By_Subcategory, Check, Default => False);
+      Location_View_Callbacks.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         On_Change_Sort'Access, View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Sort files alphabetically");
+      Check.Set_Tooltip_Text
+        (-("Force sorting of files alphabetically, and ignore the default"
+         & " sort order (which depends on the category)"));
+      Associate (Get_History (View.Kernel).all,
+                 Hist_Sort_Files_Alphabetical, Check, Default => True);
       Location_View_Callbacks.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          On_Change_Sort'Access, View);
@@ -1287,6 +1316,10 @@ package body GPS.Location_View is
       Create_New_Boolean_Key_If_Necessary
         (Hist => Get_History (Kernel).all,
          Key  => Hist_Locations_Auto_Close,
+         Default_Value => False);
+      Create_New_Boolean_Key_If_Necessary
+        (Hist => Get_History (Kernel).all,
+         Key  => Hist_Sort_Files_Alphabetical,
          Default_Value => False);
 
       Command := new Remove_Selection_Command;

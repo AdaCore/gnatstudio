@@ -531,6 +531,12 @@ The local settings menu contains the following entries:
   results. The error messages will appear first. The default is to sort
   the message by their location.
 
+* :guilabel:`Sort files alphabetically`
+  Force files to be sorted alphabetically. The default is that files are not
+  sorted, which makes manipulation of the :guilabel:`Locations` window easier
+  before all messages are added to it (otherwise the nodes might be switched
+  while you are trying to click on them).
+
 * :guilabel:`Jump to first location`: Every time a new category is created, as
   a result of a compilation or a search operation for example, the first entry
   of that category is automatically selected, and the corresponding editor

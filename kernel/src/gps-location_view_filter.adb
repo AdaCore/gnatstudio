@@ -251,7 +251,9 @@ package body GPS.Location_View_Filter is
                if Self.Is_Hide then
                   Found := not Found;
                end if;
-               return Found;
+               if Found then
+                  return Found;
+               end if;
             end if;
 
             Child := Children (Child_Model, Iter);
