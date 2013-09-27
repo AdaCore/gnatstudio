@@ -2984,7 +2984,7 @@ package body Src_Editor_Module is
         (Kernel, "Autoindent selection",
          Command, -"Automatically indent the current line or selection",
          Category => "Editor",
-         Filter   => Src_Action_Context);
+         Filter   => Src_Action_Context and Is_Not_Makefile);
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Insert File...",

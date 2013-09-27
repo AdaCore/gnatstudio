@@ -64,7 +64,8 @@ def smart_tab():
     # Otherwise, reformat the current selection
 
     action = GPS.Action("Autoindent selection")
-    action.execute_if_possible()
+    if not action.execute_if_possible():
+        editor.insert(editor.current_view().cursor(), "\t")
 
 
 def escape_filter(context):
