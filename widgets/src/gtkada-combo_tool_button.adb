@@ -388,7 +388,7 @@ package body Gtkada.Combo_Tool_Button is
       Push_In : out Boolean;
       Widget  : Gtkada_Combo_Tool_Button)
    is
-      pragma Unreferenced (Menu, Push_In);
+      pragma Unreferenced (Menu);
       Menu_Req    : Gtk_Requisition;
       Allo : Gtk_Allocation;
 
@@ -399,6 +399,8 @@ package body Gtkada.Combo_Tool_Button is
 
       X := X + Allo.X;
       Y := Y + Allo.Y + Allo.Height;
+
+      Push_In := False;
 
       if Allo.Width > Menu_Req.Width then
          X := X + Allo.Width - Menu_Req.Width;
