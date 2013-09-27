@@ -41,7 +41,8 @@ package Codefix is
    --  String used to insert an end of line.
 
    function To_Char_Index
-     (Index : Visible_Column_Type; Str : String) return String_Index_Type;
+     (Index : Visible_Column_Type; Str : String) return String_Index_Type
+     with post => To_Char_Index'Result <= String_Index_Type (Str'Last);
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
