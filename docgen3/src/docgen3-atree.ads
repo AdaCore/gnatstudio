@@ -285,6 +285,8 @@ private package Docgen3.Atree is
    function Is_Standard_Entity
      (E : Entity_Id) return Boolean;
    --  Return true if E represents the Standard scope (the outermost entity)
+   function Is_Subtype
+     (E : Entity_Id) return Boolean;
    function Is_Tagged_Type
      (E : Entity_Id) return Boolean;
 
@@ -335,6 +337,8 @@ private package Docgen3.Atree is
    procedure Set_Is_Partial_View
      (E : Entity_Id);
    procedure Set_Is_Private
+     (E : Entity_Id);
+   procedure Set_Is_Subtype
      (E : Entity_Id);
    procedure Set_Is_Tagged_Type
      (E : Entity_Id);
@@ -619,6 +623,7 @@ private
          Is_Partial_View   : Boolean;
          Is_Private        : Boolean;
 
+         Is_Subtype        : Boolean;
          Is_Tagged_Type    : Boolean;
          Idepth_Level      : Natural;
          --  Inheritance depth level of a tagged type
@@ -702,6 +707,7 @@ private
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
    pragma Inline (Is_Private);
+   pragma Inline (Is_Subtype);
    pragma Inline (Is_Tagged_Type);
    pragma Inline (Kind_In);
    pragma Inline (No);
@@ -720,6 +726,7 @@ private
    pragma Inline (Set_Is_Generic_Formal);
    pragma Inline (Set_Is_Partial_View);
    pragma Inline (Set_Is_Private);
+   pragma Inline (Set_Is_Subtype);
    pragma Inline (Set_Is_Tagged_Type);
    pragma Inline (Set_Kind);
    pragma Inline (Set_Parent);

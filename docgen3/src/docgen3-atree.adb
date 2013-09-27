@@ -832,8 +832,10 @@ package body Docgen3.Atree is
                            declare
                               Parents : constant Xref.Entity_Array :=
                                 Parent_Types (Db, E, Recursive => False);
+                              Has_Progenitors : constant Boolean :=
+                                Parents'Length > 1;
                            begin
-                              if Parents'Length > 0 then
+                              if Has_Progenitors then
                                  Set_Is_Tagged_Type (New_E);
                                  Set_Kind (New_E, E_Tagged_Record_Type);
                               end if;
@@ -1007,6 +1009,7 @@ package body Docgen3.Atree is
            Is_Generic_Formal => False,
            Is_Incomplete_Or_Private_Type => False,
            Is_Internal       => Is_Internal,
+           Is_Subtype        => False,
            Is_Tagged_Type    => False,
            Is_Private        => False,
            Is_Partial_View   => False,
@@ -1144,6 +1147,15 @@ package body Docgen3.Atree is
       return E.Is_Internal
         and then Get_Short_Name (E) = Std_Entity_Name;
    end Is_Standard_Entity;
+
+   ----------------
+   -- Is_Subtype --
+   ----------------
+
+   function Is_Subtype (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Subtype;
+   end Is_Subtype;
 
    ---------------
    -- Is_Tagged --
@@ -1479,13 +1491,21 @@ package body Docgen3.Atree is
       E.Is_Private := True;
    end Set_Is_Private;
 
+   --------------------
+   -- Set_Is_Subtype --
+   --------------------
+
+   procedure Set_Is_Subtype (E : Entity_Id) is
+   begin
+      E.Is_Subtype := True;
+   end Set_Is_Subtype;
+
    -------------------
    -- Set_Is_Tagged --
    -------------------
 
    procedure Set_Is_Tagged_Type (E : Entity_Id) is
    begin
-      pragma Assert (not (E.Is_Tagged_Type));
       pragma Assert (Is_Class_Or_Record_Type (E));
       E.Is_Tagged_Type := True;
    end Set_Is_Tagged_Type;
@@ -2148,8 +2168,12 @@ package body Docgen3.Atree is
          Append_Line ("Is_Partial_View");
       end if;
 
+      if E.Is_Subtype then
+         Append_Line ("Is_Subtype");
+      end if;
+
       if E.Is_Tagged_Type then
-         Append_Line ("Is_Tagged");
+         Append_Line ("Is_Tagged_Type");
       end if;
 
       if E.Is_Generic_Formal then

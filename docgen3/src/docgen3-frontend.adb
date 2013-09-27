@@ -541,10 +541,6 @@ package body Docgen3.Frontend is
                      --  docgen3-atree.adb).
 
                      else
-                        if not Is_Tagged_Type (E) then
-                           Set_Is_Tagged_Type (E);
-                        end if;
-
                         --  We don't know the exact location associated with
                         --  the entity in the database. Hence for now we take a
                         --  conservative approach and we first retry the entity
@@ -578,6 +574,10 @@ package body Docgen3.Frontend is
 
                            Set_Parent (E, Parent);
 
+                           if Is_Tagged_Type (Parent) then
+                              Set_Is_Tagged_Type (E);
+                           end if;
+
                            if Get_Progenitors (E).all.Contains (Parent) then
                               Delete_Entity
                                 (Get_Progenitors (E).all, Parent);
@@ -595,10 +595,21 @@ package body Docgen3.Frontend is
                   if Prev_Token = Tok_Is then
                      if Token = Tok_New then
                         In_Parent_Part := True;
-                     elsif Token = Tok_Interface then
-                        Is_Interface := True;
+
                      elsif Token = Tok_Null then
                         Is_Null := True;
+
+                     elsif Token = Tok_Tagged then
+                        if not Is_Tagged_Type (E) then
+                           Set_Is_Tagged_Type (E);
+
+                           pragma Assert (Get_Kind (E) = E_Record_Type);
+                           Set_Kind (E, E_Tagged_Record_Type);
+                        end if;
+
+                     elsif Token = Tok_Interface then
+                        pragma Assert (Get_Kind (E) = E_Interface);
+                        Is_Interface := True;
                      end if;
 
                   elsif Prev_Token = Tok_Limited then
@@ -665,6 +676,7 @@ package body Docgen3.Frontend is
 
                      if Par_Count = 0 then
                         return not Is_Full_View
+                          or else Is_Subtype (E)
                           or else Is_Interface
                           or else End_Record_Found
                           or else (With_Private
@@ -713,7 +725,19 @@ package body Docgen3.Frontend is
             Prev_Word_Begin :=
               Search_Backward (Lines_Skipped,
                 From   => Entity_Index - 1,
-                Word_1 => "type");
+                Word_1 => "type",
+                Word_2 => "subtype");
+
+            declare
+               Word : constant String := "subtype";
+            begin
+               if Buffer.all
+                    (Prev_Word_Begin .. Prev_Word_Begin + Word'Length - 1)
+                 = Word
+               then
+                  Set_Is_Subtype (E);
+               end if;
+            end;
 
             --  Append tabulation
 
