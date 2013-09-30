@@ -1099,7 +1099,7 @@ package body Project_Explorers is
    is
       V : constant Project_Explorer := Project_Explorer (View);
    begin
-      Reload_Project_If_Needed (V.Kernel);
+      Reload_Project_If_Needed (V.Kernel, Recompute_View => True);
    end On_Reload_Project;
 
    ------------------------------

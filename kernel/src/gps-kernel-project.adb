@@ -577,7 +577,8 @@ package body GPS.Kernel.Project is
    ------------------------------
 
    procedure Reload_Project_If_Needed
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Recompute_View : Boolean := False)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
@@ -608,7 +609,8 @@ package body GPS.Kernel.Project is
 
       begin
          Kernel.Registry.Tree.Reload_If_Needed
-           (Reloaded, Report_Error'Unrestricted_Access);
+           (Reloaded, Errors => Report_Error'Unrestricted_Access,
+            Recompute_View => Recompute_View);
       exception
          when Invalid_Project =>
             Pop_State (Kernel_Handle (Kernel));
@@ -616,6 +618,10 @@ package body GPS.Kernel.Project is
 
       if Reloaded then
          Run_Hook (Kernel, Project_Changed_Hook);
+
+         if Recompute_View then
+            Run_Hook (Kernel, Project_View_Changed_Hook);
+         end if;
       end if;
 
       Pop_State (Kernel_Handle (Kernel));

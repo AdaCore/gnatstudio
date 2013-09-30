@@ -88,7 +88,8 @@ package GPS.Kernel.Project is
    --  Create and load an empty project in memory.
 
    procedure Reload_Project_If_Needed
-     (Kernel : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Recompute_View : Boolean := False);
    --  If any of the project files on the disk have been modified, reload the
    --  project. This doesn't recompute the view, though.
 
