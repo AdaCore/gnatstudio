@@ -596,7 +596,7 @@ package body GPS.Kernel.Preferences is
 
       Blocks_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Blocks-Variant",
+         Name         => "Src-Editor-Block-Variant",
          Label        => -"Blocks",
          Doc          => -("Style to use when displaying blocks (subprograms,"
            & "tasks, entries, ...) in declarations."),
@@ -608,7 +608,7 @@ package body GPS.Kernel.Preferences is
 
       Types_Style := Create
         (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Types-Variant",
+         Name         => "Src-Editor-Type-Variant",
          Label        => -"Types",
          Doc          => -("Style to use when displaying types in "
            & "declarations."),
