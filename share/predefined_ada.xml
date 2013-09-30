@@ -5513,9 +5513,9 @@ You can use this pragma either to access a predefined `System'
 extension supplied with the compiler, for example `Aux_DEC' or you can
 construct your own extension unit following the above definition.  Note
 that such a package is a child of `System' and thus is considered part
-of the implementation.  To compile it you will have to use the
-appropriate switch for compiling system units.  *Note GNAT Pro User's
-Guide: (gnat_ugn)Top, for details.
+of the implementation.  To compile it you will have to use the `-gnatg'
+switch, or the `/GNAT_INTERNAL' qualifier on OpenVMS, for compiling
+System units, as explained in the GNAT Pro User's Guide.
       </DOC>
    </PRAGMA>
 
