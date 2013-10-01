@@ -494,6 +494,11 @@ NF-60-LB04-004 GB: Export GNATbench preferences like CDT (2013-01-22)
   GNATbench preferences can now be exported via the export preferences wizard
   and imported into another workspace via the import preferences wizard.
 
+NF-60-LA05-038 GPS: Key shortcut for "Locate in Project View" (2013-10-01)
+
+  New action "Locate file in explorer" is available for key shortcuts and
+  scripting.
+
 NF-60-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
