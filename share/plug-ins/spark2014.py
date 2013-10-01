@@ -112,11 +112,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <contextual action="Prove Line Action">
       <Title>SPARK 2014/Prove Line</Title>
     </contextual>
-  </GNATPROVE>
-"""
 
-xml_gnatprove = """<?xml version="1.0"?>
-  <GNATPROVE>
     <doc_path>share/doc/spark</doc_path>
 
     <documentation_file>
@@ -133,6 +129,80 @@ xml_gnatprove = """<?xml version="1.0"?>
       <menu before="About">/Help/SPARK 2014/SPARK 2014 Reference Manual</menu>
     </documentation_file>
 
+    <action name="spark2014_example_binary_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/binary_search/test.gpr"</shell>
+      <shell>Editor.edit "binary_search.ads"</shell>
+      <shell>Editor.edit "binary_search.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/SPARK 2014/Examples</title>
+      <menu action="spark2014_example_binary_search">
+        <title>Binary_Search</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_database" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/database/test.gpr"</shell>
+      <shell>Editor.edit "database.ads"</shell>
+      <shell>Editor.edit "database.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/SPARK 2014/Examples</title>
+      <menu action="spark2014_example_database">
+        <title>Database</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_intro" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/intro/test.gpr"</shell>
+      <shell>Editor.edit "pricing.ads"</shell>
+      <shell>Editor.edit "pricing.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/SPARK 2014/Examples</title>
+      <menu action="spark2014_example_intro">
+        <title>Intro</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_longest_common_prefix" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/longest_common_prefix/test.gpr"</shell>
+      <shell>Editor.edit "lcp.ads"</shell>
+      <shell>Editor.edit "lcp.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/SPARK 2014/Examples</title>
+      <menu action="spark2014_example_longest_common_prefix">
+        <title>Longest_Common_Prefix</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_segway" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/segway/test.gpr"</shell>
+      <shell>Editor.edit "segway.ads"</shell>
+      <shell>Editor.edit "segway.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/SPARK 2014/Examples</title>
+      <menu action="spark2014_example_segway">
+        <title>Segway</title>
+      </menu>
+    </submenu>
+  </GNATPROVE>
+"""
+
+xml_gnatprove = """<?xml version="1.0"?>
+  <GNATPROVE>
     <tool name="GNATprove" package="Prove" attribute="switches" index="">
       <language>Ada</language>
       <switches columns="2" lines="3" switch_char="-">
@@ -921,5 +991,9 @@ if gnatprove:
     if spark2005:
         prefix = "SPARK 2014"
         menu_prefix = "/" + prefix
+
+    example_root=os.path.dirname (os.path.dirname(gnatprove)).replace('\\', '/')+\
+                  '/share/examples/spark'
+    xml_gnatprove_menus = xml_gnatprove_menus.replace('@EXAMPLE@', example_root)
 
     gnatprove_plug = GNATProve_Plugin()
