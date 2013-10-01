@@ -1712,6 +1712,10 @@ package body Project_Viewers is
          Label  => "Project/Save project %p");
 
       Command := new Edit_Project_Source_Command;
+      Register_Action
+        (Kernel, "Edit project source file", Command,
+         "Open an editor for the .gpr file of the current project",
+         null, -"Projects");
       Register_Contextual_Menu
         (Kernel, "Project/Edit source file",
          Action => Command,
