@@ -189,13 +189,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>--mode=flow</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="1" lines="3">
-         <title column="1" line="1" >General</title>
-         <check label="Ignore cached results" switch="-f" column="1"
-                tip="All actions are redone entirely, including compilation and proof" />
-         <check label="Report checks proved" switch="--report=all" column="1"
-                tip="Report the status of all checks, including those proved" />
-       </switches>
     </target-model>
 
     <target-model name="gnatprove-prove">
@@ -234,7 +227,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -255,7 +248,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine Root Project" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -275,7 +268,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -297,7 +290,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine Subprogram" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -438,17 +431,12 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>-P%PP</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="1" lines="1">
-         <title column="1" line="1" >Compilation</title>
-         <check label="Ignore cached results" switch="-f" column="1"
-                tip="All actions are redone entirely, including compilation and proof" />
-       </switches>
     </target-model>
 
     <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
