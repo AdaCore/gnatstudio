@@ -3185,6 +3185,10 @@ package body Project_Explorers is
       Explorer_Views.Register_Open_Menu (Kernel, Project, -"Project _View");
 
       Command := new Locate_File_In_Explorer_Command;
+      Register_Action
+        (Kernel, "Locate file in explorer",
+         Command, "Locate current file in project explorer",
+         Lookup_Filter (Kernel, "File"), -"Project Explorer");
       Register_Contextual_Menu
         (Kernel, "Locate file in explorer",
          Action => Command,
