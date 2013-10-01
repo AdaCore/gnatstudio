@@ -867,7 +867,8 @@ package body Docgen2 is
                         Skip_C_Files    => False,
                         Display_Time    => True,
                         Process_Bodies  => Options.Process_Body_Files,
-                        Show_Private    => Options.Show_Private));
+                        Show_Private    => Options.Show_Private,
+                        Output_Comments => True));
          return;
       end if;
 
@@ -925,7 +926,8 @@ package body Docgen2 is
                           Skip_C_Files    => False,
                           Display_Time    => True,
                           Process_Bodies  => Options.Process_Body_Files,
-                          Show_Private    => Options.Show_Private),
+                          Show_Private    => Options.Show_Private,
+                          Output_Comments => True),
             Recursive => Recursive);
          return;
       end if;

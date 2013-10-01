@@ -382,6 +382,12 @@ package body Docgen3 is
                         end if;
                      end if;
 
+                     if Options.Output_Comments then
+                        Treepr.Print_Comments
+                          (Context => Context,
+                           Tree    => Tree'Access);
+                     end if;
+
                      All_Files.Append (Current_File);
                      All_Trees.Append (Tree);
                   end if;

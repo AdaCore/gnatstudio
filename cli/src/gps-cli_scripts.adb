@@ -147,7 +147,8 @@ package body GPS.CLI_Scripts is
                                    With_Comments),
                Display_Time    => False,
                Process_Bodies  => False,
-               Show_Private    => True);
+               Show_Private    => True,
+               Output_Comments => True);
          begin
             Docgen3.Process_Project_Files
               (Kernel    => Kernel,

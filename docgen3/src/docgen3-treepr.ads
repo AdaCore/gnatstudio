@@ -22,6 +22,11 @@ with Docgen3.Frontend;  use Docgen3.Frontend;
 
 private package Docgen3.Treepr is
 
+   procedure Print_Comments
+     (Context     : access constant Docgen_Context;
+      Tree        : access Tree_Type);
+   --  Print the entity comments retrieved from the sources
+
    procedure Print_Short_Tree
      (Context     : access constant Docgen_Context;
       Tree        : access Tree_Type;

@@ -64,20 +64,27 @@ package Docgen3 is
       --  project may have or reference these files we may not be interested
       --  in the addition of those files to the generated documentation).
 
-      Tree_Output     : Tree_Output_Type := (Full, True);
-      --  Internal switch used to enable generating tree listings. Used to
-      --  write regression tests.
-
-      Display_Time    : Boolean := False;
-      --  Internal flag used to enable an extra output with the time consumed
-      --  by the docgen components processing files. Used to identify which
-      --  components of Docgen3 must be optimized.
-
       Process_Bodies  : Boolean := False;
       --  True to enable processing of body files
 
       Show_Private    : Boolean := False;
       --  Show also private entities
+
+      --  -------------------------- Internal switches -----------------------
+
+      Display_Time    : Boolean := False;
+      --  Used to enable an extra output with the time consumed by the docgen
+      --  components processing files. Used to identify which components of
+      --  Docgen3 must be optimized.
+
+      Tree_Output     : Tree_Output_Type := (Full, True);
+      --  Enables the generation of tree listings. Used to write regression
+      --  tests.
+
+      Output_Comments : Boolean := False;
+      --  Enable an extra output with the retrieved sources, retrieved sources
+      --  and parsed comments. Used to write regression tests.
+
    end record;
 
    procedure Process_Single_File
