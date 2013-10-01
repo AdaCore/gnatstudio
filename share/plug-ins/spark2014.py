@@ -297,7 +297,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -318,7 +318,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine Root Project" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -338,7 +338,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -360,7 +360,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove-examine" name="Examine Subprogram" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -506,7 +506,7 @@ xml_gnatprove = """<?xml version="1.0"?>
     <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
