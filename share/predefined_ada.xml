@@ -8513,7 +8513,7 @@ pragma Reviewable;
       <DOC>
 Syntax:
 
-pragma SPARK_Mode [ (On | Off | Auto) ] ;
+pragma SPARK_Mode [(On | Off)] ;
 
 This pragma is used to specify whether a construct must satisfy the
 syntactic and semantic rules of the SPARK 2014 programming language.
@@ -8521,16 +8521,13 @@ The pragma is intended for use with formal verification tools and has
 no effect on the generated code.
 
 The SPARK_Mode pragma is used to specify the value of the SPARK_Mode
-aspect (a three-valued aspect having values of On, Off, or Auto) of an
-entity.  More precisely, it is used to specify the aspect value of a
-"section" of an entity (the term "section" is defined below).  If a
-Spark_Mode pragma's (optional) argument is omitted, an implicit
-argument of On is assumed.
+aspect (either Off or On) of an entity.  More precisely, it is used to
+specify the aspect value of a "section" of an entity (the term
+"section" is defined below).  If a Spark_Mode pragma's (optional)
+argument is omitted, an implicit argument of On is assumed.
 
 A SPARK_Mode pragma may be used as a configuration pragma and then
-has the semantics described below. A SPARK_Mode pragma which is not
-used as a configuration pragma (or an equivalent SPARK_Mode
-aspect_specification) shall not have an argument of Auto.
+has the semantics described below.
 
 A SPARK_Mode pragma can be used as a local pragma only in the
 following contexts:
@@ -8572,8 +8569,7 @@ completion is defined to have 2 "sections": its declaration and its
 completion. Any other construct is defined to have 1 section.
 
 The SPARK_Mode aspect value of an arbitrary section of an arbitrary
-Ada entity or construct is then defined to be the following value
-(except if this yields a result of Auto for a non-package; see below):
+Ada entity or construct is then defined to be the following value:
 
 * If SPARK_Mode has been specified for the given section of the
 given entity or construct, then the specified value;
@@ -8586,7 +8582,7 @@ preceding section;
 unit package or either section of a library unit subprogram, if
 there is an applicable SPARK_Mode configuration pragma then the
 value specified by the pragma; if no such configuration pragma
-applies, then an implicit specification of Auto is assumed;
+applies, then an implicit specification of Off is assumed;
 
 * else for any subsequent (i.e., not the first) section of a library
 unit package, the SPARK_Mode of the preceding section;
@@ -8595,12 +8591,11 @@ unit package, the SPARK_Mode of the preceding section;
 enclosing package or subprogram;
 
 
-If the above computation yields a result of Auto for any construct
-other than one of the four sections of a package, then a result of On
-or Off is determined instead based on the legality (with respect to the
-rules of SPARK 2014) of the construct. The construct's SPARK_Mode is On
-if and only if the construct is in SPARK 2014. [A SPARK_Mode of Auto is
-therefore only possible for sections of a package.]
+If the above computation does not specify a SPARK_Mode setting for
+any construct other than one of the four sections of a package, then a
+result of On or Off is determined instead based on the legality (with
+respect to the rules of SPARK 2014) of the construct. The construct's
+SPARK_Mode is On if and only if the construct is in SPARK 2014.
 
 If an earlier section of an entity has a Spark_Mode of Off, then the
 Spark_Mode aspect of any later section of that entity shall not be
