@@ -75,9 +75,10 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
 with Gtk.Selection_Data;
-with Gdk.Property; use Gdk.Property;
 with Gtk.Dnd; use Gtk.Dnd;
-
+with Gdk.Dnd;
+with Gtk.Target_List; use Gtk.Target_List;
+with Gdk.Property; use Gdk.Property;
 --  Drawing the side info is organized this way:
 --
 --     <----  side area (View.Area)   ----><----  editor (View)      --->
@@ -1298,7 +1299,7 @@ package body Src_Editor_View is
    --------------------------------
    -- View_On_Drag_Data_Received --
    --------------------------------
-
+   pragma Warnings (Off);
    procedure View_On_Drag_Data_Received
      (Self    : access Gtk_Widget_Record'Class;
       Context : not null access Gdk.Drag_Contexts.Drag_Context_Record'Class;
@@ -1309,10 +1310,6 @@ package body Src_Editor_View is
       Time    : Guint)
    is
       Result : Boolean;
-      Start_Iter, End_Iter, Drop_Iter : Gtk_Text_Iter;
-      Buffer : Source_Buffer;
-      Mark : Gtk_Text_Mark;
-
       pragma Unreferenced (Result, X, Y, Info);
    begin
       --  Do not accept drag data if the view is not editable
@@ -1323,34 +1320,9 @@ package body Src_Editor_View is
          return;
       end if;
 
-      --  Handle the special case of When the drop target is
-      --  GTK_TEXT_BUFFER_CONTENTS, which means the drop comes from a Gtk
-      --  Text View
-      if Atom_Name (Data.Get_Target) = "GTK_TEXT_BUFFER_CONTENTS" then
-         --  Prevent the propagation of the signal, to prevent the original
-         --  handler from running
-         Gtk.Handlers.Emit_Stop_By_Name
-           (Object => Self, Name => "drag-data-received");
-
-         Buffer := Source_Buffer (Source_View (Self).Get_Buffer);
-         Buffer.Start_Undo_Group;
-         --  Get the drag destination mark
-         Mark := Buffer.Get_Mark ("gtk_drag_target");
-         Buffer.Get_Iter_At_Mark (Drop_Iter, Mark);
-         Buffer.Get_Selection_Bounds (Start_Iter, End_Iter, Result);
-
-         --  Insert the dragged text at Drop_Iter
-         Buffer.Insert
-           (Drop_Iter, String'(Buffer.Get_Text (Start_Iter, End_Iter)));
-
-         --  Finish the drag action so that the selected text is deleted
-         Finish (Drag_Context (Context), True, True, Guint32 (Time));
-
-         --  Place the cursor at the location of the drag mark
-         Buffer.Get_Iter_At_Mark (Drop_Iter, Mark);
-         Buffer.Place_Cursor (Drop_Iter);
-
-         Buffer.Finish_Undo_Group;
+      if Atom_Name (Data.Get_Target) = "text/uri-list" then
+         --  TODO : Add code to handle file drops
+         null;
       end if;
    end View_On_Drag_Data_Received;
 
@@ -1384,6 +1356,10 @@ package body Src_Editor_View is
    -- Initialize --
    ----------------
 
+   Target_Table : constant Target_Entry_Array :=
+     ((Interfaces.C.Strings.New_String ("text/uri-list"), 0, 0),
+      (Interfaces.C.Strings.New_String ("text/plain"), 0, 1));
+
    procedure Initialize
      (View   : access Source_View_Record;
       Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
@@ -1394,7 +1370,6 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
       Hook        : Preferences_Hook;
       F_Hook      : File_Hook;
-
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realized or mapped. Their initialization is thus
@@ -1403,6 +1378,11 @@ package body Src_Editor_View is
       pragma Assert (Buffer /= null);
 
       Gtkada.Text_View.Initialize (View, Gtkada_Text_Buffer (Buffer));
+
+      Gtk.Dnd.Dest_Set
+        (View, Dest_Default_All,
+         Target_Table,
+         Gdk.Dnd.Action_Any);
 
       View.Kernel := Kernel_Handle (Kernel);
       View.Scroll := Gtk_Scrolled_Window (Scroll);
