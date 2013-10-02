@@ -1106,6 +1106,18 @@ package Src_Editor_Buffer is
 
    Listener_Factories : Listener_Factory_Lists.List;
 
+   type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
+
+   function Get_Editor_Buffer
+     (Buffer : access Source_Buffer_Record'Class) return Editor_Buffer_Access;
+   --  Get the abstract instance of Editor_Buffer corresponding to this
+   --  Source_Buffer_Record
+
+   function Get_Global_Editor_Buffer_Factory
+     return access GPS.Editors.Editor_Buffer_Factory'Class;
+   --  Get the global Editor_Buffer_Factory. Useful to access buffers in an
+   --  abstract way (for example, opening new buffers)
+
 private
 
    procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
@@ -1398,8 +1410,6 @@ private
 
    package Listener_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Access);
-
-   type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
 
    --------------------------
    -- Source_Buffer_Record --

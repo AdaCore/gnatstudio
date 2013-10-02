@@ -79,6 +79,9 @@ with Gtk.Dnd; use Gtk.Dnd;
 with Gdk.Dnd;
 with Gtk.Target_List; use Gtk.Target_List;
 with Gdk.Property; use Gdk.Property;
+with GNAT.Strings;
+with Glib.Convert; use Glib.Convert;
+
 --  Drawing the side info is organized this way:
 --
 --     <----  side area (View.Area)   ----><----  editor (View)      --->
@@ -1299,7 +1302,6 @@ package body Src_Editor_View is
    --------------------------------
    -- View_On_Drag_Data_Received --
    --------------------------------
-   pragma Warnings (Off);
    procedure View_On_Drag_Data_Received
      (Self    : access Gtk_Widget_Record'Class;
       Context : not null access Gdk.Drag_Contexts.Drag_Context_Record'Class;
@@ -1309,8 +1311,9 @@ package body Src_Editor_View is
       Info    : Guint;
       Time    : Guint)
    is
+      use GNATCOLL.VFS;
       Result : Boolean;
-      pragma Unreferenced (Result, X, Y, Info);
+      pragma Unreferenced (Result, X, Y, Info, Context, Time);
    begin
       --  Do not accept drag data if the view is not editable
       if not Get_Editable (Source_View (Self)) then
@@ -1321,8 +1324,23 @@ package body Src_Editor_View is
       end if;
 
       if Atom_Name (Data.Get_Target) = "text/uri-list" then
-         --  TODO : Add code to handle file drops
-         null;
+         Gtk.Handlers.Emit_Stop_By_Name
+           (Object => Self, Name => "drag-data-received");
+         declare
+            Uris : constant GNAT.Strings.String_List := Data.Get_Uris;
+         begin
+            for Url of Uris loop
+               declare
+                  Buf : Editor_Buffer'Class :=
+                    Get_Global_Editor_Buffer_Factory.Get
+                      (Create (+Filename_From_URI (Url.all, null)),
+                       True, True, True);
+                  pragma Unreferenced (Buf);
+               begin
+                  null;
+               end;
+            end loop;
+         end;
       end if;
    end View_On_Drag_Data_Received;
 

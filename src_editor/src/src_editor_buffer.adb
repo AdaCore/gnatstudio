@@ -8339,10 +8339,35 @@ package body Src_Editor_Buffer is
       Buffer.Highlight_Enabled := False;
    end Disable_Highlighting;
 
+   --------------------------
+   -- Add_Listener_Factory --
+   --------------------------
+
    procedure Add_Listener_Factory
      (Factory : Editor_Listener_Factory_Access) is
    begin
       Listener_Factories.Append (Factory);
    end Add_Listener_Factory;
+
+   -----------------------
+   -- Get_Editor_Buffer --
+   -----------------------
+
+   function Get_Editor_Buffer
+     (Buffer : access Source_Buffer_Record'Class) return Editor_Buffer_Access
+   is
+   begin
+      return Buffer.Editor_Buffer;
+   end Get_Editor_Buffer;
+
+   --------------------------------------
+   -- Get_Global_Editor_Buffer_Factory --
+   --------------------------------------
+
+   function Get_Global_Editor_Buffer_Factory
+     return access GPS.Editors.Editor_Buffer_Factory'Class is
+   begin
+      return Editors_Factory;
+   end Get_Global_Editor_Buffer_Factory;
 
 end Src_Editor_Buffer;
