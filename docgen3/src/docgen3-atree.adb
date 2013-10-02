@@ -429,6 +429,26 @@ package body Docgen3.Atree is
       return E.End_Of_Syntax_Scope_Loc;
    end Get_End_Of_Syntax_Scope_Loc;
 
+   ---------------------------------
+   -- Get_End_Of_Profile_Location --
+   ---------------------------------
+
+   function Get_End_Of_Profile_Location
+     (E : Entity_Id) return General_Location is
+   begin
+      return E.End_Of_Profile_Location;
+   end Get_End_Of_Profile_Location;
+
+   -----------------------------------------
+   -- Get_End_Of_Profile_Location_In_Body --
+   -----------------------------------------
+
+   function Get_End_Of_Profile_Location_In_Body
+     (E : Entity_Id) return General_Location is
+   begin
+      return E.End_Of_Profile_Location_In_Body;
+   end Get_End_Of_Profile_Location_In_Body;
+
    ------------------
    -- Get_Entities --
    ------------------
@@ -907,7 +927,7 @@ package body Docgen3.Atree is
                   Ref := Get (Cursor);
 
                   if Get_Display_Kind (Ref) = "end of spec" then
-                     New_E.End_Of_Syntax_Scope_Loc := Get_Location (Ref);
+                     Set_End_Of_Syntax_Scope_Loc (New_E, Get_Location (Ref));
                      exit;
                   elsif Get_Display_Kind (Ref) = "private part" then
                      New_E.Xref.First_Private_Entity_Loc := Get_Location (Ref);
@@ -918,9 +938,6 @@ package body Docgen3.Atree is
 
                Destroy (Cursor);
             end;
-
-         elsif not LL.Is_Subprogram (New_E) then
-            New_E.End_Of_Syntax_Scope_Loc := LL.Get_End_Of_Scope_Loc (New_E);
          end if;
 
       exception
@@ -1000,7 +1017,10 @@ package body Docgen3.Atree is
            Alias           => No_Entity,
            Scope           => No_Entity,
            Kind            => Kind,
+
            End_Of_Syntax_Scope_Loc => No_Location,
+           End_Of_Profile_Location => No_Location,
+           End_Of_Profile_Location_In_Body => No_Location,
 
            Has_Private_Parent => False,
 
@@ -1364,6 +1384,26 @@ package body Docgen3.Atree is
    begin
       E.End_Of_Syntax_Scope_Loc := Loc;
    end Set_End_Of_Syntax_Scope_Loc;
+
+   ---------------------------------
+   -- Set_End_Of_Profile_Location --
+   ---------------------------------
+
+   procedure Set_End_Of_Profile_Location
+     (E : Entity_Id; Loc : General_Location) is
+   begin
+      E.End_Of_Profile_Location := Loc;
+   end Set_End_Of_Profile_Location;
+
+   -----------------------------------------
+   -- Set_End_Of_Profile_Location_In_Body --
+   -----------------------------------------
+
+   procedure Set_End_Of_Profile_Location_In_Body
+     (E : Entity_Id; Loc : General_Location) is
+   begin
+      E.End_Of_Profile_Location_In_Body := Loc;
+   end Set_End_Of_Profile_Location_In_Body;
 
    ----------------------
    -- Set_IDepth_Level --
@@ -2122,9 +2162,21 @@ package body Docgen3.Atree is
          Append_Entity ("Scope: ", E.Scope);
       end if;
 
-      if E.End_Of_Syntax_Scope_Loc /= No_Location then
+      if Present (E.End_Of_Syntax_Scope_Loc) then
          Append_Line
            ("End_Of_Syntax_Scope_Loc: " & Image (E.End_Of_Syntax_Scope_Loc));
+      end if;
+
+      if Present (E.End_Of_Profile_Location) then
+         Append_Line
+           ("End_Of_Profile_Location: "
+            & Image (E.End_Of_Profile_Location));
+      end if;
+
+      if E.End_Of_Profile_Location_In_Body /= No_Location then
+         Append_Line
+           ("End_Of_Profile_Location_In_Body: "
+            & Image (E.End_Of_Profile_Location_In_Body));
       end if;
 
       if Present (E.Alias) then

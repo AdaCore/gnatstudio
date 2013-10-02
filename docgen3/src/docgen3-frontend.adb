@@ -90,6 +90,25 @@ package body Docgen3.Frontend is
       procedure Filter_Doc (E : Entity_Id);
       --  Filter the documentation using the user-defined filter
 
+      procedure Parse_Ada_Subprogram_Profile
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Is_Body  : Boolean);
+      --  Parse the profile of a subprogram and complete the decoration of
+      --  entity E setting attributes:
+      --   - End_Of_Profile_Location (or End_Of_Profile_Location_In_Body)
+
+      procedure Parse_Ada_Subprogram_Profile
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Is_Body  : Boolean;
+         Profile  : out Unbounded_String);
+      --  Parse the profile of a subprogram and complete the decoration of
+      --  entity E. Similar to the previous one but returns the scanned
+      --  profile.
+
       procedure Previous_Word
         (Index           : Natural;
          Prev_Word_Begin : out Natural;
@@ -98,6 +117,7 @@ package body Docgen3.Frontend is
 
       function Search_Backward
         (Lines_Skipped : out Natural;
+         Buffer : GNAT.Strings.String_Access;
          From   : Natural;
          Word_1 : String;
          Word_2 : String := "") return Natural;
@@ -133,7 +153,7 @@ package body Docgen3.Frontend is
               Buffer   => Buffer,
               Location => LL.Get_Location (E),
               End_Loc  => (if not LL.Is_Subprogram (E) then No_Location
-                           else Get_End_Of_Syntax_Scope_Loc (E))));
+                           else Get_End_Of_Profile_Location (E))));
 
          --  For nested packages, if no documentation was found then we try
          --  locating the documentation immediately after the package spec.
@@ -184,6 +204,16 @@ package body Docgen3.Frontend is
                     Buffer   => Buffer_Body,
                     Location => LL.Get_Body_Loc (E)));
 
+               --  Locate the end of the body profile
+
+               if LL.Is_Subprogram (E) then
+                  Parse_Ada_Subprogram_Profile
+                    (E        => E,
+                     Buffer   => Buffer_Body,
+                     Location => LL.Get_Body_Loc (E),
+                     Is_Body  => True);
+               end if;
+
             --  Retrieve documentation located in separate compilation unit
 
             elsif Present (LL.Get_Body_Loc (E)) then
@@ -199,6 +229,16 @@ package body Docgen3.Frontend is
                        Handler  => Context.Lang_Handler,
                        Buffer   => Buffer,
                        Location => LL.Get_Body_Loc (E)));
+
+                  --  Locate the end of the body profile
+
+                  if LL.Is_Subprogram (E) then
+                     Parse_Ada_Subprogram_Profile
+                       (E        => E,
+                        Buffer   => Buffer_Body,
+                        Location => LL.Get_Body_Loc (E),
+                        Is_Body  => True);
+                  end if;
 
                   Free (Buffer);
                end;
@@ -226,9 +266,6 @@ package body Docgen3.Frontend is
            (Loc          : General_Location;
             Is_Full_View : Boolean) return Unbounded_String;
          --  Retrieve the source of record type E
-
-         function Get_Subprogram_Source return Unbounded_String;
-         --  Retrieve the source of subprogram E
 
          function Get_Type_Declaration_Source return Unbounded_String;
          --  Retrieve the source of the declaration E
@@ -305,12 +342,14 @@ package body Docgen3.Frontend is
             if LL.Is_Subprogram (E) then
                Index :=
                  Search_Backward (Lines_Skipped,
+                   Buffer => Buffer,
                    From   => Index - 1,
                    Word_1 => "procedure",
                    Word_2 => "function");
             else
                Index :=
                  Search_Backward (Lines_Skipped,
+                   Buffer => Buffer,
                    From   => Index - 1,
                    Word_1 => "package");
             end if;
@@ -724,6 +763,7 @@ package body Docgen3.Frontend is
 
             Prev_Word_Begin :=
               Search_Backward (Lines_Skipped,
+                Buffer => Buffer,
                 From   => Entity_Index - 1,
                 Word_1 => "type",
                 Word_2 => "subtype");
@@ -760,155 +800,6 @@ package body Docgen3.Frontend is
             return Printout;
          end Get_Record_Type_Source;
 
-         ---------------------------
-         -- Get_Subprogram_Source --
-         ---------------------------
-
-         function Get_Subprogram_Source return Unbounded_String is
-            Printout : Unbounded_String;
-
-            procedure Append (Text : String);
-            --  Append Text to Printout
-
-            function CB
-              (Entity         : Language_Entity;
-               Sloc_Start     : Source_Location;
-               Sloc_End       : Source_Location;
-               Partial_Entity : Boolean) return Boolean;
-            --  Callback for entity parser
-
-            -----------------
-            -- Append_Line --
-            -----------------
-
-            procedure Append (Text : String) is
-            begin
-               Printout := Printout & Text;
-            end Append;
-
-            --------
-            -- CB --
-            --------
-
-            Start_Line : Natural;
-            In_Profile : Boolean := False;
-            Last_Idx   : Natural := 0;
-            Par_Count  : Natural := 0;
-
-            function CB
-              (Entity         : Language_Entity;
-               Sloc_Start     : Source_Location;
-               Sloc_End       : Source_Location;
-               Partial_Entity : Boolean) return Boolean
-            is
-               pragma Unreferenced (Partial_Entity);
-
-               S : String renames
-                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
-
-            begin
-               --  Print all text between previous call and current one
-
-               if Last_Idx /= 0 then
-                  Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
-               end if;
-
-               Last_Idx := Sloc_End.Index;
-               Append (S);
-
-               if Entity = Comment_Text then
-                  return False; --  continue
-
-               elsif Entity = Keyword_Text then
-                  declare
-                     Keyword : constant String := To_Lower (S);
-                  begin
-                     if Keyword = "procedure"
-                       or else Keyword = "function"
-                     then
-                        In_Profile := True;
-                     end if;
-                  end;
-
-               elsif Entity = Operator_Text then
-                  if S = "(" then
-                     Par_Count := Par_Count + 1;
-                  elsif S = ")" then
-                     Par_Count := Par_Count - 1;
-                  elsif S = ";" then
-                     if In_Profile and then Par_Count = 0 then
-                        Set_End_Of_Syntax_Scope_Loc (E,
-                          General_Location'
-                            (File => File,
-                             Line => Start_Line + Sloc_End.Line - 1,
-                             Column => Visible_Column_Type (Sloc_End.Column)));
-                        return True;
-                     end if;
-                  end if;
-               end if;
-
-               return False;
-            exception
-               when E : others =>
-                  Trace (Me, E);
-                  return True;
-            end CB;
-
-            From          : Natural;
-            Index         : Natural;
-            Lines_Skipped : Natural;
-
-         --  Start of processing for Get_Subprogram_Source
-
-         begin
-            --  Displace the pointer to the beginning of the subprogram
-            Index := Buffer'First;
-            GNATCOLL.Utils.Skip_Lines
-              (Str           => Buffer.all,
-               Lines         => LL.Get_Location (E).Line - 1,
-               Index         => Index,
-               Lines_Skipped => Lines_Skipped);
-
-            GNATCOLL.Utils.Skip_To_Column
-              (Str           => Buffer.all,
-               Columns       => Natural (LL.Get_Location (E).Column),
-               Index         => Index);
-
-            if Is_Generic_Formal (E) then
-               Index :=
-                 Search_Backward (Lines_Skipped,
-                   From   => Index - 1,
-                   Word_1 => "with");
-
-            elsif LL.Is_Generic (E) then
-               Index :=
-                 Search_Backward (Lines_Skipped,
-                   From   => Index - 1,
-                   Word_1 => "generic");
-            else
-               Index :=
-                 Search_Backward (Lines_Skipped,
-                   From   => Index - 1,
-                   Word_1 => "procedure",
-                   Word_2 => "function");
-            end if;
-
-            Start_Line := LL.Get_Location (E).Line - Lines_Skipped;
-
-            --  Append tabulation
-
-            if Buffer.all (Index - 1) = ' ' then
-               From := Skip_Blanks_Backward (Index - 1);
-               Printout := Printout & Buffer.all (From .. Index - 1);
-            end if;
-
-            Parse_Entities
-              (Lang, Buffer.all (Index .. Buffer'Last),
-               CB'Unrestricted_Access);
-
-            return Printout;
-         end Get_Subprogram_Source;
-
          ---------------------------------
          -- Get_Type_Declaration_Source --
          ---------------------------------
@@ -942,6 +833,7 @@ package body Docgen3.Frontend is
 
             Index :=
               Search_Backward (Lines_Skipped,
+                Buffer => Buffer,
                 From   => Index - 1,
                 Word_1 => "type",
                 Word_2 => "subtype");
@@ -987,8 +879,28 @@ package body Docgen3.Frontend is
             return;
          end if;
 
+         --  No action needed for entities for which we don't need to retrieve
+         --  its sources
+
+         if Is_Package (E)
+           or else Get_Kind (E) = E_Formal
+         then
+            return;
+         end if;
+
          if LL.Is_Subprogram (E) then
-            Set_Src (E, Get_Subprogram_Source);
+            declare
+               Profile : Unbounded_String;
+            begin
+               Parse_Ada_Subprogram_Profile
+                 (E        => E,
+                  Buffer   => Buffer,
+                  Location => LL.Get_Location (E),
+                  Is_Body  => False,
+                  Profile  => Profile);
+
+               Set_Src (E, Profile);
+            end;
 
          elsif Is_Class_Or_Record_Type (E) then
 
@@ -1652,6 +1564,205 @@ package body Docgen3.Frontend is
          end;
       end Filter_Doc;
 
+      ----------------------------------
+      -- Parse_Ada_Subprogram_Profile --
+      ----------------------------------
+
+      procedure Parse_Ada_Subprogram_Profile
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Is_Body  : Boolean)
+      is
+         Profile : Unbounded_String;
+         pragma Unreferenced (Profile);
+      begin
+         Parse_Ada_Subprogram_Profile
+           (E        => E,
+            Buffer   => Buffer,
+            Location => Location,
+            Is_Body  => Is_Body,
+            Profile  => Profile);
+      end Parse_Ada_Subprogram_Profile;
+
+      ----------------------------------
+      -- Parse_Ada_Subprogram_Profile --
+      ----------------------------------
+
+      procedure Parse_Ada_Subprogram_Profile
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access;
+         Location : General_Location;
+         Is_Body  : Boolean;
+         Profile  : out Unbounded_String)
+      is
+         procedure Append (Text : String);
+         --  Append Text to Profile
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Callback for entity parser
+
+         ------------
+         -- Append --
+         ------------
+
+         procedure Append (Text : String) is
+         begin
+            Profile := Profile & Text;
+         end Append;
+
+         --------
+         -- CB --
+         --------
+
+         Start_Line : Natural;
+         In_Profile : Boolean := False;
+         Last_Idx   : Natural := 0;
+         Par_Count  : Natural := 0;
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+            S : String renames
+              Buffer (Sloc_Start.Index .. Sloc_End.Index);
+
+         begin
+            --  Append all text between previous call and current one
+
+            if Last_Idx /= 0 then
+               Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+            end if;
+
+            Last_Idx := Sloc_End.Index;
+            Append (S);
+
+            if Entity = Comment_Text then
+               return False; --  continue
+
+            elsif Entity = Keyword_Text then
+               declare
+                  Keyword : constant String := To_Lower (S);
+               begin
+                  if Keyword = "procedure"
+                    or else Keyword = "function"
+                  then
+                     In_Profile := True;
+
+                  elsif Is_Body
+                    and then In_Profile
+                    and then Par_Count = 0
+                    and then Keyword = "is"
+                  then
+                     Set_End_Of_Profile_Location_In_Body (E,
+                       General_Location'
+                         (File => File,
+                          Line => Start_Line + Sloc_End.Line - 1,
+                          Column => Visible_Column_Type (Sloc_End.Column)));
+                     return True;
+                  end if;
+               end;
+
+            elsif Entity = Operator_Text then
+               if S = "(" then
+                  Par_Count := Par_Count + 1;
+
+               elsif S = ")" then
+                  Par_Count := Par_Count - 1;
+
+               elsif S = ";" then
+                  if In_Profile and then Par_Count = 0 then
+                     if Is_Body then
+                        Set_End_Of_Profile_Location_In_Body (E,
+                          General_Location'
+                            (File => File,
+                             Line => Start_Line + Sloc_End.Line - 1,
+                             Column => Visible_Column_Type (Sloc_End.Column)));
+                     else
+                        Set_End_Of_Profile_Location (E,
+                          General_Location'
+                            (File => File,
+                             Line => Start_Line + Sloc_End.Line - 1,
+                             Column => Visible_Column_Type (Sloc_End.Column)));
+                     end if;
+
+                     return True;
+                  end if;
+               end if;
+            end if;
+
+            return False;
+         exception
+            when E : others =>
+               Trace (Me, E);
+               return True;
+         end CB;
+
+         From          : Natural;
+         Index         : Natural;
+         Lines_Skipped : Natural;
+
+      --  Start of processing for Parse_Ada_Subprogram_Profile
+
+      begin
+         --  Displace the pointer to the beginning of the subprogram
+         Index := Buffer'First;
+         GNATCOLL.Utils.Skip_Lines
+           (Str           => Buffer.all,
+            Lines         => Location.Line - 1,
+            Index         => Index,
+            Lines_Skipped => Lines_Skipped);
+
+         GNATCOLL.Utils.Skip_To_Column
+           (Str           => Buffer.all,
+            Columns       => Natural (Location.Column),
+            Index         => Index);
+
+         if Is_Generic_Formal (E) then
+            Index :=
+              Search_Backward (Lines_Skipped,
+                               Buffer => Buffer,
+                               From   => Index - 1,
+                               Word_1 => "with");
+
+         elsif LL.Is_Generic (E) then
+            Index :=
+              Search_Backward (Lines_Skipped,
+                               Buffer => Buffer,
+                               From   => Index - 1,
+                               Word_1 => "generic");
+         else
+            Index :=
+              Search_Backward (Lines_Skipped,
+                               Buffer => Buffer,
+                               From   => Index - 1,
+                               Word_1 => "procedure",
+                               Word_2 => "function");
+         end if;
+
+         Start_Line := Location.Line - Lines_Skipped;
+
+         --  Append tabulation
+
+         if Buffer.all (Index - 1) = ' ' then
+            From := Skip_Blanks_Backward (Index - 1);
+            Append (Buffer.all (From .. Index - 1));
+         end if;
+
+         Parse_Entities
+           (Lang, Buffer.all (Index .. Buffer'Last),
+            CB'Unrestricted_Access);
+
+      end Parse_Ada_Subprogram_Profile;
+
       -------------------
       -- Previous_Word --
       -------------------
@@ -1722,6 +1833,7 @@ package body Docgen3.Frontend is
 
       function Search_Backward
         (Lines_Skipped : out Natural;
+         Buffer : GNAT.Strings.String_Access;
          From   : Natural;
          Word_1 : String;
          Word_2 : String := "") return Natural
@@ -2273,8 +2385,17 @@ package body Docgen3.Frontend is
                --  formal.
 
                if not EInfo_List.Has_Element (Cursor) then
-                  Param_End_Line :=
-                    Get_End_Of_Syntax_Scope_Loc (Subp).Line;
+                  --  Subprogram documentation retrieved from the body
+
+                  if Is_Doc_From_Body (Param) then
+                     pragma Assert
+                       (Present (Get_End_Of_Profile_Location_In_Body (Subp)));
+                     Param_End_Line :=
+                       Get_End_Of_Profile_Location_In_Body (Subp).Line;
+                  else
+                     Param_End_Line :=
+                       Get_End_Of_Profile_Location (Subp).Line;
+                  end if;
 
                --  Case 2: For other parameters their comment must be
                --  located before the location of the next parameter.
@@ -2297,7 +2418,9 @@ package body Docgen3.Frontend is
                   end if;
                end if;
 
-               if Get_Doc (Param).Start_Line < Param_End_Line then
+               if Get_Doc (Param).Start_Line >= LL.Get_Location (Subp).Line
+                 and then Get_Doc (Param).Start_Line < Param_End_Line
+               then
                   Append_Param_Tag
                     (Comment    => Get_Comment (Subp),
                      Entity     => LL.Get_Entity (Param),

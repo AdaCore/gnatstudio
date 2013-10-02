@@ -213,6 +213,14 @@ private package Docgen3.Atree is
    function Get_IDepth_Level
      (E : Entity_Id) return Natural;
 
+   function Get_End_Of_Profile_Location
+     (E : Entity_Id) return General_Location;
+   --  This attribute is set only for subprograms
+
+   function Get_End_Of_Profile_Location_In_Body
+     (E : Entity_Id) return General_Location;
+   --  This attribute is set only for subprograms
+
    function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location;
    --  At current stage this attribute is set only for E_Package and
@@ -316,7 +324,9 @@ private package Docgen3.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_IDepth_Level
      (E : Entity_Id);
-   procedure Set_End_Of_Syntax_Scope_Loc
+   procedure Set_End_Of_Profile_Location
+     (E : Entity_Id; Loc : General_Location);
+   procedure Set_End_Of_Profile_Location_In_Body
      (E : Entity_Id; Loc : General_Location);
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
@@ -607,8 +617,9 @@ private
          Alias           : Entity_Id;
          Scope           : Entity_Id;
 
-         End_Of_Syntax_Scope_Loc : General_Location;
-         --  Not set on subprogram declarations
+         End_Of_Syntax_Scope_Loc         : General_Location;
+         End_Of_Profile_Location         : General_Location;
+         End_Of_Profile_Location_In_Body : General_Location;
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
@@ -666,6 +677,9 @@ private
 
       end record;
 
+   procedure Set_End_Of_Syntax_Scope_Loc
+     (E : Entity_Id; Loc : General_Location);
+
    pragma Inline (Append_Derivation);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
@@ -677,6 +691,8 @@ private
    pragma Inline (Get_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_IDepth_Level);
+   pragma Inline (Get_End_Of_Profile_Location);
+   pragma Inline (Get_End_Of_Profile_Location_In_Body);
    pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
@@ -716,6 +732,9 @@ private
    pragma Inline (Set_Comment);
    pragma Inline (Set_IDepth_Level);
    pragma Inline (Set_Doc);
+   pragma Inline (Set_End_Of_Profile_Location);
+   pragma Inline (Set_End_Of_Profile_Location_In_Body);
+   pragma Inline (Set_End_Of_Syntax_Scope_Loc);
    pragma Inline (Set_Error_Msg);
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
