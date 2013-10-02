@@ -7376,7 +7376,19 @@ class Message(object):
 
     def get_flags(self):
         """
-        Return an integer which represents the location of the message
+        Return an integer which represents the location of the message: should
+        it be displayed in locations view and source editor's sidebar. Message
+        is displayed in source editor's sidebar when zero bit is set, and is
+        displayed in locations view when first bit is set, so here is possible
+        values:
+
+         0 - message is invisible
+         1 - message is visible in source editor's sidebar only
+         2 - message is visible in locations view only
+         3 - message is visible in source editor and locations view
+
+        Note, set of flags can be extended in the future, thus it is better to
+        handle them as bit set.
         """
         pass  # implemented in Ada
 
