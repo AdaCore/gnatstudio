@@ -154,7 +154,7 @@ package body Docgen3.Atree is
       Cursor  : EInfo_List.Cursor;
 
    begin
-      if Loc /= No_Location then
+      if Present (Loc) then
          Cursor := Container.First;
          while EInfo_List.Has_Element (Cursor) loop
             if LL.Get_Location (EInfo_List.Element (Cursor)) = Loc then
@@ -2173,7 +2173,7 @@ package body Docgen3.Atree is
             & Image (E.End_Of_Profile_Location));
       end if;
 
-      if E.End_Of_Profile_Location_In_Body /= No_Location then
+      if Present (E.End_Of_Profile_Location_In_Body) then
          Append_Line
            ("End_Of_Profile_Location_In_Body: "
             & Image (E.End_Of_Profile_Location_In_Body));
@@ -2252,7 +2252,7 @@ package body Docgen3.Atree is
          & "Full Name: "
          & Get (E.Full_Name).all);
 
-      if E.Xref.Body_Loc /= No_Location then
+      if Present (E.Xref.Body_Loc) then
          Append_Line
            (LL_Prefix
             & "Body_Loc: " & Image (E.Xref.Body_Loc));
@@ -2265,7 +2265,7 @@ package body Docgen3.Atree is
             & Image (LL.Get_First_Private_Entity_Loc (E)));
       end if;
 
-      if E.Xref.End_Of_Scope_Loc /= No_Location then
+      if Present (E.Xref.End_Of_Scope_Loc) then
          Append_Line
            (LL_Prefix
             & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
