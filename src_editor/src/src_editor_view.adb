@@ -1742,6 +1742,12 @@ package body Src_Editor_View is
       Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
       Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
 
+      if Self.Get_Editable then
+         Get_Style_Context (Self).Remove_Class ("readonly");
+      else
+         Get_Style_Context (Self).Add_Class ("readonly");
+      end if;
+
       Invalidate_Window (Self);
    end Set_Background_Color;
 

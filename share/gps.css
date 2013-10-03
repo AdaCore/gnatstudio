@@ -28,6 +28,10 @@
 .gps-local-toolbar {  /* local toolbar in the panes/views */
 }
 
+.readonly {
+   /* for read-only editors */
+}
+
 .mdi tab GtkLabel, .mdifocused tab GtkLabel { 
    color:   @theme_fg_color;
    opacity: 1.0 
