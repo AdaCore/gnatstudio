@@ -22,6 +22,7 @@ with System.Address_To_Access_Conversions;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Generic_Views;
+with GPS.Search;                     use GPS.Search;
 with GPS.Stock_Icons;                use GPS.Stock_Icons;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 
@@ -150,8 +151,7 @@ package body GPS.Location_View is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding procedure Filter_Changed
      (Self    : not null access Location_View_Record;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options);
+      Pattern : in out Search_Pattern_Access);
 
    function Initialize
      (Self   : access Location_View_Record'Class)
@@ -1219,7 +1219,8 @@ package body GPS.Location_View is
          Hist_Prefix => "locations",
          Tooltip     => -"The text pattern or regular expression",
          Placeholder => -"filter",
-         Options     => Has_Regexp or Has_Negate);
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
    end Create_Toolbar;
 
    -----------------
@@ -1552,14 +1553,10 @@ package body GPS.Location_View is
 
    overriding procedure Filter_Changed
      (Self    : not null access Location_View_Record;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options)
+      Pattern : in out Search_Pattern_Access)
    is
    begin
-      Self.View.Get_Filter_Model.Set_Pattern
-        (Pattern,
-         Is_Regexp    => Options.Regexp,
-         Hide_Matched => Options.Negate);
+      Self.View.Get_Filter_Model.Set_Pattern (Pattern);
    end Filter_Changed;
 
    --------------------

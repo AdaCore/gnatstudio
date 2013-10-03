@@ -21,11 +21,14 @@ with XML_Utils;               use XML_Utils;
 with Gtk.Editable;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Box;                 use Gtk.Box;
+with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Enums;               use Gtk.Enums;
+with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Style_Context;       use Gtk.Style_Context;
+with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
-with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -43,7 +46,9 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Search;                use GPS.Search;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Histories;                 use Histories;
 with System;
@@ -73,6 +78,65 @@ package body Generic_Views is
 
    Filter_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
+
+   procedure On_Pattern_Config_Menu
+     (Self  : access GObject_Record'Class;
+      Pos   : Gtk_Entry_Icon_Position;
+      Event : Gdk_Event_Button);
+   --  Creates the popup menu to configure the filter settings.
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when a filter panel is destroyed
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
+      Filter : constant Filter_Panel := Filter_Panel (Self);
+   begin
+      if Filter.Pattern_Config_Menu /= null then
+         Unref (Filter.Pattern_Config_Menu);
+      end if;
+   end On_Destroy;
+
+   ----------------------------
+   -- On_Pattern_Config_Menu --
+   ----------------------------
+
+   procedure On_Pattern_Config_Menu
+      (Self  : access GObject_Record'Class;
+       Pos   : Gtk_Entry_Icon_Position;
+       Event : Gdk_Event_Button)
+   is
+      pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
+      View : constant Abstract_View_Access := Abstract_View_Access (Self);
+
+      procedure Func
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X, Y    : in out Gint;
+         Push_In : out Boolean);
+      procedure Func
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X, Y    : in out Gint;
+         Push_In : out Boolean)
+      is
+         pragma Unreferenced (Menu);
+      begin
+         X := Gint (Event.X_Root);
+         Y := Gint (Event.Y_Root);
+         Push_In := True;
+      end Func;
+
+   begin
+      if View.Filter.Pattern.Get_Icon_Position (Event) =
+        Gtk_Entry_Icon_Primary
+      then
+         View.Filter.Pattern_Config_Menu.Show_All;
+         View.Filter.Pattern_Config_Menu.Popup
+           (Func => Func'Unrestricted_Access);
+      end if;
+   end On_Pattern_Config_Menu;
 
    --------------------------------
    -- Get_Filter_Preferred_Width --
@@ -107,15 +171,41 @@ package body Generic_Views is
    function Report_Filter_Changed_Idle
      (View : Abstract_View_Access) return Boolean
    is
-   begin
-      View.Filter_Changed
-        (Pattern => View.Filter.Pattern.Get_Text,
-         Options => (Regexp =>
-                         View.Filter.Regexp /= null
-                     and then View.Filter.Regexp.Get_Active,
-                     Negate => View.Filter.Negate /= null
-                     and then View.Filter.Negate.Get_Active));
+      Regexp : constant Boolean :=
+        View.Filter.Regexp /= null and then View.Filter.Regexp.Get_Active;
+      Approximate : constant Boolean :=
+        View.Filter.Approximate /= null
+        and then View.Filter.Approximate.Get_Active;
+      Fuzzy : constant Boolean :=
+        View.Filter.Fuzzy /= null and then View.Filter.Fuzzy.Get_Active;
+      Negate : constant Boolean :=
+        View.Filter.Negate /= null and then View.Filter.Negate.Get_Active;
+      Whole  : constant Boolean :=
+        View.Filter.Whole_Word /= null
+        and then View.Filter.Whole_Word.Get_Active;
+      Pattern : Search_Pattern_Access;
 
+   begin
+      if View.Filter.Pattern.Get_Text /= "" then
+         Pattern := Build
+           (Pattern         => View.Filter.Pattern.Get_Text,
+            Case_Sensitive  => False,
+            Whole_Word      => Whole,
+            Negate          => Negate,
+            Kind            =>
+              (if Regexp then
+                    GPS.Search.Regexp
+               elsif Approximate then
+                  GPS.Search.Approximate
+               elsif Fuzzy then
+                  GPS.Search.Fuzzy
+               else
+                  GPS.Search.Full_Text),
+            Allow_Highlight => False);
+
+      end if;
+
+      View.Filter_Changed (Pattern);
       View.Filter.Timeout := Glib.Main.No_Source_Id;
       return False;
    end Report_Filter_Changed_Idle;
@@ -148,6 +238,8 @@ package body Generic_Views is
       Options     : Filter_Options_Mask := 0)
    is
       F : Filter_Panel;
+      Full_Text : Gtk_Radio_Menu_Item;
+      Sep       : Gtk_Separator_Menu_Item;
    begin
       if Self.Filter /= null then
          return;
@@ -171,43 +263,95 @@ package body Generic_Views is
       end if;
 
       G_New (F, Filter_Class_Record.The_Type);
+      Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
+      F.Set_Expand (True);
+      F.Set_Homogeneous (False);
+
+      Self.Filter.On_Destroy (On_Destroy'Access);
 
       Gtk_New (F.Pattern, Placeholder => Placeholder);
-
+      Set_Font_And_Colors (F.Pattern, Fixed_Font => True);
       Object_Callback.Object_Connect
         (F.Pattern, Gtk.Editable.Signal_Changed,
          Report_Filter_Changed'Access, Self);
       F.Add (F.Pattern);
-      F.Set_Expand (True);
-      F.Set_Homogeneous (False);
-      Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
 
       if Tooltip /= "" then
          F.Pattern.Set_Tooltip_Text (Tooltip);
       end if;
 
-      --  ??? Perhaps we should have a popdown menu for the options instead
+      if Options /= 0 then
+         F.Pattern.Set_Icon_From_Stock
+           (Gtk_Entry_Icon_Primary, "gps-search-and-menu");
+         F.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
+         F.Pattern.On_Icon_Press (On_Pattern_Config_Menu'Access, Self);
 
-      if (Options and Has_Regexp) /= 0 then
-         Gtk_New_From_Stock (F.Regexp, GPS_Regexp);
-         Associate (Get_History (Self.Kernel).all,
-                    Hist_Prefix & "-filter-is-regexp",
-                    F.Regexp, Default => True);
-         F.Regexp.Set_Tooltip_Text
-           (-"Whether filter is a regular expression");
-         F.Regexp.On_Toggled (Report_Filter_Changed'Access, Self);
-         Self.Append_Toolbar (Toolbar, F.Regexp, Is_Filter => True);
-      end if;
+         Gtk_New (F.Pattern_Config_Menu);
+         Ref (F.Pattern_Config_Menu);  --  unref'ed in On_Destroy
 
-      if (Options and Has_Negate) /= 0 then
-         Gtk_New_From_Stock (F.Negate, GPS_Negate_Search);
-         Associate (Get_History (Self.Kernel).all,
-                    Hist_Prefix & "-filter-negate",
-                    F.Negate, Default => False);
-         F.Negate.Set_Tooltip_Text
-           (-"Revert filter: hide matching items");
-         F.Negate.On_Toggled (Report_Filter_Changed'Access, Self);
-         Self.Append_Toolbar (Toolbar, F.Negate, Is_Filter => True);
+         Gtk_New (Full_Text, Widget_SList.Null_List, -"Full text match");
+         Full_Text.On_Toggled (Report_Filter_Changed'Access, Self);
+         F.Pattern_Config_Menu.Add (Full_Text);
+
+         if (Options and Has_Regexp) /= 0 then
+            Gtk_New (F.Regexp, Label => -"Regular Expression",
+                     Group => Full_Text.Get_Group);
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-is-regexp",
+                       F.Regexp, Default => False);
+            F.Regexp.Set_Tooltip_Text
+              (-"Whether filter is a regular expression");
+            F.Regexp.On_Toggled (Report_Filter_Changed'Access, Self);
+            F.Pattern_Config_Menu.Add (F.Regexp);
+         end if;
+
+         if (Options and Has_Approximate) /= 0 then
+            Gtk_New (F.Approximate, Label => -"Approximate matching",
+                     Group => Full_Text.Get_Group);
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-approximate",
+                       F.Approximate, Default => False);
+            F.Approximate.Set_Tooltip_Text
+              (-"Matchng allows some errors (e.g. extra or missing text)");
+            F.Approximate.On_Toggled (Report_Filter_Changed'Access, Self);
+            F.Pattern_Config_Menu.Add (F.Approximate);
+         end if;
+
+         if (Options and Has_Fuzzy) /= 0 then
+            Gtk_New (F.Fuzzy, Label => -"Fuzzy matching",
+                     Group => Full_Text.Get_Group);
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-fuzzy",
+                       F.Fuzzy, Default => False);
+            F.Fuzzy.Set_Tooltip_Text (-"Matching allows missing characters");
+            F.Fuzzy.On_Toggled (Report_Filter_Changed'Access, Self);
+            F.Pattern_Config_Menu.Add (F.Fuzzy);
+         end if;
+
+         Gtk_New (Sep);
+         F.Pattern_Config_Menu.Add (Sep);
+
+         if (Options and Has_Negate) /= 0 then
+            Gtk_New (F.Negate, -"Revert filter");
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-negate",
+                       F.Negate, Default => False);
+            F.Negate.Set_Tooltip_Text
+              (-"Revert filter : hide matching items");
+            F.Negate.On_Toggled (Report_Filter_Changed'Access, Self);
+            F.Pattern_Config_Menu.Add (F.Negate);
+         end if;
+
+         if (Options and Has_Whole_Word) /= 0 then
+            Gtk_New (F.Whole_Word, -"Whole word");
+            Associate (Get_History (Self.Kernel).all,
+                       Hist_Prefix & "-filter-whole-word",
+                       F.Whole_Word, Default => False);
+            F.Whole_Word.Set_Tooltip_Text (-"Match whole words only");
+            F.Whole_Word.On_Toggled (Report_Filter_Changed'Access, Self);
+            F.Pattern_Config_Menu.Add (F.Whole_Word);
+         end if;
+
       end if;
    end Build_Filter;
 

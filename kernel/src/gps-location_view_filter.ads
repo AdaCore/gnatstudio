@@ -33,9 +33,7 @@ package GPS.Location_View_Filter is
 
    procedure Set_Pattern
      (Self         : not null access Location_View_Filter_Model_Record;
-      Pattern      : String;
-      Is_Regexp    : Boolean;
-      Hide_Matched : Boolean);
+      Pattern      : GPS.Search.Search_Pattern_Access);
    --  Sets pattern to be used for filtering.
 
 private
@@ -44,7 +42,6 @@ private
      new Gtk.Tree_Model_Filter.Gtk_Tree_Model_Filter_Record
    with record
       Pattern : GPS.Search.Search_Pattern_Access;
-      Is_Hide : Boolean := False;
    end record;
 
 end GPS.Location_View_Filter;

@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Event;          use Gdk.Event;
+with Gdk.Window; use Gdk, Gdk.Window;
+with Gdk.Rectangle, Glib; use Glib, Gdk.Rectangle;
 with Gtk.Style_Context;  use Gtk.Style_Context;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
@@ -33,6 +34,30 @@ package body Gtkada.Search_Entry is
    procedure On_Changed (Self : access Gtk_Widget_Record'Class);
    --  Called when the text of the entry has changed.
 
+   -----------------------
+   -- Get_Icon_Position --
+   -----------------------
+
+   function Get_Icon_Position
+     (Self   : access Gtkada_Search_Entry_Record'Class;
+      Event  : Gdk_Event_Button) return Gtk_Entry_Icon_Position
+   is
+      Alloc : Gtk_Allocation;
+      Rect  : Gdk_Rectangle;
+      X, Y  : Gint;
+   begin
+      Self.Get_Allocation (Alloc);
+      Get_Position (Event.Window, X, Y);
+
+      Self.Get_Icon_Area (Gtk_Entry_Icon_Primary, Rect);
+
+      if X - Alloc.X = Rect.X then
+         return Gtk_Entry_Icon_Primary;
+      else
+         return Gtk_Entry_Icon_Secondary;
+      end if;
+   end Get_Icon_Position;
+
    --------------------
    -- On_Clear_Entry --
    --------------------
@@ -42,9 +67,13 @@ package body Gtkada.Search_Entry is
        Pos   : Gtk_Entry_Icon_Position;
        Event : Gdk_Event_Button)
    is
-      pragma Unreferenced (Pos, Event);
+      pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
    begin
-      Self.Set_Text ("");
+      if Gtkada_Search_Entry (Self).Get_Icon_Position (Event) =
+        Gtk_Entry_Icon_Secondary
+      then
+         Self.Set_Text ("");
+      end if;
    end On_Clear_Entry;
 
    ----------------
@@ -82,7 +111,7 @@ package body Gtkada.Search_Entry is
 
       Get_Style_Context (Self).Add_Class ("search");
 
-      Self.On_Icon_Release (On_Clear_Entry'Access);
+      Self.On_Icon_Press (On_Clear_Entry'Access);
       Widget_Callback.Connect (Self, Signal_Changed, On_Changed'Access);
    end Gtk_New;
 

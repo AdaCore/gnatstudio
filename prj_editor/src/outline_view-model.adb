@@ -18,7 +18,6 @@
 with System; use System;
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -29,9 +28,9 @@ with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
 with Basic_Types;                 use Basic_Types;
 with Project_Explorers_Common;    use Project_Explorers_Common;
-with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GPS.Search;                  use GPS.Search;
 with Language.Profile_Formaters;  use Language.Profile_Formaters;
 
 package body Outline_View.Model is
@@ -285,12 +284,8 @@ package body Outline_View.Model is
       end if;
 
       if Model.Filter_Pattern /= null then
-         if Ada.Strings.Fixed.Index
-           (Source  => To_Lower (Get (Construct.Name).all),
-            Pattern => Model.Filter_Pattern.all) = 0
-         then
-            return False;
-         end if;
+         return Model.Filter_Pattern.Start
+           (Get (Construct.Name).all) /= No_Match;
       end if;
 
       return True;
@@ -892,16 +887,10 @@ package body Outline_View.Model is
 
    procedure Set_Filter
      (Model   : not null access Outline_Model_Record'Class;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options)
-   is
-      pragma Unreferenced (Options);
+      Pattern : Search_Pattern_Access) is
    begin
       Free (Model.Filter_Pattern);
-
-      if Pattern /= "" then
-         Model.Filter_Pattern := new String'(To_Lower (Pattern));
-      end if;
+      Model.Filter_Pattern := Pattern;
    end Set_Filter;
 
    ----------------

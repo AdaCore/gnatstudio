@@ -17,14 +17,13 @@
 
 with Ada.Containers.Ordered_Sets;
 with GNATCOLL.Symbols;
-with GNAT.Strings;
+with GPS.Search;
 
 with Glib;                       use Glib;
 with Glib.Values;                use Glib.Values;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
 
-with Generic_Views;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
@@ -75,8 +74,7 @@ private package Outline_View.Model is
 
    procedure Set_Filter
      (Model   : not null access Outline_Model_Record'Class;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options);
+      Pattern : GPS.Search.Search_Pattern_Access);
    --  Filters the contents of the model. This does not refresh the model.
 
    procedure Set_File
@@ -226,7 +224,7 @@ private
       File           : Structured_File_Access;
 
       Filter         : Tree_Filter;
-      Filter_Pattern : GNAT.Strings.String_Access := null;
+      Filter_Pattern : GPS.Search.Search_Pattern_Access := null;
 
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children

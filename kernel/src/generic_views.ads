@@ -22,13 +22,15 @@
 
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
+with GPS.Search;
 with Glib.Main;
 with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
 with Gtk.Box;
+private with Gtk.Check_Menu_Item;
+private with Gtk.Radio_Menu_Item;
 with Gtk.Menu;
-private with Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
@@ -102,14 +104,12 @@ package Generic_Views is
    -- Search and filter fields --
    ------------------------------
 
-   type Filter_Options is record
-      Regexp : Boolean;
-      Negate : Boolean;
-   end record;
-
    type Filter_Options_Mask is mod Natural'Last;
-   Has_Regexp : constant Filter_Options_Mask := 2 ** 0;
-   Has_Negate : constant Filter_Options_Mask := 2 ** 1;
+   Has_Regexp      : constant Filter_Options_Mask := 2 ** 0;
+   Has_Negate      : constant Filter_Options_Mask := 2 ** 1;
+   Has_Whole_Word  : constant Filter_Options_Mask := 2 ** 2;
+   Has_Approximate : constant Filter_Options_Mask := 2 ** 3;
+   Has_Fuzzy       : constant Filter_Options_Mask := 2 ** 4;
 
    procedure Build_Filter
      (Self        : not null access View_Record;
@@ -132,11 +132,10 @@ package Generic_Views is
 
    procedure Filter_Changed
      (Self    : not null access View_Record;
-      Pattern : String;
-      Options : Filter_Options) is null;
-   --  Called when the user has changed the filter applied to the view. Some
-   --  of the patterns in Options might be irrelevant, depending on the
-   --  mask set in Build_Filter.
+      Pattern : in out GPS.Search.Search_Pattern_Access) is null;
+   --  Called when the user has changed the filter applied to the view.
+   --  Pattern must be freed by the callee.
+   --  null is passed when no pattern is set by the user.
 
    ------------------
    -- Simple_Views --
@@ -296,8 +295,14 @@ private
    type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
      with record
       Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
-      Regexp  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
-      Negate  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
+      Pattern_Config_Menu : Gtk.Menu.Gtk_Menu;
+
+      Whole_Word  : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Negate      : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Regexp      : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Fuzzy       : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Approximate : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+
       Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
      end record;
    type Filter_Panel is access all Filter_Panel_Record'Class;

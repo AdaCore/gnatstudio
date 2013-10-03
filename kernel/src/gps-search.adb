@@ -91,7 +91,8 @@ package body GPS.Search is
      (Pattern         : String;
       Case_Sensitive  : Boolean;
       Whole_Word      : Boolean;
-      Allow_Highlight : Boolean) return Approximate_Search_Access;
+      Allow_Highlight : Boolean;
+      Negate          : Boolean) return Approximate_Search_Access;
    --  Compile the pattern
 
    overriding function Start
@@ -244,30 +245,54 @@ package body GPS.Search is
    begin
       Index := GNATCOLL.Boyer_Moore.Search (Self.Pattern.all, Buffer (S .. F));
       if Index = -1 then
-         return No_Match;
+         if Self.Negate then
+            Context := Search_Context'
+              (Start              => S,
+               Finish             => F,
+               Line_Start         => 1,
+               Line_End           => 1,
+               Col_Start          => 1,
+               Col_End            => 1,
+               Col_Visible_Start  => 1,
+               Col_Visible_End    => 1,
+               Score              => 50,
+               Buffer_Start       => S,
+               Buffer_End         => F,
+               Ref_Index          => R,
+               Ref_Line           => Ref_Line,
+               Ref_Column         => Ref_Column,
+               Ref_Visible_Column =>
+                 (if Ref_Visible_Column = -1
+                  then Visible_Column_Type (Ref_Column)
+                  else Ref_Visible_Column));
+         else
+            Context := No_Match;
+         end if;
+      elsif Self.Negate then
+         Context := No_Match;
+      else
+         Context := Search_Context'
+           (Start              => Index,
+            Finish             => Index + Self.Length - 1,
+            Line_Start         => 1,
+            Line_End           => 1,
+            Col_Start          => 1,
+            Col_End            => 1,
+            Col_Visible_Start  => 1,
+            Col_Visible_End    => 1,
+            Score              => 100,
+            Buffer_Start       => S,
+            Buffer_End         => F,
+            Ref_Index          => R,
+            Ref_Line           => Ref_Line,
+            Ref_Column         => Ref_Column,
+            Ref_Visible_Column =>
+              (if Ref_Visible_Column = -1
+               then Visible_Column_Type (Ref_Column)
+               else Ref_Visible_Column));
+         Update_Location (Context, Buffer);
       end if;
 
-      Context := Search_Context'
-        (Start             => Index,
-         Finish            => Index + Self.Length - 1,
-         Line_Start        => 1,
-         Line_End          => 1,
-         Col_Start         => 1,
-         Col_End           => 1,
-         Col_Visible_Start => 1,
-         Col_Visible_End   => 1,
-         Score             => 100,
-         Buffer_Start      => S,
-         Buffer_End        => F,
-         Ref_Index         => R,
-         Ref_Line          => Ref_Line,
-         Ref_Column        => Ref_Column,
-         Ref_Visible_Column =>
-           (if Ref_Visible_Column = -1
-            then Visible_Column_Type (Ref_Column)
-            else Ref_Visible_Column));
-
-      Update_Location (Context, Buffer);
       return Context;
    end Start;
 
@@ -303,6 +328,33 @@ package body GPS.Search is
       if Self.Matches (0) = GNAT.Regpat.No_Match
         or else Self.Matches (0).First > Buffer'Last
       then
+         if Self.Negate then
+            Context := Search_Context'
+              (Start              => S,
+               Finish             => F,
+               Line_Start         => 1,
+               Line_End           => 1,
+               Col_Start          => 1,
+               Col_End            => 1,
+               Col_Visible_Start  => 1,
+               Col_Visible_End    => 1,
+               Score              => 100,
+               Buffer_Start       => S,
+               Buffer_End         => F,
+               Ref_Index          => R,
+               Ref_Line           => Ref_Line,
+               Ref_Column         => Ref_Column,
+               Ref_Visible_Column =>
+                 (if Ref_Visible_Column = -1
+                  then Visible_Column_Type (Ref_Column)
+                  else Ref_Visible_Column));
+
+            Update_Location (Context, Buffer);
+            return Context;
+         else
+            return No_Match;
+         end if;
+      elsif Self.Negate then
          return No_Match;
       end if;
 
@@ -371,35 +423,64 @@ package body GPS.Search is
                --  together
                Score := 100 - (B - Start);
 
-               Context := Search_Context'
-                 (Start             => Start,
-                  Finish            => B,
-                  Line_Start        => 1,
-                  Line_End          => 1,
-                  Col_Start         => 1,
-                  Col_End           => 1,
-                  Col_Visible_Start => 1,
-                  Col_Visible_End   => 1,
-                  Score             => Score,
-                  Buffer_Start      => S,
-                  Buffer_End        => F,
-                  Ref_Index         => R,
-                  Ref_Line          => Ref_Line,
-                  Ref_Column        => Ref_Column,
-                  Ref_Visible_Column =>
-                    (if Ref_Visible_Column = -1
-                     then Visible_Column_Type (Ref_Column)
-                     else Ref_Visible_Column));
+               if Self.Negate then
+                  return GPS.Search.No_Match;
+               else
+                  Context := Search_Context'
+                    (Start              => Start,
+                     Finish             => B,
+                     Line_Start         => 1,
+                     Line_End           => 1,
+                     Col_Start          => 1,
+                     Col_End            => 1,
+                     Col_Visible_Start  => 1,
+                     Col_Visible_End    => 1,
+                     Score              => Score,
+                     Buffer_Start       => S,
+                     Buffer_End         => F,
+                     Ref_Index          => R,
+                     Ref_Line           => Ref_Line,
+                     Ref_Column         => Ref_Column,
+                     Ref_Visible_Column =>
+                       (if Ref_Visible_Column = -1
+                        then Visible_Column_Type (Ref_Column)
+                        else Ref_Visible_Column));
 
-               Update_Location (Context, Buffer);
-               return Context;
+                  Update_Location (Context, Buffer);
+                  return Context;
+               end if;
             end if;
 
             T := T + 1;
          end if;
       end loop;
 
-      return GPS.Search.No_Match;
+      if Self.Negate then
+         Context := Search_Context'
+           (Start              => S,
+            Finish             => F,
+            Line_Start         => 1,
+            Line_End           => 1,
+            Col_Start          => 1,
+            Col_End            => 1,
+            Col_Visible_Start  => 1,
+            Col_Visible_End    => 1,
+            Score              => Score,
+            Buffer_Start       => S,
+            Buffer_End         => F,
+            Ref_Index          => R,
+            Ref_Line           => Ref_Line,
+            Ref_Column         => Ref_Column,
+            Ref_Visible_Column =>
+              (if Ref_Visible_Column = -1
+               then Visible_Column_Type (Ref_Column)
+               else Ref_Visible_Column));
+         Update_Location (Context, Buffer);
+         return Context;
+
+      else
+         return GPS.Search.No_Match;
+      end if;
    end Start;
 
    -----------
@@ -449,7 +530,16 @@ package body GPS.Search is
       end loop;
 
       Next (Self, Buffer, Context);
-      return Context;
+
+      if Context = No_Match and then Self.Negate then
+         Context.Start := S;
+         Context.Finish := F;
+         return Context;
+      elsif Self.Negate then
+         return No_Match;
+      else
+         return Context;
+      end if;
    end Start;
 
    ----------
@@ -563,7 +653,7 @@ package body GPS.Search is
       T : Natural := Self.Text'First;
       Result : Unbounded_String;
    begin
-      if not Self.Allow_Highlight then
+      if not Self.Allow_Highlight or else Self.Negate then
          return Buffer;
       end if;
 
@@ -650,7 +740,7 @@ package body GPS.Search is
    is
       B, F, S, E : Natural;
    begin
-      if not Self.Allow_Highlight then
+      if not Self.Allow_Highlight or else Self.Negate then
          return Buffer;
       end if;
 
@@ -826,13 +916,15 @@ package body GPS.Search is
      (Pattern         : String;
       Case_Sensitive  : Boolean;
       Whole_Word      : Boolean;
-      Allow_Highlight : Boolean) return Approximate_Search_Access
+      Allow_Highlight : Boolean;
+      Negate          : Boolean) return Approximate_Search_Access
    is
       Result : constant Approximate_Search_Access := new Approximate_Search'
         (Text            => new String'(Pattern),
          Case_Sensitive  => Case_Sensitive,
          Whole_Word      => Whole_Word,
          Kind            => Approximate,
+         Negate          => Negate,
          Pattern         => (others => 0),
          Result          => new Approximate_Status,
          Allow_Highlight => Allow_Highlight,
@@ -862,6 +954,7 @@ package body GPS.Search is
      (Pattern         : String;
       Case_Sensitive  : Boolean := False;
       Whole_Word      : Boolean := False;
+      Negate          : Boolean := False;
       Kind            : Search_Kind := Full_Text;
       Allow_Highlight : Boolean := False)
       return Search_Pattern_Access
@@ -879,6 +972,7 @@ package body GPS.Search is
               (Pattern         => BM,
                Text            => new String'(Pattern),
                Case_Sensitive  => Case_Sensitive,
+               Negate          => Negate,
                Allow_Highlight => Allow_Highlight,
                Whole_Word      => Whole_Word,
                Kind            => Kind,
@@ -890,6 +984,7 @@ package body GPS.Search is
                Allow_Highlight => Allow_Highlight,
                Case_Sensitive  => Case_Sensitive,
                Whole_Word      => Whole_Word,
+               Negate          => Negate,
                Kind            => Kind);
 
          when Approximate =>
@@ -904,6 +999,7 @@ package body GPS.Search is
                   Case_Sensitive  => Case_Sensitive,
                   Whole_Word      => Whole_Word,
                   Kind            => Kind,
+                  Negate          => Negate,
                   Length          => Pattern'Length);
 
             else
@@ -911,6 +1007,7 @@ package body GPS.Search is
                  (Pattern,
                   Allow_Highlight => Allow_Highlight,
                   Case_Sensitive  => Case_Sensitive,
+                  Negate          => Negate,
                   Whole_Word      => Whole_Word));
             end if;
 
@@ -935,6 +1032,7 @@ package body GPS.Search is
                   Case_Sensitive => Case_Sensitive,
                   Whole_Word     => Whole_Word,
                   Kind           => Kind,
+                  Negate         => Negate,
                   Matches      => new Match_Array (0 .. Paren_Count (Re.all)));
 
             exception
@@ -944,6 +1042,7 @@ package body GPS.Search is
                      Case_Sensitive  => Case_Sensitive,
                      Whole_Word      => Whole_Word,
                      Kind            => Full_Text,
+                     Negate          => Negate,
                      Allow_Highlight => Allow_Highlight);
             end;
       end case;
@@ -962,6 +1061,7 @@ package body GPS.Search is
           Case_Sensitive  => Pattern.Case_Sensitive,
           Allow_Highlight => Pattern.Allow_Highlight,
           Whole_Word      => Pattern.Whole_Word,
+          Negate          => Pattern.Negate,
           Kind            => Pattern.Kind);
    end Build;
 
@@ -978,8 +1078,19 @@ package body GPS.Search is
           Case_Sensitive  => Pattern.Case_Sensitive,
           Whole_Word      => Pattern.Whole_Word,
           Allow_Highlight => Pattern.Allow_Highlight,
+          Negate          => Pattern.Negate,
           Kind            => Kind);
    end Build;
+
+   ----------------
+   -- Get_Negate --
+   ----------------
+
+   function Get_Negate
+     (Pattern : not null access Search_Pattern'Class) return Boolean is
+   begin
+      return Pattern.Negate;
+   end Get_Negate;
 
    ------------------------
    -- Get_Case_Sensitive --

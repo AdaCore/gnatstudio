@@ -19,6 +19,7 @@
 --  This is an entry with special styles and icons. In particular, it
 --  provides an icon to clear the entry.
 
+with Gdk.Event;   use Gdk.Event;
 with Gtk.GEntry;  use Gtk.GEntry;
 
 package Gtkada.Search_Entry is
@@ -31,5 +32,11 @@ package Gtkada.Search_Entry is
       (Self        : out Gtkada_Search_Entry;
        Placeholder : String := "");
    --  Create a new search entry
+
+   function Get_Icon_Position
+     (Self   : access Gtkada_Search_Entry_Record'Class;
+      Event  : Gdk_Event_Button) return Gtk_Entry_Icon_Position;
+   --  Returns the icon which was clicked on.
+   --  For some reason, gtk+ always seems to return the primary icon otherwise.
 
 end Gtkada.Search_Entry;

@@ -93,6 +93,7 @@ package GPS.Search is
      (Pattern         : String;
       Case_Sensitive  : Boolean := False;
       Whole_Word      : Boolean := False;
+      Negate          : Boolean := False;
       Kind            : Search_Kind := Full_Text;
       Allow_Highlight : Boolean := False)
       return Search_Pattern_Access;
@@ -103,6 +104,9 @@ package GPS.Search is
    --  characters.
    --  If the kind is a regular expression, but the pattern is invalid, this
    --  function falls back to a Full_Text search.
+   --  If Negate is true, the search_pattern will always return No_Match if
+   --  the pattern in fact matches the text (and a match at position 1 if the
+   --  pattern in fact does not match).
 
    function Build
       (Pattern    : not null access Search_Pattern'Class;
@@ -123,6 +127,8 @@ package GPS.Search is
    function Get_Case_Sensitive
      (Pattern    : not null access Search_Pattern'Class) return Boolean;
    function Get_Whole_Word
+     (Pattern    : not null access Search_Pattern'Class) return Boolean;
+   function Get_Negate
      (Pattern    : not null access Search_Pattern'Class) return Boolean;
    --  Return the text searched by the user.
 
@@ -418,6 +424,7 @@ private
       Whole_Word     : Boolean := False;
       Kind           : Search_Kind := Full_Text;
       Allow_Highlight : Boolean := False;
+      Negate         : Boolean := False;
    end record;
 
    No_Match : constant Search_Context :=

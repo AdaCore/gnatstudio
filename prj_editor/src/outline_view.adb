@@ -51,7 +51,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
 with Entities_Tooltips;
-with Generic_Views;
+with Generic_Views;             use Generic_Views;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -62,6 +62,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language;                  use Language;
@@ -127,8 +128,7 @@ package body Outline_View is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding procedure Filter_Changed
      (Self    : not null access Outline_View_Record;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options);
+      Pattern : in out Search_Pattern_Access);
 
    function Initialize
      (Outline : access Outline_View_Record'Class)
@@ -431,7 +431,8 @@ package body Outline_View is
          Hist_Prefix => "outline",
          Tooltip     => -"Filter the contents of the outline view",
          Placeholder => -"filter",
-         Options     => 0);
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
    end Create_Toolbar;
 
    -----------------
@@ -706,10 +707,9 @@ package body Outline_View is
 
    overriding procedure Filter_Changed
      (Self    : not null access Outline_View_Record;
-      Pattern : String;
-      Options : Generic_Views.Filter_Options) is
+      Pattern : in out Search_Pattern_Access) is
    begin
-      Get_Outline_Model (Self).Set_Filter (Pattern, Options);
+      Get_Outline_Model (Self).Set_Filter (Pattern);
       Force_Refresh (Self);
    end Filter_Changed;
 

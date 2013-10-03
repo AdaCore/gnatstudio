@@ -246,11 +246,12 @@ package body GPS.Location_View_Filter is
             Text  : constant String := Get_String
               (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
          begin
-            if Self.Pattern /= null then
+            --  when the filter is negated, ignore file names, since otherwise
+            --  we cannot easily filter "warning"
+            if Self.Pattern /= null
+              and then not Self.Pattern.Get_Negate
+            then
                Found := Self.Pattern.Start (Text) /= No_Match;
-               if Self.Is_Hide then
-                  Found := not Found;
-               end if;
                if Found then
                   return Found;
                end if;
@@ -279,16 +280,12 @@ package body GPS.Location_View_Filter is
          begin
             if Self.Pattern = null then
                return True;
+            elsif Self.Pattern.Get_Negate then
+               return Self.Pattern.Start (Text) /= No_Match;
             else
-               Found := Self.Pattern.Start (Text) /= No_Match
+               return Self.Pattern.Start (Text) /= No_Match
                  or else Self.Pattern.Start (File.Display_Base_Name) /=
                     No_Match;
-
-               if Self.Is_Hide then
-                  Found := not Found;
-               end if;
-
-               return Found;
             end if;
          end;
       end if;
@@ -300,20 +297,11 @@ package body GPS.Location_View_Filter is
 
    procedure Set_Pattern
      (Self         : not null access Location_View_Filter_Model_Record;
-      Pattern      : String;
-      Is_Regexp    : Boolean;
-      Hide_Matched : Boolean)
+      Pattern      : Search_Pattern_Access)
    is
    begin
       Free (Self.Pattern);
-
-      if Pattern /= "" then
-         Self.Pattern := Build
-           (Pattern => Pattern,
-            Kind    => (if Is_Regexp then Regexp else Full_Text));
-      end if;
-
-      Self.Is_Hide := Hide_Matched;
+      Self.Pattern := Pattern;
       Self.Refilter;
    end Set_Pattern;
 
