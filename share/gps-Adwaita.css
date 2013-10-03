@@ -9,6 +9,9 @@
 
 @define-color theme_tooltip_bg_color #ffffee;
 @define-color theme_tooltip_fg_color black;
+.tooltip {
+   text-shadow: none;
+}
 
 .notebook.mdifocused tab.top:active,
 .notebook.mdifocused tab.bottom:active {
