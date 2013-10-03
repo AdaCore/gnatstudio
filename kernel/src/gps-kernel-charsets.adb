@@ -330,6 +330,7 @@ package body GPS.Kernel.Charsets is
       Valid         : Boolean;
       First_Invalid : Natural;
       Charset : constant String := Get_File_Charset (File);
+      C             : Integer := Charsets'First;
    begin
       Props := (Invalid_UTF8          => False,
                 CR_Found              => False,
@@ -352,13 +353,18 @@ package body GPS.Kernel.Charsets is
         (Contents (Contents'First .. Last), "UTF-8", Charset,
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
-      if UTF8 = Gtkada.Types.Null_Ptr then
-         --  In case conversion failed, use a default encoding so that we
-         --  can at least show something in the editor
+      --  In case conversion failed, use a default encoding so that we
+      --  can at least show something in the editor
+
+      while UTF8 = Gtkada.Types.Null_Ptr
+        and then C <= Charsets'Last
+      loop
          UTF8 := Glib.Convert.Convert
-           (Contents (Contents'First .. Last), "UTF-8", Charset,
+           (Contents (Contents'First .. Last), "UTF-8",
+            Charsets (C).Name.all,
             Ignore'Unchecked_Access, Length'Unchecked_Access);
-      end if;
+         C := C + 1;
+      end loop;
 
       for J in reverse Contents'Range loop
          if Contents (J) = ASCII.LF then
@@ -378,7 +384,7 @@ package body GPS.Kernel.Charsets is
            (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
       else
          Valid := False;
-         First_Invalid := 0;
+         First_Invalid := 1;
       end if;
 
       if not Valid then
