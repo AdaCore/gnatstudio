@@ -30,6 +30,7 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Stock;                use Gtk.Stock;
@@ -1475,7 +1476,6 @@ package body GPS.Search.GUI is
          (Module.Search,
           Kernel              => Kernel,
           Name                => "global_search",
-          Completion_In_Popup => True,
           Case_Sensitive      => False,
           Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
@@ -1486,7 +1486,7 @@ package body GPS.Search.GUI is
 
       Widget_Callback.Connect (Module.Search, Signal_Escape, On_Escape'Access);
       Widget_Callback.Connect
-         (Module.Search, Signal_Activate, On_Activate'Access);
+         (Module.Search, Gtk.GEntry.Signal_Activate, On_Activate'Access);
 
       Register_Menu
         (Kernel,

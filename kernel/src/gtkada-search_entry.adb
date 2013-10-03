@@ -94,15 +94,15 @@ package body Gtkada.Search_Entry is
       end if;
    end On_Changed;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-      (Self        : out Gtkada_Search_Entry;
-       Placeholder : String := "") is
+   procedure Initialize
+      (Self        : access Gtkada_Search_Entry_Record'Class;
+       Placeholder : String := "")
+   is
    begin
-      Self := new Gtkada_Search_Entry_Record;
       Gtk.GEntry.Initialize (Self);
 
       if Placeholder /= "" then
@@ -113,6 +113,18 @@ package body Gtkada.Search_Entry is
 
       Self.On_Icon_Press (On_Clear_Entry'Access);
       Widget_Callback.Connect (Self, Signal_Changed, On_Changed'Access);
+   end Initialize;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+      (Self        : out Gtkada_Search_Entry;
+       Placeholder : String := "") is
+   begin
+      Self := new Gtkada_Search_Entry_Record;
+      Initialize (Self, Placeholder);
    end Gtk_New;
 
 end Gtkada.Search_Entry;
