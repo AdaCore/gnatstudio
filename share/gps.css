@@ -30,6 +30,7 @@
 
 .readonly {
    /* for read-only editors */
+   /* background-color: rgb(200,200,200); */
 }
 
 .mdi tab GtkLabel, .mdifocused tab GtkLabel { 
