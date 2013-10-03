@@ -15,16 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Styles.UI;             use GPS.Styles.UI;
 
 with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands;                  use Commands;
@@ -34,12 +35,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GVD.Preferences;           use GVD.Preferences;
-with GPS.Editors; use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GVD.Source_Editor.GPS is
-
-   Highlight_Category : constant String := "Debugger Highlight";
 
    use String_List_Utils.String_List;
 
@@ -74,41 +72,31 @@ package body GVD.Source_Editor.GPS is
    is
       Kernel : constant Kernel_Handle := Editor.Window.Kernel;
    begin
-      if Editor.Current_File = GNATCOLL.VFS.No_File then
-         return;
-      end if;
-
-      Open_File_Editor
-        (Kernel,
-         Editor.Current_File,
-         Editor.Line,
-         1,
-         Enable_Navigation => False,
-         New_File          => False,
-         Focus             => False);
-
-      declare
-         CL : Arg_List := Create ("Editor.unhighlight");
-      begin
-         Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
-         Append_Argument (CL, Highlight_Category, One_Arg);
-         Execute_GPS_Shell_Command (Kernel, CL);
-      end;
-
-      if Editor.Line /= 0 then
+      if Editor.Current_File /= GNATCOLL.VFS.No_File then
          declare
-            CL : Arg_List := Create ("Editor.highlight");
+            Buffer : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get (Editor.Current_File);
+            View   : constant Editor_View'Class   := Buffer.Current_View;
          begin
-            Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
-            Append_Argument (CL, Highlight_Category, One_Arg);
-            Append_Argument (CL, Editor.Line'Img, One_Arg);
-            Execute_GPS_Shell_Command (Kernel, CL);
-         end;
-      end if;
+            View.Cursor_Goto
+              (Location   => Buffer.New_Location
+                 (Line   => Editor.Line,
+                  Column => 1),
+               Raise_View => True);
 
-      Add_Unique_Sorted
-        (Editor.Highlighted_Files,
-         +Full_Name (Editor.Current_File));
+            Buffer.Remove_Style
+              (Style      => Editor.Current_Line_Style,
+               Line       => 0);  --  whole buffer
+
+            Buffer.Apply_Style
+              (Style      => Editor.Current_Line_Style,
+               Line       => Editor.Line);
+         end;
+
+         Add_Unique_Sorted
+           (Editor.Highlighted_Files,
+            +Full_Name (Editor.Current_File));
+      end if;
    end Highlight_Current_Line;
 
    ------------------------------
@@ -137,13 +125,8 @@ package body GVD.Source_Editor.GPS is
             new Line_Information_Array'(Line => Empty_Line_Information));
       end if;
 
-      declare
-         CL : Arg_List := Create ("Editor.unhighlight");
-      begin
-         Append_Argument (CL, +Full_Name (Editor.Current_File), One_Arg);
-         Append_Argument (CL, Highlight_Category, One_Arg);
-         Execute_GPS_Shell_Command (Kernel, CL);
-      end;
+      Kernel.Get_Buffer_Factory.Get (Editor.Current_File).Remove_Style
+        (Style => Editor.Current_Line_Style, Line => 0);
    end Unhighlight_Current_Line;
 
    ----------------
@@ -154,18 +137,14 @@ package body GVD.Source_Editor.GPS is
      (Editor : access GEdit_Record'Class;
       Window : access GPS_Window_Record'Class)
    is
-      Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
-      CL     : Arg_List := Create ("Editor.register_highlighting");
-
    begin
       Editor.Window := GPS_Window (Window);
+      Editor.Current_Line_Style := Get_Or_Create_Style
+        (Kernel => Window.Kernel,
+         Name   => "debugger current line",
+         Create => True);
 
-      --  Initialize the color for line highlighting.
-
-      Append_Argument (CL, Highlight_Category, One_Arg);
-      Append_Argument (CL, "#00FF00", One_Arg);
-      Append_Argument (CL, "True", One_Arg);
-      Execute_GPS_Shell_Command (Kernel, CL);
+      Preferences_Changed (Editor);
    end Initialize;
 
    ---------------
@@ -206,9 +185,9 @@ package body GVD.Source_Editor.GPS is
    -------------------------
 
    overriding procedure Preferences_Changed (Editor : access GEdit_Record) is
-      pragma Unreferenced (Editor);
    begin
-      null;
+      Editor.Current_Line_Style.Set_Background
+        (Editor_Current_Line_Color.Get_Pref);
    end Preferences_Changed;
 
    --------------
@@ -541,14 +520,9 @@ package body GVD.Source_Editor.GPS is
       --  Clear the line highlight for files that had an highlight.
 
       while not Is_Empty (Editor.Highlighted_Files) loop
-         declare
-            CL : Arg_List := Create ("Editor.unhighlight");
-         begin
-            Append_Argument (CL, Head (Editor.Highlighted_Files), One_Arg);
-            Append_Argument (CL, Highlight_Category, One_Arg);
-            Execute_GPS_Shell_Command (Kernel, CL);
-         end;
-
+         Kernel.Get_Buffer_Factory.Get
+           (Create (+Head (Editor.Highlighted_Files))).Remove_Style
+           (Style => Editor.Current_Line_Style, Line => 0);
          Next (Editor.Highlighted_Files);
       end loop;
    end Free_Debug_Info;

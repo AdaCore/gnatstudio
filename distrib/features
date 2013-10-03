@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.0 / GNATbench 2.8.0
 -------------------------------------------
 
+NF-60-MA02-018 GPS: change current line color in debugger (2013-10-03)
+
+  A new preference has been added to control the color of the current line
+  in the debugger.
+
 NF-60-M926-036 GPS: filter in Locations matches on file names (2013-09-26)
 
   The filter in the Locations window now matches the location of the messages,

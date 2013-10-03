@@ -94,6 +94,15 @@ package body GVD.Preferences is
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 
+      Editor_Current_Line_Color := Create
+        (Manager   => Prefs,
+         Name      => XML_Prefix & "Editor-Current-Line",
+         Label     => -"Current line",
+         Doc       =>
+           -"Color used to highlight the current line in the editor",
+         Page      => General,
+         Default   => "rgba(125,236,57,0.6)");
+
       Editor_Show_Line_With_Code := Create
         (Manager   => Prefs,
          Name      => XML_Prefix & "Editor-Show-Line-With-Code",

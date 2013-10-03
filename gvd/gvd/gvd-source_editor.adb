@@ -27,14 +27,4 @@ package body GVD.Source_Editor is
       return Editor.Current_File;
    end Get_Current_File;
 
-   ----------------
-   -- Get_Widget --
-   ----------------
-
-   function Get_Widget
-     (Editor : access Source_Editor_Record) return Gtk.Widget.Gtk_Widget is
-   begin
-      return Editor.Widget;
-   end Get_Widget;
-
 end GVD.Source_Editor;

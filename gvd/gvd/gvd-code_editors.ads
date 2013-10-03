@@ -103,6 +103,9 @@ package GVD.Code_Editors is
    --  Current_Line_Icon is displayed on the left of the line currently
    --  "active" (using the procedure Set_Line below).
 
+   procedure Preferences_Changed (Editor : access Code_Editor_Record);
+   --  Called when the preferences have changed
+
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
 

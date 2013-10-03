@@ -51,6 +51,15 @@ package body GVD.Code_Editors is
       Editor.Process := Glib.Object.GObject (Process);
    end Initialize;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed (Editor : access Code_Editor_Record) is
+   begin
+      Editor.Source.Preferences_Changed;
+   end Preferences_Changed;
+
    --------------
    -- Set_Line --
    --------------

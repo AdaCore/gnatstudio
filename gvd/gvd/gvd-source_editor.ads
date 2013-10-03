@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;
-with Gtk.Widget;
 with GVD.Types;
 with GNATCOLL.VFS;
 
@@ -85,15 +84,8 @@ package GVD.Source_Editor is
      (Editor : access Source_Editor_Record) return Natural is abstract;
    --  Return the current line.
 
-   function Get_Widget
-     (Editor : access Source_Editor_Record) return Gtk.Widget.Gtk_Widget;
-   --  Return the widget associated with Editor.
-   --  WARNING: do not add or remove this widget in a container.
-   --  Instead, use the Attach/Detach routines provided in this package.
-
 private
    type Source_Editor_Record is abstract tagged record
-      Widget       : Gtk.Widget.Gtk_Widget;
       Current_File : GNATCOLL.VFS.Virtual_File;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)

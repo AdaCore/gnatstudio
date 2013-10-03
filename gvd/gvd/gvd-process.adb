@@ -128,6 +128,16 @@ package body GVD.Process is
       Mode     : Command_Type);
    --  Process a "graph ..." command
 
+   type Preferences_Changed_Hook_Record is new Function_With_Args with record
+      Process : access Visual_Debugger_Record'Class;
+   end record;
+   type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
+   overriding procedure Execute
+     (Hook   : Preferences_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the preferences have changed
+
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
@@ -1742,6 +1752,22 @@ package body GVD.Process is
       return Process.Current_Line;
    end Get_Current_Source_Line;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Hook   : Preferences_Changed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      if Hook.Process.Editor_Text /= null then
+         Hook.Process.Editor_Text.Preferences_Changed;
+      end if;
+   end Execute;
+
    -----------
    -- Spawn --
    -----------
@@ -1763,6 +1789,7 @@ package body GVD.Process is
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
+      H            : Preferences_Hook;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1906,6 +1933,13 @@ package body GVD.Process is
             Load_Breakpoints_From_Property (Process, Property);
          end if;
       end if;
+
+      H := new Preferences_Changed_Hook_Record;
+      H.Process := Process;
+      Add_Hook
+        (Kernel, Preference_Changed_Hook, H,
+         Name => "gvd.process.preferences_changed",
+         Watch => GObject (Process));
 
       Run_Debugger_States_Hook
         (Process, Debugger_State_Changed_Hook, Debug_Available);

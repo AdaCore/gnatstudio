@@ -18,6 +18,7 @@
 with Glib.Object;
 with GVD.Types;
 with GPS.Main_Window; use GPS.Main_Window;
+with GPS.Styles.UI;
 
 with String_List_Utils;
 
@@ -92,6 +93,9 @@ private
       --  Entries in this array may be set to 0, in order to avoid
       --  necessity to reallocate it every time the set of breakpoints
       --  is updated.
+
+      Current_Line_Style : Standard.GPS.Styles.UI.Style_Access;
+      --  style used for highlighting the current line
 
       Highlighted_Files : String_List_Utils.String_List.List;
       --  The list of files for which a location is currently highlighted.
