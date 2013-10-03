@@ -5,8 +5,10 @@
 /* Change the color border at the top of the active tab, when it has keyboard
  * focus
  */
-
 @define-color gps_active_tab green;
+
+@define-color theme_tooltip_bg_color #ffffee;
+@define-color theme_tooltip_fg_color black;
 
 .notebook.mdifocused tab.top:active,
 .notebook.mdifocused tab.bottom:active {
