@@ -619,9 +619,8 @@ package body Src_Editor_View is
                Buffer : constant Source_Buffer := Source_Buffer
                  (Get_Buffer (User));
                Color  : Gdk_RGBA;
+               Found_Width : Boolean := False;
             begin
-               User.Speed_Bar_Width := 0;
-
                --  Change the size if there is new info
 
                for J in 1 .. Get_Line_Count (Buffer) loop
@@ -631,9 +630,32 @@ package body Src_Editor_View is
 
                   if Color /= Null_RGBA then
                      User.Speed_Bar_Width := Speed_Bar_Default_Width;
+                     Found_Width := True;
                      exit;
                   end if;
                end loop;
+
+               if Found_Width then
+                  --  A width has been allocated to the speed column: if we
+                  --  had registered it to be hidden, unregister this now.
+
+                  if User.Speed_Column_Hide_Registered then
+                     User.Speed_Column_Hide_Registered := False;
+                     Glib.Main.Remove (User.Speed_Column_Hide_Timeout);
+                  end if;
+               else
+                  --  We have not found a width: register for the column
+                  --  to be hidden.
+
+                  if not User.Speed_Column_Hide_Registered then
+                     User.Speed_Column_Hide_Registered := True;
+                     User.Speed_Column_Hide_Timeout    :=
+                       Source_View_Timeout.Timeout_Add
+                         (Speed_Column_Timeout,
+                          Hide_Speed_Column_Timeout'Access,
+                          User);
+                  end if;
+               end if;
             end;
       end case;
 
