@@ -34,8 +34,8 @@ themes = [
     "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(96,97,95)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(150,150,150)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,230)", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(0,153,0)", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(96,97,95)", "transparent")
+    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(0,153,0)", "transparent"),
+    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(96,97,95)", "transparent")
    },
    {"name": "Darkside",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
@@ -51,8 +51,8 @@ themes = [
     "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(114,159,207)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(114,159,207)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(240,141,36)", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
+    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
+    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
    },
    {"name": "Monokai",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
@@ -70,8 +70,8 @@ themes = [
     "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(117,113,94)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(117,113,94)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(249,38,114)", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
+    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
+    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
    },
    {"name": "iPlastic",
     "GPS6-Gtk-Theme-Name": "Adwaita",
@@ -86,8 +86,8 @@ themes = [
     "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(0,102,255)", "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(0,102,255)", "transparent"),
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,255)", "transparent"),
-    "Src-Editor-Types-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
-    "Src-Editor-Blocks-Variant":             ("DEFAULT", "rgb(255,128,0)", "transparent")
+    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
+    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(255,128,0)", "transparent")
    },
 ]
 
