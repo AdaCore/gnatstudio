@@ -28,6 +28,7 @@ with Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;
 with Gtk.List_Store;
 with Gtkada.Search_Entry;
+with Gtk.Spin_Button;
 with Gtk.Tree_View;
 with Gtk.Widget;
 with Gtk.Window;
@@ -142,6 +143,7 @@ private
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+      Settings_Width          : Gtk.Spin_Button.Gtk_Spin_Button;
 
       Completions      : Gtk.List_Store.Gtk_List_Store;
       View             : Gtk.Tree_View.Gtk_Tree_View;

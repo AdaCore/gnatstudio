@@ -50,6 +50,7 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
+with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -463,6 +464,16 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.Set_Placeholder_Text ("search");
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
       Self.GEntry.Set_Name (String (Name));
+
+      begin
+         Self.GEntry.Set_Width_Chars
+           (Gint'Value
+              (Most_Recent (Get_History (Kernel), Name & "-width",
+               Default => "15")));
+      exception
+         when others =>
+            Self.GEntry.Set_Width_Chars (15);
+      end;
 
       if Completion_In_Popup then
          Gtk_New (Self.Popup, Window_Popup);
@@ -1338,10 +1349,18 @@ package body Gtkada.Entry_Completion is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
       T : constant String := S.Settings_Kind.Get_Active_Id;
       K : constant Search_Kind := Search_Kind'Value (T);
+      Size : constant Gint := Gint (S.Settings_Width.Get_Value);
    begin
+      if S.Settings_Width /= null then
+         Trace (Me, "MANU Settings changed, size=" & Size'Img);
+         S.GEntry.Set_Width_Chars (Size);
+         S.GEntry.Queue_Resize;
+         Add_To_History
+           (Get_History (S.Kernel).all, S.Name.all & "-width", Size'Img);
+      end if;
+
       S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
       Add_To_History (Get_History (S.Kernel).all, S.Name.all & "-kind", T);
-
       Show_Preview (S);
       On_Entry_Changed (S);
    end On_Settings_Changed;
@@ -1468,6 +1487,8 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Resp, Button);
       Preview : Gtk_Check_Button;
       Resize  : Gtk_Check_Button;
+      Label   : Gtk_Label;
+      Box     : Gtk_Box;
    begin
       Gtk_New
         (Win,
@@ -1492,6 +1513,20 @@ package body Gtkada.Entry_Completion is
       Win.Get_Content_Area.Pack_Start (Resize, Expand => False);
       Resize.On_Toggled (On_Settings_Changed'Access, Self);
 
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Win.Get_Content_Area.Pack_Start (Box, Expand => False);
+
+      Gtk_New (Label, -"Field width: ");
+      Box.Pack_Start (Label, Expand => False);
+
+      Gtk_New (S.Settings_Width, Min => 0.0, Max => 50.0, Step => 1.0);
+      S.Settings_Width.Set_Tooltip_Text
+        (-"Width of the search field, in characters");
+      S.Settings_Width.Set_Digits (0);
+      S.Settings_Width.Set_Value (Gdouble (S.GEntry.Get_Width_Chars));
+      S.Settings_Width.On_Value_Changed (On_Settings_Changed'Access, Self);
+      Box.Pack_Start (S.Settings_Width, Expand => True, Fill => True);
+
       Kernel_Search_Provider_Access (S.Completion).Edit_Settings
         (Win.Get_Content_Area, Self, On_Settings_Changed'Access);
 
@@ -1499,6 +1534,8 @@ package body Gtkada.Entry_Completion is
 
       Win.Show_All;
       Resp := Win.Run;
+
+      S.Settings_Width := null;
       Win.Destroy;
    end Show_Settings;
 
