@@ -40,6 +40,7 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -184,25 +185,36 @@ package body Generic_Views is
         View.Filter.Whole_Word /= null
         and then View.Filter.Whole_Word.Get_Active;
       Pattern : Search_Pattern_Access;
+      Text : constant String := View.Filter.Pattern.Get_Text;
+      Kind : constant Search_Kind :=
+        (if Regexp then
+            GPS.Search.Regexp
+         elsif Approximate then
+            GPS.Search.Approximate
+         elsif Fuzzy then
+            GPS.Search.Fuzzy
+         else
+            GPS.Search.Full_Text);
 
    begin
-      if View.Filter.Pattern.Get_Text /= "" then
-         Pattern := Build
-           (Pattern         => View.Filter.Pattern.Get_Text,
-            Case_Sensitive  => False,
-            Whole_Word      => Whole,
-            Negate          => Negate,
-            Kind            =>
-              (if Regexp then
-                    GPS.Search.Regexp
-               elsif Approximate then
-                  GPS.Search.Approximate
-               elsif Fuzzy then
-                  GPS.Search.Fuzzy
-               else
-                  GPS.Search.Full_Text),
-            Allow_Highlight => False);
-
+      if Text /= "" then
+         if Starts_With (Text, "not:") then
+            Pattern := Build
+              (Pattern         => Text (Text'First + 4 .. Text'Last),
+               Case_Sensitive  => False,
+               Whole_Word      => Whole,
+               Negate          => True,  --  force
+               Kind            => Kind,
+               Allow_Highlight => False);
+         else
+            Pattern := Build
+              (Pattern         => Text,
+               Case_Sensitive  => False,
+               Whole_Word      => Whole,
+               Negate          => Negate,
+               Kind            => Kind,
+               Allow_Highlight => False);
+         end if;
       end if;
 
       View.Filter_Changed (Pattern);
@@ -276,9 +288,9 @@ package body Generic_Views is
          Report_Filter_Changed'Access, Self);
       F.Add (F.Pattern);
 
-      if Tooltip /= "" then
-         F.Pattern.Set_Tooltip_Text (Tooltip);
-      end if;
+      F.Pattern.Set_Tooltip_Text
+        (Tooltip & ASCII.LF
+         & "Start with <b>not:</b> to reverse the filter");
 
       if Options /= 0 then
          F.Pattern.Set_Icon_From_Stock
