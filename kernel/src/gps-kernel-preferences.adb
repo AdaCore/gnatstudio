@@ -1061,7 +1061,7 @@ package body GPS.Kernel.Preferences is
 
       Secondary_File_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Secondary-File-Regexp",
+         Name    => "GPS6-Messages-Secondary-File-Regexp",
          Label   => -"Secondary File pattern",
          Doc     =>
            -"Pattern used to detect secondary file locations in messages",
@@ -1070,7 +1070,7 @@ package body GPS.Kernel.Preferences is
 
       Secondary_File_Pattern_Index := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Secondary-File-Regexp-Index",
+         Name    => "GPS6-Messages-Secondary-File-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 2,
@@ -1080,7 +1080,7 @@ package body GPS.Kernel.Preferences is
 
       Secondary_Line_Pattern_Index := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Secondary-Line-Regexp-Index",
+         Name    => "GPS6-Messages-Secondary-Line-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 3,
@@ -1090,7 +1090,7 @@ package body GPS.Kernel.Preferences is
 
       Secondary_Column_Pattern_Index := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Secondary-Column-Regexp-Index",
+         Name    => "GPS6-Messages-Secondary-Column-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 5,
@@ -1101,7 +1101,7 @@ package body GPS.Kernel.Preferences is
 
       Alternate_Secondary_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Alternate-Secondary-Regpat",
+         Name    => "GPS6-Messages-Alternate-Secondary-Regpat",
          Label   => -"Alternate secondary pattern",
          Doc     =>
            -"Pattern used to detect alternate secondary locations in messages",
@@ -1110,7 +1110,7 @@ package body GPS.Kernel.Preferences is
 
       Alternate_Secondary_Line_Index := Create
         (Manager => Kernel.Preferences,
-         Name    => "Messages-Alternate-Secondary-Line",
+         Name    => "GPS6-Messages-Alternate-Secondary-Line",
          Label   => -"Alternate secondary line index",
          Doc     =>
            -"Index of secondary location line number in the alternate pattern",
