@@ -41,8 +41,7 @@ package Gtkada.Entry_Completion is
    --  Maximum time spent in the idle callback to insert the possible
    --  completions.
 
-   type Gtkada_Entry_Record
-      is new Gtkada.Search_Entry.Gtkada_Search_Entry_Record with private;
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New
@@ -50,13 +49,15 @@ package Gtkada.Entry_Completion is
       Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False);
+      Case_Sensitive : Boolean := False;
+      Completion_In_Popup : Boolean := True);
    procedure Initialize
      (Self           : not null access Gtkada_Entry_Record'Class;
       Kernel         : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Completion     : not null access GPS.Search.Search_Provider'Class;
       Name           : Histories.History_Key;
-      Case_Sensitive : Boolean := False);
+      Case_Sensitive : Boolean := False;
+      Completion_In_Popup : Boolean := True);
    --  Create a new entry.
    --
    --  Name is a unique name for this entry. It is used to store a number of
@@ -69,6 +70,12 @@ package Gtkada.Entry_Completion is
    --  Completion is the provider to be used to compute the possible
    --  completions. Completion is then owned by Self, and must not be freed
    --  by the caller.
+   --
+   --  The list of completions can either appear in a popup, or in a widget
+   --  below the completion entry. Do not use a popup if the entry is put in a
+   --  dialog, since the latter will grab all events and the list of
+   --  completions will not receive the mouse events. The layout is configured
+   --  via Completion_In_Popup.
 
    function Get_Type return Glib.GType;
    --  The internal gtk+ type
@@ -78,7 +85,9 @@ package Gtkada.Entry_Completion is
       return GPS.Kernel.Kernel_Handle;
    --  Return a handle to the kernel
 
-   overriding procedure Set_Text
+   function Get_Text
+      (Self : not null access Gtkada_Entry_Record) return String;
+   procedure Set_Text
       (Self : not null access Gtkada_Entry_Record;
        Text : String);
    --  Force the text in the entry.
@@ -96,12 +105,15 @@ package Gtkada.Entry_Completion is
    --  Emitted when the user presses <escape> in the search field. This is
    --  called just after calling popdown.
 
+   Signal_Activate : constant Glib.Signal_Name := "activate";
+   --  Emitted when the user activates a search proposal.
+   --  This is called just prior to executing the action.
+
 private
    type History_Key_Access is access all Histories.History_Key;
 
-   type Gtkada_Entry_Record
-      is new Gtkada.Search_Entry.Gtkada_Search_Entry_Record with
-   record
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
+      GEntry             : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Completion         : GPS.Search.Search_Provider_Access;
       Default_Completion : GPS.Search.Search_Provider_Access;
       Pattern            : GPS.Search.Search_Pattern_Access;

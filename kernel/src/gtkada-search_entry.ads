@@ -31,9 +31,6 @@ package Gtkada.Search_Entry is
    procedure Gtk_New
       (Self        : out Gtkada_Search_Entry;
        Placeholder : String := "");
-   procedure Initialize
-      (Self        : access Gtkada_Search_Entry_Record'Class;
-       Placeholder : String := "");
    --  Create a new search entry
 
    function Get_Icon_Position
