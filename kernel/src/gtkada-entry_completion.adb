@@ -469,10 +469,10 @@ package body Gtkada.Entry_Completion is
          Self.GEntry.Set_Width_Chars
            (Gint'Value
               (Most_Recent (Get_History (Kernel), Name & "-width",
-               Default => "15")));
+               Default => "25")));
       exception
          when others =>
-            Self.GEntry.Set_Width_Chars (15);
+            Self.GEntry.Set_Width_Chars (25);
       end;
 
       if Completion_In_Popup then
