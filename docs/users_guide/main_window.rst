@@ -12,213 +12,6 @@ in a later section (:ref:`Multiple_Document_Interface`).
 But there are also various other windows that might pop up at
 various times, and this section documents them.
 
-.. index:: welcome dialog
-.. index:: windows; welcome dialog
-.. _The_Welcome_Dialog:
-
-The Welcome Dialog
-==================
-
-.. image:: welcome.png
-.. index:: command line; -P
-.. index:: project; startup
-
-When it starts, GPS is looking for a project file to load, so that it knows
-where to find the sources of your project. This project is in general specified
-on the command line (via a :command:`-P` switch). Alternatively, if the current
-directory only contains one project file, GPS will select it automatically.
-Finally, if you specify the name of a source file to edit, GPS will load
-a default project and start the editing immediately.
-if no project file can be found, GPS displays a welcome dialog, which gives you
-the following choices:
-
-:guilabel:`Create new project from template`
-  If you select this option and then click the :guilabel:`OK` button, GPS will
-  launch an assistant to create a project using one of the predefined project
-  templates. This makes it easy to create GtkAda-based applications, or
-  applications using the Ada Web Server, for instance.
-
-.. index:: project; default
-
-:guilabel:`Start with default project in directory`
-
-  If you select this option and click on the :guilabel:`OK` button, GPS will
-  first look for a project called :file:`default.gpr` in the current directory
-  and load it if found. Otherwise, it will copy in the current directory the
-  default project found under :file:`<prefix>/share/gps/default.gpr` and load
-  it.  GPS will remove this temporary copy when exiting or loading another
-  project, if the copy has not been modified during the session.
-
-  The default project will contain all the Ada source files from the given
-  directory (assuming they use the default GNAT naming scheme :file:`.ads`
-  and :file:`.adb`).
-
-  If the current directory is not writable, GPS will instead load directly
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS will work in a
-  degraded mode, where some capabilities will not work (such as building and
-  source navigation). This project does not contain any sources.
-
-.. index:: project; wizard
-
-:guilabel:`Create new project with wizard`
-
-  Selecting this option and clicking on the :guilabel:`OK` button will start a
-  wizard allowing you to specify most of the properties for a new project. Once
-  the project is created, GPS will save it and load it automatically.
-  See :ref:`The_Project_Wizard` for more details.
-
-  There are several kinds of wizards, ranging from creating a single project,
-  to creating a set of project that attempt to adapt to an existing directory
-  layout. The list of pages in the wizard will depend on the kind of project
-  you want to create.
-
-  One of the wizard, :guilabel:`Project Tree`, will try and import a set of
-  sources and object files, and attempt to create one or more project files so
-  that building your application through these project files will put the
-  objects in the same directory they are currently in. If you have not compiled
-  your application when launching this wizard, GPS will create a single project
-  file and all object files will be put in the same object directory. This is
-  the prefered method when importing sources with duplicate file names, since
-  the latter is only authorized in a single project file, not across various
-  project files.
-
-.. index:: project; load existing project
-
-:guilabel:`Open existing project`
-
-  You can select an existing project by clicking on the :guilabel:`Browse`
-  button, or by using a previously loaded project listed in the combo box. When
-  a project is selected, click on the :guilabel:`OK` button to load this
-  project and open the main window.
-
-:guilabel:`Always show this dialog when GPS starts`
-
-  If unset, the welcome dialog won't be shown in future sessions.  In this
-  case, GPS will behave as follows: it will first look for a :command:`-P`
-  switch on the command line, and load the corresponding project if present;
-  otherwise, it will look for a project file in the current directory and will
-  load it if there is only of them; if no project file was loaded, GPS will
-  start with the default project, as if you had selected :guilabel:`Start with
-  default project in directory` in the welcome dialog.
-
-  .. index:: preferences; display welcome window
-
-  To reset this property, go to the menu :menuselection:`Edit --> Preferences`.
-
-:guilabel:`Quit`
-  If you click on this button, GPS will terminate immediately.
-
-.. index:: tip of the day
-.. index:: windows; tip of the day
-.. _The_Tip_of_the_Day:
-
-The Tip of the Day
-==================
-
-.. image:: tip-of-the-day.png
-
-This dialog displays short tips on how to make the most efficient use of the
-GNAT Programming Studio. You can click on the :guilabel:`Previous` and
-:guilabel:`Next` buttons to access all tips, and close the dialog by either
-clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
-
-.. index:: preferences; tip of the day
-
-You can also disable this dialog by unchecking the :guilabel:`Display Tip of
-the Day on startup` check box. If you would like to reenable this dialog, you
-can go to the :menuselection:`Edit --> Preferences` dialog.
-
-
-.. index:: menu bar
-.. index:: windows; menu bar
-.. _The_Menu_Bar:
-
-The Menu Bar
-============
-
-.. image:: menubar.png
-
-This is a standard menu bar that gives access to all the global functionalities
-of GPS. It is usually easier to access a given functionality using the various
-contextual menus provided throughout GPS: these menus give direct access to the
-most relevant actions given the current context (e.g. a project, a directory, a
-file, an entity, ...). Contextual menus pop up when the right mouse button is
-clicked or when using the special :kbd:`open contextual menu` key on most PC
-keyboards.
-
-The menu bar gives access to the following items:
-
-* :menuselection:`File` (:ref:`The_File_Menu`)
-
-* :menuselection:`Edit` (:ref:`The_Edit_Menu`)
-
-* :menuselection:`Navigate` (:ref:`The_Navigate_Menu`)
-
-* :menuselection:`VCS` (:ref:`The_VCS_Menu`)
-
-* :menuselection:`Project` (:ref:`The_Project_Menu`)
-
-* :menuselection:`Build` (:ref:`The_Build_Menu`)
-
-* :menuselection:`Debug` (:ref:`The_Debug_Menu`)
-
-* :menuselection:`Tools` (:ref:`The_Tools_Menu`)
-
-* :menuselection:`SPARK`
-
-  If the SPARK toolset is installed on your system and available on your
-  PATH, then this menu is available. See
-  :menuselection:`Help-->SPARK-->Reference-->Using SPARK with GPS`
-  for more details.
-
-* :menuselection:`CodePeer`
-
-  If the CodePeer toolset is installed on your system and available on your
-  PATH, then this menu is available. See your CodePeer documentation for more
-  details.
-
-* :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
-
-* :menuselection:`Help`
-
-.. index:: tool bar
-.. _The_Tool_Bar:
-
-The Tool Bar
-============
-
-.. image:: toolbar.png
-
-The tool bar provides shortcuts via buttons to some typical actions:
-
-* creating a new file
-* opening an existing file (see laso the omni-search on the right of the bar)
-* saving the current file
-* undo / redo last editing
-* go to previous or next saved location
-* multiple customizable buttons to build, clean or run your project
-  :index:`build; toolbar buttons`
-* when a debugger is started, multiple buttons to stop and continue the
-  debugger, step to the next instruction,...
-  :index:`debugger; toolbar buttons`
-
-.. index:: progress bar
-.. index:: tool bar; progress bar
-
-When GPS is performing background actions, like loading the cross-reference
-information, compiling or indeed all actions involving external processes,
-a progress bar is displayed in the toolbar. This shows when the current
-task(s) will be completed. A small :guilabel:`interrupt` button can be clicked
-on to interrupt all background tasks. Clicking on the progress bar will
-open the :guilabel:`Tasks` view (:ref:`The_Task_Manager`).
-
-.. index:: omni-search
-.. index:: seealso: search; omni-search
-
-The final item in the toolbar is the omni-search (:ref:`omni_search`). This is
-a search field that will search the text you type in various contexts in GPS,
-like filenames (for convenient access to the source files), the entities
-referenced in your application, your code,...
 
 .. _The_Work_Space:
 
@@ -435,6 +228,335 @@ name, one with the additional decorator indicating the 'private' compile-time
 visibility.
 
 
+.. index:: welcome dialog
+.. index:: windows; welcome dialog
+.. _The_Welcome_Dialog:
+
+
+The Welcome Dialog
+==================
+
+.. image:: welcome.png
+.. index:: command line; -P
+.. index:: project; startup
+
+When it starts, GPS is looking for a project file to load, so that it knows
+where to find the sources of your project. This project is in general specified
+on the command line (via a :command:`-P` switch). Alternatively, if the current
+directory only contains one project file, GPS will select it automatically.
+Finally, if you specify the name of a source file to edit, GPS will load
+a default project and start the editing immediately.
+if no project file can be found, GPS displays a welcome dialog, which gives you
+the following choices:
+
+:guilabel:`Create new project from template`
+  If you select this option and then click the :guilabel:`OK` button, GPS will
+  launch an assistant to create a project using one of the predefined project
+  templates. This makes it easy to create GtkAda-based applications, or
+  applications using the Ada Web Server, for instance.
+
+.. index:: project; default
+
+:guilabel:`Start with default project in directory`
+
+  If you select this option and click on the :guilabel:`OK` button, GPS will
+  first look for a project called :file:`default.gpr` in the current directory
+  and load it if found. Otherwise, it will copy in the current directory the
+  default project found under :file:`<prefix>/share/gps/default.gpr` and load
+  it.  GPS will remove this temporary copy when exiting or loading another
+  project, if the copy has not been modified during the session.
+
+  The default project will contain all the Ada source files from the given
+  directory (assuming they use the default GNAT naming scheme :file:`.ads`
+  and :file:`.adb`).
+
+  If the current directory is not writable, GPS will instead load directly
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS will work in a
+  degraded mode, where some capabilities will not work (such as building and
+  source navigation). This project does not contain any sources.
+
+.. index:: project; wizard
+
+:guilabel:`Create new project with wizard`
+
+  Selecting this option and clicking on the :guilabel:`OK` button will start a
+  wizard allowing you to specify most of the properties for a new project. Once
+  the project is created, GPS will save it and load it automatically.
+  See :ref:`The_Project_Wizard` for more details.
+
+  There are several kinds of wizards, ranging from creating a single project,
+  to creating a set of project that attempt to adapt to an existing directory
+  layout. The list of pages in the wizard will depend on the kind of project
+  you want to create.
+
+  One of the wizard, :guilabel:`Project Tree`, will try and import a set of
+  sources and object files, and attempt to create one or more project files so
+  that building your application through these project files will put the
+  objects in the same directory they are currently in. If you have not compiled
+  your application when launching this wizard, GPS will create a single project
+  file and all object files will be put in the same object directory. This is
+  the prefered method when importing sources with duplicate file names, since
+  the latter is only authorized in a single project file, not across various
+  project files.
+
+.. index:: project; load existing project
+
+:guilabel:`Open existing project`
+
+  You can select an existing project by clicking on the :guilabel:`Browse`
+  button, or by using a previously loaded project listed in the combo box. When
+  a project is selected, click on the :guilabel:`OK` button to load this
+  project and open the main window.
+
+:guilabel:`Always show this dialog when GPS starts`
+
+  If unset, the welcome dialog won't be shown in future sessions.  In this
+  case, GPS will behave as follows: it will first look for a :command:`-P`
+  switch on the command line, and load the corresponding project if present;
+  otherwise, it will look for a project file in the current directory and will
+  load it if there is only of them; if no project file was loaded, GPS will
+  start with the default project, as if you had selected :guilabel:`Start with
+  default project in directory` in the welcome dialog.
+
+  .. index:: preferences; display welcome window
+
+  To reset this property, go to the menu :menuselection:`Edit --> Preferences`.
+
+:guilabel:`Quit`
+  If you click on this button, GPS will terminate immediately.
+
+.. index:: tip of the day
+.. index:: windows; tip of the day
+.. _The_Tip_of_the_Day:
+
+The Tip of the Day
+==================
+
+.. image:: tip-of-the-day.png
+
+This dialog displays short tips on how to make the most efficient use of the
+GNAT Programming Studio. You can click on the :guilabel:`Previous` and
+:guilabel:`Next` buttons to access all tips, and close the dialog by either
+clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
+
+.. index:: preferences; tip of the day
+
+You can also disable this dialog by unchecking the :guilabel:`Display Tip of
+the Day on startup` check box. If you would like to reenable this dialog, you
+can go to the :menuselection:`Edit --> Preferences` dialog.
+
+
+.. index:: menu bar
+.. index:: windows; menu bar
+.. _The_Menu_Bar:
+
+The Menu Bar
+============
+
+.. image:: menubar.png
+
+This is a standard menu bar that gives access to all the global functionalities
+of GPS. It is usually easier to access a given functionality using the various
+contextual menus provided throughout GPS: these menus give direct access to the
+most relevant actions given the current context (e.g. a project, a directory, a
+file, an entity, ...). Contextual menus pop up when the right mouse button is
+clicked or when using the special :kbd:`open contextual menu` key on most PC
+keyboards.
+
+The menu bar gives access to the following items:
+
+* :menuselection:`File` (:ref:`The_File_Menu`)
+
+* :menuselection:`Edit` (:ref:`The_Edit_Menu`)
+
+* :menuselection:`Navigate` (:ref:`The_Navigate_Menu`)
+
+* :menuselection:`VCS` (:ref:`The_VCS_Menu`)
+
+* :menuselection:`Project` (:ref:`The_Project_Menu`)
+
+* :menuselection:`Build` (:ref:`The_Build_Menu`)
+
+* :menuselection:`Debug` (:ref:`The_Debug_Menu`)
+
+* :menuselection:`Tools` (:ref:`The_Tools_Menu`)
+
+* :menuselection:`SPARK`
+
+  If the SPARK toolset is installed on your system and available on your
+  PATH, then this menu is available. See
+  :menuselection:`Help-->SPARK-->Reference-->Using SPARK with GPS`
+  for more details.
+
+* :menuselection:`CodePeer`
+
+  If the CodePeer toolset is installed on your system and available on your
+  PATH, then this menu is available. See your CodePeer documentation for more
+  details.
+
+* :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
+
+* :menuselection:`Help`
+
+
+
+.. index:: tool bar
+.. _The_Tool_Bar:
+
+The Tool Bar
+============
+
+.. image:: toolbar.png
+
+The tool bar provides shortcuts via buttons to some typical actions:
+
+* creating a new file
+* opening an existing file (see laso the omni-search on the right of the bar)
+* saving the current file
+* undo / redo last editing
+* go to previous or next saved location
+* multiple customizable buttons to build, clean or run your project
+  :index:`build; toolbar buttons`
+* when a debugger is started, multiple buttons to stop and continue the
+  debugger, step to the next instruction,...
+  :index:`debugger; toolbar buttons`
+
+.. index:: progress bar
+.. index:: tool bar; progress bar
+
+When GPS is performing background actions, like loading the cross-reference
+information, compiling or indeed all actions involving external processes,
+a progress bar is displayed in the toolbar. This shows when the current
+task(s) will be completed. A small :guilabel:`interrupt` button can be clicked
+on to interrupt all background tasks. Clicking on the progress bar will
+open the :guilabel:`Tasks` view (:ref:`The_Task_Manager`).
+
+
+.. index:: omni-search
+.. index:: seealso: search; omni-search
+.. _omni_search:
+
+The omni-search
+===============
+
+.. image:: omnisearch.png
+
+The final item in the toolbar is the omni-search. This is a search field that
+will search the text you type in various contexts in GPS, like filenames (for
+convenient access to the source files), the entities referenced in your
+application, your code,...
+
+There are various ways to use the omni-search:
+
+* The simplest is of course to click in it, and type the pattern you are
+  interested in. GPS will immediately start searching in the background for
+  possible matching open windows, file names, entities, GPS actions, bookmarks,
+  and source files. For each context, GPS only displays the five matches with
+  the highest score. 
+
+  For each context, GPS tells you how many matches there. You can click on the
+  name of the context to only search in that context. So for instance, if GPS
+  tells you there are 20 file names matching your search (but only displaying
+  the five first ones), you can click on :guilabel:`file names` to view all
+  20 names, and exclude the results from all the other contexts.
+
+  If you click again on the context, GPS is back to displaying the results in
+  all contexts.
+
+* If you are searching in a specific context, the above requires too many
+  clicks.  GPS defines a number of actions to which you can bind key shortcuts
+  via the :menuselection:`Edit-->Key Shortcuts` dialog. These actions are found
+  in :guilabel:`Search` category, and are called :guilabel:`Global Search in
+  context:`. GPS includes a menu for two of them by default:
+  :index:`menu; file-->open from project`
+  :menuselection:`File-->Open From Project...` will search amongst filenames,
+  :index:`menu; navigate-->goto entity`
+  whereas :menuselection:`Navigate-->Goto Entity...` will search amonst all
+  entities defined in your project.
+
+
+Each context displays its results sligthly differently, and clicking on a
+result will have different effects depending on a context. For instance,
+clicking on a file name will open the corresponding file, whereas clicking on
+an entity will jump to its declaration, and clicking on a bookmark while show
+the source file it is in.
+
+Pressing :kbd:`enter` at any point will select the top item in the list of
+search results, which is in general faster than clicking on it.
+ 
+
+.. image:: omnisearch-settings.png
+
+It is possible that you have no interest in some of the search contexts.  You
+can chose to disable some of them by clicking on the :guilabel:`Settings` icon
+at the bottom-right corner of the completion popup. The resulting dialog shows
+you the list of all contexts that are searched, and clicking on any of the
+checkboxes next to the names will enable to disable the context.
+
+Still in this settings dialog, you can also reorder the context. This
+influences both the order in which they are searched and the order in which
+they are displayed. We recommend keeping the :guilabel:`Sources` context last,
+because it is the slowest, and while GPS is searching it, it would not be able
+to search the other faster contexts.
+
+In the settings dialog, you can chose whether to display a :guilabel:`Preview`
+for the matches. This preview is displayed when you use the :kbd:`down arrow`
+key to select some of the search results. In general, it will display the
+corresponding source file, or the details for the matching GPS action or
+bookmark.
+
+The settings dialog also allows you to select the number of results that
+should be displayed for each context when multiple contexts are displayed,
+or the size of the search field (which depends on how big your screen and
+the GPS window are).
+
+GPS proposes various algorithms to do the search:
+
+* :guilabel:`Full Text` simply checks whether the text you typed appears
+  exactly as is in the context (be it a file name, the contents of a file,
+  the name of an entity,...)
+
+* :guilabel:`Regular Expression` assumes the text you typed is a valid
+  regular expression, and searches for it. If this isn't a valid regexp,
+  it tries to search for the exact text.
+
+* :guilabel:`Fuzzy Match` will try to find each of the characters you
+  typed, in that order, but possibly with extra characters in between.
+  This is likely to be the fastest way to search, but it might requires
+  a bit of getting used to. For instance, the text 'mypks' will match
+  the file name 'MY_PacKage.adS' because the letters shown in
+  upper cases match the text.
+
+  When searching in the source files, the algorithm is changed slightly,
+  since otherwise there would obviously be too many matches. In that
+  context, GPS only allows a few approximations between the text you
+  typed and the text it tries to match (one or two extra characters
+  or missing characters, for instance).
+
+You can select the algorithm you wish to use by changing it at the
+bottom of the popup window that contains the search results.
+
+
+Once it has found a match, GPS assigns it a score, so that it can
+order the results in the most meaningful way for you. Scoring is
+based on a number of criteria:
+
+* length of the match
+
+  For instance, when searching file names, it is more likely that by typing
+  'foo' you intended to match 'foo.ads' rather than 'the_long_foo.ads'.
+
+* the grouping of characters in match
+
+  As we have seen, when doing a fuzzy match, GPS allows extra characters in
+  between the ones you typed. But the closer the ones you typed are in the
+  match result, the more likely it is this is what you were looking for.
+
+* when was the item last selected
+
+  If you recently selected an item (like a file name), GPS assumes you are more
+  likely to want it again, and will raise its score appropriately.
+
 
 .. index:: windows; messages
 .. index:: messages
@@ -442,7 +564,7 @@ visibility.
 .. _The_Messages_Window:
 
 The :guilabel:`Messages` window
--------------------------------
+===============================
 
 .. image:: messages.png
 
@@ -478,7 +600,7 @@ closed anyway, and in this case it can be reopened with the
 .. _The_Locations_View:
 
 The :guilabel:`Locations` view
-------------------------------
+==============================
 
 .. image:: locations-view.png
 
@@ -580,7 +702,7 @@ of this icon.
 .. _The_Project_View:
 
 The :guilabel:`Project` view
-----------------------------
+============================
 
 .. image:: project-view.png
 .. image:: project-view-flat.png
@@ -792,7 +914,7 @@ your project:
 .. index:: scenario
 
 The :guilabel:`Scenario` view
------------------------------
+=============================
 
 .. image:: scenario-view.png
 
@@ -842,11 +964,13 @@ If you are not using build modes and want to save some space on the screen,
 you can use the local settings menu :guilabel:`Show build modes` to disable
 the display.
 
+
+
 .. index:: windows; files view
 .. _The_File_View:
 
 The :guilabel:`Files` View
---------------------------
+==========================
 
 .. image:: file-view.png
 .. index:: menu; tools --> views --> files
@@ -864,11 +988,13 @@ the disk. Filters can be set through the local settings menu to restrict the
 display to the files and directories that belong to the project (use the
 :guilabel:`Show files from project only` menu).
 
+
+
 .. index:: windows, windows view
 .. _The_Window_View:
 
 The :guilabel:`Windows` view
-----------------------------
+============================
 
 .. image:: windows-view1.png
 .. image:: windows-view2.png
@@ -897,12 +1023,14 @@ control or shift keys. The Window view provides a contextual menu to easily
 close all selected windows at once, which is a very fast way to cleanup your
 desktop after you have finished working on a task.
 
+
+
 .. index:: windows, outline
 .. index:: outline view
 .. _The_Outline_View:
 
 The :guilabel:`Outline` view
-----------------------------
+============================
 
 .. image:: outline-view1.png
 .. image:: outline-view2.png
@@ -962,7 +1090,7 @@ of the outline view:
 .. _The_Clipboard_View:
 
 The :guilabel:`Clipboard` view
-------------------------------
+==============================
 
 .. image:: clipboard.png
 
@@ -1041,7 +1169,7 @@ removed]".
 .. _The_Callgraph_View:
 
 The :guilabel:`Call trees` view and :guilabel:`Callgraph` browser
------------------------------------------------------------------
+=================================================================
 
 These two views play a similar role.  They display the same information about
 entities, but in two different ways: the callgraph view displays the
@@ -1064,7 +1192,7 @@ the subprogram is in fact never dispatched to.
 .. index:: contextual menu; called by
 
 Call Trees
-__________
+----------
 
 .. image:: calltree.png
 
@@ -1107,7 +1235,7 @@ The local toolbar provides the following buttons:
 .. _Call_Graph:
 
 Callgraph browser
-_________________
+-----------------
 
 .. image:: callgraph.png
 .. image:: callgraph_orth.png
@@ -1170,7 +1298,7 @@ See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 .. _Bookmarks:
 
 The :guilabel:`Bookmarks` view
-------------------------------
+==============================
 
 .. image:: bookmarks.png
 
@@ -1214,13 +1342,14 @@ to act on the bookmarks:
 * :guilabel:`Remove` is used to delete the selected bookmark.
 
 
+
 .. index:: windows; python console
 .. index:: windows; shell console
 .. index:: python; console
 .. _The_Shell_and_Python_Windows:
 
 The :guilabel:`Shell` and :guilabel:`Python` Windows
-----------------------------------------------------
+====================================================
 
 .. image:: shell-window.png
 .. image:: python-window.png
@@ -1257,7 +1386,7 @@ of commands.
 .. index:: plug-ins; shell.py
 
 The OS shell window
--------------------
+===================
 
 .. image:: os_shell-window.png
 .. index:: menu; tools --> consoles --> OS Shell
@@ -1284,7 +1413,7 @@ might be useful.
 .. _The_Execution_Window:
 
 The Execution window
---------------------
+====================
 
 .. index:: menus; build --> run
 
@@ -1299,12 +1428,13 @@ dialog window is displayed, asking whether you want to kill the application, or
 to cancel the close operation.
 
 
+
 .. index:: tasks
 .. index:: windows; task manager
 .. _The_Task_Manager:
 
 The :guilabel:`Task Manager`
-----------------------------
+============================
 
 .. image:: task-manager.png
 
@@ -1337,7 +1467,7 @@ in GPS by pressing the :guilabel:`Cancel` button.
 .. _The_Project_Browser:
 
 The :guilabel:`Project Browser`
-------------------------------- 
+=============================== 
 
 .. image:: project-browser.png
 
@@ -1393,7 +1523,7 @@ See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 .. _The_Dependency_Browser:
 
 The :guilabel:`Dependency Browser`
-----------------------------------
+==================================
 
 .. image:: dependency-browser.png
 
@@ -1483,7 +1613,7 @@ See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 .. _Elaboration_Cycles_Browser:
 
 The :guilabel:`Elaboration Circularities` browser
--------------------------------------------------
+=================================================
 
 .. image:: elaboration-graph.jpg
 
@@ -1510,7 +1640,7 @@ See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 .. _Entity_Browser:
 
 The :guilabel:`Entity Browser`
-------------------------------
+==============================
 
 .. image:: entity-browser.png
 
