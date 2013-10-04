@@ -1336,6 +1336,7 @@ package body Src_Editor_View is
       use GNATCOLL.VFS;
       Result : Boolean;
       pragma Unreferenced (Result, X, Y, Info, Context, Time);
+      View : constant Source_View   := Source_View (Self);
    begin
       --  Do not accept drag data if the view is not editable
       if not Get_Editable (Source_View (Self)) then
@@ -1352,15 +1353,10 @@ package body Src_Editor_View is
             Uris : constant GNAT.Strings.String_List := Data.Get_Uris;
          begin
             for Url of Uris loop
-               declare
-                  Buf : Editor_Buffer'Class :=
-                    Get_Global_Editor_Buffer_Factory.Get
-                      (Create (+Filename_From_URI (Url.all, null)),
-                       True, True, True);
-                  pragma Unreferenced (Buf);
-               begin
-                  null;
-               end;
+               Open_File_Editor
+                 (View.Kernel,
+                  Create (+Filename_From_URI (Url.all, null)),
+                  New_File => False);
             end loop;
          end;
       end if;

@@ -65,7 +65,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with File_Utils;
 with System;                    use System;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -1725,32 +1724,28 @@ package body GPS.Kernel.Modules.UI is
       Data    : constant Gtk_Selection_Data :=
                   From_Object (Get_Address (Nth (Args, 4)));
       Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
-      File    : Virtual_File;
    begin
       if Get_Length (Data) >= 0
         and then Get_Format (Data) = 8
       then
          declare
-            Files : constant File_Array_Access
-              := File_Utils.URL_List_To_Files (Get_Data_As_String (Data));
+            Uris : constant GNAT.Strings.String_List := Data.Get_Uris;
          begin
-            if Files /= null then
-               for J in Files'Range loop
-                  File := Files (J);
-
-                  if Is_Regular_File (File) then
-                     if File_Extension (File) = Project_File_Extension then
-                        Load_Project (Kernel, File);
-                     else
-                        Open_File_Editor (Kernel, File, New_File => False);
-                     end if;
+            for Url of Uris loop
+               declare
+                  File : constant Virtual_File :=
+                    Create (+Filename_From_URI (Url.all, null));
+               begin
+                  if File_Extension (File) = Project_File_Extension then
+                     Load_Project (Kernel, File);
+                  else
+                     Open_File_Editor (Kernel, File, New_File => False);
                   end if;
-               end loop;
-            end if;
+               end;
+            end loop;
          end;
-
-         Gtk.Dnd.Finish (Context, Success => True, Del => False, Time => Time);
-
+         Gtk.Dnd.Finish
+           (Context, Success => True, Del => False, Time => Time);
       else
          Gtk.Dnd.Finish
            (Context, Success => False, Del => False, Time => Time);
