@@ -1144,10 +1144,18 @@ package body Debugger.Gdb_MI is
    -- Run --
    ---------
 
-   overriding procedure Run
+   procedure Run_Helper
      (Debugger  : access Gdb_MI_Debugger;
-      Arguments : String := "";
-      Mode      : Command_Type := Hidden) is
+      Arguments : String;
+      Mode      : Command_Type;
+      Start     : Boolean);
+   --  Shared code beteen Run/Start
+
+   procedure Run_Helper
+     (Debugger  : access Gdb_MI_Debugger;
+      Arguments : String;
+      Mode      : Command_Type;
+      Start     : Boolean) is
    begin
       if Arguments = "" and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= GNATCOLL.VFS.No_File
@@ -1162,8 +1170,17 @@ package body Debugger.Gdb_MI is
          Send (Debugger, "-exec-arguments " & Arguments, Mode => Internal);
       end if;
 
-      Send (Debugger, "-exec-run", Mode => Mode);
+      Send (Debugger, "-exec-run" & (if Start then " --start" else ""),
+            Mode => Mode);
       Set_Is_Started (Debugger, True);
+   end Run_Helper;
+
+   overriding procedure Run
+     (Debugger  : access Gdb_MI_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden) is
+   begin
+      Run_Helper (Debugger, Arguments, Mode, Start => False);
    end Run;
 
    -----------
@@ -1175,20 +1192,7 @@ package body Debugger.Gdb_MI is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Arguments = "" and then Debugger.Remote_Target /= null
-        and then Debugger.Executable /= GNATCOLL.VFS.No_File
-      then
-         declare
-            Module : constant String := Get_Module (Debugger.Executable);
-         begin
-            Send (Debugger, "start " & Module, Mode => Mode);
-         end;
-
-      else
-         Send (Debugger, "start " & Arguments, Mode => Mode);
-      end if;
-
-      Set_Is_Started (Debugger, True);
+      Run_Helper (Debugger, Arguments, Mode, Start => False);
    end Start;
 
    ---------------
@@ -2139,6 +2143,11 @@ package body Debugger.Gdb_MI is
                         Next (C2, 2);
                         Result (J).Line :=
                           Integer'Value (Element (C2).Text.all);
+
+                     elsif Text.all = "what" then
+                        Next (C2, 2);
+                        Result (J).Expression :=
+                          new String'(Element (C2).Text.all);
                      else
                         exit;
                      end if;
@@ -2146,6 +2155,7 @@ package body Debugger.Gdb_MI is
 
                   Next (C2, 2);
                end loop;
+
             else  -- Watchpoint
                C2 := Find_Identifier (C2, "what");
                Next (C2, 2);
