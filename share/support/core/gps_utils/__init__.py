@@ -28,6 +28,11 @@ GPS.MDI.POSITION_LEFT = 3
 GPS.MDI.POSITION_RIGHT = 4
 # Must be kept in sync with Gtkada.MDI
 
+GPS.Message.MESSAGE_INVISIBLE = 0
+GPS.Message.MESSAGE_IN_SIDEBAR = 1
+GPS.Message.MESSAGE_IN_LOCATIONS = 2
+GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
+
 
 def get_focused_widget():
     return GPS.MDI.current().get_child().pywidget().get_toplevel().get_focus()

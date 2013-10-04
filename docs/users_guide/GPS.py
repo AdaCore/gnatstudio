@@ -7382,10 +7382,17 @@ class Message(object):
         displayed in locations view when first bit is set, so here is possible
         values:
 
-         0 - message is invisible
-         1 - message is visible in source editor's sidebar only
-         2 - message is visible in locations view only
-         3 - message is visible in source editor and locations view
+        * GPS.Message.MESSAGE_INVISIBLE:
+          message is invisible
+
+        * GPS.Message.MESSAGE_IN_SIDEBAR:
+          message is visible in source editor's sidebar only
+
+        * GPS.Message.MESSAGE_IN_LOCATIONS:
+          message is visible in locations view only
+
+        * GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS:
+          message is visible in source editor and locations view
 
         Note, set of flags can be extended in the future, thus it is better to
         handle them as bit set.
