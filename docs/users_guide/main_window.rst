@@ -21,6 +21,7 @@ The Welcome Dialog
 
 .. image:: welcome.png
 .. index:: command line; -P
+.. index:: project; startup
 
 When it starts, GPS is looking for a project file to load, so that it knows
 where to find the sources of your project. This project is in general specified
