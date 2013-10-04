@@ -22,8 +22,6 @@ with GNATCOLL.Projects;
 
 with Glib.Object;
 
-with Gdk.Pixbuf;
-
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
@@ -180,9 +178,6 @@ package Vsearch is
    --  Return selected project saved at the beginning of last search
 
 private
-
-   Open_Options_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
-   Close_Options_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
 
    type Vsearch_Record is new Gtk_Box_Record with record
       Scrolled                : Gtk_Scrolled_Window;

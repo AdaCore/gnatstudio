@@ -48,6 +48,7 @@ package body GPS.Stock_Icons is
       Icon_Size_Action_Button := Icon_Size_Register ("ICON_SIZE_ACTION", 7, 7);
       Icon_Size_Local_Toolbar :=
          Icon_Size_Register ("ICON_SIZE_LOCAL_TOOLBAR", 12, 12);
+      Icon_Size_Speedbar := Icon_Size_Register ("ICON_SIZE_SPEEDBAR", 9, 9);
 
       if Active (Me) then
          Icon_Size_Lookup (Icon_Size_Action_Button, W, H, Result);

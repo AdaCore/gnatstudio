@@ -155,6 +155,8 @@ XML = r"""<?xml version="1.0"?>
     <icon id="gps-project-modified-closed"     file="16px/project_box_pencil.png" />
 
     <icon id="gps-search-and-menu" file="svg/search-and-menu.svg" />
+    <icon id="gps-fold-block" file="svg/gps-fold-block.svg"/>
+    <icon id="gps-unfold-block" file="svg/gps-unfold-block.svg"/>
 
     <icon id="gps-double-arrow" file="svg/double_arrow.svg"/>
 

@@ -78,6 +78,7 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -119,10 +120,6 @@ package body Src_Editor_Module is
    Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
 
-   fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, fold_block_xpm, "fold_block_xpm");
-   unfold_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, unfold_block_xpm, "unfold_block_xpm");
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
@@ -3176,8 +3173,6 @@ package body Src_Editor_Module is
       Register_Editor_Hooks (Kernel);
 
       Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
-      Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
-      Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
 
       Completion_Module.Register_Module (Kernel);
 
@@ -3195,7 +3190,6 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Data);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref;
       Pref_Display_Subprogram_Names : constant Boolean :=
@@ -3209,6 +3203,7 @@ package body Src_Editor_Module is
 
       Iter  : Child_Iterator;
       Child : MDI_Child;
+      P : constant Preference := Get_Pref (Data);
    begin
       Line_Highlighting.Add_Category (Search_Results_Style);
 
@@ -3226,6 +3221,20 @@ package body Src_Editor_Module is
          end;
 
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
+      end if;
+
+      if P = null
+        or else P = Preference (Gtk_Theme)
+        or else Hide_Block_Pixbuf = null
+      then
+         --  Do not free old one, since referenced by existing editors.
+
+         Hide_Block_Pixbuf   :=
+           Kernel.Get_Main_Window.Render_Icon
+             (GPS_Fold_Block, Icon_Size_Speedbar);
+         Unhide_Block_Pixbuf   :=
+           Kernel.Get_Main_Window.Render_Icon
+             (GPS_Unfold_Block, Icon_Size_Speedbar);
       end if;
 
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then

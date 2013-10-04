@@ -21,7 +21,6 @@
 #include "cancel_xpm"
 #include "close_block_xpm"
 #include "display_small_xpm"
-#include "fold_block_xpm"
 #include "i_page_xpm"
 #include "lock_xpm"
 #include "package_xpm"
@@ -29,5 +28,4 @@
 #include "stop_xpm"
 #include "trash_xpm"
 #include "subprogram_xpm"
-#include "unfold_block_xpm"
 #include "var_xpm"

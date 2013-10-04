@@ -2703,12 +2703,6 @@ package body Vsearch is
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find All References";
       Mitem    : Gtk_Separator_Menu_Item;
-
-      open_options_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-      pragma Import (C, open_options_xpm, "unfold_block_xpm");
-      close_options_xpm  : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-      pragma Import (C, close_options_xpm, "fold_block_xpm");
-
       Command : Interactive_Command_Access;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
@@ -2720,11 +2714,6 @@ package body Vsearch is
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
       Vsearch_Module_Id.Tab_Width := Tab_Width;
-
-      Close_Options_Pixbuf := Gdk.Pixbuf.Gdk_New_From_Xpm_Data
-        (close_options_xpm);
-      Open_Options_Pixbuf := Gdk.Pixbuf.Gdk_New_From_Xpm_Data
-        (open_options_xpm);
 
       --  Register the menus
       Register_Menu
