@@ -3785,6 +3785,7 @@ package body Xref is
          --  been computed.
 
          Trace (Me, "Set up xref database: :memory:");
+         Self.Xref_Db := GNATCOLL.VFS.No_File;
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
       else
          --  When loading a new project, we need to reset the cache containing
@@ -3797,6 +3798,53 @@ package body Xref is
          Old_Entities.Reset (Self.Entities);
       end if;
    end Project_Changed;
+
+   ----------------------------
+   -- Xref_Database_Location --
+   ----------------------------
+
+   function Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record;
+      Project : Project_Type)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Dir  : Virtual_File;
+   begin
+      if Active (SQLITE)
+        and then Self.Xref_Db = GNATCOLL.VFS.No_File
+      then
+         declare
+            Attr : constant String :=
+              Project.Attribute_Value
+                (Build ("IDE", "Xref_Database"),
+                 Default => "",
+                 Use_Extended => True);
+         begin
+            if Attr = "" then
+               Dir    := Project.Object_Dir;
+
+               if Dir = No_File then
+                  Trace (Me, "Object_Dir is unknown for the root project "
+                         & Project.Project_Path.Display_Full_Name);
+                  Dir := GNATCOLL.VFS.Get_Current_Dir;
+               end if;
+
+               Self.Xref_Db := Create_From_Base
+                 (Base_Dir  => Dir.Full_Name.all,
+                  Base_Name => "gnatinspect.db");
+            else
+               Self.Xref_Db := Create_From_Base
+                 (Base_Name => +Attr,
+                  Base_Dir  => Project.Project_Path.Dir_Name);
+            end if;
+
+            Trace
+              (Me, "Set up xref database: " & Self.Xref_Db.Display_Full_Name);
+         end;
+      end if;
+
+      return Self.Xref_Db;
+   end Xref_Database_Location;
 
    --------------------------
    -- Project_View_Changed --
@@ -3824,26 +3872,13 @@ package body Xref is
          end if;
       end Reset_File_If_External;
 
-      Dir  : Virtual_File;
       File : Virtual_File;
    begin
       if Active (SQLITE) then
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
-         Dir := Tree.Root_Project.Object_Dir;
-
-         if Dir = No_File then
-            Trace (Me, "Object_Dir is unknown for the root project "
-                   & Tree.Root_Project.Project_Path.Display_Full_Name);
-            Dir := GNATCOLL.VFS.Get_Current_Dir;
-         end if;
-
-         File := Create_From_Dir
-           (Dir       => Dir,
-            Base_Name => "gnatinspect.db");
-
-         Trace (Me, "Set up xref database: " & File.Display_Full_Name);
+         File := Xref_Database_Location (Self, Tree.Root_Project);
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
 
          --  ??? Now would be a good opportunity to update the cross-references

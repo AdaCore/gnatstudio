@@ -490,6 +490,17 @@ package body GPS.Kernel.Scripts is
             end loop;
          end;
 
+      elsif Command = "xref_db" then
+         declare
+            F : constant Virtual_File :=
+              Kernel.Databases.Xref_Database_Location
+                (Get_Project (Kernel));
+         begin
+            if F /= No_File then
+               Set_Return_Value (Data, F.Display_Full_Name);
+            end if;
+         end;
+
       elsif Command = "freeze_xref" then
          declare
             Lock : Database_Lock;
@@ -1377,6 +1388,9 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "unset_busy",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "xref_db",
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "freeze_xref",

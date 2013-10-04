@@ -54,6 +54,7 @@ Functions
 .. autofunction:: thaw_xref
 .. autofunction:: unset_busy
 .. autofunction:: version
+.. autofunction:: xref_db
 .. autofunction:: xref_frozen
 
 Classes
@@ -1247,6 +1248,22 @@ Classes
 .. autoclass:: Message
 
    
+
+
+   .. autoattribute:: GPS.Message.MESSAGE_INVISIBLE
+
+
+
+   .. autoattribute:: GPS.Message.MESSAGE_IN_LOCATIONS
+
+
+
+   .. autoattribute:: GPS.Message.MESSAGE_IN_SIDEBAR
+
+
+
+   .. autoattribute:: GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS
+
 
    .. automethod:: GPS.Message.__init__
 

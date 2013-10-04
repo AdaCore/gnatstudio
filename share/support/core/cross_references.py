@@ -21,24 +21,11 @@ class Sqlite_Cross_References(object):
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
    <icon>gps-custom-build</icon>
-   <command-line>
-      <arg>gnatinspect</arg>
-      <arg>-d</arg>
-      <arg>--exit</arg>
-      <arg>--db=gnatinspect.db</arg>
-      <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
-      <arg>--encoding=iso-8859-1</arg>
-      <arg>%eL</arg>
-      <arg>-P%PP</arg>
-      <arg>%X</arg>
-      <arg>%subdirsarg</arg>
-   </command-line>
    <output-parsers>
        gnatinspect_onexit_hook
    </output-parsers>
    <is-run>True</is-run>
-   <switches command="">
-   </switches>
+   <switches command=""/>
 </target-model>
 
 <!-- Targets to launch cross-reference recompilation  -->
@@ -60,7 +47,6 @@ class Sqlite_Cross_References(object):
        <arg>gnatinspect</arg>
        <arg>-d</arg>
        <arg>--exit</arg>
-       <arg>--db=gnatinspect.db</arg>
        <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
        <arg>--encoding=iso-8859-1</arg>
        <arg>-P%PP</arg>
@@ -112,9 +98,9 @@ class Sqlite_Cross_References(object):
         self.gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
 
-        extra_args = None
+        extra_args = "--db=%s" % (GPS.xref_db(), )
         if not self.trusted_mode:
-            extra_args = "--symlinks"
+            extra_args += " --symlinks"
 
         target.execute(synchronous=GPS.Logger("TESTSUITE").active, quiet=True, extra_args=extra_args)
 

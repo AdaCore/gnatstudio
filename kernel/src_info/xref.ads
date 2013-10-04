@@ -91,6 +91,9 @@ package Xref is
 
       Freeze_Count : Integer := 0;
       --  Used to implement freeze of the DB
+
+      Xref_Db : GNATCOLL.VFS.Virtual_File;
+      --  Location of the sqlite database
    end record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
@@ -125,6 +128,13 @@ package Xref is
    --  Entity is set initially to the best choice, and its name is the one
    --  that should be looked for in the file.
    --  Should return No_General_Entity if the user has cancelled the action.
+
+   function Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record;
+      Project : GNATCOLL.Projects.Project_Type)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Location of the sqlite file that contains the xref, or No_File.
+   --  Project should be the root project.
 
    -----------------------
    --  File location
