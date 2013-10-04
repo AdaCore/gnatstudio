@@ -3878,6 +3878,7 @@ package body Xref is
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
+         Self.Xref_Db := No_File;
          File := Xref_Database_Location (Self, Tree.Root_Project);
          Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
 
