@@ -17,7 +17,7 @@ function buildSourcesIndex()
         item = document.createElement('li');
         href = document.createElement('a');
         href.setAttribute('href',
-                          'javascript:displaySource(''' + source.file + ''')');
+                          'javascript:displaySource(\'' + source.file + '\')');
         text = document.createTextNode(source.file);
         href.appendChild(text);
         item.appendChild(href);
