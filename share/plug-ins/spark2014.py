@@ -950,7 +950,19 @@ class GNATProve_Plugin:
     def show_report(self):
         """show report produced in gnatprove/gnatprove.out"""
         objdirs = GPS.Project.root().object_dirs()
-        report_file = os.path.join(objdirs[0], obj_subdir_name, report_file_name)
+        default_objdir = objdirs[0]
+        report_file = os.path.join(default_objdir, obj_subdir_name, report_file_name)
+        # if build mode is not the default one, the report file may be found in
+        # the parent directory of the current object directory
+        if not os.path.exists(report_file):
+            if default_objdir.endswith(os.sep):
+                default_objdir = default_objdir[:-(len(os.sep))]
+            default_objdir = os.path.dirname(default_objdir)
+            candidate_report_file = os.path.join(default_objdir, obj_subdir_name, report_file_name)
+            # if the report file is still not found, leave the original path
+            # so that the error message mentions this one
+            if os.path.exists(candidate_report_file):
+                report_file = candidate_report_file
         buf = GPS.EditorBuffer.get(GPS.File(report_file))
         v = buf.current_view()
         GPS.MDI.get_by_child(v).raise_window()
