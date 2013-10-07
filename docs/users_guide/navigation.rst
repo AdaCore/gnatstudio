@@ -118,11 +118,14 @@ project this user might be working on, as in the following examples::
 
       package IDE is
          for Xref_Database use "xref_database.db";
-         --  this would be /home/user1/work/obj/xref_database.db
+         --  This would be /home/user1/work/xref_database.db
 
-         for Xref_Database use
-            external("HOME") & "/prj1/database.db";
-         --  this would be /home/user1/prj1/database.db
+         for Xref_Database use Project'Object_Dir & "/xref_database.db";
+         --  This would be /home/user1/work/obj/xref_database.db
+         --  This is the default when this attribute is not specified
+
+         for Xref_Database use external("HOME") & "/prj1/database.db";
+         --  This would be /home/user1/prj1/database.db
       end IDE;
    end Default;
 
