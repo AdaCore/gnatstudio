@@ -839,6 +839,9 @@ package body GPS.Kernel.Project is
 
          Run_Hook (Kernel, Project_Changed_Hook);
 
+         --  Make sure the subdirs is correctly set for objects
+         Kernel.Set_Build_Mode (Kernel.Get_Build_Mode);
+
          --  Recompute the project view before loading the desktop, since the
          --  latter operation with also load files which might need to do xref
          --  queries.
