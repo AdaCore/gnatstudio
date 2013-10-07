@@ -98,7 +98,7 @@ class Sqlite_Cross_References(object):
         self.gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
 
-        extra_args = "--db=%s" % (GPS.xref_db(), )
+        extra_args = '"--db=%s"' % (GPS.xref_db(), )
         if not self.trusted_mode:
             extra_args += " --symlinks"
 
