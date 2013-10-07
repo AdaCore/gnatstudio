@@ -96,6 +96,12 @@ NF-60-M816-002 GPS: display text only in the toolbar (2013-08-19)
 
   There is a new preference to set the toolbar style to "text only".
 
+NF-60-M814-011 GPS: Enhanced Edit/Selection/Refill behavior (2013-10-07)
+
+  When refilling a comment block with the Refill command, the cursor will now
+  be placed at the end of the last word of the comment, so as to enable the
+  user to keep editing his comment seamlessly.
+
 NF-60-M808-017 GPS: New menu CodePeer>Generate CSV Report (2013-09-22)
 
   As part of the CodePeer integration, a new menu is provided to generate
