@@ -2233,6 +2233,12 @@ package body Src_Editor_View is
                   Str : constant String := Interfaces.C.Strings.Value
                     (Event.Key.String);
                begin
+                  --  We want to let the event propagate if there is a modifier
+                  --  applied, in case it is a default Gtk action
+                  if Boolean'Val (Event.Key.State and Modifier_Mask) then
+                     return False;
+                  end if;
+
                   if Str'Length >= 1 then
                      Insert
                        (View.Kernel,
