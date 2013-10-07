@@ -35,15 +35,6 @@ if [ -f $root/etc/fonts/fonts.conf ]; then
   export FONTCONFIG_FILE
 fi
 
-if [ -f /etc/fonts/fonts.conf ]; then
-  if grep '<cachedir>' /etc/fonts/fonts.conf > /dev/null 2>&1; then
-    FONTCONFIG_FILE=/etc/fonts/fonts.conf
-    export FONTCONFIG_FILE
-    FONTCONFIG_PATH=/etc/fonts
-    export FONTCONFIG_PATH
-  fi
-fi
-
 if [ -f $root/etc/pango/pangorc ]; then
   PANGO_RC_FILE=$root/etc/pango/pangorc
   export PANGO_RC_FILE
