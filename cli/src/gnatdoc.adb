@@ -21,6 +21,7 @@ with Ada.Command_Line;
 with Ada.Text_IO;       use Ada.Text_IO;
 
 with GNAT.Command_Line; use GNAT.Command_Line;
+with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.Strings;      use GNAT.Strings;
 
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
@@ -29,16 +30,25 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.CLI_Utils;     use GPS.CLI_Utils;
 with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 
-with Docgen3;
+with Docgen3;           use Docgen3;
 with Xref;              use Xref;
 
 procedure GNATdoc is
+   Kernel : constant GPS.CLI_Kernels.CLI_Kernel :=
+              new GPS.CLI_Kernels.CLI_Kernel_Record;
 
-   Cmdline               : Command_Line_Configuration;
-   Project_Name          : aliased GNAT.Strings.String_Access;
-   Project_File          : Virtual_File;
-   Kernel                : constant GPS.CLI_Kernels.CLI_Kernel :=
-     new GPS.CLI_Kernels.CLI_Kernel_Record;
+   Cmdline         : Command_Line_Configuration;
+   Project_File    : Virtual_File;
+
+   --  Switches
+
+   Regular_Expr         : aliased GNAT.Strings.String_Access;
+   Internal_Output      : aliased Boolean;
+   Process_C_Files      : aliased Boolean;
+   Process_Bodies       : aliased Boolean;
+   Project_Name         : aliased GNAT.Strings.String_Access;
+   Process_Private_Part : aliased Boolean;
+   Suppress_Warnings    : aliased Boolean;
 
 begin
    --  Retrieve log configuration
@@ -59,6 +69,37 @@ begin
      (Cmdline,
       Switch       => "-X:",
       Help         => "Specify an external reference in the project");
+   Define_Switch
+     (Cmdline,
+      Output      => Regular_Expr'Access,
+      Switch      => "-R:",
+      Long_Switch => "--regexp=",
+      Help        => "Regular expression to select documentation comments");
+   Define_Switch
+     (Cmdline,
+      Output       => Process_Bodies'Access,
+      Switch       => "-b",
+      Help         => "Process bodies");
+   Define_Switch
+     (Cmdline,
+      Output       => Process_C_Files'Access,
+      Switch       => "-c",
+      Help         => "Process C/C++ files");
+   Define_Switch
+     (Cmdline,
+      Output       => Process_Private_Part'Access,
+      Switch       => "-p",
+      Help         => "Process private part of packages");
+   Define_Switch
+     (Cmdline,
+      Output       => Suppress_Warnings'Access,
+      Switch       => "-ws",
+      Help         => "Suppress all warnings");
+   Define_Switch
+     (Cmdline,
+      Output       => Internal_Output'Access,
+      Switch       => "-zz",
+      Help         => "Internal output (for debugging and regression tests)");
 
    --  Initialize context
    GPS.CLI_Utils.Create_Kernel_Context (Kernel);
@@ -67,6 +108,10 @@ begin
    begin
       GPS.CLI_Utils.Parse_Command_Line (Cmdline, Kernel);
    exception
+      when GNAT.Command_Line.Invalid_Switch =>
+         --  User provided some invalid switch. Just return
+         return;
+
       when GNAT.Command_Line.Exit_From_Command_Line =>
          --  User provided -h or --help option. Just return
          return;
@@ -99,7 +144,29 @@ begin
 
    --  Run Docgen
    declare
-      Options : Docgen3.Docgen_Options;
+      Pattern : constant String :=
+        (if Regular_Expr.all = "" then ""
+         else Regular_Expr.all
+                (Regular_Expr.all'First + 1 .. Regular_Expr.all'Last));
+
+      --  Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
+
+      Options : constant Docgen3.Docgen_Options :=
+        (Comments_Filter => (if Regular_Expr.all = "" then null
+                             else new Pattern_Matcher'
+                                        (Compile
+                                          (Pattern, Single_Line))),
+         Report_Errors   => (if Suppress_Warnings then Errors_Only
+                                                  else Errors_And_Warnings),
+         Skip_C_Files    => not Process_C_Files,
+         Tree_Output     => ((if Internal_Output then Full
+                                                 else None),
+                             With_Comments => False),
+         Display_Time    => Internal_Output,
+         Process_Bodies  => Process_Bodies,
+         Show_Private    => Process_Private_Part,
+         Output_Comments => Internal_Output);
+
    begin
       Docgen3.Process_Project_Files
         (Kernel    => Kernel,
