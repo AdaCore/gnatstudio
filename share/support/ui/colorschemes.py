@@ -13,12 +13,41 @@ from gi.repository import Gtk, Gdk
 import gps_utils
 
 
+light_common = {
+    "Plugins/auto_highlight_occurrences/color_type": "rgba(144, 238, 144, 0.5)",
+    "Plugins/auto_highlight_occurrences/color_unknown": "#d7d7d7",
+    "Plugins/auto_highlight_occurrences/color_subprogram": "rgba(252, 175, 62, 0.5)",
+    "Plugins/auto_highlight_occurrences/color_object": "rgba(255, 190, 238, 0.7)",
+    "Plugins/auto_highlight_occurrences/color_package_namespace": "rgba(144, 238, 144, 0.5)",
+
+    "Search-Src-Highlight-Color": "#A2B6FF",
+
+    "Horizontal-Diff-Change-Color": "#FDE66A",
+    "Diff-Change-Color": "#ECECAA",
+    "Diff-Remove-Color": "#FFA0A0",
+    "Diff-Append-Color": "#88EEAA",
+    }
+
+dark_common = {
+    "Plugins/auto_highlight_occurrences/color_type": "rgb(3,41,97)",
+    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(32,74,135)",
+    "Plugins/auto_highlight_occurrences/color_subprogram": "rgb(39,81,0)",
+    "Plugins/auto_highlight_occurrences/color_object": "rgb(92,53,102)",
+    "Plugins/auto_highlight_occurrences/color_package_namespace": "rgb(94,0,118)",
+
+    "Search-Src-Highlight-Color": "#008191",
+
+    "Horizontal-Diff-Change-Color": "rgb(143,89,2)",
+    "Diff-Change-Color": "rgb(107,73,19)",
+    "Diff-Remove-Color": "rgb(88,43,43)",
+    "Diff-Append-Color": "rgb(38,68,36)",
+    }
+
 # Colors should use "rgb()" or "rgba()" format, not "#...". This is so that
 # __on_preferences_changed can detect changes done to the preferences and set
 # the color scheme to "Custom" appropriately.
 
-themes = [
-   {"name": "Default",
+default = {"name": "Default",
     "GPS6-Gtk-Theme-Name": "Adwaita",
     "@theme_bg_color": None,           # the background color for windows
     "@theme_fg_color": None,           # default color for the text
@@ -37,31 +66,16 @@ themes = [
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,230)", "transparent"),
     "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(0,153,0)", "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(96,97,95)", "transparent")
-   },
-   {"name": "Darkside",
-    "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
-    "@theme_bg_color": "#222324",
-    "@editor_bg_selection": "#49483E",
-    "General-Default-Style":                 ("${font}", "rgb(186,186,186)", "rgb(34,35,36)"),
-    "Debugger-Editor-Current-Line":          "rgba(58,71,54,0.6)",
-    "Src-Editor-Current-Line-Color":         "rgb(48,51,51)",
-    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(186,186,186)", "rgb(34,35,36)"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(242,212,44)", "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(114,159,207)", "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(114,159,207)", "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(114,159,207)", "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(240,141,36)", "transparent"),
-    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
-    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
-   },
-   {"name": "Monokai",
+   }
+default.update(light_common)
+
+
+monokai = {"name": "Monokai",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "#272822",
     "@theme_fg_color": "#F8F8F2",
-    "@theme_selected_bg_color": "#49483E",
-    "@editor_bg_selection": "#49483E",
+    "@theme_selected_bg_color": "#004398",
+    "@editor_bg_selection": "#004398",
     "General-Default-Style":                 ("${font}", "rgb(248,248,242)", "rgb(39,40,34)"),
     "Debugger-Editor-Current-Line":          "rgba(58,71,54,0.6)",
     "Src-Editor-Current-Line-Color":         "rgb(73,72,62)",
@@ -75,8 +89,30 @@ themes = [
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(249,38,114)", "transparent"),
     "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(230,219,116)", "transparent")
-   },
-   {"name": "iPlastic",
+   }
+monokai.update(dark_common)
+
+darkside = {"name": "Darkside",
+    "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
+    "@theme_bg_color": "#222324",
+    "@editor_bg_selection": "#004398",
+    "General-Default-Style":                 ("${font}", "rgb(186,186,186)", "rgb(34,35,36)"),
+    "Debugger-Editor-Current-Line":          "rgba(58,71,54,0.6)",
+    "Src-Editor-Current-Line-Color":         "rgb(48,51,51)",
+    "Src-Editor-Reference-Style":            ("${editorfont}", "rgb(186,186,186)", "rgb(34,35,36)"),
+    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT", "rgb(0,0,255)",    "transparent"),
+    "Src-Editor-Strings-Variant":            ("DEFAULT", "rgb(242,212,44)", "transparent"),
+    "Src-Editor-Numbers-Variant":            ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT", "rgb(114,159,207)", "transparent"),
+    "Src-Editor-Aspects-Variant":            ("DEFAULT", "rgb(114,159,207)", "transparent"),
+    "Src-Editor-Comments-Variant":           ("DEFAULT", "rgb(114,159,207)", "transparent"),
+    "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(240,141,36)", "transparent"),
+    "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(142,105,201)", "transparent"),
+    "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(104,194,68)", "transparent")
+   }
+darkside.update(dark_common)
+
+iplastic =  {"name": "iPlastic",
     "GPS6-Gtk-Theme-Name": "Adwaita",
     "@editor_bg_selection": "#4A90D9",
     "General-Default-Style":                 ("${font}", "rgb(0,0,0)", "rgb(238,238,238)"),
@@ -92,8 +128,10 @@ themes = [
     "Src-Editor-Keywords-Variant":           ("DEFAULT", "rgb(0,0,255)", "transparent"),
     "Src-Editor-Type-Variant":              ("DEFAULT", "rgb(102,217,239)", "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT", "rgb(255,128,0)", "transparent")
-   },
-]
+   }
+iplastic.update(light_common)
+
+themes = [default, darkside, monokai, iplastic]
 
 
 class Color_Theme_Switcher(object):
