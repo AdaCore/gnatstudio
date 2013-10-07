@@ -65,6 +65,33 @@ def save_dir(fn):
     return do_work
 
 
+def save_current_window(f, args=[], kwargs=dict()):
+    """
+    Save the window that currently has the focus, executes f, and
+    reset the focus to that window.
+    """
+
+    mdi = GPS.MDI.current()
+
+    try:
+       apply(f, args, kwargs)
+    finally:
+       if mdi:
+           mdi.raise_window()
+
+
+def with_save_current_window(fn):
+    """
+    A decorator with the same behavior as save_current_window.
+    """
+
+    def do_work(*args, **kwargs):
+        save_current_window(fn, args=args, kwargs=kwargs)
+    do_work.__name__ = fn.__name__   # Reset name
+    do_work.__doc__ = fn.__doc__
+    return do_work
+
+
 def save_excursion(f, args=[], kwargs=dict(), undo_group=True):
     """
     Save current buffer, cursor position and selection and execute f.
