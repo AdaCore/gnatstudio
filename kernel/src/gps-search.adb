@@ -25,6 +25,7 @@ with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with Glib.Convert;
 with Interfaces;                  use Interfaces;
+with Unicode.CES.Utf8;            use Unicode, Unicode.CES.Utf8;
 
 package body GPS.Search is
    Me : constant Trace_Handle := Create ("SEARCH");
@@ -64,17 +65,20 @@ package body GPS.Search is
    subtype Mask is Interfaces.Unsigned_64;
    --  We only consider the 1..Pattern'Length
 
-   type Character_Mask_Array is array (Character) of Mask;
+   type Character_Mask_Array is array (Unicode_Char range <>) of Mask;
+   type Character_Masks is access all Character_Mask_Array;
    type Approximate_Status is
      array (-Approximate_Max_Cost .. Approximate_Max_Errors) of Mask;
    type Approximate_Status_Access is access all Approximate_Status;
 
    type Approximate_Search is new Search_Pattern with record
-      Pattern : Character_Mask_Array;
+      Pattern : Character_Masks;
       --  Precomputed info about the pattern
       --  ??? We only need entries for the characters in the Pattern, so we
       --  are wasting space here. This would also allow working with UTF8
       --  characters.
+
+      Max_Errors : Natural := Approximate_Max_Errors;
 
       Result : Approximate_Status_Access;
       --  ??? This would be better part of the search context
@@ -402,33 +406,45 @@ package body GPS.Search is
         (if End_Index = -1 then Buffer'Last else End_Index);
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
-      Start : Natural;
+      Start : Natural := Natural'Last;
       Score : Natural;
 
       T : Natural := Self.Text'First;
       Context : Search_Context;
 
+      B : Natural := S;
+      C, C2 : Unicode_Char;
+      B1 : Natural;
+
    begin
-      for B in S .. F loop
-         if (Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
-            or else (not Self.Case_Sensitive
-                     and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T)))
-         then
-            if T = Self.Text'First then
-               Start := B;
+      Utf8_Get_Char (Self.Text.all, T, C2);  --  also moves T to next char
+      if not Self.Case_Sensitive then
+         C2 := To_Lower (C2);
+      end if;
+
+      while B <= F loop
+         B1 := B;
+         Utf8_Get_Char (Buffer, B, C); --  also moves B to next char
+         if not Self.Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         if C = C2 then
+            if Start = Natural'Last then
+               Start := B1;
             end if;
 
-            if T = Self.Text'Last then
+            if T > Self.Text'Last then
                --  The score should be higher when the characters are closer
                --  together
-               Score := 100 - (B - Start);
+               Score := 101 - (B - Start);
 
                if Self.Negate then
                   return GPS.Search.No_Match;
                else
                   Context := Search_Context'
                     (Start              => Start,
-                     Finish             => B,
+                     Finish             => B - 1,
                      Line_Start         => 1,
                      Line_End           => 1,
                      Col_Start          => 1,
@@ -451,7 +467,10 @@ package body GPS.Search is
                end if;
             end if;
 
-            T := T + 1;
+            Utf8_Get_Char (Self.Text.all, T, C2);  --  moves T forward
+            if not Self.Case_Sensitive then
+               C2 := To_Lower (C2);
+            end if;
          end if;
       end loop;
 
@@ -504,8 +523,8 @@ package body GPS.Search is
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
       Context : Search_Context :=
-        (Start             => S,
-         Finish            => S - 1,
+        (Start             => S,  --  first byte of the matched substring
+         Finish            => S - 1,   --  last byte of last char read
          Line_Start        => 1,
          Line_End          => 1,
          Col_Start         => 1,
@@ -525,7 +544,7 @@ package body GPS.Search is
    begin
       --  Initialize the pattern with K ones
       Self.Result.all := (others => 0);
-      for K in 1 .. Approximate_Max_Errors loop
+      for K in 1 .. Self.Max_Errors loop
          Self.Result (K) := Shift_Left (Self.Result (K - 1), 1) or 1;
       end loop;
 
@@ -551,41 +570,52 @@ package body GPS.Search is
       Buffer  : String;
       Context : in out Search_Context)
    is
-      C : Character;
+      C : Unicode_Char;
+      P, P1 : Natural;
       Tmp_R : Approximate_Status;
-
-      --  We want at least one character of the pattern to match, otherwise it
-      --  doesn't make sense.
-      Max_K : constant Natural :=
-        Integer'Min (Approximate_Max_Errors, Self.Text'Length - 1);
+      Offset : Mask;
 
    begin
-      for P in Context.Finish + 1 .. Context.Buffer_End loop
-         C := Buffer (P);
+      P := Context.Finish + 1;  --  points to first byte of first char
+
+      while P <= Context.Buffer_End loop
+         P1 := P;
+         Utf8_Get_Char (Buffer, P, C);
          if not Self.Case_Sensitive then
             C := To_Lower (C);
          end if;
 
          Tmp_R := Self.Result.all;
-         Self.Result (0) :=
-           (Shift_Left (Tmp_R (0), 1) or 1) and Self.Pattern (C);
 
-         for K in 1 .. Max_K loop
+         if C in Self.Pattern'Range then
+            Offset := Self.Pattern (C);
+         else
+            Offset := 0;
+         end if;
+
+         Self.Result (0) := (Shift_Left (Tmp_R (0), 1) or 1) and Offset;
+
+         for K in 1 .. Self.Max_Errors loop
             Self.Result (K) :=
-              ((Shift_Left (Tmp_R (K), 1) or 1) and Self.Pattern (C))
+              ((Shift_Left (Tmp_R (K), 1) or 1) and Offset)
               or (Shift_Left (Tmp_R (K - Approximate_Substitution_Cost)
                               or Self.Result (K - Approximate_Deletion_Cost),
                               1) or 1)
               or Tmp_R (K - Approximate_Insertion_Cost);
          end loop;
 
-         for K in Self.Result'First .. Max_K loop
+         for K in Self.Result'First .. Self.Max_Errors loop
             if P - Self.Text'Length - K + 1 >= Buffer'First
               and then (Self.Result (K) and Self.Matched) /= 0
             then
-               Context.Start := Integer'Max
-                 (Context.Buffer_Start, P - Self.Text'Length - K + 1);
-               Context.Finish := P;
+               Context.Start := P1;
+               for N in 1 .. Utf8_Length (Self.Text.all) - 1 loop
+                  Context.Start := Utf8_Prev_Char (Buffer, Context.Start);
+               end loop;
+
+--                 Context.Start := Integer'Max
+--                   (Context.Buffer_Start, P1 - Self.Text'Length - K + 1);
+               Context.Finish := P - 1;  --  last byte of last significant char
 
                Context.Score := 100 - K;
                Update_Location (Context, Buffer);
@@ -604,7 +634,10 @@ package body GPS.Search is
    overriding procedure Free (Self : in out Approximate_Search) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Approximate_Status, Approximate_Status_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Character_Mask_Array, Character_Masks);
    begin
+      Unchecked_Free (Self.Pattern);
       Unchecked_Free (Self.Result);
    end Free;
 
@@ -618,24 +651,40 @@ package body GPS.Search is
       Context : in out Search_Context)
    is
       T : Natural := Self.Text'First;
+      B : Natural := Context.Finish + 1;
+      B1 : Natural;
+      C, C2 : Unicode_Char;
    begin
-      for B in Context.Finish + 1 .. Context.Buffer_End loop
-         if (Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
-            or else (not Self.Case_Sensitive
-                     and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T)))
-         then
-            if T = Self.Text'First then
-               Context.Start := B;
+      Utf8_Get_Char (Self.Text.all, T, C2);  --  moves T forward
+      if not Self.Case_Sensitive then
+         C2 := To_Lower (C2);
+      end if;
+
+      Context.Start := Natural'Last;
+
+      while B <= Context.Buffer_End loop
+         B1 := B;
+         Utf8_Get_Char (Buffer, B, C);  --  moves B forward
+         if not Self.Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         if C = C2 then
+            if Context.Start = Natural'Last then
+               Context.Start := B1;
             end if;
 
-            if T = Self.Text'Last then
-               Context.Score := 100 - (B - Context.Start);
-               Context.Finish := B;
+            if T > Self.Text'Last then
+               Context.Score := 101 - (B - Context.Start);
+               Context.Finish := B - 1;
                Update_Location (Context, Buffer);
                return;
             end if;
 
-            T := T + 1;
+            Utf8_Get_Char (Self.Text.all, T, C2);  --  moves T forward
+            if not Self.Case_Sensitive then
+               C2 := To_Lower (C2);
+            end if;
          end if;
       end loop;
       Context := No_Match;
@@ -652,32 +701,51 @@ package body GPS.Search is
    is
       T : Natural := Self.Text'First;
       Result : Unbounded_String;
+      B : Natural := Context.Start;
+      B1 : Natural;
+      C, C2 : Unicode_Char;
    begin
-      if not Self.Allow_Highlight or else Self.Negate then
+      if not Self.Allow_Highlight
+        or else Self.Negate
+        or else Self.Text'Length = 0
+      then
          return Buffer;
       end if;
 
-      Result := To_Unbounded_String
-         (Glib.Convert.Escape_Text
-            (Buffer (Buffer'First .. Context.Start - 1)));
+      Utf8_Get_Char (Self.Text.all, T, C2); --  moves T forward
+      if not Self.Case_Sensitive then
+         C2 := To_Lower (C2);
+      end if;
 
-      for B in Context.Start .. Context.Finish loop
-         if T <= Self.Text'Last
-            and then
-             ((Self.Case_Sensitive and then Buffer (B) = Self.Text (T))
-               or else (not Self.Case_Sensitive
-                   and then To_Lower (Buffer (B)) = To_Lower (Self.Text (T))))
-         then
+      Result := To_Unbounded_String
+         (Glib.Convert.Escape_Text (Buffer (Buffer'First .. B - 1)));
+
+      while B <= Context.Finish loop
+         B1 := B;
+         Utf8_Get_Char (Buffer, B, C);  --  moves B forward
+         if not Self.Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         if C2 /= Unicode_Char'Last and then C = C2 then
             Append (Result, "<b>"
-               & Glib.Convert.Escape_Text ("" & Buffer (B)) & "</b>");
-            T := T + 1;
+                    & Glib.Convert.Escape_Text
+                      ("" & Buffer (B1 .. B - 1)) & "</b>");
+
+            if T <= Self.Text'Last then
+               Utf8_Get_Char (Self.Text.all, T, C2); --  moves T forward
+               if not Self.Case_Sensitive then
+                  C2 := To_Lower (C2);
+               end if;
+            else
+               C2 := Unicode_Char'Last;
+            end if;
          else
-            Append (Result, Glib.Convert.Escape_Text ("" & Buffer (B)));
+            Append (Result, Glib.Convert.Escape_Text (Buffer (B1 .. B - 1)));
          end if;
       end loop;
 
-      Append (Result, Glib.Convert.Escape_Text
-         (Buffer (Context.Finish + 1 .. Buffer'Last)));
+      Append (Result, Glib.Convert.Escape_Text (Buffer (B .. Buffer'Last)));
       return To_String (Result);
    end Highlight_Match;
 
@@ -925,22 +993,45 @@ package body GPS.Search is
          Whole_Word      => Whole_Word,
          Kind            => Approximate,
          Negate          => Negate,
-         Pattern         => (others => 0),
+         Pattern         => null,
+
+         --  We want at least two characters of the pattern to match, otherwise
+         --  it doesn't make sense.
+         Max_Errors      => Integer'Max
+           (0, Integer'Min (Approximate_Max_Errors, Pattern'Length - 1)),
+
          Result          => new Approximate_Status,
          Allow_Highlight => Allow_Highlight,
          Matched         =>  2 ** (Pattern'Length - 1));
 
-      C : Character;
+      Min : Unicode_Char := Unicode_Char'Last;
+      Max : Unicode_Char := 0;
+      C : Unicode_Char;
+      P : Natural := Pattern'First;
    begin
-      --  Compared to the paper, we revert the bit ordering in S
-      for P in Pattern'Range loop
-         C := Pattern (P);
-
+      while P <= Pattern'Last loop
+         Utf8_Get_Char (Pattern, P, C);
          if not Case_Sensitive then
             C := To_Lower (C);
          end if;
 
-         Result.Pattern (C) := Result.Pattern (C) or 2 ** (P - Pattern'First);
+         Min := Unicode_Char'Min (Min, C);
+         Max := Unicode_Char'Max (Max, C);
+      end loop;
+
+      Result.Pattern := new Character_Mask_Array (Min .. Max);
+      Result.Pattern.all := (others => 0);
+
+      --  Compared to the paper, we revert the bit ordering in S
+      P := Pattern'First;
+      while P <= Pattern'Last loop
+         Utf8_Get_Char (Pattern, P, C);
+         if not Case_Sensitive then
+            C := To_Lower (C);
+         end if;
+
+         Result.Pattern (C) :=
+           Result.Pattern (C) or 2 ** (P - 1 - Pattern'First);
       end loop;
 
       return Result;
