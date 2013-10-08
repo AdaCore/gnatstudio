@@ -613,8 +613,6 @@ package body GPS.Search is
                   Context.Start := Utf8_Prev_Char (Buffer, Context.Start);
                end loop;
 
---                 Context.Start := Integer'Max
---                   (Context.Buffer_Start, P1 - Self.Text'Length - K + 1);
                Context.Finish := P - 1;  --  last byte of last significant char
 
                Context.Score := 100 - K;
