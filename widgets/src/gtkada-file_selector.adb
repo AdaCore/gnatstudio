@@ -1830,7 +1830,7 @@ package body Gtkada.File_Selector is
 
       if Remote_Browsing then
          Gtk_New_Hbox (Hbox2, False, 0);
-         Self.Get_Content_Area.Pack_Start (Hbox2, True, True);
+         Self.Get_Content_Area.Pack_Start (Hbox2, False, False);
 
          Gtk_New (Label1, -("Host:"));
          Hbox2.Pack_Start (Label1, False, False, 3);
