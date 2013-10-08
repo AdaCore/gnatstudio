@@ -32,6 +32,13 @@ workspace. The following sections will list them all.
 Common features of the views
 ----------------------------
 
+.. index:: menu; Tools
+.. index:: menu; Tools --> Views
+
+Some views are part of the default desktop, and thus are visible by default.
+The other views can always be opened through one of the submenus of the
+:menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
+
 .. index:: windows; local toolbar
 
 Some of the view have their own local toolbar that contains shortcuts
@@ -44,12 +51,29 @@ a local settings menu. This menu can contain more actions that can be
 performed in this view, or various configuration settings that affect
 the behavior or the display of the view.
 
-.. index:: menu; Tools
-.. index:: menu; Tools --> Views
+.. index:: windows; filter
 
-Some views are part of the default desktop, and thus are visible by default.
-The other views can always be opened through one of the submenus of the
-:menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
+Some of the views also have a filter in their local toolbar. These
+filters can be used to reduce the amount of information that is
+displayed on the screen, by only leaving those lines that match
+the filter.
+
+If you click on the left icon of the filter, this will bring up a
+popup menu to configure the filter:
+
+* The first three entries are used to chose the search algorith (from
+  full text match, to regular expression, to fuzzy matching). These
+  modes are similar to the ones used in the omni-search (:ref:`omni_search`).
+
+* The next entry is :guilabel:`Revert filter`. When this is selected, the
+  lines that do not match the filter are displayed, as opposed to the ones
+  that match the filter otherwise. This mode can also be enabled temporarily
+  if you start the filter with the string `not:`. For instance, a filter
+  in the :guilabel:`Locations` view that says `not:warning` will hide all
+  warning messages.
+
+* The last entry :guilabel:`Whole word` should be used when you only want
+  to match on full words, not on substrings.
 
 
 .. _browsers_features:
