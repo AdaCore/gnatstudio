@@ -35,7 +35,7 @@
 
 .mdi tab GtkLabel, .mdifocused tab GtkLabel { 
    color:   @theme_fg_color;
-   opacity: 1.0 
+   opacity: 1.0;
 }
 
 /* Uncomment this if you want to have the same behavior as in previous
