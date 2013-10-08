@@ -688,6 +688,10 @@ procedure GPS.Main is
          end if;
 
          if not Gnatinspect_Traces.Is_Regular_File then
+            --  Make sure gnatinspect will never try to write to stdout. This
+            --  works around an issue in gnatcoll-traces, where handles that
+            --  are enabled by default would write to stdout in no config file
+            --  is parsed to override this.
             Create (File, Name => +Gnatinspect_Traces.Full_Name.all);
             Put_Line (File, ">log_gnatinspect");
             Close (File);
