@@ -54,6 +54,9 @@ fi
 
 export LD_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
 
+GSETTINGS_BACKEND=memory
+export GSETTINGS_BACKEND
+
 if [ $debug = debug ]; then
    gdb -args $root/bin/${prog}_exe "$@"
 else
