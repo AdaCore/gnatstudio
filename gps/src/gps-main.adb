@@ -655,7 +655,9 @@ procedure GPS.Main is
 
       declare
          Plug_Ins : constant Virtual_File :=
-                      Create_From_Dir (GPS_Home_Dir, "plug-ins");
+           Create_From_Dir (GPS_Home_Dir, "plug-ins");
+         Gnatinspect_Traces : constant Virtual_File :=
+           Create_From_Dir (GPS_Home_Dir, "gnatinspect_traces.cfg");
       begin
          User_Directory_Existed := Is_Directory (GPS_Home_Dir);
 
@@ -682,6 +684,12 @@ procedure GPS.Main is
             Put_Line (File, "DEBUG.STACK_TRACE=no");
             Put_Line (File, "DEBUG.LOCATION=no");
             Put_Line (File, "DEBUG.ENCLOSING_ENTITY=no");
+            Close (File);
+         end if;
+
+         if not Gnatinspect_Traces.Is_Regular_File then
+            Create (File, Name => +Gnatinspect_Traces.Full_Name.all);
+            Put_Line (File, ">log_gnatinspect");
             Close (File);
          end if;
 
