@@ -68,6 +68,13 @@ package body Xref is
       Tree_Lang   : out Tree_Language_Access);
    --  Returns the constructs data for a given entity.
 
+   function Construct_From_Entity
+     (Self : access General_Xref_Database_Record'Class;
+      Entity : General_Entity) return access Simple_Construct_Information;
+   --  Returns Construct_Information from an Entity. This access shouldn't be
+   --  kept because it will be invalid next time the constructs database is
+   --  updated
+
    function To_String (Loc : General_Location) return String;
    --  Display Loc
 
@@ -715,6 +722,13 @@ package body Xref is
          if Entity.Entity /= No_Entity then
             return To_String
               (Declaration (Db.Xref.all, Entity.Entity).Name);
+         elsif Entity.Loc /= No_Location then
+            declare
+               C : constant access Simple_Construct_Information :=
+                 Construct_From_Entity (Db, Entity);
+            begin
+               return Get (C.Name).all;
+            end;
          end if;
       else
          if Entity.Old_Entity /= null then
@@ -1271,6 +1285,33 @@ package body Xref is
       end if;
    end Node_From_Entity;
 
+   ---------------------------
+   -- Construct_From_Entity --
+   ---------------------------
+
+   function Construct_From_Entity
+     (Self : access General_Xref_Database_Record'Class;
+      Entity : General_Entity) return access Simple_Construct_Information is
+   begin
+      declare
+         Result    : Entity_Access;
+         Tree_Lang : Tree_Language_Access;
+         Decl      : Entity_Access;
+         Node      : Construct_Tree_Iterator;
+      begin
+         Node_From_Entity
+           (Self, Self.Lang_Handler, Entity.Loc, Result, Tree_Lang);
+
+         if Result /= Null_Entity_Access then
+            Decl := Get_Declaration
+              (Get_Tree_Language (Get_File (Result)), Result);
+            Node := To_Construct_Tree_Iterator (Decl);
+            return Get_Construct (Node);
+         end if;
+         return null;
+      end;
+   end Construct_From_Entity;
+
    ------------------
    -- Pointed_Type --
    ------------------
@@ -1389,7 +1430,12 @@ package body Xref is
    overriding function "=" (E1, E2 : General_Entity) return Boolean is
    begin
       if Active (SQLITE) then
-         return E1.Entity = E2.Entity;
+         if E1.Entity = No_Entity
+           and then E2.Entity = No_Entity then
+            return E1.Loc = E2.Loc;
+         else
+            return E1.Entity = E2.Entity;
+         end if;
       else
          return E1.Old_Entity = E2.Old_Entity;
       end if;
@@ -1703,7 +1749,18 @@ package body Xref is
    is
    begin
       if Active (SQLITE) then
-         return Db.Xref.Declaration (E.Entity).Flags.Is_Subprogram;
+         if E.Entity /= No_Entity then
+            return Db.Xref.Declaration (E.Entity).Flags.Is_Subprogram;
+         elsif E.Loc /= No_Location then
+            declare
+               C : constant access Simple_Construct_Information :=
+                 Construct_From_Entity (Db, E);
+            begin
+               return
+                 C.Category = Cat_Function or else C.Category = Cat_Procedure;
+            end;
+         end if;
+         return False;
       else
          return Old_Entities.Is_Subprogram (E.Old_Entity);
       end if;
@@ -2841,13 +2898,7 @@ package body Xref is
          else
             --  sqlite backend
 
-            Entity := From_New
-              (Self.Xref.Add_Entity
-                 (Name        => Get (Get_Construct (E).Name).all,
-                  Kind        => "procedure",
-                  Decl_File   => Loc.File,
-                  Decl_Line   => Loc.Line,
-                  Decl_Column => Integer (Loc.Column)));
+            Entity := No_General_Entity;
          end if;
 
          Entity.Loc := Loc;
