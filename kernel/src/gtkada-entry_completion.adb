@@ -134,6 +134,9 @@ package body Gtkada.Entry_Completion is
    procedure On_Settings_Changed (Self : access GObject_Record'Class);
    --  One of the settings has changed
 
+   procedure Reset (Self : not null access Gtkada_Entry_Record'Class);
+   --  Reset the search field and completion engine
+
    function On_Button_Event
       (Ent   : access GObject_Record'Class;
        Event : Gdk_Event_Button) return Boolean;
@@ -712,8 +715,7 @@ package body Gtkada.Entry_Completion is
 
          Result.Provider.On_Result_Executed (Result);
 
-         --  Keep the interface leaner
-         Self.GEntry.Set_Text ("");
+         Reset (Self);
 
          --  ??? Temporary workaround to close the parent dialog if any.
          --  The clean approach is to have a signal that a completion has
@@ -870,6 +872,20 @@ package body Gtkada.Entry_Completion is
       Unset (Val);
    end Insert_Proposal;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Self : not null access Gtkada_Entry_Record'Class) is
+   begin
+      --  Keep the interface leaner
+      Self.GEntry.Set_Text ("");
+
+      --  We are done with the current completion, next time we want to
+      --  restart with the default one
+      Self.Completion := Self.Default_Completion;
+   end Reset;
+
    ------------------
    -- On_Key_Press --
    ------------------
@@ -892,10 +908,7 @@ package body Gtkada.Entry_Completion is
 
       elsif Event.Keyval = GDK_Escape then
          Popdown (Self);
-
-         --  Keep the interface leaner
-         Self.GEntry.Set_Text ("");
-
+         Reset (Self);
          Widget_Callback.Emit_By_Name (Self, Signal_Escape);
 
       elsif Event.Keyval = GDK_Tab then
@@ -1352,7 +1365,6 @@ package body Gtkada.Entry_Completion is
       Size : constant Gint := Gint (S.Settings_Width.Get_Value);
    begin
       if S.Settings_Width /= null then
-         Trace (Me, "MANU Settings changed, size=" & Size'Img);
          S.GEntry.Set_Width_Chars (Size);
          S.GEntry.Queue_Resize;
          Add_To_History
