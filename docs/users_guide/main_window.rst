@@ -511,11 +511,17 @@ search results, which is in general faster than clicking on it.
 
 .. image:: omnisearch-settings.png
 
+.. index:: menu; file-->open from project
+
 It is possible that you have no interest in some of the search contexts.  You
 can chose to disable some of them by clicking on the :guilabel:`Settings` icon
 at the bottom-right corner of the completion popup. The resulting dialog shows
 you the list of all contexts that are searched, and clicking on any of the
-checkboxes next to the names will enable to disable the context.
+checkboxes next to the names will enable to disable the context. Note that
+this list is only displayed when you have accessed the omni-search by clicking
+directly into it. If you accessed it via :kbd:`shift-F3` or the equivalent
+menu :menuselection:`File-->Open From Project...`, then only a subset of the
+settings will be displayed.
 
 Still in this settings dialog, you can also reorder the context. This
 influences both the order in which they are searched and the order in which
