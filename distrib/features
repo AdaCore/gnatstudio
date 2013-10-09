@@ -119,7 +119,7 @@ NF-60-M806-037 GPS: new command line -X (2013-08-22)
   This new switch is similar to -X in gprbuid, and can be used to set the
   value of the scenario variables found in your project.
 
-NF-60-M806-016 GPS: reorganize editor toolbars (2013-08-06)
+NF-60-M806-016 GPS: reorganize editor status bars (2013-08-06)
 
   Changed the order of buttons and text in the status bar to avoid
   flickering when the location is changed or a selection is made, since
@@ -198,7 +198,7 @@ NF-60-M708-023 GPS: middle-click on tab closes the window (2013-07-08)
   This is close to the behavior most web browsers implement and is a
   convenient way to quickly close a number of tabs.
 
-NF-60-M705-044 GPS: rotation text in notebook tabs (2013-07-08)
+NF-60-M705-044 GPS: vertical tabs (2013-07-08)
 
   It is now possible, via the contextual menu on each notebook tab, to
   change the orientation of the text. For instance, displaying the tabs
@@ -267,7 +267,7 @@ NF-60-M531-032 SPARK 2014 support (2013-07-30)
 NF-60-M530-024 GPS: only save changed preferences (2013-07-04)
 
   GPS will now only save those preferences that have been modified into
-  its HOME/.gps/preferences file. This change should be mostly invisible
+  its HOME/.gps/preferences.xml file. This change should be mostly invisible
   to users, except when changing versions of GPS where the new default
   will be picked up automatically.
 
@@ -510,7 +510,7 @@ NF-60-LA05-038 GPS: Key shortcut for "Locate in Project View" (2013-10-01)
   New action "Locate file in explorer" is available for key shortcuts and
   scripting.
 
-NF-60-L926-027 GPS: Project, Files and Windows views pop-ups (2012-11-13)
+NF-60-L926-027 GPS: Project, Files and Windows views tooltips (2012-11-13)
 
   Tooltips added to views to help navigation when windows are narrow.
 
