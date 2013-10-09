@@ -727,7 +727,7 @@ package body GPS.Search.GUI is
 
       Gtk_New (Frame);
       Frame.Set_Label (-"Categories");
-      Box.Pack_Start (Frame, Expand => True, Fill => True);
+      Box.Pack_End (Frame, Expand => True, Fill => True);
 
       Gtk_New_Vbox (B, Homogeneous => False);
       Frame.Add (B);

@@ -534,6 +534,16 @@ should be displayed for each context when multiple contexts are displayed,
 or the size of the search field (which depends on how big your screen and
 the GPS window are).
 
+One of the search context looks at file names, and is convenient for quickly
+opening files. By default, it will look at all files found in any of the
+source directories of your project, even if those files are not explicit
+sources of the project (for instance because they do not match the naming
+scheme for any of the languages used by the project). This is often 
+convenient because you can easily open support files like Makefiles or
+documentation, but it can also sometimes get in the way if the source
+directories include too many irrelevant files. The :guilabel:`Include all
+files from source dirs` setting can be used to control this behavior.
+
 GPS proposes various algorithms to do the search:
 
 * :guilabel:`Full Text` simply checks whether the text you typed appears

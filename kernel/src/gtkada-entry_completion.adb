@@ -1525,7 +1525,7 @@ package body Gtkada.Entry_Completion is
       S.Settings_Width.Set_Digits (0);
       S.Settings_Width.Set_Value (Gdouble (S.GEntry.Get_Width_Chars));
       S.Settings_Width.On_Value_Changed (On_Settings_Changed'Access, Self);
-      Box.Pack_Start (S.Settings_Width, Expand => True, Fill => True);
+      Box.Pack_Start (S.Settings_Width, Expand => False, Fill => True);
 
       Kernel_Search_Provider_Access (S.Completion).Edit_Settings
         (Win.Get_Content_Area, Self, On_Settings_Changed'Access);

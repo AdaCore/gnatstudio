@@ -97,7 +97,11 @@ package body Histories is
      (Hist     : History_Record;
       Key      : History_Key;
       Key_Type : History_Key_Type) return History_Key_Access;
-   --  Internal version of the public procedure
+   function Create_New_Boolean_Key_If_Necessary
+     (Hist          : in out History_Record;
+      Key           : History_Key;
+      Default_Value : Boolean) return History_Key_Access;
+   --  Internal versions of the public procedures
 
    ---------------------------------
    -- Create_New_Key_If_Necessary --
@@ -140,10 +144,10 @@ package body Histories is
    -- Create_New_Boolean_Key_If_Necessary --
    -----------------------------------------
 
-   procedure Create_New_Boolean_Key_If_Necessary
+   function Create_New_Boolean_Key_If_Necessary
      (Hist          : in out History_Record;
       Key           : History_Key;
-      Default_Value : Boolean)
+      Default_Value : Boolean) return History_Key_Access
    is
       Value : History_Key_Access := Get (Hist.Table.all, String (Key));
    begin
@@ -152,6 +156,22 @@ package body Histories is
          Set (Hist.Table.all, String (Key), Value);
          Value.Value := Default_Value;
       end if;
+      return Value;
+   end Create_New_Boolean_Key_If_Necessary;
+
+   -----------------------------------------
+   -- Create_New_Boolean_Key_If_Necessary --
+   -----------------------------------------
+
+   procedure Create_New_Boolean_Key_If_Necessary
+     (Hist          : in out History_Record;
+      Key           : History_Key;
+      Default_Value : Boolean)
+   is
+      Tmp : History_Key_Access;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default_Value);
    end Create_New_Boolean_Key_If_Necessary;
 
    --------------------
@@ -609,8 +629,7 @@ package body Histories is
    is
       Val : History_Key_Access;
    begin
-      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
-      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Button.Set_Active (Val.Value);
       Value_Callback.Connect
         (Button, Gtk.Toggle_Button.Signal_Toggled,
@@ -630,8 +649,7 @@ package body Histories is
    is
       Val : History_Key_Access;
    begin
-      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
-      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Button.Set_Active (Val.Value);
       Value_Callback.Connect
         (Button, Gtk.Toggle_Tool_Button.Signal_Toggled,
@@ -650,8 +668,7 @@ package body Histories is
    is
       Val : History_Key_Access;
    begin
-      Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
-      Val := Create_New_Key_If_Necessary (Hist, Key, Booleans);
+      Val := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default);
       Set_Active (Item, Val.Value);
       Value_Callback.Connect
         (Item, Gtk.Toggle_Button.Signal_Toggled,

@@ -26,6 +26,8 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Label;                 use Gtk.Label;
 with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Types;              use Gtkada.Types;
@@ -37,9 +39,15 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
+with Histories;                 use Histories;
 
 package body GPS.Kernel.Search.Filenames is
    Me : constant Trace_Handle := Create ("SEARCH.FILENAMES");
+
+   Key_Search_Other_Files : constant History_Key :=
+     "omni-search-include-all-from-source-dirs";
+   --  whether to include files found in the source dirs and that are not
+   --  sources of the project.
 
    type Hook_Project_View_Changed is new Function_No_Args with record
       Provider : access Filenames_Search_Provider;
@@ -165,21 +173,39 @@ package body GPS.Kernel.Search.Filenames is
                Iter  => Get_Project (Self.Kernel).Start (Recursive => True));
          when Other_Files =>
             Trace (Me, "Will parse name of files in source_dirs");
-            if Self.Source_Dirs = null then
-               Self.Source_Dirs := new File_Array'
-                 (Get_Project (Self.Kernel).Source_Dirs (Recursive => True));
-            end if;
 
-            Self.Data :=
-              (Step         => Other_Files,
-               Files_In_Dir => null,
-               Dirs_Index   => Self.Source_Dirs'First,
-               File_Index   => 0);
+            Create_New_Boolean_Key_If_Necessary
+              (Get_History (Self.Kernel).all,
+               Key_Search_Other_Files,
+               Default_Value => True);
 
-            if Self.Source_Dirs'Length /= 0 then
-               Self.Data.Files_In_Dir :=
-                 Self.Source_Dirs (Self.Source_Dirs'First).Read_Dir;
-               Self.Data.File_Index := Self.Data.Files_In_Dir'First - 1;
+            if Get_History
+              (Get_History (Self.Kernel).all, Key_Search_Other_Files)
+            then
+               if Self.Source_Dirs = null then
+                  Self.Source_Dirs       := new File_Array'
+                    (Get_Project (Self.Kernel).Source_Dirs
+                     (Recursive => True));
+               end if;
+
+               Self.Data                 :=
+                 (Step         => Other_Files,
+                  Files_In_Dir => null,
+                  Dirs_Index   => Self.Source_Dirs'First,
+                  File_Index   => 0);
+
+               if Self.Source_Dirs'Length /= 0 then
+                  Self.Data.Files_In_Dir :=
+                    Self.Source_Dirs (Self.Source_Dirs'First).Read_Dir;
+                  Self.Data.File_Index   := Self.Data.Files_In_Dir'First - 1;
+               end if;
+
+            else
+               Self.Data                 :=
+                 (Step         => Other_Files,
+                  Files_In_Dir => null,
+                  Dirs_Index   => Natural'Last,
+                  File_Index   => Natural'Last);
             end if;
       end case;
    end Set_Step;
@@ -348,8 +374,10 @@ package body GPS.Kernel.Search.Filenames is
 
             --  Move on to the next diretory
 
-            Self.Data.Dirs_Index := Self.Data.Dirs_Index + 1;
-            if Self.Data.Dirs_Index <= Self.Source_Dirs'Last then
+            if Self.Source_Dirs /= null
+              and then Self.Data.Dirs_Index < Self.Source_Dirs'Last
+            then
+               Self.Data.Dirs_Index := Self.Data.Dirs_Index + 1;
                Unchecked_Free (Self.Data.Files_In_Dir);
                Self.Data.Files_In_Dir :=
                  Self.Source_Dirs (Self.Data.Dirs_Index).Read_Dir;
@@ -557,5 +585,29 @@ package body GPS.Kernel.Search.Filenames is
 
       return Slice (Suffix, 1, Suffix_Last);
    end Complete_Suffix;
+
+   -------------------
+   -- Edit_Settings --
+   -------------------
+
+   overriding procedure Edit_Settings
+     (Self : not null access Filenames_Search_Provider;
+      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data : not null access Glib.Object.GObject_Record'Class;
+      On_Change : On_Settings_Changed_Callback)
+   is
+      Include : Gtk_Check_Button;
+   begin
+      Gtk_New (Include, -"Include all files from source dirs");
+      Include.Set_Tooltip_Text
+        (-("Whether to check the file names for all files in source"
+         & " directories and not just actual sources of the project."));
+      Box.Pack_Start (Include, Expand => False);
+      Associate (Get_History (Self.Kernel).all,
+                 Key_Search_Other_Files,
+                 Include,
+                 Default => True);
+      Include.On_Toggled (Gtk.Toggle_Button.Cb_GObject_Void (On_Change), Data);
+   end Edit_Settings;
 
 end GPS.Kernel.Search.Filenames;

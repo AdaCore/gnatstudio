@@ -19,6 +19,8 @@
 
 with GPS.Search;
 with GNATCOLL.VFS;
+with Gtk.Box;
+with Glib.Object;
 
 package GPS.Kernel.Search.Filenames is
 
@@ -43,6 +45,11 @@ package GPS.Kernel.Search.Filenames is
      (Self      : not null access Filenames_Search_Provider;
       Pattern   : not null access GPS.Search.Search_Pattern'Class)
       return String;
+   overriding procedure Edit_Settings
+     (Self : not null access Filenames_Search_Provider;
+      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data : not null access Glib.Object.GObject_Record'Class;
+      On_Change : On_Settings_Changed_Callback);
 
    type Filenames_Search_Result is new Kernel_Search_Result with private;
 
