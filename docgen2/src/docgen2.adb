@@ -3416,22 +3416,24 @@ package body Docgen2 is
       begin
          for J in Cmd.Package_List.First_Index .. Cmd.Package_List.Last_Index
          loop
-            EInfo := Cmd.Package_List.Element (J);
-            Is_Body := EInfo.Is_Body;
+            EInfo               := Cmd.Package_List.Element (J);
+            Is_Body             := EInfo.Is_Body;
 
             if EInfo.Children.Length = 1 then
-               EInfo := EInfo.Children.First_Element;
+               EInfo            := EInfo.Children.First_Element;
 
                if EInfo.Category = Cat_Package then
                   EInfo.Is_Body := Is_Body;
                end if;
             end if;
 
-            if not Is_Body then
-               Letter := To_Upper
-                 (Get (EInfo.Name) (Get (EInfo.Name)'First));
-               List_Index := Index (API_Index, Letter);
-               Local_List (List_Index).Append (EInfo);
+            if Get (EInfo.Name).all /= "" then
+               if not Is_Body then
+                  Letter     := To_Upper
+                    (Get (EInfo.Name) (Get (EInfo.Name)'First));
+                  List_Index := Index (API_Index, Letter);
+                  Local_List (List_Index).Append (EInfo);
+               end if;
             end if;
          end loop;
 
