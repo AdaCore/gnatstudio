@@ -14,9 +14,11 @@ the user interface itself.
 Local toolbars
 ~~~~~~~~~~~~~~
 
+.. NF-60-LC06-024 GPS: Locations view has a toolbar (2012-12-06)
+
 A number of views now have a local toolbar. They also display their
-configuration settings in a local menu rather than in the :file:`Preferences`
-dialog or the contextual menu.
+configuration settings in a local menu rather than in the
+:guilabel:`Preferences` dialog or the contextual menu.
 
 .. figure:: locations_toolbar.png
    :class: screenshot
@@ -24,31 +26,28 @@ dialog or the contextual menu.
 
    Local toolbar in the Locations window
 
-
-..  this is   NF-60-LC06-024 GPS: Locations view has a toolbar (2012-12-06)
-
-In the :file:`Locations` view, actions such as `clear locations`, or the filter
-panel were moved into that toolbar to make them more accessible. The
-preference `Auto Jump To First Location` was removed from the preferences menu
-and moved to the toolbar as well.
+In the :guilabel:`Locations` view, actions such as `clear locations`, or the
+filter panel were moved into that toolbar to make them more accessible. The
+preference :guilabel:`Auto Jump To First Location` was removed from the
+preferences menu and moved to the toolbar as well.
 
 
 Global search field in the toolbar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+..  NF-60-M606-028 GPS: remove Open From Project dialog
+..  NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
+
 A search field is now provided, which will look simultaneously in various
 context (source file names, entities,...). You can optionally restrict the
 search to specific contexts to view all possible matches in this context.
 
-This field replaces the two dialogs `/File/Open File From Project` and
-`/Navigate/Goto Entity...`. The menus are still available, but the actual
-search is done via the global search field.
+This field replaces the two dialogs :menuselection:`File-->Open File From
+Project` and :menuselection:`Navigate-->Goto Entity...`. The menus are still
+available, but the actual search is done via the global search field.
 
-..  This is NF-60-M606-028 GPS: remove Open From Project dialog
-..  and NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
-
-The :file:`/Tools/Views/Entity` view was also removed since its features
-are now available through the global search field.
+The :menuselection:`Tools-->Views-->Entity` view was also removed since its
+features are now available through the global search field.
 
 ..  This is Approximate search
 
@@ -119,7 +118,7 @@ The text in the title bars and in the notebook tabs will now use ellipsis
 ("...") when the window is too small to accomodate the whole text. The size
 of notebook tabs is also limited so that we do not end up with a single tab
 using most of the notebook widths, thus hidding the others. This behavior
-is controlled by a new preference `Window/Homogeneous Tabs`.
+is controlled by a new preference :menuselection:`Window-->Homogeneous Tabs`.
 
 .. figure:: homogeneous_tabs.png
    :scale: 100%
@@ -150,8 +149,9 @@ Protected objects in outline view
 .................................
 
 Protected and task types/objects and their entries are now visible in
-:file:`Outline View`. A new filter in `Show tasks, entries, and protected
-types` is used to show/hide these items (in the local configuration menu).
+:guilabel:`Outline` view. A new filter in :guilabel:`Show tasks, entries, and
+protected types` is used to show/hide these items (in the local configuration
+menu).
 
 .. figure:: outline_config.png
    :scale: 100%
@@ -165,7 +165,7 @@ Group spec and body in outline view
 
 It is now possible to group the spec and body (or spec and full view) for an
 entity on the same row in the Outline view, to reduce the total height of the
-:file:`Outline view`. Clicking on the name of the entity will jump to its spec,
+:guilabel:`Outline` view. Clicking on the name of the entity will jump to its spec,
 but if this is already the current location in the editor will jump to its body
 instead. It is also possible to click on either of the two icons to jump
 directory to the spec or the body.
@@ -187,14 +187,14 @@ Flat view mode in outline
 
 It is now possible to display all entities at the same level, rather than
 nested hierarchically. In some cases, it makes searching for an entity easier.
-It also reduces the amount of horizontal space that the :file:`Outline view`
-needs.
+It also reduces the amount of horizontal space that the :guilabel:`Outline`
+view needs.
 
 
 Scenario view displays a tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :file:`Scenario view` has been updated to a more usable tree rendering.
+The :guilabel:`Scenario` view has been updated to a more usable tree rendering.
 
 .. figure:: scenarios.png
    :scale: 100%

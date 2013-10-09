@@ -6,8 +6,8 @@ Aliases expansion directly in editors
 
 The aliases expansion feature now works directly in-editor, without presenting
 the user a dialog for aliases with parameters. The user progresses through the
-fields directly in the editor via the Ctrl+Tab shortcut. Visual feedback is
-provided for the current field via highlighting.
+fields directly in the editor via the :kbd:`Ctrl+Tab` shortcut. Visual feedback
+is provided for the current field via highlighting.
 
 Smart-completion
 ~~~~~~~~~~~~~~~~
@@ -53,13 +53,12 @@ Improved indentation of parenthesized expressions
 Extra spaces following an open parenthesis is now taken into account when
 indenting Ada code.
 
-
 Refill automatically computes paragraphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The menu /Edit/Selection/Refill will now either apply to the current
-selection if it exists (as before), or automatically compute the extents
-of the current paragraph to reformat (instead of only applying to the
+The menu :menuselection:`Edit-->Selection-->Refill` will now either apply to
+the current selection if it exists (as before), or automatically compute the
+extents of the current paragraph to reformat (instead of only applying to the
 current line).
 
 .. figure:: refill.png

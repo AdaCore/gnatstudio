@@ -22,9 +22,9 @@ of messages by review status.
 New :file:`formatfile.py`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This optional plug-in adds a new menu `/Edit/Format Whole File` which reformats
-the whole file using GPS internal formatting, while preserving the current
-cursor location.
+This optional plug-in adds a new menu :menuselection:`Edit-->Format Whole File`
+which reformats the whole file using GPS internal formatting, while preserving
+the current cursor location.
 
 This is a simple plug-in that can be used as an example on how to create
 new menus and preserve the current location.
