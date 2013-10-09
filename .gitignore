@@ -5,7 +5,9 @@
 *.gcda
 *.gcno
 *.gcov
+*.bexch
 *.o
+*.deps
 *.pyc
 */config.log
 */config.status
@@ -30,6 +32,7 @@ gnatinspect.db*
 *-loc.xml
 config.log
 config.status
+ada_module/ui/obj/ada_semantic_tree-test
 design/tests/M806-002/result.out
 design/tests/F221-006/hello.adb.redo_0
 design/tests/F221-006/hello.adb.redo_1

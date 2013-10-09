@@ -25,6 +25,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Assistants;   use Ada_Semantic_Tree.Assistants;
@@ -818,6 +819,7 @@ procedure Ada_Semantic_Tree.Test is
    Db : constant Old_Entities.Entities_Database :=
      Old_Entities.Create (New_Registry, Construct_Db);
 begin
+   GNATCOLL.Traces.Parse_Config_File;
    Set_Symbols (Construct_Db, Symbols);
    Old_Entities.Set_Symbols (Db, Symbols);
    Set_Symbols (Ada_Lang, Symbols);
