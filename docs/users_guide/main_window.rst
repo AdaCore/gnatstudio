@@ -957,6 +957,7 @@ The :guilabel:`Scenario` view
 =============================
 
 .. image:: scenario-view.png
+.. image:: scenario-view-nobuild.png
 
 As described in the GNAT User's Guide, the project files can be configured
 through external variables (typically environment variables). This means that
