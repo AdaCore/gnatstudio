@@ -519,7 +519,7 @@ xml_spark = """<?xml version="1.0"?>
 
   <tool name="SPARKSimp">
     <language>Ada</language>
-    <switches columns="2" lines="6" switch_char="-">
+    <switches columns="2" lines="7" switch_char="-">
       <title line="1">Analysis order</title>
       <check line="1" label="Process all files" switch="-a" />
       <check line="1" label="Sort files, largest first" switch="-t" />
