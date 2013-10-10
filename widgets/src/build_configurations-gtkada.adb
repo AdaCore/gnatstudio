@@ -798,7 +798,9 @@ package body Build_Configurations.Gtkada is
 
       Pack_Start (Box, Scrolled.Frame, True, True, 0);
 
-      Set_Switches (Scrolled);
+      if Scrolled.Target.Model.Switches /= null then
+         Set_Switches (Scrolled);
+      end if;
 
       if Single then
          Object_Connect
