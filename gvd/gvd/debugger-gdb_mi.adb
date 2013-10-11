@@ -958,7 +958,7 @@ package body Debugger.Gdb_MI is
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String := "catch exception";
+            Cmd : constant String := "-catch-exception";
             S   : constant String := Send (Debugger, Cmd);
 
          begin
@@ -1448,9 +1448,10 @@ package body Debugger.Gdb_MI is
       Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger,
-            (if Temporary then "t" else "") & "catch exception" &
-            (if Unhandled then " unhandled"
-             elsif Name /= "" and then Name /= "all" then " " & Name else ""),
+            "-catch-exception" & (if Temporary then " -t" else "") &
+            (if Unhandled then " -u"
+             elsif Name /= "" and then Name /= "all"
+             then " -e " & Name else ""),
             Mode => Mode);
    end Break_Exception;
 
