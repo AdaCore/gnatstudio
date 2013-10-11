@@ -2229,25 +2229,27 @@ package body Src_Editor_View is
                return True;
 
             when others =>
-               declare
-                  Str : constant String := Interfaces.C.Strings.Value
-                    (Event.Key.String);
-               begin
-                  --  We want to let the event propagate if there is a modifier
-                  --  applied, in case it is a default Gtk action
-                  if Boolean'Val (Event.Key.State and Modifier_Mask) then
-                     return False;
-                  end if;
+               if Event.Key.String /= Null_Ptr then
+                  declare
+                     Str : constant String := Interfaces.C.Strings.Value
+                       (Event.Key.String);
+                  begin
+                     --  We want to let the event propagate if there is a
+                     --  modifier applied, in case it is a default Gtk action
+                     if Boolean'Val (Event.Key.State and Modifier_Mask) then
+                        return False;
+                     end if;
 
-                  if Str'Length >= 1 then
-                     Insert
-                       (View.Kernel,
-                        -"Warning : attempting to edit a read-only editor.",
-                        Mode => Error);
+                     if Str'Length >= 1 then
+                        Insert
+                          (View.Kernel,
+                           -"Warning : attempting to edit a read-only editor.",
+                           Mode => Error);
 
-                     return True;
-                  end if;
-               end;
+                        return True;
+                     end if;
+                  end;
+               end if;
          end case;
 
       end if;
