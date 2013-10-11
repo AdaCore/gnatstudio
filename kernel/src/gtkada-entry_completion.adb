@@ -1362,9 +1362,10 @@ package body Gtkada.Entry_Completion is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
       T : constant String := S.Settings_Kind.Get_Active_Id;
       K : constant Search_Kind := Search_Kind'Value (T);
-      Size : constant Gint := Gint (S.Settings_Width.Get_Value);
+      Size : Gint;
    begin
       if S.Settings_Width /= null then
+         Size := Gint (S.Settings_Width.Get_Value);
          S.GEntry.Set_Width_Chars (Size);
          S.GEntry.Queue_Resize;
          Add_To_History
