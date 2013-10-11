@@ -2277,6 +2277,10 @@ package body Src_Contexts is
       return Pattern.Casings (Current_Casing).all;
    end Replacement_Text;
 
+   ---------------------
+   -- Replace_Matched --
+   ---------------------
+
    procedure Replace_Matched
      (Context     : access File_Search_Context'Class;
       Replacement : Replacement_Pattern;
