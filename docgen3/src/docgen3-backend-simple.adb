@@ -1966,9 +1966,21 @@ package body Docgen3.Backend.Simple is
       end Generate_Support_Files;
 
    begin
-      Backend.Context := Context;
+      Docgen3.Backend.Base.Base_Backend (Backend).Initialize (Context);
+
       Generate_Support_Files (Context.Kernel);
    end Initialize;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name (Self : Simple_Backend) return String is
+      pragma Unreferenced (Self);
+
+   begin
+      return "simple";
+   end Name;
 
    ------------------
    -- Process_File --

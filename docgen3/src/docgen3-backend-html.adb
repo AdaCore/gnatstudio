@@ -234,35 +234,6 @@ package body Docgen3.Backend.HTML is
       end;
    end Finalize;
 
-   -----------------------
-   -- Get_Resource_File --
-   -----------------------
-
-   function Get_Resource_File
-     (Self      : HTML_Backend'Class;
-      File_Name : GNATCOLL.VFS.Filesystem_String)
-      return GNATCOLL.VFS.Virtual_File
-   is
-      Backend : constant Filesystem_String := "html";
-      Dir     : constant GNATCOLL.VFS.Virtual_File :=
-        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
-          ("docgen3").Create_From_Dir (Backend);
-      Dev_Dir : constant GNATCOLL.VFS.Virtual_File :=
-        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
-          ("docgen3").Create_From_Dir ("resources").Create_From_Dir (Backend);
-
-   begin
-      --  Special case: check for this in order to be able to work
-      --  in the development environment
-
-      if Dir.Is_Directory then
-         return Dir.Create_From_Dir (File_Name);
-
-      else
-         return Dev_Dir.Create_From_Dir (File_Name);
-      end if;
-   end Get_Resource_File;
-
    ------------------
    -- Get_Template --
    ------------------
@@ -338,7 +309,7 @@ package body Docgen3.Backend.HTML is
       end Generate_Support_Files;
 
    begin
-      Self.Context := Context;
+      Docgen3.Backend.Base.Base_Backend (Self).Initialize (Context);
 
       --  Create documentation directory
 
@@ -350,6 +321,17 @@ package body Docgen3.Backend.HTML is
 
       Generate_Support_Files;
    end Initialize;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name (Self : HTML_Backend) return String is
+      pragma Unreferenced (Self);
+
+   begin
+      return "html";
+   end Name;
 
    ------------------
    -- Process_File --
