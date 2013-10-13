@@ -19,11 +19,26 @@ with GNAT.Strings;                     use GNAT.Strings;
 with GNATCOLL.JSON;                    use GNATCOLL.JSON;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with Language;                         use Language;
+with Templates_Parser;                 use Templates_Parser;
 
 with Docgen3.Backend.HTML.Source_Code; use Docgen3.Backend.HTML.Source_Code;
 
 package body Docgen3.Backend.HTML is
    Me : constant Trace_Handle := Create ("Docgen3.1-HTML_Backend");
+
+   type Template_Kinds is
+     (Tmpl_Source_File_HTML,       --  Source file (HTML page)
+      Tmpl_Source_File_JS,         --  Source file (JavaScript data)
+      Tmpl_Source_File_Index_JS);  --  Index of source files (JavaScript data)
+
+   -----------------------
+   -- Local Subprograms --
+   -----------------------
+
+   function Get_Template
+     (Self : HTML_Backend'Class;
+      Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File;
+   --  Returns file name of the specified template.
 
    --------------
    -- Finalize --
@@ -151,13 +166,41 @@ package body Docgen3.Backend.HTML is
             Printer.End_File (Text, Continue);
 
             if Continue then
+               --  Write HTML page
+
+               declare
+                  Translation : Translate_Set;
+
+               begin
+                  Insert
+                    (Translation,
+                     Assoc ("SOURCE_FILE_JS", +File.Base_Name & ".js"));
+                  Write_To_File
+                    (Self.Context,
+                     Get_Doc_Directory (Self.Context.Kernel),
+                     File.Base_Name & ".html",
+                     Parse
+                       (+Self.Get_Template (Tmpl_Source_File_HTML).Full_Name,
+                        Translation,
+                        Cached => True));
+               end;
+
                --  Write JSON data file
 
-               Write_To_File
-                 (Self.Context,
-                  Get_Doc_Directory (Self.Context.Kernel),
-                  File.Base_Name & ".json",
-                  To_String (Text));
+               declare
+                  Translation : Translate_Set;
+
+               begin
+                  Insert (Translation, Assoc ("SOURCE_FILE_DATA", Text));
+                  Write_To_File
+                    (Self.Context,
+                     Get_Doc_Directory (Self.Context.Kernel),
+                     File.Base_Name & ".js",
+                     Parse
+                       (+Self.Get_Template (Tmpl_Source_File_JS).Full_Name,
+                        Translation,
+                        Cached => True));
+               end;
 
                --  Append source file to the index
 
@@ -172,12 +215,71 @@ package body Docgen3.Backend.HTML is
 
       --  Write JSON data file for index of source files.
 
-      Write_To_File
-        (Self.Context,
-         Get_Doc_Directory (Self.Context.Kernel),
-         "sources.json",
-         Write (Create (Sources), False));
+      declare
+         Translation : Translate_Set;
+
+      begin
+         Insert
+           (Translation,
+            Assoc
+              ("SOURCE_FILE_INDEX_DATA",
+               String'(Write (Create (Sources), False))));
+         Write_To_File
+           (Self.Context,
+            Get_Doc_Directory (Self.Context.Kernel),
+            "source_file_index.js",
+            Parse
+              (+Self.Get_Template (Tmpl_Source_File_Index_JS).Full_Name,
+               Translation));
+      end;
    end Finalize;
+
+   -----------------------
+   -- Get_Resource_File --
+   -----------------------
+
+   function Get_Resource_File
+     (Self      : HTML_Backend'Class;
+      File_Name : GNATCOLL.VFS.Filesystem_String)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Backend : constant Filesystem_String := "html";
+      Dir     : constant GNATCOLL.VFS.Virtual_File :=
+        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
+          ("docgen3").Create_From_Dir (Backend);
+      Dev_Dir : constant GNATCOLL.VFS.Virtual_File :=
+        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
+          ("docgen3").Create_From_Dir ("resources").Create_From_Dir (Backend);
+
+   begin
+      --  Special case: check for this in order to be able to work
+      --  in the development environment
+
+      if Dir.Is_Directory then
+         return Dir.Create_From_Dir (File_Name);
+
+      else
+         return Dev_Dir.Create_From_Dir (File_Name);
+      end if;
+   end Get_Resource_File;
+
+   ------------------
+   -- Get_Template --
+   ------------------
+
+   function Get_Template
+     (Self : HTML_Backend'Class;
+      Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File is
+   begin
+      case Kind is
+         when Tmpl_Source_File_HTML =>
+            return Self.Get_Resource_File ("source_file.html.tmpl");
+         when Tmpl_Source_File_JS =>
+            return Self.Get_Resource_File ("source_file.js.tmpl");
+         when Tmpl_Source_File_Index_JS =>
+            return Self.Get_Resource_File ("source_file_index.js.tmpl");
+      end case;
+   end Get_Template;
 
    ----------------
    -- Initialize --

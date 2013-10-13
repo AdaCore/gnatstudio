@@ -7,3 +7,23 @@
 .keyword {
     font-weight: bold;
 }
+
+#tocView {
+    width: 10%;
+}
+
+#contentView {
+    width: 80%;
+}
+
+table.code tbody th {
+    font-size: 11px;
+    text-align: right;
+    font-weight: normal;
+}
+
+table.code td {
+    font-size: 11px;
+    font-family: monospace;
+    white-space: pre;
+}

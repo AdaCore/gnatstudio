@@ -1,23 +1,18 @@
 
 function buildSourcesIndex()
 {
-    data = new XMLHttpRequest();
-    data.open('GET', 'sources.json', false);
-    data.send(null);
-    sources = JSON.parse(data.response);
-
-    toc = document.getElementById('toc');
+    toc = document.getElementById('body');
     list = document.createElement('ul');
     toc.appendChild(list);
 
-    for (index = 0; index < sources.length; index++)
+    for (index = 0; index < GNATdocSourceFileIndex.length; index++)
     {
-        source = sources[index];
+        source = GNATdocSourceFileIndex[index];
 
         item = document.createElement('li');
         href = document.createElement('a');
-        href.setAttribute('href',
-                          'javascript:displaySource(\'' + source.file + '\')');
+        href.setAttribute('href', source.file + '.html');
+        href.setAttribute('target', 'contentView');
         text = document.createTextNode(source.file);
         href.appendChild(text);
         item.appendChild(href);
@@ -25,28 +20,21 @@ function buildSourcesIndex()
     }
 }
 
-function displaySource(file)
+function displaySource()
 {
-    pane = document.getElementById('pane');
+    pane = document.getElementById('body');
 
-    while (pane.children.length != 0)
-    {
-        pane.removeChild(pane.children[0]);
-    }
-
-    data = new XMLHttpRequest();
-    data.open('GET', file + '.json', false);
-    data.send(null);
-    source = JSON.parse(data.response);
+    source = GNATdocSourceFile;
 
     table = document.createElement('table');
+    table.setAttribute('class', 'code');
     code = document.createElement('tbody');
 
     for (lineIndex = 0; lineIndex < source.length; lineIndex++)
     {
         line = source[lineIndex];
         row = document.createElement('tr');
-        num = document.createElement('td');
+        num = document.createElement('th');
         spans = document.createElement('td');
         text = document.createTextNode((lineIndex + 1).toString());
         num.appendChild(text);
@@ -70,7 +58,10 @@ function displaySource(file)
     pane.appendChild(table);
 }
 
-function onload() {
-    //  Load list of source files.
+function onTOCLoad() {
     buildSourcesIndex();
+}
+
+function onSourceFileLoad() {
+    displaySource();
 }

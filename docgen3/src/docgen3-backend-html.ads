@@ -67,4 +67,11 @@ private
 --        Entities    : Collected_Entities;
    end record;
 
+   function Get_Resource_File
+     (Self      : HTML_Backend'Class;
+      File_Name : GNATCOLL.VFS.Filesystem_String)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Returns full name of the specified resource file. This subprogram do
+   --  lookup in all resource directories and take in sense name of backend.
+
 end Docgen3.Backend.HTML;
