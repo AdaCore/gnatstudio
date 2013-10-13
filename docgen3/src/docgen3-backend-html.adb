@@ -340,6 +340,14 @@ package body Docgen3.Backend.HTML is
    begin
       Self.Context := Context;
 
+      --  Create documentation directory
+
+      if not Get_Doc_Directory (Self.Context.Kernel).Is_Directory then
+         Get_Doc_Directory (Self.Context.Kernel).Make_Dir;
+      end if;
+
+      --  Copy support files
+
       Generate_Support_Files;
    end Initialize;
 
