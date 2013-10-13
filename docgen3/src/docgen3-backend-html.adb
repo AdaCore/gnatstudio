@@ -287,9 +287,60 @@ package body Docgen3.Backend.HTML is
 
    overriding procedure Initialize
      (Self    : in out HTML_Backend;
-      Context : access constant Docgen_Context) is
+      Context : access constant Docgen_Context)
+   is
+
+      procedure Generate_Support_Files;
+      --  Generate support files in destination directory
+
+      ----------------------------
+      -- Generate_Support_Files --
+      ----------------------------
+
+      procedure Generate_Support_Files is
+         Index_HTML      : constant Filesystem_String := "index.html";
+         TOC_HTML        : constant Filesystem_String := "toc.html";
+         GNATdoc_JS      : constant Filesystem_String := "gnatdoc.js";
+         GNATdoc_CSS     : constant Filesystem_String := "gnatdoc.css";
+
+         Index_HTML_Src  : constant Virtual_File :=
+           Self.Get_Resource_File (Index_HTML);
+         Index_HTML_Dst  : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (Index_HTML);
+         TOC_HTML_Src    : constant Virtual_File :=
+           Self.Get_Resource_File (TOC_HTML);
+         TOC_HTML_Dst    : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (TOC_HTML);
+         GNATdoc_JS_Src  : constant Virtual_File :=
+           Self.Get_Resource_File (GNATdoc_JS);
+         GNATdoc_JS_Dst  : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (GNATdoc_JS);
+         GNATdoc_CSS_Src : constant Virtual_File :=
+           Self.Get_Resource_File (GNATdoc_CSS);
+         GNATdoc_CSS_Dst : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (GNATdoc_CSS);
+
+         Success         : Boolean;
+
+      begin
+         Index_HTML_Src.Copy (Index_HTML_Dst.Full_Name, Success);
+         pragma Assert (Success);
+         TOC_HTML_Src.Copy (TOC_HTML_Dst.Full_Name, Success);
+         pragma Assert (Success);
+         GNATdoc_JS_Src.Copy (GNATdoc_JS_Dst.Full_Name, Success);
+         pragma Assert (Success);
+         GNATdoc_CSS_Src.Copy (GNATdoc_CSS_Dst.Full_Name, Success);
+         pragma Assert (Success);
+      end Generate_Support_Files;
+
    begin
       Self.Context := Context;
+
+      Generate_Support_Files;
    end Initialize;
 
    ------------------
