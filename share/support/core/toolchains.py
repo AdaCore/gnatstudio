@@ -28,6 +28,8 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="asm">gcc</compiler>
   </toolchain_default>
 
+  <toolchain name="arm-linux-gnueabi"/>
+
   <toolchain name="arm-wrs-vxworks">
     <debugger>arm-wrs-vxworks6-gdb</debugger>
     <cpp_filt>c++filtarm</cpp_filt>
