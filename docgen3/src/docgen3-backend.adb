@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Docgen3.Backend.Simple;  use Docgen3.Backend.Simple;
+with Docgen3.Backend.HTML;  use Docgen3.Backend.HTML;
 
 package body Docgen3.Backend is
 
@@ -25,7 +25,7 @@ package body Docgen3.Backend is
 
    function New_Backend return Docgen3_Backend'Class is
       pragma Warnings (Off);
-      Obj : Simple_Backend;
+      Obj : HTML_Backend;
       pragma Warnings (On);
    begin
       return Obj;

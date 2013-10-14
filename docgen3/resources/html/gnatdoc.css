@@ -1,3 +1,11 @@
+html, body {
+    height: 99%;
+    width: 99%;
+    margin: 0px;
+    border: 0px;
+    padding: 0px;
+    outline: 0px;
+}
 
 .comment {
     color: #999988;
@@ -9,11 +17,15 @@
 }
 
 #tocView {
-    width: 10%;
+    width: 15%;
+    height: 100%;
+    border: 0px;
 }
 
 #contentView {
     width: 80%;
+    height: 100%;
+    border: 0px;
 }
 
 table.code tbody th {
