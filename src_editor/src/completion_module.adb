@@ -202,7 +202,6 @@ package body Completion_Module is
       Completion_Triggers_Callback    : Function_With_Args_Access;
       --  The hook callback corresponding to character triggers
 
-      Trigger_Timeout_Value : Gint;
       Trigger_Timeout       : Glib.Main.G_Source_Id;
       --  The timeout associated to character triggers
 
@@ -334,9 +333,6 @@ package body Completion_Module is
          end if;
       end if;
 
-      Completion_Module.Trigger_Timeout_Value :=
-        Gint (Smart_Completion_Trigger_Timeout.Get_Pref);
-
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion_Pref;
 
@@ -382,6 +378,12 @@ package body Completion_Module is
       pragma Unreferenced (Dummy);
    begin
       if Completion_Module.Has_Smart_Completion then
+
+         if Completion_Module.Has_Trigger_Timeout then
+            Glib.Main.Remove (Completion_Module.Trigger_Timeout);
+            Completion_Module.Has_Trigger_Timeout := False;
+         end if;
+
          Completion_Module.Has_Smart_Completion := False;
          D.Lock.Unlock;
          Free (D.Lock);
@@ -414,10 +416,6 @@ package body Completion_Module is
             end if;
          end if;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
    end On_Completion_Destroy;
 
    ------------------------
@@ -1452,7 +1450,8 @@ package body Completion_Module is
          if Smart_Completion_Pref = Dynamic then
             Timeout := 0;
          else
-            Timeout := Completion_Module.Trigger_Timeout_Value;
+            Timeout :=
+              Gint (Smart_Completion_Trigger_Timeout.Get_Pref);
          end if;
 
          Completion_Module.Trigger_Timeout :=
