@@ -574,7 +574,7 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, View);
 
-      Gtk_New_From_Stock (Menu, Stock_Save);
+      Gtk_New_From_Stock (Menu, GPS_Save);
       Menu.Set_Tooltip_Text (-"Export to...");
       Menu.Set_Menu (Export_Menu);
       Export_Menu.Show_All;

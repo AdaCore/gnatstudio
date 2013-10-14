@@ -48,6 +48,7 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 
@@ -523,7 +524,7 @@ package body GPS.Kernel.Console is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Save,
+         Stock_Id => GPS_Save,
          Action   => Command_Save_Name,
          Tooltip  => Command_Save_Tip);
       Add_Button
