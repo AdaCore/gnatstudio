@@ -86,6 +86,10 @@ package GPS.Stock_Icons is
    GPS_Edit_Value          : constant String := "gps-edit";
    --  Edit a value in a view
 
+   GPS_Save                : constant String := "gtk-cdrom";
+   --  The icon for save. We avoid using "gtk-save" because of a startup
+   --  interaction with gio.
+
    function Set_Icon
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : String;

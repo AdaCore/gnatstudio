@@ -26,7 +26,7 @@ XML = r"""<?xml version="1.0"?>
        <alternate   file="svg/folder-12.svg" size="Icon_Size_Local_Toolbar" />
     </icon>
     <icon id="gtk-redo"               label="Redo" file="svg/redo.svg" />
-    <icon id="gtk-save"               label="Save" file="svg/save.svg">
+    <icon id="gtk-cdrom"              label="Save" file="svg/save.svg">
        <alternate   file="svg/save-12.svg" size="Icon_Size_Local_Toolbar" />
     </icon>
     <icon id="gtk-undo"               label="Undo" file="svg/undo.svg" />

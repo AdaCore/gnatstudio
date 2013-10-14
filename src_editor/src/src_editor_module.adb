@@ -2809,7 +2809,7 @@ package body Src_Editor_Module is
                                 Kernel => Kernel_Handle (Kernel)));
 
       Register_Menu
-        (Kernel, File, -"_Save", Stock_Save,
+        (Kernel, File, -"_Save", GPS_Save,
          On_Save'Access, null,
          GDK_LC_s, Control_Mask,
          Ref_Item => -"Save More");
@@ -3063,7 +3063,7 @@ package body Src_Editor_Module is
            (Button, Signal_Clicked,
             On_Open_File'Access, Kernel_Handle (Kernel));
 
-         Gtk_New_From_Stock (Button, Stock_Save);
+         Gtk_New_From_Stock (Button, GPS_Save);
          Button.Set_Homogeneous (False);
          Set_Tooltip_Text (Button, -"Save Current File");
          Insert (Toolbar, Button, 2);
