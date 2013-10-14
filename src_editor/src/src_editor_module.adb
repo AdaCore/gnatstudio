@@ -733,6 +733,7 @@ package body Src_Editor_Module is
             if not Is_Open (User, F) then
                Src := Open_File
                  (User, F, False,
+                  Focus  => False,
                   Line   => Line,
                   Column => Column,
                   Column_End => Column);
@@ -1056,7 +1057,8 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True) return Source_Editor_Box
+      Create_New : Boolean := True;
+      Focus      : Boolean := True) return Source_Editor_Box
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
@@ -1070,7 +1072,7 @@ package body Src_Editor_Module is
       if File_Exists then
          Gtk_New (Editor, Kernel_Handle (Kernel));
          Load_File (Editor, File,
-                    Force_Focus => True,
+                    Force_Focus => Focus,
                     Success     => Success);
 
          if not Success then
@@ -1222,7 +1224,8 @@ package body Src_Editor_Module is
          end if;
       end if;
 
-      Editor := Create_File_Editor (Kernel, File, Initial_Dir, Create_New);
+      Editor := Create_File_Editor
+        (Kernel, File, Initial_Dir, Create_New, Focus);
 
       --  If we have created an editor, put it into a box, and give it
       --  to the MDI to handle

@@ -148,7 +148,8 @@ package Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
+      Create_New : Boolean := True;
+      Focus      : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
    --  True, then an empty editor is created.
@@ -156,6 +157,7 @@ package Src_Editor_Module is
    --  File = VFS.No_File.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
+   --  Give the focus to the editor iff Focus.
 
    ------------------
    -- Highlighters --
