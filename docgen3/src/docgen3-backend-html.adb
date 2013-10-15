@@ -294,8 +294,6 @@ package body Docgen3.Backend.HTML is
       begin
          Index_HTML_Src.Copy (Index_HTML_Dst.Full_Name, Success);
          pragma Assert (Success);
-         TOC_HTML_Src.Copy (TOC_HTML_Dst.Full_Name, Success);
-         pragma Assert (Success);
          GNATdoc_JS_Src.Copy (GNATdoc_JS_Dst.Full_Name, Success);
          pragma Assert (Success);
          GNATdoc_CSS_Src.Copy (GNATdoc_CSS_Dst.Full_Name, Success);
