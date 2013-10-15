@@ -54,6 +54,10 @@ package body GPS.Tree_View.Locations is
      (Self : GPS_Locations_Tree_View) return Boolean;
    --  Idle callback used to ensure that the proper path is visible
 
+   function On_Row_Click_Idle
+     (Self : GPS_Locations_Tree_View) return Boolean;
+   --  Idle callback to handle click on an action or location
+
    function On_Query_Tooltip
      (Self   : access GPS_Locations_Tree_View_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
@@ -219,6 +223,11 @@ package body GPS.Tree_View.Locations is
          Glib.Main.Remove (S.On_Row_Expanded_Handler);
          S.On_Row_Expanded_Handler := No_Source_Id;
       end if;
+
+      if S.On_Row_Click_Handler /= No_Source_Id then
+         Glib.Main.Remove (S.On_Row_Click_Handler);
+         S.On_Row_Click_Handler := No_Source_Id;
+      end if;
    end On_Destroy;
 
    ----------------------
@@ -318,25 +327,19 @@ package body GPS.Tree_View.Locations is
          end if;
 
          if Path /= Null_Gtk_Tree_Path then
-            if Get_Depth (Path) <= 2 then
-               Path_Free (Path);
-
-               return False;
-
-            else
-               if Column = Self.Action_Column then
-                  Self.Action_Clicked (Path, Get_Iter (Self.Get_Model, Path));
-
-               else
-                  Self.Location_Clicked
-                    (Path, Get_Iter (Self.Get_Model, Path));
+            if Get_Depth (Path) > 2 then
+               if Self.On_Row_Click_Handler = No_Source_Id then
+                  Self.Column_Clicked := Column;
+                  Self.On_Row_Click_Path    := Copy (Path);
+                  Self.On_Row_Click_Handler :=
+                    View_Idles.Idle_Add
+                      (On_Row_Click_Idle'Access,
+                       GPS_Locations_Tree_View (Self));
                end if;
             end if;
 
             Path_Free (Path);
          end if;
-
-         return True;
       end if;
 
       return False;
@@ -528,6 +531,29 @@ package body GPS.Tree_View.Locations is
 
       return False;
    end On_Row_Expanded_Idle;
+
+   -----------------------
+   -- On_Row_Click_Idle --
+   -----------------------
+
+   function On_Row_Click_Idle
+     (Self : GPS_Locations_Tree_View) return Boolean
+   is
+      Iter : constant Gtk_Tree_Iter :=
+        Get_Iter (Self.Get_Model, Self.On_Row_Click_Path);
+   begin
+      if Self.Column_Clicked = Self.Action_Column then
+         Self.Action_Clicked (Self.On_Row_Click_Path, Iter);
+      else
+         Self.Location_Clicked (Self.On_Row_Click_Path, Iter);
+      end if;
+
+      Path_Free (Self.On_Row_Click_Path);
+      Self.On_Row_Click_Path := Null_Gtk_Tree_Path;
+      Self.On_Row_Click_Handler := No_Source_Id;
+
+      return False;
+   end On_Row_Click_Idle;
 
    ------------------------
    -- Signals_Parameters --
