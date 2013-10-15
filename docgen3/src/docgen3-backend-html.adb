@@ -270,7 +270,6 @@ package body Docgen3.Backend.HTML is
 
       procedure Generate_Support_Files is
          Index_HTML      : constant Filesystem_String := "index.html";
-         TOC_HTML        : constant Filesystem_String := "toc.html";
          GNATdoc_JS      : constant Filesystem_String := "gnatdoc.js";
          GNATdoc_CSS     : constant Filesystem_String := "gnatdoc.css";
 
@@ -279,11 +278,6 @@ package body Docgen3.Backend.HTML is
          Index_HTML_Dst  : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Index_HTML);
-         TOC_HTML_Src    : constant Virtual_File :=
-           Self.Get_Resource_File (TOC_HTML);
-         TOC_HTML_Dst    : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (TOC_HTML);
          GNATdoc_JS_Src  : constant Virtual_File :=
            Self.Get_Resource_File (GNATdoc_JS);
          GNATdoc_JS_Dst  : constant Virtual_File :=

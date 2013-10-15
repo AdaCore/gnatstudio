@@ -1,7 +1,11 @@
 
 function buildSourcesIndex()
 {
-    toc = document.getElementById('body');
+    toc = document.getElementById('tocView');
+    header = document.createElement('h1');
+    text = document.createTextNode('Source Files');
+    header.appendChild(text);
+    toc.appendChild(header);
     list = document.createElement('ul');
     toc.appendChild(list);
 
@@ -58,7 +62,7 @@ function displaySource()
     pane.appendChild(table);
 }
 
-function onTOCLoad() {
+function onLoad() {
     buildSourcesIndex();
 }
 

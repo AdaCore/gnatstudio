@@ -18,8 +18,7 @@ html, body {
 
 #tocView {
     width: 15%;
-    height: 100%;
-    border: 0px;
+    float: left;
 }
 
 #contentView {
