@@ -1124,19 +1124,23 @@ package body GPS.Location_View is
          Mark     : constant Editor_Mark'Class :=
            Get_Mark (Gtk.Tree_Model."-" (Self.View.Get_Model),
                      Iter, Node_Mark_Column);
-         File     : constant Virtual_File :=
-           Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
-                     Iter, File_Column);
+--           File     : constant Virtual_File :=
+--             Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
+--                       Iter, File_Column);
          Location : constant Editor_Location'Class := Mark.Location (True);
 
       begin
          if Mark /= Nil_Editor_Mark then
             Location.Buffer.Current_View.Cursor_Goto (Location, True);
 
-         elsif File /= No_File then
-            GPS.Editors.GtkAda.Get_MDI_Child
-              (Self.Kernel.Get_Buffer_Factory.Get
-                 (File).Current_View).Raise_Child;
+            --  ??? The following causes a simple-click on a file line to
+            --  open the editor. This is not what we want, we want to do this
+            --  on a double click only.
+
+--           elsif File /= No_File then
+--              GPS.Editors.GtkAda.Get_MDI_Child
+--                (Self.Kernel.Get_Buffer_Factory.Get
+--                   (File).Current_View).Raise_Child;
          end if;
       end;
    end On_Location_Clicked;
