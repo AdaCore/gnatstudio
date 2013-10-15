@@ -65,8 +65,8 @@ which also provides a convenient solution to close multiple windows at once.
 Alternatively, windows can be selected with the omni-search, that is the search
 field in the global toolbar. One of the contexts where the search is done is the
 list of opened window. To make things more convenient, you can bind a key
-shortcut via the :menuselection:`Edit-->Key Shortcuts` menu (the name of the
-action is :menuselection:`Search-->Global Search in context: Opened`. If you
+shortcut via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
+action is :menuselection:`Search --> Global Search in context: Opened`. If you
 load the :file:`emacs.py` plugin, a standard key binding is set for
 :kbd:`control-xb`.
 
@@ -96,10 +96,10 @@ that previously had the focus.  Therefore, if you simply open an editor as a
 result of a cross-reference query, you can simply close that editor to go back
 to where you were before.
 
-.. index:: menus; window --> close
+.. index:: menu; window --> close
 
 Alternatively, you can also select the window by clicking anywhere in its title
-bar, and then select the menu :menuselection:`Window->Close`.
+bar, and then select the menu :menuselection:`Window --> Close`.
 
 Finally, a window can be closed by right-clicking in the associated notebook
 tab (if the tabs are visible), and select :guilabel:`Close` in the contextual
@@ -111,8 +111,8 @@ a single editor open, the one you are clicking on.
 
 
 
-.. index:: menus; windows --> split horizontally
-.. index:: menus; windows --> split vertically
+.. index:: menu; windows --> split horizontally
+.. index:: menu; windows --> split vertically
 .. _Splitting_Windows:
 
 Splitting Windows
@@ -121,7 +121,7 @@ Splitting Windows
 Windows can be split at will, through any combination of horizontal and
 vertical splits.  This feature requires at least two windows (text editors,
 browsers, ...) to be superimposed in a given notebook. Selecting either the
-:menuselection:`Window-->Split Horizontally` or :menuselection:`Window->Split
+:menuselection:`Window --> Split Horizontally` or :menuselection:`Window --> Split
 Vertically` menus will then split the selected window in two. In the left
 (resp. top) pane, the currently selected window will be left on its own. The
 rest of the previously superimposed windows will be put in the right (resp.
@@ -129,14 +129,14 @@ bottom) pane. You can then in turn split these remaining windows to achieve any
 layout you want.
 
 All split windows can be resized interactively by dragging the handles that
-separate them. A preference (menu :menuselection:`Edit->Preferences`) controls
+separate them. A preference (menu :menuselection:`Edit --> Preferences`) controls
 whether this resizing is done in opaque mode or border mode. In the latter
 case, only the new handle position will be displayed while the mouse is
 dragged.
 
 You may want to bind the key shortcuts to the menus
-:menuselection:`Window->Split Horizontally` as well as
-:menuselection:`Window->Split Vertically` using the key manager. In addition,
+:menuselection:`Window --> Split Horizontally` as well as
+:menuselection:`Window --> Split Vertically` using the key manager. In addition,
 if you want to achieve an effect similar to e.g. the standard Emacs behavior
 (where :kbd:`control-x 2` splits a window horizontally, and :kbd:`control-x 3`
 splits a window vertically), you can use the key manager
@@ -170,22 +170,22 @@ want to benefit from some extra possibilities that your system might provide
 (virtual desktops, different window decoration depending on the window's type,
 transparent windows, multiple screens, ...).
 
-.. index:: menus; window --> floating
+.. index:: menu; window --> floating
 
 GPS is fully compatible with this behavior, since windows can also be
 **floating windows**. Any window that is currently embedded in the MDI can be
 made floating at any time, simply by selecting the window and then selecting
-the menu :menuselection:`Window->Floating`. The window will then be detached,
+the menu :menuselection:`Window --> Floating`. The window will then be detached,
 and can be moved anywhere on your screen, even outside of GPS's main window.
 
 There are two ways to put a floating window back under control of GPS.  The
 more general method is to select the window through its title in the menu
-:menuselection:`Window`, and then unselect :menuselection:`Window->Floating`.
+:menuselection:`Window`, and then unselect :menuselection:`Window --> Floating`.
 
 .. index:: preferences; windows --> destroy floats
 
 The second method assumes that the preference :guilabel:`Destroy Floats` in the
-menu :menuselection:`Edit->Preferences` has been set to false. Then, you can
+menu :menuselection:`Edit --> Preferences` has been set to false. Then, you can
 simply close the floating window by clicking in the appropriate title bar
 button, and the window will be put back in GPS. If you actually want to close
 it, you need to click once again on the cross button in its title bar.
@@ -198,7 +198,7 @@ on windows handling facilities supported by your system or window manager but
 not available in GPS. This might also be useful if you want to have windows on
 various virtual desktops, should your window manager support this.
 
-This special mode is activated through the :menuselection:`Windows-->All Floating`
+This special mode is activated through the :menuselection:`Windows --> All Floating`
 preference.
 
 
@@ -281,8 +281,8 @@ the data window, the debugger consoles,... each at your favorite location.
 Whenever the debug starts, you therefore do not have to open these windows
 again.
 
-.. index:: menus; window --> perspectives
-.. index:: menus; window --> perspectives --> create new
+.. index:: menu; window --> perspectives
+.. index:: menu; window --> perspectives --> create new
 
 The perspectives have names, and you switch perspectives by selecting the menu
 :menuselection:`/Window/Perspectives/`. You can also create a new perspective
@@ -301,7 +301,7 @@ same perspective you find the same layout.
 
 Likewise, when GPS exits, it will save the layout of all perspectives into a
 file called :file:`perspectives6.xml`, so that it can restore them when you
-restart GPS. This behavior is controlled by the :menuselection:`General-->Save
+restart GPS. This behavior is controlled by the :menuselection:`General --> Save
 desktop on exit` preference, and can be disabled.
 
 One of the difficulties in working with perspectives is knowing which windows

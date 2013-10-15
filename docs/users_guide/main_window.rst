@@ -32,12 +32,12 @@ workspace. The following sections will list them all.
 Common features of the views
 ----------------------------
 
-.. index:: menu; Tools
-.. index:: menu; Tools --> Views
+.. index:: menu; tools
+.. index:: menu; tools --> views
 
 Some views are part of the default desktop, and thus are visible by default.
 The other views can always be opened through one of the submenus of the
-:menuselection:`Tools` menu, most often :menuselection:`Tools-->Views`.
+:menuselection:`Tools` menu, most often :menuselection:`Tools --> Views`.
 
 .. index:: windows; local toolbar
 
@@ -142,7 +142,7 @@ with the mouse, and provide the following additional capabilities:
   The local settings menu in browsers has an option :guilabel:`straight links`
   which can be toggled if you prefer to have orthogonal links.
 
-* Exporting :index:`image` :index:`callgraph; export`
+* :index:`export <single: callgraph; export>`
 
   The entire contents of a browser can be exported as a :guilabel:`PNG` or
   :guilabel:`SVG` images using the entry :guilabel:`Export to...` in the local
@@ -409,7 +409,7 @@ The menu bar gives access to the following items:
 
   If the SPARK toolset is installed on your system and available on your
   PATH, then this menu is available. See
-  :menuselection:`Help-->SPARK-->Reference-->Using SPARK with GPS`
+  :menuselection:`Help --> SPARK --> Reference --> Using SPARK with GPS`
   for more details.
 
 * :menuselection:`CodePeer`
@@ -439,11 +439,14 @@ The tool bar provides shortcuts via buttons to some typical actions:
 * saving the current file
 * undo / redo last editing
 * go to previous or next saved location
-* multiple customizable buttons to build, clean or run your project
-  :index:`build; toolbar buttons`
-* when a debugger is started, multiple buttons to stop and continue the
-  debugger, step to the next instruction,...
-  :index:`debugger; toolbar buttons`
+
+* multiple customizable
+  :index:`buttons <single: build; toolbar buttons>`
+  to build, clean or run your project
+
+* when a debugger is started, multiple
+  :index:`buttons <single: debugger; toolbar buttons>`
+  to stop and continue the debugger, step to the next instruction,...
 
 .. index:: progress bar
 .. index:: tool bar; progress bar
@@ -476,7 +479,7 @@ There are various ways to use the omni-search:
   interested in. GPS will immediately start searching in the background for
   possible matching open windows, file names, entities, GPS actions, bookmarks,
   and source files. For each context, GPS only displays the five matches with
-  the highest score. 
+  the highest score.
 
   For each context, GPS tells you how many matches there. You can click on the
   name of the context to only search in that context. So for instance, if GPS
@@ -489,14 +492,13 @@ There are various ways to use the omni-search:
 
 * If you are searching in a specific context, the above requires too many
   clicks.  GPS defines a number of actions to which you can bind key shortcuts
-  via the :menuselection:`Edit-->Key Shortcuts` dialog. These actions are found
+  via the :menuselection:`Edit --> Key Shortcuts` dialog. These actions are found
   in :guilabel:`Search` category, and are called :guilabel:`Global Search in
-  context:`. GPS includes a menu for two of them by default:
-  :index:`menu; file-->open from project`
-  :menuselection:`File-->Open From Project...` will search amongst filenames,
-  :index:`menu; navigate-->goto entity`
-  whereas :menuselection:`Navigate-->Goto Entity...` will search amonst all
-  entities defined in your project.
+  context:`. GPS includes a :index:`menu <single: menu; file --> open from
+  project>` for two of them by default: :menuselection:`File --> Open From
+  Project...` will search amongst filenames, :index:`wheras <single: menu;
+  navigate --> goto entity>` :menuselection:`Navigate --> Goto Entity...`
+  will search amonst all entities defined in your project.
 
 
 Each context displays its results sligthly differently, and clicking on a
@@ -507,11 +509,11 @@ the source file it is in.
 
 Pressing :kbd:`enter` at any point will select the top item in the list of
 search results, which is in general faster than clicking on it.
- 
+
 
 .. image:: omnisearch-settings.png
 
-.. index:: menu; file-->open from project
+.. index:: menu; file --> open from project
 
 It is possible that you have no interest in some of the search contexts.  You
 can chose to disable some of them by clicking on the :guilabel:`Settings` icon
@@ -520,7 +522,7 @@ you the list of all contexts that are searched, and clicking on any of the
 checkboxes next to the names will enable to disable the context. Note that
 this list is only displayed when you have accessed the omni-search by clicking
 directly into it. If you accessed it via :kbd:`shift-F3` or the equivalent
-menu :menuselection:`File-->Open From Project...`, then only a subset of the
+menu :menuselection:`File --> Open From Project...`, then only a subset of the
 settings will be displayed.
 
 Still in this settings dialog, you can also reorder the context. This
@@ -544,7 +546,7 @@ One of the search context looks at file names, and is convenient for quickly
 opening files. By default, it will look at all files found in any of the
 source directories of your project, even if those files are not explicit
 sources of the project (for instance because they do not match the naming
-scheme for any of the languages used by the project). This is often 
+scheme for any of the languages used by the project). This is often
 convenient because you can easily open support files like Makefiles or
 documentation, but it can also sometimes get in the way if the source
 directories include too many irrelevant files. The :guilabel:`Include all
@@ -632,7 +634,7 @@ how many files were compiled successfully.
 The :guilabel:`Messages` window can not be closed, because it might contain
 important messages at any time. However, it might happen that it has been
 closed anyway, and in this case it can be reopened with the
-:menuselection:`Tools-->Views-->Messages` menu.
+:menuselection:`Tools --> Views --> Messages` menu.
 
 
 
@@ -683,8 +685,8 @@ buttons:
 * a filter that can be used to show or hide some of the messages.  Filtering is
   done on the text of the message itself (either as a text or as a regular
   expression). It can also be reversed, so that for instance typing `warning`
-  in the filter field and reversing the filter will only show error messages.
-  :index:`build; hiding warning messages`
+  in the filter field and reversing the filter will
+  :index:`hide warning messages <single: build; hiding warning messages>`
 
 The local settings menu contains the following entries:
 
@@ -722,12 +724,12 @@ The local settings menu contains the following entries:
 .. index:: menu; navigate --> next tag
 
 To navigate through the locations with the keyboard, GPS provides two menus:
-:menuselection:`Navigate-->Previous Tag` and :menuselection:`Navigate-->Next
+:menuselection:`Navigate --> Previous Tag` and :menuselection:`Navigate --> Next
 Tag`. Depending on your settings, they might wrap around after reaching the
 first or last message.
 
 It is also possible to bind key shortcuts to these menus via the
-:menuselection:`Edit-->Key Shortcuts` menu.
+:menuselection:`Edit --> Key Shortcuts` menu.
 
 .. index:: codefix
 .. index:: build; auto fix errors
@@ -751,8 +753,8 @@ The :guilabel:`Project` view
 
 The project view provides a representation of the various components of your
 project, as listed below.  It is displayed by default on the left side of the
-workspace, and can be selected by using the :menuselection:`Project-->Project
-View` or :menuselection:`Tools-->Views-->Project` menu items.
+workspace, and can be selected by using the :menuselection:`Project --> Project
+View` or :menuselection:`Tools --> Views --> Project` menu items.
 
 .. index:: drag-and-drop
 
@@ -795,14 +797,13 @@ The various components that are displayed are:
   A given project might appear multiple times in the view, if it is imported by
   several other projects.
 
-  :index:`projects; limited with`
-  Likewise, if you have edited the project manually and have used the
-  :samp:`limited with` construct to have cycles in the project dependencies,
-  the cycle will expand infinitely. For instance, if project :file:`a` imports
-  project :file:`b`, which in turns imports project :file:`a` through a
-  :samp:`limited with` clause, then expanding the node for :file:`a` will show
-  :file:`b`. In turn, expanding the node for :file:`b` will show a node for
-  :file:`a`, and so on.
+  Likewise, if you have edited the :index:`project <single: projects; limited
+  with>` manually and have used the :samp:`limited with` construct to have
+  cycles in the project dependencies, the cycle will expand infinitely. For
+  instance, if project :file:`a` imports project :file:`b`, which in turns
+  imports project :file:`a` through a :samp:`limited with` clause, then
+  expanding the node for :file:`a` will show :file:`b`. In turn, expanding the
+  node for :file:`b` will show a node for :file:`a`, and so on.
 
   A special icon with a pen mark is displayed if the project was modified, but
   not saved yet. You can choose to save it at any time by right-clicking on it.
@@ -872,7 +873,7 @@ The various components that are displayed are:
 .. index:: search; project view
 .. index:: menu; navigate --> find or replace
 
-If you open the search dialog through the :menuselection:`Navigate-->Find or
+If you open the search dialog through the :menuselection:`Navigate --> Find or
 Replace...` menu, you have the possibility to search for anything in the
 :guilabel:`Project` view, either a file or an entity. Note that searching for
 an entity can be slow if you have lots of files, and/or big files.
@@ -896,7 +897,7 @@ project.
 
 It also includes a button to graphically edit the attributes of the selected
 project, like the tool switches, the naming schemes,... It behaves similarly
-to the :menuselection:`Project-->Edit Project Properties` menu. See
+to the :menuselection:`Project --> Edit Project Properties` menu. See
 :ref:`The_Project_Properties_Editor` for more information.
 
 
@@ -910,20 +911,19 @@ your project:
   which displays graphically the relationships between each project in
   the hierarchy (see :ref:`The_Project_Browser`).
 
-* :menuselection:`Project-->Properties`
-  :index:`menu;project --> edit project properties`
-  This menu opens a new dialog to interactively edit the attributes of the
+* :menuselection:`Project --> Properties`
+  This :index:`menu <single: menu; project --> edit project properties>`
+  opens a new dialog to interactively edit the attributes of the
   project (tool switches, naming schemes,...) and is similar to the local
   toolbar button.
 
-* :menuselection:`Project-->Save project...`
-  :index:`project; saving`
-  :index:`menu:project --> save all`
-  This item can be selected to save a single project in the hierarchy after it
-  was modified. Modified but unsaved projects in the hierarchy have a special
-  icon (a pen mark is drawn on top of the standard icon). If you would rather
-  save all the modified projects in a single step, use the menu bar item
-  :menuselection:`Project-->Save All`.
+* :menuselection:`Project --> Save project...`
+  This item can be selected to :index:`save <single: project; saving>` a single
+  project in the hierarchy after it was modified. Modified but unsaved projects
+  in the hierarchy have a special icon (a pen mark is drawn on top of the
+  standard icon). If you would rather :index:`save all <single: menu; project
+  --> save_all>` the modified projects in a single step, use the menu bar item
+  :menuselection:`Project --> Save All`.
 
   Any time one or several projects are modified, the contents of the project view
   is automatically refreshed. No project is automatically saved. This provides a
@@ -933,17 +933,17 @@ your project:
 
   .. image:: project-modified.jpg
 
-* :menuselection:`Project-->Edit source file`
+* :menuselection:`Project --> Edit source file`
   This menu will load the project file into an editor, so that you can manually
   edit it. This should be used if you need to access some features of the
   project files that are not accessible graphically (renames statements,
   variables, ...).
 
-* :menuselection:`Project-->Dependencies`
+* :menuselection:`Project --> Dependencies`
   This menu opens the dependencies editor for the selected project
   (:ref:`The_Project_Dependencies_Editor`).
 
-* :menuselection:`Project-->Add scenario variable`
+* :menuselection:`Project --> Add scenario variable`
   This menu item should be used to add new scenario variables to the
   project (see :ref:`Scenarios_And_Configuration_Variables`). It mighe be more
   convenient in general to use the :guilabel:`Scenario` view for that purpose.
@@ -1017,7 +1017,7 @@ The :guilabel:`Files` View
 .. index:: menu; tools --> views --> files
 
 In addition to the :guilabel:`Project` view, GPS also provides a
-:guilabel:`Files` view through the :menuselection:`Tools-->Views-->Files` menu.
+:guilabel:`Files` view through the :menuselection:`Tools --> Views --> Files` menu.
 
 In this view, directories are displayed exactly as they are organized
 physically on the disk (including Windows drives).  Each source file can also
@@ -1042,7 +1042,7 @@ The :guilabel:`Windows` view
 .. index:: menu; tools --> views --> windows
 
 The :guilabel:`Windows` view displays the currently opened windows.  It is
-opened through the :menuselection:`Tools-->Views-->Windows` menu.
+opened through the :menuselection:`Tools --> Views --> Windows` menu.
 
 In the contextual menu, you can configure the display in one of two ways:
 
@@ -1079,7 +1079,7 @@ The :guilabel:`Outline` view
 .. index:: menu; tools --> views --> outline
 
 The :guilabel:`Outline` view, which you can choose to activate through the
-:menuselection:`Tools-->Views-->Outline` menu, shows the contents of the
+:menuselection:`Tools --> Views --> Outline` menu, shows the contents of the
 current file.
 
 The exact semantics depends on the language you are seeing. For Ada, C and C++
@@ -1141,8 +1141,8 @@ GPS has an advanced mechanism for handling copy/paste operations.
 .. index:: menu; edit --> copy
 .. index:: menu; edit --> cut
 
-When you select the menus :menuselection:`Edit-->Copy` or
-:menuselection:`Edit-->Cut`, GPS adds the current selection to the clipboard.
+When you select the menus :menuselection:`Edit --> Copy` or
+:menuselection:`Edit --> Cut`, GPS adds the current selection to the clipboard.
 As opposed to what lots of applications do, it doesn't discard the previous
 contents of the clipboard, but save it for future usage. It saves a number of
 entries this way, up to 10 by default.  This value is configurable through the
@@ -1151,9 +1151,9 @@ entries this way, up to 10 by default.  This value is configurable through the
 .. index:: menu; edit --> paste
 .. index:: menu; edit --> paste previous
 
-When you select the menu :menuselection:`Edit-->Paste`, GPS will paste the last
+When you select the menu :menuselection:`Edit --> Paste`, GPS will paste the last
 entry made in the clipboard at the current location in the editor.  If you
-immediately select :menuselection:`Edit-->Paste Previous`, this newly inserted
+immediately select :menuselection:`Edit --> Paste Previous`, this newly inserted
 text will be removed, and GPS will instead insert the second to last entry
 added to the clipboard. You can keep selecting the same menu to get access to
 older entries.
@@ -1166,7 +1166,7 @@ separate lines, without having to go back and forth between the two editors.
 
 The :guilabel:`Clipboard` view provides a graphical mean of seeing what is
 currently stored in the clipboard. It can be opened via
-:menuselection:`Tools-->Views-->Clipboard`.
+:menuselection:`Tools --> Views --> Clipboard`.
 
 It appears as a list of lines, each of which
 is associated with one level of the clipboard. The text that shows in these
@@ -1179,20 +1179,20 @@ will pop up showing the entire selection corresponding to the line by
 opposition to the possibly truncated one.
 
 In addition, one of the lines has an arrow on its left. This indicates the line
-that will be pasted when you select the menu :menuselection:`Edit-->Paste`. If
-you select instead the menu :menuselection:`Edit-->Paste Previous`, then the
+that will be pasted when you select the menu :menuselection:`Edit --> Paste`. If
+you select instead the menu :menuselection:`Edit --> Paste Previous`, then the
 line below that one will be inserted instead.
 
 If you double-click on any of these lines, GPS will insert the corresponding
 text in the current editor, and make the line you clicked on the current line,
-so that selecting :menuselection:`Edit-->Paste` or the equivalent shortcut will
+so that selecting :menuselection:`Edit --> Paste` or the equivalent shortcut will
 now insert that line.
 
 The local toolbar in the clipboard view provides two buttons:
 
 * :guilabel:`Append To Previous`. If you select this button, the select line will
    be append to the one below, and removed from the clipboard. This means that
-   selection :menuselection:`Edit-->Paste` will in fact paste the two entries at
+   selection :menuselection:`Edit --> Paste` will in fact paste the two entries at
    the same time.  This is in particular useful when you want to copy lines from
    separate places in the initial file, merge them, and then paste them together
    one or more times later on, through a single operation.
@@ -1305,8 +1305,8 @@ item (i.e. its callers).
 
 This browser is generally opened by right-clicking on the name of an entity in
 source editors or :guilabel:`Project` view, and selecting one of
-:menuselection:`Browsers--><entity> calls`, :menuselection:`Browsers--><entity>
-calls (recursive)` or :menuselection:`Browsers--><entity> is called by`.
+:menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers --> <entity>
+calls (recursive)` or :menuselection:`Browsers --> <entity> is called by`.
 
 All boxes in this browser list several information: the location of their
 declaration, and the list of all their references in the other entities
@@ -1357,20 +1357,20 @@ aware of that change, and will thus reference another place in the file.
 
 .. index:: menu; edit --> create bookmark
 
-The menu :menuselection:`Edit-->Create Bookmark` allows you to create a
+The menu :menuselection:`Edit --> Create Bookmark` allows you to create a
 bookmark at the current location (either in the editor, or the browser for
 instance).
 
 .. index:: menu; tools --> views --> bookmarks
 
 All the bookmarks you have created will be visible in the
-:menuselection:`Tools-->Views-->Bookmarks` window. Clicking on the line will
+:menuselection:`Tools --> Views --> Bookmarks` window. Clicking on the line will
 immediately open an editor with the cursor at that position.
 
 In the :guilabel:`Bookmarks` window, the local toolbar provides three buttons
 to act on the bookmarks:
 
-* :guilabel:`Create` is similar to the :menuselection:`Edit-->Create Bookmark`
+* :guilabel:`Create` is similar to the :menuselection:`Edit --> Create Bookmark`
   and will create a bookmark at the current location. After pressing this
   button, you can immediately start typing a custom name for the new bookmark
   (or just press :kbd:`enter` to keep the default name, which is based on the
@@ -1401,13 +1401,13 @@ without using the menu items or the mouse.
 
 .. index:: menu; tools --> consoles --> GPS Shell
 
-The menu :menuselection:`Tools-->Consoles-->GPS Shell` can be used to open the
+The menu :menuselection:`Tools --> Consoles --> GPS Shell` can be used to open the
 shell console. The GPS shell is a custom language that was mostly used when
 GPS did not have python support, and is obsolete at this point.
 
 .. index:: menu; tools --> consoles --> Python
 
-The menu :menuselection:`Tools-->Consoles-->Python` opens the python
+The menu :menuselection:`Tools --> Consoles --> Python` opens the python
 console. Python is the preferred language to customize your GPS (and many
 more details will be provided in later sections of this documentation).
 The console is mostly useful for testing interactive commands before you
@@ -1456,9 +1456,9 @@ might be useful.
 The Execution window
 ====================
 
-.. index:: menus; build --> run
+.. index:: menu; build --> run
 
-Each time a program is launched using the menu :menuselection:`Build-->Run`, a
+Each time a program is launched using the menu :menuselection:`Build --> Run`, a
 new execution window is created to provide input and output for this program.
 
 In order to allow post mortem analysis and copy/pasting, the execution windows
@@ -1508,7 +1508,7 @@ in GPS by pressing the :guilabel:`Cancel` button.
 .. _The_Project_Browser:
 
 The :guilabel:`Project Browser`
-=============================== 
+===============================
 
 .. image:: project-browser.png
 
@@ -1670,7 +1670,7 @@ in the browser and connected by links with labels "body" and "with".
 
 .. index:: preferences; browsers --> show elaboration cycles
 
-The preference :menuselection:`Browsers-->Show elaboration cycles` controls
+The preference :menuselection:`Browsers --> Show elaboration cycles` controls
 whether to automatically create a graph from cycles listed in build output.
 
 See also :ref:`browsers_features` for more capabilities of the GPS browsers.
@@ -1710,7 +1710,7 @@ exact content of the items depend on the type of the item. For instance:
 
 
 This browser is accessible through the contextual menu
-:menuselection:`Browsers-->Examine entity` in the project view and source
+:menuselection:`Browsers --> Examine entity` in the project view and source
 editor, when clicking on an entity.
 
 Most information in the items are clickable (by default, they appear as
@@ -1731,3 +1731,59 @@ override an inherited one, are displayed. The parent's methods are not shown,
 unless you click on this title bar button.
 
 See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+
+
+.. index:: file selector
+.. index:: Windows
+.. _The_File_Selector:
+
+The File Selector
+=================
+
+.. image:: open-file.png
+
+The file selector is a dialog used to select a file. On Windows, the default is
+to use the standard file selection widget. On other platforms, the file
+selector is a built-in dialog:
+
+This dialog provides the following areas and capabilities:
+
+* A tool bar on the top composed of five buttons giving access to common
+  navigation features:
+
+  - :guilabel:`left arrow` go back in the list of directories visited
+  - :guilabel:`right arrow` go forward
+  - :guilabel:`up arrow` go to parent directory
+  - :guilabel:`refresh` refresh the contents of the directory
+  - :guilabel:`home` go to home directory (value of the HOME environment variable,
+    or `/` if not defined)
+
+* A list with the current directory and the last directories explored.  You can
+  modify the current directory by modifying the text entry and hitting
+  :kbd:`Enter`, or by clicking on the right arrow and choose a previous
+  directory in the pop down list displayed.
+
+* A directory tree. You can open or close directories by clicking on the `+`
+  and `-` icons on the left of the directories, or navigate using the keyboard
+  keys: :kbd:`up` and :kbd:`down` to select the previous or the next directory,
+  :kbd:`+` and :kbd:`-` to expand and collapse the current directory, and
+  :kbd:`backspace` to select the parent directory.
+
+* A file list. This area lists the files contained in the selected directory.
+  If a filter is selected in the filter area, only the relevant files for the
+  given filter are displayed. Depending on the context, the list of files may
+  include additional information about the files, e.g. the kind of a file, its
+  size, etc...
+
+* A filter area. Depending on the context, one or several filters are available
+  to select only a subset of files to display. The filter *All files* which is
+  always available will display all files in the directory selected.
+
+* A file name area. This area will display the name of the current file
+  selected, if any.  You can also type a file or directory name directly, and
+  complete the name automatically by using the :kbd:`Tab` key.
+
+* A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.  When
+  you have selected the right file, click on :guilabel:`OK` to confirm, or
+  click on :guilabel:`Cancel` at any time to cancel and close the file
+  selection.
