@@ -318,7 +318,7 @@ package body GPS.Tree_View.Locations is
          end if;
 
          if Path /= Null_Gtk_Tree_Path then
-            if Get_Depth (Path) < 2 then
+            if Get_Depth (Path) <= 2 then
                Path_Free (Path);
 
                return False;
