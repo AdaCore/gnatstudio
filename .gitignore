@@ -193,6 +193,8 @@ design/tests/src_editor.tabs_torture/.gps/histories.xml
 design/tests/src_editor.tabs_torture/.gps/log_files/
 design/tests/src_editor.tabs_torture/.gps/properties.xml
 design/tests/src_editor.tabs_torture/.gps/styles.xml
+design/tests/K303-003/codepeer/
+design/tests/K303-003/p.adb
 design/tests/switches.1/default.gpr
 design/tests/switches.1/default.gpr.new
 design/tests/switches.3/default.gpr
