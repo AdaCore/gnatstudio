@@ -469,7 +469,6 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
-          <arg>--proof=path_wp</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
