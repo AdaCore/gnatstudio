@@ -1,9 +1,19 @@
+# TODO:
+# * Commands : Sentences and paragraphs movements {}()
+# * Make w and b work as in vim
+# * Goto line
+# * Repeats
+# * Bind "/" to isearch or implement own search
+# * Bind "*" to search whole word
+
 from gi.repository import Gtk
 import GPS
 from gps_utils import *
 from pygps import get_widgets_by_type, send_key_event
+from collections import defaultdict
 
 # UTILS #
+
 
 def qualifier_decorator(_type):
 
@@ -17,7 +27,9 @@ def qualifier_decorator(_type):
 
     return decorator
 
+
 movement_command = qualifier_decorator("movement_command")
+composed_movement = qualifier_decorator("composed_movement")
 write_command = qualifier_decorator("write_command")
 insert_command = qualifier_decorator("insert_command")
 
@@ -26,7 +38,10 @@ def with_col(loc, col):
     return GPS.EditorLocation(loc.buffer(), loc.line(), col)
 
 
-def forward_until(loc, pred, skip_first_char=False, stop_at_eol=False, backwards=False):
+def forward_until(loc, pred,
+                  skip_first_char=False,
+                  stop_at_eol=False,
+                  backwards=False):
     step = -1 if backwards else 1
     cur_loc = loc
 
@@ -45,8 +60,28 @@ def forward_until(loc, pred, skip_first_char=False, stop_at_eol=False, backwards
     return cur_loc
 
 
+def get_visual_locs(vim_state):
+    return [(vim_state.visual_start_pos, vim_state.view.cursor())]
+
+
+def get_visual_box_locs(vim_state):
+    pass
+
+
+def get_visual_line_locs(vim_state):
+    cur = vim_state.view.cursor()
+    if vim_state.visual_start_pos > cur:
+        a = cur.beginning_of_line()
+        b = vim_state.visual_start_pos.end_of_line()
+    else:
+        a = vim_state.visual_start_pos.beginning_of_line()
+        b = cur.end_of_line()
+    return [(a, b)]
+
+
 GPS.EditorLocation.with_col = with_col
 GPS.EditorLocation.forward_until = forward_until
+
 
 # CONSTANTS #
 
@@ -54,7 +89,16 @@ KEY_ESC = 65307
 
 NormalState = 0
 InsertState = 1
-VisualSelectionState = 2
+ReplaceState = 12
+VisualState = 2
+VisualStateLine = 3
+VisualStateBox = 4
+
+visual_state_locs_funcs = {
+    VisualState: get_visual_locs,
+    VisualStateLine: get_visual_line_locs,
+    VisualStateBox: get_visual_box_locs
+}
 
 Mov_Char = 0
 Mov_Line = 1
@@ -62,6 +106,7 @@ Mov_Word = 2
 
 
 def create_action(action_tuple, vim_state):
+
     if isinstance(action_tuple, tuple):
         args = action_tuple[1:]
         args_prepared = [create_action(arg, vim_state)
@@ -70,9 +115,12 @@ def create_action(action_tuple, vim_state):
         inst = action_tuple[0](*args_prepared)
     else:
         inst = action_tuple()
+
     inst.vim_state = vim_state
+
     if inst.is_a(insert_command):
         inst.key_presses = []
+
     return inst
 
 
@@ -86,15 +134,31 @@ class CharActionKeyMap(KeyMap):
         self.keymap = keymap
 
     def get_action(self, keyval, vim_state):
-        return create_action(
-            self.keymap.get(chr(keyval), (NoAction,)),
-            vim_state
-        )
+        action = self.keymap.get(chr(keyval), (NoAction,))
+        return create_action(action, vim_state)
 
 
 class CharCharKeyMap(KeyMap):
     def get_action(self, keyval, vim_state):
         return create_action((CharAction, chr(keyval)), vim_state)
+
+
+def is_command_state(state):
+    return state in [
+        NormalState, VisualState, VisualStateLine, VisualStateBox
+    ]
+
+
+def is_visual_state(state):
+    return is_visual_state(state) and state != NormalState
+
+
+def is_insert_state(state):
+    return state in [InsertState, ReplaceState]
+
+override_keys_map = {
+    65106: 94
+}
 
 
 class VimState(object):
@@ -119,39 +183,73 @@ class VimState(object):
 
         switch_state(self, NormalState)
 
+    def yank(self, beginning, end, is_line=False):
+        yanks[current_yank_buffer] = (self.buffer.get_chars(beginning, end),
+                                      is_line)
+
+    def delete(self, start, end, is_line=False):
+        self.yank(start, end, is_line)
+        self.buffer.delete(start, end)
+
+    def get_selection_locs(self):
+        return visual_state_locs_funcs[self.state](self)
+
+    def extend_selection(self):
+        locs_pairs = self.get_selection_locs()
+        for loc_a, loc_b in locs_pairs:
+            self.buffer.remove_overlay(self.selection_overlay)
+            self.buffer.apply_overlay(self.selection_overlay, loc_a, loc_b)
+
+    def init_visual(self):
+        self.visual_start_pos = self.view.cursor()
+        self.extend_selection()
+
+    def is_in_command_state(self):
+        return is_command_state(self.state)
+
     def on_key_pressed(self, view, event):
         _, key = event.get_keyval()
 
-        print "Key : ", key
+        if key in override_keys_map:
+            key = override_keys_map[key]
+
+        # print "Key : ", key
 
         # Escape always returns back to normal mode
         if key == KEY_ESC:
             self.action_stack = []
-            if self.current_insert_command:
-                print self.current_insert_command.key_presses
             self.current_insert_command = None
             switch_state(self, NormalState)
 
         # Bind actions if we are in normal mode
-        elif self.state == NormalState:
+        elif self.is_in_command_state():
             if key in range(256):
                 action = self.keymaps_stack[-1].get_action(key, self)
                 remember_action = action.apply()
                 if remember_action:
-                    if remember_action.is_a(movement_command):
+                    if remember_action.is_a(composed_movement):
                         self.last_movement_command = remember_action
+                        # print "MOVEMENT COMMAND:", self.last_movement_command
                     elif remember_action.is_a(write_command)\
                             or remember_action.is_a(insert_command):
                         self.last_write_command = remember_action
-                        print "LAST WRITE COMMAND : ", self.last_write_command
+                        # print "LAST WRITE COMMAND:", self.last_write_command
                     if remember_action.is_a(insert_command):
                         self.current_insert_command = remember_action
 
+            # print self.state
+            # Extend the state's selection if we are in visual
+            if self.state in [VisualState, VisualStateLine, VisualStateBox]:
+                # print "IN VISUAL STATE"
+                self.extend_selection()
+
             return True
 
-        elif self.state == InsertState:
+        elif is_insert_state(self.state):
             if self.current_insert_command:
-                self.current_insert_command.key_presses.append((key, event.hardware_keycode, event.string))
+                self.current_insert_command.key_presses.append(
+                    (key, event.hardware_keycode, event.string)
+                )
                 self.last_ev = event
 
             return False
@@ -165,27 +263,26 @@ class VimState(object):
     def set_column_memory(self):
         self.column_memory = self.view.cursor().column()
 
-    def update_selection(self):
-        if self.state == VisualSelectionState:
-            self.selection_end_point = self.view.cursor()
-            self.buffer.remove_overlay(self.selection_overlay)
-            self.buffer.apply_overlay(
-                self.selection_overlay,
-                self.selection_start_point,
-                self.selection_end_point
-            )
+
+yanks = {}
+current_yank_buffer = "default_yank_buffer"
 
 
 class BaseAction(object):
+
+    def cursor(self):
+        return self.vim_state.view.cursor()
 
     qualifiers = set()
 
     def replay(self):
         self.apply_action()
         if self.is_a(insert_command):
-            print self.vim_state.state
+            # print self.vim_state.state
             for key, hw_kc, string in self.key_presses:
-                send_key_event(key, hardware_keycode=hw_kc, window=self.vim_state.gtk_view)
+                send_key_event(
+                    key, hardware_keycode=hw_kc, window=self.vim_state.gtk_view
+                )
 
     def apply(self):
         if self.vim_state.action_stack == []:
@@ -194,16 +291,38 @@ class BaseAction(object):
         else:
             try:
                 action = self.vim_state.action_stack.pop().compose(self)
-                print "ACTION : ", action
+                # print "ACTION : ", action
                 action.apply_action()
                 return action
             except Exception, e:
                 raise e
                 self.vim_state.action_stack = []
 
-
     def is_a(self, qualifier):
         return qualifier._type in self.qualifiers
+
+
+class PasteAction(BaseAction):
+
+    def __init__(self, offset=0):
+        self.offset = offset
+
+    def apply_action(self):
+        text, is_line = yanks[current_yank_buffer]
+        pos = self.cursor()
+        if is_line and self.offset == 0:
+            pos = pos.beginning_of_line()
+        elif is_line and self.offset == 1:
+            pos = pos.forward_line()
+        else:
+            pos = pos.forward_char(self.offset)
+        self.vim_state.buffer.insert(pos, text)
+
+
+class YankAction(BaseAction):
+
+    def apply_action(self):
+        pass
 
 
 class CharAction(BaseAction):
@@ -240,11 +359,18 @@ class SwitchState(BaseAction):
 
     def apply_action(self):
         self.vim_state.state = self.state
-        if self.state in (NormalState, VisualSelectionState):
+        if self.state == NormalState:
+            self.vim_state.buffer.remove_overlay(
+                self.vim_state.selection_overlay
+            )
+        if is_command_state(self.state) or self.state == ReplaceState:
             self.vim_state.gtk_view.set_overwrite(True)
         elif self.state == InsertState:
             self.vim_state.gtk_view.set_overwrite(False)
         self.vim_state.set_column_memory()
+        self.vim_state.keymaps_stack = [
+            CharActionKeyMap(modes_keymaps[self.state])
+        ]
 
 
 @insert_command
@@ -259,10 +385,28 @@ class Insert(BaseAction):
 class Movement(BaseAction):
 
     def get_start_location(self):
-        return self.vim_state.view.cursor()
+        return self.cursor()
 
     def get_end_location(self):
         raise Exception("Not implemented")
+
+    def is_line(self):
+        return False
+
+    def apply_action(self):
+        loc = self.get_end_location()
+        self.vim_state.view.goto(loc)
+        self.vim_state.set_column_memory()
+
+
+import re
+is_keyword_re = re.compile("[\w_0-9]")
+
+def is_symbol_char(char):
+    return not is_keyword_char(char) and not char.isspace()
+
+def is_keyword_char(char):
+    return is_keyword_re.match(char) != None
 
 
 class SimpleMovement(Movement):
@@ -272,7 +416,7 @@ class SimpleMovement(Movement):
         self.repeat = repeat
 
     def get_end_location(self):
-        cur = self.vim_state.view.cursor()
+        cur = self.cursor()
 
         if self.type == Mov_Char:
             return cur.forward_char(self.repeat)
@@ -283,11 +427,14 @@ class SimpleMovement(Movement):
             return res.with_col(min(eol.column(), self.vim_state.column()))
 
         elif self.type == Mov_Word:
-            loc = cur.forward_word(self.repeat)
-            if self.repeat > 0:
-                loc = loc.forward_char(-1)
-            elif self.repeat < 0:
-                loc = loc.forward_char(1)
+            is_kw = is_keyword_char(self.vim_state.buffer.get_chars(cur, cur))
+            pred = is_keyword_char if not is_kw else lambda c: not is_keyword_char(c)
+            fwc = 1 if self.repeat < 0 else -1
+            loc = cur.forward_until(pred, backwards=self.repeat < 0).forward_char(fwc)
+            # if self.repeat > 0:
+            #     loc = loc.forward_char(-1)
+            # elif self.repeat < 0:
+            #     loc = loc.forward_char(1)
             return loc
 
     def apply_action(self):
@@ -303,47 +450,47 @@ class SimpleMovement(Movement):
             self.vim_state.set_column_memory()
 
 
-@write_command
-class Deletion(ComposedAction):
+class LineAction(ComposedAction):
+
     def apply(self):
         if self.vim_state.action_stack != []\
-                and isinstance(self.vim_state.action_stack[-1], Deletion):
+                and isinstance(self.vim_state.action_stack[-1], type(self)):
             BaseAction.apply(self)
         else:
             ComposedAction.apply(self)
 
-    def apply_action (self):
+
+@write_command
+class Deletion(LineAction):
+
+    def apply_action(self):
         if isinstance(self.expected_action, Deletion):
-            start_loc = self.vim_state.view.cursor().beginning_of_line()
-            end_loc = self.vim_state.view.cursor().end_of_line()
+            start_loc = self.cursor().beginning_of_line()
+            end_loc = self.cursor().end_of_line()
+            is_line = True
         else:
             start_loc = self.expected_action.get_start_location()
             end_loc = self.expected_action.get_end_location()
+            is_line = self.expected_action.is_line()
 
-        self.vim_state.view.buffer().delete(start_loc, end_loc)
+        self.vim_state.delete(start_loc, end_loc, is_line)
 
 
 @write_command
 @insert_command
-class Replace(ComposedAction):
-    def apply(self):
-        if self.vim_state.action_stack != []\
-                and isinstance(self.vim_state.action_stack[-1], Replace):
-            self.vim_state.action_stack.pop()
-            self.expected_action = None
-            self.apply_action()
-        else:
-            ComposedAction.apply(self)
+class Replace(LineAction):
 
-    def apply_action (self):
-        cur = self.vim_state.view.cursor()
+    def apply_action(self):
+        cur = self.cursor()
         if not self.expected_action:
-            start_loc = cur.beginning_of_line().forward_until(lambda c: not c.isspace())
+            start_loc = cur.beginning_of_line().forward_until(
+                lambda c: not c.isspace()
+            )
             end_loc = cur.end_of_line().forward_char(-1)
         else:
-            start_loc = self.vim_state.view.cursor()
+            start_loc = self.cursor()
             end_loc = self.expected_action.get_end_location()
-        self.vim_state.view.buffer().delete(start_loc, end_loc)
+        self.vim_state.delete(start_loc, end_loc)
         switch_state(self.vim_state, InsertState)
 
 
@@ -360,10 +507,11 @@ class OpenLine(BaseAction):
         self.before = before
 
     def apply_action(self):
+        cur = self.cursor()
         if self.before:
-            insert_loc = self.vim_state.view.cursor().forward_line(-1).end_of_line()
+            insert_loc = cur.forward_line(-1).end_of_line()
         else:
-            insert_loc = self.vim_state.view.cursor().end_of_line()
+            insert_loc = cur.end_of_line()
         self.vim_state.view.goto(insert_loc)
         self.vim_state.buffer.insert(insert_loc, "\n")
         GPS.execute_action("/Edit/Format Selection")
@@ -371,6 +519,7 @@ class OpenLine(BaseAction):
 
 
 @movement_command
+@composed_movement
 class UntilCharMovement(ComposedAction):
 
     def __init__(self, backwards=False, stop_before=False):
@@ -392,10 +541,10 @@ class UntilCharMovement(ComposedAction):
         self.vim_state.set_column_memory()
 
     def get_start_location(self):
-        return self.vim_state.view.cursor()
+        return self.cursor()
 
     def get_end_location(self):
-        loc = self.vim_state.view.cursor().forward_until(
+        loc = self.cursor().forward_until(
             lambda x: x == self.expected_action.get_char(),
             skip_first_char=True,
             stop_at_eol=True,
@@ -416,18 +565,78 @@ class ChainedAction(BaseAction):
         for action in self.actions:
             action.apply()
 
+
 class ReplayAction(BaseAction):
     def apply(self):
-        print "IN REPLAYACTION APPLY"
         self.vim_state.last_write_command.replay()
+
+
+class ReplayMove(BaseAction):
+    def apply(self):
+        # print "IN REPLAYMOVE"
+        self.vim_state.last_movement_command.replay()
+
+
+class SwitchToVisual(BaseAction):
+    def __init__(self, state):
+        self.visual_state = state
+
+    def apply_action(self):
+        switch_state(self.vim_state, self.visual_state)
+        self.vim_state.init_visual()
+
+
+class VisualDeletion(BaseAction):
+    def apply_action(self):
+        for loc_a, loc_b in self.vim_state.get_selection_locs():
+            self.vim_state.delete(
+                loc_a,
+                loc_b,
+                is_line=self.vim_state.state == VisualStateLine
+            )
+        switch_state(self.vim_state, NormalState)
+
+
+class VisualYank(BaseAction):
+    def apply_action(self):
+        for loc_a, loc_b in self.vim_state.get_selection_locs():
+            self.vim_state.yank(loc_a, loc_b, is_line=self.vim_state.state == VisualStateLine)
+        switch_state(self.vim_state, NormalState)
+
+
+class EOLMovement(Movement):
+    def get_end_location(self):
+        return self.cursor().end_of_line().forward_char(-1)
+
+
+class BOLMovement(Movement):
+    def get_end_location(self):
+        return self.cursor().beginning_of_line().forward_until(
+            lambda c: not c.isspace()
+        )
+
+
+class ConflateLines(BaseAction):
+    def apply_action(self):
+        self.vim_state.view.goto(self.cursor().end_of_line().forward_char(-1))
+        self.vim_state.buffer.delete(
+            self.cursor().forward_char(),
+            self.cursor().forward_char().forward_until(
+                lambda c: not c.isspace()
+            ).forward_char(-1)
+        )
+        self.vim_state.buffer.insert(self.cursor().forward_char(), " ")
+        self.vim_state.view.goto(self.cursor().forward_char(-1))
 
 
 def switch_state(vim_state, state):
     sw = create_action((SwitchState, state), vim_state)
     sw.apply_action()
 
+
 basic_actions = {
     ".": (ReplayAction, ),
+    ";": (ReplayMove, ),
     "i": (Insert, ),
     "h": (SimpleMovement, Mov_Char, -1),
     "l": (SimpleMovement, Mov_Char, 1),
@@ -442,7 +651,8 @@ basic_actions = {
     "$": (ChainedAction, (UntilCharMovement, False, True), (CharAction, "\n")),
     "D": (ChainedAction, (Deletion,),
                          (UntilCharMovement, False, True),
-                         (CharAction, "\n")),
+                         (CharAction, "\n"),
+                         (SimpleMovement, Mov_Char, -1)),
     "C": (ChainedAction, (Replace,),
                          (UntilCharMovement, False, True),
                          (CharAction, "\n")),
@@ -451,8 +661,30 @@ basic_actions = {
     "u": (Undo,),
     "o": (OpenLine, False),
     "O": (OpenLine, True),
-    "v": (SwitchState, VisualSelectionState)
+    "v": (SwitchToVisual, VisualState),
+    "V": (SwitchToVisual, VisualStateLine),
+    "p": (PasteAction, 1),
+    "P": (PasteAction,),
+    "$": (EOLMovement,),
+    "^": (BOLMovement,),
+    "J": (ConflateLines,),
 }
+
+
+visual_actions = dict(basic_actions.items() + {
+    "d": (VisualDeletion,),
+    "D": (VisualDeletion,),
+    "y": (VisualYank,),
+    "Y": (VisualYank,)
+}.items())
+
+
+modes_keymaps = defaultdict(dict, {
+    NormalState: basic_actions,
+    VisualState: visual_actions,
+    VisualStateLine: visual_actions,
+    VisualStateBox: visual_actions
+})
 
 
 def on_file_edited(hn, f):
