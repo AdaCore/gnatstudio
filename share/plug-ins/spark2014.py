@@ -65,7 +65,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="Window">
-      <Title>_SPARK 2014</Title>
+      <Title>_%(prefix)s</Title>
         <menu action="Examine All Action">
           <Title>Examine All</Title>
         </menu>
@@ -98,19 +98,19 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </submenu>
 
     <contextual action="Examine File Action">
-      <Title>SPARK 2014/Examine File</Title>
+      <Title>%(prefix)s/Examine File</Title>
     </contextual>
     <contextual action="Examine Subprogram Action">
-      <Title>SPARK 2014/Examine Subprogram</Title>
+      <Title>%(prefix)s/Examine Subprogram</Title>
     </contextual>
     <contextual action="Prove File Action">
-      <Title>SPARK 2014/Prove File</Title>
+      <Title>%(prefix)s/Prove File</Title>
     </contextual>
     <contextual action="Prove Subprogram Action">
-      <Title>SPARK 2014/Prove Subprogram</Title>
+      <Title>%(prefix)s/Prove Subprogram</Title>
     </contextual>
     <contextual action="Prove Line Action">
-      <Title>SPARK 2014/Prove Line</Title>
+      <Title>%(prefix)s/Prove Line</Title>
     </contextual>
 
     <doc_path>share/doc/spark</doc_path>
@@ -118,15 +118,15 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <documentation_file>
       <name>html/ug/index.html</name>
       <descr>SPARK 2014 Toolset User's Guide</descr>
-      <category>SPARK 2014</category>
-      <menu before="About">/Help/SPARK 2014/SPARK 2014 Toolset User's Guide</menu>
+      <category>%(prefix)s</category>
+      <menu before="About">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide</menu>
     </documentation_file>
 
     <documentation_file>
       <name>html/lrm/index.html</name>
       <descr>SPARK 2014 Reference Manual</descr>
-      <category>SPARK 2014</category>
-      <menu before="About">/Help/SPARK 2014/SPARK 2014 Reference Manual</menu>
+      <category>%(prefix)s</category>
+      <menu before="About">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
     </documentation_file>
 
     <action name="spark2014_example_binary_search" category=""
@@ -137,7 +137,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="About">
-      <title>/Help/SPARK 2014/Examples</title>
+      <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search">
         <title>Binary_Search</title>
       </menu>
@@ -151,7 +151,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="About">
-      <title>/Help/SPARK 2014/Examples</title>
+      <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_database">
         <title>Database</title>
       </menu>
@@ -165,7 +165,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="About">
-      <title>/Help/SPARK 2014/Examples</title>
+      <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_intro">
         <title>Intro</title>
       </menu>
@@ -179,7 +179,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="About">
-      <title>/Help/SPARK 2014/Examples</title>
+      <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_longest_common_prefix">
         <title>Longest_Common_Prefix</title>
       </menu>
@@ -193,7 +193,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
 
     <submenu before="About">
-      <title>/Help/SPARK 2014/Examples</title>
+      <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_segway">
         <title>Segway</title>
       </menu>
@@ -469,6 +469,7 @@ xml_gnatprove = """<?xml version="1.0"?>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--mode=prove</arg>
+          <arg>--proof=path_wp</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
@@ -933,7 +934,7 @@ class GNATProve_Plugin:
 
     def __init__(self):
         GPS.parse_xml(xml_gnatprove)
-        GPS.parse_xml(xml_gnatprove_menus)
+        GPS.parse_xml(xml_gnatprove_menus % {"prefix":prefix})
         self.messages = []
         self.trace_msg = None
 
