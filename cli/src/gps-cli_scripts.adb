@@ -23,7 +23,7 @@ with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
-with Docgen3;                         use Docgen3;
+with GNATdoc;                         use GNATdoc;
 
 with XML_Utils;                       use XML_Utils;
 with XML_Parsers;
@@ -139,7 +139,7 @@ package body GPS.CLI_Scripts is
             Tree_Output   : constant String := Nth_Arg (Data, 3, "Full");
             With_Comments : constant Boolean := Nth_Arg (Data, 4, False);
 
-            Options : constant Docgen3.Docgen_Options :=
+            Options : constant GNATdoc.Docgen_Options :=
               (Comments_Filter => null,
                Report_Errors   => Report_Errors_Kind'Value (Report_Errors),
                Skip_C_Files    => Skip_C_Files,
@@ -150,7 +150,7 @@ package body GPS.CLI_Scripts is
                Show_Private    => True,
                Output_Comments => True);
          begin
-            Docgen3.Process_Project_Files
+            GNATdoc.Process_Project_Files
               (Kernel    => Kernel,
                Options   => Options,
                Project   => Kernel.Registry.Tree.Root_Project,

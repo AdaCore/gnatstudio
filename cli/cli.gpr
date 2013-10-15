@@ -4,13 +4,13 @@ with "../kernel/kernel_core";
 with "../python/python_core";
 with "../builder/builder_core";
 with "../ada_module/core/ada_module_core";
-with "../docgen3/docgen3";
+with "../gnatdoc/gnatdoc";
 with "../prj_editor/prj_core";
 
 project CLI is
 
    for Languages use ("Ada");
-   for Main use ("gps-cli.adb", "gnatdoc.adb");
+   for Main use ("gps-cli.adb", "gnatdoc_main.adb");
 
    for Source_Dirs use ("src");
    for Object_Dir use Shared'Object_Dir;
@@ -20,6 +20,7 @@ project CLI is
 
    package Builder is
       for Executable ("gps-cli.adb") use "gps_cli";
+      for Executable ("gnatdoc_main.adb") use "gnatdoc";
 
       case Shared.Build is
          when "Debug" =>
