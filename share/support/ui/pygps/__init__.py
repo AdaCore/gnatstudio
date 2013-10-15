@@ -27,6 +27,9 @@ import time
 import os
 import sys
 
+global last_sent_event
+last_sent_event = None
+
 # List of modules to import when user does "from pygps import *"
 # Do not use, since otherwise the functions defined in this module are
 # not visible
@@ -373,9 +376,9 @@ try:
     else:
         GDK_BACKSPACE_HARDWARE_KEYCODE = 59
 
-
     def send_key_event(keyval, control=0, alt=0, shift=0, window=None,
-                       process_events=True, bypass_keymanager=False):
+                       process_events=True, bypass_keymanager=False,
+                       hardware_keycode=None):
         """Emit a key event on GPS, simulating the given key. This event is
            sent asynchronously.
            Unless process_events is true, this function will return when the
@@ -387,7 +390,6 @@ try:
            passes the event to the key manager, but synthesize the event
            in Python directly.
         """
-
         if not bypass_keymanager:
             if hasattr(GPS, "send_key_event"):
                 GPS.send_key_event(keyval, window=window,
@@ -400,13 +402,15 @@ try:
             event.window = window
             event.keyval = keyval
             event.send_event = 0
-            event.time = Gdk.CURRENT_TIME
+            event.length = 1
             event.is_modifier = 0
             event.group = 0
             event.state = Gdk.ModifierType(0)
             # event.device = None    # No device for key events
 
-            if keyval == GDK_BACKSPACE:
+            if hardware_keycode:
+                event.hardware_keycode = hardware_keycode
+            elif keyval == GDK_BACKSPACE:
                 event.hardware_keycode = GDK_BACKSPACE_HARDWARE_KEYCODE
 
             # Can't set string in some versions of pygobject
