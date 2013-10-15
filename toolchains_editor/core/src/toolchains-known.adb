@@ -85,7 +85,7 @@ package body Toolchains.Known is
                  ("compiler_" & Get_Attribute (Child, "lang"),
                   Child.Value.all);
             else
-               Default_Naming.Insert (Child.Tag.all, Child.Value.all);
+               Default_Naming.Include (Child.Tag.all, Child.Value.all);
             end if;
 
             Child := Child.Next;
