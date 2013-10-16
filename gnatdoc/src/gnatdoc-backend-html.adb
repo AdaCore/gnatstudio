@@ -177,7 +177,8 @@ package body GNATdoc.Backend.HTML is
                      Assoc ("SOURCE_FILE_JS", +File.Base_Name & ".js"));
                   Write_To_File
                     (Self.Context,
-                     Get_Doc_Directory (Self.Context.Kernel),
+                     Get_Doc_Directory
+                       (Self.Context.Kernel).Create_From_Dir ("srcs"),
                      File.Base_Name & ".html",
                      Parse
                        (+Self.Get_Template (Tmpl_Source_File_HTML).Full_Name,
@@ -194,7 +195,8 @@ package body GNATdoc.Backend.HTML is
                   Insert (Translation, Assoc ("SOURCE_FILE_DATA", Text));
                   Write_To_File
                     (Self.Context,
-                     Get_Doc_Directory (Self.Context.Kernel),
+                     Get_Doc_Directory
+                       (Self.Context.Kernel).Create_From_Dir ("srcs"),
                      File.Base_Name & ".js",
                      Parse
                        (+Self.Get_Template (Tmpl_Source_File_JS).Full_Name,
@@ -205,7 +207,7 @@ package body GNATdoc.Backend.HTML is
                --  Append source file to the index
 
                Object := Create_Object;
-               Object.Set_Field ("file", String (File.Base_Name));
+               Object.Set_Field ("file", "srcs/" & String (File.Base_Name));
                Append (Sources, Object);
             end if;
          end if;
@@ -264,6 +266,9 @@ package body GNATdoc.Backend.HTML is
       procedure Generate_Support_Files;
       --  Generate support files in destination directory
 
+      procedure Create_Documentation_Directories;
+      --  Creates root documentation directory and its subdirectories
+
       ----------------------------
       -- Generate_Support_Files --
       ----------------------------
@@ -300,14 +305,31 @@ package body GNATdoc.Backend.HTML is
          pragma Assert (Success);
       end Generate_Support_Files;
 
+      --------------------------------------
+      -- Create_Documentation_Directories --
+      --------------------------------------
+
+      procedure Create_Documentation_Directories is
+         Doc_Dir  : constant Virtual_File :=
+           Get_Doc_Directory (Self.Context.Kernel);
+         Srcs_Dir : constant Virtual_File := Doc_Dir.Create_From_Dir ("srcs");
+
+      begin
+         if not Doc_Dir.Is_Directory then
+            Doc_Dir.Make_Dir;
+         end if;
+
+         if not Srcs_Dir.Is_Directory then
+            Srcs_Dir.Make_Dir;
+         end if;
+      end Create_Documentation_Directories;
+
    begin
       GNATdoc.Backend.Base.Base_Backend (Self).Initialize (Context);
 
-      --  Create documentation directory
+      --  Create documentation directory and its subdirectories
 
-      if not Get_Doc_Directory (Self.Context.Kernel).Is_Directory then
-         Get_Doc_Directory (Self.Context.Kernel).Make_Dir;
-      end if;
+      Create_Documentation_Directories;
 
       --  Copy support files
 
