@@ -50,9 +50,6 @@ package body GNATdoc.Backend.Simple is
    -- Local Subprograms --
    -----------------------
 
-   procedure Clear (Entities : in out Collected_Entities);
-   --  Clear all the lists used to classify the tree nodes in categories
-
    function File_Containing (E : Entity_Id) return String;
    --  Returns the name of the backend file containing the documentation of E
 
@@ -681,26 +678,6 @@ package body GNATdoc.Backend.Simple is
 
    end ReST;
    use ReST;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Entities : in out Collected_Entities) is
-   begin
-      Entities.Pkgs.Clear;
-      Entities.Variables.Clear;
-      Entities.Access_Types.Clear;
-      Entities.Simple_Types.Clear;
-      Entities.Record_Types.Clear;
-      Entities.Tagged_Types.Clear;
-      Entities.Interface_Types.Clear;
-      Entities.Subprgs.Clear;
-      Entities.Methods.Clear;
-
-      Entities.CPP_Classes.Clear;
-      Entities.CPP_Constructors.Clear;
-   end Clear;
 
    ---------------------
    -- File_Containing --
@@ -1940,22 +1917,26 @@ package body GNATdoc.Backend.Simple is
    ---------------------------------
 
    overriding procedure Generate_Lang_Documentation
-     (Backend : in out Simple_Backend;
-      Tree    : access Tree_Type)
+     (Backend     : in out Simple_Backend;
+      Tree        : access Tree_Type;
+      Entity      : Entity_Id;
+      Entities    : Base.Collected_Entities;
+      Scope_Level : Natural)
    is
-      Tmpl    : constant Virtual_File :=
-                  Backend.Get_Template (Tmpl_Entities);
+      Root_Level  : constant Natural := 0;
+      Tmpl        : constant Virtual_File :=
+                      Backend.Get_Template (Tmpl_Entities);
       Translation : Translate_Set;
 
       procedure For_All
-        (Vector   : in out EInfo_List.Vector;
+        (Vector   : EInfo_List.Vector;
          Printout : access Unbounded_String;
          Process  : access procedure (Printout : access Unbounded_String;
                                       E_Info   : Entity_Id));
       --  Call subprogram Process for all the elements of Vector
 
       procedure For_All
-        (Vector   : in out EInfo_List.Vector;
+        (Vector   : EInfo_List.Vector;
          Printout : access Unbounded_String;
          Process  : access procedure
                              (Printout : access Unbounded_String;
@@ -1963,12 +1944,17 @@ package body GNATdoc.Backend.Simple is
                               Context  : access constant Docgen_Context));
       --  Call subprogram Process for all the elements of Vector
 
+      procedure Append_Generic_Formal
+        (Printout : access Unbounded_String;
+         E        : Entity_Id);
+      --  Append to Printout the reStructured output of a generic formal
+
       -------------
       -- For_All --
       -------------
 
       procedure For_All
-        (Vector   : in out EInfo_List.Vector;
+        (Vector   : EInfo_List.Vector;
          Printout : access Unbounded_String;
          Process  : access procedure (Printout : access Unbounded_String;
                                       E_Info   : Entity_Id))
@@ -1988,7 +1974,7 @@ package body GNATdoc.Backend.Simple is
       -------------
 
       procedure For_All
-        (Vector   : in out EInfo_List.Vector;
+        (Vector   : EInfo_List.Vector;
          Printout : access Unbounded_String;
          Process  : access procedure
                              (Printout : access Unbounded_String;
@@ -2007,446 +1993,268 @@ package body GNATdoc.Backend.Simple is
          end loop;
       end For_All;
 
-      ------------------
-      -- Process_Node --
-      ------------------
+      ---------------------------
+      -- Append_Generic_Formal --
+      ---------------------------
 
-      Root_Level : constant Natural := 0;
+      procedure Append_Generic_Formal
+        (Printout : access Unbounded_String;
+         E        : Entity_Id) is
+      begin
+         if Is_Package (E) then
+            null;  --  unsupported yet???
 
-      procedure Process_Node
-        (Entity      : Entity_Id;
-         Scope_Level : Natural);
+         elsif Get_Kind (E) = E_Variable then
+            ReST_Append_Simple_Declaration (Printout, E);
 
-      procedure Process_Node
-        (Entity      : Entity_Id;
-         Scope_Level : Natural)
-      is
-         Entities : aliased Collected_Entities;
-
-         procedure Append_Generic_Formal
-           (Printout : access Unbounded_String;
-            E        : Entity_Id);
-         --  Append to Printout the reStructured output of a generic formal
-
-         procedure Classify_Entity (E : Entity_Id);
-         --  Classify the entity in one of the following categories: Method,
-         --  subprogram, tagged type, record type, type, variable or package.
-
-         ---------------------------
-         -- Append_Generic_Formal --
-         ---------------------------
-
-         procedure Append_Generic_Formal
-           (Printout : access Unbounded_String;
-            E        : Entity_Id) is
-         begin
-            if Is_Package (E) then
-               null;  --  unsupported yet???
-
-            elsif Get_Kind (E) = E_Variable then
+         elsif LL.Is_Type (E) then
+            if Is_Class_Or_Record_Type (E) then
+               ReST_Append_Record_Type_Declaration
+                 (Printout, E, Backend.Context);
+            else
                ReST_Append_Simple_Declaration (Printout, E);
+            end if;
 
-            elsif LL.Is_Type (E) then
-               if Is_Class_Or_Record_Type (E) then
-                  ReST_Append_Record_Type_Declaration
-                    (Printout, E, Backend.Context);
-               else
-                  ReST_Append_Simple_Declaration (Printout, E);
-               end if;
-
-            elsif LL.Is_Subprogram (E) then
-               ReST_Append_Subprogram (Printout, E);
+         elsif LL.Is_Subprogram (E) then
+            ReST_Append_Subprogram (Printout, E);
 
             --  Here we cover generic formals which are not fully decorated
             --  We assume that the output associated with these missing
             --  cases is simple. More work needed here???
 
-            else
-               ReST_Append_Simple_Declaration (Printout, E);
-            end if;
-         end Append_Generic_Formal;
-
-         ---------------------
-         -- Classify_Entity --
-         ---------------------
-
-         In_Pkg_Generic_Formals : Boolean := True;
-
-         procedure Classify_Entity (E : Entity_Id) is
-         begin
-            --  Package generic formals are stored at the beginning of the
-            --  list of entities
-
-            if In_Pkg_Generic_Formals then
-               if Is_Generic_Formal (E) then
-                  Entities.Generic_Formals.Append (E);
-                  Backend.Entities.Generic_Formals.Append (E);
-                  return;
-               end if;
-
-               In_Pkg_Generic_Formals := False;
-            end if;
-
-            if Is_Package (E) then
-               Entities.Pkgs.Append (E);
-               Backend.Entities.Pkgs.Append (E);
-
-            elsif Get_Kind (E) = E_Variable then
-               Entities.Variables.Append (E);
-               Backend.Entities.Variables.Append (E);
-
-            elsif LL.Is_Type (E) then
-               if Get_Kind (E) = E_Class then
-                  Entities.CPP_Classes.Append (E);
-                  Backend.Entities.CPP_Classes.Append (E);
-
-               elsif Is_Tagged_Type (E) then
-                  if Get_Kind (E) = E_Interface then
-                     Entities.Interface_Types.Append (E);
-                     Backend.Entities.Interface_Types.Append (E);
-                  else
-                     Entities.Tagged_Types.Append (E);
-                     Backend.Entities.Tagged_Types.Append (E);
-                  end if;
-
-               elsif Is_Class_Or_Record_Type (E) then
-                  Entities.Record_Types.Append (E);
-                  Backend.Entities.Record_Types.Append (E);
-
-               elsif LL.Is_Access (E) then
-                  Entities.Access_Types.Append (E);
-                  Backend.Entities.Access_Types.Append (E);
-
-               else
-                  Entities.Simple_Types.Append (E);
-                  Backend.Entities.Simple_Types.Append (E);
-               end if;
-
-            elsif LL.Is_Subprogram (E) then
-
-               --  C/C++ macros unsupported yet???
-
-               if Get_Kind (E) = E_Macro then
-                  null;
-
-               elsif Get_Kind (Entity) = E_Class
-                 and then LL.Is_Primitive (E)
-               then
-                  --  This is not fully correct since we should check that
-                  --  it is NOT defined as "void" (but this information is
-                  --  not available in Xref ???)
-
-                  if Get_Kind (E) = E_Procedure
-                    and then Get_Short_Name (E) = Get_Short_Name (Entity)
-                  then
-                     Entities.CPP_Constructors.Append (E);
-                     Backend.Entities.CPP_Constructors.Append (E);
-                  else
-                     Append_Unique_Elmt (Entities.Methods, E);
-                     Append_Unique_Elmt (Backend.Entities.Methods, E);
-                  end if;
-
-               elsif In_Ada_Language (E) then
-                  if LL.Is_Primitive (E) then
-                     Append_Unique_Elmt (Entities.Methods, E);
-                     Append_Unique_Elmt (Backend.Entities.Methods, E);
-                  else
-                     Entities.Subprgs.Append (E);
-                     Backend.Entities.Subprgs.Append (E);
-                  end if;
-
-               else
-                  Entities.Subprgs.Append (E);
-                  Backend.Entities.Subprgs.Append (E);
-               end if;
-            end if;
-         end Classify_Entity;
-
-         --  Local variable
-
-         Printout : aliased Unbounded_String;
-         use type Ada.Containers.Count_Type;
-
-      --  Start of processing for Process_Node
-
-      begin
-         if In_Ada_Language (Entity) then
-            if Is_Package (Entity) then
-               if not Backend.Entities.Pkgs.Contains (Entity) then
-                  Backend.Entities.Pkgs.Append (Entity);
-               end if;
-
-            elsif LL.Is_Subprogram (Entity) then
-               if not Backend.Entities.Subprgs.Contains (Entity) then
-                  Backend.Entities.Subprgs.Append (Entity);
-               end if;
-            end if;
-         end if;
-
-         --  Classify the tree nodes in categories
-
-         For_All (Get_Entities (Entity).all, Classify_Entity'Access);
-
-         if Entities.Access_Types.Length > 0
-           or else Entities.CPP_Classes.Length > 0
-           or else Entities.CPP_Constructors.Length > 0
-           or else Entities.Generic_Formals.Length > 0
-           or else Entities.Interface_Types.Length > 0
-           or else Entities.Methods.Length > 0
-           or else Entities.Pkgs.Length > 0
-           or else Entities.Record_Types.Length > 0
-           or else Entities.Simple_Types.Length > 0
-           or else Entities.Subprgs.Length > 0
-           or else Entities.Tagged_Types.Length > 0
-           or else Entities.Variables.Length > 0
-         then
-            Append_Line (Printout'Access, "Entities");
-            Append_Line (Printout'Access, "========");
-            Append_Line (Printout'Access, "");
-
-            ReST_Append_List
-              (Printout'Access, Entities.Generic_Formals, "Generic formals");
-            ReST_Append_List
-              (Printout'Access, Entities.Variables, "Constants & variables");
-            ReST_Append_List
-              (Printout'Access, Entities.Simple_Types, "Simple Types");
-            ReST_Append_List
-              (Printout'Access, Entities.Access_Types, "Access Types");
-            ReST_Append_List
-              (Printout'Access, Entities.Record_Types, "Record Types");
-            ReST_Append_List
-              (Printout'Access, Entities.Interface_Types, "Interface types");
-            ReST_Append_List
-              (Printout'Access, Entities.Tagged_Types, "Tagged types");
-            ReST_Append_List
-              (Printout'Access, Entities.CPP_Classes, "C++ Classes");
-            ReST_Append_List
-              (Printout'Access, Entities.Subprgs, "Subprograms");
-
-            if In_Ada_Language (Entity) then
-               ReST_Append_List
-                 (Printout'Access, Entities.Methods,
-                  "Dispatching subprograms");
-            else
-               ReST_Append_List
-                 (Printout'Access, Entities.CPP_Constructors, "Constructors",
-                  Use_Full_Name => True);
-               ReST_Append_List
-                 (Printout'Access, Entities.Methods, "Methods",
-                  Use_Full_Name => True);
-            end if;
-
-            if In_Ada_Language (Entity) then
-               ReST_Append_List
-                 (Printout'Access, Entities.Pkgs, "Nested packages");
-            end if;
-
-            --  Generate full documentation
-
-            For_All
-              (Vector   => Entities.Generic_Formals,
-               Printout => Printout'Access,
-               Process  => Append_Generic_Formal'Access);
-            For_All
-              (Vector   => Entities.Variables,
-               Printout => Printout'Access,
-               Process  => ReST_Append_Simple_Declaration'Access);
-            For_All
-              (Entities.Simple_Types,
-               Printout'Access,
-               ReST_Append_Simple_Declaration'Access);
-            For_All
-              (Entities.Access_Types,
-               Printout'Access,
-               ReST_Append_Simple_Declaration'Access);
-            For_All
-              (Entities.Record_Types,
-               Printout'Access,
-               ReST_Append_Record_Type_Declaration'Access);
-
-            if In_Ada_Language (Entity) then
-               For_All
-                 (Entities.Interface_Types,
-                  Printout'Access,
-                  ReST_Append_Record_Type_Declaration'Access);
-               For_All
-                 (Entities.Tagged_Types,
-                  Printout'Access,
-                  ReST_Append_Record_Type_Declaration'Access);
-               For_All
-                 (Entities.Methods,
-                  Printout'Access,
-                  ReST_Append_Subprogram'Access);
-
-            else
-               For_All
-                 (Entities.CPP_Constructors,
-                  Printout'Access,
-                  ReST_Append_Subprogram'Access);
-               For_All
-                 (Entities.Methods,
-                  Printout'Access,
-                  ReST_Append_Subprogram'Access);
-            end if;
-
-            For_All
-              (Entities.Subprgs,
-               Printout'Access,
-               ReST_Append_Subprogram'Access);
-         end if;
-
-         declare
-            Doc_Dir     : constant Virtual_File :=
-                            Get_Doc_Directory (Backend.Context.Kernel);
-            Filename    : constant String := File_Containing (Entity);
-            ReST_Header : constant String (Filename'Range) := (others => '*');
-            ReST_File   : constant Filesystem_String :=
-                            To_ReST_Name (Filesystem_String (Filename));
-            Labels      : Unbounded_String;
-            Header      : aliased Unbounded_String;
-         begin
-            if In_Ada_Language (Entity) then
-               Labels :=
-                 To_Unbounded_String (ReST_Label (Filename))
-                 & ASCII.LF;
-
-               --  For subprograms and instantiations we do not add here its
-               --  label to avoid generating the label twice since we will
-               --  append its profile (and label). See bellow the call to
-               --  ReST_Append_Subprogram.
-
-               if Is_Package (Entity)
-                 and then not Present (LL.Get_Instance_Of (Entity))
-               then
-                  Labels := Labels
-                    & ReST_Label (Entity)
-                    & ASCII.LF;
-               end if;
-
-            elsif Get_Kind (Entity) = E_Class then
-               Labels :=
-                 To_Unbounded_String (ReST_Label (Entity)) & ASCII.LF;
-            end if;
-
-            Header :=
-              Labels
-              & ASCII.LF
-              & ReST_Header & ASCII.LF
-              & Filename    & ASCII.LF
-              & ReST_Header & ASCII.LF;
-
-            if In_Ada_Language (Entity) then
-               if Get_Kind (Entity) = E_Generic_Package then
-                  Header :=
-                    Header
-                    & ASCII.LF
-                    & "Generic package."
-                    & ASCII.LF
-                    & ASCII.LF
-                    & To_ReST (Get_Comment (Entity))
-                    & ASCII.LF;
-               else
-                  Header :=
-                    Header
-                    & ASCII.LF
-                    & To_ReST (Get_Comment (Entity))
-                    & ASCII.LF;
-               end if;
-
-               if Present (LL.Get_Instance_Of (Entity)) then
-                  ReST_Append_Simple_Declaration (Printout'Access, Entity);
-
-               elsif LL.Is_Subprogram (Entity) then
-                  ReST_Append_Subprogram (Printout'Access, Entity);
-               end if;
-
-            elsif Get_Kind (Entity) = E_Class then
-               ReST_Append_Src (Header'Access, Entity);
-               ReST_Append_Comment (Header'Access, Entity);
-            end if;
-
-            Printout :=
-              Header & ASCII.LF
-              & Printout & ASCII.LF;
-
-            Insert (Translation, Assoc ("PRINTOUT", Printout));
-
-            Write_To_File
-              (Context   => Backend.Context,
-               Directory => Doc_Dir,
-               Filename  => ReST_File,
-               Text =>
-                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
-
-            --  Append files of nested Ada packages and C++ classes to the
-            --  list of files of the global index
-
-            if Scope_Level > Root_Level then
-               declare
-                  File : constant Virtual_File :=
-                           Create_From_Dir (Doc_Dir, ReST_File);
-               begin
-                  Backend.Extra_Files.Append (File);
-               end;
-            end if;
-         end;
-
-         --  (Ada) Handle nested packages
-
-         if In_Ada_Language (Entity) then
-            declare
-               Cursor : EInfo_List.Cursor;
-
-            begin
-               Cursor := Entities.Pkgs.First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Process_Node (EInfo_List.Element (Cursor), Scope_Level + 1);
-                  EInfo_List.Next (Cursor);
-               end loop;
-            end;
-
-         --  (C++) Handle C++ nested classes
-
          else
-            declare
-               Cursor : EInfo_List.Cursor;
-
-            begin
-               Cursor := Entities.CPP_Classes.First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Process_Node (EInfo_List.Element (Cursor), Scope_Level + 1);
-                  EInfo_List.Next (Cursor);
-               end loop;
-            end;
+            ReST_Append_Simple_Declaration (Printout, E);
          end if;
-
-         Clear (Entities);
-      end Process_Node;
+      end Append_Generic_Formal;
 
       --  Local variables
 
-      Lang         : constant Language_Access :=
-                       Get_Language_From_File
-                        (Backend.Context.Lang_Handler, Tree.File);
-      In_Ada_Lang  : constant Boolean :=
-                       Lang.all in Language.Ada.Ada_Language'Class;
-      Current_Unit : Entity_Id;
-      My_Delay     : Delay_Time;
+      My_Delay : Delay_Time;
+      Printout : aliased Unbounded_String;
+      use type Ada.Containers.Count_Type;
 
    --  Start of processing for Process_File
 
    begin
       Trace (Me, "Process_File " & (+Tree.File.Base_Name));
-
-      if In_Ada_Lang then
-         Current_Unit := Get_Entities (Tree.Tree_Root).First_Element;
-      else
-         Current_Unit := Tree.Tree_Root;
-      end if;
-
       Start (My_Delay);
 
-      Process_Node (Current_Unit, Scope_Level => Root_Level);
+      if In_Ada_Language (Entity) then
+         if Is_Package (Entity) then
+            if not Backend.Entities.Pkgs.Contains (Entity) then
+               Backend.Entities.Pkgs.Append (Entity);
+            end if;
+
+         elsif LL.Is_Subprogram (Entity) then
+            if not Backend.Entities.Subprgs.Contains (Entity) then
+               Backend.Entities.Subprgs.Append (Entity);
+            end if;
+         end if;
+      end if;
+
+      if Entities.Access_Types.Length > 0
+        or else Entities.CPP_Classes.Length > 0
+        or else Entities.CPP_Constructors.Length > 0
+        or else Entities.Generic_Formals.Length > 0
+        or else Entities.Interface_Types.Length > 0
+        or else Entities.Methods.Length > 0
+        or else Entities.Pkgs.Length > 0
+        or else Entities.Record_Types.Length > 0
+        or else Entities.Simple_Types.Length > 0
+        or else Entities.Subprgs.Length > 0
+        or else Entities.Tagged_Types.Length > 0
+        or else Entities.Variables.Length > 0
+      then
+         Append_Line (Printout'Access, "Entities");
+         Append_Line (Printout'Access, "========");
+         Append_Line (Printout'Access, "");
+
+         ReST_Append_List
+           (Printout'Access, Entities.Generic_Formals, "Generic formals");
+         ReST_Append_List
+           (Printout'Access, Entities.Variables, "Constants & variables");
+         ReST_Append_List
+           (Printout'Access, Entities.Simple_Types, "Simple Types");
+         ReST_Append_List
+           (Printout'Access, Entities.Access_Types, "Access Types");
+         ReST_Append_List
+           (Printout'Access, Entities.Record_Types, "Record Types");
+         ReST_Append_List
+           (Printout'Access, Entities.Interface_Types, "Interface types");
+         ReST_Append_List
+           (Printout'Access, Entities.Tagged_Types, "Tagged types");
+         ReST_Append_List
+           (Printout'Access, Entities.CPP_Classes, "C++ Classes");
+         ReST_Append_List
+           (Printout'Access, Entities.Subprgs, "Subprograms");
+
+         if In_Ada_Language (Entity) then
+            ReST_Append_List
+              (Printout'Access, Entities.Methods,
+               "Dispatching subprograms");
+         else
+            ReST_Append_List
+              (Printout'Access, Entities.CPP_Constructors, "Constructors",
+               Use_Full_Name => True);
+            ReST_Append_List
+              (Printout'Access, Entities.Methods, "Methods",
+               Use_Full_Name => True);
+         end if;
+
+         if In_Ada_Language (Entity) then
+            ReST_Append_List
+              (Printout'Access, Entities.Pkgs, "Nested packages");
+         end if;
+
+         --  Generate full documentation
+
+         For_All
+           (Vector   => Entities.Generic_Formals,
+            Printout => Printout'Access,
+            Process  => Append_Generic_Formal'Access);
+         For_All
+           (Vector   => Entities.Variables,
+            Printout => Printout'Access,
+            Process  => ReST_Append_Simple_Declaration'Access);
+         For_All
+           (Entities.Simple_Types,
+            Printout'Access,
+            ReST_Append_Simple_Declaration'Access);
+         For_All
+           (Entities.Access_Types,
+            Printout'Access,
+            ReST_Append_Simple_Declaration'Access);
+         For_All
+           (Entities.Record_Types,
+            Printout'Access,
+            ReST_Append_Record_Type_Declaration'Access);
+
+         if In_Ada_Language (Entity) then
+            For_All
+              (Entities.Interface_Types,
+               Printout'Access,
+               ReST_Append_Record_Type_Declaration'Access);
+            For_All
+              (Entities.Tagged_Types,
+               Printout'Access,
+               ReST_Append_Record_Type_Declaration'Access);
+            For_All
+              (Entities.Methods,
+               Printout'Access,
+               ReST_Append_Subprogram'Access);
+
+         else
+            For_All
+              (Entities.CPP_Constructors,
+               Printout'Access,
+               ReST_Append_Subprogram'Access);
+            For_All
+              (Entities.Methods,
+               Printout'Access,
+               ReST_Append_Subprogram'Access);
+         end if;
+
+         For_All
+           (Entities.Subprgs,
+            Printout'Access,
+            ReST_Append_Subprogram'Access);
+      end if;
+
+      declare
+         Doc_Dir     : constant Virtual_File :=
+           Get_Doc_Directory (Backend.Context.Kernel);
+         Filename    : constant String := File_Containing (Entity);
+         ReST_Header : constant String (Filename'Range) := (others => '*');
+         ReST_File   : constant Filesystem_String :=
+           To_ReST_Name (Filesystem_String (Filename));
+         Labels      : Unbounded_String;
+         Header      : aliased Unbounded_String;
+      begin
+         if In_Ada_Language (Entity) then
+            Labels :=
+              To_Unbounded_String (ReST_Label (Filename))
+              & ASCII.LF;
+
+            --  For subprograms and instantiations we do not add here its
+            --  label to avoid generating the label twice since we will
+            --  append its profile (and label). See bellow the call to
+            --  ReST_Append_Subprogram.
+
+            if Is_Package (Entity)
+              and then not Present (LL.Get_Instance_Of (Entity))
+            then
+               Labels := Labels
+                 & ReST_Label (Entity)
+                 & ASCII.LF;
+            end if;
+
+         elsif Get_Kind (Entity) = E_Class then
+            Labels :=
+              To_Unbounded_String (ReST_Label (Entity)) & ASCII.LF;
+         end if;
+
+         Header :=
+           Labels
+           & ASCII.LF
+           & ReST_Header & ASCII.LF
+           & Filename    & ASCII.LF
+           & ReST_Header & ASCII.LF;
+
+         if In_Ada_Language (Entity) then
+            if Get_Kind (Entity) = E_Generic_Package then
+               Header :=
+                 Header
+                 & ASCII.LF
+                 & "Generic package."
+                 & ASCII.LF
+                 & ASCII.LF
+                 & To_ReST (Get_Comment (Entity))
+                 & ASCII.LF;
+            else
+               Header :=
+                 Header
+                 & ASCII.LF
+                 & To_ReST (Get_Comment (Entity))
+                 & ASCII.LF;
+            end if;
+
+            if Present (LL.Get_Instance_Of (Entity)) then
+               ReST_Append_Simple_Declaration (Printout'Access, Entity);
+
+            elsif LL.Is_Subprogram (Entity) then
+               ReST_Append_Subprogram (Printout'Access, Entity);
+            end if;
+
+         elsif Get_Kind (Entity) = E_Class then
+            ReST_Append_Src (Header'Access, Entity);
+            ReST_Append_Comment (Header'Access, Entity);
+         end if;
+
+         Printout :=
+           Header & ASCII.LF
+           & Printout & ASCII.LF;
+
+         Insert (Translation, Assoc ("PRINTOUT", Printout));
+
+         Write_To_File
+           (Context   => Backend.Context,
+            Directory => Doc_Dir,
+            Filename  => ReST_File,
+            Text =>
+              Parse (+Tmpl.Full_Name, Translation, Cached => True));
+
+         --  Append files of nested Ada packages and C++ classes to the
+         --  list of files of the global index
+
+         if Scope_Level > Root_Level then
+            declare
+               File : constant Virtual_File :=
+                 Create_From_Dir (Doc_Dir, ReST_File);
+            begin
+               Backend.Extra_Files.Append (File);
+            end;
+         end if;
+      end;
 
       Stop (My_Delay, Generate_Doc_Time);
    end Generate_Lang_Documentation;

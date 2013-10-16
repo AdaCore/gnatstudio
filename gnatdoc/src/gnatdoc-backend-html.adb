@@ -242,7 +242,10 @@ package body GNATdoc.Backend.HTML is
 
    overriding procedure Generate_Lang_Documentation
      (Self : in out HTML_Backend;
-      Tree : access Tree_Type) is
+      Tree : access Tree_Type;
+      Entity      : Entity_Id;
+      Entities    : Collected_Entities;
+      Scope_Level : Natural) is
    begin
       null;
    end Generate_Lang_Documentation;

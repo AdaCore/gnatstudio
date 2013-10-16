@@ -15,20 +15,41 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATdoc.Atree; use GNATdoc.Atree;
+
 package GNATdoc.Backend.Base is
+
+   type Collected_Entities is record
+      Access_Types     : EInfo_List.Vector;
+      CPP_Classes      : EInfo_List.Vector;
+      CPP_Constructors : EInfo_List.Vector;
+      Generic_Formals  : EInfo_List.Vector;
+      Interface_Types  : EInfo_List.Vector;
+      Methods          : EInfo_List.Vector;
+      Pkgs             : aliased EInfo_List.Vector;
+      Record_Types     : EInfo_List.Vector;
+      Simple_Types     : EInfo_List.Vector;
+      Subprgs          : aliased EInfo_List.Vector;
+      Tagged_Types     : EInfo_List.Vector;
+      Variables        : EInfo_List.Vector;
+   end record;
 
    type Base_Backend is
      abstract new GNATdoc.Backend.GNATdoc_Backend with record
       Context   : access constant Docgen_Context;
       Src_Files : Files_List.Vector;
+      Entities  : Collected_Entities;
    end record;
 
    function Name (Self : Base_Backend) return String is abstract;
    --  Returns name of the backend in lowercase. It is used to construct paths.
 
    procedure Generate_Lang_Documentation
-     (Self : in out Base_Backend;
-      Tree : access Tree_Type) is abstract;
+     (Self        : in out Base_Backend;
+      Tree        : access Tree_Type;
+      Entity      : Entity_Id;
+      Entities    : Collected_Entities;
+      Scope_Level : Natural) is abstract;
    --  Generates documentation for single <lang> file.
 
    function Get_Resource_File

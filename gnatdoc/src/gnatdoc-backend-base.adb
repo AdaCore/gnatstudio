@@ -18,8 +18,6 @@
 with Language;      use Language;
 with Language.Ada;  use Language.Ada;
 
-with GNATdoc.Atree; use GNATdoc.Atree;
-
 package body GNATdoc.Backend.Base is
 
    -----------------------
@@ -70,8 +68,150 @@ package body GNATdoc.Backend.Base is
      (Self : in out Base_Backend;
       Tree : access Tree_Type)
    is
-      Lang : constant Language_Access :=
+      procedure Generate_Documentation
+        (Entity : Entity_Id; Scope_Level : Natural);
+
+      ----------------------------
+      -- Generate_Documentation --
+      ----------------------------
+
+      procedure Generate_Documentation
+        (Entity : Entity_Id; Scope_Level : Natural)
+      is
+         procedure Classify_Entity
+           (Entity   : Entity_Id;
+            Parent   : Entity_Id;
+            Entities : in out Collected_Entities);
+         --  Classify the entity in one of the following categories: Method,
+         --  subprogram, tagged type, record type, type, variable or package.
+
+         ---------------------
+         -- Classify_Entity --
+         ---------------------
+
+         In_Pkg_Generic_Formals : Boolean := True;
+
+         procedure Classify_Entity
+           (Entity   : Entity_Id;
+            Parent   : Entity_Id;
+            Entities : in out Collected_Entities) is
+         begin
+            --  Package generic formals are stored at the beginning of the
+            --  list of entities
+
+            if In_Pkg_Generic_Formals then
+               if Is_Generic_Formal (Entity) then
+                  Entities.Generic_Formals.Append (Entity);
+                  Self.Entities.Generic_Formals.Append (Entity);
+                  return;
+               end if;
+
+               In_Pkg_Generic_Formals := False;
+            end if;
+
+            if Is_Package (Entity) then
+               Entities.Pkgs.Append (Entity);
+               Self.Entities.Pkgs.Append (Entity);
+
+            elsif Get_Kind (Entity) = E_Variable then
+               Entities.Variables.Append (Entity);
+               Self.Entities.Variables.Append (Entity);
+
+            elsif LL.Is_Type (Entity) then
+               if Get_Kind (Entity) = E_Class then
+                  Entities.CPP_Classes.Append (Entity);
+                  Self.Entities.CPP_Classes.Append (Entity);
+
+               elsif Is_Tagged_Type (Entity) then
+                  if Get_Kind (Entity) = E_Interface then
+                     Entities.Interface_Types.Append (Entity);
+                     Self.Entities.Interface_Types.Append (Entity);
+                  else
+                     Entities.Tagged_Types.Append (Entity);
+                     Self.Entities.Tagged_Types.Append (Entity);
+                  end if;
+
+               elsif Is_Class_Or_Record_Type (Entity) then
+                  Entities.Record_Types.Append (Entity);
+                  Self.Entities.Record_Types.Append (Entity);
+
+               elsif LL.Is_Access (Entity) then
+                  Entities.Access_Types.Append (Entity);
+                  Self.Entities.Access_Types.Append (Entity);
+
+               else
+                  Entities.Simple_Types.Append (Entity);
+                  Self.Entities.Simple_Types.Append (Entity);
+               end if;
+
+            elsif LL.Is_Subprogram (Entity) then
+
+               --  C/C++ macros unsupported yet???
+
+               if Get_Kind (Entity) = E_Macro then
+                  null;
+
+               elsif Get_Kind (Parent) = E_Class
+                 and then LL.Is_Primitive (Entity)
+               then
+                  --  This is not fully correct since we should check that
+                  --  it is NOT defined as "void" (but this information is
+                  --  not available in Xref ???)
+
+                  if Get_Kind (Entity) = E_Procedure
+                    and then Get_Short_Name (Entity) = Get_Short_Name (Parent)
+                  then
+                     Entities.CPP_Constructors.Append (Entity);
+                     Self.Entities.CPP_Constructors.Append (Entity);
+                  else
+                     Append_Unique_Elmt (Entities.Methods, Entity);
+                     Append_Unique_Elmt (Self.Entities.Methods, Entity);
+                  end if;
+
+               elsif In_Ada_Language (Entity) then
+                  if LL.Is_Primitive (Entity) then
+                     Append_Unique_Elmt (Entities.Methods, Entity);
+                     Append_Unique_Elmt (Self.Entities.Methods, Entity);
+                  else
+                     Entities.Subprgs.Append (Entity);
+                     Self.Entities.Subprgs.Append (Entity);
+                  end if;
+
+               else
+                  Entities.Subprgs.Append (Entity);
+                  Self.Entities.Subprgs.Append (Entity);
+               end if;
+            end if;
+         end Classify_Entity;
+
+         Entities : Collected_Entities;
+
+      begin
+         for Current of Get_Entities (Entity).all loop
+            Classify_Entity (Current, Entity, Entities);
+         end loop;
+
+         Base_Backend'Class
+           (Self).Generate_Lang_Documentation
+           (Tree, Entity, Entities, Scope_Level);
+
+         --  Handle nested Ada packages
+
+         for Nested of Entities.Pkgs loop
+            Generate_Documentation (Nested, Scope_Level + 1);
+         end loop;
+
+         --  Handle nested C++ classes
+
+         for Nested of Entities.CPP_Classes loop
+            Generate_Documentation (Nested, Scope_Level + 1);
+         end loop;
+      end Generate_Documentation;
+
+      Lang   : constant Language_Access :=
         Self.Context.Lang_Handler.Get_Language_From_File (Tree.File);
+      Is_Ada : constant Boolean         :=
+        Lang.all in Language.Ada.Ada_Language'Class;
 
    begin
       if No (Tree.Tree_Root) then
@@ -79,16 +219,21 @@ package body GNATdoc.Backend.Base is
 
          return;
 
-      elsif Lang.all not in Language.Ada.Ada_Language'Class
-        and then Self.Context.Options.Skip_C_Files
-      then
+      elsif not Is_Ada and then Self.Context.Options.Skip_C_Files then
          --  Skip non-Ada files except when they are activated
 
          return;
       end if;
 
       Self.Src_Files.Append (Tree.File);
-      Base_Backend'Class (Self).Generate_Lang_Documentation (Tree);
+
+      if Is_Ada then
+         Generate_Documentation
+           (Get_Entities (Tree.Tree_Root).First_Element, 0);
+
+      else
+         Generate_Documentation (Tree.Tree_Root, 0);
+      end if;
    end Process_File;
 
 end GNATdoc.Backend.Base;
