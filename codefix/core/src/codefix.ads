@@ -42,7 +42,7 @@ package Codefix is
 
    function To_Char_Index
      (Index : Visible_Column_Type; Str : String) return String_Index_Type
-     with post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
+     with Post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
