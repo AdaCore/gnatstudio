@@ -1935,11 +1935,11 @@ package body GNATdoc.Backend.Simple is
       return "simple";
    end Name;
 
-   ------------------
-   -- Process_File --
-   ------------------
+   ---------------------------------
+   -- Generate_Lang_Documentation --
+   ---------------------------------
 
-   overriding procedure Process_File
+   overriding procedure Generate_Lang_Documentation
      (Backend : in out Simple_Backend;
       Tree    : access Tree_Type)
    is
@@ -2430,20 +2430,12 @@ package body GNATdoc.Backend.Simple is
                         (Backend.Context.Lang_Handler, Tree.File);
       In_Ada_Lang  : constant Boolean :=
                        Lang.all in Language.Ada.Ada_Language'Class;
-      In_C_Lang    : constant Boolean := not In_Ada_Lang;
-      Root_Id      : Entity_Id renames Tree.Tree_Root;
       Current_Unit : Entity_Id;
       My_Delay     : Delay_Time;
 
    --  Start of processing for Process_File
 
    begin
-      if No (Root_Id) then
-         return;
-      elsif In_C_Lang and then Backend.Context.Options.Skip_C_Files then
-         return;
-      end if;
-
       Trace (Me, "Process_File " & (+Tree.File.Base_Name));
 
       if In_Ada_Lang then
@@ -2455,10 +2447,9 @@ package body GNATdoc.Backend.Simple is
       Start (My_Delay);
 
       Process_Node (Current_Unit, Scope_Level => Root_Level);
-      Backend.Src_Files.Append (Tree.File);
 
       Stop (My_Delay, Generate_Doc_Time);
-   end Process_File;
+   end Generate_Lang_Documentation;
 
    ---------------------
    -- To_Listing_Name --

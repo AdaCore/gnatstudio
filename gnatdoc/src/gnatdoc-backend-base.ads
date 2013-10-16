@@ -19,11 +19,17 @@ package GNATdoc.Backend.Base is
 
    type Base_Backend is
      abstract new GNATdoc.Backend.GNATdoc_Backend with record
-      Context : access constant Docgen_Context;
+      Context   : access constant Docgen_Context;
+      Src_Files : Files_List.Vector;
    end record;
 
    function Name (Self : Base_Backend) return String is abstract;
    --  Returns name of the backend in lowercase. It is used to construct paths.
+
+   procedure Generate_Lang_Documentation
+     (Self : in out Base_Backend;
+      Tree : access Tree_Type) is abstract;
+   --  Generates documentation for single <lang> file.
 
    function Get_Resource_File
      (Self      : Base_Backend'Class;
@@ -36,5 +42,12 @@ package GNATdoc.Backend.Base is
      (Backend : in out Base_Backend;
       Context : access constant Docgen_Context);
    --  Initialize backend.
+
+   overriding procedure Process_File
+     (Self : in out Base_Backend;
+      Tree : access Tree_Type);
+   --  Process one file. Depending from the file's language it calls
+   --  corresponding Generate_<language>_Documentation subprogram. This
+   --  subprogram should not be overridden by derived backends.
 
 end GNATdoc.Backend.Base;

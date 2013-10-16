@@ -236,6 +236,17 @@ package body GNATdoc.Backend.HTML is
       end;
    end Finalize;
 
+   ---------------------------------
+   -- Generate_Lang_Documentation --
+   ---------------------------------
+
+   overriding procedure Generate_Lang_Documentation
+     (Self : in out HTML_Backend;
+      Tree : access Tree_Type) is
+   begin
+      null;
+   end Generate_Lang_Documentation;
+
    ------------------
    -- Get_Template --
    ------------------
@@ -310,16 +321,21 @@ package body GNATdoc.Backend.HTML is
       --------------------------------------
 
       procedure Create_Documentation_Directories is
-         Doc_Dir  : constant Virtual_File :=
+         Root_Dir : constant Virtual_File :=
            Get_Doc_Directory (Self.Context.Kernel);
-         Srcs_Dir : constant Virtual_File := Doc_Dir.Create_From_Dir ("srcs");
+         Srcs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("srcs");
+         Docs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("docs");
 
       begin
-         if not Doc_Dir.Is_Directory then
-            Doc_Dir.Make_Dir;
+         if not Root_Dir.Is_Directory then
+            Root_Dir.Make_Dir;
          end if;
 
          if not Srcs_Dir.Is_Directory then
+            Srcs_Dir.Make_Dir;
+         end if;
+
+         if not Docs_Dir.Is_Directory then
             Srcs_Dir.Make_Dir;
          end if;
       end Create_Documentation_Directories;
@@ -346,16 +362,5 @@ package body GNATdoc.Backend.HTML is
    begin
       return "html";
    end Name;
-
-   ------------------
-   -- Process_File --
-   ------------------
-
-   overriding procedure Process_File
-     (Self : in out HTML_Backend;
-      Tree : access Tree_Type) is
-   begin
-      Self.Src_Files.Append (Tree.File);
-   end Process_File;
 
 end GNATdoc.Backend.HTML;

@@ -15,6 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Language;      use Language;
+with Language.Ada;  use Language.Ada;
+
+with GNATdoc.Atree; use GNATdoc.Atree;
+
 package body GNATdoc.Backend.Base is
 
    -----------------------
@@ -56,5 +61,34 @@ package body GNATdoc.Backend.Base is
    begin
       Backend.Context := Context;
    end Initialize;
+
+   ------------------
+   -- Process_File --
+   ------------------
+
+   overriding procedure Process_File
+     (Self : in out Base_Backend;
+      Tree : access Tree_Type)
+   is
+      Lang : constant Language_Access :=
+        Self.Context.Lang_Handler.Get_Language_From_File (Tree.File);
+
+   begin
+      if No (Tree.Tree_Root) then
+         --  Skip files without entities information.
+
+         return;
+
+      elsif Lang.all not in Language.Ada.Ada_Language'Class
+        and then Self.Context.Options.Skip_C_Files
+      then
+         --  Skip non-Ada files except when they are activated
+
+         return;
+      end if;
+
+      Self.Src_Files.Append (Tree.File);
+      Base_Backend'Class (Self).Generate_Lang_Documentation (Tree);
+   end Process_File;
 
 end GNATdoc.Backend.Base;
