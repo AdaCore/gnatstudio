@@ -50,20 +50,6 @@ private package GNATdoc.Backend.Simple is
    --  If Update_Global_Index is true then update the global indexes.
 
 private
-   type Collected_Entities is record
-      Access_Types     : EInfo_List.Vector;
-      CPP_Classes      : EInfo_List.Vector;
-      CPP_Constructors : EInfo_List.Vector;
-      Generic_Formals  : EInfo_List.Vector;
-      Interface_Types  : EInfo_List.Vector;
-      Methods          : EInfo_List.Vector;
-      Pkgs             : aliased EInfo_List.Vector;
-      Record_Types     : EInfo_List.Vector;
-      Simple_Types     : EInfo_List.Vector;
-      Subprgs          : aliased EInfo_List.Vector;
-      Tagged_Types     : EInfo_List.Vector;
-      Variables        : EInfo_List.Vector;
-   end record;
 
    type Simple_Backend is new GNATdoc.Backend.Base.Base_Backend with record
       Extra_Files : Files_List.Vector;
