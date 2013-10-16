@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;          use Ada.Characters.Handling;
+
 with GNAT.Strings;                     use GNAT.Strings;
 with GNATCOLL.JSON;                    use GNATCOLL.JSON;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
@@ -22,14 +24,18 @@ with Language;                         use Language;
 with Templates_Parser;                 use Templates_Parser;
 
 with GNATdoc.Backend.HTML.Source_Code; use GNATdoc.Backend.HTML.Source_Code;
+with GNATdoc.Comment;                  use GNATdoc.Comment;
 
 package body GNATdoc.Backend.HTML is
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
 
    type Template_Kinds is
-     (Tmpl_Source_File_HTML,       --  Source file (HTML page)
-      Tmpl_Source_File_JS,         --  Source file (JavaScript data)
-      Tmpl_Source_File_Index_JS);  --  Index of source files (JavaScript data)
+     (Tmpl_Documentation_HTML,      --  Documentation (HTML page)
+      Tmpl_Documentation_JS,        --  Documentation (JS data)
+      Tmpl_Documentation_Index_JS,  --  Index of documentation (JS data)
+      Tmpl_Source_File_HTML,        --  Source file (HTML page)
+      Tmpl_Source_File_JS,          --  Source file (JavaScript data)
+      Tmpl_Source_File_Index_JS);   --  Index of source files (JavaScript data)
 
    -----------------------
    -- Local Subprograms --
@@ -234,6 +240,26 @@ package body GNATdoc.Backend.HTML is
               (+Self.Get_Template (Tmpl_Source_File_Index_JS).Full_Name,
                Translation));
       end;
+
+      --  Write JSON data file for index of documentation files.
+
+      declare
+         Translation : Translate_Set;
+
+      begin
+         Insert
+           (Translation,
+            Assoc
+              ("DOCUMENTATION_INDEX_DATA",
+               String'(Write (Create (Self.Doc_Files), False))));
+         Write_To_File
+           (Self.Context,
+            Get_Doc_Directory (Self.Context.Kernel),
+            "documentation_index.js",
+            Parse
+              (+Self.Get_Template (Tmpl_Documentation_Index_JS).Full_Name,
+               Translation));
+      end;
    end Finalize;
 
    ---------------------------------
@@ -241,13 +267,97 @@ package body GNATdoc.Backend.HTML is
    ---------------------------------
 
    overriding procedure Generate_Lang_Documentation
-     (Self : in out HTML_Backend;
-      Tree : access Tree_Type;
+     (Self        : in out HTML_Backend;
+      Tree        : access Tree_Type;
       Entity      : Entity_Id;
       Entities    : Collected_Entities;
-      Scope_Level : Natural) is
+      Scope_Level : Natural)
+   is
+      pragma Unreferenced (Tree, Entities, Scope_Level);
+
+      Docs_Dir       : constant Virtual_File :=
+        Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
+      File_Base_Name : constant String := To_Lower (Get_Full_Name (Entity));
+      HTML_File_Name : constant String := File_Base_Name & ".html";
+      JS_File_Name   : constant String := File_Base_Name & ".js";
+      Documentation  : constant JSON_Value := Create_Object;
+      Index_Entry    : constant JSON_Value := Create_Object;
+      Summary        : Unbounded_String;
+      Description    : Unbounded_String;
+
    begin
-      null;
+      --  Extract package's "summary" and "description".
+
+      if Present (Get_Comment (Entity)) then
+         declare
+            Cursor      : Tag_Cursor := New_Cursor (Get_Comment (Entity));
+            Tag         : Tag_Info_Ptr;
+
+         begin
+            while not At_End (Cursor) loop
+               Tag := Get (Cursor);
+
+               if Tag.Tag = "summary" then
+                  Summary := Tag.Text;
+
+               elsif Tag.Tag = "description" then
+                  Description := Tag.Text;
+
+               else
+                  null;
+               end if;
+
+               Next (Cursor);
+            end loop;
+         end;
+      end if;
+
+      Documentation.Set_Field ("summary", Summary);
+      Documentation.Set_Field ("description", Description);
+
+      --  Write JS data file
+
+      declare
+         Translation : Translate_Set;
+
+      begin
+         Insert
+           (Translation,
+            Assoc
+              ("DOCUMENTATION_DATA",
+               String'(Write (Documentation, False))));
+         Write_To_File
+           (Self.Context,
+            Docs_Dir,
+            Filesystem_String (JS_File_Name),
+            Parse
+              (+Self.Get_Template (Tmpl_Documentation_JS).Full_Name,
+               Translation,
+               Cached => True));
+      end;
+
+      --  Write HTML file
+
+      declare
+         Translation : Translate_Set;
+
+      begin
+         Insert (Translation, Assoc ("DOCUMENTATION_JS", JS_File_Name));
+         Write_To_File
+           (Self.Context,
+            Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs"),
+            Filesystem_String (HTML_File_Name),
+            Parse
+              (+Self.Get_Template (Tmpl_Documentation_HTML).Full_Name,
+               Translation,
+               Cached => True));
+      end;
+
+      --  Construct documentation index entry for generated page
+
+      Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
+      Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
+      Append (Self.Doc_Files, Index_Entry);
    end Generate_Lang_Documentation;
 
    ------------------
@@ -259,6 +369,12 @@ package body GNATdoc.Backend.HTML is
       Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File is
    begin
       case Kind is
+         when Tmpl_Documentation_HTML =>
+            return Self.Get_Resource_File ("documentation.html.tmpl");
+         when Tmpl_Documentation_JS =>
+            return Self.Get_Resource_File ("documentation.js.tmpl");
+         when Tmpl_Documentation_Index_JS =>
+            return Self.Get_Resource_File ("documentation_index.js.tmpl");
          when Tmpl_Source_File_HTML =>
             return Self.Get_Resource_File ("source_file.html.tmpl");
          when Tmpl_Source_File_JS =>
@@ -339,7 +455,7 @@ package body GNATdoc.Backend.HTML is
          end if;
 
          if not Docs_Dir.Is_Directory then
-            Srcs_Dir.Make_Dir;
+            Docs_Dir.Make_Dir;
          end if;
       end Create_Documentation_Directories;
 

@@ -17,6 +17,8 @@
 
 --  This package implements a HTML backend of Docgen.
 
+with GNATCOLL.JSON;
+
 with GNATdoc.Atree;        use GNATdoc.Atree;
 with GNATdoc.Backend.Base; use GNATdoc.Backend.Base;
 
@@ -47,7 +49,8 @@ private package GNATdoc.Backend.HTML is
 private
 
    type HTML_Backend is new GNATdoc.Backend.Base.Base_Backend with record
-      null;
+      Doc_Files : GNATCOLL.JSON.JSON_Array;
+      --  List of generated documentation files.
    end record;
 
    overriding function Name (Self : HTML_Backend) return String;

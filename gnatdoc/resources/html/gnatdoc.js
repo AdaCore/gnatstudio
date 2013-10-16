@@ -1,7 +1,56 @@
 
-function buildSourcesIndex()
+function buildDocumentationPage(toc)
 {
-    toc = document.getElementById('tocView');
+    pane = document.getElementById('body');
+
+    header = document.createElement('h2');
+    text = document.createTextNode('Summary');
+    header.appendChild(text);
+    pane.appendChild(header);
+    text = document.createTextNode(GNATdocDocumentation.summary);
+    pane.appendChild(text);
+    href = document.createElement('a');
+    href.setAttribute('href', '#Description');
+    text = document.createTextNode(' More...');
+    href.appendChild(text);
+    pane.appendChild(href);
+
+    header = document.createElement('h2');
+    header.setAttribute('id', 'Description');
+    text = document.createTextNode('Description');
+    header.appendChild(text);
+    pane.appendChild(header);
+    text = document.createTextNode(GNATdocDocumentation.description);
+    pane.appendChild(text);
+}
+
+function buildPackagesIndex(toc)
+{
+    header = document.createElement('h1');
+    text = document.createTextNode('Packages and Classes');
+    header.appendChild(text);
+    toc.appendChild(header);
+
+    list = document.createElement('ul');
+    toc.appendChild(list);
+
+    for (index = 0; index < GNATdocDocumentationIndex.length; index++)
+    {
+        entry = GNATdocDocumentationIndex[index];
+
+        item = document.createElement('li');
+        href = document.createElement('a');
+        href.setAttribute('href', entry.file);
+        href.setAttribute('target', 'contentView');
+        text = document.createTextNode(entry.label);
+        href.appendChild(text);
+        item.appendChild(href);
+        list.appendChild(item);
+    }
+}
+
+function buildSourcesIndex(toc)
+{
     header = document.createElement('h1');
     text = document.createTextNode('Source Files');
     header.appendChild(text);
@@ -62,10 +111,19 @@ function displaySource()
     pane.appendChild(table);
 }
 
-function onLoad() {
-    buildSourcesIndex();
+function onDocumentationLoad()
+{
+    buildDocumentationPage();
 }
 
-function onSourceFileLoad() {
+function onLoad()
+{
+    toc = document.getElementById('tocView');
+    buildPackagesIndex(toc);
+    buildSourcesIndex(toc);
+}
+
+function onSourceFileLoad()
+{
     displaySource();
 }
