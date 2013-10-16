@@ -641,12 +641,15 @@ class GNATprove_Message(GPS.Message):
 
     def clear_trace(self):
         """clear the trace of the message"""
-        if self.lines:
-            first_sloc = self.lines[0]
-            buf = GPS.EditorBuffer.get(first_sloc.file())
-            if buf:
-                overlay = get_overlay(buf,"trace")
-                buf.remove_overlay(overlay)
+        f = None
+        for sloc in (self.lines or []):
+            if sloc.file() != f:
+                f = sloc.file()
+                buf = GPS.EditorBuffer.get(f)
+                goto_location(sloc)
+                if buf:
+                    overlay = get_overlay(buf,"trace")
+                    buf.remove_overlay(overlay)
         self.trace_visible = False
 
     def clear_highlighting(self):
@@ -688,17 +691,18 @@ class GNATprove_Message(GPS.Message):
            trace file to load the information.
         """
         self.trace_visible = True
-        if self.lines:
-            first_sloc = self.lines[0]
-            buf = GPS.EditorBuffer.get(first_sloc.file())
-            goto_location(first_sloc)
-            overlay = get_overlay(buf, "trace")
-            buf.remove_overlay(overlay)
-            for sloc in self.lines:
-                buf.apply_overlay(
-                    overlay,
-                    GPS.EditorLocation(buf, sloc.line(), 1),
-                    GPS.EditorLocation(buf, sloc.line(), 1))
+        f = None
+        for sloc in (self.lines or []):
+            if sloc.file() != f:
+                f = sloc.file()
+                buf = GPS.EditorBuffer.get(f)
+                goto_location(sloc)
+                overlay = get_overlay(buf, "trace")
+                buf.remove_overlay(overlay)
+            buf.apply_overlay(
+                overlay,
+                GPS.EditorLocation(buf, sloc.line(), 1),
+                GPS.EditorLocation(buf, sloc.line(), 1))
 
 # this variable is used to clear GNATprove messages whenever a new
 # builder action is run. It is too early to do it in the menu entry
