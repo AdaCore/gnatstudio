@@ -951,7 +951,8 @@ your project:
 
 .. index:: project; scenario variables
 .. index:: windows; scenario view
-.. index:: scenario
+.. index:: project; scenario variable
+.. _Scenario_View:
 
 The :guilabel:`Scenario` view
 =============================
@@ -1436,7 +1437,7 @@ An OS shell window is also available in GPS, providing a simple access to the
 underlying OS shell as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
 environment variables.
 
-This console is opened via the :menuselection:`Tools->Consoles->OS Shell`
+This console is opened via the :menuselection:`Tools --> Consoles --> OS Shell`
 menu. This menu is available only if the plug-in :file:`shell.py` was
 loaded in GPS (which is the default).
 
@@ -1490,7 +1491,7 @@ killed by clicking on the :guilabel:`interrupt` button.
 .. index:: menu; tools --> views --> tasks
 
 The Task Manager is opened by double clicking on the progress bar in the main
-toolbar, or using the :menuselection:`Tools->Views->Tasks` menu, and can be put
+toolbar, or using the :menuselection:`Tools --> Views --> Tasks` menu, and can be put
 anywhere in your desktop.
 
 .. image:: task-manager-exit.png
