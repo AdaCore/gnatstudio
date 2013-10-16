@@ -2,7 +2,7 @@ with "../shared";
 
 project Docgen_Resources is
 
-   for Source_Dirs use ("resources/");
+   for Source_Dirs use ("resources/html", "resources/simple");
    for Object_Dir use Shared'Object_Dir;
    for Languages use ("html");
 
