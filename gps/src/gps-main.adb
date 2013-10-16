@@ -285,6 +285,9 @@ procedure GPS.Main is
    --  Main GPS processing (launches a gtk+ main loop and handle unexpected
    --  exceptions).
 
+   procedure Error_Message (Message : String);
+   --  Display the "Fatal error" message
+
    procedure Do_Cleanups;
    --  Perform clean ups and automatic saving before exiting
 
@@ -1324,6 +1327,17 @@ procedure GPS.Main is
 
          Destroy (Screen);
          return True;
+      exception
+         when E : others =>
+            Unexpected_Exception := True;
+            Trace (Me, E);
+            if not Hide_GPS then
+               Error_Message
+                 ("Unexpected fatal error during project load.");
+            end if;
+
+            Gtk.Main.Main_Quit;
+            return False;
       end Setup_Project;
 
       ------------------
@@ -1862,11 +1876,11 @@ procedure GPS.Main is
       return False;
    end Finish_Setup;
 
-   ---------------------
-   -- Main_Processing --
-   ---------------------
+   -------------------
+   -- Error_Message --
+   -------------------
 
-   procedure Main_Processing is
+   procedure Error_Message (Message : String) is
       Log_File : constant Virtual_File :=
                    Create_From_Dir
                      (Get_Home_Dir (GPS_Main.Kernel),
@@ -1878,27 +1892,41 @@ procedure GPS.Main is
       Str      : Virtual_File;
 
    begin
+
+      if Is_Regular_File (Pid_File) then
+         Str := Pid_File;
+      else
+         Str := Log_File;
+      end if;
+
+      if Active (Testsuite_Handle) then
+         Put_Line ("Error message generated: " & Message);
+      else
+         Button := Message_Dialog
+           (Message
+            & ASCII.LF
+            & "Please report with contents of " & Str.Display_Full_Name,
+            Error, Button_OK,
+            Title         => -"Fatal Error",
+            Justification => Justify_Left);
+      end if;
+   end Error_Message;
+
+   ---------------------
+   -- Main_Processing --
+   ---------------------
+
+   procedure Main_Processing is
+   begin
       Gtk.Main.Main;
    exception
       when E : others =>
          Unexpected_Exception := True;
          Trace (Me, E);
-
-         if Is_Regular_File (Pid_File) then
-            Str := Pid_File;
-         else
-            Str := Log_File;
-         end if;
-
-         Button := Message_Dialog
-           ("Unexpected fatal error, GPS is in an inconsistent state" &
-            ASCII.LF & "Please report with contents of " &
-            Str.Display_Full_Name &
-            ASCII.LF & ASCII.LF &
-            "You will be asked to save modified files before GPS exits",
-            Error, Button_OK,
-            Title         => -"Fatal Error",
-            Justification => Justify_Left);
+         Error_Message
+           ("Unexpected fatal error, GPS is in an inconsistent state"
+            & ASCII.LF
+            & "You will be asked to save modified files before GPS exits");
          Result := Save_MDI_Children (GPS_Main.Kernel, Force => False);
    end Main_Processing;
 
