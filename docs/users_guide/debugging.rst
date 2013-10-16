@@ -1,11 +1,9 @@
+.. index:: debugging
 .. _Debugging:
 
 *********
 Debugging
 *********
-
-.. index:: debugger
-.. index:: debugging
 
 GPS is also a graphical front-end for text-based debuggers such as GDB.  A
 knowledge of the basics of the underlying debugger used by GPS will help
@@ -18,96 +16,105 @@ for more details.
 Debugging is tightly integrated with the other components of GPS. For example,
 it is possible to edit files and navigate through your sources while debugging.
 
-.. index:: menu
+.. index:: menu; debug --> initialize
+.. index:: menu; debug --> debug --> load file
 
-To start a debug session, go to the menu `Debug->Initialize`, and choose either
-the name of your executable, if you have specified the name of your main
-program(s) in the project properties, or start an empty debug session using the
-`<no main file>` item. It is then possible to load any file to debug, by using
-the menu `Debug->Debug->Load File...`
+To start a debug session, go to the menu :menuselection:`Debug --> Initialize`,
+and choose either the name of your executable, if you have specified the name
+of your main program(s) in the project properties, or start an empty debug
+session using the :menuselection:`<no main file>` item. It is then possible to
+load any file to debug, by using the menu :menuselection:`Debug --> Debug -->
+Load File...`
 
 Note that you first need to build your executable with debug information (`-g`
 switch), either explicitly as part of your project properties, or via the
 `Debug` build mode (see :ref:`The_Build_Mode` for more details).
 
-Note that you can create multiple debuggers by using the `Initialize` menu
-several times: this will create a new debugger each time.  All the
-debugger-related actions (e.g. stepping, running) are performed on the current
-debugger, which is represented by the current debugger console.  To switch
-between debuggers, simply select its corresponding console.
+Note that you can create multiple debuggers by using the :menuselection:`Debug
+--> Initialize` menu several times: this will create a new debugger each time.
+All the debugger-related actions (e.g. stepping, running) are performed on the
+current debugger, which is represented by the current debugger console.  To
+switch between debuggers, simply select its corresponding console.
 
 After the debugger has been initialized, you have access to two new windows:
 the data window (in the top of the working area), and the debugger console (in
-a new page, after the Messages and Shell windows).  All the menus under
-`Debugger` are now also accessible, and you also have access to additional
-contextual menus, in particular in the source editor where it is possible to
-easily display variables, set breakpoints, and get automatic display (via *tool
-tips*) of object values.
+a new page, after the :guilabel:`Messages` and :guilabel:`Shell` windows).  All
+the menus under :menuselection:`Debugger` are now also accessible, and you also
+have access to additional contextual menus, in particular in the source editor
+where it is possible to easily display variables, set breakpoints, and get
+automatic display (via tooltips) of object values.
 
-.. index:: menu
+.. index:: menu; debug --> terminate
+.. index:: menu; debug --> terminate current
 
 When you want to quit the debugger without quitting GPS, go to the menu
-`Debug->Terminate Current`, that will terminate your current debug session, or
-the menu `Debug->Terminate` that will terminate all your debug sessions at
-once.
+:menuselection:`Debug --> Terminate Current`, that will terminate your current
+debug session, or the menu :menuselection:`Debug --> Terminate` that will
+terminate all your debug sessions at once.
+
+
 
 .. _The_Debug_Menu:
 
 The Debug Menu
 ==============
 
-.. index:: menu
-.. index:: debug
-.. index:: debugger
+The :menuselection:`Debug` entry in the menu bar provides operations that act
+at a global level. Key shortcuts are available for the most common operations,
+and are displayed in the menus themselves.  Here is a detailed list of the menu
+items that can be found in the menu bar:
 
-The `Debug` entry in the menu bar provides operations that act at a global
-level. Key shortcuts are available for the most common operations, and are
-displayed in the menus themselves.  Here is a detailed list of the menu items
-that can be found in the menu bar:
 
-*Run...*
-  .. index:: run
+.. index:: menu; debug --> run
 
+:menuselection:`Debug --> Run...`
   Opens a dialog window allowing you to specify the arguments to pass to the
   program to be debugged, and whether this program should be stopped at the
   beginning of the main subprogram. If you confirm by clicking on the *OK*
   button, the program will be launched according to the arguments entered.
 
-*Step*
-  .. index:: step
 
+.. index:: menu; debug --> step
+
+:menuselection:`Debug --> Step`
   Execute the program until it reaches a different source line.
 
-*Step Instruction*
-  .. index:: stepi
 
+.. index:: menu; debug --> step instruction
+
+:menuselection:`Debug --> Step Instruction`
   Execute the program for one machine instruction only.
 
-*Next*
-  .. index:: next
 
+.. index:: menu; debug --> next
+
+:menuselection:`Debug --> Next`
   Execute the program until it reaches the next source line, stepping over
   subroutine calls.
 
-*Next Instruction*
-  .. index:: nexti
 
+.. index:: menu; debug --> next instruction
+
+:menuselection:`Debug --> Next Instruction`
   Execute the program until it reaches the next machine instruction, stepping
   over subroutine calls.
 
-*Finish*
-  .. index:: finish
 
+.. index:: menu; debug --> finish
+
+:menuselection:`Debug --> Finish`
   Continue execution until selected stack frame returns.
 
-*Continue*
-  .. index:: continue
 
+.. index:: menu; debug --> continue
+
+:menuselection:`Debug --> Continue`
   Continue execution of the program being debugged.
 
-*Interrupt*
-  .. index:: interrupt
 
+.. index:: menu; debug --> interrupt
+
+:menuselection:`Debug --> Interrupt`
   Asynchronously interrupt the program being debugged. Note that depending on
   the state of the program, you may stop it in low-level system code that does
   not have debug information, or in some cases, not even a coherent state. Use
@@ -115,18 +122,22 @@ that can be found in the menu bar:
   is nevertheless required in some situations, for example when the program
   appears to be in an infinite (or at least very time-consuming) loop.
 
-*Terminate Current*
-  .. index:: terminate
 
+.. index:: menu; debug --> terminate current
+.. index:: preferences; debugger --> debugger windows
+
+:menuselection:`Debug --> Terminate Current`
   Terminate the current debug session by terminating the underlying debugger
   (e.g `gdb`) used to handle the low level debugging. You can control what
-  happens to the windows through the `Debugger/Debugger Windows` preference.
+  happens to the windows through the :menuselection:`Debugger --> Debugger
+  Windows` preference.
 
-*Terminate*
-  .. index:: terminate
 
-  Terminate all your debug sessions. Same as `Terminate Current` if there is
-  only one debugger open.
+.. index:: menu; debug --> termiante
+
+:menuselection:`Debug --> Terminate`
+  Terminate all your debug sessions. Same as :menuselection:`Debug -->
+  Terminate Current` if there is only one debugger open.
 
 Initialize
 ----------
@@ -137,98 +148,111 @@ unit selected and if relevant, all corresponding settings: a debug session
 will open the debug perspective and associated debug properties (e.g.
 saved breakpoints, and data display).
 
-*<No Main File>*
+.. index:: menu; debug --> initialize --> no main file
+
+:menuselection:`Debug --> Initialize --> <No Main File>`
 
   Will initialize the debugger with no executable. You can then use one of
-  the menu items in the `Debug` menu (e.g. `Load File...` or `Attach...`)
-  if needed.
+  the other menu items like :menuselection:`Debug --> Debug --> Load File`
+  or :menuselection:`Debug --> Debug --> Attach`.
+
 
 Debug
 -----
 
-*Connect to Board...*
-  .. index:: connect
-  .. index:: board
-  .. index:: target
-  .. index:: cross debugger
+.. index:: board
+.. index:: target
+.. index:: cross debugger
+.. index:: menu; debug --> debug --> connect to board
+
+:menuselection:`Debug --> Debug --> Connect to board`
 
   Opens a simple dialog to connect to a remote board. This option is only
   relevant to cross debuggers.
 
-*Load File...*
-  .. index:: load
 
-  .. _open_program_menu:
+.. index:: menu; debug --> debug --> load file
+.. _open_program_menu:
 
+:menuselection:`Debug --> Debug --> Load File...`
   Opens a file selection dialog that allows you to choose a program to debug.
   The program to debug is either an executable for native debugging, or a
   partially linked module for cross environments (e.g VxWorks).
 
-*Add Symbols...*
-  .. index:: add symbols
 
+.. index:: menu; debug --> debug --> add symbols
+
+:menuselection:`Debug --> Debug --> Add Symbols`
   Add the symbols from a given file/module. This corresponds to the gdb command
-  *add-symbol-file*. This menu is particularly useful under VxWorks targets,
+  `add-symbol-file`. This menu is particularly useful under VxWorks targets,
   where the modules can be loaded independently of the debugger.  For instance,
   if a module is independently loaded on the target (e.g. using windshell), it
   is absolutely required to use this functionality, otherwise the debugger
   won't work properly.
 
-*Attach...*
-  .. index:: attach
 
+.. index:: menu; debug --> debug --> attach
+
+:menuselection:`Debug --> Debug --> Attach...`
   Instead of starting a program to debug, you can instead attach to an already
   running process. To do so, you need to specify the process id of the process
   you want to debug. The process might be busy in an infinite loop, or waiting
   for event processing. Note that as for :ref:`Core Files <core_files>`, you
   need to specify an executable before attaching to a process.
 
-*Detach*
-  .. index:: detach
 
+.. index:: menu; debug --> debug --> detach
+
+:menuselection:`Debug --> Debug --> Detach`
   Detaches the currently debugged process from the underlying debugger.  This
   means that the executable will continue to run independently. You can use the
-  *Attach To Process* menu later to re-attach to this process.
+  :menuselection:`Debug --> Debug --> Attach To Process` menu later to
+  re-attach to this process.
 
-*Debug Core File...*
-  .. index:: core file
 
-  .. _core_files:
+.. index:: menu; debug --> debug --> debug core file
+.. index:: core file
+.. _core_files:
 
+:menuselection:`Debug --> Debug --> Debug Core File`
   This will open a file selection dialog that allows you to debug a core file
   instead of debugging a running process. Note that you must first specify an
   executable to debug before loading a core file.
 
-*Kill*
-  .. index:: kill
 
+.. index:: menu; debug --> debug --> kill
+
+:menuselection:`Debug --> Debug --> Kill`
   Kills the process being debugged.
+
+
 
 Data
 ----
-
-.. index:: menu
-.. index:: data
 
 Note that most items in this menu need to access the underlying debugger when
 the process is stopped, not when it is running. This means that you first need
 to stop the process on a breakpoint or interrupt it, before using the following
 commands. Failing to do so will result in blank windows.
 
-*Data Window*
 
+.. index:: menu; debug --> data --> data window
+
+:menuselection:`Debug --> Data --> Data Window`
   Displays the Data window. If this window already exists, it is raised so that
   it becomes visible
 
-*Call Stack*
-  .. index:: call stack
 
+.. index:: menu; debug --> data --> call stack
+
+:menuselection:`Debug --> Data --> Call Stack`
   Displays the Call Stack window.
   See :ref:`The_Call_Stack_Window` for more details.
 
-*Threads*
-  .. index:: thread
 
+.. index:: menu; debug --> data --> threads
+
+:menuselection:`Debug --> Data --> Threads`
   Opens a new window containing the list of threads currently present in the
   executable as reported by the underlying debugger. For each thread, it will
   give information such as internal identifier, name and status.  This
@@ -241,9 +265,10 @@ commands. Failing to do so will result in blank windows.
   the context (variables, call stack, source file) displayed, allowing you to
   inspect the stack of the selected thread.
 
-*Tasks*
-  .. index:: task
 
+.. index:: menu; debug --> data --> tasks
+
+:menuselection:`Debug --> Data --> Tasks`
   For GDB only, this will open a new window containing the list of Ada tasks
   currently present in the executable. Similarly to the thread window, you can
   switch to a selected task context by clicking on it, if supported by GDB. See
@@ -252,76 +277,88 @@ commands. Failing to do so will result in blank windows.
   As for the thread window, the process being debugged needs to be stopped
   before using this window.
 
-  .. index:: screen shot
   .. image:: tasks.jpg
 
-*Protection Domains*
-  .. index:: protection domain
 
+.. index:: protection domain
+.. index:: menu; debug --> data --> protection domains
+
+:menuselection:`Debug --> Data --> Protection Domains`
   For VxWorks AE only, this will open a new window containing the list of
   available protection domains in the target. To change to a different
   protection domain, simply click on it. A @c{*} character indicates the
   current protection domain.
 
-*Assembly*
-  .. index:: assembly
 
+.. index:: menu; debug --> data --> assembly
+.. index:: assembly
+
+:menuselection:`Debug --> Data --> Assembly`
   Opens a new window displaying an assembly dump of the current code being
   executed.  See :ref:`The_Assembly_Window` for more details.
 
-*Edit Breakpoints*
-  .. index:: breakpoint
 
+.. index:: menu; debug --> data --> edit breakpoints
+
+:menuselection:`Debug --> Data --> Edit Breakpoints`
   Opens an advanced window to create and modify any kind of breakpoint,
   including watchpoints (see :ref:`The_Breakpoint_Editor`).  For simple
   breakpoint creation, see the description of the source window.
 
-*Examine Memory*
-  .. index:: memory view
 
+.. index:: menu; debug --> data --> examine memory
+
+:menuselection:`Debug --> Data --> Examine Memory`
   Opens a memory viewer/editor. See :ref:`The_Memory_Window` for more details.
 
-*Command History*
-  .. index:: command
-  .. index:: history
 
+.. index:: menu; debug --> data --> command history
+
+:menuselection:`Debug --> Data --> Command History`
   Opens a dialog with the list of commands executed in the current session.
   You can select any number of items in this list and replay the selection
   automatically.
 
-*Display Local Variables*
-  .. index:: local variables
 
-  Opens an item in the Data Window containing all the local variables for the
+.. index:: menu; debug --> data --> display local variables
+
+:menuselection:`Debug --> Data --> Display Local Variables`
+  Opens an item in the :guilabel:`Data Window` containing all the local
+  variables for the current frame.
+
+
+.. index:: menu; debug --> data --> display arguments
+
+:menuselection:`Debug --> Data --> Display Argument`
+  Opens an item in the :guilabel:`Data Window` containing the arguments for the
   current frame.
 
-*Display Arguments*
-  .. index:: arguments
 
-  Opens an item in the Data Window containing the arguments for the current
-  frame.
+.. index:: menu; debug --> data --> display registeres
 
-*Display Registers*
-  .. index:: registers
+:menuselection:`Debug --> Data --> Display Registers`
+  Opens an item in the :guilabel:`Data Window` containing the machine registers
+  for the current frame.
 
-  Opens an item in the Data Window containing the machine registers for the
-  current frame.
 
-*Display Any Expression...*
-  .. index:: display expression
+.. index:: menu; debug --> Data --> display any expression
 
-  Opens a small dialog letting you specify an arbitrary expression in the Data
-  Window. This expression can be a variable name, or a more complex expression,
-  following the syntax of the underlying debugger.  See the documentation of
-  e.g gdb for more details on the syntax.  The check button *Expression is a
-  subprogram call* should be enabled if the expression is actually a debugger
-  command (e.g `p/x var`) or a procedure call in the program being debugged
-  (e.g `call my_proc`).
+:menuselection:`Debug --> Data --> Display Any Expression...`
+  Opens a small dialog letting you specify an arbitrary expression in the
+  :guilabel:`Data Window`. This expression can be a variable name, or a more
+  complex expression, following the syntax of the underlying debugger.  See the
+  documentation of e.g gdb for more details on the syntax.  The check button
+  *Expression is a subprogram call* should be enabled if the expression is
+  actually a debugger command (e.g `p/x var`) or a procedure call in the
+  program being debugged (e.g `call my_proc`).
 
-*Recompute*
-  .. index:: recompute
 
-  Recomputes and refreshes all the items displayed in the Data Window.
+.. index:: menu; debug --> data --> recompute
+
+:menuselection:`Debug --> Data --> Recompute`
+  Recomputes and refreshes all the items displayed in the :guilabel:`Data Window`.
+
+
 
 .. _The_Call_Stack_Window:
 
@@ -948,7 +985,7 @@ You might also choose to look at a single register.  With gdb, select the
 `Data->Display Any Expression`, entering something like::
 
   output /x $eax
-  
+
 in the field, and selecting the toggle button "Expression is a subprogram
 call". This will create a new canvas item that will be refreshed every time the
 value of the register (in this case eax) changes.
@@ -1092,7 +1129,7 @@ Here is the code::
         return False
 
   GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
-  
+
 
 The list of aliases is stored in the global variable `aliases`, which is
 modified by `set_alias`. Whenever the user executes an alias, the real command
@@ -1109,7 +1146,7 @@ its console::
 
      (gdb) alias foo print a_long_long_name
      (gdb) foo
-  
+
 
 The first command defines the alias, the second line executes it.
 
@@ -1118,10 +1155,9 @@ value of the variable is in fact displayed in the data window automatically,
 for instance::
 
      (gdb) graph display `foo`
-  
+
 Other examples can be programmed. You could write complex python functions,
 which would for instance query the value of several variables, and pretty print
 the result. This complex python function can then be called from the debugger
 console, or automatically every time the debugger stops through the `graph
 display` command.
-
