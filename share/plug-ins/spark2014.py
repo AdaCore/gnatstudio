@@ -992,6 +992,7 @@ class GNATProve_Plugin:
         """
         self.clear_highlighting()
         self.clear_messages()
+        self.trace_msg = None
         GPS.Locations.remove_category(toolname)
 
 # Check for GNAT toolchain: gnatprove
