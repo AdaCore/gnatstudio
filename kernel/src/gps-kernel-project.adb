@@ -367,8 +367,6 @@ package body GPS.Kernel.Project is
       Gnatls         : constant String :=
                          Get_Project (Handle).Attribute_Value
                            (Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args    : Argument_List_Access :=
-                         Argument_String_To_List (Gnatls & " -v");
       Langs          : Argument_List := Get_Project (Handle).Languages;
       Property       : Predefined_Paths_Property;
       Prop_Access    : Property_Access;
@@ -392,7 +390,6 @@ package body GPS.Kernel.Project is
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
          then
             Free (Langs);
-            Free (Gnatls_Args);
             return;
          end if;
 
@@ -441,7 +438,7 @@ package body GPS.Kernel.Project is
          Projects.Compute_Predefined_Paths
            (Handle.Registry,
             Handle.GNAT_Version,
-            Gnatls_Args,
+            Gnatls,
             Report_Error'Unrestricted_Access);
 
          if Property_Index /= No_Index then
@@ -462,7 +459,6 @@ package body GPS.Kernel.Project is
 
       end if;
 
-      Free (Gnatls_Args);
       Free (Langs);
    end Compute_Predefined_Paths;
 

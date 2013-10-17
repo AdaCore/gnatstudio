@@ -83,7 +83,7 @@ package Projects is
    procedure Compute_Predefined_Paths
      (Registry     : Project_Registry_Access;
       GNAT_Version : out GNAT.Strings.String_Access;
-      Gnatls_Args  : GNAT.Strings.String_List_Access;
+      Gnatls       : String;
       Errors       : GNATCOLL.Projects.Error_Report := null);
    --  Compute the predefined paths for the GNAT runtime, and return the
    --  GNAT version that is used.

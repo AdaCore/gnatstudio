@@ -22,13 +22,13 @@ with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with Opt;                        use Opt;
 with Namet;                      use Namet;
 with Scans;                      use Scans;
 with Snames;                     use Snames;
 with GPS.Intl;                   use GPS.Intl;
 with Remote;                     use Remote;
-with Toolchains_Old;                 use Toolchains_Old;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
@@ -42,17 +42,6 @@ package body Projects is
    Keywords_Initialized : Boolean := False;
    --  Whether we have already initialized the Ada keywords list. This is only
    --  used by Is_Valid_Project_Name
-
-   Gnatls_Called : Boolean := False;
-   --  Flag used to avoid generating an error message the first time
-   --  GPS is launched, and only a cross-gnatls is available.
-   --  The second time, assuming the project properly defined the Gnatlist
-   --  attribute, everything will work properly. Otherwise, we will generate
-   --  an error message at this point.
-   --  ??? If no Gnatlist attribute is defined, Compute_Predefined_Paths
-   --  won't be called a second time, but it's better to hide messages about
-   --  gnatls being not found to users rather than confuse them for the case
-   --  above (cross-gnatls only).
 
    -----------------------
    -- Project_Name_Hash --
@@ -285,52 +274,35 @@ package body Projects is
    procedure Compute_Predefined_Paths
      (Registry     : Project_Registry_Access;
       GNAT_Version : out GNAT.Strings.String_Access;
-      Gnatls_Args  : GNAT.Strings.String_List_Access;
+      Gnatls       : String;
       Errors       : GNATCOLL.Projects.Error_Report := null)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Process_Descriptor'Class, Process_Descriptor_Access);
 
-      Success : Boolean;
+      Gnatls_Args    : Argument_List_Access;
+      Success : Boolean := True;
       Fd      : Process_Descriptor_Access;
 
    begin
-      Trace (Me, "Executing " & Argument_List_To_String (Gnatls_Args.all));
-      --  ??? Place a error handler here
+      if Is_Local (Build_Server) then
+         Set_Path_From_Gnatls
+            (Registry.Environment.all,
+             Gnatls,
+             GNAT_Version => GNAT_Version,
+             Errors       => Errors);
+         return;
+      end if;
+
       begin
-         Success := True;
-
-         if Is_Local (Build_Server) then
-            declare
-               Gnatls_Path : constant Virtual_File :=
-                               Locate_Compiler_Executable
-                                 (+Gnatls_Args (Gnatls_Args'First).all);
-            begin
-               if Gnatls_Path = GNATCOLL.VFS.No_File then
-                  Success := False;
-
-                  Trace (Me, "Could not locate exec " &
-                         Gnatls_Args (Gnatls_Args'First).all);
-
-                  if Gnatls_Called and then Errors /= null then
-                     Errors (-"Could not locate exec " &
-                             Gnatls_Args (Gnatls_Args'First).all);
-                  end if;
-               else
-                  Fd := new TTY_Process_Descriptor;
-                  Non_Blocking_Spawn
-                    (Fd.all,
-                     +Gnatls_Path.Full_Name,
-                     Gnatls_Args (2 .. Gnatls_Args'Last),
-                     Buffer_Size => 0, Err_To_Out => True);
-               end if;
-            end;
-         else
-            Remote_Spawn
-              (Fd, Get_Nickname (Build_Server), Gnatls_Args.all,
-               Err_To_Out => True);
-         end if;
-
+         Gnatls_Args := Argument_String_To_List (Gnatls & " -v");
+         Trace (Me, "Executing "
+                & Argument_List_To_String (Gnatls_Args.all)
+                & " on " & Get_Nickname (Build_Server));
+         Remote_Spawn
+           (Fd, Get_Nickname (Build_Server), Gnatls_Args.all,
+            Err_To_Out => True);
+         GNAT.Strings.Free (Gnatls_Args);
       exception
          when others =>
             if Errors /= null then
@@ -340,25 +312,17 @@ package body Projects is
       end;
 
       if not Success then
-         if Gnatls_Called and then Errors /= null then
+         if Errors /= null then
             Errors
               (-"Could not compute predefined paths for this project.");
-            Errors
-              (-("Subprojects might be incorrectly loaded, please make " &
-               "sure they are in your ADA_PROJECT_PATH"));
          end if;
-
-         Gnatls_Called := True;
          return;
       end if;
-
-      Gnatls_Called := True;
 
       Set_Path_From_Gnatls_Output
         (Registry.Environment.all,
          Output       => GNATCOLL.Utils.Get_Command_Output (Fd),
          GNAT_Version => GNAT_Version);
-
       Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
 
