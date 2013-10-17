@@ -1,14 +1,46 @@
 
-function buildDocumentationPage(toc)
+function buildText(root, data)
 {
+    var element;
+
+    for (var index = 0; index < data.length; index++)
+    {
+        switch (data[index].kind)
+        {
+            case 'paragraph':
+                element = document.createElement('p');
+                buildText(element, data[index].children);
+                break;
+
+            case 'span':
+                element = document.createElement('span');
+                element.appendChild(document.createTextNode(data[index].text));
+
+                if (typeof data[index].class !== 'undefined')
+                {
+                    element.setAttribute('class', data[index].class);
+                }
+
+                break;
+        }
+        root.appendChild(element);
+    }
+}
+
+function buildDocumentationPage()
+{
+    var pane;
+    var header;
+    var text;
+    var href;
+
     pane = document.getElementById('body');
 
     header = document.createElement('h2');
     text = document.createTextNode('Summary');
     header.appendChild(text);
     pane.appendChild(header);
-    text = document.createTextNode(GNATdocDocumentation.summary);
-    pane.appendChild(text);
+    buildText(pane, GNATdocDocumentation.summary);
     href = document.createElement('a');
     href.setAttribute('href', '#Description');
     text = document.createTextNode(' More...');
@@ -20,8 +52,7 @@ function buildDocumentationPage(toc)
     text = document.createTextNode('Description');
     header.appendChild(text);
     pane.appendChild(header);
-    text = document.createTextNode(GNATdocDocumentation.description);
-    pane.appendChild(text);
+    buildText(pane, GNATdocDocumentation.description);
 }
 
 function buildPackagesIndex(toc)
