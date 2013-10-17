@@ -1356,7 +1356,7 @@ package body Call_Graph_Views is
       View.Pack_Start (View.Pane, Expand => True, Fill => True);
 
       Gtk_New (Scroll);
-      View.Pane.Add1 (Scroll);
+      View.Pane.Pack1 (Scroll, Resize => True, Shrink => False);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
@@ -1381,7 +1381,7 @@ package body Call_Graph_Views is
 
       Gtk_New (Scroll);
       Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
-      View.Pane.Add2 (Scroll);
+      View.Pane.Pack2 (Scroll, Resize => True, Shrink => True);
 
       --  Create the lines list
 
@@ -1711,8 +1711,6 @@ package body Call_Graph_Views is
                No_General_Entity_Reference, -" calls ",
               Kind                => View_Calls,
               Through_Dispatching => False));
-
-         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
@@ -1741,12 +1739,6 @@ package body Call_Graph_Views is
                No_General_Entity_Reference, -" is called by ",
                Kind                => View_Called_By,
                Through_Dispatching => False));
-
-         --  ??? Should we be changing the position here ? It should be kept
-         --  as it. Unfortunately, it is not computed properly if we never
-         --  call Set_Position, and we can't call it from Initialize because
-         --  we don't know yet the size that View will be allocated.
-         View.Pane.Set_Position (View.Get_Allocated_Width / 3);
       end if;
 
       return Commands.Success;
