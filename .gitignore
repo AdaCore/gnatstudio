@@ -244,3 +244,4 @@ share/support/core/runtime.py
 share/icons/light/svg
 templates_parser
 widgets/Makefile.widgets
+vsearch/tests/obj/run
