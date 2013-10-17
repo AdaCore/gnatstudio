@@ -21,7 +21,6 @@
    extending
    environment
    GPS
-   runtime
    plugins
    license
 

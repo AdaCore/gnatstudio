@@ -7,14 +7,12 @@ Environment
 .. highlight:: ada
 
 .. index:: environment
-
+.. index:: ! command line
+.. index:: see: options; command line
 .. _Command_Line_Options:
 
 Command Line Options
 ====================
-
-.. index:: ! command line
-.. index:: see: options; command line
 
 The command line options are::
 
@@ -57,14 +55,17 @@ be absolute or relative pathnames. In addition, if you prepend a filename
 with the `=` character, then GPS will look for the file in the source
 search path of the project.
 
+When no project is specified on the command line, GPS tries to find one
+and otherwise displays the :ref:`welcome dialog <The_Welcome_Dialog>`.
+
+
+
+.. index:: environment
+.. index:: environment variables
 .. _Environment_Variables:
 
 Environment Variables
 =====================
-
-.. index:: environment
-
-.. index:: environment variables
 
 The following environment variables can be set to override some default
 settings in GPS:
@@ -74,9 +75,9 @@ settings in GPS:
   .. index:: Windows
 
   Override the variable HOME if present. All the configuration files and
-  directories used by GPS are either relative to $HOME/.gps (%HOME%\\.gps under
-  Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
-  %GPS_HOME%\\.gps) if set.
+  directories used by GPS are either relative to :file:`$HOME/.gps`
+  (:file:`%HOME%\.gps` on Windows) if GPS_HOME is not set, or to
+  :file:`$GPS_HOME/.gps` (respectively :file:`%GPS_HOME%\.gps`) if set.
 
 *GPS_DOC_PATH*
   .. index:: GPS_DOC_PATH
@@ -110,14 +111,6 @@ settings in GPS:
   Same as `GPS_STARTUP_LD_LIBRARY_PATH` but for the `LD_LIBRARY_PATH`
   variable.
 
-*GPS_MEMORY_MONITOR*
-  .. index:: GPS_MEMORY_MONITOR
-
-  If set, GPS will add special code on every allocation and deallocation, thus
-  slowing things down a bit, that makes it possible to check where the biggest
-  amount of memory is allocated, through the `GPS.debug_memory_usage` python
-  command.
-
 *GPS_PYTHONHOME*
   .. index:: GPS_PYTHONHOME
 
@@ -142,44 +135,33 @@ settings in GPS:
   images, plug-ins, xml files) from this root prefix, so setting GPS_ROOT
   to a wrong value will cause GPS to misbehave.
 
-.. _Running_GPS_on_Mac_OS_X:
+*GPS_MEMORY_MONITOR*
+  .. index:: GPS_MEMORY_MONITOR
 
-Running GPS on Mac OS X
-=======================
+  If set, GPS will add special code on every allocation and deallocation, thus
+  slowing things down a bit, that makes it possible to check where the biggest
+  amount of memory is allocated, through the `GPS.debug_memory_usage` python
+  command.
 
-.. index:: Mac OS
-
-The current version of GPS on Mac OS X requires an X11 server. Such a server is
-distributed with Mac OS X Panther and Mac OS X Tiger.
-
-Additionally, if you are launching GPS from a standard Terminal, you need to
-specify the display on which to launch GPS, by typing::
-
-   export DISPLAY=:0
-
-before launching GPS.
-
-Note: GPS does not support files with line endings in CR.
 
 .. _Files:
 
 Files
 =====
 
-.. index:: files
-
-*$HOME/.gps*
+:file:`$HOME/.gps`
   .. index:: Windows
   .. index:: HOME
 
-  GPS state directory. Defaults to C:\\.gps under Windows systems if HOME or
-  USERPROFILE environment variables are not defined.
+  GPS state directory. Defaults to :file:`C:\.gps` under Windows systems if
+  HOME or USERPROFILE environment variables are not defined.
 
-*$HOME/.gps/log*
-  .. index:: log
 
-  .. _log_file:
 
+.. index:: log file
+.. _log_file:
+
+:file:`$HOME/.gps/log`
   Log file created automatically by GPS.  When GPS is running, it will create a
   file named :file:`log.<pid>`, where :file:`<pid>` is the GPS process id, so
   that multiple GPS sessions do not clobber each other's log. In case of a
@@ -190,13 +172,15 @@ Files
   Note that the name of the log file is configured by the :file:`traces.cfg`
   file.
 
-*$HOME/.gps/aliases*
+
+
+:file:`$HOME/.gps/aliases`
   .. index:: aliases
 
   File containing the user-defined aliases (:ref:`Defining_text_aliases`).
 
 
-*$HOME/.gps/plug-ins*
+:file:`$HOME/.gps/plug-ins`
   Directory containing files with user-defined plug-ins.  All xml and python
   files found under this directory are loaded by GPS during start up.  You can
   create/edit these files to add your own menu/tool-bar entries in GPS, or
@@ -204,58 +188,60 @@ Files
   :ref:`Customizing_through_XML_and_Python_files` and
   :ref:`Adding_support_for_new_languages`.
 
-*$HOME/.gps/keys.xml*
+
+:file:`$HOME/.gps/keys.xml`
   Contains all the key bindings for the actions defined in GPS or in the
   custom files. This only contains the key bindings overridden through the
   key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
 
-*$HOME/.gps/gps.css*
-  .. index:: Dynamic Key Binding
 
-  .. index:: CSS
+.. index:: CSS
 
+:file:`$HOME/.gps/gps.css`
   Configuration and theme file for gtk. This file can be change specific
   aspects of the look of GPS. Its contents overrides any other style
   information set by your default gtk+ theme (as selected in the Preferences
   dialog) and GPS's :file:`prefix/share/gps/gps.css` file.
 
-*$HOME/.gps/actions.xml*
-  Contains the definition of all the actions that were defined through the
-  graphical interface. This is loaded last, and overrides all actions defined
-  elsewhere.
 
-*$HOME/.gps/perspectives6.xml*
-  Desktop file in XML format (using the menu `File->Save More->Desktop`),
-  loaded automatically if found.
+:file:`$HOME/.gps/perspectives6.xml`
+  Desktop file in XML format (using the menu :menuselection:`File --> Save More
+  --> Desktop`), loaded automatically if found.
 
-*$HOME/.gps/locations.xml*
+
+:file:`$HOME/.gps/locations.xml`
   This file contains the list of locations that GPS has previously edited. It
-  corresponds to the history navigation (`Navigate->Back` and
-  `Navigate->Forward`)
+  corresponds to the history navigation (:menuselection:`Navigate --> Back` and
+  :menuselection:`Navigate --> Forward`)
 
-*$HOME/.gps/properties.xml*
+
+:file:`$HOME/.gps/properties.xml`
   This file is used to store file-specific properties across GPS sessions. In
   particular, it contains the encoding to use for various files when the
   default encoding isn't appropriate.
 
-*$HOME/.gps/histories.xml*
+
+:file:`$HOME/.gps/histories.xml`
   .. index:: history
 
-  Contains the state and history of combo boxes (e.g. the
-  `Run->Custom...` dialog).
+  Contains the state and history of combo boxes (for instance the
+  :menuselection:`Build --> Run --> Custom...` dialog).
 
-*$HOME/.gps/targets.xml*
+
+:file:`$HOME/.gps/targets.xml`
   .. index:: targets
 
   Contains the build targets defined by the user.
 
-*$HOME/.gps/preferences*
+
+:file:`$HOME/.gps/preferences.xml`
   .. index:: preferences
 
   Contains all the preferences in XML format, as specified in the
   preferences menu.
 
-*$HOME/.gps/traces.cfg*
+
+:file:`$HOME/.gps/traces.cfg`
   Default configuration for the system traces. These traces are used to analyze
   problems with GPS.  By default, they are sent to the file
   :file:`$HOME/.gps/log.<pid>`.
@@ -264,75 +250,67 @@ Files
   created. If you remove it manually, it won't be recreated the next time you
   start GPS.
 
-*$HOME/.gps/startup.xml*
+
+:file:`$HOME/.gps/startup.xml`
   This file contains the list of scripts to load at startup, as well as
   additional code that need to be executed to setup the script.
 
-*$HOME/.gpe/activity_log.tmplt*
+
+.. index:: activity log template
+.. index:: activity, log template
+
+:file:`$HOME/.gpe/activity_log.tmplt`
   Template file used to generate activities' group commit-log and patch
   file's header. If not present the system wide template (see below) is
   used. The set of configurable tags are described into this template.
 
-  .. index:: activity log template
-  .. index:: activity, log template
 
-*prefix*
+:file:`prefix`
   The prefix directory where GPS is installed, e.g :file:`/opt/gps`.
 
-*prefix*/bin
+:file:`prefix/bin`
   The directory containing the GPS executables.
 
-*prefix*/etc/gps
+:file:`prefix/etc/gps`
   The directory containing global configuration files for GPS.
 
-*prefix*/lib
+:file:`prefix/lib`
   This directory contains the shared libraries used by GPS.
 
-*prefix*/share/doc/gps/html
+:file:`prefix/share/doc/gps/html`
   GPS will look for all the documentation files under this directory.
 
-*prefix*/share/examples/gps
+:file:`prefix/share/examples/gps`
   This directory contains source code examples.
 
-*prefix*/share/examples/gps/language
+:file:`prefix/share/examples/gps/language`
   This directory contains sources showing how to provide a shared library to
   dynamically define a new language. See
   :ref:`Adding_support_for_new_languages`.
 
-*prefix*/share/examples/gps/tutorial
+:file:`prefix/share/examples/gps/tutorial`
   This directory contains the sources used by the GPS tutorial.
-
-  .. index:: url
 
   See `gps-tutorial.html <gps-tutorial.html>`_.
 
-*prefix*/share/gps/plug-ins
+:file:`prefix/share/gps/support`
+  Directoring containing mandatory plug-ins for GPS, which are systematically
+  loaded at startup.
+
+:file:`prefix/share/gps/plug-ins`
   Directory containing files with system-wide plug-ins (xml and python files)
   loaded automatically at start-up.
 
-*prefix*/share/gps/library
+:file:`prefix/share/gps/library`
   Directory containing files with system-wide plug-ins (xml and python files)
   that are not loaded automatically at startup, but can be selected in the
   Plug-ins editor.
 
-*prefix*/share/gps/gps-animation.png
-  .. index:: png
-
-  Default image displayed in the top right corner of GPS when GPS is idle.
-
-*prefix*/share/gps/gps-animation.gif
-  .. index:: gif
-
-  Animated image displayed in the top right corner of GPS to indicate that
-  actions (e.g compilation) are on going. If you remove this file, the idle
-  image (:file:`gps-animation.png`) will always be displayed.
-
-*prefix*/share/gps/gps-splash.png
-  .. index:: png
-
+:file:`prefix/share/gps/gps-splash.png`
   Splash screen displayed by default when GPS is started.
 
-*prefix*/share/gps/perspectives6.xml
+
+:file:`prefix/share/gps/perspectives6.xml`
   .. index:: default desktop
   .. index:: desktop, default
 
@@ -343,22 +321,22 @@ Files
   same as $HOME/.gps/perspectives6.xml, which can be copied from your own
   directory if you wish.
 
-*prefix*/share/gps/default.gpr
-  .. index:: default project
+:file:`prefix/share/gps/default.gpr`
+  .. index:: project; default project
 
   Default project used by GPS. Can be modified after installation time to
   provide useful default for a given system or project.
 
-*prefix*/share/gps/readonly.gpr
+:file:`prefix/share/gps/readonly.gpr`
   Project used by GPS as the default project when working in a read-only
   directory.
 
-*prefix*/share/gps/activity_log.tmplt
+:file:`prefix/share/gps/activity_log.tmplt`
   Template file used by default to generate activities' group commit-log
   and patch file's header. This file can be copied into user home
   directory and customized (see above).
 
-*prefix*/share/locale
+:file:`prefix/share/locale`
   Directory used to retrieve the translation files, when relevant.
 
 
@@ -387,6 +365,7 @@ In case GPS generates a bug box, the log file will be kept under a separate
 name (:file:`$HOME/.gps/log.<pid>` so that it does not get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
+
 Solving Problems
 ================
 
@@ -414,7 +393,7 @@ installing GPS.
   Q: I have installed GPS originally as super user, and ran GPS successfully,
   but normal users can't.
 
-  A: You should check the permissions of the directory $HOME/.gps and its
+  A: You should check the permissions of the directory :file:`$HOME/.gps` and its
   subdirectories, they should be owned by the user.
 
 *GPS crashes whenever I open a source editor*
@@ -427,11 +406,11 @@ installing GPS.
   .. index:: debugger
 
   If GPS cannot properly initialize the debugger (using the menu
-  `Debug->Initialize`), it is usually because the underlying debugger (gdb)
-  cannot be launched properly. To verify this, try to launch the 'gdb' command
-  from a shell (i.e outside GPS). If gdb cannot be launched from a shell, it
-  usually means that you are using a wrong version of gdb (e.g a version of gdb
-  built for Solaris 8, but run on Solaris 2.6).
+  :menuselection:`Debug --> Initialize`), it is usually because the underlying
+  debugger (gdb) cannot be launched properly. To verify this, try to launch the
+  'gdb' command from a shell (i.e outside GPS). If gdb cannot be launched from
+  a shell, it usually means that you are using a wrong version of gdb (e.g a
+  version of gdb built for Solaris 8, but run on Solaris 2.6).
 
 *GPS is frozen during a debugging session*
   .. index:: debugger
@@ -451,7 +430,7 @@ installing GPS.
   session, and will unblock GPS.
 
 *My Ada program fails during elaboration. How can I debug it ?*
-  .. index:: -g
+  .. index:: GNAT; -g
   .. index:: gnatmake
 
   If your program was compiled with GNAT, the main program is generated by the
@@ -544,4 +523,3 @@ installing GPS.
   Select the *Layout* tab, click on *Layout Options*. Then click twice on
   *Using space key to input non-breakable space character* and then select
   *Usual space at any level* and then close the dialogs.
-
