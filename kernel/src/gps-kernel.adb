@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
 pragma Warnings (Off);
@@ -1976,6 +1977,10 @@ package body GPS.Kernel is
       Console : not null access Abstract_Messages_Window'Class) is
    begin
       Kernel.Messages := Abstract_Messages_Window_Access (Console);
+      if Kernel.Pending_Messages /= Null_Unbounded_String then
+         Insert (Kernel, To_String (Kernel.Pending_Messages), Add_LF => True);
+         Kernel.Pending_Messages := Null_Unbounded_String;
+      end if;
    end Set_Messages_Window;
 
    --------------------------
@@ -2023,7 +2028,14 @@ package body GPS.Kernel is
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info) is
    begin
-      Kernel.Messages.Insert (Text, Add_LF, Mode);
+      if Kernel.Messages = null then
+         Append (Kernel.Pending_Messages, Text);
+         if Add_LF then
+            Append (Kernel.Pending_Messages, ASCII.LF);
+         end if;
+      else
+         Kernel.Messages.Insert (Text, Add_LF, Mode);
+      end if;
    exception
       when E : Constraint_Error =>
          Trace (Me, "Exception when inserting the follwing message: " & Text);

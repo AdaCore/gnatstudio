@@ -1212,6 +1212,12 @@ private
 
       Launcher : aliased GPS_Process_Launcher_Record;
       --  External process launcher
+
+      Pending_Messages : Ada.Strings.Unbounded.Unbounded_String
+         := Ada.Strings.Unbounded.Null_Unbounded_String;
+      --  Messages that should be inserted in the Messages window.
+      --  We use this to store messages until the Messages window is
+      --  created.
    end record;
 
    overriding procedure Create_Registry
