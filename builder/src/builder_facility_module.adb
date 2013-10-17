@@ -255,20 +255,29 @@ package body Builder_Facility_Module is
    function Get_Kernel return Kernel_Handle;
    --  Utility function to get the kernel
 
-   procedure On_Build_Manager
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Targets_Settings_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Targets_Settings_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the build manager
 
-   procedure On_Modes_Manager
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Modes_Settings_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Modes_Settings_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the mode manager
 
-   procedure On_Shadow_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Shadow_Console_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Shadow_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the shadow console
 
-   procedure On_Background_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Background_Builds_Console_Command
+      is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Background_Builds_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open the background console
 
    procedure Auxiliary_Console
@@ -1552,14 +1561,16 @@ package body Builder_Facility_Module is
       end loop;
    end Install_Toolbar_Buttons;
 
-   ----------------------
-   -- On_Build_Manager --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Build_Manager
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Targets_Settings_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
    begin
       Configuration_Dialog
@@ -1578,18 +1589,19 @@ package body Builder_Facility_Module is
          Save_Targets;
       end if;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Build_Manager;
+      return Commands.Success;
+   end Execute;
 
-   ----------------------
-   -- On_Modes_Manager --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Modes_Manager
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Modes_Settings_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
    begin
       Modes_Dialog
@@ -1606,9 +1618,8 @@ package body Builder_Facility_Module is
       end if;
       pragma Warnings (On);
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Modes_Manager;
+      return Commands.Success;
+   end Execute;
 
    -----------------------
    -- Auxiliary_Console --
@@ -1643,33 +1654,35 @@ package body Builder_Facility_Module is
       end if;
    end Auxiliary_Console;
 
-   -----------------------
-   -- On_Shadow_Console --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Shadow_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Shadow_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Auxiliary_Console (Kernel, Background => False, Shadow => True);
-   exception
-      when E : others => Trace (Me, E);
-   end On_Shadow_Console;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------------
-   -- On_Background_Console --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Background_Console
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Background_Builds_Console_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Auxiliary_Console (Kernel, Background => True, Shadow => False);
-   exception
-      when E : others => Trace (Me, E);
-   end On_Background_Console;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Parse_Mode_Node --
@@ -1755,7 +1768,8 @@ package body Builder_Facility_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      P : Kernel_Search_Provider_Access;
+      P       : Kernel_Search_Provider_Access;
+      Command : Interactive_Command_Access;
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -1782,21 +1796,40 @@ package body Builder_Facility_Module is
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu & (-"_Run"));
-      Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
-                     On_Build_Manager'Access);
+
+      Command := new Targets_Settings_Command;
+      Register_Action
+        (Kernel, "Build open targets settings", Command,
+         Description => -"Open the Build Targets settings dialog");
+      Register_Menu
+        (Kernel, "/Build/Settings/_Targets", "Build open targets settings");
 
       if Active (Modes_Trace) then
-         Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Modes", "",
-                        On_Modes_Manager'Access);
+         Command := new Modes_Settings_Command;
+         Register_Action
+           (Kernel, "Build open modes settings", Command,
+            Description => -"Open the Modes Targets settings dialog");
+         Register_Menu
+           (Kernel, "/Build/Settings/_Modes", "Build open modes settings");
       end if;
 
-      Register_Menu (Kernel, -"/Tools/Consoles",
-                     -"_Auxiliary Builds", "",
-                     On_Shadow_Console'Access);
+      Command := new Shadow_Console_Command;
+      Register_Action
+        (Kernel, "open Auxiliary Builds", Command,
+         Category => -"Views",
+         Description => -"Open the Auxiliary Builds console");
+      Register_Menu
+        (Kernel, -"/Tools/Consoles/_Auxiliary Builds",
+         "open Auxiliary Builds");
 
-      Register_Menu (Kernel, -"/Tools/Consoles",
-                     -"_Background Builds", "",
-                     On_Background_Console'Access);
+      Command := new Background_Builds_Console_Command;
+      Register_Action
+        (Kernel, "open Background Builds", Command,
+         Category => -"Views",
+         Description => -"Open the Backgorund Builds console");
+      Register_Menu
+        (Kernel, -"/Tools/Consoles/_Background Builds",
+         "open Background Builds");
 
       Register_Contextual_Submenu
         (Kernel,

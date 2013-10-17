@@ -3021,11 +3021,12 @@ package body VCS_View_API is
    ------------------------------
 
    procedure Query_Status_For_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
       Explorer : VCS_Explorer_View_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Kernel, No_Context);
       Explorer := Get_Explorer (Kernel);
@@ -3037,10 +3038,11 @@ package body VCS_View_API is
    ----------------
 
    procedure Update_All
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
 
       Dirs : File_Array_Access :=
                Get_Dirs_In_Project (Get_Project (Kernel), True);

@@ -264,13 +264,13 @@ package VCS_View_API is
    --  will be obtained from the project.
 
    procedure Query_Status_For_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
    --  List all open files in the project
 
    procedure Update_All
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
    --  Update all files in the project
 
    function Context_Factory

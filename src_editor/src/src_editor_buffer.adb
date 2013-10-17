@@ -67,7 +67,6 @@ with Pango.Enums;                         use Pango.Enums;
 with Casing_Exceptions;                   use Casing_Exceptions;
 with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
-with Commands.Controls;                   use Commands.Controls;
 with Completion_Module;                   use Completion_Module;
 with Default_Preferences;                 use Default_Preferences;
 with GPS.Intl;                            use GPS.Intl;
@@ -1568,9 +1567,7 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      if Buffer.Controls_Command /= null then
-         Remove_Controls (Buffer);
-      end if;
+      Remove_Controls (Buffer);
 
       Free_Queue (Buffer.Queue);
       Free_File_Information (Buffer);
@@ -5708,10 +5705,7 @@ package body Src_Editor_Buffer is
 
    procedure Add_Controls (Buffer : access Source_Buffer_Record) is
    begin
-      if Buffer.Controls_Command = null then
-         Buffer.Controls_Command := Set_Controls
-           (Buffer.Queue, Buffer.Kernel.Get_Undo_Redo);
-      end if;
+      Change_Undo_Redo_Queue (Buffer.Queue);
    end Add_Controls;
 
    ---------------------
@@ -5719,14 +5713,9 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure Remove_Controls (Buffer : access Source_Buffer_Record) is
+      pragma Unreferenced (Buffer);
    begin
-      if Buffer.Controls_Command /= null then
-         Unset_Controls (Buffer.Controls_Command);
-      end if;
-
-      --  No need to Unref the command, this is done in the following call to
-      --  Add_Controls.
-      Buffer.Controls_Command := null;
+      Change_Undo_Redo_Queue (Null_Command_Queue);
    end Remove_Controls;
 
    ----------------------------

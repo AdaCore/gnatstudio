@@ -37,6 +37,7 @@ with Pango.Font;              use Pango.Font;
 with Pango.Layout;            use Pango.Layout;
 
 with Browsers.Canvas;        use Browsers.Canvas;
+with Commands.Interactive;   use Commands, Commands.Interactive;
 with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
 with GNAT.Regpat;            use GNAT.Regpat;
@@ -45,6 +46,7 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Properties;         use GPS.Properties;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -188,8 +190,10 @@ package body GVD.Canvas is
       Activate : Boolean);
    --  Change the status of aliases detection in the canvas
 
-   procedure On_Data_Window
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Data_Window_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Data_Window_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Data Window
 
    procedure Preferences_Changed
@@ -1827,21 +1831,24 @@ package body GVD.Canvas is
          True);
    end Toggle_Refresh_Mode;
 
-   --------------------
-   -- On_Data_Window --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Data_Window
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Data_Window_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger := Get_Current_Process
         (GPS_Window (Get_Main_Window (Kernel)));
    begin
       if Process /= null and then Process.Debugger /= null then
          Attach_To_Data_Window (Process, Create_If_Necessary => True);
       end if;
-   end On_Data_Window;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1850,11 +1857,17 @@ package body GVD.Canvas is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug          : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub       : constant String := Debug & (-"D_ata") & '/';
+      Command : Interactive_Command_Access;
    begin
-      Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
-                     On_Data_Window'Access, Ref_Item => -"Protection Domains");
+      Command := new Data_Window_Command;
+      Register_Action
+        (Kernel, "open debugger data window", Command,
+         Description => -"Open the Data Window for the debugger",
+         Category => -"Views");
+      Register_Menu
+        (Kernel, -"/Debug/Data/_Data Window", "open debugger data window",
+         Ref_Item => -"Protection Domains");
+
       Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
 

@@ -725,20 +725,6 @@ package body Generic_Views is
          return Commands.Success;
       end Execute;
 
-      ------------------
-      -- On_Open_View --
-      ------------------
-
-      procedure On_Open_View
-        (Widget : access GObject_Record'Class;
-         Kernel : Kernel_Handle)
-      is
-         Ignore : View_Access;
-         pragma Unreferenced (Widget, Ignore);
-      begin
-         Ignore := Get_Or_Create_View (Kernel);
-      end On_Open_View;
-
       -------------------
       -- Retrieve_View --
       -------------------
@@ -794,9 +780,13 @@ package body Generic_Views is
          Item_Name : String;
          Before    : String := "") is
       begin
-         Register_Menu
-           (Kernel, Menu_Name, Item_Name, "", On_Open_View_Access,
-            Ref_Item => Before);
+         if Commands_Category /= "" then
+            Register_Menu
+              (Kernel   => Kernel,
+               Path     => Menu_Name & "/" & Item_Name,
+               Action   => "open " & View_Name,
+               Ref_Item => Before);
+         end if;
       end Register_Open_Menu;
 
       ---------------------

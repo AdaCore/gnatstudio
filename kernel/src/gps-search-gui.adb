@@ -1458,7 +1458,11 @@ package body GPS.Search.GUI is
            & Provider_Sources & ";");
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
-      Register_Provider_And_Action (Kernel, P);
+      Register_Provider_And_Action
+        (Kernel, P,
+         Stock_Id   => Stock_Open,
+         Accel_Key  => GDK_F3,
+         Accel_Mods => Shift_Mask);
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
@@ -1490,11 +1494,8 @@ package body GPS.Search.GUI is
 
       Register_Menu
         (Kernel,
-         '/' & (-"File") & '/', -"Open _From Project...",  Stock_Open,
-         Callback => null,
-         Action =>
-           Lookup_Action (Kernel, Action_Name_Prefix & Provider_Filenames),
-         Accel_Key => GDK_F3, Accel_Mods => Shift_Mask,
+         -"/File/Open _From Project...",
+         Action_Name_Prefix & Provider_Filenames,
          Ref_Item => -"Open...", Add_Before => False);
 
       Add_Hook (Kernel, Preference_Changed_Hook,

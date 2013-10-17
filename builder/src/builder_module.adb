@@ -30,8 +30,10 @@ with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -73,12 +75,17 @@ package body Builder_Module is
    -- Menu Callbacks --
    --------------------
 
-   procedure On_Compute_Xref
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Recompute_Xref_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Recompute_Xref_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Build->Compute Xref information menu
 
-   procedure On_Load_Xref_In_Memory
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Load_Xref_In_Memory_Command
+      is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Load_Xref_In_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Build->Load Xref info
 
    procedure On_Compilation_Finished
@@ -91,9 +98,10 @@ package body Builder_Module is
       Data   : access Hooks_Data'Class) return Boolean;
    --  Called when the compilation is starting
 
-   procedure On_Tools_Interrupt
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Interrupt menu
+   type Interrupt_Tool_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Interrupt_Tool_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
@@ -143,15 +151,15 @@ package body Builder_Module is
       end if;
    end Compile_Command;
 
-   ---------------------
-   -- On_Compute_Xref --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Compute_Xref
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Recompute_Xref_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Kernel);
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Command, Context);
    begin
       Launch_Target
         (Builder_Facility_Module.Builder,
@@ -163,26 +171,23 @@ package body Builder_Module is
          Background  => False,
          Dialog      => Build_Command_Utils.Force_No_Dialog,
          Main        => GNATCOLL.VFS.No_File);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Compute_Xref;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------
-   -- On_Load_Xref_In_Memory --
-   ----------------------------
-
-   procedure On_Load_Xref_In_Memory
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Xref_In_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       GPS.Kernel.Xref.Load_Xref_In_Memory (Kernel, C_Only => False);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Load_Xref_In_Memory;
+      return Commands.Success;
+   end Execute;
 
    -----------------------------
    -- On_Compilation_Starting --
@@ -232,14 +237,16 @@ package body Builder_Module is
       Kill_File_Iteration (Kernel, Xrefs_Loading_Queue);
    end Interrupt_Xrefs_Loading;
 
-   ------------------------
-   -- On_Tools_Interrupt --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Tools_Interrupt
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Interrupt_Tool_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Check whether the current MDI child can handle interrupt on its own
@@ -251,11 +258,8 @@ package body Builder_Module is
          --  Else default is to kill the last process we started
          Interrupt_Latest_Task (Kernel);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Tools_Interrupt;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- On_View_Changed --
@@ -282,6 +286,7 @@ package body Builder_Module is
       Build_Menu : constant String := '/' & (-"_Build") & '/';
       Tools      : constant String := '/' & (-"Tools") & '/';
       Sep        : Gtk_Separator_Menu_Item;
+      Command    : Interactive_Command_Access;
 
    begin
       --  This memory is allocated once, and lives as long as the application
@@ -297,22 +302,38 @@ package body Builder_Module is
       Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
 
       if not Active (Xref.SQLITE) then
+         Command := new Recompute_Xref_Command;
+         Register_Action
+           (Kernel, "Recompute Xref Info", Command,
+            Description => -"Reload the contents of all ALI files");
          Register_Menu
-           (Kernel, Build_Menu, -"Recompute _Xref info", "",
-            On_Compute_Xref'Access, Ref_Item => -"Settings");
+           (Kernel, -"/Build/Recompute _Xref info", "Recompute Xref Info",
+            Ref_Item => -"Settings");
+
+         Command := new Load_Xref_In_Memory_Command;
+         Register_Action
+           (Kernel, "Load Xref in memory", Command,
+            Description => -"Load all ALI file in memory, for faster queries");
          Register_Menu
-           (Kernel, Build_Menu, -"Load Xref info in memory", "",
-            On_Load_Xref_In_Memory'Access, Ref_Item => -"Settings");
+           (Kernel, -"/Build/Load Xref info in memory",
+            "Load Xref in memory", Ref_Item => -"Settings");
+
          Gtk_New (Sep);
          Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
       end if;
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Tools, Sep);
-      Register_Menu
-        (Kernel, Tools, -"_Interrupt", GPS_Stop_Task,
-         On_Tools_Interrupt'Access,
-         null, GDK_C, Control_Mask + Shift_Mask);
+
+      Command := new Interrupt_Tool_Command;
+      Register_Action
+        (Kernel, "Interrupt", Command,
+         Description =>
+           -"Interrupt the tasks performed in the background by GPS",
+         Stock_Id   => GPS_Stop_Task,
+         Accel_Key  => GDK_C,
+         Accel_Mods => Control_Mask + Shift_Mask);
+      Register_Menu (Kernel, -"/Tools/_Interrupt", "Interrupt");
 
       Add_Hook
         (Kernel => Kernel,

@@ -393,9 +393,9 @@ class Isearch(CommandWindow):
              filter='Source editor')
 def interactive_search():
     """
-    This action provides an incremental search facility: once activated,
-    each character you type is added to the search pattern, and GPS jumps
-    to the next occurrence of the pattern.
+This action provides an incremental search facility: once activated,
+each character you type is added to the search pattern, and GPS jumps
+to the next occurrence of the pattern.
     """
     Isearch()
 
@@ -407,9 +407,9 @@ def interactive_search():
              filter="Source editor")
 def interactive_search_backward():
     """
-    This action provides a backward incremental search facility:
-    once activated, each character you type is added to the search pattern, and
-    GPS jumps to the stack occurrence of the pattern.
+This action provides a backward incremental search facility:
+once activated, each character you type is added to the search pattern, and
+GPS jumps to the stack occurrence of the pattern.
     """
     Isearch(backward=True)
 

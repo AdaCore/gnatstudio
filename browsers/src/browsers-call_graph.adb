@@ -55,6 +55,7 @@ with Commands.Generic_Asynchronous; use Commands;
 with Commands.Interactive;          use Commands.Interactive;
 with Generic_Views;
 with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
@@ -475,10 +476,6 @@ package body Browsers.Call_Graph is
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Entity_Idle_Data, Destroy_Idle);
-
-   procedure On_Find_All_References
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Find all the references of the current entity
 
    procedure Print_Ref
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -1347,50 +1344,52 @@ package body Browsers.Call_Graph is
          Trace (Me, E);
    end Contextual_Factory;
 
-   ----------------------------
-   -- On_Find_All_References --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Find_All_References
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Find_All_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity  : General_Entity;
       Filter  : Custom_Filter;
-
    begin
-      if Context /= No_Context then
-         Entity := Get_Entity (Context);
+      if Context.Context /= No_Context then
+         Entity := Get_Entity (Context.Context);
          if Entity /= No_General_Entity then
             Filter := Custom_Filter'
                (Db        => Kernel.Databases,
                 Ref_Kinds => null,
-                Filter    => Is_Read_Or_Write_Reference'Access);
+                Filter    => null);
 
-            Find_All_References_Internal
-              (Kernel,
-               Entity,
-               Category_Title   => All_Refs_Category
-                 (Entity             => Entity,
-                  Kernel             => Kernel,
-                  Local_Only         => False,
-                  Local_File         => GNATCOLL.VFS.No_File,
-                  All_From_Same_File => False),
-               Filter           => Filter,
-               Show_Caller      => True);
+            if Command.Reads_Only then
+               Filter.Filter := Is_Read_Reference'Access;
+            elsif Command.Writes_Only then
+               Filter.Filter := Is_Write_Reference'Access;
+            else
+               Filter.Filter := Is_Read_Or_Write_Reference'Access;
+            end if;
+
+            Parse_All_Refs
+              (Kernel             => Kernel,
+               Entity             => Entity,
+               Locals_Only        => Command.Locals_Only,
+               Local_File         => File_Information (Context.Context),
+               All_From_Same_File => False,
+               Filter             => Filter,
+               Show_Caller        => True);
          end if;
+         return Commands.Success;
 
       else
          Kernel.Insert
            (-"Cannot find references: no entity selected",
             Mode => Error);
+         return Commands.Failure;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Find_All_References;
+   end Execute;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -2029,42 +2028,6 @@ package body Browsers.Call_Graph is
       Pop_State (Kernel_Handle (Kernel));
    end Parse_All_Refs;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Find_All_Refs_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity   : constant General_Entity := Get_Entity (Context.Context);
-      Filter   : Custom_Filter;
-      File     : constant Virtual_File := File_Information (Context.Context);
-   begin
-      Filter := (Db        => Kernel.Databases,
-                 Ref_Kinds => null,
-                 Filter    => null);
-
-      if Command.Reads_Only then
-         Filter.Filter := Is_Read_Reference'Access;
-      elsif Command.Writes_Only then
-         Filter.Filter := Is_Write_Reference'Access;
-      else
-         Filter.Filter := Is_Read_Or_Write_Reference'Access;
-      end if;
-
-      Parse_All_Refs
-        (Kernel             => Kernel,
-         Entity             => Entity,
-         Locals_Only        => Command.Locals_Only,
-         Local_File         => File,
-         All_From_Same_File => False,
-         Filter             => Filter,
-         Show_Caller        => True);
-      return Commands.Success;
-   end Execute;
-
    ------------------------
    -- Select_All_Filters --
    ------------------------
@@ -2306,15 +2269,10 @@ package body Browsers.Call_Graph is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Navigate : constant String := "/_" & (-"Navigate");
-      Find_All : constant String := -"Find _All References";
       Command  : Interactive_Command_Access;
-
       Filter   : Action_Filter;
-
       ReferencesCommand_Class : constant Class_Type := New_Class
         (Kernel, "ReferencesCommand", New_Class (Kernel, "Command"));
-
    begin
       Call_Graph_Module_Id := new Callgraph_Module_Record;
       Callgraph_Views.Register_Module
@@ -2353,6 +2311,10 @@ package body Browsers.Call_Graph is
          Add_Before => False);
 
       Command := new Find_All_Refs_Command;
+      Register_Action (Kernel, "Find All References", Command);
+      Register_Menu
+        (Kernel, -"/_Navigate/Find _All References", "Find All References",
+         Ref_Item => -"Find Previous", Add_Before => False);
       Register_Contextual_Menu
         (Kernel, "Find all references",
          Label      => "References/Find all references to %e",
@@ -2388,10 +2350,6 @@ package body Browsers.Call_Graph is
          Action => Command,
          Filter => Create (Module => Call_Graph_Module_Name)
                      and Lookup_Filter (Kernel, "Entity"));
-
-      Register_Menu
-        (Kernel, Navigate, Find_All, "", On_Find_All_References'Access,
-         Ref_Item => -"Find Previous", Add_Before => False);
 
       Register_Command
         (Kernel, "find_all_refs",

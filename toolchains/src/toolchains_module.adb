@@ -18,6 +18,7 @@
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -25,6 +26,7 @@ with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -60,8 +62,10 @@ package body Toolchains_Module is
    pragma Warnings (On);
    --  Applies the property.
 
-   procedure On_Menu
-     (Widget : access GObject_Record'Class; Kernel : GPS.Kernel.Kernel_Handle);
+   type Toolchains_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Toolchains_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Config menu
 
    pragma Warnings (Off); --  Yes, it's not dispatching and it's expected.
@@ -199,14 +203,15 @@ package body Toolchains_Module is
    end On_GPS_Started;
 
    -------------
-   -- On_Menu --
+   -- Execute --
    -------------
 
-   procedure On_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access Toolchains_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Property      : Toolchains_Property := Get_Property;
       Prop_Access   : Property_Access;
       Dialog        : Toolchains_Dialog.Dialog;
@@ -273,7 +278,8 @@ package body Toolchains_Module is
       end if;
 
       Destroy (Dialog);
-   end On_Menu;
+      return Commands.Success;
+   end Execute;
 
    ------------------
    -- Get_Property --
@@ -308,9 +314,16 @@ package body Toolchains_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools    : constant String := '/' & (-"Build/Settings") & '/';
+      Command : Interactive_Command_Access;
    begin
-      Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
+      Command := new Toolchains_Command;
+      Register_Action
+        (Kernel, "open toolchains editor", Command,
+         -"Open the toolchains editor (for builds)",
+         Category => -"Views");
+      Register_Menu (Kernel, -"/Build/Settings/T_oolchains",
+                     "open toolchains editor");
+
       --  Load the property after all modules and plug-ins are loaded.
       Add_Hook (Kernel, GPS_Started_Hook,
                 Wrapper (On_GPS_Started'Access),

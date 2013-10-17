@@ -18,6 +18,7 @@
 --  The root for all the search providers in GPS
 
 with GPS.Search;
+with Gdk.Types;
 with Glib.Object;
 with Gtk.Box;
 with Gtk.Widget;
@@ -86,8 +87,11 @@ package GPS.Kernel.Search is
    --  ??? Will be moved to the kernel
 
    procedure Register_Provider_And_Action
-      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider : not null access Kernel_Search_Provider'Class);
+      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider   : not null access Kernel_Search_Provider'Class;
+       Stock_Id   : String := "";
+       Accel_Key  : Gdk.Types.Gdk_Key_Type := 0;
+       Accel_Mods : Gdk.Types.Gdk_Modifier_Type := 0);
    --  Register the provider (and sets its Kernel field).
    --  Creates an action for it so that users can do key bindings.
 

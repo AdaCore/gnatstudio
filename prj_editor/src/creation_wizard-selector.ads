@@ -19,7 +19,7 @@
 --  several project wizards provided by GPS
 
 with GPS.Kernel;
-with Glib.Object;
+with Commands.Interactive;  use Commands, Commands.Interactive;
 
 package Creation_Wizard.Selector is
 
@@ -31,9 +31,10 @@ package Creation_Wizard.Selector is
    --  Return True if a project could be created, False if there was an error
    --  or the user cancelled the operation.
 
-   procedure On_New_Project
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
+   type New_Project_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access New_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Same as above, but suitable for use from a callback.
 
 end Creation_Wizard.Selector;

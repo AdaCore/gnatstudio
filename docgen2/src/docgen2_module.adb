@@ -24,12 +24,15 @@ with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 
+with Commands;                    use Commands;
+with Commands.Interactive;        use Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Docgen2;                     use Docgen2;
 with Docgen2.Scripts;
 with Docgen2_Backend;             use Docgen2_Backend;
 with Docgen2_Backend.HTML;        use Docgen2_Backend.HTML;
 with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
@@ -122,31 +125,19 @@ package body Docgen2_Module is
       Command : String);
    --  Handler for the Docgen2 commands specific to the Project class
 
-   ------------------
-   -- For the menu --
-   ------------------
+   type Generate_Project_Command is new Interactive_Command with record
+      Recursive : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Generate_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Choose_Menu_Current_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Generate the doc for the selected file
-
-   procedure Choose_Menu_Project
-      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  In order to generate the doc of the loaded project
-   --  It generates only the direct sources of the project
-   --  It calls Generate_Project
-
-   procedure Choose_Menu_Project_Recursive
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  In order to generate the doc of the project loaded
-   --  It generates the direct sources of the project and the sources
-   --     from imported projects
-   --  It calls Generate_Project
-
-   procedure Choose_Menu_File
-      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  In order to choose a file and generate its documentation
-   --  It calls Generate_File
+   type Generate_File_Command is new Interactive_Command with record
+      Interactive : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Generate_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -------------
    -- Destroy --
@@ -238,19 +229,30 @@ package body Docgen2_Module is
      (Command : access Generate_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File   : Virtual_File;
    begin
-      Generate
-        (Get_Kernel (Context.Context),
-         Docgen_Module (Docgen_Module_Id).Backend,
-         File_Information (Context.Context),
-         Docgen_Module (Docgen_Module_Id).Options);
-      return Commands.Success;
+      if Command.Interactive then
+         File := Select_File
+           (Title             => -"Generate Documentation For",
+            Parent            => Get_Current_Window (Kernel),
+            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+            Kind              => Open_File,
+            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+            Pattern_Name      => -"All files;Ada files;C/C++ files",
+            History           => Get_History (Kernel));
+      else
+         File := File_Information (Context.Context);
+      end if;
 
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return Commands.Failure;
+      if File /= GNATCOLL.VFS.No_File then
+         Generate
+           (Kernel,
+            Docgen_Module (Docgen_Module_Id).Backend,
+            File,
+            Docgen_Module (Docgen_Module_Id).Options);
+      end if;
+      return Commands.Success;
    end Execute;
 
    ---------------------------
@@ -329,109 +331,6 @@ package body Docgen2_Module is
          Get_Project_Class (Kernel));
    end Register_Commands;
 
-   ------------------------------
-   -- Choose_Menu_Current_File --
-   ------------------------------
-
-   procedure Choose_Menu_Current_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Kernel);
-      File    : aliased Virtual_File;
-
-   begin
-      if Has_File_Information (Context) then
-         File := File_Information (Context);
-
-         if File /= GNATCOLL.VFS.No_File then
-            Generate
-              (Kernel,
-               Docgen_Module (Docgen_Module_Id).Backend,
-               File,
-               Docgen_Module (Docgen_Module_Id).Options);
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Choose_Menu_Current_File;
-
-   -------------------------
-   -- Choose_Menu_Project --
-   -------------------------
-
-   procedure Choose_Menu_Project
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Generate
-        (Kernel,
-         Docgen_Module (Docgen_Module_Id).Backend,
-         No_Project,
-         Docgen_Module (Docgen_Module_Id).Options,
-         False);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Choose_Menu_Project;
-
-   -----------------------------------
-   -- Choose_Menu_Project_Recursive --
-   -----------------------------------
-
-   procedure Choose_Menu_Project_Recursive
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Generate
-        (Kernel,
-         Docgen_Module (Docgen_Module_Id).Backend,
-         No_Project,
-         Docgen_Module (Docgen_Module_Id).Options,
-         True);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Choose_Menu_Project_Recursive;
-
-   ----------------------
-   -- Choose_Menu_File --
-   ---------------------
-
-   procedure Choose_Menu_File
-    (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      File : aliased constant Virtual_File :=
-        Select_File
-          (Title             => -"Generate Documentation For",
-           Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Kernel));
-   begin
-      if File /= GNATCOLL.VFS.No_File then
-         Generate
-           (Kernel,
-            Docgen_Module (Docgen_Module_Id).Backend,
-            File,
-            Docgen_Module (Docgen_Module_Id).Options);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Choose_Menu_File;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -440,7 +339,6 @@ package body Docgen2_Module is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools    : constant String := '/' & (-"Tools");
-      Generate : constant String := '/' & (-"_Documentation");
       Command  : Interactive_Command_Access;
    begin
       Docgen_Module_Id := new Docgen_Module_Record;
@@ -524,7 +422,18 @@ package body Docgen2_Module is
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel, Data => null);
 
+      Register_Menu
+        (Kernel, Tools, "_Documentation", Callback => null,
+         Ref_Item => -"Consoles", Add_Before => False);
+
       Command := new Generate_Project_Command;
+      Register_Action
+        (Kernel, "Documentation generate for project", Command,
+         Description => -"Generate documentation for a single project",
+         Filter => Lookup_Filter (Kernel, "Project only"));
+      Register_Menu
+        (Kernel, -"/Tools/Documentation/Generate _project",
+         "Documentation generate for project");
       Register_Contextual_Menu
         (Kernel, "Generate project documentation",
          Label  => "Documentation/Generate for %p",
@@ -533,6 +442,13 @@ package body Docgen2_Module is
 
       Command := new Generate_Project_Command;
       Generate_Project_Command (Command.all).Recursive := True;
+      Register_Action
+        (Kernel, "Documentation generate for project and subprojects", Command,
+         Description => -"Generate documentation for project and subprojects",
+         Filter => Lookup_Filter (Kernel, "Project only"));
+      Register_Menu
+        (Kernel, -"/Tools/Documentation/Generate project & _subprojects",
+         "Documentation generate for project and subprojects");
       Register_Contextual_Menu
         (Kernel, "Generate project documentation recursive",
          Label  => "Documentation/Generate for %p and subprojects",
@@ -540,6 +456,14 @@ package body Docgen2_Module is
          Filter => Lookup_Filter (Kernel, "Project only"));
 
       Command := new Generate_File_Command;
+      Register_Action
+        (Kernel, "Documentation generate for current file", Command,
+         Description => -"Generate documentation for current file",
+         Filter => Lookup_Filter (Kernel, "File")
+             and Create (Language => "ada"));
+      Register_Menu
+        (Kernel, -"/Tools/Documentation/Generate _current file",
+         "Documentation generate for current file");
       Register_Contextual_Menu
         (Kernel, "Generate file documentation",
          Label  => "Documentation/Generate for %f",
@@ -547,33 +471,16 @@ package body Docgen2_Module is
          Filter => Lookup_Filter (Kernel, "File")
                      and Create (Language => "ada"));
 
+      Command := new Generate_File_Command;
+      Generate_File_Command (Command.all).Interactive := True;
+      Register_Action
+        (Kernel, "Documentation generate for file", Command,
+         Description => -"Generate documentation for file",
+         Filter => Lookup_Filter (Kernel, "File")
+             and Create (Language => "ada"));
       Register_Menu
-        (Kernel, Tools, "_Documentation", Callback => null,
-         Ref_Item => -"Consoles", Add_Before => False);
-
-      Register_Menu
-        (Kernel,
-         Tools & Generate,
-         -"Generate _project",
-         Callback => Choose_Menu_Project'Access);
-
-      Register_Menu
-        (Kernel,
-         Tools & Generate,
-         -"Generate project & _subprojects",
-         Callback => Choose_Menu_Project_Recursive'Access);
-
-      Register_Menu
-        (Kernel,
-         Tools & Generate,
-         -"Generate _current file",
-         Callback => Choose_Menu_Current_File'Access);
-
-      Register_Menu
-        (Kernel,
-         Tools & Generate,
-         -"Generate _for ...",
-         Callback => Choose_Menu_File'Access);
+        (Kernel, -"/Tools/Documentation/Generate _for ...",
+         "Documentation generate for file");
 
       Register_Commands (Kernel);
    end Register_Module;

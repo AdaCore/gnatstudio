@@ -921,15 +921,11 @@ package body Call_Graph_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Clear,
-         Action   => Command_Clear_Calltree_Name,
-         Tooltip  => Command_Clear_Calltree_Tip);
+         Action   => Command_Clear_Calltree_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Remove,
-         Action   => Command_Remove_Calltree_Name,
-         Tooltip  => Command_Remove_Calltree_Tip);
+         Action   => Command_Remove_Calltree_Name);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
@@ -937,9 +933,7 @@ package body Call_Graph_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => GPS_Collapse_All,
-         Action   => Command_Collapse_All_Name,
-         Tooltip  => Command_Collapse_All_Tip);
+         Action   => Command_Collapse_All_Name);
    end Create_Toolbar;
 
    -------------
@@ -1801,19 +1795,22 @@ package body Call_Graph_Views is
       Register_Action
         (Kernel, Command_Clear_Calltree_Name,
          Command, Command_Clear_Calltree_Tip,
-         null, -"Call trees");
+         Category => -"Call trees",
+         Stock_Id => Stock_Clear);
 
       Command := new Calltree_Remove_Command;
       Register_Action
         (Kernel, Command_Remove_Calltree_Name,
          Command, Command_Remove_Calltree_Tip,
-         null, -"Call trees");
+         Stock_Id => Stock_Remove,
+         Category => -"Call trees");
 
       Command := new Calltree_Collapse_All_Command;
       Register_Action
         (Kernel, Command_Collapse_All_Name,
          Command, Command_Collapse_All_Tip,
-         null, -"Call trees");
+         Stock_Id => GPS_Collapse_All,
+         Category => -"Call trees");
    end Register_Module;
 
 end Call_Graph_Views;

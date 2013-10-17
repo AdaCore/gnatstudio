@@ -18,38 +18,31 @@
 --  This package enables the user to connect Undo / Redo buttons to a
 --  queue of commands
 
-with Gtk.Handlers;            use Gtk.Handlers;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Tool_Button;         use Gtk.Tool_Button;
+with Gtk.Widget;   use Gtk.Widget;
 
 package Commands.Controls is
 
    type Undo_Redo_Information is record
-      Undo_Button    : Gtk.Tool_Button.Gtk_Tool_Button;
-      Redo_Button    : Gtk.Tool_Button.Gtk_Tool_Button;
+      Undo_Button    : Gtk.Widget.Gtk_Widget;
+      Redo_Button    : Gtk.Widget.Gtk_Widget;
 
-      Undo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
-      Redo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      Command : Commands.Command_Access;
+      --  A command used to follow changes in the queue
 
-      Undo_Button_Handler_ID    : Handler_Id;
-      Redo_Button_Handler_ID    : Handler_Id;
-      Undo_Menu_Item_Handler_ID : Handler_Id;
-      Redo_Menu_Item_Handler_ID : Handler_Id;
+      Queue : Commands.Command_Queue;
+      --  The queue from which undo and redo information is read
    end record;
 
    type Undo_Redo is access Undo_Redo_Information;
 
-   function Set_Controls
-     (Queue  : Command_Queue;
-      UR     : Undo_Redo) return Command_Access;
+   procedure Set_Undo_Redo_Queue (Queue  : Command_Queue; UR : Undo_Redo);
    --  Associate the state of Queue to the buttons:
    --  The sensitivity of Undo/Redo widgets (named "controls")
    --  indicate the presence of actions in the corresponding Undo/Redo Queues.
    --  Activating the controls executes the first action in the corresponding
    --  queue.
 
-   procedure Unset_Controls (Command : Command_Access);
+   procedure Unset_Undo_Redo_Queue (UR : Undo_Redo);
    --  Disconnect any controls that are connected to Command.
-   --  Command must be a Queue_Change_Access.
 
 end Commands.Controls;

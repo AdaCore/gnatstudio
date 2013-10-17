@@ -245,9 +245,10 @@ package body Project_Viewers is
      (Command : access Edit_Project_Properties_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Save_All_Projects
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Save_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Save_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Save the project associated with the kernel, and all its imported
    --  projects.
 
@@ -819,22 +820,21 @@ package body Project_Viewers is
       return Commands.Success;
    end Execute;
 
-   -----------------------
-   -- Save_All_Projects --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Save_All_Projects
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Save_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       Tmp : Boolean;
-      pragma Unreferenced (Widget, Tmp);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Command, Tmp);
    begin
       Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
-
-   exception
-      when E : others => Trace (Me, E);
-   end Save_All_Projects;
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -1651,23 +1651,32 @@ package body Project_Viewers is
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
-      Register_Menu (Kernel, Project, -"_New...", "",
-                     Creation_Wizard.Selector.On_New_Project'Access,
+
+      Command := new New_Project_Command;
+      Register_Action
+        (Kernel, "new project", Command,
+         Description => -"Interactively create a new project");
+      Register_Menu (Kernel, -"/Project/_New...", "new project",
                      Ref_Item => -"Open From Host...", Add_Before => False);
 
       Command := new Edit_Project_Properties_Command;
       Register_Action
         (Kernel, "open Project Properties", Command,
-         "Open the project properties editor", null, -"Views");
+         "Open the project properties editor",
+         Stock_Id => Stock_Edit,
+         Category => -"Views");
       Register_Menu
-        (Kernel, Project, -"Edit Project _Properties", "",
-         null, Command => Command, Ref_Item => -"Recent",
-         Add_Before => False);
+        (Kernel,
+         -"/Project/Edit Project _Properties", "open Project Properties",
+         Ref_Item => -"Recent", Add_Before => False);
 
+      Command := new Save_All_Command;
+      Register_Action
+        (Kernel, "save all projects", Command,
+         Description => -"Save all modified projects to disk");
       Register_Menu
-        (Kernel, Project, -"Save _All", "",
-         Save_All_Projects'Access, Ref_Item => -"Edit Project Properties",
-         Add_Before => False);
+        (Kernel, -"/Project/Save _All", "save all projects",
+         Ref_Item => -"Edit Project Properties", Add_Before => False);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Project, Mitem, Ref_Item => -"Recent",
@@ -1738,6 +1747,7 @@ package body Project_Viewers is
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,
          Command => Command,
+         Stock_Id    => Stock_Add,
          Description => -"Add a new scenario variable to the selected project",
          Category => -"Projects");
 

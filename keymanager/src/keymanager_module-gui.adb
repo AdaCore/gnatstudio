@@ -62,7 +62,7 @@ with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Pango.Enums;             use Pango.Enums;
 
-with Commands.Interactive;    use Commands.Interactive;
+with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -101,8 +101,10 @@ package body KeyManager_Module.GUI is
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
    --  Fill the contents of the editor
 
-   procedure On_Edit_Keys
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Open_Keyshortcuts_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Keyshortcuts_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open a GUI to edit the key bindings
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class);
@@ -805,18 +807,20 @@ package body KeyManager_Module.GUI is
       when E : others => Trace (Me, E);
    end On_Remove_Key;
 
-   ------------------
-   -- On_Edit_Keys --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Edit_Keys
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Open_Keyshortcuts_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Editor    : Keys_Editor;
       Scrolled  : Gtk_Scrolled_Window;
       Bbox      : Gtk_Box;
       Hbox, Vbox, Filter_Box : Gtk_Box;
---        Button    : Gtk_Button;
       Col       : Gtk_Tree_View_Column;
       Render    : Gtk_Cell_Renderer_Text;
       Ignore    : Gint;
@@ -826,7 +830,7 @@ package body KeyManager_Module.GUI is
       Event     : Gtk_Event_Box;
       Text      : Gtk_Text_View;
       Ignore_Action : Gtk_Widget;
-      pragma Unreferenced (Widget, Ignore, Ignore_Action);
+      pragma Unreferenced (Ignore, Ignore_Action);
 
    begin
       Editor := new Keys_Editor_Record;
@@ -1007,9 +1011,8 @@ package body KeyManager_Module.GUI is
       Unchecked_Free (Editor.Bindings);
       Destroy (Editor);
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Edit_Keys;
+      return Commands.Success;
+   end Execute;
 
    -----------------------
    -- Register_Key_Menu --
@@ -1018,13 +1021,15 @@ package body KeyManager_Module.GUI is
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Command : Interactive_Command_Access;
    begin
+      Command := new Open_Keyshortcuts_Command;
+      Register_Action
+        (Kernel, "open key shortcuts dialog", Command,
+         Category => -"Views");
       Register_Menu
-        (Kernel, '/' & (-"Edit"),
-         -"_Key Shortcuts",
-         Callback => On_Edit_Keys'Access,
-         Ref_Item => -"Aliases",
-         Add_Before => False);
+        (Kernel, -"/Edit/_Key Shortcuts", "open key shortcuts dialog",
+         Ref_Item => -"Aliases", Add_Before => False);
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;

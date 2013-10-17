@@ -35,12 +35,13 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Glib.Object;  use Glib;
+with Gdk.Types;
 with Gtk.Widget;
 with Gtk.Window;
 
 with Basic_Types;
 with Basic_Mapper;
-with Commands.Controls;
+with Commands;
 with Generic_List;
 with HTables;
 with Language_Handlers;
@@ -219,20 +220,49 @@ package GPS.Kernel is
    type Key_Setter is access procedure
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
-      Accel_Key  : Natural;
-      Accel_Mods : Natural);
+      Accel_Key  : Gdk.Types.Gdk_Key_Type;
+      Accel_Mods : Gdk.Types.Gdk_Modifier_Type);
+   type Key_Getter is access function
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Action          : String;
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True) return String;
+   type Key_Getter_Simple is access procedure
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Key        : out Gdk.Types.Gdk_Key_Type;
+      Mods       : out Gdk.Types.Gdk_Modifier_Type);
 
    procedure Set_Key_Setter
-     (Kernel : access Kernel_Handle_Record;
-      Setter : Key_Setter);
+     (Kernel        : access Kernel_Handle_Record;
+      Setter        : Key_Setter;
+      Getter        : Key_Getter;
+      Getter_Simple : Key_Getter_Simple);
    --  Register a key setter. This function should be called by key manager
    --  modules.
+
+   function Get_Shortcut
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Action          : String;
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True) return String;
+   --  Return the key shortcut(s) for the given action.
+   --  The return value is suitable for display, but cannot be used as a key
+   --  binding (since it might includes special system-specific symbols).
+
+   procedure Get_Shortcut_Simple
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Key        : out Gdk.Types.Gdk_Key_Type;
+      Mods       : out Gdk.Types.Gdk_Modifier_Type);
+   --  If the action has a simple keybinding associated with it, return it.
+   --  Otherwise, set Key to 0 to indicate there is no simple shortcut.
 
    procedure Set_Default_Key
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
-      Accel_Key  : Natural;
-      Accel_Mods : Natural);
+      Accel_Key  : Gdk.Types.Gdk_Key_Type;
+      Accel_Mods : Gdk.Types.Gdk_Modifier_Type);
    --  Set a default key for the registered action.
 
    -----------
@@ -583,18 +613,6 @@ package GPS.Kernel is
    procedure Set_Buffer_Factory
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
-
-   ----------------
-   --  Undo_Redo --
-   ----------------
-
-   function Get_Undo_Redo
-     (Kernel : access Kernel_Handle_Record)
-      return Commands.Controls.Undo_Redo;
-
-   procedure Set_Undo_Redo
-     (Kernel : access Kernel_Handle_Record;
-      Value  : Commands.Controls.Undo_Redo);
 
    -----------------
    -- Refactoring --
@@ -1201,14 +1219,13 @@ private
       --  The message container for this instance of kernel
 
       Key_Setter_Function : Key_Setter;
-      --  The function to set default keys
+      Key_Getter_Function : Key_Getter;
+      Key_Getter_Simple_Function : Key_Getter_Simple;
+      --  The function to set or retrieve default keys
 
       Refactoring : Standard.Refactoring.Factory_Context;
 
       Messages : Abstract_Messages_Window_Access;
-
-      Undo_Redo : Commands.Controls.Undo_Redo;
-      --  Undo/redo controls
 
       Launcher : aliased GPS_Process_Launcher_Record;
       --  External process launcher

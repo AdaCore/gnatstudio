@@ -700,7 +700,6 @@ package body Bookmark_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Add,
          Action   => Command_Add_Name);
 
       Gtk_New (Sep);
@@ -709,12 +708,10 @@ package body Bookmark_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Convert,
          Action   => Command_Rename_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Remove,
          Action   => Command_Remove_Name);
    end Create_Toolbar;
 
@@ -1291,26 +1288,27 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, Command_Rename_Name, Command,
          -("Interactively rename the bookmark currently selected in the"
-           & " bookmarks view"), Category => -"Bookmarks");
+           & " bookmarks view"), Category => -"Bookmarks",
+         Stock_Id => Stock_Convert);
 
       Command := new Delete_Bookmark_Command;
       Register_Action
         (Kernel, Command_Remove_Name, Command,
          -"Delete the bookmark currently selected in the bookmarks view",
+         Stock_Id => Stock_Remove,
          Category => -"Bookmarks");
 
       Command := new Create_Bookmark_Command;
+      Register_Action
+        (Kernel, Command_Add_Name, Command,
+         -("Create a bookmark at the current location"),
+         Stock_Id => Stock_Add,
+         Category => -"Bookmarks", Filter => Src_Action_Context);
       Register_Menu
         (Kernel,
-         "/" & (-"Edit"), -"Create Boo_kmark", "",
-         Ref_Item => -"Aliases",
-         Callback => null,
-         Command  => Command,
-         Filter   => Src_Action_Context);
-      Register_Action
-        (Kernel, "Bookmark Create", Command,
-         -("Create a bookmark at the current location"),
-         Category => -"Bookmarks", Filter => Src_Action_Context);
+         Path     => -"/Edit/Create Boo_kmark",
+         Action   => Command_Add_Name,
+         Ref_Item => -"Aliases");
 
       Command := new Next_Bookmark_Command (Backward => False);
       Register_Action

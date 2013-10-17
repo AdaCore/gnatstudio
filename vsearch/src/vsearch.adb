@@ -38,7 +38,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -167,8 +166,8 @@ package body Vsearch is
       --  The extended search widget, stored for the whole life of GPS, so that
       --  histories are kept
 
-      Next_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
-      Prev_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      Search_Started : Boolean := False;
+      --  Whether the user has started a search (Next and Previous should work)
 
       Search_Regexps : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
@@ -386,12 +385,22 @@ package body Vsearch is
      (Object : access Gtk_Widget_Record'Class);
    --  Called when the entry "Look in" is changed.
 
-   procedure Search_Next_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Has_Search_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Search_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  Whether a search is in progress
+
+   type Find_Next_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Find_Next_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for menu Edit->Search Next
 
-   procedure Search_Previous_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Find_Previous_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Find_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for menu Edit->Search Previous
 
    procedure New_Predefined_Regexp
@@ -652,8 +661,6 @@ package body Vsearch is
       end if;
 
       Search_Modules_List.Free (Module.Search_Modules);
-      Unref (Module.Next_Menu_Item);
-      Unref (Module.Prev_Menu_Item);
    end Destroy;
 
    --------------------
@@ -1376,8 +1383,7 @@ package body Vsearch is
          Add (Align, Label);
          Show_All (Align);
 
-         Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, True);
-         Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, True);
+         Vsearch_Module_Id.Search_Started := True;
 
          --  Always activate the "Next" button, so that we can still do
          --  selective replace. Otherwise, the button is greyed out when we
@@ -1396,8 +1402,7 @@ package body Vsearch is
          Add (Align, Label);
          Show_All (Align);
 
-         Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
-         Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
+         Vsearch_Module_Id.Search_Started := False;
       end if;
    end Set_First_Next_Mode;
 
@@ -2311,39 +2316,50 @@ package body Vsearch is
       To   := Vsearch_Module_Id.Search.Selection_To;
    end Get_Selection;
 
-   --------------------
-   -- Search_Next_Cb --
-   --------------------
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
 
-   procedure Search_Next_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Search_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Vsearch_Module_Id.Search_Started;
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Find_Next_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
    begin
       if Vsearch_Module_Id.Search /= null then
          On_Search (Vsearch_Module_Id.Search);
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end Search_Next_Cb;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------
-   -- Search_Previous_Cb --
-   ------------------------
-
-   procedure Search_Previous_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Find_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Command, Context);
    begin
       if Vsearch_Module_Id.Search /= null then
          On_Search_Previous (Vsearch_Module_Id.Search);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Search_Previous_Cb;
+      return Commands.Success;
+   end Execute;
 
    ----------
    -- Free --
@@ -2704,6 +2720,7 @@ package body Vsearch is
       Find_All : constant String := -"Find All References";
       Mitem    : Gtk_Separator_Menu_Item;
       Command : Interactive_Command_Access;
+      Filter  : Action_Filter;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
       Register_Module
@@ -2722,37 +2739,37 @@ package body Vsearch is
       Command := new Search_Specific_Context'
         (Interactive_Command with Context => null);
       Register_Action
-        (Kernel,
-         Name        => -"Search",
-         Command     => Command,
+        (Kernel, "Search", Command,
          Description => -("Open the search dialog. If you have selected the"
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
+         Stock_Id    => Stock_Find,
+         Accel_Key   => GDK_LC_f,
+         Accel_Mods  => Control_Mask,
          Category    => -"Search");
       Register_Menu
-        (Kernel,
-         Parent_Path => Navigate,
-         Text        => -"_Find or Replace...",
-         Stock_Image => Stock_Find,
-         Callback    => null,
-         Command     => Command,
-         Ref_Item    => Find_All,
-         Accel_Key   => GDK_LC_f, Accel_Mods => Control_Mask);
+        (Kernel, -"/Navigate/_Find or Replace...", "Search",
+         Ref_Item => Find_All);
 
-      Vsearch_Module_Id.Next_Menu_Item := Register_Menu
-        (Kernel, Navigate, -"Find _Next",
-         "", Search_Next_Cb'Access,
-         Accel_Key => GDK_LC_n, Accel_Mods => Control_Mask);
-      Ref (Vsearch_Module_Id.Next_Menu_Item);
-      Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
+      Command := new Find_Next_Command;
+      Filter  := new Has_Search_Filter;
+      Register_Action
+        (Kernel, "find next", Command,
+         Description => -"Find the next occurrence of the search pattern",
+         Filter      => Filter,
+         Accel_Key   => GDK_LC_n,
+         Accel_Mods  => Control_Mask);
+      Register_Menu (Kernel, -"/Navigate/Find _Next", "find next");
 
-      Vsearch_Module_Id.Prev_Menu_Item := Register_Menu
-        (Kernel, Navigate, -"Find _Previous",
-         "", Search_Previous_Cb'Access,
-         Accel_Key => GDK_LC_p, Accel_Mods => Control_Mask);
-      Ref (Vsearch_Module_Id.Prev_Menu_Item);
-      Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
+      Command := new Find_Previous_Command;
+      Register_Action
+        (Kernel, "find previous", Command,
+         Description => -"Find the previous occurrence of the search pattern",
+         Filter      => Filter,
+         Accel_Key   => GDK_LC_p,
+         Accel_Mods  => Control_Mask);
+      Register_Menu (Kernel, -"/Navigate/Find _Previous", "find previous");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Navigate, Mitem);

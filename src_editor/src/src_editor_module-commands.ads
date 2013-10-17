@@ -117,4 +117,129 @@ package Src_Editor_Module.Commands is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Callback for the "Goto Line" contextual menu
 
+   Open_Command_Name : constant String := "open file";
+   type Open_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->Open menu
+
+   type Open_Remote_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Remote_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->Open Remote menu
+
+   type New_View_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access New_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->New View menu
+
+   New_File_Command_Name : constant String := "new file";
+   type New_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access New_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->New menu
+
+   Save_Command_Name : constant String := "save";
+   type Save_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Save_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->Save menu
+
+   type Save_As_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Save_As_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->Save As... menu
+
+   type Print_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Print_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  File->Print menu
+
+   type Print_Selection_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Print_Selection_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Selection->Print Selection menu
+
+   type Goto_Body_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Goto_Body_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Navigate->Goto Body menu
+   --  Goto the next body of the entity under the cursor in the current
+   --  editor.
+
+   type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
+   type Close_Command is new Interactive_Command with record
+      Mode      : Close_Command_Mode;
+   end record;
+   overriding function Execute
+     (Command : access Close_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Close the current window (or all windows if Close_All is True)
+
+   type Comment_Lines_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Comment_Lines_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Comment Lines menu
+
+   type Uncomment_Lines_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Uncomment_Lines_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Uncomment Lines menu
+
+   type Fold_All_Blocks_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Fold_All_Blocks_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Fold all blocks menu
+
+   type Unfold_All_Blocks_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Unfold_All_Blocks_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Unfold all blocks menu
+
+   type Refill_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Refill_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Refill
+
+   type Edit_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc for inherited subprogram
+   --  Edit a file (from a contextual menu)
+
+   type Editor_Properties_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Editor_Properties_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc for inherited subprogram
+   --  Edit the properties of a file (from a contextual menu)
+
+   procedure Save_To_File
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Success : out Boolean);
+   --  Save the current editor to Name, or its associated filename if Name is
+   --  null.
+
+   procedure New_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create a new view for the current editor and add it in the MDI.
+   --  The current editor is the focus child in the MDI. If the focus child
+   --  is not an editor, nothing happens.
+
 end Src_Editor_Module.Commands;

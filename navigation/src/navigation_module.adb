@@ -31,11 +31,12 @@ with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
-with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Editors;                use GPS.Editors;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
@@ -130,39 +131,60 @@ package body Navigation_Module is
      (Handle : access Kernel_Handle_Record'Class);
    --  Refresh the active/inactive state of the location buttons
 
-   procedure On_Back
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   procedure On_Forward
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callbacks for the back/forward buttons
+   type Back_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Back_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Callbacks for the back buttons
 
-   procedure On_Other_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Forward_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Forward_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Callbacks for the forward buttons
+
+   type Goto_Other_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Goto_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open the spec if a body or separate is currently selected, and the spec
    --  otherwise.
 
-   procedure On_Next_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Navigate->Next Result menu
-
-   procedure On_Previous_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Previous_Tag_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Previous_Tag_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->Previous Result menu
 
-   procedure On_Start_Statement
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Next_Tag_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Next_Tag_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Callback for Navigate->Next Result menu
+
+   type Start_Statement_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Start_Statement_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->Start Statement menu
 
-   procedure On_End_Statement
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type End_Statement_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access End_Statement_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->End Statement menu
 
-   procedure On_Next_Subprogram
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Next_Subprogram_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Next_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->Next Subprogram menu
 
-   procedure On_Previous_Subprogram
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Previous_Subprogram_Command
+      is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Previous_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->Previous Subprogram menu
 
    procedure Command_Handler
@@ -813,59 +835,58 @@ package body Navigation_Module is
    end Command_Handler;
 
    -------------
-   -- On_Back --
+   -- Execute --
    -------------
 
-   procedure On_Back
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Back_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => True);
       Go_To_Current_Marker (Kernel);
       Refresh_Location_Buttons (Kernel);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Back;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------
-   -- On_Forward --
-   ----------------
-
-   procedure On_Forward
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Forward_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => False);
       Go_To_Current_Marker (Kernel);
       Refresh_Location_Buttons (Kernel);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Forward;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------
-   -- On_Start_Statement --
-   ------------------------
-
-   procedure On_Start_Statement
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Start_Statement_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : Virtual_File;
       Line    : Natural;           -- Current line being processed
       B_Start : Natural;           -- Block's first line
       B_Type  : Language_Category; -- Block's category
-
    begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
+      if Has_File_Information (Context.Context)
+        and then Has_Directory_Information (Context.Context)
       then
-         File := File_Information (Context);
+         File := File_Information (Context.Context);
 
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
@@ -895,31 +916,28 @@ package body Navigation_Module is
             end if;
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Start_Statement;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------
-   -- On_End_Statement --
-   ----------------------
-
-   procedure On_End_Statement
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access End_Statement_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : Virtual_File;
       Line    : Natural;           -- Current line being processed
       B_End   : Natural;           -- Block's first line
       B_Type  : Language_Category; -- Block's category
-
    begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
+      if Has_File_Information (Context.Context)
+        and then Has_Directory_Information (Context.Context)
       then
-         File := File_Information (Context);
+         File := File_Information (Context.Context);
 
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
@@ -948,32 +966,29 @@ package body Navigation_Module is
             end if;
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_End_Statement;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------
-   -- On_Next_Subprogram --
-   ------------------------
-
-   procedure On_Next_Subprogram
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Next_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
-      Context   : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File      : Virtual_File;
       Line      : Natural;           -- Current line being processed
       Last_Line : Natural;           -- Last line in the buffer
       B_Start   : Natural;           -- Block's first line
       B_Type    : Language_Category; -- Block's category
-
    begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
+      if Has_File_Information (Context.Context)
+        and then Has_Directory_Information (Context.Context)
       then
-         File := File_Information (Context);
+         File := File_Information (Context.Context);
 
          Line      := Get_Current_Line (Kernel, File);
          Last_Line := Get_Last_Line (Kernel, File);
@@ -992,47 +1007,43 @@ package body Navigation_Module is
             Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Next_Subprogram;
+   -------------
+   -- Execute --
+   -------------
 
-   --------------------
-   -- On_Next_Result --
-   --------------------
-
-   procedure On_Next_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Next_Tag_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Next_Item (Kernel, False);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Next_Result;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------
-   -- On_Previous_Subprogram --
-   ----------------------------
-
-   procedure On_Previous_Subprogram
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Previous_Subprogram_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       File    : Virtual_File;
       Line    : Natural;           -- Current line being processed
       B_Start : Natural;           -- Block's first line
       B_Type  : Language_Category; -- Block's category
-
    begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
+      if Has_File_Information (Context.Context)
+        and then Has_Directory_Information (Context.Context)
       then
-         File := File_Information (Context);
+         File := File_Information (Context.Context);
 
          Line := Get_Current_Line (Kernel, File);
 
@@ -1050,63 +1061,54 @@ package body Navigation_Module is
             Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Previous_Subprogram;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------
-   -- On_Previous_Result --
-   ------------------------
-
-   procedure On_Previous_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Previous_Tag_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Next_Item (Kernel, True);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Previous_Result;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------
-   -- On_Other_File --
-   -------------------
-
-   procedure On_Other_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Goto_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Push_State (Kernel, Busy);
-
-      if Has_File_Information (Context) then
+      if Has_File_Information (Context.Context) then
          declare
+            File : constant Virtual_File := File_Information (Context.Context);
             Other_File : constant Virtual_File :=
-              Get_Registry (Kernel).Tree.Other_File
-                (File_Information (Context));
+              Get_Registry (Kernel).Tree.Other_File (File);
          begin
             if Dir_Name (Other_File) /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & Display_Full_Name (File_Information (Context)));
+                      & File.Display_Full_Name);
             end if;
          end;
       else
          Insert (Kernel, -"There is no selected file", Mode => Error);
       end if;
 
-      Pop_State (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel);
-   end On_Other_File;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1120,7 +1122,7 @@ package body Navigation_Module is
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
       Menu_Item          : Gtk_Separator_Menu_Item;
-      Button             : Gtk_Tool_Button;
+      Command            : Interactive_Command_Access;
       Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
@@ -1145,45 +1147,99 @@ package body Navigation_Module is
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
-      Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body", "",
-                     On_Other_File'Access);
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, Navigate, Menu_Item);
-      Register_Menu (Kernel, Navigate, -"_Start Of Statement",
-                     "", On_Start_Statement'Access,
-                     null, GDK_Up, Mod1_Mask,
-                     Filter => Src_Action_Context);
-      Register_Menu (Kernel, Navigate, -"_End Of Statement",
-                     "", On_End_Statement'Access,
-                     null, GDK_Down, Mod1_Mask,
-                     Filter => Src_Action_Context);
-      Register_Menu (Kernel, Navigate, -"Pre_vious Subprogram", "",
-                     On_Previous_Subprogram'Access, null,
-                     GDK_Up, Control_Mask,
-                     Filter => Src_Action_Context);
-      Register_Menu (Kernel, Navigate, -"Ne_xt Subprogram", "",
-                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask,
-                     Filter => Src_Action_Context);
+      Command := new Goto_Other_File_Command;
+      Register_Action
+        (Kernel, "goto other file", Command,
+         -"Open the corresponding spec or body file");
+      Register_Menu
+        (Kernel, -"/Navigate/Goto _File Spec<->Body", "goto other file");
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
+
+      Command := new Start_Statement_Command;
+      Register_Action
+        (Kernel, "start of statement", Command,
+         -"Move to the beginning of the current statement",
+         Category   => -"Editor",
+         Accel_Key  => GDK_Up,
+         Accel_Mods => Mod1_Mask,
+         Filter     => Src_Action_Context);
       Register_Menu
-        (Kernel, Navigate, -"Previous _Tag", "", On_Previous_Result'Access,
+        (Kernel, -"/Navigate/_Start of Statement", "start of statement");
+
+      Command := new End_Statement_Command;
+      Register_Action
+        (Kernel, "end of statement", Command,
+         -"Move to the end of the current statement",
+         Category   => -"Editor",
+         Accel_Key  => GDK_Down,
+         Accel_Mods => Mod1_Mask,
+         Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Navigate/_End of Statement", "end of statement");
+
+      Command := new Previous_Subprogram_Command;
+      Register_Action
+        (Kernel, "previous subprogram", Command,
+         -"Move to the previous subprogram",
+         Category   => -"Editor",
+         Accel_Key  => GDK_Up,
+         Accel_Mods => Control_Mask,
+         Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Navigate/_Pre_vious Subprogram", "previous subprogram");
+
+      Command := new Next_Subprogram_Command;
+      Register_Action
+        (Kernel, "next subprogram", Command,
+         -"Move to the next subprogram",
+         Category   => -"Editor",
+         Accel_Key  => GDK_Down,
+         Accel_Mods => Control_Mask,
+         Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Navigate/_Ne_xt Subprogram", "next subprogram");
+
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, Navigate, Menu_Item);
+
+      Command := new Previous_Tag_Command;
+      Register_Action
+        (Kernel, "previous tag", Command,
+         -"Move to the previous message from the Locations window",
+         Category   => -"Locations",
          Accel_Key  => GDK_less,
          Accel_Mods => Control_Mask);
-      Register_Menu
-        (Kernel, Navigate, -"N_ext Tag", "", On_Next_Result'Access,
+      Register_Menu (Kernel, -"/Navigate/Previous _Tag", "previous tag");
+
+      Command := new Next_Tag_Command;
+      Register_Action
+        (Kernel, "next tag", Command,
+         -"Move to the next message from the Locations window",
+         Category   => -"Locations",
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
+      Register_Menu (Kernel, -"/Navigate/N_ext Tag", "next tag");
+
+      Command := new Back_Command;
+      Register_Action
+        (Kernel, "backward locations history", Command,
+         Description => -"Goto previous location",
+         Category    => -"Editor",
+         Stock_Id    => "gps-navigate-back");
+      Register_Menu (Kernel, -"/Navigate/Bac_k", "backward locations history");
+
+      Command := new Forward_Command;
+      Register_Action
+        (Kernel, "forward locations history", Command,
+         Description => -"Goto next location",
+         Category    => -"Editor",
+         Stock_Id    => "gps-navigate-forward");
+      Register_Menu
+        (Kernel, -"/Navigate/For_ward", "forward locations history");
 
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
-
-      Register_Menu
-        (Kernel, Navigate, -"Bac_k", "gps-navigate-back",
-         On_Back'Access);
-      Register_Menu
-        (Kernel, Navigate, -"For_ward", "gps-navigate-forward",
-         On_Forward'Access);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,
                 Wrapper (On_Marker_Added_In_History'Access),
                 Name => "navigation.maker_added");
@@ -1193,25 +1249,12 @@ package body Navigation_Module is
       Insert (Toolbar, Space,
               Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
-      Gtk_New_From_Stock (Button, "gps-navigate-back");
-      Button.Set_Homogeneous (False);
-      Set_Tooltip_Text (Button, -"Goto Previous Location");
-      Insert (Toolbar, Button,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build));
-      Kernel_Callback.Connect
-        (Button, Signal_Clicked, On_Back'Access, Kernel_Handle (Kernel));
       Navigation_Module (Navigation_Module_ID).Back_Button :=
-        Gtk_Widget (Button);
-
-      Gtk_New_From_Stock (Button, "gps-navigate-forward");
-      Button.Set_Homogeneous (False);
-      Set_Tooltip_Text (Button, -"Goto Next Location");
-      Insert (Toolbar, Button,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build));
-      Kernel_Callback.Connect
-        (Button, Signal_Clicked, On_Forward'Access, Kernel_Handle (Kernel));
+        Add_Button (Kernel, Toolbar, "backward locations history",
+                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
       Navigation_Module (Navigation_Module_ID).Forward_Button :=
-        Gtk_Widget (Button);
+        Add_Button (Kernel, Toolbar, "forward locations history",
+                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
       Add_Hook
         (Kernel  => Kernel,

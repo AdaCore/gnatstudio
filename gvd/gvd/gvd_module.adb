@@ -54,6 +54,7 @@ with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -234,88 +235,130 @@ package body GVD_Module is
      (Object : access GObject_Record'Class; Data : File_And_Kernel_Record);
    --  Debug->Initialize
 
-   procedure On_Connect_To_Board
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Connect_To_Board_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Connect_To_Board_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Connect to Board
 
-   procedure On_Debug_Executable
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Load_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Load_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Load File
 
-   procedure On_Add_Symbols
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Add_Symbols_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Add_Symbols_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Add Symbols
 
-   procedure On_Load_Core
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Load_Core_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Load_Core_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Debug Core File
 
-   procedure On_Attach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Attach_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Attach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Attach
 
-   procedure On_Detach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Detach_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Detach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Detach
 
-   procedure On_Kill
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Kill_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Kill_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Kill
 
-   procedure On_Display_Locals
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Local_Vars_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Local_Vars_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Display Local Variables
 
-   procedure On_Display_Args
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Arguments_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Arguments_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Display Arguments
 
-   procedure On_Display_Regs
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Registers_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Display Registers
 
-   procedure On_Display_Expression
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Expression_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Expression_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Display Any Expression
 
-   procedure On_Start
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Start_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Start_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Run... menu
 
-   procedure On_Step
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Step_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Step_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Step menu
 
-   procedure On_Step_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Stepi_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Stepi_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Step Instruction menu
 
-   procedure On_Next
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Next_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Next_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Next menu
 
-   procedure On_Next_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Nexti_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Nexti_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Next Instruction menu
 
-   procedure On_Finish
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Finish_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Finish_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Finish menu
 
-   procedure On_Continue
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Continue_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Continue_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Continue menu
 
-   procedure On_Interrupt
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Interrupt_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Interrupt_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Interrupt
 
-   procedure On_Debug_Terminate_Current
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Terminate_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Terminate_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate Current
 
-   procedure On_Debug_Terminate
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Terminate_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Terminate_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate
 
    -----------------------
@@ -352,6 +395,11 @@ package body GVD_Module is
    ----------------
    -- Contextual --
    ----------------
+
+   type Debugger_Stopped_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
 
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -611,20 +659,20 @@ package body GVD_Module is
         (Kernel, File, Breakpoints_Column_Id);
    end Remove_Debugger_Columns;
 
-   --------------------
-   -- On_Add_Symbols --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Add_Symbols
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Add_Symbols_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
       use GNAT.Strings;
-
    begin
       declare
          S : constant Virtual_File :=
@@ -638,7 +686,7 @@ package body GVD_Module is
                   History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          if Process.Descriptor.Remote_Host /= null
@@ -664,22 +712,21 @@ package body GVD_Module is
             Kernel.Insert
               ((-"Could not find file: ") & S.Display_Full_Name,
                Mode => Error);
+            return Commands.Failure;
          end if;
       end;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Add_Symbols;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------
-   -- On_Attach --
-   ---------------
-
-   procedure On_Attach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Attach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top          : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger := Get_Current_Process (Top);
@@ -687,11 +734,11 @@ package body GVD_Module is
       Success      : Boolean;
       Info         : Process_Info;
       Ignore       : Message_Dialog_Buttons;
-      pragma Unreferenced (Ignore);
+      pragma Unreferenced (Command, Ignore);
 
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
@@ -701,7 +748,7 @@ package body GVD_Module is
             (-"Interrupt the debugger or wait for its availability."),
            Dialog_Type => Warning,
            Buttons => Button_OK);
-         return;
+         return Commands.Failure;
       end if;
 
       Gtk_New
@@ -731,28 +778,26 @@ package body GVD_Module is
          end if;
       end;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Attach;
+      return Commands.Success;
+   end Execute;
 
-   ---------------
-   -- On_Detach --
-   ---------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Detach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Detach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
       Ignore  : Message_Dialog_Buttons;
-      pragma Unreferenced (Ignore);
-
+      pragma Unreferenced (Command, Ignore);
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
@@ -766,195 +811,181 @@ package body GVD_Module is
       else
          Detach_Process (Process.Debugger, Mode => GVD.Types.Visible);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Detach;
+      return Commands.Success;
+   end Execute;
 
    -------------
-   -- On_Step --
+   -- Execute --
    -------------
 
-   procedure On_Step
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Step_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Step_Into (Process.Debugger, Mode => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Step;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------
-   -- On_Step_Instruction --
-   -------------------------
-
-   procedure On_Step_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Stepi_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Step_Into_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Step_Instruction;
+      return Commands.Success;
+   end Execute;
 
    -------------
-   -- On_Next --
+   -- Execute --
    -------------
 
-   procedure On_Next
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Next_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Step_Over (Process.Debugger, Mode => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Next;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------
-   -- On_Next_Instruction --
-   -------------------------
-
-   procedure On_Next_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Nexti_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Step_Over_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Next_Instruction;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------
-   -- On_Finish --
-   ---------------
-
-   procedure On_Finish
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Finish_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Finish (Process.Debugger, Mode => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Finish;
+   -------------
+   -- Execute --
+   -------------
 
-   -----------------
-   -- On_Continue --
-   -----------------
-
-   procedure On_Continue
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Continue_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Continue (Process.Debugger, Mode => GVD.Types.Visible);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Continue;
+      return Commands.Success;
+   end Execute;
 
    -------------
-   -- On_Kill --
+   -- Execute --
    -------------
 
-   procedure On_Kill
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Kill_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Kill_Process (Process.Debugger, Mode => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Kill;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------
-   -- On_Interrupt --
-   ------------------
-
-   procedure On_Interrupt
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Interrupt_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       --  Give some visual feedback to the user
@@ -987,26 +1018,25 @@ package body GVD_Module is
       --  to clean up properly the current command, which is particularly
       --  tricky when handling an internal command.
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Interrupt;
+      return Commands.Success;
+   end Execute;
 
-   -----------------------
-   -- On_Display_Locals --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Display_Locals
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Local_Vars_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       --  ???? won't work with GDB/MI
@@ -1014,27 +1044,26 @@ package body GVD_Module is
         (Process,
          "graph display `" & Info_Locals (Process.Debugger) & '`',
          Output_Command => True);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Display_Locals;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------------
-   -- On_Display_Args --
-   ---------------------
-
-   procedure On_Display_Args
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Arguments_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       --  ???? won't work with GDB/MI
@@ -1042,27 +1071,26 @@ package body GVD_Module is
         (Process,
          "graph display `" & Info_Args (Process.Debugger) & '`',
          Output_Command => True);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Display_Args;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------------
-   -- On_Display_Regs --
-   ---------------------
-
-   procedure On_Display_Regs
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       --  ???? won't work with GDB/MI
@@ -1070,34 +1098,30 @@ package body GVD_Module is
         (Process,
          "graph display `" & Info_Registers (Process.Debugger) & '`',
          Output_Command => True);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Display_Regs;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------------------
-   -- On_Display_Expression --
-   ---------------------------
-
-   procedure On_Display_Expression
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Expression_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window :=
                   GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       Display_Expression (Process);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Display_Expression;
+      return Commands.Success;
+   end Execute;
 
    -------------------
    -- Start_Program --
@@ -1210,22 +1234,23 @@ package body GVD_Module is
       end;
    end Start_Program;
 
-   --------------
-   -- On_Start --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Start
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Start_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
                   Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
       Ignore  : Message_Dialog_Buttons;
       pragma Unreferenced (Ignore);
    begin
       if Process = null or else Process.Debugger = null then
-         return;
+         return Commands.Failure;
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
@@ -1235,24 +1260,24 @@ package body GVD_Module is
             (-"Interrupt the debugger or wait for its availability."),
            Dialog_Type => Warning,
            Buttons => Button_OK);
-         return;
+         return Commands.Failure;
       end if;
 
       --  Launch the dialog for starting the application
 
       Start_Program (Process);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Start;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------
-   -- On_Connect_To_Board --
-   -------------------------
-
-   procedure On_Connect_To_Board
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Connect_To_Board_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top          : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
@@ -1263,8 +1288,7 @@ package body GVD_Module is
       Ent_Target   : Gtk_Entry;
       Label        : Gtk_Label;
       Ignore       : Gtk_Widget;
-      pragma Unreferenced (Widget, Ignore);
-
+      pragma Unreferenced (Command, Ignore);
    begin
       Gtk_New
         (Dialog,
@@ -1327,20 +1351,19 @@ package body GVD_Module is
       end if;
 
       Destroy (Dialog);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Connect_To_Board;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------
-   -- On_Debug_Executable --
-   -------------------------
-
-   procedure On_Debug_Executable
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top         : constant GPS_Window :=
                       GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
@@ -1367,7 +1390,7 @@ package body GVD_Module is
                   History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          if not Is_Regular_File (S) then
@@ -1392,21 +1415,22 @@ package body GVD_Module is
             Kernel.Insert
               ((-"Could not find file: ") & Display_Full_Name (S),
                Mode => Error);
+            return Commands.Failure;
       end;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Debug_Executable;
+      return Commands.Success;
+   end Execute;
 
-   ------------------
-   -- On_Load_Core --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_Core
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Core_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
 
@@ -1425,7 +1449,7 @@ package body GVD_Module is
                   History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          if Process.Descriptor.Remote_Host /= null
@@ -1442,10 +1466,8 @@ package body GVD_Module is
                Mode => Error);
          end if;
       end;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_Core;
+      return Commands.Success;
+   end Execute;
 
    ----------------------------
    -- Custom_Label_Expansion --
@@ -1572,7 +1594,7 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Active_Filter;
+     (Filter  : access Debugger_Stopped_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
@@ -1584,6 +1606,21 @@ package body GVD_Module is
         and then (Has_File_Information (Context)
                   or else Has_Area_Information (Context))
         and then not Command_In_Process (Get_Process (Process.Debugger));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Active_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Process : constant Visual_Debugger :=
+                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+   begin
+      return Process /= null and then Process.Debugger /= null;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1880,38 +1917,46 @@ package body GVD_Module is
       Pop_State (Kernel);
    end Debug_Terminate;
 
-   ------------------------
-   -- On_Debug_Terminate --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Debug_Terminate
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Terminate_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Debug_Terminate (Kernel);
-
+      return Commands.Success;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          Pop_State (Kernel);
-   end On_Debug_Terminate;
+         return Commands.Failure;
+   end Execute;
 
-   --------------------------------
-   -- On_Debug_Terminate_Current --
-   --------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Debug_Terminate_Current
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Terminate_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
+      return Commands.Success;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          Pop_State (Kernel);
-   end On_Debug_Terminate_Current;
+         return Commands.Failure;
+   end Execute;
 
    -----------------------
    -- Get_Variable_Name --
@@ -2379,6 +2424,7 @@ package body GVD_Module is
       Command           : Interactive_Command_Access;
       Filter            : Action_Filter;
       Debugger_Filter   : Action_Filter;
+      Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;
       Subprogram_Filter : Action_Filter;
@@ -2390,8 +2436,11 @@ package body GVD_Module is
       GVD_Module_ID.Show_Lines_With_Code :=
         Editor_Show_Line_With_Code.Get_Pref;
 
-      Debugger_Filter := new Debugger_Active_Filter;
-      Register_Filter (Kernel, Debugger_Filter, "Debugger active");
+      Debugger_Filter := new Debugger_Stopped_Filter;
+      Register_Filter (Kernel, Debugger_Filter, "Debugger stopped");
+
+      Debugger_Active := new Debugger_Active_Filter;
+      Register_Filter (Kernel, Debugger_Active, "Debugger active");
 
       Printable_Filter  := new Printable_Variable_Filter;
       Register_Filter
@@ -2493,20 +2542,72 @@ package body GVD_Module is
       --  Add debugger menus
 
       Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
-      Register_Menu (Kernel, Debug_Sub, -"_Connect to Board...", "",
-                     On_Connect_To_Board'Access);
-      Register_Menu (Kernel, Debug_Sub, -"_Load File...", "",
-                     On_Debug_Executable'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Add _Symbols...", "",
-                     On_Add_Symbols'Access);
-      Register_Menu (Kernel, Debug_Sub, -"_Attach...", "",
-                     On_Attach'Access);
-      Register_Menu (Kernel, Debug_Sub, -"_Detach", "",
-                     On_Detach'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Debug C_ore File...", "",
-                     On_Load_Core'Access);
-      Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
-                     On_Kill'Access);
+
+      Command := new Connect_To_Board_Command;
+      Register_Action
+        (Kernel, "Debug connect to board", Command,
+         Description =>
+           -("Opens a simple dialog to connect to a remote board. This option"
+           & " is only relevant to cross debuggers."),
+         Category => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/_Connect to Board...",
+                     "Debug connect to board");
+
+      Command := new Load_File_Command;
+      Register_Action
+        (Kernel, "Debug load file", Command,
+         Description =>
+           -("Opens a file selection dialog that allows you to choose a"
+           & " program to debug. The program to debug is either an executable"
+           & " for native debugging, or a partially linked module for cross"
+           & " environments (e.g VxWorks)."),
+         Category => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/_Load File...",
+                     "Debug load file");
+
+      Command := new Add_Symbols_Command;
+      Register_Action
+        (Kernel, "Debug add symbols", Command,
+         Description =>
+           -("Add the symbols from a given file/module. This corresponds to"
+           & " the gdb command add-symbol-file. This menu is particularly"
+           & " useful under VxWorks targets, where the modules can be loaded"
+           & " independently of the debugger.  For instance, if a module is"
+           & " independently loaded on the target (e.g. using windshell), it"
+           & " is absolutely required to use this functionality, otherwise"
+           & " the debugger won't work properly."),
+         Category => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/Add _Symbols...",
+                     "Debug add symbols");
+
+      Command := new Attach_Command;
+      Register_Action
+        (Kernel, "Debug attach", Command,
+         Description => -"Attach to a running process",
+         Category => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/_Attach...", "Debug attach");
+
+      Command := new Detach_Command;
+      Register_Action
+        (Kernel, "Debug detach", Command,
+         Description => -"Detach the application from the debugger",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/_Detach", "Debug detach");
+
+      Command := new Load_Core_Command;
+      Register_Action
+        (Kernel, "Debug core file", Command,
+         Description => -"Debug a core file instead of a running process",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/Debug C_ore File...",
+                     "Debug core file");
+
+      Command := new Kill_Command;
+      Register_Action
+        (Kernel, "Debug kill", Command,
+         Description => -"Kill the debuggee process",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Debug/_Kill", "Debug kill");
 
       GVD.Canvas.Register_Module (Kernel);
       GVD.Call_Stack.Register_Module (Kernel);
@@ -2518,46 +2619,148 @@ package body GVD_Module is
 
       Gtk_New (Sepitem);
       Register_Menu (Kernel, Data_Sub, Sepitem);
-      Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
-                     On_Display_Locals'Access, null,
-                     GDK_LC_l, Mod1_Mask);
-      Register_Menu (Kernel, Data_Sub, -"Display _Arguments", "",
-                     On_Display_Args'Access, null,
-                     GDK_LC_u, Mod1_Mask);
-      Register_Menu (Kernel, Data_Sub, -"Display _Registers", "",
-                     On_Display_Regs'Access);
-      Register_Menu (Kernel, Data_Sub, -"Display Any _Expression...", "",
-                     On_Display_Expression'Access);
+
+      Command := new Local_Vars_Command;
+      Register_Action
+        (Kernel, "Debug display local variables", Command,
+         Accel_Key   => GDK_LC_l,
+         Accel_Mods  => Mod1_Mask,
+         Description => -"Display local variables in the data window",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Data/Display _Local Variables",
+                    "Debug display local variables");
+
+      Command := new Arguments_Command;
+      Register_Action
+        (Kernel, "Debug display arguments", Command,
+         Accel_Key   => GDK_LC_u,
+         Accel_Mods  => Mod1_Mask,
+         Description => -"Display arguments to the current subprogram",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Data/Display _Arguments",
+                     "Debug display arguments");
+
+      Command := new Registers_Command;
+      Register_Action
+        (Kernel, "Debug display registers", Command,
+         Description => -"Display the contents of registers in data window",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Data/Display _Registers",
+                     "Debug display registers");
+
+      Command := new Expression_Command;
+      Register_Action
+        (Kernel, "Debug display any expression", Command,
+         Description => -"Opens a dialog to choose an expression to display",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Data/Dispay Any _Expression...",
+                     "Debug display any expression");
 
       Gtk_New (Sepitem);
       Register_Menu (Kernel, Debug, Sepitem);
 
-      Register_Menu (Kernel, Debug, -"_Run...", "",
-                     On_Start'Access, null, GDK_F2, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"S_tep", "",
-                     On_Step'Access, null,  GDK_F5, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Step _Instruction", "",
-                     On_Step_Instruction'Access, null,
-                     GDK_F5, Shift_Mask, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"_Next", "",
-                     On_Next'Access, null, GDK_F6, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"N_ext Instruction", "",
-                     On_Next_Instruction'Access, null,
-                     GDK_F6, Shift_Mask, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"_Finish", "",
-                     On_Finish'Access, null, GDK_F7, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"_Continue", "",
-                     On_Continue'Access, null, GDK_F8, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"_Interrupt", GPS_Stop_Task,
-                     On_Interrupt'Access, null,
-                     GDK_backslash, Control_Mask, Sensitive => False);
+      Command := new Start_Command;
+      Register_Action
+        (Kernel, "Debug run dialog", Command,
+         Accel_Key   => GDK_F2,
+         Filter      => Debugger_Filter,
+         Description =>
+           -"Choose the arguments to the program, and start running it",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/_Run...", "Debug run dialog");
+
+      Command := new Step_Command;
+      Register_Action
+        (Kernel, "Debug step", Command,
+         Accel_Key   => GDK_F5,
+         Filter      => Debugger_Filter,
+         Description =>
+           -"Execute until program reaches a new line of source code",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/S_tep", "Debug step");
+
+      Command := new Stepi_Command;
+      Register_Action
+        (Kernel, "Debug stepi", Command,
+         Accel_Key   => GDK_F5,
+         Accel_Mods  => Shift_Mask,
+         Filter      => Debugger_Filter,
+         Description =>
+           -"Execute the program for one machine instruction only",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/Step _Instruction", "Debug stepi");
+
+      Command := new Next_Command;
+      Register_Action
+        (Kernel, "Debug next", Command,
+         Accel_Key   => GDK_F6,
+         Filter      => Debugger_Filter,
+         Description =>
+           -("Execute the program until the next source line, stepping over"
+             & " subprogram calls"),
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/_Next", "Debug next");
+
+      Command := new Nexti_Command;
+      Register_Action
+        (Kernel, "Debug nexti", Command,
+         Accel_Key   => GDK_F6,
+         Accel_Mods  => Shift_Mask,
+         Filter      => Debugger_Filter,
+         Description =>
+           -("Execute the program until the next machine instruction, stepping"
+             & " over subprogram calls"),
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/N_ext Instruction", "Debug nexti");
+
+      Command := new Finish_Command;
+      Register_Action
+        (Kernel, "Debug finish", Command,
+         Accel_Key   => GDK_F7,
+         Filter      => Debugger_Filter,
+         Description =>
+           -("Continue execution until selected stack frame returns"),
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/_Finish", "Debug finish");
+
+      Command := new Continue_Command;
+      Register_Action
+        (Kernel, "Debug continue", Command,
+         Accel_Key   => GDK_F8,
+         Filter      => Debugger_Filter,
+         Description => -"Continue execution until next breakpoint",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/_Continue", "Debug continue");
+
+      Command := new Interrupt_Command;
+      Register_Action
+        (Kernel, "Debug interrupt", Command,
+         Accel_Key   => GDK_backslash,
+         Accel_Mods  => Control_Mask,
+         Stock_Id    => GPS_Stop_Task,
+         Filter      => Debugger_Filter,
+         Description => -"Asynchronously interrupt the debuggee program",
+         Category    => -"Debug");
+      Register_Menu (Kernel, -"/Debug/_Interrupt", "Debug interrupt");
+
       Gtk_New (Sepitem);
       Register_Menu (Kernel, Debug, Sepitem);
 
-      Register_Menu (Kernel, Debug, -"Te_rminate Current", "",
-                     On_Debug_Terminate_Current'Access, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Ter_minate", "",
-                     On_Debug_Terminate'Access, Sensitive => False);
+      Command := new Terminate_Command;
+      Register_Action
+        (Kernel, "terminate debugger", Command,
+         Description => -"Terminate the current debugger",
+         Filter      => Debugger_Active);
+      Register_Menu
+        (Kernel, -"/Debug/Te_rminate Current", "terminate debugger");
+
+      Command := new Terminate_All_Command;
+      Register_Action
+        (Kernel, "terminate all debuggers", Command,
+         Description => -"Terminate all running debugger",
+         Filter      => Debugger_Active);
+      Register_Menu
+        (Kernel, -"/Debug/Te_rminate", "terminate all debuggers");
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 

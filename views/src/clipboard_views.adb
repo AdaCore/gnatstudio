@@ -258,12 +258,10 @@ package body Clipboard_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Add,
          Action   => Command_Append_To_Previous_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Remove,
          Action   => Command_Remove_Name);
    end Create_Toolbar;
 
@@ -490,12 +488,14 @@ package body Clipboard_Views is
       Register_Action
         (Kernel, Command_Append_To_Previous_Name, Command,
          -"Append to previous clipboard entry",
+         Stock_Id => Stock_Add,
          Category => -"Clipboard");
 
       Command := new Remove_Entry_Command;
       Register_Action
         (Kernel, Command_Remove_Name, Command,
          -"Remove selected clipboard entry",
+         Stock_Id => Stock_Remove,
          Category => -"Clipboard");
    end Register_Module;
 

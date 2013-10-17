@@ -15,18 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Enums; use Gtk.Enums;
+with Gtk.Enums;             use Gtk.Enums;
+with Glib.Object;           use Glib.Object;
 
-with Glib.Object;   use Glib.Object;
-
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with Commands.Interactive;  use Commands, Commands.Interactive;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-
 with GPS.Intl;              use GPS.Intl;
-
 with Project_Templates;     use Project_Templates;
 with Project_Templates.GUI; use Project_Templates.GUI;
 
@@ -41,16 +39,12 @@ package body Project_Templates.GPS is
 
    Module_Id : Project_Templates_Module;
 
-   procedure On_New_From_Template
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Project_From_Template_Command is new Interactive_Command
+      with null record;
+   overriding function Execute
+     (Command : access Project_From_Template_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback when the menu is selected
-
-   procedure Register_Menus (Kernel : access Kernel_Handle_Record'Class);
-   --  Register the menus
-
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
-   --  Register the commands
 
    procedure Template_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -76,24 +70,6 @@ package body Project_Templates.GPS is
          end;
       end if;
    end Template_Command_Handler;
-
-   -----------------------
-   -- Register_Commands --
-   -----------------------
-
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Project_Template_Class : constant Class_Type :=
-        New_Class (Kernel, "ProjectTemplate");
-   begin
-      Register_Command
-        (Kernel,
-         "add_templates_dir",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Template_Command_Handler'Access,
-         Class         => Project_Template_Class,
-         Static_Method => True);
-   end Register_Commands;
 
    -------------------
    -- Launch_Dialog --
@@ -198,46 +174,52 @@ package body Project_Templates.GPS is
       end if;
    end Launch_Dialog;
 
-   --------------------------
-   -- On_New_From_Template --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_New_From_Template
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Project_From_Template_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       Cancelled : Boolean;
-      pragma Unreferenced (Widget, Cancelled);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Command, Cancelled);
    begin
       Launch_Dialog (Kernel, Gtk_Widget (Kernel.Get_Main_Window), Cancelled);
-   end On_New_From_Template;
-
-   --------------------
-   -- Register_Menus --
-   --------------------
-
-   procedure Register_Menus (Kernel : access Kernel_Handle_Record'Class) is
-   begin
-      Register_Menu (Kernel      => Kernel,
-                     Parent_Path => -"/_Project",
-                     Text        => -"New from _Template...",
-                     Callback    => On_New_From_Template'Access,
-                     Ref_Item    => "_New...",
-                     Add_Before  => False);
-   end Register_Menus;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
+      Project_Template_Class : constant Class_Type :=
+        New_Class (Kernel, "ProjectTemplate");
+      Command : Interactive_Command_Access;
    begin
       --  Register the default template dir.
       Module_Id.Dirs.Append
         (Create_From_Dir (Kernel.Get_System_Dir, "share/gps/templates"));
 
-      Register_Commands (Kernel);
-      Register_Menus (Kernel);
+      Register_Command
+        (Kernel,
+         "add_templates_dir",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Template_Command_Handler'Access,
+         Class         => Project_Template_Class,
+         Static_Method => True);
+
+      Command := new Project_From_Template_Command;
+      Register_Action
+        (Kernel, "create project from template", Command,
+         -"Open a dialog to create a new project from an existing template");
+      Register_Menu
+        (Kernel, -"/Project/New from _Template...",
+         "create project from template",
+         Ref_Item    => "_New...", Add_Before  => False);
    end Register_Module;
 
 end Project_Templates.GPS;

@@ -1195,14 +1195,10 @@ package body Completion_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Edit               : constant String := '/' & (-"Edit") & '/';
-      Completion         : constant String :=
-                             Edit & '/' & (-"_More Completion");
       Command            : Interactive_Command_Access;
       Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Action             : Action_Record_Access;
    begin
       Completion_Module := new Completion_Module_Record;
       Register_Module
@@ -1212,36 +1208,34 @@ package body Completion_Module is
 
       Command := new Completion_Command (Smart_Completion => False);
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
+      Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
          Category => "Editor",
-         Filter   => Src_Action_Context);
-      Register_Menu
-        (Kernel, Completion, -"Complete _Identifier",
-         Ref_Item   => -"Format Selection",
-         Add_Before => False,
          Accel_Key  => GDK_slash,
          Accel_Mods => Control_Mask,
-         Callback   => null,
-         Action     => Action,
-         Filter     => Src_Action_Context);
+         Filter   => Src_Action_Context);
+      Register_Menu
+        (Kernel,
+         -"/Edit/_More Completion/Complete _Identifier",
+         "Complete identifier",
+         Ref_Item   => -"Format Selection",
+         Add_Before => False);
 
       Command_Smart := new Completion_Command (Smart_Completion => True);
       Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
+      Register_Action
         (Kernel, "Complete identifier (advanced)", Command_Smart,
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
+         Accel_Key  => GDK_space,
+         Accel_Mods => Control_Mask,
          Filter   => Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"Smar_t Completion",
-                     Ref_Item   => -"Format Selection",
-                     Add_Before => False,
-                     Accel_Key  => GDK_space,
-                     Accel_Mods => Control_Mask,
-                     Callback   => null,
-                     Action     => Action,
-                     Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/Smar_t Completion",
+         "Complete identifier (advanced)",
+         Ref_Item   => -"Format Selection",
+         Add_Before => False);
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

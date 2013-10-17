@@ -52,10 +52,12 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Breakpoints_Pkg;         use Breakpoints_Pkg;
+with Commands.Interactive;    use Commands, Commands.Interactive;
 with Generic_Views;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GVD_Module;       use GVD_Module;
@@ -108,8 +110,10 @@ package body Breakpoints_Editor is
       Position           => Position_Automatic,
       Initialize         => Initialize);
 
-   procedure On_Edit_Breakpoints
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Breakpoint_Editor_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Breakpoint_Editor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Breakpoints
 
    procedure On_Breakpoints_Changed
@@ -212,14 +216,16 @@ package body Breakpoints_Editor is
       end if;
    end Set_View;
 
-   -------------------------
-   -- On_Edit_Breakpoints --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Edit_Breakpoints
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Breakpoint_Editor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : Visual_Debugger;
       List    : Debugger_List_Link := Get_Debugger_List (Kernel);
 
@@ -233,7 +239,8 @@ package body Breakpoints_Editor is
 
          List := List.Next;
       end loop;
-   end On_Edit_Breakpoints;
+      return Commands.Success;
+   end Execute;
 
    ----------------------------
    -- Update_Breakpoint_List --
@@ -495,12 +502,17 @@ package body Breakpoints_Editor is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug    : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+      Command : Interactive_Command_Access;
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Menu (Kernel, Data_Sub, -"Edit _Breakpoints", "",
-                     On_Edit_Breakpoints'Access);
+
+      Command := new Breakpoint_Editor_Command;
+      Register_Action
+        (Kernel, "open breakpoints editor", Command,
+         -"Open the Breakpoints Editor for the debugger",
+         Category => -"Views");
+      Register_Menu
+        (Kernel, -"/Debug/Data/Edit _Breakpoints", "open breakpoints editor");
    end Register_Module;
 
    -------------------------------------

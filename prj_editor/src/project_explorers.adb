@@ -47,7 +47,6 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -58,7 +57,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toggle_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
@@ -83,7 +81,6 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
@@ -321,9 +318,6 @@ package body Project_Explorers is
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view
-
-   procedure On_Reload_Project (View : access Gtk_Widget_Record'Class);
-   --  Callback for the "reload project" action button
 
    ------------------
    -- Adding nodes --
@@ -1072,35 +1066,11 @@ package body Project_Explorers is
 
    overriding procedure Create_Toolbar
      (View    : not null access Project_Explorer_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Button : Gtk_Tool_Button;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
-      Gtk_New_From_Stock (Button, GPS_Refresh);
-      Button.Set_Tooltip_Text (-"Reload project");
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked,
-         On_Reload_Project'Access, View);
-      Toolbar.Insert (Button);
-
-      Add_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Stock_Id => Stock_Edit,
-         Action   => "open Project Properties");
+      Add_Button (View.Kernel, Toolbar, "reload project");
+      Add_Button (View.Kernel, Toolbar, "open Project Properties");
    end Create_Toolbar;
-
-   -----------------------
-   -- On_Reload_Project --
-   -----------------------
-
-   procedure On_Reload_Project
-     (View : access Gtk_Widget_Record'Class)
-   is
-      V : constant Project_Explorer := Project_Explorer (View);
-   begin
-      Reload_Project_If_Needed (V.Kernel, Recompute_View => True);
-   end On_Reload_Project;
 
    ------------------------------
    -- Explorer_Context_Factory --

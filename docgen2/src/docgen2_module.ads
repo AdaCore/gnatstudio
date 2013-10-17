@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands;                    use Commands;
-with Commands.Interactive;        use Commands.Interactive;
 with GPS.Kernel;                  use GPS.Kernel;
 
 package Docgen2_Module is
@@ -24,21 +22,5 @@ package Docgen2_Module is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Docgen2 module in GPS.
-
-private
-
-   type Generate_Project_Command is new Interactive_Command with record
-      Recursive : Boolean := False;
-   end record;
-
-   overriding function Execute
-     (Command : access Generate_Project_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Generate_File_Command is new Interactive_Command with null record;
-
-   overriding function Execute
-     (Command : access Generate_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
 
 end Docgen2_Module;

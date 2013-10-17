@@ -376,7 +376,6 @@ package GPS.Kernel.Modules.UI is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null;
       Filter      : Action_Filter  := null;
       Mnemonics   : Boolean := True);
    --  Same as the above, but creates the menu item directly, and connects the
@@ -404,10 +403,28 @@ package GPS.Kernel.Modules.UI is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null;
       Filter      : Action_Filter  := null;
       Mnemonics   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created
+
+   procedure Register_Menu
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Path       : String;
+      Action     : String;
+      Ref_Item   : String := "";
+      Add_Before : Boolean := True);
+   function Register_Menu
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Path       : String;
+      Action     : String;
+      Ref_Item   : String := "";
+      Add_Before : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+   --  Append a menu binding a GPS action. The action need not exist when the
+   --  menu is created (but the menu will always be greyd out if the action
+   --  does not exist).
+   --  Accel_Key, Accel_Mods are looked up from the action.
+   --  Filter is looked up from the action.
+   --  The image is also looked up from the action.
 
    procedure Register_Dynamic_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -459,13 +476,16 @@ package GPS.Kernel.Modules.UI is
    procedure Add_Button
      (Kernel   : access Kernel_Handle_Record'Class;
       Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Stock_Id : String;
       Action   : String;
-      Tooltip  : String := "");
+      Position : Glib.Gint := -1);
+   function Add_Button
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Action   : String;
+      Position : Glib.Gint := -1) return Gtk.Widget.Gtk_Widget;
    --  Insert a button in the local toolbar, associated with the given named
    --  action. The action will be lookuped up upon execution, so it is valid
    --  even if it has not been registered yet.
-   --  Tooltip is a markup.
 
    -------------------------
    -- Drag'n'drop support --

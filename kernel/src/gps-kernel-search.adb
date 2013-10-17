@@ -75,8 +75,11 @@ package body GPS.Kernel.Search is
    ----------------------------------
 
    procedure Register_Provider_And_Action
-      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider : not null access Kernel_Search_Provider'Class)
+      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Provider   : not null access Kernel_Search_Provider'Class;
+       Stock_Id   : String := "";
+       Accel_Key  : Gdk.Types.Gdk_Key_Type := 0;
+       Accel_Mods : Gdk.Types.Gdk_Modifier_Type := 0)
    is
       Command : Global_Search_Command_Access;
    begin
@@ -91,7 +94,10 @@ package body GPS.Kernel.Search is
       Register_Action
          (Kernel, Action_Name_Prefix & Provider.Display_Name, Command,
           Description => Command.Provider.Documentation,
-          Category => "Search");
+          Category    => "Search",
+          Stock_Id    => Stock_Id,
+          Accel_Key   => Accel_Key,
+          Accel_Mods  => Accel_Mods);
    end Register_Provider_And_Action;
 
 end GPS.Kernel.Search;

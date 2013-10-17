@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
@@ -33,20 +32,12 @@ with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
 
-with Gtk.Box;                           use Gtk.Box;
-with Gtk.Check_Button;                  use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;                use Gtk.Combo_Box_Text;
-with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
-with Gtk.Handlers;                      use Gtk.Handlers;
-with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
-with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
@@ -60,8 +51,8 @@ with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Case_Handling;                     use Case_Handling;
 with Commands;
-with Commands.Interactive;              use Commands, Commands.Interactive;
 with Commands.Controls;                 use Commands.Controls;
+with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
@@ -70,7 +61,6 @@ with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
-with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -80,9 +70,6 @@ with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
-with Language;                          use Language;
-with Language_Handlers;                 use Language_Handlers;
-with Language_Handlers.GUI;             use Language_Handlers.GUI;
 with Projects;                          use Projects;
 with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
@@ -101,10 +88,8 @@ with Src_Editor_Module.Messages;        use Src_Editor_Module.Messages;
 
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;
-with Src_Printing.Fabric;
 with String_Utils;                      use String_Utils;
-with UTF8_Utils;                        use UTF8_Utils;
-with GNATCOLL.Traces;                            use GNATCOLL.Traces;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
@@ -156,13 +141,6 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Reacts to the character_added Hook
 
-   procedure Save_To_File
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Success : out Boolean);
-   --  Save the current editor to Name, or its associated filename if Name is
-   --  null.
-
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line  : Editable_Line_Type;
@@ -180,113 +158,17 @@ package body Src_Editor_Module is
       User : Kernel_Handle) return MDI_Child;
    --  Support functions for the MDI
 
-   procedure On_Open_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Open menu
-
-   procedure On_Open_Remote_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Open Remote menu
-
-   procedure On_New_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->New View menu
-
-   procedure On_New_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->New menu
-
-   procedure On_Save
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save menu
-
-   procedure On_Save_As
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save As... menu
-
-   procedure On_Print
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Print menu
-
-   procedure On_Print_Selection
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Selection->Print Selection menu
-
-   procedure On_Select_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Select_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Select_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Select All menu
 
-   procedure On_Insert_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Insert_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Insert_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Insert File... menu
-
-   procedure On_Goto_Declaration
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Navigate->Goto Declaration menu
-   --  Goto the declaration of the entity under the cursor in the current
-   --  editor.
-
-   procedure On_Goto_Body
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Navigate->Goto Body menu
-   --  Goto the next body of the entity under the cursor in the current
-   --  editor.
-
-   procedure On_Comment_Lines
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Comment Lines menu
-
-   procedure On_Uncomment_Lines
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Uncomment Lines menu
-
-   procedure On_Fold_Blocks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Fold all blocks menu
-
-   procedure On_Unfold_Blocks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Unfold all blocks menu
-
-   procedure On_Refill
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Refill
-
-   procedure Comment_Uncomment
-     (Kernel : Kernel_Handle; Comment : Boolean);
-   --  Comment or uncomment the current selection, if any.
-   --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
-
-   type Edit_File_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Edit_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  See doc for inherited subprogram
-   --  Edit a file (from a contextual menu)
-
-   type Editor_Properties_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Editor_Properties_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  See doc for inherited subprogram
-   --  Edit the properties of a file (from a contextual menu)
-
-   type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
-
-   type Close_Command is new Interactive_Command with record
-      Kernel    : Kernel_Handle;
-      Mode      : Close_Command_Mode;
-   end record;
-   overriding function Execute
-     (Command : access Close_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Close the current window (or all windows if Close_All is True)
-
-   procedure New_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new view for the current editor and add it in the MDI.
-   --  The current editor is the focus child in the MDI. If the focus child
-   --  is not an editor, nothing happens.
 
    procedure File_Edited_Cb
      (Kernel : access Kernel_Handle_Record'Class;
@@ -340,8 +222,7 @@ package body Src_Editor_Module is
    end record;
    overriding procedure Activate (Callback : access On_Recent; Item : String);
 
-   procedure Toolbar_Destroy_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure Toolbar_Destroy_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Called when we are about to destroy the toolbar which contains the
    --  undo/redo items.
 
@@ -371,6 +252,109 @@ package body Src_Editor_Module is
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  Filter which passes when the context contains a file which is not
    --  a Makefile.
+
+   type Undo_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Undo_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Redo_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Redo_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Has_Undo_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Undo_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Has_Redo_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Redo_Filter;
+      Context : Selection_Context) return Boolean;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Undo_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+   begin
+      return UR.Queue /= Null_Command_Queue
+        and then not Undo_Queue_Empty (UR.Queue);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Redo_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+   begin
+      return UR.Queue /= Null_Command_Queue
+        and then not Redo_Queue_Empty (UR.Queue);
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Undo_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+   begin
+      if UR.Queue /= Null_Command_Queue then
+         Undo (UR.Queue);
+      end if;
+      return Standard.Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Redo_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+   begin
+      if UR.Queue /= Null_Command_Queue then
+         Redo (UR.Queue);
+      end if;
+      return Standard.Commands.Success;
+   end Execute;
+
+   ----------------------------
+   -- Change_Undo_Redo_Queue --
+   ----------------------------
+
+   procedure Change_Undo_Redo_Queue (Queue : Command_Queue) is
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+   begin
+      if Queue = Null_Command_Queue then
+         Unset_Undo_Redo_Queue (UR);
+      else
+         Set_Undo_Redo_Queue (Queue, UR);
+      end if;
+   end Change_Undo_Redo_Queue;
 
    -----------------------
    -- On_Editor_Destroy --
@@ -429,20 +413,13 @@ package body Src_Editor_Module is
    -- Toolbar_Destroy_Cb --
    ------------------------
 
-   procedure Toolbar_Destroy_Cb
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      UR : Undo_Redo;
+   procedure Toolbar_Destroy_Cb (Widget : access Gtk_Widget_Record'Class) is
+      UR : constant Undo_Redo :=
+        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
       pragma Unreferenced (Widget);
    begin
-      UR := Kernel.Get_Undo_Redo;
-      UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
       UR.Undo_Button := null;
       UR.Redo_Button := null;
-      UR.Undo_Menu_Item := null;
-      UR.Redo_Menu_Item := null;
-   exception
-      when E : others => Trace (Me, E);
    end Toolbar_Destroy_Cb;
 
    -------------------------
@@ -1005,20 +982,6 @@ package body Src_Editor_Module is
       return Editor;
    end New_View;
 
-   procedure New_View
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Ignore  : Source_Editor_Box;
-      pragma Unreferenced (Ignore);
-
-   begin
-      if Current /= null then
-         Ignore := New_View (Kernel, Current);
-      end if;
-   end New_View;
-
    -------------------
    -- Save_Function --
    -------------------
@@ -1378,94 +1341,6 @@ package body Src_Editor_Module is
       return Editor;
    end Open_File;
 
-   ------------------
-   -- Save_To_File --
-   ------------------
-
-   procedure Save_To_File
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Success : out Boolean)
-   is
-      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source : Source_Editor_Box;
-   begin
-      if Child = null then
-         Success := False;
-         return;
-      end if;
-
-      Source := Source_Editor_Box (Get_Widget (Child));
-      Save_To_File (Source, Name, Success);
-   end Save_To_File;
-
-   ------------------
-   -- On_Open_File --
-   ------------------
-
-   procedure On_Open_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : Selection_Context;
-      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-   begin
-      Context := Get_Current_Context (Kernel);
-
-      if Has_Directory_Information (Context) then
-         Dir := Directory_Information (Context);
-      end if;
-
-      declare
-         Filename : constant Virtual_File := Select_File
-           (Title             => -"Open File",
-            Base_Directory    => Dir,
-            Parent            => Get_Current_Window (Kernel),
-            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-            Kind              => Open_File,
-            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-            Pattern_Name      => -"All files;Ada files;C/C++ files",
-            History           => Get_History (Kernel));
-      begin
-         if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Editor (Kernel, Filename);
-         end if;
-      end;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Open_File;
-
-   -------------------------
-   -- On_Open_Remote_File --
-   -------------------------
-
-   procedure On_Open_Remote_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      declare
-         Filename : constant Virtual_File := Select_File
-           (Title             => -"Open Remote File",
-            Parent            => Get_Current_Window (Kernel),
-            Remote_Browsing   => True,
-            Use_Native_Dialog => False,
-            Kind              => Open_File,
-            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-            Pattern_Name      => -"All files;Ada files;C/C++ files",
-            History           => Get_History (Kernel));
-
-      begin
-         if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Editor (Kernel, Filename);
-         end if;
-      end;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Open_Remote_File;
-
    --------------
    -- Activate --
    --------------
@@ -1476,234 +1351,35 @@ package body Src_Editor_Module is
       Open_File_Editor (Callback.Kernel, Create (Full_Filename => +Item));
    end Activate;
 
-   -----------------
-   -- On_New_File --
-   -----------------
-
-   procedure On_New_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-      Ignore  : Source_Editor_Box;
-      pragma Unreferenced (Widget, Ignore);
-      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-
-   begin
-      if Has_Directory_Information (Context) then
-         Dir := Directory_Information (Context);
-      end if;
-
-      Ignore := Open_File
-        (Kernel,
-         File => GNATCOLL.VFS.No_File,
-         Line => 1, Column => 1, Column_End => 1,
-         Initial_Dir => Dir);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_New_File;
-
-   -------------
-   -- On_Save --
-   -------------
-
-   procedure On_Save
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Success : Boolean;
-      pragma Warnings (Off, Success);
-   begin
-      Save_To_File (Kernel, Success => Success);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Save;
-
-   ----------------
-   -- On_Save_As --
-   ----------------
-
-   procedure On_Save_As
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Success : Boolean;
-      Source  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Source /= null then
-         declare
-            Old_Name : constant Virtual_File := Get_Filename (Source);
-            New_Name : constant Virtual_File := Select_File
-              (Title             => -"Save File As",
-               Parent            => Get_Current_Window (Kernel),
-               Base_Directory    => Dir (Old_Name),
-               Default_Name      => Base_Name (Old_Name),
-               Remote_Browsing   => not Is_Local (Old_Name),
-               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-               Kind              => Save_File,
-               File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-               Pattern_Name      => -"All files;Ada files;C/C++ files",
-               History           => Get_History (Kernel));
-
-         begin
-            if New_Name /= GNATCOLL.VFS.No_File then
-               Save_To_File (Kernel, New_Name, Success);
-            end if;
-         end;
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Save_As;
-
    -------------
    -- Execute --
    -------------
 
    overriding function Execute
-     (Command : access Close_Command;
+     (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
-      MDI   : MDI_Window;
-      Child : MDI_Child;
-   begin
-      case Command.Mode is
-         when Close_All =>
-            if Save_MDI_Children (Command.Kernel) then
-               Close_All_Children (Command.Kernel);
-            end if;
-
-         when Close_One =>
-            MDI := Get_MDI (Command.Kernel);
-            Child := Get_Focus_Child (MDI);
-
-            if Child /= null then
-               Close (MDI, Get_Widget (Child));
-            end if;
-         when Close_All_Except_Current =>
-            declare
-               Buffer : constant Editor_Buffer'Class :=
-                 GPS.Editors.Get
-                   (This        => Get_Buffer_Factory (Command.Kernel).all,
-                    File        => No_File,
-                    Force       => False,
-                    Open_Buffer => False,
-                    Open_View   => False);
-               List : constant Buffer_Lists.List :=
-                 Buffers (Get_Buffer_Factory (Command.Kernel).all);
-
-            begin
-               for Editor of List loop
-                  if Editor /= Buffer then
-                     Editor.Close;
-                  end if;
-               end loop;
-            end;
-      end case;
-
-      return Standard.Commands.Success;
-   end Execute;
-
-   --------------
-   -- On_Print --
-   --------------
-
-   procedure On_Print
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : Source_Editor_Box;
-   begin
-      if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Kernel.Insert ("No source file selected", Mode => Error);
-         return;
-      end if;
-
-      Source := Get_Source_Box_From_MDI (Child);
-
-      if Source = null then
-         return;
-      end if;
-
-      Src_Printing.Fabric.Create.Print (Source);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Print;
-
-   ------------------------
-   -- On_Print_Selection --
-   ------------------------
-
-   procedure On_Print_Selection
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : Source_Editor_Box;
-
-      Context    : constant Selection_Context := Get_Current_Context (Kernel);
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type;
-   begin
-      if Has_Area_Information (Context) then
-         Get_Area (Context, Natural (Start_Line), Natural (End_Line));
-      else
-         Kernel.Insert ("No selection", Mode => Error);
-         return;
-      end if;
-
-      if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
-         Kernel.Insert ("No source file selected", Mode => Error);
-         return;
-      end if;
-
-      Source := Get_Source_Box_From_MDI (Child);
-
-      if Source = null then
-         return;
-      end if;
-
-      Src_Printing.Fabric.Create.Print (Source, Start_Line, End_Line);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Print_Selection;
-
-   -------------------
-   -- On_Select_All --
-   -------------------
-
-   procedure On_Select_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Source : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Select_All (Get_Buffer (Source));
       end if;
+      return Standard.Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Select_All;
+   -------------
+   -- Execute --
+   -------------
 
-   --------------------
-   -- On_Insert_File --
-   --------------------
-
-   procedure On_Insert_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Insert_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Source : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
@@ -1731,226 +1407,8 @@ package body Src_Editor_Module is
             end if;
          end;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Insert_File;
-
-   -----------------
-   -- On_New_View --
-   -----------------
-
-   procedure On_New_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      New_View (Kernel);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_New_View;
-
-   -------------------------
-   -- On_Goto_Declaration --
-   -------------------------
-
-   procedure On_Goto_Declaration
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Editor = null then
-         return;
-      end if;
-
-      Goto_Declaration_Or_Body
-        (Kernel,
-         To_Body => False,
-         Editor  => Editor,
-         Context => Get_Current_Context (Kernel));
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Goto_Declaration;
-
-   ------------------
-   -- On_Goto_Body --
-   ------------------
-
-   procedure On_Goto_Body
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Editor = null then
-         return;
-      end if;
-
-      Goto_Declaration_Or_Body
-        (Kernel,
-         To_Body => True,
-         Editor  => Editor,
-         Context => Get_Current_Context (Kernel));
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Goto_Body;
-
-   -----------------------
-   -- Comment_Uncomment --
-   -----------------------
-
-   procedure Comment_Uncomment
-     (Kernel : Kernel_Handle; Comment : Boolean)
-   is
-      Context    : constant Selection_Context := Get_Current_Context (Kernel);
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type;
-      Buffer     : Source_Buffer;
-   begin
-      if Has_File_Information (Context)
-        and then Has_Directory_Information (Context)
-      then
-         declare
-            Lang  : Language_Access;
-            File  : constant Virtual_File := File_Information (Context);
-            Block : Unbounded_String := Null_Unbounded_String;
-         begin
-            Buffer := Get_Buffer
-              (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
-
-            if not Get_Writable (Buffer) then
-               return;
-            end if;
-
-            if Has_Area_Information (Context) then
-               Get_Area (Context, Natural (Start_Line), Natural (End_Line));
-
-            elsif Has_Line_Information (Context) then
-               Start_Line := Editable_Line_Type
-                 (Contexts.Line_Information (Context));
-               End_Line   := Start_Line;
-            else
-               return;
-            end if;
-
-            Lang := Get_Language_From_File
-              (Get_Language_Handler (Kernel), File);
-
-            --  Create a String representing the selected block
-
-            for J in Start_Line .. End_Line loop
-               Append
-                 (Block,
-                  Get_Chars (Buffer => Buffer, Line => J, Column => 1));
-            end loop;
-
-            Replace_Slice
-              (Buffer,
-               Text   => Comment_Block (Lang, To_String (Block), Comment),
-               Line   => Start_Line,
-               Column => 1,
-               Before => 0,
-               After  => Length (Block));
-         end;
-      end if;
-   end Comment_Uncomment;
-
-   ----------------------
-   -- On_Comment_Lines --
-   ----------------------
-
-   procedure On_Comment_Lines
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Comment_Uncomment (Kernel, Comment => True);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Comment_Lines;
-
-   --------------------
-   -- On_Fold_Blocks --
-   --------------------
-
-   procedure On_Fold_Blocks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Current /= null then
-         Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Fold_Blocks;
-
-   ----------------------
-   -- On_Unfold_Blocks --
-   ----------------------
-
-   procedure On_Unfold_Blocks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Current /= null then
-         Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
-         Get_View (Current).Scroll_To_Cursor_Location;
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Unfold_Blocks;
-
-   ------------------------
-   -- On_Uncomment_Lines --
-   ------------------------
-
-   procedure On_Uncomment_Lines
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-   begin
-      Comment_Uncomment (Kernel, Comment => False);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Uncomment_Lines;
-
-   ---------------
-   -- On_Refill --
-   ---------------
-
-   procedure On_Refill
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Ignore  : Boolean;
-      pragma Unreferenced (Ignore);
-   begin
-      if Current /= null then
-         Ignore := Do_Refill (Get_Buffer (Current));
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Refill;
+      return Standard.Commands.Success;
+   end Execute;
 
    ----------------------
    -- Source_File_Hook --
@@ -2169,186 +1627,6 @@ package body Src_Editor_Module is
       Autocase_Text (Buffer, Casing => End_Of_Word);
    end Word_Added_Hook;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Edit_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Line : Natural;
-   begin
-      Trace (Me, "On_Edit_File: "
-             & (+Full_Name (File_Information (Context.Context))));
-
-      if Has_Line_Information (Context.Context) then
-         Line := Contexts.Line_Information (Context.Context);
-      else
-         Line := 1;
-      end if;
-
-      Open_File_Editor
-        (Get_Kernel (Context.Context),
-         Filename  => File_Information (Context.Context),
-         Line      => Line,
-         Column    => Column_Information (Context.Context));
-      return Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Editor_Properties_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      File   : constant GNATCOLL.VFS.Virtual_File :=
-        File_Information (Context.Context);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dialog  : Gtk_Dialog;
-      Label   : Gtk_Label;
-      Lang    : Gtk_Combo_Box_Text;
-      Charset : Gtk_Combo_Box_Text;
-      Strip   : Gtk_Check_Button;
-      Strip_Lines : Gtk_Check_Button;
-      Box     : Gtk_Box;
-      Size    : Gtk_Size_Group;
-      Buffer  : Source_Buffer;
-      Ignore  : Gtk_Widget;
-      pragma Unreferenced (Ignore);
-
-   begin
-      Buffer := Get_Buffer
-        (Get_Source_Box_From_MDI (Get_Focus_Child (Get_MDI (Kernel))));
-      if Buffer = null then
-         return Failure;
-      end if;
-
-      Gtk_New (Dialog,
-               Title  => -"Properties for " & Display_Full_Name (File),
-               Parent => Get_Main_Window (Kernel),
-               Flags  => Destroy_With_Parent);
-      Set_Default_Size (Dialog, 400, 200);
-
-      Gtk_New (Size);
-
-      --  Base name
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-      Gtk_New (Label, -"File:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Label, Display_Base_Name (File));
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-
-      --  Directory
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-      Gtk_New (Label, -"Directory:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File)));
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-
-      --  Language
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-
-      Gtk_New (Label, -"Language: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-
-      Lang := Create_Language_Combo
-        (Get_Language_Handler (Kernel), File,
-         Default => Get_Name (Get_Language (Buffer)));
-      Pack_Start (Box, Lang, Expand => True, Fill => True);
-
-      --  Charset
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-
-      Gtk_New (Label, -"Character set: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-
-      Charset := Create_Charset_Combo
-        (File, Default => Get_Charset (Buffer));
-      Pack_Start (Box, Charset, Expand => True, Fill => True);
-
-      --  Trailing spaces
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-
-      Gtk_New (Label, -"Strip blanks: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-
-      Gtk_New (Strip, "");
-      Strip.Set_Active (Get_Strip_Trailing_Blanks (Buffer));
-      Pack_Start (Box, Strip, Expand => True, Fill => True);
-
-      --  Trailing blank lines
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Box, Expand => True);
-
-      Gtk_New (Label, -"Strip lines: ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Size, Label);
-      Pack_Start (Box, Label, Expand => False);
-
-      Gtk_New (Strip_Lines, "");
-      Strip_Lines.Set_Active (Get_Strip_Trailing_Lines (Buffer));
-      Pack_Start (Box, Strip_Lines, Expand => True, Fill => True);
-
-      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         declare
-            Text   : constant String := Get_Active_Text (Lang);
-            Header : constant String := -"(From project) ";
-            Index  : Natural := Text'First;
-         begin
-            if Text'Length >= Header'Length
-              and then Text (Index .. Index + Header'Length - 1) = Header
-            then
-               Index := Index + Header'Length;
-            end if;
-
-            Set_Language
-              (Buffer, Get_Language_By_Name
-                 (Get_Language_Handler (Kernel),
-                  Text (Index .. Text'Last)));
-            Set_Charset (Buffer, Selected_Charset (Charset));
-
-            Set_Strip_Trailing_Blanks (Buffer, Strip.Get_Active);
-            Set_Strip_Trailing_Lines (Buffer, Strip_Lines.Get_Active);
-         end;
-      end if;
-
-      Destroy (Dialog);
-      return Success;
-   end Execute;
-
    -----------------------------
    -- Default_Context_Factory --
    -----------------------------
@@ -2482,9 +1760,6 @@ package body Src_Editor_Module is
    is
       File                     : constant String := '/' & (-"File") & '/';
       Edit                     : constant String := '/' & (-"Edit") & '/';
-      Selection                : constant String :=
-                                   Edit & (-"S_election") & '/';
-      Navigate                 : constant String := '/' & (-"Navigate") & '/';
       Sep                      : Gtk_Separator_Menu_Item;
       Toolbar                  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       UR                       : constant Undo_Redo :=
@@ -2513,6 +1788,7 @@ package body Src_Editor_Module is
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
+      Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo := UR;
       Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
       --  Commands
@@ -2563,7 +1839,7 @@ package body Src_Editor_Module is
       Move_Command (Command.all).Step := 1;
       Register_Action
         (Kernel, "Move to next character", Command,
-           -"Move to the next character in the current source editor",
+         -"Move to the next character in the current source editor",
          Category => "Editor",
          Filter   => Src_Action_Context);
 
@@ -2729,12 +2005,10 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "No casing/indentation on next key",
          Command, -"Disable the casing and indentation on next key",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "No casing/indentation on next key",
-         Default_Key => "control-q");
+         Category   => "Editor",
+         Accel_Key  => GDK_LC_q,
+         Accel_Mods => Control_Mask,
+         Filter     => Src_Action_Context);
 
       Command := new Control_Command;
       Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2743,11 +2017,9 @@ package body Src_Editor_Module is
         (Kernel, "Toggle auto casing/indentation",
          Command, -"Disable or enable the casing and indentation",
          Category => "Editor",
-         Filter   => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Toggle auto casing/indentation",
-         Default_Key => "alt-q");
+         Accel_Key  => GDK_LC_q,
+         Accel_Mods => Mod1_Mask,
+         Filter     => Src_Action_Context);
 
       Command := new Tab_As_Space_Command;
       Tab_As_Space_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2758,10 +2030,6 @@ package body Src_Editor_Module is
            & " as set in the Preferences for the corresponding language"),
          Category => "Editor",
          Filter => Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Insert TAB with spaces",
-         Default_Key => "");
 
       Register_Module
         (Module      => Src_Editor_Module_Id,
@@ -2785,19 +2053,41 @@ package body Src_Editor_Module is
 
       --  Menus
 
+      Command := new New_File_Command;
+      Register_Action
+        (Kernel, New_File_Command_Name, Command,
+         Description => -"Create a new empty editor",
+         Stock_Id    => Stock_New);
       Register_Menu
-        (Kernel, File, -"_New", Stock_New, On_New_File'Access,
+        (Kernel, -"/File/_New", New_File_Command_Name,
          Ref_Item => -"Save More");
+
+      Command := new New_View_Command;
+      Register_Action
+        (Kernel, "new view", Command,
+         Description => -"Create a new view for the selected editor");
       Register_Menu
-        (Kernel, File, -"New _View", "", On_New_View'Access,
+        (Kernel, -"/File/New _View", "new view", Ref_Item => -"Save More");
+
+      Command := new Open_Command;
+      Register_Action
+        (Kernel, Open_Command_Name, Command,
+         Description => -"Open an existing file",
+         Stock_Id    => Stock_Open,
+         Accel_Key   => GDK_F3);
+      Register_Menu
+        (Kernel, -"/File/_Open ...", Open_Command_Name,
          Ref_Item => -"Save More");
+
+      Command := new Open_Remote_Command;
+      Register_Action
+        (Kernel, "open from host", Command,
+         Description => -"Open a file from a remote host",
+         Stock_Id    => Stock_Open,
+         Accel_Key   => GDK_F3,
+         Accel_Mods  => Control_Mask);
       Register_Menu
-        (Kernel, File, -"_Open...",  Stock_Open,
-         On_Open_File'Access, null, GDK_F3,
-         Ref_Item => -"Save More");
-      Register_Menu
-        (Kernel, File, -"Open From _Host...",  Stock_Open,
-         On_Open_Remote_File'Access, null, GDK_F3, Control_Mask,
+        (Kernel, -"/File/Open From _Host...", "open from host",
          Ref_Item => -"Save More");
 
       Recent_Menu_Item := Register_Menu
@@ -2808,57 +2098,54 @@ package body Src_Editor_Module is
                  new On_Recent'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
 
-      Register_Menu
-        (Kernel, File, -"_Save", GPS_Save,
-         On_Save'Access, null,
-         GDK_LC_s, Control_Mask,
-         Ref_Item => -"Save More");
-      Register_Menu
-        (Kernel, File, -"Save _As...", "",
-         On_Save_As'Access,
-         Ref_Item => -"Save More");
+      Command := new Save_Command;
+      Register_Action
+        (Kernel, Save_Command_Name, Command,
+         Stock_Id    => GPS_Save,
+         Description => -"Save the current editor",
+         Accel_Key   => GDK_LC_s,
+         Accel_Mods  => Control_Mask);
+      Register_Menu (Kernel, -"/File/_Save", Save_Command_Name,
+                     Ref_Item => -"Save More");
 
-      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access,
-                     Ref_Item => "Exit");
+      Command := new Save_As_Command;
+      Register_Action
+        (Kernel, "save as", Command,
+         Description => -"Save the current editor with a different name");
+      Register_Menu
+        (Kernel, -"/File/Save _As...", "save as", Ref_Item => -"Save More");
+
+      Command := new Src_Editor_Module.Commands.Print_Command;
+      Register_Action
+        (Kernel, "print", Command,
+         Stock_Id    => Stock_Print,
+         Description => -"Print the current editor");
+      Register_Menu (Kernel, -"/File/_Print", "print", Ref_Item => -"Exit");
 
       Command := new Close_Command;
-      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Close_Command (Command.all).Mode := Close_One;
       Register_Action
         (Kernel, "Close current window", Command,
-         -"Close the currently selected window",
-        Category => "MDI");
-
-      Register_Menu
-        (Kernel,
-         Parent_Path => File,
-         Text        => -"_Close",
-         Ref_Item    => -"Exit",
-         Stock_Image => Stock_Close,
-         Callback    => null,
-         Command     => Command,
+         Description => -"Close the currently selected window",
+         Category    => -"MDI",
+         Stock_Id    => Stock_Close,
          Accel_Key   => GDK_LC_w,
          Accel_Mods  => Control_Mask);
+      Register_Menu
+        (Kernel, -"/File/_Close", "Close current window",
+         Ref_Item => -"Exit");
 
       Command := new Close_Command;
-      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Close_Command (Command.all).Mode := Close_All;
       Register_Action
         (Kernel, "Close all windows", Command,
          -"Close all open windows, asking for confirmation when relevant",
-         Category => "MDI");
-
+         Category => -"MDI");
       Register_Menu
-        (Kernel,
-         Parent_Path => File,
-         Text        => -"Close _All",
-         Ref_Item    => -"Close",
-         Callback    => null,
-         Command     => Command,
-         Add_Before  => False);
+        (Kernel, -"/File/Close _All", "Close all windows",
+         Ref_Item => -"Close", Add_Before => False);
 
       Command := new Close_Command;
-      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Close_Command (Command.all).Mode := Close_All_Except_Current;
       Register_Action
         (Kernel, "Close all windows except current", Command,
@@ -2881,20 +2168,31 @@ package body Src_Editor_Module is
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
-      UR.Undo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
-                       null, null,
-                       GDK_LC_z, Control_Mask,
-                       Ref_Item  => -"Paste Previous",
-                       Add_Before => False,
-                       Sensitive => False);
-      UR.Redo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
-                       null, null,
-                       GDK_LC_r, Control_Mask,
-                       Ref_Item   => -"Undo",
-                       Add_Before => False,
-                       Sensitive  => False);
+      Command := new Undo_Command;
+      Filter  := new Has_Undo_Filter;
+      Register_Action
+        (Kernel, "undo", Command,
+         Description => -"Undo the last command",
+         Stock_Id    => Stock_Undo,
+         Filter      => Filter,
+         Accel_Key   => GDK_LC_z,
+         Accel_Mods  => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Edit/_Undo", "undo",
+         Ref_Item  => -"Paste Previous", Add_Before => False);
+
+      Command := new Redo_Command;
+      Filter  := new Has_Redo_Filter;
+      Register_Action
+        (Kernel, "redo", Command,
+         Description => -"Redo the last command that was undone",
+         Stock_Id    => Stock_Redo,
+         Filter      => Filter,
+         Accel_Key   => GDK_LC_r,
+         Accel_Mods  => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Edit/_Redo", "redo",
+         Ref_Item   => -"Undo", Add_Before => False);
 
       declare
          Space : Gtk_Separator_Tool_Item;
@@ -2903,70 +2201,86 @@ package body Src_Editor_Module is
          Space.Set_Name ("from editor");
          Insert (Toolbar, Space,
                  Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
-         Gtk_New_From_Stock (UR.Undo_Button, Stock_Undo);
-         UR.Undo_Button.Set_Homogeneous (False);
-         Set_Tooltip_Text (UR.Undo_Button, -"Undo Previous Action");
-         Set_Sensitive (UR.Undo_Button, False);
-         Insert (Toolbar, UR.Undo_Button,
-                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
-         Gtk_New_From_Stock (UR.Redo_Button, Stock_Redo);
-         UR.Redo_Button.Set_Homogeneous (False);
-         Set_Tooltip_Text (UR.Redo_Button, -"Redo Previous Action");
-         Set_Sensitive (UR.Redo_Button, False);
-         Insert (Toolbar, UR.Redo_Button,
-                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
       end;
 
-      Kernel_Callback.Connect
-        (Toolbar, Signal_Destroy,
-         Toolbar_Destroy_Cb'Access,
-         Kernel_Handle (Kernel));
+      UR.Undo_Button := Add_Button
+        (Kernel, Toolbar, "undo",
+         Get_Toolbar_Separator_Position (Kernel, Before_Build));
+      UR.Redo_Button := Add_Button
+        (Kernel, Toolbar, "redo",
+         Get_Toolbar_Separator_Position (Kernel, Before_Build));
 
-      --  ??? This should be bound to Ctrl-A, except this would interfer with
-      --  Emacs keybindings for people who want to use them.
-      Register_Menu (Kernel, Edit, -"_Select All", "",
-                     On_Select_All'Access, Ref_Item => -"Redo",
-                     Add_Before => False,
-                     Filter => Src_Action_Context);
+      Toolbar.On_Destroy (Toolbar_Destroy_Cb'Access);
+
+      Command := new Select_All_Command;
+      Register_Action
+        (Kernel, "select all", Command,
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/_Select All", "select all",
+         Ref_Item => -"Redo", Add_Before => False);
 
       Gtk_New (Sep);
       Register_Menu
         (Kernel, Edit, Sep, Ref_Item => "Redo", Add_Before => False);
 
-      Register_Menu (Kernel, Edit, -"Insert _File...",  "",
-                     On_Insert_File'Access, Ref_Item => -"Select All",
-                     Add_Before => False,
-                     Filter => Src_Action_Context);
+      Command := new Insert_File_Command;
+      Register_Action
+        (Kernel, "insert file", Command,
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/Insert _File...", "insert file",
+         Ref_Item => -"Select All", Add_Before => False);
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Select All",
                      Add_Before => False);
 
-      Register_Menu (Kernel, Selection, -"Comment _Lines", "",
-                     On_Comment_Lines'Access, null,
-                     GDK_minus, Control_Mask, Ref_Item => -"More Completion",
-                     Add_Before => False,
-                     Filter => Src_Action_Context);
+      Command := new Comment_Lines_Command;
+      Register_Action
+        (Kernel, "comment lines", Command,
+         Description   => -"Comment the selected lines",
+         Filter        => Src_Action_Context,
+         Accel_Key     => GDK_minus,
+         Accel_Mods    => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Edit/Selection/Comment _Lines", "comment lines",
+         Ref_Item => -"More Completion", Add_Before => False);
 
-      Register_Menu (Kernel, Selection, -"Uncomment L_ines", "",
-                     On_Uncomment_Lines'Access, null,
-                     GDK_underscore, Control_Mask,
-                     Ref_Item   => -"Comment Lines",
-                     Add_Before => False,
-                     Filter     => Src_Action_Context);
-      Register_Menu (Kernel, Selection, -"R_efill", "",
-                     On_Refill'Access, null,
-                     GDK_equal, Control_Mask,
-                     Ref_Item   => "Expand Alias",
-                     Add_Before => False,
-                     Filter     => Src_Action_Context);
-      Register_Menu (Kernel, Selection, -"Print Selection",
-                     Callback   => On_Print_Selection'Access,
-                     Ref_Item   => "Refill",
-                     Add_Before => True,
-                     Filter     => Src_Action_Context);
+      Command := new Uncomment_Lines_Command;
+      Register_Action
+        (Kernel, "uncomment lines", Command,
+         Description   => -"Uncomment the selected lines",
+         Filter        => Src_Action_Context,
+         Accel_Key     => GDK_underscore,
+         Accel_Mods    => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Edit/Selection/Uncomment L_ines", "uncomment lines",
+         Ref_Item   => -"Comment Lines", Add_Before => False);
+
+      Command := new Refill_Command;
+      Register_Action
+        (Kernel, "refill", Command,
+         Description   =>
+           -("Reformat selected lines or current paragraph so that the list"
+           & " are shorter than the grey line on the right"),
+         Filter        => Src_Action_Context,
+         Accel_Key     => GDK_equal,
+         Accel_Mods    => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Edit/Selection/R_efill", "refill",
+         Ref_Item   => "Expand Alias", Add_Before => False);
+
+      Command := new Print_Selection_Command;
+      Register_Action
+        (Kernel, "print selection", Command,
+         Description   => -"Print the current selection",
+         Filter        => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/Selection/Print Selection", "print selection",
+         Ref_Item   => "Refill", Add_Before => True);
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Selection",
@@ -2974,102 +2288,91 @@ package body Src_Editor_Module is
 
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Menu
-        (Kernel, Edit, -"Format Selectio_n", "",
-         null, Command,
-         Ref_Item   => "Insert File...",
-         Add_Before => False,
-         Filter     => Src_Action_Context and Is_Not_Makefile);
       Register_Action
         (Kernel, "Autoindent selection",
          Command, -"Automatically indent the current line or selection",
          Category => "Editor",
          Filter   => Src_Action_Context and Is_Not_Makefile);
+      Register_Menu
+        (Kernel, -"/Edit/Format Selectio_n", "Autoindent selection",
+         Ref_Item   => "Insert File...", Add_Before => False);
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Insert File...",
                      Add_Before => False);
 
-      Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
-                     On_Fold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Selection",
-                     Add_Before     => False,
-                     Filter         => Src_Action_Context);
+      Command := new Fold_All_Blocks_Command;
+      Register_Action
+        (Kernel, "fold all blocks", Command,
+         -"Fold all blocks (if, loops,...)",
+         Filter  => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/_Fold all blocks", "fold all blocks",
+         Ref_Item => -"Selection", Add_Before => False);
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Fold all blocks",
                      Add_Before => True);
 
-      Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
-                     On_Unfold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Fold all blocks",
-                     Add_Before     => False,
-                     Filter         => Src_Action_Context);
+      Command := new Unfold_All_Blocks_Command;
+      Register_Action
+        (Kernel, "unfold all blocks", Command,
+         -"Unfold all blocks (if, loops,...)",
+         Filter => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Edit/Unfold all _blocks", "unfold all blocks",
+         Ref_Item => -"Fold all blocks", Add_Before => False);
 
       Command := new Goto_Line_Command;
       Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Menu (Kernel,
-                     Parent_Path => Navigate,
-                     Text        => -"Goto _Line...",
-                     Command     => Command,
-                     Callback    => null,
-                     Accel_Key   => GDK_LC_g,
-                     Accel_Mods  => Control_Mask,
-                     Ref_Item    => -"Goto File Spec<->Body");
+      Register_Action
+        (Kernel, "goto line", Command,
+         -"Open a dialog to select a line to go to",
+         Accel_Key   => GDK_LC_g,
+         Accel_Mods  => Control_Mask);
+      Register_Menu
+        (Kernel, -"/Navigate/Goto _Line...", "goto line",
+         Ref_Item    => -"Goto File Spec<->Body");
       Register_Contextual_Menu
         (Kernel, -"Goto line...",
          Action => Command,
          Filter => Line_Numbers_Area_Filter);
 
-      Register_Menu (Kernel, Navigate, -"Goto _Declaration", "",
-                     On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
-      Register_Menu (Kernel, Navigate, -"Goto _Body", "",
-                     On_Goto_Body'Access, Ref_Item => -"Goto Line...");
+      Command := new Goto_Declaration_Command;
+      Register_Action
+        (Kernel, "goto declaration", Command,
+         -"Jump to the declaration of the current entity");
+      Register_Menu
+        (Kernel, -"/Navigate/Goto _Declaration", "goto declaration",
+         Ref_Item => -"Goto Line...");
+
+      Command := new Goto_Body_Command;
+      Register_Action
+        (Kernel, "goto body", Command,
+         -"Jump to the implementation/body of the current entity");
+      Register_Menu
+        (Kernel, -"/Navigate/Goto _Body", "goto body",
+         Ref_Item => -"Goto Line...");
 
       Command := new Jump_To_Delimiter_Command;
       Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
-         Category => "Editor",
-         Filter => Src_Action_Context);
-      Register_Menu (Kernel, Navigate, -"Goto Matching _Delimiter",
-                     Ref_Item   => -"Goto Body",
-                     Callback   => null,
-                     Add_Before => False,
-                     Accel_Key  => GDK_apostrophe,
-                     Accel_Mods => Control_Mask,
-                     Command    => Command,
-                     Filter     => Src_Action_Context);
+         Accel_Key  => GDK_apostrophe,
+         Accel_Mods => Control_Mask,
+         Category   => "Editor",
+         Filter     => Src_Action_Context);
+      Register_Menu
+        (Kernel, -"/Navigate/Goto Matching _Delimiter",
+         "Jump to matching delimiter",
+         Ref_Item   => -"Goto Body", Add_Before => False);
 
       --  Toolbar buttons
 
-      declare
-         Button : Gtk_Tool_Button;
-      begin
-         Gtk_New_From_Stock (Button, Stock_New);
-         Button.Set_Homogeneous (False);
-         Set_Tooltip_Text (Button, -"Create a New File");
-         Insert (Toolbar, Button, 0);
-         Kernel_Callback.Connect
-           (Button, Signal_Clicked,
-            On_New_File'Access, Kernel_Handle (Kernel));
-
-         Gtk_New_From_Stock (Button, Stock_Open);
-         Button.Set_Homogeneous (False);
-         Set_Tooltip_Text (Button, -"Open a File");
-         Insert (Toolbar, Button, 1);
-         Kernel_Callback.Connect
-           (Button, Signal_Clicked,
-            On_Open_File'Access, Kernel_Handle (Kernel));
-
-         Gtk_New_From_Stock (Button, GPS_Save);
-         Button.Set_Homogeneous (False);
-         Set_Tooltip_Text (Button, -"Save Current File");
-         Insert (Toolbar, Button, 2);
-         Kernel_Callback.Connect
-           (Button, Signal_Clicked, On_Save'Access, Kernel_Handle (Kernel));
-      end;
+      Add_Button (Kernel, Toolbar, New_File_Command_Name, 0);
+      Add_Button (Kernel, Toolbar, Open_Command_Name, 1);
+      Add_Button (Kernel, Toolbar, Save_Command_Name, 2);
 
       Add_Hook (Kernel, File_Renamed_Hook,
                 Wrapper (File_Renamed_Cb'Access),
@@ -3080,8 +2383,6 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, Location_Changed_Hook,
                 Wrapper (Cursor_Stopped_Cb'Access),
                 Name => "src_editor.location_changed");
-
-      Kernel.Set_Undo_Redo (UR);
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
@@ -3684,9 +2985,7 @@ package body Src_Editor_Module is
       Command : Interactive_Command_Access;
    begin
       Command := new Close_Command;
-      Close_Command (Command.all).Kernel := Kernel;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
-
       Launch_Background_Command (Kernel          => Kernel,
                                  Command         => Command,
                                  Active          => True,

@@ -35,6 +35,7 @@ with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -829,12 +830,16 @@ package body External_Editor_Module is
          Label   => -"Always use external editor");
 
       Command := new Edit_With_External_Command;
+      Register_Action
+        (Kernel, "Edit with external editor", Command,
+         Description =>
+           -("Edit the file with an external editor, as configued in the"
+           & " preferences"),
+         Filter      => Lookup_Filter (Kernel, "File"));
       Register_Menu
-        (Kernel, -"/Edit/", -"Edit with external editor", "",
-         null, Command,
-         Ref_Item   => "Aliases",
-         Add_Before => False,
-         Filter     => Lookup_Filter (Kernel, "File"));
+        (Kernel, -"/Edit/Edit with external editor",
+         "Edit with external editor",
+         Ref_Item => -"Aliases", Add_Before => False);
 
       Register_Module
         (Module                  => Module_ID (External_Editor_Module_Id),

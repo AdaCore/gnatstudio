@@ -466,28 +466,6 @@ package body GPS.Kernel is
       Kernel.Editor_Factory := Factory;
    end Set_Buffer_Factory;
 
-   -------------------
-   -- Get_Undo_Redo --
-   -------------------
-
-   function Get_Undo_Redo
-     (Kernel : access Kernel_Handle_Record)
-      return Commands.Controls.Undo_Redo is
-   begin
-      return Kernel.Undo_Redo;
-   end Get_Undo_Redo;
-
-   -------------------
-   -- Set_Undo_Redo --
-   -------------------
-
-   procedure Set_Undo_Redo
-     (Kernel : access Kernel_Handle_Record;
-      Value  : Commands.Controls.Undo_Redo) is
-   begin
-      Kernel.Undo_Redo := Value;
-   end Set_Undo_Redo;
-
    ---------------------------
    -- Source_Lines_Revealed --
    ---------------------------
@@ -1946,11 +1924,15 @@ package body GPS.Kernel is
    --------------------
 
    procedure Set_Key_Setter
-     (Kernel : access Kernel_Handle_Record;
-      Setter : Key_Setter)
+     (Kernel        : access Kernel_Handle_Record;
+      Setter        : Key_Setter;
+      Getter        : Key_Getter;
+      Getter_Simple : Key_Getter_Simple)
    is
    begin
       Kernel.Key_Setter_Function := Setter;
+      Kernel.Key_Getter_Function := Getter;
+      Kernel.Key_Getter_Simple_Function := Getter_Simple;
    end Set_Key_Setter;
 
    ---------------------
@@ -1960,13 +1942,50 @@ package body GPS.Kernel is
    procedure Set_Default_Key
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
-      Accel_Key  : Natural;
-      Accel_Mods : Natural) is
+      Accel_Key  : Gdk.Types.Gdk_Key_Type;
+      Accel_Mods : Gdk.Types.Gdk_Modifier_Type) is
    begin
       if Kernel.Key_Setter_Function /= null then
          Kernel.Key_Setter_Function (Kernel, Action, Accel_Key, Accel_Mods);
       end if;
    end Set_Default_Key;
+
+   ------------------
+   -- Get_Shortcut --
+   ------------------
+
+   function Get_Shortcut
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Action          : String;
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True) return String
+   is
+   begin
+      if Kernel.Key_Getter_Function = null then
+         return "";
+      else
+         return Kernel.Key_Getter_Function
+           (Kernel, Action, Use_Markup, Return_Multiple);
+      end if;
+   end Get_Shortcut;
+
+   -------------------------
+   -- Get_Shortcut_Simple --
+   -------------------------
+
+   procedure Get_Shortcut_Simple
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Key        : out Gdk.Types.Gdk_Key_Type;
+      Mods       : out Gdk.Types.Gdk_Modifier_Type) is
+   begin
+      if Kernel.Key_Getter_Simple_Function = null then
+         Key := 0;
+         Mods := 0;
+      else
+         Kernel.Key_Getter_Simple_Function (Kernel, Action, Key, Mods);
+      end if;
+   end Get_Shortcut_Simple;
 
    -------------------------
    -- Set_Messages_Window --

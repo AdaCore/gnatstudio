@@ -35,6 +35,7 @@ with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Window;              use Gdk.Window;
 
+with Glib.Convert;            use Glib.Convert;
 with Glib.Object;             use Glib.Object;
 with Glib;                    use Glib;
 
@@ -261,10 +262,22 @@ package body KeyManager_Module is
    procedure Set_Default_Key
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
-      Accel_Key  : Natural;
-      Accel_Mods : Natural);
+      Accel_Key  : Gdk_Key_Type;
+      Accel_Mods : Gdk_Modifier_Type);
    --  If the Action doesn't already have a key binding, then bind it to
    --  Accel_Key/Accel_Mods.
+
+   function Get_Shortcut
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Action          : String;
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True) return String;
+   procedure Get_Shortcut_Simple
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Key        : out Gdk.Types.Gdk_Key_Type;
+      Mods       : out Gdk.Types.Gdk_Modifier_Type);
+   --  Implement the kernel interface for retrieving key shortcuts
 
    ----------------------
    -- Save_Custom_Keys --
@@ -1380,11 +1393,22 @@ package body KeyManager_Module is
 
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.Changed;
-                     Append
-                       (Result,
-                        Prefix
-                        & Gtk.Accel_Group.Accelerator_Get_Label
-                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+
+                     if Use_Markup then
+                        Append
+                          (Result,
+                           Escape_Text
+                             (Prefix
+                              & Gtk.Accel_Group.Accelerator_Get_Label
+                                (Get_Key (Iter).Key,
+                                 Get_Key (Iter).Modifier)));
+                     else
+                        Append
+                          (Result,
+                           Prefix
+                           & Gtk.Accel_Group.Accelerator_Get_Label
+                             (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                     end if;
 
                   elsif Prefix = "" then
                      --  When returning a single key binding, give priority to
@@ -1392,9 +1416,19 @@ package body KeyManager_Module is
                      --  them in menu shortcuts
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.Changed;
-                     Result := To_Unbounded_String
-                       (Gtk.Accel_Group.Accelerator_Get_Label
-                          (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+
+                     if Use_Markup then
+                        Result := To_Unbounded_String
+                          (Escape_Text
+                             (Gtk.Accel_Group.Accelerator_Get_Label
+                                  (Get_Key (Iter).Key,
+                                   Get_Key (Iter).Modifier)));
+
+                     else
+                        Result := To_Unbounded_String
+                          (Gtk.Accel_Group.Accelerator_Get_Label
+                             (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
+                     end if;
                   end if;
                end if;
 
@@ -1414,6 +1448,74 @@ package body KeyManager_Module is
          return To_String (Result);
       end if;
    end Lookup_Key_From_Action;
+
+   ------------------
+   -- Get_Shortcut --
+   ------------------
+
+   function Get_Shortcut
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Action          : String;
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True) return String
+   is
+      pragma Unreferenced (Kernel);
+      Is_User_Changed : aliased Boolean;
+   begin
+      return Lookup_Key_From_Action
+        (Keymanager_Module.Table,
+         Action          => Action,
+         Default         => "",
+         Use_Markup      => Use_Markup,
+         Return_Multiple => Return_Multiple,
+         Is_User_Changed => Is_User_Changed'Access);
+   end Get_Shortcut;
+
+   -------------------------
+   -- Get_Shortcut_Simple --
+   -------------------------
+
+   procedure Get_Shortcut_Simple
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Action     : String;
+      Key        : out Gdk.Types.Gdk_Key_Type;
+      Mods       : out Gdk.Types.Gdk_Modifier_Type)
+   is
+      pragma Unreferenced (Kernel);
+      Iter    : Key_Htable.Cursor;
+      Binding : Key_Description_List;
+   begin
+      Get_First (Keymanager_Module.Table.all, Iter);
+      loop
+         Binding := Get_Element (Iter);
+         exit when Binding = No_Key;
+
+         --  If we have voluntarily assigned an invalid binding to indicate
+         --  a key should be removed, ignore this here as well.
+         if Get_Key (Iter).Key = 0 then
+            Binding := null;
+         end if;
+
+         while Binding /= null loop
+            if Binding.Action /= null
+              and then Equal
+                (Binding.Action.all, Action, Case_Sensitive => False)
+              and then Get_Key (Iter).Key /= 0
+            then
+               Key := Get_Key (Iter).Key;
+               Mods := Get_Key (Iter).Modifier;
+               return;
+            end if;
+
+            Binding := Binding.Next;
+         end loop;
+
+         Get_Next (Keymanager_Module.Table.all, Iter);
+      end loop;
+
+      Key := 0;
+      Mods := 0;
+   end Get_Shortcut_Simple;
 
    ---------------
    -- Customize --
@@ -1871,7 +1973,9 @@ package body KeyManager_Module is
                 Wrapper (Preferences_Changed'Access),
                 Name => "key_manager.preferences_changed");
 
-      Set_Key_Setter (Kernel, Set_Default_Key'Access);
+      Set_Key_Setter
+        (Kernel, Set_Default_Key'Access,
+         Get_Shortcut'Access, Get_Shortcut_Simple'Access);
    end Register_Module;
 
    -------------------------
@@ -2084,8 +2188,8 @@ package body KeyManager_Module is
    procedure Set_Default_Key
      (Kernel     : access Kernel_Handle_Record'Class;
       Action     : String;
-      Accel_Key  : Natural;
-      Accel_Mods : Natural)
+      Accel_Key  : Gdk_Key_Type;
+      Accel_Mods : Gdk_Modifier_Type)
    is
       pragma Unreferenced (Kernel);
       Keys  : Key_Description_List;
@@ -2107,9 +2211,7 @@ package body KeyManager_Module is
             Next    => null);
          Set
            (Keymanager_Module.Table.all,
-            Key_Binding'
-              (Gdk.Types.Gdk_Key_Type (Accel_Key),
-               Gdk.Types.Gdk_Modifier_Type (Accel_Mods)),
+            Key_Binding'(Accel_Key, Accel_Mods),
             Keys);
       end if;
    end Set_Default_Key;

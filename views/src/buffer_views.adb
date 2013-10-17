@@ -583,9 +583,7 @@ package body Buffer_Views is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Close,
-         Action   => Command_Close_Windows_Name,
-         Tooltip  => Command_Close_Windows_Tip);
+         Action   => Command_Close_Windows_Name);
    end Create_Toolbar;
 
    -----------------
@@ -911,7 +909,8 @@ package body Buffer_Views is
       Register_Action
         (Kernel, Command_Close_Windows_Name,
          Command, Command_Close_Windows_Tip,
-         null, -"Windows view");
+         Stock_Id => Stock_Close,
+         Category => -"Windows view");
 
       P := new Opened_Windows_Search;
       Register_Provider_And_Action (Kernel, P);

@@ -15,41 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
-
 with Ada.Containers.Doubly_Linked_Lists;
-
 with Ada.Unchecked_Deallocation;
+with Basic_Types;                 use Basic_Types;
+with Commands.Controls;
 with GNAT.Expect;
 with GNAT.Strings;
-
-with Gdk.Pixbuf;         use Gdk.Pixbuf;
-
-with Glib.Object;
-with Glib;               use Glib;
-
-with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
-with Gtk.Text_View;      use Gtk.Text_View;
-with Gtk.Widget;         use Gtk.Widget;
-
-with Gtkada.MDI;         use Gtkada.MDI;
-
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Styles;                  use GPS.Styles;
-with GPS.Styles.UI;               use GPS.Styles.UI;
 with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
+with GPS.Styles.UI;               use GPS.Styles.UI;
+with GPS.Styles;                  use GPS.Styles;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Generic_List;
+with Glib;                        use Glib;
+with Glib.Object;
+with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
+with Gtk.Text_View;               use Gtk.Text_View;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.MDI;                  use Gtkada.MDI;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
-
-with Basic_Types;        use Basic_Types;
-with Src_Editor_Buffer;  use Src_Editor_Buffer;
-with XML_Utils;          use XML_Utils;
+with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with System;
+with XML_Utils;                   use XML_Utils;
 
 package Src_Editor_Module is
 
@@ -122,6 +115,10 @@ package Src_Editor_Module is
       return Src_Editor_Box.Source_Editor_Box;
    --  Create a new view for Current and add it in the MDI.
    --  The current editor is the focus child in the MDI.
+
+   procedure Change_Undo_Redo_Queue (Queue : Standard.Commands.Command_Queue);
+   --  Change the queue to which undo/redo apply.
+   --  Set Queue to Null_Command_Queue to unset
 
    ---------------------
    -- Automatic saves --
@@ -299,6 +296,9 @@ private
       Search_Context        : Src_Contexts.Files_Project_Context_Access;
       Search_File           : GNATCOLL.VFS.Virtual_File;
       Search_Pattern        : GNAT.Strings.String_Access;
+
+      Undo_Redo             : Standard.Commands.Controls.Undo_Redo;
+      --  Undo/redo controls
 
       --  The following fields are related to hyper mode
 

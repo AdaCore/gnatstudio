@@ -128,7 +128,6 @@ package body VCS_Module.Actions is
       --  If In_Contextual_Menu, also register a contextual menu for this
       --  action.
 
-      VCS_Menu         : constant String := "/_" & (-"VCS");
       Has_Revision_Log : constant Action_Filter :=
                            new Has_Revision_Log_Filter;
       Is_Revision_Log  : constant Action_Filter :=
@@ -195,14 +194,6 @@ package body VCS_Module.Actions is
       Filter : Action_Filter;
 
    begin
-      Register_Menu
-        (Kernel, VCS_Menu, -"Update all _projects", "",
-         Update_All'Access);
-
-      Register_Menu
-        (Kernel, VCS_Menu, -"_Query status for all projects", "",
-         Query_Status_For_Project'Access);
-
       Register_Action_Menu
         ("Status",
          -"Query the status of the current selection",
@@ -479,6 +470,23 @@ package body VCS_Module.Actions is
 
       Filter := new Has_VCS_Filter;
       Register_Filter (Kernel, Filter, "VCS");
+
+      Register_Action_Menu
+        ("VCS update all projects",
+         -"Update all projects (recursively)",
+         Prj_Filter,
+         Update_All'Access);
+      Register_Menu
+        (Kernel, -"/VCS/Update all _projects", "VCS update all projects");
+
+      Register_Action_Menu
+        ("VCS query status for all projects",
+         -"Query status for all projects (recursively)",
+         Prj_Filter,
+         Query_Status_For_Project'Access);
+      Register_Menu
+        (Kernel, -"/VCS/_Query status for all projects",
+         "VCS query status for all projects");
 
       Register_Contextual_Submenu
         (Kernel     => Kernel,

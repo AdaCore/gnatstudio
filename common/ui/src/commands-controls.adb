@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;           use Glib;
-with Glib.Values;    use Glib.Values;
-with Gtk.Widget;     use Gtk.Widget;
-
 package body Commands.Controls is
 
    type Queue_Change_Command is new Root_Command with record
@@ -30,67 +26,8 @@ package body Commands.Controls is
    overriding function Execute
      (Command : access Queue_Change_Command) return Command_Return_Type;
 
-   package Command_Callback is new User_Callback
-     (Gtk_Widget_Record, Queue_Change_Access);
-
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
-   overriding procedure Free (X : in out Queue_Change_Command);
+   overriding procedure Free (X : in out Queue_Change_Command) is null;
    --  Free memory associated to X.
-
-   procedure On_Undo
-     (Widget  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Command : Queue_Change_Access);
-   --  Callback for the undo widgets.
-
-   procedure On_Redo
-     (Widget  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Command : Queue_Change_Access);
-   --  Callback for the redo widgets.
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (X : in out Queue_Change_Command) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
-   -------------
-   -- On_Undo --
-   -------------
-
-   procedure On_Undo
-     (Widget  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Command : Queue_Change_Access)
-   is
-      pragma Unreferenced (Widget);
-      pragma Unreferenced (Params);
-   begin
-      Undo (Command.The_Queue);
-   end On_Undo;
-
-   -------------
-   -- On_Redo --
-   -------------
-
-   procedure On_Redo
-     (Widget  : access Gtk_Widget_Record'Class;
-      Params  : GValues;
-      Command : Queue_Change_Access)
-   is
-      pragma Unreferenced (Widget);
-      pragma Unreferenced (Params);
-   begin
-      Redo (Command.The_Queue);
-   end On_Redo;
 
    -------------
    -- Execute --
@@ -99,109 +36,63 @@ package body Commands.Controls is
    overriding function Execute
      (Command : access Queue_Change_Command) return Command_Return_Type is
    begin
-      if Command.UR.Undo_Button /= null then
-         Set_Sensitive (Command.UR.Undo_Button,
-                        not Undo_Queue_Empty (Command.The_Queue));
-      end if;
+      --  Is this a change in the current queue ?
+      if Command.The_Queue = Command.UR.Queue then
+         if Command.UR.Undo_Button /= null then
+            Command.UR.Undo_Button.Set_Sensitive
+              (Command.The_Queue /= Null_Command_Queue
+               and then not Undo_Queue_Empty (Command.The_Queue));
+         end if;
 
-      if Command.UR.Redo_Button /= null then
-         Set_Sensitive
-           (Command.UR.Redo_Button, not Redo_Queue_Empty (Command.The_Queue));
+         if Command.UR.Redo_Button /= null then
+            Command.UR.Redo_Button.Set_Sensitive
+              (Command.The_Queue /= Null_Command_Queue
+               and then not Redo_Queue_Empty (Command.The_Queue));
+         end if;
       end if;
-
-      if Command.UR.Undo_Menu_Item /= null then
-         Set_Sensitive
-           (Command.UR.Undo_Menu_Item,
-            not Undo_Queue_Empty (Command.The_Queue));
-      end if;
-
-      if Command.UR.Redo_Menu_Item /= null then
-         Set_Sensitive
-           (Command.UR.Redo_Menu_Item,
-            not Redo_Queue_Empty (Command.The_Queue));
-      end if;
-
-      return Success;
+      return Commands.Success;
    end Execute;
 
-   ------------------
-   -- Set_Controls --
-   ------------------
+   -------------------------
+   -- Set_Undo_Redo_Queue --
+   -------------------------
 
-   function Set_Controls
-     (Queue : Command_Queue;
-      UR    : Undo_Redo) return Command_Access
-   is
+   procedure Set_Undo_Redo_Queue (Queue  : Command_Queue; UR : Undo_Redo) is
       Command : Queue_Change_Access;
    begin
-      if Queue = null then
-         Set_Sensitive (UR.Undo_Button, False);
-         Set_Sensitive (UR.Redo_Button, False);
-         Set_Sensitive (UR.Undo_Menu_Item, False);
-         Set_Sensitive (UR.Redo_Menu_Item, False);
-      else
+      if Queue /= UR.Queue then
+         UR.Queue := Queue;
+
          Command := new Queue_Change_Command;
-         Command.The_Queue := Queue;
          Command.UR := UR;
-
-         Command.UR.Undo_Button_Handler_ID := Command_Callback.Connect
-           (UR.Undo_Button, Signal_Clicked, On_Undo'Access, Command, True);
-         Command.UR.Redo_Button_Handler_ID := Command_Callback.Connect
-           (UR.Redo_Button, Signal_Clicked, On_Redo'Access, Command, True);
-
-         Command.UR.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (UR.Undo_Menu_Item, Signal_Activate, On_Undo'Access, Command, True);
-         Command.UR.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (UR.Redo_Menu_Item, Signal_Activate, On_Redo'Access, Command, True);
+         Command.The_Queue := Queue;
+         UR.Command := Command_Access (Command);
 
          Execute (Command);
+
+         --  This frees the previous command associated with that queue.
          Add_Queue_Change_Hook (Queue, Command_Access (Command), "Controls");
       end if;
+   end Set_Undo_Redo_Queue;
 
-      return Command_Access (Command);
-   end Set_Controls;
+   ---------------------------
+   -- Unset_Undo_Redo_Queue --
+   ---------------------------
 
-   --------------------
-   -- Unset_Controls --
-   --------------------
-
-   procedure Unset_Controls
-     (Command : Command_Access)
-   is
-      use Command_Lists;
-      C : Queue_Change_Access;
+   procedure Unset_Undo_Redo_Queue (UR : Undo_Redo) is
    begin
-      if Command = null
-        or else Command.all not in Queue_Change_Command'Class
-      then
-         return;
+      UR.Queue := Null_Command_Queue;
+
+      if UR.Undo_Button /= null then
+         UR.Undo_Button.Set_Sensitive (False);
       end if;
 
-      C := Queue_Change_Access (Command);
-
-      if C.UR.Undo_Button_Handler_ID.Id /= Null_Handler_Id then
-         Disconnect (C.UR.Undo_Button, C.UR.Undo_Button_Handler_ID);
-         Disconnect (C.UR.Redo_Button, C.UR.Redo_Button_Handler_ID);
-         Disconnect (C.UR.Undo_Menu_Item, C.UR.Undo_Menu_Item_Handler_ID);
-         Disconnect (C.UR.Redo_Menu_Item, C.UR.Redo_Menu_Item_Handler_ID);
-         C.UR.Undo_Button_Handler_ID.Id := Null_Handler_Id;
+      if UR.Redo_Button /= null then
+         UR.Redo_Button.Set_Sensitive (False);
       end if;
 
-      if C.UR.Undo_Button /= null then
-         Set_Sensitive (C.UR.Undo_Button, False);
-      end if;
-
-      if C.UR.Redo_Button /= null then
-         Set_Sensitive (C.UR.Redo_Button, False);
-      end if;
-
-      if C.UR.Undo_Menu_Item /= null then
-         Set_Sensitive (C.UR.Undo_Menu_Item, False);
-      end if;
-
-      if C.UR.Redo_Menu_Item /= null then
-         Set_Sensitive (C.UR.Redo_Menu_Item, False);
-      end if;
-   end Unset_Controls;
+      --  UR.Commands still monitors the old queue, but its execution has no
+      --  effect.
+   end Unset_Undo_Redo_Queue;
 
 end Commands.Controls;

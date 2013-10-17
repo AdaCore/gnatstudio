@@ -19,6 +19,7 @@ with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
+with Commands.Interactive;                  use Commands, Commands.Interactive;
 with GNAT.Strings;
 with GNATCOLL.Projects;                      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
@@ -45,6 +46,7 @@ with Gtkada.MDI;                             use Gtkada.MDI;
 with GPS.Core_Kernels;                       use GPS.Core_Kernels;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
+with GPS.Kernel.Actions;                     use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
@@ -173,29 +175,37 @@ package body Code_Analysis_Module is
    --  Determine wether we add entries directly in the contextual menu, or in
    --  a generated submenu. Submenus are created if many instances are loaded.
 
-   procedure On_Single_View_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Show_Report_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Show_Report_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
-   procedure On_Load_All_Projects_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Load_Data_All_Projects_Command is new Interactive_Command
+     with null record;
+   overriding function Execute
+     (Command : access Load_Data_All_Projects_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
-   procedure On_Load_Current_Project_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Load_Data_Current_Project_Command is new Interactive_Command
+     with null record;
+   overriding function Execute
+     (Command : access Load_Data_Current_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
-   procedure On_Load_Current_File_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Load_Data_Current_File_Command is new Interactive_Command
+     with null record;
+   overriding function Execute
+     (Command : access Load_Data_Current_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
-   procedure On_Clear_Coverage_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Clear_Memory_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Clear_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
    procedure Show_Analysis_Report_From_Menu
@@ -305,7 +315,7 @@ package body Code_Analysis_Module is
    --  project and call Add_Gcov_File_Info on it.
 
    procedure Add_All_Gcov_Project_Info_From_Menu
-     (Widget  : access Glib.Object.GObject_Record'Class;
+     (Widget : access Glib.Object.GObject_Record'Class;
       CB_Data : CB_Data_Record);
    --  Wrapper for Add_All_Gcov_Project_Info_In_Callback
 
@@ -802,7 +812,7 @@ package body Code_Analysis_Module is
    -----------------------------------------
 
    procedure Add_All_Gcov_Project_Info_From_Menu
-     (Widget  : access Glib.Object.GObject_Record'Class;
+     (Widget : access Glib.Object.GObject_Record'Class;
       CB_Data : CB_Data_Record)
    is
       pragma Unreferenced (Widget);
@@ -1750,121 +1760,115 @@ package body Code_Analysis_Module is
       end if;
    end Append_To_Menu;
 
-   -------------------------
-   -- On_Single_View_Menu --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Single_View_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Show_Report_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Show_Analysis_Report (Kernel, Get_Or_Create);
-   exception
-      when E : others => Trace (Me, E);
-   end On_Single_View_Menu;
+      return Commands.Success;
+   end Execute;
 
-   -------------------------------
-   -- On_Load_All_Projects_Menu --
-   -------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_All_Projects_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Data_All_Projects_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       use Code_Analysis_Instances;
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Add_All_Gcov_Project_Info_From_Menu
-        (Widget  => Widget,
+        (Widget => null,
          CB_Data => CB_Data_Record'
            (Kernel   => Kernel,
             Analysis =>
               Code_Analysis_Module_ID.Registered_Analysis.First_Element,
             Project  => Get_Project (Kernel),
             File     => No_File));
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_All_Projects_Menu;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------------
-   -- On_Load_Current_Project_Menu --
-   ----------------------------------
-
-   procedure On_Load_Current_Project_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Data_Current_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
       use Code_Analysis_Instances;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Prj : Project_Type := Project_Information (Get_Current_Context (Kernel));
-
    begin
       if Prj = No_Project then
          Prj := Get_Project (Kernel);
       end if;
 
       Add_Gcov_Project_Info_From_Menu
-        (Widget  => Widget,
+        (Widget => null,
          CB_Data => CB_Data_Record'
            (Kernel   => Kernel,
             Analysis =>
               Code_Analysis_Module_ID.Registered_Analysis.First_Element,
             Project  => Prj,
             File     => No_File));
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_Current_Project_Menu;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------------
-   -- On_Load_Current_File_Menu --
-   -------------------------------
-
-   procedure On_Load_Current_File_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Data_Current_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Prj      : Project_Type :=
-                   Project_Information (Get_Current_Context (Kernel));
-      File     : constant Virtual_File :=
-                   File_Information (Get_Current_Context (Kernel));
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Prj : Project_Type := Project_Information (Get_Current_Context (Kernel));
+      File : constant Virtual_File :=
+        File_Information (Get_Current_Context (Kernel));
    begin
       if Prj = No_Project then
          Prj := Get_Project (Kernel);
       end if;
 
       Add_Gcov_File_Info_From_Menu
-        (Widget => Widget,
+        (Widget => null,
          CB_Data => CB_Data_Record'
            (Kernel   => Kernel,
             Analysis =>
               Code_Analysis_Module_ID.Registered_Analysis.First_Element,
             Project  => Prj,
             File     => File));
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_Current_File_Menu;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------
-   -- On_Clear_Coverage_Menu --
-   ----------------------------
-
-   procedure On_Clear_Coverage_Menu
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Clear_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Destroy_All_Analyzes (Kernel, False);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Clear_Coverage_Menu;
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- Activate_Pango_Markup --
@@ -2070,8 +2074,8 @@ package body Code_Analysis_Module is
                               New_Class (Kernel, CodeAnalysis_Cst);
       Tools               : constant String := '/' & (-"Tools");
       Coverage            : constant String := -"Cov_erage";
-      Views               : constant String := -"Views";
       Sep                 : Gtk_Separator_Menu_Item;
+      Command             : Interactive_Command_Access;
 
    begin
       Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
@@ -2093,56 +2097,64 @@ package body Code_Analysis_Module is
                           or Lookup_Filter (Kernel, "In project"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
+      Command := new Show_Report_Command;
+      Register_Action
+        (Kernel, "open Coverage Report", Command,
+         Category    => -"Coverage",
+         Description => -"Display the coverage report (must load data first)");
       Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Coverage,
-         Text        => -"_Show report",
-         Callback    => On_Single_View_Menu'Access,
+        (Kernel, -"/Tools/Cov_erage/_Show report", "open Coverage Report",
          Ref_Item    => -"Documentation",
          Add_Before  => True);
+      Register_Menu
+        (Kernel, -"/Tools/Views/Coverage Repor_t", "open Coverage Report");
 
       Gtk_New (Sep);
       Register_Menu (Kernel, Tools & '/' & Coverage, Sep);
 
+      Command := new Load_Data_All_Projects_Command;
+      Register_Action
+        (Kernel, "Coverage load data for all projects", Command,
+         Category    => -"Coverage",
+         Description => -"Load coverage data for all projects");
       Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for _all projects",
-         Callback    => On_Load_All_Projects_Menu'Access,
+        (Kernel, -"/Tools/Coverage/Load data for _all projects",
+         "Coverage load data for all projects",
          Ref_Item    => -"Documentation",
          Add_Before  => False);
 
+      Command := new Load_Data_Current_Project_Command;
+      Register_Action
+        (Kernel, "Coverage load data for current project", Command,
+         Category    => -"Coverage",
+         Description => -"Load coverage data for current project");
       Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for current _project",
-         Callback    => On_Load_Current_Project_Menu'Access,
+        (Kernel, -"/Tools/Coverage/Load data for current _project",
+         "Coverage load data for current project",
          Ref_Item    => -"Documentation",
          Add_Before  => False);
 
+      Command := new Load_Data_Current_File_Command;
+      Register_Action
+        (Kernel, "Coverage load data for current file", Command,
+         Category    => -"Coverage",
+         Description => -"Load coverage data for current file");
       Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Coverage,
-         Text        => -"Load data for current _file",
-         Callback    => On_Load_Current_File_Menu'Access,
+        (Kernel, -"/Tools/Coverage/Load data for current _file",
+         "Coverage load data for current file",
          Ref_Item    => -"Documentation",
          Add_Before  => False);
 
+      Command := new Clear_Memory_Command;
+      Register_Action
+        (Kernel, "Coverage clear from memory", Command,
+         Category    => -"Coverage",
+         Description => -"Clear coverage information from memory");
       Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Coverage,
-         Text        => -"C_lear coverage from memory",
-         Callback    => On_Clear_Coverage_Menu'Access,
+        (Kernel, -"/Tools/Coverage/C_lear coverage from memory",
+         "Coverage clear from memory",
          Ref_Item    => -"Documentation",
          Add_Before  => False);
-
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Tools & '/' & Views,
-         Text        => -"Coverage Repor_t",
-         Ref_Item    => -"Clipboard",
-         Add_Before  => False,
-         Callback    => On_Single_View_Menu'Access);
 
       Add_Hook
         (Kernel  => Kernel,

@@ -248,18 +248,20 @@ package body Creation_Wizard.Selector is
       return Gtk_Widget (Box);
    end Create_Content;
 
-   --------------------
-   -- On_New_Project --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_New_Project
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access New_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       Tmp : Boolean;
-      pragma Unreferenced (Widget, Tmp);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Command, Tmp);
    begin
       Tmp := Create_New_Project (Kernel);
-   end On_New_Project;
+      return Commands.Success;
+   end Execute;
 
 end Creation_Wizard.Selector;

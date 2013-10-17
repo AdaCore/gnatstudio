@@ -123,11 +123,7 @@ package body Aliases_Module is
       renames Implements_Editable.To_Interface;
 
    type Interactive_Alias_Expansion_Command is new Interactive_Command with
-   record
-      Kernel : Kernel_Handle;
-   end record;
-   type Interactive_Alias_Expansion_Command_Access is access all
-     Interactive_Alias_Expansion_Command'Class;
+      null record;
    overriding function Execute
      (Command : access Interactive_Alias_Expansion_Command;
       Context : Interactive_Command_Context)
@@ -258,8 +254,10 @@ package body Aliases_Module is
    procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class);
    --  Save the aliases in filename
 
-   procedure On_Edit_Aliases
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Edit_Aliases_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_Aliases_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the aliases edition
 
    procedure Alias_Selection_Changed
@@ -862,10 +860,9 @@ package body Aliases_Module is
      (Command : access Interactive_Alias_Expansion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
-
-      W         : constant Gtk_Widget :=
-                    Get_Current_Focus_Widget (Command.Kernel);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      W         : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Had_Focus : Boolean;
 
    begin
@@ -891,7 +888,7 @@ package body Aliases_Module is
                   Cursor  : aliased Integer;
                   Must_Reindent : aliased Boolean;
                   Replace : constant String := Expand_Alias
-                    (Command.Kernel, Text (First .. Last - 1),
+                    (Kernel, Text (First .. Last - 1),
                      Cursor'Unchecked_Access, Must_Reindent'Unchecked_Access,
                      0);
                   F       : Gint := Gint (First - Text'First);
@@ -944,7 +941,7 @@ package body Aliases_Module is
                                     Get_Line_Offset (First_Iter);
                   Replace       : constant String :=
                                     Expand_Alias
-                                      (Command.Kernel,
+                                      (Kernel,
                                        Get_Slice
                                          (Buffer, First_Iter, Last_Iter),
                                        Cursor'Unchecked_Access,
@@ -1008,11 +1005,11 @@ package body Aliases_Module is
                              (CL, Image (Start_Line + 1), One_Arg);
                            Append_Argument
                              (CL, Image (Start_Line + Count), One_Arg);
-                           Execute_GPS_Shell_Command (Command.Kernel, CL);
+                           Execute_GPS_Shell_Command (Kernel, CL);
                         end;
 
                         Execute_GPS_Shell_Command
-                          (Command.Kernel, CL => Create ("Editor.indent"));
+                          (Kernel, CL => Create ("Editor.indent"));
 
                         Get_Iter_At_Mark (Buffer, First_Iter, Mark);
                         Place_Cursor (Buffer, First_Iter);
@@ -1937,14 +1934,16 @@ package body Aliases_Module is
       Editor.Local_Aliases.Clear;
    end Update_Aliases;
 
-   ---------------------
-   -- On_Edit_Aliases --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Edit_Aliases
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Edit_Aliases_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Editor : Alias_Editor;
    begin
       Gtk_New (Editor, Kernel);
@@ -1969,10 +1968,8 @@ package body Aliases_Module is
       Unref (Editor.Highlight_Tag);
 
       Destroy (Editor);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Edit_Aliases;
+      return Commands.Success;
+   end Execute;
 
    -----------------------------------
    -- Register_Special_Alias_Entity --
@@ -2152,11 +2149,7 @@ package body Aliases_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Edit       : constant String := '/' & (-"Edit");
-      Completion : constant String := Edit & '/' & (-"_More Completion");
-      Command    : Interactive_Alias_Expansion_Command_Access;
-      Action     : Action_Record_Access;
-
+      Cmd        : Interactive_Command_Access;
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
@@ -2165,34 +2158,30 @@ package body Aliases_Module is
          Module_Name => "Aliases",
          Priority    => Default_Priority);
 
+      Cmd := new Edit_Aliases_Command;
+      Register_Action (Kernel, "Aliases edit", Cmd, Category => -"Aliases");
       Register_Menu
-        (Kernel, Edit, -"_Aliases",
+        (Kernel, -"/Edit/_Aliases", Action => "Aliases edit",
          Ref_Item   => -"Preferences",
-         Add_Before => True,
-         Callback   => On_Edit_Aliases'Access);
+         Add_Before => True);
 
       Parse_File
         (Kernel,
          Create_From_Dir (Get_Home_Dir (Kernel), "aliases"),
          Read_Only => False);
 
-      Command := new Interactive_Alias_Expansion_Command;
-      Command.Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
-        (Kernel,
-         Name        => "Expand alias",
-         Command     => Command,
-         Category    => "Editor",
-         Description => -"Expand the alias found just before the cursor");
+      Cmd := new Interactive_Alias_Expansion_Command;
+      Register_Action
+        (Kernel, "Expand alias", Cmd,
+         Category    => -"Editor",
+         Description => -"Expand the alias found just before the cursor",
+         Accel_Key   => GDK_LC_o,
+         Accel_Mods  => Control_Mask,
+         Filter      => Lookup_Filter (Kernel, "Source editor"));
       Register_Menu
-        (Kernel, Completion, -"Expand _Alias",
+        (Kernel, -"/Edit/_More Completion/Expand _Alias", "Expand alias",
          Ref_Item   => -"Aliases",
-         Add_Before => True,
-         Accel_Key  => GDK_LC_o,
-         Accel_Mods => Control_Mask,
-         Callback   => null,
-         Action     => Action,
-         Filter     => Lookup_Filter (Kernel, "Source editor"));
+         Add_Before => True);
 
       Register_Special_Alias_Entity
         (Kernel, "Expand previous alias", 'O', Special_Entities'Access);

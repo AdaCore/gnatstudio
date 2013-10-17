@@ -200,16 +200,19 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       or after the item referenced as `after`.
     """
 
+    doc = callback.__doc__
+    if doc:
+        doc = doc.strip()
+
     if isinstance(callback, types.TypeType):  # Do we have a class ?
         cb = callback
         def do():
             cb()   # Create new instance
-        do.__doc__ = callback.__doc__
+        do.__doc__ = doc
         callback = do
 
     a = Action(name or callback.__name__)
-    a.create(callback, filter=filter, category=category,
-             description=callback.__doc__)
+    a.create(callback, filter=filter, category=category, description=doc)
     if menu:
        if before:
           a.menu(menu, add_before=True, ref=before)

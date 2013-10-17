@@ -22,6 +22,7 @@
 
 with Commands.Interactive;
 with Gdk.Event;
+with Gdk.Types;
 with GNAT.Strings;
 with GNATCOLL.VFS;
 
@@ -36,6 +37,8 @@ package GPS.Kernel.Actions is
       Overriden   : Boolean;
       Category    : GNAT.Strings.String_Access;
       Defined_In  : GNATCOLL.VFS.Virtual_File;
+
+      Stock_Id    : GNAT.Strings.String_Access;
    end record;
    --  Command is freed automatically by the kernel.
    --  Filter indicates when the action can be executed. If null, this means
@@ -46,6 +49,8 @@ package GPS.Kernel.Actions is
    --  the action should not be shown in the keybinding editor.
    --  Defined_In indicates in which file the action was defined. This is
    --  optional and could be No_File to indicate builtin actions.
+   --
+   --  Stock_Id is the icon for this action. It might not be set.
 
    type Action_Record_Access is access Action_Record;
 
@@ -56,7 +61,10 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Stock_Id    : String := "";
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0);
    function Register_Action
      (Kernel      : access Kernel_Handle_Record'Class;
       Name        : String;
@@ -64,7 +72,10 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Stock_Id    : String := "";
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
       return Action_Record_Access;
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
@@ -78,6 +89,8 @@ package GPS.Kernel.Actions is
    --  is considered as a builtin action.
    --  Command is then owned by the kernel, and will be freed when GPS exits.
    --  You must not call Unref withouth first calling Ref on that command.
+   --
+   --  Accel_Key and Accel_Mods are the default keybinding for this action.
 
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;

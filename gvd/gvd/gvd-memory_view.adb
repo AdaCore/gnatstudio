@@ -62,6 +62,7 @@ with Debugger;                 use Debugger;
 with Generic_Views;            use Generic_Views;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
@@ -199,10 +200,6 @@ package body GVD.Memory_View is
    overriding function Execute
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-
-   procedure On_Examine_Memory
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Examine Memory
 
    procedure Init_Graphics
      (View   : access GVD_Memory_View_Record'Class;
@@ -1522,29 +1519,6 @@ package body GVD.Memory_View is
       end loop;
    end Insert_ASCII;
 
-   -----------------------
-   -- On_Examine_Memory --
-   -----------------------
-
-   procedure On_Examine_Memory
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Process : Visual_Debugger;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
-
-         if Process.Debugger /= null then
-            Attach_To_Memory (Process, Create_If_Necessary => True);
-         end if;
-
-         List := List.Next;
-      end loop;
-   end On_Examine_Memory;
-
    --------------------
    -- Display_Memory --
    --------------------
@@ -1604,8 +1578,15 @@ package body GVD.Memory_View is
       Register_Menu (Kernel, Data_Sub, Mitem);
 
       Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Menu (Kernel, Data_Sub, -"_Examine _Memory", "",
-                     On_Examine_Memory'Access);
+
+      Command := new View_Memory_Command;
+      Register_Action
+        (Kernel, "examine memory", Command,
+         -("Examine the contents of the memory at the location of the variable"
+           & " under the cursor"),
+         Category => -"Debugger");
+      Register_Menu
+        (Kernel, -"/Debug/Data/_Examine Memory", "examine memory");
 
       Command := new View_Memory_Command;
       Register_Contextual_Menu

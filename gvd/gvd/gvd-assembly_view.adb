@@ -40,11 +40,13 @@ with Pango.Font;              use Pango.Font;
 
 with Gtkada.MDI;              use Gtkada.MDI;
 
+with Commands.Interactive;    use Commands, Commands.Interactive;
 with Debugger;                use Debugger;
 with Default_Preferences;     use Default_Preferences;
 with Generic_Views;           use Generic_Views;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
@@ -161,8 +163,10 @@ package body GVD.Assembly_View is
    package Assembly_View_Event_Cb is
      new Return_Callback (Assembly_View_Record, Boolean);
 
-   procedure On_Assembly
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Assembly_View_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Assembly_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Assembly
 
    function Key_Press_Cb
@@ -1050,14 +1054,16 @@ package body GVD.Assembly_View is
       Process.Assembly := Gtk_Widget (View);
    end Set_View;
 
-   -----------------
-   -- On_Assembly --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Assembly
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Assembly_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : Visual_Debugger;
       List    : Debugger_List_Link := Get_Debugger_List (Kernel);
    begin
@@ -1070,7 +1076,8 @@ package body GVD.Assembly_View is
 
          List := List.Next;
       end loop;
-   end On_Assembly;
+      return Commands.Success;
+   end Execute;
 
    -----------------------------
    -- Attach_To_Assembly_View --
@@ -1115,14 +1122,16 @@ package body GVD.Assembly_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug    : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+      Command : Interactive_Command_Access;
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Menu
-        (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access,
-         Ref_Item   => -"Protection Domains",
-         Add_Before => False);
+
+      Command := new Assembly_View_Command;
+      Register_Action
+        (Kernel, "open assembly view", Command,
+         -"Open the Assembly view for the debugger",
+         Category => -"Views");
+      Register_Menu (Kernel, -"/Debug/Data/A_ssembly", "open assembly view");
    end Register_Module;
 
    ----------------

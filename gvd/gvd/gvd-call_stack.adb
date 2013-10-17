@@ -39,10 +39,12 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Commands.Interactive;   use Commands, Commands.Interactive;
 with Config;                 use Config;
 with Debugger;               use Debugger;
 with Generic_Views;          use Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
@@ -152,8 +154,10 @@ package body GVD.Call_Stack is
      (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the selection change.
 
-   procedure On_Call_Stack
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Call_Stack_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Call_Stack_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Call Stack
 
    --------------
@@ -188,17 +192,18 @@ package body GVD.Call_Stack is
       end if;
    end Set_View;
 
-   -------------------
-   -- On_Call_Stack --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Call_Stack
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Call_Stack_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : Visual_Debugger;
       List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-
    begin
       while List /= null loop
          Process := Visual_Debugger (List.Debugger);
@@ -209,7 +214,8 @@ package body GVD.Call_Stack is
 
          List := List.Next;
       end loop;
-   end On_Call_Stack;
+      return Commands.Success;
+   end Execute;
 
    --------------------------
    -- On_Selection_Changed --
@@ -422,13 +428,17 @@ package body GVD.Call_Stack is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug    : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+      Command : Interactive_Command_Access;
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
-                     On_Call_Stack'Access, Ref_Item => -"Data Window",
-                     Add_Before => False);
+
+      Command := new Call_Stack_Command;
+      Register_Action
+        (Kernel, "open debugger call stack", Command,
+         -"Open the Call Stack window for the debugger",
+         Category => -"Views");
+      Register_Menu
+        (Kernel, -"/Debug/Data/_Call Stack", "open debugger call stack");
    end Register_Module;
 
    -------------------

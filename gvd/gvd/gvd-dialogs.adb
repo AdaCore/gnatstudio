@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Commands.Interactive;  use Commands, Commands.Interactive;
 with Config;                use Config;
 with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
@@ -54,14 +56,6 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
 package body GVD.Dialogs is
    Me : constant Trace_Handle := Create ("GVD.Dialogs");
-
-   generic
-      with procedure Attach
-        (Process : access Visual_Debugger_Record'Class;
-         Create_If_Necessary : Boolean);
-   procedure Open_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Open one of the views, and update it immediately
 
    -----------------
    -- Thread View --
@@ -206,31 +200,71 @@ package body GVD.Dialogs is
       Create_If_Necessary : Boolean)
       renames PD_Views.Attach_To_View;
 
-   ---------------
-   -- Open_View --
-   ---------------
+   type Protection_Domains_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Protection_Domains_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Open_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   type Tasks_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Tasks_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Threads_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Threads_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Protection_Domains_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      Attach (Process, Create_If_Necessary => True);
+      Attach_To_PD_Dialog (Process, Create_If_Necessary => True);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end Open_View;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------
-   -- Generics instantiation --
-   ----------------------------
+   overriding function Execute
+     (Command : access Tasks_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+   begin
+      Attach_To_Tasks_Dialog (Process, Create_If_Necessary => True);
+      return Commands.Success;
+   end Execute;
 
-   procedure On_Threads is new Open_View (Attach_To_Thread_Dialog);
-   procedure On_Tasks is new Open_View   (Attach_To_Tasks_Dialog);
-   procedure On_PD is new Open_View      (Attach_To_PD_Dialog);
-   --  The various menus to open views
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Threads_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+   begin
+      Attach_To_Thread_Dialog (Process, Create_If_Necessary => True);
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- Info_Threads_Dispatch --
@@ -342,17 +376,34 @@ package body GVD.Dialogs is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug    : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub : constant String := Debug & (-"D_ata") & '/';
+      Command  : Interactive_Command_Access;
    begin
+      Command := new Protection_Domains_Command;
+      Register_Action
+        (Kernel, "open protection domains debugger window", Command,
+         -"Open the 'Protection Domains' window for the debugger",
+         Category => -"Views");
       Register_Menu
-        (Kernel, Data_Sub, -"_Protection Domains", "", On_PD'Access);
+        (Kernel, -"/Debug/Data/_Protection Domains",
+         "open protection domains debugger window");
+
+      Command := new Threads_Command;
+      Register_Action
+        (Kernel, "open threads debugger window", Command,
+         -"Open the 'Threads' window for the debugger",
+         Category => -"Views");
       Register_Menu
-        (Kernel, Data_Sub, -"_Threads", "",
-         On_Threads'Access, Ref_Item => -"Protection Domains");
+        (Kernel, -"/Debug/Data/_Threads",
+         "open threads debugger window");
+
+      Command := new Tasks_Command;
+      Register_Action
+        (Kernel, "open tasks debugger window", Command,
+         -"Open the 'Tasks' window for the debugger",
+         Category => -"Views");
       Register_Menu
-        (Kernel, Data_Sub, -"Ta_sks", "",
-         On_Tasks'Access, Ref_Item => -"Protection Domains");
+        (Kernel, -"/Debug/Data/Ta_sks",
+         "open tasks debugger window");
 
       Thread_Views.Register_Desktop_Functions (Kernel);
       Tasks_Views.Register_Desktop_Functions (Kernel);

@@ -17,9 +17,9 @@
 
 with Completion.Search;     use Completion.Search;
 with Gdk.Types.Keysyms;     use Gdk.Types, Gdk.Types.Keysyms;
-with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.Search;     use GPS.Kernel.Search;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Intl;              use GPS.Intl;
 
 package body Completion_Window.Entity_Views is
 
@@ -33,16 +33,14 @@ package body Completion_Window.Entity_Views is
       P : Kernel_Search_Provider_Access;
    begin
       P := new Entities_Search_Provider;
-      Register_Provider_And_Action (Kernel, P);
-
+      Register_Provider_And_Action
+        (Kernel, P,
+         Accel_Key  => GDK_LC_t,
+         Accel_Mods => Control_Mask);
       Register_Menu
-        (Kernel, "/_Navigate/", "Goto _Entity...",
-         Ref_Item => "Goto _Line...",
-         Accel_Key => GDK_LC_t,
-         Accel_Mods => Control_Mask,
-         Callback => null,
-         Action =>
-           Lookup_Action (Kernel, Action_Name_Prefix & P.Display_Name));
+        (Kernel, -"/_Navigate/Goto _Entity...",
+         Action_Name_Prefix & P.Display_Name,
+         Ref_Item => "Goto _Line...");
    end Register_Module;
 
 end Completion_Window.Entity_Views;

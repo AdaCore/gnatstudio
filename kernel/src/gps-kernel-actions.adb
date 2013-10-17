@@ -19,6 +19,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
+with Gdk.Types;                 use Gdk.Types;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -51,6 +52,7 @@ package body GPS.Kernel.Actions is
       Free (Action.Category);
       Free (Action.Description);
       Free (Action.Name);
+      Free (Action.Stock_Id);
       Unchecked_Free (Action);
    end Free;
 
@@ -65,13 +67,17 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Stock_Id    : String := "";
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
    is
       Action : Action_Record_Access;
       pragma Unreferenced (Action);
    begin
       Action := Register_Action
-        (Kernel, Name, Command, Description, Filter, Category, Defined_In);
+        (Kernel, Name, Command, Description, Filter, Category, Defined_In,
+         Stock_Id, Accel_Key, Accel_Mods);
    end Register_Action;
 
    ---------------------
@@ -85,7 +91,10 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
+      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Stock_Id    : String := "";
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
       return Action_Record_Access
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
@@ -101,6 +110,7 @@ package body GPS.Kernel.Actions is
       Overridden_In : constant String :=
         -" and overriden in ";
       Action : Action_Record_Access;
+      Stock  : String_Access;
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -152,6 +162,10 @@ package body GPS.Kernel.Actions is
          Cat := new String'(Category);
       end if;
 
+      if Stock_Id /= "" then
+         Stock := new String'(Stock_Id);
+      end if;
+
       --  Handle memory management for the filter
 
       if Filter /= null then
@@ -168,12 +182,18 @@ package body GPS.Kernel.Actions is
          Modified   => False,
          Category   => Cat,
          Defined_In => Defined_In,
-         Overriden  => Overriden);
+         Overriden  => Overriden,
+         Stock_Id   => Stock);
 
       Register_Perma_Command (Kernel, Command);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
+
+      if Accel_Key /= 0 then
+         Kernel.Set_Default_Key (Name, Accel_Key, Accel_Mods);
+      end if;
+
       return Action;
    end Register_Action;
 

@@ -260,14 +260,6 @@ package Generic_Views is
         (Self : not null access Local_Formal_MDI_Child)
          return XML_Utils.Node_Ptr;
 
-      procedure On_Open_View
-        (Widget : access Glib.Object.GObject_Record'Class;
-         Kernel : GPS.Kernel.Kernel_Handle);
-      On_Open_View_Access : constant
-        GPS.Kernel.MDI.Kernel_Callback.Marshallers.Void_Marshaller.Handler :=
-          On_Open_View'Access;
-      --  Create a new view if none exists, or raise the existing one
-
       function Load_Desktop
         (MDI  : Gtkada.MDI.MDI_Window;
          Node : XML_Utils.Node_Ptr;

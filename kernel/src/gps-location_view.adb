@@ -1186,21 +1186,15 @@ package body GPS.Location_View is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Clear,
-         Action   => Command_Clear_Locations_Name,
-         Tooltip  => Command_Clear_Locations_Tip);
+         Action   => Command_Clear_Locations_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Remove,
-         Action   => Command_Remove_Message_Name,
-         Tooltip  => Command_Remove_Message_Tip);
+         Action   => Command_Remove_Message_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => GPS_Save,
-         Action   => Command_Export_Name,
-         Tooltip  => Command_Export_Tip);
+         Action   => Command_Export_Name);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
@@ -1208,15 +1202,11 @@ package body GPS.Location_View is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => GPS_Expand_All,
-         Action   => Command_Expand_Category_Name,
-         Tooltip  => Command_Expand_Category_Tip);
+         Action   => Command_Expand_Category_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => GPS_Collapse_All,
-         Action   => Command_Collapse_All_Files_Name,
-         Tooltip  => Command_Collapse_All_Files_Tip);
+         Action   => Command_Collapse_All_Files_Name);
 
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -1331,37 +1321,42 @@ package body GPS.Location_View is
       Register_Action
         (Kernel, Command_Remove_Message_Name,
          Command, Command_Remove_Message_Tip,
-         null, -"Locations");
+         Stock_Id => Stock_Remove,
+         Category => -"Locations");
       GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
 
       Command := new Clear_Locations_Command;
       Register_Action
         (Kernel, Command_Clear_Locations_Name,
          Command, Command_Clear_Locations_Tip,
-         null, -"Locations");
+         Stock_Id => Stock_Clear,
+         Category => -"Locations");
 
       Command := new Export_Command;
       Register_Action
         (Kernel, Command_Export_Name, Command, Command_Export_Tip,
-         null, -"Locations");
+         Stock_Id => GPS_Save,
+         Category => -"Locations");
 
       Command := new Toggle_Sort_By_Subcategory_Command;
       Register_Action
         (Kernel, Command_Toggle_Sort_By_Subcategory,
          Command, Command_Toggle_Sort_By_Subcategory_Tip,
-         null, -"Locations");
+         Category => -"Locations");
 
       Command := new Expand_Category_Command;
       Register_Action
         (Kernel, Command_Expand_Category_Name,
          Command, Command_Expand_Category_Tip,
-         null, -"Locations");
+         Stock_Id => GPS_Expand_All,
+         Category => -"Locations");
 
       Command := new Collapse_All_Files_Command;
       Register_Action
         (Kernel, Command_Collapse_All_Files_Name,
          Command, Command_Collapse_All_Files_Tip,
-         null, -"Locations");
+         Stock_Id => GPS_Collapse_All,
+         Category => -"Locations");
 
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),

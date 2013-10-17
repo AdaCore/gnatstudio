@@ -42,6 +42,7 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
+with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with Projects;               use Projects;
 
@@ -73,44 +74,80 @@ package body GPS.Menu is
       return Command_Return_Type;
    --  Perform the various actions associated with the clipboard
 
-   procedure On_Save_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Save_Desktop_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Save_Desktop_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  File->Save Desktop menu
 
-   procedure On_Change_Dir
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Change_Dir_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Change_Dir_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  File->Change Directory... menu
 
-   procedure On_Save_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Save_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Save_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  File->Save All menu
 
-   procedure On_Exit
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Exit_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Exit_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  File->Exit menu
 
+   type Preference_Dialog_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Preference_Dialog_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit->Preferences menu
+
+   type Open_Project_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Project->Open menu
+
+   type Open_From_Host_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_From_Host_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Project->Open remote menu
+
+   type Reload_Project_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Reload_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Callback for the Project->Recompute Project menu
+
    -------------
-   -- On_Exit --
+   -- Execute --
    -------------
 
-   procedure On_Exit
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Exit_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
-   end On_Exit;
+      return Commands.Success;
+   end Execute;
 
-   -------------------
-   -- On_Change_Dir --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Change_Dir
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Change_Dir_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir : Virtual_File;
-
    begin
       Dir := Select_Directory
         (-"Select a directory",
@@ -121,6 +158,7 @@ package body GPS.Menu is
       if Dir /= No_File then
          Change_Dir (Dir);
       end if;
+      return Commands.Success;
 
    exception
       when VFS_Directory_Error =>
@@ -128,39 +166,39 @@ package body GPS.Menu is
            ("Cannot change to directory: " &
             Dir.Display_Full_Name,
             Mode => Error);
-      when E : others => Trace (Me, E);
-   end On_Change_Dir;
+         return Commands.Failure;
+   end Execute;
 
-   -----------------
-   -- On_Save_All --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Save_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Save_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Ignore : Boolean;
-      pragma Unreferenced (Widget, Ignore);
-
+      pragma Unreferenced (Command, Ignore);
    begin
       Ignore := Save_MDI_Children (Kernel, Force => False);
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Save_All;
+   -------------
+   -- Execute --
+   -------------
 
-   ---------------------
-   -- On_Save_Desktop --
-   ---------------------
-
-   procedure On_Save_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Save_Desktop_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Save_Desktop (Kernel);
-   exception
-      when E : others => Trace (Me, E);
-   end On_Save_Desktop;
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -223,118 +261,88 @@ package body GPS.Menu is
       when E : others => Trace (Me, E);
    end On_Project_Changed;
 
-   --------------------
-   -- Menu Callbacks --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Edit->Preferences menu
-
-   procedure On_Open_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Project->Open menu
-
-   procedure On_Open_Remote_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Project->Open remote menu
-
-   procedure On_Project_Recompute
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Callback for the Project->Recompute Project menu
-
-   --------------------------
-   -- On_Project_Recompute --
-   --------------------------
-
-   procedure On_Project_Recompute
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Reload_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Reload_Project_If_Needed (Kernel);
       Recompute_View (Kernel);
-   end On_Project_Recompute;
+      return Commands.Success;
+   end Execute;
 
-   ---------------------
-   -- On_Open_Project --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Open_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Open_Project_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Filename : constant Virtual_File :=
+        Select_File
+          (-"Open Project",
+           File_Pattern      => "*.gpr",
+           Pattern_Name      => -"Project files",
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           History           => Get_History (Kernel));
    begin
-      declare
-         Filename : constant Virtual_File :=
-                      Select_File
-                        (-"Open Project",
-                         File_Pattern      => "*.gpr",
-                         Pattern_Name      => -"Project files",
-                         Parent            => Get_Current_Window (Kernel),
-                         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                         Kind              => Open_File,
-                         History           => Get_History (Kernel));
-      begin
-         if Filename /= GNATCOLL.VFS.No_File then
-            Load_Project (Kernel, Filename);
-         end if;
-      end;
+      if Filename /= GNATCOLL.VFS.No_File then
+         Load_Project (Kernel, Filename);
+      end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Open_Project;
+   -------------
+   -- Execute --
+   -------------
 
-   ----------------------------
-   -- On_Open_Remote_Project --
-   ----------------------------
-
-   procedure On_Open_Remote_Project
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Open_From_Host_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Filename : constant Virtual_File :=
+        Select_File
+          (-"Open Project",
+           File_Pattern    => "*.gpr",
+           Pattern_Name    => -"Project files",
+           Parent          => Get_Current_Window (Kernel),
+           Remote_Browsing => True,
+           Kind            => Open_File,
+           History         => Get_History (Kernel));
    begin
-      declare
-         Filename : constant Virtual_File :=
-                      Select_File
-                        (-"Open Project",
-                         File_Pattern    => "*.gpr",
-                         Pattern_Name    => -"Project files",
-                         Parent          => Get_Current_Window (Kernel),
-                         Remote_Browsing => True,
-                         Kind            => Open_File,
-                         History         => Get_History (Kernel));
-      begin
-         if Filename /= GNATCOLL.VFS.No_File then
-            Load_Project (Kernel, Filename);
-         end if;
-      end;
+      if Filename /= GNATCOLL.VFS.No_File then
+         Load_Project (Kernel, Filename);
+      end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Open_Remote_Project;
+   -------------
+   -- Execute --
+   -------------
 
-   --------------------
-   -- On_Preferences --
-   --------------------
-
-   procedure On_Preferences
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Preference_Dialog_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Edit_Preferences (Kernel);
-   exception
-      when E : others => Trace (Me, E);
-   end On_Preferences;
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- Register_Common_Menus --
@@ -343,25 +351,36 @@ package body GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File        : constant String := '/' & (-"File") & '/';
-      Edit        : constant String := "/_" & (-"Edit")     & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
-      Save        : constant String := File & (-"Save _More") & '/';
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
+      Command := new Preference_Dialog_Command;
+      Register_Action
+        (Kernel, "open Preferences", Command,
+         Category => -"Views",
+         Stock_Id => Stock_Preferences,
+         Description => -"Open the preferences dialog");
       Register_Menu
-        (Kernel, Edit, -"_Preferences",
-         Stock_Preferences, On_Preferences'Access,
+        (Kernel, -"/Edit/_Preferences...", "open Preferences",
          Ref_Item => -"Window");
 
+      Command := new Open_Project_Command;
+      Register_Action
+        (Kernel, "open project dialog", Command,
+         Stock_Id => Stock_Open,
+         Description => -"Open the Open Project dialog");
       Register_Menu
-        (Kernel, Project, -"_Open...", "",
-         On_Open_Project'Access,
+        (Kernel, -"/_Project/Open...", "open project dialog",
          Ref_Item => -"Window");
+
+      Command := new Open_From_Host_Command;
+      Register_Action
+        (Kernel, "open remote project", Command,
+         Stock_Id    => Stock_Open,
+         Description => -"Open remote project");
       Register_Menu
-        (Kernel, Project, -"Open From _Host...", "",
-         On_Open_Remote_Project'Access);
+        (Kernel, -"/Project/Open From _Host...", "open remote project");
 
       Reopen_Menu := Register_Menu
         (Kernel, Project, -"_Recent", "", null);
@@ -374,54 +393,78 @@ package body GPS.Menu is
                 Wrapper (On_Project_Changed'Access),
                 Name => "menu.project_changed");
 
+      Command := new Reload_Project_Command;
+      Register_Action
+        (Kernel, "reload project", Command,
+         Description =>
+           -("Recompute the list of source files for the project. This should"
+           & " be used whenever you create or remove files outside of GPS"),
+         Stock_Id => GPS_Refresh);
       Register_Menu
-        (Kernel, Project, -"R_eload Project", "",
-         On_Project_Recompute'Access);
+        (Kernel, -"/Project/R_eload Project", "reload project");
 
+      Command := new Save_All_Command;
+      Register_Action
+        (Kernel, "save files and projects", Command,
+         Description => -("Save all modified files and projects"));
       Register_Menu
-        (Kernel, Save, -"_All", "",
-         On_Save_All'Access,
+        (Kernel, -"/File/Save _More/_All", "save files and projects",
          Ref_Item => -"Messages");
-      Register_Menu (Kernel, Save, -"_Desktop", "", On_Save_Desktop'Access);
 
+      Command := new Save_Desktop_Command;
+      Register_Action
+        (Kernel, "save desktop", Command,
+         Description =>
+           -("Save the layout of the desktop to a file, so that it is"
+           & " restored when GPS is restarted later with the same project"));
       Register_Menu
-        (Kernel, File, -"Change _Directory...", "",
-         On_Change_Dir'Access, Ref_Item => -"Messages");
+        (Kernel, -"/File/Save _More/_Desktop", "save desktop");
 
-      Register_Menu (Kernel, File, -"_Exit", "", On_Exit'Access);
+      Command := new Change_Dir_Command;
+      Register_Action
+        (Kernel, "change directory", Command,
+         Description => -"Change the current directory");
+      Register_Menu
+        (Kernel, -"/File/Change _Directory...", "change directory",
+         Ref_Item => -"Messages");
+
+      Command := new Exit_Command;
+      Register_Action (Kernel, "exit", Command);
+      Register_Menu (Kernel, -"/File/_Exit", "exit");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Cut;
       Register_Action
-        (Kernel, -"Cut to Clipboard", Command,
-         -"Cut the current selection to the clipboard");
-      Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
-                     null, Command,
-                     GDK_Delete, Shift_Mask,
-                     Ref_Item => -"Preferences");
+        (Kernel, "Cut to Clipboard", Command,
+         Description => -"Cut the current selection to the clipboard",
+         Stock_Id    => Stock_Cut,
+         Accel_Key   => GDK_Delete,
+         Accel_Mods  => Shift_Mask);
+      Register_Menu (Kernel, -"/Edit/_Cut", "Cut to Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Copy;
       Register_Action
-        (Kernel, -"Copy to Clipboard", Command,
-         -"Copy the current selection to the clipboard");
-      Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
-                     null, Command,
-                     GDK_Insert, Control_Mask,
-                     Ref_Item => -"Preferences");
+        (Kernel, "Copy to Clipboard", Command,
+         Description => -"Copy the current selection to the clipboard",
+         Stock_Id    => Stock_Copy,
+         Accel_Key   => GDK_Insert,
+         Accel_Mods  => Control_Mask);
+      Register_Menu (Kernel, -"/Edit/C_opy", "Copy to Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Paste;
       Register_Action
-        (Kernel, -"Paste From Clipboard", Command,
-         -"Paste the contents of the clipboard into the current text area");
-      Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
-                     null, Command,
-                     GDK_Insert, Shift_Mask,
-                     Ref_Item => -"Preferences");
+        (Kernel, "Paste From Clipboard", Command,
+         Description =>
+           -"Paste the contents of the clipboard into the current text area",
+         Stock_Id   => Stock_Paste,
+         Accel_Key  => GDK_Insert,
+         Accel_Mods => Shift_Mask);
+      Register_Menu (Kernel, -"/Edit/P_aste", "Paste From Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -429,11 +472,12 @@ package body GPS.Menu is
       Register_Action
         (Kernel, -"Paste Previous From Clipboard", Command,
          -("Cancel the previous Paste operation, and instead insert the text"
-           & " copied before through Copy To Clipboard"));
-      Register_Menu (Kernel, Edit, -"Pa_ste Previous",  Stock_Paste,
-                     null, Command,
-                     GDK_Insert, Control_Mask + Shift_Mask,
-                     Ref_Item => -"Preferences");
+           & " copied before through Copy To Clipboard"),
+         Stock_Id   => Stock_Paste,
+         Accel_Key  => GDK_Insert,
+         Accel_Mods => Control_Mask + Shift_Mask);
+      Register_Menu (Kernel, -"/Edit/Pa_ste Previous",
+                     "Paste Previous From Clipboard");
 
       --  The menus created above are created before the keymanager_module
       --  is registered, so the default key assignations is not done through

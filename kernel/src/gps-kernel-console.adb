@@ -518,21 +518,15 @@ package body GPS.Kernel.Console is
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Clear,
-         Action   => Command_Clear_Messages_Name,
-         Tooltip  => Command_Clear_Messages_Tip);
+         Action   => Command_Clear_Messages_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => GPS_Save,
-         Action   => Command_Save_Name,
-         Tooltip  => Command_Save_Tip);
+         Action   => Command_Save_Name);
       Add_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
-         Stock_Id => Stock_Open,
-         Action   => Command_Load_Name,
-         Tooltip  => Command_Load_Tip);
+         Action   => Command_Load_Name);
    end Create_Toolbar;
 
    ---------------------
@@ -559,17 +553,23 @@ package body GPS.Kernel.Console is
       Command := new Clear_Messages_Command;
       Register_Action
         (Kernel, Command_Clear_Messages_Name,
-         Command, Command_Clear_Messages_Tip, null, -"Messages");
+         Command, Command_Clear_Messages_Tip,
+         Stock_Id => Stock_Clear,
+         Category => -"Messages");
 
       Command := new Save_Messages_Command;
       Register_Action
         (Kernel, Command_Save_Name,
-         Command, Command_Save_Tip, null, -"Messages");
+         Command, Command_Save_Tip,
+         Stock_Id => GPS_Save,
+         Category => -"Messages");
 
       Command := new Load_Messages_Command;
       Register_Action
         (Kernel, Command_Load_Name,
-         Command, Command_Load_Tip, null, -"Messages");
+         Command, Command_Load_Tip,
+         Stock_Id => Stock_Open,
+         Category => -"Messages");
    end Register_Module;
 
 end GPS.Kernel.Console;

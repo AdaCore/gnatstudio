@@ -29,8 +29,10 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Log_Utils;                 use Log_Utils;
 
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -61,14 +63,16 @@ package body VCS_Module is
    --  Fill Menu with the contextual menu for the VCS module,
    --  if Context is appropriate.
 
-   procedure On_Open_Interface
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Explorer_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Display the VCS explorer
 
-   procedure On_Open_Activities_Interface
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+   type Activities_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Activities_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Display the VCS Activities explorer
 
    procedure File_Edited_Cb
@@ -187,31 +191,35 @@ package body VCS_Module is
       end if;
    end Get_VCS_From_Id;
 
-   -----------------------
-   -- On_Open_Interface --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Open_Interface
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Explorer_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Open_Explorer (Kernel, No_Context);
-   end On_Open_Interface;
+      Open_Explorer (Kernel, Context.Context);
+      return Commands.Success;
+   end Execute;
 
-   ----------------------------------
-   -- On_Open_Activities_Interface --
-   ----------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Open_Activities_Interface
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   overriding function Execute
+     (Command : access Activities_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Open_Activities_Explorer (Kernel, No_Context);
-   end On_Open_Activities_Interface;
+      Open_Activities_Explorer (Kernel, Context.Context);
+      return Commands.Success;
+   end Execute;
 
    --------------------
    -- Append_To_Menu --
@@ -509,10 +517,9 @@ package body VCS_Module is
       VCS_Class            : constant Class_Type := New_Class (Kernel, "VCS");
       VCS_Activities_Class : constant Class_Type :=
                                New_Class (Kernel, "Activities");
-      VCS_Menu             : constant String := "/_" & (-"VCS");
-      Tools_Menu           : constant String := -"Tools" & '/' & (-"Views");
 
       VCS_Action_Context   : constant Action_Filter := GPS.Kernel.Create;
+      Command : Interactive_Command_Access;
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
@@ -797,21 +804,27 @@ package body VCS_Module is
 
       Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
+      Command := new Explorer_Command;
+      Register_Action
+        (Kernel, "VCS open explorer", Command,
+         Description => -"Open the VCS explorer",
+         Category => -"Views");
       Register_Menu
-        (Kernel, VCS_Menu, -"_Explorer", "",
-         On_Open_Interface'Access,
-         Ref_Item   => -"Navigate",
-         Add_Before => False);
+        (Kernel, -"/VCS/_Explorer", "VCS open explorer",
+         Ref_Item   => -"Navigate", Add_Before => False);
       Register_Menu
-        (Kernel, VCS_Menu, -"_Activities", "",
-         On_Open_Activities_Interface'Access);
+        (Kernel, -"/Tools/Views/_VCS Explorer", "VCS open explorer");
 
+      Command := new Activities_Command;
+      Register_Action
+        (Kernel, "VCS open activities window", Command,
+         Description => -"Open the VCS activities window",
+         Category    => -"Views");
       Register_Menu
-        (Kernel, Tools_Menu, -"VCS _Activities", "",
-         On_Open_Activities_Interface'Access);
+        (Kernel, -"/VCS/_Activities", "VCS open activities window");
       Register_Menu
-        (Kernel, Tools_Menu, -"_VCS Explorer", "",
-         On_Open_Interface'Access);
+        (Kernel, -"/Tools/Views/VCS _Activities",
+         "VCS open activities window");
 
       --  Register contextual menus
 

@@ -1085,7 +1085,6 @@ package body Custom_Module is
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access := new String'("");
          Sep     : Gtk_Separator_Menu_Item;
-         Command : Action_Record_Access;
       begin
          Child := Node.Child;
          while Child /= null loop
@@ -1116,43 +1115,27 @@ package body Custom_Module is
             Gtk_New (Sep);
             Register_Menu (Kernel, Parent_Path, Sep);
          else
-            Command := Lookup_Action (Kernel, Action);
-            if Command /= null and then Command.Command /= null then
-
-               if Before /= "" then
-                  Register_Menu
-                    (Kernel,
-                     Dir_Name (Format (Parent_Path) & Title.all),
-                     Text        => Base_Name (Title.all),
-                     Stock_Image => "",
-                     Callback    => null,
-                     Action      => Command,
-                     Ref_Item    => Before);
-
-               elsif After /= "" then
-                  Register_Menu
-                    (Kernel,
-                     Dir_Name (Format (Parent_Path) & Title.all),
-                     Text        => Base_Name (Title.all),
-                     Stock_Image => "",
-                     Callback    => null,
-                     Action      => Command,
-                     Ref_Item    => After,
-                     Add_Before  => False);
-
-               else
-                  Register_Menu
-                    (Kernel,
-                     Dir_Name (Format (Parent_Path) & Title.all),
-                     Text        => Base_Name (Title.all),
-                     Stock_Image => "",
-                     Callback    => null,
-                     Action      => Command);
-               end if;
+            if Before /= "" then
+               Register_Menu
+                 (Kernel,
+                  Dir_Name (Format (Parent_Path) & Title.all)
+                  & Base_Name (Title.all),
+                  Action => Action,
+                  Ref_Item    => Before);
+            elsif After /= "" then
+               Register_Menu
+                 (Kernel,
+                  Dir_Name (Format (Parent_Path) & Title.all)
+                  & Base_Name (Title.all),
+                  Action => Action,
+                  Ref_Item    => After,
+                  Add_Before  => False);
             else
-               Insert
-                 (Kernel, -"Command not found for creating menu: "
-                  & Action, Mode => Error);
+               Register_Menu
+                 (Kernel,
+                  Dir_Name (Format (Parent_Path) & Title.all)
+                  & Base_Name (Title.all),
+                  Action => Action);
             end if;
          end if;
          Free (Title);
@@ -1904,24 +1887,15 @@ package body Custom_Module is
             Path   : constant String  := Nth_Arg (Data, 2);
             Ref    : constant String  := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
-            Action : constant Action_Record_Access :=
-              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
-
+            Action : constant String := Get_Data (Inst, Action_Class);
          begin
-            if Action /= null then
-               Item := Register_Menu
-                 (Kernel,
-                  Parent_Path => Dir_Name (Path),
-                  Text        => Base_Name (Path),
-                  Ref_Item    => Ref,
-                  Add_Before  => Before,
-                  Callback    => null,
-                  Action      => Action);
-
-               Inst := New_Instance (Get_Script (Data), Menu_Class);
-               Set_Data (Inst, Widget => GObject (Item));
-               Set_Return_Value (Data, Inst);
-            end if;
+            Item := Register_Menu
+              (Kernel, Path, Action,
+               Ref_Item    => Ref,
+               Add_Before  => Before);
+            Inst := New_Instance (Get_Script (Data), Menu_Class);
+            Set_Data (Inst, Widget => GObject (Item));
+            Set_Return_Value (Data, Inst);
          end;
 
       elsif Command = "contextual" then

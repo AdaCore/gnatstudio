@@ -169,6 +169,16 @@ package body KeyManager_Module.Macros is
    procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class);
    --  Stop running current macro as a result of the "stop_macro_action_hook'
 
+   type In_Macro_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Macro_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Has_Macro_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Macro_Filter;
+      Context : Selection_Context) return Boolean;
+
    function Load_Macro
      (Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File) return Event_Set_Access;
@@ -277,6 +287,33 @@ package body KeyManager_Module.Macros is
    exception
       when E : others => Trace (Me, E);
    end Macro_Command_Handler;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Macro_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Keymanager_Macro_Module.Recording;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Macro_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+   begin
+      return not Keymanager_Macro_Module.Recording
+        and then Keymanager_Macro_Module.Current_Macro /= null;
+   end Filter_Matches_Primitive;
 
    -------------
    -- Execute --
@@ -754,7 +791,7 @@ package body KeyManager_Module.Macros is
    is
       Macro_Menu : constant String := "/" & (-"Tools/M_acro");
       Command    : Interactive_Command_Access;
-      Action     : Action_Record_Access;
+      Filter     : Action_Filter;
    begin
       Keymanager_Macro_Module := new Keymanager_Macro_Module_Record;
       Register_Module (Keymanager_Macro_Module, Kernel, "macros");
@@ -762,7 +799,7 @@ package body KeyManager_Module.Macros is
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Start_Keyboard;
       Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
+      Register_Action
         (Kernel,
          Name        => "Macro Start Keyboard",
          Command     => Command,
@@ -771,9 +808,8 @@ package body KeyManager_Module.Macros is
              & " recorded."),
          Category    => -"Macro");
       Register_Menu
-        (Kernel, Macro_Menu, -"_Start Keyboard Macro",
-         Callback => null,
-         Action   => Action,
+        (Kernel, -"/Tools/M_acro/_Start Keyboard Macro",
+         "Macro Start Keyboard",
          Ref_Item => "Documentation",
          Add_Before => False);
 
@@ -781,7 +817,7 @@ package body KeyManager_Module.Macros is
          Command := new Macro_Command;
          Macro_Command (Command.all).Action := Action_Start_Mouse;
          Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-         Action := Register_Action
+         Register_Action
            (Kernel,
             Name        => "Macro Start Mouse",
             Command     => Command,
@@ -790,41 +826,36 @@ package body KeyManager_Module.Macros is
                 & " are recorded, and can be replayed later on"),
             Category    => -"Macro");
          Register_Menu
-           (Kernel, Macro_Menu, -"_Start Mouse Macro",
-            Callback => null,
-            Action   => Action);
+           (Kernel, -"/Tools/Macro/_Start Mouse Macro", "Macro Start Mouse");
       end if;
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Stop;
       Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
+      Filter := new In_Macro_Filter;
+      Register_Action
         (Kernel,
          Name        => "Macro Stop",
          Command     => Command,
          Description => -"Stop recording the current macro",
+         Filter      => Filter,
+         Accel_Key   => GDK_Escape,
+         Accel_Mods  => Control_Mask,
          Category    => -"Macro");
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Stop Recording",
-         Callback  => null,
-         Sensitive => False,
-         Action    => Action);
-      Bind_Default_Key (Kernel, "Macro Stop", "control-escape");
+      Register_Menu (Kernel, -"/Tools/Macro/_Stop Recording", "Macro Stop");
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Play;
       Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Action := Register_Action
+      Filter := new Has_Macro_Filter;
+      Register_Action
         (Kernel,
          Name        => "Macro Play",
          Command     => Command,
          Description => -"Replay the last macro that was recorded",
-         Category    => -"Macro");
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Play",
-         Callback  => null,
-         Sensitive => False,
-         Action    => Action);
+         Category    => -"Macro",
+         Filter      => Filter);
+      Register_Menu (Kernel, -"/Tools/Macro/_Play", "Macro Play");
 
       Register_Menu
         (Kernel, Macro_Menu, -"Load...",

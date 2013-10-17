@@ -569,28 +569,13 @@ package body Scenario_Views is
    is
       Sep : Gtk_Separator_Tool_Item;
    begin
-      Add_Button
-        (View.Kernel,
-         Toolbar  => Toolbar,
-         Stock_Id => Stock_Add,
-         Action   => Action_Add_Scenario_Variable,
-         Tooltip  => -"Add new scenario variable");
-      Add_Button
-        (View.Kernel,
-         Toolbar  => Toolbar,
-         Stock_Id => Stock_Remove,
-         Action   => Command_Delete_Variable_Name,
-         Tooltip  => Command_Delete_Variable_Tip);
+      Add_Button (View.Kernel, Toolbar, Action_Add_Scenario_Variable);
+      Add_Button (View.Kernel, Toolbar, Command_Delete_Variable_Name);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Add_Button
-        (View.Kernel,
-         Toolbar  => Toolbar,
-         Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
-         Action   => Command_Edit_Variable_Name,
-         Tooltip  => Command_Edit_Variable_Tip);
+      Add_Button (View.Kernel, Toolbar, Command_Edit_Variable_Name);
    end Create_Toolbar;
 
    -------------
@@ -757,13 +742,15 @@ package body Scenario_Views is
       Register_Action
         (Kernel, Command_Edit_Variable_Name,
          Command, Command_Edit_Variable_Tip,
-         null, -"Scenario");
+         Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
+         Category => -"Scenario");
 
       Command := new Command_Delete_Variable;
       Register_Action
         (Kernel, Command_Delete_Variable_Name,
          Command, Command_Delete_Variable_Tip,
-         null, -"Scenario");
+         Stock_Id => Stock_Remove,
+         Category => -"Scenario");
    end Register_Module;
 
 end Scenario_Views;
