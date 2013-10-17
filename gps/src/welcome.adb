@@ -427,7 +427,7 @@ package body Welcome is
       Dir          : Virtual_File;
    begin
       Push_State (S.Kernel, Busy);
-      if Project_Name'Length > 0 then
+      if Project_Name'Length = 0 then
          Dir := Create (+Get_Text (S.Default_Dir));
       else
          Dir := Create (Dir_Name (Project_Name));
