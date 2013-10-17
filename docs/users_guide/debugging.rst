@@ -360,18 +360,16 @@ commands. Failing to do so will result in blank windows.
 
 
 
+.. index:: debugger; call stack
 .. _The_Call_Stack_Window:
 
 The Call Stack Window
 =====================
 
-.. index:: call stack
+.. image:: call-stack.jpg
 
 The call stack window gives a list of frames corresponding to the current
 execution stack for the current thread/task.
-
-.. index:: screen shot
-.. image:: call-stack.jpg
 
 The bottom frame corresponds to the outermost frame where the thread is
 currently stopped. This frame corresponds to the first function executed by the
@@ -380,29 +378,29 @@ frame to switch to the caller's context, this will update the display in the
 source window. See also the up and down buttons in the tool bar to go up and
 down one frame in the call stack.
 
-.. index:: contextual menu
-
 The contextual menu (right mouse button) allows you to choose which information
 you want to display in the call stack window (via check buttons):
 
-* Frame number: the debugger frame number (usually starts at 0 or 1)
-* Program Counter: the low level address corresponding to the
+* :menuselection:`Frame number`: the debugger frame number (usually starts at 0 or 1)
+* :menuselection:`Program Counter`: the low level address corresponding to the
   function's entry point.
-* Subprogram Name: the name of the subprogram in a given frame
-* Parameters: the parameters of the subprogram
-* File Location: the filename and line number information.
+* :menuselection:`Subprogram Name`: the name of the subprogram in a given frame
+* :menuselection:`Parameters`: the parameters of the subprogram
+* :menuselection:`File Location`: the filename and line number information.
+
+.. index:: menu; debug --> data --> call stack
 
 By default, only the subprogram name is displayed.  You can hide the call stack
 window by closing it, as for other windows, and show it again using the menu
-`Data->Call Stack`.
+:menuselection:`Debug --> Data --> Call Stack`.
 
+
+
+.. index:: debugger; data window
 .. _The_Data_Window:
 
 The Data Window
 ===============
-
-.. index:: data
-.. index:: data window
 
 Description
 -----------
@@ -411,40 +409,31 @@ The Data Window is the area in which various information about the debugged
 process can be displayed. This includes the value of selected variables, the
 current contents of the registeres, the local variables, ...
 
-.. index:: Data Window
+.. index:: debugger; data window
 
-This window is not open by default when you start the debugger. It will be
-created automatically when needed (e.g. when using the Debug contextual menu
-to display a variable). You can also force its display through the menu
-`Debug->Data->Data Window`.
+This window is open by default when you start the debugger. You can also force
+its display through the menu :menuselection:`Debug --> Data --> Data Window`.
 
-However, if you save the desktop through the menu `File->Save More->Desktop`
-while the data window is open, it will be automatically reopen the next time
-the desktop is loaded, for instance when restarting GPS.
+.. index:: preferences; debugger --> preserve state on exit
 
 The contents of the data window is preserved by default whenever you close it.
 Thus, if you reopen the data window either during the same debugger session, or
 automatically when you start a debugger on the same executable, it will display
-the same items again. This behavior is controlled by the `Preserve State on
-Exit` preference.
-
-.. index:: menu
-.. index:: contextual menu
+the same items again. This behavior is controlled by the
+:menuselection:`Debugger --> Preserve State on Exit` preference.
 
 The data window contains all the graphic boxes that can be accessed using the
-*Data->Display* menu items, or the data window *Display Expression...*
-contextual menu, or the source window *Display* contextual menu items, or
-finally the *graph* command in the debugger console.
+:menuselection:`Debug --> Data --> Display*` menu items, or the data window
+:menuselection:`Display Expression...` contextual menu, or the source window
+:menuselection:`Display` contextual menu items, or finally the `graph` command
+in the debugger console.
 
 For each of these commands, a box is displayed in the data window with the
 following information:
 
-.. index:: screen shot
 .. image:: canvas.jpg
 
 * A title bar containing:
-
-  .. index:: title bar
 
   * The number of this expression: this is a positive number starting
     from 1 and incremented for each new box displayed. It represents the
@@ -454,17 +443,14 @@ following information:
     specified when creating the box.
 
   * An icon representing either a flash light, or a lock.
-    .. index:: icon
 
-    This is a click-able icon that will change the state of the box from
+    This is a clickable icon that will change the state of the box from
     automatically updated (the flash light icon) to frozen (the lock icon).
     When frozen, the value is grayed, and will not change until you change the
     state. When updated, the value of the box will be recomputed each time an
     execution command is sent to the debugger (e.g step, next).
 
   * An icon representing an 'X'.
-    .. index:: icon
-
     You can click on this icon to close/delete any box.
 
 * A main area.
@@ -476,92 +462,57 @@ following information:
   be displayed separately. For each subcomponent, a thin box is displayed to
   distinguish it from the other components.
 
-.. index:: contextual menu
 
 A contextual menu, that takes into account the current component selected by
 the mouse, gives access to the following capabilities:
 
-*Close *component**
+:menuselection:`Close *component*`
   Closes the selected item.
 
-*Hide all *component**
-  .. index:: hide
-
+:menuselection:`Hide all *component*`
   Hides all subcomponents of the selected item. To select a particular field or
   item in a record/array, move your mouse over the name of this component, not
   over the box containing the values for this item.
 
-*Show all *component**
-  .. index:: show
-
+:menuselection:`Show all *component*`
   Shows all subcomponents of the selected item.
 
-*Clone *component**
-  .. index:: clone
-
+:menuselection:`Clone *component*`
   Clones the selected component into a new, independent item.
 
-*View memory at address of *component**
-  .. index:: memory view
-
+:menuselection:`View memory at address of *component*`
   Brings up the memory view dialog and explore memory at the address of the
   component.
 
-*Set value of *component**
-
+:menuselection:`Set value of *component*`
   Sets the value of a selected component. This will open an entry box where you
   can enter the new value of a variable/component. Note that GDB does not
   perform any type or range checking on the value entered.
 
-*Update Value*
-  .. index:: update value
-
+:menuselection:`Update Value`
   Refreshes the value displayed in the selected item.
 
-*Show Value*
-  .. index:: show value
-
+:menuselection:`Show Value`
   Shows only the value of the item.
 
-*Show Type*
-  .. index:: show type
-
+:menuselection:`Show Type`
   Shows only the type of each field for the item.
 
-*Show Value+Type*
+:menuselection:`Show Value+Type`
   Shows both the value and the type of the item.
 
-*Auto refresh*
-  .. index:: auto refresh
-
+:menuselection:`Auto refresh`
   Enables or disables the automatic refreshing of the item upon program
   execution (e.g step, next).
 
-.. index:: contextual menu
 
-A contextual menu can be accessed in the canvas itself (point the mouse to an
-empty area in the canvas, and click on the right mouse button) with the
-following entries:
+The :guilabel:`Data Window` has a local menu bar which contains a number of
+useful buttons:
 
-*Display Expression...*
-  .. index:: display expression
-
-  Open a small dialog letting you specify an arbitrary expression in the Data
-  Window. This expression can be a variable name, or a more complex expression,
-  following the syntax of the current language and underlying debugger.  See
-  the documentation of e.g gdb for more details on the syntax.  The check
-  button *Expression is a subprogram call* should be enabled if the expression
-  is actually not an expression but rather a debugger command (e.g `p/x var`)
-  or a procedure call in the program being debugged (e.g `call my_proc`).
-
-*Align On Grid*
-  .. index:: align
-
+:menuselection:`Align On Grid`
   Enables or disables alignment of items on the grid.
 
-*Detect Aliases*
-  .. index:: aliases
-
+:menuselection:`Detect Aliases`
   Enables or disables the automatic detection of shared data structures.  Each
   time you display an item or dereference a pointer, all the items already
   displayed on the canvas are considered and their addresses are compared with
@@ -569,28 +520,21 @@ following entries:
   tried to dereference a pointer to an object already displayed) instead of
   creating a new item a link will be displayed.
 
-*Zoom in*
-  .. index:: zoom in
-
+:menuselection:`Zoom in`
   Redisplays the items in the data window with a bigger font
 
-*Zoom out*
-  .. index:: zoom out
-
+:menuselection:`Zoom out`
   Displays the items in the data window with smaller fonts and pixmaps. This
   can be used when you have several items in the window and you can't see all
   of them at the same time (for instance if you are displaying a tree and want
   to clearly see its structure).
 
-*Zoom*
-  .. index:: zoom
-
+:menuselection:`Zoom`
   Allows you to choose the zoom level directly from a menu.
 
-*Clear*
-  .. index:: clear
-
+:menuselection:`Clear`
   When this item is selected, all the boxes currently displayed are removed.
+
 
 Manipulating items
 ------------------
@@ -617,7 +561,6 @@ Most of the items are displayed using several colors, each conveying a special
 meaning. Here is the meaning assigned to all colors (note that the exact color
 can be changed through the preferences dialog; these are the default colors):
 
-.. index:: screen shot
 .. image:: colors.jpg
 
 *black*
@@ -643,16 +586,12 @@ can be changed through the preferences dialog; these are the default colors):
   data window and then select the *Next* button in the tool bar, then the
   elements of the array whose value has just changed will appear in red.
 
-  .. index:: menu
-
   As another example, if you choose to display the value of local variables in
   the data window (*Display->Display Local Variables*), then only the variables
   whose value has changed are highlighted, the others are left in black.
 
 Icons
 ^^^^^
-
-.. index:: icon
 
 Several different icons can be used in the display of items. They also convey
 special meanings.
@@ -682,25 +621,26 @@ special meanings.
   subcomponents is to clone them in a separate item (see the contextual menu
   again).
 
+
+.. index:: breakpoint editor
+.. index:: breakpoint
 .. _The_Breakpoint_Editor:
 
 The Breakpoint Editor
 =====================
 
-.. index:: breakpoint editor
-.. index:: breakpoint
-.. index:: screen shot
-.. index:: menu
 .. image:: breakpoints.jpg
 
-The breakpoint editor can be accessed from the menu *Data->Edit Breakpoints*.
-It allows manipulation of different kinds of breakpoints: at a source location,
-on a subprogram, at an executable address, on memory access (watchpoints), and
-on Ada exceptions.
+.. index:: menu; debug --> data --> edit breaakpoints
+
+The breakpoint editor can be accessed from the menu :menuselection:`Debug -->
+Data --> Edit Breakpoints`.  It allows manipulation of different kinds of
+breakpoints: at a source location, on a subprogram, at an executable address,
+on memory access (watchpoints), and on Ada exceptions.
 
 You can double-click on any breakpoint in the list to open the corresponding
 source editor at the right location. Alternatively, you can select the
-breakpoint and then click on the `View` button.
+breakpoint and then click on the :guilabel:`View` button.
 
 The top area provides an interface to create the different kinds of
 breakpoints, while the bottom area lists existing breakpoints and their
@@ -708,29 +648,25 @@ characteristics.
 
 It is possible to access advanced breakpoint characteristics for a given
 breakpoint.  First, select a breakpoint in the list.  Then, click on the
-*Advanced* button, which will display a new dialog window.  You can specify
-commands to run automatically after a breakpoint is hit, or specify how many
-times a selected breakpoint will be ignored.  If running VxWorks AE, you can
-also change the Scope and Action settings for breakpoints.
+:guilabel:`Advanced` button, which will display a new dialog window.  You can
+specify commands to run automatically after a breakpoint is hit, or specify how
+many times a selected breakpoint will be ignored.  If running VxWorks AE, you
+can also change the Scope and Action settings for breakpoints.
 
-.. index:: screen shot
 .. image:: bp-advanced.jpg
+
+
+.. index:: VxWorks AE
 
 Scope/Action Settings for VxWorks AE
 ------------------------------------
 
-.. index:: VxWorks AE
-
 In VxWorks AE breakpoints have two extra properties:
 
 * Scope:
-  .. index:: scope
-
   which task(s) can hit a given breakpoint. Possible Scope values are:
 
   * task:
-    .. index:: task
-
     the breakpoint can only be hit by the task that was active when the
     breakpoint was set. If the breakpoint is set before the program is run, the
     breakpoint will affect the environment task
@@ -746,18 +682,14 @@ In VxWorks AE breakpoints have two extra properties:
     only allowed for tasks in the Kernel domain.
 
 * Action:
-  .. index:: action
-
   when a task hits a breakpoints, which tasks are stopped:
 
   * task:
-    .. index:: task
-
     stop only the task that hit the breakpoint.
-  * pd:
-    .. index:: protection domain
 
+  * pd:
     stop all tasks in the current protection domain
+
   * all:
     stop all breakable tasks in the system
 
@@ -769,33 +701,37 @@ setting these properties:
 * Per breakpoint settings:
 
   after setting a breakpoint (the default Scope/Action values will be
-  task/task), select the *Scope/Action* tab in the *Advanced* settings.  To
-  change these settings on a given breakpoint, select it from the breakpoints
-  list, select the desired values of Scope and Action and click on the *Update*
-  button.
+  task/task), select the :guilabel:`Scope/Action` tab in the
+  :guilabel:`Advanced` settings.  To change these settings on a given
+  breakpoint, select it from the breakpoints list, select the desired values of
+  Scope and Action and click on the :guilabel:`Update` button.
 
 * Default session settings:
 
-  select the *Scope/Action* tab in the *Advanced* settings. Select the desired
-  Scope and Action settings, check the *Set as session defaults* check box
-  below and click the *Close* button. From now on, every new breakpoint will
-  have the selected values for Scope and Action.
+  select the :guilabel:`Scope/Action` tab in the :guilabel:`Advanced`
+  settings. Select the desired Scope and Action settings, check the
+  :guilabel:`Set as session defaults` check box below and click the
+  :guilabel:`Close` button. From now on, every new breakpoint will have the
+  selected values for Scope and Action.
 
 .. index:: saving breakpoints
 .. index:: breakpoints, saving
+.. index:: preferences; debugger --> preserve state on exit
 
-If you have enabled the preference `Preserve state on exit`, GPS will
-automatically save the currently set breakpoints, and restore them the next
-time you debug the same executable. This allows you to immediately start
-debugging your application again, without reseting the breakpoints every time.
+If you have enabled the preference :menuselection:`Debugger --> Preserve state
+on exit`, GPS will automatically save the currently set breakpoints, and
+restore them the next time you debug the same executable. This allows you to
+immediately start debugging your application again, without reseting the
+breakpoints every time.
 
+
+
+.. index:: memory view
 .. _The_Memory_Window:
 
 The Memory Window
 =================
 
-.. index:: memory view
-.. index:: screen shot
 .. image:: memory-view.jpg
 
 The memory window allows you to display the contents of memory by
@@ -805,40 +741,38 @@ specifying either an address, or a variable name.
 .. index:: hexadecimal
 
 To display memory contents, enter the address using the C hexadecimal notation:
-0xabcd, or the name of a variable, e.g foo, in the *Location* text entry.  In
-the latter case, its address is computed automatically. Then either press
-*Enter* or click on the *View* button. This will display the memory with the
-corresponding addresses in the bottom text area.
+0xabcd, or the name of a variable, e.g foo, in the :guilabel:`Location` text
+entry.  In the latter case, its address is computed automatically. Then either
+press :kbd:`Enter` or click on the :guilabel:`View` button. This will display
+the memory with the corresponding addresses in the bottom text area.
 
 .. index:: ASCII
 
-You can also specify the unit size (*Byte*, *Halfword* or *Word*), the format
-(*Hexadecimal*, *Decimal*, *Octal* or *ASCII*), and you can display the
-corresponding ASCII value at the same time.
+You can also specify the unit size (:guilabel:`Byte`, :guilabel:`Halfword` or
+:guilabel:`Word`), the format (:guilabel:`Hexadecimal`, :guilabel:`Decimal`,
+:guilabel:`Octal` or :guilabel:`ASCII`), and you can display the corresponding
+ASCII value at the same time.
 
-.. index:: key
-
-The *up* and *down* arrows as well as the :kbd:`Page up` and :kbd:`Page down`
+The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and :kbd:`Page down`
 keys in the memory text area allows you to walk through the memory in order of
 ascending/descending addresses respectively.
 
 Finally, you can modify a memory area by simply clicking on the location you
 want to modify, and by entering the new values. Modified values will appear in
 a different color (red by default) and will only be taken into account (i.e
-written to the target) when you click on the *Submit changes* button. Clicking
-on the *Undo changes* or going up/down in the memory will undo your editing.
+written to the target) when you click on the :guilabel:`Submit changes`
+button. Clicking on the :guilabel:`Undo changes` or going up/down in the memory
+will undo your editing.
 
-Clicking on *Close* will close the memory window, canceling your last pending
-changes, if any.
+Clicking on :guilabel:`Close` will close the memory window, canceling your last
+pending changes, if any.
+
+
 
 .. _Using_the_Source_Editor_when_Debugging:
 
 Using the Source Editor when Debugging
 ======================================
-
-.. index:: source file
-.. index:: editing
-.. index:: debug
 
 When debugging, the left area of each source editor provides the following
 information:
@@ -854,10 +788,7 @@ information:
   closest location that matches the file and line that you specified.
 
 *Current line executed*
-  .. index:: current line
-
   This is a green arrow showing the line about to be executed.
-
 
 *Lines with breakpoints*
   .. index:: breakpoint
@@ -867,8 +798,9 @@ information:
   this area (the first click will set a breakpoint, the second click will
   remove it).
 
-.. index:: screen shot
 .. image:: tooltips.jpg
+
+
 .. index:: syntax highlighting
 .. index:: tooltip
 
@@ -877,14 +809,10 @@ displays the source files, with syntax highlighting.  If you leave the cursor
 over a variable, a tooltip will appear showing the value of this variable.
 Automatic tooltips can be disabled in the preferences menu.
 
-.. index:: preferences
-
 See :ref:`Preferences Dialog <preferences_dialog>`.
 
-.. index:: contextual menu
-
 When the debugger is active, the contextual menu of the source window contains
-a sub menu called `Debug` providing the following entries.
+a sub menu called :menuselection:`Debug` providing the following entries.
 
 Note that these entries are dynamic: they will apply to the entity found under
 the cursor when the menu is displayed (depending on the current language). In
@@ -894,15 +822,12 @@ expressions easily (for example by adding some comments to your code with the
 complex expressions you want to be able to display in the debugger).
 
 
-*Print *selection**
-  .. index:: print
-
+:menuselection:`Debug --> Print *selection*`
   Prints the selection (or by default the name under the cursor) in the
   debugger console.
 
-*Display *selection**
-  .. index:: display
 
+:menuselection:`Debug --> Display *selection*`
   Displays the selection (or by default the name under the cursor) in the data
   window. The value will be automatically refreshed each time the process state
   changes (e.g after a step or a next command). To freeze the display in the
@@ -910,39 +835,40 @@ complex expressions you want to be able to display in the debugger).
   use the contextual menu for the specific item (see :ref:`The_Data_Window` for
   more information).
 
-*Print *selection*.all*
+
+:menuselection:`Debug --> Print *selection*.all`
   Dereferences the selection (or by default the name under the cursor) and
   prints the value in the debugger console.
 
-*Display *selection*.all*
+
+:menuselection:`Display *selection*.all`
   Dereferences the selection (or by default the name under the cursor) and
   displays the value in the data window.
 
-*View memory at address of *selection**
-  .. index:: memory view
 
+:menuselection:`View memory at address of *selection*`
   Brings up the memory view dialog and explores memory at the address of the
   selection.
 
-*Set Breakpoint on Line *xx**
-  .. index:: breakpoint
 
+:menuselection:`Set Breakpoint on Line *xx*`
   Sets a breakpoint on the line under the cursor, in the current file.
 
-*Set Breakpoint on *selection**
+
+:menuselection:`Set Breakpoint on *selection*`
   Sets a breakpoint at the beginning of the subprogram named *selection*
 
-*Continue Until Line *xx**
-  .. index:: continue until
 
+:menuselection:`Continue Until Line *xx*`
   Continues execution (the program must have been started previously) until
   it reaches the specified line.
 
-*Show Current Location*
-  .. index:: current location
 
+:menuselection:`Show Current Location`
   Jumps to the current line of execution. This is particularly useful after
   navigating through your source code.
+
+
 
 .. _The_Assembly_Window:
 
@@ -952,18 +878,20 @@ The Assembly Window
 It is sometimes convenient to look at the assembly code for the subprogram
 or source line you are currently debugging.
 
-You can open the assembly window by using the menu
-`Debug->Data->Assembly`.
 
-.. index:: screen shot
+.. index:: menu; debug --> data --> assembly
+
+You can open the assembly window by using the menu
+:menuselection:`Debug --> Data --> Assembly`.
+
 .. image:: assembly.jpg
 
 The current assembly instruction is highlighted with a green arrow on its left.
 The instructions corresponding to the current source line are highlighted in
 red by default. This allows you to easily see where the program counter will
-point to, once you have pressed the "Next" button on the tool bar.
+point to, once you have pressed the :guilabel:`Next` button on the tool bar.
 
-Moving to the next assembly instruction is done through the "Nexti" (next
+Moving to the next assembly instruction is done through the :guilabel:`Nexti` (next
 instruction) button in the tool bar. If you choose "Stepi" instead (step
 instruction), this will also jump to the subprogram being called.
 
@@ -975,28 +903,35 @@ following the currently displayed instructions by pressing one of the
 :kbd:`Page up` or :kbd:`Page down` keys, or by using the contextual menu in the
 assembly window.
 
+.. index:: menu; debug --> data --> display registers
+
 A convenient complement when debugging at the assembly level is the ability of
-displaying the contents  of machine registers.  When the debugger supports it
-(as gdb does), you can select the `Data->Display Registers` menu to get an item
-in the canvas that will show the current contents of each machine register, and
-that will be updated every time one of them changes.
+displaying the contents of machine registers.  When the debugger supports it
+(as gdb does), you can select the :menuselection:`Debug --> Data --> Display
+Registers` menu to get an item in the canvas that will show the current
+contents of each machine register, and that will be updated every time one of
+them changes.
+
+
+.. index:: menu; debug --> Data --> display any expression
 
 You might also choose to look at a single register.  With gdb, select the
-`Data->Display Any Expression`, entering something like::
+:menuselection:`Debug --> Data --> Display Any Expression`, entering something
+like::
 
   output /x $eax
 
-in the field, and selecting the toggle button "Expression is a subprogram
-call". This will create a new canvas item that will be refreshed every time the
+in the field, and selecting the toggle button :guilabel:`Expression is a subprogram
+call`. This will create a new canvas item that will be refreshed every time the
 value of the register (in this case eax) changes.
 
+
+
+.. index:: debugger console
 .. _The_Debugger_Console:
 
 The Debugger Console
 ====================
-
-.. index:: debugger
-.. index:: debugger console
 
 This is the text window located at the bottom of the main window.  In this
 console, you have direct access to the underlying debugger, and can send
@@ -1069,12 +1004,12 @@ brackets are optional and can be omitted.
 
   This command will remove an item from the canvas
 
+
+
 .. _Customizing_the_Debugger:
 
 Customizing the Debugger
 ========================
-
-.. index:: debugger
 
 GPS is a high-level interface to several debugger backends, in particular gdb.
 Each back end has its own strengths, but you can enhance the command line
