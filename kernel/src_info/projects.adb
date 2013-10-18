@@ -318,6 +318,8 @@ package body Projects is
                   end if;
                else
                   Fd := new TTY_Process_Descriptor;
+
+                  Trace (Me, "Spawning " & (+Gnatls_Path.Full_Name));
                   Non_Blocking_Spawn
                     (Fd.all,
                      +Gnatls_Path.Full_Name,
@@ -333,6 +335,7 @@ package body Projects is
 
       exception
          when others =>
+            Trace (Me, "Could not execute " & Gnatls_Args (1).all);
             if Errors /= null then
                Errors (-"Could not execute " & Gnatls_Args (1).all);
             end if;
@@ -340,6 +343,7 @@ package body Projects is
       end;
 
       if not Success then
+         Trace (Me, "Could not compute predefined paths");
          if Gnatls_Called and then Errors /= null then
             Errors
               (-"Could not compute predefined paths for this project.");
@@ -354,10 +358,15 @@ package body Projects is
 
       Gnatls_Called := True;
 
-      Set_Path_From_Gnatls_Output
-        (Registry.Environment.all,
-         Output       => GNATCOLL.Utils.Get_Command_Output (Fd),
-         GNAT_Version => GNAT_Version);
+      declare
+         S : constant String := GNATCOLL.Utils.Get_Command_Output (Fd);
+      begin
+         Trace (Me, "Output of gnatls is " & S);
+         Set_Path_From_Gnatls_Output
+           (Registry.Environment.all,
+            Output       => S,
+            GNAT_Version => GNAT_Version);
+      end;
 
       Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
