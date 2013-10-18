@@ -38,6 +38,9 @@ install:
 	${MKDIR} $(docdir)/html/tutorial/
 	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
 
+	${MKDIR} $(docdir)/html/release_notes/
+	-${CP} -r release_notes/build/singlehtml/* $(docdir)/html/release_notes/
+
 	-$(INSTALL_DATA) gps-splash.png $(sharedir)
 	-${INSTALL_DATA} gps_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html

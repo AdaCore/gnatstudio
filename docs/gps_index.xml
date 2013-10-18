@@ -34,7 +34,14 @@
       <name>html/tutorial/index.html</name>
       <descr>GNAT Programming Studio Tutorial</descr>
       <category>GPS</category>
-      <menu>/Help/GPS/GNAT Programming Studio Tutorial</menu>
+      <menu>/Help/GPS/Tutorial</menu>
+   </documentation_file>
+
+   <documentation_file>
+      <name>html/release_notes/index.html</name>
+      <descr>GPS Release Notes</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Release Notes</menu>
    </documentation_file>
 
    <documentation_file>
