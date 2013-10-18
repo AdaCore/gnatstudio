@@ -30,23 +30,20 @@ package body GNATdoc.Backend.Base is
       return GNATCOLL.VFS.Virtual_File
    is
       Backend : constant Filesystem_String := Filesystem_String (Self.Name);
-      Dir     : constant GNATCOLL.VFS.Virtual_File :=
+      Dir     : GNATCOLL.VFS.Virtual_File :=
         Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
           ("gnatdoc").Create_From_Dir (Backend);
-      Dev_Dir : constant GNATCOLL.VFS.Virtual_File :=
-        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
-          ("gnatdoc").Create_From_Dir ("resources").Create_From_Dir (Backend);
-
    begin
       --  Special case: check for this in order to be able to work
       --  in the development environment
 
-      if Dir.Is_Directory then
-         return Dir.Create_From_Dir (File_Name);
-
-      else
-         return Dev_Dir.Create_From_Dir (File_Name);
+      if not Dir.Is_Directory then
+         Dir := Create_From_Dir
+           (Get_Share_Dir (Self.Context.Kernel).Get_Parent,
+            "gnatdoc/resources/" & Backend);
       end if;
+
+      return Dir.Create_From_Dir (File_Name);
    end Get_Resource_File;
 
    ----------------
