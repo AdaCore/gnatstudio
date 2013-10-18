@@ -70,6 +70,9 @@ package GNATdoc is
       Show_Private    : Boolean := False;
       --  Show also private entities
 
+      Quiet_Mode      : Boolean := False;
+      --  Quiet mode
+
       --  -------------------------- Internal switches -----------------------
 
       Display_Time    : Boolean := False;

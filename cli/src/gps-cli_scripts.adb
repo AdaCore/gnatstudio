@@ -148,7 +148,8 @@ package body GPS.CLI_Scripts is
                Display_Time    => False,
                Process_Bodies  => False,
                Show_Private    => True,
-               Output_Comments => True);
+               Output_Comments => True,
+               Quiet_Mode      => False);
          begin
             GNATdoc.Process_Project_Files
               (Kernel    => Kernel,

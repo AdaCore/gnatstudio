@@ -357,10 +357,12 @@ package body GNATdoc is
                   --  Progress notification: currently using GNAT.IO but this
                   --  must be improved???
 
-                  GNAT.IO.Put_Line
-                    (Count'Img & "/" & To_String (Num_Files)
-                     & ": "
-                     & (+Current_File.Base_Name));
+                  if not Options.Quiet_Mode then
+                     GNAT.IO.Put_Line
+                       (Count'Img & "/" & To_String (Num_Files)
+                        & ": "
+                        & (+Current_File.Base_Name));
+                  end if;
 
                   if not All_Files.Contains (Current_File) then
                      Tree :=
@@ -456,10 +458,12 @@ package body GNATdoc is
                   Tree_List.Next (Cursor);
                end loop;
 
-               Kernel.Messages_Window.Insert
-                 (-("info: Documentation generated in ") &
-                    Get_Doc_Directory (Kernel).Display_Full_Name,
-                  Mode => Info);
+               if not Options.Quiet_Mode then
+                  Kernel.Messages_Window.Insert
+                    (-("info: Documentation generated in ") &
+                       Get_Doc_Directory (Kernel).Display_Full_Name,
+                     Mode => Info);
+               end if;
             end;
          end if;
       end;

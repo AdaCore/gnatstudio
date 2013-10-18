@@ -48,6 +48,7 @@ procedure GNATdoc_Main is
    Process_Bodies       : aliased Boolean;
    Project_Name         : aliased GNAT.Strings.String_Access;
    Process_Private_Part : aliased Boolean;
+   Quiet_Mode           : aliased Boolean;
    Suppress_Warnings    : aliased Boolean;
 
 begin
@@ -90,6 +91,11 @@ begin
       Output       => Process_Private_Part'Access,
       Switch       => "-p",
       Help         => "Process private part of packages");
+   Define_Switch
+     (Cmdline,
+      Output       => Quiet_Mode'Access,
+      Switch       => "-q",
+      Help         => "Be quiet/terse");
    Define_Switch
      (Cmdline,
       Output       => Suppress_Warnings'Access,
@@ -165,7 +171,8 @@ begin
          Display_Time    => Internal_Output,
          Process_Bodies  => Process_Bodies,
          Show_Private    => Process_Private_Part,
-         Output_Comments => Internal_Output);
+         Output_Comments => Internal_Output,
+         Quiet_Mode      => Quiet_Mode);
 
    begin
       GNATdoc.Process_Project_Files
