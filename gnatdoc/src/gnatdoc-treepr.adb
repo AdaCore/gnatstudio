@@ -111,6 +111,16 @@ package body GNATdoc.Treepr is
       is
          pragma Unreferenced (Scope_Level);
       begin
+         --  No output generated if no information is available on this
+         --  entity (to leave the output more clean)
+
+         if Get_Src (Entity) = Null_Unbounded_String
+           and then Get_Doc (Entity) = No_Comment_Result
+           and then Get_Comment (Entity) = No_Structured_Comment
+         then
+            return OK;
+         end if;
+
          Append_Line
            ("***** "
             & Utils.Image (LL.Get_Location (Entity))
