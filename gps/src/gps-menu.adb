@@ -355,16 +355,6 @@ package body GPS.Menu is
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
-      Command := new Preference_Dialog_Command;
-      Register_Action
-        (Kernel, "open Preferences", Command,
-         Category => -"Views",
-         Stock_Id => Stock_Preferences,
-         Description => -"Open the preferences dialog");
-      Register_Menu
-        (Kernel, -"/Edit/_Preferences", "open Preferences",
-         Ref_Item => -"Window");
-
       Command := new Open_Project_Command;
       Register_Action
         (Kernel, "open project dialog", Command,
@@ -516,6 +506,16 @@ package body GPS.Menu is
         (Kernel      => Kernel,
          Action      => -"Paste From Clipboard",
          Default_Key => "control-v");
+
+      Command := new Preference_Dialog_Command;
+      Register_Action
+        (Kernel, "open Preferences", Command,
+         Category => -"Views",
+         Stock_Id => Stock_Preferences,
+         Description => -"Open the preferences dialog");
+      Register_Menu
+        (Kernel, -"/Edit/_Preferences", "open Preferences",
+         Ref_Item => -"Window");
    end Register_Common_Menus;
 
 end GPS.Menu;
