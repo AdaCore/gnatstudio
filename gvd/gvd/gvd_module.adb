@@ -19,7 +19,6 @@ with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
@@ -2663,7 +2662,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug run dialog", Command,
          Accel_Key   => GDK_F2,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -"Choose the arguments to the program, and start running it",
          Category    => -"Debug");
@@ -2673,7 +2672,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug step", Command,
          Accel_Key   => GDK_F5,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -"Execute until program reaches a new line of source code",
          Category    => -"Debug");
@@ -2684,7 +2683,7 @@ package body GVD_Module is
         (Kernel, "Debug stepi", Command,
          Accel_Key   => GDK_F5,
          Accel_Mods  => Shift_Mask,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -"Execute the program for one machine instruction only",
          Category    => -"Debug");
@@ -2694,7 +2693,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug next", Command,
          Accel_Key   => GDK_F6,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -("Execute the program until the next source line, stepping over"
              & " subprogram calls"),
@@ -2706,7 +2705,7 @@ package body GVD_Module is
         (Kernel, "Debug nexti", Command,
          Accel_Key   => GDK_F6,
          Accel_Mods  => Shift_Mask,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -("Execute the program until the next machine instruction, stepping"
              & " over subprogram calls"),
@@ -2717,7 +2716,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug finish", Command,
          Accel_Key   => GDK_F7,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description =>
            -("Continue execution until selected stack frame returns"),
          Category    => -"Debug");
@@ -2727,7 +2726,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug continue", Command,
          Accel_Key   => GDK_F8,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description => -"Continue execution until next breakpoint",
          Category    => -"Debug");
       Register_Menu (Kernel, -"/Debug/_Continue", "Debug continue");
@@ -2738,7 +2737,7 @@ package body GVD_Module is
          Accel_Key   => GDK_backslash,
          Accel_Mods  => Control_Mask,
          Stock_Id    => GPS_Stop_Task,
-         Filter      => Debugger_Filter,
+         Filter      => Debugger_Active,
          Description => -"Asynchronously interrupt the debuggee program",
          Category    => -"Debug");
       Register_Menu (Kernel, -"/Debug/_Interrupt", "Debug interrupt");

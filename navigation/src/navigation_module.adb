@@ -1188,7 +1188,7 @@ package body Navigation_Module is
          Accel_Mods => Control_Mask,
          Filter     => Src_Action_Context);
       Register_Menu
-        (Kernel, -"/Navigate/_Pre_vious Subprogram", "previous subprogram");
+        (Kernel, -"/Navigate/_Previous Subprogram", "previous subprogram");
 
       Command := new Next_Subprogram_Command;
       Register_Action
@@ -1199,7 +1199,7 @@ package body Navigation_Module is
          Accel_Mods => Control_Mask,
          Filter     => Src_Action_Context);
       Register_Menu
-        (Kernel, -"/Navigate/_Ne_xt Subprogram", "next subprogram");
+        (Kernel, -"/Navigate/_Next Subprogram", "next subprogram");
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);

@@ -474,7 +474,7 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("VCS update all projects",
          -"Update all projects (recursively)",
-         Prj_Filter,
+         null,
          Update_All'Access);
       Register_Menu
         (Kernel, -"/VCS/Update all _projects", "VCS update all projects");
@@ -482,7 +482,7 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("VCS query status for all projects",
          -"Query status for all projects (recursively)",
-         Prj_Filter,
+         null,
          Query_Status_For_Project'Access);
       Register_Menu
         (Kernel, -"/VCS/_Query status for all projects",

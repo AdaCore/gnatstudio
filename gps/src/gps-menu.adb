@@ -362,7 +362,7 @@ package body GPS.Menu is
          Stock_Id => Stock_Preferences,
          Description => -"Open the preferences dialog");
       Register_Menu
-        (Kernel, -"/Edit/_Preferences...", "open Preferences",
+        (Kernel, -"/Edit/_Preferences", "open Preferences",
          Ref_Item => -"Window");
 
       Command := new Open_Project_Command;

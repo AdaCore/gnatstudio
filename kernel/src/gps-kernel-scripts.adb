@@ -391,7 +391,7 @@ package body GPS.Kernel.Scripts is
                if Action_Name (Action_Name'First) = '/' then
                   GPS.Kernel.Modules.UI.Execute_Menu (Kernel, Action_Name);
                else
-                  Set_Error_Msg (Data, -"No such registered action");
+                  Set_Error_Msg (Data, -"No such action: " & Action_Name);
                end if;
 
             elsif Context = No_Context then

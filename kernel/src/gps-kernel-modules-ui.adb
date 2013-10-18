@@ -362,7 +362,7 @@ package body GPS.Kernel.Modules.UI is
          return Success;
       else
          Command.Kernel.Insert
-           ((-"Can't execute ") & Command.Menu_Name.all,
+           (-"Can't execute " & Command.Menu_Name.all,
             Mode => Error);
          return Failure;
       end if;
@@ -1514,21 +1514,26 @@ package body GPS.Kernel.Modules.UI is
       Context : constant Selection_Context :=
         Get_Current_Context (Self.Kernel);
    begin
+      Trace (Me, "Execute action " & Self.Name.all);
       Self.Lookup_Action;
 
-      if Self.Action /= null
-        and then Context /= No_Context
+      if Self.Action = null then
+         Trace (Me, "Action not found: " & Self.Name.all);
+
+      elsif Context /= No_Context
         and then Filter_Matches (Self.Action.Filter, Context)
       then
-         Launch_Background_Command
+         --  Tests expect that using GPS.execute_action("/menu") will
+         --  execute in the foreground, so we run Launch_Foreground_Command.
+         --  However, when the user is using the GUI, it might make more
+         --  sense to be in the background, not sure.
+
+         Launch_Foreground_Command
            (Self.Kernel,
             Create_Proxy
               (Self.Action.Command,
                (null, Context, False, No_File, null, null, 1, 0)),
-            Destroy_On_Exit => True,
-            Active          => True,
-            Show_Bar        => False,
-            Queue_Id        => "");
+            Destroy_On_Exit => True);
 
       elsif Get_Error_Message (Self.Action.Filter) /= "" then
          Insert (Self.Kernel, Get_Error_Message (Self.Action.Filter),

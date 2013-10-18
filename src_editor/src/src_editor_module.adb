@@ -346,13 +346,15 @@ package body Src_Editor_Module is
    ----------------------------
 
    procedure Change_Undo_Redo_Queue (Queue : Command_Queue) is
-      UR : constant Undo_Redo :=
-        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+      UR : Undo_Redo;
    begin
-      if Queue = Null_Command_Queue then
-         Unset_Undo_Redo_Queue (UR);
-      else
-         Set_Undo_Redo_Queue (Queue, UR);
+      if Src_Editor_Module_Id /= null then
+         UR := Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+         if Queue = Null_Command_Queue then
+            Unset_Undo_Redo_Queue (UR);
+         else
+            Set_Undo_Redo_Queue (Queue, UR);
+         end if;
       end if;
    end Change_Undo_Redo_Queue;
 
