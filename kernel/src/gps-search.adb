@@ -484,7 +484,7 @@ package body GPS.Search is
             Col_End            => 1,
             Col_Visible_Start  => 1,
             Col_Visible_End    => 1,
-            Score              => Score,
+            Score              => 100,
             Buffer_Start       => S,
             Buffer_End         => F,
             Ref_Index          => R,
