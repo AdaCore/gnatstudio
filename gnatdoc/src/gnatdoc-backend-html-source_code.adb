@@ -67,16 +67,23 @@ package body GNATdoc.Backend.HTML.Source_Code is
          if Slice_Last >= Slice_First then
             if Slice_First < Slice_Last then
                Object := Create_Object;
+               Object.Set_Field ("kind", "span");
                Object.Set_Field ("class", Class);
                Object.Set_Field ("text", Text (Slice_First .. Slice_Last - 1));
                Append (Self.Line, Object);
             end if;
 
-            Append (Self.Result, Create (Self.Line));
+            Object := Create_Object;
+            Object.Set_Field ("kind", "line");
+            Object.Set_Field ("number", Self.Current_Line);
+            Object.Set_Field ("children", Self.Line);
+            Append (Self.Result, Object);
             Self.Line := Empty_Array;
+            Self.Current_Line := Self.Current_Line + 1;
 
          else
             Object := Create_Object;
+            Object.Set_Field ("kind", "span");
             Object.Set_Field ("class", Class);
             Object.Set_Field ("text", Text (Slice_First .. Text'Last));
             Append (Self.Line, Object);
@@ -163,15 +170,28 @@ package body GNATdoc.Backend.HTML.Source_Code is
    is
       pragma Unreferenced (Continue);
 
+      Object : JSON_Value;
+
    begin
       --  Append last line
 
       if Length (Self.Line) /= 0 then
-         Append (Self.Result, Create (Self.Line));
+         Object := Create_Object;
+         Object.Set_Field ("kind", "line");
+         Object.Set_Field ("number", Self.Current_Line);
+         Object.Set_Field ("children", Self.Line);
+         Append (Self.Result, Object);
          Self.Line := Empty_Array;
+         Self.Current_Line := Self.Current_Line + 1;
       end if;
 
-      Text := Write (Create (Self.Result), False);
+      --  Construct "code" object
+
+      Object := Create_Object;
+      Object.Set_Field ("kind", "code");
+      Object.Set_Field ("children", Self.Result);
+
+      Text := Write (Object, False);
 
       --  Cleanup
 
@@ -272,15 +292,16 @@ package body GNATdoc.Backend.HTML.Source_Code is
    ----------------
 
    not overriding procedure Start_File
-     (Self     : in out Source_Code_Printer;
-      Buffer   : not null GNAT.Strings.String_Access;
-      Continue : in out Boolean)
+     (Self       : in out Source_Code_Printer;
+      Buffer     : not null GNAT.Strings.String_Access;
+      First_Line : Positive;
+      Continue   : in out Boolean)
    is
       pragma Unreferenced (Continue);
 
    begin
       Self.Buffer := Buffer;
-      Self.Current_Line := 1;
+      Self.Current_Line := First_Line;
    end Start_File;
 
    -----------------

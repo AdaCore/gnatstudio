@@ -24,9 +24,10 @@ private package GNATdoc.Backend.HTML.Source_Code is
    type Source_Code_Printer is tagged limited private;
 
    not overriding procedure Start_File
-     (Self     : in out Source_Code_Printer;
-      Buffer   : not null GNAT.Strings.String_Access;
-      Continue : in out Boolean);
+     (Self       : in out Source_Code_Printer;
+      Buffer     : not null GNAT.Strings.String_Access;
+      First_Line : Positive;
+      Continue   : in out Boolean);
    --  Called on start of processing source code file. When subprograms sets
    --  Continue to False processing is terminated and End_File doesn't
    --  executed.

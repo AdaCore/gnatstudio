@@ -37,14 +37,236 @@ package body GNATdoc.Backend.HTML is
       Tmpl_Source_File_JS,          --  Source file (JavaScript data)
       Tmpl_Source_File_Index_JS);   --  Index of source files (JavaScript data)
 
-   -----------------------
-   -- Local Subprograms --
-   -----------------------
+   procedure Extract_Summary_And_Description
+     (Entity      : Entity_Id;
+      Summary     : out JSON_Array;
+      Description : out JSON_Array);
+   --  Extracts summary and description of the specified entity
 
    function Get_Template
      (Self : HTML_Backend'Class;
       Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File;
    --  Returns file name of the specified template.
+
+   -------------------------------------
+   -- Extract_Summary_And_Description --
+   -------------------------------------
+
+   procedure Extract_Summary_And_Description
+     (Entity      : Entity_Id;
+      Summary     : out JSON_Array;
+      Description : out JSON_Array) is
+   begin
+      Summary     := Empty_Array;
+      Description := Empty_Array;
+
+      if Present (Get_Comment (Entity)) then
+         declare
+            function To_JSON_Representation
+              (Text : Ada.Strings.Unbounded.Unbounded_String)
+               return GNATCOLL.JSON.JSON_Array;
+            --  Parses Text and converts it into JSON representation.
+
+            ----------------------------
+            -- To_JSON_Representation --
+            ----------------------------
+
+            function To_JSON_Representation
+              (Text : Ada.Strings.Unbounded.Unbounded_String)
+               return GNATCOLL.JSON.JSON_Array
+            is
+               Result      : JSON_Array;
+               Delimiter   : Natural;
+               Slice_First : Positive := 1;
+               Slice_Last  : Positive;
+               Paragraph   : JSON_Value;
+               Span        : JSON_Value;
+               Aux         : JSON_Array;
+
+            begin
+               while Slice_First <= Length (Text) loop
+                  Delimiter := Index (Text, ASCII.LF & ASCII.LF, Slice_First);
+
+                  if Delimiter = 0 then
+                     Slice_Last := Length (Text);
+
+                  else
+                     Slice_Last := Delimiter - 1;
+                  end if;
+
+                  Span := Create_Object;
+                  Span.Set_Field ("kind", "span");
+                  Span.Set_Field
+                    ("text", Slice (Text, Slice_First, Slice_Last));
+
+                  Paragraph := Create_Object;
+                  Paragraph.Set_Field ("kind", "paragraph");
+                  Aux := Empty_Array;
+                  Append (Aux, Span);
+                  Paragraph.Set_Field ("children", Aux);
+
+                  Append (Result, Paragraph);
+
+                  Slice_First := Slice_Last + 1;
+
+                  while Slice_First <= Length (Text) loop
+                     exit when Element (Text, Slice_First) /= ASCII.LF;
+                     Slice_First := Slice_First + 1;
+                  end loop;
+               end loop;
+
+               return Result;
+            end To_JSON_Representation;
+
+            Cursor      : Tag_Cursor := New_Cursor (Get_Comment (Entity));
+            Tag         : Tag_Info_Ptr;
+
+         begin
+            while not At_End (Cursor) loop
+               Tag := Get (Cursor);
+
+               if Tag.Tag = "summary" then
+                  Summary := To_JSON_Representation (Tag.Text);
+
+               elsif Tag.Tag = "description" then
+                  Description := To_JSON_Representation (Tag.Text);
+
+               else
+                  Description := To_JSON_Representation (Tag.Text);
+               end if;
+
+               Next (Cursor);
+            end loop;
+         end;
+      end if;
+   end Extract_Summary_And_Description;
+
+   -----------------------
+   -- Print_Source_Code --
+   -----------------------
+
+   procedure Print_Source_Code
+     (Self       : HTML_Backend'Class;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Buffer     : GNAT.Strings.String_Access;
+      First_Line : Positive;
+      Printer    : in out Source_Code.Source_Code_Printer'Class;
+      Text       : out Ada.Strings.Unbounded.Unbounded_String);
+
+   procedure Print_Source_Code
+     (Self       : HTML_Backend'Class;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Buffer     : GNAT.Strings.String_Access;
+      First_Line : Positive;
+      Printer    : in out Source_Code.Source_Code_Printer'Class;
+      Text       : out Ada.Strings.Unbounded.Unbounded_String)
+   is
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Callback function to dispatch parsed entities to source code printer
+
+      Sloc_First : Source_Location;
+      Sloc_Last  : Source_Location;
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+
+         Continue : Boolean := True;
+
+      begin
+         if Sloc_Last.Index + 1 < Sloc_Start.Index then
+            Sloc_First := Sloc_Last;
+            Sloc_First.Index := Sloc_First.Index + 1;
+            Sloc_Last := Sloc_Start;
+            Sloc_Last.Index := Sloc_Last.Index - 1;
+
+            Printer.Normal_Text (Sloc_First, Sloc_Last, Continue);
+
+            if not Continue then
+               return True;
+            end if;
+         end if;
+
+         Sloc_Last := Sloc_End;
+
+         case Entity is
+            when Normal_Text =>
+               Printer.Normal_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Identifier_Text =>
+               Printer.Identifier_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Partial_Identifier_Text =>
+               Printer.Partial_Identifier_Text
+                 (Sloc_Start, Sloc_End, Continue);
+
+            when Block_Text =>
+               Printer.Block_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Type_Text =>
+               Printer.Type_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Number_Text =>
+               Printer.Number_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Keyword_Text =>
+               Printer.Keyword_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Comment_Text =>
+               Printer.Comment_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Annotated_Keyword_Text =>
+               Printer.Annotated_Keyword_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Annotated_Comment_Text =>
+               Printer.Annotated_Comment_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Aspect_Keyword_Text =>
+               Printer.Aspect_Keyword_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Aspect_Text =>
+               Printer.Aspect_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Character_Text =>
+               Printer.Character_Text (Sloc_Start, Sloc_End, Continue);
+
+            when String_Text =>
+               Printer.String_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Operator_Text =>
+               Printer.Operator_Text (Sloc_Start, Sloc_End, Continue);
+         end case;
+
+         return not Continue;
+      end Callback;
+
+      Lang     : Language_Access;
+      Continue : Boolean := True;
+
+   begin
+      Lang := Get_Language_From_File (Self.Context.Lang_Handler, File);
+
+      Sloc_Last := (First_Line, 0, 0);
+      Printer.Start_File (Buffer, First_Line, Continue);
+
+      if Continue then
+         Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
+         Printer.End_File (Text, Continue);
+      end if;
+   end Print_Source_Code;
 
    --------------
    -- Finalize --
@@ -165,7 +387,7 @@ package body GNATdoc.Backend.HTML is
          Lang      := Get_Language_From_File (Self.Context.Lang_Handler, File);
          Buffer    := File.Read_File;
          Sloc_Last := (0, 0, 0);
-         Printer.Start_File (Buffer, Continue);
+         Printer.Start_File (Buffer, 1, Continue);
 
          if Continue then
             Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
@@ -273,7 +495,60 @@ package body GNATdoc.Backend.HTML is
       Entities    : Collected_Entities;
       Scope_Level : Natural)
    is
-      pragma Unreferenced (Tree, Entities, Scope_Level);
+      pragma Unreferenced (Scope_Level);
+
+      procedure Build_Entity_Entries
+        (Entity_Entries : in out JSON_Array;
+         Label          : String;
+         Entities       : EInfo_List.Vector);
+
+      --------------------------
+      -- Build_Entity_Entries --
+      --------------------------
+
+      procedure Build_Entity_Entries
+        (Entity_Entries : in out JSON_Array;
+         Label          : String;
+         Entities       : EInfo_List.Vector)
+      is
+         Entity_Kind_Entry : constant JSON_Value := Create_Object;
+         Entity_Entry      : JSON_Value;
+         Aux               : JSON_Array;
+         Summary           : JSON_Array;
+         Description       : JSON_Array;
+         Printer           : Source_Code_Printer;
+
+      begin
+         for E of Entities loop
+            Extract_Summary_And_Description (E, Summary, Description);
+
+            if Get_Src (E) /= Null_Unbounded_String then
+               declare
+                  Buffer     : aliased String := To_String (Get_Src (E));
+                  Aux_String : Unbounded_String;
+
+               begin
+                  Self.Print_Source_Code
+                    (Tree.File,
+                     Buffer'Unchecked_Access,
+                     LL.Get_Location (E).Line,
+                     Printer,
+                     Aux_String);
+                  Prepend (Description, Read (To_String (Aux_String)));
+               end;
+            end if;
+
+            Entity_Entry := Create_Object;
+            Entity_Entry.Set_Field ("label", Get_Short_Name (E));
+            Entity_Entry.Set_Field ("summary", Summary);
+            Entity_Entry.Set_Field ("description", Description);
+            Append (Aux, Entity_Entry);
+         end loop;
+
+         Entity_Kind_Entry.Set_Field ("entities", Aux);
+         Entity_Kind_Entry.Set_Field ("label", Label);
+         Append (Entity_Entries, Entity_Kind_Entry);
+      end Build_Entity_Entries;
 
       Docs_Dir       : constant Virtual_File :=
         Get_Doc_Directory (Self.Context.Kernel).Create_From_Dir ("docs");
@@ -284,92 +559,80 @@ package body GNATdoc.Backend.HTML is
       Index_Entry    : constant JSON_Value := Create_Object;
       Summary        : JSON_Array;
       Description    : JSON_Array;
+      Entity_Entries : JSON_Array;
 
    begin
       --  Extract package's "summary" and "description".
 
-      if Present (Get_Comment (Entity)) then
+      Extract_Summary_And_Description (Entity, Summary, Description);
+      Documentation.Set_Field ("summary", Summary);
+      Documentation.Set_Field ("description", Description);
+
+      --  Process entities
+
+      if not Entities.Generic_Formals.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Generic formals", Entities.Generic_Formals);
+      end if;
+
+      if not Entities.Variables.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Constants and variables", Entities.Variables);
+      end if;
+
+      if not Entities.Simple_Types.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Simple types", Entities.Simple_Types);
+      end if;
+
+      if not Entities.Access_Types.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Access types", Entities.Access_Types);
+      end if;
+
+      if not Entities.Record_Types.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Record types", Entities.Record_Types);
+      end if;
+
+      if not Entities.Tagged_Types.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Tagged types", Entities.Tagged_Types);
+      end if;
+
+      if not Entities.Subprgs.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Subprograms", Entities.Subprgs);
+      end if;
+
+      if not Entities.Methods.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Dispatching subprograms", Entities.Methods);
+      end if;
+
+      if not Entities.Pkgs.Is_Empty then
          declare
-            function To_JSON_Representation
-              (Text : Ada.Strings.Unbounded.Unbounded_String)
-               return GNATCOLL.JSON.JSON_Array;
-            --  Parses Text and converts it into JSON representation.
-
-            ----------------------------
-            -- To_JSON_Representation --
-            ----------------------------
-
-            function To_JSON_Representation
-              (Text : Ada.Strings.Unbounded.Unbounded_String)
-               return GNATCOLL.JSON.JSON_Array
-            is
-               Result      : JSON_Array;
-               Delimiter   : Natural;
-               Slice_First : Positive := 1;
-               Slice_Last  : Positive;
-               Paragraph   : JSON_Value;
-               Span        : JSON_Value;
-               Aux         : JSON_Array;
-
-            begin
-               while Slice_First <= Length (Text) loop
-                  Delimiter := Index (Text, ASCII.LF & ASCII.LF, Slice_First);
-
-                  if Delimiter = 0 then
-                     Slice_Last := Length (Text);
-
-                  else
-                     Slice_Last := Delimiter - 1;
-                  end if;
-
-                  Span := Create_Object;
-                  Span.Set_Field ("kind", "span");
-                  Span.Set_Field
-                    ("text", Slice (Text, Slice_First, Slice_Last));
-
-                  Paragraph := Create_Object;
-                  Paragraph.Set_Field ("kind", "paragraph");
-                  Aux := Empty_Array;
-                  Append (Aux, Span);
-                  Paragraph.Set_Field ("children", Aux);
-
-                  Append (Result, Paragraph);
-
-                  Slice_First := Slice_Last + 1;
-
-                  while Slice_First <= Length (Text) loop
-                     exit when Element (Text, Slice_First) /= ASCII.LF;
-                     Slice_First := Slice_First + 1;
-                  end loop;
-               end loop;
-
-               return Result;
-            end To_JSON_Representation;
-
-            Cursor      : Tag_Cursor := New_Cursor (Get_Comment (Entity));
-            Tag         : Tag_Info_Ptr;
+            Entity_Kind_Entry : constant JSON_Value := Create_Object;
+            Entity_Entry      : JSON_Value;
+            Aux               : JSON_Array;
 
          begin
-            while not At_End (Cursor) loop
-               Tag := Get (Cursor);
-
-               if Tag.Tag = "summary" then
-                  Summary := To_JSON_Representation (Tag.Text);
-
-               elsif Tag.Tag = "description" then
-                  Description := To_JSON_Representation (Tag.Text);
-
-               else
-                  Description := To_JSON_Representation (Tag.Text);
-               end if;
-
-               Next (Cursor);
+            for E of Entities.Pkgs loop
+               Extract_Summary_And_Description (E, Summary, Description);
+               Entity_Entry := Create_Object;
+               Entity_Entry.Set_Field ("label", Get_Short_Name (E));
+               Entity_Entry.Set_Field ("summary", Summary);
+               Entity_Entry.Set_Field ("description", Description);
+               Append (Aux, Entity_Entry);
             end loop;
+
+            Entity_Kind_Entry.Set_Field ("entities", Aux);
+            Entity_Kind_Entry.Set_Field ("label", "Nested packages");
+            Append (Entity_Entries, Entity_Kind_Entry);
          end;
       end if;
 
-      Documentation.Set_Field ("summary", Summary);
-      Documentation.Set_Field ("description", Description);
+      Documentation.Set_Field ("entities", Entity_Entries);
 
       --  Write JS data file
 
