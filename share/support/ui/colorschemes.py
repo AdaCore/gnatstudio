@@ -20,12 +20,23 @@ light_common = {
     "Plugins/auto_highlight_occurrences/color_object": "rgba(255, 190, 238, 0.7)",
     "Plugins/auto_highlight_occurrences/color_package_namespace": "rgba(144, 238, 144, 0.5)",
 
+    'Plugins/isearch/nextmatchcolor' : 'cyan',
+    'Plugins/isearch/bgcolor' : 'yellow',
+    'Plugins/isearch/bgcolor' : 'red',
+
     "Search-Src-Highlight-Color": "#A2B6FF",
+    "Messages-Highlight-Color": "rgb(255,0,0)",
+    "Errors-Src-Highlight-Color": "rgb(255,183,183)",
+    "Warnings-Src-Highlight-Color": "rgb(255,204,156)",
+    "Style-Src-Highlight-Color": "rgb(255,255,173)",
+    "Info-Src-Highlight-Color": "rgb(173,255,194)",
 
     "Horizontal-Diff-Change-Color": "#FDE66A",
     "Diff-Change-Color": "#ECECAA",
     "Diff-Remove-Color": "#FFA0A0",
     "Diff-Append-Color": "#88EEAA",
+
+    "Plugins/dispatching/color" : "#FFF3C2",
     }
 
 dark_common = {
@@ -35,12 +46,24 @@ dark_common = {
     "Plugins/auto_highlight_occurrences/color_object": "rgb(92,53,102)",
     "Plugins/auto_highlight_occurrences/color_package_namespace": "rgb(94,0,118)",
 
+
+    'Plugins/isearch/nextmatchcolor' : 'rgb(9,60,60)',
+    'Plugins/isearch/bgcolor' : 'rgb(74,43,75)',
+    'Plugins/isearch/bgcolor' : 'rgb(77,19,19)',
+
     "Search-Src-Highlight-Color": "#008191",
+    "Messages-Highlight-Color": "rgb(84,42,42)",
+    "Errors-Src-Highlight-Color": "rgb(75,34,34)",
+    "Warnings-Src-Highlight-Color": "rgb(85,52,18)",
+    "Style-Src-Highlight-Color": "rgb(68,12,42)",
+    "Info-Src-Highlight-Color": "rgb(53,77,59)",
 
     "Horizontal-Diff-Change-Color": "rgb(143,89,2)",
     "Diff-Change-Color": "rgb(107,73,19)",
     "Diff-Remove-Color": "rgb(88,43,43)",
     "Diff-Append-Color": "rgb(38,68,36)",
+
+    "Plugins/dispatching/color" : "#2E3436",
     }
 
 # Colors should use "rgb()" or "rgba()" format, not "#...". This is so that
@@ -133,6 +156,11 @@ iplastic.update(light_common)
 
 themes = [default, darkside, monokai, iplastic]
 
+def pref_set(gps_pref, val):
+    try:
+        GPS.Preference(gps_pref).set(val)
+    except GPS.Exception:
+        pass
 
 class Color_Theme_Switcher(object):
 
@@ -214,16 +242,19 @@ class Color_Theme_Switcher(object):
 
                 # if any of the preferences was changed, set to "Custom"
                 def test_changed(key, value):
-                    if GPS.Preference(key).get() != value:
-                        GPS.Logger("COLORSCHEME").log(
-                            "pref %s is different: %s != %s" %
-                            (key, value, GPS.Preference(key).get()))
-                        self.__modified = True
+                    try:
+                        if GPS.Preference(key).get() != value:
+                            GPS.Logger("COLORSCHEME").log(
+                                "pref %s is different: %s != %s" %
+                                (key, value, GPS.Preference(key).get()))
+                            self.__modified = True
+                    except GPS.Exception:
+                        pass
 
                 self.__for_each_pref(values, lambda k, v: test_changed(k, v))
 
                 if self.__modified:
-                    GPS.Preference(self.pref_name).set("Custom")
+                    pref_set (self.pref_name, "Custom")
 
 
     def apply_theme(self, theme):
@@ -231,7 +262,7 @@ class Color_Theme_Switcher(object):
 
         v = theme.get("@theme_bg_color")
         if v:
-            colors += "@define-color theme_bg_color %s;" %  v
+            colors += "@define-color theme_bg_color %s;" % v
 
         v = theme.get("@theme_selected_bg_color")
         if v:
@@ -250,11 +281,12 @@ class Color_Theme_Switcher(object):
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
         with gps_utils.freeze_prefs():
-           GPS.Preference(self.gtkpref_name).set(colors)
+            pref_set(self.gtkpref_name, colors)
 
-           if theme.get("@theme"):
-               GPS.Preference(self.pref_gtk_theme).set(theme.get("@theme"))
-           self.__for_each_pref(theme, lambda k, v: GPS.Preference(k).set(v))
+            if theme.get("@theme"):
+                pref_set(self.pref_gtk_theme, theme.get("@theme"))
+
+            self.__for_each_pref(theme, lambda k, v: pref_set(k, v))
 
         self.__set_gtk_properties()
 
