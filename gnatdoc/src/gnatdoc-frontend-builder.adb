@@ -1642,7 +1642,9 @@ package body GNATdoc.Frontend.Builder is
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
-         if Entities_Count mod 75 = 0 then
+         if not Context.Options.Quiet_Mode
+           and then Entities_Count mod 75 = 0
+         then
             GNAT.IO.Put_Line
               (+File.Base_Name
                & ":"

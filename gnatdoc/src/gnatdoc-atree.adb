@@ -2124,20 +2124,6 @@ package body GNATdoc.Atree is
 
       if No (E) then
          return "";
-
-      --  Internal entity are not fully decorated (currently used only to
-      --  represent the standard scope)
-
-      elsif E.Is_Internal then
-         Append_Line
-           ("*** "
-            & To_String (E.Id)
-            & ": "
-            & Get (E.Short_Name).all
-            & " ("
-            & E.Kind'Img
-            & ")");
-         return To_String (Printout);
       end if;
 
       declare
@@ -2145,6 +2131,21 @@ package body GNATdoc.Atree is
                  (if With_Unique_Id then To_String (E.Id) & ": "
                                     else "");
       begin
+         --  Internal entity are not fully decorated (currently used only to
+         --  represent the standard scope)
+
+         if E.Is_Internal then
+            Append_Line
+              ("*** "
+               & UID
+               & Get (E.Short_Name).all
+               & " ("
+               & E.Kind'Img
+               & ")");
+
+            return To_String (Printout);
+         end if;
+
          Append_Line
            ("*** "
             & UID

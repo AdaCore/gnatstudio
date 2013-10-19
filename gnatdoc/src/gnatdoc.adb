@@ -95,12 +95,14 @@ package body GNATdoc is
             Lang : Language_Access;
          begin
             if not Files_List.Element (File_Index).Is_Regular_File then
-               Kernel.Messages_Window.Insert
-                 ((-"warning: the file ") &
-                    Display_Full_Name
-                    (Files_List.Element (File_Index)) &
-                  (-" cannot be found. It will be skipped."),
-                  Mode => GPS.Messages_Windows.Info);
+               if Options.Report_Errors = Errors_And_Warnings then
+                  Kernel.Messages_Window.Insert
+                    ((-"warning: the file ") &
+                       Display_Full_Name
+                       (Files_List.Element (File_Index)) &
+                     (-" cannot be found. It will be skipped."),
+                     Mode => GPS.Messages_Windows.Info);
+               end if;
 
                return True;
             end if;
@@ -133,7 +135,8 @@ package body GNATdoc is
                  and then Is_Spec_File (Kernel, File)
                then
                   null;
-               else
+
+               elsif Options.Report_Errors = Errors_And_Warnings then
                   Kernel.Messages_Window.Insert
                     (-("warning: cross references for file ") &
                        Display_Base_Name (File) &
