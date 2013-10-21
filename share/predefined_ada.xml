@@ -1230,7 +1230,7 @@ same value as is returned by the corresponding `'Address' attribute.
 `Standard'Compiler_Version' (`Standard' is the only allowed prefix)
 yields a static string identifying the version of the compiler being
 used to compile the unit containing the attribute reference. A typical
-result would be something like "GNAT Pro 7.2.0w (20090221)".
+result would be something like "GNAT Pro 7.2.0rc (20090221)".
       </DOC>
    </ATTRIBUTE>
 
@@ -8490,6 +8490,23 @@ This pragma allows a series of restriction identifiers to be specified
 `Restrictions'). For each of these identifiers the compiler checks for
 violations of the restriction, but generates a warning message rather
 than an error message if the restriction is violated.
+
+One use of this is in situations where you want to know about
+violations of a restriction, but you want to ignore some of these
+violations. Consider this example, where you want to set Ada_95 mode
+and enable style checks, but you want to know about any other use of
+implementation pragmas:
+
+pragma Restriction_Warnings (No_Implementation_Pragmas);
+pragma Warnings (Off, "violation of*No_Implementation_Pragmas*");
+pragma Ada_95;
+pragma Style_Checks ("2bfhkM160");
+pragma Warnings (On, "violation of*No_Implementation_Pragmas*");
+
+By including the above lines in a configuration pragmas file, the
+Ada_95 and Style_Checks pragmas are accepted without generating a
+warning, but any other use of implementation defined pragmas will cause
+a warning to be generated.
       </DOC>
    </PRAGMA>
 
