@@ -2,9 +2,9 @@
 Editing sources
 ***************
 
-In the project view, open the `common` directory by clicking on the `[+]` sign
-(a triangle under unix systems) on the left of `common`.  This will open the
-directory and display a list of source files located in this directory.
+In the project view, open the `common` directory by clicking on the triangle
+on the left of `common`.  This will open the directory and display a list of
+source files located in this directory.
 
 Now, double click on :file:`sdc.adb`: this will open a source editor on this
 file. The source code is syntax-highlighted: keywords, comments, strings and
