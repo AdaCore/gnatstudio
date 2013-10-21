@@ -2078,7 +2078,7 @@ package body Src_Editor_Module is
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3);
       Register_Menu
-        (Kernel, -"/File/_Open ...", Open_Command_Name,
+        (Kernel, -"/File/_Open...", Open_Command_Name,
          Ref_Item => -"Save More");
 
       Command := new Open_Remote_Command;
