@@ -2298,16 +2298,18 @@ package body Ada_Analyzer is
                end if;
             end if;
 
-            if (Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
-                   | Tok_Colon
-                and then Num_Parens = 0)
-              or else (Top_Token.Token in Tok_Task | Tok_Protected
-                       and then
-                       Prev_Prev_Token in Tok_Protected | Tok_Task | Tok_Type)
-              or else (Top_Token.Token = No_Token
-                       and then Prev_Token
-                         not in Tok_Semicolon | Tok_Limited |
-                                Tok_Private | No_Token)
+            if Prev_Prev_Token /= Tok_Raise
+              and then
+                ((Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
+                    | Tok_Colon
+                  and then Num_Parens = 0)
+                 or else (Top_Token.Token in Tok_Task | Tok_Protected
+                          and then Prev_Prev_Token
+                            in Tok_Protected | Tok_Task | Tok_Type)
+                 or else (Top_Token.Token = No_Token
+                          and then Prev_Token
+                            not in Tok_Semicolon | Tok_Limited |
+                                   Tok_Private | No_Token))
             then
                --  Recognize aspect clauses, even in the case of a partial
                --  buffer. But do not confuse with a 'with' clause.
