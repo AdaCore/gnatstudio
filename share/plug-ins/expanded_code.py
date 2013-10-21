@@ -137,7 +137,7 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
 
   if context.project():
     l = context.project().object_dirs (False)
-    prj = " -P" + GPS.Project.root().file().name("Build_Server")
+    prj = ' -P """' + GPS.Project.root().file().name("Build_Server") + '"""'
   else:
     l = GPS.Project.root().object_dirs (False)
     prj = " -a"
@@ -156,7 +156,7 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
     gnatmake = GPS.Project.root().get_attribute_as_string ("compiler_command",
                  package="ide", index="ada")
     cmd = gnatmake + " -q" + prj + \
-          " -f -c -u -gnatcdx -gnatws -gnatGL " + file
+          ' -f -c -u -gnatcdx -gnatws -gnatGL """' + file + '"""'
     GPS.Console ("Messages").write ("Generating " + dg + "...\n")
     proc = GPS.Process (cmd, on_exit=on_exit, remote_server="Build_Server")
     proc.source_filename = local_file
