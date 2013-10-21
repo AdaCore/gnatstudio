@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
+- MA17-041: GPS: default directory in welcome dialog
+  Problem:    When clicking on "Browse" in the open dialog, the default
+              directory should be the one from the previous project loaded,
+              not the current directory (which on Windows is often the
+              installation directory of GPS)
+  Workaround: Navigate back to the directory.
+
 - M923-015: GPS.Project.object_dirs might return library_dir
   Problem:    When using the object_dirs() python API, a different result
               is returned depending on the recursive parameter. The result
