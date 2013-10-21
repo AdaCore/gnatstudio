@@ -545,8 +545,6 @@ package body GPS.Kernel.Console is
       Messages_Views.Register_Module
         (Kernel, Menu_Name  => -"Views/_Messages");
 
-      Msg := Messages_Views.Get_Or_Create_View (Kernel);
-
       Msg2.Kernel := Kernel_Handle (Kernel);
       Kernel.Set_Messages_Window (Msg2);
 
@@ -570,6 +568,9 @@ package body GPS.Kernel.Console is
          Command, Command_Load_Tip,
          Stock_Id => Stock_Open,
          Category => -"Messages");
+
+      --  After the actions have been registered, so that the icons are found
+      Msg := Messages_Views.Get_Or_Create_View (Kernel);
    end Register_Module;
 
 end GPS.Kernel.Console;
