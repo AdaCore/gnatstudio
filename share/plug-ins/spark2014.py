@@ -266,7 +266,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
        </command-line>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="2" lines="4">
@@ -385,7 +384,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
        </command-line>
@@ -406,7 +404,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -426,7 +423,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
@@ -448,7 +444,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -468,7 +463,6 @@ xml_gnatprove = """<?xml version="1.0"?>
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
-          <arg>--mode=prove</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
