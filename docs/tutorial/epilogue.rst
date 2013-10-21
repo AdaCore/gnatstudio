@@ -14,6 +14,8 @@ this document includes:
 * Version control
 * Flexible multiple document interface
 * Code coverage
+* Coding standard verification
+* Extensive customization through Python
 
 For more information, please look at the *User's Guide* (`gps.html
 <gps.html>`_), and also look at the `Tools` menu which gives access to most of
