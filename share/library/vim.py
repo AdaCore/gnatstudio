@@ -1,6 +1,28 @@
+"""
+This plug-in provides a Vim emulation layer for GPS.
+It does so outside of the GPS keybindings facility, which means
+that it won't affect your regular keybindings.
+
+This plug-in provides a very small subset of the facilities of vim
+for the moment. What works :
+
+- Insertion mode
+- Basic commands (word and line movement, deletions, replace)
+- Visual mode (both line and character)
+
+Notable features that are not yet implemented:
+
+- Visual block mode
+- Repeats
+- Macros
+- Text objects
+- Paragraph and sentences moves
+- Much much more
+"""
+
 # TODO:
 # * Commands : Sentences and paragraphs movements {}()
-# * Make w and b work as in vim
+# * Make w and b work as in vim  OK
 # * Goto line
 # * Repeats
 # * Bind "/" to isearch or implement own search
@@ -11,6 +33,7 @@ import GPS
 from gps_utils import *
 from pygps import get_widgets_by_type, send_key_event
 from collections import defaultdict
+from functools import partial
 
 # UTILS #
 
@@ -38,6 +61,43 @@ def with_col(loc, col):
     return GPS.EditorLocation(loc.buffer(), loc.line(), col)
 
 
+def forward_vim_word(loc, fwd=True):
+
+    loc = loc if fwd else loc.forward_char(-1)
+    isword = lambda c : c == '_' or c.isalpha()
+
+    def cat (c):
+        if isword(c): return 1
+        elif c.isspace(): return 2
+        else: return 3
+
+    offset = 1 if fwd else -1
+    fw_ws = partial(forward_until, pred=lambda c: not c.isspace(),
+                    backwards=not fwd)
+
+    print loc.get_char()
+
+    if loc.get_char().isspace():
+        if fwd:
+            return fw_ws(loc)
+        loc = fw_ws(loc)
+
+    print loc.get_char()
+
+    c = cat(loc.get_char())
+    while c == cat(loc.get_char()):
+        print "IN DALOOP"
+        in_alpha = isword(loc.get_char())
+        loc = loc.forward_char(offset)
+
+    print loc.get_char()
+
+    return fw_ws(loc) if fwd else loc.forward_char(1)
+
+
+GPS.EditorLocation.forward_vim_word = forward_vim_word
+
+
 def forward_until(loc, pred,
                   skip_first_char=False,
                   stop_at_eol=False,
@@ -49,6 +109,7 @@ def forward_until(loc, pred,
         cur_loc = cur_loc.forward_char(step)
 
     while not pred(cur_loc.get_char()):
+        print "OY : "; cur_loc.get_char()
 
         if cur_loc.get_char() == "\n" and stop_at_eol:
             return loc
@@ -415,7 +476,7 @@ class SimpleMovement(Movement):
         self.type = movement_type
         self.repeat = repeat
 
-    def get_end_location(self):
+    def get_end_location(self, internal=False):
         cur = self.cursor()
 
         if self.type == Mov_Char:
@@ -427,23 +488,13 @@ class SimpleMovement(Movement):
             return res.with_col(min(eol.column(), self.vim_state.column()))
 
         elif self.type == Mov_Word:
-            is_kw = is_keyword_char(self.vim_state.buffer.get_chars(cur, cur))
-            pred = is_keyword_char if not is_kw else lambda c: not is_keyword_char(c)
-            fwc = 1 if self.repeat < 0 else -1
-            loc = cur.forward_until(pred, backwards=self.repeat < 0).forward_char(fwc)
-            # if self.repeat > 0:
-            #     loc = loc.forward_char(-1)
-            # elif self.repeat < 0:
-            #     loc = loc.forward_char(1)
+            loc = cur.forward_vim_word(self.repeat > 0)
+            if not internal:
+                return loc.forward_char(-1 if self.repeat > 0 else 1)
             return loc
 
     def apply_action(self):
-        loc = self.get_end_location()
-        if self.type == Mov_Word:
-            if self.repeat > 0:
-                loc = loc.forward_char(1)
-            elif self.repeat < 0:
-                loc = loc.forward_char(-1)
+        loc = self.get_end_location(True)
 
         self.vim_state.view.goto(loc)
         if self.type != Mov_Line:
@@ -464,14 +515,15 @@ class LineAction(ComposedAction):
 class Deletion(LineAction):
 
     def apply_action(self):
-        if isinstance(self.expected_action, Deletion):
+        a = self.expected_action
+        if isinstance(a, Deletion):
             start_loc = self.cursor().beginning_of_line()
             end_loc = self.cursor().end_of_line()
             is_line = True
         else:
-            start_loc = self.expected_action.get_start_location()
-            end_loc = self.expected_action.get_end_location()
-            is_line = self.expected_action.is_line()
+            start_loc = a.get_start_location()
+            end_loc = a.get_end_location()
+            is_line = a.is_line()
 
         self.vim_state.delete(start_loc, end_loc, is_line)
 
@@ -525,6 +577,9 @@ class UntilCharMovement(ComposedAction):
     def __init__(self, backwards=False, stop_before=False):
         self.backwards = backwards
         self.stop_before = stop_before
+
+    def is_line(self):
+        return False
 
     def apply(self):
         self.vim_state.keymaps_stack.append(CharCharKeyMap())
@@ -638,6 +693,8 @@ basic_actions = {
     ".": (ReplayAction, ),
     ";": (ReplayMove, ),
     "i": (Insert, ),
+    "a": (ChainedAction, (SimpleMovement, Mov_Char, 1), (Insert, )),
+    "x": (ChainedAction, (Deletion,), (SimpleMovement, Mov_Char, 1)),
     "h": (SimpleMovement, Mov_Char, -1),
     "l": (SimpleMovement, Mov_Char, 1),
     "k": (SimpleMovement, Mov_Line, -1),
