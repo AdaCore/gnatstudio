@@ -3579,7 +3579,7 @@ package body Src_Editor_Buffer is
 
       B.Auto_Syntax_Check    := Automatic_Syntax_Check.Get_Pref;
       B.Highlight_Delimiters := Highlight_Delimiters.Get_Pref;
-      B.Tab_Width            := Gint (String_Utils.Tab_Width);
+      B.Tab_Width            := String_Utils.Tab_Width;
    end Execute;
 
    ---------------------
@@ -4495,7 +4495,7 @@ package body Src_Editor_Buffer is
       Line   : Gint;
       Column : Visible_Column_Type)
    is
-      Tab_Len    : constant Gint := Buffer.Tab_Width;
+      Tab_Len    : constant Positive := Buffer.Tab_Width;
       The_Column : constant Gint := Gint (Column - 1);
       Result     : Boolean := True;
       Current    : Gint := 0;
@@ -4513,7 +4513,7 @@ package body Src_Editor_Buffer is
 
       while Result and then Current < The_Column loop
          if Get_Char (Iter) = ASCII.HT then
-            Current := Current + Tab_Len - (Current mod Tab_Len);
+            Current := Current + Gint (Tab_Len) - (Current mod Gint (Tab_Len));
          else
             Current := Current + 1;
          end if;
@@ -4580,7 +4580,7 @@ package body Src_Editor_Buffer is
    is
       Start   : Gtk_Text_Iter;
       Result  : Boolean := True;
-      Tab_Len : constant Gint := Buffer.Tab_Width;
+      Tab_Len : constant Positive := Buffer.Tab_Width;
 
    begin
       Line   := Get_Line (Iter);
@@ -4592,7 +4592,7 @@ package body Src_Editor_Buffer is
 
       while Result and then not Equal (Start, Iter) loop
          if Get_Char (Start) = ASCII.HT then
-            Column := Column + Tab_Len - (Column mod Tab_Len);
+            Column := Column + Gint (Tab_Len) - (Column mod Gint (Tab_Len));
          else
             Column := Column + 1;
          end if;

@@ -1603,7 +1603,7 @@ private
       Highlight_Delimiters : Boolean := False;
       --  Cache corresponding preference
 
-      Tab_Width : Gint := 8;
+      Tab_Width : Positive := 8;
       --  Width of a Tab character
 
       In_Destruction : Boolean := False;
