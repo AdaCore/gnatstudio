@@ -291,9 +291,11 @@ package body Build_Configurations.Gtkada is
          T := Target_UI_Access (Get_Nth_Page (UI.Notebook, Gint (J)));
 
          --  Save the command line
-         CL := Get_Command_Line (T.Editor, False);
-         Set_Command_Line (UI.Registry, T.Target, CL.all);
-         Unchecked_Free (CL);
+         if T.Editor /= null then
+            CL := Get_Command_Line (T.Editor, False);
+            Set_Command_Line (UI.Registry, T.Target, CL.all);
+            Unchecked_Free (CL);
+         end if;
 
          --  Save the options
          T.Target.Properties.Launch_Mode :=
