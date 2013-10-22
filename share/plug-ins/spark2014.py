@@ -866,10 +866,14 @@ def subprogram_start(cursor):
 def compute_subp_sloc(self):
     """Return the location of the declaration of the subprogram that we are
        currently in"""
-    curloc = self.location()
-    buf = GPS.EditorBuffer.get(curloc.file())
-    edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
-    start_loc = subprogram_start(edloc)
+    try:
+        curloc = self.location()
+        buf = GPS.EditorBuffer.get(curloc.file())
+        edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
+        start_loc = subprogram_start(edloc)
+    except:
+        return None
+
     if not start_loc:
         return None
     name = edloc.subprogram_name()
