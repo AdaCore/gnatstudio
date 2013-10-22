@@ -28,3 +28,8 @@ NF-61-MA18-018 GPS: New plug-in vim.py (2013-10-18)
   GPS now has a vim emulation layer, that aims to reproduce the behavior of the
   vim text editor in GPS editor buffers. It will be enabled by default in all
   buffers if you activate it via the plug-ins dialog.
+
+NF-61-LB30-034 GPS: Faster Ways to Open and Navigate GPR files (2013-10-21)
+
+  New action "Edit project source file" provides fastest way to open the source
+  of current project in GPS editor.
