@@ -2236,7 +2236,7 @@ package body Src_Editor_View is
                   begin
                      --  We want to let the event propagate if there is a
                      --  modifier applied, in case it is a default Gtk action
-                     if Boolean'Val (Event.Key.State and Modifier_Mask) then
+                     if (Event.Key.State and Modifier_Mask) /= 0 then
                         return False;
                      end if;
 
