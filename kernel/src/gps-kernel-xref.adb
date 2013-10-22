@@ -24,7 +24,6 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
@@ -109,28 +108,6 @@ package body GPS.Kernel.Xref is
    procedure Row_Activated (Widget : access Gtk_Widget_Record'Class);
    --  Called when a specific entity declaration has been selected in the
    --  overloaded entities dialog.
-
-   procedure On_Xref_Updated (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the xref is updated
-
-   ---------------------
-   -- On_Xref_Updated --
-   ---------------------
-
-   procedure On_Xref_Updated (Kernel : access Kernel_Handle_Record'Class)
-   is
-   begin
-      --  Here we want to do whatever is necessary to make sure the database
-      --  is being read from disk.
-
-      --  For now, we call Xref.Project_View_Changed, which resets the
-      --  connection to the xref database.
-      --  ??? This is a hack, we would need a dedicated function to do
-      --  this, rather than reusing Project_View_Changed.
-
-      Standard.Xref.Project_View_Changed
-        (Kernel.Databases, Get_Project_Tree (Kernel));
-   end On_Xref_Updated;
 
    ----------
    -- Name --
@@ -747,13 +724,7 @@ package body GPS.Kernel.Xref is
          Registry     => Kernel.Registry,
          Subprogram_Ref_Is_Call =>
             not Require_GNAT_Date
-           (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
-
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         Xref_Updated_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Xref_Updated'Access),
-         "kernel.xref.xref_updated");
+              (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
    end Create_Database;
 
    --------------------------
