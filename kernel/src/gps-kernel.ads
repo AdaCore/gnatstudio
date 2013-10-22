@@ -859,11 +859,6 @@ package GPS.Kernel is
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").
 
-   Xref_Updated_Hook : constant Hook_Name :=
-                                  To_Hook_Name ("xref_updated");
-   --  Emitted when the xref has been updated outside of GPS.
-   --  Synchronize this with cross_references.py
-
    -------------------
    -- Sets of files --
    -------------------
