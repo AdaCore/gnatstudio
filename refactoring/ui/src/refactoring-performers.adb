@@ -49,12 +49,7 @@ package body Refactoring.Performers is
       Entity              : General_Entity;
       Iter                : Entity_Reference_Iterator;
       Errors              : Renaming_Error;
-
---        Extra_Entities       : Entity_Information_Arrays.Instance :=
---          Entity_Information_Arrays.Empty_Instance;
---        Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
---          Entity_Information_Arrays.First;
-      Make_Writable        : Boolean;
+      Make_Writable       : Boolean;
    end record;
    --  Extra_Entities is the list of entities that are also impacted by the
    --  refactoring
