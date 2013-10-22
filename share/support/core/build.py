@@ -355,32 +355,6 @@ XML = r"""<?xml version="1.0" ?>
     </command-line>
 </target>
 
-<target model="gnatmake" category="_File_" name="U_pdate file XRef">
-    <in-toolbar>TRUE</in-toolbar>
-    <icon>gps-semantic-check</icon>
-    <launch-mode>ON_FILE_SAVE</launch-mode>
-    <read-only>TRUE</read-only>
-    <server>Tools_Server</server>
-    <command-line>
-       <arg>%gnatmake</arg>
-       <arg>-q</arg>
-       <arg>-c</arg>
-       <arg>-gnatc</arg>
-       <arg>-u</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-       <arg>%fp</arg>
-    </command-line>
-    <output-parsers>
-         output_chopper
-         utf_converter
-         progress_parser
-         end_of_build
-    </output-parsers>
-</target>
-
-
 <!-- This is a target to compile the current file using the builder model
      NOTE: the name of this command must be kept in sync with the constant in
      Builder_Facility_Module.Scripts.  -->
