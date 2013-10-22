@@ -334,7 +334,7 @@ xml_gnatprove = """<?xml version="1.0"?>
        </output-parsers>
     </target>
 
-    <target model="gnatprove-examine" name="Examine File" category="GNATprove">
+    <target model="gnatprove-examine" name="Examine Single File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -519,7 +519,7 @@ prefix               = "SPARK"
 menu_prefix          = "/" + prefix
 examine_all          = "Examine All"
 examine_root_project = "Examine Root Project"
-examine_file         = "Examine File"
+examine_file         = "Examine Single File"
 examine_subp         = "Examine Subprogram"
 prove_all            = "Prove All"
 prove_root_project   = "Prove Root Project"
