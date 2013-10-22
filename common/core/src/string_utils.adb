@@ -57,7 +57,7 @@ package body String_Utils is
    function Blank_Slice
      (Count     : Integer;
       Use_Tabs  : Boolean := False;
-      Tab_Width : Natural := 8) return String is
+      Tab_Width : Positive := 8) return String is
    begin
       if Count <= 0 then
          return "";
@@ -138,7 +138,7 @@ package body String_Utils is
       Columns       : out Visible_Column_Type;
       Index_In_Line : String_Index_Type;
       Index         : in out String_Index_Type;
-      Tab_Width     : String_Index_Type := 8)
+      Tab_Width     : Positive := 8)
    is
       Start_Of_Line : constant String_Index_Type := Index;
    begin
@@ -153,7 +153,7 @@ package body String_Utils is
             Columns := Columns +
               Visible_Column_Type
                 (Tab_Width -
-                     ((String_Index_Type (Columns) - 1) mod Tab_Width));
+                     ((Positive (Columns) - 1) mod Tab_Width));
          else
             Columns := Columns + 1;
          end if;
@@ -166,7 +166,7 @@ package body String_Utils is
    -- Tab_Width --
    ---------------
 
-   function Tab_Width return Natural is
+   function Tab_Width return Positive is
    begin
       return 8;
    end Tab_Width;

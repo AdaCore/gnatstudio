@@ -38,7 +38,7 @@ package String_Utils is
       Columns       : out Visible_Column_Type;
       Index_In_Line : String_Index_Type;
       Index         : in out String_Index_Type;
-      Tab_Width     : String_Index_Type := 8);
+      Tab_Width     : Positive := 8);
    --  Assuming Index points to the begining of a line, move the index by
    --  "Index_In_Line" characters, and give the new column value.
 
@@ -75,7 +75,7 @@ package String_Utils is
    --  Currently, a cpp token is defined as any string made of alphanumeric
    --  character, underscore or period.
 
-   function Tab_Width return Natural;
+   function Tab_Width return Positive;
    pragma Inline (Tab_Width);
    --  Default value of tab width in the text editor (current value is 8)
 
@@ -85,7 +85,7 @@ package String_Utils is
    function Blank_Slice
      (Count     : Integer;
       Use_Tabs  : Boolean := False;
-      Tab_Width : Natural := 8) return String;
+      Tab_Width : Positive := 8) return String;
    --  Return a string representing count blanks.
    --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
    --  otherwise use only spaces.
