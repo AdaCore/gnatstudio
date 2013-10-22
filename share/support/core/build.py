@@ -322,6 +322,7 @@ XML = r"""<?xml version="1.0" ?>
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
+       <arg>-f</arg>
        <arg>-c</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
@@ -344,6 +345,7 @@ XML = r"""<?xml version="1.0" ?>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
        <arg>-c</arg>
+       <arg>-f</arg>
        <arg>-gnatc</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
@@ -391,6 +393,7 @@ XML = r"""<?xml version="1.0" ?>
        <arg>%builder</arg>
        <arg>-ws</arg>
        <arg>-c</arg>
+       <arg>-f</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
