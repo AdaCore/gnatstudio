@@ -499,7 +499,7 @@ package body Browsers.Canvas is
       end loop;
 
       Gtk_New_From_Stock (Menu, Stock_Zoom_100);
-      Menu.Set_Tooltip_Text (-"Change zoom level");
+      Menu.Set_Tooltip_Text (-"Reset zoom level");
       Menu.Set_Menu (Zooms_Menu);
       Zooms_Menu.Show_All;
       Toolbar.Insert (Menu);
