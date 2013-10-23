@@ -12,23 +12,20 @@ which provides a tree view of the callers/callees.
 In the call graph, click on the right arrow of `Process` (one of the
 first items on the top). Also click on the right arrow of `Error_Msg`.
 
-Select `Orthogonal links` in the contextual menu of the graph to change the way
+The call graph contains a tool bar; the button on the right of this
+tool bar brings up the options menu.
+
+Unselect `Straight links` in the options  menu of the graph to change the way
 links are displayed in the graph.  You may then play with the zoom (:kbd:`=`
 and :kbd:`-` keys).
-
-If you select `Hide links` from `Error_Msg` contextual menu, this will hide all
-the links that are related to this item: the link between the callers and
-callees of `Error_Msg` are no longer displayed. This can be useful when the
-graph becomes complex, to hide some parts. If you go back to the contextual
-menu, you can now select `Show links` to show the links again.
 
 Click on right arrow of `Process` (`(Decl) instructions.ads:12`).
 
 The items can also be moved: move e.g `Msg` item around.
 
 You can also recompute the layout of all the current items by using
-the browser's contextual menu `Refresh layout` (move the mouse on the
-browser's background, with no box underneath, and right click).
+the `Refresh layout` button (the sixth button from the left on the local
+tool bar).
 
 Click on left arrow of `Msg`
 to display who is calling `Msg`. Notice that `View` calls `Msg`.

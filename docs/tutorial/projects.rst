@@ -147,7 +147,7 @@ Click on `Apply` to validate the change.
 
 You can see the new dependency added in the project view, as a tree of
 projects. In particular, project dependencies are duplicated: if you open the
-`prj1` icon by clicking on the `[+]` sign (or triangle), and then similarly
+`prj1` icon by clicking on the triangle, and then similarly
 open the `prj2` icon, you will notice that the project `prj4` is displayed
 twice: once as a dependency of `prj2`, and once as a dependency of `prj1`.
 

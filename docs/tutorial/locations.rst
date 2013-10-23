@@ -10,7 +10,7 @@ references for `View`, grouped by files (:file:`stack.ads` and
 :file:`stack.adb`).
 
 The first location is highlighted automatically: this is the spec of the
-procedure `View`. Now click in the tree on the `+` sign (or triangle) at the
+procedure `View`. Now click in the tree on the triangle at the
 left of :file:`stack.adb`: two locations are listed, at line 90 and 97.  Click
 on each of these locations: they correspond to the procedure body.
 

@@ -14,6 +14,6 @@ Now click on `Execute`: a new window titled `Run: sdc` is created at the bottom
 of the main window where the sdc application runs and displays an unexpected
 internal error: this is a good opportunity to use the integrated debugger.
 
-Close the execution window by clicking on the x icon on the top right corner of
-this window.
+Place the mouse cursor over the tab titled `Run: sdc`: a cross will appear on
+the right of the label: click on it to close the window.
 

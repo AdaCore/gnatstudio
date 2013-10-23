@@ -2,7 +2,7 @@
 Project View (entities)
 ***********************
 
-Click on the `[+]` sign (or triangle) to open :file:`tokens.ads` entities.
+Click on the triangle to open :file:`tokens.ads` entities.
 When you click on a file in the project view, you get
 language sensitive information about the file, such as
 `packages`, `subprograms`, `tasks`, ... for `Ada`.
