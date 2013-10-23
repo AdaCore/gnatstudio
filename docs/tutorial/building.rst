@@ -36,9 +36,9 @@ Press the :kbd:`F4` key to build again. GPS will automatically save the
 modified files, and start a build. This behavior (automatic saving of files
 before building) can be configured in the preferences dialog.
 
-If you look at the bottom right of the GPS window, you will notice that a
-progress bar has appeared, displaying the current number of files compiled, and
-the number of remaining files. This progress bar disappears when the build is
-finished.
+If you look to the right of the toolbar in the GPS window, next to the
+omni-search entry, you will notice that a progress bar has appeared,
+displaying the current number of files compiled, and the number of remaining
+files. This progress bar disappears when the build is finished.
 
 This should now report a successful build.
