@@ -419,7 +419,9 @@ package body GPS.Menu is
          Ref_Item => -"Messages");
 
       Command := new Exit_Command;
-      Register_Action (Kernel, "exit", Command);
+      Register_Action
+         (Kernel, "exit", Command,
+          -"Exit GPS, after confirming whether to save modified files");
       Register_Menu (Kernel, -"/File/_Exit", "exit");
 
       Command := new Clipboard_Command;

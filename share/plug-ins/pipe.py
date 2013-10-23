@@ -92,17 +92,11 @@ class ShellProcess (CommandWindow):
    def on_activate (self, shell_command):
       sel_pipe (shell_command)
 
-@interactive (filter="Source editor", menu="/Edit/Selection/Pipe in external program...")
-def pipe ():
-   """Process the current selection through a shell command,
-and replace it with the output of that command."""
-   ShellProcess ()
-
-def on_gps_started (hook):
-   parse_xml ("""
-     <menu action="Pipe" after="Insert File...">
-       <title>/Edit/Insert Shell Output...</title>
-     </menu>
-   """)
-
-Hook ("gps_started").add (on_gps_started)
+@interactive(filter="Source editor",
+             menu="/Edit/Selection/Pipe in External Program...")
+def pipe():
+   """
+   Process the current selection through a shell command,
+and replace it with the output of that command.
+   """
+   ShellProcess()

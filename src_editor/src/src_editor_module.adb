@@ -2217,6 +2217,7 @@ package body Src_Editor_Module is
       Command := new Select_All_Command;
       Register_Action
         (Kernel, "select all", Command,
+         -"Select the whole contents of the editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
       Register_Menu
@@ -2230,6 +2231,7 @@ package body Src_Editor_Module is
       Command := new Insert_File_Command;
       Register_Action
         (Kernel, "insert file", Command,
+         -"Insert the contents of the file into the current editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
       Register_Menu

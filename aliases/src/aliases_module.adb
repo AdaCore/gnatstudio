@@ -2159,9 +2159,12 @@ package body Aliases_Module is
          Priority    => Default_Priority);
 
       Cmd := new Edit_Aliases_Command;
-      Register_Action (Kernel, "Aliases edit", Cmd, Category => -"Aliases");
+      Register_Action
+         (Kernel, "aliases edit", Cmd,
+          -"Open the aliases editor",
+          Category => -"Aliases");
       Register_Menu
-        (Kernel, -"/Edit/_Aliases", Action => "Aliases edit",
+        (Kernel, -"/Edit/_Aliases", Action => "aliases edit",
          Ref_Item   => -"Preferences",
          Add_Before => True);
 

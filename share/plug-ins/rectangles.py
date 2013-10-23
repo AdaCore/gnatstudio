@@ -124,12 +124,20 @@ def rectangle_insert(text=None):
 @interactive("Editor", "Source editor", "/Edit/Rectangle/Sort")
 @with_save_excursion
 def rectangle_sort():
+    """
+    Sort the lines included in the rectangle, based on the contents of
+    the rectangle.
+    """
     Rectangle.from_buffer(EditorBuffer.get()).sort()
 
 
 @interactive("Editor", "Source editor", "/Edit/Rectangle/Sort Reverse")
 @with_save_excursion
 def rectangle_sort_reverse():
+    """
+    Sort in reverse order the lines included in the rectangle, based on
+    the contents of the rectangle.
+    """
     Rectangle.from_buffer(EditorBuffer.get()).sort(revert=True)
 
 

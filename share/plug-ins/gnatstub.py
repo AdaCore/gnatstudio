@@ -27,10 +27,14 @@ class OnExit(object):
 @gps_utils.interactive(
     category="Editor",
     filter=gps_utils.in_ada_file,
-    menu="/Edit/_Generate body",
+    menu="/Edit/_Generate Body",
     before="Aliases",
     name="Generate body")
 def generate_body():
+    """
+Run gnatstub on the current Ada spec to generate a matching
+body file.
+    """
     GPS.MDI.save_all()
     proj = GPS.current_context().project()
     file = GPS.current_context().file()

@@ -1026,6 +1026,7 @@ package body KeyManager_Module.GUI is
       Command := new Open_Keyshortcuts_Command;
       Register_Action
         (Kernel, "open key shortcuts dialog", Command,
+         -"Edit or create key shortcuts for all actions and menus",
          Category => -"Views");
       Register_Menu
         (Kernel, -"/Edit/_Key Shortcuts", "open key shortcuts dialog",

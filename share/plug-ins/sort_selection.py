@@ -21,13 +21,15 @@ from gps_utils import *
               name="sort selected lines descending",
               menu="/Edit/Selection/Sort Reverse", after="Refill")
 def sort_selection_revert ():
+   """Sorts the current selection, in descending order"""
    sort_selection (revert=True)
+
 
 @interactive ("Editor", filter="Source editor",
               name="sort selected lines ascending",
               menu="/Edit/Selection/Sort", after="Refill")
 def sort_selection (revert=False):
-   """Sorts the current selection, in ascending order by default"""
+   """Sorts the current selection, in ascending order"""
    context = GPS.current_context ();
    ed      = GPS.EditorBuffer.get (context.file())
    start   = ed.selection_start()

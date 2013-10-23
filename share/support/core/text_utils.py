@@ -260,10 +260,12 @@ make_interactive (lambda:move_block(-1),
 
 @interactive("Editor", "Source editor", menu="/Edit/Selection/Untabify")
 @with_save_excursion
-def untabify ():
-   """Replace tab characters in the current selection (or the whole buffer)
-      with the correct amount of spaces. The tab stops are every n columns
-      where n is specified by a preference in the Preferences dialog"""
+def untabify():
+   """
+Replace tab characters in the current selection (or the whole buffer)
+with the correct amount of spaces. The tab stops are every n columns
+where n is specified by a preference in the Preferences dialog.
+   """
 
    tab_width = 8
    buffer, start, end = get_selection_or_buffer ()
