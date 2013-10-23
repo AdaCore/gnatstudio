@@ -15,7 +15,7 @@ As with many other properties, colors are configurable in GPS:
 Select the menu `Edit->Preferences`. This will open a preferences dialog
 window.
 
-Select the `Editor->Fonts & Colors` page by clicking on the cross next to the
+Select the `Editor->Fonts & Colors` page by clicking on the triangle next to the
 item `Editor` and then selecting the `Fonts & Colors` item.
 
 As you go over the various lines and labels, you will notice that by holding
