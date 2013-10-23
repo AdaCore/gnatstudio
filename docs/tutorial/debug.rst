@@ -49,7 +49,7 @@ Use the `up` and `down` arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the red color
 for modified values; click on `Undo Changes` to cancel the modifications; then
-close the memory window by e.g. clicking on the `x` icon or pressing
+close the memory window by e.g. clicking on the `x` icon in the tab or pressing
 :kbd:`Ctrl-W`.
 
 In the call stack, go back to the `stack.push` frame.  Move the mouse
