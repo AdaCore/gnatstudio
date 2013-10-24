@@ -414,8 +414,7 @@ def sum_file_current_line_has_dpc(context):
         return context.has_dpc
 
 
-xml_spark = \
-    """<?xml version="1.0"?>
+xml_spark = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
 
 <SPARK>
@@ -1053,8 +1052,7 @@ xml_spark = \
 
 """
 
-xml_sparkclean = \
-    """<?xml version="1.0"?>
+xml_sparkclean = """<?xml version="1.0"?>
 <!-- The XML to add the sparkclean menus and options dialog has been    -->
 <!-- split out so that it can be enabled separately from the main       -->
 <!-- SPARK menus. This is so that it can be selectively enabled, based  -->
@@ -1138,8 +1136,7 @@ xml_sparkclean = \
 
 """
 
-b = \
-    """<?xml version="1.0"?>
+b = """<?xml version="1.0"?>
 <GPS>
   <doc_path>~</doc_path>
 
