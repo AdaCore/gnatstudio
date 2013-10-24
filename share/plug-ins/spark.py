@@ -1,339 +1,421 @@
-"""This file provides SPARK support in GPS.
+"""
+This file provides SPARK support in GPS.
 
 Copyright (c) 2004-2013 Altran UK Limited
 Copyright (c) 2005-2013 AdaCore
 """
 
-
-import os, os.path, re, string, tempfile
-import os_utils, text_utils
+import os
+import os.path
+import re
+import string
+import tempfile
+import os_utils
+import text_utils
 import re
 import GPS
 from gps_utils import *
 
-spark_module="spark.spark"
-spark_console="SPARK Output"
-spark_category="Examiner"
+spark_module = 'spark.spark'
+spark_console = 'SPARK Output'
+spark_category = 'Examiner'
 
 recompute_project = False
-focus_file = ""
+focus_file = ''
+
 
 def find_on_path(filename):
-  """
-  Looks through the system PATH to find the first directory containing
-  the given file. Returns the empty string if it cannot be found on
-  the PATH.
-  """
-  dirs = [x
-          for x in os.environ["PATH"].split(os.pathsep)
-          if os.path.isfile(os.path.join(x, filename))]
-  if len(dirs) > 0:
-    return dirs[0]
-  else:
-    return ""
+    """
+    Looks through the system PATH to find the first directory containing
+    the given file. Returns the empty string if it cannot be found on
+    the PATH.
+    ??? Consider using distutils.spawn.find_executable instead
+    """
 
-RIPOSTE_PATH = find_on_path("riposte.py")
+    dirs = [x for x in os.environ['PATH'].split(os.pathsep)
+            if os.path.isfile(os.path.join(x, filename))]
+    if len(dirs) > 0:
+        return dirs[0]
+    else:
+        return ''
 
-def on_execution_finished (hook, category, target_name, mode_name, status):
-  global recompute_project, focus_file
 
-  if category == "SPARK":
-    # Take into account new files and directories created by the Examiner,
-    # in particular in the project view.
-    if recompute_project:
-      recompute_project = False
-      GPS.Project.recompute ()
+RIPOSTE_PATH = find_on_path('riposte.py')
 
-    if focus_file != "":
-      buf = GPS.EditorBuffer.get (GPS.File (focus_file))
-      GPS.MDI.get_by_child (buf.current_view()).raise_window()
-      focus_file = ""
 
-def _spawn_spark_tool (cmd_name, prj_attr, input=None,
-                       show_cmd=False, ctx=None):
-  """
-  Spawn a SPARK tool. Get its switches from the project file (attribute
-  name specified as prj_attr)
-  If input is a string, it is sent to stdin for the process. Otherwise it
-  should be an instance of GPS.File, and is added to the command line. If it
-  is none, the current file is used
-  Returns the output of the process. This is run synchronously.
-  ??? This procedure is only used by format_selection. Consider simplifying it.
-  """
+def on_execution_finished(hook, category, target_name, mode_name, status):
+    global recompute_project, focus_file
 
-  result = ""
+    if category == 'SPARK':
 
-  if not ctx:
-     ctx = GPS.current_context()
+        # Take into account new files and directories created by the Examiner,
+        # in particular in the project view.
 
-  try:
-     sw = ctx.project().get_tool_switches_as_string (prj_attr)
-  except:
-     sw = GPS.Project.root().get_tool_switches_as_string (prj_attr)
+        if recompute_project:
+            recompute_project = False
+            GPS.Project.recompute()
 
-  cmd = cmd_name + " " + sw
+        if focus_file != '':
+            buf = GPS.EditorBuffer.get(GPS.File(focus_file))
+            GPS.MDI.get_by_child(buf.current_view()).raise_window()
+            focus_file = ''
 
-  if input == None:
-     input = ctx.file ()
 
-  if not isinstance (input, str):
-     GPS.MDI.save_all (GPS.Preference ("General-Auto-Save").get())
-     cmd = cmd + " " + input.name()
+def _spawn_spark_tool(
+    cmd_name, prj_attr, input=None, show_cmd=False, ctx=None):
+    """
+    Spawn a SPARK tool. Get its switches from the project file (attribute
+    name specified as prj_attr)
+    If input is a string, it is sent to stdin for the process. Otherwise it
+    should be an instance of GPS.File, and is added to the command line. If it
+    is none, the current file is used
+    Returns the output of the process. This is run synchronously.
+    ??? This procedure is only used by format_selection.
+    Consider simplifying it.
+    """
 
-  if show_cmd:
-     GPS.Console (spark_console, accept_input=False).clear ()
-     GPS.Console (spark_console).write (cmd + "\n")
+    result = ''
 
-  proc = GPS.Process (cmd, remote_server="Build_Server")
-  if isinstance (input, str):
-     proc.send (input, add_lf=True)
-     proc.send (chr (4), add_lf=False) # End of transmission
+    if not ctx:
+        ctx = GPS.current_context()
 
-  return proc.get_result ()
+    try:
+        sw = ctx.project().get_tool_switches_as_string(prj_attr)
+    except:
+        sw = GPS.Project.root().get_tool_switches_as_string(prj_attr)
 
-def examine_file (file):
-  """Examine current file through the SPARK Examiner. file is an instance
-     of GPS.File"""
-  global recompute_project
+    cmd = cmd_name + ' ' + sw
 
-  # decide whether project source files need to be recomputed after Examiner
-  # has run:
-  if '-vcg' in file.project().get_tool_switches_as_string ("Examiner"):
+    if input == None:
+        input = ctx.file()
+
+    if not isinstance(input, str):
+        GPS.MDI.save_all(GPS.Preference('General-Auto-Save').get())
+        cmd += ' ' + input.name()
+
+    if show_cmd:
+        GPS.Console(spark_console, accept_input=False).clear()
+        GPS.Console(spark_console).write(cmd + '\n')
+
+    proc = GPS.Process(cmd, remote_server='Build_Server')
+    if isinstance(input, str):
+        proc.send(input, add_lf=True)
+        proc.send(chr(4), add_lf=False)  # End of transmission
+
+    return proc.get_result()
+
+
+def examine_file(file):
+    """
+    Examine current file through the SPARK Examiner. file is an instance
+    of GPS.File.
+    """
+
+    global recompute_project
+
+    # decide whether project source files need to be recomputed after Examiner
+    # has run:
+
+    if '-vcg' in file.project().get_tool_switches_as_string('Examiner'):
+        recompute_project = True
+
+    GPS.BuildTarget('Examine SPARK File').execute(synchronous=False)
+
+
+def examine_metafile(file):
+    """
+    Examine metafile through the SPARK Examiner. file is an instance
+    of GPS.File
+    """
+
+    global recompute_project
+
+    # decide whether project source files need to be recomputed after Examiner
+    # has run:
+
+    if '-vcg' in file.project().get_tool_switches_as_string('Examiner'):
+        recompute_project = True
+
+    GPS.BuildTarget('Examine SPARK Meta File').execute(synchronous=False)
+
+
+def sparkmake():
+    GPS.BuildTarget('SPARKMake').execute(synchronous=False)
+
+
+def sparkclean_custom():
+    GPS.BuildTarget('SPARKClean Custom').execute(synchronous=False)
+
+
+def sparkclean_all():
+    GPS.BuildTarget('SPARKClean All').execute(synchronous=False)
+
+
+def format_file():
+    buffer = GPS.EditorBuffer.get()
+    GPS.BuildTarget('SPARKFormat').execute(synchronous=True)
+    GPS.EditorBuffer.get(file=buffer.file(), force=True)
+
+
+def format_selection():
+    """sparkformat the selection or the current line"""
+
+    ctx = GPS.current_context()
+    buffer = GPS.EditorBuffer.get()
+    start = buffer.selection_start().beginning_of_line()
+    end = buffer.selection_end().end_of_line() - 1
+    buffer.start_undo_group()
+    selection = buffer.get_chars(start, end)
+
+    # Go through a temporary file, instead of sending the contents on stdin,
+    # because in the latter case we are sometimes getting duplicate output (both
+    # the input and the output)
+
+    (fd, name) = tempfile.mkstemp(suffix='.ada')
+    os.write(fd, selection)
+    os.close(fd)
+
+    _spawn_spark_tool(cmd_name='sparkformat', prj_attr='SPARKFormat',
+                      show_cmd=False, ctx=ctx, input=GPS.File(name))
+
+    f = file(name)
+    text_utils.replace(start, end, f.read())
+    f.close()
+
+    buffer.finish_undo_group()
+    os.unlink(name)
+
+
+def riposte_vc(numeric=False):
+    ctx = GPS.current_context()
+    buffer = GPS.EditorBuffer.get()
+
+    current_line = buffer.selection_start().line()
+
+    # Ok, lets work out which VC we're in. Thankfully the format is very
+    # very simple.
+
+    vc_id = 0
+    in_vc = False
+    for (line_no, line) in enumerate(
+        x.strip() for x in buffer.get_chars().splitlines()):
+
+        if len(line) > 0 and ' ' not in line and line.endswith('.'):
+            vc_id += 1
+            in_vc = True
+        if in_vc and len(line) == 0:
+            in_vc = False
+        if line_no + 1 == current_line:
+            break
+
+    if not in_vc or vc_id == 0:
+        GPS.Console('Messages').write(
+            "Error: I can't work out which VC you are in.\n")
+        return
+
+    try:
+        basic_options = ctx.project().get_tool_switches_as_string('Riposte')
+    except:
+        basic_options = GPS.Project.root().get_tool_switches_as_string(
+            'Riposte')
+
+    the_file = buffer.file().name()
+
+    extra_args = basic_options + ' --vc=%u' % vc_id
+    if numeric:
+        extra_args += ' --numeric'
+    extra_args = ' '.join(extra_args.split())
+
+    GPS.BuildTarget('Riposte').execute(
+        synchronous=False, extra_args=extra_args)
+
+
+def simplify_file(file):
+    """
+    Simplify current file through the SPARK simplifier. file is an instance
+    of GPS.File.
+    """
+
+    global recompute_project, focus_file
+
     recompute_project = True
-  GPS.BuildTarget ("Examine SPARK File").execute(synchronous=False)
+    focus_file = file.name().replace('.vcg', '.siv')
+    GPS.BuildTarget('Simplifier').execute(synchronous=False)
 
-def examine_metafile (file):
-  """Examine metafile through the SPARK Examiner. file is an instance
-     of GPS.File"""
-  global recompute_project
 
-  # decide whether project source files need to be recomputed after Examiner
-  # has run:
-  if '-vcg' in file.project().get_tool_switches_as_string ("Examiner"):
-    recompute_project = True
-  GPS.BuildTarget ("Examine SPARK Meta File").execute(synchronous=False)
+def victor_file(file):
+    """Apply victor to the current file. file is an instance of GPS.File"""
 
-def sparkmake ():
-  GPS.BuildTarget ("SPARKMake").execute(synchronous=False)
+    global focus_file
 
-def sparkclean_custom ():
-  GPS.BuildTarget ("SPARKClean Custom").execute(synchronous=False)
+    focus_file = file.name().replace('.vcg', '.vct').replace('.siv', '.vct')
+    GPS.BuildTarget('Victor').execute(synchronous=False)
 
-def sparkclean_all ():
-  GPS.BuildTarget ("SPARKClean All").execute(synchronous=False)
-
-def format_file ():
-  buffer = GPS.EditorBuffer.get ()
-  GPS.BuildTarget ("SPARKFormat").execute(synchronous=True)
-  GPS.EditorBuffer.get (file=buffer.file(), force=True)
-
-def format_selection ():
-  """sparkformat the selection or the current line"""
-  ctx = GPS.current_context()
-  buffer = GPS.EditorBuffer.get ()
-  start = buffer.selection_start ().beginning_of_line ()
-  end   = buffer.selection_end ().end_of_line () - 1
-  buffer.start_undo_group ()
-  selection = buffer.get_chars (start, end)
-
-  # Go through a temporary file, instead of sending the contents on stdin,
-  # because in the latter case we are sometimes getting duplicate output
-  # (both the input and the output)
-
-  fd, name = tempfile.mkstemp (suffix=".ada")
-  os.write (fd, selection)
-  os.close (fd)
-
-  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat",
-                     show_cmd=False, ctx=ctx, input=GPS.File (name))
-
-  f = file (name)
-  text_utils.replace (start, end, f.read())
-  f.close ()
-
-  buffer.finish_undo_group ()
-  os.unlink (name)
-
-def riposte_vc(numeric = False):
-  ctx = GPS.current_context()
-  buffer = GPS.EditorBuffer.get()
-
-  current_line = buffer.selection_start().line()
-
-  # Ok, lets work out which VC we're in. Thankfully the format is very
-  # very simple.
-  vc_id = 0
-  in_vc = False
-  for line_no, line in enumerate(x.strip() for x in buffer.get_chars().splitlines()):
-    if len(line) > 0 and " " not in line and line.endswith("."):
-      vc_id += 1
-      in_vc = True
-    if in_vc and len(line) == 0:
-      in_vc = False
-    if line_no + 1 == current_line:
-      break
-
-  if not in_vc or vc_id == 0:
-    GPS.Console("Messages").write("Error: I can't work out which VC you are in.\n")
-    return
-
-  try:
-     basic_options = ctx.project().get_tool_switches_as_string("Riposte")
-  except:
-     basic_options = GPS.Project.root().get_tool_switches_as_string("Riposte")
-
-  the_file = buffer.file().name()
-
-  extra_args = basic_options + " --vc=%u" % vc_id
-  if numeric:
-    extra_args += " --numeric"
-  extra_args = " ".join(extra_args.split())
-
-  GPS.BuildTarget("Riposte").execute(synchronous=False, extra_args=extra_args)
-
-def simplify_file (file):
-  """Simplify current file through the SPARK simplifier. file is an instance
-     of GPS.File"""
-  global recompute_project, focus_file
-
-  recompute_project = True
-  focus_file = file.name().replace(".vcg", ".siv")
-  GPS.BuildTarget ("Simplifier").execute(synchronous=False)
-
-def victor_file (file):
-  """Apply victor to the current file. file is an instance of GPS.File"""
-  global focus_file
-
-  focus_file = file.name().replace(".vcg", ".vct").replace(".siv", ".vct")
-  GPS.BuildTarget ("Victor").execute(synchronous=False)
 
 def riposte_file(file):
-  global focus_file
+    global focus_file
 
-  try:
-     basic_options = GPS.current_context().project().get_tool_switches_as_string("Riposte")
-  except:
-     basic_options = GPS.Project.root().get_tool_switches_as_string("Riposte")
+    try:
+        prj = GPS.current_context().project()
+    except:
+        prj = GPS.Project.root()
 
-  focus_file = file.name().replace(".vcg", ".rce").replace(".siv", ".rce")
-  GPS.BuildTarget("Riposte").execute(synchronous=False, extra_args=basic_options)
+    basic_options = prj.get_tool_switches_as_string('Riposte')
+    focus_file = file.name().replace('.vcg', '.rce').replace('.siv', '.rce')
+    GPS.BuildTarget('Riposte').execute(
+        synchronous=False, extra_args=basic_options)
 
-def zombiescope_file (file):
-  """Run ZombieScope on file, where file is an instance of GPS.File"""
-  global focus_file
 
-  focus_file = file.name().replace(".dpc", ".sdp")
-  GPS.BuildTarget ("ZombieScope").execute(synchronous=False)
+def zombiescope_file(file):
+    """Run ZombieScope on file, where file is an instance of GPS.File"""
 
-def sparksimp_project ():
-  """Simplify all files in the project"""
-  global recompute_project
+    global focus_file
+    focus_file = file.name().replace('.dpc', '.sdp')
+    GPS.BuildTarget('ZombieScope').execute(synchronous=False)
 
-  recompute_project = True
-  GPS.BuildTarget ("SPARKSimp").execute(synchronous=False)
+
+def sparksimp_project():
+    """Simplify all files in the project"""
+
+    global recompute_project
+    recompute_project = True
+    GPS.BuildTarget('SPARKSimp').execute(synchronous=False)
+
 
 def show_pogs_file():
-  """Show the POGS file of the current project"""
-  global recompute_project, focus_file
-  recompute_project = True
+    """Show the POGS file of the current project"""
 
-  sw = GPS.Project.root().get_tool_switches_as_string ("pogs")
-  summary_file_option = re.search("-o=[^ ]+", sw)
+    global recompute_project, focus_file
+    recompute_project = True
 
-  if not summary_file_option:
-    # If the user has not specified an output file then the summary file
-    # is set to <SPARK'Output_Dir>/<project_name>.sum
+    sw = GPS.Project.root().get_tool_switches_as_string('pogs')
+    summary_file_option = re.search('-o=[^ ]+', sw)
 
-    prj = GPS.Project.root().file().name()
-    output_dir = GPS.Project.root().get_attribute_as_string("output_dir", "SPARK")
-    if output_dir == "":
-      output_dir = os.path.dirname(prj)
+    if not summary_file_option:
 
-    focus_file = output_dir + '/' + re.sub("\.gpr$", ".sum", os.path.basename(prj))
-  else:
-    focus_file = \
-      summary_file_option.string[summary_file_option.start():summary_file_option.end()].lstrip("-o=")
+        # If the user has not specified an output file then the summary file is
+        # set to <SPARK'Output_Dir>/<project_name>.sum
 
-  GPS.BuildTarget ("POGS").execute (synchronous=False)
+        prj = GPS.Project.root().file().name()
+        output_dir = GPS.Project.root().get_attribute_as_string(
+            'output_dir', 'SPARK')
 
-def do_pogs_xref (context, siv, dpc, zlg):
-  """Jump to the path number referenced in the current line of the POGS output"""
-  editor = GPS.EditorBuffer.get()
-  curs = editor.current_view().cursor()
-  line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-  number = re.search ("^\|\s*(\d+)", line).group (1)  # path number
+        if output_dir == '':
+            output_dir = os.path.dirname(prj)
 
-  if dpc:
-     (frm,to) = curs.search ("^File (.*)\.dpc$", backward=True, regexp=True)
-     proof_file=editor.get_chars (frm+5, to-1)
-     if zlg:
-        proof_file = proof_file.replace (".dpc", ".zlg")
-  else:
-     (frm,to) = curs.search ("^File (.*)\.vcg$", backward=True, regexp=True)
-     proof_file=editor.get_chars (frm+5, to-1)
-     if siv:
-        proof_file = proof_file.replace (".vcg", ".siv")
+        focus_file = os.path.join(
+            output_dir,
+            re.sub("\.gpr$", '.sum', os.path.basename(prj)))
+    else:
+        focus_file = summary_file_option.string[
+            summary_file_option.start():summary_file_option.end()].lstrip(
+                '-o=')
 
-  f = GPS.EditorBuffer.get (GPS.File (proof_file))
-  loc = GPS.EditorLocation (f, 1, 1)
-  if zlg:
-     (frm,to) = loc.search ("^@@@@@@@@@@  VC: (procedure|function)_\S+_" + number + "\.", regexp=True)
-  else:
-     (frm,to) = loc.search ("^(procedure|function|package_spec|package_body)_\S+_" + number + "\.$", regexp=True)
+    GPS.BuildTarget('POGS').execute(synchronous=False)
 
-  GPS.MDI.get_by_child (f.current_view()).raise_window()
 
-  # Goto the VC or DPC and then scroll the window down so the selected VC or DPC is not at the
-  # bottom of the page.
+def do_pogs_xref(context, siv, dpc, zlg):
+    """
+    Jump to the path number referenced in the current line of the POGS output
+    """
 
-  f.current_view().goto (frm)
-  cursor = f.current_view().cursor()
-  f.current_view().center(cursor)
+    editor = GPS.EditorBuffer.get()
+    curs = editor.current_view().cursor()
+    line = editor.get_chars(curs.beginning_of_line(), curs.end_of_line())
+    number = re.search("^\|\s*(\d+)", line).group(1)  # path number
 
-def pogs_xref (context):
-  do_pogs_xref (context, siv=False, dpc=False, zlg=False)
-def pogs_siv_xref (context):
-  do_pogs_xref (context, siv=True, dpc=False, zlg=False)
-def pogs_dpc_xref (context):
-  do_pogs_xref (context, siv=False, dpc=True, zlg=False)
-def pogs_zlg_xref (context):
-  do_pogs_xref (context, siv=False, dpc=True, zlg=True)
+    if dpc:
+        (frm, to) = curs.search("^File (.*)\.dpc$", backward=True, regexp=True)
+        proof_file = editor.get_chars(frm + 5, to - 1)
+        if zlg:
+            proof_file = proof_file.replace('.dpc', '.zlg')
 
-def sum_file_current_line_has_vc (context):
-  """Return TRUE if the current line of the POGS output references a VC"""
-  try:
-     # Avoid doing the work several times for all entries in the menu
-     return context.has_vc
-  except:
-     try:
-        if os.path.splitext (context.file().name())[1] != ".sum":
-           return False
-     except:
-        return False  # context.file() does not exist
-     editor = GPS.EditorBuffer.get()
-     curs = editor.current_view().cursor()
-     line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_vc = re.search ("\|   [SUEIXPVRCMF].   \|", line) != None
-     return context.has_vc
+    else:
+        (frm, to) = curs.search("^File (.*)\.vcg$", backward=True, regexp=True)
+        proof_file = editor.get_chars(frm + 5, to - 1)
+        if siv:
+            proof_file = proof_file.replace('.vcg', '.siv')
 
-def sum_file_current_line_has_dpc (context):
-  """Return TRUE if the current line of the POGS output references a DPC"""
-  try:
-     # Avoid doing the work several times for all entries in the menu
-     return context.has_dpc
-  except:
-     try:
-        if os.path.splitext (context.file().name())[1] != ".sum":
-           return False
-     except:
-        return False  # context.file() does not exist
-     editor = GPS.EditorBuffer.get()
-     curs = editor.current_view().cursor()
-     line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_dpc = re.search ("\|   .[SUDL]   \|", line) != None
-     return context.has_dpc
+    f = GPS.EditorBuffer.get(GPS.File(proof_file))
+    loc = GPS.EditorLocation(f, 1, 1)
+    if zlg:
+        (frm, to) = loc.search(
+            "^@@@@@@@@@@  VC: (procedure|function)_\S+_%s\." % number,
+            regexp=True)
+    else:
+        (frm, to) = loc.search(
+          "^(procedure|function|package_spec|package_body)_\S+_%s\.$" % number,
+          regexp=True)
 
-xml_spark = """<?xml version="1.0"?>
+    # Goto the VC or DPC and then scroll the window down so the selected VC or
+    # DPC is not at the bottom of the page.
+
+    view = f.current_view()
+    GPS.MDI.get_by_child(view).raise_window()
+    view.goto(frm)
+    view.center(view.cursor())
+
+
+def pogs_xref(context):
+    do_pogs_xref(context, siv=False, dpc=False, zlg=False)
+
+
+def pogs_siv_xref(context):
+    do_pogs_xref(context, siv=True, dpc=False, zlg=False)
+
+
+def pogs_dpc_xref(context):
+    do_pogs_xref(context, siv=False, dpc=True, zlg=False)
+
+
+def pogs_zlg_xref(context):
+    do_pogs_xref(context, siv=False, dpc=True, zlg=True)
+
+
+def sum_file_current_line_has_vc(context):
+    """Return TRUE if the current line of the POGS output references a VC"""
+
+    try:
+        # Avoid doing the work several times for all entries in the menu
+        return context.has_vc
+    except:
+        try:
+            if os.path.splitext(context.file().name())[1] != '.sum':
+                return False
+        except:
+            return False  # context.file() does not exist
+
+        editor = GPS.EditorBuffer.get()
+        curs = editor.current_view().cursor()
+        line = editor.get_chars(curs.beginning_of_line(),
+                                curs.end_of_line())
+        context.has_vc = re.search("\|   [SUEIXPVRCMF].   \|", line) != None
+        return context.has_vc
+
+
+def sum_file_current_line_has_dpc(context):
+    """Return TRUE if the current line of the POGS output references a DPC"""
+
+    try:
+        # Avoid doing the work several times for all entries in the menu
+        return context.has_dpc
+    except:
+        try:
+            if os.path.splitext(context.file().name())[1] != '.sum':
+                return False
+        except:
+            return False  # context.file() does not exist
+
+        editor = GPS.EditorBuffer.get()
+        curs = editor.current_view().cursor()
+        line = editor.get_chars(
+            curs.beginning_of_line(), curs.end_of_line())
+        context.has_dpc = re.search("\|   .[SUDL]   \|", line) != None
+        return context.has_dpc
+
+
+xml_spark = \
+    """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
 
 <SPARK>
@@ -750,29 +832,39 @@ xml_spark = """<?xml version="1.0"?>
 
   <action name="Examine file" category="Spark" output="none">
      <filter language="Ada"/>
-     <shell lang="python">"""+spark_module+""".examine_file (GPS.File ("%F"))</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.examine_file (GPS.File ("%F"))</shell>
   </action>
 
   <action name="Examine metafile" category="Spark" output="none">
      <filter language="Metafile" />
-     <shell lang="python">"""+spark_module+""".examine_metafile (GPS.File ("%F"))</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.examine_metafile (GPS.File ("%F"))</shell>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
     <filter language="VCG" />
-     <shell lang="python">"""+spark_module+""".simplify_file (GPS.File("%F"))</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.simplify_file (GPS.File("%F"))</shell>
   </action>
 
   <action name="Victor file" category="Spark" output="none">
     <filter language="VCG" />
     <filter language="SIV" />
-     <shell lang="python">"""+spark_module+""".victor_file (GPS.File("%F"))</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.victor_file (GPS.File("%F"))</shell>
   </action>
 
   <action name="Riposte entire file" category="Spark" output="none">
      <filter language="VCG" />
      <filter language="SIV" />
-     <shell lang="python">"""+spark_module+""".riposte_file (GPS.File("%F"))</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.riposte_file (GPS.File("%F"))</shell>
   </action>
 
   <action name="Riposte this VC" output="none">
@@ -784,7 +876,9 @@ xml_spark = """<?xml version="1.0"?>
         <filter language="SIV" />
         <filter id="Source editor" />
      </filter_and>
-     <shell lang="python">"""+spark_module+""".riposte_vc()</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.riposte_vc()</shell>
   </action>
 
   <action name="Riposte this VC (Numeric)" output="none">
@@ -796,7 +890,9 @@ xml_spark = """<?xml version="1.0"?>
         <filter language="SIV" />
         <filter id="Source editor" />
      </filter_and>
-     <shell lang="python">"""+spark_module+""".riposte_vc(numeric=True)</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.riposte_vc(numeric=True)</shell>
   </action>
 
   <action name="ZombieScope file" category="Spark" output="none">
@@ -808,7 +904,9 @@ xml_spark = """<?xml version="1.0"?>
      <filter_and>
         <filter language="Ada" />
      </filter_and>
-     <shell lang="python">"""+spark_module+""".format_file ()</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.format_file ()</shell>
   </action>
 
   <action name="SPARKFormat selection" category="Spark" output="none">
@@ -816,20 +914,28 @@ xml_spark = """<?xml version="1.0"?>
         <filter language="Ada" />
         <filter id="Source editor" />
      </filter_and>
-     <shell lang="python">"""+spark_module+""".format_selection ()</shell>
+     <shell lang="python">""" \
+    + spark_module \
+    + """.format_selection ()</shell>
   </action>
 
   <action name="Launch SPARKSimp" category="Spark" output="none">
-    <shell lang="python">"""+spark_module+""".sparksimp_project ()</shell>
+    <shell lang="python">""" \
+    + spark_module \
+    + """.sparksimp_project ()</shell>
   </action>
 
   <action name="Launch POGS" category="Spark" output="none">
-    <shell lang="python">"""+spark_module+""".show_pogs_file()</shell>
+    <shell lang="python">""" \
+    + spark_module \
+    + """.show_pogs_file()</shell>
   </action>
 
   <action name="Launch SPARKMake" category="Spark" output="none">
     <filter language="Ada" />
-    <shell lang="python">"""+spark_module+""".sparkmake ()</shell>
+    <shell lang="python">""" \
+    + spark_module \
+    + """.sparkmake ()</shell>
   </action>
 
  <!-- Set up SPARK menu -->
@@ -947,7 +1053,8 @@ xml_spark = """<?xml version="1.0"?>
 
 """
 
-xml_sparkclean = """<?xml version="1.0"?>
+xml_sparkclean = \
+    """<?xml version="1.0"?>
 <!-- The XML to add the sparkclean menus and options dialog has been    -->
 <!-- split out so that it can be enabled separately from the main       -->
 <!-- SPARK menus. This is so that it can be selectively enabled, based  -->
@@ -963,7 +1070,9 @@ xml_sparkclean = """<?xml version="1.0"?>
 
   <action name="Launch SPARKClean All" category="Spark" output="none">
     <filter language="Ada" />
-    <shell lang="python">"""+spark_module+""".sparkclean_all ()</shell>
+    <shell lang="python">""" \
+    + spark_module \
+    + """.sparkclean_all ()</shell>
   </action>
 
   <submenu before="Window">
@@ -979,7 +1088,9 @@ xml_sparkclean = """<?xml version="1.0"?>
 
   <action name="Launch SPARKClean Custom" category="Spark" output="none">
     <filter language="Ada" />
-    <shell lang="python">"""+spark_module+""".sparkclean_custom ()</shell>
+    <shell lang="python">""" \
+    + spark_module \
+    + """.sparkclean_custom ()</shell>
   </action>
 
   <submenu before="Window">
@@ -1027,7 +1138,8 @@ xml_sparkclean = """<?xml version="1.0"?>
 
 """
 
-b = """<?xml version="1.0"?>
+b = \
+    """<?xml version="1.0"?>
 <GPS>
   <doc_path>~</doc_path>
 
@@ -1546,7 +1658,9 @@ b = """<?xml version="1.0"?>
      <server>Tools_Server</server>
      <command-line>
         <arg>python</arg>
-        <arg>""" + os.path.join(RIPOSTE_PATH, "riposte.py") + """</arg>
+        <arg>""" \
+    + os.path.join(RIPOSTE_PATH, 'riposte.py') \
+    + """</arg>
         <arg>%F</arg>
      </command-line>
   </target>
@@ -1616,28 +1730,24 @@ b = """<?xml version="1.0"?>
 
 """
 
-spark = os_utils.locate_exec_on_path ("spark")
-if spark != "":
-  GPS.parse_xml(xml_spark)
-  GPS.parse_xml(xml_sparkclean)
-  sparkdocdir = os.path.dirname(spark)+os.sep+os.pardir+os.sep+"docs"+os.sep+"HTML"
-  b = b.replace('~', sparkdocdir)
-  GPS.parse_xml(b)
-  GPS.Hook ("compilation_finished").add (on_execution_finished)
+spark = os_utils.locate_exec_on_path('spark')
+if spark != '':
+    GPS.parse_xml(xml_spark)
+    GPS.parse_xml(xml_sparkclean)
+    sparkdocdir = os.path.dirname(spark) + os.sep + os.pardir + os.sep \
+        + 'docs' + os.sep + 'HTML'
+    b = b.replace('~', sparkdocdir)
+    GPS.parse_xml(b)
+    GPS.Hook('compilation_finished').add(on_execution_finished)
 
-  GPS.Contextual("SPARK/Show VC").create(
-    on_activate = pogs_xref,
-    filter      = sum_file_current_line_has_vc)
+    GPS.Contextual('SPARK/Show VC').create(
+        on_activate=pogs_xref, filter=sum_file_current_line_has_vc)
 
-  GPS.Contextual("SPARK/Show Simplified VC").create(
-    on_activate = pogs_siv_xref,
-    filter      = sum_file_current_line_has_vc)
+    GPS.Contextual('SPARK/Show Simplified VC').create(
+        on_activate=pogs_siv_xref, filter=sum_file_current_line_has_vc)
 
-  GPS.Contextual("SPARK/Show DPC").create(
-    on_activate = pogs_dpc_xref,
-    filter      = sum_file_current_line_has_dpc)
+    GPS.Contextual('SPARK/Show DPC').create(
+        on_activate=pogs_dpc_xref, filter=sum_file_current_line_has_dpc)
 
-  GPS.Contextual("SPARK/Show ZLG").create(
-    on_activate = pogs_zlg_xref,
-    filter      = sum_file_current_line_has_dpc)
-
+    GPS.Contextual('SPARK/Show ZLG').create(
+        on_activate=pogs_zlg_xref, filter=sum_file_current_line_has_dpc)
