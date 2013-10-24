@@ -26,7 +26,7 @@ Change the background color of the `Keywords` by clicking on the last button,
 at the right of the `Keywords` line.
 
 Choose a color, e.g a light green. When you're done with the color selection,
-click on `OK` in the color selection dialog.
+click on `Select` in the color selection dialog.
 
 After selecting a color, look at the effects in the source editor. If
 you like the new display, click on `OK` to confirm the changes, otherwise
