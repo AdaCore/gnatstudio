@@ -6,8 +6,8 @@ Go on the line 38 of sdc.adb. You can see that there is a null instruction for
 the case of Stack.Overflow. We are going to add some code here, using the code
 assist capabilities.
 
-Type :kbd:`enter` to create a new line, and then `Scr`, and hit
-:kbd:`Ctrl+Space`.  A completion popup will be displayed, showing all the
+Type :kbd:`enter` to create a new line, and then type `Scr`.
+A completion popup will be displayed, showing all the
 entities of the project begining with `Scr`. Double click on `Screen_Output`:
 the code is automatically completed in the editor. Then add a dot in your code.
 The completion popup will be automatically triggered, and will offer you to
