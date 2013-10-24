@@ -28,6 +28,6 @@ at the right of the `Keywords` line.
 Choose a color, e.g a light green. When you're done with the color selection,
 click on `OK` in the color selection dialog.
 
-Click on the `Apply` button and look at the effects in the source editor. If
+After selecting a color, look at the effects in the source editor. If
 you like the new display, click on `OK` to confirm the changes, otherwise
 clicking on `Cancel` will revert to the previous color.
