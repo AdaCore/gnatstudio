@@ -868,8 +868,13 @@ package body Project_Viewers is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Open_File_Editor
-        (Kernel, Project_Path (Project_Information (Context.Context)));
+      if Has_Project_Information (Context.Context) then
+         Open_File_Editor
+           (Kernel, Project_Path (Project_Information (Context.Context)));
+      else
+         Open_File_Editor
+           (Kernel, Kernel.Registry.Tree.Root_Project.Project_Path);
+      end if;
       return Success;
    end Execute;
 
