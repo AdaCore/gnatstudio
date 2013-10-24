@@ -2448,6 +2448,7 @@ package body Src_Editor_Module.Editors is
                   Xalign        => 0.5,
                   Yalign        => 0.5);
                Delete_Mark (Get_Buffer (This.Contents.Box), M);
+               Set_Position_Set_Explicitely (Get_View (This.Contents.Box));
             end;
          else
             raise Editor_Exception with -"Invalid location";
