@@ -859,9 +859,6 @@ package body Src_Editor_View is
             Scroll_To_Cursor_Location (V, Center);
          end if;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Size_Allocated;
 
    ----------------------------
