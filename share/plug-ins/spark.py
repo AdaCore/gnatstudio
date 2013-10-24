@@ -1619,8 +1619,7 @@ b = """<?xml version="1.0"?>
 spark = os_utils.locate_exec_on_path ("spark")
 if spark != "":
   GPS.parse_xml(xml_spark)
-  if GPS.version() >= "5.1.1":
-    GPS.parse_xml(xml_sparkclean)
+  GPS.parse_xml(xml_sparkclean)
   sparkdocdir = os.path.dirname(spark)+os.sep+os.pardir+os.sep+"docs"+os.sep+"HTML"
   b = b.replace('~', sparkdocdir)
   GPS.parse_xml(b)
