@@ -210,6 +210,7 @@ package Build_Command_Utils is
       Force_File : Virtual_File;
       Main       : Virtual_File;
       Subdir     : Filesystem_String;
+      Quiet      : Boolean;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result;
    --  Expand all macros contained in CL using the GPS macro language.
