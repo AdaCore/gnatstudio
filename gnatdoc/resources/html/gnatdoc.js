@@ -37,7 +37,19 @@ function buildText(root, data)
 
             case 'span':
                 element = document.createElement('span');
-                element.appendChild(document.createTextNode(data[index].text));
+
+                if (typeof data[index].href !== 'undefined')
+                {
+                    var href = document.createElement('a');
+                    href.setAttribute('href', '../' + data[index].href);
+                    href.appendChild(document.createTextNode(data[index].text));
+                    element.appendChild(href);
+
+                } else
+                {
+                    element.appendChild(
+                      document.createTextNode(data[index].text));
+                }
 
                 if (typeof data[index].class !== 'undefined')
                 {
@@ -91,6 +103,7 @@ function buildDocumentationPage()
         pane.appendChild(header);
 
         table = document.createElement('table');
+        table.setAttribute('class', 'entities');
         tbody = document.createElement('tbody');
 
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++)
@@ -100,8 +113,13 @@ function buildDocumentationPage()
             var cell;
 
             row = document.createElement('tr');
-            cell = document.createElement('td');
-            cell.appendChild(document.createTextNode(entity.label));
+            cell = document.createElement('th');
+            href = document.createElement('a');
+            href.setAttribute(
+              'href',
+              '#L' + entity.line.toString() + 'C' + entity.column.toString());
+            href.appendChild(document.createTextNode(entity.label));
+            cell.appendChild(href);
             row.appendChild(cell);
             cell = document.createElement('td');
             buildText(cell, entity.summary);
@@ -133,6 +151,9 @@ function buildDocumentationPage()
             var entity = entity_set.entities[eindex];
 
             header = document.createElement('h3');
+            header.setAttribute(
+              'id',
+              'L' + entity.line.toString() + 'C' + entity.column.toString());
             text = document.createTextNode(entity.label);
             header.appendChild(text);
             pane.appendChild(header);
@@ -199,6 +220,22 @@ function displaySource()
 function onDocumentationLoad()
 {
     buildDocumentationPage();
+
+    /* Scroll view to requested element. */
+
+    var url = document.URL;
+    var index = url.indexOf('#');
+
+    if (index >= 0)
+    {
+        var id = url.slice(index + 1, url.length);
+        var element = document.getElementById(id);
+
+        if (element)
+        {
+            element.scrollIntoView();
+        }
+    }
 }
 
 function onLoad()

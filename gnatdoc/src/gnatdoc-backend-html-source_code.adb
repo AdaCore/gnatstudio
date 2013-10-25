@@ -15,16 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings;             use Ada.Strings;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
-with GNATCOLL.JSON;     use GNATCOLL.JSON;
+with GNATCOLL.JSON;           use GNATCOLL.JSON;
 
 package body GNATdoc.Backend.HTML.Source_Code is
 
    procedure Append_Text_Object
      (Self  : in out Source_Code_Printer'Class;
       Class : String;
-      Text  : String);
+      Text  : String;
+      Href  : String := "");
 
    ----------------------------
    -- Annotated_Comment_Text --
@@ -53,7 +56,8 @@ package body GNATdoc.Backend.HTML.Source_Code is
    procedure Append_Text_Object
      (Self  : in out Source_Code_Printer'Class;
       Class : String;
-      Text  : String)
+      Text  : String;
+      Href  : String := "")
    is
       Slice_First : Natural := Text'First;
       Slice_Last  : Natural;
@@ -70,6 +74,11 @@ package body GNATdoc.Backend.HTML.Source_Code is
                Object.Set_Field ("kind", "span");
                Object.Set_Field ("class", Class);
                Object.Set_Field ("text", Text (Slice_First .. Slice_Last - 1));
+
+               if Href /= "" then
+                  Object.Set_Field ("href", Href);
+               end if;
+
                Append (Self.Line, Object);
             end if;
 
@@ -86,6 +95,11 @@ package body GNATdoc.Backend.HTML.Source_Code is
             Object.Set_Field ("kind", "span");
             Object.Set_Field ("class", Class);
             Object.Set_Field ("text", Text (Slice_First .. Text'Last));
+
+            if Href /= "" then
+               Object.Set_Field ("href", Href);
+            end if;
+
             Append (Self.Line, Object);
 
             Slice_Last := Text'Last;
@@ -211,9 +225,31 @@ package body GNATdoc.Backend.HTML.Source_Code is
    is
       pragma Unreferenced (Continue);
 
+      Entity : constant Entity_Id :=
+        Find_Unique_Entity
+          ((Self.File, First.Line, Visible_Column (First.Column)));
+      Parent : Entity_Id := Entity;
+
    begin
-      Self.Append_Text_Object
-        ("identifier", Self.Buffer (First.Index .. Last.Index));
+      if No (Entity) then
+         Self.Append_Text_Object
+           ("identifier", Self.Buffer (First.Index .. Last.Index));
+
+      else
+         while Get_Kind (Parent) /= E_Package loop
+            Parent := Get_Scope (Parent);
+         end loop;
+
+         Self.Append_Text_Object
+           ("identifier",
+            Self.Buffer (First.Index .. Last.Index),
+            "docs/"
+            & To_Lower (Get_Full_Name (Parent))
+            & ".html#L"
+            & Trim (Natural'Image (First.Line), Both)
+            & "C"
+            & Trim (Natural'Image (First.Column), Both));
+      end if;
    end Identifier_Text;
 
    ------------------
@@ -293,6 +329,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
    not overriding procedure Start_File
      (Self       : in out Source_Code_Printer;
+      File       : GNATCOLL.VFS.Virtual_File;
       Buffer     : not null GNAT.Strings.String_Access;
       First_Line : Positive;
       Continue   : in out Boolean)
@@ -300,7 +337,8 @@ package body GNATdoc.Backend.HTML.Source_Code is
       pragma Unreferenced (Continue);
 
    begin
-      Self.Buffer := Buffer;
+      Self.File         := File;
+      Self.Buffer       := Buffer;
       Self.Current_Line := First_Line;
    end Start_File;
 

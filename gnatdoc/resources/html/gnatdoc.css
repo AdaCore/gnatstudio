@@ -38,3 +38,7 @@ table.code td {
     font-family: monospace;
     white-space: pre;
 }
+
+table.entities tr {
+    text-align: left;
+}

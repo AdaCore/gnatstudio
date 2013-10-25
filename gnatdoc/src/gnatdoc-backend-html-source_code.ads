@@ -25,6 +25,7 @@ private package GNATdoc.Backend.HTML.Source_Code is
 
    not overriding procedure Start_File
      (Self       : in out Source_Code_Printer;
+      File       : GNATCOLL.VFS.Virtual_File;
       Buffer     : not null GNAT.Strings.String_Access;
       First_Line : Positive;
       Continue   : in out Boolean);
@@ -133,6 +134,7 @@ private package GNATdoc.Backend.HTML.Source_Code is
 private
 
    type Source_Code_Printer is tagged limited record
+      File         : GNATCOLL.VFS.Virtual_File;
       Buffer       : GNAT.Strings.String_Access;
       Result       : GNATCOLL.JSON.JSON_Array;
       Line         : GNATCOLL.JSON.JSON_Array;

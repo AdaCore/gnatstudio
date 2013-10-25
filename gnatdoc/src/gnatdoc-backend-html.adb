@@ -260,7 +260,7 @@ package body GNATdoc.Backend.HTML is
       Lang := Get_Language_From_File (Self.Context.Lang_Handler, File);
 
       Sloc_Last := (First_Line, 0, 0);
-      Printer.Start_File (Buffer, First_Line, Continue);
+      Printer.Start_File (File, Buffer, First_Line, Continue);
 
       if Continue then
          Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
@@ -387,7 +387,7 @@ package body GNATdoc.Backend.HTML is
          Lang      := Get_Language_From_File (Self.Context.Lang_Handler, File);
          Buffer    := File.Read_File;
          Sloc_Last := (0, 0, 0);
-         Printer.Start_File (Buffer, 1, Continue);
+         Printer.Start_File (File, Buffer, 1, Continue);
 
          if Continue then
             Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
@@ -540,6 +540,9 @@ package body GNATdoc.Backend.HTML is
 
             Entity_Entry := Create_Object;
             Entity_Entry.Set_Field ("label", Get_Short_Name (E));
+            Entity_Entry.Set_Field ("line", LL.Get_Location (E).Line);
+            Entity_Entry.Set_Field
+              ("column", Integer (LL.Get_Location (E).Column));
             Entity_Entry.Set_Field ("summary", Summary);
             Entity_Entry.Set_Field ("description", Description);
             Append (Aux, Entity_Entry);
