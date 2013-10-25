@@ -8,7 +8,17 @@
     <script src="gnatdoc.js"></script>
   </head>
   <body onload="onLoad()">
-    <div id="tocView"></div>
-    <iframe id="contentView" name="contentView"></iframe>
+    <table id="frameSet">
+      <tbody>
+        <tr>
+          <td id="toc">
+            <div id="tocView"></div>
+          </td>
+	  <td id="content">
+            <iframe id="contentView" name="contentView"></iframe>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </body>
 </html>
