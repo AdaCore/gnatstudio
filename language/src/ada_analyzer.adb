@@ -1943,7 +1943,7 @@ package body Ada_Analyzer is
          Do_Push  : out Boolean;
          Finish   : out Boolean)
       is
-         Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
+         Top_Token     : Token_Stack.Generic_Type_Access;
          Start_Of_Line : Natural;
          Index_Next    : Natural;
          Tmp_Index     : Natural;
@@ -1971,14 +1971,6 @@ package body Ada_Analyzer is
          Do_Push := False;
          Do_Pop := 0;
          Finish := False;
-         Temp := (others => <>);
-
-         Temp.Token       := Reserved;
-         Start_Of_Line    := Line_Start (Buffer, Prec);
-         Temp.Sloc.Line   := Line_Count;
-         Temp.Sloc.Column := Prec - Start_Of_Line + 1;
-         Temp.Sloc.Index  := Prec;
-         Temp.Visibility  := Top_Token.Visibility_Section;
 
          if Reserved = Tok_Is and then Aspect_Clause then
             Finish_Aspect_Clause (Prec, Line_Count, Done => Finish);
@@ -1987,6 +1979,15 @@ package body Ada_Analyzer is
                return;
             end if;
          end if;
+
+         Top_Token := Top (Tokens);
+         Temp := (others => <>);
+         Temp.Token       := Reserved;
+         Start_Of_Line    := Line_Start (Buffer, Prec);
+         Temp.Sloc.Line   := Line_Count;
+         Temp.Sloc.Column := Prec - Start_Of_Line + 1;
+         Temp.Sloc.Index  := Prec;
+         Temp.Visibility  := Top_Token.Visibility_Section;
 
          if Callback /= null then
             Finish := Call_Callback
