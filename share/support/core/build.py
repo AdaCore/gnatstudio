@@ -356,7 +356,7 @@ XML = r"""<?xml version="1.0" ?>
 </target>
 
 <target model="gnatmake" category="_File_" name="U_pdate file XRef">
-    <in-toolbar>TRUE</in-toolbar>
+    <in-toolbar>FALSE</in-toolbar>
     <icon>gps-semantic-check</icon>
     <launch-mode>ON_FILE_SAVE</launch-mode>
     <read-only>TRUE</read-only>
