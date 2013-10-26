@@ -19,8 +19,7 @@ with Ada.Command_Line;
 with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
 with System;             use System;
 
-with Gtk.Main;
-
+with GPS.Main_Window;    use GPS.Main_Window;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with OS_Utils;           use OS_Utils;
@@ -435,7 +434,7 @@ package body GPS.Kernel.Standard_Hooks is
       then
          Ada.Command_Line.Set_Exit_Status
            (Ada.Command_Line.Exit_Status (Status));
-         Gtk.Main.Main_Quit;
+         GPS_Window (Get_Main_Window (Kernel)).Application.Quit;
       end if;
    end Exit_GPS;
 

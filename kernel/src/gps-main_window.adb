@@ -37,7 +37,6 @@ with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
@@ -47,6 +46,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Css_Provider;          use Gtk.Css_Provider;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
@@ -312,10 +312,12 @@ package body GPS.Main_Window is
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File) is
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application) is
    begin
       Main_Window := new GPS_Window_Record;
-      GPS.Main_Window.Initialize (Main_Window, Home_Dir, Prefix_Directory);
+      GPS.Main_Window.Initialize
+        (Main_Window, Home_Dir, Prefix_Directory, Application);
    end Gtk_New;
 
    ----------
@@ -520,7 +522,8 @@ package body GPS.Main_Window is
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File)
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application)
    is
       Vbox      : Gtk_Vbox;
       Menu      : Gtk_Menu;
@@ -546,11 +549,14 @@ package body GPS.Main_Window is
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
       Glib.Object.Initialize_Class_Record
-        (Ancestor     => Gtk.Window.Get_Type,
+        (Ancestor     => Gtk.Application_Window.Get_Type,
          Signals      => Signals,
          Class_Record => Class_Record,
          Type_Name    => "GpsMainWindow");
       Glib.Object.G_New (Main_Window, Class_Record);
+
+      Main_Window.Application := Application;
+      Application.Add_Window (Main_Window);
 
       Gtk_New
         (Main_Window.Kernel,
@@ -1404,11 +1410,8 @@ package body GPS.Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Main_Window);
    begin
-      if Main_Level > 0 then
-         Main_Quit;
-      end if;
+      GPS_Window (Main_Window).Application.Release;
    end On_Destroy;
 
    -----------------

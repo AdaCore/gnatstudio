@@ -576,7 +576,7 @@ package body KeyManager_Module.GUI is
    begin
       --  If there is a grab pending
 
-      if Main_Level > 1 then
+      if Main_Level > 0 then
          Main_Quit;
       end if;
 

@@ -15,26 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Gtk.Accel_Group;  use Gtk.Accel_Group;
-with Gtk.Box;          use Gtk.Box;
-with Gtk.Icon_Factory; use Gtk.Icon_Factory;
-with Gtk.Menu_Bar;     use Gtk.Menu_Bar;
-with Gtk.Tool_Item;    use Gtk.Tool_Item;
-with Gtk.Window;       use Gtk.Window;
-with Gdk.Event;        use Gdk.Event;
-with Gtk.Toolbar;      use Gtk.Toolbar;
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
+with Gtk.Application_Window;  use Gtk.Application_Window;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Icon_Factory;        use Gtk.Icon_Factory;
+with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
+with Gtk.Tool_Item;           use Gtk.Tool_Item;
+with Gdk.Event;               use Gdk.Event;
+with Gtk.Toolbar;             use Gtk.Toolbar;
 
-with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Application;      use Gtkada.Application;
+with Gtkada.MDI;              use Gtkada.MDI;
 
 with GPS.Kernel;
 
 package GPS.Main_Window is
 
-   type GPS_Window_Record is new Gtk_Window_Record with record
+   type GPS_Window_Record is new Gtk_Application_Window_Record with record
       Kernel            : GPS.Kernel.Kernel_Handle;
+      Application       : Gtkada_Application;
+      --  The GPS Application
+
       Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window
 
@@ -65,16 +69,19 @@ package GPS.Main_Window is
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File);
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
    --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
+   --  Application is the GPS Application instance
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File);
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application);
    --  Internal initialization function
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
