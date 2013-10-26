@@ -205,7 +205,7 @@ design/tests/wizard.1/foo.gpr.new
 design/tests/wizard.2/foo.gpr
 design/tests/wizard.2/foo.gpr.new
 docs/Makefile
-docs/programers_guide/_build/
+docs/programmers_guide/_build/
 docs/users_guide/_build/
 docs/tutorial/_build/
 docs/release_notes/build/
