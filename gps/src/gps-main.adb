@@ -2389,6 +2389,7 @@ procedure GPS.Main is
       end if;
    end Error_Message;
 
+   Darwin_Host : Boolean := False;
    Dead   : Boolean;
    pragma Unreferenced (Dead);
 
@@ -2403,8 +2404,20 @@ begin
             Glib.Application.G_Application_Non_Unique);
    Application.Set_Default;
 
-   Glib.Properties.Set_Property
-     (Application, Register_Session_Property, True);
+   Darwin_Host :=
+     Ada.Strings.Fixed.Index (Config.Target, "darwin") > 0;
+
+   if Config.Host = Config.Unix and then not Darwin_Host then
+      --  On systems with DBus and an existing DBus configuration
+      --  for the system's gtk, we don't want to open a session as
+      --  we're using a different gtk library, that may have
+      --  incompatibilities or missing modules.
+      Glib.Properties.Set_Property
+        (Application, Register_Session_Property, False);
+   else
+      Glib.Properties.Set_Property
+        (Application, Register_Session_Property, True);
+   end if;
 
    Application.On_Startup (Startup_Callback'Unrestricted_Access);
    Application.On_Activate (Activate_Callback'Unrestricted_Access);
