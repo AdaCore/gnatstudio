@@ -449,10 +449,7 @@ procedure GPS.Main is
             then
                Prefix_Dir := Create (+Prefix);
             else
-               Put_Line
-                 ("WARNING: Cannot determine GPS's prefix. " & ASCII.LF &
-                    "Please set GPS_ROOT to GPS installation directory");
-               Prefix_Dir := Create (+Command_Line.Get_Cwd);
+               Prefix_Dir := Create (+Config.Prefix);
             end if;
 
          end;
