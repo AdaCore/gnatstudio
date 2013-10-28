@@ -552,7 +552,6 @@ package body Build_Command_Utils is
       Force_File : Virtual_File;
       Main       : Virtual_File;
       Subdir     : Filesystem_String;
-      Quiet      : Boolean;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result;
    --  Expand macros contained in Arg.
@@ -633,7 +632,6 @@ package body Build_Command_Utils is
       Force_File : Virtual_File;
       Main       : Virtual_File;
       Subdir     : Filesystem_String;
-      Quiet      : Boolean;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
    is
@@ -896,7 +894,7 @@ package body Build_Command_Utils is
             --  We are launching a compile command involving Force_File:
             --  remove reference to File from the Locations View.
             --  See F830-003.
-            if not Quiet then
+            if Get_Properties (Target).Always_Clear_Locations then
                Remove_Error_Builder_Message_From_File
                  (Adapter.all, Force_File);
             end if;
@@ -1069,7 +1067,6 @@ package body Build_Command_Utils is
       Force_File : Virtual_File;
       Main       : Virtual_File;
       Subdir     : Filesystem_String;
-      Quiet      : Boolean;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
    is
@@ -1091,7 +1088,7 @@ package body Build_Command_Utils is
          begin
             Result := Expand_Arg
               (Adapter, Target, CL (J).all, Server,
-               Force_File, Main, Subdir, Quiet, Background, Simulate);
+               Force_File, Main, Subdir, Background, Simulate);
          exception
             when Invalid_Argument =>
                Console_Insert
@@ -1322,7 +1319,7 @@ package body Build_Command_Utils is
 
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File, Main, Subdir, Builder.Build.Quiet, Background, Simulate);
+         Force_File, Main, Subdir, Background, Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
@@ -1835,7 +1832,7 @@ package body Build_Command_Utils is
       Res := Expand_Command_Line
          (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args.all, T,
           Get_Server (Build_Registry, Mode_Name, T), Force_File, Main_File,
-          Get_Mode_Subdir (Build_Registry, Mode_Name), False, False, Simulate);
+          Get_Mode_Subdir (Build_Registry, Mode_Name), False, Simulate);
       Res.Status := Adapter.Status;
       Free (CL_Args);
       Free (Mode_Args);

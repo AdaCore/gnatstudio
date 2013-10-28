@@ -259,6 +259,8 @@ package Build_Configurations is
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
 
+      Always_Clear_Locations : Boolean := True;
+
       Visible    : Boolean          := True;
       --  Whether target visible at all
 

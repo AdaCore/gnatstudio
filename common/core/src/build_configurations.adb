@@ -1244,6 +1244,10 @@ package body Build_Configurations is
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
 
+         elsif Child.Tag.all = "always-clear-locations" then
+            Target.Properties.Always_Clear_Locations :=
+              Boolean'Value (Child.Value.all);
+
          elsif Child.Tag.all = "launch-mode" then
             Target.Properties.Launch_Mode := Launch_Mode_Type'Value
               (Child.Value.all);

@@ -361,6 +361,7 @@ XML = r"""<?xml version="1.0" ?>
     <launch-mode>ON_FILE_SAVE</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
+    <always-clear-locations>FALSE</always-clear-locations>
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>

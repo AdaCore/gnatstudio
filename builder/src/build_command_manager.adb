@@ -273,8 +273,7 @@ package body Build_Command_Manager is
 
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File, Main, Subdir,
-         Builder.Get_Last_Build.Quiet, Background, Simulate);
+         Force_File, Main, Subdir, Background, Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
