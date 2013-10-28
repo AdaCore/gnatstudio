@@ -48,6 +48,11 @@ package body GNATdoc.Backend.HTML is
       Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File;
    --  Returns file name of the specified template.
 
+   function To_JSON_Representation
+     (Text : Ada.Strings.Unbounded.Unbounded_String)
+      return GNATCOLL.JSON.JSON_Array;
+   --  Parses Text and converts it into JSON representation.
+
    -------------------------------------
    -- Extract_Summary_And_Description --
    -------------------------------------
@@ -62,64 +67,8 @@ package body GNATdoc.Backend.HTML is
 
       if Present (Get_Comment (Entity)) then
          declare
-            function To_JSON_Representation
-              (Text : Ada.Strings.Unbounded.Unbounded_String)
-               return GNATCOLL.JSON.JSON_Array;
-            --  Parses Text and converts it into JSON representation.
-
-            ----------------------------
-            -- To_JSON_Representation --
-            ----------------------------
-
-            function To_JSON_Representation
-              (Text : Ada.Strings.Unbounded.Unbounded_String)
-               return GNATCOLL.JSON.JSON_Array
-            is
-               Result      : JSON_Array;
-               Delimiter   : Natural;
-               Slice_First : Positive := 1;
-               Slice_Last  : Positive;
-               Paragraph   : JSON_Value;
-               Span        : JSON_Value;
-               Aux         : JSON_Array;
-
-            begin
-               while Slice_First <= Length (Text) loop
-                  Delimiter := Index (Text, ASCII.LF & ASCII.LF, Slice_First);
-
-                  if Delimiter = 0 then
-                     Slice_Last := Length (Text);
-
-                  else
-                     Slice_Last := Delimiter - 1;
-                  end if;
-
-                  Span := Create_Object;
-                  Span.Set_Field ("kind", "span");
-                  Span.Set_Field
-                    ("text", Slice (Text, Slice_First, Slice_Last));
-
-                  Paragraph := Create_Object;
-                  Paragraph.Set_Field ("kind", "paragraph");
-                  Aux := Empty_Array;
-                  Append (Aux, Span);
-                  Paragraph.Set_Field ("children", Aux);
-
-                  Append (Result, Paragraph);
-
-                  Slice_First := Slice_Last + 1;
-
-                  while Slice_First <= Length (Text) loop
-                     exit when Element (Text, Slice_First) /= ASCII.LF;
-                     Slice_First := Slice_First + 1;
-                  end loop;
-               end loop;
-
-               return Result;
-            end To_JSON_Representation;
-
-            Cursor      : Tag_Cursor := New_Cursor (Get_Comment (Entity));
-            Tag         : Tag_Info_Ptr;
+            Cursor : Tag_Cursor := New_Cursor (Get_Comment (Entity));
+            Tag    : Tag_Info_Ptr;
 
          begin
             while not At_End (Cursor) loop
@@ -544,6 +493,90 @@ package body GNATdoc.Backend.HTML is
               ("column", Integer (LL.Get_Location (E).Column));
             Entity_Entry.Set_Field ("summary", Summary);
             Entity_Entry.Set_Field ("description", Description);
+
+            if LL.Is_Subprogram (E)
+              and then Present (Get_Comment (E))
+            then
+               --  Extract parameters
+
+               declare
+                  Cursor      : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag         : Tag_Info_Ptr;
+                  Parameter   : JSON_Value;
+                  Parameters  : JSON_Array;
+                  Declaration : Xref.General_Entity_Declaration;
+
+               begin
+                  while not At_End (Cursor) loop
+                     Tag := Get (Cursor);
+
+                     if Tag.Tag = "param" then
+                        Declaration :=
+                          Xref.Get_Declaration
+                            (Self.Context.Database, Tag.Entity);
+                        Parameter := Create_Object;
+                        Parameter.Set_Field ("label", Declaration.Name);
+                        Parameter.Set_Field ("line", Declaration.Loc.Line);
+                        Parameter.Set_Field
+                          ("column", Natural (Declaration.Loc.Column));
+                        Parameter.Set_Field
+                          ("description", To_JSON_Representation (Tag.Text));
+                        Append (Parameters, Parameter);
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+
+                  if Length (Parameters) /= 0 then
+                     Entity_Entry.Set_Field ("parameters", Parameters);
+                  end if;
+               end;
+
+               --  Extract return value
+
+               declare
+                  Cursor  : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag     : Tag_Info_Ptr;
+                  Returns : JSON_Value;
+
+               begin
+                  while not At_End (Cursor) loop
+                     Tag := Get (Cursor);
+
+                     if Tag.Tag = "return" then
+                        Returns := Create_Object;
+                        Returns.Set_Field
+                          ("description", To_JSON_Representation (Tag.Text));
+                        Entity_Entry.Set_Field ("returns", Returns);
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+               end;
+
+               --  Extract exceptions
+
+               declare
+                  Cursor  : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag     : Tag_Info_Ptr;
+                  Returns : JSON_Value;
+
+               begin
+                  while not At_End (Cursor) loop
+                     Tag := Get (Cursor);
+
+                     if Tag.Tag = "exception" then
+                        Returns := Create_Object;
+                        Returns.Set_Field
+                          ("description", To_JSON_Representation (Tag.Text));
+                        Entity_Entry.Set_Field ("exceptions", Returns);
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+               end;
+            end if;
+
             Append (Aux, Entity_Entry);
          end loop;
 
@@ -802,5 +835,56 @@ package body GNATdoc.Backend.HTML is
    begin
       return "html";
    end Name;
+
+   ----------------------------
+   -- To_JSON_Representation --
+   ----------------------------
+
+   function To_JSON_Representation
+     (Text : Ada.Strings.Unbounded.Unbounded_String)
+      return GNATCOLL.JSON.JSON_Array
+   is
+      Result      : JSON_Array;
+      Delimiter   : Natural;
+      Slice_First : Positive := 1;
+      Slice_Last  : Positive;
+      Paragraph   : JSON_Value;
+      Span        : JSON_Value;
+      Aux         : JSON_Array;
+
+   begin
+      while Slice_First <= Length (Text) loop
+         Delimiter := Index (Text, ASCII.LF & ASCII.LF, Slice_First);
+
+         if Delimiter = 0 then
+            Slice_Last := Length (Text);
+
+         else
+            Slice_Last := Delimiter - 1;
+         end if;
+
+         Span := Create_Object;
+         Span.Set_Field ("kind", "span");
+         Span.Set_Field
+           ("text", Slice (Text, Slice_First, Slice_Last));
+
+         Paragraph := Create_Object;
+         Paragraph.Set_Field ("kind", "paragraph");
+         Aux := Empty_Array;
+         Append (Aux, Span);
+         Paragraph.Set_Field ("children", Aux);
+
+         Append (Result, Paragraph);
+
+         Slice_First := Slice_Last + 1;
+
+         while Slice_First <= Length (Text) loop
+            exit when Element (Text, Slice_First) /= ASCII.LF;
+            Slice_First := Slice_First + 1;
+         end loop;
+      end loop;
+
+      return Result;
+   end To_JSON_Representation;
 
 end GNATdoc.Backend.HTML;

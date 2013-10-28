@@ -148,6 +148,7 @@ function buildDocumentationPage()
 
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++)
         {
+            var list = null;
             var entity = entity_set.entities[eindex];
 
             header = document.createElement('h3');
@@ -158,6 +159,57 @@ function buildDocumentationPage()
             header.appendChild(text);
             pane.appendChild(header);
             buildText(pane, entity.description);
+
+            if (typeof entity.parameters !== 'undefined')
+            {
+                list = document.createElement('dl');
+
+                for (var pindex = 0;
+                     pindex < entity.parameters.length;
+                     pindex++)
+                {
+                    var parameter = entity.parameters[pindex];
+                    var term = document.createElement('dt');
+                    term.setAttribute(
+                      'id',
+                      'L' + parameter.line.toString() +
+                        'C' + parameter.column.toString());
+                    term.appendChild(document.createTextNode(parameter.label));
+                    var description = document.createElement('dd');
+                    buildText(description, parameter.description);
+
+                    list.appendChild(term);
+                    list.appendChild(description);
+                }
+            }
+
+            if (typeof entity.returns !== 'undefined')
+            {
+                if (list == null) list = document.createElement('dl');
+
+                var term = document.createElement('dt');
+                term.appendChild(document.createTextNode('Return value'));
+                var description = document.createElement('dd');
+                buildText(description, entity.returns.description);
+
+                list.appendChild(term);
+                list.appendChild(description);
+            }
+
+            if (typeof entity.exceptions !== 'undefined')
+            {
+                if (list == null) list = document.createElement('dl');
+
+                var term = document.createElement('dt');
+                term.appendChild(document.createTextNode('Exceptions'));
+                var description = document.createElement('dd');
+                buildText(description, entity.exceptions.description);
+
+                list.appendChild(term);
+                list.appendChild(description);
+            }
+
+            if (list != null) pane.appendChild(list);
         }
     }
 }
