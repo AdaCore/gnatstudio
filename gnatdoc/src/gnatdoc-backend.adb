@@ -29,7 +29,7 @@ package body GNATdoc.Backend is
       if Name = "html" then
          return Result : HTML_Backend;
 
-      elsif Name = "text" then
+      elsif Name = "test" then
          return Result : Simple_Backend;
 
       else
