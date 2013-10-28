@@ -128,10 +128,9 @@ package body GNATdoc.Backend.HTML is
                if Tag.Tag = "summary" then
                   Summary := To_JSON_Representation (Tag.Text);
 
-               elsif Tag.Tag = "description" then
-                  Description := To_JSON_Representation (Tag.Text);
-
-               else
+               elsif Tag.Tag = "description"
+                 or Tag.Tag = ""
+               then
                   Description := To_JSON_Representation (Tag.Text);
                end if;
 
