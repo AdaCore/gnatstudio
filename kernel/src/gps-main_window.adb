@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Command_Line;
-with Ada.Text_IO;
 
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
@@ -342,8 +341,6 @@ package body GPS.Main_Window is
             Before_Exit_Action_Hook, Data'Unchecked_Access))
       then
          Main_Window.Application.Quit;
-
-         Ada.Text_IO.Put_Line ("Quit called: " & Status'Img);
          Ada.Command_Line.Set_Exit_Status
            (Ada.Command_Line.Exit_Status (Status));
       end if;

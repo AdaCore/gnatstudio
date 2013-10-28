@@ -2429,10 +2429,7 @@ begin
    Status := Application.Run;
 
    if Status /= 0 then
-      Ada.Text_IO.Put_Line ("Exiting with status " & Status'Img);
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Exit_Status (Status));
-   else
-      Ada.Text_IO.Put_Line ("Exiting normally");
    end if;
 
    Trace (Me, "Done");
