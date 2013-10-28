@@ -2390,7 +2390,8 @@ procedure GPS.Main is
    end Error_Message;
 
    Darwin_Host : Boolean := False;
-   Dead   : Boolean;
+   Dead        : Boolean;
+   Status      : Glib.Gint;
    pragma Unreferenced (Dead);
 
 begin
@@ -2425,9 +2426,14 @@ begin
    Application.On_Open (File_Open_Callback'Unrestricted_Access);
    Application.On_Shutdown (Shutdown_Callback'Unrestricted_Access);
 
-   Ada.Command_Line.Set_Exit_Status
-     (Ada.Command_Line.Exit_Status
-        (Application.Run));
+   Status := Application.Run;
+
+   if Status /= 0 then
+      Ada.Text_IO.Put_Line ("Exiting with status " & Status'Img);
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Exit_Status (Status));
+   else
+      Ada.Text_IO.Put_Line ("Exiting normally");
+   end if;
 
    Trace (Me, "Done");
 

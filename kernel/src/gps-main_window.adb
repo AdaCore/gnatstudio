@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Command_Line;
+with Ada.Text_IO;
+
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -327,10 +330,22 @@ package body GPS.Main_Window is
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False;
-      Status      : Integer := 0) is
+      Status      : Integer := 0)
+   is
+      Data : aliased Exit_Before_Action_Hooks_Args :=
+               (Hooks_Data with null record);
    begin
-      if Force or else Save_MDI_Children (Main_Window.Kernel) then
-         Exit_GPS (Main_Window.Kernel, Status => Status);
+      if Force or else
+        (Save_MDI_Children (Main_Window.Kernel)
+         and then Run_Hook_Until_Failure
+           (Main_Window.Kernel,
+            Before_Exit_Action_Hook, Data'Unchecked_Access))
+      then
+         Main_Window.Application.Quit;
+
+         Ada.Text_IO.Put_Line ("Quit called: " & Status'Img);
+         Ada.Command_Line.Set_Exit_Status
+           (Ada.Command_Line.Exit_Status (Status));
       end if;
    end Quit;
 

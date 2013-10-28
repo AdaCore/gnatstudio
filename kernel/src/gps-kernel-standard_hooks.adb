@@ -15,11 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Command_Line;
 with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
 with System;             use System;
 
-with GPS.Main_Window;    use GPS.Main_Window;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with OS_Utils;           use OS_Utils;
@@ -417,26 +415,6 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Exit_Before_Action_Hooks_Args'(Hooks_Data with null record);
    end From_Callback_Data_Before_Exit;
-
-   --------------
-   -- Exit_GPS --
-   --------------
-
-   procedure Exit_GPS
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Status : Integer := 0)
-   is
-      Data : aliased Exit_Before_Action_Hooks_Args :=
-               (Hooks_Data with null record);
-   begin
-      if Run_Hook_Until_Failure
-        (Kernel, Before_Exit_Action_Hook, Data'Unchecked_Access)
-      then
-         Ada.Command_Line.Set_Exit_Status
-           (Ada.Command_Line.Exit_Status (Status));
-         GPS_Window (Get_Main_Window (Kernel)).Application.Quit;
-      end if;
-   end Exit_GPS;
 
    ----------------------------------
    -- From_Callback_Data_Line_Info --
