@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATdoc.Backend.Simple;  use GNATdoc.Backend.Simple;
+with GNATdoc.Backend.HTML;   use GNATdoc.Backend.HTML;
+with GNATdoc.Backend.Simple; use GNATdoc.Backend.Simple;
 
 package body GNATdoc.Backend is
 
@@ -23,12 +24,17 @@ package body GNATdoc.Backend is
    -- New_Backend --
    -----------------
 
-   function New_Backend return GNATdoc_Backend'Class is
-      pragma Warnings (Off);
-      Obj : Simple_Backend;
-      pragma Warnings (On);
+   function New_Backend (Name : String) return GNATdoc_Backend'Class is
    begin
-      return Obj;
+      if Name = "html" then
+         return Result : HTML_Backend;
+
+      elsif Name = "text" then
+         return Result : Simple_Backend;
+
+      else
+         raise Program_Error;
+      end if;
    end New_Backend;
 
 end GNATdoc.Backend;

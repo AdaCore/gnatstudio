@@ -39,7 +39,7 @@ private package GNATdoc.Backend is
       Update_Global_Index : Boolean) is abstract;
    --  If Update_Global_Index is true then update the global indexes.
 
-   function New_Backend return GNATdoc_Backend'Class;
+   function New_Backend (Name : String) return GNATdoc_Backend'Class;
    --  Factory method
 
 end GNATdoc.Backend;

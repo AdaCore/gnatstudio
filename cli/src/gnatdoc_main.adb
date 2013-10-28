@@ -18,20 +18,21 @@
 --  Command line docgen utility
 
 with Ada.Command_Line;
-with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Text_IO;           use Ada.Text_IO;
 
-with GNAT.Command_Line; use GNAT.Command_Line;
-with GNAT.Regpat;       use GNAT.Regpat;
-with GNAT.Strings;      use GNAT.Strings;
+with GNAT.Command_Line;     use GNAT.Command_Line;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Strings;          use GNAT.Strings;
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with GPS.CLI_Utils;     use GPS.CLI_Utils;
-with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
+with GPS.CLI_Utils;         use GPS.CLI_Utils;
+with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
-with GNATdoc;           use GNATdoc;
-with Xref;              use Xref;
+with GNATdoc;               use GNATdoc;
+with Xref;                  use Xref;
 
 procedure GNATdoc_Main is
    Kernel : constant GPS.CLI_Kernels.CLI_Kernel :=
@@ -43,10 +44,10 @@ procedure GNATdoc_Main is
    --  Switches
 
    Regular_Expr         : aliased GNAT.Strings.String_Access;
-   Internal_Output      : aliased Boolean;
    Process_C_Files      : aliased Boolean;
    Process_Bodies       : aliased Boolean;
    Project_Name         : aliased GNAT.Strings.String_Access;
+   Backend_Name         : aliased GNAT.Strings.String_Access;
    Process_Private_Part : aliased Boolean;
    Quiet_Mode           : aliased Boolean;
    Suppress_Warnings    : aliased Boolean;
@@ -103,9 +104,9 @@ begin
       Help         => "Suppress all warnings");
    Define_Switch
      (Cmdline,
-      Output       => Internal_Output'Access,
-      Switch       => "-zz",
-      Help         => "Internal output (for debugging and regression tests)");
+      Output       => Backend_Name'Access,
+      Switch       => "--output=",
+      Help         => "Format of generated documentation");
 
    --  Initialize context
    GPS.CLI_Utils.Create_Kernel_Context (Kernel);
@@ -157,6 +158,8 @@ begin
 
       --  Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
 
+      Internal_Output : constant Boolean := Backend_Name.all = "test";
+
       Options : constant GNATdoc.Docgen_Options :=
         (Comments_Filter => (if Regular_Expr.all = "" then null
                              else new Pattern_Matcher'
@@ -168,6 +171,7 @@ begin
          Tree_Output     => ((if Internal_Output then Full
                                                  else None),
                              With_Comments => False),
+         Backend_Name    => To_Unbounded_String (Backend_Name.all),
          Display_Time    => Internal_Output,
          Process_Bodies  => Process_Bodies,
          Show_Private    => Process_Private_Part,

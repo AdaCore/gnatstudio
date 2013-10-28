@@ -73,6 +73,9 @@ package GNATdoc is
       Quiet_Mode      : Boolean := False;
       --  Quiet mode
 
+      Backend_Name    : Ada.Strings.Unbounded.Unbounded_String;
+      --  Name of selected backend.
+
       --  -------------------------- Internal switches -----------------------
 
       Display_Time    : Boolean := False;

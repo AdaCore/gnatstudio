@@ -138,6 +138,7 @@ package body GPS.CLI_Scripts is
             Report_Errors : constant String := Nth_Arg (Data, 2, "None");
             Tree_Output   : constant String := Nth_Arg (Data, 3, "Full");
             With_Comments : constant Boolean := Nth_Arg (Data, 4, False);
+            Backend_Name  : constant String := Nth_Arg (Data, 5, "html");
 
             Options : constant GNATdoc.Docgen_Options :=
               (Comments_Filter => null,
@@ -145,6 +146,7 @@ package body GPS.CLI_Scripts is
                Skip_C_Files    => Skip_C_Files,
                Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
                                    With_Comments),
+               Backend_Name    => To_Unbounded_String (Backend_Name),
                Display_Time    => False,
                Process_Bodies  => False,
                Show_Private    => True,

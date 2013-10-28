@@ -284,7 +284,8 @@ package body GNATdoc is
 
       --  Local variables
 
-      Backend : GNATdoc_Backend'Class := New_Backend;
+      Backend : GNATdoc_Backend'Class :=
+                  New_Backend (To_String (Options.Backend_Name));
       Context : aliased Docgen_Context_Ptr :=
                   new Docgen_Context'
                         (Kernel, Database, Lang_Handler, Options, Prj_Files);
