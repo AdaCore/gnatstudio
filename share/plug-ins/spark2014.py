@@ -310,6 +310,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -330,6 +331,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -352,6 +354,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -372,6 +375,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -392,6 +396,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -411,6 +416,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -432,6 +438,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -451,6 +458,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
@@ -471,6 +479,7 @@ xml_gnatprove = """<?xml version="1.0"?>
          utf_converter
          progress_parser
          gnatprove_parser
+         console_writer
          end_of_build
        </output-parsers>
     </target>
