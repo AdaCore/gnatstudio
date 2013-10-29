@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
+with Ada.Containers.Ordered_Sets;
 with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 
@@ -526,12 +527,53 @@ package body GNATdoc.Backend.HTML is
       File_Name  : String;
       Categories : in out JSON_Array)
    is
+      function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean;
+
+      package Ordered_Sets is
+        new Ada.Containers.Ordered_Sets (Entity_Id);
+
+      ---------
+      -- "<" --
+      ---------
+
+      function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean is
+         LN : constant String := Get_Short_Name (Left);
+         LL : constant General_Location := Atree.LL.Get_Location (Left);
+         RN : constant String := Get_Short_Name (Right);
+         RL : constant General_Location := Atree.LL.Get_Location (Right);
+
+      begin
+         if LN < RN then
+            return True;
+
+         elsif LN = RN then
+            if LL.File < RL.File then
+               return True;
+
+            elsif LL.File = RL.File then
+               if LL.Line < RL.Line then
+                  return True;
+
+               elsif LL.Line = RL.Line then
+                  return LL.Column < RL.Column;
+               end if;
+            end if;
+         end if;
+
+         return False;
+      end "<";
+
       Entries : JSON_Array;
       Object  : JSON_Value;
+      Set     : Ordered_Sets.Set;
 
    begin
       if not Entities.Is_Empty then
          for Entity of Entities loop
+            Set.Insert (Entity);
+         end loop;
+
+         for Entity of Set loop
             Object := Create_Object;
             Object.Set_Field ("label", Get_Short_Name (Entity));
             Object.Set_Field ("href", Get_Docs_Href (Entity));
