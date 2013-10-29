@@ -824,7 +824,7 @@ package body GPS.Main_Window is
       Bind_Default_Key
         (Kernel      => Main_Window.Kernel,
          Action      => "Move to next tab",
-         Default_Key => "control-alt-Right");
+         Default_Key => "primary-alt-Right");
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Kernel := Main_Window.Kernel;
@@ -838,7 +838,7 @@ package body GPS.Main_Window is
       Bind_Default_Key
         (Kernel      => Main_Window.Kernel,
          Action      => "Move to previous tab",
-         Default_Key => "control-alt-Left");
+         Default_Key => "primary-alt-Left");
 
       Register_Command
         (Main_Window.Kernel, "dialog",

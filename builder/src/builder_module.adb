@@ -332,7 +332,7 @@ package body Builder_Module is
            -"Interrupt the tasks performed in the background by GPS",
          Stock_Id   => GPS_Stop_Task,
          Accel_Key  => GDK_C,
-         Accel_Mods => Control_Mask + Shift_Mask);
+         Accel_Mods => Primary_Mod_Mask + Shift_Mask);
       Register_Menu (Kernel, -"/Tools/_Interrupt", "Interrupt");
 
       Add_Hook

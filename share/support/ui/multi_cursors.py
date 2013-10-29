@@ -13,8 +13,8 @@ xml_conf = """
 <key action="Add multi cursor and go down">shift-alt-Down</key>
 <key action="Add multi cursor and go up">shift-alt-Up</key>
 
-<key action="Move to next word">control-Right</key>
-<key action="Move to previous word">control-Left</key>
+<key action="Move to next word">primary-Right</key>
+<key action="Move to previous word">primary-Left</key>
 
 <key action="Move to previous character">Left</key>
 <key action="Move to next character">Right</key>
@@ -22,9 +22,9 @@ xml_conf = """
 <key action="Move to previous line">Up</key>
 <key action="Move to next line">Down</key>
 
-<key action="Delete word forward" >control-Delete</key>
+<key action="Delete word forward" >primary-Delete</key>
 
-<key action="Remove all multi cursors" >control-Escape</key>
+<key action="Remove all multi cursors" >primary-Escape</key>
 
 <key action="goto beginning of line" >Home</key>
 <key action="goto end of line" >End</key>

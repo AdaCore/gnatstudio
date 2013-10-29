@@ -376,7 +376,8 @@ try:
     else:
         GDK_BACKSPACE_HARDWARE_KEYCODE = 59
 
-    def send_key_event(keyval, control=0, alt=0, shift=0, window=None,
+    def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
+                       window=None,
                        process_events=True, bypass_keymanager=False,
                        hardware_keycode=None):
         """Emit a key event on GPS, simulating the given key. This event is
@@ -393,7 +394,8 @@ try:
         if not bypass_keymanager:
             if hasattr(GPS, "send_key_event"):
                 GPS.send_key_event(keyval, window=window,
-                                   control=control, alt=alt, shift=shift)
+                                   primary=primary, control=control,
+                                   alt=alt, shift=shift)
                 return
 
         def _synthesize(type, keyval):
@@ -427,6 +429,12 @@ try:
             window = window.get_window()
 
         event = _synthesize(Gdk.EventType.KEY_PRESS, keyval)
+
+        if primary:
+            if sys.platform == 'darwin':
+                event.state |= Gdk.ModifierType.META_MASK
+            else:
+                event.state |= Gdk.ModifierType.CONTROL_MASK
 
         if control:
             event.state |= Gdk.ModifierType.CONTROL_MASK

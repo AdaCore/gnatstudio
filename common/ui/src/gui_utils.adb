@@ -957,9 +957,9 @@ package body GUI_Utils is
       Shift   : constant String := "shift-";
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
-      Cmd     : constant String := "cmd-";
+      Primary : constant String := "primary-";
       Max : constant Natural := Shift'Length + Control'Length + Meta'Length
-       + Cmd'Length;
+       + Primary'Length;
       Buffer   : String (1 .. Max);
       Current : Natural := Buffer'First;
 
@@ -988,7 +988,12 @@ package body GUI_Utils is
                Current := Current + Shift'Length;
             end if;
 
-            if (Mods and Control_Mask) /= 0 then
+            if (Mods and Primary_Mod_Mask) /= 0 then
+               Buffer (Current .. Current + Primary'Length - 1) := Primary;
+               Current := Current + Primary'Length;
+
+            elsif (Mods and Control_Mask) /= 0 then
+               --  Exclusive, for case where Control == Primary masks
                Buffer (Current .. Current + Control'Length - 1) := Control;
                Current := Current + Control'Length;
             end if;
@@ -996,11 +1001,6 @@ package body GUI_Utils is
             if (Mods and Mod1_Mask) /= 0 then
                Buffer (Current .. Current + Meta'Length - 1) := Meta;
                Current := Current + Meta'Length;
-            end if;
-
-            if (Mods and Meta_Mask) /= 0 then
-               Buffer (Current .. Current + Cmd'Length - 1) := Cmd;
-               Current := Current + Cmd'Length;
             end if;
 
             return
@@ -1029,7 +1029,11 @@ package body GUI_Utils is
             elsif From (Start .. D) = "alt-" then
                Mods := Mods or Mod1_Mask;
             elsif From (Start .. D) = "cmd-" then
-               Mods := Mods or Meta_Mask;
+               --  backward compatibility: cmd-<key> are now saved as
+               --  primary-<key> on OSX
+               Mods := Mods or Primary_Mod_Mask;
+            elsif From (Start .. D) = "primary-" then
+               Mods := Mods or Primary_Mod_Mask;
             end if;
             Start := D + 1;
          end if;

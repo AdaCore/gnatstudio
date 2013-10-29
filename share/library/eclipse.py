@@ -1,6 +1,6 @@
 """ Enables a selection of Eclipse-like shortcuts in GPS.
 
-The "delete line" (Ctrl-D) action was contributed by Robert ter Vehn.
+The "delete line" (Ctrl-D or Cmd-D) action was contributed by Robert ter Vehn.
 """
 
 
@@ -35,4 +35,4 @@ GPS.parse_xml ("""
       <description>Delete the lines that include the selection, or the current line.</description>
       <shell lang="python">eclipse.delete_line()</shell>
    </action>
-   <key action="delete line">control-d</key>""")
+   <key action="delete line">primary-d</key>""")

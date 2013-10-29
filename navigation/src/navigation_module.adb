@@ -1185,7 +1185,7 @@ package body Navigation_Module is
          -"Move to the previous subprogram",
          Category   => -"Editor",
          Accel_Key  => GDK_Up,
-         Accel_Mods => Control_Mask,
+         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
       Register_Menu
         (Kernel, -"/Navigate/_Previous Subprogram", "previous subprogram");
@@ -1196,7 +1196,7 @@ package body Navigation_Module is
          -"Move to the next subprogram",
          Category   => -"Editor",
          Accel_Key  => GDK_Down,
-         Accel_Mods => Control_Mask,
+         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
       Register_Menu
         (Kernel, -"/Navigate/_Next Subprogram", "next subprogram");
@@ -1210,7 +1210,7 @@ package body Navigation_Module is
          -"Move to the previous message from the Locations window",
          Category   => -"Locations",
          Accel_Key  => GDK_less,
-         Accel_Mods => Control_Mask);
+         Accel_Mods => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/Navigate/Previous _Tag", "previous tag");
 
       Command := new Next_Tag_Command;
@@ -1219,7 +1219,7 @@ package body Navigation_Module is
          -"Move to the next message from the Locations window",
          Category   => -"Locations",
          Accel_Key  => GDK_greater,
-         Accel_Mods => Control_Mask);
+         Accel_Mods => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/Navigate/N_ext Tag", "next tag");
 
       Command := new Back_Command;

@@ -16,8 +16,8 @@ subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
 xml_conf = """
-<key action="Toggle to next alias field">control-Tab</key>
-<key action="Expand alias under cursor">control-o</key>
+<key action="Toggle to next alias field">primary-Tab</key>
+<key action="Expand alias under cursor">primary-o</key>
 """
 
 color_pref_name = "Plugins/aliases/color_current_field"

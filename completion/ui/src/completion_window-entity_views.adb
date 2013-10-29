@@ -36,7 +36,7 @@ package body Completion_Window.Entity_Views is
       Register_Provider_And_Action
         (Kernel, P,
          Accel_Key  => GDK_LC_t,
-         Accel_Mods => Control_Mask);
+         Accel_Mods => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/_Navigate/Goto _Entity...",
          Action_Name_Prefix & P.Display_Name,

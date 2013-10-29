@@ -1211,10 +1211,10 @@ package body Completion_Module is
       Register_Action
         (Kernel, "Complete identifier", Command,
          -("Complete current identifier based on the contents of the editor"),
-         Category => "Editor",
+         Category   => "Editor",
          Accel_Key  => GDK_slash,
-         Accel_Mods => Control_Mask,
-         Filter   => Src_Action_Context);
+         Accel_Mods => Primary_Mod_Mask,
+         Filter     => Src_Action_Context);
       Register_Menu
         (Kernel,
          -"/Edit/_More Completion/Complete _Identifier",

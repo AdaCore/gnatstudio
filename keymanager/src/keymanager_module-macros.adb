@@ -840,7 +840,7 @@ package body KeyManager_Module.Macros is
          Description => -"Stop recording the current macro",
          Filter      => Filter,
          Accel_Key   => GDK_Escape,
-         Accel_Mods  => Control_Mask,
+         Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Macro");
       Register_Menu (Kernel, -"/Tools/Macro/_Stop Recording", "Macro Stop");
 

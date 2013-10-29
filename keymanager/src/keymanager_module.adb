@@ -842,7 +842,7 @@ package body KeyManager_Module is
       --  unexpected behavior.
 
       if Config.Host = Windows
-        and then Key = "control-c"
+        and then (Key = "control-c" or else Key = "primary-c")
         and then Action /= ""
         and then Action /= "/Edit/Copy"
         and then Action /= "Copy to Clipboard"
@@ -888,7 +888,7 @@ package body KeyManager_Module is
                   if Modif = Mnemonic_Modif then
                      Set_Mnemonic_Modifier
                        (Get_Main_Window (Kernel),
-                        Modif or Control_Mask or Mod1_Mask or Shift_Mask);
+                        Modif or Primary_Mod_Mask or Mod1_Mask or Shift_Mask);
                   end if;
 
                   if not Change_Entry
@@ -1754,9 +1754,10 @@ package body KeyManager_Module is
             Keyval  : constant Gdk_Key_Type :=
                Gdk_Key_Type (Integer'(Nth_Arg (Data, 1)));
             Window  : Gdk.Gdk_Window := From_PyGtk (Data, 2);
-            Control : constant Boolean := Nth_Arg (Data, 3, False);
+            Primary : constant Boolean := Nth_Arg (Data, 3, False);
             Alt     : constant Boolean := Nth_Arg (Data, 4, False);
             Shift   : constant Boolean := Nth_Arg (Data, 5, False);
+            Control : constant Boolean := Nth_Arg (Data, 6, False);
             Event   : Gdk_Event;
             List    : Widget_List.Glist;
             Win     : Gtk_Widget;
@@ -1783,6 +1784,10 @@ package body KeyManager_Module is
                 String      => Interfaces.C.Strings.Null_Ptr,
                 Hardware_Keycode => 0);
             Ref (Event.Key.Window);
+
+            if Primary then
+               Event.Key.State := Event.Key.State or Primary_Mod_Mask;
+            end if;
 
             if Control then
                Event.Key.State := Event.Key.State or Control_Mask;
@@ -1942,12 +1947,13 @@ package body KeyManager_Module is
       if Active (Testsuite_Handle) then
          Register_Command
             (Get_Scripts (Kernel), "send_key_event",
-            (Param ("keyval"),
-             Param ("window", Optional => True),
-             Param ("control", Optional => True),
-             Param ("alt", Optional => True),
-             Param ("shift", Optional => True)),
-            Keymanager_Command_Handler'Access);
+             (Param ("keyval"),
+              Param ("window", Optional => True),
+              Param ("primary", Optional => True),
+              Param ("alt", Optional => True),
+              Param ("shift", Optional => True),
+              Param ("control", Optional => True)),
+             Keymanager_Command_Handler'Access);
          Register_Command
            (Get_Scripts (Kernel), "send_button_event",
             (Param ("window", Optional => True),
@@ -1967,7 +1973,7 @@ package body KeyManager_Module is
            & " instance, if this is associated with ctrl-u, you can type"
            & " ""ctrl-u 30 t"" to  the character t 30 times"),
          Category => -"General");
-      Bind_Default_Key (Kernel, "Repeat Next", "control-u");
+      Bind_Default_Key (Kernel, "Repeat Next", "primary-u");
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

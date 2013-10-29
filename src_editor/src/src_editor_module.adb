@@ -2009,7 +2009,7 @@ package body Src_Editor_Module is
          Command, -"Disable the casing and indentation on next key",
          Category   => "Editor",
          Accel_Key  => GDK_LC_q,
-         Accel_Mods => Control_Mask,
+         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
       Command := new Control_Command;
@@ -2087,7 +2087,7 @@ package body Src_Editor_Module is
          Description => -"Open a file from a remote host",
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/File/Open From _Host...", "open from host",
          Ref_Item => -"Save More");
@@ -2106,7 +2106,7 @@ package body Src_Editor_Module is
          Stock_Id    => GPS_Save,
          Description => -"Save the current editor",
          Accel_Key   => GDK_LC_s,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/File/_Save", Save_Command_Name,
                      Ref_Item => -"Save More");
 
@@ -2132,7 +2132,7 @@ package body Src_Editor_Module is
          Category    => -"MDI",
          Stock_Id    => Stock_Close,
          Accel_Key   => GDK_LC_w,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/File/_Close", "Close current window",
          Ref_Item => -"Exit");
@@ -2178,7 +2178,7 @@ package body Src_Editor_Module is
          Stock_Id    => Stock_Undo,
          Filter      => Filter,
          Accel_Key   => GDK_LC_z,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Edit/_Undo", "undo",
          Ref_Item  => -"Paste Previous", Add_Before => False);
@@ -2191,7 +2191,7 @@ package body Src_Editor_Module is
          Stock_Id    => Stock_Redo,
          Filter      => Filter,
          Accel_Key   => GDK_LC_r,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Edit/_Redo", "redo",
          Ref_Item   => -"Undo", Add_Before => False);
@@ -2248,7 +2248,7 @@ package body Src_Editor_Module is
          Description   => -"Comment the selected lines",
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_minus,
-         Accel_Mods    => Control_Mask);
+         Accel_Mods    => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Edit/Selection/Comment _Lines", "comment lines",
          Ref_Item => -"More Completion", Add_Before => False);
@@ -2259,7 +2259,7 @@ package body Src_Editor_Module is
          Description   => -"Uncomment the selected lines",
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_underscore,
-         Accel_Mods    => Control_Mask);
+         Accel_Mods    => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Edit/Selection/Uncomment L_ines", "uncomment lines",
          Ref_Item   => -"Comment Lines", Add_Before => False);
@@ -2272,7 +2272,7 @@ package body Src_Editor_Module is
            & " are shorter than the grey line on the right"),
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_equal,
-         Accel_Mods    => Control_Mask);
+         Accel_Mods    => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Edit/Selection/R_efill", "refill",
          Ref_Item   => "Expand Alias", Add_Before => False);
@@ -2333,7 +2333,7 @@ package body Src_Editor_Module is
         (Kernel, "goto line", Command,
          -"Open a dialog to select a line to go to",
          Accel_Key   => GDK_LC_g,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu
         (Kernel, -"/Navigate/Goto _Line...", "goto line",
          Ref_Item    => -"Goto File Spec<->Body");
@@ -2364,7 +2364,7 @@ package body Src_Editor_Module is
         (Kernel, "Jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
          Accel_Key  => GDK_apostrophe,
-         Accel_Mods => Control_Mask,
+         Accel_Mods => Primary_Mod_Mask,
          Category   => "Editor",
          Filter     => Src_Action_Context);
       Register_Menu

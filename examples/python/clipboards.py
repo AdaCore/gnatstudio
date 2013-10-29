@@ -18,7 +18,7 @@
 import GPS
 
 copy_key="alt-e"
-paste_key="control-t"
+paste_key="primary-t"
 
 def get_customization_string (suffix):
    return """
@@ -58,4 +58,4 @@ def paste_from_clipboard (suffix):
    context=GPS.current_context()
    GPS.Editor.replace_text (context.file().name(), context.location().line(), \
        context.location().column(), clipboard[suffix], 0, 0)
-  
+

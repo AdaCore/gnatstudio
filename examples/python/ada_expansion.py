@@ -99,7 +99,7 @@ action_name = "Conditionally expand Ada syntax"
 # has no effect, since the action is created as soon as this module
 # is loaded
 
-default_action_key = "control-h"
+default_action_key = "primary-h"
 # To change the default expansion key, you should go to the menu
 # /Edit/Key shortcuts, and select the action action_name in the Ada
 # category. Changing the default action_key here has no effect, since
@@ -134,7 +134,7 @@ def expand_syntax ():
 
 def debug (s):
    "comment-out this return statement to enable debugging statements..."
-   return 
+   return
    name = sys._getframe (1).f_code.co_name
    GPS.Console("Messages").write (name + ": " + s + "\n")
 
@@ -145,9 +145,9 @@ def do_expansion ():
    try:
       current_file = GPS.current_context().file().name()
    except:
-      # Indicate that a blank character is required since this routine is not 
+      # Indicate that a blank character is required since this routine is not
       # going to be doing anything
-      return True  
+      return True
 
    orig_word = ""
    word = ""
@@ -183,7 +183,7 @@ def do_expansion ():
          return True
       orig_word = string.lower ( string.strip(remainder) )
       found_colon = True
-   
+
    if len(orig_word) >= min_abbreviation:
       debug("orig_word is '" + orig_word + "'")
       word = expanded_abbreviation (orig_word, expansion_words)

@@ -2735,7 +2735,7 @@ package body GVD_Module is
       Register_Action
         (Kernel, "Debug interrupt", Command,
          Accel_Key   => GDK_backslash,
-         Accel_Mods  => Control_Mask,
+         Accel_Mods  => Primary_Mod_Mask,
          Stock_Id    => GPS_Stop_Task,
          Filter      => Debugger_Active,
          Description => -"Asynchronously interrupt the debuggee program",

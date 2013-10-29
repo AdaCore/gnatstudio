@@ -122,7 +122,7 @@ Contextual("debug print as decimal").create(
 ###################################
 
 @interactive(name="continue till line", category="Debugger",
-             filter="Debugger active", key="control-b",
+             filter="Debugger active", key="primary-b",
              menu="/Debug/Continue to current line", after="Continue")
 def continue_till_line():
     """

@@ -2746,7 +2746,7 @@ package body Vsearch is
            & " the active window"),
          Stock_Id    => Stock_Find,
          Accel_Key   => GDK_LC_f,
-         Accel_Mods  => Control_Mask,
+         Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Search");
       Register_Menu
         (Kernel, -"/Navigate/_Find or Replace...", "Search",
@@ -2759,7 +2759,7 @@ package body Vsearch is
          Description => -"Find the next occurrence of the search pattern",
          Filter      => Filter,
          Accel_Key   => GDK_LC_n,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/Navigate/Find _Next", "find next");
 
       Command := new Find_Previous_Command;
@@ -2768,7 +2768,7 @@ package body Vsearch is
          Description => -"Find the previous occurrence of the search pattern",
          Filter      => Filter,
          Accel_Key   => GDK_LC_p,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/Navigate/Find _Previous", "find previous");
 
       Gtk_New (Mitem);

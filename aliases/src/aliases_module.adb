@@ -2179,7 +2179,7 @@ package body Aliases_Module is
          Category    => -"Editor",
          Description => -"Expand the alias found just before the cursor",
          Accel_Key   => GDK_LC_o,
-         Accel_Mods  => Control_Mask,
+         Accel_Mods  => Primary_Mod_Mask,
          Filter      => Lookup_Filter (Kernel, "Source editor"));
       Register_Menu
         (Kernel, -"/Edit/_More Completion/Expand _Alias", "Expand alias",

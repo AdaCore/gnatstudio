@@ -443,7 +443,7 @@ package body GPS.Menu is
          Description => -"Copy the current selection to the clipboard",
          Stock_Id    => Stock_Copy,
          Accel_Key   => GDK_Insert,
-         Accel_Mods  => Control_Mask);
+         Accel_Mods  => Primary_Mod_Mask);
       Register_Menu (Kernel, -"/Edit/C_opy", "Copy to Clipboard");
 
       Command := new Clipboard_Command;
@@ -467,7 +467,7 @@ package body GPS.Menu is
            & " copied before through Copy To Clipboard"),
          Stock_Id   => Stock_Paste,
          Accel_Key  => GDK_Insert,
-         Accel_Mods => Control_Mask + Shift_Mask);
+         Accel_Mods => Primary_Mod_Mask + Shift_Mask);
       Register_Menu (Kernel, -"/Edit/Pa_ste Previous",
                      "Paste Previous From Clipboard");
 
@@ -480,10 +480,10 @@ package body GPS.Menu is
       --  ??? This can be removed when we have a global mechanism for menu
       --  registering and ordering.
       Bind_Default_Key (Kernel, "/Edit/Cut", "shift-Delete");
-      Bind_Default_Key (Kernel, "/Edit/Copy", "control-Insert");
+      Bind_Default_Key (Kernel, "/Edit/Copy", "primary-Insert");
       Bind_Default_Key (Kernel, "/Edit/Paste", "shift-Insert");
       Bind_Default_Key
-        (Kernel, "/Edit/Paste Previous", "control-shift-Insert");
+        (Kernel, "/Edit/Paste Previous", "primary-shift-Insert");
 
       --  Gtk+ provides hard-coded bindings for Cut (ctrl-x), Copy (ctrl-c)
       --  and Paste (ctrl-v). Making use of these mechanisms in GPS is not a
@@ -499,15 +499,15 @@ package body GPS.Menu is
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Cut to Clipboard",
-         Default_Key => "control-x");
+         Default_Key => "primary-x");
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Copy to Clipboard",
-         Default_Key => "control-c");
+         Default_Key => "primary-c");
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => -"Paste From Clipboard",
-         Default_Key => "control-v");
+         Default_Key => "primary-v");
 
       Command := new Preference_Dialog_Command;
       Register_Action

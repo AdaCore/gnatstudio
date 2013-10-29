@@ -34,7 +34,7 @@ def zoom(factor):
     name="increase text size",
     category="Editor",
     menu="/Edit/Text Size/Increase",
-    key="control-plus",
+    key="primary-plus",
     before="Preferences")
 def zoom_in():
     """Increase the size of fonts in the source editors.
@@ -46,7 +46,7 @@ This impacts the corresponding preferences."""
     name="decrease text size",
     category="Editor",
     menu="/Edit/Text Size/Decrease",
-    key="control-alt-plus",
+    key="primary-alt-plus",
     before="Preferences")
 def zoom_out():
     """Decrease the size of fonts in the source editors.

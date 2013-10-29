@@ -756,7 +756,9 @@ package body Bookmark_Views is
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
    begin
-      if (Get_State (Event) and (Control_Mask or Shift_Mask)) /= 0 then
+      if (Get_State (Event) and
+            (Primary_Mod_Mask or Control_Mask or Shift_Mask)) /= 0
+      then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.

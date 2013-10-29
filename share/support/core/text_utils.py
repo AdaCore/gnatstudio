@@ -190,7 +190,7 @@ def get_selection_or_line (buffer, location):
       return (buffer, start, end)
 
 @interactive ("Editor", "Source editor", name="Move block right",
-              menu="/Edit/Selection/Move right", key="control-alt-greater")
+              menu="/Edit/Selection/Move right", key="primary-alt-greater")
 def move_block (chars=1):
    """Move the current selection chars characters to the right. If chars
       is negative, moves to the left. If there is no selection, indent
@@ -255,7 +255,7 @@ def move_block (chars=1):
 
 make_interactive (lambda:move_block(-1),
                   category="Editor", filter="Source editor",
-                  menu="/Edit/Selection/Move left", key="control-alt-less",
+                  menu="/Edit/Selection/Move left", key="primary-alt-less",
                   name="Move block left")
 
 @interactive("Editor", "Source editor", menu="/Edit/Selection/Untabify")
