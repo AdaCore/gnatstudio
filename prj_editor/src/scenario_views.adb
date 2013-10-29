@@ -397,7 +397,12 @@ package body Scenario_Views is
 
       --  Have we changed a scenario variable ?
 
-      if Model.Parent (Iter) = Model.Get_Iter (V.Scenario_Node) then
+      if V.Scenario_Node = Null_Gtk_Tree_Path
+      --  If the Scenario_Node is null, we have necessarily changed a
+      --  scenario variable because that means the build mode is not shown
+
+        or else (Model.Parent (Iter) = Model.Get_Iter (V.Scenario_Node))
+      then
          declare
             Value : constant String := List.Get_String (New_Iter, 0);
             Variable : constant String := Model.Get_String (Iter, 0);
