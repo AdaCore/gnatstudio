@@ -537,9 +537,9 @@ package body GNATdoc.Backend.HTML is
       ---------
 
       function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean is
-         LN : constant String := Get_Short_Name (Left);
+         LN : constant String := To_Lower (Get_Short_Name (Left));
          LL : constant General_Location := Atree.LL.Get_Location (Left);
-         RN : constant String := Get_Short_Name (Right);
+         RN : constant String := To_Lower (Get_Short_Name (Right));
          RL : constant General_Location := Atree.LL.Get_Location (Right);
 
       begin
