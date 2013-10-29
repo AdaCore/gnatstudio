@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.1.0 / GNATbench 2.9.0
 -------------------------------------------
 
+NF-61-MA22-042 GPS: Recompute Xrefs on file save (2013-10-29)
+
+  GPS now recomputes the cross references of a given file every time this file
+  is saved. This enhances the quality of all tools relying on the cross
+  references engine - refactorings, code navigation, occurences highlighting,
+  etc.
+
 NF-61-MA18-018 GPS: New plug-in vim.py (2013-10-18)
 
   GPS now has a vim emulation layer, that aims to reproduce the behavior of the
