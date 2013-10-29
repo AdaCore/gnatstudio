@@ -239,6 +239,36 @@ function buildPackagesIndex(toc)
     }
 }
 
+function buildEntitiesCategoriesIndex(toc)
+{
+    var header;
+    var text;
+    var list;
+
+    header = document.createElement('h1');
+    header.appendChild(document.createTextNode('Entities Index'));
+    toc.appendChild(header);
+
+    list = document.createElement('ul');
+
+    for (var index = 0; index < GNATdocEntitiesCategoriesIndex.length; index++)
+    {
+        var item;
+        var href;
+        var entry = GNATdocEntitiesCategoriesIndex[index];
+
+        item = document.createElement('li');
+        href = document.createElement('a');
+        href.setAttribute('href', entry.href);
+        href.setAttribute('target', 'contentView');
+        href.appendChild(document.createTextNode(entry.label));
+        item.appendChild(href);
+        list.appendChild(item);
+    }
+
+    toc.appendChild(list);
+}
+
 function buildSourcesIndex(toc)
 {
     header = document.createElement('h1');
@@ -261,6 +291,47 @@ function buildSourcesIndex(toc)
         item.appendChild(href);
         list.appendChild(item);
     }
+}
+
+function buildEntitiesCategoryPage()
+{
+    var header;
+    var character;
+    var list;
+    var page = document.getElementById('body');
+
+    header = document.createElement('h1');
+    header.appendChild(document.createTextNode(GNATdocEntitiesCategory.label));
+    page.appendChild(header);
+
+    character = '';
+    list = document.createElement('dl');
+
+    for (var index = 0;
+         index < GNATdocEntitiesCategory.entities.length;
+         index++)
+    {
+        var item;
+        var href;
+        var entity = GNATdocEntitiesCategory.entities[index];
+
+        if (character == '' || character != entity.label[0].toUpperCase())
+        {
+            character = entity.label[0].toUpperCase();
+            item = document.createElement('dt');
+            item.appendChild(document.createTextNode(character));
+            list.appendChild(item);
+        }
+
+        item = document.createElement('dd');
+        href = document.createElement('a');
+        href.setAttribute('href', '../' + entity.href);
+        href.appendChild(document.createTextNode(entity.label));
+        item.appendChild(href);
+        list.appendChild(item);
+    }
+
+    page.appendChild(list);
 }
 
 function displaySource()
@@ -294,10 +365,16 @@ function onLoad()
 {
     toc = document.getElementById('tocView');
     buildPackagesIndex(toc);
+    buildEntitiesCategoriesIndex(toc);
     buildSourcesIndex(toc);
 }
 
 function onSourceFileLoad()
 {
     displaySource();
+}
+
+function onEntitiesCategoryLoad()
+{
+    buildEntitiesCategoryPage();
 }

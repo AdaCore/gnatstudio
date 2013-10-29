@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings;             use Ada.Strings;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 with GNATCOLL.JSON;           use GNATCOLL.JSON;
@@ -228,7 +226,6 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Entity : constant Entity_Id :=
         Find_Unique_Entity
           ((Self.File, First.Line, Visible_Column (First.Column)));
-      Parent : Entity_Id := Entity;
 
    begin
       if No (Entity) then
@@ -236,19 +233,10 @@ package body GNATdoc.Backend.HTML.Source_Code is
            ("identifier", Self.Buffer (First.Index .. Last.Index));
 
       else
-         while Get_Kind (Parent) /= E_Package loop
-            Parent := Get_Scope (Parent);
-         end loop;
-
          Self.Append_Text_Object
            ("identifier",
             Self.Buffer (First.Index .. Last.Index),
-            "docs/"
-            & To_Lower (Get_Full_Name (Parent))
-            & ".html#L"
-            & Trim (Natural'Image (First.Line), Both)
-            & "C"
-            & Trim (Natural'Image (First.Column), Both));
+            Get_Docs_Href (Entity));
       end if;
    end Identifier_Text;
 

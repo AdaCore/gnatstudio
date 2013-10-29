@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
+with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 
 with GNAT.Strings;                     use GNAT.Strings;
 with GNATCOLL.JSON;                    use GNATCOLL.JSON;
@@ -33,6 +35,10 @@ package body GNATdoc.Backend.HTML is
      (Tmpl_Documentation_HTML,      --  Documentation (HTML page)
       Tmpl_Documentation_JS,        --  Documentation (JS data)
       Tmpl_Documentation_Index_JS,  --  Index of documentation (JS data)
+      Tmpl_Entities_Category_HTML,  --  Entities' category (HTML page)
+      Tmpl_Entities_Category_JS,    --  Entities' category (JS data)
+      Tmpl_Entities_Categories_Index_JS,
+                                    --  Entities' category index (JS data)
       Tmpl_Source_File_HTML,        --  Source file (HTML page)
       Tmpl_Source_File_JS,          --  Source file (JavaScript data)
       Tmpl_Source_File_Index_JS);   --  Index of source files (JavaScript data)
@@ -52,6 +58,14 @@ package body GNATdoc.Backend.HTML is
      (Text : Ada.Strings.Unbounded.Unbounded_String)
       return GNATCOLL.JSON.JSON_Array;
    --  Parses Text and converts it into JSON representation.
+
+   procedure Generate_Entities_Category
+     (Self       : in out HTML_Backend'Class;
+      Entities   : EInfo_List.Vector;
+      Label      : String;
+      File_Name  : String;
+      Categories : in out JSON_Array);
+   --  Generates entities category HTML page and JS data.
 
    -------------------------------------
    -- Extract_Summary_And_Description --
@@ -430,7 +444,147 @@ package body GNATdoc.Backend.HTML is
               (+Self.Get_Template (Tmpl_Documentation_Index_JS).Full_Name,
                Translation));
       end;
+
+      declare
+         Categories_Index : JSON_Array;
+
+      begin
+         --  Generate entities by category pages and compute list of categories
+
+         Self.Generate_Entities_Category
+           (Self.Entities.Variables,
+            "Constants & Variables",
+            "objects",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Simple_Types,
+            "Simple Types",
+            "simple_types",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Access_Types,
+            "Access Types",
+            "access_types",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Record_Types,
+            "Record Types",
+            "record_types",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Tagged_Types,
+            "Tagged Types",
+            "tagged_types",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.CPP_Classes,
+            "C++ Classes",
+            "cpp_classes",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Subprgs,
+            "Subprograms",
+            "subprograms",
+            Categories_Index);
+         Self.Generate_Entities_Category
+           (Self.Entities.Pkgs,
+            "Packages",
+            "packages",
+            Categories_Index);
+
+         --  Generate entities' categories index JSON data file.
+
+         declare
+            Translation : Translate_Set;
+
+         begin
+            Insert
+              (Translation,
+               Assoc
+                 ("ENTITIES_CATEGORIES_INDEX_DATA",
+                  String'(Write (Create (Categories_Index), False))));
+            Write_To_File
+              (Self.Context,
+               Get_Doc_Directory (Self.Context.Kernel),
+               "entities_categories_index.js",
+               Parse
+                 (+Self.Get_Template
+                      (Tmpl_Entities_Categories_Index_JS).Full_Name,
+                  Translation));
+         end;
+      end;
    end Finalize;
+
+   --------------------------------
+   -- Generate_Entities_Category --
+   --------------------------------
+
+   procedure Generate_Entities_Category
+     (Self       : in out HTML_Backend'Class;
+      Entities   : EInfo_List.Vector;
+      Label      : String;
+      File_Name  : String;
+      Categories : in out JSON_Array)
+   is
+      Entries : JSON_Array;
+      Object  : JSON_Value;
+
+   begin
+      if not Entities.Is_Empty then
+         for Entity of Entities loop
+            Object := Create_Object;
+            Object.Set_Field ("label", Get_Short_Name (Entity));
+            Object.Set_Field ("href", Get_Docs_Href (Entity));
+            Append (Entries, Object);
+         end loop;
+
+         Object := Create_Object;
+         Object.Set_Field ("label", Label);
+         Object.Set_Field ("entities", Entries);
+
+         declare
+            Translation : Translate_Set;
+
+         begin
+            Insert
+              (Translation,
+               Assoc
+                 ("ENTITIES_CATEGORY_DATA",
+                  String'(Write (Object, False))));
+            Write_To_File
+              (Self.Context,
+               Get_Doc_Directory
+                 (Self.Context.Kernel).Create_From_Dir ("entities"),
+               +File_Name & ".js",
+               Parse
+                 (+Self.Get_Template (Tmpl_Entities_Category_JS).Full_Name,
+                  Translation));
+         end;
+         declare
+            Translation : Translate_Set;
+
+         begin
+            Insert
+              (Translation,
+               Assoc
+                 ("ENTITIES_CATEGORY_JS", File_Name & ".js"));
+            Write_To_File
+              (Self.Context,
+               Get_Doc_Directory
+                 (Self.Context.Kernel).Create_From_Dir ("entities"),
+               +File_Name & ".html",
+               Parse
+                 (+Self.Get_Template (Tmpl_Entities_Category_HTML).Full_Name,
+                  Translation));
+
+            Object := Create_Object;
+            Object.Set_Field ("label", Label);
+            Object.Set_Field ("href", "entities/" & File_Name & ".html");
+
+            Append (Categories, Object);
+         end;
+      end if;
+   end Generate_Entities_Category;
 
    ---------------------------------
    -- Generate_Lang_Documentation --
@@ -714,6 +868,28 @@ package body GNATdoc.Backend.HTML is
       Append (Self.Doc_Files, Index_Entry);
    end Generate_Lang_Documentation;
 
+   -------------------
+   -- Get_Docs_Href --
+   -------------------
+
+   function Get_Docs_Href (Entity : Entity_Id) return String is
+      Parent : Entity_Id := Entity;
+
+   begin
+      while Get_Kind (Parent) /= E_Package loop
+         Parent := Get_Scope (Parent);
+      end loop;
+
+      return
+        "docs/"
+        & To_Lower (Get_Full_Name (Parent))
+        & ".html#L"
+        & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both)
+        & "C"
+        & Trim
+        (Natural'Image (Natural (LL.Get_Location (Entity).Column)), Both);
+   end Get_Docs_Href;
+
    ------------------
    -- Get_Template --
    ------------------
@@ -729,6 +905,13 @@ package body GNATdoc.Backend.HTML is
             return Self.Get_Resource_File ("documentation.js.tmpl");
          when Tmpl_Documentation_Index_JS =>
             return Self.Get_Resource_File ("documentation_index.js.tmpl");
+         when Tmpl_Entities_Category_HTML =>
+            return Self.Get_Resource_File ("entities_category.html.tmpl");
+         when Tmpl_Entities_Category_JS =>
+            return Self.Get_Resource_File ("entities_category.js.tmpl");
+         when Tmpl_Entities_Categories_Index_JS =>
+            return Self.Get_Resource_File
+              ("entities_categories_index.js.tmpl");
          when Tmpl_Source_File_HTML =>
             return Self.Get_Resource_File ("source_file.html.tmpl");
          when Tmpl_Source_File_JS =>
@@ -798,6 +981,8 @@ package body GNATdoc.Backend.HTML is
            Get_Doc_Directory (Self.Context.Kernel);
          Srcs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("srcs");
          Docs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("docs");
+         Ents_Dir : constant Virtual_File :=
+           Root_Dir.Create_From_Dir ("entities");
 
       begin
          if not Root_Dir.Is_Directory then
@@ -810,6 +995,10 @@ package body GNATdoc.Backend.HTML is
 
          if not Docs_Dir.Is_Directory then
             Docs_Dir.Make_Dir;
+         end if;
+
+         if not Ents_Dir.Is_Directory then
+            Ents_Dir.Make_Dir;
          end if;
       end Create_Documentation_Directories;
 

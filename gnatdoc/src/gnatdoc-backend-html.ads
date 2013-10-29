@@ -56,4 +56,7 @@ private
    overriding function Name (Self : HTML_Backend) return String;
    --  Returns name of the backend.
 
+   function Get_Docs_Href (Entity : Entity_Id) return String;
+   --  Returns hyper reference to documentation of entity.
+
 end GNATdoc.Backend.HTML;
