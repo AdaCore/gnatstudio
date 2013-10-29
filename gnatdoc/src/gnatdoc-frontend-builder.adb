@@ -1085,7 +1085,9 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Append_To_File_Entities (E : Unique_Entity_Id) is
       begin
-         Append_To_List (File_Entities.All_Entities'Access, E);
+         if not File_Entities.All_Entities.Contains (Get_Entity (E)) then
+            Append_To_List (File_Entities.All_Entities'Access, E);
+         end if;
       end Append_To_File_Entities;
 
       -------------------------
@@ -1152,6 +1154,12 @@ package body GNATdoc.Frontend.Builder is
             procedure Append_Parent_And_Progenitors
               (Parents  : Xref.Entity_Array);
 
+            function Is_Inherited_Primitive
+              (Typ  : Entity_Id;
+               Prim : General_Entity) return Boolean;
+            --  Return true if primitive Prim of tagged type Typ has been
+            --  inherited from some parent or progenitor type
+
             procedure Append_Parent_And_Progenitors
               (Parents : Xref.Entity_Array)
             is
@@ -1188,6 +1196,95 @@ package body GNATdoc.Frontend.Builder is
                   end if;
                end loop;
             end Append_Parent_And_Progenitors;
+
+            ----------------------------
+            -- Is_Inherited_Primitive --
+            ----------------------------
+
+            function Is_Inherited_Primitive
+              (Typ  : Entity_Id;
+               Prim : General_Entity) return Boolean
+            is
+               function Check_Primitives
+                 (Typ : Entity_Id) return Boolean;
+               --  Return true if Prim is a primitive of Typ
+
+               function Check_Progenitors
+                 (Typ : Entity_Id) return Boolean;
+               --  Return True if Prim is a primitive defined in some
+               --  progenitor of Typ
+
+               ----------------------
+               -- Check_Primitives --
+               ----------------------
+
+               function Check_Primitives
+                 (Typ : Entity_Id) return Boolean
+               is
+                  Cursor : EInfo_List.Cursor;
+                  E      : Entity_Id;
+
+               begin
+                  Cursor := Get_Methods (Typ).First;
+                  while EInfo_List.Has_Element (Cursor) loop
+                     E := EInfo_List.Element (Cursor);
+
+                     if LL.Get_Entity (E) = Prim then
+                        return True;
+                     end if;
+
+                     EInfo_List.Next (Cursor);
+                  end loop;
+
+                  return False;
+               end Check_Primitives;
+
+               -----------------------
+               -- Check_Progenitors --
+               -----------------------
+
+               function Check_Progenitors
+                 (Typ : Entity_Id) return Boolean
+               is
+                  Cursor     : EInfo_List.Cursor;
+                  Progenitor : Entity_Id;
+
+               begin
+                  Cursor := Get_Progenitors (Typ).First;
+                  while EInfo_List.Has_Element (Cursor) loop
+                     Progenitor := EInfo_List.Element (Cursor);
+
+                     if Check_Primitives (Progenitor) then
+                        return True;
+                     end if;
+
+                     EInfo_List.Next (Cursor);
+                  end loop;
+
+                  return False;
+               end Check_Progenitors;
+
+            begin
+               if Get_Kind (Typ) = E_Interface then
+                  return Check_Progenitors (Typ);
+
+               else
+                  declare
+                     Parent : Entity_Id;
+                  begin
+                     Parent := Get_Parent (Typ);
+                     while Present (Parent) loop
+                        if Check_Primitives (Parent) then
+                           return True;
+                        end if;
+
+                        Parent := Get_Parent (Parent);
+                     end loop;
+
+                     return False;
+                  end;
+               end if;
+            end Is_Inherited_Primitive;
 
          --  Start of processing for Decorate_Record_Type
 
@@ -1229,78 +1326,6 @@ package body GNATdoc.Frontend.Builder is
                      Append_To_Scope (E, Entity);
                      Append_To_File_Entities (Entity);
                      Append_To_Map (Entity);
-                  end loop;
-               end;
-            end if;
-
-            if Is_Tagged_Type (E)
-              or else Get_Kind (E) = E_Class
-            then
-               --  ??? Xref bug (Xref.Methods): Include_Inherited returns
-               --  the same array when set to True or False (that is, False
-               --  has no effect).
-
-               declare
-                  All_Methods : constant Xref.Entity_Array :=
-                                  Methods
-                                    (Context.Database, Get_LL_Entity (E),
-                                     Include_Inherited => True);
-                  Method : Unique_Entity_Id;
-
-               begin
-                  for J in All_Methods'Range loop
-                     Get_Unique_Entity
-                       (Method, Context, File, All_Methods (J),
-                        Forced => True);
-
-                     if not Is_New (Method) then
-                        Append_Inherited_Method (E, Method);
-
-                     elsif In_Ada_Language (Method) then
-
-                        --  If Xref does not have available the scope of this
-                        --  method it means that it is a primitive defined in
-                        --  a file which is not directly part of this project
-                        --  (that is, an entity defined in the runtime of the
-                        --  compiler or in a library). In such case we assume
-                        --  that it is an inherited primitive.
-
-                        if No (Get_LL_Scope (Method))
-                          or else Get_LL_Scope (Method) /= Get_LL_Scope (E)
-                        then
-                           --  For inherited primitives defined in other
-                           --  files/scopes we cannot set their scope.
-
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Inherited_Method (E, Method);
-
-                        else
-                           Append_To_Enclosing_Scope (E, Method);
-                           Append_To_File_Entities (Method);
-
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Method (E, Method);
-                        end if;
-
-                        Append_To_Map (Method);
-                     else
-                        if Get_LL_Scope (Method) = Get_LL_Entity (E) then
-                           Append_To_Scope (E, Method);
-                           Append_To_File_Entities (Method);
-
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Method (E, Method);
-
-                        --  For inherited primitives defined in other
-                        --  scopes we cannot set their scope.
-
-                        else
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Inherited_Method (E, Method);
-                        end if;
-
-                        Append_To_Map (Method);
-                     end if;
                   end loop;
                end;
             end if;
@@ -1374,6 +1399,76 @@ package body GNATdoc.Frontend.Builder is
                   end if;
                end loop;
             end;
+
+            if Is_Tagged_Type (E)
+              or else Get_Kind (E) = E_Class
+            then
+               declare
+                  All_Methods : constant Xref.Entity_Array :=
+                                  Methods
+                                    (Context.Database, Get_LL_Entity (E),
+                                     Include_Inherited => True);
+
+                  Method : Unique_Entity_Id;
+               begin
+                  for J in All_Methods'Range loop
+                     Get_Unique_Entity
+                       (Method, Context, File, All_Methods (J),
+                        Forced => True);
+
+                     if Is_Inherited_Primitive
+                         (Get_Entity (E), All_Methods (J))
+                     then
+                        Append_Inherited_Method (E, Method);
+
+                     elsif In_Ada_Language (Method) then
+
+                        --  If Xref does not have available the scope of this
+                        --  method it means that it is a primitive defined in
+                        --  a file which is not directly part of this project
+                        --  (that is, an entity defined in the runtime of the
+                        --  compiler or in a library). In such case we assume
+                        --  that it is an inherited primitive.
+
+                        if No (Get_LL_Scope (Method))
+                          or else Get_LL_Scope (Method) /= Get_LL_Scope (E)
+                        then
+                           --  For inherited primitives defined in other
+                           --  files/scopes we cannot set their scope.
+
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Inherited_Method (E, Method);
+
+                        else
+                           Append_To_Enclosing_Scope (E, Method);
+                           Append_To_File_Entities (Method);
+
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Method (E, Method);
+                        end if;
+
+                        Append_To_Map (Method);
+                     else
+                        if Get_LL_Scope (Method) = Get_LL_Entity (E) then
+                           Append_To_Scope (E, Method);
+                           Append_To_File_Entities (Method);
+
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Method (E, Method);
+
+                        --  For inherited primitives defined in other
+                        --  scopes we cannot set their scope.
+
+                        else
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Inherited_Method (E, Method);
+                        end if;
+
+                        Append_To_Map (Method);
+                     end if;
+                  end loop;
+               end;
+            end if;
          end Decorate_Record_Type;
 
          ---------------------------------

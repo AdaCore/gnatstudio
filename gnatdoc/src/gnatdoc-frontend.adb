@@ -872,17 +872,22 @@ package body GNATdoc.Frontend is
       --  Start of processing for Ada_Get_Source
 
       begin
+         --  No action needed if we already retrieved the documentation of this
+         --  entity
+
+         if Get_Src (E) /= Null_Unbounded_String then
+            return;
+
          --  Skip processing entities defined in other files (for example,
          --  primitives inherited of the parent type).
 
-         if LL.Get_Location (E).File /= File then
+         elsif LL.Get_Location (E).File /= File then
             return;
-         end if;
 
          --  No action needed for entities for which we don't need to retrieve
          --  its sources
 
-         if Is_Package (E)
+         elsif Is_Package (E)
            or else Get_Kind (E) = E_Formal
          then
             return;
@@ -2475,9 +2480,9 @@ package body GNATdoc.Frontend is
          end if;
       end Parse_Subprogram_Comments;
 
-      ---------------
-      -- Parse_Doc --
-      ---------------
+      ------------------
+      -- Process_Node --
+      ------------------
 
       function Process_Node
         (Entity      : Entity_Id;
@@ -2486,13 +2491,9 @@ package body GNATdoc.Frontend is
       begin
          --  Do not document again C/C++ entities which are already documented
 
-         if not In_Ada_Language (Entity)
-           and then Get_Comment (Entity) /= No_Structured_Comment
-         then
+         if Get_Comment (Entity) /= No_Structured_Comment then
             return Skip;
          end if;
-
-         pragma Assert (Get_Comment (Entity) = No_Structured_Comment);
 
          if LL.Is_Subprogram (Entity) then
             Parse_Subprogram_Comments (Entity);
