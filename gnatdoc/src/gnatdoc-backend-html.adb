@@ -72,6 +72,42 @@ package body GNATdoc.Backend.HTML is
    procedure Generate_Inheritance_Index (Self : in out HTML_Backend'Class);
    --  Generates inheritance index for Ada tagged and interface types
 
+   function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean;
+
+   package Entity_Id_Ordered_Sets is
+     new Ada.Containers.Ordered_Sets (Entity_Id);
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean is
+      LN : constant String := To_Lower (Get_Short_Name (Left));
+      LL : constant General_Location := Atree.LL.Get_Location (Left);
+      RN : constant String := To_Lower (Get_Short_Name (Right));
+      RL : constant General_Location := Atree.LL.Get_Location (Right);
+
+   begin
+      if LN < RN then
+         return True;
+
+      elsif LN = RN then
+         if LL.File < RL.File then
+            return True;
+
+         elsif LL.File = RL.File then
+            if LL.Line < RL.Line then
+               return True;
+
+            elsif LL.Line = RL.Line then
+               return LL.Column < RL.Column;
+            end if;
+         end if;
+      end if;
+
+      return False;
+   end "<";
+
    -------------------------------------
    -- Extract_Summary_And_Description --
    -------------------------------------
@@ -283,9 +319,14 @@ package body GNATdoc.Backend.HTML is
       is
          Object  : constant JSON_Value := Create_Object;
          Derived : JSON_Array;
+         Aux     : Entity_Id_Ordered_Sets.Set;
 
       begin
          for D of Get_Derivations (Entity).all loop
+            Aux.Insert (D);
+         end loop;
+
+         for D of Aux loop
             Build (D, Derived);
          end loop;
 
@@ -300,6 +341,7 @@ package body GNATdoc.Backend.HTML is
       end Build;
 
       Root_Types : EInfo_List.Vector;
+      Aux        : Entity_Id_Ordered_Sets.Set;
       Types      : JSON_Array;
 
    begin
@@ -314,6 +356,10 @@ package body GNATdoc.Backend.HTML is
       end loop;
 
       for T of Root_Types loop
+         Aux.Insert (T);
+      end loop;
+
+      for T of Aux loop
          Build (T, Types);
       end loop;
 
@@ -644,45 +690,9 @@ package body GNATdoc.Backend.HTML is
       File_Name  : String;
       Categories : in out JSON_Array)
    is
-      function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean;
-
-      package Ordered_Sets is
-        new Ada.Containers.Ordered_Sets (Entity_Id);
-
-      ---------
-      -- "<" --
-      ---------
-
-      function "<" (Left : Entity_Id; Right : Entity_Id) return Boolean is
-         LN : constant String := To_Lower (Get_Short_Name (Left));
-         LL : constant General_Location := Atree.LL.Get_Location (Left);
-         RN : constant String := To_Lower (Get_Short_Name (Right));
-         RL : constant General_Location := Atree.LL.Get_Location (Right);
-
-      begin
-         if LN < RN then
-            return True;
-
-         elsif LN = RN then
-            if LL.File < RL.File then
-               return True;
-
-            elsif LL.File = RL.File then
-               if LL.Line < RL.Line then
-                  return True;
-
-               elsif LL.Line = RL.Line then
-                  return LL.Column < RL.Column;
-               end if;
-            end if;
-         end if;
-
-         return False;
-      end "<";
-
       Entries : JSON_Array;
       Object  : JSON_Value;
-      Set     : Ordered_Sets.Set;
+      Set     : Entity_Id_Ordered_Sets.Set;
 
    begin
       if not Entities.Is_Empty then
