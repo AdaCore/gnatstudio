@@ -31,6 +31,13 @@ html, body {
     border: 0px;
 }
 
+table.code {
+    border-width: 1px;
+    border-color: #D7D7D7;
+    border-style: solid;
+    padding: 5px;
+}
+
 table.code tbody th {
     font-size: 11px;
     text-align: right;
