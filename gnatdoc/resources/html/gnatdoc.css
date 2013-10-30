@@ -5,6 +5,7 @@ html, body {
     border: 0px;
     padding: 0px;
     outline: 0px;
+    font-size: 13px;
 }
 
 .comment {
@@ -17,8 +18,11 @@ html, body {
 }
 
 #tocView {
-    width: 15%;
     float: left;
+}
+
+#tocView h1 {
+    font-size: 16px;
 }
 
 #contentView {
@@ -55,4 +59,12 @@ table#frameSet td#toc {
 table#frameSet td {
     height: 100%;
     width: 70%;
+}
+
+h1 {
+    font-size: 26px;
+}
+
+h2 {
+    font-size: 16px;
 }
