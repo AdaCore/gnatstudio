@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.1.0 / GNATbench 2.9.0
 -------------------------------------------
 
+NF-61-MA25-032 GPS: Use the primary modifier for shortcuts (2013-10-29)
+
+  GPS now uses the primary system modifier key instead of the fixed control
+  key for its default key shortcuts. This has only effects on OSX, where this
+  modifier is mapped to the command key.
+
 NF-61-MA22-042 GPS: Recompute Xrefs on file save (2013-10-29)
 
   GPS now recomputes the cross references of a given file every time this file
