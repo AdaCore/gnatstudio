@@ -378,6 +378,34 @@ function buildEntitiesCategoryPage()
     page.appendChild(list);
 }
 
+function buildInheritanceIndex(page)
+{
+    function build(list, entities)
+    {
+        for (var index = 0; index < entities.length; index++)
+        {
+            var item = document.createElement('li');
+            var href = document.createElement('a');
+            href.setAttribute('href', entities[index].href);
+            href.appendChild(document.createTextNode(entities[index].label));
+            item.appendChild(href);
+
+            if (typeof entities[index].inherited !== 'undefined')
+            {
+                var sublist = document.createElement('ul');
+                build(sublist, entities[index].inherited);
+                item.appendChild(sublist);
+            }
+            list.appendChild(item);
+        }
+    }
+
+    var list = document.createElement('ul');
+
+    build(list, GNATdocInheritanceIndex);
+    page.appendChild(list);
+}
+
 function displaySource()
 {
     pane = document.getElementById('body');
@@ -407,15 +435,32 @@ function onDocumentationLoad()
 
 function onLoad()
 {
-    toc = document.getElementById('tocView');
+    var toc = document.getElementById('tocView');
+
     buildPackagesIndex(toc);
     buildEntitiesCategoriesIndex(toc);
+
+    var header = document.createElement('h1');
+    var href = document.createElement('a');
+    href.setAttribute('href', 'inheritance_index.html');
+    href.setAttribute('target', 'contentView');
+    href.appendChild(document.createTextNode('Inheritance Tree'));
+    header.appendChild(href);
+    toc.appendChild(header);
+
     buildSourcesIndex(toc);
 }
 
 function onSourceFileLoad()
 {
     displaySource();
+}
+
+function onInheritanceLoad()
+{
+    var page = document.getElementById('body');
+
+    buildInheritanceIndex(page);
 }
 
 function onEntitiesCategoryLoad()

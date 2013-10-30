@@ -40,6 +40,7 @@ package body GNATdoc.Backend.HTML is
       Tmpl_Entities_Category_JS,    --  Entities' category (JS data)
       Tmpl_Entities_Categories_Index_JS,
                                     --  Entities' category index (JS data)
+      Tmpl_Inheritance_Index_JS,    --  Inheritance tree (JS data)
       Tmpl_Source_File_HTML,        --  Source file (HTML page)
       Tmpl_Source_File_JS,          --  Source file (JavaScript data)
       Tmpl_Source_File_Index_JS);   --  Index of source files (JavaScript data)
@@ -67,6 +68,9 @@ package body GNATdoc.Backend.HTML is
       File_Name  : String;
       Categories : in out JSON_Array);
    --  Generates entities category HTML page and JS data.
+
+   procedure Generate_Inheritance_Index (Self : in out HTML_Backend'Class);
+   --  Generates inheritance index for Ada tagged and interface types
 
    -------------------------------------
    -- Extract_Summary_And_Description --
@@ -230,6 +234,107 @@ package body GNATdoc.Backend.HTML is
          Printer.End_File (Text, Continue);
       end if;
    end Print_Source_Code;
+
+   --------------------------------
+   -- Generate_Inheritance_Index --
+   --------------------------------
+
+   procedure Generate_Inheritance_Index (Self : in out HTML_Backend'Class) is
+
+      procedure Analyze_Inheritance_Tree
+        (Entity     : Entity_Id;
+         Root_Types : in out EInfo_List.Vector);
+      --  Analyze inheritance tree, lookup root types and append them to the
+      --  list.
+
+      procedure Build
+        (Entity : Entity_Id;
+         List   : in out JSON_Array);
+
+      ------------------------------
+      -- Analyze_Inheritance_Tree --
+      ------------------------------
+
+      procedure Analyze_Inheritance_Tree
+        (Entity     : Entity_Id;
+         Root_Types : in out EInfo_List.Vector) is
+      begin
+         if Get_IDepth_Level (Entity) = 0 then
+            if not Root_Types.Contains (Entity) then
+               Root_Types.Append (Entity);
+            end if;
+
+         else
+            Analyze_Inheritance_Tree (Get_Parent (Entity), Root_Types);
+
+            for Progenitor of Get_Progenitors (Entity).all loop
+               Analyze_Inheritance_Tree (Progenitor, Root_Types);
+            end loop;
+         end if;
+      end Analyze_Inheritance_Tree;
+
+      -----------
+      -- Build --
+      -----------
+
+      procedure Build
+        (Entity : Entity_Id;
+         List   : in out JSON_Array)
+      is
+         Object  : constant JSON_Value := Create_Object;
+         Derived : JSON_Array;
+
+      begin
+         for D of Get_Derivations (Entity).all loop
+            Build (D, Derived);
+         end loop;
+
+         Object.Set_Field ("label", Get_Short_Name (Entity));
+         Object.Set_Field ("href", Get_Docs_Href (Entity));
+
+         if Derived /= Empty_Array then
+            Object.Set_Field ("inherited", Derived);
+         end if;
+
+         Append (List, Object);
+      end Build;
+
+      Root_Types : EInfo_List.Vector;
+      Types      : JSON_Array;
+
+   begin
+      --  Collect root types
+
+      for Entity of Self.Entities.Tagged_Types loop
+         Analyze_Inheritance_Tree (Entity, Root_Types);
+      end loop;
+
+      for Entity of Self.Entities.Interface_Types loop
+         Analyze_Inheritance_Tree (Entity, Root_Types);
+      end loop;
+
+      for T of Root_Types loop
+         Build (T, Types);
+      end loop;
+
+      declare
+         Translation : Translate_Set;
+
+      begin
+         Insert
+           (Translation,
+            Assoc
+              ("INHERITANCE_INDEX_DATA",
+               String'(Write (Create (Types), False))));
+         Write_To_File
+           (Self.Context,
+            Get_Doc_Directory (Self.Context.Kernel),
+            "inheritance_index.js",
+            Parse
+              (+Self.Get_Template (Tmpl_Inheritance_Index_JS).Full_Name,
+               Translation));
+      end;
+   end Generate_Inheritance_Index;
 
    --------------
    -- Finalize --
@@ -524,6 +629,8 @@ package body GNATdoc.Backend.HTML is
                   Translation));
          end;
       end;
+
+      Self.Generate_Inheritance_Index;
    end Finalize;
 
    --------------------------------
@@ -1011,6 +1118,8 @@ package body GNATdoc.Backend.HTML is
             return Self.Get_Resource_File ("documentation.js.tmpl");
          when Tmpl_Documentation_Index_JS =>
             return Self.Get_Resource_File ("documentation_index.js.tmpl");
+         when Tmpl_Inheritance_Index_JS =>
+            return Self.Get_Resource_File ("inheritance_index.js.tmpl");
          when Tmpl_Entities_Category_HTML =>
             return Self.Get_Resource_File ("entities_category.html.tmpl");
          when Tmpl_Entities_Category_JS =>
@@ -1047,30 +1156,39 @@ package body GNATdoc.Backend.HTML is
       ----------------------------
 
       procedure Generate_Support_Files is
-         Index_HTML      : constant Filesystem_String := "index.html";
-         GNATdoc_JS      : constant Filesystem_String := "gnatdoc.js";
-         GNATdoc_CSS     : constant Filesystem_String := "gnatdoc.css";
+         Index_HTML       : constant Filesystem_String := "index.html";
+         Inheritance_HTML : constant Filesystem_String :=
+                              "inheritance_index.html";
+         GNATdoc_JS       : constant Filesystem_String := "gnatdoc.js";
+         GNATdoc_CSS      : constant Filesystem_String := "gnatdoc.css";
 
-         Index_HTML_Src  : constant Virtual_File :=
+         Index_HTML_Src       : constant Virtual_File :=
            Self.Get_Resource_File (Index_HTML);
-         Index_HTML_Dst  : constant Virtual_File :=
+         Index_HTML_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Index_HTML);
-         GNATdoc_JS_Src  : constant Virtual_File :=
+         Inheritance_HTML_Src : constant Virtual_File :=
+           Self.Get_Resource_File (Inheritance_HTML);
+         Inheritance_HTML_Dst : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (Inheritance_HTML);
+         GNATdoc_JS_Src       : constant Virtual_File :=
            Self.Get_Resource_File (GNATdoc_JS);
-         GNATdoc_JS_Dst  : constant Virtual_File :=
+         GNATdoc_JS_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (GNATdoc_JS);
-         GNATdoc_CSS_Src : constant Virtual_File :=
+         GNATdoc_CSS_Src      : constant Virtual_File :=
            Self.Get_Resource_File (GNATdoc_CSS);
-         GNATdoc_CSS_Dst : constant Virtual_File :=
+         GNATdoc_CSS_Dst      : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (GNATdoc_CSS);
 
-         Success         : Boolean;
+         Success : Boolean;
 
       begin
          Index_HTML_Src.Copy (Index_HTML_Dst.Full_Name, Success);
+         pragma Assert (Success);
+         Inheritance_HTML_Src.Copy (Inheritance_HTML_Dst.Full_Name, Success);
          pragma Assert (Success);
          GNATdoc_JS_Src.Copy (GNATdoc_JS_Dst.Full_Name, Success);
          pragma Assert (Success);

@@ -98,6 +98,7 @@ package body GNATdoc.Atree is
    begin
       pragma Assert (not E.Progenitors.Contains (Value));
       E.Progenitors.Append (Value);
+      Append_Derivation (E => Value, Value => E);
    end Append_Progenitor;
 
    ---------------------
