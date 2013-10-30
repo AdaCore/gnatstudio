@@ -483,6 +483,11 @@ package body GNATdoc.Backend.HTML is
             "tagged_types",
             Categories_Index);
          Self.Generate_Entities_Category
+           (Self.Entities.Tagged_Types,
+            "Tasks & Task Types",
+            "tasks",
+            Categories_Index);
+         Self.Generate_Entities_Category
            (Self.Entities.CPP_Classes,
             "C++ Classes",
             "cpp_classes",
@@ -883,6 +888,11 @@ package body GNATdoc.Backend.HTML is
       if not Entities.Tagged_Types.Is_Empty then
          Build_Entity_Entries
            (Entity_Entries, "Tagged types", Entities.Tagged_Types);
+      end if;
+
+      if not Entities.Tasks.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Tasks and task types", Entities.Tasks);
       end if;
 
       if not Entities.Subprgs.Is_Empty then

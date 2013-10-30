@@ -1136,6 +1136,12 @@ package body GNATdoc.Backend.Simple is
 
             ReST_Append_List
               (Printout'Access,
+               Backend.Entities.Tasks,
+               "Tasks & Task types",
+               Filter => Filter);
+
+            ReST_Append_List
+              (Printout'Access,
                Backend.Entities.CPP_Classes,
                "C++ Classes",
                Filter => Filter);
@@ -2089,6 +2095,8 @@ package body GNATdoc.Backend.Simple is
            (Printout'Access, Entities.Interface_Types, "Interface types");
          ReST_Append_List
            (Printout'Access, Entities.Tagged_Types, "Tagged types");
+         ReST_Append_List
+           (Printout'Access, Entities.Tasks, "Tasks & task types types");
          ReST_Append_List
            (Printout'Access, Entities.CPP_Classes, "C++ Classes");
          ReST_Append_List

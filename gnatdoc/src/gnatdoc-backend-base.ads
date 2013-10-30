@@ -32,6 +32,7 @@ package GNATdoc.Backend.Base is
       Subprgs          : aliased EInfo_List.Vector;
       Tagged_Types     : EInfo_List.Vector;
       Variables        : EInfo_List.Vector;
+      Tasks            : EInfo_List.Vector;
    end record;
 
    type Base_Backend is

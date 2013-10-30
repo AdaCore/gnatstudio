@@ -114,6 +114,12 @@ package body GNATdoc.Backend.Base is
                Entities.Variables.Append (Entity);
                Self.Entities.Variables.Append (Entity);
 
+            elsif Get_Kind (Entity) = E_Task
+              or Get_Kind (Entity) = E_Task_Type
+            then
+               Entities.Tasks.Append (Entity);
+               Self.Entities.Tasks.Append (Entity);
+
             elsif LL.Is_Type (Entity) then
                if Get_Kind (Entity) = E_Class then
                   Entities.CPP_Classes.Append (Entity);
