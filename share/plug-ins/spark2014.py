@@ -270,8 +270,8 @@ xml_gnatprove = """<?xml version="1.0"?>
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s" columns="2" lines="4">
          <title column="1" line="1" >General</title>
-         <check label="Ignore cached results" switch="-f" column="1"
-                tip="All actions are redone entirely, including compilation and proof" />
+         <check label="Force re-analysis" switch="-f" column="1"
+                tip="Re-start analysis from scratch, ignoring previous results" />
          <check label="Report checks proved" switch="--report=all" column="1"
                 tip="Report the status of all checks, including those proved" />
          <title column="2" line="1" >Prover</title>
@@ -483,20 +483,6 @@ xml_gnatprove = """<?xml version="1.0"?>
          end_of_build
        </output-parsers>
     </target>
-
-    <target-model name="gnatprovable">
-       <description>Target model for GNATprove in detection mode</description>
-       <command-line>
-          <arg>gnatprove</arg>
-          <arg>-P%PP</arg>
-       </command-line>
-       <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="1" lines="1">
-         <title column="1" line="1" >Compilation</title>
-         <check label="Ignore cached results" switch="-f" column="1"
-                tip="All actions are redone entirely, including compilation and proof" />
-       </switches>
-    </target-model>
 
     <target-model name="gnatprove_clean">
        <description>Target model for GNATprove for cleaning</description>
