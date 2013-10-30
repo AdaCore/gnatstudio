@@ -374,26 +374,6 @@ package body GNATdoc is
                          (Context => Context,
                           File    => Current_File);
 
-                     if Options.Tree_Output.Kind /= None then
-                        if Options.Tree_Output.Kind = Short then
-                           Treepr.Print_Short_Tree
-                             (Context     => Context,
-                              Tree        => Tree'Access,
-                              With_Scopes => True);
-                        else
-                           Treepr.Print_Full_Tree
-                             (Context     => Context,
-                              Tree        => Tree'Access,
-                              With_Scopes => True);
-                        end if;
-                     end if;
-
-                     if Options.Output_Comments then
-                        Treepr.Print_Comments
-                          (Context => Context,
-                           Tree    => Tree'Access);
-                     end if;
-
                      All_Files.Append (Current_File);
                      All_Trees.Append (Tree);
                   end if;
@@ -408,6 +388,45 @@ package body GNATdoc is
          All_Files.Clear;
 
          if Tree_List.Has_Element (All_Trees.First) then
+            declare
+               Cursor : Tree_List.Cursor;
+               Tree   : aliased Tree_Type;
+
+            begin
+               --  Generate the tree output files. This cannot be done before
+               --  because as part of decorating a tree the frontend may
+               --  complete the decoration of entities defined in other trees
+               --  (for example, the decoration of a derived type completes
+               --  the decoration of its parent type, which may be located
+               --  in another file ---and hence in another tree).
+
+               Cursor := All_Trees.First;
+               while Tree_List.Has_Element (Cursor) loop
+                  Tree := Tree_List.Element (Cursor);
+
+                  if Options.Tree_Output.Kind /= None then
+                     if Options.Tree_Output.Kind = Short then
+                        Treepr.Print_Short_Tree
+                          (Context     => Context,
+                           Tree        => Tree'Access,
+                           With_Scopes => True);
+                     else
+                        Treepr.Print_Full_Tree
+                          (Context     => Context,
+                           Tree        => Tree'Access,
+                           With_Scopes => True);
+                     end if;
+                  end if;
+
+                  if Options.Output_Comments then
+                     Treepr.Print_Comments
+                       (Context => Context,
+                        Tree    => Tree'Access);
+                  end if;
+
+                  Tree_List.Next (Cursor);
+               end loop;
+            end;
 
             --  Set the inheritance depth level of tagged types. This cannot
             --  be done before because files are not processed following their
