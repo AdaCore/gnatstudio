@@ -1,0 +1,44 @@
+#!/usr/bin/python
+
+"""Tool used to find and copy the library dependencies of executable into a bundle.
+
+Installing such library dependencies is performed in two steps:
+
+1) We need to find all dependencies recursively, and copy them to the bundle's lib directory
+2) We need then to rebase those dependencies to force them to use relative paths when looking
+   for their own dependencies
+"""
+
+import os
+import os.path
+import shutil
+import sys
+import stat
+
+from resolver import Resolver
+
+if len(sys.argv) < 3:
+    print "Usage:"
+    print "  %s prefix files ... " % os.path.basename(sys.argv[0])
+
+prefix=sys.argv[1]
+
+if not os.path.isdir(prefix):
+    print "%s is not a directory" % prefix
+
+resolver = Resolver(prefix, sys.argv[2:],
+                    ["@EXEC_PREFIX@", "@GTKADA_PREFIX@", "@GTK_PREFIX@"])
+
+for libname in resolver.to_copy.keys():
+    lib = resolver.to_copy[libname]
+
+    if len(lib[0]) > 0:
+        print "Copying %s as %s" % lib
+        dirname = os.path.dirname(lib[1])
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+
+        shutil.copy(lib[0], lib[1])
+        st = os.stat(lib[1])
+        os.chmod(lib[1], st.st_mode | stat.S_IWUSR)
+    resolver.to_relative(lib[1])

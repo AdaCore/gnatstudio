@@ -1,0 +1,90 @@
+PREFIX:=$(PWD)
+TOP:=$(PWD)
+APP:=$(PREFIX)/GPS.app
+
+contents=$(APP)/Contents
+root=$(contents)/MacOS
+bin=$(root)/bin
+etc=$(root)/etc
+lib=$(root)/lib
+share=$(root)/share
+inc=$(root)/include
+
+GTK_PREFIX=@GTK_PREFIX@
+GPS_VERSION=@GPS_VERSION@
+
+all: $(APP)
+
+dmg: $(PREFIX)/$(GPS)-$(GPS_VERSION).dmg
+
+#install: GPS.app
+#	rm -rf /Applications/GPS.app
+#	cp -r GPS.app /Applications/
+#	rm -f $(GNAT_PREFIX)/bin/gps
+#	cp srcs/gps_launcher.sh $(GNAT_PREFIX)/bin/gps
+#	chmod a+x $(GNAT_PREFIX)/bin/gps
+#	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user
+#	rm -rf GPS.app
+
+clean:
+	rm -rf *.dmg GPS.app
+
+.PHONY: force
+
+$(PREFIX)/$(GPS)-$(GPS_VERSION).dmg: $(APP)
+# create dmg image
+	cd $(PREFIX) && sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION)
+
+$(APP): force
+# prepare the bundle structure
+	rm -rf $(APP)
+	mkdir -p $(contents)
+	mkdir -p $(root)
+	mkdir -p $(lib)
+	mkdir -p $(inc)
+	mkdir -p $(etc)
+	cp -r Resources $(contents)
+	cp srcs/Info.plist $(contents)
+	cp srcs/gps_bundle_main $(root)/gps
+
+# install gps
+	make -C .. install-strip prefix=$(root)
+	find $(APP) -d -name .svn -exec rm -rf {} \;
+
+# install gtk data files
+	cp -r $(GTK_PREFIX)/lib/girepository-1.0 $(lib)
+	cp -r $(GTK_PREFIX)/lib/gio $(lib)
+	cp -r $(GTK_PREFIX)/lib/gdk-pixbuf-2.0 $(lib)
+	cp -r $(GTK_PREFIX)/lib/gtk-3.0 $(lib)
+	rm $(lib)/gdk-pixbuf-2.0/*/loaders.cache
+	mkdir -p $(etc)/gtk-3.0
+	cp srcs/settings.ini $(etc)/gtk-3.0/
+	cp -r $(GTK_PREFIX)/etc/pango $(etc)
+
+# install gtk binaries and libraries
+	python ./scripts/install.py $(root) \
+	  $(GTK_PREFIX)/bin/gdk-pixbuf-query-loaders \
+	  $(bin)/gps_exe \
+	  $(lib)/gdk-pixbuf-2.0/2.10.0/loaders/*.so \
+	  $(GTK_PREFIX)/lib/libgirepository*.dylib \
+	  $(GTK_PREFIX)/lib/libpyglib*.dylib
+
+# install python run-time
+	cp -r $(GTK_PREFIX)/lib/python2.7 $(lib)
+	cp -r $(GTK_PREFIX)/include/python2.7 $(inc)
+
+# cleanup and strip libraries and python run-time
+	find $(lib) -name \*.dylib -exec strip -S - {} \;
+	find $(lib) -name \*.py[co] -exec rm {} \;
+	find $(lib) -name \*.la -exec rm {} \;
+
+# share dir
+	mkdir -p $(share)/themes
+	cp -r $(GTK_PREFIX)/share/themes/* $(share)/themes/
+	mkdir -p $(share)/locale
+	-cp -r $(GTK_PREFIX)/share/locale/* $(share)/locale/
+	mkdir -p $(share)/icons
+	-cp -r $(GTK_PREFIX)/share/icons/* $(share)/icons/
+	mkdir -p $(share)/glib-2.0
+	-cp -r $(GTK_PREFIX)/share/glib-2.0/schemas $(share)/glib-2.0
+

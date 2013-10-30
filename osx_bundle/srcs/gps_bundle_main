@@ -1,0 +1,63 @@
+#!/bin/bash
+
+tmp=$(cd ${0%/*} && echo `pwd -P`/${0##*/})
+lnk=`readlink $tmp`
+
+if [ x$lnk != x ]; then
+   tmp=$lnk
+fi
+
+tmp=`dirname "$tmp"`
+tmp=`dirname "$tmp"`
+bundle=`dirname "$tmp"`
+bundle_mac="$bundle"/Contents/MacOS
+bundle_bin="$bundle_mac"/bin
+bundle_lib="$bundle_mac"/lib
+
+gdk_pixbuf_libdir="$bundle_lib/gdk-pixbuf-2.0/2.10.0"
+export GDK_PIXBUF_MODULE_FILE="$gdk_pixbuf_libdir/loaders.cache"
+
+# Just in case ...
+unset GPS_PYTHONHOME
+export LC_ALL="C"
+
+DYLD_LIBRARY_PATH=$bundle_lib:$DYLD_LIBRARY_PATH $bundle_bin/gdk-pixbuf-query-loaders > "$GDK_PIXBUF_MODULE_FILE"
+
+useshell=0
+
+# Strip out the argument added by the OS (until 10.9).
+echo "$1" | grep "\-psn_*" > /dev/null
+if [ $? == 0 ]; then
+    shift 1
+fi
+
+# in case GPS is launched by the OS, we need to explicitely
+# run it through the default user's shell to properly initialize
+# its environment (e.g. source .bash_profile)
+if [ $SHLVL == 1 ]; then
+    useshell=1
+fi
+
+# Protect arguments with spaces, and handle the -pwd switch given by the
+# gps command-line wrapper
+i=0
+argv=()
+for arg in "$@"; do
+    case "$arg" in
+        -pwd*) cd "`echo "$arg" | sed -e 's,-pwd,,'`";;
+        *)     argv[$i]="$arg" ;;
+    esac
+    i=$((i + 1))
+done
+
+# use the user's default shell
+if [ x$useshell == x1 ]; then
+  ME=`whoami`
+  SH=`dscl localhost -read /Local/Default/Users/$ME shell | cut -d " " -f 2`
+  if [ x"$SH" == x ]; then
+      SH=/bin/bash
+  fi
+  $SH -l -c "$bundle_bin/gps" "${argv[@]}"
+else
+  "$bundle_bin/gps" "${argv[@]}"
+fi

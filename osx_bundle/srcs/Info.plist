@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>gpr</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>gpr.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>GNAT Project file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>ads</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>ads.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Ada Specification</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>adb</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>adb.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Ada Body</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>ada</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>ada.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Ada File</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+	</array>
+	<key>CFBundleExecutable</key>
+	<string>gps</string>
+	<key>CFBundleIconFile</key>
+	<string>gps.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.adacore.gps</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>GPS</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>5.1.0</string>
+	<key>CFBundleSignature</key>
+	<string>ADAC</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSArchitecturePriority</key>
+	<array>
+		<string>x86_64</string>
+	</array>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.6.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2001-2011 AdaCore</string>
+</dict>
+</plist>
