@@ -771,6 +771,50 @@ package body GNATdoc.Backend.HTML is
                      Next (Cursor);
                   end loop;
                end;
+
+            elsif Is_Tagged_Type (E) then
+               declare
+                  Super     : Entity_Id;
+                  Inherits  : JSON_Array;
+                  Inherited : JSON_Array;
+                  Object    : JSON_Value;
+
+               begin
+                  --  Compute set of 'supertypes'
+
+                  Super := Get_Parent (E);
+
+                  if Present (Super) then
+                     Object := Create_Object;
+                     Object.Set_Field ("label", Get_Short_Name (Super));
+                     Object.Set_Field ("href", Get_Docs_Href (Super));
+                     Append (Inherits, Object);
+                  end if;
+
+                  for Progenitor of Get_Progenitors (E).all loop
+                     Object := Create_Object;
+                     Object.Set_Field ("label", Get_Short_Name (Progenitor));
+                     Object.Set_Field ("href", Get_Docs_Href (Progenitor));
+                     Append (Inherits, Object);
+                  end loop;
+
+                  if Inherits /= Empty_Array then
+                     Entity_Entry.Set_Field ("inherits", Inherits);
+                  end if;
+
+                  --  Compute set of derived types
+
+                  for Derived of Get_Derivations (E).all loop
+                     Object := Create_Object;
+                     Object.Set_Field ("label", Get_Short_Name (Derived));
+                     Object.Set_Field ("href", Get_Docs_Href (Derived));
+                     Append (Inherited, Object);
+                  end loop;
+
+                  if Inherited /= Empty_Array then
+                     Entity_Entry.Set_Field ("inherited", Inherited);
+                  end if;
+               end;
             end if;
 
             Append (Aux, Entity_Entry);

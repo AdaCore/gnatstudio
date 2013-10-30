@@ -160,6 +160,50 @@ function buildDocumentationPage()
             pane.appendChild(header);
             buildText(pane, entity.description);
 
+            if (typeof entity.inherits !== 'undefined')
+            {
+                var paragraph = document.createElement('p');
+                paragraph.appendChild(document.createTextNode('Inherits '));
+
+                for (var iindex = 0; iindex < entity.inherits.length; iindex++)
+                {
+                    if (iindex != 0)
+                      paragraph.appendChild(document.createTextNode(', '));
+
+                    href = document.createElement('a');
+                    href.setAttribute(
+                      'href', '../' + entity.inherits[iindex].href);
+                    href.setAttribute('target', 'contentView');
+                    href.appendChild(
+                      document.createTextNode(entity.inherits[iindex].label));
+                    paragraph.appendChild(href);
+                }
+
+                pane.appendChild(paragraph);
+            }
+
+            if (typeof entity.inherited !== 'undefined')
+            {
+                var paragraph = document.createElement('p');
+                paragraph.appendChild(document.createTextNode('Inherited by '));
+
+                for (var iindex = 0; iindex < entity.inherited.length; iindex++)
+                {
+                    if (iindex != 0)
+                      paragraph.appendChild(document.createTextNode(', '));
+
+                    href = document.createElement('a');
+                    href.setAttribute(
+                      'href', '../' + entity.inherited[iindex].href);
+                    href.setAttribute('target', 'contentView');
+                    href.appendChild(
+                      document.createTextNode(entity.inherited[iindex].label));
+                    paragraph.appendChild(href);
+                }
+
+                pane.appendChild(paragraph);
+            }
+
             if (typeof entity.parameters !== 'undefined')
             {
                 list = document.createElement('dl');
