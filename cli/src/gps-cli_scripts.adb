@@ -16,8 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Text_IO;                     use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                     use GNAT.OS_Lib;
+
+with GNAT.Expect;                     use GNAT.Expect;
+with GNAT.Expect.TTY;                 use GNAT.Expect.TTY;
+
+with GNAT.Regpat;                     use GNAT.Regpat;
 
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
@@ -72,6 +79,14 @@ package body GPS.CLI_Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Hanler for GPS.Project.get_attribute_as_* command
+
+   procedure Process_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Hanler for GPS.Project.launch_simple_process command
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Pattern_Matcher, Pattern_Matcher_Access);
 
    ---------------------
    -- Command_Handler --
@@ -164,6 +179,146 @@ package body GPS.CLI_Scripts is
          end;
       end if;
    end Docgen_Command_Handler;
+
+   -----------------------------
+   -- Process_Command_Handler --
+   -----------------------------
+
+   procedure Process_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Args           : Argument_List_Access;
+      Pd             : TTY_Process_Descriptor;
+
+      Pattern_Arg    : constant := 1;  --  The pattern parameter
+      Log_Arg        : constant := 2;  --  The log parameter
+      Command_Arg    : constant := 3;  --  The command parameter
+
+      Argc           : constant Natural := Data.Number_Of_Arguments;
+      --  The number of arguments actually passed to the command
+
+      Status         : Integer := 1;
+      --  The return code
+
+      Log_Filename   : constant String := Data.Nth_Arg (Log_Arg, "");
+      Log_File       : Writable_File := Invalid_File;
+
+      Result         : Expect_Match;
+      Pattern_String : constant String := Data.Nth_Arg (Pattern_Arg, "");
+      Pattern        : Pattern_Matcher_Access;
+      Num_Groups     : Match_Count := 0;
+
+   begin
+      --  Open the log file for writing, if needed
+
+      if Log_Filename /= "" then
+         begin
+            Log_File := Write_File (Create (+Log_Filename));
+
+         exception
+            when others =>
+               Log_File := Invalid_File;
+         end;
+
+         if Log_File = Invalid_File then
+            Data.Set_Error_Msg
+              ("Could not open file for writing: " & Log_Filename);
+            return;
+         end if;
+      end if;
+
+      --  Construct the argument list
+
+      Args := new Argument_List (Command_Arg + 1 .. Argc);
+      for J in Command_Arg + 1 .. Argc loop
+         Args (J) := new String'(Data.Nth_Arg (J));
+      end loop;
+
+      --  Spawn the process
+
+      begin
+         Non_Blocking_Spawn (Descriptor  => Pd,
+                             Command     => Data.Nth_Arg (Command_Arg),
+                             Args        => Args.all,
+                             Buffer_Size => 0,
+                             Err_To_Out  => True);
+      exception
+         when others =>
+            Data.Set_Error_Msg ("Could not launch command");
+            Free (Args);
+
+            if Log_File /= Invalid_File then
+               Close (Log_File);
+            end if;
+
+            return;
+      end;
+
+      Free (Args);
+
+      --  Precompile the pattern matcher for efficiency
+
+      if Pattern_String /= "" then
+         Pattern := new Pattern_Matcher'(Compile (Pattern_String));
+         Num_Groups := Paren_Count (Pattern.all);
+      end if;
+
+      --  While the process is up, read its output line by line
+
+      begin
+         loop
+            Expect (Pd, Result, ".+\n");
+
+            declare
+               S : constant String := Expect_Out (Pd);
+               M : Match_Array (0 .. Num_Groups);
+            begin
+               --  Log the results if needed
+               if Log_File /= Invalid_File then
+                  Write (Log_File, S);
+               end if;
+
+               if Pattern /= null then
+                  --  Look for the progress regexp in the output
+
+                  Match (Pattern.all, S, M);
+
+                  if M (0) /= No_Match then
+                     --  We have a match!
+
+                     if Num_Groups = 2 then
+                        --  If the match has two subgroups, interpret them as
+                        --  current and total and just print this
+
+                        Put_Line (S (M (1).First .. M (1).Last) & '/'
+                                  & S (M (2).First .. M (2).Last));
+                     else
+                        --  otherwise, just print the whole match
+                        Put_Line (S (M (0).First .. M (0).Last));
+                     end if;
+                  end if;
+               end if;
+            end;
+         end loop;
+      exception
+         when Process_Died =>
+            --  This is expected at some point
+
+            Close (Pd, Status);
+
+            if Pattern /= null then
+               Free (Pattern);
+            end if;
+
+            if Log_File /= Invalid_File then
+               Close (Log_File);
+            end if;
+
+            Data.Set_Return_Value (Status);
+      end;
+   end Process_Command_Handler;
 
    -----------------------------
    -- Project_Command_Handler --
@@ -279,6 +434,51 @@ package body GPS.CLI_Scripts is
          Maximum_Args => 3,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts, "launch_simple_process",
+         Minimum_Args => 1,
+         Maximum_Args => Natural'Last,
+         Handler      => Process_Command_Handler'Access);
+      --  GPS.launch_simple_process:
+      --  Launches a process, waits for the result, and display progress on
+      --  the standard output.
+      --
+      --  Usage:
+      --
+      --   r = GPS.launch_simple_process (regex, log, command, arg1, ... argN)
+      --
+      --  where:
+      --
+      --      regex is a string representing a regular expression, or empty:
+      --        - if it is an empty string, no output is displayed
+      --        - if it contains a regular expression:
+      --             - if this regular expression contains exactly two
+      --               groups, interpret them as 'current' and 'total'
+      --               and print "current/total"
+      --             - otherwise, print the part of the output that was
+      --               matched by the regular expression
+      --
+      --      log is a string representing the file in which to log
+      --          the full output of the command. If log is the empty string,
+      --          no logging occurs. If the file could not be found or could
+      --          not be opened for writing, an exception is raised
+      --
+      --      command is the command to launch, for instance "gnatls"
+      --
+      --      arg1 .. argN contain the arguments to pass to the function
+      --
+      --  returns the status of the launched process as an integer.
+      --  Raises an exception if the process could not be launched.
+      --
+      --  Example:
+      --       status = GPS.launch_simple_process (
+      --          "completed (\d+) out of (\d+)",
+      --          "log.txt",
+      --          "gprbuild", "-d", "-Pcli.gpr")
+      --
+      --       print "exited with status %s" % status
+
    end Register_Commands;
 
 end GPS.CLI_Scripts;
