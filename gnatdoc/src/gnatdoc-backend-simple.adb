@@ -1124,6 +1124,12 @@ package body GNATdoc.Backend.Simple is
 
             ReST_Append_List
               (Printout'Access,
+               Backend.Entities.Interface_Types,
+               "Interface types",
+               Filter => Filter);
+
+            ReST_Append_List
+              (Printout'Access,
                Backend.Entities.Tagged_Types,
                "Tagged types",
                Filter => Filter);

@@ -473,6 +473,11 @@ package body GNATdoc.Backend.HTML is
             "record_types",
             Categories_Index);
          Self.Generate_Entities_Category
+           (Self.Entities.Interface_Types,
+            "Interface Types",
+            "interface_types",
+            Categories_Index);
+         Self.Generate_Entities_Category
            (Self.Entities.Tagged_Types,
             "Tagged Types",
             "tagged_types",
@@ -868,6 +873,11 @@ package body GNATdoc.Backend.HTML is
       if not Entities.Record_Types.Is_Empty then
          Build_Entity_Entries
            (Entity_Entries, "Record types", Entities.Record_Types);
+      end if;
+
+      if not Entities.Interface_Types.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Interface types", Entities.Interface_Types);
       end if;
 
       if not Entities.Tagged_Types.Is_Empty then
