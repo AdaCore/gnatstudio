@@ -22,7 +22,7 @@ export PATH
 
 # setup pixbuf modules
 pixbuf_base="$bundle_mac/lib/gdk-pixbuf-2.0/2.10.0"
-#GDK_PIXBUF_MODULE_FILE="$pixbuf_base/loaders.cache"
+GDK_PIXBUF_MODULE_FILE="$pixbuf_base/loaders.cache"
 GDK_PIXBUF_MODULEDIR="$pixbuf_base/loaders"
 export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
 
