@@ -133,6 +133,44 @@ package body Codefix_Module is
    end record;
    type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
 
+   package Fix_Batches is
+      --  This package represent a way to fix batch of errors in one shot.
+
+      type Fix_Batch_Record (Menu : Codefix_Menu_Item) is
+        abstract tagged null record;
+      type Fix_Batch is access all Fix_Batch_Record'Class;
+      procedure Fix_If_Match
+        (Self  : access Fix_Batch_Record;
+         Error : Error_Id) is abstract;
+      --  If given Self is supposed to fix Error, then apply a fix.
+      --  Do nothing otherswise.
+
+      function Fabric (Menu : Codefix_Menu_Item) return Fix_Batch;
+      --  Return object to fix all errors corresponding to Fix_Mode of Menu.
+
+      type Simple_Fix_Batch_Record is new Fix_Batch_Record with null record;
+      --  Fix all simple errors
+      overriding procedure Fix_If_Match
+        (Self  : access Simple_Fix_Batch_Record;
+         Error : Error_Id);
+
+      type Style_Fix_Batch_Record is
+        new Simple_Fix_Batch_Record with null record;
+      --  Fix all "style and warnings" errors
+      overriding procedure Fix_If_Match
+        (Self  : access Style_Fix_Batch_Record;
+         Error : Error_Id);
+
+      type Similar_Fix_Batch_Record is new Fix_Batch_Record with null record;
+      --  Fix all similar errors
+      overriding procedure Fix_If_Match
+        (Self  : access Similar_Fix_Batch_Record;
+         Error : Error_Id);
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Fix_Batch_Record'Class, Fix_Batch);
+   end Fix_Batches;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Codefix_Sessions_Array, Codefix_Sessions);
 
@@ -302,72 +340,125 @@ package body Codefix_Module is
 
          when others =>
             declare
-               Error                 : Error_Id :=
+               Batch_Fix : Fix_Batches.Fix_Batch := Fix_Batches.Fabric (Mitem);
+               Error     : Error_Id :=
                  Get_First_Error (Mitem.Session.Corrector.all);
-               Solution_Node         : Solution_List_Iterator;
-               Solution_Index        : Positive;
-               Command               : Ptr_Command;
-               Unique_Simple_Command : Ptr_Command;
             begin
                --  Loop over all the errors stored in the session and fix
                --  all the ones with one simple fix and matching the fix mode.
 
                while Error /= Null_Error_Id loop
                   if not Is_Fixed (Error) then
-                     Unique_Simple_Command := null;
-                     Solution_Index := 1;
-
-                     Solution_Node := First (Get_Solutions (Error));
-
-                     while not At_End (Solution_Node) loop
-                        Command := Get_Command (Solution_Node);
-
-                        if Command.Complexity = Simple then
-                           if Mitem.Fix_Mode = Simple
-                             or else
-                               (Mitem.Fix_Mode = Style_And_Warnings
-                                and then Is_Style_Or_Warning
-                                  (Get_Error_Message (Error)))
-                             or else
-                               (Mitem.Fix_Mode = Similar
-                                and then Command.Get_Parser.all'Tag
-                                  = Mitem.Matching_Parser.all'Tag
-                                and then Solution_Index
-                                  = Mitem.Solution_Index
-                                and then Length (Get_Solutions (Error))
-                                  = Mitem.Total_Solutions)
-                           then
-                              if Unique_Simple_Command = null then
-                                 Unique_Simple_Command := Command;
-                              else
-                                 Unique_Simple_Command := null;
-                                 exit;
-                              end if;
-                           end if;
-
-                           Solution_Index := Solution_Index + 1;
-                        end if;
-
-                        Solution_Node := Next (Solution_Node);
-                     end loop;
-
-                     if Unique_Simple_Command /= null then
-                        --  If this is an error set up to be fixed, fix it
-
-                        On_Fix
-                          (Mitem.Kernel,
-                           Mitem.Session,
-                           Error,
-                           Unique_Simple_Command.all);
-                     end if;
+                     Batch_Fix.Fix_If_Match (Error);
                   end if;
 
                   Error := Next (Error);
                end loop;
+
+               Fix_Batches.Unchecked_Free (Batch_Fix);
             end;
       end case;
 
    end On_Fix;
+
+   package body Fix_Batches is
+
+      ------------
+      -- Fabric --
+      ------------
+
+      function Fabric (Menu : Codefix_Menu_Item) return Fix_Batch is
+      begin
+         case Menu.Fix_Mode is
+            when Specific =>
+               raise Constraint_Error;
+            when Simple =>
+               return new Simple_Fix_Batch_Record (Menu);
+            when Style_And_Warnings =>
+               return new Style_Fix_Batch_Record (Menu);
+            when Similar =>
+               return new Similar_Fix_Batch_Record (Menu);
+         end case;
+      end Fabric;
+
+      ------------------
+      -- Fix_If_Match --
+      ------------------
+
+      overriding procedure Fix_If_Match
+        (Self  : access Simple_Fix_Batch_Record;
+         Error : Error_Id)
+      is
+         Solution_Node         : Solution_List_Iterator :=
+           First (Get_Solutions (Error));
+         Command               : Ptr_Command;
+         Unique_Simple_Command : Ptr_Command;
+      begin
+         while not At_End (Solution_Node) loop
+            Command := Get_Command (Solution_Node);
+
+            if Command.Complexity = Simple then
+               if Unique_Simple_Command = null then
+                  Unique_Simple_Command := Command;
+               else
+                  return;
+               end if;
+            end if;
+
+            Solution_Node := Next (Solution_Node);
+         end loop;
+
+         if Unique_Simple_Command /= null then
+            --  If this is an error set up to be fixed, fix it
+
+            On_Fix
+              (Self.Menu.Kernel,
+               Self.Menu.Session,
+               Error,
+               Unique_Simple_Command.all);
+         end if;
+      end Fix_If_Match;
+
+      ------------------
+      -- Fix_If_Match --
+      ------------------
+
+      overriding procedure Fix_If_Match
+        (Self  : access Style_Fix_Batch_Record;
+         Error : Error_Id) is
+      begin
+         if Is_Style_Or_Warning (Get_Error_Message (Error)) then
+            Simple_Fix_Batch_Record (Self.all).Fix_If_Match (Error);
+         end if;
+      end Fix_If_Match;
+
+      ------------------
+      -- Fix_If_Match --
+      ------------------
+
+      overriding procedure Fix_If_Match
+        (Self  : access Similar_Fix_Batch_Record;
+         Error : Error_Id)
+      is
+         Command : Ptr_Command;
+      begin
+         if Length (Get_Solutions (Error)) /= Self.Menu.Total_Solutions then
+            return;
+         end if;
+
+         Command :=
+           Get_Command (Get_Solutions (Error), Self.Menu.Solution_Index);
+
+         if Command.Get_Parser.all'Tag = Self.Menu.Matching_Parser.all'Tag then
+            On_Fix
+              (Self.Menu.Kernel,
+               Self.Menu.Session,
+               Error,
+               Command.all);
+         end if;
+      end Fix_If_Match;
+
+   end Fix_Batches;
 
    ----------------------
    -- Activate_Codefix --
