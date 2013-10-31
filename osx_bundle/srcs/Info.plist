@@ -31,6 +31,8 @@
 			<string>Ada Specification</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
@@ -43,6 +45,8 @@
 			<string>Ada Body</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
@@ -55,6 +59,8 @@
 			<string>Ada File</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+                        <key>LSHandlerRank</key>
+                        <string>Owner</string>
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
@@ -80,7 +86,7 @@
 		<string>x86_64</string>
 	</array>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.6.0</string>
+	<string>10.9.0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2001-2011 AdaCore</string>
 </dict>

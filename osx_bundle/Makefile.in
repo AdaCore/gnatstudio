@@ -1,8 +1,14 @@
 PREFIX:=$(PWD)
 TOP:=$(PWD)
-APP:=$(PREFIX)/GPS.app
+GTK_PREFIX=@GTK_PREFIX@
+GPS_VERSION=@GPS_VERSION@
+GPS_VERSION_NUM=$(shell echo $(GPS_VERSION) | sed -e 's/\([0-9.]+\).*/\1/')
 
-contents=$(APP)/Contents
+APP:=GPS.app
+PKG:=GPS-$(GPS_VERSION).pkg
+DMG:=GPS-$(GPS_VERSION).dmg
+
+contents=$(PREFIX)/$(APP)/Contents
 root=$(contents)/MacOS
 bin=$(root)/bin
 etc=$(root)/etc
@@ -10,34 +16,37 @@ lib=$(root)/lib
 share=$(root)/share
 inc=$(root)/include
 
-GTK_PREFIX=@GTK_PREFIX@
-GPS_VERSION=@GPS_VERSION@
+all: pkg
 
-all: $(APP)
+pkg: $(PREFIX)/$(PKG)
 
-dmg: $(PREFIX)/$(GPS)-$(GPS_VERSION).dmg
-
-#install: GPS.app
-#	rm -rf /Applications/GPS.app
-#	cp -r GPS.app /Applications/
-#	rm -f $(GNAT_PREFIX)/bin/gps
-#	cp srcs/gps_launcher.sh $(GNAT_PREFIX)/bin/gps
-#	chmod a+x $(GNAT_PREFIX)/bin/gps
-#	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user
-#	rm -rf GPS.app
+dmg: $(PREFIX)/$(DMG)
 
 clean:
 	rm -rf *.dmg GPS.app
 
 .PHONY: force
 
-$(PREFIX)/$(GPS)-$(GPS_VERSION).dmg: $(APP)
+$(PREFIX)/$(DMG): $(PREFIX)/$(PKG)
 # create dmg image
 	cd $(PREFIX) && sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION)
+	rm -f $(PREFIX)/$(PKG)
 
-$(APP): force
+$(PREFIX)/$(PKG): $(PREFIX)/$(APP)
+	rm -rf $(PREFIX)/pkgtmp
+	mkdir $(PREFIX)/pkgtmp
+	cp $(TOP)/srcs/postinstall $(PREFIX)/pkgtmp
+	pkgbuild --root "$(PREFIX)/$(APP)" \
+	         --version $(GPS_VERSION_NUM) \
+	         --identifier "com.adacore.gps" \
+	         --install-location "/Applications/GPS.app" \
+	         --scripts "$(PREFIX)/pkgtmp" \
+	         "$(PREFIX)/$(PKG)"
+	rm -rf $(PREFIX)/$(APP)
+
+$(PREFIX)/$(APP): force
 # prepare the bundle structure
-	rm -rf $(APP)
+	rm -rf $(PREFIX)/$(APP)
 	mkdir -p $(contents)
 	mkdir -p $(root)
 	mkdir -p $(lib)
@@ -49,7 +58,7 @@ $(APP): force
 
 # install gps
 	make -C .. install-strip prefix=$(root)
-	find $(APP) -d -name .svn -exec rm -rf {} \;
+	find $(contents) -d -name .svn -exec rm -rf {} \;
 
 # install gtk data files
 	cp -r $(GTK_PREFIX)/lib/girepository-1.0 $(lib)

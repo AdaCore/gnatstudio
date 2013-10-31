@@ -11,17 +11,20 @@ tmp=`dirname "$tmp"`
 tmp=`dirname "$tmp"`
 bundle=`dirname "$tmp"`
 bundle_mac="$bundle"/Contents/MacOS
-bundle_bin="$bundle_mac"/bin
-bundle_lib="$bundle_mac"/lib
-
-gdk_pixbuf_libdir="$bundle_lib/gdk-pixbuf-2.0/2.10.0"
-export GDK_PIXBUF_MODULE_FILE="$gdk_pixbuf_libdir/loaders.cache"
 
 # Just in case ...
 unset GPS_PYTHONHOME
 export LC_ALL="C"
 
-DYLD_LIBRARY_PATH=$bundle_lib:$DYLD_LIBRARY_PATH $bundle_bin/gdk-pixbuf-query-loaders > "$GDK_PIXBUF_MODULE_FILE"
+# amend the path
+PATH="$bundle_mac/bin":$PATH
+export PATH
+
+# setup pixbuf modules
+pixbuf_base="$bundle_mac/lib/gdk-pixbuf-2.0/2.10.0"
+#GDK_PIXBUF_MODULE_FILE="$pixbuf_base/loaders.cache"
+GDK_PIXBUF_MODULEDIR="$pixbuf_base/loaders"
+export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
 
 useshell=0
 
@@ -57,7 +60,7 @@ if [ x$useshell == x1 ]; then
   if [ x"$SH" == x ]; then
       SH=/bin/bash
   fi
-  $SH -l -c "$bundle_bin/gps" "${argv[@]}"
+  $SH -l -c "$bundle_mac/bin/gps" "${argv[@]}"
 else
-  "$bundle_bin/gps" "${argv[@]}"
+  "$bundle_mac/bin/gps" "${argv[@]}"
 fi
