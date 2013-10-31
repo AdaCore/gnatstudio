@@ -2,6 +2,7 @@
 
 APP=$1
 VERSION=$2
+SRCDIR=$3
 PKG=${APP}-${VERSION}.pkg
 backgroundPictureName=logo.png
 
@@ -19,7 +20,7 @@ if [ x${VERSION} = x ]; then
 fi
 
 SIZE=`du -k -d 0 ${PKG} | sed -e 's/\([0-9]*\).*/\1/'`
-SIZE_SRCS=`du -k -d 0 srcs | sed -e 's/\([0-9]*\).*/\1/'`
+SIZE_SRCS=`du -k -d 0 ${SRCDIR}/srcs | sed -e 's/\([0-9]*\).*/\1/'`
 let SIZE=${SIZE}+${SIZE_SRCS}
 # Add some more space for extra folder metadata, and potential rounding issues
 let SIZE=${SIZE}*11/10
@@ -43,7 +44,7 @@ echo "    Mounted in '${volume}' as ${device}"
 echo "=== Setting the folder's background"
 mkdir "/Volumes/${volume}/.bg"
 
-cp srcs/${backgroundPictureName} "/Volumes/${volume}/.bg/"
+cp ${SRCDIR}/srcs/${backgroundPictureName} "/Volumes/${volume}/.bg/"
 
 echo '
    tell application "Finder"

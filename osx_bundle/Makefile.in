@@ -29,7 +29,7 @@ clean:
 
 $(PREFIX)/$(DMG): $(PREFIX)/$(PKG)
 # create dmg image
-	cd $(PREFIX) && sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION)
+	cd $(PREFIX) && sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION) $(TOP)
 	rm -f $(PREFIX)/$(PKG)
 
 $(PREFIX)/$(PKG): $(PREFIX)/$(APP)
