@@ -9,7 +9,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
 - JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
-  Problem:    When using GPS remote mode with rsh, it may happend that spawned
+  Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
               connection is closed.
               This may lead to zombie processes remaining on the remote host.
