@@ -15,7 +15,7 @@ done
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 APP=GPS
-if [ -d ../GPS.app ]; then
+if [ -d $DIR/../GPS.app ]; then
     APP=$DIR/../GPS.app
 fi
 open -a $APP -n -W --args "${argv[@]}"
