@@ -8,3 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
+Problem:    When using GPS remote mode with rsh, it may happend that spawned
+            remote processes are not properly terminated before the rsh
+            connection is closed.
+            This may lead to zombie processes remaining on the remote host.
+            rsh support by GPS has now been deprecated, as rsh is not an
+            active development anymore, and has been replaced by secure and
+            more robust solutions such as ssh.
+Workaround: Use ssh instead. If absolutely needed, you can re-enable rsh
+            support by using the remote_rsh.py plugin, to be activated from
+            the Tools->Plug-ins menu.
