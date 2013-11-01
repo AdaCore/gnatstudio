@@ -39,15 +39,14 @@ def on_project_changed(self):
         for j in dirs:
             if i and i not in [".",""," "]:
                dir = join (dirname (i.file().name()), j).strip()
-               if dir[-1:] not in ["\\","/"]:
-                   if not exists(dir):
-                       os.makedirs(dir)
-                       created.append(dir)
-                       CreatedDirs=True
+               if not exists(dir):
+                   os.makedirs(dir)
+                   created.append(dir)
+                   CreatedDirs=True
      if CreatedDirs:
-        GPS.Console("").write("Created missing dirs\n")
-        GPS.Console("").write(string.join(created,"\n"))
-        GPS.Console("").write("\n")
+        GPS.Console("Messages").write("Created missing dirs\n")
+        GPS.Console("Messages").write(string.join(created,"\n"))
+        GPS.Console("Messages").write("\n")
         GPS.Project.recompute()
 
 GPS.parse_xml("""
