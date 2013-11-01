@@ -3,7 +3,9 @@
 argv=()
 argv[0]="-pwd$PWD"
 i=1
+directlaunch=0
 
+# making sure file paths are preserved, by using their full path
 for arg in "$@"; do
     case "$arg" in
       -*) argv[$i]="$arg" ;;
@@ -12,10 +14,4 @@ for arg in "$@"; do
     i=$((i + 1))
 done
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-APP=GPS
-if [ -d $DIR/../GPS.app ]; then
-    APP=$DIR/../GPS.app
-fi
-open -a $APP -n -W --args "${argv[@]}"
+open -a GPS -n -W --args "${argv[@]}"

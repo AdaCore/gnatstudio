@@ -10,21 +10,37 @@ fi
 tmp=`dirname "$tmp"`
 tmp=`dirname "$tmp"`
 bundle=`dirname "$tmp"`
-bundle_mac="$bundle"/Contents/MacOS
+bundle_mac="${bundle}"/Contents/MacOS
 
 # Just in case ...
 unset GPS_PYTHONHOME
 export LC_ALL="C"
 
 # amend the path
-PATH="$bundle_mac/bin":$PATH
+PATH=${bundle_mac}/bin:$PATH
 export PATH
 
-# setup pixbuf modules
+# Search for GPS's preference folder
+PREFS=$HOME/Library/Application\ Support/AdaCore/GPS
+if [ ! -d "${PREFS}" ]; then
+    mkdir -p "${PREFS}"
+fi
+
+# setup pixbuf modules and use GPS's pref folder to store gdk_pixbuf loaders
+# cache file (the bundle might be read-only).
+# Note: We need to update it for each startup because the bundle may have been
+# moved from one launch to the other.
 pixbuf_base="$bundle_mac/lib/gdk-pixbuf-2.0/2.10.0"
-GDK_PIXBUF_MODULE_FILE="$pixbuf_base/loaders.cache"
+GDK_PIXBUF_MODULE_FILE="${PREFS}/pixbuf_loaders.cache"
 GDK_PIXBUF_MODULEDIR="$pixbuf_base/loaders"
 export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
+
+# and update pixbuf cache
+DYLD_LIBRARY_PATH="${bundle_mac}/lib":$DYLD_LIBRARY_PATH \
+    "${bundle_mac}"/bin/gdk-pixbuf-query-loaders > "${GDK_PIXBUF_MODULE_FILE}"
+echo "${GDK_PIXBUF_MODULE_FILE}" > /tmp/gps
+
+# At this stage, everything's ready to launch gps.
 
 useshell=0
 

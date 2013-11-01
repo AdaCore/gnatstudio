@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<installer-gui-script minSpecVersion="2">
+  <title>The GNAT Programming Studio</title>
+  <background alignment="top"
+              scaling="tofit"
+              file="background.png"
+              mime-type="image/png"/>
+  <options customize="always"
+           hostArchitectures="x86_64"
+           require-scripts="false"/>
+
+  <pkg-ref id="gps">gps.pkg</pkg-ref>
+  <pkg-ref auth="Root" id="gpscmdlin">gpscmdlin.pkg</pkg-ref>
+
+  <choice id="GPSApp"
+          title="GPS.app"
+          description="The GPS Application"
+          customLocation="/Applications"
+          customLocationAllowAlternateVolumes="false"
+          enabled="false"
+          start_enabled="false"
+          selected="true"
+          start_selected="false"
+          visible="true">
+    <pkg-ref id="gps"/>
+  </choice>
+  <choice id="CmdLine"
+          title="command line support"
+          description="Enable this option to allow running GPS from the command line (via the 'gps' command)"
+          customLocation="/usr/local/bin"
+          customLocationAllowAlternateVolumes="false"
+          enabled="true"
+          start_enabled="true"
+          selected="true"
+          start_selected="false"
+          visible="true">
+    <pkg-ref id="gpscmdlin"/>
+  </choice>
+
+  <choices-outline>
+    <line choice="GPSApp"/>
+    <line choice="CmdLine"/>
+  </choices-outline>
+
+</installer-gui-script>

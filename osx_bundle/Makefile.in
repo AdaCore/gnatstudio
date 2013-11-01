@@ -2,13 +2,13 @@ PREFIX:=$(PWD)
 TOP:=$(PWD)
 GTK_PREFIX=@GTK_PREFIX@
 GPS_VERSION=@GPS_VERSION@
-GPS_VERSION_NUM=$(shell echo $(GPS_VERSION) | sed -e 's/\([0-9.]+\).*/\1/')
+GPS_VERSION_NUM=$(shell echo $(GPS_VERSION) | sed -e 's/\([0-9.]*\).*/\1/')
 
 APP:=GPS.app
 PKG:=GPS-$(GPS_VERSION).pkg
 DMG:=GPS-$(GPS_VERSION).dmg
 
-contents=$(PREFIX)/$(APP)/Contents
+contents=$(TOP)/_build/Applications/$(APP)/Contents
 root=$(contents)/MacOS
 bin=$(root)/bin
 etc=$(root)/etc
@@ -29,24 +29,14 @@ clean:
 
 $(PREFIX)/$(DMG): $(PREFIX)/$(PKG)
 # create dmg image
-	cd $(PREFIX) && sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION) $(TOP)
+	cd $(PREFIX) && \
+	  sh $(TOP)/scripts/dodmg.sh GPS $(GPS_VERSION) $(TOP)
 	rm -f $(PREFIX)/$(PKG)
 
-$(PREFIX)/$(PKG): $(PREFIX)/$(APP)
-	rm -rf $(PREFIX)/pkgtmp
-	mkdir $(PREFIX)/pkgtmp
-	cp $(TOP)/srcs/postinstall $(PREFIX)/pkgtmp
-	pkgbuild --root "$(PREFIX)/$(APP)" \
-	         --version $(GPS_VERSION_NUM) \
-	         --identifier "com.adacore.gps" \
-	         --install-location "/Applications/GPS.app" \
-	         --scripts "$(PREFIX)/pkgtmp" \
-	         "$(PREFIX)/$(PKG)"
-	rm -rf $(PREFIX)/$(APP)
+$(PREFIX)/$(PKG): force
+	rm -rf _build
 
-$(PREFIX)/$(APP): force
-# prepare the bundle structure
-	rm -rf $(PREFIX)/$(APP)
+# prepare the OSX Application structure
 	mkdir -p $(contents)
 	mkdir -p $(root)
 	mkdir -p $(lib)
@@ -96,4 +86,29 @@ $(PREFIX)/$(APP): force
 	-cp -r $(GTK_PREFIX)/share/icons/* $(share)/icons/
 	mkdir -p $(share)/glib-2.0
 	-cp -r $(GTK_PREFIX)/share/glib-2.0/schemas $(share)/glib-2.0
+
+# Now that the app has been created, let's package it
+# The gps.app package
+	pkgbuild --root _build/Applications \
+	         --version $(GPS_VERSION_NUM) \
+	         --identifier com.adacore.gps \
+	         _build/gps.pkg
+
+# The command line handling package
+	mkdir -p _build/bin
+	cp srcs/gps_command_line _build/bin/gps
+	chmod a+x _build/bin/gps
+	pkgbuild --root _build/bin \
+	         --version $(GPS_VERSION_NUM) \
+	         --identifier com.adacore.gpscmdlin \
+	         _build/gpscmdlin.pkg
+
+# The end product, allowing custom install
+	mkdir -p _build/resources
+	cp srcs/background.png _build/resources/background.png
+	productbuild --distribution srcs/gps.dist \
+	             --resources _build/resources \
+	             --package-path _build \
+	             $(PREFIX)/$(PKG)
+	rm -rf _build
 
