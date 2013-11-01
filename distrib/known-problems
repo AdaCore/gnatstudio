@@ -6,6 +6,16 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
+Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
+
+- MA24-006: GPS: crash when moving the last window in a notebook
+  Problem:    When moving a window within the GPS MDI by dragging the window
+              tab, GPS might crash if the window was the last one in its
+              notebook.
+  Workaround: To initiate the dragging operation, do not drag with the mouse
+              sideways, but drag the tab downwards first, and then to another
+              area.
+
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
 - MA17-041: GPS: default directory in welcome dialog
