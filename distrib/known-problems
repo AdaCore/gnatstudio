@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MB01-006: GPS: create_missing_dirs not working with trailing separators
+  Problem:    The plugin create_missing_dirs.py does not create directories
+              that are specified with a trailing directory separator.
+  Workaround: Create the directories manually, or remove the directory
+              separator at the end of the directory specification.
+
 - JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
