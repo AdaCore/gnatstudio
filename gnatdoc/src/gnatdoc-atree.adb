@@ -63,12 +63,12 @@ package body GNATdoc.Atree is
    -- Append_Derivation --
    -----------------------
 
-   procedure Append_Derivation (E : Entity_Id; Value : Entity_Id) is
+   procedure Append_Direct_Derivation (E : Entity_Id; Value : Entity_Id) is
    begin
-      if not Contains (E.Derivations, Value) then
-         E.Derivations.Append (Value);
+      if not Contains (E.Direct_Derivations, Value) then
+         E.Direct_Derivations.Append (Value);
       end if;
-   end Append_Derivation;
+   end Append_Direct_Derivation;
 
    -----------------------------
    -- Append_Inherited_Method --
@@ -98,7 +98,6 @@ package body GNATdoc.Atree is
    begin
       pragma Assert (not E.Progenitors.Contains (Value));
       E.Progenitors.Append (Value);
-      Append_Derivation (E => Value, Value => E);
    end Append_Progenitor;
 
    ---------------------
@@ -405,11 +404,11 @@ package body GNATdoc.Atree is
    -- Get_Derivations --
    ---------------------
 
-   function Get_Derivations
+   function Get_Direct_Derivations
      (E : Entity_Id) return access EInfo_List.Vector is
    begin
-      return E.Derivations'Access;
-   end Get_Derivations;
+      return E.Direct_Derivations'Access;
+   end Get_Direct_Derivations;
 
    -------------
    -- Get_Doc --
@@ -1046,13 +1045,13 @@ package body GNATdoc.Atree is
            Src               => Null_Unbounded_String,
            Full_View_Src     => Null_Unbounded_String,
 
-           Entities          => <>,
-           Inherited_Methods => <>,
-           Methods           => <>,
-           Parent            => null,
-           Progenitors       => <>,
-           Derivations       => <>,
-           Error_Msg         => Null_Unbounded_String);
+           Entities           => <>,
+           Inherited_Methods  => <>,
+           Methods            => <>,
+           Parent             => null,
+           Progenitors        => <>,
+           Direct_Derivations => <>,
+           Error_Msg          => Null_Unbounded_String);
 
       --  Do not perform the full decoration of the entity for auxiliary
       --  entities created by the frontend (for example, the "standard"
@@ -1091,6 +1090,15 @@ package body GNATdoc.Atree is
    begin
       return E.Is_Decorated;
    end Is_Decorated;
+
+   ----------------------------
+   -- Is_Subprogram_Or_Entry --
+   ----------------------------
+
+   function Is_Subprogram_Or_Entry (E : Entity_Id) return Boolean is
+   begin
+      return Is_Subprogram (E) or else Get_Kind (E) = E_Entry;
+   end Is_Subprogram_Or_Entry;
 
    ------------------
    -- Is_Full_View --
@@ -1168,6 +1176,21 @@ package body GNATdoc.Atree is
       return E.Is_Internal
         and then Get_Short_Name (E) = Std_Entity_Name;
    end Is_Standard_Entity;
+
+   -------------------
+   -- Is_Subprogram --
+   -------------------
+
+   function Is_Subprogram (E : Entity_Id) return Boolean is
+   begin
+      --  Xref has attribute Is_Subprogram in single task declarations and
+      --  entries; we must explicitly exclude such cases to avoid confusing
+      --  the frontend.
+
+      return E.Xref.Is_Subprogram
+        and then Get_Kind (E) /= E_Single_Task
+        and then Get_Kind (E) /= E_Entry;
+   end Is_Subprogram;
 
    ----------------
    -- Is_Subtype --
@@ -1579,7 +1602,7 @@ package body GNATdoc.Atree is
          Set_Is_Tagged_Type (E.Parent);
       end if;
 
-      Append_Derivation (E.Parent, E);
+      Append_Direct_Derivation (E.Parent, E);
    end Set_Parent;
 
    ------------------
@@ -1826,10 +1849,9 @@ package body GNATdoc.Atree is
                         = Db.Get_Name (E);
       end Is_Self_Referenced_Type;
 
-      function Is_Subprogram (E : Entity_Id) return Boolean is
-      begin
-         return E.Xref.Is_Subprogram;
-      end Is_Subprogram;
+      -------------
+      -- Is_Type --
+      -------------
 
       function Is_Type (E : Entity_Id) return Boolean is
       begin
@@ -1951,7 +1973,7 @@ package body GNATdoc.Atree is
             return E_String_Type;
 
          elsif Kind = "task" then
-            return E_Task;
+            return E_Single_Task;
 
          elsif Kind = "task type" then
             return E_Task_Type;
@@ -2197,7 +2219,7 @@ package body GNATdoc.Atree is
             Header => "Progenitors",
             Prefix => " - ");
          Append_Entities
-           (Vector => Get_Derivations (E),
+           (Vector => Get_Direct_Derivations (E),
             Header => "Derivations",
             Prefix => " - ");
       end if;
@@ -2232,6 +2254,10 @@ package body GNATdoc.Atree is
 
       if E.Is_Generic_Formal then
          Append_Line ("Is_Generic_Formal");
+      end if;
+
+      if Is_Subprogram (E) then
+         Append_Line ("Is_Subprogram");
       end if;
 
       --  Output information retrieved from Xref
@@ -2399,7 +2425,7 @@ package body GNATdoc.Atree is
             Prefix => LL_Prefix & " - ");
       end if;
 
-      if LL.Is_Subprogram (E) then
+      if E.Xref.Is_Subprogram then
          Append_Line (LL_Prefix & " Is_Subprogram");
 
          declare

@@ -322,7 +322,7 @@ package body GNATdoc.Backend.HTML is
          Aux     : Entity_Id_Ordered_Sets.Set;
 
       begin
-         for D of Get_Derivations (Entity).all loop
+         for D of Get_Direct_Derivations (Entity).all loop
             Aux.Insert (D);
          end loop;
 
@@ -817,7 +817,7 @@ package body GNATdoc.Backend.HTML is
             Entity_Entry.Set_Field ("summary", Summary);
             Entity_Entry.Set_Field ("description", Description);
 
-            if LL.Is_Subprogram (E)
+            if Is_Subprogram_Or_Entry (E)
               and then Present (Get_Comment (E))
             then
                --  Extract parameters
@@ -931,7 +931,7 @@ package body GNATdoc.Backend.HTML is
 
                   --  Compute set of derived types
 
-                  for Derived of Get_Derivations (E).all loop
+                  for Derived of Get_Direct_Derivations (E).all loop
                      Object := Create_Object;
                      Object.Set_Field ("label", Get_Short_Name (Derived));
                      Object.Set_Field ("href", Get_Docs_Href (Derived));

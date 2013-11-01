@@ -92,8 +92,9 @@ private package GNATdoc.Atree is
       E_Procedure,
       E_Protected_Type,
       E_Record_Type,
+      E_Single_Protected,
+      E_Single_Task,
       E_String_Type,
-      E_Task,
       E_Task_Type,
       E_Variable,
 
@@ -190,8 +191,15 @@ private package GNATdoc.Atree is
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
 
-   procedure Append_Derivation
+   procedure Append_Direct_Derivation
      (E : Entity_Id; Value : Entity_Id);
+   --  This attribute stores only direct derivations of tagged types (that is,
+   --  it stores all the entities for which verify that Parent (Value) = E;
+   --  this means that progenitors are NOT stored here). Combined with the
+   --  attribute "Parent" this attribute allows to traverse the tree up and
+   --  down in the tree of tagged type derivations. If all the derivations of
+   --  a type are needed then attribute LL.Get_Child_Types must be used.
+
    procedure Append_Inherited_Method
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
@@ -206,7 +214,7 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Entity_Id;
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
-   function Get_Derivations
+   function Get_Direct_Derivations
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Doc
      (E : Entity_Id) return Comment_Result;
@@ -293,6 +301,10 @@ private package GNATdoc.Atree is
    function Is_Standard_Entity
      (E : Entity_Id) return Boolean;
    --  Return true if E represents the Standard scope (the outermost entity)
+   function Is_Subprogram
+     (E : Entity_Id) return Boolean;
+   function Is_Subprogram_Or_Entry
+     (E : Entity_Id) return Boolean;
    function Is_Subtype
      (E : Entity_Id) return Boolean;
    function Is_Tagged_Type
@@ -448,7 +460,6 @@ private package GNATdoc.Atree is
       function Is_Predef        (E : Entity_Id) return Boolean;
       function Is_Primitive     (E : Entity_Id) return Boolean;
       function Is_Type          (E : Entity_Id) return Boolean;
-      function Is_Subprogram    (E : Entity_Id) return Boolean;
 
       function Is_Self_Referenced_Type
         (Db   : General_Xref_Database;
@@ -484,7 +495,6 @@ private package GNATdoc.Atree is
       pragma Inline (Is_Global);
       pragma Inline (Is_Predef);
       pragma Inline (Is_Primitive);
-      pragma Inline (Is_Subprogram);
       pragma Inline (Is_Type);
    end LL;
 
@@ -665,9 +675,9 @@ private
          Inherited_Methods : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
 
-         Parent          : Entity_Id;
-         Progenitors     : aliased EInfo_List.Vector;
-         Derivations     : aliased EInfo_List.Vector;
+         Parent             : Entity_Id;
+         Progenitors        : aliased EInfo_List.Vector;
+         Direct_Derivations : aliased EInfo_List.Vector;
 
          Error_Msg       : Unbounded_String;
          --  Errors reported on this entity
@@ -680,7 +690,7 @@ private
    procedure Set_End_Of_Syntax_Scope_Loc
      (E : Entity_Id; Loc : General_Location);
 
-   pragma Inline (Append_Derivation);
+   pragma Inline (Append_Direct_Derivation);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
    pragma Inline (Append_Progenitor);
@@ -688,7 +698,7 @@ private
 
    pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);
-   pragma Inline (Get_Derivations);
+   pragma Inline (Get_Direct_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_End_Of_Profile_Location);
@@ -723,6 +733,7 @@ private
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
    pragma Inline (Is_Private);
+   pragma Inline (Is_Subprogram);
    pragma Inline (Is_Subtype);
    pragma Inline (Is_Tagged_Type);
    pragma Inline (Kind_In);

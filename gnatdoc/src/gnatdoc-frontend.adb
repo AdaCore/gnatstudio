@@ -90,24 +90,24 @@ package body GNATdoc.Frontend is
       procedure Filter_Doc (E : Entity_Id);
       --  Filter the documentation using the user-defined filter
 
-      procedure Parse_Ada_Subprogram_Profile
+      procedure Parse_Ada_Profile
         (E        : Entity_Id;
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
          Is_Body  : Boolean);
-      --  Parse the profile of a subprogram and complete the decoration of
-      --  entity E setting attributes:
+      --  Parse the profile of a subprogram or an entry and complete the
+      --  decoration of entity E setting attributes:
       --   - End_Of_Profile_Location (or End_Of_Profile_Location_In_Body)
 
-      procedure Parse_Ada_Subprogram_Profile
+      procedure Parse_Ada_Profile
         (E        : Entity_Id;
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
          Is_Body  : Boolean;
          Profile  : out Unbounded_String);
-      --  Parse the profile of a subprogram and complete the decoration of
-      --  entity E. Similar to the previous one but returns the scanned
-      --  profile.
+      --  Parse the profile of a subprogram or an entry and complete the
+      --  decoration of entity E. Similar to the previous one but returns
+      --  the scanned profile.
 
       procedure Previous_Word
         (Index           : Natural;
@@ -152,7 +152,7 @@ package body GNATdoc.Frontend is
               Handler  => Context.Lang_Handler,
               Buffer   => Buffer,
               Location => LL.Get_Location (E),
-              End_Loc  => (if not LL.Is_Subprogram (E) then No_Location
+              End_Loc  => (if not Is_Subprogram (E) then No_Location
                            else Get_End_Of_Profile_Location (E))));
 
          --  For nested packages, if no documentation was found then we try
@@ -192,7 +192,7 @@ package body GNATdoc.Frontend is
          if Get_Doc (E) = No_Comment_Result
            and then Context.Options.Process_Bodies
            and then Buffer_Body /= null
-           and then (LL.Is_Subprogram (E) or else Get_Kind (E) = E_Formal)
+           and then (Is_Subprogram (E) or else Get_Kind (E) = E_Formal)
            and then Present (LL.Get_Body_Loc (E))
          then
             if LL.Get_Body_Loc (E).File = Body_File then
@@ -206,8 +206,8 @@ package body GNATdoc.Frontend is
 
                --  Locate the end of the body profile
 
-               if LL.Is_Subprogram (E) then
-                  Parse_Ada_Subprogram_Profile
+               if Is_Subprogram (E) then
+                  Parse_Ada_Profile
                     (E        => E,
                      Buffer   => Buffer_Body,
                      Location => LL.Get_Body_Loc (E),
@@ -232,8 +232,8 @@ package body GNATdoc.Frontend is
 
                   --  Locate the end of the body profile
 
-                  if LL.Is_Subprogram (E) then
-                     Parse_Ada_Subprogram_Profile
+                  if Is_Subprogram (E) then
+                     Parse_Ada_Profile
                        (E        => E,
                         Buffer   => Buffer_Body,
                         Location => LL.Get_Body_Loc (E),
@@ -267,8 +267,18 @@ package body GNATdoc.Frontend is
             Is_Full_View : Boolean) return Unbounded_String;
          --  Retrieve the source of record type E
 
+         function Get_Concurrent_Type_Source
+           (Loc : General_Location) return Unbounded_String;
+         --  Retrieve the source of a protected type or a task type (including
+         --  the case of single protected object and single task type)
+
          function Get_Type_Declaration_Source return Unbounded_String;
          --  Retrieve the source of the declaration E
+
+         function Is_Single_Protected_Object (E : Entity_Id) return Boolean;
+         --  Return True if the previous word of the variable E is "protected"
+         --  (done to workaround the missing identification of single protected
+         --  objects in Xref)
 
          ----------------------------
          -- Get_Declaration_Source --
@@ -339,7 +349,7 @@ package body GNATdoc.Frontend is
             --  word "type" located in a comment. A backward parser is required
             --  here. Must be improved???
 
-            if LL.Is_Subprogram (E) then
+            if Is_Subprogram (E) then
                Index :=
                  Search_Backward (Lines_Skipped,
                    Buffer => Buffer,
@@ -800,6 +810,282 @@ package body GNATdoc.Frontend is
             return Printout;
          end Get_Record_Type_Source;
 
+         --------------------------------
+         -- Get_Concurrent_Type_Source --
+         --------------------------------
+
+         function Get_Concurrent_Type_Source
+           (Loc : General_Location) return Unbounded_String
+         is
+            Printout : Unbounded_String;
+
+            procedure Append (Text : String);
+            --  Append Text to Printout
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+            --  Callback for entity parser
+
+            -----------------
+            -- Append_Line --
+            -----------------
+
+            procedure Append (Text : String) is
+            begin
+               Printout := Printout & Text;
+            end Append;
+
+            --------
+            -- CB --
+            --------
+
+            Par_Count : Natural := 0;
+            Last_Idx  : Natural := 0;
+
+            In_Definition  : Boolean := False;
+            In_Item_Decl   : Boolean := False;
+            End_Decl_Found : Boolean := False;
+
+            type Tokens is
+              (Tok_Unknown,
+               --  Reserved words
+               Tok_Abstract,
+               Tok_And,
+               Tok_Aliased,
+               Tok_Case,
+               Tok_End,
+               Tok_Entry,
+               Tok_Function,
+               Tok_Interface,
+               Tok_Is,
+               Tok_Limited,
+               Tok_New,
+               Tok_Null,
+               Tok_Others,
+               Tok_Private,
+               Tok_Procedure,
+               Tok_Record,
+               Tok_Tagged,
+               Tok_Task,
+               Tok_Type,
+               Tok_When,
+               Tok_With,
+               --  Other tokens
+               Tok_Left_Paren,
+               Tok_Right_Paren,
+               Tok_Semicolon);
+
+            Prev_Token : Tokens := Tok_Unknown;
+            pragma Unreferenced (Prev_Token);
+
+            Token      : Tokens := Tok_Unknown;
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               pragma Unreferenced (Partial_Entity);
+
+               S : String renames
+                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
+
+               function Get_Token return Tokens;
+               --  Return the token associated with S
+
+               function Get_Token return Tokens is
+                  Keyword : constant String := To_Lower (S);
+
+               begin
+                  if Keyword = "abstract" then
+                     return Tok_Abstract;
+                  elsif Keyword = "aliased" then
+                     return Tok_Aliased;
+                  elsif Keyword = "and" then
+                     return Tok_And;
+                  elsif Keyword = "case" then
+                     return Tok_Case;
+                  elsif Keyword = "end" then
+                     return Tok_End;
+                  elsif Keyword = "entry" then
+                     return Tok_Entry;
+                  elsif Keyword = "function" then
+                     return Tok_Function;
+                  elsif Keyword = "is" then
+                     return Tok_Is;
+                  elsif Keyword = "interface" then
+                     return Tok_Interface;
+                  elsif Keyword = "limited" then
+                     return Tok_Limited;
+                  elsif Keyword = "new" then
+                     return Tok_New;
+                  elsif Keyword = "null" then
+                     return Tok_Null;
+                  elsif Keyword = "others" then
+                     return Tok_Others;
+                  elsif Keyword = "private" then
+                     return Tok_Private;
+                  elsif Keyword = "procedure" then
+                     return Tok_Procedure;
+                  elsif Keyword = "record" then
+                     return Tok_Record;
+                  elsif Keyword = "tagged" then
+                     return Tok_Tagged;
+                  elsif Keyword = "task" then
+                     return Tok_Task;
+                  elsif Keyword = "type" then
+                     return Tok_Type;
+                  elsif Keyword = "when" then
+                     return Tok_When;
+                  elsif Keyword = "with" then
+                     return Tok_With;
+                  else
+                     return Tok_Unknown;
+                  end if;
+               end Get_Token;
+
+            begin
+               --  Print all text between previous call and current one
+
+               if Last_Idx /= 0 then
+                  Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+               Append (S);
+
+               if Entity = Identifier_Text then
+                  null;
+
+               elsif Entity = Keyword_Text then
+                  Prev_Token := Token;
+                  Token      := Get_Token;
+
+                  if Token = Tok_Is then
+                     In_Definition := True;
+
+                  elsif Token = Tok_Procedure
+                    or else Token = Tok_Function
+                    or else Token = Tok_Entry
+                  then
+                     In_Item_Decl := True;
+
+                  elsif Token = Tok_End
+                    and then not In_Item_Decl
+                    and then In_Definition
+                  then
+                     End_Decl_Found := True;
+                  end if;
+
+               elsif Entity = Operator_Text then
+                  Prev_Token := Token;
+
+                  if S = "(" then
+                     Token := Tok_Left_Paren;
+                     Par_Count := Par_Count + 1;
+
+                  elsif S = ")" then
+                     Token := Tok_Right_Paren;
+                     Par_Count := Par_Count - 1;
+
+                  elsif S = ";" then
+                     Token := Tok_Semicolon;
+
+                     if Par_Count = 0 then
+
+                        --  Handle simple cases: "task T;" or "task type T;"
+
+                        if not In_Definition then
+                           return True;  --  Stop
+
+                        elsif In_Item_Decl then
+                           In_Item_Decl := False;
+
+                        elsif End_Decl_Found then
+                           return True; --  Stop
+                        end if;
+                     end if;
+                  end if;
+               end if;
+
+               return False; --  Continue
+            exception
+               when E : others =>
+                  Trace (Me, E);
+                  return True;
+            end CB;
+
+            --  Local variables
+
+            Entity_Index    : Natural;
+            From            : Natural;
+            Lines_Skipped   : Natural;
+            Prev_Word_Begin : Natural;
+
+         --  Start of processing for Get_Record_Type_Source
+
+         begin
+            --  Displace the pointer to the beginning of the record type
+            --  declaration
+
+            Entity_Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => Loc.Line - 1,
+               Index         => Entity_Index,
+               Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (Loc.Column),
+               Index         => Entity_Index);
+
+            --  Locate the beginning of the type declaration. This is a naive
+            --  approach used in the prototype since it does not handle the
+            --  word "type" located in a comment. A backward parser is required
+            --  here. Must be improved???
+
+            if Get_Kind (E) = E_Task_Type
+              or else Get_Kind (E) = E_Single_Task
+            then
+               Prev_Word_Begin :=
+                 Search_Backward (Lines_Skipped,
+                   Buffer => Buffer,
+                   From   => Entity_Index - 1,
+                   Word_1 => "task");
+            else
+               Prev_Word_Begin :=
+                 Search_Backward (Lines_Skipped,
+                   Buffer => Buffer,
+                   From   => Entity_Index - 1,
+                   Word_1 => "protected");
+            end if;
+
+            --  Append tabulation
+
+            if Buffer (Prev_Word_Begin - 1) = ' ' then
+               From := Skip_Blanks_Backward (Prev_Word_Begin - 1);
+
+               if Buffer.all (From) = ASCII.LF then
+                  From := From + 1;
+               end if;
+
+               Append (Buffer.all (From .. Prev_Word_Begin - 1));
+            else
+               From := Prev_Word_Begin;
+            end if;
+
+            Parse_Entities
+              (Lang, Buffer.all (From .. Buffer'Last),
+               CB'Unrestricted_Access);
+
+            return Printout;
+         end Get_Concurrent_Type_Source;
+
          ---------------------------------
          -- Get_Type_Declaration_Source --
          ---------------------------------
@@ -869,6 +1155,35 @@ package body GNATdoc.Frontend is
             return Printout;
          end Get_Type_Declaration_Source;
 
+         --------------------------------
+         -- Is_Single_Protected_Object --
+         --------------------------------
+
+         function Is_Single_Protected_Object (E : Entity_Id) return Boolean is
+            Index           : Natural;
+            Lines_Skipped   : Natural;
+            Prev_Word_Begin : Natural;
+            Prev_Word_End   : Natural;
+         begin
+            --  Displace the pointer to the beginning of the declaration
+            Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => LL.Get_Location (E).Line - 1,
+               Index         => Index,
+               Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (LL.Get_Location (E).Column),
+               Index         => Index);
+
+            Previous_Word (Index, Prev_Word_Begin, Prev_Word_End);
+
+            return To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End))
+                     = "protected";
+         end Is_Single_Protected_Object;
+
       --  Start of processing for Ada_Get_Source
 
       begin
@@ -893,11 +1208,11 @@ package body GNATdoc.Frontend is
             return;
          end if;
 
-         if LL.Is_Subprogram (E) then
+         if Is_Subprogram_Or_Entry (E) then
             declare
                Profile : Unbounded_String;
             begin
-               Parse_Ada_Subprogram_Profile
+               Parse_Ada_Profile
                  (E        => E,
                   Buffer   => Buffer,
                   Location => LL.Get_Location (E),
@@ -937,11 +1252,22 @@ package body GNATdoc.Frontend is
                end if;
             end if;
 
+         elsif Get_Kind (E) = E_Single_Task
+           or else Get_Kind (E) = E_Task_Type
+           or else Get_Kind (E) = E_Protected_Type
+         then
+            Set_Src (E, Get_Concurrent_Type_Source (LL.Get_Location (E)));
+
          elsif LL.Is_Type (E) then
             Set_Src (E, Get_Type_Declaration_Source);
 
          elsif Get_Kind (E) = E_Variable then
-            Set_Src (E, Get_Declaration_Source);
+            if Is_Single_Protected_Object (E) then
+               Set_Kind (E, E_Single_Protected);
+               Set_Src (E, Get_Concurrent_Type_Source (LL.Get_Location (E)));
+            else
+               Set_Src (E, Get_Declaration_Source);
+            end if;
 
          --  Instantiations of generic packages and subprograms
 
@@ -1455,7 +1781,7 @@ package body GNATdoc.Frontend is
             end if;
          end if;
 
-         if LL.Is_Subprogram (E) then
+         if Is_Subprogram (E) then
             Set_Src (E, Get_Subprogram_Source);
 
          elsif Get_Kind (E) = E_Class then
@@ -1573,7 +1899,7 @@ package body GNATdoc.Frontend is
       -- Parse_Ada_Subprogram_Profile --
       ----------------------------------
 
-      procedure Parse_Ada_Subprogram_Profile
+      procedure Parse_Ada_Profile
         (E        : Entity_Id;
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
@@ -1582,19 +1908,19 @@ package body GNATdoc.Frontend is
          Profile : Unbounded_String;
          pragma Unreferenced (Profile);
       begin
-         Parse_Ada_Subprogram_Profile
+         Parse_Ada_Profile
            (E        => E,
             Buffer   => Buffer,
             Location => Location,
             Is_Body  => Is_Body,
             Profile  => Profile);
-      end Parse_Ada_Subprogram_Profile;
+      end Parse_Ada_Profile;
 
-      ----------------------------------
-      -- Parse_Ada_Subprogram_Profile --
-      ----------------------------------
+      -----------------------
+      -- Parse_Ada_Profile --
+      -----------------------
 
-      procedure Parse_Ada_Subprogram_Profile
+      procedure Parse_Ada_Profile
         (E        : Entity_Id;
          Buffer   : GNAT.Strings.String_Access;
          Location : General_Location;
@@ -1659,6 +1985,7 @@ package body GNATdoc.Frontend is
                begin
                   if Keyword = "procedure"
                     or else Keyword = "function"
+                    or else Keyword = "entry"
                   then
                      In_Profile := True;
 
@@ -1744,6 +2071,14 @@ package body GNATdoc.Frontend is
                                Buffer => Buffer,
                                From   => Index - 1,
                                Word_1 => "generic");
+
+         elsif Get_Kind (E) = E_Entry then
+            Index :=
+              Search_Backward (Lines_Skipped,
+                               Buffer => Buffer,
+                               From   => Index - 1,
+                               Word_1 => "entry");
+
          else
             Index :=
               Search_Backward (Lines_Skipped,
@@ -1766,7 +2101,7 @@ package body GNATdoc.Frontend is
            (Lang, Buffer.all (Index .. Buffer'Last),
             CB'Unrestricted_Access);
 
-      end Parse_Ada_Subprogram_Profile;
+      end Parse_Ada_Profile;
 
       -------------------
       -- Previous_Word --
@@ -2495,7 +2830,7 @@ package body GNATdoc.Frontend is
             return Skip;
          end if;
 
-         if LL.Is_Subprogram (Entity) then
+         if Is_Subprogram_Or_Entry (Entity) then
             Parse_Subprogram_Comments (Entity);
             return Skip;
 

@@ -47,6 +47,7 @@ with Gtkada.Handlers;                use Gtkada.Handlers;
 with Old_Entities.Queries;
 with Old_Entities.Values;
 with System;                         use System;
+with GNAT.IO;
 
 package body GPS.Kernel.Xref is
    use Xref;
@@ -711,6 +712,8 @@ package body GPS.Kernel.Xref is
       end if;
 
       if Active (SQLITE) then
+         GNAT.IO.Put_Line ("SQLITE ON");
+
          if Result.Xref = null then
             Result.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
             GPS_Xref_Database (Result.Xref.all).Kernel :=

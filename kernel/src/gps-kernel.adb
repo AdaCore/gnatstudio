@@ -81,6 +81,7 @@ with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Xref;                      use Xref;
+with Xref.Debug;
 
 package body GPS.Kernel is
 
@@ -305,6 +306,7 @@ package body GPS.Kernel is
       Result : out Standard.Xref.General_Xref_Database) is
    begin
       GPS.Kernel.Xref.Create_Database (Self, Result);
+      Standard.Xref.Debug.Register_Db (Result);
    end Create_Database;
 
    -------------

@@ -114,7 +114,7 @@ package body GNATdoc.Backend.Base is
                Entities.Variables.Append (Entity);
                Self.Entities.Variables.Append (Entity);
 
-            elsif Get_Kind (Entity) = E_Task
+            elsif Get_Kind (Entity) = E_Single_Task
               or Get_Kind (Entity) = E_Task_Type
             then
                Entities.Tasks.Append (Entity);
@@ -147,7 +147,7 @@ package body GNATdoc.Backend.Base is
                   Self.Entities.Simple_Types.Append (Entity);
                end if;
 
-            elsif LL.Is_Subprogram (Entity) then
+            elsif Is_Subprogram (Entity) then
 
                --  C/C++ macros unsupported yet???
 

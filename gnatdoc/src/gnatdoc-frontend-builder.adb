@@ -158,7 +158,7 @@ package body GNATdoc.Frontend.Builder is
       function Is_Primitive
         (Entity : Unique_Entity_Id) return Boolean;
 
-      function Is_Subprogram
+      function Is_Subprogram_Or_Entry
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Tagged_Type
@@ -281,7 +281,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_New);
       pragma Inline (Is_Package);
       pragma Inline (Is_Primitive);
-      pragma Inline (Is_Subprogram);
+      pragma Inline (Is_Subprogram_Or_Entry);
       pragma Inline (Is_Tagged_Type);
       pragma Inline (Is_Type);
       pragma Inline (Number_Of_Progenitors);
@@ -683,15 +683,15 @@ package body GNATdoc.Frontend.Builder is
          return LL.Is_Primitive (Get_Entity (Entity));
       end Is_Primitive;
 
-      -------------------
-      -- Is_Subprogram --
-      -------------------
+      ----------------------------
+      -- Is_Subprogram_Or_Entry --
+      ----------------------------
 
-      function Is_Subprogram
+      function Is_Subprogram_Or_Entry
         (Entity : Unique_Entity_Id) return Boolean is
       begin
-         return LL.Is_Subprogram (Get_Entity (Entity));
-      end Is_Subprogram;
+         return Is_Subprogram_Or_Entry (Get_Entity (Entity));
+      end Is_Subprogram_Or_Entry;
 
       --------------------
       -- Is_Tagged_Type --
@@ -1542,7 +1542,7 @@ package body GNATdoc.Frontend.Builder is
             elsif Is_Generic (E) then
                Decorate_Generic_Formals (E);
 
-               if Is_Subprogram (E) then
+               if Is_Subprogram_Or_Entry (E) then
                   Decorate_Subprogram_Formals (E);
                end if;
 
@@ -1551,7 +1551,7 @@ package body GNATdoc.Frontend.Builder is
             --  the scope of formals just traversing these entities since
             --  some entities do not have its Xref.Scope entity available.
 
-            elsif Is_Subprogram (E) or else Is_Generic (E) then
+            elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
                Decorate_Subprogram_Formals (E);
             end if;
 

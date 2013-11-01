@@ -1477,7 +1477,7 @@ package body GNATdoc.Backend.Simple is
                   Suffix   => Suffix);
                Append_Line (Printout'Access, "");
 
-               Cursor := Get_Derivations (E).First;
+               Cursor := Get_Direct_Derivations (E).First;
                while EInfo_List.Has_Element (Cursor) loop
                   Entity := EInfo_List.Element (Cursor);
                   ReST_Append (Entity, "  " & Prefix);
@@ -1795,7 +1795,7 @@ package body GNATdoc.Backend.Simple is
       if Use_Full_Name then
          return Get_Full_Name (E);
 
-      elsif not LL.Is_Subprogram (E)
+      elsif not Is_Subprogram_Or_Entry (E)
         or else In_C_Or_CPP_Language (E)
       then
          return Get_Short_Name (E);
@@ -2027,7 +2027,7 @@ package body GNATdoc.Backend.Simple is
                ReST_Append_Simple_Declaration (Printout, E);
             end if;
 
-         elsif LL.Is_Subprogram (E) then
+         elsif Is_Subprogram (E) then
             ReST_Append_Subprogram (Printout, E);
 
             --  Here we cover generic formals which are not fully decorated
@@ -2057,7 +2057,7 @@ package body GNATdoc.Backend.Simple is
                Backend.Entities.Pkgs.Append (Entity);
             end if;
 
-         elsif LL.Is_Subprogram (Entity) then
+         elsif Is_Subprogram (Entity) then
             if not Backend.Entities.Subprgs.Contains (Entity) then
                Backend.Entities.Subprgs.Append (Entity);
             end if;
@@ -2235,7 +2235,7 @@ package body GNATdoc.Backend.Simple is
             if Present (LL.Get_Instance_Of (Entity)) then
                ReST_Append_Simple_Declaration (Printout'Access, Entity);
 
-            elsif LL.Is_Subprogram (Entity) then
+            elsif Is_Subprogram (Entity) then
                ReST_Append_Subprogram (Printout'Access, Entity);
             end if;
 
