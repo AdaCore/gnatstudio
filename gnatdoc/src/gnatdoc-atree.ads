@@ -372,8 +372,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Virtual_File);
    procedure Set_Scope
      (E : Entity_Id; Value : Entity_Id);
+
    procedure Set_Src
      (E : Entity_Id; Value : Unbounded_String);
+   --  Set attribute Src filtering empty lines located at the beginning and
+   --  end of Value
 
    type Traverse_Result is (OK, Skip);
 
@@ -517,6 +520,9 @@ private package GNATdoc.Atree is
    procedure pn (E : Entity_Id);
    --  (gdb) Prints a single tree node (full output), without printing
    --  descendants.
+
+   procedure ploc (E : Entity_Id);
+   --  (gdb) Prints the location of E
 
    procedure pns (E : Entity_Id);
    procedure pns (Db : General_Xref_Database; E : General_Entity);

@@ -1630,9 +1630,68 @@ package body GNATdoc.Atree is
    -------------
 
    procedure Set_Src (E : Entity_Id; Value : Unbounded_String) is
+      Low  : Natural := 1;
+      High : Natural := Length (Value);
+
+      type T_Direction is (Forward, Backward);
+
+      procedure Skip
+        (C         : Character;
+         Index     : in out Natural;
+         Direction : T_Direction);
+      --  Diplace Index in the specified direction skipping occurrences of C
+
+      procedure Skip_Empty_Lines
+        (Index     : in out Natural;
+         Direction : T_Direction);
+      --  Displace Index in the specified direction skipping empty lines
+
+      ----------
+      -- Skip --
+      ----------
+
+      procedure Skip
+        (C : Character; Index : in out Natural; Direction : T_Direction)
+      is
+         Increment : constant Integer :=
+                       (if Direction = Forward then 1 else -1);
+      begin
+         while Element (Value, Index) = C and then Index < High loop
+            Index := Index + Increment;
+         end loop;
+      end Skip;
+
+      ----------------------
+      -- Skip_Empty_Lines --
+      ----------------------
+
+      procedure Skip_Empty_Lines
+        (Index     : in out Natural;
+         Direction : T_Direction)
+      is
+         J : Natural;
+      begin
+         Skip (ASCII.LF, Index, Direction);
+
+         J := Index;
+         while Element (Value, J) = ' ' and then J < High loop
+            Skip (' ', J, Direction);
+
+            if Element (Value, J) = ASCII.LF then
+               Skip (ASCII.LF, J, Direction);
+               Index := J;
+            end if;
+         end loop;
+      end Skip_Empty_Lines;
+
    begin
+      --  Filter empty lines located at the beginning and end of Value
+
+      Skip_Empty_Lines (Low, Forward);
+      Skip_Empty_Lines (High, Backward);
+
       pragma Assert (E.Src = Null_Unbounded_String);
-      E.Src := Value;
+      E.Src := Unbounded_Slice (Value, Low, High);
    end Set_Src;
 
    -------------------
@@ -2569,6 +2628,21 @@ package body GNATdoc.Atree is
          EInfo_List.Next (Cursor);
       end loop;
    end pl;
+
+   ----------
+   -- ploc --
+   ----------
+
+   procedure ploc (E : Entity_Id) is
+   begin
+      if E.Xref.Loc /= No_Location then
+         GNAT.IO.Put_Line
+           ((+E.Xref.Loc.File.Dir_Name)
+             & Image (E.Xref.Loc));
+      else
+         GNAT.IO.Put_Line ("<no location>");
+      end if;
+   end ploc;
 
    --------
    -- pn --
