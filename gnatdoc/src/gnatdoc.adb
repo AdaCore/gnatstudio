@@ -44,6 +44,11 @@ package body GNATdoc is
    -- Local Subprograms --
    -----------------------
 
+   procedure Check_Tree
+     (Context : access constant Docgen_Context;
+      Tree    : access Tree_Type);
+   --  Verify that all the nodes of the tree have a minimum decoration
+
    procedure Process_Files
      (Kernel              : Core_Kernel;
       Options             : Docgen_Options;
@@ -52,6 +57,66 @@ package body GNATdoc is
    --  This subprogram factorizes the functionality shared by routines
    --  Process_Single_File and Process_Project_Files. It processes all
    --  the files in Src_Files and generates their documentation.
+
+   ----------------
+   -- Check_Tree --
+   ----------------
+
+   procedure Check_Tree
+     (Context : access constant Docgen_Context;
+      Tree    : access Tree_Type)
+   is
+      function Check_Node
+        (Entity      : Entity_Id;
+         Scope_Level : Natural) return Traverse_Result;
+      --  Check a single node
+
+      function Check_Node
+        (Entity      : Entity_Id;
+         Scope_Level : Natural) return Traverse_Result
+      is
+         pragma Unreferenced (Scope_Level);
+      begin
+         if No (Get_Scope (Entity)) then
+            GNAT.IO.Put_Line
+              (">> Internal error on "
+               & Get_Short_Name (Entity)
+               & ":"
+               & Image (LL.Get_Location (Entity)));
+         end if;
+
+         return OK;
+      end Check_Node;
+
+      Lang         : constant Language_Access :=
+                       Get_Language_From_File
+                        (Context.Lang_Handler, Tree.File);
+      In_Ada_Lang  : constant Boolean :=
+                       Lang.all in Language.Ada.Ada_Language'Class;
+      In_C_Lang    : constant Boolean := not In_Ada_Lang;
+      Root         : Entity_Id renames Tree.Tree_Root;
+      Root_E       : Entity_Id;
+   begin
+      if In_C_Lang then
+         Root_E := Root;
+      else
+         declare
+            C : constant EInfo_List.Cursor := Get_Entities (Root).First;
+         begin
+            if EInfo_List.Has_Element (C) then
+               Root_E := EInfo_List.Element (C);
+            else
+               Root_E := null;
+            end if;
+         end;
+      end if;
+
+      if No (Root_E) then
+         return;
+      end if;
+
+      Traverse_Tree (Root_E, Check_Node'Access);
+   end Check_Tree;
 
    -------------------
    -- Process_Files --
@@ -403,6 +468,8 @@ package body GNATdoc is
                Cursor := All_Trees.First;
                while Tree_List.Has_Element (Cursor) loop
                   Tree := Tree_List.Element (Cursor);
+
+                  Check_Tree (Context, Tree'Access);
 
                   if Options.Tree_Output.Kind /= None then
                      if Options.Tree_Output.Kind = Short then

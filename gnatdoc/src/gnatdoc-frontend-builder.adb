@@ -1630,6 +1630,8 @@ package body GNATdoc.Frontend.Builder is
                   Exit_Scope;
                end loop;
 
+               Set_Scope (New_E, Current_Scope);
+
             elsif Is_Type (New_E) then
                Scope_Id :=
                  Find_Entity
