@@ -1230,7 +1230,7 @@ same value as is returned by the corresponding `'Address' attribute.
 `Standard'Compiler_Version' (`Standard' is the only allowed prefix)
 yields a static string identifying the version of the compiler being
 used to compile the unit containing the attribute reference. A typical
-result would be something like "GNAT Pro 7.2.0rc (20090221)".
+result would be something like "GNAT Pro 7.3.0w (20090221)".
       </DOC>
    </ATTRIBUTE>
 
