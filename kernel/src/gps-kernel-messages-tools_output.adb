@@ -162,11 +162,7 @@ package body GPS.Kernel.Messages.Tools_Output is
             Returned := Primary;
 
             if Highlight_Category /= null then
-               Highlight_Style :=
-                 Get_Or_Create_Style_Copy
-                   (Kernel_Handle (Container.Kernel),
-                    Get_Name (Highlight_Category) & '/' & Category,
-                    Highlight_Category);
+               Highlight_Style := Highlight_Category;
 
                if Length = 0 then
                   Primary.Set_Highlighting (Highlight_Style);
