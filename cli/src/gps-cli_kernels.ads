@@ -25,6 +25,7 @@ with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.CLI_Messages_Windows;
 with GPS.CLI_Process_Launchers;        use GPS.CLI_Process_Launchers;
+with GPS.Editors;
 
 package GPS.CLI_Kernels is
 
@@ -58,5 +59,9 @@ private
    overriding function Get_Share_Dir
      (Self : not null access CLI_Kernel_Record)
       return Virtual_File;
+
+   overriding function Get_Buffer_Factory
+     (Kernel : not null access CLI_Kernel_Record)
+      return GPS.Editors.Editor_Buffer_Factory_Access;
 
 end GPS.CLI_Kernels;

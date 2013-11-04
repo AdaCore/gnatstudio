@@ -20,9 +20,9 @@
 --  modifying it, by creating an Extending project.
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Remote;       use Remote;
 
 with GPS.Core_Kernels;   use GPS.Core_Kernels;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Extending_Environments is
 
@@ -36,8 +36,7 @@ package Extending_Environments is
 
    function Create_Extending_Environment
      (Kernel : access Core_Kernel_Record'Class;
-      Source : Virtual_File;
-      Server : Server_Type) return Extending_Environment;
+      Source : Virtual_File) return Extending_Environment;
    --  Create an extending environment needed to build Source.
    --  The current Source is copied as-is from the current buffer into the
    --  extending environment.
@@ -49,6 +48,7 @@ package Extending_Environments is
 private
 
    type Extending_Environment is record
+      Project : Project_Type := No_Project;
       File          : Virtual_File := No_File;
       Project_File  : Virtual_File := No_File;
       Temporary_Dir : Virtual_File := No_File;

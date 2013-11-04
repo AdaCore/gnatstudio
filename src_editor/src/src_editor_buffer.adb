@@ -97,7 +97,6 @@ with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 

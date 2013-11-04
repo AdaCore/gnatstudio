@@ -54,6 +54,7 @@ with GPS.Styles.UI;             use GPS.Styles.UI;
 with Language.Tree;
 with Src_Highlighting;
 with Ada.Strings.Unbounded;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package Src_Editor_Buffer is
 

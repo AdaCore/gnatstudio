@@ -606,8 +606,8 @@ package GPS.Kernel is
    --  Editor_Factory --
    ---------------------
 
-   function Get_Buffer_Factory
-     (Kernel : access Kernel_Handle_Record)
+   overriding function Get_Buffer_Factory
+     (Kernel : not null access Kernel_Handle_Record)
       return GPS.Editors.Editor_Buffer_Factory_Access;
 
    procedure Set_Buffer_Factory

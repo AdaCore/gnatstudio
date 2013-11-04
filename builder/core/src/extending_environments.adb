@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with Projects;           use Projects;
+with GPS.Editors; use GPS.Editors;
 
 package body Extending_Environments is
 
@@ -44,8 +44,7 @@ package body Extending_Environments is
 
    function Create_Extending_Environment
      (Kernel : access Core_Kernel_Record'Class;
-      Source : Virtual_File;
-      Server : Server_Type) return Extending_Environment
+      Source : Virtual_File) return Extending_Environment
    is
       Env : Extending_Environment;
 
@@ -100,45 +99,48 @@ package body Extending_Environments is
          Close (W);
       end Write_Extending_Project;
 
-      P, Root : Project_Type;
-
-      Project_File : Virtual_File;
-
-      Success : Boolean;
+      P : Project_Type;
    begin
-      --  Create the temporary directory
+      P := Kernel.Registry.Tree.Info (Source).Project;
+
+      --  Create the temporary directory in the object dir of the projet
+
       Env.Temporary_Dir := Create_From_Dir
-        (Get_Tmp_Directory (Get_Nickname (Server)),
+        (P.Object_Dir,
          Base_Name => Source.Base_Name);
 
       if not Is_Directory (Env.Temporary_Dir) then
          Make_Dir (Env.Temporary_Dir);
       end if;
 
-      --  Create the project file
+      Env.Project := P;
 
-      P := Kernel.Registry.Tree.Info (Source).Project;
-      Root := Kernel.Registry.Tree.Root_Project;
+      --  Create the extending project file. This project is a simple extension
+      --  of the source's project file which source dir is the current
+      --  temporary dir, in which the current version of the source file
+      --  will be written.
 
-      Write_Extending_Project (File   => Project_File,
-                               P      => P,
-                               E_All  => "",
-                               Body_S => "",
-                               With_S => "");
+      Write_Extending_Project
+        (File   => Env.Project_File,
+         P      => P,
+         E_All  => "",
+         Body_S => "for Source_Dirs use (""."");",
+         With_S => "");
 
-      Write_Extending_Project (File   => Env.Project_File,
-                               P      => Root,
-                               E_All  => "all",
-                               Body_S => "for Source_Dirs use ();",
-                               With_S => "with """ &
-                               (+Project_File.Full_Name.all) & """;");
+      --  Create the temporary source file
 
-      --  Create the file
       Env.File := Create_From_Dir (Env.Temporary_Dir, Base_Name (Source));
 
-      Source.Copy
-        (Target_Name => Filesystem_String (Env.File.Display_Full_Name),
-         Success     => Success);
+      --  Write the current content of the source editor into the file and
+      --  close it
+
+      declare
+         Dest : Writable_File :=
+           Create (Filesystem_String (Env.File.Display_Full_Name)).Write_File;
+      begin
+         Write (Dest, Get_Buffer_Factory (Kernel).Get (Source).Get_Chars);
+         Close (Dest);
+      end;
 
       return Env;
    end Create_Extending_Environment;
@@ -149,8 +151,26 @@ package body Extending_Environments is
 
    procedure Destroy (Env : Extending_Environment) is
       Dummy : Boolean;
-      pragma Unreferenced (Dummy);
+      BN : constant Filesystem_String := Env.File.Base_Name;
+      BN_Stripped : constant Filesystem_String :=
+        (if Env.File.Has_Suffix (".ads") or else Env.File.Has_Suffix (".adb")
+         then BN (BN'First .. BN'Last - 4)
+         else "");
    begin
+
+      if BN_Stripped /= "" then
+         declare
+            ALI_File : constant Virtual_File :=
+              Create_From_Dir (Env.Temporary_Dir, BN_Stripped & ".ali");
+         begin
+            if ALI_File /= No_File then
+               ALI_File.Copy
+                 (Env.Project.Object_Dir.Full_Name.all & ALI_File.Base_Name,
+                  Dummy);
+            end if;
+         end;
+      end if;
+
       if Env.Temporary_Dir /= No_File then
          Remove_Dir (Env.Temporary_Dir, Recursive => True, Success => Dummy);
       end if;

@@ -25,12 +25,15 @@ with Projects;
 with Xref;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
+with GPS.Editors;
+use GPS.Editors;
 
 with GNATCOLL.Scripts;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with Toolchains;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Finalization; use Ada.Finalization;
 
 package GPS.Core_Kernels is
 
@@ -53,6 +56,10 @@ package GPS.Core_Kernels is
      (Kernel : access Core_Kernel_Record'Class)
       return Language_Handlers.Language_Handler;
    --  The type used to convert from file names to languages
+
+   function Get_Buffer_Factory
+     (Kernel : not null access Core_Kernel_Record)
+      return GPS.Editors.Editor_Buffer_Factory_Access is abstract;
 
    function Registry
      (Kernel : access Core_Kernel_Record'Class)
@@ -155,6 +162,21 @@ package GPS.Core_Kernels is
    --  value; otherwise use the default directory (that is, a subdirectory
    --  'doc' in the object directory, or in the project directory if no
    --  object dir is defined).
+
+   type Editor_Listener_Factory is abstract new Controlled with null record;
+   type Editor_Listener_Factory_Access is
+     access all Editor_Listener_Factory'Class;
+
+   -----------------------------
+   -- Editor_Listener_Factory --
+   -----------------------------
+
+   function Create
+     (This : Editor_Listener_Factory;
+      Editor : Editor_Buffer'Class;
+      Factory : Editor_Buffer_Factory'Class;
+      Kernel : Core_Kernel) return Editor_Listener_Access
+      is abstract;
 
 private
 

@@ -72,6 +72,19 @@ package body GPS.CLI_Kernels is
       return Dir;
    end Get_Share_Dir;
 
+   ------------------------
+   -- Get_Buffer_Factory --
+   ------------------------
+
+   overriding function Get_Buffer_Factory
+     (Kernel : not null access CLI_Kernel_Record)
+      return GPS.Editors.Editor_Buffer_Factory_Access
+   is
+   begin
+      raise Program_Error with "Get_Buffer_Factory not implemented in GPS cli";
+      return null;
+   end Get_Buffer_Factory;
+
    ---------------------
    -- Messages_Window --
    ---------------------

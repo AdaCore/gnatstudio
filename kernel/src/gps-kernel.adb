@@ -447,8 +447,8 @@ package body GPS.Kernel is
    -- Get_Buffer_Factory --
    ------------------------
 
-   function Get_Buffer_Factory
-     (Kernel : access Kernel_Handle_Record)
+   overriding function Get_Buffer_Factory
+     (Kernel : not null access Kernel_Handle_Record)
       return Editor_Buffer_Factory_Access
    is
    begin

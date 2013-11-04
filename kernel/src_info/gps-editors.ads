@@ -26,7 +26,6 @@ with GNATCOLL.Xref;    use GNATCOLL.Xref;
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 with GPS.Styles;       use GPS.Styles;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package GPS.Editors is
 
@@ -61,10 +60,6 @@ package GPS.Editors is
 
    type Editor_Listener is abstract new Controlled with null record;
    type Editor_Listener_Access is access all Editor_Listener'Class;
-
-   type Editor_Listener_Factory is abstract new Controlled with null record;
-   type Editor_Listener_Factory_Access is
-     access all Editor_Listener_Factory'Class;
 
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
@@ -736,17 +731,6 @@ package GPS.Editors is
      (This            : in out Editor_Listener;
       Cursor_Location : Editor_Location'Class;
       From_User       : Boolean) is abstract;
-
-   -----------------------------
-   -- Editor_Listener_Factory --
-   -----------------------------
-
-   function Create
-     (This : Editor_Listener_Factory;
-      Editor : Editor_Buffer'Class;
-      Factory : Editor_Buffer_Factory'Class;
-      Kernel : Core_Kernel) return Editor_Listener_Access
-      is abstract;
 
 private
 

@@ -83,7 +83,7 @@ package body Commands.Builder is
          --  Get the unexpanded command line from the target
          if Background then
             Background_Env := Create_Extending_Environment
-              (Builder.Kernel, Force_File, Server);
+              (Builder.Kernel, Force_File);
          end if;
 
          --  For background compilation synthetic messages category name is
