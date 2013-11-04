@@ -1180,7 +1180,15 @@ package body Src_Editor_Module is
             --  floating window.
 
             Raise_Child (Child2, Focus);
-            Present (Gtk_Window (Child2.Get_Toplevel));
+
+            declare
+               TL : constant Gtk_Widget := Child2.Get_Toplevel;
+            begin
+               if TL.all in Gtk_Window_Record'Class then
+                  Present (Gtk_Window (TL));
+               end if;
+            end;
+
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
             Jump_To_Location;
