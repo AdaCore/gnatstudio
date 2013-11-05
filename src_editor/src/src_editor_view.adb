@@ -2112,6 +2112,8 @@ package body Src_Editor_View is
    begin
       External_End_Action (Buffer);
 
+      View.Acquire_Focus;
+
       case Get_Event_Type (Event) is
          when Button_Press =>
             if Get_Button (Event) = 1 then
