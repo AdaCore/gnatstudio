@@ -99,17 +99,14 @@ package body Src_Editor_Module.Commands is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Db     : constant General_Xref_Database := Kernel.Databases;
 
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean;
+      function On_Callee (Callee : General_Entity) return Boolean;
 
       ---------------
       -- On_Callee --
       ---------------
 
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean
-      is
-         pragma Unreferenced (Callee, Primitive_Of);
+      function On_Callee (Callee : General_Entity) return Boolean is
+         pragma Unreferenced (Callee);
       begin
          --  Consider dispatching calls only if we find more than one
          --  potential target, to avoid creating submenu with only one entry

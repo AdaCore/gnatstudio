@@ -579,14 +579,10 @@ package body GPS.Kernel.Xref is
                            declare
                               Stop : Boolean := False;
                               function On_Callee
-                                (Callee, Primitive_Of : General_Entity)
-                                    return Boolean;
+                                (Callee : General_Entity) return Boolean;
 
                               function On_Callee
-                                (Callee, Primitive_Of : General_Entity)
-                                    return Boolean
-                              is
-                                 pragma Unreferenced (Primitive_Of);
+                                (Callee : General_Entity) return Boolean is
                               begin
                                  if not On_Entity_Found
                                    (User_Data,

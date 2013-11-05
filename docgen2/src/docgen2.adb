@@ -1622,7 +1622,7 @@ package body Docgen2 is
                   --  Get primitive operations
                   declare
                      Methods : constant Xref.Entity_Array :=
-                       Db.Methods (Entity, Include_Inherited => True);
+                       Db.Methods (Entity, Include_Inherited => False);
                      E_Overriden      : General_Entity;
                      Op_Xref          : Cross_Ref;
 
@@ -1655,8 +1655,17 @@ package body Docgen2 is
                         if not List (J).Overriden then
                            Op_Xref := Create_Xref  (List (J).Entity, Entity);
 
-                           Op_Xref.Inherited :=
-                             Db.Is_Primitive_Of (List (J).Entity) /= Entity;
+                           Op_Xref.Inherited := False;
+
+                           --  ??? We use to search for all methods, included
+                           --  iherited, and then compute the flag above with:
+                           --
+                           --   Db.Is_Primitive_Of (List (J).Entity) /= Entity;
+                           --
+                           --  This no longer works because Is_Primitive_Of
+                           --  returns a list of types, but the original code
+                           --  was in fact incorrect since it is unclear which
+                           --  type was previously returned by Is_Primitive_Of
 
                            E_Overriden := Db.Overrides (List (J).Entity);
 

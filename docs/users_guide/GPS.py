@@ -4931,10 +4931,10 @@ class Entity(object):
 
     def primitive_of(self):
         """
-        Return the type for which self is a primitive operation (or a method,
+        Return the list of type for which self is a primitive operation (or a method,
         in other languages than Ada)
 
-        :return: An instance of :class:`GPS.Entity` or None
+        :return: A list of instances of :class:`GPS.Entity` or []
 
         """
         pass  # implemented in Ada

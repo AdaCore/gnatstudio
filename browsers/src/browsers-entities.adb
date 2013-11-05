@@ -653,11 +653,16 @@ package body Browsers.Entities is
                  (Get_Script (Data), Kernel.Databases.Returned_Type (Entity)));
 
          elsif Command = "primitive_of" then
-            Set_Return_Value
-              (Data,
-               Create_Entity
-                 (Get_Script (Data),
-                  Kernel.Databases.Is_Primitive_Of (Entity)));
+            declare
+               Arr : constant Xref.Entity_Array :=
+                 Kernel.Databases.Is_Primitive_Of (Entity);
+            begin
+               Set_Return_Value_As_List (Data);
+               for A in Arr'Range loop
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Arr (A)));
+               end loop;
+            end;
 
          elsif Command = "pointed_type" then
             Result := Kernel.Databases.Pointed_Type (Entity);

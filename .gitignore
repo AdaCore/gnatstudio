@@ -19,6 +19,7 @@
 .gpssnprj
 Makefile.common
 b~*
+b__*
 *.d
 *.cgpr
 /Makefile
@@ -245,3 +246,6 @@ share/icons/light/svg
 templates_parser
 widgets/Makefile.widgets
 vsearch/tests/obj/run
+osx_bundle/Makefile
+osx_bundle/scripts/install.py
+examples/tutorial/obj/sdc

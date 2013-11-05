@@ -253,8 +253,7 @@ package Xref is
      (Dbase     : access General_Xref_Database_Record;
       Entity    : General_Entity;
       Ref       : General_Entity_Reference;
-      On_Callee : access function
-                    (Callee, Primitive_Of : General_Entity) return Boolean;
+      On_Callee : access function (Callee : General_Entity) return Boolean;
       Filter    : Reference_Kind_Filter := null);
    --  If Ref references a dispatching call then call On_Callee with all the
    --  overridding primitives (that is, all the primitives that might possibly
@@ -272,6 +271,8 @@ package Xref is
    --  Entity_Has_Body.
    --
    --  Search stops when On_Callee returns False
+   --
+   --  The Primitive_Of parameter
    --
    --  Nothing is done if Ref does not point to a dispatching call.
    --  This procedure does not propagate any exception.
@@ -387,8 +388,9 @@ package Xref is
 
    function Is_Primitive_Of
      (Self   : access General_Xref_Database_Record;
-      Entity : General_Entity) return General_Entity;
-   --  Returns the entity for which Entity is a method/primitive operation
+      Entity : General_Entity) return Entity_Array;
+   --  Returns the entities for which Entity is a method/primitive operation
+   --  (including the entities for which it is an inherited method)
 
    function Has_Methods
      (Db : access General_Xref_Database_Record;

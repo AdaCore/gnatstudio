@@ -216,7 +216,7 @@ package body Refactoring.Parameters is
             return False;
          end if;
 
-         if Kernel.Databases.Is_Primitive_Of (Entity) /= No_General_Entity then
+         if Kernel.Databases.Is_Primitive_Of (Entity)'Length /= 0 then
             To_Line_Column
               (S_File, Entity_Token.Token_First, Tok_Line, Tok_Column);
 

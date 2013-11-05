@@ -295,14 +295,12 @@ package body Xref is
      (Dbase     : access General_Xref_Database_Record;
       Entity    : General_Entity;
       Ref       : General_Entity_Reference;
-      On_Callee : access function
-        (Callee, Primitive_Of : General_Entity) return Boolean;
+      On_Callee : access function (Callee : General_Entity) return Boolean;
       Filter    : Reference_Kind_Filter := null)
    is
       use type Old_Entities.Reference_Kind;
 
       Prim_Ent  : General_Entity;
-      Typ_Ent   : General_Entity;
 
    begin
       --  Handle cases in which no action is needed
@@ -315,23 +313,8 @@ package body Xref is
 
       if Active (SQLITE) then
          declare
-            function Tagged_Type
-              (E : Entity_Information) return Entity_Information;
-            --  ???
-
             function Should_Show (E : Entity_Information) return Boolean;
-            --  ???
-
-            -----------------
-            -- Tagged_Type --
-            -----------------
-
-            function Tagged_Type
-              (E : Entity_Information) return Entity_Information is
-            begin
-               return Dbase.Xref.Declaration
-                 (Dbase.Xref.Method_Of (E)).Location.Entity;
-            end Tagged_Type;
+            --  Whether we should display E
 
             -----------------
             -- Should_Show --
@@ -360,11 +343,9 @@ package body Xref is
          begin
             Prim     := Entity.Entity;
             Prim_Ent := To_General_Entity (Dbase, Prim);
-            Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
 
-            if Should_Show (Prim_Ent.Entity)
-              and then not On_Callee
-                (Callee => Prim_Ent, Primitive_Of => Typ_Ent)
+            if Should_Show (Prim)
+              and then not On_Callee (Callee => Prim_Ent)
             then
                return;
             end if;
@@ -378,12 +359,10 @@ package body Xref is
             while Cursor.Has_Element loop
                Prim     := Cursor.Element;
                Prim_Ent := To_General_Entity (Dbase, Prim);
-               Typ_Ent  := To_General_Entity (Dbase, Tagged_Type (Prim));
 
                exit when Should_Show (Prim_Ent.Entity)
                  and then not On_Callee
-                   (Callee       => Prim_Ent,
-                    Primitive_Of => Typ_Ent);
+                   (Callee       => Prim_Ent);
 
                Cursor.Next;
             end loop;
@@ -406,9 +385,11 @@ package body Xref is
 
             function Proxy
               (Callee, Primitive_Of : Old_Entities.Entity_Information)
-               return Boolean is
+               return Boolean
+            is
+               pragma Unreferenced (Primitive_Of);
             begin
-               return On_Callee (From_Old (Callee), From_Old (Primitive_Of));
+               return On_Callee (From_Old (Callee));
             end Proxy;
 
             function Proxy_Filter
@@ -2255,14 +2236,24 @@ package body Xref is
 
    function Is_Primitive_Of
      (Self   : access General_Xref_Database_Record;
-      Entity : General_Entity) return General_Entity
+      Entity : General_Entity) return Entity_Array
    is
+      Result : Entity_Lists.List;
+      Curs   : Entities_Cursor;
+      E      : General_Entity;
    begin
       if Active (SQLITE) then
-         return From_New (Self.Xref.Method_Of (Entity.Entity));
+         Self.Xref.Method_Of (Entity.Entity, Curs);
+         Fill_Entity_Array (Curs, Result);
+         return To_Entity_Array (Result);
       else
-         return From_Old
+         E := From_Old
            (Old_Entities.Is_Primitive_Operation_Of (Entity.Old_Entity));
+         if E /= No_General_Entity then
+            return (1 => E);
+         else
+            return (1 .. 0 => No_General_Entity);
+         end if;
       end if;
    end Is_Primitive_Of;
 
@@ -3658,23 +3649,14 @@ package body Xref is
        Include_Inherited : Boolean) return Entity_Array
    is
       Result : Entity_Lists.List;
+      Curs   : Entities_Cursor;
    begin
       if Active (SQLITE) then
-         declare
-            Curs : Entities_Cursor;
-            Rec_Curs : Recursive_Entities_Cursor;
-         begin
-            if Include_Inherited then
-               Self.Xref.Recursive
-                 (Entity  => Entity.Entity,
-                  Compute => GNATCOLL.Xref.Methods'Unrestricted_Access,
-                  Cursor  => Rec_Curs);
-               Fill_Entity_Array (Rec_Curs, Result);
-            else
-               Self.Xref.Methods (Entity.Entity, Cursor => Curs);
-               Fill_Entity_Array (Curs, Result);
-            end if;
-         end;
+         Self.Xref.Methods
+           (Entity.Entity,
+            Cursor            => Curs,
+            Include_Inherited => Include_Inherited);
+         Fill_Entity_Array (Curs, Result);
       else
          declare
             use Old_Entities;

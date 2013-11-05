@@ -1242,8 +1242,7 @@ package body Src_Editor_Box is
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Xref_Db : constant General_Xref_Database := Kernel.Databases;
 
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean;
+      function On_Callee (Callee : General_Entity) return Boolean;
 
       --  CP record is used to sort the menu entries by means of an ordered set
 
@@ -1306,10 +1305,12 @@ package body Src_Editor_Box is
       -- On_Callee --
       ---------------
 
-      function On_Callee
-        (Callee, Primitive_Of : General_Entity) return Boolean
-      is
-         New_Elem : constant CP := (Callee, Primitive_Of);
+      function On_Callee (Callee : General_Entity) return Boolean is
+         --  We chose, at random, the first tagged type returned by
+         --  Is_Primitive_Of
+         Primitive_Of : constant Entity_Array :=
+           Xref_Db.Is_Primitive_Of (Callee);
+         New_Elem : constant CP := (Callee, Primitive_Of (Primitive_Of'First));
       begin
          E_Set.Include (New_Elem);
          return True;
