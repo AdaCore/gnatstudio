@@ -36,6 +36,11 @@ NF-61-MA22-042 GPS: Recompute Xrefs on file save (2013-10-29)
   references engine - refactorings, code navigation, occurences highlighting,
   etc.
 
+NF-61-MA21-056 GPS: Autofix to current file only (2013-11-05)
+
+  Autofix menu was extended with items to restrict fixing of simple errors and
+  warnings to current file occurencies.
+
 NF-61-MA18-018 GPS: New plug-in vim.py (2013-10-18)
 
   GPS now has a vim emulation layer, that aims to reproduce the behavior of the
