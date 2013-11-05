@@ -750,7 +750,7 @@ package body GNATdoc.Frontend.Builder is
 
          --  Local variables
 
-         Is_Prim : constant Boolean := Present (Is_Primitive_Of (Db, E));
+         Is_Prim : constant Boolean := Is_Primitive_Of (Db, E)'Length /= 0;
          --  Avoid calling twice this service???
 
       begin

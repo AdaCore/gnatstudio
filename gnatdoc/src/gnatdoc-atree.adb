@@ -806,7 +806,7 @@ package body GNATdoc.Atree is
             if New_E.Xref.Is_Subprogram then
                New_E.Xref.Is_Abstract := Xref.Is_Abstract (Db, E);
 
-               if Present (Is_Primitive_Of (Db, E)) then
+               if Is_Primitive_Of (Db, E)'Length /= 0 then
                   New_E.Xref.Is_Primitive := True;
                end if;
             end if;
