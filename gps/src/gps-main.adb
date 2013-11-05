@@ -903,7 +903,7 @@ procedure GPS.Main is
             GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
 
          elsif Switch = "--traceoff" then
-            GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
+            GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
 
          elsif Switch = "--tracefile" then
             GNATCOLL.Traces.Parse_Config_File
