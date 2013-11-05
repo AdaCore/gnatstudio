@@ -196,7 +196,10 @@ package body Src_Editor_View.Commands is
       View : constant Source_View :=
                Source_View (Get_Current_Focus_Widget (Command.Kernel));
 
+      Adj : constant Gtk_Adjustment := View.Get_Hadjustment;
+      Val : constant Gdouble := Adj.Get_Value;
    begin
+      --  First center the mark onscreen
       Scroll_To_Mark
         (View,
          View.Saved_Cursor_Mark,
@@ -204,6 +207,9 @@ package body Src_Editor_View.Commands is
          Use_Align     => True,
          Xalign        => 0.0,
          Yalign        => 0.5);
+
+      --  Then restore the previous adjustment
+      Adj.Set_Value (Val);
       return Success;
    end Execute;
 

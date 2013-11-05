@@ -14,7 +14,7 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Create the directories manually, or remove the directory
               separator at the end of the directory specification.
 
-- JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
+- JC07-006: GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
               connection is closed.
@@ -25,3 +25,8 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Use ssh instead. If absolutely needed, you can re-enable rsh
               support by using the remote_rsh.py plugin, to be activated from
               the Tools->Plug-ins menu.
+
+- G928-018: GPS: "center cursor on screen" scrolls horizontally
+  Problem:    Using the "center cursor on screen" action causes unwanted
+              horizontal scrolling in editors.
+  Workaround: Scroll manually.
