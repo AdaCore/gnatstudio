@@ -119,7 +119,11 @@ package body Codefix_Module is
    end record;
    type Codefix_Properties_Access is access all Codefix_Properties'Class;
 
-   type Fix_Mode_Type is (Specific, Simple, Style_And_Warnings, Similar);
+   type Fix_Mode_Type is
+     (Specific, Simple, Style_And_Warnings, Similar,
+      Simple_In_File,               --  All simple errors in current file
+      Style_And_Warnings_In_File,   --  All style warrings in current file
+      Similar_In_File);             --  All similar errors in current file
 
    type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Kernel          : Kernel_Handle;
@@ -144,6 +148,8 @@ package body Codefix_Module is
          Error : Error_Id) is abstract;
       --  If given Self is supposed to fix Error, then apply a fix.
       --  Do nothing otherswise.
+      procedure Destroy (Self : access Fix_Batch_Record) is null;
+      --  Deallocate all used data
 
       function Fabric (Menu : Codefix_Menu_Item) return Fix_Batch;
       --  Return object to fix all errors corresponding to Fix_Mode of Menu.
@@ -167,8 +173,17 @@ package body Codefix_Module is
         (Self  : access Similar_Fix_Batch_Record;
          Error : Error_Id);
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Fix_Batch_Record'Class, Fix_Batch);
+      type In_File_Fix_Batch_Record is new Fix_Batch_Record with record
+         Parent : Fix_Batch;
+      end record;
+      --  Fix all errors in one file only using Parent object
+      overriding procedure Fix_If_Match
+        (Self  : access In_File_Fix_Batch_Record;
+         Error : Error_Id);
+      overriding procedure Destroy (Self : access In_File_Fix_Batch_Record);
+
+      procedure Free (Self : in out Fix_Batch);
+
    end Fix_Batches;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -355,7 +370,7 @@ package body Codefix_Module is
                   Error := Next (Error);
                end loop;
 
-               Fix_Batches.Unchecked_Free (Batch_Fix);
+               Fix_Batches.Free (Batch_Fix);
             end;
       end case;
 
@@ -378,6 +393,15 @@ package body Codefix_Module is
                return new Style_Fix_Batch_Record (Menu);
             when Similar =>
                return new Similar_Fix_Batch_Record (Menu);
+            when Simple_In_File =>
+               return new In_File_Fix_Batch_Record'
+                 (Menu, new Simple_Fix_Batch_Record (Menu));
+            when Style_And_Warnings_In_File =>
+               return new In_File_Fix_Batch_Record'
+                 (Menu, new Style_Fix_Batch_Record (Menu));
+            when Similar_In_File =>
+               return new In_File_Fix_Batch_Record'
+                 (Menu, new Similar_Fix_Batch_Record (Menu));
          end case;
       end Fabric;
 
@@ -457,6 +481,42 @@ package body Codefix_Module is
                Command.all);
          end if;
       end Fix_If_Match;
+
+      ------------------
+      -- Fix_If_Match --
+      ------------------
+
+      overriding procedure Fix_If_Match
+        (Self  : access In_File_Fix_Batch_Record;
+         Error : Error_Id)
+      is
+         File : constant Virtual_File := Get_Error_Message (Error).Get_File;
+      begin
+         if File = Get_Error_Message (Self.Menu.Error).Get_File then
+            Self.Parent.Fix_If_Match (Error);
+         end if;
+      end Fix_If_Match;
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Self : in out Fix_Batch) is
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (Fix_Batch_Record'Class, Fix_Batch);
+      begin
+         Self.Destroy;
+         Unchecked_Free (Self);
+      end Free;
+
+      -------------
+      -- Destroy --
+      -------------
+
+      overriding procedure Destroy (Self : access In_File_Fix_Batch_Record) is
+      begin
+         Free (Self.Parent);
+      end Destroy;
 
    end Fix_Batches;
 
@@ -1270,6 +1330,17 @@ package body Codefix_Module is
             Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
             Append (Sub_Menu, Mitem);
 
+            Gtk_New (Mitem, "Apply to current file");
+            Mitem.Fix_Mode        := Similar_In_File;
+            Mitem.Matching_Parser := Fix_Command.Get_Parser;
+            Mitem.Solution_Index  := Simple_Number;
+            Mitem.Total_Solutions := Length (Solutions);
+            Mitem.Error           := Error;
+            Mitem.Kernel          := Kernel_Handle (Kernel);
+            Mitem.Session         := Codefix_Session (Session);
+            Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+            Append (Sub_Menu, Mitem);
+
             Append (Menu, Menu_Item);
          else
             Gtk_New (Mitem, Get_Caption (Get_Command (Solution_Node).all));
@@ -1300,6 +1371,24 @@ package body Codefix_Module is
          Gtk_New (Mitem, "Fix all simple errors");
 
          Mitem.Fix_Mode := Simple;
+         Mitem.Kernel   := Kernel_Handle (Kernel);
+         Mitem.Session  := Codefix_Session (Session);
+         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+         Append (Menu, Mitem);
+
+         Gtk_New (Mitem, "Fix all simple style errors in current file");
+
+         Mitem.Fix_Mode := Style_And_Warnings_In_File;
+         Mitem.Error    := Error;
+         Mitem.Kernel   := Kernel_Handle (Kernel);
+         Mitem.Session  := Codefix_Session (Session);
+         Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
+         Append (Menu, Mitem);
+
+         Gtk_New (Mitem, "Fix all simple errors in current file");
+
+         Mitem.Fix_Mode := Simple_In_File;
+         Mitem.Error    := Error;
          Mitem.Kernel   := Kernel_Handle (Kernel);
          Mitem.Session  := Codefix_Session (Session);
          Widget_Callback.Connect (Mitem, Signal_Activate, On_Fix'Access);
