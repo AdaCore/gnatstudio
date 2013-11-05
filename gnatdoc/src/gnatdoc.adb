@@ -77,7 +77,9 @@ package body GNATdoc is
       is
          pragma Unreferenced (Scope_Level);
       begin
-         if No (Get_Scope (Entity)) then
+         if No (Get_Scope (Entity))
+           and then not Is_Standard_Entity (Entity)
+         then
             GNAT.IO.Put_Line
               (">> Internal error on "
                & Get_Short_Name (Entity)

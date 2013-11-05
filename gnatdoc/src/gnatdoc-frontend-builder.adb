@@ -1630,7 +1630,9 @@ package body GNATdoc.Frontend.Builder is
                   Exit_Scope;
                end loop;
 
-               Set_Scope (New_E, Current_Scope);
+               if No (Get_Scope (New_E)) then
+                  Set_Scope (New_E, Current_Scope);
+               end if;
 
             elsif Is_Type (New_E) then
                Scope_Id :=
@@ -1639,13 +1641,13 @@ package body GNATdoc.Frontend.Builder is
                     Get_Location
                       (Context.Database, Get_LL_Scope (New_E)));
 
-               Set_Scope (New_E, Scope_Id);
-
-               --  pragma Assert (Get_Scope (New_E) /= null);
-
                if No (Get_Scope (New_E)) then
-                  pragma Assert (Get_Kind (New_E) = E_Access_Type);
-                  Set_Scope (New_E, Current_Scope);
+                  if Present (Scope_Id) then
+                     Set_Scope (New_E, Scope_Id);
+                  else
+                     pragma Assert (Get_Kind (New_E) = E_Access_Type);
+                     Set_Scope (New_E, Current_Scope);
+                  end if;
                end if;
             end if;
          end if;
