@@ -192,7 +192,7 @@ Make sure you have run the executable(s) at least once.
 
 @interactive(name='gcov remove coverage files',
              filter=using_gcov)
-def remove_gcov(menu):
+def remove_gcov():
    "Cleanup the gcov coverage files"
 
    if not MDI.yes_no_dialog (
