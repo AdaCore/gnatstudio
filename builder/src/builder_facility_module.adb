@@ -89,9 +89,6 @@ package body Builder_Facility_Module is
    Modes_Trace : constant Trace_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
-   Main_Menu : constant String := '/' & (-"_Build") & '/';
-   --  -"Build"
-
    End_Of_Build_Name : constant String := "end_of_build";
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -1794,23 +1791,16 @@ package body Builder_Facility_Module is
 
       --  Register the menus
 
-      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
-      Register_Menu (Kernel, Main_Menu & (-"_Run"));
-
       Command := new Targets_Settings_Command;
       Register_Action
         (Kernel, "Build open targets settings", Command,
          Description => -"Open the Build Targets settings dialog");
-      Register_Menu
-        (Kernel, "/Build/Settings/_Targets", "Build open targets settings");
 
       if Active (Modes_Trace) then
          Command := new Modes_Settings_Command;
          Register_Action
            (Kernel, "Build open modes settings", Command,
             Description => -"Open the Modes Targets settings dialog");
-         Register_Menu
-           (Kernel, "/Build/Settings/_Modes", "Build open modes settings");
       end if;
 
       Command := new Shadow_Console_Command;
@@ -1818,18 +1808,12 @@ package body Builder_Facility_Module is
         (Kernel, "open Auxiliary Builds", Command,
          Category => -"Views",
          Description => -"Open the Auxiliary Builds console");
-      Register_Menu
-        (Kernel, -"/Tools/Consoles/_Auxiliary Builds",
-         "open Auxiliary Builds");
 
       Command := new Background_Builds_Console_Command;
       Register_Action
         (Kernel, "open Background Builds", Command,
          Category => -"Views",
          Description => -"Open the Backgorund Builds console");
-      Register_Menu
-        (Kernel, -"/Tools/Consoles/_Background Builds",
-         "open Background Builds");
 
       Register_Contextual_Submenu
         (Kernel,

@@ -66,8 +66,6 @@ with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Intl;                use GPS.Intl;
 with GUI_Utils;               use GUI_Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
@@ -1028,9 +1026,6 @@ package body KeyManager_Module.GUI is
         (Kernel, "open key shortcuts dialog", Command,
          -"Edit or create key shortcuts for all actions and menus",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Edit/_Key Shortcuts", "open key shortcuts dialog",
-         Ref_Item => -"Aliases", Add_Before => False);
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;

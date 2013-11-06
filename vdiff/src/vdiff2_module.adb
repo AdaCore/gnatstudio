@@ -18,8 +18,9 @@
 with Config;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -266,8 +267,6 @@ package body Vdiff2_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       use Default_Preferences;
-      Tools          : constant String :=
-                         '/' & (-"Tools") & '/' & (-"Compare");
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
       Command        : Interactive_Command_Access;
@@ -375,28 +374,15 @@ package body Vdiff2_Module is
          Wrapper (Diff_Hook'Access),
          Name => "vdiff2.diff");
 
-      Register_Menu
-        (Kernel, '/' & (-"Tools") & '/', (-"C_ompare"),
-         Callback => null,
-         Ref_Item   => -"Consoles",
-         Add_Before => True);
+      Command := new Compare_Two_Files;
+      Register_Action
+         (Kernel, "compare two files", Command,
+          -"Compare two files");
 
-      Register_Menu
-        (Kernel, Tools, -"_Two Files...", "",
-         On_Compare_Two_Files'Access);
-      Register_Menu
-        (Kernel, Tools, -"T_hree Files...", "",
-         On_Compare_Three_Files'Access);
-
-      --  ??? Disable these menus for now, since the "Merge" interface doesn't
-      --  work yet.
-
---        Register_Menu
---          (Kernel, Tools, -"Merge Two Files...", "",
---           On_Merge_Two_Files'Access);
---        Register_Menu
---          (Kernel, Tools, -"Merge Three Files...", "",
---           On_Merge_Three_Files'Access);
+      Command := new Compare_Three_Files;
+      Register_Action
+         (Kernel, "compare three files", Command,
+          -"Compare three files");
 
       Register_Commands (Kernel);
    end Register_Module;

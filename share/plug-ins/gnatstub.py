@@ -27,9 +27,7 @@ class OnExit(object):
 @gps_utils.interactive(
     category="Editor",
     filter=gps_utils.in_ada_file,
-    menu="/Edit/_Generate Body",
-    before="Aliases",
-    name="Generate body")
+    name="generate body")
 def generate_body():
     """
 Run gnatstub on the current Ada spec to generate a matching
@@ -44,7 +42,7 @@ body file.
         GPS.Project.scenario_variables_cmd_line("-X"),
         file.name(),
         file.directory())
- 
+
     proc = GPS.Process(
         command, task_manager=True, on_exit=OnExit(file).on_exit)
     proc.wait()

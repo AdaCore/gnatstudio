@@ -5,6 +5,7 @@ Provides support for gnatmetrics.
 
 import re
 import GPS
+from gps_utils import interactive
 
 # Initialize the targets
 xml_base = """
@@ -231,22 +232,6 @@ xml_base = """
    >GPS.BuildTarget("GNAT Metrics for project and subprojects").execute(synchronous=False)</shell>
 </action>
 
-<submenu>
-   <title>Tools</title>
-    <submenu after="Macro">
-      <title>_Metrics</title>
-      <menu action="GNAT Metric on current file">
-         <title>Compute metrics on current file</title>
-      </menu>
-      <menu action="GNAT Metric on current project">
-         <title>Compute metrics on current p_roject</title>
-      </menu>
-      <menu action="GNAT Metric on current project and subprojects">
-         <title>Compute metrics on current project and _subprojects</title>
-      </menu>
-    </submenu>
-</submenu>
-
 <contextual action="GNAT metric on current project" >
    <title>Metrics/Compute metrics for project %p</title>
 </contextual>
@@ -269,7 +254,10 @@ def on_compilation_finished(hook, category,
     v = GPS.XMLViewer.create_metric("Metrics")
     v.parse("metrix.xml")
 
-def show_metrics_window(self):
+
+@interactive(name='open metrics view')
+def show_metrics_window():
+    "Open the Metrics view"
     w=GPS.MDI.get("Metrics")
 
     if w == None:
@@ -281,6 +269,3 @@ def show_metrics_window(self):
 
 GPS.parse_xml(xml_base)
 GPS.Hook("compilation_finished").add(on_compilation_finished)
-GPS.Menu.create("/Tools/Views/Metrics",
-                show_metrics_window,
-                ref="Messages", add_before=0)

@@ -542,8 +542,7 @@ package body GPS.Kernel.Console is
       Command : Interactive_Command_Access;
       pragma Unreferenced (Msg);
    begin
-      Messages_Views.Register_Module
-        (Kernel, Menu_Name  => -"Views/_Messages");
+      Messages_Views.Register_Module (Kernel);
 
       Msg2.Kernel := Kernel_Handle (Kernel);
       Kernel.Set_Messages_Window (Msg2);

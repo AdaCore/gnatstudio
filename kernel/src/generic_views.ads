@@ -199,16 +199,11 @@ package Generic_Views is
 
       procedure Register_Module
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID          : GPS.Kernel.Modules.Module_ID := null;
-         Menu_Name   : String := "Views/" & View_Name;
-         Before_Menu : String := "");
+         ID          : GPS.Kernel.Modules.Module_ID := null);
       --  Register the module. This sets it up for proper desktop handling, as
       --  well as create a menu in Tools/ so that the user can open the view.
       --  ID can be passed in parameter if a special tagged type needs to be
       --  used.
-      --  Menu_Name is the name of the menu, in tools, that is used to create
-      --  the view.
-      --  If Before_Menu is not empty, the menu entry will be added before it.
 
       function Get_Module return GPS.Kernel.Modules.Module_ID;
       --  Return the module ID corresponding to that view
@@ -237,15 +232,6 @@ package Generic_Views is
         (View : not null access Formal_View_Record'Class)
          return Gtkada.MDI.MDI_Child;
       --  Return the MDI Child containing view.
-
-      procedure Register_Open_Menu
-        (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Menu_Name : String;
-         Item_Name : String;
-         Before    : String := "");
-      --  Creates a new toplevel menu used to open the view. One such menu is
-      --  already created by Register_Module, so this procedure is only useful
-      --  for additional menus to open the same view.
 
       procedure Close
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

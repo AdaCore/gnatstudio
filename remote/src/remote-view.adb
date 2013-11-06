@@ -1048,9 +1048,7 @@ package body Remote.View is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Remote_Views.Register_Module
-        (Kernel,
-         Menu_Name => -"Views/_Remote");
+      Remote_Views.Register_Module (Kernel);
    end Register_Module;
 
 end Remote.View;

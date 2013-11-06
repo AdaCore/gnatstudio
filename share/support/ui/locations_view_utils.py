@@ -42,7 +42,6 @@ def in_locations_filter(context):
 
 @gps_utils.interactive(
     name="export locations to editor",
-    menu="/File/Locations/_Export Locations to Editor",
     contextual="Export messages to editor",
     filter=in_locations_filter,
     after="Change Directory...")

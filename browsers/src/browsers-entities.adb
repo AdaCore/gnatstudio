@@ -495,9 +495,7 @@ package body Browsers.Entities is
                                   new Entity_Browser_Action_Context;
    begin
       Entity_Browser_Module := new Entity_Browser_Module_Record;
-      Entities_Views.Register_Module
-        (Kernel, Entity_Browser_Module,
-         Menu_Name => -"Browsers/_Entity");
+      Entities_Views.Register_Module (Kernel, Entity_Browser_Module);
 
       Command := new Examine_Entity_Command;
 

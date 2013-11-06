@@ -33,7 +33,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
@@ -1767,11 +1766,6 @@ package body GVD_Module is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       State    : Debugger_State)
    is
-      Debug     : constant String := '/' & (-"Debug") & '/';
-      Available : constant Boolean := State = Debug_Available;
-      Sensitive : constant Boolean := State /= Debug_None;
-      Item      : Gtk_Menu_Item;
-
    begin
       if Get_Main_Window (Kernel) /= null
         and then not Get_Main_Window (Kernel).In_Destruction
@@ -1780,38 +1774,6 @@ package body GVD_Module is
             Add_Debug_Buttons (Kernel);
          elsif State = Debug_None then
             Remove_Debug_Buttons (Kernel);
-         end if;
-
-         --  The menu might not exist if GPS is being destroyed at this point,
-         --  or it could have been destroyed from a python script
-         Item := Find_Menu_Item (Kernel, Debug & (-"Debug"));
-         if Item /= null then
-            Set_Sensitive (Item, Available);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
-            Set_Sensitive (Find_Menu_Item
-              (Kernel, Debug & (-"Step Instruction")), Sensitive);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Next")), Sensitive);
-            Set_Sensitive
-              (Find_Menu_Item
-                 (Kernel, Debug & (-"Next Instruction")), Sensitive);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Finish")), Sensitive);
-            Set_Sensitive
-              (Find_Menu_Item (Kernel, Debug & (-"Continue")), Sensitive);
-            Set_Sensitive
-              (Find_Menu_Item
-                 (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
-            Set_Sensitive
-              (Find_Menu_Item
-                 (Kernel, Debug & (-"Terminate Current")), Sensitive);
-            Set_Sensitive (Find_Menu_Item
-                           (Kernel, Debug & (-"Terminate")), Sensitive);
          end if;
       end if;
    end Set_Sensitive;
@@ -2414,11 +2376,7 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug             : constant String := '/' & (-"_Debug") & '/';
-      Debug_Sub         : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub          : constant String := Debug & (-"D_ata") & '/';
       Mitem             : Gtk_Menu_Item;
-      Sepitem           : Gtk_Separator_Menu_Item;
       Menu              : Gtk_Menu;
       Command           : Interactive_Command_Access;
       Filter            : Action_Filter;
@@ -2525,48 +2483,38 @@ package body GVD_Module is
          Action => Command,
          Filter => Debugger_Filter);
 
-      Register_Menu (Kernel, Debug, Ref_Item => -"Tools");
-
       --  Dynamic Initialize menu
-      Mitem := Register_Menu (Kernel, Debug, -"Initialize", "", null,
-                              Ref_Item => -"Data");
+      Mitem := Find_Menu_Item (Kernel, -"/Debug/Initialize");
       Gtk_New (Menu);
       Set_Submenu (Mitem, Menu);
       GVD_Module_ID.Initialize_Menu := Menu;
-
       Add_Hook (Kernel, Project_View_Changed_Hook,
                 Wrapper (On_View_Changed'Access),
                 Name => "gvd.project_view_changed");
 
       --  Add debugger menus
 
-      Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
-
       Command := new Connect_To_Board_Command;
       Register_Action
-        (Kernel, "Debug connect to board", Command,
+        (Kernel, "debug connect to board", Command,
          Description =>
            -("Opens a simple dialog to connect to a remote board. This option"
            & " is only relevant to cross debuggers."),
          Category => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/_Connect to Board...",
-                     "Debug connect to board");
 
       Command := new Load_File_Command;
       Register_Action
-        (Kernel, "Debug load file", Command,
+        (Kernel, "debug load file", Command,
          Description =>
            -("Opens a file selection dialog that allows you to choose a"
            & " program to debug. The program to debug is either an executable"
            & " for native debugging, or a partially linked module for cross"
            & " environments (e.g VxWorks)."),
          Category => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/_Load File...",
-                     "Debug load file");
 
       Command := new Add_Symbols_Command;
       Register_Action
-        (Kernel, "Debug add symbols", Command,
+        (Kernel, "debug add symbols", Command,
          Description =>
            -("Add the symbols from a given file/module. This corresponds to"
            & " the gdb command add-symbol-file. This menu is particularly"
@@ -2576,37 +2524,30 @@ package body GVD_Module is
            & " is absolutely required to use this functionality, otherwise"
            & " the debugger won't work properly."),
          Category => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/Add _Symbols...",
-                     "Debug add symbols");
 
       Command := new Attach_Command;
       Register_Action
-        (Kernel, "Debug attach", Command,
+        (Kernel, "debug attach", Command,
          Description => -"Attach to a running process",
          Category => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/_Attach...", "Debug attach");
 
       Command := new Detach_Command;
       Register_Action
-        (Kernel, "Debug detach", Command,
+        (Kernel, "debug detach", Command,
          Description => -"Detach the application from the debugger",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/_Detach", "Debug detach");
 
       Command := new Load_Core_Command;
       Register_Action
-        (Kernel, "Debug core file", Command,
+        (Kernel, "debug core file", Command,
          Description => -"Debug a core file instead of a running process",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/Debug C_ore File...",
-                     "Debug core file");
 
       Command := new Kill_Command;
       Register_Action
-        (Kernel, "Debug kill", Command,
+        (Kernel, "debug kill", Command,
          Description => -"Kill the debuggee process",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Debug/_Kill", "Debug kill");
 
       GVD.Canvas.Register_Module (Kernel);
       GVD.Call_Stack.Register_Module (Kernel);
@@ -2616,93 +2557,75 @@ package body GVD_Module is
       Breakpoints_Editor.Register_Module (Kernel);
       GVD.Memory_View.Register_Module (Kernel);
 
-      Gtk_New (Sepitem);
-      Register_Menu (Kernel, Data_Sub, Sepitem);
-
       Command := new Local_Vars_Command;
       Register_Action
-        (Kernel, "Debug display local variables", Command,
+        (Kernel, "debug display local variables", Command,
          Accel_Key   => GDK_LC_l,
          Accel_Mods  => Mod1_Mask,
          Description => -"Display local variables in the data window",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Data/Display _Local Variables",
-                    "Debug display local variables");
 
       Command := new Arguments_Command;
       Register_Action
-        (Kernel, "Debug display arguments", Command,
+        (Kernel, "debug display arguments", Command,
          Accel_Key   => GDK_LC_u,
          Accel_Mods  => Mod1_Mask,
          Description => -"Display arguments to the current subprogram",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Data/Display _Arguments",
-                     "Debug display arguments");
 
       Command := new Registers_Command;
       Register_Action
-        (Kernel, "Debug display registers", Command,
+        (Kernel, "debug display registers", Command,
          Description => -"Display the contents of registers in data window",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Data/Display _Registers",
-                     "Debug display registers");
 
       Command := new Expression_Command;
       Register_Action
         (Kernel, "Debug display any expression", Command,
          Description => -"Opens a dialog to choose an expression to display",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Data/Dispay Any _Expression...",
-                     "Debug display any expression");
-
-      Gtk_New (Sepitem);
-      Register_Menu (Kernel, Debug, Sepitem);
 
       Command := new Start_Command;
       Register_Action
-        (Kernel, "Debug run dialog", Command,
+        (Kernel, "debug run dialog", Command,
          Accel_Key   => GDK_F2,
          Filter      => Debugger_Active,
          Description =>
            -"Choose the arguments to the program, and start running it",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/_Run...", "Debug run dialog");
 
       Command := new Step_Command;
       Register_Action
-        (Kernel, "Debug step", Command,
+        (Kernel, "debug step", Command,
          Accel_Key   => GDK_F5,
          Filter      => Debugger_Active,
          Description =>
            -"Execute until program reaches a new line of source code",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/S_tep", "Debug step");
 
       Command := new Stepi_Command;
       Register_Action
-        (Kernel, "Debug stepi", Command,
+        (Kernel, "debug stepi", Command,
          Accel_Key   => GDK_F5,
          Accel_Mods  => Shift_Mask,
          Filter      => Debugger_Active,
          Description =>
            -"Execute the program for one machine instruction only",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/Step _Instruction", "Debug stepi");
 
       Command := new Next_Command;
       Register_Action
-        (Kernel, "Debug next", Command,
+        (Kernel, "debug next", Command,
          Accel_Key   => GDK_F6,
          Filter      => Debugger_Active,
          Description =>
            -("Execute the program until the next source line, stepping over"
              & " subprogram calls"),
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/_Next", "Debug next");
 
       Command := new Nexti_Command;
       Register_Action
-        (Kernel, "Debug nexti", Command,
+        (Kernel, "debug nexti", Command,
          Accel_Key   => GDK_F6,
          Accel_Mods  => Shift_Mask,
          Filter      => Debugger_Active,
@@ -2710,56 +2633,45 @@ package body GVD_Module is
            -("Execute the program until the next machine instruction, stepping"
              & " over subprogram calls"),
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/N_ext Instruction", "Debug nexti");
 
       Command := new Finish_Command;
       Register_Action
-        (Kernel, "Debug finish", Command,
+        (Kernel, "debug finish", Command,
          Accel_Key   => GDK_F7,
          Filter      => Debugger_Active,
          Description =>
            -("Continue execution until selected stack frame returns"),
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/_Finish", "Debug finish");
 
       Command := new Continue_Command;
       Register_Action
-        (Kernel, "Debug continue", Command,
+        (Kernel, "debug continue", Command,
          Accel_Key   => GDK_F8,
          Filter      => Debugger_Active,
          Description => -"Continue execution until next breakpoint",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/_Continue", "Debug continue");
 
       Command := new Interrupt_Command;
       Register_Action
-        (Kernel, "Debug interrupt", Command,
+        (Kernel, "debug interrupt", Command,
          Accel_Key   => GDK_backslash,
          Accel_Mods  => Primary_Mod_Mask,
          Stock_Id    => GPS_Stop_Task,
          Filter      => Debugger_Active,
          Description => -"Asynchronously interrupt the debuggee program",
          Category    => -"Debug");
-      Register_Menu (Kernel, -"/Debug/_Interrupt", "Debug interrupt");
-
-      Gtk_New (Sepitem);
-      Register_Menu (Kernel, Debug, Sepitem);
 
       Command := new Terminate_Command;
       Register_Action
         (Kernel, "terminate debugger", Command,
          Description => -"Terminate the current debugger",
          Filter      => Debugger_Active);
-      Register_Menu
-        (Kernel, -"/Debug/Te_rminate Current", "terminate debugger");
 
       Command := new Terminate_All_Command;
       Register_Action
         (Kernel, "terminate all debuggers", Command,
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
-      Register_Menu
-        (Kernel, -"/Debug/Te_rminate", "terminate all debuggers");
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 

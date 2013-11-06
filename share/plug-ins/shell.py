@@ -21,6 +21,7 @@ in such cases. In general, this can be safely done in your .bashrc
 
 
 import GPS, re, traceback, os
+from gps_utils import interactive
 from gps_utils.console_process import *
 
 
@@ -37,14 +38,10 @@ class Win32_Shell(Console_Process):
         Console_Process.__init__(self, process, args)
 
 
-def create_default_shell(menu):
+@interactive(name="open os shell")
+def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""
     if os.getenv("SHELL") and os.getenv("TERM"):
         Unix_Shell(os.getenv("SHELL"), "-i")
     elif os.getenv("COMSPEC"):
         Win32_Shell(os.getenv("COMSPEC"), "/Q")
-
-
-GPS.Menu.create("/Tools/Consoles/_OS Shell",
-                create_default_shell,
-                ref="Auxiliary Builds", add_before=1)

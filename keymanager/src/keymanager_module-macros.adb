@@ -26,7 +26,6 @@ with Glib.Main;                 use Glib, Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -39,14 +38,12 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 
 package body KeyManager_Module.Macros is
-
    Me                  : constant Trace_Handle := Create ("Keymanager.Macros");
 
    Mouse_Macro_Support : constant Trace_Handle :=
@@ -184,12 +181,16 @@ package body KeyManager_Module.Macros is
       File   : Virtual_File) return Event_Set_Access;
    --  Load macro file
 
-   procedure On_Load_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Macro_Load_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Macro_Load_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for loading set of events to replay
 
-   procedure On_Save_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Macro_Save_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Macro_Save_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Save last set of events recorded
 
    function Play_Macro_Timer (Events : Event_Set_Access) return Boolean;
@@ -248,17 +249,12 @@ package body KeyManager_Module.Macros is
 
          declare
             File    : constant Filesystem_String := Nth_Arg (Data, 1);
-            Macro   : constant String := '/' & (-"Tools/Macro") & '/';
-
          begin
             Free (Keymanager_Macro_Module.Current_Macro);
             Keymanager_Macro_Module.Current_Macro :=
               Load_Macro (Get_Kernel (Data), Create (File));
 
-            if Keymanager_Macro_Module.Current_Macro /= null then
-               Set_Sensitive
-                 (Find_Menu_Item (Get_Kernel (Data), Macro & (-"Play")), True);
-            else
+            if Keymanager_Macro_Module.Current_Macro = null then
                Set_Error_Msg
                  (Data, Command & ": " & (-"error while reading file"));
             end if;
@@ -357,27 +353,10 @@ package body KeyManager_Module.Macros is
 
          when Action_Stop =>
             if Keymanager_Macro_Module.Recording then
-               declare
-                  Macro : constant String := '/' & (-"Tools/Macro") & '/';
-               begin
-                  Trace (Me, "Stop recording macro");
-                  Keymanager_Macro_Module.Recording := False;
-                  Remove_Event_Handler
-                    (Command.Kernel, General_Event_Handler'Access);
-                  Set_Sensitive
-                    (Find_Menu_Item
-                       (Command.Kernel, Macro & (-"Start Keyboard Macro")),
-                     True);
-                  Set_Sensitive
-                    (Find_Menu_Item
-                       (Command.Kernel, Macro & (-"Stop Recording")), False);
-                  Set_Sensitive
-                    (Find_Menu_Item
-                       (Command.Kernel, Macro & (-"Play")), True);
-                  Set_Sensitive
-                    (Find_Menu_Item
-                       (Command.Kernel, Macro & (-"Save As...")), True);
-               end;
+               Trace (Me, "Stop recording macro");
+               Keymanager_Macro_Module.Recording := False;
+               Remove_Event_Handler
+                 (Command.Kernel, General_Event_Handler'Access);
             end if;
 
          when Action_Play =>
@@ -410,20 +389,10 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Mask   : Events_Mask) return Event_Set_Access
    is
-      Macro  : constant String := '/' & (-"Tools/Macro") & '/';
       Events : Event_Set_Access;
    begin
       --  ??? There's no way to remove Pointer_Motion_Mask afterwards
       Add_Events (Get_Main_Window (Kernel), Pointer_Motion_Mask);
-
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Start Keyboard Macro")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), True);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Play")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Save As...")), False);
 
       Events := new Event_Set;
       Events.Last_Event := null;
@@ -518,11 +487,10 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Events : Event_Set_Access)
    is
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
+      pragma Unreferenced (Kernel);
    begin
       Events.Current_Event := null;
 
-      Set_Sensitive (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
       if Events.Child /= null then
          End_Group (Get_Command_Queue (Events.Child));
       end if;
@@ -549,7 +517,6 @@ package body KeyManager_Module.Macros is
       Speed  : Duration := 1.0;
       Macro  : Event_Set_Access)
    is
-      Macro_Menu : constant String := '/' & (-"Tools/Macro") & '/';
       Id         : G_Source_Id;
       pragma Unreferenced (Id);
       C          : MDI_Child;
@@ -577,8 +544,6 @@ package body KeyManager_Module.Macros is
                   Start_Group (Get_Command_Queue (Macro.Child));
                end if;
 
-               Set_Sensitive
-                 (Find_Menu_Item (Kernel, Macro_Menu & (-"Play")), False);
                Keymanager_Macro_Module.Start_Clock := Clock;
                Keymanager_Macro_Module.Time_Spent  := 0;
                Macro.Speed                         := Speed;
@@ -589,15 +554,16 @@ package body KeyManager_Module.Macros is
       end if;
    end Play_Macro;
 
-   -------------------
-   -- On_Load_Macro --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self    : access Macro_Load_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Self);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       declare
          Name    : constant Virtual_File :=
@@ -610,36 +576,35 @@ package body KeyManager_Module.Macros is
 
       begin
          if Name = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          Free (Keymanager_Macro_Module.Current_Macro);
          Keymanager_Macro_Module.Current_Macro := Load_Macro (Kernel, Name);
 
-         if Keymanager_Macro_Module.Current_Macro /= null then
-            Set_Sensitive (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
-         else
+         if Keymanager_Macro_Module.Current_Macro = null then
             Insert (Kernel, -"Error while loading macro", Mode => Error);
+            return Commands.Failure;
          end if;
       end;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_Macro;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------
-   -- On_Save_Macro --
-   -------------------
-
-   procedure On_Save_Macro
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self    : access Macro_Save_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Self);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Events : constant Macro_Item_Access :=
                  Keymanager_Macro_Module.Current_Macro.Events;
    begin
       if Events = null then
-         return;
+         return Commands.Failure;
       end if;
 
       declare
@@ -654,19 +619,19 @@ package body KeyManager_Module.Macros is
 
       begin
          if Name = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          Success := Save_List (+Full_Name (Name), Events);
 
          if not Success then
             Insert (Kernel, -"Error while saving macro", Mode => Error);
+            return Commands.Failure;
          end if;
       end;
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_Save_Macro;
+      return Commands.Success;
+   end Execute;
 
    ----------------
    -- Load_Macro --
@@ -789,7 +754,6 @@ package body KeyManager_Module.Macros is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Macro_Menu : constant String := "/" & (-"Tools/M_acro");
       Command    : Interactive_Command_Access;
       Filter     : Action_Filter;
    begin
@@ -807,11 +771,6 @@ package body KeyManager_Module.Macros is
            -("Start recording a keyboard macro. Only keyboard events are"
              & " recorded."),
          Category    => -"Macro");
-      Register_Menu
-        (Kernel, -"/Tools/M_acro/_Start Keyboard Macro",
-         "Macro Start Keyboard",
-         Ref_Item => "Documentation",
-         Add_Before => False);
 
       if Active (Mouse_Macro_Support) then
          Command := new Macro_Command;
@@ -825,8 +784,6 @@ package body KeyManager_Module.Macros is
               -("Start recording a general macro. Mouse and keyboards events"
                 & " are recorded, and can be replayed later on"),
             Category    => -"Macro");
-         Register_Menu
-           (Kernel, -"/Tools/Macro/_Start Mouse Macro", "Macro Start Mouse");
       end if;
 
       Command := new Macro_Command;
@@ -842,7 +799,6 @@ package body KeyManager_Module.Macros is
          Accel_Key   => GDK_Escape,
          Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Macro");
-      Register_Menu (Kernel, -"/Tools/Macro/_Stop Recording", "Macro Stop");
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Play;
@@ -855,15 +811,17 @@ package body KeyManager_Module.Macros is
          Description => -"Replay the last macro that was recorded",
          Category    => -"Macro",
          Filter      => Filter);
-      Register_Menu (Kernel, -"/Tools/Macro/_Play", "Macro Play");
 
-      Register_Menu
-        (Kernel, Macro_Menu, -"Load...",
-         Callback  => On_Load_Macro'Access);
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Save As...",
-         Callback  => On_Save_Macro'Access,
-         Sensitive => False);
+      Command := new Macro_Load_Command;
+      Register_Action
+         (Kernel, "macro load", Command,
+          -"Load a macro from an external file");
+
+      Command := new Macro_Save_Command;
+      Register_Action
+         (Kernel, "macro save", Command,
+          -"Save the current macro to an external file",
+          Filter => Filter);
 
       --  ??? Do not export these commands for now. We should have a class to
       --  represent a macro, so that several macros can be accessible at the

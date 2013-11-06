@@ -3131,7 +3131,6 @@ package body Project_Explorers is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Project : constant String := '/' & (-"Project");
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
@@ -3152,7 +3151,6 @@ package body Project_Explorers is
       Explorer_Views.Register_Module
         (Kernel => Kernel,
          ID     => Explorer_Module_ID);
-      Explorer_Views.Register_Open_Menu (Kernel, Project, -"Project _View");
 
       Command := new Locate_File_In_Explorer_Command;
       Register_Action

@@ -809,22 +809,12 @@ package body VCS_Module is
         (Kernel, "VCS open explorer", Command,
          Description => -"Open the VCS explorer",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/VCS/_Explorer", "VCS open explorer",
-         Ref_Item   => -"Navigate", Add_Before => False);
-      Register_Menu
-        (Kernel, -"/Tools/Views/_VCS Explorer", "VCS open explorer");
 
       Command := new Activities_Command;
       Register_Action
         (Kernel, "VCS open activities window", Command,
          Description => -"Open the VCS activities window",
          Category    => -"Views");
-      Register_Menu
-        (Kernel, -"/VCS/_Activities", "VCS open activities window");
-      Register_Menu
-        (Kernel, -"/Tools/Views/VCS _Activities",
-         "VCS open activities window");
 
       --  Register contextual menus
 

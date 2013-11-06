@@ -1,0 +1,396 @@
+<?xml version="1.0" ?>
+<GPS>
+   <!--
+        A <menu> can be marked as 'optional': in this case, the menu is hidden when the
+           action is not found, presumably because it is provided by a plug-in that has
+           not be loaded. When not optional, the menu is displayed greyed-out.
+        Naming conventions for menus:
+           labels should end up with '...' when they display a dialog or another window.
+           All words should be upper-cased, except small words like 'with', 'from',...
+        The label might include an underscore to indicate the key used to quickly
+           select it once the menu is opened.
+        Keyshortcuts and icons are provided by the GPS action itself.
+   -->
+   <menubar>
+      <menu label='_File'>
+         <menu label='_New'                          action='new file'/>
+         <menu label='New _View'                     action='new view'/>
+         <menu label='_Open...'                      action='open file'/>
+         <menu label='Open _from Project...'         action='global search in context: file names'/>
+         <menu label='Open from _Host...'            action='open from host'/>
+         <menu label='_Recent' />  <!--  dynamic content provided by GPS -->
+         <menu label='_Save'                         action='save'/>
+         <menu label='Save _As...'                   action='save as'/>
+         <menu label='Save _More'>
+            <menu label='_All'                       action='save files and projects'/>
+            <menu label='_Desktop'                   action='save desktop'/>
+         </menu>
+         <separator />
+         <menu label='Change _Directory...'          action='change directory'/>
+         <menu label='Locations'>
+            <menu label='Export Locations to Editor' action='export locations to editor'/>
+         </menu>
+         <separator />
+         <menu label='_Print'                        action='print'/>
+         <separator />
+         <menu label='_Close'                        action='close current window'/>
+         <menu label='Close _All'                    action='close all windows'/>
+         <menu label='Close All Editors'             action='close all editors' optional='true'/>
+         <menu label='Close All Editors except Current' optional='true'
+               action='close all editors except current'/>
+         <separator />
+         <menu label='_Exit'                         action='exit'/>
+      </menu>
+
+      <menu label='_Edit'>
+         <menu label='_Cut'            action='cut to clipboard'/>
+         <menu label='C_opy'           action='copy to clipboard'/>
+         <menu label='P_aste'          action='paste from clipboard'/>
+         <menu label='Pa_ste Previous' action='paste previous from clipboard'/>
+         <separator />
+         <menu label='_Undo'          action='undo' />
+         <menu label='_Redo'          action='redo' />
+         <separator />  <!--  Below this: selection -->
+         <menu label='_Select All'            action='select all'/>
+         <menu label='Format Selectio_n'      action='autoindent selection'/>
+         <menu label='Selection'>
+            <menu label='Comment _Lines'              action='comment lines'/>
+            <menu label='Uncomment L_ines'            action='uncomment lines'/>
+            <menu label='Print'                       action='print selection'/>
+            <menu label='R_efill'                     action='refill'/>
+            <menu label='Sort'                        action='sort selected lines ascending'/>
+            <menu label='Sort Reverse'                action='sort selected lines descending'/>
+            <menu label='Move Right'                  action='move block right'/>
+            <menu label='Move Left'                   action='move block left'/>
+            <menu label='Untabify'                    action='untabify'/>
+            <menu label='Pipe in External Program...' action='pipe' optional='true'/>
+         </menu>
+         <menu label='Rectangle' optional='True'>
+            <menu label='Cut'               action='rectangle_cut'   optional='true'/>
+            <menu label='Copy'              action='rectangle_copy'  optional='true'/>
+            <menu label='Paste'             action='rectangle_paste' optional='true'/>
+            <separator />
+            <menu label='Delete'            action='rectangle_delete' optional='true'/>
+            <menu label='Clear'             action='rectangle_clear'  optional='true'/>
+            <menu label='Open'              action='rectangle_open'   optional='true'/>
+            <menu label='Replace with Text' action='rectangle_string' optional='true'/>
+            <menu label='Insert Text'       action='rectangle_insert' optional='true'/>
+            <separator />
+            <menu label='Sort'              action='rectangle_sort'   optional='true'/>
+            <menu label='Sort Reverse'      action='rectangle_sort_reverse' optional='true'/>
+            <separator />
+            <menu label='Serialize'         action='serialize' optional='True'/>
+         </menu>
+         <separator /> <!-- Below this: completion -->
+         <menu label='Smar_t Completion'       action='complete identifier (advanced)'/>
+         <menu label='_More Completion'>
+            <menu label='Expand _Alias'        action='expand alias'/>
+            <menu label='Complete _Identifier' action='complete identifier'/>
+            <menu label='Complete Block'       action='block completion'/>
+         </menu>
+         <separator />  <!--  Below this: editor related -->
+         <menu label='_Fold All Blocks'          action='fold all blocks'/>
+         <menu label='Unfold All _Blocks'        action='unfold all blocks'/>
+         <menu label='Insert _File'              action='insert file'/>
+         <menu label='Edit with External Editor' action='edit with external editor'/>
+         <menu label='Create Boo_kmark'          action='bookmark create'/>
+         <menu label='_Generate Body'            action='generate body'/>
+         <menu label='P_retty Print'             action='pretty print'/>
+         <menu label='Text Size'>   <!--  would be nicer in /Window -->
+            <menu label='Increase'               action='increase text size' optional='true'/>
+            <menu label='Decrease'               action='decrease text size' optional='true'/>
+         </menu>
+         <separator />  <!--  Below this: general dialogs -->
+         <menu label='_Aliases...'               action='aliases edit'/>
+         <menu label='_Key Shortcuts...'         action='open key shortcuts dialog'/>
+         <menu label='_Preferences...'           action='open preferences'/>
+      </menu>
+
+      <menu label='_Navigate'>
+         <menu label='_Find Or Replace...'       action='search'/>
+         <menu label='Find _Previous'            action='find previous'/>
+         <menu label='Find _Next'                action='find next'/>
+         <menu label='Find Previous Incremental' action='isearch backward' optional='true'/>
+         <menu label='Find Incremental'          action='isearch' optional='true'/>
+         <separator />
+         <menu label='Find All References'       action='find all references'/>
+         <menu label='Goto _Declaration'         action='goto declaration'/>
+         <menu label='Goto _Body'                action='goto body'/>
+         <menu label='Goto Matching _Delimiter'  action='jump to matching delimiter'/>
+         <menu label='Goto Entity...'            action='global search in context: entities'/>
+         <menu label='Goto _Line...'             action='goto line'/>
+         <menu label='Goto File Spec&lt;-&gt;Body' action='goto other file'/>
+         <separator />
+         <menu label='Start of Statement'        action='start of statement'/>
+         <menu label='End of Statement'          action='end of statement'/>
+         <menu label='Previous Subprogram'       action='previous subprogram'/>
+         <menu label='Next Subprogram'           action='next subprogram'/>
+         <separator />
+         <menu label='Previous Locations Message' action='previous tag'/>
+         <menu label='Next Locations Message'     action='next tag'/>
+         <menu label='Back'                       action='backward locations history'/>
+         <menu label='Forward'                    action='forward locations history'/>
+      </menu>
+
+      <menu label='VCS'>
+         <menu label='_Explorer'                  action='vcs open explorer'/>
+         <menu label='_Activities'                action='vcs open activities window'/>
+         <menu label='Update All _Projects'       action='vcs update all projects'/>
+         <menu label='_Query Status for All Projects' action='vcs query status for all projects'/>
+         <!--  All other menus are dynamic and depend on the VCS backend 
+         <menu label='Query Status'               action='status'/>
+         <menu label='Commit'                     action='commit'/>
+         <menu label='Commit (via Revision Log)'  action='commit (via revision log)'/>
+         <menu label='Commit File'                action='commit (from revision log)'/>
+         <separator />
+         <menu label='View Entire Revision History (as Text)' action='history (as text)'/>
+         <menu label='View Entire Revision History'           action='history'/>
+         <menu label='View Specific Revision History'         action='history for revision'/>
+         <separator />
+         <menu label='Compare With Head Revision'             action='diff against head'/>
+         <separator />
+         <menu label='Add Annotations'                        action='annotate'/>
+         <menu label='Remove Annotations'                     action='remove annotate'/>
+         <menu label='Edit Revision Log'                      action='edit revision log'/>
+         <menu label='Edit Global Changelog'                  action='edit global changelog'/>
+         <menu label='Remove Revision Log'                    action='remove revision log'/>
+         <separator />
+         <menu label='Add, no Commit'                         action='add no commit'/>
+         <menu label='View Revision'                          action='view revision'/>
+         <separator />
+         <menu label='Directory'>
+            <menu label='Query Status for Directory'          action='status dir'/>
+            <menu label='Query Status for Directory (Recursively)' action='status dir (recursively)'/>
+            <menu label='Update Directory Recursively'        action='update dir (recursively)'/>
+         </menu>
+         <menu label='Project'>
+            <menu label='List All Files in Project'   action='list project'/>
+            <menu label='Query Status for Project'    action='status project'/>
+            <menu label='Update Project'              action='update project'/>
+            <menu label='List All Files in Project (Recursively)'
+                  action='list project (recursively)'/>
+            <menu label='Query Status for Project (Recursively)'
+                  action='status project (recursively)'/>
+            <menu label='Update Project (Recursively)'
+                  action='update project (recursively)'/>
+         </menu>
+         -->
+      </menu>
+
+      <menu label='_Project'>
+         <menu label='Open...'                        action='open project dialog'/>
+         <menu label='Open from _Host...'             action='open remote project'/>
+         <menu label='_New...'                        action='new project'/>
+         <menu label='New from _Template...'          action='create project from template'/>
+         <menu label='_Recent'/>  <!--  contents is dynamic -->
+         <separator />
+         <menu label='_Properties...'                 action='open project properties'/>
+         <menu label='Save _All'                      action='save all projects'/>
+         <menu label='R_eload'                        action='reload project'/>
+         <menu label='Edit File Switches...'          action='open switches editor'/> <!-- duplicate-->
+         <menu label='Project view'                   action='open project'/> <!-- duplicate-->
+      </menu>
+
+      <menu label='_Build'>
+         <menu label='Project'/>
+         <menu label='Clean'/>
+         <menu label='_Run'/>
+         <separator />
+         <menu label='Settings'>
+            <menu label='_Targets'     action='build open targets settings'/>
+            <menu label='_Modes'       action='build open modes settings' optional='True'/>
+            <menu label='T_oolchains'  action='open toolchains editor'/>
+         </menu>
+         <menu label='Recompute _Xref Info' action='recompute xref info' optional='True'/>
+         <menu label='Load Xref in Memory'  action='load xref in memory' optional='True'/>
+      </menu>
+
+      <menu label='_Debug'>
+         <menu label="Initialize"/>
+         <menu label="Debug">
+            <menu label="_Connect to Board..." action="debug connect to board"/>
+            <menu label="_Load File..."        action="debug load file"/>
+            <menu label="Add _Symbols..."      action="debug add symbols"/>
+            <menu label="_Attach..."           action="debug attach"/>
+            <menu label="_Detach"              action="debug detach"/>
+            <menu label="Debug C_ore File..."  action="debug core file"/>
+            <menu label="_Kill"                action="debug kill"/>
+         </menu>
+         <menu label="D_ata">
+            <menu label="_Data Window"        action="open debugger data window"/>
+            <menu label="_Call Stack"         action="open debugger call stack"/>
+            <menu label="_Protection Domains" action="open protection domains debugger window"/>
+            <menu label="_Threads"            action="open threads debugger window"/>
+            <menu label="Tas_ks"              action="open tasks debugger window"/>
+            <menu label="A_ssembly"           action="open assembly view"/>
+            <menu label="Edit _Breakpoints"   action="open breakpoints editor"/>
+            <separator/>
+            <menu label="_Examine Memory"     action="examine memory"/>
+            <separator/>
+            <menu label="Display _Local Variables" action="debug display local variables"/>
+            <menu label="Display _Arguments"       action="debug display arguments"/>
+            <menu label="Display _Registers"       action="debug display registers"/>
+            <menu label="Display Any _Expression..." action="debug display any expression"/>
+            <menu label="Graph Display Local Variables" action="debug graph display local variables"
+                  optional="true"/>
+         </menu>
+         <separator/>
+         <menu label="_Run..."                      action="debug run dialog"/>
+         <menu label="S_tep"                        action="debug step"/>
+         <menu label="Step _Instruction"            action="debug stepi"/>
+         <menu label="_Next"                        action="debug next"/>
+         <menu label="N_ext Instruction"            action="debug nexti"/>
+         <menu label="_Finish"                      action="debug finish"/>
+         <menu label="_Continue"                    action="debug continue"/>
+         <menu label="Continue to Current Line"    action="continue till line" optional="True"/>
+         <menu label="_Interrupt"                   action="debug interrupt"/>
+         <separator/>
+         <menu label="Te_rminate Current"           action="terminate debugger"/>
+         <menu label="Ter_minate"                   action="terminate all debuggers"/>
+      </menu>
+
+      <menu label='_Tools'>
+         <menu label="Views">
+            <menu label="_Bookmarks"                 action="open bookmarks"/>
+            <menu label="Ca_ll Trees"                action="open call trees"/>
+            <menu label="_Clipboard"                 action="open clipboard"/>
+            <menu label="File Sw_itches"             action="open switches editor"/>
+            <menu label="_Files"                     action="open files"/>
+            <menu label="_Locations"                 action="open locations"/>
+            <menu label="_Messages"                  action="open messages"/>
+            <menu label="Metrics"                    action="open metrics view" />
+            <menu label="_Outline"                   action="open outline"/>
+            <menu label="Project"                   action="open project"/>
+            <menu label="_Remote"                    action="open remote"/>
+            <menu label="Scenario"                  action="open scenario"/>
+            <menu label="Tasks"                     action="open task manager"/>
+            <menu label="VCS _Activities"            action="VCS open activities window"/>
+            <menu label="_VCS Explorer"              action="VCS open explorer"/> <!-- duplicate-->
+            <menu label="_Windows"                   action="open windows"/>
+         </menu>
+         <menu label="Browsers">
+            <menu label="_Call Graph"                action="open call graph browser"/>
+            <menu label="_Dependency"                action="open dependency browser"/>
+            <menu label="_Elaboration Circularities" action="open elaboration circularities"/>
+            <menu label="E_ntity"                    action="open entity browser"/>
+            <menu label="Project"                   action="open project browser"/>
+         </menu>
+         <menu label="Consoles">
+            <menu label="_GPS Shell"                 action="open shell"/>
+            <menu label="_Python"                    action="open python"/>
+            <menu label="OS Shell"                   action="open os shell"/>
+            <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>
+            <menu label="_Background Builds"         action="open background builds"/>
+         </menu>
+         <menu label="C_ompare">
+            <menu label="_Two Files..."              action="compare two files" />
+            <menu label="T_hree Files..."            action="compare three files" />
+         </menu>
+         <menu label="Cov_erage">
+            <menu label="_Show Report"               action="open coverage report"/>
+            <separator/>
+            <menu label="Load Data for _All Projects" action="coverage load data for all projects"/>
+            <menu label="Load Data for Current _Project"
+                  action="coverage load data for current project"/>
+            <menu label="Load Data for Current _File"
+                  action="coverage load data for current file"/>
+            <menu label="C_lear Coverage from Memory"
+                  action="coverage clear from memory"/>
+            <menu label="_Gcov">
+               <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
+               <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
+            </menu>
+         </menu>
+         <menu label="Documentation">
+            <menu label="Generate _Project"   action="documentation generate for project"/>
+            <menu label="Generate Project &amp; _Subprojects"
+                  action="documentation generate for project and subprojects"/>
+            <menu label="Generate _Current File"
+                  action="documentation generate for current file"/>
+            <menu label="Generate _for..."
+                  action="documentation generate for file"/>
+         </menu>
+         <menu label="GNATtest">
+            <menu label="Generate Unit Test Setup" action="run gnattest on root"/>
+            <menu label="Generate Unit Test Setup Recursive"
+                  action="run gnattest on root recursive"/>
+            <menu label="Show not Implemented Tests" action="show not implemented tests"/>
+            <menu label="Open Harness Project"       action="open harness"/>
+            <menu label="Exit from Harness Project"  action="exit harness"/>
+         </menu>
+         <menu label="M_acro">
+            <menu label="_Start Keyboard Macro"       action="macro start keyboard"/>
+            <menu label="Start Mouse Macro"       action="macro start mouse" optional="True"/>
+            <menu label="St_op Recording"             action="macro stop"/>
+            <menu label="_Play"                       action="macro play"/>
+            <menu label="Load..."                    action="macro load"/>
+            <!--  <menu label="Save As..."                 action="macro save"/> -->
+         </menu>
+         <menu label="_Metrics">
+            <menu label="Compute Metrics on Current _File"
+                  action="gnat metric on current file" optional='true'/>
+            <menu label="Compute Metrics on Current P_roject"
+                  action="gnat metric on current project" optional='true'/>
+            <menu label="Compute Metrics on Current Project &amp; _Subprojects"
+                  action="gnat metric on current project and subprojects" optional='true'/>
+         </menu>
+         <menu label="Coding _Standard" optional='True'>
+            <menu label="_Edit Rules File"         action="edit gnatcheck rules" optional='True'/>
+            <menu label="Check Root Project &amp; _Subprojects"
+                  action="gnatcheck root project recursive" optional='True'/>
+            <menu label="Check Root _Project"      action="gnatcheck root project" optional='True'/>
+            <menu label="Check Current _File"      action="gnatcheck file" optional='True'/>
+         </menu>
+         <separator/>
+         <menu label="_Plug-ins"                  action="open plug-ins dialog"/>
+         <menu label="_Interrupt"                 action="interrupt"/>
+      </menu>
+
+      <menu label='_CodePeer' optional='true'>
+         <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
+         <menu label='Analyze _Root Project' action='codepeer analyze root' optional='true'/>
+         <menu label='Analyze _File'         action='codepeer analyze file' optional='true'/>
+         <menu label='_Display Code Review'  action='codepeer display code review'
+               optional='true'/>
+         <separator/>
+         <menu label='_Quick Analyze All' action='codepeer quick analyze all' optional='true'/>
+         <menu label='_Generate SCIL'     action='codepeer generate scil' optional='true'/>
+         <menu label='Run _CodePeer'      action='codepeer run' optional='true'/>
+         <menu label='_Regenerate Report' action='codepeer regenerate report' optional='true'/>
+         <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
+         <menu label='Generate CS_V Report' action='codepeer generate csv' optional='true'/>
+         <menu label='Ad_vanced'>
+            <menu label='Text _Overview' action='codepeer text overview' optional='true'/>
+            <menu label='_Text Listing'  action='codepeer text listing'  optional='true'/>
+            <menu label='CodePeer _Log'  action='codepeer log'           optional='true'/>
+            <separator/>
+            <menu label='R_emove Lock'   action='codepeer remove lock'   optional='true'/>
+            <menu label='Remove _XML Code Review' action='codepeer remove xml review'
+                  optional='true'/>
+            <menu label='_Remove SCIL'   action='codepeer remove scil'   optional='true'/>
+            <menu label='Remove _SCIL &amp; DB' action='codepeer remove scil and db'
+                  optional='true'/>
+         </menu>
+      </menu>
+
+      <menu label='SPARK'>
+      </menu>
+
+      <menu label='_Window'>
+      </menu>
+
+      <menu label='Help'>
+         <menu label='Welcome'      action='display gps welcome view'/>
+         <menu label='_Contents'    action='display help contents'/>
+         <menu label='GPS'/>
+         <menu label='GNAT Runtime'>
+            <menu label='Standard'  action='display standard.ads'/>
+         </menu>
+         <menu label='GNAT'/>
+         <menu label='GNU Tools'/>
+         <menu label='Gprbuild'/>
+         <menu label='Python Extensions' action='display documentation GPS extensions for Python'/>
+         <menu label='A_bout'       action='about gps'/>
+      </menu>
+   </menubar>
+</GPS>

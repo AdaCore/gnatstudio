@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                 use GPS.Intl;
@@ -59,11 +60,7 @@ with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 
 package body Startup_Module is
 
-   procedure On_Edit_Startup_Scripts
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Called when the user selects the menu to edit startup plug-ins
-
-   Column_Load       : constant := 0;
+      Column_Load       : constant := 0;
    Column_Name       : constant := 1;
    Column_Explicit   : constant := 2;
    Column_File       : constant := 3;
@@ -113,6 +110,12 @@ package body Startup_Module is
    function On_File_Clicked
      (Self : access Gtk_Link_Button_Record'Class) return Boolean;
    --  Called when the user requests to view the source file.
+
+   type Open_Plug_Ins_Dialog is new Interactive_Command with null record;
+   overriding function Execute
+      (Self : access Open_Plug_Ins_Dialog;
+       Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when the user selects the menu to edit startup plug-ins
 
    ---------------------
    -- On_File_Clicked --
@@ -464,14 +467,16 @@ package body Startup_Module is
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
    end Gtk_New;
 
-   -----------------------------
-   -- On_Edit_Startup_Scripts --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Edit_Startup_Scripts
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+      (Self : access Open_Plug_Ins_Dialog;
+       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Self);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Editor : Startup_Editor;
    begin
       Gtk_New (Editor, Kernel);
@@ -479,10 +484,11 @@ package body Startup_Module is
       Show_All (Editor);
       if Run (Editor) = Gtk_Response_OK then
          Save (Editor);
-         Save_Startup_Scripts_List (Editor.Kernel);
+         Save_Startup_Scripts_List (Kernel);
       end if;
       Destroy (Editor);
-   end On_Edit_Startup_Scripts;
+      return Commands.Success;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -492,16 +498,15 @@ package body Startup_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module : Module_ID;
+      Command : Interactive_Command_Access;
    begin
       Module := new Module_ID_Record;
       Register_Module (Module, Kernel, "Plug-ins manager");
 
-      Register_Menu
-        (Kernel, '/' & (-"Tools"),
-         -"_Plug-ins",
-         Callback => On_Edit_Startup_Scripts'Access,
-         Ref_Item => "Dual Compilation Mode",
-         Add_Before => False);
+      Command := new Open_Plug_Ins_Dialog;
+      Register_Action
+        (Kernel, "open plug-ins dialog", Command,
+         -"Opens a dialog to select which plug-ins should be activated");
    end Register_Module;
 
 end Startup_Module;

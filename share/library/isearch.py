@@ -80,9 +80,7 @@ Preference('Plugins/isearch/errcolor').create('Error color', 'color',
         'red')
 
 isearch_action_name = 'isearch'
-isearch_menu = '/Navigate/Find Incremental'
 isearch_backward_action_name = 'isearch backward'
-isearch_backward_menu = '/Navigate/Find Previous Incremental'
 ## Changing the name of menus should be reflected in emacs.xml
 
 try:
@@ -270,7 +268,7 @@ class Isearch(CommandWindow):
         # using the other action
 
         actions = lookup_actions_from_key(key)
-        if isearch_action_name in actions or isearch_menu.lower() in actions:
+        if isearch_action_name in actions:
             self.backward = False
             if input == '':
                 self.case_sensitive = Isearch.last_case_sensitive
@@ -281,8 +279,7 @@ class Isearch(CommandWindow):
                 self.search_next(input, len(input), redo_overlays=0)
             return True
 
-        if isearch_backward_action_name in actions \
-            or isearch_backward_menu.lower() in actions:
+        if isearch_backward_action_name in actions:
             self.backward = True
             if input == '':
                 self.case_sensitive = Isearch.last_case_sensitive
@@ -377,7 +374,7 @@ class Isearch(CommandWindow):
         """The user has pressed enter"""
 
         if input == '':
-            execute_action('/Navigate/Find or Replace...')
+            execute_action('search')
 
     def on_cancel(self, input):
         """The user has cancelled the search"""
@@ -388,8 +385,6 @@ class Isearch(CommandWindow):
 
 @interactive(name=isearch_action_name,
              category='Editor',
-             menu=isearch_menu,
-             after='Find Or Replace...',
              filter='Source editor')
 def interactive_search():
     """
@@ -402,8 +397,6 @@ to the next occurrence of the pattern.
 
 @interactive(name=isearch_backward_action_name,
              category="Editor",
-             menu=isearch_backward_menu,
-             after='Find Or Replace...',
              filter="Source editor")
 def interactive_search_backward():
     """

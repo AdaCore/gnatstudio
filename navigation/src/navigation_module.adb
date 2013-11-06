@@ -29,7 +29,6 @@ with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
 with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -1118,10 +1117,8 @@ package body Navigation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Navigate           : constant String := "/_" & (-"Navigate");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Menu_Item          : Gtk_Separator_Menu_Item;
       Command            : Interactive_Command_Access;
       Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of
@@ -1135,12 +1132,6 @@ package body Navigation_Module is
          Module_Name  => Navigation_Module_Name,
          Priority     => High_Priority);
 
-      Register_Menu
-        (Kernel,
-         Navigate,
-         Ref_Item => -"Edit",
-         Add_Before => False);
-
       Register_Command
         (Kernel, "add_location_command",
          Minimum_Args => 1,
@@ -1151,11 +1142,6 @@ package body Navigation_Module is
       Register_Action
         (Kernel, "goto other file", Command,
          -"Open the corresponding spec or body file");
-      Register_Menu
-        (Kernel, -"/Navigate/Goto _File Spec<->Body", "goto other file");
-
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, Navigate, Menu_Item);
 
       Command := new Start_Statement_Command;
       Register_Action
@@ -1165,8 +1151,6 @@ package body Navigation_Module is
          Accel_Key  => GDK_Up,
          Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Navigate/_Start of Statement", "start of statement");
 
       Command := new End_Statement_Command;
       Register_Action
@@ -1176,8 +1160,6 @@ package body Navigation_Module is
          Accel_Key  => GDK_Down,
          Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Navigate/_End of Statement", "end of statement");
 
       Command := new Previous_Subprogram_Command;
       Register_Action
@@ -1187,8 +1169,6 @@ package body Navigation_Module is
          Accel_Key  => GDK_Up,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Navigate/_Previous Subprogram", "previous subprogram");
 
       Command := new Next_Subprogram_Command;
       Register_Action
@@ -1198,11 +1178,6 @@ package body Navigation_Module is
          Accel_Key  => GDK_Down,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Navigate/_Next Subprogram", "next subprogram");
-
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, Navigate, Menu_Item);
 
       Command := new Previous_Tag_Command;
       Register_Action
@@ -1211,7 +1186,6 @@ package body Navigation_Module is
          Category   => -"Locations",
          Accel_Key  => GDK_less,
          Accel_Mods => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/Navigate/Previous _Tag", "previous tag");
 
       Command := new Next_Tag_Command;
       Register_Action
@@ -1220,7 +1194,6 @@ package body Navigation_Module is
          Category   => -"Locations",
          Accel_Key  => GDK_greater,
          Accel_Mods => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/Navigate/N_ext Tag", "next tag");
 
       Command := new Back_Command;
       Register_Action
@@ -1228,7 +1201,6 @@ package body Navigation_Module is
          Description => -"Goto previous location",
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-back");
-      Register_Menu (Kernel, -"/Navigate/Bac_k", "backward locations history");
 
       Command := new Forward_Command;
       Register_Action
@@ -1236,8 +1208,6 @@ package body Navigation_Module is
          Description => -"Goto next location",
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-forward");
-      Register_Menu
-        (Kernel, -"/Navigate/For_ward", "forward locations history");
 
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,

@@ -481,8 +481,7 @@ package body Clipboard_Views is
    is
       Command : Interactive_Command_Access;
    begin
-      Generic_View.Register_Module
-        (Kernel, Menu_Name => -"Views/_Clipboard", Before_Menu => -"Entity");
+      Generic_View.Register_Module (Kernel);
 
       Command := new Merge_With_Previous_Command;
       Register_Action

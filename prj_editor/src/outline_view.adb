@@ -1002,10 +1002,7 @@ package body Outline_View is
    is
    begin
       Outline_View_Module := new Outline_View_Module_Record;
-      Outline_Views.Register_Module
-        (Kernel, Outline_View_Module,
-         Menu_Name   => -"Views/_Outline",
-         Before_Menu => -"Messages");
+      Outline_Views.Register_Module (Kernel, Outline_View_Module);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Profile, True);

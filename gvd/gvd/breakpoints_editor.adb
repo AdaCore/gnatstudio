@@ -59,7 +59,6 @@ with Gtkada.MDI;         use Gtkada.MDI;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GVD_Module;       use GVD_Module;
 with GVD.Code_Editors; use GVD, GVD.Code_Editors;
 with GVD.Process;      use GVD.Process;
@@ -511,8 +510,6 @@ package body Breakpoints_Editor is
         (Kernel, "open breakpoints editor", Command,
          -"Open the Breakpoints Editor for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/Edit _Breakpoints", "open breakpoints editor");
    end Register_Module;
 
    -------------------------------------

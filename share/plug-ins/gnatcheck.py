@@ -11,6 +11,7 @@ This plug-in adds support for gnatcheck, a coding standard checker
 import GPS, os, os.path, re, string, traceback
 import os_utils
 from gi.repository import GObject, Gtk, GLib
+from gps_utils import interactive
 from gps_utils.gnatcheck_rules_editor import *
 
 gnatcheck = None
@@ -328,12 +329,41 @@ class contextualMenu (GPS.Contextual):
 
 # create the menus instances.
 
-def on_gps_started (hook_name):
-   global gnatcheckproc
-   gnatcheckproc = gnatCheckProc()
-   contextualMenu()
+gnatcheckproc = gnatCheckProc()
 
-   GPS.parse_xml ("""
+
+@interactive(name='gnatcheck root project',
+             category='Coding Standard')
+def check_root_project():
+    "Check coding standard of the root project"
+    gnatcheckproc.check_project(GPS.Project.root())
+
+
+@interactive(name='gnatcheck root project recursive',
+             category='Coding Standard')
+def check_root_project_recursive():
+    "Check coding standard fo the root project and its subprojects"
+    gnatcheckproc.check_project(GPS.Project.root(), True)
+
+
+@interactive(name='gnatcheck file',
+             filter='Source editor',
+             category='Coding Standard')
+def check_file():
+    "Check coding standard of the selected file"
+    gnatcheckproc.check_file(GPS.EditorBuffer.get())
+
+
+@interactive(name='edit gnatcheck rules',
+             category='Coding Standard')
+def edit_gnatcheck_rules():
+    "Edit the coding standard file"
+    gnatcheckproc.edit()
+
+
+def on_gps_started(hook_name):
+   contextualMenu()
+   GPS.parse_xml("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
      <language>Ada</language>
      <switches lines="1" sections="-rules">
@@ -341,41 +371,7 @@ def on_gps_started (hook_name):
         <check label="debug mode" switch="-d" line="1"/>
         <field label="Coding standard file" switch="-from" separator="=" as-file="true" line="1" section="-rules"/>
      </switches>
-  </tool>
-  <action name="gnatcheck root project" category="Coding Standard" output="none">
-    <description>Check Coding Standard of the root project</description>
-    <shell lang="python">gnatcheck.gnatcheckproc.check_project (GPS.Project.root())</shell>
-  </action>
-  <action name="gnatcheck root project recursive" category="Coding Standard" output="none">
-    <description>Check Coding Standard of the root project and its subprojects</description>
-    <shell lang="python">gnatcheck.gnatcheckproc.check_project (GPS.Project.root(), True)</shell>
-  </action>
-  <action name="gnatcheck file" category="Coding Standard" output="none">
-    <description>Check Coding Standard of the selected file</description>
-    <filter id="Source editor"/>
-    <shell lang="python">gnatcheck.gnatcheckproc.check_file (GPS.EditorBuffer.get().file())</shell>
-  </action>
-  <action name="edit gnatcheck rules" category="Coding Standard" output="none">
-    <description>Edit the Coding Standard file (coding standard)</description>
-    <shell lang="python">gnatcheck.gnatcheckproc.edit ()</shell>
-  </action>
-  <submenu>
-    <title>Tools</title>
-    <submenu after="Browsers">
-      <title>Coding _Standard</title>
-      <menu action="edit gnatcheck rules">
-        <title>_Edit rules file</title>
-      </menu>
-      <menu action="gnatcheck root project recursive">
-        <title>Check root project and _subprojects</title>
-      </menu>
-      <menu action="gnatcheck root project">
-        <title>Check root _project</title>
-      </menu>
-      <menu action="gnatcheck file">
-        <title>Check current _file</title>
-      </menu>
-    </submenu>
-  </submenu>""");
+  </tool>""");
+
 
 GPS.Hook ("gps_started").add (on_gps_started)

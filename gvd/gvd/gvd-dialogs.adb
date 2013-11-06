@@ -24,8 +24,6 @@ with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
@@ -383,27 +381,18 @@ package body GVD.Dialogs is
         (Kernel, "open protection domains debugger window", Command,
          -"Open the 'Protection Domains' window for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/_Protection Domains",
-         "open protection domains debugger window");
 
       Command := new Threads_Command;
       Register_Action
         (Kernel, "open threads debugger window", Command,
          -"Open the 'Threads' window for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/_Threads",
-         "open threads debugger window");
 
       Command := new Tasks_Command;
       Register_Action
         (Kernel, "open tasks debugger window", Command,
          -"Open the 'Tasks' window for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/Ta_sks",
-         "open tasks debugger window");
 
       Thread_Views.Register_Desktop_Functions (Kernel);
       Tasks_Views.Register_Desktop_Functions (Kernel);

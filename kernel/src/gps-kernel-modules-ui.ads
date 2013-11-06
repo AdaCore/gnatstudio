@@ -328,6 +328,11 @@ package GPS.Kernel.Modules.UI is
    -- Menus --
    -----------
 
+   procedure Install_Menus
+      (Kernel      : not null access Kernel_Handle_Record'Class;
+       Description : GNATCOLL.VFS.Virtual_File);
+   --  Load an XML description of the menubar, and create it.
+
    type Dynamic_Menu_Factory is access procedure
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context;
@@ -418,13 +423,17 @@ package GPS.Kernel.Modules.UI is
       Path       : String;
       Action     : String;
       Ref_Item   : String := "";
-      Add_Before : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+      Add_Before : Boolean := True;
+      Optional   : Boolean := False) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Append a menu binding a GPS action. The action need not exist when the
    --  menu is created (but the menu will always be greyd out if the action
    --  does not exist).
    --  Accel_Key, Accel_Mods are looked up from the action.
    --  Filter is looked up from the action.
    --  The image is also looked up from the action.
+   --
+   --  When a menu is optional, it is hidden if its action does not exist.
+   --  Otherwise, the menu is simply greyed out, but the menu is still visible.
 
    procedure Register_Dynamic_Menu
      (Kernel      : access Kernel_Handle_Record'Class;

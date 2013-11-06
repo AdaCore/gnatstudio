@@ -39,7 +39,6 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -2716,9 +2715,6 @@ package body Vsearch is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Navigate : constant String := "/_" & (-"Navigate");
-      Find_All : constant String := -"Find All References";
-      Mitem    : Gtk_Separator_Menu_Item;
       Command : Interactive_Command_Access;
       Filter  : Action_Filter;
    begin
@@ -2732,10 +2728,6 @@ package body Vsearch is
 
       Vsearch_Module_Id.Tab_Width := Tab_Width;
 
-      --  Register the menus
-      Register_Menu
-        (Kernel, Navigate, null, Ref_Item => -"Edit", Add_Before => False);
-
       Command := new Search_Specific_Context'
         (Interactive_Command with Context => null);
       Register_Action
@@ -2748,9 +2740,6 @@ package body Vsearch is
          Accel_Key   => GDK_LC_f,
          Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Search");
-      Register_Menu
-        (Kernel, -"/Navigate/_Find or Replace...", "Search",
-         Ref_Item => Find_All);
 
       Command := new Find_Next_Command;
       Filter  := new Has_Search_Filter;
@@ -2760,7 +2749,6 @@ package body Vsearch is
          Filter      => Filter,
          Accel_Key   => GDK_LC_n,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/Navigate/Find _Next", "find next");
 
       Command := new Find_Previous_Command;
       Register_Action
@@ -2769,10 +2757,6 @@ package body Vsearch is
          Filter      => Filter,
          Accel_Key   => GDK_LC_p,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/Navigate/Find _Previous", "find previous");
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Navigate, Mitem);
 
       --  Register the default search functions
 

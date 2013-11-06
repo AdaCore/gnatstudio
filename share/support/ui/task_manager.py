@@ -201,8 +201,7 @@ class Task_Manager(Module):
         make_interactive(
             self.get_view,
             category="Views",
-            name="open Task Manager",
-            menu="/Tools/Views/Tasks", before="Windows")
+            name="open Task Manager")
 
     def create_view(self):
         self.widget = Task_Manager_Widget()

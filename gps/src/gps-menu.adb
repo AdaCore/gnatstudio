@@ -351,7 +351,6 @@ package body GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Project     : constant String := "/_" & (-"Project")  & '/';
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
@@ -360,20 +359,14 @@ package body GPS.Menu is
         (Kernel, "open project dialog", Command,
          Stock_Id => Stock_Open,
          Description => -"Open the Open Project dialog");
-      Register_Menu
-        (Kernel, -"/_Project/Open...", "open project dialog",
-         Ref_Item => -"Window");
 
       Command := new Open_From_Host_Command;
       Register_Action
         (Kernel, "open remote project", Command,
          Stock_Id    => Stock_Open,
          Description => -"Open remote project");
-      Register_Menu
-        (Kernel, -"/Project/Open From _Host...", "open remote project");
 
-      Reopen_Menu := Register_Menu
-        (Kernel, Project, -"_Recent", "", null);
+      Reopen_Menu := Find_Menu_Item (Kernel, "/Project/Recent");
       Associate (Get_History (Kernel).all,
                  Project_History_Key,
                  Reopen_Menu,
@@ -390,16 +383,11 @@ package body GPS.Menu is
            -("Recompute the list of source files for the project. This should"
            & " be used whenever you create or remove files outside of GPS"),
          Stock_Id => GPS_Refresh);
-      Register_Menu
-        (Kernel, -"/Project/R_eload Project", "reload project");
 
       Command := new Save_All_Command;
       Register_Action
         (Kernel, "save files and projects", Command,
          Description => -("Save all modified files and projects"));
-      Register_Menu
-        (Kernel, -"/File/Save _More/_All", "save files and projects",
-         Ref_Item => -"Messages");
 
       Command := new Save_Desktop_Command;
       Register_Action
@@ -407,22 +395,16 @@ package body GPS.Menu is
          Description =>
            -("Save the layout of the desktop to a file, so that it is"
            & " restored when GPS is restarted later with the same project"));
-      Register_Menu
-        (Kernel, -"/File/Save _More/_Desktop", "save desktop");
 
       Command := new Change_Dir_Command;
       Register_Action
         (Kernel, "change directory", Command,
          Description => -"Change the current directory");
-      Register_Menu
-        (Kernel, -"/File/Change _Directory...", "change directory",
-         Ref_Item => -"Messages");
 
       Command := new Exit_Command;
       Register_Action
          (Kernel, "exit", Command,
           -"Exit GPS, after confirming whether to save modified files");
-      Register_Menu (Kernel, -"/File/_Exit", "exit");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -433,7 +415,6 @@ package body GPS.Menu is
          Stock_Id    => Stock_Cut,
          Accel_Key   => GDK_Delete,
          Accel_Mods  => Shift_Mask);
-      Register_Menu (Kernel, -"/Edit/_Cut", "Cut to Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -444,7 +425,6 @@ package body GPS.Menu is
          Stock_Id    => Stock_Copy,
          Accel_Key   => GDK_Insert,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/Edit/C_opy", "Copy to Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -456,7 +436,6 @@ package body GPS.Menu is
          Stock_Id   => Stock_Paste,
          Accel_Key  => GDK_Insert,
          Accel_Mods => Shift_Mask);
-      Register_Menu (Kernel, -"/Edit/P_aste", "Paste From Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -468,8 +447,6 @@ package body GPS.Menu is
          Stock_Id   => Stock_Paste,
          Accel_Key  => GDK_Insert,
          Accel_Mods => Primary_Mod_Mask + Shift_Mask);
-      Register_Menu (Kernel, -"/Edit/Pa_ste Previous",
-                     "Paste Previous From Clipboard");
 
       --  The menus created above are created before the keymanager_module
       --  is registered, so the default key assignations is not done through
@@ -512,12 +489,9 @@ package body GPS.Menu is
       Command := new Preference_Dialog_Command;
       Register_Action
         (Kernel, "open Preferences", Command,
-         Category => -"Views",
-         Stock_Id => Stock_Preferences,
+         Category    => -"Views",
+         Stock_Id    => Stock_Preferences,
          Description => -"Open the preferences dialog");
-      Register_Menu
-        (Kernel, -"/Edit/_Preferences", "open Preferences",
-         Ref_Item => -"Window");
    end Register_Common_Menus;
 
 end GPS.Menu;

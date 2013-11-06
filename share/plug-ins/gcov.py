@@ -19,6 +19,7 @@ Note that GPS calls gcov so that the .gcov files are generated
 ###########################################################################
 
 import GPS, os
+from gps_utils import interactive
 from GPS import *
 from os import *
 
@@ -62,9 +63,15 @@ class Gcov_Process (GPS.Console, GPS.Process):
           on_exit=Gcov_Process.on_exit, \
           on_match=Gcov_Process.on_output)
 
-# Actual menu implementation
 
-def run_gcov(menu):
+def using_gcov(context):
+    return GPS.Preference('Coverage-Toolchain').get() == 'Gcov'
+
+
+@interactive(name='gcov compute coverage files',
+             filter=using_gcov)
+def run_gcov():
+   "Run gcov to generate the coverage files"
    # Verify that the version of gcov is recent enough to support response
    # files and reading of .gc?? data in multiple directories.
 
@@ -78,7 +85,6 @@ def run_gcov(menu):
          MDI.dialog ("Your version of gcov is dated " + str (date) +
          ".\nThis plug-in requires gcov for GNAT dated 20071005 or later.")
          return;
-
    except:
       MDI.dialog ("""Could not read gcov version number.
 
@@ -183,7 +189,12 @@ Make sure you have run the executable(s) at least once.
 
    cd (previous_dir)
 
+
+@interactive(name='gcov remove coverage files',
+             filter=using_gcov)
 def remove_gcov(menu):
+   "Cleanup the gcov coverage files"
+
    if not MDI.yes_no_dialog (
       "This will remove all .gcov and .gcda files, are you sure ?"):
       return
@@ -201,40 +212,3 @@ def remove_gcov(menu):
             #  if f is a .gcda or a .gcov, remove it
             if f.find (".gcda") != -1 or f.find (".gcov") != -1:
                remove (object_dir + sep + f)
-
-def on_preferences_changed(name):
-   global gcov_menu_separator
-
-   gcov_menu = GPS.Menu.get ("/Tools/Coverage/Gcov")
-   toolchain = GPS.Preference("Coverage-Toolchain").get()
-
-   if toolchain == "Gcov":
-      gcov_menu.show()
-      gcov_menu_separator.show()
-
-   else:
-      gcov_menu.hide()
-      gcov_menu_separator.hide()
-
-def on_gps_started (hook):
-   global gcov_menu_separator
-
-   #  Create menu items
-
-   gcov_menu_separator = GPS.Menu.create ("/Tools/Covera_ge/-")
-   gcov_menu = GPS.Menu.create ("/Tools/Covera_ge/_Gcov")
-
-   GPS.Menu.create ("/Tools/Covera_ge/_Gcov/Compute coverage files",
-     on_activate=run_gcov)
-
-   GPS.Menu.create ("/Tools/Covera_ge/_Gcov/Remove coverage files",
-     on_activate=remove_gcov)
-
-   #  Register preference change hook and run it for setup menu items' names.
-
-   GPS.Hook ("preferences_changed").add (on_preferences_changed)
-   on_preferences_changed("preferences_changed")
-
-#  Register GPS startup hook.
-
-GPS.Hook ("gps_started").add (on_gps_started)

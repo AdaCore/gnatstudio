@@ -8,6 +8,7 @@ with "../language/language_ui";
 with "../gnatlib/src/gnatcoll_gtk";
 with "../refactoring/core/refactoring_core";
 with "../toolchains_editor/core/toolchains_core";
+with "xmlada";
 
 project Kernel is
 

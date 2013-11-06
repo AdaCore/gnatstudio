@@ -190,7 +190,7 @@ def get_selection_or_line (buffer, location):
       return (buffer, start, end)
 
 @interactive ("Editor", "Source editor", name="Move block right",
-              menu="/Edit/Selection/Move right", key="primary-alt-greater")
+              key="primary-alt-greater")
 def move_block (chars=1):
    """Move the current selection chars characters to the right. If chars
       is negative, moves to the left. If there is no selection, indent
@@ -255,10 +255,10 @@ def move_block (chars=1):
 
 make_interactive (lambda:move_block(-1),
                   category="Editor", filter="Source editor",
-                  menu="/Edit/Selection/Move left", key="primary-alt-less",
+                  key="primary-alt-less",
                   name="Move block left")
 
-@interactive("Editor", "Source editor", menu="/Edit/Selection/Untabify")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def untabify():
    """
@@ -299,12 +299,9 @@ def lines_with_digit (buffer, loc, max=None):
 
    return max
 
-#  Create /Edit/Rectangle menu in correct position
-GPS.Menu.create("/Edit/Rectangle", ref="Redo", add_before=0)
-
-@interactive ("Editor", "Source editor", "/Edit/Rectangle/Serialize")
+@interactive("Editor", "Source editor")
 @with_save_excursion
-def serialize (increment=1):
+def serialize(increment=1):
    """Increment a set of numbers found on adjacent lines.
       The exact behavior depends on whether there is a current selection
       or not.

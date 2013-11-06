@@ -22,7 +22,6 @@ Example of use:
 ############################################################################
 
 action_name = "Block Completion"
-menu_name   = "/Edit/More Completion/Complete _Block"
 ## Name of the action and the menu defined by this package.
 
 import re, string, GPS
@@ -59,16 +58,11 @@ BLOCKS_DEFS = {
 
 def on_gps_started(hook_name):
    "Initializes this module."
-   global action_name, menu_name
-
    init = """<action name='%(action)s' category='Editor'>
      <description>End the current Ada block, by providing the appropriate "end" statement</description>
       <filter language="ada" error='%(action)s requires an Ada file' />
       <shell lang="python" output="none">block_completion.block_complete("%%F");</shell>
-   </action>
-   <menu action='%(action)s' before="Refill">
-      <title>%(menu)s</title>
-   </menu>""" % {"action": action_name, "menu": menu_name}
+   </action>""" % {"action": action_name}
    GPS.parse_xml(init)
 
 

@@ -898,7 +898,7 @@ package body Buffer_Views is
       Command : Interactive_Command_Access;
       P : Opened_Windows_Search_Access;
    begin
-      Generic_View.Register_Module (Kernel, Menu_Name => -"Views/_Windows");
+      Generic_View.Register_Module (Kernel);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Editors_Only, True);

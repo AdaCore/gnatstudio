@@ -1748,3 +1748,6 @@ if spark != '':
 
     GPS.Contextual('SPARK/Show ZLG').create(
         on_activate=pogs_zlg_xref, filter=sum_file_current_line_has_dpc)
+
+else:
+    GPS.Menu.get("/Spark").destroy()

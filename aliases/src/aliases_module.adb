@@ -85,7 +85,6 @@ with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel;               use GPS.Kernel;
@@ -2163,10 +2162,6 @@ package body Aliases_Module is
          (Kernel, "aliases edit", Cmd,
           -"Open the aliases editor",
           Category => -"Aliases");
-      Register_Menu
-        (Kernel, -"/Edit/_Aliases", Action => "aliases edit",
-         Ref_Item   => -"Preferences",
-         Add_Before => True);
 
       Parse_File
         (Kernel,
@@ -2181,10 +2176,6 @@ package body Aliases_Module is
          Accel_Key   => GDK_LC_o,
          Accel_Mods  => Primary_Mod_Mask,
          Filter      => Lookup_Filter (Kernel, "Source editor"));
-      Register_Menu
-        (Kernel, -"/Edit/_More Completion/Expand _Alias", "Expand alias",
-         Ref_Item   => -"Aliases",
-         Add_Before => True);
 
       Register_Special_Alias_Entity
         (Kernel, "Expand previous alias", 'O', Special_Entities'Access);

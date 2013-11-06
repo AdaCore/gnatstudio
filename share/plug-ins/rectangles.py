@@ -48,56 +48,59 @@ import string
 from gps_utils import interactive, with_save_excursion
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Cut")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_cut():
     """Cut the selected rectangle into the clipboard"""
     Rectangle.from_buffer(EditorBuffer.get()).cut()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Copy")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_copy():
     """Copy the selected rectangle into the clipboard"""
     Rectangle.from_buffer(EditorBuffer.get()).copy()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Paste")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_paste():
     """Paste the last entry in the clipboard as a rectangle in the current editor"""
     Rectangle.paste(loc=EditorBuffer.get().current_view().cursor())
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Delete")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_delete():
     """Delete the selected rectangle"""
     Rectangle.from_buffer(EditorBuffer.get()).delete()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Clear")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_clear():
     """Replaces the contents of the rectangle with spaces"""
     Rectangle.from_buffer(EditorBuffer.get()).clear()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Open")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_open():
-    """Insert blank spaces to fill the selected rectangle.
-       This pushes its text to the right"""
+    """
+Insert blank spaces to fill the selected rectangle.
+This pushes its text to the right"""
     Rectangle.from_buffer(EditorBuffer.get()).open()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Replace with Text")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_string(text=None):
-    """Replaces the contents of the rectangle with TEXT on each line.
-      If TEXT is narrower or wider than the rectangle, the text is shifted
-      right or left as appropriate.
-      If TEXT is unspecified, an interactive dialog is open."""
+    """
+Replaces the contents of the rectangle with TEXT on each line.
+If TEXT is narrower or wider than the rectangle, the text is shifted
+right or left as appropriate.
+If TEXT is unspecified, an interactive dialog is open.
+    """
 
     if not text:
         text = MDI.input_dialog('Text to replace each line with:', """""")
@@ -107,11 +110,12 @@ def rectangle_string(text=None):
     Rectangle.from_buffer(EditorBuffer.get()).string(text)
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Insert Text")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_insert(text=None):
-    """Insert TEXT at the beginning of each line of the selected rectangle.
-      If TEXT is unspecified, an interactive dialog is open"""
+    """
+Insert TEXT at the beginning of each line of the selected rectangle.
+If TEXT is unspecified, an interactive dialog is open"""
 
     if not text:
         text = MDI.input_dialog('Text to insert before each line:', """""")
@@ -121,30 +125,24 @@ def rectangle_insert(text=None):
     Rectangle.from_buffer(EditorBuffer.get()).insert(text)
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Sort")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_sort():
     """
-    Sort the lines included in the rectangle, based on the contents of
-    the rectangle.
+Sort the lines included in the rectangle, based on the contents of
+the rectangle.
     """
     Rectangle.from_buffer(EditorBuffer.get()).sort()
 
 
-@interactive("Editor", "Source editor", "/Edit/Rectangle/Sort Reverse")
+@interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_sort_reverse():
     """
-    Sort in reverse order the lines included in the rectangle, based on
-    the contents of the rectangle.
+Sort in reverse order the lines included in the rectangle, based on
+the contents of the rectangle.
     """
     Rectangle.from_buffer(EditorBuffer.get()).sort(revert=True)
-
-
-def on_gps_started(hook_name):
-    """Create the menus associated with this module"""
-    Menu.create('/Edit/Rectangle/-', ref='Sort', add_before=True)
-    Menu.create('/Edit/Rectangle/-', ref='Delete', add_before=True)
 
 
 ##############################################################################
@@ -376,6 +374,3 @@ class Rectangle(object):
         self.buffer.delete(start, to)
         self.buffer.insert(start, '\n'.join(lines) + '\n')
         self.buffer.finish_undo_group()
-
-
-Hook('gps_started').add(on_gps_started)

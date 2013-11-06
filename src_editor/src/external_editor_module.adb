@@ -39,7 +39,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
@@ -836,10 +835,6 @@ package body External_Editor_Module is
            -("Edit the file with an external editor, as configued in the"
            & " preferences"),
          Filter      => Lookup_Filter (Kernel, "File"));
-      Register_Menu
-        (Kernel, -"/Edit/Edit with external editor",
-         "Edit with external editor",
-         Ref_Item => -"Aliases", Add_Before => False);
 
       Register_Module
         (Module                  => Module_ID (External_Editor_Module_Id),

@@ -39,7 +39,6 @@ with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;      use Gtk.Separator_Menu_Item;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Toolbar;                  use Gtk.Toolbar;
 with Gtk.Tool_Button;              use Gtk.Tool_Button;
@@ -1632,11 +1631,9 @@ package body Project_Viewers is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Project : constant String := '/' & (-"Project");
       Filter  : Action_Filter;
       Filter2 : Action_Filter;
       Command : Interactive_Command_Access;
-      Mitem   : Gtk_Separator_Menu_Item;
 
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
@@ -1646,23 +1643,12 @@ package body Project_Viewers is
          Module_Name => Project_Editor_Module_Name,
          Priority    => Default_Priority);
 
-      File_Views.Register_Module
-        (Kernel,
-         Menu_Name => -"Views/File Sw_itches");
-      File_Views.Register_Open_Menu
-        (Kernel,
-         Menu_Name => Project,
-         Item_Name => -"Edit File _Switches");
-
-      Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
-                     Add_Before => False);
+      File_Views.Register_Module (Kernel);
 
       Command := new New_Project_Command;
       Register_Action
         (Kernel, "new project", Command,
          Description => -"Interactively create a new project");
-      Register_Menu (Kernel, -"/Project/_New...", "new project",
-                     Ref_Item => -"Open From Host...", Add_Before => False);
 
       Command := new Edit_Project_Properties_Command;
       Register_Action
@@ -1670,22 +1656,11 @@ package body Project_Viewers is
          "Open the project properties editor",
          Stock_Id => Stock_Edit,
          Category => -"Views");
-      Register_Menu
-        (Kernel,
-         -"/Project/Edit Project _Properties", "open Project Properties",
-         Ref_Item => -"Recent", Add_Before => False);
 
       Command := new Save_All_Command;
       Register_Action
         (Kernel, "save all projects", Command,
          Description => -"Save all modified projects to disk");
-      Register_Menu
-        (Kernel, -"/Project/Save _All", "save all projects",
-         Ref_Item => -"Edit Project Properties", Add_Before => False);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Project, Mitem, Ref_Item => -"Recent",
-                     Add_Before => False);
 
       --  ??? Disabled for now, pending resolution of related problems
       --  encountered during testing

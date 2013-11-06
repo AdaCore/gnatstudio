@@ -1276,9 +1276,7 @@ package body Bookmark_Views is
 
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
-      Generic_View.Register_Module
-        (Kernel, Module_ID (Bookmark_Views_Module),
-         "Views/_Bookmarks", -"Call Trees");
+      Generic_View.Register_Module (Kernel, Module_ID (Bookmark_Views_Module));
 
       Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
       Register_Hook_No_Return
@@ -1306,11 +1304,6 @@ package body Bookmark_Views is
          -("Create a bookmark at the current location"),
          Stock_Id => Stock_Add,
          Category => -"Bookmarks", Filter => Src_Action_Context);
-      Register_Menu
-        (Kernel,
-         Path     => -"/Edit/Create Boo_kmark",
-         Action   => Command_Add_Name,
-         Ref_Item => -"Aliases");
 
       Command := new Next_Bookmark_Command (Backward => False);
       Register_Action

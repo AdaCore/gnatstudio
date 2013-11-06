@@ -14,7 +14,7 @@ import GPS
 
 XML = u"""<?xml version="1.0" ?>
 <GPS>
-   <action name="Pretty print" output="none" category="Editor" >
+   <action name="pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>
       <!-- This action only applies to Ada files -->
       <filter language="ada"
@@ -30,13 +30,6 @@ XML = u"""<?xml version="1.0" ?>
       </on-failure>
       <shell>Editor.edit "%F" 0 0 0 true</shell>
    </action>
-
-   <submenu>
-     <title>Edit</title>
-     <menu action="Pretty print" before="Aliases" >
-        <title>P_retty Print</title>
-     </menu>
-   </submenu>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >
       <language>Ada</language>

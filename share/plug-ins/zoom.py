@@ -33,9 +33,7 @@ def zoom(factor):
 @gps_utils.interactive(
     name="increase text size",
     category="Editor",
-    menu="/Edit/Text Size/Increase",
-    key="primary-plus",
-    before="Preferences")
+    key="primary-plus")
 def zoom_in():
     """Increase the size of fonts in the source editors.
 This impacts the corresponding preferences."""
@@ -45,9 +43,7 @@ This impacts the corresponding preferences."""
 @gps_utils.interactive(
     name="decrease text size",
     category="Editor",
-    menu="/Edit/Text Size/Decrease",
-    key="primary-alt-plus",
-    before="Preferences")
+    key="primary-alt-plus")
 def zoom_out():
     """Decrease the size of fonts in the source editors.
 This impacts the corresponding preferences."""

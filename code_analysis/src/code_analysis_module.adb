@@ -2072,9 +2072,6 @@ package body Code_Analysis_Module is
       Contextual_Menu     : Code_Analysis_Contextual_Menu_Access;
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, CodeAnalysis_Cst);
-      Tools               : constant String := '/' & (-"Tools");
-      Coverage            : constant String := -"Cov_erage";
-      Sep                 : Gtk_Separator_Menu_Item;
       Command             : Interactive_Command_Access;
 
    begin
@@ -2102,59 +2099,30 @@ package body Code_Analysis_Module is
         (Kernel, "open Coverage Report", Command,
          Category    => -"Coverage",
          Description => -"Display the coverage report (must load data first)");
-      Register_Menu
-        (Kernel, -"/Tools/Cov_erage/_Show report", "open Coverage Report",
-         Ref_Item    => -"Documentation",
-         Add_Before  => True);
-      Register_Menu
-        (Kernel, -"/Tools/Views/Coverage Repor_t", "open Coverage Report");
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Tools & '/' & Coverage, Sep);
 
       Command := new Load_Data_All_Projects_Command;
       Register_Action
         (Kernel, "Coverage load data for all projects", Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for all projects");
-      Register_Menu
-        (Kernel, -"/Tools/Coverage/Load data for _all projects",
-         "Coverage load data for all projects",
-         Ref_Item    => -"Documentation",
-         Add_Before  => False);
 
       Command := new Load_Data_Current_Project_Command;
       Register_Action
         (Kernel, "Coverage load data for current project", Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for current project");
-      Register_Menu
-        (Kernel, -"/Tools/Coverage/Load data for current _project",
-         "Coverage load data for current project",
-         Ref_Item    => -"Documentation",
-         Add_Before  => False);
 
       Command := new Load_Data_Current_File_Command;
       Register_Action
         (Kernel, "Coverage load data for current file", Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for current file");
-      Register_Menu
-        (Kernel, -"/Tools/Coverage/Load data for current _file",
-         "Coverage load data for current file",
-         Ref_Item    => -"Documentation",
-         Add_Before  => False);
 
       Command := new Clear_Memory_Command;
       Register_Action
         (Kernel, "Coverage clear from memory", Command,
          Category    => -"Coverage",
          Description => -"Clear coverage information from memory");
-      Register_Menu
-        (Kernel, -"/Tools/Coverage/C_lear coverage from memory",
-         "Coverage clear from memory",
-         Ref_Item    => -"Documentation",
-         Add_Before  => False);
 
       Add_Hook
         (Kernel  => Kernel,

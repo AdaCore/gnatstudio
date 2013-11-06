@@ -28,8 +28,6 @@ with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -321,8 +319,6 @@ package body Toolchains_Module is
         (Kernel, "open toolchains editor", Command,
          -"Open the toolchains editor (for builds)",
          Category => -"Views");
-      Register_Menu (Kernel, -"/Build/Settings/T_oolchains",
-                     "open toolchains editor");
 
       --  Load the property after all modules and plug-ins are loaded.
       Add_Hook (Kernel, GPS_Started_Hook,

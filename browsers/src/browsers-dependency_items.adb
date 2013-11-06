@@ -948,8 +948,7 @@ package body Browsers.Dependency_Items is
       Dependency_Browser_Module_ID := new Dependency_Browser_Module;
       Dependency_Views.Register_Module
         (Kernel,
-         Dependency_Browser_Module_ID,
-         Menu_Name => -"Browsers/_Dependency");
+         Dependency_Browser_Module_ID);
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"
 

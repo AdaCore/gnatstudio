@@ -437,8 +437,6 @@ package body GVD.Call_Stack is
         (Kernel, "open debugger call stack", Command,
          -"Open the Call Stack window for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/_Call Stack", "open debugger call stack");
    end Register_Module;
 
    -------------------

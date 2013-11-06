@@ -196,9 +196,7 @@ package body Python_Module is
       Set_Default_Console (Script, Kernel.Get_Messages_Window);
 
       Python_Views.Register_Module
-        (Kernel,
-         new Python_Module_Record,
-         Menu_Name  => -"Consoles/_Python");
+        (Kernel, new Python_Module_Record);
 
       Register_Desktop_Functions (null, Load_Desktop'Access);
 

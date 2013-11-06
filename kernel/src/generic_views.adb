@@ -39,14 +39,12 @@ with Gtkada.MDI;              use Gtkada.MDI;
 
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
@@ -770,34 +768,13 @@ package body Generic_Views is
          end if;
       end Get_Or_Create_View;
 
-      ------------------------
-      -- Register_Open_Menu --
-      ------------------------
-
-      procedure Register_Open_Menu
-        (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Menu_Name : String;
-         Item_Name : String;
-         Before    : String := "") is
-      begin
-         if Commands_Category /= "" then
-            Register_Menu
-              (Kernel   => Kernel,
-               Path     => Menu_Name & "/" & Item_Name,
-               Action   => "open " & View_Name,
-               Ref_Item => Before);
-         end if;
-      end Register_Open_Menu;
-
       ---------------------
       -- Register_Module --
       ---------------------
 
       procedure Register_Module
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID          : GPS.Kernel.Modules.Module_ID := null;
-         Menu_Name   : String := "Views/" & View_Name;
-         Before_Menu : String := "")
+         ID          : GPS.Kernel.Modules.Module_ID := null)
       is
          Command : Interactive_Command_Access;
       begin
@@ -821,12 +798,6 @@ package body Generic_Views is
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
          Register_Desktop_Functions (null, Load_Desktop_Access);
-
-         if Menu_Name /= "" then
-            Register_Open_Menu
-              (Kernel, '/' & (-"Tools") & '/' & Dir_Name (Menu_Name),
-               Base_Name (Menu_Name), Before => Before_Menu);
-         end if;
       end Register_Module;
    end Simple_Views;
 

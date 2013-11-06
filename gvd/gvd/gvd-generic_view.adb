@@ -358,8 +358,8 @@ package body GVD.Generic_View is
         (Kernel : access Kernel_Handle_Record'Class)
       is
       begin
-         Views.Register_Module (Kernel, Menu_Name => "");
-                  Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
+         Views.Register_Module (Kernel);
+         Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
                    Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".process_stopped");
          Add_Hook (Kernel, Debugger_Context_Changed_Hook,

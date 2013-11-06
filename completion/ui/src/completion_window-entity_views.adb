@@ -18,8 +18,6 @@
 with Completion.Search;     use Completion.Search;
 with Gdk.Types.Keysyms;     use Gdk.Types, Gdk.Types.Keysyms;
 with GPS.Kernel.Search;     use GPS.Kernel.Search;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
-with GPS.Intl;              use GPS.Intl;
 
 package body Completion_Window.Entity_Views is
 
@@ -37,10 +35,6 @@ package body Completion_Window.Entity_Views is
         (Kernel, P,
          Accel_Key  => GDK_LC_t,
          Accel_Mods => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/_Navigate/Goto _Entity...",
-         Action_Name_Prefix & P.Display_Name,
-         Ref_Item => "Goto _Line...");
    end Register_Module;
 
 end Completion_Window.Entity_Views;

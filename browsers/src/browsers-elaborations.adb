@@ -347,9 +347,7 @@ package body Browsers.Elaborations is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
-      Elaboration_Views.Register_Module
-        (Kernel,
-         Menu_Name => -"Browsers/_Elaboration Circularities");
+      Elaboration_Views.Register_Module (Kernel);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,

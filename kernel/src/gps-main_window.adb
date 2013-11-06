@@ -39,7 +39,6 @@ with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
@@ -538,24 +537,8 @@ package body GPS.Main_Window is
       Application      : Gtkada_Application)
    is
       Vbox      : Gtk_Vbox;
-      Menu      : Gtk_Menu;
       Menu_Item : Gtk_Menu_Item;
       Tool_Item : Gtk_Separator_Tool_Item;
-
-      procedure Init_Menu (Item : Gtk_Menu_Item);
-      --  Initialize top level menu Menu_Item
-
-      ---------------
-      -- Init_Menu --
-      ---------------
-
-      procedure Init_Menu (Item : Gtk_Menu_Item) is
-      begin
-         Append (Main_Window.Menu_Bar, Item);
-         Gtk_New (Menu);
-         Set_Accel_Group (Menu, Main_Window.Main_Accel_Group);
-         Set_Submenu (Item, Menu);
-      end Init_Menu;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -606,27 +589,12 @@ package body GPS.Main_Window is
 
       Gtk_New (Main_Window.Menu_Bar);
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
+      Install_Menus
+        (Main_Window.Kernel,
+         Create_From_Base
+           ("menus.xml", Get_Share_Dir (Main_Window.Kernel).Full_Name.all));
 
-      Gtk_New_With_Mnemonic (Menu_Item, -"_File");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Edit");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Project");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Build");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Debug");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Tools");
-      Init_Menu (Menu_Item);
-
-      Gtk_New_With_Mnemonic (Menu_Item, -"_Window");
-      Append (Main_Window.Menu_Bar, Menu_Item);
+      Menu_Item := Find_Menu_Item (Main_Window.Kernel, -"/Window");
       Set_Submenu
         (Menu_Item, Kernel_Desktop.Create_Menu
            (Main_Window.MDI,
@@ -1478,6 +1446,10 @@ package body GPS.Main_Window is
         (Window, "GPS" & Info_Str & " - "
          & Get_Project (Window.Kernel).Name & " project" & Remote_Str);
    end Reset_Title;
+
+   ----------------------
+   -- Is_Any_Menu_Open --
+   ----------------------
 
    function Is_Any_Menu_Open
      (Window : access GPS_Window_Record) return Boolean

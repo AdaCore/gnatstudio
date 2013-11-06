@@ -51,6 +51,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
@@ -71,6 +72,12 @@ with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with System;                    use System;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
+with Input_Sources.File;        use Input_Sources.File;
+with DOM.Readers;               use DOM.Readers;
+with DOM.Core.Nodes;            use DOM.Core, DOM.Core.Nodes;
+with DOM.Core.Documents;        use DOM.Core.Documents;
+with DOM.Core.Elements;         use DOM.Core.Elements;
 
 with UTF8_Utils;                use UTF8_Utils;
 
@@ -275,10 +282,11 @@ package body GPS.Kernel.Modules.UI is
    ----------------------
 
    type Action_Menu_Item_Record is new Gtk_Image_Menu_Item_Record with record
-      Kernel : Kernel_Handle;
-      Name   : GNAT.Strings.String_Access;
+      Kernel   : Kernel_Handle;
+      Name     : GNAT.Strings.String_Access;
+      Optional : Boolean;
 
-      Action : Action_Record_Access;
+      Action   : Action_Record_Access;
       --  null until looked up
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
@@ -1565,8 +1573,11 @@ package body GPS.Kernel.Modules.UI is
       Self.Lookup_Action;
 
       if Self.Action = null then
-         Self.Set_Sensitive (False);
-         --  Self.Hide;
+         if Self.Optional then
+            Self.Hide;
+         else
+            Self.Set_Sensitive (False);
+         end if;
       elsif Self.Action.Filter = null then
          Self.Set_Sensitive (True);
       else
@@ -1603,18 +1614,27 @@ package body GPS.Kernel.Modules.UI is
       Path       : String;
       Action     : String;
       Ref_Item   : String := "";
-      Add_Before : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item
+      Add_Before : Boolean := True;
+      Optional   : Boolean := False) return Gtk.Menu_Item.Gtk_Menu_Item
    is
       Self : Action_Menu_Item;
       Full_Path : constant String := Cleanup ('/' & Path);
       Accel_Path  : constant String := "<gps>" & Full_Path;
+      Item : Gtk_Menu_Item;
    begin
+      Item := Find_Menu_Item (Kernel, Path);
+      if Item /= null then
+         Trace (Me, "Menu registered twice: " & Path);
+         return Item;
+      end if;
+
       --  Create the menu item
       Self := new Action_Menu_Item_Record;
       Gtk.Image_Menu_Item.Initialize_With_Mnemonic
         (Self, Label => Base_Name (Path));
       Self.Name := new String'(Action);
       Self.Kernel := Kernel_Handle (Kernel);
+      Self.Optional := Optional;
       Self.Set_Accel_Path (Accel_Path);
       Get_Style_Context (Self).Add_Class ("gpsaction");
 
@@ -2552,4 +2572,123 @@ package body GPS.Kernel.Modules.UI is
       Ignored := Add_Button (Kernel, Toolbar, Action, Position);
    end Add_Button;
 
+   -------------------
+   -- Install_Menus --
+   -------------------
+
+   procedure Install_Menus
+      (Kernel      : not null access Kernel_Handle_Record'Class;
+       Description : GNATCOLL.VFS.Virtual_File)
+   is
+      procedure Process_Menu_Bar (Menubar_Node : Node);
+      --  Process a <menubar> node
+
+      procedure Process_Menu
+        (Parent_Path : String;
+         Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         Menu_Node   : Node);
+      --  Process a <menu> node
+
+      ------------------
+      -- Process_Menu --
+      ------------------
+
+      procedure Process_Menu
+        (Parent_Path : String;
+         Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         Menu_Node   : Node)
+      is
+         Label  : constant DOM_String := Get_Attribute (Menu_Node, "label");
+         Action : constant DOM_String := Get_Attribute (Menu_Node, "action");
+         Optional_Str : constant DOM_String :=
+           Get_Attribute (Menu_Node, "optional");
+         Optional : Boolean := False;
+         Item   : Gtk_Menu_Item;
+         Sep    : Gtk_Separator_Menu_Item;
+         Menu   : Gtk_Menu;
+         N      : Node;
+      begin
+         if Optional_Str /= "" then   --  avoid raising exception if we can
+            begin
+               Optional    := Boolean'Value (Optional_Str);
+            exception
+               when Constraint_Error =>
+                  Trace (Me, "Invalid value for 'optional': " & Optional_Str
+                         & " for label=" & Label);
+                  Optional := False;
+            end;
+         end if;
+
+         if Action /= "" then
+            --  ??? Inefficient, we do not need to look for existing items
+            --  here, since we are creating the menu bar from scratch.
+            --  ??? Can we use this even if the action is ""
+            Item := Register_Menu
+              (Kernel, Parent_Path & "/" & Label, Action,
+               Optional => Optional);
+         else
+            Gtk_New_With_Mnemonic (Item, Label);
+            Parent.Append (Item);
+         end if;
+
+         N := First_Child (Menu_Node);
+
+         if N /= null then
+            Gtk_New (Menu);
+            Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
+            Item.Set_Submenu (Menu);
+
+            while N /= null loop
+               if Node_Name (N) = "menu" then
+                  Process_Menu (Parent_Path & "/" & Label, Menu, N);
+               elsif Node_Name (N) = "separator" then
+                  Gtk_New (Sep);
+                  Menu.Append (Sep);
+               end if;
+               N := Next_Sibling (N);
+            end loop;
+         end if;
+      end Process_Menu;
+
+      ----------------------
+      -- Process_Menu_Bar --
+      ----------------------
+
+      procedure Process_Menu_Bar (Menubar_Node : Node) is
+         N    : Node := First_Child (Menubar_Node);
+         Menubar : constant Gtk_Menu_Bar :=
+           GPS_Window (Kernel.Main_Window).Menu_Bar;
+      begin
+         while N /= null loop
+            if Node_Name (N) = "menu" then
+               Process_Menu ("", Menubar, N);
+            end if;
+
+            N := Next_Sibling (N);
+         end loop;
+      end Process_Menu_Bar;
+
+      Input  : File_Input;
+      Reader : Tree_Reader;
+      Doc    : Document;
+      N      : Node;
+   begin
+      Open (Description.Display_Full_Name, Input);
+      Parse (Reader, Input);
+      Close (Input);
+
+      Doc := Get_Tree (Reader);
+      N := Get_Element (Doc);   --  name is irrelevant
+      N := First_Child (N);
+
+      while N /= null loop
+         if Node_Name (N) = "menubar" then
+            Process_Menu_Bar (N);
+         end if;
+
+         N := Next_Sibling (N);
+      end loop;
+
+      Free (Reader);
+   end Install_Menus;
 end GPS.Kernel.Modules.UI;

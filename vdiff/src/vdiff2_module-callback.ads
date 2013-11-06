@@ -28,12 +28,16 @@ package Vdiff2_Module.Callback is
       return Boolean;
    --  Process, if possible, the data sent by the kernel
 
-   procedure On_Compare_Three_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Compare_Three_Files is new Interactive_Command with null record;
+   overriding function Execute
+     (Self  : access Compare_Three_Files;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Tools->VDiff->Compare Three Files...
 
-   procedure On_Compare_Two_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Compare_Two_Files is new Interactive_Command with null record;
+   overriding function Execute
+     (Self  : access Compare_Two_Files;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Tools->VDiff->Compare Two Files...
 
    procedure On_Merge_Three_Files

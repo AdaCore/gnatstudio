@@ -338,7 +338,6 @@ package body Docgen2_Module is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools    : constant String := '/' & (-"Tools");
       Command  : Interactive_Command_Access;
    begin
       Docgen_Module_Id := new Docgen_Module_Record;
@@ -422,18 +421,11 @@ package body Docgen2_Module is
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel, Data => null);
 
-      Register_Menu
-        (Kernel, Tools, "_Documentation", Callback => null,
-         Ref_Item => -"Consoles", Add_Before => False);
-
       Command := new Generate_Project_Command;
       Register_Action
         (Kernel, "Documentation generate for project", Command,
          Description => -"Generate documentation for a single project",
          Filter => Lookup_Filter (Kernel, "Project only"));
-      Register_Menu
-        (Kernel, -"/Tools/Documentation/Generate _project",
-         "Documentation generate for project");
       Register_Contextual_Menu
         (Kernel, "Generate project documentation",
          Label  => "Documentation/Generate for %p",
@@ -446,9 +438,6 @@ package body Docgen2_Module is
         (Kernel, "Documentation generate for project and subprojects", Command,
          Description => -"Generate documentation for project and subprojects",
          Filter => Lookup_Filter (Kernel, "Project only"));
-      Register_Menu
-        (Kernel, -"/Tools/Documentation/Generate project & _subprojects",
-         "Documentation generate for project and subprojects");
       Register_Contextual_Menu
         (Kernel, "Generate project documentation recursive",
          Label  => "Documentation/Generate for %p and subprojects",
@@ -461,9 +450,6 @@ package body Docgen2_Module is
          Description => -"Generate documentation for current file",
          Filter => Lookup_Filter (Kernel, "File")
              and Create (Language => "ada"));
-      Register_Menu
-        (Kernel, -"/Tools/Documentation/Generate _current file",
-         "Documentation generate for current file");
       Register_Contextual_Menu
         (Kernel, "Generate file documentation",
          Label  => "Documentation/Generate for %f",
@@ -478,9 +464,6 @@ package body Docgen2_Module is
          Description => -"Generate documentation for file",
          Filter => Lookup_Filter (Kernel, "File")
              and Create (Language => "ada"));
-      Register_Menu
-        (Kernel, -"/Tools/Documentation/Generate _for ...",
-         "Documentation generate for file");
 
       Register_Commands (Kernel);
    end Register_Module;

@@ -26,7 +26,6 @@ with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
@@ -38,7 +37,6 @@ with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
@@ -283,11 +281,7 @@ package body Builder_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Build_Menu : constant String := '/' & (-"_Build") & '/';
-      Tools      : constant String := '/' & (-"Tools") & '/';
-      Sep        : Gtk_Separator_Menu_Item;
       Command    : Interactive_Command_Access;
-
    begin
       --  This memory is allocated once, and lives as long as the application
 
@@ -298,32 +292,17 @@ package body Builder_Module is
          Module_Name => "Builder",
          Priority    => Default_Priority);
 
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
-
       if not Active (Xref.SQLITE) then
          Command := new Recompute_Xref_Command;
          Register_Action
            (Kernel, "Recompute Xref Info", Command,
             Description => -"Reload the contents of all ALI files");
-         Register_Menu
-           (Kernel, -"/Build/Recompute _Xref info", "Recompute Xref Info",
-            Ref_Item => -"Settings");
 
          Command := new Load_Xref_In_Memory_Command;
          Register_Action
            (Kernel, "Load Xref in memory", Command,
             Description => -"Load all ALI file in memory, for faster queries");
-         Register_Menu
-           (Kernel, -"/Build/Load Xref info in memory",
-            "Load Xref in memory", Ref_Item => -"Settings");
-
-         Gtk_New (Sep);
-         Register_Menu (Kernel, Build_Menu, Sep, Ref_Item => -"Settings");
       end if;
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Tools, Sep);
 
       Command := new Interrupt_Tool_Command;
       Register_Action
@@ -333,7 +312,6 @@ package body Builder_Module is
          Stock_Id   => GPS_Stop_Task,
          Accel_Key  => GDK_C,
          Accel_Mods => Primary_Mod_Mask + Shift_Mask);
-      Register_Menu (Kernel, -"/Tools/_Interrupt", "Interrupt");
 
       Add_Hook
         (Kernel => Kernel,

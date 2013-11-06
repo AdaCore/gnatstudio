@@ -43,7 +43,6 @@ with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
@@ -1569,14 +1568,8 @@ package body GVD.Memory_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debug    : constant String := '/' & (-"_Debug") & '/';
-      Data_Sub : constant String := Debug & (-"D_ata") & '/';
-      Mitem    : Gtk_Separator_Menu_Item;
       Command  : Interactive_Command_Access;
    begin
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Data_Sub, Mitem);
-
       Simple_Views.Register_Desktop_Functions (Kernel);
 
       Command := new View_Memory_Command;
@@ -1585,8 +1578,6 @@ package body GVD.Memory_View is
          -("Examine the contents of the memory at the location of the variable"
            & " under the cursor"),
          Category => -"Debugger");
-      Register_Menu
-        (Kernel, -"/Debug/Data/_Examine Memory", "examine memory");
 
       Command := new View_Memory_Command;
       Register_Contextual_Menu

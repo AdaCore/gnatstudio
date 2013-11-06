@@ -54,13 +54,15 @@ package body Vdiff2_Module.Callback is
         (Get_Tmp_Directory, "ref$" & Base_Name (File));
    end Get_Ref_Filename;
 
-   ---------------------------
-   -- On_Compare_Tree_Files --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Compare_Three_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+      (Self : access Compare_Three_Files;
+       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       File1  : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Common Ancestor",
@@ -71,11 +73,10 @@ package body Vdiff2_Module.Callback is
                     Pattern_Name      => -"All files;Ada files;C/C++ files",
                     History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
-
+      pragma Unreferenced (Button, Self);
    begin
       if File1 = GNATCOLL.VFS.No_File then
-         return;
+         return Commands.Failure;
       end if;
 
       declare
@@ -94,7 +95,7 @@ package body Vdiff2_Module.Callback is
 
       begin
          if File2 = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          declare
@@ -112,15 +113,18 @@ package body Vdiff2_Module.Callback is
             Visual_Diff (Side_By_Side, File1, File2, File3);
          end;
       end;
-   end On_Compare_Three_Files;
+      return Commands.Success;
+   end Execute;
 
-   --------------------------
-   -- On_Compare_Two_Files --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Compare_Two_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+      (Self : access Compare_Two_Files;
+       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       File1  : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select First File",
@@ -132,11 +136,11 @@ package body Vdiff2_Module.Callback is
                     Pattern_Name      => -"All files;Ada files;C/C++ files",
                     History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
+      pragma Unreferenced (Self, Button);
 
    begin
       if File1 = GNATCOLL.VFS.No_File then
-         return;
+         return Commands.Failure;
       end if;
 
       declare
@@ -153,12 +157,13 @@ package body Vdiff2_Module.Callback is
 
       begin
          if File2 = GNATCOLL.VFS.No_File then
-            return;
+            return Commands.Failure;
          end if;
 
          Visual_Diff (Side_By_Side, File1, File2);
       end;
-   end On_Compare_Two_Files;
+      return Commands.Success;
+   end Execute;
 
    -------------------------
    -- On_Merge_Tree_Files --

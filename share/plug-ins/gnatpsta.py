@@ -29,7 +29,7 @@ def on_exit (process, exit_status, output):
                         "package Standard", "package Standard")
       os.unlink (process.standard)
 
-@interactive (name="Display standard.ads", menu="/Help/GNAT Runtime/Standard")
+@interactive(name="Display standard.ads")
 def display():
    # Two possible ways here: older versions of GNAT still have the
    # gnatpsta utility, whereas for more recent versions we need to

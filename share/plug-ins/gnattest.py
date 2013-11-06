@@ -282,25 +282,6 @@ XML = r"""<?xml version="1.0" ?>
     >gnattest.run(GPS.current_context().project(), "GNATtest for file")</shell>
   </action>
 
-  <submenu after="Documentation">
-    <title>Tools/GNATtest</title>
-    <menu action="run gnattest on root">
-      <title>Generate unit test setup</title>
-    </menu>
-    <menu action="run gnattest on root recursive">
-      <title>Generate unit test setup recursive</title>
-    </menu>
-    <menu action="Show not implemented tests">
-      <title>Show not implemented tests</title>
-    </menu>
-    <menu action="open harness">
-      <title>Open harness project</title>
-    </menu>
-    <menu action="exit harness">
-      <title>Exit from harness project</title>
-    </menu>
-  </submenu>
-
   <contextual action="run gnattest" after="GNATtest">
     <title>GNATtest/Generate unit test setup for %p</title>
   </contextual>

@@ -1864,9 +1864,6 @@ package body GVD.Canvas is
         (Kernel, "open debugger data window", Command,
          Description => -"Open the Data Window for the debugger",
          Category => -"Views");
-      Register_Menu
-        (Kernel, -"/Debug/Data/_Data Window", "open debugger data window",
-         Ref_Item => -"Protection Domains");
 
       Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;

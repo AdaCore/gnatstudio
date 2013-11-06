@@ -19,7 +19,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -35,15 +34,15 @@ with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Handlers;            use Gtkada.Handlers;
 
+with Commands, Commands.Interactive; use Commands, Commands.Interactive;
 with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -168,12 +167,20 @@ package body Help_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       URL    : String) is separate;
 
-   procedure On_Load_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Load HMTL_File in the HTML/Help widget
+   type Display_Doc_Command is new Interactive_Command with record
+      URL        : Unbounded_String;
+      Shell      : Unbounded_String;
+      Shell_Lang : Unbounded_String;
+   end record;
+   overriding function Execute
+     (Self : access Display_Doc_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Display HTML documentation
 
-   procedure On_Load_Index
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Display_Contents_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self : access Display_Contents_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create and load the index of all help contents
 
    procedure Register_Help
@@ -200,23 +207,17 @@ package body Help_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for HTML commands
 
-   procedure On_About
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type About_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self : access About_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Menu Help->About...
 
-   procedure On_Welcome
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Display_Welcome_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self : access Display_Welcome_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Menu Help->Welcome...
-
-   type String_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      URL        : GNAT.Strings.String_Access;
-      Shell      : GNAT.Strings.String_Access;
-      Shell_Lang : GNAT.Strings.String_Access;
-   end record;
-   type String_Menu_Item is access all String_Menu_Item_Record'Class;
-
-   procedure On_Destroy (Item : access Gtk_Widget_Record'Class);
-   --  Called when a String_Menu_Item is destroyed
 
    function Create_URL
      (Name   : Glib.UTF8_String;
@@ -697,29 +698,30 @@ package body Help_Module is
       null;
    end Default_Context_Factory;
 
-   ------------------
-   -- On_Load_HTML --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self    : access Display_Doc_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Item : constant String_Menu_Item := String_Menu_Item (Widget);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      if Item.URL /= null and then Item.URL.all /= "" then
-         Trace (Me, "Loading HTML file " & Item.URL.all);
-         Open_Html (Kernel, Item.URL.all);
+      if Self.URL /= "" then
+         Trace (Me, "Loading HTML file " & To_String (Self.URL));
+         Open_Html (Kernel, To_String (Self.URL));
 
-      elsif Item.Shell /= null then
+      elsif Self.Shell /= "" then
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
             Script : constant Scripting_Language := Lookup_Scripting_Language
-              (Get_Scripts (Kernel), Item.Shell_Lang.all);
+              (Get_Scripts (Kernel), To_String (Self.Shell_Lang));
             File   : constant String := Execute_Command
               (Script      => Script,
                CL          => Parse_String
-                 (Item.Shell.all,
+                 (To_String (Self.Shell),
                   Command_Line_Treatment (Script)),
                Console     => null,
                Hide_Output => False,
@@ -729,28 +731,15 @@ package body Help_Module is
                Insert
                  (Kernel,
                   -"Couldn't generate the HTML file through the shell command "
-                  & Item.Shell.all,
+                  & To_String (Self.Shell),
                   Mode => Error);
             else
                Open_Html (Kernel, File);
             end if;
          end;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Load_HTML;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Item : access Gtk_Widget_Record'Class) is
-   begin
-      Free (String_Menu_Item (Item).URL);
-      Free (String_Menu_Item (Item).Shell);
-      Free (String_Menu_Item (Item).Shell_Lang);
-   end On_Destroy;
+      return Commands.Success;
+   end Execute;
 
    -------------------
    -- Register_Help --
@@ -767,54 +756,36 @@ package body Help_Module is
       Menu_Before : String := "";
       Menu_After  : String := "")
    is
-      Item : String_Menu_Item;
+      Command : Interactive_Command_Access;
       Node : Help_Category_List.List_Node;
       Cat  : Help_Category_Access;
    begin
+      Command := new Display_Doc_Command'
+        (Interactive_Command with
+           URL      => To_Unbounded_String (URL),
+         Shell      => To_Unbounded_String (Shell_Cmd),
+         Shell_Lang => To_Unbounded_String (Shell_Lang));
+
+      Register_Action
+        (Kernel, "display documentation " & Descr, Command,
+         -"Load the documentation for '" & Descr
+         & "' into an external web browser",
+         Category => Category);
+
       if Menu_Path /= "" then
-         Item := new String_Menu_Item_Record;
-         Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
-
-         if URL /= "" then
-            Item.URL        := new String'(URL);
-         end if;
-
-         if Shell_Cmd /= "" then
-            Item.Shell      := new String'(Shell_Cmd);
-         end if;
-
-         if Shell_Lang = "" then
-            Item.Shell_Lang := new String'(GPS_Shell_Name);
-         else
-            Item.Shell_Lang := new String'(Shell_Lang);
-         end if;
-
          if Menu_Before /= "" then
             Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Dir_Name (Menu_Path),
-               Item        => Gtk_Menu_Item (Item),
-               Ref_Item    => Menu_Before,
-               Add_Before  => True);
+              (Kernel, Menu_Path, "display documentation " & Descr,
+               Ref_Item => Menu_Before, Add_Before => True);
 
          elsif Menu_After /= "" then
             Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Dir_Name (Menu_Path),
-               Item        => Gtk_Menu_Item (Item),
-               Ref_Item    => Menu_After,
-               Add_Before  => False);
+              (Kernel, Menu_Path, "display documentation " & Descr,
+               Ref_Item => Menu_After, Add_Before => False);
          else
             Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Dir_Name (Menu_Path),
-               Item        => Gtk_Menu_Item (Item));
+              (Kernel, Menu_Path, "display documentation " & Descr);
          end if;
-
-         Widget_Callback.Connect (Item, Signal_Destroy, On_Destroy'Access);
-         Kernel_Callback.Connect
-           (Item, Signal_Activate,
-            On_Load_HTML'Access, Kernel_Handle (Kernel));
       end if;
 
       Node := First (Help_Module_ID.Categories);
@@ -917,17 +888,18 @@ package body Help_Module is
       return True;
    end Open_Help_Hook;
 
-   --------------
-   -- On_About --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_About
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self : access About_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       use ASCII;
-
       Ignore     : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Ignore);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Self, Ignore);
 
       Verbose    : aliased String := "-v";
       Codepeer   : constant Virtual_File := Locate_On_Path ("codepeer");
@@ -968,21 +940,22 @@ package body Help_Module is
          Parent  => Get_Current_Window (Kernel));
       Free (Contents);
 
-   exception
-      when E : others => Trace (Me, E);
-   end On_About;
+      return Commands.Success;
+   end Execute;
 
-   ----------------
-   -- On_Welcome --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Welcome
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self : access Display_Welcome_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Self);
    begin
-      Display_Welcome_Page (Kernel);
-   end On_Welcome;
+      Display_Welcome_Page (Get_Kernel (Context.Context));
+      return Commands.Success;
+   end Execute;
 
    ---------------
    -- Customize --
@@ -1126,14 +1099,16 @@ package body Help_Module is
       end if;
    end Parse_Index_File;
 
-   -------------------
-   -- On_Load_Index --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_Index
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   overriding function Execute
+     (Self : access Display_Contents_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Self);
+      Kernel          : constant Kernel_Handle := Get_Kernel (Context.Context);
       Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
       Output          : constant Virtual_File :=
                           Create_From_Dir (Get_Home_Dir (Kernel),
@@ -1203,7 +1178,8 @@ package body Help_Module is
 
          Open_Html (Kernel, +Output.Full_Name (True));
       end if;
-   end On_Load_Index;
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- Add_Doc_Path_From_Env --
@@ -1242,7 +1218,7 @@ package body Help_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Help : constant String := "/_" & (-"Help") & '/';
+      Command : Interactive_Command_Access;
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
@@ -1255,10 +1231,11 @@ package body Help_Module is
                 Wrapper (Open_Help_Hook'Access),
                 Name => "help.html");
 
-      --  Add help menus
-
-      Register_Menu
-        (Kernel, Help, -"_Welcome", "", On_Welcome'Access);
+      Command := new Display_Welcome_Command;
+      Register_Action
+        (Kernel, "display GPS welcome view", Command,
+         -("Open a new view showing the GPS welcome, which contains quick"
+           & " links to various areas of interests in GPS"));
 
       --  Register commands
 
@@ -1305,18 +1282,19 @@ package body Help_Module is
          Static_Method => True,
          Handler       => Command_Handler'Access);
 
-      Register_Menu
-        (Kernel,
-         Parent_Path => Help,
-         Text        => -"_Contents",
-         Callback    => On_Load_Index'Access);
+      Command := new Display_Contents_Command;
+      Register_Action
+        (Kernel, "display help contents", Command,
+         -("Display a HTML page with a pointer to all documentation known"
+           & " to GPS"));
 
       --  This procedure will not reset the Doc path, since it might have been
       --  set before from other modules (through XML strings).
       Add_Doc_Path_From_Env (Kernel);
 
-      Register_Menu
-        (Kernel, Help, -"A_bout", "", On_About'Access);
+      Command := new About_Command;
+      Register_Action
+        (Kernel, "about gps", Command, -"Display the About dialog");
    end Register_Module;
 
 end Help_Module;

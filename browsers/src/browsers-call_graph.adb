@@ -2277,8 +2277,7 @@ package body Browsers.Call_Graph is
       Call_Graph_Module_Id := new Callgraph_Module_Record;
       Callgraph_Views.Register_Module
         (Kernel,
-         ID        => Call_Graph_Module_Id,
-         Menu_Name => -"_Browsers/_Call Graph");
+         ID        => Call_Graph_Module_Id);
 
       Filter := new Subprogram_Entity_Filter;
       Subprogram_Entity_Filter (Filter.all).Kernel := Kernel_Handle (Kernel);
@@ -2311,10 +2310,10 @@ package body Browsers.Call_Graph is
          Add_Before => False);
 
       Command := new Find_All_Refs_Command;
-      Register_Action (Kernel, "Find All References", Command);
-      Register_Menu
-        (Kernel, -"/_Navigate/Find _All References", "Find All References",
-         Ref_Item => -"Find Previous", Add_Before => False);
+      Register_Action
+         (Kernel, "find all references", Command,
+          -("List all references to the entity under the cursor"
+            & " in the Locations window"));
       Register_Contextual_Menu
         (Kernel, "Find all references",
          Label      => "References/Find all references to %e",

@@ -92,11 +92,10 @@ class ShellProcess (CommandWindow):
    def on_activate (self, shell_command):
       sel_pipe (shell_command)
 
-@interactive(filter="Source editor",
-             menu="/Edit/Selection/Pipe in External Program...")
+@interactive(filter="Source editor")
 def pipe():
    """
-   Process the current selection through a shell command,
+Process the current selection through a shell command,
 and replace it with the output of that command.
    """
    ShellProcess()

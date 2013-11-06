@@ -21,7 +21,6 @@ with Glib.Object;           use Glib.Object;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Intl;              use GPS.Intl;
@@ -216,10 +215,6 @@ package body Project_Templates.GPS is
       Register_Action
         (Kernel, "create project from template", Command,
          -"Open a dialog to create a new project from an existing template");
-      Register_Menu
-        (Kernel, -"/Project/New from _Template...",
-         "create project from template",
-         Ref_Item    => "_New...", Add_Before  => False);
    end Register_Module;
 
 end Project_Templates.GPS;

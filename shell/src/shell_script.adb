@@ -159,8 +159,7 @@ package body Shell_Script is
       Register_Shell_Scripting (Get_Scripts (Kernel), Script);
       Set_Prompt (Script, "GPS>");
 
-      Shell_Views.Register_Module
-        (Kernel, Menu_Name => -"Consoles/_GPS Shell");
+      Shell_Views.Register_Module (Kernel);
 
       --  Only remember the last 100 commands.
       Set_Max_Length (Get_History (Kernel).all, 100, "shell");

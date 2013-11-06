@@ -49,8 +49,6 @@ with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Code_Editors;        use GVD.Code_Editors;
@@ -1131,7 +1129,6 @@ package body GVD.Assembly_View is
         (Kernel, "open assembly view", Command,
          -"Open the Assembly view for the debugger",
          Category => -"Views");
-      Register_Menu (Kernel, -"/Debug/Data/A_ssembly", "open assembly view");
    end Register_Module;
 
    ----------------

@@ -1765,8 +1765,7 @@ package body Call_Graph_Views is
       Filter  : Action_Filter;
       Command : Interactive_Command_Access;
    begin
-      Generic_View.Register_Module
-        (Kernel, Menu_Name => -"Views/Ca_ll Trees", Before_Menu => -"Entity");
+      Generic_View.Register_Module (Kernel);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Locations, True);

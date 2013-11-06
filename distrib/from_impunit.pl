@@ -44,10 +44,6 @@ foreach $line (<IMPUNIT>) {
    }
 }
 
-print OUT "<submenu before=\"About\">
-   <title>/Help/GNAT Runtime</title>
-</submenu>\n";
-
 # Basic sanity checking
 
 keys %units > 30 || die "Couldn't parse ${impunit}, not enough elements";
@@ -67,7 +63,7 @@ foreach $unit (sort keys %units) {
     ## Hierarchy parents must have two menu entries, or every time a
     ## submenu is open, the file is also open
 
-    $hierarchy = $unit; 
+    $hierarchy = $unit;
     $hierarchy =~ s/_/__/g;
     $hierarchy =~ s/\./\//g;
     ($base_unit) = ($hierarchy =~ /\/([^\/]+)$/);
@@ -81,7 +77,7 @@ foreach $unit (sort keys %units) {
 
     $menu = "/Help/GNAT Runtime/$hierarchy";
   }
-       
+
   print OUT "<documentation_file>
    <shell>Editor.edit \"$filename.ads\"</shell>
    <descr>$unit</descr>

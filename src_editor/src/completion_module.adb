@@ -14,8 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with Ada.Unchecked_Deallocation;
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -45,7 +45,6 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -1215,12 +1214,6 @@ package body Completion_Module is
          Accel_Key  => GDK_slash,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel,
-         -"/Edit/_More Completion/Complete _Identifier",
-         "Complete identifier",
-         Ref_Item   => -"Format Selection",
-         Add_Before => False);
 
       Command_Smart := new Completion_Command (Smart_Completion => True);
       Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
@@ -1231,11 +1224,6 @@ package body Completion_Module is
          Accel_Key  => GDK_space,
          Accel_Mods => Control_Mask,
          Filter   => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/Smar_t Completion",
-         "Complete identifier (advanced)",
-         Ref_Item   => -"Format Selection",
-         Add_Before => False);
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

@@ -36,7 +36,6 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Stock;                         use Gtk.Stock;
-with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
@@ -1768,9 +1767,6 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      File                     : constant String := '/' & (-"File") & '/';
-      Edit                     : constant String := '/' & (-"Edit") & '/';
-      Sep                      : Gtk_Separator_Menu_Item;
       Toolbar                  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       UR                       : constant Undo_Redo :=
                                    new Undo_Redo_Information;
@@ -2068,16 +2064,11 @@ package body Src_Editor_Module is
         (Kernel, New_File_Command_Name, Command,
          Description => -"Create a new empty editor",
          Stock_Id    => Stock_New);
-      Register_Menu
-        (Kernel, -"/File/_New", New_File_Command_Name,
-         Ref_Item => -"Save More");
 
       Command := new New_View_Command;
       Register_Action
         (Kernel, "new view", Command,
          Description => -"Create a new view for the selected editor");
-      Register_Menu
-        (Kernel, -"/File/New _View", "new view", Ref_Item => -"Save More");
 
       Command := new Open_Command;
       Register_Action
@@ -2085,9 +2076,6 @@ package body Src_Editor_Module is
          Description => -"Open an existing file",
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3);
-      Register_Menu
-        (Kernel, -"/File/_Open...", Open_Command_Name,
-         Ref_Item => -"Save More");
 
       Command := new Open_Remote_Command;
       Register_Action
@@ -2096,12 +2084,8 @@ package body Src_Editor_Module is
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/File/Open From _Host...", "open from host",
-         Ref_Item => -"Save More");
 
-      Recent_Menu_Item := Register_Menu
-        (Kernel, File, -"_Recent", "", null, Ref_Item => -"Save More");
+      Recent_Menu_Item := Find_Menu_Item (Kernel, "/File/Recent");
       Associate (Get_History (Kernel).all,
                  Hist_Key,
                  Recent_Menu_Item,
@@ -2115,22 +2099,17 @@ package body Src_Editor_Module is
          Description => -"Save the current editor",
          Accel_Key   => GDK_LC_s,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu (Kernel, -"/File/_Save", Save_Command_Name,
-                     Ref_Item => -"Save More");
 
       Command := new Save_As_Command;
       Register_Action
         (Kernel, "save as", Command,
          Description => -"Save the current editor with a different name");
-      Register_Menu
-        (Kernel, -"/File/Save _As...", "save as", Ref_Item => -"Save More");
 
       Command := new Src_Editor_Module.Commands.Print_Command;
       Register_Action
         (Kernel, "print", Command,
          Stock_Id    => Stock_Print,
          Description => -"Print the current editor");
-      Register_Menu (Kernel, -"/File/_Print", "print", Ref_Item => -"Exit");
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_One;
@@ -2141,9 +2120,6 @@ package body Src_Editor_Module is
          Stock_Id    => Stock_Close,
          Accel_Key   => GDK_LC_w,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/File/_Close", "Close current window",
-         Ref_Item => -"Exit");
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All;
@@ -2151,9 +2127,6 @@ package body Src_Editor_Module is
         (Kernel, "Close all windows", Command,
          -"Close all open windows, asking for confirmation when relevant",
          Category => -"MDI");
-      Register_Menu
-        (Kernel, -"/File/Close _All", "Close all windows",
-         Ref_Item => -"Close", Add_Before => False);
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
@@ -2162,18 +2135,6 @@ package body Src_Editor_Module is
          -("Close all editors except the current one, asking for confirmation"
            & " when relevant"),
          Category => "MDI");
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, File, Sep, Ref_Item => -"Exit");
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, File, Sep, Ref_Item => -"Close");
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, File, Sep, Ref_Item => -"Print");
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, File, Sep, Ref_Item => -"Change Directory...");
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
@@ -2187,9 +2148,6 @@ package body Src_Editor_Module is
          Filter      => Filter,
          Accel_Key   => GDK_LC_z,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Edit/_Undo", "undo",
-         Ref_Item  => -"Paste Previous", Add_Before => False);
 
       Command := new Redo_Command;
       Filter  := new Has_Redo_Filter;
@@ -2200,9 +2158,6 @@ package body Src_Editor_Module is
          Filter      => Filter,
          Accel_Key   => GDK_LC_r,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Edit/_Redo", "redo",
-         Ref_Item   => -"Undo", Add_Before => False);
 
       declare
          Space : Gtk_Separator_Tool_Item;
@@ -2228,13 +2183,6 @@ package body Src_Editor_Module is
          -"Select the whole contents of the editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/_Select All", "select all",
-         Ref_Item => -"Redo", Add_Before => False);
-
-      Gtk_New (Sep);
-      Register_Menu
-        (Kernel, Edit, Sep, Ref_Item => "Redo", Add_Before => False);
 
       Command := new Insert_File_Command;
       Register_Action
@@ -2242,13 +2190,6 @@ package body Src_Editor_Module is
          -"Insert the contents of the file into the current editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/Insert _File...", "insert file",
-         Ref_Item => -"Select All", Add_Before => False);
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Select All",
-                     Add_Before => False);
 
       Command := new Comment_Lines_Command;
       Register_Action
@@ -2257,9 +2198,6 @@ package body Src_Editor_Module is
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_minus,
          Accel_Mods    => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Edit/Selection/Comment _Lines", "comment lines",
-         Ref_Item => -"More Completion", Add_Before => False);
 
       Command := new Uncomment_Lines_Command;
       Register_Action
@@ -2268,9 +2206,6 @@ package body Src_Editor_Module is
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_underscore,
          Accel_Mods    => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Edit/Selection/Uncomment L_ines", "uncomment lines",
-         Ref_Item   => -"Comment Lines", Add_Before => False);
 
       Command := new Refill_Command;
       Register_Action
@@ -2281,22 +2216,12 @@ package body Src_Editor_Module is
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_equal,
          Accel_Mods    => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Edit/Selection/R_efill", "refill",
-         Ref_Item   => "Expand Alias", Add_Before => False);
 
       Command := new Print_Selection_Command;
       Register_Action
         (Kernel, "print selection", Command,
          Description   => -"Print the current selection",
          Filter        => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/Selection/Print Selection", "print selection",
-         Ref_Item   => "Refill", Add_Before => True);
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Selection",
-                     Add_Before => False);
 
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2305,35 +2230,18 @@ package body Src_Editor_Module is
          Command, -"Automatically indent the current line or selection",
          Category => "Editor",
          Filter   => Src_Action_Context and Is_Not_Makefile);
-      Register_Menu
-        (Kernel, -"/Edit/Format Selectio_n", "Autoindent selection",
-         Ref_Item   => "Insert File...", Add_Before => False);
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Insert File...",
-                     Add_Before => False);
 
       Command := new Fold_All_Blocks_Command;
       Register_Action
         (Kernel, "fold all blocks", Command,
          -"Fold all blocks (if, loops,...)",
          Filter  => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/_Fold all blocks", "fold all blocks",
-         Ref_Item => -"Selection", Add_Before => False);
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Edit, Sep, Ref_Item => -"Fold all blocks",
-                     Add_Before => True);
 
       Command := new Unfold_All_Blocks_Command;
       Register_Action
         (Kernel, "unfold all blocks", Command,
          -"Unfold all blocks (if, loops,...)",
          Filter => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Edit/Unfold all _blocks", "unfold all blocks",
-         Ref_Item => -"Fold all blocks", Add_Before => False);
 
       Command := new Goto_Line_Command;
       Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2342,9 +2250,6 @@ package body Src_Editor_Module is
          -"Open a dialog to select a line to go to",
          Accel_Key   => GDK_LC_g,
          Accel_Mods  => Primary_Mod_Mask);
-      Register_Menu
-        (Kernel, -"/Navigate/Goto _Line...", "goto line",
-         Ref_Item    => -"Goto File Spec<->Body");
       Register_Contextual_Menu
         (Kernel, -"Goto line...",
          Action => Command,
@@ -2354,17 +2259,11 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "goto declaration", Command,
          -"Jump to the declaration of the current entity");
-      Register_Menu
-        (Kernel, -"/Navigate/Goto _Declaration", "goto declaration",
-         Ref_Item => -"Goto Line...");
 
       Command := new Goto_Body_Command;
       Register_Action
         (Kernel, "goto body", Command,
          -"Jump to the implementation/body of the current entity");
-      Register_Menu
-        (Kernel, -"/Navigate/Goto _Body", "goto body",
-         Ref_Item => -"Goto Line...");
 
       Command := new Jump_To_Delimiter_Command;
       Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2375,10 +2274,6 @@ package body Src_Editor_Module is
          Accel_Mods => Primary_Mod_Mask,
          Category   => "Editor",
          Filter     => Src_Action_Context);
-      Register_Menu
-        (Kernel, -"/Navigate/Goto Matching _Delimiter",
-         "Jump to matching delimiter",
-         Ref_Item   => -"Goto Body", Add_Before => False);
 
       --  Toolbar buttons
 

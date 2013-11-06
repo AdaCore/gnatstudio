@@ -61,8 +61,12 @@ def print_in_console(debug, txt):
 # Display all local vars in graph #
 ###################################
 
-@interactive(menu="/Debug/Data/Graph display local variables")
+@interactive(name="debug graph display local variables")
 def display_local_vars(menu):
+    """
+Show in the Data Window the value for each all local variables
+(one box per variable).
+    """
     buffer = EditorBuffer.get()
     subp   = text_utils.goto_subprogram_start(buffer.current_view().cursor())
     if subp:
@@ -122,12 +126,11 @@ Contextual("debug print as decimal").create(
 ###################################
 
 @interactive(name="continue till line", category="Debugger",
-             filter="Debugger active", key="primary-b",
-             menu="/Debug/Continue to current line", after="Continue")
+             filter="Debugger active", key="primary-b")
 def continue_till_line():
     """
-    Continue executing the debuggee until it reaches the current editor line.
-    If this line is never reached, the debugger will not stop.
+Continue executing the debuggee until it reaches the current editor line.
+If this line is never reached, the debugger will not stop.
     """
     context = current_context()
     try:

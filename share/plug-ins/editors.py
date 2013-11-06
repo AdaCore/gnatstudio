@@ -12,10 +12,7 @@ This script adds a new menu /File/Close All Editors that close all open editors
 import GPS
 import gps_utils
 
-@gps_utils.interactive(
-    name='close all editors',
-    menu='/File/Close All Editors',
-    after='Close All')
+@gps_utils.interactive(name='close all editors')
 def close_editors():
     """
     Save and close all source editors.
@@ -25,10 +22,7 @@ def close_editors():
        ed.close(True)
 
 
-@gps_utils.interactive(
-    name='close all editors except current',
-    menu='/File/Close All Editors Except Current',
-    after='Close All Editors')
+@gps_utils.interactive(name='close all editors except current')
 def close_editors_except_current():
     """
     Save and close all source editors, except the curret one.

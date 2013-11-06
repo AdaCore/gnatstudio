@@ -663,8 +663,7 @@ package body Browsers.Projects is
    begin
       Project_Browser_Module_ID := new Project_Browser_Module;
       Project_Views.Register_Module
-        (Kernel, Project_Browser_Module_ID,
-         Menu_Name => -"Browsers/Project");
+        (Kernel, Project_Browser_Module_ID);
 
       --  ??? will be done in hook
       --     Set_Sensitive (Mitem, not Children_Shown (Item));
