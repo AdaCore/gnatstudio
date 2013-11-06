@@ -23,7 +23,7 @@ try:
            open_project_properties (on_pp)
     """
 
-    pygps.open_menu ("/Project/Edit Project Properties",on_open,
+    pygps.open_menu ("/Project/Properties...",on_open,
                ["Project Properties Notebook"],
                args, kwargs, 2000)
 
