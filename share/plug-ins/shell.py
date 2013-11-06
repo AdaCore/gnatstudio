@@ -45,3 +45,32 @@ def create_default_shell():
         Unix_Shell(os.getenv("SHELL"), "-i")
     elif os.getenv("COMSPEC"):
         Win32_Shell(os.getenv("COMSPEC"), "/Q")
+
+GPS.Preference ("Plugins/shell/contextual").create (
+  "Contextual menu", "boolean",
+  "Add contextual menu to start OS shell from project view",
+  False)
+
+def on_contextual(context):
+   dir = GPS.pwd()
+   GPS.cd (context.directory())
+   create_default_shell ()
+   GPS.cd (dir)
+
+def on_label(context):
+   return "Run OS shell in <b>" + \
+     GPS.base_name(context.directory().rstrip ("/")) + "</b>"
+
+def on_filter(context):
+   if not isinstance(context, GPS.FileContext):
+      return False
+   try:
+      #  Check if context has directory information
+      dir = context.directory()
+      return GPS.Preference ("Plugins/shell/contextual").get()
+   except:
+      return False
+
+GPS.Contextual("OS shell").create(
+   on_activate=on_contextual, filter=on_filter, label=on_label)
+
