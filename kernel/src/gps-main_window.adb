@@ -1461,7 +1461,7 @@ package body GPS.Main_Window is
       while L /= Null_List loop
          Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
          L := Next (L);
-         if Menu.Is_Visible then
+         if Menu /= null and then Menu.Is_Visible then
             return True;
          end if;
       end loop;
