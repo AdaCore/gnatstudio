@@ -1465,6 +1465,10 @@ package body GPS.Kernel.Modules.UI is
          if Self.Action /= null then
             --  ??? Could free Self.Name, which duplicates Self.Action.Name
 
+            if Self.Action.Category = null then
+               Self.Action.Category := new String'("");
+            end if;
+
             Self.Set_Tooltip_Markup
               (Escape_Text (Self.Action.Description.all)
                & ASCII.LF & ASCII.LF
