@@ -257,7 +257,7 @@ def reload_gnatcov_data():
     GPS.execute_action("/Tools/Coverage/Clear coverage from memory")
     GPS.execute_action("/Tools/Coverage/Load data for all projects")
 
-def on_gps_started (hook_name):
+def on_gps_started():
     """ Called once, when GPS is starting.
     """
     global gnatcov_menu_separator
@@ -284,4 +284,4 @@ def on_compilation_finished(hook, category,
 
 GPS.parse_xml (project_support_xml)
 
-GPS.Hook ("gps_started").add (on_gps_started)
+on_gps_started()
