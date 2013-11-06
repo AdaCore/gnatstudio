@@ -351,7 +351,7 @@ def check_root_project_recursive():
              category='Coding Standard')
 def check_file():
     "Check coding standard of the selected file"
-    gnatcheckproc.check_file(GPS.EditorBuffer.get())
+    gnatcheckproc.check_file(GPS.EditorBuffer.get().file())
 
 
 @interactive(name='edit gnatcheck rules',
