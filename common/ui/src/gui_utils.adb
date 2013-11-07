@@ -1467,9 +1467,6 @@ package body GUI_Utils is
          exit when Last >= Path'Last;
 
          if Get_Submenu (Menu_Item) = null then
-            Trace
-              (Me, "Find_Or_Create_Menu_Tree: "
-               & Path (Path'First .. Last - 1) & " has no submenu");
             return null;
          end if;
 
