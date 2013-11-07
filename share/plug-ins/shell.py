@@ -72,5 +72,5 @@ def on_filter(context):
       return False
 
 GPS.Contextual("OS shell").create(
-   on_activate=on_contextual, filter=on_filter, label=on_label)
+   on_activate=on_contextual, filter=on_filter, label=on_label, group=30)
 
