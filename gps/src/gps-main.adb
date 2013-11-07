@@ -2401,8 +2401,10 @@ begin
      ("com.adacore.GPS",
       Glib.Application.G_Application_Handles_Open +
         Glib.Application.G_Application_Handles_Command_Line +
-          Glib.Application.G_Application_Send_Environment +
-            Glib.Application.G_Application_Non_Unique);
+        Glib.Application.G_Application_Send_Environment +
+        Glib.Application.G_Application_Non_Unique,
+      Gtkada_Application_Handles_Open +
+        Gtkada_Application_OSX_FullScreen);
    Application.Set_Default;
 
    Darwin_Host :=
