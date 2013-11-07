@@ -30,6 +30,11 @@ with GNAT.IO;
 package body GNATdoc.Frontend.Builder is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend-Builder");
 
+   Workaround : constant Boolean := True;
+   --  Variable used in assertions which identify workarounds temporarily added
+   --  to this package. Setting this variable to False helps to know quickly if
+   --  the workaround is still needed.
+
    -----------------------------
    -- Unique_Entity_Allocator --
    -----------------------------
@@ -164,9 +169,6 @@ package body GNATdoc.Frontend.Builder is
       function Is_Tagged_Type
         (Entity : Unique_Entity_Id) return Boolean;
 
-      function Is_Type
-        (Entity : Unique_Entity_Id) return Boolean;
-
       function New_Internal_Entity
         (Context  : access constant Docgen_Context;
          Language : Language_Access;
@@ -283,7 +285,6 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Subprogram_Or_Entry);
       pragma Inline (Is_Tagged_Type);
-      pragma Inline (Is_Type);
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
       pragma Inline (Set_Alias);
@@ -702,15 +703,6 @@ package body GNATdoc.Frontend.Builder is
          return Is_Tagged_Type (Get_Entity (Entity));
       end Is_Tagged_Type;
 
-      -------------
-      -- Is_Type --
-      -------------
-
-      function Is_Type (Entity : Unique_Entity_Id) return Boolean is
-      begin
-         return LL.Is_Type (Get_Entity (Entity));
-      end Is_Type;
-
       -----------------------
       -- Get_Unique_Entity --
       -----------------------
@@ -1076,8 +1068,12 @@ package body GNATdoc.Frontend.Builder is
       procedure Complete_Decoration (E : Unique_Entity_Id);
       --  Complete the decoration of entity E
 
+      procedure Set_Scope (New_E : Unique_Entity_Id);
+      --  Set the scope of the entity using the current scope (if required)
+
       procedure Update_Scopes_Stack (New_E : Unique_Entity_Id);
-      --  Update the top of the scope stack (if required)
+      --  Update the scopes stack using the reliable value provided by Xref
+      --  (if available)
 
       -----------------------------
       -- Append_To_File_Entities --
@@ -1364,6 +1360,7 @@ package body GNATdoc.Frontend.Builder is
                            (Context.Database, Get_LL_Entity (E),
                             Recursive => False);
                Child  : Unique_Entity_Id;
+               Loc    : General_Location;
 
             begin
                for J in Childs'Range loop
@@ -1382,11 +1379,21 @@ package body GNATdoc.Frontend.Builder is
                      Get_Unique_Entity
                        (Child, Context, File, Childs (J), Forced => True);
 
+                     Loc := LL.Get_Location (Get_Entity (Child));
+
                      --  Avoid problems with wrong Xref decoration that I can
-                     --  reproduces with gnatcoll-refcount-weakref.ads. To
+                     --  reproduce with gnatcoll-refcount-weakref.ads. To
                      --  be investigated???
 
                      if not Is_Class_Or_Record_Type (Child) then
+                        Free (Child);
+
+                     --  Avoid adding to the tree entities defined in package
+                     --  bodies since they cannot be fully decorated and
+                     --  hence cause problems to the backend (for example,
+                     --  we cannot set their scope!)
+
+                     elsif not Is_Spec_File (Context.Kernel, Loc.File) then
                         Free (Child);
 
                      else
@@ -1565,15 +1572,87 @@ package body GNATdoc.Frontend.Builder is
          end if;
       end Complete_Decoration;
 
+      ---------------
+      -- Set_Scope --
+      ---------------
+
+      procedure Set_Scope (New_E : Unique_Entity_Id) is
+         Scope_Id : Entity_Id;
+         Id : constant Integer := Get_Unique_Id (Get_Entity (New_E));
+         S  : constant Unique_Entity_Id := Current_Scope;
+      begin
+         pragma Assert (In_Ada_Lang);
+         pragma Assert (Id /= -1);
+         pragma Assert (Present (S));
+
+         --  No action needed if this attribute is already set
+
+         if Present (Get_Scope (New_E)) then
+            return;
+
+         --  We cannot use the location provided by Xref when the entity is
+         --  declared in a generic package since Xref references the scope
+         --  enclosing the generic package (which is wrong!). More work
+         --  needed in this area???
+
+         elsif In_Generic_Scope then
+            pragma Assert (Workaround);
+            return;
+
+         --  Skip the full view of incomplete or private types because their
+         --  Xref.Scope references the partial view (instead of referencing
+         --  their syntax scope)
+
+         elsif Is_Incomplete_Or_Private_Type (New_E)
+           and then Is_Full_View (New_E)
+         then
+            pragma Assert (Workaround);
+            return;
+
+         --  If Xref does not provide the scope we do our best and assume that
+         --  this entity is defined in the current scope.
+
+         --  This case can be reproduced when the package has a separate
+         --  compilation unit (reproducible using test  013-GE-Bodies)
+
+         elsif No (Get_LL_Scope (New_E)) then
+            pragma Assert (Workaround);
+            Set_Scope (New_E, Current_Scope);
+
+         elsif Get_LL_Entity (Current_Scope) = Get_LL_Scope (New_E) then
+            Set_Scope (New_E, Current_Scope);
+
+         else
+            Scope_Id :=
+              Find_Entity
+                (Current_Scope,
+                 Get_Location
+                   (Context.Database, Get_LL_Scope (New_E)));
+
+            if Present (Scope_Id) then
+               Set_Scope (New_E, Scope_Id);
+
+            --  No information available: we do our best and assume that
+            --  this entity is defined in the current scope.
+
+            else
+               pragma Assert (Workaround);
+               Set_Scope (New_E, Current_Scope);
+            end if;
+         end if;
+      end Set_Scope;
+
       -------------------------
       -- Update_Scopes_Stack --
       -------------------------
 
       procedure Update_Scopes_Stack (New_E : Unique_Entity_Id) is
-         Scope_Id : Entity_Id;
-
       begin
          pragma Assert (In_Ada_Lang);
+
+         --  We do not use such value when the entity is declared in a generic
+         --  package since Xref references the scope enclosing the generic
+         --  package (which is wrong!)
 
          if In_Generic_Scope then
             declare
@@ -1599,58 +1678,31 @@ package body GNATdoc.Frontend.Builder is
                   End_Scope_Loc := Get_End_Of_Syntax_Scope_Loc (Scope);
                end loop;
             end;
-         end if;
 
-         --  Update the scopes stack using the reliable value provided by
-         --  Xref (if available)
+         --  Skip updating the scopes stack using the full view of incomplete
+         --  or private types because their Xref.Scope references the partial
+         --  view (instead of referencing their syntax scope).
 
-         --  We do not use such value when the entity is declared in a
-         --  generic package since Xref references the scope enclosing
-         --  the generic package (which is wrong!)
-
-         if In_Generic_Scope then
-            return;
-         end if;
-
-         --  Skip the full view of incomplete or private types
-         --  because their Xref.Scope references the partial
-         --  view (instead of referencing its syntax scope)
-
-         if Is_Incomplete_Or_Private_Type (New_E)
+         elsif Is_Incomplete_Or_Private_Type (New_E)
            and then Is_Full_View (New_E)
          then
             return;
+
+         --  Update the scopes stack using the reliable value provided by Xref.
+         --  We skip updating it when such value is not found in the enclosing
+         --  scopes since this entity may be a primitive inherited from other
+         --  package.
+
+         elsif Present (Get_LL_Scope (New_E))
+           and then In_Open_Scopes (Get_LL_Scope (New_E))
+         then
+            while Get_LL_Scope (New_E)
+              /= Get_LL_Entity (Current_Scope)
+            loop
+               Exit_Scope;
+            end loop;
          end if;
 
-         if Present (Get_LL_Scope (New_E)) then
-            if In_Open_Scopes (Get_LL_Scope (New_E)) then
-               while Get_LL_Scope (New_E)
-                 /= Get_LL_Entity (Current_Scope)
-               loop
-                  Exit_Scope;
-               end loop;
-
-               if No (Get_Scope (New_E)) then
-                  Set_Scope (New_E, Current_Scope);
-               end if;
-
-            elsif Is_Type (New_E) then
-               Scope_Id :=
-                 Find_Entity
-                   (Current_Scope,
-                    Get_Location
-                      (Context.Database, Get_LL_Scope (New_E)));
-
-               if No (Get_Scope (New_E)) then
-                  if Present (Scope_Id) then
-                     Set_Scope (New_E, Scope_Id);
-                  else
-                     pragma Assert (Get_Kind (New_E) = E_Access_Type);
-                     Set_Scope (New_E, Current_Scope);
-                  end if;
-               end if;
-            end if;
-         end if;
       end Update_Scopes_Stack;
 
       --  Local variables
@@ -1684,6 +1736,11 @@ package body GNATdoc.Frontend.Builder is
       --  requires 46 minutes to build the tree in my virtual machine???
 
       if Total_Entities_Count > 3000 then
+         if not Context.Options.Quiet_Mode then
+            GNAT.IO.Put_Line
+              (" Skipping large file " & (+File.Base_Name));
+         end if;
+
          Trace (Me,
            ">> Build_File_Tree (skipped): "
            & Total_Entities_Count'Img
@@ -1742,10 +1799,11 @@ package body GNATdoc.Frontend.Builder is
          Entities_Count := Entities_Count + 1;
 
          if not Context.Options.Quiet_Mode
-           and then Entities_Count mod 75 = 0
+           and then Entities_Count mod 125 = 0
          then
             GNAT.IO.Put_Line
-              (+File.Base_Name
+              ("   "
+               & (+File.Base_Name)
                & ":"
                & To_String (Entities_Count)
                & "/"
@@ -1762,6 +1820,7 @@ package body GNATdoc.Frontend.Builder is
 
             if In_Ada_Lang then
                Update_Scopes_Stack (New_E);
+               Set_Scope (New_E);
 
                if not Context.Options.Show_Private
                  and then Is_Package (Current_Scope)
@@ -1935,7 +1994,7 @@ package body GNATdoc.Frontend.Builder is
    exception
       when E : others =>
          Trace (Me, E);
-         return Atree.No_Entity;
+         raise;
    end Build_File_Tree;
 
    ----------------

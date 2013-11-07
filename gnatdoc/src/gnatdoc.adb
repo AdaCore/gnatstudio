@@ -44,6 +44,8 @@ package body GNATdoc is
    -- Local Subprograms --
    -----------------------
 
+   Serious_Errors : Natural := 0;
+
    procedure Check_Tree
      (Context : access constant Docgen_Context;
       Tree    : access Tree_Type);
@@ -76,16 +78,48 @@ package body GNATdoc is
          Scope_Level : Natural) return Traverse_Result
       is
          pragma Unreferenced (Scope_Level);
+
+         procedure Check (Entity : Entity_Id);
+         procedure Check_List (List : EInfo_List.Vector);
+
+         procedure Check (Entity : Entity_Id) is
+         begin
+            if No (Get_Scope (Entity))
+              and then not Is_Standard_Entity (Entity)
+            then
+               Serious_Errors := Serious_Errors + 1;
+
+               GNAT.IO.Put_Line
+                 (">> Missing decoration on "
+                  & Get_Short_Name (Entity)
+                  & ":"
+                  & Image (LL.Get_Location (Entity)));
+
+               Atree.pn (Entity);
+            end if;
+         end Check;
+
+         procedure Check_List (List : EInfo_List.Vector) is
+            Cursor : EInfo_List.Cursor;
+         begin
+            if not EInfo_List.Has_Element (List.First) then
+               return;
+            end if;
+
+            Cursor := List.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Check (EInfo_List.Element (Cursor));
+               EInfo_List.Next (Cursor);
+            end loop;
+         end Check_List;
+
       begin
-         if No (Get_Scope (Entity))
-           and then not Is_Standard_Entity (Entity)
-         then
-            GNAT.IO.Put_Line
-              (">> Internal error on "
-               & Get_Short_Name (Entity)
-               & ":"
-               & Image (LL.Get_Location (Entity)));
-         end if;
+         Check (Entity);
+
+         --  Temporarily disabled because it causes regressions!
+         --  Check_List (LL.Get_Parent_Types (Entity).all);
+
+         Check_List (LL.Get_Child_Types (Entity).all);
 
          return OK;
       end Check_Node;
@@ -101,6 +135,9 @@ package body GNATdoc is
    begin
       if In_C_Lang then
          Root_E := Root;
+
+         --  At current stage we can check only trees of Ada sources
+         return;
       else
          declare
             C : constant EInfo_List.Cursor := Get_Entities (Root).First;
@@ -497,6 +534,13 @@ package body GNATdoc is
                end loop;
             end;
 
+            --  No need to continue if we found serious errors in the tree
+            --  since the backend may crash!
+
+            if Serious_Errors > 0 then
+               return;
+            end if;
+
             --  Set the inheritance depth level of tagged types. This cannot
             --  be done before because files are not processed following their
             --  order of dependencies (and thus a file containing a child type
@@ -572,6 +616,7 @@ package body GNATdoc is
 
    exception
       when E : others =>
+         GNAT.IO.Put_Line ("Internal error: program terminated");
          Free (Context);
          Trace (Me, E);
    end Process_Files;

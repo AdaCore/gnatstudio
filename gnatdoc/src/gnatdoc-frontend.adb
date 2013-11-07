@@ -125,7 +125,9 @@ package body GNATdoc.Frontend is
       --  From) for the index of the first occurrence of Word_1 (or Word_2
       --  if present).
 
-      function Skip_Blanks_Backward (Index : Natural) return Natural;
+      function Skip_Blanks_Backward
+        (Buffer : GNAT.Strings.String_Access;
+         Index  : Natural) return Natural;
       --  Displace Idx backwards skipping character ' '
 
       procedure Swap_Buffers;
@@ -367,7 +369,7 @@ package body GNATdoc.Frontend is
             --  Append tabulation
 
             if Buffer (Index - 1) = ' ' then
-               From := Skip_Blanks_Backward (Index - 1);
+               From := Skip_Blanks_Backward (Buffer, Index - 1);
                Printout :=
                  To_Unbounded_String (Buffer.all (From .. Index - 1));
             end if;
@@ -792,7 +794,7 @@ package body GNATdoc.Frontend is
             --  Append tabulation
 
             if Buffer (Prev_Word_Begin - 1) = ' ' then
-               From := Skip_Blanks_Backward (Prev_Word_Begin - 1);
+               From := Skip_Blanks_Backward (Buffer, Prev_Word_Begin - 1);
 
                if Buffer.all (From) = ASCII.LF then
                   From := From + 1;
@@ -1068,7 +1070,7 @@ package body GNATdoc.Frontend is
             --  Append tabulation
 
             if Buffer (Prev_Word_Begin - 1) = ' ' then
-               From := Skip_Blanks_Backward (Prev_Word_Begin - 1);
+               From := Skip_Blanks_Backward (Buffer, Prev_Word_Begin - 1);
 
                if Buffer.all (From) = ASCII.LF then
                   From := From + 1;
@@ -1127,7 +1129,7 @@ package body GNATdoc.Frontend is
             --  Append tabulation
 
             if Buffer (Index - 1) = ' ' then
-               From := Skip_Blanks_Backward (Index - 1);
+               From := Skip_Blanks_Backward (Buffer, Index - 1);
                Printout :=
                  To_Unbounded_String (Buffer.all (From .. Index - 1));
             end if;
@@ -2093,7 +2095,7 @@ package body GNATdoc.Frontend is
          --  Append tabulation
 
          if Buffer.all (Index - 1) = ' ' then
-            From := Skip_Blanks_Backward (Index - 1);
+            From := Skip_Blanks_Backward (Buffer, Index - 1);
             Append (Buffer.all (From .. Index - 1));
          end if;
 
@@ -2230,7 +2232,10 @@ package body GNATdoc.Frontend is
       -- Skip_Blanks_Backward --
       --------------------------
 
-      function Skip_Blanks_Backward (Index : Natural) return Natural is
+      function Skip_Blanks_Backward
+        (Buffer : GNAT.Strings.String_Access;
+         Index  : Natural) return Natural
+      is
          Idx : Natural := Index;
       begin
          while Idx > Buffer'First
@@ -2920,7 +2925,7 @@ package body GNATdoc.Frontend is
    exception
       when E : others =>
          Trace (Me, E);
-         return No_Tree;
+         raise;
    end Build_Tree;
 
    ----------------
