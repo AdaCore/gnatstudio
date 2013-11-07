@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB07-022: GPS: spark integration broken
+  Problem:    Due to a last minute change the spark.py module will often
+              report a python error.
+  Workaround: In spark.py, change spark_module to have a 'spark' value
+
 - MA24-006: GPS: crash when moving the last window in a notebook
   Problem:    When moving a window within the GPS MDI by dragging the window
               tab, GPS might crash if the window was the last one in its
