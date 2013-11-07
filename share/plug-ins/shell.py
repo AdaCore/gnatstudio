@@ -49,7 +49,7 @@ def create_default_shell():
 GPS.Preference ("Plugins/shell/contextual").create (
   "Contextual menu", "boolean",
   "Add contextual menu to start OS shell from project view",
-  False)
+  True)
 
 def on_contextual(context):
    dir = GPS.pwd()
