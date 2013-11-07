@@ -43,13 +43,13 @@
       </menu>
 
       <menu label='_Edit'>
+         <menu label='_Undo'          action='undo' />
+         <menu label='_Redo'          action='redo' />
+         <separator />
          <menu label='_Cut'            action='cut to clipboard'/>
          <menu label='C_opy'           action='copy to clipboard'/>
          <menu label='P_aste'          action='paste from clipboard'/>
          <menu label='Pa_ste Previous' action='paste previous from clipboard'/>
-         <separator />
-         <menu label='_Undo'          action='undo' />
-         <menu label='_Redo'          action='redo' />
          <separator />  <!--  Below this: selection -->
          <menu label='_Select All'            action='select all'/>
          <menu label='Format Selectio_n'      action='autoindent selection'/>
