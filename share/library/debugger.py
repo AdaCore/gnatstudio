@@ -61,7 +61,8 @@ def print_in_console(debug, txt):
 # Display all local vars in graph #
 ###################################
 
-@interactive(name="debug graph display local variables")
+@interactive(name="debug graph display local variables",
+             filter="Debugger active")
 def display_local_vars(menu):
     """
 Show in the Data Window the value for each all local variables

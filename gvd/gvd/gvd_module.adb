@@ -398,6 +398,8 @@ package body GVD_Module is
    overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Stopped_Filter;
       Context : Selection_Context) return Boolean;
+   --  True if the debugger has been started but is now idle waiting for new
+   --  commands.
 
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -1601,8 +1603,6 @@ package body GVD_Module is
    begin
       return Process /= null
         and then Process.Debugger /= null
-        and then (Has_File_Information (Context)
-                  or else Has_Area_Information (Context))
         and then not Command_In_Process (Get_Process (Process.Debugger));
    end Filter_Matches_Primitive;
 
@@ -2381,6 +2381,7 @@ package body GVD_Module is
       Command           : Interactive_Command_Access;
       Filter            : Action_Filter;
       Debugger_Filter   : Action_Filter;
+      Stopped_And_In_File : Action_Filter;
       Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;
@@ -2398,6 +2399,9 @@ package body GVD_Module is
 
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
+
+      Stopped_And_In_File :=
+        Debugger_Filter and Lookup_Filter (Kernel, "Source editor");
 
       Printable_Filter  := new Printable_Variable_Filter;
       Register_Filter
@@ -2465,7 +2469,7 @@ package body GVD_Module is
         (Kernel, "Debug set line breakpoint",
          Label  => -"Debug/Set breakpoint on line %l",
          Action => Command,
-         Filter => Debugger_Filter);
+         Filter => Stopped_And_In_File);
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
@@ -2474,7 +2478,7 @@ package body GVD_Module is
         (Kernel, "Debug continue until",
          Label  => -"Debug/Continue until line %l",
          Action => Command,
-         Filter => Debugger_Filter);
+         Filter => Stopped_And_In_File);
 
       Command := new Show_Location_Command;
       Register_Contextual_Menu
@@ -2500,6 +2504,7 @@ package body GVD_Module is
          Description =>
            -("Opens a simple dialog to connect to a remote board. This option"
            & " is only relevant to cross debuggers."),
+         Filter   => Debugger_Filter,
          Category => -"Debug");
 
       Command := new Load_File_Command;
@@ -2510,6 +2515,7 @@ package body GVD_Module is
            & " program to debug. The program to debug is either an executable"
            & " for native debugging, or a partially linked module for cross"
            & " environments (e.g VxWorks)."),
+         Filter   => Debugger_Filter,
          Category => -"Debug");
 
       Command := new Add_Symbols_Command;
@@ -2523,30 +2529,35 @@ package body GVD_Module is
            & " independently loaded on the target (e.g. using windshell), it"
            & " is absolutely required to use this functionality, otherwise"
            & " the debugger won't work properly."),
+         Filter   => Debugger_Filter,
          Category => -"Debug");
 
       Command := new Attach_Command;
       Register_Action
         (Kernel, "debug attach", Command,
          Description => -"Attach to a running process",
+         Filter   => Debugger_Filter,
          Category => -"Debug");
 
       Command := new Detach_Command;
       Register_Action
         (Kernel, "debug detach", Command,
          Description => -"Detach the application from the debugger",
+         Filter   => Debugger_Filter,
          Category    => -"Debug");
 
       Command := new Load_Core_Command;
       Register_Action
         (Kernel, "debug core file", Command,
          Description => -"Debug a core file instead of a running process",
+         Filter   => Debugger_Filter,
          Category    => -"Debug");
 
       Command := new Kill_Command;
       Register_Action
         (Kernel, "debug kill", Command,
          Description => -"Kill the debuggee process",
+         Filter   => Debugger_Filter,
          Category    => -"Debug");
 
       GVD.Canvas.Register_Module (Kernel);
@@ -2562,6 +2573,7 @@ package body GVD_Module is
         (Kernel, "debug display local variables", Command,
          Accel_Key   => GDK_LC_l,
          Accel_Mods  => Mod1_Mask,
+         Filter      => Debugger_Filter,
          Description => -"Display local variables in the data window",
          Category    => -"Debug");
 
@@ -2570,6 +2582,7 @@ package body GVD_Module is
         (Kernel, "debug display arguments", Command,
          Accel_Key   => GDK_LC_u,
          Accel_Mods  => Mod1_Mask,
+         Filter      => Debugger_Filter,
          Description => -"Display arguments to the current subprogram",
          Category    => -"Debug");
 
@@ -2577,12 +2590,14 @@ package body GVD_Module is
       Register_Action
         (Kernel, "debug display registers", Command,
          Description => -"Display the contents of registers in data window",
+         Filter      => Debugger_Filter,
          Category    => -"Debug");
 
       Command := new Expression_Command;
       Register_Action
         (Kernel, "Debug display any expression", Command,
          Description => -"Opens a dialog to choose an expression to display",
+         Filter      => Debugger_Filter,
          Category    => -"Debug");
 
       Command := new Start_Command;
