@@ -3,6 +3,10 @@
 @define-color borders #777777;
 @define-color theme_base_color white;
 
+@define-color completion-selected-color #888;
+@define-color completions-notes-text-color #444;
+
+
 .mdi tab GtkLabel, .mdifocused tab GtkLabel {
    color:   black;
    opacity: 1.0;
