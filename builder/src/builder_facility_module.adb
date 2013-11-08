@@ -649,6 +649,18 @@ package body Builder_Facility_Module is
                         Menu_Name   => Mains.List (J).Tuple (1).Str);
                   end if;
                end loop;
+
+               --  Make sure we create at least those actions so that users
+               --  can associate shortcuts to these.
+
+               for J in Mains.Length + 1 .. 4 loop
+                  Register_Action
+                    (Kernel      => Get_Kernel,
+                     Name        => N & (-" Number") & J'Img,
+                     Command     => null,
+                     Category    => -"Build");
+                  Builder_Module_ID.Actions.Append (Action);
+               end loop;
             end if;
 
             Destroy (Data);
