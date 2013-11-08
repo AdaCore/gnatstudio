@@ -334,6 +334,16 @@
             <menu label="Compute Metrics on Current Project &amp; _Subprojects"
                   action="gnat metric on current project and subprojects" optional='true'/>
          </menu>
+         <menu label="Stac_k Analysis">
+            <menu label="_Analyze Stack Usage"               action="analyze stack usage" />
+            <separator/>
+            <menu label="_Open Undefined Subprograms Editor"
+                  action="gnatstack open undefined subprogram editor"/>
+            <separator/>
+            <menu label="_Load Last Stack Usage"             action="load last stack usage"/>
+            <menu label="_Clear Stack Usage Information"
+                  action="clear stack usage information"/>
+         </menu>
          <menu label="Coding _Standard" optional='True'>
             <menu label="_Edit Rules File"         action="edit gnatcheck rules" optional='True'/>
             <menu label="Check Root Project &amp; _Subprojects"

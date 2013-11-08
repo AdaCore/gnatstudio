@@ -21,16 +21,17 @@ with GNAT.Regexp;
 with GNAT.Strings;
 
 with Basic_Types;
+with Commands.Interactive;          use Commands, Commands.Interactive;
 with Input_Sources.File;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Menu;
-with Gtk.Menu_Item;
-with Gtk.Separator_Menu_Item;       use Gtk.Separator_Menu_Item;
+with Gtk.Menu_Item;                 use Gtk.Menu_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
 with GPS.Editors.Line_Information;
 with GPS.Intl;
+with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;              use GPS.Kernel;
 with GPS.Kernel.Project;
@@ -83,24 +84,28 @@ package body GNATStack.Module is
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   procedure On_Analyze_Stack_Usage
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
+   type Analyze_Stack_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Analyze_Stack_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Analyze stack usage" menu item is activated
 
-   procedure On_Open_CIs_Editor
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
+   type Open_CIs_Editor_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_CIs_Editor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Open undefined subprograms editor" menu item is activated
 
-   procedure On_Load_Data
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
+   type Load_Data_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Load_Data_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Load data" menu item is activated
 
-   procedure On_Clear_Data
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
+   type Clear_Data_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Clear_Data_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Clear data" menu item is activated
 
    procedure On_Show_Stack_Usage
@@ -484,26 +489,23 @@ package body GNATStack.Module is
       end if;
    end Load_Data;
 
-   ----------------------------
-   -- On_Analyze_Stack_Usage --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Analyze_Stack_Usage
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access Analyze_Stack_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       GNATStack.Shell_Commands.Build_Target_Execute
         (Kernel,
          GNATStack.Shell_Commands.Build_Target (Kernel, "Run GNATStack"),
          Synchronous => False);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Analyze_Stack_Usage;
+      return Commands.Success;
+   end Execute;
 
    -----------------------------
    -- On_Call_Tree_View_Close --
@@ -534,16 +536,15 @@ package body GNATStack.Module is
       Self.CI_Editor_MDI := null;
    end On_CIs_Editor_Close;
 
-   -------------------
-   -- On_Clear_Data --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Clear_Data
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access Clear_Data_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget, Kernel);
-
+      pragma Unreferenced (Command, Context);
    begin
       GPS.Kernel.Messages.Get_Messages_Container
         (Module.Kernel).Remove_Category
@@ -560,7 +561,8 @@ package body GNATStack.Module is
 
       Clear (Module.Data);
       Module.Loaded := False;
-   end On_Clear_Data;
+      return Commands.Success;
+   end Execute;
 
    -----------------------------
    -- On_Compilation_Finished --
@@ -640,21 +642,22 @@ package body GNATStack.Module is
       Editors.Hide_Stack_Usage (Module, Module.File);
    end On_Hide_Stack_Usage;
 
-   ------------------
-   -- On_Load_Data --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Load_Data
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access Load_Data_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Load_Data (Module);
       Open_Report (Module);
       Editors.Show_Stack_Usage_In_Opened_Editors (Module);
       Fill_Entry_Points (Module);
+      return Commands.Success;
 
    exception
       when E : others =>
@@ -663,7 +666,8 @@ package body GNATStack.Module is
             True,
             GPS.Kernel.Error);
          Trace (Me, E);
-   end On_Load_Data;
+         return Commands.Failure;
+   end Execute;
 
    -----------------------
    -- On_Open_Call_Tree --
@@ -678,19 +682,19 @@ package body GNATStack.Module is
       Open_Call_Tree_View (Module, Module.Subprogram);
    end On_Open_Call_Tree;
 
-   ------------------------
-   -- On_Open_CIs_Editor --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Open_CIs_Editor
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
+   overriding function Execute
+     (Command : access Open_CIs_Editor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget, Kernel);
-
+      pragma Unreferenced (Command, Context);
    begin
       Open_CI_Editor (Module);
-   end On_Open_CIs_Editor;
+      return Commands.Success;
+   end Execute;
 
    -------------------------
    -- On_Show_Stack_Usage --
@@ -1025,18 +1029,21 @@ package body GNATStack.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       use GNATCOLL.VFS;
-
-      Menu           : constant String := -"/Tools/Stac_k Analysis";
       GNATStack_Path : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
-      Sep            : Gtk_Separator_Menu_Item;
+      Command        : Interactive_Command_Access;
+      Item           : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
       if GNATStack_Path = No_File then
          --  There is no GNATStack executable available, module is not
          --  registered.
 
+         Item := Find_Menu_Item (Kernel, "/Tools/Stack Analysis");
+         if Item /= null then
+            Item.Destroy;
+         end if;
          return;
       end if;
 
@@ -1053,37 +1060,18 @@ package body GNATStack.Module is
          Label   => -Stack_Analysis_Name,
          Submenu => Factory);
 
-      --  Registry main menu
+      Command := new Analyze_Stack_Command;
+      Register_Action (Kernel, "analyze stack usage", Command);
 
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Menu,
-         Ref_Item    => -"Macro",
-         Text        => -"_Analyze stack usage",
-         Callback    => On_Analyze_Stack_Usage'Access);
+      Command := new Open_CIs_Editor_Command;
+      Register_Action
+         (Kernel, "gnatstack open undefined subprogram editor", Command);
 
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Menu, Sep);
+      Command := new Load_Data_Command;
+      Register_Action (Kernel, "load last stack usage", Command);
 
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Menu,
-         Text        => -"_Open undefined subprograms editor",
-         Callback    => On_Open_CIs_Editor'Access);
-
-      Gtk_New (Sep);
-      Register_Menu (Kernel, Menu, Sep);
-
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Menu,
-         Text        => -"_Load last stack usage",
-         Callback    => On_Load_Data'Access);
-      Register_Menu
-        (Kernel      => Kernel,
-         Parent_Path => Menu,
-         Text        => -"_Clear stack usage information",
-         Callback    => On_Clear_Data'Access);
+      Command := new Clear_Data_Command;  --  On_Clear_Data
+      Register_Action (Kernel, "clear stack usage information", Command);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
