@@ -629,10 +629,15 @@ package body Builder_Facility_Module is
             else
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
-                     Create (M, Builder_Module_ID.Builder'Access, N,
-                             To_String (Targets), J,
-                             False, Default);
+                     Create (Item        => M,
+                             Builder     => Builder_Module_ID.Builder'Access,
+                             Target_Name => N,
+                             Target_Type => To_String (Targets),
+                             Main        => J,
+                             Quiet       => False,
+                             Dialog      => Default);
                      Set_Unbounded_String (Action, N & (-" Number") & J'Img);
+                     Unregister_Action (Get_Kernel, To_String (Action));
                      Register_Action
                        (Kernel      => Get_Kernel,
                         Name        => To_String (Action),
@@ -654,6 +659,7 @@ package body Builder_Facility_Module is
                --  can associate shortcuts to these.
 
                for J in Mains.Length + 1 .. 4 loop
+                  Unregister_Action (Get_Kernel, N & (-" Number") & J'Img);
                   Register_Action
                     (Kernel      => Get_Kernel,
                      Name        => N & (-" Number") & J'Img,
@@ -669,6 +675,7 @@ package body Builder_Facility_Module is
       else
          Create
            (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
+         Unregister_Action (Get_Kernel, N);
          Register_Action (Kernel      => Get_Kernel,
                           Name        => N,
                           Command     => C,
