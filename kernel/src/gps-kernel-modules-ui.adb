@@ -1439,16 +1439,19 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    procedure Register_Menu
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Path       : String;
-      Action     : String;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True)
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Path          : String;
+      Action        : String;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True;
+      Use_Mnemonics : Boolean := True)
    is
       Ignored : Gtk_Menu_Item;
       pragma Unreferenced (Ignored);
    begin
-      Ignored := Register_Menu (Kernel, Path, Action, Ref_Item, Add_Before);
+      Ignored := Register_Menu
+        (Kernel, Path, Action, Ref_Item, Add_Before,
+         Use_Mnemonics => Use_Mnemonics);
    end Register_Menu;
 
    -------------------
@@ -1456,12 +1459,13 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    function Register_Menu
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Path       : String;
-      Action     : String;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True;
-      Optional   : Boolean := False) return Gtk.Menu_Item.Gtk_Menu_Item
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Path          : String;
+      Action        : String;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True;
+      Optional      : Boolean := False;
+      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item
    is
       Self : Action_Menu_Item;
       Full_Path : constant String := Cleanup ('/' & Path);
@@ -1476,8 +1480,15 @@ package body GPS.Kernel.Modules.UI is
 
       --  Create the menu item
       Self := new Action_Menu_Item_Record;
-      Gtk.Image_Menu_Item.Initialize_With_Mnemonic
-        (Self, Label => Base_Name (Path));
+
+      if Use_Mnemonics then
+         Gtk.Image_Menu_Item.Initialize_With_Mnemonic
+           (Self, Label => Base_Name (Path));
+      else
+         Gtk.Image_Menu_Item.Initialize
+           (Self, Label => Base_Name (Path));
+      end if;
+
       Self.Name := new String'(Action);
       Self.Kernel := Kernel_Handle (Kernel);
       Self.Optional := Optional;

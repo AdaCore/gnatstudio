@@ -569,7 +569,9 @@ package body Builder_Facility_Module is
          Menu_Name   : String;
          Action_Name : String)
       is
-         pragma Unreferenced (Main);
+         C : constant Unbounded_String :=
+           To_Unbounded_String
+             (Strip_Single_Underscores (To_String (Cat_Path)));
       begin
          --  Do nothing is the target is not supposed to be shown in the menu
          if not Get_Properties (Target).In_Menu
@@ -580,9 +582,18 @@ package body Builder_Facility_Module is
 
          Register_Menu
            (Get_Kernel, To_String (Cat_Path) & Menu_Name,
-            Action => Action_Name, Ref_Item => "Project");
+            Action => Action_Name, Ref_Item => "Project",
 
-         Builder_Module_ID.Menus.Prepend (Cat_Path & Menu_Name);
+            --  Do not use mnemonics if we are registering a
+            --  main, as this is a file name in this case.
+            Use_Mnemonics => Main = No_File);
+
+         if Main = No_File then
+            Builder_Module_ID.Menus.Prepend
+              (C & Strip_Single_Underscores (Menu_Name));
+         else
+            Builder_Module_ID.Menus.Prepend (C & Menu_Name);
+         end if;
       end Menu_For_Action;
 
    begin
@@ -1410,16 +1421,11 @@ package body Builder_Facility_Module is
       while Has_Element (C) loop
          --  Find_Menu_Item expects menu names stripped of their underscores,
          --  so call Strip_Single_Underscore here.
-         declare
-            Menu_Name : constant String :=
-              Strip_Single_Underscores (To_String (Element (C)));
-         begin
-            M := Find_Menu_Item (Get_Kernel, Menu_Name);
+         M := Find_Menu_Item (Get_Kernel, To_String (Element (C)));
 
-            if M /= null then
-               M.Destroy;
-            end if;
-         end;
+         if M /= null then
+            M.Destroy;
+         end if;
 
          Next (C);
       end loop;

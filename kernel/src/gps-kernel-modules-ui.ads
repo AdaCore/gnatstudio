@@ -362,18 +362,20 @@ package GPS.Kernel.Modules.UI is
    --  The menu item will be active if Filter matches.
 
    procedure Register_Menu
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Path       : String;
-      Action     : String;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True);
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Path          : String;
+      Action        : String;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True;
+      Use_Mnemonics : Boolean := True);
    function Register_Menu
-     (Kernel     : not null access Kernel_Handle_Record'Class;
-      Path       : String;
-      Action     : String;
-      Ref_Item   : String := "";
-      Add_Before : Boolean := True;
-      Optional   : Boolean := False) return Gtk.Menu_Item.Gtk_Menu_Item;
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Path          : String;
+      Action        : String;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True;
+      Optional      : Boolean := False;
+      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Append a menu binding a GPS action. The action need not exist when the
    --  menu is created (but the menu will always be greyd out if the action
    --  does not exist).
