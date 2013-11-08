@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -1027,14 +1026,12 @@ package body Custom_Module is
             Register_Menu
               (Kernel      => Kernel,
                Parent_Path => Format (Parent_Path) & Title.all,
-               Item        => null,
                Ref_Item    => Before,
                Add_Before  => True);
          elsif After /= "" then
             Register_Menu
               (Kernel      => Kernel,
                Parent_Path => Format (Parent_Path) & Title.all,
-               Item        => null,
                Ref_Item    => After,
                Add_Before  => False);
          end if;
@@ -1118,23 +1115,20 @@ package body Custom_Module is
             if Before /= "" then
                Register_Menu
                  (Kernel,
-                  Dir_Name (Format (Parent_Path) & Title.all)
-                  & Base_Name (Title.all),
+                  Format (Parent_Path) & Title.all,
                   Action => Action,
                   Ref_Item    => Before);
             elsif After /= "" then
                Register_Menu
                  (Kernel,
-                  Dir_Name (Format (Parent_Path) & Title.all)
-                  & Base_Name (Title.all),
+                  Format (Parent_Path) & Title.all,
                   Action => Action,
                   Ref_Item    => After,
                   Add_Before  => False);
             else
                Register_Menu
                  (Kernel,
-                  Dir_Name (Format (Parent_Path) & Title.all)
-                  & Base_Name (Title.all),
+                  Format (Parent_Path) & Title.all,
                   Action => Action);
             end if;
          end if;
@@ -1781,6 +1775,11 @@ package body Custom_Module is
             Filter := Lookup_Filter (Get_Kernel (Data), Name);
             if Filter /= null then
                return Filter;
+            else
+               Insert (Get_Kernel (Data),
+                       -"Invalid filter name: " & Name,
+                       Mode => Error);
+               return null;
             end if;
          end;
 

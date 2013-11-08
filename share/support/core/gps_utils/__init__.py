@@ -198,6 +198,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     :param menu: The name of a menu to associate with the action. It will be
       placed within its parent just before the item referenced as `before`,
       or after the item referenced as `after`.
+
+    :return: a tuple (GPS.Action, GPS.Menu)
+      The menu might be None if you did not request its creation.
     """
 
     doc = callback.__doc__
@@ -213,21 +216,22 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     a = Action(name or callback.__name__)
     a.create(callback, filter=filter, category=category, description=doc)
+
     if menu:
-       if before:
-          a.menu(menu, add_before=True, ref=before)
-       else:
-          a.menu(menu, add_before=False, ref=after)
+        if before:
+           m = a.menu(menu, add_before=True, ref=before)
+        else:
+           m = a.menu(menu, add_before=False, ref=after)
+    else:
+        m = None
 
     if contextual:
         a.contextual(contextual)
 
     if key:
-       if menu:
-          # Bind the key to the menu so that it is visible to the user
-          Action(menu).key(key)
-       else:
-          a.key(key)
+        a.key(key)
+
+    return (a, m)
 
 
 class interactive:

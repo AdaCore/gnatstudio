@@ -24,151 +24,27 @@ following are provided:
 #   - "class browser" -> project view in GPS
 
 import GPS, sys, os.path
-
-GPS.Preference ("Plugins/python_support/port").create (
-   "Pydoc port", "integer", """Port that should be used when spawning the pydoc daemon.
-This is a small local server to which your web browser connects to display the documentation for the standard python library. It is accessed through the /Python menu when editing a python file""", 9432)
+import gps_utils
 
 try:
-  from gi.repository import Gtk
-  has_pygtk=1
+   from gi.repository import Gtk
+   has_pygtk=1
 except:
-  has_pygtk=0
+   has_pygtk=0
 
-pydoc_proc = None
-python_menu = None
 
-def register_doc():
-  GPS.parse_xml ("""
-  <documentation_file>
-     <name>http://www.python.org/doc/2.4.2/tut/tut.html</name>
-     <descr>Python tutorial</descr>
-     <menu>/Python/Python Tutorial</menu>
-     <category>Scripts</category>
-  </documentation_file>
-  <documentation_file>
-     <shell lang="python">python_support.show_python_library()</shell>
-     <descr>Python Library</descr>
-     <menu>/Python/Python Library</menu>
-     <category>Scripts</category>
-  </documentation_file>""")
+class Python_Support(object):
+    def __init__(self):
+        self.port_pref = GPS.Preference("Plugins/python_support/port")
+        self.port_pref.create(
+            "Pydoc port", "integer",
+            """Port that should be used when spawning the pydoc daemon.
+This is a small local server to which your web browser connects to display the
+documentation for the standard python library. It is accessed through the
+/Python menu when editing a python file""",
+            9432)
 
-  if has_pygtk:
-        GPS.parse_xml ("""
-  <documentation_file>
-     <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
-     <descr>PyGTK tutorial</descr>
-     <menu>/Python/PyGTK Tutorial</menu>
-     <category>Scripts</category>
-  </documentation_file>
-  <documentation_file>
-     <name>http://www.pygtk.org/pygtk2reference/index.html</name>
-     <descr>PyGTK Reference Manual</descr>
-     <menu>/Python/PyGTK Reference Manual</menu>
-     <category>Scripts</category>
-  </documentation_file>""")
-
-def create_python_menu():
-  global python_menu
-  if not python_menu:
-     python_menu = GPS.Menu.create ("/Python", ref="Help", add_before=1)
-     GPS.Menu.create ("/Python/Import & Reload", on_activate=reload_file)
-     register_doc ()
-
-def destroy_python_menu():
-  global python_menu
-  if python_menu:
-     python_menu.destroy()
-     python_menu = None
-
-def reload_file (menu):
-  """Reload the currently edited file in python.
-If the file has not been imported yet, import it initially.
-Otherwise, reload the current version of the file."""
-  try:
-     file = GPS.current_context().file()
-     module=os.path.splitext (os.path.basename (file.name()))[0]
-
-     ## The actual import and reload must be done in the context of the
-     ## GPS console so that they are visible there. The current function
-     ## executes in a different context, and would not impact the GPS
-     ## console as a result otherwise.
-
-     ## We cannot use  execfile(...), since that would be the equivalent
-     ## of "from ... import *", not of "import ..."
-
-     if sys.modules.has_key (module):
-        GPS.exec_in_console ("reload (sys.modules[\"" + module + "\"])")
-
-     else:
-        try:
-           sys.path.index (os.path.dirname (file.name()))
-        except:
-           sys.path = [os.path.dirname (file.name())] + sys.path
-        mod = __import__ (module)
-
-        # This would import in the current context, not what we want
-        # exec (compile ("import " + module, "<cmdline>", "exec"))
-
-        ## The proper solution is to execute in the context of the GPS console
-        GPS.exec_in_console ("import " + module)
-
-  except:
-     pass   ## Current context is not a file
-
-def context_changed (hook_name, context):
-  """Called when a new context is activated in GPS"""
-  try:
-    if context.file().language() == "python":
-       create_python_menu()
-    else:
-       destroy_python_menu()
-  except:
-    destroy_python_menu()
-
-def project_recomputed (hook_name):
-  """if python is one of the supported language for the project, add various
-     predefined directories that may contain python files, so that shift-F3
-     works to open these files as it does for the Ada runtime"""
-  GPS.Project.add_predefined_paths(sources="%splug-ins" % GPS.get_home_dir())
-  try:
-    GPS.Project.root().languages (recursive=True).index ("python")
-    # The rest is done only if we support python
-    GPS.Project.add_predefined_paths (sources=os.pathsep.join (sys.path))
-  except:
-    pass
-
-def show_python_library ():
-  """Open a navigator to show the help on the python library"""
-  global pydoc_proc
-
-  pydoc_port = GPS.Preference ("Plugins/python_support/port").get()
-
-  if not pydoc_proc:
-     while 1:
-        pydoc_proc = GPS.Process ("pydoc -p " + `pydoc_port`)
-        out = pydoc_proc.expect ("pydoc server ready|Address already in use", 10000)
-        try:
-           out.rindex ("Address already in use")
-           pydoc_port += 1
-        except:
-           break
-  GPS.HTML.browse ("http://localhost:" + `pydoc_port` + "/")
-
-def before_exit (hook_name):
-  """Called before GPS exits"""
-  global pydoc_proc
-  if pydoc_proc:
-    pydoc_proc.kill()
-    pydoc_proc = None
-  return 1
-
-## Always register python immediately as a language, so that projects that
-## have
-##    for Languages use ("Python");
-## do not have to define a naming scheme and can depend on the default.
-
-GPS.parse_xml ("""
+        XML = """
   <Language>
     <Name>Python</Name>
     <Body_Suffix>.py</Body_Suffix>
@@ -180,7 +56,6 @@ GPS.parse_xml ("""
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
-
     <Categories>
       <Category>
         <Name>class</Name>
@@ -201,8 +76,128 @@ GPS.parse_xml ("""
     <filter id="Source editor" />
      <filter language="Python" />
   </filter_and>
-""")
 
-GPS.Hook ("project_view_changed").add (project_recomputed)
-GPS.Hook ("before_exit_action_hook").add (before_exit)
-GPS.Hook ("context_changed").add (context_changed)
+  <documentation_file>
+     <name>http://docs.python.org/2/tutorial/</name>
+     <descr>Python tutorial</descr>
+     <menu>/Help/Python/Python Tutorial</menu>
+     <category>Scripts</category>
+  </documentation_file>
+  <documentation_file>
+     <shell lang="python">GPS.execute_action('display python library help')</shell>
+     <descr>Python Library</descr>
+     <menu>/Help/Python/Python Library</menu>
+     <category>Scripts</category>
+  </documentation_file>"""
+
+        if has_pygtk:
+            XML += """
+  <documentation_file>
+     <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
+     <descr>PyGTK tutorial</descr>
+     <menu>/Help/Python/PyGTK Tutorial</menu>
+     <category>Scripts</category>
+  </documentation_file>
+  <documentation_file>
+     <name>http://www.pygtk.org/pygtk2reference/index.html</name>
+     <descr>PyGTK Reference Manual</descr>
+     <menu>/Help/Python/PyGTK Reference Manual</menu>
+     <category>Scripts</category>
+  </documentation_file>"""
+
+        GPS.parse_xml(XML)
+
+        gps_utils.make_interactive(
+            callback=self.show_python_library,
+            name='display python library help')
+
+        gps_utils.make_interactive(
+            callback=self.reload_file,
+            name='reload python file',
+            filter='Python file',
+            contextual='Python/Import & Reload')
+
+        self.pydoc_proc = None
+        GPS.Hook("project_view_changed").add(self._project_recomputed)
+        GPS.Hook("before_exit_action_hook").add(self._before_exit)
+
+    def reload_file(self):
+        """
+Reload the currently edited file in python.
+If the file has not been imported yet, import it initially.
+Otherwise, reload the current version of the file.
+        """
+    
+        try:
+           file = GPS.current_context().file()
+           module = os.path.splitext(os.path.basename(file.name()))[0]
+    
+           ## The actual import and reload must be done in the context of the
+           ## GPS console so that they are visible there. The current function
+           ## executes in a different context, and would not impact the GPS
+           ## console as a result otherwise.
+    
+           ## We cannot use  execfile(...), since that would be the equivalent
+           ## of "from ... import *", not of "import ..."
+    
+           if sys.modules.has_key(module):
+              GPS.exec_in_console("reload(sys.modules[\"" + module + "\"])")
+    
+           else:
+              try:
+                 sys.path.index(os.path.dirname(file.name()))
+              except:
+                 sys.path = [os.path.dirname(file.name())] + sys.path
+              mod = __import__(module)
+    
+              # This would import in the current context, not what we want
+              # exec (compile ("import " + module, "<cmdline>", "exec"))
+    
+              ## The proper solution is to execute in the context of the GPS console
+              GPS.exec_in_console("import " + module)
+        except:
+           pass   ## Current context is not a file
+
+    def _project_recomputed(self, hook_name):
+        """
+if python is one of the supported language for the project, add various
+predefined directories that may contain python files, so that shift-F3
+works to open these files as it does for the Ada runtime
+        """
+    
+        GPS.Project.add_predefined_paths(sources="%splug-ins" % GPS.get_home_dir())
+        try:
+            GPS.Project.root().languages(recursive=True).index("python")
+            # The rest is done only if we support python
+            GPS.Project.add_predefined_paths(sources=os.pathsep.join(sys.path))
+        except:
+            pass
+
+    def show_python_library(self):
+        """Open a navigator to show the help on the python library"""
+        base = port = self.port_pref.get()
+        if not self.pydoc_proc:
+            while port - base < 10:
+               self.pydoc_proc = GPS.Process("pydoc -p %s" % port)
+               out = self.pydoc_proc.expect(
+                   "pydoc server ready|Address already in use", 10000)
+               try:
+                   out.rindex(   # raise exception if not found
+                       "Address already in use")
+                   port += 1
+               except:
+                   break
+    
+        GPS.HTML.browse("http://localhost:%s/" % port)
+
+    def _before_exit(self, hook_name):
+        """Called before GPS exits"""
+        if self.pydoc_proc:
+            self.pydoc_proc.kill()
+            self.pydoc_proc = None
+        return 1
+
+
+# Create the class once GPS is started, so that the filter is created
+# immediately when parsing XML, and we can create our actions.
+GPS.Hook("gps_started").add(lambda h: Python_Support())

@@ -294,6 +294,7 @@ class Action(GUI):
         :param path: A string
         :param ref: A string
         :param add_before: A boolean
+        :return: the instance of GPS.Menu that was created
         """
         pass  # implemented in Ada
 
@@ -7220,6 +7221,11 @@ class Menu(GUI):
         Create a new menu in the GPS system. The menu is added at the given
         location (see GPS.Menu.get for more information on the path
         parameter). Submenus are created as necessary so that path is valid.
+
+        It is recommended, nowadays, to use gps_utils.interactive instead of
+        creating menus explicitly. The latter will create GPS actions, to which
+        keybindings can be associated with the user. They can also be executed
+        more conveniently using keyboard only with the omni-search.
 
         If ``on_activate`` is specified, it will be executed every time the user
         selects that menu. It is called with only one parameter, the instance
