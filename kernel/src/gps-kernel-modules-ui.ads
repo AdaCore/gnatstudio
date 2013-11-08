@@ -62,7 +62,6 @@ with GNAT.Strings;
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
-with Gdk.Types;
 with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu;
@@ -74,7 +73,6 @@ with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with XML_Utils;
 
 package GPS.Kernel.Modules.UI is
@@ -333,12 +331,6 @@ package GPS.Kernel.Modules.UI is
        Description : GNATCOLL.VFS.Virtual_File);
    --  Load an XML description of the menubar, and create it.
 
-   type Dynamic_Menu_Factory is access procedure
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Callback that fills Menu according to Context
-
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
@@ -370,49 +362,6 @@ package GPS.Kernel.Modules.UI is
    --  The menu item will be active if Filter matches.
 
    procedure Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Interactive_Command_Access := null;
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Mnemonics   : Boolean := True);
-   --  Same as the above, but creates the menu item directly, and connects the
-   --  appropriate callback. The latter is all of:
-   --     - Callback parameter if the Filter parameter matches
-   --     - Action parameter, if the Action's filter matches
-   --     - Command, if the Filter parameter matches
-   --  The menu item will be active if both of the Action's filter and the
-   --  Filter parameter matches. If none of these are defined, the menu item is
-   --  always visible.
-   --  Sensitive indicates whether the menu item is created sensitive or not.
-   --  Do not bind a default key to the action if you are already binding one
-   --  to the menu. This would result in executing the action twice otherwise.
-   --  Mnemonics indicates whether the menu should be created with mnemonics.
-
-   function Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Interactive_Command_Access := null;
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Mnemonics   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
-   --  Same as above, but returns the menu item that was created
-
-   procedure Register_Menu
      (Kernel     : not null access Kernel_Handle_Record'Class;
       Path       : String;
       Action     : String;
@@ -434,16 +383,6 @@ package GPS.Kernel.Modules.UI is
    --
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.
-
-   procedure Register_Dynamic_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Factory     : Dynamic_Menu_Factory);
-   --  Register a menu that will be generated using Factory
 
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;

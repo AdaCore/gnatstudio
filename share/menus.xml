@@ -195,6 +195,7 @@
          <menu label='Project'/>
          <menu label='Clean'/>
          <menu label='_Run'/>
+         <menu label='_Makefile'/>
          <separator />
          <menu label='Settings'>
             <menu label='_Targets'     action='build open targets settings'/>

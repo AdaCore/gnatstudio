@@ -299,14 +299,8 @@ package body Builder_Facility_Module is
    procedure Install_Button_For_Target (Target : Target_Access);
    --  Install one button in the toolbar
 
-   procedure Clear_Menus;
+   procedure Clear_Actions_And_Menus;
    --  Remove the target build menus
-
-   procedure Install_Menus;
-   --  Install menus for all the targets
-
-   procedure Add_Menu_For_Target (Target : Target_Access);
-   --  Create a menu item to build Target
 
    procedure Set_Parsers_For_Target (Target : Target_Access);
    --  Set list of output parser for given Target
@@ -388,17 +382,12 @@ package body Builder_Facility_Module is
       Data   : access Hooks_Data'Class);
    --  Called when the build mode is being changed by the user
 
-   procedure Add_Action_For_Target (T : Target_Access);
-   --  Register a Kernel Action to build T
+   procedure Add_Action_And_Menu_For_Target (Target : Target_Access);
+   --  Register a Kernel Action to build T and create a menu item to build
+   --  Target
 
-   procedure Add_Actions_For_All_Targets;
+   procedure Add_Actions_And_Menus_For_All_Targets;
    --  Register Kernel Actions for all targets
-
-   procedure Remove_All_Actions;
-   --  Unregister all previously registered Kernel Actions
-
-   function Action_Name (T : Target_Access) return String;
-   --  Return the name of the Kernel Action to build T
 
    procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
@@ -550,67 +539,133 @@ package body Builder_Facility_Module is
       Free (Module.Registry);
    end Destroy;
 
-   -----------------
-   -- Action_Name --
-   -----------------
+   ------------------------------------
+   -- Add_Action_And_Menu_For_Target --
+   ------------------------------------
 
-   function Action_Name (T : Target_Access) return String is
+   procedure Add_Action_And_Menu_For_Target (Target : Target_Access) is
+      C        : Build_Command_Access;
+      M        : Build_Main_Command_Access;
+      N        : constant String := Get_Name (Target);
+      Action   : Unbounded_String;
+      Category : constant String := Get_Category (Target);
+      Cat_Path : Unbounded_String :=
+        To_Unbounded_String (Get_Parent_Menu_Name (Target));
+      Targets  : constant Unbounded_String :=
+        Get_Properties (Target).Target_Type;
+
+      Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
+        and then Category (Category'Last) = '_';
+
+      procedure Menu_For_Action
+        (Main        : Virtual_File;
+         Menu_Name   : String;
+         Action_Name : String);
+      --  Add a menu at Parent_Path for target named Name, with menu name
+      --  Menu_Name
+
+      procedure Menu_For_Action
+        (Main        : Virtual_File;
+         Menu_Name   : String;
+         Action_Name : String)
+      is
+         pragma Unreferenced (Main);
+      begin
+         --  Do nothing is the target is not supposed to be shown in the menu
+         if not Get_Properties (Target).In_Menu
+           or else not Get_Properties (Target).Visible
+         then
+            return;
+         end if;
+
+         Register_Menu
+           (Get_Kernel, To_String (Cat_Path) & Menu_Name,
+            Action => Action_Name, Ref_Item => "Project");
+
+         Builder_Module_ID.Menus.Prepend (Cat_Path & Menu_Name);
+      end Menu_For_Action;
+
    begin
+      if not Toplevel_Menu then
+         Append (Cat_Path, Category & '/');
+      end if;
 
-      return Get_Name (T);
-   end Action_Name;
-
-   ---------------------------
-   -- Add_Action_For_Target --
-   ---------------------------
-
-   procedure Add_Action_For_Target (T : Target_Access) is
-      C      : Build_Command_Access;
-      M      : Build_Main_Command_Access;
-      N      : constant String := Get_Name (T);
-      Name   : constant String := Action_Name (T);
-      Action : Unbounded_String;
-
-   begin
-      if Length (Get_Properties (T).Target_Type) /= 0 then
+      if Length (Targets) /= 0 then
          --  Register the "build main number x"-like actions
 
-         for J in 1 .. 4 loop
-            Create (M, Builder_Module_ID.Builder'Access, N,
-                    To_String (Get_Properties (T).Target_Type), J,
-                    False, Default);
-            Set_Unbounded_String (Action, N & (-" Number") & J'Img);
-            Register_Action
-              (Kernel      => Get_Kernel,
-               Name        => To_String (Action),
-               Command     => M,
-               Description => To_String (Action),
-               Filter      => null,
-               Category    => -"Build",
-               Defined_In  => GNATCOLL.VFS.No_File);
-            Builder_Module_ID.Actions.Append (Action);
-         end loop;
+         declare
+            Data   : aliased String_Hooks_Args :=
+              (Hooks_Data with
+               Length => Length (Targets),
+               Value  => To_String (Targets));
+            Mains  : Any_Type := Run_Hook_Until_Not_Empty
+              (Get_Kernel,
+               Compute_Build_Targets_Hook,
+               Data'Unchecked_Access);
+
+         begin
+            if Mains.Length > 0
+              and then Mains.T /= List_Type
+            then
+               Insert
+                 (Get_Kernel,
+                  (-"The command for determining the target type of target " &
+                   To_String (Targets) & (-" returned a ") & Mains.T'Img
+                     & (-("but should return a LIST_TYPE "
+                       & " (containing a pair display_name/full_name)"))),
+                  Mode => Error);
+
+            else
+               for J in 1 .. Mains.Length loop
+                  if Mains.List (J).Length /= 0 then
+                     Create (M, Builder_Module_ID.Builder'Access, N,
+                             To_String (Targets), J,
+                             False, Default);
+                     Set_Unbounded_String (Action, N & (-" Number") & J'Img);
+                     Register_Action
+                       (Kernel      => Get_Kernel,
+                        Name        => To_String (Action),
+                        Command     => M,
+                        Description => To_String (Action),
+                        Stock_Id    => Get_Icon (Target),
+                        Filter      => null,
+                        Category    => -"Build",
+                        Defined_In  => GNATCOLL.VFS.No_File);
+                     Builder_Module_ID.Actions.Append (Action);
+                     Menu_For_Action
+                       (Main        => Create (+Mains.List (J).Tuple (2).Str),
+                        Action_Name => To_String (Action),
+                        Menu_Name   => Mains.List (J).Tuple (1).Str);
+                  end if;
+               end loop;
+            end if;
+
+            Destroy (Data);
+            Free (Mains);
+         end;
       else
          Create
            (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
-
          Register_Action (Kernel      => Get_Kernel,
-                          Name        => Name,
+                          Name        => N,
                           Command     => C,
                           Description => (-"Build target ") & N,
                           Filter      => null,
+                          Stock_Id    => Get_Icon (Target),
                           Category    => -"Build",
                           Defined_In  => GNATCOLL.VFS.No_File);
-
-         Builder_Module_ID.Actions.Append (To_Unbounded_String (Name));
+         Builder_Module_ID.Actions.Append (To_Unbounded_String (N));
+         Menu_For_Action (Main        => No_File,
+                          Menu_Name   => Get_Menu_Name (Target),
+                          Action_Name => N);
       end if;
-   end Add_Action_For_Target;
+   end Add_Action_And_Menu_For_Target;
 
-   ---------------------------------
-   -- Add_Actions_For_All_Targets --
-   ---------------------------------
+   -------------------------------------------
+   -- Add_Actions_And_Menus_For_All_Targets --
+   -------------------------------------------
 
-   procedure Add_Actions_For_All_Targets is
+   procedure Add_Actions_And_Menus_For_All_Targets is
       C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
       T : Target_Access;
    begin
@@ -618,31 +673,10 @@ package body Builder_Facility_Module is
          T := Get_Target (C);
          exit when T = null;
 
-         Add_Action_For_Target (T);
-
+         Add_Action_And_Menu_For_Target (T);
          Next (C);
       end loop;
-   end Add_Actions_For_All_Targets;
-
-   ------------------------
-   -- Remove_All_Actions --
-   ------------------------
-
-   procedure Remove_All_Actions is
-      use Unbounded_String_List;
-      C : Unbounded_String_List.Cursor;
-   begin
-      loop
-         C := Builder_Module_ID.Actions.First;
-
-         exit when not Has_Element (C);
-
-         Unregister_Action (Kernel => Get_Kernel,
-                            Name   => To_String (Element (C)));
-
-         Builder_Module_ID.Actions.Delete (C);
-      end loop;
-   end Remove_All_Actions;
+   end Add_Actions_And_Menus_For_All_Targets;
 
    ----------------------
    -- Get_Targets_File --
@@ -928,8 +962,11 @@ package body Builder_Facility_Module is
 
    procedure Refresh_Graphical_Elements is
    begin
-      Clear_Menus;
-      Install_Menus;
+      --  Recreate the actions
+      Clear_Actions_And_Menus;
+
+      Add_Actions_And_Menus_For_All_Targets;
+
       Clear_Toolbar_Buttons;
       Install_Toolbar_Buttons;
    end Refresh_Graphical_Elements;
@@ -1092,12 +1129,8 @@ package body Builder_Facility_Module is
                      or else not Builder_Module_ID.Actions.Contains
                        (To_Unbounded_String (Get_Name (T) & (-" Number 1"))))
          then
-            Add_Action_For_Target (T);
-
+            Add_Action_And_Menu_For_Target (T);
             Install_Button_For_Target (T);
-
-            Add_Menu_For_Target (T);
-
             Set_Parsers_For_Target (T);
          end if;
 
@@ -1346,128 +1379,6 @@ package body Builder_Facility_Module is
       end if;
    end Install_Button_For_Target;
 
-   -------------------------
-   -- Add_Menu_For_Target --
-   -------------------------
-
-   procedure Add_Menu_For_Target (Target : Target_Access) is
-      Category : constant String := Get_Category (Target);
-      Cat_Path : Unbounded_String :=
-        To_Unbounded_String (Get_Parent_Menu_Name (Target));
-
-      Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
-        and then Category (Category'Last) = '_';
-
-      procedure Menu_For_Action
-        (Parent_Path : String;
-         Name        : String;
-         Main        : Virtual_File;
-         Menu_Name   : String);
-      --  Add a menu at Parent_Path for target named Name, with menu name
-      --  Menu_Name
-
-      procedure Menu_For_Action
-        (Parent_Path : String;
-         Name        : String;
-         Main        : Virtual_File;
-         Menu_Name   : String)
-      is
-         C : Build_Command_Access;
-      begin
-         Create
-           (C,
-            Builder_Module_ID.Builder'Access,
-            Name,
-            Main,
-            False,
-            Force_Dialog_Unless_Disabled_By_Target);
-
-         Register_Menu (Kernel      => Get_Kernel,
-                        Parent_Path => Parent_Path,
-                        Text        => Menu_Name,
-                        Stock_Image => Get_Icon (Target),
-                        Callback    => null,
-                        Command     => Interactive_Command_Access (C),
-                        Ref_Item    => -"Run",
-                        --  Do not use mnemonics if we are registering a
-                        --  main, as this is a file name in this case.
-                        Mnemonics   => Main = No_File);
-
-         if Toplevel_Menu then
-            Builder_Module_ID.Menus.Prepend
-              (To_Unbounded_String (Parent_Path & Name));
-         else
-            Builder_Module_ID.Menus.Prepend (Cat_Path & "/" & Name);
-         end if;
-      end Menu_For_Action;
-
-      Targets : Unbounded_String;
-
-   begin
-      --  Do nothing is the target is not supposed to be shown in the menu
-      if not Get_Properties (Target).In_Menu
-        or else not Get_Properties (Target).Visible
-      then
-         return;
-      end if;
-
-      if not Toplevel_Menu then
-         Append (Cat_Path, Category);
-
-         if not Builder_Module_ID.Menus.Contains (Cat_Path) then
-            Builder_Module_ID.Menus.Append (Cat_Path);
-         end if;
-      end if;
-
-      Targets := Get_Properties (Target).Target_Type;
-
-      if Length (Targets) /= 0 then
-         declare
-            Data   : aliased String_Hooks_Args :=
-              (Hooks_Data with
-                 Length => Length (Targets),
-                 Value  => To_String (Targets));
-            Mains  : Any_Type :=
-              Run_Hook_Until_Not_Empty
-                 (Get_Kernel,
-                  Compute_Build_Targets_Hook,
-                  Data'Unchecked_Access);
-
-         begin
-            if Mains.Length > 0
-              and then Mains.T /= List_Type
-            then
-               Insert
-                 (Get_Kernel,
-                  (-"The command for determining the target type of target " &
-                   To_String (Targets) & (-" returned a ") & Mains.T'Img
-                     & (-("but should return a LIST_TYPE "
-                       & " (containing a pair display_name/full_name)"))),
-                  Mode => Error);
-
-            else
-               for J in 1 .. Mains.Length loop
-                  if Mains.List (J).Length /= 0 then
-                     Menu_For_Action
-                       (Parent_Path => To_String (Cat_Path),
-                        Name        => Get_Name (Target),
-                        Main        => Create (+Mains.List (J).Tuple (2).Str),
-                        Menu_Name   => Mains.List (J).Tuple (1).Str);
-                  end if;
-               end loop;
-            end if;
-
-            Destroy (Data);
-            Free (Mains);
-         end;
-      else
-         Menu_For_Action (Parent_Path => To_String (Cat_Path),
-                          Name        => Get_Name (Target),
-                          Main        => No_File,
-                          Menu_Name   => Get_Menu_Name (Target));
-      end if;
-   end Add_Menu_For_Target;
-
    ----------------------------
    -- Set_Parsers_For_Target --
    ----------------------------
@@ -1485,11 +1396,11 @@ package body Builder_Facility_Module is
       end if;
    end Set_Parsers_For_Target;
 
-   -----------------
-   -- Clear_Menus --
-   -----------------
+   -----------------------------
+   -- Clear_Actions_And_Menus --
+   -----------------------------
 
-   procedure Clear_Menus is
+   procedure Clear_Actions_And_Menus is
       use Unbounded_String_List;
       C : Unbounded_String_List.Cursor;
       M : Gtk_Menu_Item;
@@ -1506,38 +1417,21 @@ package body Builder_Facility_Module is
             M := Find_Menu_Item (Get_Kernel, Menu_Name);
 
             if M /= null then
-               --  Always keep /Build/Run in place to have a menu item to
-               --  reference when inserting new items.
-
-               if Menu_Name = -"/Build/Run" then
-                  Set_Submenu (M, null);
-               else
-                  Destroy (M);
-               end if;
+               M.Destroy;
             end if;
          end;
 
          Next (C);
       end loop;
-   end Clear_Menus;
 
-   -------------------
-   -- Install_Menus --
-   -------------------
-
-   procedure Install_Menus is
-      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
-      T : Target_Access;
-
-   begin
       loop
-         T := Get_Target (C);
-         exit when T = null;
-
-         Add_Menu_For_Target (T);
-         Next (C);
+         C := Builder_Module_ID.Actions.First;
+         exit when not Has_Element (C);
+         Unregister_Action (Kernel => Get_Kernel,
+                            Name   => To_String (Element (C)));
+         Builder_Module_ID.Actions.Delete (C);
       end loop;
-   end Install_Menus;
+   end Clear_Actions_And_Menus;
 
    -----------------------------
    -- Install_Toolbar_Buttons --
@@ -1576,10 +1470,6 @@ package body Builder_Facility_Module is
          Changes_Made);
 
       if Changes_Made then
-         --  Recreate the actions
-         Remove_All_Actions;
-         Add_Actions_For_All_Targets;
-
          Refresh_Graphical_Elements;
 
          --  Save the user-defined targets

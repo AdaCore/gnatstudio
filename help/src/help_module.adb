@@ -775,16 +775,16 @@ package body Help_Module is
       if Menu_Path /= "" then
          if Menu_Before /= "" then
             Register_Menu
-              (Kernel, Menu_Path, "display documentation " & Descr,
+              (Kernel, Menu_Path, Action => "display documentation " & Descr,
                Ref_Item => Menu_Before, Add_Before => True);
 
          elsif Menu_After /= "" then
             Register_Menu
-              (Kernel, Menu_Path, "display documentation " & Descr,
+              (Kernel, Menu_Path, Action => "display documentation " & Descr,
                Ref_Item => Menu_After, Add_Before => False);
          else
             Register_Menu
-              (Kernel, Menu_Path, "display documentation " & Descr);
+              (Kernel, Menu_Path, Action => "display documentation " & Descr);
          end if;
       end if;
 

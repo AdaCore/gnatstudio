@@ -35,7 +35,6 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -65,6 +64,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -92,12 +92,6 @@ package body GPS.Kernel.Modules.UI is
       Kernel       : Kernel_Handle;
       ID           : Module_ID;
       Event_Widget : Gtk_Widget;
-   end record;
-
-   type Menu_Factory_User_Data is record
-      Kernel  : Kernel_Handle;
-      Factory : Dynamic_Menu_Factory;
-      Menu    : Gtk_Menu;
    end record;
 
    type Contextual_Menu_Type
@@ -218,17 +212,8 @@ package body GPS.Kernel.Modules.UI is
       Command : Interactive_Action);
    --  Execute a single command
 
-   procedure Menu_Button_Press
-     (Widget : access GObject_Record'Class;
-      Data   : Menu_Factory_User_Data);
-   --  Create a menu using the data in Factory
-
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Interactive_Action);
-
-   package Menu_Factory_Callback is
-   new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Menu_Factory_User_Data);
 
    procedure Add_Contextual_Menu
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -1250,34 +1235,6 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Register_Menu;
 
-   -------------------
-   -- Register_Menu --
-   -------------------
-
-   procedure Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Interactive_Command_Access := null;
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Mnemonics   : Boolean := True)
-   is
-      Ignore : Gtk_Menu_Item;
-      pragma Unreferenced (Ignore);
-   begin
-      Ignore := Register_Menu
-        (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
-         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive,
-         Filter, Mnemonics);
-   end Register_Menu;
-
    ---------------------
    -- Execute_Command --
    ---------------------
@@ -1331,121 +1288,6 @@ package body GPS.Kernel.Modules.UI is
       end loop;
       return Output (Output'First .. Index - 1);
    end Cleanup;
-
-   -------------------
-   -- Register_Menu --
-   -------------------
-
-   function Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Interactive_Command_Access := null;
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Mnemonics   : Boolean := True) return Gtk_Menu_Item
-   is
-      use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-
-      Full_Path  : constant String := Cleanup ('/' & Parent_Path & '/' & Text);
-
-      Accel_Path  : constant String := "<gps>" & Full_Path;
-      Item        : Gtk_Menu_Item;
-      Image       : Gtk_Image_Menu_Item;
-      Pix         : Gtk_Image;
-      The_Command : Interactive_Command_Access;
-
-   begin
-      if Stock_Image = "" then
-         if Mnemonics then
-            Gtk_New_With_Mnemonic (Item, Text);
-         else
-            Gtk_New (Item, Text);
-         end if;
-      else
-         if Mnemonics then
-            Gtk_New_With_Mnemonic (Image, Text);
-         else
-            Gtk_New (Image, Text);
-         end if;
-
-         Gtk_New (Pix, Stock_Image, Icon_Size_Menu);
-         Set_Image (Image, Pix);
-         Item := Gtk_Menu_Item (Image);
-      end if;
-
-      Set_Sensitive (Item, Sensitive);
-      Set_Accel_Path (Item, Accel_Path);
-
-      if Guint (Accel_Key) > 0 then
-         Gtk.Accel_Map.Add_Entry
-           (Accel_Path,
-            Accel_Key  => Accel_Key,
-            Accel_Mods => Accel_Mods);
-      end if;
-
-      Register_Menu (Kernel, Parent_Path, Item, Ref_Item, Add_Before);
-
-      if Callback /= null then
-         Kernel_Callback.Connect
-           (Item, Signal_Activate,
-            Kernel_Callback.To_Marshaller (Callback), Kernel_Handle (Kernel));
-      end if;
-
-      if Command /= null then
-         Command_Callback.Connect
-           (Item, Signal_Activate, Execute_Command'Access,
-            User_Data   => (Kernel_Handle (Kernel), Command, Filter));
-         Register_Perma_Command (Kernel, Command);
-      end if;
-
-      if Filter /= null then
-         Register_Filter (Kernel, Filter, "");  --  Memory management only
-         Command_Callback.Object_Connect
-           (Get_Toplevel (Item), Signal_Map, Map_Menu'Access,
-            Slot_Object => Item,
-            User_Data   => (Kernel_Handle (Kernel), null, Filter));
-      end if;
-
-      --  For every menu that we create, register an action
-
-      --  If we already have an action or an interactive command, simply
-      --  reuse it.
-
-      if Command /= null then
-         The_Command := Command;
-      else
-         --  Otherwise, create the wrapper command which will launch the menu
-
-         The_Command := Interactive_Command_Access
-           (Create_Command_For_Menu (Kernel_Handle (Kernel), Full_Path));
-      end if;
-
-      Register_Action
-        (Kernel      => Kernel,
-         Name        => Full_Path,
-         Command     => The_Command,
-         Description => "Menu " & Full_Path,
-         Filter      => Filter,
-         Category    => "Menus");
-
-      if Accel_Key /= 0
-        or else Accel_Mods /= 0
-      then
-         Set_Default_Key (Kernel     => Kernel,
-                          Action     => Full_Path,
-                          Accel_Key  => Accel_Key,
-                          Accel_Mods => Accel_Mods);
-      end if;
-
-      return Item;
-   end Register_Menu;
 
    -------------------
    -- Lookup_Action --
@@ -1734,119 +1576,6 @@ package body GPS.Kernel.Modules.UI is
 
       Set_Sensitive (Gtk_Widget (Item), Filter_Matches (Command.Filter, Ctxt));
    end Map_Menu;
-
-   -----------------------
-   -- Menu_Button_Press --
-   -----------------------
-
-   procedure Menu_Button_Press
-     (Widget : access GObject_Record'Class;
-      Data   : Menu_Factory_User_Data)
-   is
-      pragma Unreferenced (Widget);
-
-      procedure Remove_Item
-        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class);
-      --  Remove one item from Data.Menu
-
-      -----------------
-      -- Remove_Item --
-      -----------------
-
-      procedure Remove_Item
-        (Item : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
-      begin
-         Remove (Data.Menu, Item);
-      end Remove_Item;
-
-   begin
-      --  Remove all items in the menu
-      Ref (Data.Menu);
-      Forall (Data.Menu, Remove_Item'Unrestricted_Access);
-
-      --  Override the previous value.
---        Trace (Me, "Menu_Button_Press: Setting Last_Context_For_Contextual");
---        Data.Kernel.Last_Context_For_Contextual :=
---          Get_Current_Context (Data.Kernel);
-
-      Data.Factory
-        (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
-      Show_All (Data.Menu);
-
-   exception
-      when E : others => Trace (Me, E);
-   end Menu_Button_Press;
-
-   ---------------------------
-   -- Register_Dynamic_Menu --
-   ---------------------------
-
-   procedure Register_Dynamic_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Text        : String;
-      Stock_Image : String := "";
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Factory     : Dynamic_Menu_Factory)
-   is
-      Item, Parent, Pred : Gtk_Menu_Item;
-      Image              : Gtk_Image_Menu_Item;
-      Pix                : Gtk_Image;
-      Menu, Parent_Menu  : Gtk_Menu;
-      Index              : Gint;
-
-   begin
-      if Stock_Image = "" then
-         Gtk_New_With_Mnemonic (Item, Text);
-      else
-         Gtk_New_With_Mnemonic (Image, Text);
-         Gtk_New (Pix, Stock_Image, Icon_Size_Menu);
-         Set_Image (Image, Pix);
-         Item := Gtk_Menu_Item (Image);
-      end if;
-
-      Gtk_New (Menu);
-      Set_Submenu (Item, Menu);
-
-      Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
-         Menu         => null,
-         Path         => Format (Parent_Path),
-         Accelerators => Get_Default_Accelerators (Kernel),
-         Add_Before   => Add_Before,
-         Ref_Item     => Ref_Item,
-         Allow_Create => True);
-
-      if Parent = null then
-         Trace (Me, "Register_Dynamic_Menu: Parent menu not found for " &
-                Parent_Path);
-         Parent_Menu := null;
-      else
-         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
-         if Parent_Menu = null then
-            Gtk_New (Parent_Menu);
-            Set_Submenu (Parent, Parent_Menu);
-         end if;
-      end if;
-
-      Find_Menu_Item_By_Name
-        (GPS_Window (Kernel.Main_Window).Menu_Bar,
-         Parent_Menu, Ref_Item, Pred, Index, False);
-      Add_Menu (Parent     => Parent_Menu,
-                Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
-                Item       => Item,
-                Index      => Index,
-                Add_Before => Add_Before);
-      Show_All (Item);
-
-      if Factory /= null then
-         Menu_Factory_Callback.Connect
-           (Get_Toplevel (Item), Signal_Map,
-            Menu_Factory_Callback.To_Marshaller (Menu_Button_Press'Access),
-            User_Data => (Kernel_Handle (Kernel), Factory, Menu));
-      end if;
-   end Register_Dynamic_Menu;
 
    ---------------------
    -- Register_Button --
