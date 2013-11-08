@@ -97,6 +97,10 @@ package body Generic_Views is
       if Filter.Pattern_Config_Menu /= null then
          Unref (Filter.Pattern_Config_Menu);
       end if;
+
+      if Filter.Timeout /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (Filter.Timeout);
+      end if;
    end On_Destroy;
 
    ----------------------------
