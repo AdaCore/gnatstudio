@@ -122,6 +122,16 @@ private
       package Files_List is new Ada.Containers.Vectors
         (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
 
+      procedure Append_Unique_Files
+        (Target : access Files_List.Vector;
+         Source : access Files_List.Vector);
+      --  Traverse Source appending to Target all the files which are not
+      --  already stored in Target
+
+      procedure Print_Files
+        (Source : access Files_List.Vector);
+      --  (gdb) Prints the name of all the files in Source
+
       function Less_Than
         (Left, Right : GNATCOLL.VFS.Virtual_File) return Boolean;
       package Files_Vector_Sort is new Files_List.Generic_Sorting

@@ -174,13 +174,20 @@ package body GNATdoc is
       --  Check the contents of Src_Files and remove from the list those files
       --  which can not be processed
 
-      function Number_Of_Files
-        (Prj_Files : in out Project_Files_List.Vector) return Natural;
-      --  Return the total number of source files stored in Prj_Files
+      procedure Collect_C_Header_Files
+        (Direct_Include_Files : access Files_List.Vector;
+         All_Include_Files    : access Files_List.Vector);
+      --  Collect in Direct_Include_Files all the C/C++ header files referenced
+      --  directly by files of Prj_Files, and collect in All_Include_Files all
+      --  the C/C++ header files which are transitively referenced by all the
+      --  sources of Prj_Files.
 
-      procedure Prepend_C_Header_Files;
-      --  Prepend to Src_Files all the C and C++ files specified in "#include"
-      --  directives.
+      function Number_Of_Files
+        (Prj_Files     : Project_Files_List.Vector;
+         Include_Files : Files_List.Vector := Files_List.Empty_Vector)
+        return Natural;
+      --  Return the total number of source files stored in Prj_Files plus
+      --  the number of files stored in Include_Files
 
       procedure Check_Src_Files is
 
@@ -291,12 +298,122 @@ package body GNATdoc is
          end loop;
       end Check_Src_Files;
 
+      ----------------------------
+      -- Collect_C_Header_Files --
+      ----------------------------
+
+      procedure Collect_C_Header_Files
+        (Direct_Include_Files : access Files_List.Vector;
+         All_Include_Files    : access Files_List.Vector)
+      is
+         Prj_Srcs : Project_Files;
+
+         procedure Collect_Include_Files
+           (File   : Virtual_File;
+            Result : access Files_List.Vector);
+
+         procedure Collect_Include_Files
+           (File   : Virtual_File;
+            Result : access Files_List.Vector)
+         is
+            Cursor : Xref.Entities_In_File_Cursor;
+            E      : General_Entity;
+            Loc    : General_Location;
+
+         begin
+            Cursor := Database.Entities_In_File (File);
+            while not At_End (Cursor) loop
+               E   := Cursor.Get;
+               Loc := Get_Location (Database, E);
+
+               if Xref.Get_Display_Kind (Database, E) = "include file"
+                 and then not Result.Contains (Loc.File)
+               then
+                  Result.Append (Loc.File);
+               end if;
+
+               Cursor.Next;
+            end loop;
+         end Collect_Include_Files;
+
+         File_Index : Files_List.Cursor;
+         Lang       : Language_Access;
+         Prj_Index  : Project_Files_List.Cursor;
+
+      begin
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               Lang :=
+                 Get_Language_From_File
+                   (Lang_Handler, Files_List.Element (File_Index));
+
+               if Lang.all in Language.C.C_Language'Class then
+                  Collect_Include_Files
+                    (File   => Files_List.Element (File_Index),
+                     Result => Direct_Include_Files);
+               end if;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            Project_Files_List.Next (Prj_Index);
+         end loop;
+
+         --  At this stage Include_Files contains all the header files which
+         --  are directly included by files of the project. Now we continue
+         --  collecting all the headers which are transitively included in
+         --  these header files.
+
+         declare
+            In_Files : aliased Files_List.Vector;
+            Result   : aliased Files_List.Vector;
+
+            use type Ada.Containers.Count_Type;
+         begin
+            Append_Unique_Files
+              (Target => In_Files'Access,
+               Source => Direct_Include_Files);
+
+            while In_Files.Length > 0 loop
+               Result.Clear;
+
+               File_Index := In_Files.First;
+               while Files_List.Has_Element (File_Index) loop
+                  if not All_Include_Files.Contains
+                    (Files_List.Element (File_Index))
+                  then
+                     All_Include_Files.Append
+                       (Files_List.Element (File_Index));
+
+                     Collect_Include_Files
+                       (File   => Files_List.Element (File_Index),
+                        Result => Result'Access);
+                  end if;
+
+                  Files_List.Next (File_Index);
+               end loop;
+
+               In_Files.Clear;
+
+               Append_Unique_Files
+                 (Target   => In_Files'Access,
+                  Source => Result'Access);
+            end loop;
+         end;
+      end Collect_C_Header_Files;
+
       ---------------------
       -- Number_Of_Files --
       ---------------------
 
       function Number_Of_Files
-        (Prj_Files : in out Project_Files_List.Vector) return Natural
+        (Prj_Files     : Project_Files_List.Vector;
+         Include_Files : Files_List.Vector := Files_List.Empty_Vector)
+         return Natural
       is
          Count      : Natural := 0;
          File_Index : Files_List.Cursor;
@@ -319,65 +436,14 @@ package body GNATdoc is
             Project_Files_List.Next (Prj_Index);
          end loop;
 
+         File_Index := Include_Files.First;
+         while Files_List.Has_Element (File_Index) loop
+            Count := Count + 1;
+            Files_List.Next (File_Index);
+         end loop;
+
          return Count;
       end Number_Of_Files;
-
-      ----------------------------
-      -- Prepend_C_Header_Files --
-      ----------------------------
-
-      procedure Prepend_C_Header_Files is
-         Prj_Srcs : Project_Files;
-
-         procedure Prepend_Include_Files (File : Virtual_File);
-         procedure Prepend_Include_Files (File : Virtual_File) is
-            Cursor : Xref.Entities_In_File_Cursor;
-            E      : General_Entity;
-            Loc    : General_Location;
-
-         begin
-            Cursor := Database.Entities_In_File (File);
-            while not At_End (Cursor) loop
-               E   := Cursor.Get;
-               Loc := Get_Location (Database, E);
-
-               if Xref.Get_Display_Kind (Database, E) = "include file"
-                 and then not Prj_Srcs.Src_Files.Contains (Loc.File)
-                  --  should check if the file is included in other
-                  --  subprojects (to avoid duplication)???
-               then
-                  Prj_Srcs.Src_Files.Prepend (Loc.File);
-               end if;
-
-               Cursor.Next;
-            end loop;
-         end Prepend_Include_Files;
-
-         File_Index : Files_List.Cursor;
-         Lang       : Language_Access;
-         Prj_Index  : Project_Files_List.Cursor;
-
-      begin
-         Prj_Index := Prj_Files.First;
-         while Project_Files_List.Has_Element (Prj_Index) loop
-            Prj_Srcs := Project_Files_List.Element (Prj_Index);
-
-            File_Index := Prj_Srcs.Src_Files.First;
-            while Files_List.Has_Element (File_Index) loop
-               Lang :=
-                 Get_Language_From_File
-                   (Lang_Handler, Files_List.Element (File_Index));
-
-               if Lang.all in Language.C.C_Language'Class then
-                  Prepend_Include_Files (Files_List.Element (File_Index));
-               end if;
-
-               Files_List.Next (File_Index);
-            end loop;
-
-            Project_Files_List.Next (Prj_Index);
-         end loop;
-      end Prepend_C_Header_Files;
 
       ----------
       -- Free --
@@ -393,6 +459,14 @@ package body GNATdoc is
       Context : aliased Docgen_Context_Ptr :=
                   new Docgen_Context'
                         (Kernel, Database, Lang_Handler, Options, Prj_Files);
+
+      Direct_Include_Files : aliased Files_List.Vector;
+      --  C and C++ header files which are directly included by files of the
+      --  current project.
+
+      All_Include_Files    : aliased Files_List.Vector;
+      --  All the C and C++ header files which transitively included by all
+      --  the header files of the project
 
    --  Start of processing for Process_Files
 
@@ -412,11 +486,13 @@ package body GNATdoc is
       end if;
 
       if not Context.Options.Skip_C_Files then
-         Prepend_C_Header_Files;
+         Collect_C_Header_Files
+           (Direct_Include_Files'Access, All_Include_Files'Access);
       end if;
 
       Trace (Me,
-        "Number of files to process: " & Number_Of_Files (Prj_Files)'Img);
+        "Number of files to process: "
+        & Number_Of_Files (Prj_Files, All_Include_Files)'Img);
 
       GNATdoc.Time.Reset;
 
@@ -437,9 +513,9 @@ package body GNATdoc is
       --  Process all the files
 
       declare
-         Num_Files  : constant Natural := Number_Of_Files (Prj_Files);
+         Num_Files  : constant Natural :=
+                        Number_Of_Files (Prj_Files, All_Include_Files);
          Count      : Natural := 0;
-         File_Index : Files_List.Cursor;
          All_Files  : Files_List.Vector;
          --  Used to avoid processing a file twice
 
@@ -447,12 +523,12 @@ package body GNATdoc is
          Prj_Index  : Project_Files_List.Cursor;
          Prj_Srcs   : Project_Files;
 
-      begin
-         Prj_Index := Prj_Files.First;
-         while Project_Files_List.Has_Element (Prj_Index) loop
-            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+         procedure Process_Src_Files (Src_Files : access Files_List.Vector);
+         procedure Process_Src_Files (Src_Files : access Files_List.Vector) is
+            File_Index : Files_List.Cursor;
 
-            File_Index := Prj_Srcs.Src_Files.First;
+         begin
+            File_Index := Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
                Count := Count + 1;
 
@@ -485,6 +561,15 @@ package body GNATdoc is
 
                Files_List.Next (File_Index);
             end loop;
+         end Process_Src_Files;
+
+      begin
+         Process_Src_Files (All_Include_Files'Access);
+
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+            Process_Src_Files (Prj_Srcs.Src_Files);
 
             Project_Files_List.Next (Prj_Index);
          end loop;
@@ -493,9 +578,9 @@ package body GNATdoc is
 
          if Tree_List.Has_Element (All_Trees.First) then
             declare
-               Cursor : Tree_List.Cursor;
-               Tree   : aliased Tree_Type;
-
+               Cursor           : Tree_List.Cursor;
+               Tree             : aliased Tree_Type;
+               Is_C_Header_File : Boolean;
             begin
                --  Generate the tree output files. This cannot be done before
                --  because as part of decorating a tree the frontend may
@@ -510,24 +595,39 @@ package body GNATdoc is
 
                   Check_Tree (Context, Tree'Access);
 
-                  if Options.Tree_Output.Kind /= None then
-                     if Options.Tree_Output.Kind = Short then
-                        Treepr.Print_Short_Tree
-                          (Context     => Context,
-                           Tree        => Tree'Access,
-                           With_Scopes => True);
-                     else
-                        Treepr.Print_Full_Tree
-                          (Context     => Context,
-                           Tree        => Tree'Access,
-                           With_Scopes => True);
-                     end if;
-                  end if;
+                  --  We cannot rely on the service Get_Language_From_File
+                  --  because it does not work well with C/C++ header files
 
-                  if Options.Output_Comments then
-                     Treepr.Print_Comments
-                       (Context => Context,
-                        Tree    => Tree'Access);
+                  Is_C_Header_File := All_Include_Files.Contains (Tree.File);
+
+                  --  Target dependant include files generate supurious output
+                  --  differences (even processing only the files which are
+                  --  directly included from the C body files referenced in
+                  --  the project ---available in Direct_Include_Files). For
+                  --  this reason we disable their output. More work will be
+                  --  needed in this area when we decide to provide full
+                  --  support of gnatdoc for C/C++ files.
+
+                  if not Is_C_Header_File then
+                     if Options.Tree_Output.Kind /= None then
+                        if Options.Tree_Output.Kind = Short then
+                           Treepr.Print_Short_Tree
+                             (Context     => Context,
+                              Tree        => Tree'Access,
+                              With_Scopes => True);
+                        else
+                           Treepr.Print_Full_Tree
+                             (Context     => Context,
+                              Tree        => Tree'Access,
+                              With_Scopes => True);
+                        end if;
+                     end if;
+
+                     if Options.Output_Comments then
+                        Treepr.Print_Comments
+                          (Context => Context,
+                           Tree    => Tree'Access);
+                     end if;
                   end if;
 
                   Tree_List.Next (Cursor);
@@ -740,6 +840,45 @@ package body GNATdoc is
    -----------
 
    package body Files is
+
+      -------------------------
+      -- Append_Unique_Files --
+      -------------------------
+
+      procedure Append_Unique_Files
+        (Target : access Files_List.Vector;
+         Source : access Files_List.Vector)
+      is
+         File_Index : Files_List.Cursor;
+      begin
+         File_Index := Source.First;
+         while Files_List.Has_Element (File_Index) loop
+            if not Target.Contains (Files_List.Element (File_Index)) then
+               Target.Append (Files_List.Element (File_Index));
+            end if;
+
+            Files_List.Next (File_Index);
+         end loop;
+      end Append_Unique_Files;
+
+      -----------------
+      -- Print_Files --
+      -----------------
+
+      procedure Print_Files
+        (Source : access Files_List.Vector)
+      is
+         File_Index : Files_List.Cursor;
+      begin
+         GNAT.IO.Put_Line ("---------------");
+         File_Index := Source.First;
+         while Files_List.Has_Element (File_Index) loop
+            GNAT.IO.Put_Line
+              (String (Files_List.Element (File_Index).Base_Name));
+
+            Files_List.Next (File_Index);
+         end loop;
+      end Print_Files;
 
       --------------
       -- Filename --
