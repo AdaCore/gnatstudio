@@ -329,7 +329,7 @@ package body Creation_Wizard.GNATname is
       then
          return "";
       else
-         return -"List of file patters is empty";
+         return -"List of file patterns is empty";
       end if;
    end Is_Complete;
 
