@@ -196,11 +196,13 @@ class gnatCheckProc:
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
          return
-      # launch gnat check with current project
-      cmd = self.gnatCmd + ' check -P """' + project.file().name("Tools_Server") + '"""'
+      # launch gnat check with root project
+      cmd = self.gnatCmd + ' check -P """' +  GPS.Project.root().file().name("Tools_Server") + '"""'
+
       # also analyse subprojects ?
       if recursive:
         cmd += " -U"
+
       # define the scenario variables
       scenario = GPS.Project.scenario_variables()
       if scenario != None:
