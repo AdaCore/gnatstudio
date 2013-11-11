@@ -1135,6 +1135,8 @@ package body Toolchains is
    begin
       if This.Name = null then
          return "";
+      elsif This.Is_Native then
+         return Standard'Target_Name;
       else
          return This.Name.all;
       end if;
