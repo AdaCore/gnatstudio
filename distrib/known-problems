@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB08-004: Extension aggregate highlighted as an aspect
+  Problem:    When typing interactively an extension aggregate, e.g:
+                (Parent with Field => null);
+              the part following the 'with' token is highlighted as an aspect
+              clause.
+  Workaround: This is a display issue only which can be safely ignored.
+
 - MB07-022: GPS: spark integration broken
   Problem:    Due to a last minute change the spark.py module will often
               report a python error.
