@@ -35,6 +35,15 @@ Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
               sideways, but drag the tab downwards first, and then to another
               area.
 
+- M910-014: GPS: gnatcheck is invoked with the local project
+  Problem:    When launching gnatcheck through the menu Tools->Coding Standard
+              ->Check current file, GPS invokes gnatcheck with the project
+              containing this file rather than the root project. This causes
+              unexpected behavior when there are extending projects in the
+              hierarchy.
+  Workaround: Launch gnatcheck manually, for instance using the menu
+              Build->Project->Custom Build.
+
 Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
 
 - MA17-041: GPS: default directory in welcome dialog
