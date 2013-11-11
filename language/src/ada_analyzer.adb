@@ -2299,7 +2299,9 @@ package body Ada_Analyzer is
                end if;
             end if;
 
-            if Prev_Prev_Token /= Tok_Raise
+            if Prev_Prev_Token not in Tok_Raise | Tok_Left_Paren
+            --  Exclude Tok_Raise: raise CE with "string";
+            --  Ditto for Tok_Left_Paren: X := (Parent with Field => null);
               and then
                 ((Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
                     | Tok_Colon
