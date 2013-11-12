@@ -406,6 +406,7 @@ package body VCS.Generic_VCS is
                 Synchronous => False,
                 Dir         => Dirs (J),
                 Args        => Args,
+                Via_Menu    => False,
                 Label       => new String'(Describe_Action (Ref, Dir_Action)),
                 Repeat_Count     => 1,
                 Remaining_Repeat => 0));
@@ -531,6 +532,7 @@ package body VCS.Generic_VCS is
                 Dir              => Dir,
                 Args             => Args,
                 Label            => new String'(Describe_Action (Ref, Action)),
+                Via_Menu         => False,
                 Repeat_Count     => 1,
                 Remaining_Repeat => 0));
 
@@ -601,6 +603,7 @@ package body VCS.Generic_VCS is
           Synchronous      => False,
           Dir              => Dir,
           Args             => Args,
+          Via_Menu         => False,
           Label            => new String'(Describe_Action (Ref, Action)),
           Repeat_Count     => 1,
           Remaining_Repeat => 0));

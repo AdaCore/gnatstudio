@@ -31,7 +31,6 @@ with GPS.Intl;                    use GPS.Intl;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
-with Gdk.Event;                   use Gdk.Event;
 with Gtk.Text_View;               use Gtk.Text_View;
 
 with GPS.Kernel.Console;          use GPS.Kernel.Console;
@@ -368,18 +367,16 @@ package body Build_Command_Manager is
       end if;
 
       case Command.Dialog is
-         when Force_Dialog | Force_No_Dialog
+         when Force_Dialog
+            | Force_No_Dialog
             | Force_Dialog_Unless_Disabled_By_Target =>
             D := Command.Dialog;
 
          when Default =>
-            if Context.Event = null
-              or else Get_Event_Type (Context.Event) = Button_Press
-              or else Get_Event_Type (Context.Event) = Button_Release
-            then
+            if Context.Via_Menu then
                D := Force_Dialog;
             else
-               D := Default;
+               D := Force_No_Dialog;
             end if;
       end case;
 

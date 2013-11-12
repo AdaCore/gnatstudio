@@ -379,8 +379,7 @@ package body GPS.Kernel.Scripts is
             Action_Name : constant String := Nth_Arg (Data, 1);
             Action      : constant Action_Record_Access := Lookup_Action
               (Kernel, Action_Name);
-            Context     : constant Selection_Context :=
-                            Get_Current_Context (Kernel);
+            Context     : Selection_Context;
             Custom      : Command_Access;
             Args        : String_List_Access;
          begin
@@ -393,8 +392,12 @@ package body GPS.Kernel.Scripts is
                else
                   Set_Error_Msg (Data, -"No such action: " & Action_Name);
                end if;
+               return;
+            end if;
 
-            elsif Context = No_Context then
+            Context := Get_Current_Context (Kernel);
+
+            if Context = No_Context then
                Set_Error_Msg
                  (Data, -"No current context, can't execute action");
 
@@ -415,6 +418,8 @@ package body GPS.Kernel.Scripts is
                               Synchronous => Synchronous,
                               Dir         => No_File,
                               Args        => Args,
+                              Via_Menu    =>
+                                Action_Name (Action_Name'First) = '/',
                               Label       => new String'(Nth_Arg (Data, 1)),
                               Repeat_Count     => 1,
                               Remaining_Repeat => 0));

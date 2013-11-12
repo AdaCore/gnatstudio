@@ -51,6 +51,10 @@ package Commands.Interactive is
 
       Label   : GNAT.Strings.String_Access;
 
+      Via_Menu : Boolean := False;
+      --  Whether this action is executed through a menu, a toolbar button or
+      --  through a script calling GPS.execute_action("/path")
+
       Repeat_Count     : Positive := 1;
       Remaining_Repeat : Natural := 0;
       --  The number of times that this command has been executed in a row,
@@ -71,6 +75,7 @@ package Commands.Interactive is
                      Dir              => No_File,
                      Args             => null,
                      Label            => null,
+                     Via_Menu         => False,
                      Repeat_Count     => 1,
                      Remaining_Repeat => 0);
 

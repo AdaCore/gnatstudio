@@ -1209,7 +1209,15 @@ package body GPS.Kernel.Modules.UI is
            (Command.Kernel,
             Create_Proxy
               (Command.Command,
-               (null, Context, False, No_File, null, null, 1, 0)),
+               (Event            => null,
+                Context          => Context,
+                Synchronous      => False,
+                Dir              => No_File,
+                Args             => null,
+                Label            => null,
+                Via_Menu         => True,
+                Repeat_Count     => 1,
+                Remaining_Repeat => 0)),
             Destroy_On_Exit => False,  --  ??? Should this be True
             Active          => True, Show_Bar => False, Queue_Id => "");
 
@@ -1320,7 +1328,15 @@ package body GPS.Kernel.Modules.UI is
            (Self.Kernel,
             Create_Proxy
               (Self.Action.Command,
-               (null, Context, False, No_File, null, null, 1, 0)),
+               (Event            => null,
+                Context          => Context,
+                Synchronous      => False,
+                Dir              => No_File,
+                Via_Menu         => True,
+                Args             => null,
+                Label            => null,
+                Repeat_Count     => 1,
+                Remaining_Repeat => 0)),
             Destroy_On_Exit => True);
 
       elsif Get_Error_Message (Self.Action.Filter) /= "" then

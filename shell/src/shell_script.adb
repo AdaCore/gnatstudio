@@ -253,6 +253,7 @@ package body Shell_Script is
                      Dir         => No_File,
                      Args        => new Argument_List'(Clone (Get_Args (D))),
                      Label       => null,
+                     Via_Menu    => False,
                      Repeat_Count => 1,
                      Remaining_Repeat => 0));
 

@@ -1356,6 +1356,7 @@ package body Completion_Window is
                         Context     => Context,
                         Synchronous => True,
                         Dir         => No_File,
+                        Via_Menu    => False,
                         Args        => new GNAT.Strings.String_List (1 .. 0),
                         Label       => new String'(""),
                         Repeat_Count     => 1,

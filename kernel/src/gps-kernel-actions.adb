@@ -19,6 +19,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -356,6 +357,10 @@ package body GPS.Kernel.Actions is
                      Synchronous => False,
                      Dir         => No_File,
                      Args        => null,
+                     Via_Menu    =>
+                       Event /= null and then
+                         (Get_Event_Type (Event) = Button_Press or else
+                          Get_Event_Type (Event) = Button_Release),
                      Label       => new String'(Action.Name.all),
                      Repeat_Count => R,
                      Remaining_Repeat => Repeat - R)),
