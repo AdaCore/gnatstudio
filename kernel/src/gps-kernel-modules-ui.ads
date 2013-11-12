@@ -339,7 +339,11 @@ package GPS.Kernel.Modules.UI is
       Add_Before  : Boolean := True;
       Filter      : Action_Filter  := null);
    --  Add new menu items to the menu bar, as a child of Parent_Path.
-   --  Parent_Path should have a form like "/main_main/submenu".
+   --
+   --  Parent_Path should have a form like "/main_main/submenu". Underscores
+   --  are not used for mnemonics, and will be present in the final menu.
+   --  Use String_Utils.Strip_Single_Underscores if needed.
+   --
    --  Menus will be created if they don't exist.
    --  This is considered as an absolute path, as if it always started with
    --  a '/'.

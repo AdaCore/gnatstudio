@@ -69,6 +69,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 with System;                    use System;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -1174,8 +1175,9 @@ package body GPS.Kernel.Modules.UI is
 
          if Item.Get_Child /= null then
             declare
-               Full : constant String :=
-                 Create_Menu_Path ('/' & Parent_Path, Item.Get_Label);
+               Full : constant String := Create_Menu_Path
+                 ('/' & Parent_Path, Item.Get_Label,
+                  Remove_Underlines => Item.Get_Use_Underline);
             begin
                Register_Action
                  (Kernel      => Kernel,
@@ -1447,6 +1449,7 @@ package body GPS.Kernel.Modules.UI is
 
       --  Add it to the menubar. We do not use Dir_Name, which would ignore
       --  escaping and would use '\' as a separator.
+
       Register_Menu
         (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
@@ -2316,12 +2319,9 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          if Action /= "" then
-            --  ??? Inefficient, we do not need to look for existing items
-            --  here, since we are creating the menu bar from scratch.
-            --  ??? Can we use this even if the action is ""
             Item := Register_Menu
-              (Kernel, Parent_Path & "/" & Label, Action,
-               Optional => Optional);
+              (Kernel, Parent_Path & "/" & Label,
+               Action, Optional => Optional, Use_Mnemonics => True);
          else
             Gtk_New_With_Mnemonic (Item, Label);
             Parent.Append (Item);
@@ -2336,7 +2336,9 @@ package body GPS.Kernel.Modules.UI is
 
             while N /= null loop
                if Node_Name (N) = "menu" then
-                  Process_Menu (Parent_Path & "/" & Label, Menu, N);
+                  Process_Menu
+                    (Parent_Path & "/" & Strip_Single_Underscores (Label),
+                     Menu, N);
                elsif Node_Name (N) = "separator" then
                   Gtk_New (Sep);
                   Menu.Append (Sep);

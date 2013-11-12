@@ -1416,7 +1416,10 @@ package body GUI_Utils is
    -- Create_Menu_Path --
    ----------------------
 
-   function Create_Menu_Path (Parent, Menu : String) return String is
+   function Create_Menu_Path
+     (Parent, Menu : String;
+      Remove_Underlines : Boolean := False) return String
+   is
       function Cleanup (Path : String) return String;
       --  Remove duplicate // in Path
 
@@ -1425,9 +1428,12 @@ package body GUI_Utils is
          Index  : Natural := Output'First;
       begin
          for P in Path'Range loop
-            if Path (P) /= '/'
-              or else P + 1 > Path'Last
-              or else Path (P + 1) /= '/'
+            if (not Remove_Underlines
+                or else Path (P) /= '_')
+              and then
+                (Path (P) /= '/'
+                 or else P + 1 > Path'Last
+                 or else Path (P + 1) /= '/')
             then
                Output (Index) := Path (P);
                Index          := Index + 1;

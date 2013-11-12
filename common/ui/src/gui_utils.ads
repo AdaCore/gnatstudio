@@ -459,7 +459,9 @@ package GUI_Utils is
    --  Return the name of the menu item, from its path.
    --  This removes the escaping that might been added thought Escape_Menu_Name
 
-   function Create_Menu_Path (Parent, Menu : String) return String;
+   function Create_Menu_Path
+     (Parent, Menu : String;
+      Remove_Underlines : Boolean := False) return String;
    --  Create a menu from its parent (possibly empty) and its name (which might
    --  need to be escaped first).
 
