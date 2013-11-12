@@ -1412,18 +1412,88 @@ package body GUI_Utils is
       end if;
    end Find_Menu_Item_By_Name;
 
+   ----------------------
+   -- Escape_Menu_Name --
+   ----------------------
+
+   function Escape_Menu_Name (Name : String) return String is
+      R : Unbounded_String;
+   begin
+      for N in Name'Range loop
+         if Name (N) = '/' or else Name (N) = '\' then
+            Append (R, '\' & Name (N));
+         else
+            Append (R, Name (N));
+         end if;
+      end loop;
+      return To_String (R);
+   end Escape_Menu_Name;
+
+   ------------------------
+   -- Unescape_Menu_Name --
+   ------------------------
+
+   function Unescape_Menu_Name (Name : String) return String is
+      R : Unbounded_String;
+      Index : Natural := Name'First;
+   begin
+      while Index <= Name'Last loop
+         if Name (Index) = '\' and then Index < Name'Last then
+            Index := Index + 1;
+         end if;
+         Append (R, Name (Index));
+         Index := Index + 1;
+      end loop;
+      return To_String (R);
+   end Unescape_Menu_Name;
+
+   ----------------------
+   -- Parent_Menu_Name --
+   ----------------------
+
+   function Parent_Menu_Name (Name : String) return String is
+   begin
+      for N in reverse Name'Range loop
+         if Name (N) = '/' and then
+           (N = Name'First
+            or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
+         then
+            return Name (Name'First .. N);
+         end if;
+      end loop;
+      return "/";
+   end Parent_Menu_Name;
+
+   --------------------
+   -- Base_Menu_Name --
+   --------------------
+
+   function Base_Menu_Name (Path : String) return String is
+   begin
+      for N in reverse Path'Range loop
+         if Path (N) = '/'
+           and then N /= Path'First
+           and then Path (N - 1) /= '\'
+           and then Path (N - 1) /= '<'   --  ignore pango markup
+         then
+            return Unescape_Menu_Name (Path (N + 1 .. Path'Last));
+         end if;
+      end loop;
+      return Path;
+   end Base_Menu_Name;
+
    ------------------------------
    -- Find_Or_Create_Menu_Tree --
    ------------------------------
 
    function Find_Or_Create_Menu_Tree
-     (Menu_Bar     : Gtk_Menu_Bar;
-      Menu         : Gtk_Menu;
-      Path         : String;
-      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
-      Allow_Create : Boolean := True;
-      Ref_Item     : String  := "";
-      Add_Before   : Boolean := True;
+     (Menu_Bar      : Gtk_Menu_Bar;
+      Menu          : Gtk_Menu;
+      Path          : String;
+      Accelerators  : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create  : Boolean := True;
+      Ref_Item      : String  := "";
+      Add_Before    : Boolean := True;
       Use_Mnemonics : Boolean := True;
       New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk_Menu_Item
@@ -1457,9 +1527,10 @@ package body GUI_Utils is
 
          Find_Menu_Item_By_Name
            (Menu_Bar, Parent,
-            Strip_Character (Path (First .. Last - 1), '\'),
+            Unescape_Menu_Name (Path (First .. Last - 1)),
             Menu_Item, Index,
             Use_Mnemonics => Use_Mnemonics);
+
          exit when Menu_Item = null;
 
          --  Have we found the item ?
@@ -1480,6 +1551,13 @@ package body GUI_Utils is
             Last := First + 1;
             Skip_To_Char (Path, Last, '/');
 
+            if Last > First and then Last < Path'Last
+              and then Path (Last - 1) = '\'
+            then
+               Last := Last + 1;
+               Skip_To_Char (Path, Last, '/');
+            end if;
+
             if Last > Path'Last and then New_Item /= null then
                Menu_Item := Gtk_Menu_Item (New_Item);
             else
@@ -1487,9 +1565,11 @@ package body GUI_Utils is
             end if;
 
             if Use_Mnemonics then
-               Initialize_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+               Initialize_With_Mnemonic
+                 (Menu_Item, Unescape_Menu_Name (Path (First .. Last - 1)));
             else
-               Initialize (Menu_Item, Path (First .. Last - 1));
+               Initialize
+                 (Menu_Item, Unescape_Menu_Name (Path (First .. Last - 1)));
             end if;
 
             --  Should we create a submenu ?

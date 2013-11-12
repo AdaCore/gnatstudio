@@ -446,6 +446,19 @@ package GUI_Utils is
    --  function. If it is used, it is returned by this function. If it isn't
    --  used, memory is deallocated for it through Unchecked_Deallocation.
 
+   function Escape_Menu_Name (Name : String) return String;
+   function Unescape_Menu_Name (Name : String) return String;
+   --  Escape special characters in the menu name, so that
+   --  Find_Or_Create_Menu_Tree keeps this as a single name, unsplit.
+
+   function Parent_Menu_Name (Name : String) return String;
+   --  Return the path to the parent menu. The return value always ends with
+   --  a trailing '/'
+
+   function Base_Menu_Name (Path : String) return String;
+   --  Return the name of the menu item, from its path.
+   --  This removes the escaping that might been added thought Escape_Menu_Name
+
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;
       Menu_Bar   : Gtk.Menu_Bar.Gtk_Menu_Bar := null;

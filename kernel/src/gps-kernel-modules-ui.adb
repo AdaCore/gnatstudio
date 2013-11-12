@@ -20,7 +20,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -246,14 +245,6 @@ package body GPS.Kernel.Modules.UI is
    package Context_User_Data is new Glib.Object.User_Data (Selection_Context);
    package Integer_User_Data is new Glib.Object.User_Data (Integer);
 
-   function Base_Menu_Name (Path : String) return String;
-   --  Return the base name of a menu path. '/' is the menu separator. This
-   --  subprogram handles pango markup correctly.
-
-   function Dir_Menu_Name (Path : String) return String;
-   --  Return the directory name of a menu path. '/' is the menu separator.
-   --  This subprogram handles pango markup correctly.
-
    function Cleanup (Path : String) return String;
    --  Remove duplicate // in Path
 
@@ -360,42 +351,6 @@ package body GPS.Kernel.Modules.UI is
          return Failure;
       end if;
    end Execute;
-
-   --------------------
-   -- Base_Menu_Name --
-   --------------------
-
-   function Base_Menu_Name (Path : String) return String is
-   begin
-      for J in reverse Path'Range loop
-         if Path (J) = '/'
-           and then J > Path'First
-           and then Path (J - 1) /= '<'
-         then
-            return Path (J + 1 .. Path'Last);
-         end if;
-      end loop;
-
-      return Path;
-   end Base_Menu_Name;
-
-   -------------------
-   -- Dir_Menu_Name --
-   -------------------
-
-   function Dir_Menu_Name (Path : String) return String is
-   begin
-      for J in reverse Path'Range loop
-         if Path (J) = '/'
-           and then ((J > Path'First and then Path (J - 1) /= '<')
-                     or else J = Path'First)
-         then
-            return Path (Path'First .. J);
-         end if;
-      end loop;
-
-      return Path;
-   end Dir_Menu_Name;
 
    ----------------------
    -- Get_Focus_Widget --
@@ -840,7 +795,7 @@ package body GPS.Kernel.Modules.UI is
                   C2 := Convert (Kernel.Contextual);
                   while C2 /= null loop
                      if C2.Filter_Matched then
-                        if Dir_Menu_Name ('/' & Label_Name (C2, Context)) =
+                        if Parent_Menu_Name ('/' & Label_Name (C2, Context)) =
                           '/' & Full_Name.all & '/'
                         then
                            Create_Item (C2, Context, Item, Full2);
@@ -938,7 +893,7 @@ package body GPS.Kernel.Modules.UI is
          Context : Selection_Context) return Boolean
       is
          Label  : constant String := Label_Name (C, Context);
-         Parent : constant String := Dir_Menu_Name ('/' & Label);
+         Parent : constant String := Parent_Menu_Name ('/' & Label);
          C2     : Contextual_Menu_Access;
       begin
          if Parent /= "/" then
@@ -1005,7 +960,7 @@ package body GPS.Kernel.Modules.UI is
                Parent_Item := Find_Or_Create_Menu_Tree
                  (Menu_Bar      => null,
                   Menu          => Menu,
-                  Path          => Dir_Menu_Name ('/' & Full_Name.all),
+                  Path          => Parent_Menu_Name ('/' & Full_Name.all),
                   Accelerators  => Get_Default_Accelerators (Kernel),
                   Allow_Create  => True,
                   Use_Mnemonics => False);
@@ -1182,7 +1137,7 @@ package body GPS.Kernel.Modules.UI is
       Parent := Find_Or_Create_Menu_Tree
         (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
-         Path         => Format (Parent_Path),
+         Path         => Parent_Path,
          Accelerators => Get_Default_Accelerators (Kernel),
          Add_Before   => Add_Before,
          Ref_Item     => Ref_Item,
@@ -1201,8 +1156,11 @@ package body GPS.Kernel.Modules.UI is
 
       if Item /= null then
          Find_Menu_Item_By_Name
-           (GPS_Window (Kernel.Main_Window).Menu_Bar,
-            Parent_Menu, Ref_Item, Pred, Index);
+           (Menu_Bar => GPS_Window (Kernel.Main_Window).Menu_Bar,
+            Menu => Parent_Menu,
+            Name => Ref_Item,
+            Menu_Item => Pred,
+            Index => Index);
          Add_Menu (Parent     => Parent_Menu,
                    Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
                    Item       => Item,
@@ -1483,10 +1441,10 @@ package body GPS.Kernel.Modules.UI is
 
       if Use_Mnemonics then
          Gtk.Image_Menu_Item.Initialize_With_Mnemonic
-           (Self, Label => Base_Name (Path));
+           (Self, Label => Base_Menu_Name (Path));
       else
          Gtk.Image_Menu_Item.Initialize
-           (Self, Label => Base_Name (Path));
+           (Self, Label => Base_Menu_Name (Path));
       end if;
 
       Self.Name := new String'(Action);
@@ -1495,8 +1453,10 @@ package body GPS.Kernel.Modules.UI is
       Self.Set_Accel_Path (Accel_Path);
       Get_Style_Context (Self).Add_Class ("gpsaction");
 
-      --  Add it to the menubar
-      Register_Menu (Kernel, Dir_Name (Path), Self, Ref_Item, Add_Before);
+      --  Add it to the menubar. We do not use Dir_Name, which would ignore
+      --  escaping and would use '\' as a separator.
+      Register_Menu
+        (Kernel, Parent_Menu_Name (Path), Self, Ref_Item, Add_Before);
 
       --  And now setup the dynamic behavior
 

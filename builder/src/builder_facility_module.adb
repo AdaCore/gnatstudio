@@ -58,6 +58,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Search;                use GPS.Search;
+with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -581,7 +582,7 @@ package body Builder_Facility_Module is
          end if;
 
          Register_Menu
-           (Get_Kernel, To_String (Cat_Path) & Menu_Name,
+           (Get_Kernel, To_String (C) & Escape_Menu_Name (Menu_Name),
             Action => Action_Name, Ref_Item => "Project",
 
             --  Do not use mnemonics if we are registering a
@@ -590,9 +591,9 @@ package body Builder_Facility_Module is
 
          if Main = No_File then
             Builder_Module_ID.Menus.Prepend
-              (C & Strip_Single_Underscores (Menu_Name));
+              (C & Strip_Single_Underscores (Escape_Menu_Name (Menu_Name)));
          else
-            Builder_Module_ID.Menus.Prepend (C & Menu_Name);
+            Builder_Module_ID.Menus.Prepend (C & Escape_Menu_Name (Menu_Name));
          end if;
       end Menu_For_Action;
 
@@ -644,9 +645,7 @@ package body Builder_Facility_Module is
                         Command     => M,
                         Description => To_String (Action),
                         Stock_Id    => Get_Icon (Target),
-                        Filter      => null,
-                        Category    => -"Build",
-                        Defined_In  => GNATCOLL.VFS.No_File);
+                        Category    => -"Build");
                      Builder_Module_ID.Actions.Append (Action);
                      Menu_For_Action
                        (Main        => Create (+Mains.List (J).Tuple (2).Str),
@@ -680,10 +679,8 @@ package body Builder_Facility_Module is
                           Name        => N,
                           Command     => C,
                           Description => (-"Build target ") & N,
-                          Filter      => null,
                           Stock_Id    => Get_Icon (Target),
-                          Category    => -"Build",
-                          Defined_In  => GNATCOLL.VFS.No_File);
+                          Category    => -"Build");
          Builder_Module_ID.Actions.Append (To_Unbounded_String (N));
          Menu_For_Action (Main        => No_File,
                           Menu_Name   => Get_Menu_Name (Target),
