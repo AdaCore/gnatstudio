@@ -245,9 +245,6 @@ package body GPS.Kernel.Modules.UI is
    package Context_User_Data is new Glib.Object.User_Data (Selection_Context);
    package Integer_User_Data is new Glib.Object.User_Data (Integer);
 
-   function Cleanup (Path : String) return String;
-   --  Remove duplicate // in Path
-
    function Create_Command_For_Menu
      (Kernel    : Kernel_Handle;
       Full_Path : String) return Menu_Command;
@@ -1178,7 +1175,7 @@ package body GPS.Kernel.Modules.UI is
          if Item.Get_Child /= null then
             declare
                Full : constant String :=
-                 Cleanup ("/" & Parent_Path & "/" & Item.Get_Label);
+                 Create_Menu_Path ('/' & Parent_Path, Item.Get_Label);
             begin
                Register_Action
                  (Kernel      => Kernel,
@@ -1225,27 +1222,6 @@ package body GPS.Kernel.Modules.UI is
                  -"Invalid context for this action", Mode => Error);
       end if;
    end Execute_Command;
-
-   -------------
-   -- Cleanup --
-   -------------
-
-   function Cleanup (Path : String) return String is
-      Output : String (Path'Range);
-      Index  : Natural := Output'First;
-   begin
-      for P in Path'Range loop
-         if Path (P) /= '_'
-           and then (Path (P) /= '/'
-                     or else P + 1 > Path'Last
-                     or else Path (P + 1) /= '/')
-         then
-            Output (Index) := Path (P);
-            Index := Index + 1;
-         end if;
-      end loop;
-      return Output (Output'First .. Index - 1);
-   end Cleanup;
 
    -------------------
    -- Lookup_Action --
@@ -1426,13 +1402,13 @@ package body GPS.Kernel.Modules.UI is
       Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item
    is
       Self : Action_Menu_Item;
-      Full_Path : constant String := Cleanup ('/' & Path);
+      Full_Path : constant String := Create_Menu_Path ("/", Path);
       Accel_Path  : constant String := "<gps>" & Full_Path;
       Item : Gtk_Menu_Item;
    begin
-      Item := Find_Menu_Item (Kernel, Path);
+      Item := Find_Menu_Item (Kernel, Full_Path);
       if Item /= null then
-         Trace (Me, "Menu registered twice: " & Path);
+         Trace (Me, "Menu registered twice: " & Full_Path);
          return Item;
       end if;
 
@@ -1441,10 +1417,10 @@ package body GPS.Kernel.Modules.UI is
 
       if Use_Mnemonics then
          Gtk.Image_Menu_Item.Initialize_With_Mnemonic
-           (Self, Label => Base_Menu_Name (Path));
+           (Self, Label => Base_Menu_Name (Full_Path));
       else
          Gtk.Image_Menu_Item.Initialize
-           (Self, Label => Base_Menu_Name (Path));
+           (Self, Label => Base_Menu_Name (Full_Path));
       end if;
 
       Self.Name := new String'(Action);
@@ -1456,7 +1432,7 @@ package body GPS.Kernel.Modules.UI is
       --  Add it to the menubar. We do not use Dir_Name, which would ignore
       --  escaping and would use '\' as a separator.
       Register_Menu
-        (Kernel, Parent_Menu_Name (Path), Self, Ref_Item, Add_Before);
+        (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
       --  And now setup the dynamic behavior
 

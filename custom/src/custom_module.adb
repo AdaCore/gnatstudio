@@ -1025,13 +1025,13 @@ package body Custom_Module is
          if Before /= "" then
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path => Format (Parent_Path) & Title.all,
+               Parent_Path => Create_Menu_Path (Parent_Path, Title.all),
                Ref_Item    => Before,
                Add_Before  => True);
          elsif After /= "" then
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path => Format (Parent_Path) & Title.all,
+               Parent_Path => Create_Menu_Path (Parent_Path, Title.all),
                Ref_Item    => After,
                Add_Before  => False);
          end if;
@@ -1041,10 +1041,10 @@ package body Custom_Module is
                null; --  Already handled
             elsif To_Lower (Child.Tag.all) = "submenu" then
                Parse_Submenu_Node
-                 (Child, Format (Parent_Path) & Title.all);
+                 (Child, Create_Menu_Path (Parent_Path, Title.all));
             elsif To_Lower (Child.Tag.all) = "menu" then
                Parse_Menu_Node
-                 (Child, Format (Parent_Path) & Title.all);
+                 (Child, Create_Menu_Path (Parent_Path, Title.all));
             elsif To_Lower (Child.Tag.all) = "menu_item"
               or else To_Lower (Child.Tag.all) = "toolbar_item"
             then
@@ -1082,6 +1082,7 @@ package body Custom_Module is
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access := new String'("");
          Sep     : Gtk_Separator_Menu_Item;
+
       begin
          Child := Node.Child;
          while Child /= null loop
@@ -1115,20 +1116,20 @@ package body Custom_Module is
             if Before /= "" then
                Register_Menu
                  (Kernel,
-                  Format (Parent_Path) & Title.all,
+                  Create_Menu_Path (Parent_Path, Title.all),
                   Action => Action,
                   Ref_Item    => Before);
             elsif After /= "" then
                Register_Menu
                  (Kernel,
-                  Format (Parent_Path) & Title.all,
+                  Create_Menu_Path (Parent_Path, Title.all),
                   Action => Action,
                   Ref_Item    => After,
                   Add_Before  => False);
             else
                Register_Menu
                  (Kernel,
-                  Format (Parent_Path) & Title.all,
+                  Create_Menu_Path (Parent_Path, Title.all),
                   Action => Action);
             end if;
          end if;

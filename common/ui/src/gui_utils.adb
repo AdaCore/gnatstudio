@@ -1413,6 +1413,41 @@ package body GUI_Utils is
    end Find_Menu_Item_By_Name;
 
    ----------------------
+   -- Create_Menu_Path --
+   ----------------------
+
+   function Create_Menu_Path (Parent, Menu : String) return String is
+      function Cleanup (Path : String) return String;
+      --  Remove duplicate // in Path
+
+      function Cleanup (Path : String) return String is
+         Output              : String (Path'Range);
+         Index               : Natural := Output'First;
+      begin
+         for P in Path'Range loop
+            if Path (P) /= '_'
+              and then (Path (P) /= '/'
+                        or else P + 1 > Path'Last
+                        or else Path (P + 1) /= '/')
+            then
+               Output (Index)          := Path (P);
+               Index                   := Index + 1;
+            end if;
+         end loop;
+         return Output (Output'First .. Index - 1);
+      end Cleanup;
+
+   begin
+      if Parent = "" then
+         return Cleanup (Menu);
+      elsif Parent (Parent'Last) = '/' then
+         return Cleanup (Parent & Menu);
+      else
+         return Cleanup (Parent & '/' & Menu);
+      end if;
+   end Create_Menu_Path;
+
+   ----------------------
    -- Escape_Menu_Name --
    ----------------------
 
