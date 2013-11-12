@@ -52,8 +52,9 @@ package Commands.Interactive is
       Label   : GNAT.Strings.String_Access;
 
       Via_Menu : Boolean := False;
-      --  Whether this action is executed through a menu, a toolbar button or
-      --  through a script calling GPS.execute_action("/path")
+      --  Whether this action is executed through a menu or through a script
+      --  calling GPS.execute_action("/path"). This is set to False for toolbar
+      --  buttons.
 
       Repeat_Count     : Positive := 1;
       Remaining_Repeat : Natural := 0;

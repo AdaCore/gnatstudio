@@ -1217,7 +1217,7 @@ package body GPS.Kernel.Modules.UI is
                 Dir              => No_File,
                 Args             => null,
                 Label            => null,
-                Via_Menu         => True,
+                Via_Menu         => False,
                 Repeat_Count     => 1,
                 Remaining_Repeat => 0)),
             Destroy_On_Exit => False,  --  ??? Should this be True
