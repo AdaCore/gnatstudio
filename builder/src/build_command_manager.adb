@@ -31,6 +31,7 @@ with GPS.Intl;                    use GPS.Intl;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
+with Gdk.Event;                   use Gdk.Event;
 with Gtk.Text_View;               use Gtk.Text_View;
 
 with GPS.Kernel.Console;          use GPS.Kernel.Console;
@@ -333,8 +334,6 @@ package body Build_Command_Manager is
      (Command : access Build_Main_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
-
       Target_Type : constant String := To_String (Command.Target_Type);
       Data        : aliased String_Hooks_Args :=
                       (Hooks_Data with
@@ -344,6 +343,7 @@ package body Build_Command_Manager is
         (Kernel_Handle (Command.Builder.Kernel),
          Compute_Build_Targets_Hook,
          Data'Unchecked_Access);
+      D : Dialog_Mode;
 
    begin
       if Mains.T /= List_Type then
@@ -367,13 +367,29 @@ package body Build_Command_Manager is
          return Failure;
       end if;
 
+      case Command.Dialog is
+         when Force_Dialog | Force_No_Dialog
+            | Force_Dialog_Unless_Disabled_By_Target =>
+            D := Command.Dialog;
+
+         when Default =>
+            if Context.Event = null
+              or else Get_Event_Type (Context.Event) = Button_Press
+              or else Get_Event_Type (Context.Event) = Button_Release
+            then
+               D := Force_Dialog;
+            else
+               D := Default;
+            end if;
+      end case;
+
       Launch_Target
         (Target_Name => To_String (Command.Target_Name),
          Mode_Name   => "",
          Force_File  => No_File,
          Extra_Args  => null,
          Quiet       => Command.Quiet,
-         Dialog      => Command.Dialog,
+         Dialog      => D,
          Synchronous => False,
          Background  => False,
          Main        => Create (+Mains.List (Command.Main).Tuple (2).Str),

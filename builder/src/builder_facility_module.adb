@@ -591,7 +591,7 @@ package body Builder_Facility_Module is
 
          if Main = No_File then
             Builder_Module_ID.Menus.Prepend
-              (C & Strip_Single_Underscores (Escape_Menu_Name (Menu_Name)));
+              (C & Escape_Menu_Name (Strip_Single_Underscores (Menu_Name)));
          else
             Builder_Module_ID.Menus.Prepend (C & Escape_Menu_Name (Menu_Name));
          end if;

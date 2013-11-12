@@ -1421,17 +1421,16 @@ package body GUI_Utils is
       --  Remove duplicate // in Path
 
       function Cleanup (Path : String) return String is
-         Output              : String (Path'Range);
-         Index               : Natural := Output'First;
+         Output : String (Path'Range);
+         Index  : Natural := Output'First;
       begin
          for P in Path'Range loop
-            if Path (P) /= '_'
-              and then (Path (P) /= '/'
-                        or else P + 1 > Path'Last
-                        or else Path (P + 1) /= '/')
+            if Path (P) /= '/'
+              or else P + 1 > Path'Last
+              or else Path (P + 1) /= '/'
             then
-               Output (Index)          := Path (P);
-               Index                   := Index + 1;
+               Output (Index) := Path (P);
+               Index          := Index + 1;
             end if;
          end loop;
          return Output (Output'First .. Index - 1);
