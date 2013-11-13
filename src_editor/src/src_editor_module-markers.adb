@@ -257,9 +257,11 @@ package body Src_Editor_Module.Markers is
          --  sure that On_Destroy_Mark will never be call with the dangling
          --  File_Marker pointer.
 
-         Disconnect (Marker.Buffer, Marker.Cid);
-         Weak_Unref (Marker.Buffer,
-                     On_Destroy_Buffer'Access, Convert (M1));
+         if not Source_Buffer (Marker.Buffer).In_Destruction then
+            Disconnect (Marker.Buffer, Marker.Cid);
+            Weak_Unref (Marker.Buffer,
+                        On_Destroy_Buffer'Access, Convert (M1));
+         end if;
 
          --  Remove the mark from the buffer, but do not Unref it (since we do
          --  not own a reference, the buffer does).
