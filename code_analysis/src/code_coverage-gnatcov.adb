@@ -17,6 +17,8 @@
 
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Intl;                   use GPS.Intl;
@@ -33,13 +35,45 @@ package body Code_Coverage.GNATcov is
      := GNATCOLL.Traces.Create
        ("GNATCOV_CODE_COVERAGE_MODULE", GNATCOLL.Traces.On);
 
+   type Coverage_Status_Char_Type is
+     array (GNATcov_Line_Coverage_Status) of Character;
+   Coverage_Status_Char : constant Coverage_Status_Char_Type :=
+     (Undetermined             => ' ',
+      No_Code                  => ' ',
+      Not_Covered              => '-',
+      Partially_Covered        => '!',
+      Branch_Partially_Covered => '?',
+      Branch_Taken             => '>',
+      Branch_Fallthrough       => 'v',
+      Branch_Covered           => '*',
+      Covered_No_Branch        => '+');
+
+   type Cst_String_Access is access constant String;
+   type Coverage_Status_Color_Type is
+     array (GNATcov_Line_Coverage_Status) of Cst_String_Access;
+   Not_Covered_Color       : aliased constant String := "red";
+   Partially_Covered_Color : aliased constant String := "orange";
+   Fully_Covered_Color     : aliased constant String := "green";
+   Coverage_Status_Color : constant Coverage_Status_Color_Type :=
+     (Undetermined              => null,
+      No_Code                   => null,
+      Not_Covered               => Not_Covered_Color'Access,
+      GNATcov_Partially_Covered => Partially_Covered_Color'Access,
+      GNATcov_Fully_Covered     => Fully_Covered_Color'Access);
+
+   function Coverage_Verbose_Message
+     (Coverage : GNATcov_Line_Coverage)
+      return String;
+   --  Return an localized message that describe why some line is not covered.
+   --  Return an empty string if there is no coverage issue.
+
    -------------------
    -- Add_File_Info --
    -------------------
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access)
+      File_Contents : GNAT.OS_Lib.String_Access)
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
@@ -52,6 +86,10 @@ package body Code_Coverage.GNATcov is
       Lines_Count       : Natural := 0;
       Not_Cov_Count     : Natural := 0;
       Line_Coverage     : GNATcov_Line_Coverage_Access;
+
+      Location_Regexp   : constant Pattern_Matcher := Compile
+        ("\sat (\d+):(\d+)\s", Multiple_Lines);
+      Location_Matches  : Match_Array (0 .. 2);
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
          File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -185,6 +223,55 @@ package body Code_Coverage.GNATcov is
          end if;
 
          Current := Line_Matches (0).Last + 1;
+
+         --  If detailed messages about the previous line follow, add them
+         --  to the line coverage information.
+
+         --  TODO??? Yield one separate coverage data per message instead of
+         --  one coverage data per line and multiple messages per line.
+
+         declare
+            Details_First : Natural := Current + 1;
+            Details_Last  : Natural;
+            Column        : Basic_Types.Visible_Column_Type;
+         begin
+            while Details_First <= File_Contents'Last
+              and then File_Contents (Details_First) /= ' '
+            loop
+               Details_Last := Index
+                 (File_Contents.all, (1 => ASCII.LF), Details_First);
+               if Details_Last = 0 then
+                  Details_Last := File_Contents'Last;
+               end if;
+
+               Current := Details_Last + 1;
+
+               if File_Contents (Details_Last) = ASCII.LF then
+                  Details_Last := Details_Last - 1;
+               end if;
+
+               Match
+                 (Location_Regexp,
+                  File_Contents (Details_First .. Details_Last),
+                  Location_Matches,
+                  Details_First);
+               if Location_Matches (0) = No_Match then
+                  Column := 0;
+               else
+                  Column := Basic_Types.Visible_Column_Type'Value
+                    (File_Contents
+                       (Location_Matches (2).First
+                        .. Location_Matches (2).Last));
+               end if;
+
+               Line_Coverage.Items.Append
+                 ((Column  => Column,
+                   Message => To_Unbounded_String
+                     (File_Contents (Details_First .. Details_Last))));
+               Details_First := Current;
+            end loop;
+         end;
+
       end loop;
 
       Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
@@ -203,51 +290,69 @@ package body Code_Coverage.GNATcov is
       Kernel      : GPS.Kernel.Kernel_Handle;
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
-      Line_Text   : String_Access;
+      Line_Text   : GNAT.OS_Lib.String_Access;
       Added       : in out Boolean;
       Allow_Auto_Jump_To_First : Boolean)
    is
-      Message : Simple_Message_Access;
-   begin
-      if Coverage.Status = Not_Covered then
-         Added := True;
-         Message :=
-           Create_Simple_Message
-             (Get_Messages_Container (Kernel),
-              Uncovered_Category,
-              File,
-              Line_Number,
-              1,
-              Line_Text.all,
-              0,
-              Coverage_Message_Flags,
-              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Message.Set_Highlighting
-           (Get_Or_Create_Style_Copy
-              (Kernel,
-               Get_Name (Builder_Styles (Warnings)) & '/' & Uncovered_Category,
-               Builder_Styles (Warnings)));
+      pragma Unreferenced (Line_Text);
 
-      elsif Coverage.Status in GNATcov_Partially_Covered then
-         Added := True;
-         Message :=
+      Coverage_Category : Cst_String_Access;
+
+      procedure Add_Location
+        (Column  : Basic_Types.Visible_Column_Type;
+         Message : String);
+      --  Helper to add a message in the location window for the current line
+
+      procedure Add_Location
+        (Column  : Basic_Types.Visible_Column_Type;
+         Message : String)
+      is
+         Msg : Simple_Message_Access;
+      begin
+         Msg :=
            Create_Simple_Message
              (Get_Messages_Container (Kernel),
-              Partially_Covered_Category,
+              Coverage_Category.all,
               File,
               Line_Number,
-              1,
-              Line_Text.all,
+              Column,
+              Message,
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Message.Set_Highlighting
+         Msg.Set_Highlighting
            (Get_Or_Create_Style_Copy
               (Kernel,
                Get_Name (Builder_Styles (Warnings))
-               & '/' & Partially_Covered_Category,
+               & '/' & Coverage_Category.all,
                Builder_Styles (Warnings)));
+      end Add_Location;
+
+   begin
+      if Coverage.Status = Not_Covered then
+         Coverage_Category := Uncovered_Category'Unrestricted_Access;
+
+      elsif Coverage.Status in GNATcov_Partially_Covered then
+         Coverage_Category := Partially_Covered_Category'Unrestricted_Access;
+
+      else
+         return;
       end if;
+
+      --  Add one entry for each detailed message
+
+      for Item of Coverage.Items loop
+         Added := True;
+         Add_Location (Item.Column, To_String (Item.Message));
+      end loop;
+
+      --  Fallback to a default message if there was no detailed message
+
+      if not Added then
+         Added := True;
+         Add_Location (0, Coverage_Verbose_Message (Coverage));
+      end if;
+
    end Add_Location_If_Uncovered;
 
    ------------------------
@@ -266,72 +371,18 @@ package body Code_Coverage.GNATcov is
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close  : constant String := "</span>";
 
-      Not_Covered_Color       : constant String := "red";
-      Partially_Covered_Color : constant String := "orange";
-      Fully_Covered_Color     : constant String := "green";
-
+      Text   : constant String := Coverage_Verbose_Message (Coverage);
       Result : GPS.Editors.Line_Information.Line_Information_Record;
-
    begin
-      case Coverage.Status is
-         when No_Code =>
-            null;
-
-         when Not_Covered =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Not_Covered_Color
-               & Pango_Markup_To_Open_2 & "-" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has not been executed.");
-
-         when Partially_Covered =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Partially_Covered_Color
-               & Pango_Markup_To_Open_2 & "!" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has been partially executed.");
-
-         when Branch_Partially_Covered =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Partially_Covered_Color
-               & Pango_Markup_To_Open_2 & "?" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-("The code for this line has been executed,"
-               & " but not all decisions taken"));
-
-         when Covered_No_Branch =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Fully_Covered_Color
-               & Pango_Markup_To_Open_2 & "+" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has been executed, no branches");
-
-         when Branch_Taken =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Partially_Covered_Color
-               & Pango_Markup_To_Open_2 & ">" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-("The code for this line has been executed,"
-               & " branch taken"));
-
-         when Branch_Fallthrough =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Partially_Covered_Color
-               & Pango_Markup_To_Open_2 & "v" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-("The code for this line has been executed,"
-               & " branch fallthrough"));
-
-         when Branch_Covered =>
-            Result.Text := new String'
-              (Pango_Markup_To_Open_1 & Fully_Covered_Color
-               & Pango_Markup_To_Open_2 & "*" & Pango_Markup_To_Close);
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has been executed, branch covered");
-
-         when Undetermined =>
-            Result.Text := new String'(-"Undetermined");
-      end case;
+      if Text /= "" then
+         Result.Text := new String'
+           (Pango_Markup_To_Open_1
+            & Coverage_Status_Color (Coverage.Status).all
+            & Pango_Markup_To_Open_2
+            & Coverage_Status_Char (Coverage.Status)
+            & Pango_Markup_To_Close);
+         Result.Tooltip_Text := new String'(Text);
+      end if;
 
       return Result;
    end Line_Coverage_Info;
@@ -345,5 +396,46 @@ package body Code_Coverage.GNATcov is
    begin
       return Self.Status /= Undetermined;
    end Is_Valid;
+
+   ------------------------------
+   -- Coverage_Verbose_Message --
+   ------------------------------
+
+   function Coverage_Verbose_Message
+     (Coverage : GNATcov_Line_Coverage)
+      return String
+   is
+   begin
+      case Coverage.Status is
+         when No_Code =>
+            return "";
+
+         when Not_Covered =>
+            return -"The code for this line has not been executed.";
+
+         when Partially_Covered =>
+            return -"The code for this line has been partially executed.";
+
+         when Branch_Partially_Covered =>
+            return -("The code for this line has been executed,"
+                     & " but not all decisions taken");
+
+         when Covered_No_Branch =>
+            return -"The code for this line has been executed, no branches";
+
+         when Branch_Taken =>
+            return -("The code for this line has been executed, branch taken");
+
+         when Branch_Fallthrough =>
+            return -("The code for this line has been executed,"
+                     & " branch fallthrough");
+
+         when Branch_Covered =>
+            return -"The code for this line has been executed, branch covered";
+
+         when Undetermined =>
+            return -"Undetermined";
+      end case;
+   end Coverage_Verbose_Message;
 
 end Code_Coverage.GNATcov;

@@ -15,6 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
+
+with Basic_Types;
 with GNATCOLL.VFS;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
@@ -39,8 +43,24 @@ package Code_Coverage.GNATcov is
    subtype GNATcov_Fully_Covered is
      GNATcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
 
+   type GNATcov_Item_Coverage is record
+      Column  : Basic_Types.Visible_Column_Type;
+      Message : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+   --  One line can contain multiple coverage items, and each coverage item can
+   --  have independant coverage issues.
+
+   package Item_Vectors is new Ada.Containers.Vectors
+     (Index_Type   => Natural,
+      Element_Type => GNATcov_Item_Coverage);
+
    type GNATcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
-      Status : GNATcov_Line_Coverage_Status := Undetermined;
+      Status  : GNATcov_Line_Coverage_Status := Undetermined;
+      --  Simple coverage status
+
+      Items : Item_Vectors.Vector;
+      --  Detailed description about what/why not covered for each not fully
+      --  covered item.
    end record;
 
    type GNATcov_Line_Coverage_Access is access all GNATcov_Line_Coverage'Class;
