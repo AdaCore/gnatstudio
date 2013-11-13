@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with GNAT.Strings;             use GNAT.Strings;
 
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
@@ -62,6 +63,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Main_Window;          use GPS.Main_Window;
 
 with GPS.Editors;              use GPS.Editors;
@@ -1595,5 +1597,16 @@ package body GPS.Kernel.MDI is
          C.Raise_Child (Give_Focus => Give_Focus);
       end if;
    end Raise_Locations_Window;
+
+   ---------------------
+   -- Get_Child_Class --
+   ---------------------
+
+   function Get_Child_Class
+     (Self : not null access GPS_MDI_Child_Record)
+     return GNATCOLL.Scripts.Class_Type is
+   begin
+      return Get_GUI_Class (Self.Kernel);
+   end Get_Child_Class;
 
 end GPS.Kernel.MDI;

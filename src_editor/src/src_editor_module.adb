@@ -65,6 +65,7 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
@@ -118,6 +119,8 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    overriding function Save_Desktop
      (Self  : not null access Editor_Child_Record) return Node_Ptr;
+   overriding function Get_Child_Class
+     (Self  : not null access Editor_Child_Record) return Class_Type;
    --  See inherited documentation
 
    function Source_File_Hook
@@ -781,6 +784,16 @@ package body Src_Editor_Module is
          Unchecked_Free (Infos);
       end if;
    end Execute;
+
+   ---------------------
+   -- Get_Child_Class --
+   ---------------------
+
+   overriding function Get_Child_Class
+     (Self  : not null access Editor_Child_Record) return Class_Type is
+   begin
+      return New_Class (Self.Kernel, "EditorView");
+   end Get_Child_Class;
 
    ------------------
    -- Save_Desktop --

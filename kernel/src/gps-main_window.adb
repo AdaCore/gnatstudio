@@ -947,6 +947,7 @@ package body GPS.Main_Window is
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, MDI_Window_Class);
       Child  : constant MDI_Child := MDI_Child (GObject'(Get_Data (Inst)));
       Child2 : MDI_Child;
+      Klass  : Class_Type;
       Widget : Gtk_Widget;
       Orientation : Gtk_Orientation;
       Result : Class_Instance;
@@ -1042,13 +1043,19 @@ package body GPS.Main_Window is
       elsif Command = "get_child" then
          Widget := Get_Widget (Child);
          Result := Get_Instance (Get_Script (Data), Widget);
-         if Result /= No_Class_Instance then
-            Set_Return_Value (Data, Result);
-         else
-            Result := New_Instance (Get_Script (Data), Get_GUI_Class (Kernel));
+
+         if Result = No_Class_Instance then
+            if Child.all in GPS_MDI_Child_Record'Class then
+               Klass := GPS_MDI_Child (Child).Get_Child_Class;
+            else
+               Klass := Get_GUI_Class (Kernel);
+            end if;
+
+            Result := New_Instance (Get_Script (Data), Klass);
             Set_Data (Result, GObject (Widget));
-            Set_Return_Value (Data, Result);
          end if;
+
+         Set_Return_Value (Data, Result);
       end if;
    end Default_Window_Command_Handler;
 
