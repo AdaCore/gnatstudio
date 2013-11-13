@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MB13-062: GPS: the key shortcuts are not display in some Build menus
+  Problem:    The key shortcuts are not displayed in some menus that
+              are present under the Build toplevel menu.
+  Workaround: None.
+
 - MB01-006: GPS: create_missing_dirs not working with trailing separators
   Problem:    The plugin create_missing_dirs.py does not create directories
               that are specified with a trailing directory separator.
