@@ -1047,6 +1047,9 @@ package body GPS.Main_Window is
          if Result = No_Class_Instance then
             if Child.all in GPS_MDI_Child_Record'Class then
                Klass := GPS_MDI_Child (Child).Get_Child_Class;
+               if Klass = No_Class then
+                  Klass := Get_GUI_Class (Kernel);
+               end if;
             else
                Klass := Get_GUI_Class (Kernel);
             end if;

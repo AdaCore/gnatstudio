@@ -201,6 +201,7 @@ package GPS.Kernel.MDI is
      return GNATCOLL.Scripts.Class_Type;
    --  Return the class to use for instances representing the widget
    --  contained in Self.
+   --  Might return No_Class to use the default GPS.GUI class
 
    function Get_Module_From_Child
      (Child : Gtkada.MDI.MDI_Child) return Module_ID;
