@@ -62,6 +62,7 @@ def print_in_console(debug, txt):
 ###################################
 
 @interactive(name="debug graph display local variables",
+             category="Debug",
              filter="Debugger active")
 def display_local_vars(menu):
     """
@@ -126,7 +127,7 @@ Contextual("debug print as decimal").create(
 # Continuing till a specific line #
 ###################################
 
-@interactive(name="continue till line", category="Debugger",
+@interactive(name="continue till line", category="Debug",
              filter="Debugger active", key="primary-b")
 def continue_till_line():
     """

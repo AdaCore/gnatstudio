@@ -1577,7 +1577,7 @@ package body GVD.Memory_View is
         (Kernel, "examine memory", Command,
          -("Examine the contents of the memory at the location of the variable"
            & " under the cursor"),
-         Category => -"Debugger",
+         Category => -"Debug",
          Filter   => Lookup_Filter (Kernel, "Debugger stopped"));
 
       Command := new View_Memory_Command;

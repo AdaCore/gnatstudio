@@ -18,7 +18,6 @@
 with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
@@ -196,14 +195,6 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, create them for all files.
 
-   type File_And_Kernel_Record is record
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      File    : GNATCOLL.VFS.Virtual_File;
-   end record;
-
-   package File_And_Kernel_Cb is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, File_And_Kernel_Record);
-
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
       File    : GNATCOLL.VFS.Virtual_File;
@@ -229,8 +220,12 @@ package body GVD_Module is
    -- Menu Callbacks --
    --------------------
 
-   procedure On_Debug_Init
-     (Object : access GObject_Record'Class; Data : File_And_Kernel_Record);
+   type Initialize_Debugger_Command is new Interactive_Command with record
+      Exec   : Virtual_File;
+   end record;
+   overriding function Execute
+     (Command : access Initialize_Debugger_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Initialize
 
    type Connect_To_Board_Command is new Interactive_Command with null record;
@@ -1795,18 +1790,18 @@ package body GVD_Module is
          Get_Project (Kernel), Args);
    end Debug_Init;
 
-   -------------------
-   -- On_Debug_Init --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Debug_Init
-     (Object : access GObject_Record'Class;
-      Data   : File_And_Kernel_Record)
+   overriding function Execute
+     (Command : access Initialize_Debugger_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Object);
    begin
-      Debug_Init (Data.Kernel, Data.File, "");
-   end On_Debug_Init;
+      Debug_Init (Get_Kernel (Context.Context), Command.Exec, "");
+      return Commands.Success;
+   end Execute;
 
    ------------------------
    -- Setup_Side_Columns --
@@ -2201,65 +2196,86 @@ package body GVD_Module is
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       use GNAT.OS_Lib;
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
-      Mitem             : Gtk_Menu_Item;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
       Iter              : Project_Iterator := Loaded_Project.Start;
       Current_Project   : Project_Type := Current (Iter);
       Tmp               : Project_Type;
-      Debuggable_Suffix : GNAT.Strings.String_Access := Get_Debuggable_Suffix;
+
+      procedure Create_Action_And_Menu
+        (Prj : Project_Type; Main : Virtual_File; M : Integer);
+      --  Create the action and menu to initialize a specific executable
 
       procedure Add_Entries (Mains : in out Argument_List; Prj : Project_Type);
       --  Add menu entries for all executables in Main. Main is freed on exit
 
-      procedure Add_Entries
-        (Mains : in out Argument_List; Prj : Project_Type)
+      ----------------------------
+      -- Create_Action_And_Menu --
+      ----------------------------
+
+      procedure Create_Action_And_Menu
+        (Prj : Project_Type; Main : Virtual_File; M : Integer)
       is
+         Main_Name : constant String :=
+           (if Main = No_File then
+               -"<no main file>"
+            else
+               Escape_Menu_Name (Main.Display_Base_Name));
+
+         Action  : constant String := "debug initialize " & Main_Name;
+         Menu    : constant String := "/Debug/Initialize/" & Main_Name;
+         Command : Interactive_Command_Access;
+         Item    : Gtk_Menu_Item;
+      begin
+         Command := new Initialize_Debugger_Command'
+           (Interactive_Command with Exec => Main);
+         Unregister_Action (Kernel, Action);
+         Register_Action
+           (Kernel, Action, Command,
+            -"Initialize the debugger on the file "
+            & Main.Display_Full_Name,
+            Category => -"Debug");
+         Item := Register_Menu (Kernel, Menu, Action => Action);
+
+         --  Only set accelerators for main units of the root project
+         if Prj = No_Project or else Prj = Loaded_Project then
+
+            if Main = No_File then
+               Set_Accel_Path (Item, Debug_Menu_Prefix & "<no main>",
+                               Get_Default_Accelerators (Kernel));
+            else
+               Set_Accel_Path
+                 (Item, Debug_Menu_Prefix & "item" & Image (M),
+                  Get_Default_Accelerators (Kernel));
+            end if;
+         end if;
+      end Create_Action_And_Menu;
+
+      -----------------
+      -- Add_Entries --
+      -----------------
+
+      procedure Add_Entries
+        (Mains : in out Argument_List; Prj : Project_Type) is
       begin
          for M in reverse Mains'Range loop
             declare
                Exec : constant Filesystem_String :=
                  Prj.Executable_Name (+Mains (M).all);
                Dir  : constant Virtual_File := Executables_Directory (Prj);
-               File : Virtual_File;
-
             begin
-               Gtk_New (Mitem, +Exec);
-               --  ??? What if Exec is not utf-8 ?
-               Prepend (Menu, Mitem);
-
                if Dir = No_File then
-                  File := Create_From_Base (Exec);
+                  Create_Action_And_Menu (Prj, Create_From_Base (Exec), M);
                else
-                  File := Create_From_Dir (Dir, Exec);
-               end if;
-
-               File_And_Kernel_Cb.Connect
-                 (Mitem, Gtk.Menu_Item.Signal_Activate,
-                  On_Debug_Init'Access,
-                  User_Data   => File_And_Kernel_Record'
-                    (Kernel  => Kernel_Handle (Kernel),
-                     File    => File));
-
-               --  Only set accelerators for main units of the root project
-               if Prj = Loaded_Project then
-                  Set_Accel_Path
-                    (Mitem, Debug_Menu_Prefix & "item" & Image (M),
-                     Get_Default_Accelerators (Kernel));
+                  Create_Action_And_Menu (Prj, Create_From_Dir (Dir, Exec), M);
                end if;
             end;
          end loop;
-
-         Free (Mains);
       end Add_Entries;
 
    begin
       --  Remove all existing menus
 
       Remove_All_Children (Menu);
-
-      if Debuggable_Suffix = null then
-         Debuggable_Suffix := new String'("");
-      end if;
 
       --  The following loop should be factorized with the one in the builder
       --  module (see Builder_Module.On_View_Changed).
@@ -2302,22 +2318,14 @@ package body GVD_Module is
          Current_Project := Current (Iter);
       end loop;
 
-      Free (Debuggable_Suffix);
-
       --  Specific entry to start the debugger without any main program
-      Gtk_New (Mitem, -"<no main file>");
-      Append (Menu, Mitem);
-      File_And_Kernel_Cb.Connect
-        (Mitem, Gtk.Menu_Item.Signal_Activate, On_Debug_Init'Access,
-         User_Data   => File_And_Kernel_Record'
-           (Kernel  => Kernel_Handle (Kernel),
-            File    => GNATCOLL.VFS.No_File));
-      Set_Accel_Path (Mitem, Debug_Menu_Prefix & "<no main>",
-                      Get_Default_Accelerators (Kernel));
+
+      Create_Action_And_Menu (No_Project, No_File, 0);
       Show_All (Menu);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          Debug_Terminate (Kernel_Handle (Kernel));
    end On_View_Changed;
 
