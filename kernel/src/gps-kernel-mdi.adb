@@ -63,7 +63,6 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Main_Window;          use GPS.Main_Window;
 
 with GPS.Editors;              use GPS.Editors;
@@ -102,6 +101,8 @@ package body GPS.Kernel.MDI is
    MDI_Homogeneous_Tabs  : Boolean_Preference;
 
    Desktop_Name : constant Filesystem_String := "perspectives6.xml";
+
+   UI_Module : General_UI_Module;
 
    -----------------------
    -- Local subprograms --
@@ -1559,8 +1560,6 @@ package body GPS.Kernel.MDI is
    -- Register_Module --
    ---------------------
 
-   UI_Module : General_UI_Module;
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
@@ -1604,9 +1603,11 @@ package body GPS.Kernel.MDI is
 
    function Get_Child_Class
      (Self : not null access GPS_MDI_Child_Record)
-     return GNATCOLL.Scripts.Class_Type is
+      return GNATCOLL.Scripts.Class_Type
+   is
+      pragma Unreferenced (Self);
    begin
-      return Get_GUI_Class (Self.Kernel);
+      return No_Class;
    end Get_Child_Class;
 
 end GPS.Kernel.MDI;
