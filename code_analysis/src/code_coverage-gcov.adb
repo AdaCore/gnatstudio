@@ -200,10 +200,13 @@ package body Code_Coverage.Gcov is
    ------------------------
 
    overriding function Line_Coverage_Info
-     (Coverage : Gcov_Line_Coverage;
+     (Coverage : access Gcov_Line_Coverage;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record
    is
+      pragma Unreferenced (Kernel);
+
       Pango_Markup_To_Open_1 : constant String := "<span foreground=""";
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close  : constant String := "</span>";

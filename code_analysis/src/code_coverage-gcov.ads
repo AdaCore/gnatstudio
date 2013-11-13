@@ -35,7 +35,8 @@ package Code_Coverage.Gcov is
    overriding function Is_Valid (Self : Gcov_Line_Coverage) return Boolean;
 
    overriding function Line_Coverage_Info
-     (Coverage : Gcov_Line_Coverage;
+     (Coverage : access Gcov_Line_Coverage;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record;
 

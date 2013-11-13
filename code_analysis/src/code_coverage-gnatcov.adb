@@ -15,19 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                use Ada.Strings;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings;                  use Ada.Strings;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
-with GNAT.Regpat;                use GNAT.Regpat;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
-with GPS.Styles;                 use GPS.Styles;
-with GPS.Styles.UI;              use GPS.Styles.UI;
-with Coverage_GUI;               use Coverage_GUI;
+with GNAT.Regpat;                  use GNAT.Regpat;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Styles;            use GPS.Kernel.Styles;
+with GPS.Styles;                   use GPS.Styles;
+with GPS.Styles.UI;                use GPS.Styles.UI;
+with Coverage_GUI;                 use Coverage_GUI;
 
 package body Code_Coverage.GNATcov is
 
@@ -61,11 +63,26 @@ package body Code_Coverage.GNATcov is
       GNATcov_Partially_Covered => Partially_Covered_Color'Access,
       GNATcov_Fully_Covered     => Fully_Covered_Color'Access);
 
+   Details_Style_Name        : constant String :=
+     "GNATcov inlined details";
+   --  Style used for special lines containing GNATcov report details. Keep
+   --  this synchronized with the "gnatcov" Python plug-in.
+
    function Coverage_Verbose_Message
      (Coverage : GNATcov_Line_Coverage)
       return String;
    --  Return an localized message that describe why some line is not covered.
    --  Return an empty string if there is no coverage issue.
+
+   procedure Process_Detailed_Messages
+     (Coverage : GNATcov_Line_Coverage;
+      Process  : not null access procedure (Item : GNATcov_Item_Coverage));
+   --  Call Process for each detailed message in Coverage. If there is no
+   --  detailed message, process a default one.
+
+   procedure Remove_Inlined_Detailed_Messages
+     (Self : in out Detail_Messages_Command);
+   --  Remove all detailed messages associated to this command
 
    -------------------
    -- Add_File_Info --
@@ -166,11 +183,14 @@ package body Code_Coverage.GNATcov is
          Line_Num := Natural'Value
            (File_Contents (Line_Matches (1).First .. Line_Matches (1).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
-         Line_Coverage := new GNATcov_Line_Coverage;
+         Line_Coverage := new GNATcov_Line_Coverage'
+           (File     => File_Node.Name,
+            Line     => Line_Num,
+            Status   => No_Code,
+            Coverage => 0,
+            others   => <>);
          File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
            Coverage_Access (Line_Coverage);
-         Line_Coverage.Status := No_Code;
-         Line_Coverage.Coverage := 0;
 
          case File_Contents (Line_Matches (2).First) is
             when '-' =>
@@ -282,6 +302,31 @@ package body Code_Coverage.GNATcov is
    end Add_File_Info;
 
    -------------------------------
+   -- Process_Detailed_Messages --
+   -------------------------------
+
+   procedure Process_Detailed_Messages
+     (Coverage : GNATcov_Line_Coverage;
+      Process  : not null access procedure (Item : GNATcov_Item_Coverage))
+   is
+      Empty : Boolean := True;
+   begin
+      --  Process each detailed message
+
+      for Item of Coverage.Items loop
+         Empty := False;
+         Process (Item);
+      end loop;
+
+      --  Fallback to a default message if there was no detailed message
+
+      if Empty then
+         Process
+           ((0, To_Unbounded_String (Coverage_Verbose_Message (Coverage))));
+      end if;
+   end Process_Detailed_Messages;
+
+   -------------------------------
    -- Add_Location_If_Uncovered --
    -------------------------------
 
@@ -298,14 +343,10 @@ package body Code_Coverage.GNATcov is
 
       Coverage_Category : Cst_String_Access;
 
-      procedure Add_Location
-        (Column  : Basic_Types.Visible_Column_Type;
-         Message : String);
+      procedure Process (Item : GNATcov_Item_Coverage);
       --  Helper to add a message in the location window for the current line
 
-      procedure Add_Location
-        (Column  : Basic_Types.Visible_Column_Type;
-         Message : String)
+      procedure Process (Item : GNATcov_Item_Coverage)
       is
          Msg : Simple_Message_Access;
       begin
@@ -315,8 +356,8 @@ package body Code_Coverage.GNATcov is
               Coverage_Category.all,
               File,
               Line_Number,
-              Column,
-              Message,
+              Item.Column,
+              To_String (Item.Message),
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
@@ -326,7 +367,7 @@ package body Code_Coverage.GNATcov is
                Get_Name (Builder_Styles (Warnings))
                & '/' & Coverage_Category.all,
                Builder_Styles (Warnings)));
-      end Add_Location;
+      end Process;
 
    begin
       if Coverage.Status = Not_Covered then
@@ -339,20 +380,8 @@ package body Code_Coverage.GNATcov is
          return;
       end if;
 
-      --  Add one entry for each detailed message
-
-      for Item of Coverage.Items loop
-         Added := True;
-         Add_Location (Item.Column, To_String (Item.Message));
-      end loop;
-
-      --  Fallback to a default message if there was no detailed message
-
-      if not Added then
-         Added := True;
-         Add_Location (0, Coverage_Verbose_Message (Coverage));
-      end if;
-
+      Process_Detailed_Messages (Coverage, Process'Access);
+      Added := True;
    end Add_Location_If_Uncovered;
 
    ------------------------
@@ -360,7 +389,8 @@ package body Code_Coverage.GNATcov is
    ------------------------
 
    overriding function Line_Coverage_Info
-     (Coverage : GNATcov_Line_Coverage;
+     (Coverage : access GNATcov_Line_Coverage;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record
    is
@@ -371,7 +401,7 @@ package body Code_Coverage.GNATcov is
       Pango_Markup_To_Open_2 : constant String := """>";
       Pango_Markup_To_Close  : constant String := "</span>";
 
-      Text   : constant String := Coverage_Verbose_Message (Coverage);
+      Text   : constant String := Coverage_Verbose_Message (Coverage.all);
       Result : GPS.Editors.Line_Information.Line_Information_Record;
    begin
       if Text /= "" then
@@ -382,6 +412,12 @@ package body Code_Coverage.GNATcov is
             & Coverage_Status_Char (Coverage.Status)
             & Pango_Markup_To_Close);
          Result.Tooltip_Text := new String'(Text);
+         Result.Associated_Command := new Detail_Messages_Command'
+           (Commands.Root_Command with
+            Line   => Coverage.all'Access,
+            Kernel => Kernel,
+            Added  => False,
+            Marks  => <>);
       end if;
 
       return Result;
@@ -437,5 +473,93 @@ package body Code_Coverage.GNATcov is
             return -"Undetermined";
       end case;
    end Coverage_Verbose_Message;
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : GPS.Editors.Editor_Mark'Class) return Boolean
+   is
+      pragma Unreferenced (Left, Right);
+   begin
+      return False;
+   end "=";
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self : access Detail_Messages_Command)
+      return Commands.Command_Return_Type
+   is
+      Coverage : constant GNATcov_Line_Coverage_Access := Self.Line;
+      Buffer   : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get (Coverage.File);
+
+      procedure Process (Item : GNATcov_Item_Coverage);
+      --  Helper to add an inline detailed message
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process (Item : GNATcov_Item_Coverage) is
+      begin
+         --  Put it *after* the corresponding line
+         Self.Marks.Append
+           (GPS_Editor_Buffer'Class (Buffer).Add_Special_Line
+            (Coverage.Line + 1,
+                 To_String (Item.Message),
+                 Details_Style_Name));
+      end Process;
+
+   begin
+      --  If the detailed messages are already displayed, remove them. Display
+      --  them otherwise.
+
+      if Self.Added then
+         Remove_Inlined_Detailed_Messages (Self.all);
+
+      elsif Buffer /= Nil_Editor_Buffer
+        and then Buffer in GPS_Editor_Buffer'Class
+        and then Coverage.Status /= Covered_No_Branch
+      then
+         Process_Detailed_Messages
+           (GNATcov_Line_Coverage (Coverage.all),
+            Process'Access);
+         Self.Added := True;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free
+     (Self : in out Detail_Messages_Command)
+   is
+   begin
+      Remove_Inlined_Detailed_Messages (Self);
+   end Free;
+
+   --------------------------------------
+   -- Remove_Inlined_Detailed_Messages --
+   --------------------------------------
+
+   procedure Remove_Inlined_Detailed_Messages
+     (Self : in out Detail_Messages_Command)
+   is
+      Buffer   : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get (Self.Line.File);
+   begin
+      for Mark of Self.Marks loop
+         GPS_Editor_Buffer'Class (Buffer).Remove_Special_Lines
+           (Mark, 1);
+      end loop;
+      Self.Added := False;
+   end Remove_Inlined_Detailed_Messages;
 
 end Code_Coverage.GNATcov;

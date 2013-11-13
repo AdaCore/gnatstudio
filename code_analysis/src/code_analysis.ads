@@ -71,7 +71,8 @@ package Code_Analysis is
    type Line_Coverage is abstract new Coverage with null record;
 
    function Line_Coverage_Info
-     (Coverage : Line_Coverage;
+     (Coverage : access Line_Coverage;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record is abstract;
    --  Return a String_Access pointing on a message describing the coverage

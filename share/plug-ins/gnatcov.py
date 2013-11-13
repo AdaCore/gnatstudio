@@ -65,223 +65,266 @@ Note: this plug-in activates only when the command-line tool
 ## No user customization below this line
 ###########################################################################
 
-import GPS, os.path, os_utils;
+import os.path
 
-#
-# Project support
-#
+import GPS
+import gps_utils.highlighter
+import os_utils
 
-project_support_xml = """
+class GNATcovPlugin(object):
 
-  <project_attribute
-    name="Gnatcov_Mode_Switches"
-    label="Switches in 'gnatcov' mode"
-    package="IDE_Coverage"
-    editor_page="GNATcov"
-    editor_section="Build"
-    hide_in="wizard library_wizard"
-    description="Extra build switches to pass to the builder when in 'gnatcov' mode.">
-    <string />
-  </project_attribute>
+    PLUGIN_MENU = '/Tools/GNATcov/'
 
-  <project_attribute
-    name="Level_Run"
-    label="Coverage Level"
-    package="IDE_Coverage"
-    editor_page="GNATcov"
-    editor_section="Run"
-    hide_in="wizard library_wizard"
-    description="The coverage level to pass to gnatcov run.">
+    # Keep this style name synchronized with Code_Coverage.GNATcov.
+    INLINED_DETAILS_NAME = 'GNATcov inlined details'
 
-      <choice>branch</choice>
-      <choice>insn</choice>
-      <choice default="true">stmt</choice>
-      <choice>stmt+decision</choice>
-      <choice>stmt+mcdc</choice>
+    PROJECT_SUPPORT_XML = """
+      <project_attribute
+        name="Gnatcov_Mode_Switches"
+        label="Switches in 'gnatcov' mode"
+        package="IDE_Coverage"
+        editor_page="GNATcov"
+        editor_section="Build"
+        hide_in="wizard library_wizard"
+        description="Extra build switches to pass to the builder when in 'gnatcov' mode.">
+        <string />
+      </project_attribute>
 
-  </project_attribute>
+      <project_attribute
+        name="Level_Run"
+        label="Coverage Level"
+        package="IDE_Coverage"
+        editor_page="GNATcov"
+        editor_section="Run"
+        hide_in="wizard library_wizard"
+        description="The coverage level to pass to gnatcov run.">
 
-  <project_attribute
-    name="Switches_Run"
-    label="Extra switches"
-    package="IDE_Coverage"
-    editor_page="GNATcov"
-    editor_section="Run"
-    hide_in="wizard library_wizard"
-    description="Extra build switches to pass to gnatcov run">
-    <string />
-  </project_attribute>
+          <choice>branch</choice>
+          <choice>insn</choice>
+          <choice default="true">stmt</choice>
+          <choice>stmt+decision</choice>
+          <choice>stmt+mcdc</choice>
 
-  <project_attribute
-    name="Level_Coverage"
-    label="Coverage Level"
-    package="IDE_Coverage"
-    editor_page="GNATcov"
-    editor_section="Coverage"
-    hide_in="wizard library_wizard"
-    description="The coverage level to pass to gnatcov coverage.">
+      </project_attribute>
 
-      <choice>branch</choice>
-      <choice>insn</choice>
-      <choice default="true">stmt</choice>
-      <choice>stmt+decision</choice>
-      <choice>stmt+mcdc</choice>
+      <project_attribute
+        name="Switches_Run"
+        label="Extra switches"
+        package="IDE_Coverage"
+        editor_page="GNATcov"
+        editor_section="Run"
+        hide_in="wizard library_wizard"
+        description="Extra build switches to pass to gnatcov run">
+        <string />
+      </project_attribute>
 
-  </project_attribute>
+      <project_attribute
+        name="Level_Coverage"
+        label="Coverage Level"
+        package="IDE_Coverage"
+        editor_page="GNATcov"
+        editor_section="Coverage"
+        hide_in="wizard library_wizard"
+        description="The coverage level to pass to gnatcov coverage.">
 
-  <project_attribute
-    name="Switches_Coverage"
-    label="Extra switches"
-    package="IDE_Coverage"
-    editor_page="GNATcov"
-    editor_section="Coverage"
-    hide_in="wizard library_wizard"
-    description="Extra build switches to pass to gnatcov coverage">
-    <string />
-  </project_attribute>
-"""
+          <choice>branch</choice>
+          <choice>insn</choice>
+          <choice default="true">stmt</choice>
+          <choice>stmt+decision</choice>
+          <choice>stmt+mcdc</choice>
 
-#
-# Build targets and modes
-#
+      </project_attribute>
 
-xml = """
-
-  <!--  Program execution under instrumented execution environment  -->
-
-  <target-model name="gnatcov-run" category="">
-    <description>Run under GNATcov for code coverage</description>
-    <command-line>
-      <arg>gnatcov</arg>
-      <arg>run</arg>
-    </command-line>
-    <icon>gps-build-all</icon>
-    <switches command="%(tool_name)s" columns="2" lines="2">
-    </switches>
-  </target-model>
-
-  <target model="gnatcov-run" category="GNATcov run"
-      name="Run under GNATcov"
-      @MENU@>
-    <target-type>executable</target-type>
-    <in-toolbar>FALSE</in-toolbar>
-    <in-menu>TRUE</in-menu>
-    <read-only>TRUE</read-only>
-    <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <command-line>
-      <arg>gnatcov</arg>
-      <arg>run</arg>
-      <arg>-P%PP</arg>
-      <arg>--recursive</arg>
-      <arg>%target</arg>
-      <arg>-c</arg>
-      <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
-      <arg>-o</arg>
-      <arg>%TT.trace</arg>
-      <arg>%E</arg>
-      <arg>%attr(ide_coverage'switches_run)</arg>
-    </command-line>
-  </target>
-
-  <!--  Coverage report generation  -->
-
-  <target-model name="gnatcov-coverage" category="">
-    <description>Code coverage with GNATcov</description>
-    <command-line>
-      <arg>gnatcov</arg>
-      <arg>coverage</arg>
-      <arg>-P%PP</arg>
-      <arg>--recursive</arg>
-      <arg>%target</arg>
-      <arg>--annotate=xcov</arg>
-    </command-line>
-    <icon>gps-build-all</icon>
-    <switches command="%(tool_name)s" columns="1" lines="4">
-    </switches>
-  </target-model>
-
-  <target model="gnatcov-coverage" category="GNATcov coverage"
-          name="Generate GNATcov Main Report"
-          @MENU@>
-    <target-type>executable</target-type>
-    <in-toolbar>FALSE</in-toolbar>
-    <in-menu>TRUE</in-menu>
-    <read-only>TRUE</read-only>
-    <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <command-line>
-      <arg>gnatcov</arg>
-      <arg>coverage</arg>
-      <arg>-P%PP</arg>
-      <arg>--recursive</arg>
-      <arg>%target</arg>
-      <arg>-c</arg>
-      <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
-      <arg>--annotate=xcov+</arg>
-      <arg>--output-dir=%O</arg>
-      <arg>-T</arg>
-      <arg>%TT.trace</arg>
-      <arg>%attr(ide_coverage'switches_coverage)</arg>
-    </command-line>
-  </target>
-
-  <builder-mode name="gnatcov">
-   <description>Build with GNATcoverage information</description>
-   <subdir>gnatcov</subdir>
-   <supported-model>builder</supported-model>
-   <supported-model>gnatmake</supported-model>
-   <supported-model>gprbuild</supported-model>
-   <supported-model filter="--subdirs=">gnatcov-coverage</supported-model>
-   <supported-model filter="--subdirs=">gprclean</supported-model>
-   <extra-args>
-      <arg>%attr(ide_coverage'gnatcov_mode_switches)</arg>
-      <arg>--subdirs=%subdir</arg>
-      <arg>-cargs</arg>
-      <arg>-g</arg>
-      <arg>-fdump-scos</arg>
-      <arg>-fpreserve-control-flow</arg>
-   </extra-args>
-  </builder-mode>
-
-
-"""
-
-def reload_gnatcov_data():
-    """ Clean the coverage report and reload it from the files.
-    """
-    # Switch to gcov mode
-    if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
-        GPS.Preference("Coverage-Toolchain").set('Gnatcov')
-
-    GPS.execute_action("/Tools/Coverage/Clear coverage from memory")
-    GPS.execute_action("/Tools/Coverage/Load data for all projects")
-
-def on_gps_started():
-    """ Called once, when GPS is starting.
-    """
-    global gnatcov_menu_separator
-
-    if os_utils.locate_exec_on_path ("gnatcov") != "":
-        GPS.Hook("compilation_finished").add(on_compilation_finished)
-
-        menu = "/Tools/GNATcov/"
-        ref  = "Coverage"
-        gnatcov_menu = GPS.Menu.create(menu + '-', ref=ref, add_before=False)
-
-        GPS.parse_xml(xml.replace("@MENU@", 'menu="%s"' % menu))
-
-def on_compilation_finished(hook, category,
-    target_name="", mode_name="", status=""):
-    """ Called whenever a compilation ends.
+      <project_attribute
+        name="Switches_Coverage"
+        label="Extra switches"
+        package="IDE_Coverage"
+        editor_page="GNATcov"
+        editor_section="Coverage"
+        hide_in="wizard library_wizard"
+        description="Extra build switches to pass to gnatcov coverage">
+        <string />
+      </project_attribute>
     """
 
-    if status:
+    BUILD_TARGETS_AND_MODES_XML = """
+      <!--  Program execution under instrumented execution environment  -->
+
+      <target-model name="gnatcov-run" category="">
+        <description>Run under GNATcov for code coverage</description>
+        <command-line>
+          <arg>gnatcov</arg>
+          <arg>run</arg>
+        </command-line>
+        <icon>gps-build-all</icon>
+        <switches command="%(tool_name)s" columns="2" lines="2">
+        </switches>
+      </target-model>
+
+      <target model="gnatcov-run" category="GNATcov run"
+          name="Run under GNATcov"
+          menu="{menu}">
+        <target-type>executable</target-type>
+        <in-toolbar>FALSE</in-toolbar>
+        <in-menu>TRUE</in-menu>
+        <read-only>TRUE</read-only>
+        <icon>gps-build-all</icon>
+        <launch-mode>MANUALLY</launch-mode>
+        <command-line>
+          <arg>gnatcov</arg>
+          <arg>run</arg>
+          <arg>-P%PP</arg>
+          <arg>--recursive</arg>
+          <arg>%target</arg>
+          <arg>-c</arg>
+          <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
+          <arg>-o</arg>
+          <arg>%TT.trace</arg>
+          <arg>%E</arg>
+          <arg>%attr(ide_coverage'switches_run)</arg>
+        </command-line>
+      </target>
+
+      <!--  Coverage report generation  -->
+
+      <target-model name="gnatcov-coverage" category="">
+        <description>Code coverage with GNATcov</description>
+        <command-line>
+          <arg>gnatcov</arg>
+          <arg>coverage</arg>
+          <arg>-P%PP</arg>
+          <arg>--recursive</arg>
+          <arg>%target</arg>
+          <arg>--annotate=xcov</arg>
+        </command-line>
+        <icon>gps-build-all</icon>
+        <switches command="%(tool_name)s" columns="1" lines="4">
+        </switches>
+      </target-model>
+
+      <target model="gnatcov-coverage" category="GNATcov coverage"
+              name="Generate GNATcov Main Report"
+              menu="{menu}">
+        <target-type>executable</target-type>
+        <in-toolbar>FALSE</in-toolbar>
+        <in-menu>TRUE</in-menu>
+        <read-only>TRUE</read-only>
+        <icon>gps-build-all</icon>
+        <launch-mode>MANUALLY</launch-mode>
+        <command-line>
+          <arg>gnatcov</arg>
+          <arg>coverage</arg>
+          <arg>-P%PP</arg>
+          <arg>--recursive</arg>
+          <arg>%target</arg>
+          <arg>-c</arg>
+          <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
+          <arg>--annotate=xcov+</arg>
+          <arg>--output-dir=%O</arg>
+          <arg>-T</arg>
+          <arg>%TT.trace</arg>
+          <arg>%attr(ide_coverage'switches_coverage)</arg>
+        </command-line>
+      </target>
+
+      <builder-mode name="gnatcov">
+       <description>Build with GNATcoverage information</description>
+       <subdir>gnatcov</subdir>
+       <supported-model>builder</supported-model>
+       <supported-model>gnatmake</supported-model>
+       <supported-model>gprbuild</supported-model>
+       <supported-model filter="--subdirs=">gnatcov-coverage</supported-model>
+       <supported-model filter="--subdirs=">gprclean</supported-model>
+       <extra-args>
+          <arg>%attr(ide_coverage'gnatcov_mode_switches)</arg>
+          <arg>--subdirs=%subdir</arg>
+          <arg>-cargs</arg>
+          <arg>-g</arg>
+          <arg>-fdump-scos</arg>
+          <arg>-fpreserve-control-flow</arg>
+       </extra-args>
+      </builder-mode>
+    """.format(menu=PLUGIN_MENU)
+
+    PREFERENCES_XML = """
+      <preference
+          name="GNATcov-Inlined-Details-Foreground"
+          page="Plugins/GNATcov"
+          default="#000000"
+          label="Inline details foreground"
+          tip="Color to use for the foreground of inlined details"
+          type="color" />
+      <preference
+          name="GNATcov-Inlined-Details-Background"
+          page="Plugins/GNATcov"
+          default="#E9E9E9"
+          label="Inline details background"
+          tip="Color to use for the background of inlined details"
+          type="color" />
+    """
+
+    def __init__(self):
+        # This is needed to load projets, so do not wait the "gps_started"
+        # event.
+        GPS.parse_xml(self.PROJECT_SUPPORT_XML)
+        GPS.parse_xml(self.PREFERENCES_XML)
+        GPS.parse_xml(self.BUILD_TARGETS_AND_MODES_XML)
+
+    def on_gps_started(self, hook):
+        GPS.Menu.create(
+            self.PLUGIN_MENU + '-',
+            ref='Coverage',
+            add_before=False)
+
+        GPS.Hook('compilation_finished').add(self.on_compilation_finished)
+        GPS.Hook('preferences_changed').add(self.on_preferences_changed)
+
+        self.inline_details_style = GPS.Style(self.INLINED_DETAILS_NAME)
+
+        self.GPS = GPS
+        self.on_preferences_changed('', reload=False)
+
+    def reload_gnatcov_data(self):
+        """Clean the coverage report and reload it from the files."""
+        GPS = self.GPS
+
+        # If needed, switch to GNATcov build mode.
+        if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
+            GPS.Preference("Coverage-Toolchain").set('Gnatcov')
+
+        GPS.execute_action("/Tools/Coverage/Clear coverage from memory")
+        GPS.execute_action("/Tools/Coverage/Load data for all projects")
+
+    def on_compilation_finished(self, hook, category,
+        target_name="", mode_name="", status=""):
+        """Called whenever a compilation ends."""
+
+        # If compilation failed, do nothing.
+        if status:
+            return
+
+        if target_name in ["Generate GNATcov Main Report"]:
+            self.reload_gnatcov_data()
+
+    def on_preferences_changed(self, hook, reload=True):
+        """Update various plugin elements that rely on preferences."""
+        GPS = self.GPS
+
+        self.inline_details_style.set_background(
+            GPS.Preference('GNATcov-Inlined-Details-Background').get())
+        self.inline_details_style.set_foreground(
+            GPS.Preference('GNATcov-Inlined-Details-Foreground').get())
+
+def setup_plugin(hook):
+    # To make debugging easier, keep a reference to the plugin in the module
+    # namespace.
+    global plugin
+
+    # Do nothing if GNATcoverage is not available.
+    if not os_utils.locate_exec_on_path('gnatcov'):
         return
 
-    if target_name in ["Generate GNATcov Main Report"]:
-        reload_gnatcov_data()
+    plugin = GNATcovPlugin()
+    GPS.Hook('gps_started').add(plugin.on_gps_started)
 
-GPS.parse_xml (project_support_xml)
-
-on_gps_started()
+setup_plugin(None)

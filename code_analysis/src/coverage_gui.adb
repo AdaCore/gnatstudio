@@ -249,10 +249,16 @@ package body Coverage_GUI is
 
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
-               Line_Info (J) := Line_Coverage_Info
-                 (Line_Coverage'Class
-                    (File_Node.Lines (J).Analysis_Data.Coverage_Data.all),
-                  Binary_Coverage_Mode);
+               declare
+                  Line_Cov : Line_Coverage'Class renames
+                    Line_Coverage'Class
+                      (File_Node.Lines (J).Analysis_Data.Coverage_Data.all);
+               begin
+                  Line_Info (J) := Line_Coverage_Info
+                    (Line_Cov'Access,
+                     Kernel,
+                     Binary_Coverage_Mode);
+               end;
             else
                Line_Info (J).Text := new String'(" ");
             end if;

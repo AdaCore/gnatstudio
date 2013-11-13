@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with Basic_Types;
+with Commands;
 with GNATCOLL.VFS;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
@@ -55,10 +57,14 @@ package Code_Coverage.GNATcov is
       Element_Type => GNATcov_Item_Coverage);
 
    type GNATcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
-      Status  : GNATcov_Line_Coverage_Status := Undetermined;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Positive;
+      --  Coordinates of the corresponding line
+
+      Status : GNATcov_Line_Coverage_Status := Undetermined;
       --  Simple coverage status
 
-      Items : Item_Vectors.Vector;
+      Items  : Item_Vectors.Vector;
       --  Detailed description about what/why not covered for each not fully
       --  covered item.
    end record;
@@ -68,7 +74,8 @@ package Code_Coverage.GNATcov is
    overriding function Is_Valid (Self : GNATcov_Line_Coverage) return Boolean;
 
    overriding function Line_Coverage_Info
-     (Coverage : GNATcov_Line_Coverage;
+     (Coverage : access GNATcov_Line_Coverage;
+      Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
       return GPS.Editors.Line_Information.Line_Information_Record;
 
@@ -88,5 +95,34 @@ package Code_Coverage.GNATcov is
       File_Contents : String_Access);
    --  Parse the File_Contents and fill the File_Node with gcov info
    --  And set Line_Count and Covered_Lines
+
+   function "=" (Left, Right : GPS.Editors.Editor_Mark'Class) return Boolean;
+   --  Dummy equality operator for marks. Always return False.
+
+   package Mark_Vectors is new Ada.Containers.Indefinite_Vectors
+     (Index_Type   => Positive,
+      Element_Type => GPS.Editors.Editor_Mark'Class,
+      "="          => "=");
+
+   type Detail_Messages_Command is new Commands.Root_Command with record
+      Line   : GNATcov_Line_Coverage_Access;
+      --  Corresponding coverage line
+
+      Kernel : GPS.Kernel.Kernel_Handle;
+      --  Kernel this command applies to
+
+      Added  : Boolean;
+      --  Whether the special lines have been added
+
+      Marks  : Mark_Vectors.Vector;
+      --  When Added is True, contain markers to remove detailed messages
+   end record;
+
+   overriding function Execute
+     (Self : access Detail_Messages_Command)
+      return Commands.Command_Return_Type;
+
+   overriding procedure Free
+     (Self : in out Detail_Messages_Command);
 
 end Code_Coverage.GNATcov;
