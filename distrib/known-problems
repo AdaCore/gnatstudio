@@ -8,7 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
-- MA04-005: python error: GUI object has no attribute cursor
+- MB11-014: GPS: omni-search popup aligned on screen edge
+  Problem:    The popup window in the omni-search is sometimes aligned
+              on the edge of the screen when GPS is maximized, which
+              makes it hard to grab the scrollbar
+  Workaround: use the keyboard to scroll or type more text to reduce
+              the number of matching results.
+
+- MA04-005: GPS: python error 'GUI object has no attribute cursor'
   Problem:    It might happen that some GPS plug-ins end up displaying
               the above error message in the console. This errors
               depends on the order in which various plug-ins interact.
