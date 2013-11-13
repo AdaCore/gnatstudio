@@ -32,6 +32,7 @@ with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GNATCOLL.Scripts;
 
 package GPS.Kernel.MDI is
 
@@ -194,6 +195,12 @@ package GPS.Kernel.MDI is
    function Kernel
      (Self : not null access GPS_MDI_Child_Record) return Kernel_Handle;
    --  Return a handle to the GPS kernel.
+
+   function Get_Child_Class
+     (Self : not null access GPS_MDI_Child_Record)
+     return GNATCOLL.Scripts.Class_Type;
+   --  Return the class to use for instances representing the widget
+   --  contained in Self.
 
    function Get_Module_From_Child
      (Child : Gtkada.MDI.MDI_Child) return Module_ID;

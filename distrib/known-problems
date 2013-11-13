@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MA04-005: python error: GUI object has no attribute cursor
+  Problem:    It might happen that some GPS plug-ins end up displaying
+              the above error message in the console. This errors
+              depends on the order in which various plug-ins interact.
+  Workaround: None found.
+
 - MB08-004: Extension aggregate highlighted as an aspect
   Problem:    When typing interactively an extension aggregate, e.g:
                 (Parent with Field => null);
