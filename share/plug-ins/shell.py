@@ -58,8 +58,8 @@ def on_contextual(context):
    GPS.cd (dir)
 
 def on_label(context):
-   return "Run OS shell in <b>" + \
-     GPS.base_name(context.directory().rstrip ("/")) + "</b>"
+   return "Run OS shell in <b>%s</b>" % (
+     GPS.base_name(context.directory().rstrip ("/")), )
 
 def on_filter(context):
    if not isinstance(context, GPS.FileContext):
