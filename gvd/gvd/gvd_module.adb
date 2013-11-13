@@ -2234,7 +2234,8 @@ package body GVD_Module is
             -"Initialize the debugger on the file "
             & Main.Display_Full_Name,
             Category => -"Debug");
-         Item := Register_Menu (Kernel, Menu, Action => Action);
+         Item := Register_Menu
+           (Kernel, Menu, Action => Action, Use_Mnemonics => False);
 
          --  Only set accelerators for main units of the root project
          if Prj = No_Project or else Prj = Loaded_Project then
@@ -2257,7 +2258,7 @@ package body GVD_Module is
       procedure Add_Entries
         (Mains : in out Argument_List; Prj : Project_Type) is
       begin
-         for M in reverse Mains'Range loop
+         for M in Mains'Range loop
             declare
                Exec : constant Filesystem_String :=
                  Prj.Executable_Name (+Mains (M).all);
