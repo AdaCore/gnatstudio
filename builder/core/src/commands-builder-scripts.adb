@@ -40,32 +40,14 @@ package body Commands.Builder.Scripts is
    --  BuildTarget class
 
    Target_Name_Cst   : aliased constant String := "target_name";
-   Main_Name_Cst     : aliased constant String := "main_name";
-   Force_Cst         : aliased constant String := "force";
-   File_Cst          : aliased constant String := "file";
-   Extra_Args_Cst    : aliased constant String := "extra_args";
-   Build_Mode_Cst    : aliased constant String := "build_mode";
-   Synchronous_Cst   : aliased constant String := "synchronous";
    Shadow_Cst        : aliased constant String := "shadow";
    Background_Cst    : aliased constant String := "background";
    As_String_Cst     : aliased constant String := "as_string";
-   Directory_Cst     : aliased constant String := "directory";
-   Quiet_Cst         : aliased constant String := "quiet";
 
    Target_Class_Name : constant String := "BuildTarget";
 
    Constructor_Args : constant Cst_Argument_List :=
      (2 => Target_Name_Cst'Access);
-
-   Execute_Args : constant Cst_Argument_List :=
-     (2 => Main_Name_Cst'Access,
-      3 => File_Cst'Access,
-      4 => Force_Cst'Access,
-      5 => Extra_Args_Cst'Access,
-      6 => Build_Mode_Cst'Access,
-      7 => Synchronous_Cst'Access,
-      8 => Directory_Cst'Access,
-      9 => Quiet_Cst'Access);
 
    type Target_Property is new Instance_Property_Record with record
       Target_Name : Unbounded_String;
@@ -172,8 +154,6 @@ package body Commands.Builder.Scripts is
          end;
 
       elsif Command = "execute" then
-         Name_Parameters (Data, Execute_Args);
-
          declare
             Inst        : constant Class_Instance :=
                             Nth_Arg (Data, 1, Target_Class);
@@ -200,8 +180,22 @@ package body Commands.Builder.Scripts is
                return;
             end if;
 
-            Extra_Args := GNAT.OS_Lib.Argument_String_To_List
-              (Nth_Arg (Data, 5, ""));
+            begin
+               Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+                 (Nth_Arg (Data, 5, ""));
+            exception
+               when Invalid_Parameter =>
+                  declare
+                     List : constant List_Instance'Class :=
+                       Nth_Arg (Data, 5);
+                     Length : constant Natural := List.Number_Of_Arguments;
+                  begin
+                     Extra_Args := new Argument_List (1 .. Length);
+                     for N in 1 .. Length loop
+                        Extra_Args (N) := new String'(List.Nth_Arg (N));
+                     end loop;
+                  end;
+            end;
 
             if Force then
                Mode := Force_No_Dialog;
@@ -355,8 +349,14 @@ package body Commands.Builder.Scripts is
 
       Register_Command
         (Kernel.Scripts, "execute",
-         Minimum_Args => 0,
-         Maximum_Args => 9,
+         Params => (Param ("main_name",   Optional => True),   --  2
+                    Param ("file",        Optional => True),   --  3
+                    Param ("force",       Optional => True),   --  4
+                    Param ("extra_args",  Optional => True),   --  5
+                    Param ("build_mode",  Optional => True),   --  6
+                    Param ("synchronous", Optional => True),   --  7
+                    Param ("directory",   Optional => True),   --  8
+                    Param ("quiet",       Optional => True)),  --  9
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
