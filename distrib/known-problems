@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB13-064: GPS: title bar issues
+  Problem:    GPS no longer displays title bars by default. However, if you
+              chose to activate them in the preferences, there are a number
+              of issues related to the display of short titles: new editor
+              views always use long titles, and changing the preferences
+              requires a restart of GPS.
+  Workaround: restart GPS after changing the preference.
+
 - MB13-032: GPS: clicking in Call Tree should give focus to editors
   Problem:    If you click on a location in the Call Tree, the proper
               editor is displayed, but it does not gain the keyboard
