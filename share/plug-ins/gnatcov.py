@@ -233,6 +233,7 @@ class GNATcovPlugin(object):
        <supported-model>builder</supported-model>
        <supported-model>gnatmake</supported-model>
        <supported-model>gprbuild</supported-model>
+       <supported-model filter="--subdirs=">gnatcov-run</supported-model>
        <supported-model filter="--subdirs=">gnatcov-coverage</supported-model>
        <supported-model filter="--subdirs=">gprclean</supported-model>
        <extra-args>
