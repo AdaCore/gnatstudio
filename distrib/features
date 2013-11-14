@@ -61,3 +61,10 @@ NF-61-LB30-034 GPS: Faster Ways to Open and Navigate GPR files (2013-10-21)
 
   New action "Edit project source file" provides fastest way to open the source
   of current project in GPS editor.
+
+NF-61-KA19-010 GPS: Integrate GNATcoverage detailed messages (2013-11-13)
+
+  The GNATcoverage plug-in in GPS can now get the detailed coverage messages
+  for each line and display them in the location window. These messages can
+  also be displayed inside the corresponding editors by clicking on the
+  coverage status margin.
