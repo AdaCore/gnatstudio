@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.1.0 / GNATbench 2.9.0
 -------------------------------------------
 
+NF-61-MB13-030 GPS: Use a fallback by name for cross references (2013-11-14)
+
+  The GPS cross reference engine will now use imprecise information from the
+  completion engine to find the origin of an entity, so that it is able to
+  resolve an entity by name, even when this entity is not visible in the
+  lexical closure of the user's code
+
 NF-61-MA25-032 GPS: Use the primary modifier for shortcuts (2013-10-29)
 
   GPS now uses the primary system modifier key instead of the fixed control
