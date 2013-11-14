@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
 with Interactive_Consoles;             use Interactive_Consoles;
 with GPS.Kernel;                       use GPS.Kernel;

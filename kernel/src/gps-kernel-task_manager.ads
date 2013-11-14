@@ -18,35 +18,11 @@
 --  This package initializes the GPS Task Manager, and provides menus
 --  to display the Task Manager Interface.
 
-with Commands;     use Commands;
-with Task_Manager; use Task_Manager;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with Commands;             use Commands;
+with Task_Manager;         use Task_Manager;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 
 package GPS.Kernel.Task_Manager is
-
-   type Scheduled_Command is new Root_Command with private;
-   --  This command encloses any command scheduled or running in the task
-   --  manager
-
-   type Scheduled_Command_Access is access all Scheduled_Command'Class;
-
-   overriding function Name (Command : access Scheduled_Command) return String;
-
-   overriding procedure Interrupt (Command : in out Scheduled_Command);
-
-   overriding procedure Set_Progress
-     (Command : access Scheduled_Command; Progress : Progress_Record);
-
-   overriding function Progress
-     (Command : access Scheduled_Command) return Progress_Record;
-
-   overriding function Execute
-     (Command : access Scheduled_Command) return Command_Return_Type;
-
-   overriding function Undo (This : access Scheduled_Command) return Boolean;
-
-   overriding procedure Free (Command : in out Scheduled_Command);
-   --  See inherited documentation
 
    procedure Launch_Foreground_Command
      (Kernel          : access Kernel_Handle_Record'Class;
@@ -118,53 +94,5 @@ package GPS.Kernel.Task_Manager is
    function Get_Task_Manager
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
    --  Return the GPS task manager
-
-   function Get_Command (Command : access Scheduled_Command'Class)
-      return Command_Access;
-   --  Return the command associated to this scheduled command
-
-   -------------------------------------
-   -- Support for scripting languages --
-   -------------------------------------
-
-   function Get_Instance
-     (Command       : access Scheduled_Command'Class;
-      Language      : access Scripting_Language_Record'Class;
-      Command_Class : Class_Type := No_Class)
-      return Class_Instance;
-   --  Returns the class instance associated to this command for the given
-   --  scripting language. Create one when needed. The instance is from the
-   --  class GPS.Command.
-   --  Command_Class specify the actual type of the command that have to be
-   --  created if needed. It has to be a child of type Command. If its type is
-   --  No_Class, then default command class will be used.
-
-   procedure Set_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class;
-      Instance : Class_Instance);
-   --  Set the instance corresponding to the given language to the given
-   --  command. This assumes that no instance has previously been set for the
-   --  given language.
-
-   procedure Remove_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class);
-   --  Removes the instance corresponding to the given language from the list
-
-   function Get_Data
-     (Instance : GNATCOLL.Scripts.Class_Instance)
-      return Scheduled_Command_Access;
-   --  Return the command stored in Instance. Instance must be of the class
-   --  GPS.Command.
-
-private
-
-   type Scheduled_Command is new Root_Command with record
-      Command         : Command_Access;
-      Destroy_On_Exit : Boolean;
-      Instances       : GNATCOLL.Scripts.Instance_List;
-      Is_Dead         : Boolean := False;
-   end record;
 
 end GPS.Kernel.Task_Manager;

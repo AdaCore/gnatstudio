@@ -44,6 +44,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 --  with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Time_Utils;                 use Time_Utils;

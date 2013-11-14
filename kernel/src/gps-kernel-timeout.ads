@@ -20,7 +20,7 @@ with GNAT.Expect;
 
 with Glib.Main;
 
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Interactive_Consoles;
 with Commands;                use Commands;
 with Remote;                  use Remote;

@@ -61,6 +61,7 @@ with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 with GPS.Scripts;             use GPS.Scripts;
+with GPS.Scripts.Commands;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;       use Language_Handlers;
@@ -1566,6 +1567,7 @@ package body GPS.Kernel.Scripts is
          Handler      => GUI_Command_Handler'Access);
 
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
+      GPS.Scripts.Commands.Register_Commands (Kernel);
       GPS.Kernel.Command_API.Register_Commands (Kernel);
    end Register_Default_Script_Commands;
 

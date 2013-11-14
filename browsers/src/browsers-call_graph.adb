@@ -72,6 +72,7 @@ with GPS.Kernel.Xref;               use GPS.Kernel.Xref;
 with GPS.Styles;                    use GPS.Styles;
 with GPS.Styles.UI;                 use GPS.Styles.UI;
 with GPS.Kernel;                    use GPS.Kernel;
+with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Std_Dialogs;                   use Std_Dialogs;
@@ -1616,8 +1617,7 @@ package body Browsers.Call_Graph is
                                   Nth_Arg (Data, 1, ReferencesCommand_Class);
       Data_Command : constant References_Command_Access :=
                                References_Command_Access
-                                 (Get_Command
-                                    (GPS.Kernel.Task_Manager.Get_Data (Inst)));
+                                 (Get_Command (Get_Data (Inst)));
    begin
       if Command = "get_result" then
          Put_Locations_In_Return

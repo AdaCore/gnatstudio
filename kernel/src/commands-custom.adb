@@ -64,6 +64,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
 with Interactive_Consoles;      use Interactive_Consoles;
