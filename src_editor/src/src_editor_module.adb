@@ -967,6 +967,10 @@ package body Src_Editor_Module is
             Num := Num + 1;
          end loop;
 
+         --  Put before we set the title, to make sure the appropriate short
+         --  title will be used
+         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Automatic);
+
          declare
             Im : constant String := Image (Num);
          begin
@@ -976,7 +980,6 @@ package body Src_Editor_Module is
                Display_Base_Name (Title) & " <" & Im & ">");
          end;
 
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position_Automatic);
          Set_Child (Get_View (Editor), Child);
 
          Widget_Callback.Connect

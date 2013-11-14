@@ -108,19 +108,6 @@ Img: tip_keyboard_macro.png
 You always perform the same sequence of keys? You can record it as a macro
 and replay it automatically using the Tools->Macro menu.
 
-Tip: Entity View
-Img: tip_entity_view.png
-
-Need to find an entity in your project and its associated
-profile/documentation? Use Tools->Views->Entities.
-
-Tip: Entity View and drag'n'drop
-Img: tip_entity_view_dnd.png
-
-Did you know that you can drag-n-drop the Entity View
-(Tools->Views->Entities) to e.g. the left part of the main window, and it will
-automatically switch to a vertical display to fit the space available?
-
 Tip: Navigating with hyperlinks
 
 If you hold the <i>Ctrl</i> key in a source editor, each source entity under
