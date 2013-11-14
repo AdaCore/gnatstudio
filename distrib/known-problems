@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MB14-058: GPS: the 'next tag' action does not select the first item
+  Problem:    In the Locations view, if the currently selected node is
+              a file node, then using the 'next tag' action or the
+              menu Navigate->Next Locations message will cause the
+              second message node to be highlighted.
+  Workaround: Use the 'previous tag' action to visit the first node.
+
 - MB13-062: GPS: the key shortcuts are not display in some Build menus
   Problem:    The key shortcuts are not displayed in some menus that
               are present under the Build toplevel menu.

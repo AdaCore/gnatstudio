@@ -695,14 +695,22 @@ package body GPS.Location_View is
 
       Path := Get_Path (Model, Iter);
 
-      --  Expand to the next path corresponding to a location node
+      --  First handle the case where the selected item is not a node
 
-      Success := True;
-      while Success and then Get_Depth (Path) < 3 loop
-         Success := Expand_Row (Loc.View, Path, False);
-         Down (Path);
-         Select_Path (Get_Selection (Loc.View), Path);
-      end loop;
+      if Get_Depth (Path) < 3 then
+         Success := True;
+         while Success and then Get_Depth (Path) < 3 loop
+            Success := Expand_Row (Loc.View, Path, False);
+            Down (Path);
+            Select_Path (Get_Selection (Loc.View), Path);
+         end loop;
+
+         if not Backwards then
+            --  We have found the first iter, our job is done.
+            Path_Free (Path);
+            return;
+         end if;
+      end if;
 
       if Get_Depth (Path) < 3 then
          Path_Free (Path);
