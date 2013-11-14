@@ -290,7 +290,7 @@ package body Generic_Views is
          Report_Filter_Changed'Access, Self);
       F.Add (F.Pattern);
 
-      F.Pattern.Set_Tooltip_Text
+      F.Pattern.Set_Tooltip_Markup
         (Tooltip & ASCII.LF
          & "Start with <b>not:</b> to reverse the filter");
 
