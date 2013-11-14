@@ -265,17 +265,20 @@ class GNATcovPlugin(object):
     """
 
     def __init__(self):
-        # This is needed to load projets, so do not wait the "gps_started"
-        # event.
+        # Create the GNATcov menu entry before loading targets and so on, so
+        # that we master where the entry is inserted.
+        GPS.Menu.create(
+            self.PLUGIN_MENU + '-',
+            ref='Coverage',
+            add_before=False)
+
+        # The following are needed to load projets, so do not wait the
+        # "gps_started" event.
         GPS.parse_xml(self.PROJECT_SUPPORT_XML)
         GPS.parse_xml(self.PREFERENCES_XML)
         GPS.parse_xml(self.BUILD_TARGETS_AND_MODES_XML)
 
     def on_gps_started(self, hook):
-        GPS.Menu.create(
-            self.PLUGIN_MENU + '-',
-            ref='Coverage',
-            add_before=False)
 
         GPS.Hook('compilation_finished').add(self.on_compilation_finished)
         GPS.Hook('preferences_changed').add(self.on_preferences_changed)
