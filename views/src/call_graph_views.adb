@@ -396,6 +396,8 @@ package body Call_Graph_Views is
             if Iter /= Null_Iter then
                File := Get_File (Model, Iter, Location_File_Column);
 
+               --  Give the focus to the editor, to match the behavior of the
+               --  Locations view.
                Open_File_Editor
                  (View.Kernel,
                   Filename   => File,
@@ -407,7 +409,7 @@ package body Call_Graph_Views is
                     (Get_Int (Model, Iter, Location_Column_Column))
                     + View.Kernel.Databases.Get_Name (Entity)'Length,
                   New_File   => False,
-                  Focus      => False);
+                  Focus      => True);
             end if;
          end if;
       end if;
@@ -675,10 +677,6 @@ package body Call_Graph_Views is
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press;
 
    --------------------------
@@ -700,14 +698,11 @@ package body Call_Graph_Views is
          if Iter /= Null_Iter then
             Select_Iter (Get_Selection (View.Locations_Tree), Iter);
             Select_Current_Location (View);
+            return True;
          end if;
       end if;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press_On_List;
 
    --------------------------
