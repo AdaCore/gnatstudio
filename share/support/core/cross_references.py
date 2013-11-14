@@ -98,9 +98,12 @@ class Sqlite_Cross_References(object):
         self.gnatinspect_launch_registered = False
         target = GPS.BuildTarget("Recompute Xref info")
 
-        extra_args = '"--db=%s"' % (GPS.xref_db(), )
+        # This might fail if we have spaces in the name of the directory, but
+        # any quoting we do here is passed directly to gnatinspect, and the
+        # switch will not be handled correctly.
+        extra_args = ['--db=%s' % (GPS.xref_db(), )]
         if not self.trusted_mode:
-            extra_args += " --symlinks"
+            extra_args.append(" --symlinks")
 
         target.execute(synchronous=GPS.Logger("TESTSUITE").active, quiet=True, extra_args=extra_args)
 

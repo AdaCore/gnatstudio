@@ -762,27 +762,26 @@ class BuildTarget(object):
     def execute(self, main_name='', file='', force=False, extra_args='',
                 build_mode='', synchronous=True, directory='', quiet=False):
         """
-        Launch the build target:
-
-- main_name indicates the base name of the main source to build, if this target
-  acts on a main file.
-
-- ``file`` indicates the file to build if this targets acts on a file.
-- if ``force`` is True, this means that the target should be launched directly,
-  even if its parameters indicate that it should be launched through an
-  intermediary dialog.
-- ``extra_args`` contains any extra parameters to pass to the command line.
-- ``build_mode`` indicates build mode to be used for build.
-- if ``synchronous`` is False, build target is launched
-  asynchronously. ``compilation_finished hook`` will be called when build target
-  execution is completed.
+        Launch the build target.
 
         :param main_name: A String
+           Indicates the base name of the main source to build, if this target
+           acts on a main file.
         :param file: A GPS.File
+           Indicates the file to build if this targets acts on a file.
         :param force: A Boolean
-        :param extra_args: A String
+           If True, this means that the target should be launched directly,
+           even if its parameters indicate that it should be launched through an
+           intermediary dialog.
+        :param extra_args: A String or a list of strings
+           any extra parameters to pass to the command line. When a single
+           string is passed, it is split into multiple arguments.
         :param build_mode: A String
+           Indicates build mode to be used for build.
         :param synchronous: A Boolean
+           if False, build target is launched asynchronously.
+           ``compilation_finished hook`` will be called when build target
+           execution is completed.
         :param directory: A String
         :param quiet: A Boolean
         """

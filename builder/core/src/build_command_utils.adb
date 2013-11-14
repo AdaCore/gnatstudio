@@ -1103,7 +1103,9 @@ package body Build_Command_Utils is
          end if;
 
          for J in 0 .. Args_Length (Result.Args) loop
-            Append_Argument (Final.Args, Nth_Arg (Result.Args, J), One_Arg);
+            if String'(Nth_Arg (Result.Args, J)) /= "" then
+               Append_Argument (Final.Args, Nth_Arg (Result.Args, J), One_Arg);
+            end if;
          end loop;
       end loop;
 
