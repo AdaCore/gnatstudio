@@ -65,8 +65,11 @@ package body Xref is
       Handler     : access Abstract_Language_Handler_Record'Class;
       Decl        : General_Location;
       Ent         : out Entity_Access;
-      Tree_Lang   : out Tree_Language_Access);
-   --  Returns the constructs data for a given entity.
+      Tree_Lang   : out Tree_Language_Access;
+      Name        : String := "");
+   --  Returns the constructs data for a given entity. Name is optional. If it
+   --  is given, this will perform a search by name in the construct database.
+   --  If the result is unique, then it will return it.
 
    function Construct_From_Entity
      (Self : access General_Xref_Database_Record'Class;
@@ -637,7 +640,8 @@ package body Xref is
                 Handler   => Self.Lang_Handler,
                 Decl      => Loc,
                 Ent       => Result,
-                Tree_Lang => Tree_Lang);
+                Tree_Lang => Tree_Lang,
+                Name      => Entity_Name);
 
             if Result /= Null_Entity_Access
                and then
@@ -1242,7 +1246,8 @@ package body Xref is
       Handler     : access Abstract_Language_Handler_Record'Class;
       Decl        : General_Location;
       Ent         : out Entity_Access;
-      Tree_Lang   : out Tree_Language_Access)
+      Tree_Lang   : out Tree_Language_Access;
+      Name        : String := "")
    is
       Data_File   : Structured_File_Access;
    begin
@@ -1264,6 +1269,24 @@ package body Xref is
             (Data_File, Decl.Line,
              To_Line_String_Index (Data_File, Decl.Line, Decl.Column));
       end if;
+
+      if Ent = Null_Entity_Access
+        and then Name /= ""
+      then
+         declare
+            It : Construct_Db_Iterator := Self.Constructs.Start (Name, True);
+         begin
+            Ent := Get (It);
+            Next (It);
+
+            --  Return a null result if there is more than one result
+
+            if not At_End (It) then
+               Ent := Null_Entity_Access;
+            end if;
+         end;
+      end if;
+
    end Node_From_Entity;
 
    ---------------------------
