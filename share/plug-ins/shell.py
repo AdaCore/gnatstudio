@@ -20,10 +20,10 @@ in such cases. In general, this can be safely done in your .bashrc
 """
 
 
+import os.path
 import GPS, re, traceback, os
 from gps_utils import interactive
 from gps_utils.console_process import *
-
 
 class Unix_Shell(ANSI_Console_Process):
     def __init__(self, process, args=""):
@@ -59,7 +59,7 @@ def on_contextual(context):
 
 def on_label(context):
    return "Run OS shell in <b>%s</b>" % (
-     GPS.base_name(context.directory().rstrip ("/")), )
+      os.path.basename(os.path.dirname("%s/" % context.directory())))
 
 def on_filter(context):
    if not isinstance(context, GPS.FileContext):
