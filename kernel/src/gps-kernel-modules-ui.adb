@@ -2343,7 +2343,7 @@ package body GPS.Kernel.Modules.UI is
             Iter := Next (Iter);
          end loop;
 
-         if Prev_Is_Sep then
+         if Prev_Is_Sep and then W /= null then
             W.Hide;
          end if;
 
