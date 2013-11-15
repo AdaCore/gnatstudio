@@ -21,6 +21,7 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with Commands; use Commands;
 
 with GPS.Scripts;                use GPS.Scripts;
+with GPS.Scripts.Commands;       use GPS.Scripts.Commands;
 with GPS.Tools_Output;           use GPS.Tools_Output;
 with String_List_Utils;
 
@@ -159,13 +160,20 @@ package body Custom_Tools_Output is
       Status  : Integer;
       Command : Command_Access)
    is
-      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 1);
+        (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
+      Inst : Class_Instance := No_Class_Instance;
+      Scheduled : constant Scheduled_Command_Access :=
+        Scheduled_Command_Access (Command);
    begin
+      if Scheduled /= null then
+         Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
+      end if;
+
       Proc := Get_Method (Self.Inst, On_Exit_Cst);
       Set_Nth_Arg (Args, 1, Status);
+      Set_Nth_Arg (Args, 2, Inst);
 
       declare
          Ignore : constant Any_Type := Proc.Execute (Args);
@@ -186,6 +194,8 @@ package body Custom_Tools_Output is
       Kernel : constant Core_Kernel := Get_Kernel (Data);
       Class  : constant Class_Type := New_Class
         (Kernel.Scripts, Tools_Output_Handler_Class_Name);
+      Arg_3  : constant Scheduled_Command_Access :=
+        Get_Data (Nth_Arg (Data, 3, Get_Command_Class (Kernel), True));
    begin
       if Command = On_Stdout_Cst then
          Name_Parameters (Data, On_Text_Params);
@@ -197,7 +207,8 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.Parse_Standard_Output (Text, null);
+            Property.Child.Parse_Standard_Output
+              (Text, Command_Access (Arg_3));
          end;
       elsif Command = On_Stderr_Cst then
          Name_Parameters (Data, On_Text_Params);
@@ -209,7 +220,7 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.Parse_Standard_Error (Text, null);
+            Property.Child.Parse_Standard_Error (Text, Command_Access (Arg_3));
          end;
       elsif Command = On_Exit_Cst then
          Name_Parameters (Data, On_Exit_Params);
@@ -221,7 +232,7 @@ package body Custom_Tools_Output is
               Tools_Output_Property_Access
                 (Get_Data (Inst, Tools_Output_Handler_Class_Name));
          begin
-            Property.Child.End_Of_Stream (Status, null);
+            Property.Child.End_Of_Stream (Status, Command_Access (Arg_3));
          end;
       end if;
    end Handler;
@@ -235,13 +246,20 @@ package body Custom_Tools_Output is
       Item    : String;
       Command : Command_Access)
    is
-      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 1);
+        (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
+      Inst : Class_Instance := No_Class_Instance;
+      Scheduled : constant Scheduled_Command_Access :=
+        Scheduled_Command_Access (Command);
    begin
+      if Scheduled /= null then
+         Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
+      end if;
+
       Proc := Get_Method (Self.Inst, On_Stderr_Cst);
       Set_Nth_Arg (Args, 1, Item);
+      Set_Nth_Arg (Args, 2, Inst);
 
       declare
          Ignore : constant Any_Type := Proc.Execute (Args);
@@ -261,13 +279,20 @@ package body Custom_Tools_Output is
       Item    : String;
       Command : Command_Access)
    is
-      pragma Unreferenced (Command);
       Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 1);
+        (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
+      Inst : Class_Instance := No_Class_Instance;
+      Scheduled : constant Scheduled_Command_Access :=
+        Scheduled_Command_Access (Command);
    begin
+      if Scheduled /= null then
+         Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
+      end if;
+
       Proc := Get_Method (Self.Inst, On_Stdout_Cst);
       Set_Nth_Arg (Args, 1, Item);
+      Set_Nth_Arg (Args, 2, Inst);
 
       declare
          Ignore : constant Any_Type := Proc.Execute (Args);
@@ -298,22 +323,22 @@ package body Custom_Tools_Output is
       Register_Command
         (Kernel.Scripts,
          On_Stdout_Cst,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
         (Kernel.Scripts,
          On_Stderr_Cst,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Class         => Class,
          Handler       => Handler'Access);
       Register_Command
         (Kernel.Scripts,
          On_Exit_Cst,
-         Minimum_Args  => 0,
-         Maximum_Args  => 1,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Class         => Class,
          Handler       => Handler'Access);
 

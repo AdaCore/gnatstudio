@@ -9850,10 +9850,10 @@ class OutputParserWrapper(object):
        import GPS, tool_output
 
        class PopupParser(tool_output.OutputParser):
-         def on_stdout(self,text):
+         def on_stdout(self,text,command):
            GPS.MDI.dialog (text)
            if self.child != None:
-             self.child.on_stdout (text)
+             self.child.on_stdout (text,command)
 
     You can attach custom parser to a build target by specify it in XML file
 
@@ -9872,7 +9872,7 @@ class OutputParserWrapper(object):
         """
         pass  # implemented in Ada
 
-    def on_stdout(self, text):
+    def on_stdout(self, text, command):
         """
         This method is called each time a portion of output text is ready to
         parse. It takes the portion of text as parameter and pass filtered
@@ -9880,13 +9880,13 @@ class OutputParserWrapper(object):
         """
         pass  # implemented in Ada
 
-    def on_stderr(self, text):
+    def on_stderr(self, text, command):
         """
         This is like on_stdout, but concerns error stream.
         """
         pass  # implemented in Ada
 
-    def on_exit(self,status=0):
+    def on_exit(self,status, command):
         """
         This method is called when all output is parsed.
         Its purpose is to flush any buffered data at end of stream.

@@ -40,7 +40,8 @@ package body GPS.Process_Launchers.Implementation is
         renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.Parse_Standard_Output (Output, Data.Command);
+         Build_Data.Output_Parser.Parse_Standard_Output
+           (Output, Command_Access (Data.Command));
       end if;
    end Build_Callback;
 
@@ -54,7 +55,8 @@ package body GPS.Process_Launchers.Implementation is
 
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.End_Of_Stream (Status, Data.Command);
+         Build_Data.Output_Parser.End_Of_Stream
+           (Status, Command_Access (Data.Command));
       end if;
    end End_Build_Callback;
 

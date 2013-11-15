@@ -22,7 +22,6 @@ with Glib.Main;
 
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Interactive_Consoles;
-with Commands;                use Commands;
 with Remote;                  use Remote;
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 
@@ -54,7 +53,7 @@ package GPS.Kernel.Timeout is
       Exit_Cb       : Exit_Callback;
       Callback_Data : Callback_Data_Access;
 
-      Command       : Commands.Command_Access;
+      Command       : Scheduled_Command_Access;
       --  The command in which the process is wrapped. There might be no such
       --  command if Launch_Process was called with Show_In_Task_Manager set to
       --  False.

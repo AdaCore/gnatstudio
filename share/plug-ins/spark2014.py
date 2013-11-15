@@ -719,7 +719,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 ": " + msg["message"] + "\n"
         GPS.Console("Messages").write(text)
 
-    def on_stdout(self,text):
+    def on_stdout(self,text,command):
         # On the first message, we assume the tool has been run; clear the
         # locations view of the gnatprove messages.
         global should_clear_messages

@@ -5,10 +5,10 @@ An example:
 import GPS, tool_output
 
 class PopupParser(tool_output.OutputParser):
-    def on_stdout(self,text):
+    def on_stdout(self,text,command):
         GPS.MDI.dialog (text)
         if self.child != None:
-            self.child.on_stdout (text)
+            self.child.on_stdout (text,command)
 
 To add custom parser to a target insert next line to target description:
 
@@ -41,17 +41,17 @@ class OutputParser(object):
     def __init__(self,child):
         self.child = child
 
-    def on_stdout(self,text):
+    def on_stdout(self,text,command):
         if self.child != None:
-            self.child.on_stdout (text)
+            self.child.on_stdout (text,command)
 
-    def on_stderr(self,text):
+    def on_stderr(self,text,command):
         if self.child != None:
-           self.child.on_stderr (text)
+           self.child.on_stderr (text,command)
 
-    def on_exit(self,status=0):
+    def on_exit(self,status,command):
         if self.child != None:
-            self.child.on_exit (status)
+            self.child.on_exit (status,command)
 
 def create_parser(name, child=None):
     if OutputParserMetaClass.registered.has_key (name):
