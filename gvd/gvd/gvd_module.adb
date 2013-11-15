@@ -1878,13 +1878,14 @@ package body GVD_Module is
    -------------
 
    overriding function Execute
-     (Command : access Terminate_Command;
+     (Command : access Terminate_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Debug_Terminate (Kernel);
+      Update_Menus_And_Buttons (Kernel);
       return Commands.Success;
    exception
       when E : others =>
@@ -1898,13 +1899,14 @@ package body GVD_Module is
    -------------
 
    overriding function Execute
-     (Command : access Terminate_All_Command;
+     (Command : access Terminate_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
+      Update_Menus_And_Buttons (Kernel);
       return Commands.Success;
 
    exception

@@ -83,6 +83,7 @@ with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Shell;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
@@ -1877,6 +1878,7 @@ procedure GPS.Main is
 
       Register_Action_Hooks (GPS_Main.Kernel);
       Register_Standard_Hooks (GPS_Main.Kernel);
+      GPS.Kernel.Modules.UI.Start_Monitoring_Menus (GPS_Main.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.

@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
@@ -31,9 +33,11 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
 with Glib.Convert;              use Glib.Convert;
+with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
+with Gtk.Container;             use Gtk.Container;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -84,7 +88,7 @@ with UTF8_Utils;                use UTF8_Utils;
 package body GPS.Kernel.Modules.UI is
 
    Me : constant Trace_Handle :=
-          Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
+     Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;
@@ -195,6 +199,11 @@ package body GPS.Kernel.Modules.UI is
      (Object : access GObject_Record'Class; Action : Contextual_Menu_Access);
    --  Execute action, in the context of a contextual menu
 
+   procedure On_Context_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the context changes
+
    function Create_Contextual_Menu
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu;
@@ -233,19 +242,6 @@ package body GPS.Kernel.Modules.UI is
       Name   : String) return Contextual_Menu_Reference;
    --  Find a contextual menu by name
 
-   procedure Map_Menu
-     (Item    : access GObject_Record'Class;
-      Command : Interactive_Action);
-   --  Called when a registered menu is displayed, so that we can check whether
-   --  it should be made sensitive or not.
-
-   procedure Unmap_Menu (Menu : access Gtk_Widget_Record'Class);
-   --  Called when a menu is unmapped, so that the associated context can be
-   --  destroyed.
-
-   package Context_User_Data is new Glib.Object.User_Data (Selection_Context);
-   package Integer_User_Data is new Glib.Object.User_Data (Integer);
-
    function Create_Command_For_Menu
      (Kernel    : Kernel_Handle;
       Full_Path : String) return Menu_Command;
@@ -260,20 +256,62 @@ package body GPS.Kernel.Modules.UI is
       Name     : GNAT.Strings.String_Access;
       Optional : Boolean;
 
-      Action   : Action_Record_Access;
-      --  null until looked up
+      Looked_Up : Action_Record_Access;
+      --  A field that must be used only to compare the current action with the
+      --  one we previously looked up. Do not use to access the action itself,
+      --  since this might be a dangling pointer if the action was
+      --  unregistered. Use Lookup_Action instead.
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
 
-   procedure Lookup_Action
-     (Self : not null access Action_Menu_Item_Record'Class);
+   function Lookup_Action
+     (Self : not null access Action_Menu_Item_Record'Class)
+     return Action_Record_Access;
    --  lookup the action if needed
 
-   procedure On_Map_Action_Item (Item : access GObject_Record'Class);
    procedure On_Activate_Action_Item
      (Item : access Gtk_Menu_Item_Record'Class);
    procedure On_Destroy_Action_Item (Item : access Gtk_Widget_Record'Class);
    --  Called when an Action_Menu_Item is mapped to screen
+
+   procedure On_Destroy_Menu_With_Filter
+     (Item : access Gtk_Widget_Record'Class);
+   --  Called when a menu item that has a custom filter is destroyed
+
+   type Item_And_Filter is record
+      Item   : Gtk_Menu_Item;
+      Filter : Action_Filter;
+   end record;
+   package Action_Menu_Item_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Item_And_Filter);
+   use Action_Menu_Item_Lists;
+   Global_Menu_Items : Action_Menu_Item_Lists.List;
+   --  List of all registered menu items for which the action has a filter.
+   --  This is needed to dynamically deactivate menus
+
+   ---------------------------------------------
+   --  Computing menu stats in the background --
+   ---------------------------------------------
+
+   type Update_Menus_Data is record
+      Context : Selection_Context;
+      Current : Action_Menu_Item_Lists.Cursor;
+   end record;
+   type Update_Menus_Data_Access is access all Update_Menus_Data;
+
+   function Update_Menus_And_Buttons_Chunk
+     (Data : Update_Menus_Data_Access) return Boolean;
+   --  Recompute the state of menus and toolbar buttons based on the specified
+   --  context. This will process as many items as possible, but will stop
+   --  processing after a while and needs to be called again if it returns
+   --  True.
+
+   procedure Destroy (Data : in out Update_Menus_Data_Access);
+   --  Free memory used by data
+
+   package Update_Menus_Idle is new Glib.Main.Generic_Sources
+     (Update_Menus_Data_Access);
+   Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
 
    --------------
    -- Toolbars --
@@ -531,7 +569,8 @@ package body GPS.Kernel.Modules.UI is
       use Abstract_Module_List;
       List    : constant Abstract_Module_List.List :=
         Kernel.Module_List (Module_ID_Record'Tag);
-      Current : Cursor := Abstract_Module_List.First (List);
+      Current : Abstract_Module_List.Cursor :=
+        Abstract_Module_List.First (List);
       Module  : Module_ID;
       W       : Gtk_Widget;
    begin
@@ -561,7 +600,8 @@ package body GPS.Kernel.Modules.UI is
       use type XML_Utils.Node_Ptr;
       List    : constant Abstract_Module_List.List :=
         Kernel.Module_List (Module_ID_Record'Tag);
-      Current : Cursor := Abstract_Module_List.First (List);
+      Current : Abstract_Module_List.Cursor :=
+        Abstract_Module_List.First (List);
       Module  : Module_ID;
       Marker  : Location_Marker;
    begin
@@ -1159,18 +1199,18 @@ package body GPS.Kernel.Modules.UI is
             Name => Ref_Item,
             Menu_Item => Pred,
             Index => Index);
+
          Add_Menu (Parent     => Parent_Menu,
                    Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
                    Item       => Item,
                    Index      => Index,
                    Add_Before => Add_Before);
-         Show_All (Item);
+         Item.Show_All;
 
          if Filter /= null then
-            Command_Callback.Object_Connect
-              (Get_Toplevel (Item), Signal_Map, Map_Menu'Access,
-               Slot_Object => Item,
-               User_Data   => (Kernel_Handle (Kernel), null, Filter));
+            Item.On_Destroy (On_Destroy_Menu_With_Filter'Access);
+            Global_Menu_Items.Append
+              (Item_And_Filter'(Gtk_Menu_Item (Item), Filter));
          end if;
 
          if Item.Get_Child /= null then
@@ -1237,41 +1277,43 @@ package body GPS.Kernel.Modules.UI is
    -- Lookup_Action --
    -------------------
 
-   procedure Lookup_Action
+   function Lookup_Action
      (Self : not null access Action_Menu_Item_Record'Class)
+     return Action_Record_Access
    is
       Label : Gtk_Accel_Label;
       Key   : Gdk_Key_Type;
       Mods  : Gdk_Modifier_Type;
       Pix   : Gtk_Image;
+      Action : Action_Record_Access;
    begin
-      if Self.Action = null then
-         Self.Action := Lookup_Action (Self.Kernel, Self.Name.all);
+      Action := Lookup_Action (Self.Kernel, Self.Name.all);
 
-         if Self.Action /= null then
-            --  ??? Could free Self.Name, which duplicates Self.Action.Name
+      if Action /= Self.Looked_Up then
+         Self.Looked_Up := Action;
 
-            if Self.Action.Category = null then
-               Self.Action.Category := new String'("");
+         if Action /= null then
+            if Action.Category = null then
+               Action.Category := new String'("");
             end if;
 
             Self.Set_Tooltip_Markup
-              (Escape_Text (Self.Action.Description.all)
+              (Escape_Text (Action.Description.all)
                & ASCII.LF & ASCII.LF
                & "<b>Action:</b> "
-               & Escape_Text (Self.Action.Name.all) & ASCII.LF
+               & Escape_Text (Action.Name.all) & ASCII.LF
                & "<b>Category:</b> "
-               & Escape_Text (Self.Action.Category.all) & ASCII.LF
+               & Escape_Text (Action.Category.all) & ASCII.LF
                & "<b>Shortcut:</b> "
                & Self.Kernel.Get_Shortcut
-                 (Action          => Self.Action.Name.all,
+                 (Action          => Action.Name.all,
                   Use_Markup      => True,
                   Return_Multiple => True));
 
             --  Update the image if the action has one
 
-            if Self.Action.Stock_Id /= null then
-               Gtk_New (Pix, Self.Action.Stock_Id.all, Icon_Size_Menu);
+            if Action.Stock_Id /= null then
+               Gtk_New (Pix, Action.Stock_Id.all, Icon_Size_Menu);
                Self.Set_Image (Pix);
                Pix.Show;
             end if;
@@ -1283,7 +1325,7 @@ package body GPS.Kernel.Modules.UI is
             --  refresh.
 
             Self.Kernel.Get_Shortcut_Simple
-              (Action    => Self.Action.Name.all,
+              (Action    => Action.Name.all,
                Key       => Key,
                Mods      => Mods);
             if Key /= 0 then
@@ -1299,6 +1341,8 @@ package body GPS.Kernel.Modules.UI is
             Get_Style_Context (Self).Add_Class ("nogpsaction");
          end if;
       end if;
+
+      return Action;
    end Lookup_Action;
 
    -----------------------------
@@ -1311,15 +1355,15 @@ package body GPS.Kernel.Modules.UI is
       Self : constant Action_Menu_Item := Action_Menu_Item (Item);
       Context : constant Selection_Context :=
         Get_Current_Context (Self.Kernel);
+      Action : constant Action_Record_Access := Self.Lookup_Action;
    begin
       Trace (Me, "Execute action " & Self.Name.all);
-      Self.Lookup_Action;
 
-      if Self.Action = null then
+      if Action = null then
          Trace (Me, "Action not found: " & Self.Name.all);
 
       elsif Context /= No_Context
-        and then Filter_Matches (Self.Action.Filter, Context)
+        and then Filter_Matches (Action.Filter, Context)
       then
          --  Tests expect that using GPS.execute_action("/menu") will
          --  execute in the foreground, so we run Launch_Foreground_Command.
@@ -1329,7 +1373,7 @@ package body GPS.Kernel.Modules.UI is
          Launch_Foreground_Command
            (Self.Kernel,
             Create_Proxy
-              (Self.Action.Command,
+              (Action.Command,
                (Event            => null,
                 Context          => Context,
                 Synchronous      => False,
@@ -1341,8 +1385,8 @@ package body GPS.Kernel.Modules.UI is
                 Remaining_Repeat => 0)),
             Destroy_On_Exit => True);
 
-      elsif Get_Error_Message (Self.Action.Filter) /= "" then
-         Insert (Self.Kernel, Get_Error_Message (Self.Action.Filter),
+      elsif Get_Error_Message (Action.Filter) /= "" then
+         Insert (Self.Kernel, Get_Error_Message (Action.Filter),
                  Mode => Error);
       else
          Insert (Self.Kernel,
@@ -1357,34 +1401,29 @@ package body GPS.Kernel.Modules.UI is
    procedure On_Destroy_Action_Item (Item : access Gtk_Widget_Record'Class) is
       Self : constant Action_Menu_Item := Action_Menu_Item (Item);
    begin
+      On_Destroy_Menu_With_Filter (Item);
       Free (Self.Name);
-      --  Do not free Self.Action, belongs to the kernel
    end On_Destroy_Action_Item;
 
-   ------------------------
-   -- On_Map_Action_Item --
-   ------------------------
+   ---------------------------------
+   -- On_Destroy_Menu_With_Filter --
+   ---------------------------------
 
-   procedure On_Map_Action_Item (Item : access GObject_Record'Class) is
-      Self : constant Action_Menu_Item := Action_Menu_Item (Item);
+   procedure On_Destroy_Menu_With_Filter
+     (Item : access Gtk_Widget_Record'Class)
+   is
+      It : Item_And_Filter;
+      C : Action_Menu_Item_Lists.Cursor := Global_Menu_Items.First;
    begin
-      Self.Lookup_Action;
-
-      if Self.Action = null then
-         if Self.Optional then
-            Self.Hide;
-         else
-            Self.Set_Sensitive (False);
+      while Has_Element (C) loop
+         It := Element (C);
+         if It.Item = Gtk_Menu_Item (Item) then
+            Global_Menu_Items.Delete (C);
+            exit;
          end if;
-      elsif Self.Action.Filter = null then
-         Self.Set_Sensitive (True);
-      else
-         Map_Menu (Self, Interactive_Action'
-                     (Kernel  => Self.Kernel,
-                      Command => Self.Action.Command,
-                      Filter  => Self.Action.Filter));
-      end if;
-   end On_Map_Action_Item;
+         Next (C);
+      end loop;
+   end On_Destroy_Menu_With_Filter;
 
    -------------------
    -- Register_Menu --
@@ -1453,11 +1492,13 @@ package body GPS.Kernel.Modules.UI is
       Register_Menu
         (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
+      Global_Menu_Items.Append (Item_And_Filter'(Gtk_Menu_Item (Self), null));
+
       --  And now setup the dynamic behavior
 
-      Self.Get_Toplevel.On_Map (On_Map_Action_Item'Access, Self);
       Self.On_Activate (On_Activate_Action_Item'Access);
       Self.On_Destroy (On_Destroy_Action_Item'Access);
+
       return Gtk_Menu_Item (Self);
    end Register_Menu;
 
@@ -1499,49 +1540,6 @@ package body GPS.Kernel.Modules.UI is
       Launch_Foreground_Command
         (Kernel, Command, Destroy_On_Exit => False);
    end Execute_Menu;
-
-   ----------------
-   -- Unmap_Menu --
-   ----------------
-
-   procedure Unmap_Menu (Menu : access Gtk_Widget_Record'Class) is
-   begin
-      Trace (Me, "Unmap_Menu");
-      Context_User_Data.Remove (Menu, "gpscontext");
-   end Unmap_Menu;
-
-   --------------
-   -- Map_Menu --
-   --------------
-
-   procedure Map_Menu
-     (Item    : access GObject_Record'Class;
-      Command : Interactive_Action)
-   is
-      Menu : constant Gtk_Widget := Get_Toplevel (Gtk_Widget (Item));
-      Ctxt : Selection_Context;
-   begin
-      --  Do not use the contextual menu here. Instead, we compute our own
-      --  current context for the whole menu tree (not just the item), and
-      --  cache it there so that it is only computed once when the user clicks
-      --  on a menu.
-
-      Ctxt := Context_User_Data.Get (Menu, "gpscontext", No_Context);
-      if Ctxt = No_Context then
-         Trace (Me, "Map_Menu: context does not exist yet, creating it");
-         Ctxt := Get_Current_Context (Command.Kernel);
-         Context_User_Data.Set (Menu, Ctxt, "gpscontext");
-
-         --  Make sure the Unmap signal is set only once for this menu, for
-         --  efficiency.
-         if Integer_User_Data.Get (Menu, "gpsunmapid", -1) = -1 then
-            Widget_Callback.Connect (Menu, Signal_Unmap, Unmap_Menu'Access);
-            Integer_User_Data.Set (Menu, 1, "gpsunmapid");
-         end if;
-      end if;
-
-      Set_Sensitive (Gtk_Widget (Item), Filter_Matches (Command.Filter, Ctxt));
-   end Map_Menu;
 
    ---------------------
    -- Register_Button --
@@ -2270,6 +2268,213 @@ package body GPS.Kernel.Modules.UI is
    begin
       Ignored := Add_Button (Kernel, Toolbar, Action, Position);
    end Add_Button;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Update_Menus_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Update_Menus_Data, Update_Menus_Data_Access);
+   begin
+      Unchecked_Free (Data);
+      Update_Menus_Idle_Id := No_Source_Id;
+   end Destroy;
+
+   ------------------------------------
+   -- Update_Menus_And_Buttons_Chunk --
+   ------------------------------------
+
+   function Update_Menus_And_Buttons_Chunk
+     (Data : Update_Menus_Data_Access) return Boolean
+   is
+      Max_Idle_Duration : constant Duration := 0.05;
+      A      : Item_And_Filter;
+      Action : Action_Record_Access;
+      Start  : constant Time := Clock;
+      Tmp    : Action_Menu_Item_Lists.Cursor;
+      Menu_Bar : Gtk_Menu_Bar;
+
+      procedure Propagate_Visibility
+        (Widget : not null access Gtk_Widget_Record'Class;
+         Parent : not null access Gtk_Container_Record'Class);
+      --  Hide menu items for which all children are also hidden.
+      --  Set menu items insensitive if all children are also insensitive
+      --  Widget's visibility and sensitivity will be updated based on the
+      --  list of children of Parent.
+
+      procedure Propagate_Visibility
+        (Widget : not null access Gtk_Widget_Record'Class;
+         Parent : not null access Gtk_Container_Record'Class)
+      is
+         use Widget_List;
+         Children : Widget_List.Glist := Parent.Get_Children;
+         Iter     : Widget_List.Glist := Children;
+         S, V : Boolean := False;
+         W    : Gtk_Widget;
+         Prev_Is_Sep : Boolean := True;
+      begin
+         while Iter /= Null_List loop
+            W := Widget_List.Get_Data (Iter);
+
+            --  Separators should not impact the visibility of the parent.
+            --  We also do not want to display a separator as the first or last
+            --  item in the menu, nor display multiple separators next to
+            --  each other.
+            if W.all in Gtk_Separator_Menu_Item_Record'Class then
+               if Prev_Is_Sep then
+                  W.Hide;
+               end if;
+               Prev_Is_Sep := True;
+
+            else
+               if W.all in Gtk_Menu_Item_Record'Class
+                 and then Gtk_Menu_Item (W).Get_Submenu /= null
+               then
+                  Propagate_Visibility
+                    (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
+               end if;
+
+               Prev_Is_Sep := not W.Get_Visible;
+               S := S or else W.Get_Sensitive;
+               V := V or else W.Get_Visible;  --  do not check parents
+            end if;
+
+            Iter := Next (Iter);
+         end loop;
+
+         if Prev_Is_Sep then
+            W.Hide;
+         end if;
+
+         Widget_List.Free (Children);
+
+         if not V then
+            Widget.Hide;
+         else
+            Widget.Show;
+            Widget.Set_Sensitive (S);
+         end if;
+      end Propagate_Visibility;
+
+   begin
+      loop
+         if not Has_Element (Data.Current) then
+            --  no more items
+
+            Menu_Bar := GPS_Window
+              (Get_Kernel (Data.Context).Main_Window).Menu_Bar;
+            Propagate_Visibility (Menu_Bar, Menu_Bar);
+
+            return False;
+         end if;
+
+         if Clock - Start > Max_Idle_Duration then
+            --  will try again
+            return True;
+         end if;
+
+         A := Element (Data.Current);
+
+         if A.Filter /= null then
+            A.Item.Set_Sensitive (Filter_Matches (A.Filter, Data.Context));
+         else
+            Action := Action_Menu_Item (A.Item).Lookup_Action;
+            if Action = null then
+               --  The action is still unknown
+               if Action_Menu_Item (A.Item).Optional then
+                  A.Item.Hide;
+               else
+                  A.Item.Set_Sensitive (False);
+               end if;
+
+            else
+               A.Item.Show;  --  in case it was hidden earlier
+
+               if Action.Filter = null then
+                  --  The item is already active, and will remain so, so
+                  --  nothing to do here. We thus remove the item from the list
+                  --  since there will be nothing to do with it anymore,
+                  --  not worth wasting time
+                  --  ??? If the action is overridden, we might need to review
+                  --  the policy here, but that should not happen.
+
+                  Tmp := Previous (Data.Current);
+                  Global_Menu_Items.Delete (Data.Current);
+
+                  if not Has_Element (Tmp) then
+                     Data.Current := Global_Menu_Items.First;
+                  else
+                     Data.Current := Tmp;
+                  end if;
+
+               else
+                  --  The context caches the filter, so there is limited
+                  --  cost in computing multiple times whether a given
+                  --  filter matches.
+                  A.Item.Set_Sensitive
+                    (Filter_Matches (Action.Filter, Data.Context));
+               end if;
+            end if;
+         end if;
+
+         Next (Data.Current);
+      end loop;
+   end Update_Menus_And_Buttons_Chunk;
+
+   ------------------------------
+   -- Update_Menus_And_Buttons --
+   ------------------------------
+
+   procedure Update_Menus_And_Buttons
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context := No_Context)
+   is
+      Ctxt : Selection_Context := Context;
+   begin
+      if Ctxt = No_Context then
+         Ctxt := Get_Current_Context (Kernel);
+      end if;
+
+      if Update_Menus_Idle_Id /= No_Source_Id then
+         Remove (Update_Menus_Idle_Id);
+      end if;
+
+      Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
+        (Update_Menus_And_Buttons_Chunk'Access,
+         Data => new Update_Menus_Data'
+           (Context => Ctxt,
+            Current => Global_Menu_Items.First),
+         Notify     => Destroy'Access);
+   end Update_Menus_And_Buttons;
+
+   ------------------------
+   -- On_Context_Changed --
+   ------------------------
+
+   procedure On_Context_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      type Context_Args is access all Context_Hooks_Args'Class;
+      D : constant Context_Args := Context_Args (Data);
+   begin
+      Update_Menus_And_Buttons (Kernel, D.Context);
+   end On_Context_Changed;
+
+   ----------------------------
+   -- Start_Monitoring_Menus --
+   ----------------------------
+
+   procedure Start_Monitoring_Menus
+     (Kernel      : not null access Kernel_Handle_Record'Class) is
+   begin
+      Add_Hook
+        (Kernel,
+         Context_Changed_Hook,
+         Wrapper (On_Context_Changed'Access),
+         Name => "monitor context for menus");
+   end Start_Monitoring_Menus;
 
    -------------------
    -- Install_Menus --

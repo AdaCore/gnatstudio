@@ -603,19 +603,19 @@ package body Src_Editor_Module is
               File_Location_Hooks_Args_Access (Data);
       Id  : constant Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
-      Box : Source_Editor_Box;
-
+      C   : constant MDI_Child := Find_Editor (Kernel, D.File);
+      Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (C);
    begin
-      if Id.Show_Subprogram_Names then
-         Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
-
-         if Box /= null then
+      if Box /= null then
+         if Id.Show_Subprogram_Names then
             Update_Subprogram_Name (Box);
          end if;
-      end if;
 
-   exception
-      when E : others => Trace (Me, E);
+         if C = Get_MDI (Kernel).Get_Focus_Child then
+            Update_Menus_And_Buttons (Kernel);
+         end if;
+      end if;
    end Cursor_Stopped_Cb;
 
    ------------------------
@@ -2284,7 +2284,7 @@ package body Src_Editor_Module is
       Command := new Jump_To_Delimiter_Command;
       Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Jump to matching delimiter", Command,
+        (Kernel, "jump to matching delimiter", Command,
          -"Jump to the matching delimiter ()[]{}",
          Accel_Key  => GDK_apostrophe,
          Accel_Mods => Primary_Mod_Mask,

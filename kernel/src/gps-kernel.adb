@@ -800,7 +800,8 @@ package body GPS.Kernel is
          if Active (Ref_Me) then
             Trace (Ref_Me, "Before decref context: ("
                    & System.Address_Image (To_Address (Data))
-                   & " " & Data.Ref_Count'Img & ")");
+                   & " " & Data.Ref_Count'Img & ") in instances="
+                   & Length (Data.Instances)'Img);
          end if;
 
          --  Some references to the selection are hold by the instance list

@@ -1033,17 +1033,12 @@ package body GNATStack.Module is
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
       Command        : Interactive_Command_Access;
-      Item           : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
       if GNATStack_Path = No_File then
          --  There is no GNATStack executable available, module is not
          --  registered.
 
-         Item := Find_Menu_Item (Kernel, "/Tools/Stack Analysis");
-         if Item /= null then
-            Item.Destroy;
-         end if;
          return;
       end if;
 

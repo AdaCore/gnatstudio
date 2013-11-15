@@ -2099,17 +2099,12 @@ package body CodePeer.Module is
       Executable      : constant Virtual_File := Locate_On_Path ("codepeer");
       Filter          : GPS.Kernel.Action_Filter;
       Command         : Interactive_Command_Access;
-      Item            : Gtk.Menu_Item.Gtk_Menu_Item;
 
    begin
       if Executable = No_File then
          --  Do not register the CodePeer module if the codepeer executable
          --  cannot be found.
 
-         Item := Find_Menu_Item (Kernel, "/CodePeer");
-         if Item /= null then
-            Item.Destroy;
-         end if;
          return;
       end if;
 

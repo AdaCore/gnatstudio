@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with Interfaces.C.Strings;
 
@@ -789,12 +790,11 @@ package body Src_Editor_View is
       User   : Source_View)
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
+      Has_Focus : constant Boolean :=
+        Gtkada.MDI.MDI_Child (User.Child) =
+        Get_Focus_Child (Get_MDI (User.Kernel));
    begin
-      --  If we are changing the cursor while this editor has the focus,
-      --  we need save the cursor position
-      if Gtkada.MDI.MDI_Child (User.Child) =
-        Get_Focus_Child (Get_MDI (User.Kernel))
-      then
+      if Has_Focus then
          Save_Cursor_Position (User);
       end if;
 
@@ -814,9 +814,6 @@ package body Src_Editor_View is
       end if;
 
       User.Current_Line := Line;
-
-   exception
-      when E : others => Trace (Me, E);
    end Change_Handler;
 
    ---------------------------

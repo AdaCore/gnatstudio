@@ -331,6 +331,16 @@ package GPS.Kernel.Modules.UI is
        Description : GNATCOLL.VFS.Virtual_File);
    --  Load an XML description of the menubar, and create it.
 
+   procedure Start_Monitoring_Menus
+     (Kernel      : not null access Kernel_Handle_Record'Class);
+   --  Start monitoring the context changes to update the menu sensitivity.
+
+   procedure Update_Menus_And_Buttons
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context := No_Context);
+   --  Recompute the visibility and sensitivity of menus and toolbar buttons.
+   --  This computation is asynchronous so that it doesn't block the user.
+
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
