@@ -133,7 +133,8 @@ package body GNATdoc.Backend.Simple is
 
       procedure ReST_Append_Simple_Declaration
         (Printout : access Unbounded_String;
-         E        : Entity_Id);
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context);
       --  Append to Printout the reStructured output of a variable or a type
 
       procedure ReST_Append_Src
@@ -487,7 +488,8 @@ package body GNATdoc.Backend.Simple is
 
       procedure ReST_Append_Simple_Declaration
         (Printout : access Unbounded_String;
-         E        : Entity_Id)
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context)
       is
          Name   : constant String := Get_Short_Name (E);
          Header : constant String (Name'Range) := (others => '=');
@@ -499,8 +501,24 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout, Header);
          Append_Line (Printout, "");
 
-         ReST_Append_Src (Printout, E);
-         ReST_Append_Comment (Printout, E);
+         if not Is_Partial_View (E) then
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+         elsif not Context.Options.Show_Private then
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+         else
+            Append_Line (Printout, "**Incomplete View:**");
+
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+            Append_Line (Printout, "**Full View:**");
+            ReST_Append_Src (Printout, Get_Full_View (E));
+            ReST_Append_Comment (Printout, Get_Full_View (E));
+         end if;
       end ReST_Append_Simple_Declaration;
 
       ---------------------
@@ -2017,14 +2035,14 @@ package body GNATdoc.Backend.Simple is
             null;  --  unsupported yet???
 
          elsif Get_Kind (E) = E_Variable then
-            ReST_Append_Simple_Declaration (Printout, E);
+            ReST_Append_Simple_Declaration (Printout, E, Backend.Context);
 
          elsif LL.Is_Type (E) then
             if Is_Class_Or_Record_Type (E) then
                ReST_Append_Record_Type_Declaration
                  (Printout, E, Backend.Context);
             else
-               ReST_Append_Simple_Declaration (Printout, E);
+               ReST_Append_Simple_Declaration (Printout, E, Backend.Context);
             end if;
 
          elsif Is_Subprogram (E) then
@@ -2035,7 +2053,7 @@ package body GNATdoc.Backend.Simple is
             --  cases is simple. More work needed here???
 
          else
-            ReST_Append_Simple_Declaration (Printout, E);
+            ReST_Append_Simple_Declaration (Printout, E, Backend.Context);
          end if;
       end Append_Generic_Formal;
 
@@ -2233,7 +2251,8 @@ package body GNATdoc.Backend.Simple is
             end if;
 
             if Present (LL.Get_Instance_Of (Entity)) then
-               ReST_Append_Simple_Declaration (Printout'Access, Entity);
+               ReST_Append_Simple_Declaration
+                 (Printout'Access, Entity, Backend.Context);
 
             elsif Is_Subprogram (Entity) then
                ReST_Append_Subprogram (Printout'Access, Entity);

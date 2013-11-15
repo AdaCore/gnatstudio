@@ -93,6 +93,14 @@ package body GNATdoc.Backend.Base is
             Parent   : Entity_Id;
             Entities : in out Collected_Entities) is
          begin
+            --  Skip storing the full view of private types and incomplete
+            --  declarations since they just complete the documentation of
+            --  their partial view.
+
+            if Is_Full_View (Entity) then
+               return;
+            end if;
+
             --  Package generic formals are stored at the beginning of the
             --  list of entities
 
