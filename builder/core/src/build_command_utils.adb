@@ -871,7 +871,7 @@ package body Build_Command_Utils is
             Res   : Expansion_Result;
 
          begin
-            Res.Args := Create ("--target=" & Get_Name (Tc));
+            Res.Args := Create ("--target=" & Get_Target_Name (Tc));
             return Res;
          end;
 

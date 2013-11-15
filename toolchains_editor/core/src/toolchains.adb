@@ -1136,11 +1136,33 @@ package body Toolchains is
       if This.Name = null then
          return "";
       elsif This.Is_Native then
-         return Standard'Target_Name;
+         return "native";
       else
          return This.Name.all;
       end if;
    end Get_Name;
+
+   ------------------------
+   -- Native_Target_Name --
+   ------------------------
+
+   function Native_Target_Name return String is
+   begin
+      return Standard'Target_Name;
+   end Native_Target_Name;
+
+   ---------------------
+   -- Get_Target_Name --
+   ---------------------
+
+   function Get_Target_Name (This : Toolchain) return String is
+   begin
+      if This.Is_Native then
+         return Native_Target_Name;
+      else
+         return Get_Name (This);
+      end if;
+   end Get_Target_Name;
 
    ---------------
    -- Get_Label --

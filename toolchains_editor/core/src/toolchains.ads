@@ -224,7 +224,13 @@ package Toolchains is
 
    function Get_Name (This : Toolchain) return String;
    --  Return the name of this toolchain, as used for the properties
-   --  deduction. This name is also the target as known by gprbuild.
+   --  deduction.
+
+   function Get_Target_Name (This : Toolchain) return String;
+   --  Return the target as known by gprbuild of this toolchain.
+
+   function Native_Target_Name return String;
+   --  Return the target as known by gprbuild for the native toolchain.
 
    procedure Set_Name (This : Toolchain; Name : String);
    --  Changes the name of the toolchain given in parameter
