@@ -218,8 +218,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Doc
      (E : Entity_Id) return Comment_Result;
-   function Get_IDepth_Level
-     (E : Entity_Id) return Natural;
 
    function Get_End_Of_Profile_Location
      (E : Entity_Id) return General_Location;
@@ -240,6 +238,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Unbounded_String;
    function Get_Full_Name
      (E : Entity_Id) return String;
+   function Get_Full_View
+     (E : Entity_Id) return Entity_Id;
    function Get_Full_View_Comment
      (E : Entity_Id) return Structured_Comment;
    function Get_Full_View_Doc
@@ -248,6 +248,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Unbounded_String;
    function Get_Inherited_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
+   function Get_IDepth_Level
+     (E : Entity_Id) return Natural;
    function Get_Kind
      (E : Entity_Id) return Entity_Kind;
    function Get_Language
@@ -255,6 +257,8 @@ private package GNATdoc.Atree is
    function Get_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Parent
+     (E : Entity_Id) return Entity_Id;
+   function Get_Partial_View
      (E : Entity_Id) return Entity_Id;
    function Get_Progenitors
      (E : Entity_Id) return access EInfo_List.Vector;
@@ -277,6 +281,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function In_C_Or_CPP_Language
      (E : Entity_Id) return Boolean;
+   function In_Private_Part
+     (E : Entity_Id) return Boolean;
 
    function Is_Class_Or_Record_Type
      (E : Entity_Id) return Boolean;
@@ -290,7 +296,7 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Generic_Formal
      (E : Entity_Id) return Boolean;
-   function Is_Incomplete_Or_Private_Type
+   function Is_Incomplete
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
@@ -326,6 +332,7 @@ private package GNATdoc.Atree is
       V3 : Entity_Kind;
       V4 : Entity_Kind) return Boolean;
 
+   procedure Remove_Full_View  (E : Entity_Id);
    procedure Remove_From_Scope (E : Entity_Id);
 
    procedure Set_Alias
@@ -334,8 +341,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Structured_Comment);
    procedure Set_Doc
      (E : Entity_Id; Value : Comment_Result);
-   procedure Set_IDepth_Level
-     (E : Entity_Id);
    procedure Set_End_Of_Profile_Location
      (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Profile_Location_In_Body
@@ -350,14 +355,18 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Unbounded_String);
    procedure Set_Has_Private_Parent
      (E : Entity_Id; Value : Boolean := True);
+   procedure Set_In_Private_Part
+     (E : Entity_Id);
+   procedure Set_IDepth_Level
+     (E : Entity_Id);
    procedure Set_Is_Decorated
      (E : Entity_Id);
    procedure Set_Is_Doc_From_Body
      (E : Entity_Id);
    procedure Set_Is_Generic_Formal
      (E : Entity_Id);
-   procedure Set_Is_Partial_View
-     (E : Entity_Id);
+   procedure Set_Is_Incomplete
+     (E : Entity_Id; Value : Boolean := True);
    procedure Set_Is_Private
      (E : Entity_Id);
    procedure Set_Is_Subtype
@@ -426,8 +435,6 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Entity;
       function Get_First_Private_Entity_Loc
         (E : Entity_Id) return General_Location;
-      function Get_Full_View
-        (E : Entity_Id) return General_Entity;
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity;
       function Get_Kind
@@ -482,7 +489,6 @@ private package GNATdoc.Atree is
       pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
       pragma Inline (Get_First_Private_Entity_Loc);
-      pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
       pragma Inline (Get_Parent_Types);
@@ -562,7 +568,6 @@ private
          End_Of_Scope_Loc : General_Location;
          Entity           : General_Entity;
          Etype            : General_Entity;
-         Full_View        : General_Entity;
          Instance_Of      : General_Entity;
          Loc              : General_Location;
          Pointed_Type     : General_Entity;
@@ -643,11 +648,13 @@ private
          Has_Private_Parent : Boolean;
          --  True if the parent type is only visible in the full view
 
+         In_Private_Part   : Boolean;
+         --  True if the entity is defined in the private part of a package
+
          Is_Decorated      : Boolean;
          Is_Generic_Formal : Boolean;
-         Is_Incomplete_Or_Private_Type : Boolean;
          Is_Internal       : Boolean;
-         Is_Partial_View   : Boolean;
+         Is_Incomplete     : Boolean;
          Is_Private        : Boolean;
 
          Is_Subtype        : Boolean;
@@ -662,6 +669,9 @@ private
          --  retrieved from the source file. After processed, it is cleaned and
          --  its contents is stored in the structured comment, which identifies
          --  tags and attributes.
+
+         Full_View         : Entity_Id;
+         Partial_View      : Entity_Id;
 
          Full_View_Doc     : Comment_Result;
          Full_View_Comment : aliased Structured_Comment;
@@ -706,21 +716,23 @@ private
    pragma Inline (Get_Comment);
    pragma Inline (Get_Direct_Derivations);
    pragma Inline (Get_Doc);
-   pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_End_Of_Profile_Location);
    pragma Inline (Get_End_Of_Profile_Location_In_Body);
    pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Full_Name);
+   pragma Inline (Get_Full_View);
    pragma Inline (Get_Full_View_Comment);
    pragma Inline (Get_Full_View_Doc);
    pragma Inline (Get_Full_View_Src);
    pragma Inline (Get_Inherited_Methods);
+   pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_Kind);
    pragma Inline (Get_Language);
    pragma Inline (Get_Methods);
    pragma Inline (Get_Parent);
+   pragma Inline (Get_Partial_View);
    pragma Inline (Get_Progenitors);
    pragma Inline (Get_Ref_File);
    pragma Inline (Get_Scope);
@@ -730,12 +742,13 @@ private
    pragma Inline (Has_Private_Parent);
    pragma Inline (In_Ada_Language);
    pragma Inline (In_C_Or_CPP_Language);
+   pragma Inline (In_Private_Part);
    pragma Inline (Is_Class_Or_Record_Type);
    pragma Inline (Is_Decorated);
    pragma Inline (Is_Doc_From_Body);
    pragma Inline (Is_Full_View);
    pragma Inline (Is_Generic_Formal);
-   pragma Inline (Is_Incomplete_Or_Private_Type);
+   pragma Inline (Is_Incomplete);
    pragma Inline (Is_Package);
    pragma Inline (Is_Partial_View);
    pragma Inline (Is_Private);
@@ -747,6 +760,7 @@ private
    pragma Inline (Present);
    pragma Inline (Set_Alias);
    pragma Inline (Set_Comment);
+   pragma Inline (Set_In_Private_Part);
    pragma Inline (Set_IDepth_Level);
    pragma Inline (Set_Doc);
    pragma Inline (Set_End_Of_Profile_Location);
@@ -760,7 +774,7 @@ private
    pragma Inline (Set_Is_Decorated);
    pragma Inline (Set_Is_Doc_From_Body);
    pragma Inline (Set_Is_Generic_Formal);
-   pragma Inline (Set_Is_Partial_View);
+   pragma Inline (Set_Is_Incomplete);
    pragma Inline (Set_Is_Private);
    pragma Inline (Set_Is_Subtype);
    pragma Inline (Set_Is_Tagged_Type);

@@ -129,7 +129,7 @@ private
       --  already stored in Target
 
       procedure Print_Files
-        (Source : access Files_List.Vector);
+        (Source : Files_List.Vector);
       --  (gdb) Prints the name of all the files in Source
 
       function Less_Than

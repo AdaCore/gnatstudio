@@ -54,11 +54,6 @@ package body GNATdoc.Atree is
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
-   procedure LL_Set_Full_View (E : Entity_Id; Value : General_Entity);
-
-   procedure Set_Is_Incomplete_Or_Private_Type (E : Entity_Id);
-   --  Set to true field E.Is_Incomplete_Or_Private_Type
-
    -----------------------
    -- Append_Derivation --
    -----------------------
@@ -114,7 +109,7 @@ package body GNATdoc.Atree is
       begin
          Cursor := Get_Entities (E).First;
          while EInfo_List.Has_Element (Cursor) loop
-            if EInfo_List.Element (Cursor) = E then
+            if EInfo_List.Element (Cursor) = Value then
                return False;
             end if;
 
@@ -476,6 +471,15 @@ package body GNATdoc.Atree is
       return Get (E.Full_Name).all;
    end Get_Full_Name;
 
+   -------------------
+   -- Get_Full_View --
+   -------------------
+
+   function Get_Full_View (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Full_View;
+   end Get_Full_View;
+
    ---------------------------
    -- Get_Full_View_Comment --
    ---------------------------
@@ -559,6 +563,15 @@ package body GNATdoc.Atree is
       return E.Parent;
    end Get_Parent;
 
+   ----------------------
+   -- Get_Partial_View --
+   ----------------------
+
+   function Get_Partial_View (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Partial_View;
+   end Get_Partial_View;
+
    ---------------------
    -- Get_Progenitors --
    ---------------------
@@ -634,7 +647,7 @@ package body GNATdoc.Atree is
          EInfo_List.Next (Cursor);
       end loop;
 
-      EInfo_Vector_Sort_Full.Sort (Aux_List);
+      EInfo_Vector_Sort_Loc.Sort (Aux_List);
 
       Cursor := Aux_List.First;
 
@@ -687,6 +700,16 @@ package body GNATdoc.Atree is
    begin
       return Get_Language (E).all in Language.C.C_Language'Class;
    end In_C_Or_CPP_Language;
+
+   ---------------------
+   -- In_Private_Part --
+   ---------------------
+
+   function In_Private_Part
+     (E : Entity_Id) return Boolean is
+   begin
+      return E.In_Private_Part;
+   end In_Private_Part;
 
    ----------------
    -- Initialize --
@@ -817,13 +840,6 @@ package body GNATdoc.Atree is
          --  traversing the tree since they require context information.
 
          if New_E.Xref.Is_Type then
-
-            if No (New_E.Xref.Etype)
-              and then Present (New_E.Xref.Body_Loc)
-            then
-               Set_Is_Incomplete_Or_Private_Type (New_E);
-            end if;
-
             if Is_Class_Or_Record_Type (New_E) then
                New_E.Xref.Has_Methods := Db.Has_Methods (E);
 
@@ -878,36 +894,45 @@ package body GNATdoc.Atree is
 
          if Present (LL.Get_Body_Loc (New_E))
            and then (LL.Is_Type (New_E) or else Get_Kind (New_E) = E_Variable)
+           and then Get_Kind (New_E) /= E_Task_Type
+           and then Get_Kind (New_E) /= E_Single_Task
+           and then Get_Kind (New_E) /= E_Protected_Type
          then
-            if (LL.Get_Body_Loc (New_E).File
-                  = LL.Get_Location (New_E).File)
-              and then (LL.Get_Body_Loc (New_E).Line
-                          > LL.Get_Location (New_E).Line)
-            then
-               Set_Is_Partial_View (New_E);
+            --  Xref does not help us to differentiate if New_E is a private
+            --  type, an incomplete declaration, or a formal of a subprogram
+            --  (because in this latter case Body_Loc references the same
+            --  formal in the subprogram body). For this reasons at this
+            --  stage the best action we can do is to decorate the entity
+            --  as "incomplete". At later stages the entity will be fully
+            --  decorated (and this value will be reset in subprogram formals).
 
-               --  The entity associated with the full view is not always
-               --  available (since the compiler does not generate it). Unclear
-               --  if this is a bug in the compiler. To be investigated???
+            Set_Is_Incomplete (New_E);
 
-               --  In such cases Xref returns the entity associated with the
-               --  partial view when we request the entity of its full view.
+            --  For private types the entity associated with the full view
+            --  is not available available in Xref since the compiler does
+            --  not generate it; by contrast, for incomplete types the
+            --  compiler generates two entities.
 
-               declare
-                  Full_View_E : General_Entity;
+            New_E.Full_View :=
+              Internal_New_Entity
+                (Context, Lang, E, LL.Get_Body_Loc (New_E), Name,
+                 Is_Internal => True);
 
-               begin
-                  Full_View_E :=
-                    Xref.Get_Entity
-                      (Db   => Context.Database,
-                       Name => Get_Short_Name (New_E),
-                       Loc  => LL.Get_Body_Loc (New_E));
+            --  Link the full view with its partial view
 
-                  if Full_View_E /= LL.Get_Entity (New_E) then
-                     LL_Set_Full_View (New_E, Full_View_E);
-                  end if;
-               end;
-            end if;
+            New_E.Full_View.Partial_View := New_E;
+
+            --  Propagate Xref attributes to the full view
+
+            New_E.Full_View.Xref := New_E.Xref;
+            New_E.Full_View.Xref.Body_Loc := No_Location;
+            New_E.Full_View.Xref.Loc := New_E.Xref.Body_Loc;
+
+            --  Adding a minimum high level decoration to the full view. For
+            --  incomplete types this value may be updated later (when the
+            --  type declaration is processed).
+
+            Set_Kind (New_E.Full_View, Get_Kind (New_E));
          end if;
 
          --  Store the location of the end of scope. For subprogram specs
@@ -943,7 +968,7 @@ package body GNATdoc.Atree is
       exception
          when E : others =>
             Trace (Me, E);
-            return;
+            raise;
       end Complete_Decoration;
 
       --  Local variables
@@ -989,7 +1014,6 @@ package body GNATdoc.Atree is
 
              First_Private_Entity_Loc  => No_Location,
 
-             Full_View        => No_General_Entity,
              Instance_Of      => No_General_Entity,
              Loc              => Loc,
              Pointed_Type     => No_General_Entity,
@@ -1023,21 +1047,24 @@ package body GNATdoc.Atree is
            End_Of_Profile_Location_In_Body => No_Location,
 
            Has_Private_Parent => False,
+           In_Private_Part    => False,
 
            Is_Decorated      => False,
            Is_Doc_From_Body  => False,
            Is_Generic_Formal => False,
-           Is_Incomplete_Or_Private_Type => False,
            Is_Internal       => Is_Internal,
            Is_Subtype        => False,
            Is_Tagged_Type    => False,
+           Is_Incomplete     => False,
            Is_Private        => False,
-           Is_Partial_View   => False,
            Idepth_Level      => 0,
            --  Inheritance depth level of the tagged type.
 
            Doc               => No_Comment_Result,
            Comment           => No_Structured_Comment,
+
+           Full_View         => No_Entity,
+           Partial_View      => No_Entity,
 
            Full_View_Doc     => No_Comment_Result,
            Full_View_Comment => No_Structured_Comment,
@@ -1057,7 +1084,7 @@ package body GNATdoc.Atree is
       --  entities created by the frontend (for example, the "standard"
       --  entity).
 
-      if Present (E) then
+      if Present (E) and then not Is_Internal then
          Complete_Decoration (New_E);
       end if;
 
@@ -1071,9 +1098,6 @@ package body GNATdoc.Atree is
 
    function Is_Class_Or_Record_Type (E : Entity_Id) return Boolean is
    begin
-      pragma Assert (Present (E)
-        and then Get_Kind (E) /= E_Unknown);
-
       return E.Xref.Ekind = E_Abstract_Record_Type
         or else E.Xref.Ekind = E_Record_Type
         or else E.Kind = E_Tagged_Record_Type
@@ -1106,9 +1130,7 @@ package body GNATdoc.Atree is
 
    function Is_Full_View (E : Entity_Id) return Boolean is
    begin
-      return Present (LL.Get_Body_Loc (E))
-        and then LL.Get_Body_Loc (E).Line
-                   < LL.Get_Location (E).Line;
+      return Present (E.Partial_View);
    end Is_Full_View;
 
    ----------------------
@@ -1129,14 +1151,14 @@ package body GNATdoc.Atree is
       return E.Is_Generic_Formal;
    end Is_Generic_Formal;
 
-   -----------------------------------
-   -- Is_Incomplete_Or_Private_Type --
-   -----------------------------------
+   -------------------
+   -- Is_Incomplete --
+   -------------------
 
-   function Is_Incomplete_Or_Private_Type (E : Entity_Id) return Boolean is
+   function Is_Incomplete (E : Entity_Id) return Boolean is
    begin
-      return E.Is_Incomplete_Or_Private_Type;
-   end Is_Incomplete_Or_Private_Type;
+      return E.Is_Incomplete;
+   end Is_Incomplete;
 
    ----------------
    -- Is_Package --
@@ -1154,7 +1176,7 @@ package body GNATdoc.Atree is
 
    function Is_Partial_View (E : Entity_Id) return Boolean is
    begin
-      return E.Is_Partial_View;
+      return Present (E.Full_View);
    end Is_Partial_View;
 
    ----------------
@@ -1288,19 +1310,6 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Loc;
 
-   ----------------------
-   -- LL_Set_Full_View --
-   ----------------------
-
-   procedure LL_Set_Full_View (E : Entity_Id; Value : General_Entity) is
-   begin
-      pragma Assert (Is_Partial_View (E));
-      pragma Assert (No (E.Xref.Full_View));
-      pragma Assert (Present (LL.Get_Entity (E)));
-      pragma Assert (Value /= LL.Get_Entity (E)); --  Avoid wrong circularity
-      E.Xref.Full_View := Value;
-   end LL_Set_Full_View;
-
    ----------------
    -- New_Entity --
    ----------------
@@ -1357,6 +1366,21 @@ package body GNATdoc.Atree is
       return E /= null;
    end Present;
 
+   ----------------------
+   -- Remove_Full_View --
+   ----------------------
+
+   procedure Remove_Full_View (E : Entity_Id) is
+   begin
+      if Present (E.Full_View) then
+         if Present (Get_Scope (E.Full_View)) then
+            Remove_From_Scope (E.Full_View);
+         end if;
+
+         Free (E.Full_View);
+      end if;
+   end Remove_Full_View;
+
    -----------------------
    -- Remove_From_Scope --
    -----------------------
@@ -1371,7 +1395,6 @@ package body GNATdoc.Atree is
       Cursor := Scope.Entities.Find (E);
       Scope.Entities.Delete (Cursor);
    end Remove_From_Scope;
-
    ---------------
    -- Set_Alias --
    ---------------
@@ -1428,6 +1451,15 @@ package body GNATdoc.Atree is
    begin
       E.End_Of_Profile_Location_In_Body := Loc;
    end Set_End_Of_Profile_Location_In_Body;
+
+   -------------------------
+   -- Set_In_Private_Part --
+   -------------------------
+
+   procedure Set_In_Private_Part (E : Entity_Id) is
+   begin
+      E.In_Private_Part := True;
+   end Set_In_Private_Part;
 
    ----------------------
    -- Set_IDepth_Level --
@@ -1525,25 +1557,14 @@ package body GNATdoc.Atree is
       E.Is_Generic_Formal := True;
    end Set_Is_Generic_Formal;
 
-   ---------------------------------------
-   -- Set_Is_Incomplete_Or_Private_Type --
-   ---------------------------------------
+   --------------------
+   -- Set_Is_Private --
+   --------------------
 
-   procedure Set_Is_Incomplete_Or_Private_Type (E : Entity_Id) is
+   procedure Set_Is_Incomplete (E : Entity_Id; Value : Boolean := True) is
    begin
-      pragma Assert (not (E.Is_Incomplete_Or_Private_Type));
-      E.Is_Incomplete_Or_Private_Type := True;
-   end Set_Is_Incomplete_Or_Private_Type;
-
-   -------------------------
-   -- Set_Is_Partial_View --
-   -------------------------
-
-   procedure Set_Is_Partial_View (E : Entity_Id) is
-   begin
-      pragma Assert (not (E.Is_Partial_View));
-      E.Is_Partial_View := True;
-   end Set_Is_Partial_View;
+      E.Is_Incomplete := Value;
+   end Set_Is_Incomplete;
 
    --------------------
    -- Set_Is_Private --
@@ -1623,6 +1644,10 @@ package body GNATdoc.Atree is
    begin
       pragma Assert (Value /= E); --  Avoid circularity
       E.Scope := Value;
+
+      if Present (Get_Full_View (E)) then
+         Set_Scope (Get_Full_View (E), Value);
+      end if;
    end Set_Scope;
 
    -------------
@@ -1791,11 +1816,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.First_Private_Entity_Loc;
       end Get_First_Private_Entity_Loc;
-
-      function Get_Full_View (E : Entity_Id) return General_Entity is
-      begin
-         return E.Xref.Full_View;
-      end Get_Full_View;
 
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity is
@@ -2213,10 +2233,10 @@ package body GNATdoc.Atree is
                  (if With_Unique_Id then To_String (E.Id) & ": "
                                     else "");
       begin
-         --  Internal entity are not fully decorated (currently used only to
-         --  represent the standard scope)
+         --  The internally generated Standard entity is not fully decorated
+         --  and hence we generate a minimum output.
 
-         if E.Is_Internal then
+         if Is_Standard_Entity (E) then
             Append_Line
               ("*** "
                & UID
@@ -2283,35 +2303,55 @@ package body GNATdoc.Atree is
             Prefix => " - ");
       end if;
 
-      if E.Has_Private_Parent then
+      if Has_Private_Parent (E) then
          Append_Line ("Has_Private_Parent");
       end if;
 
-      if E.Is_Decorated then
+      if In_Private_Part (E) then
+         Append_Line ("In_Private_Part");
+      end if;
+
+      if Is_Decorated (E) then
          Append_Line ("Is_Decorated");
       end if;
 
-      if E.Is_Incomplete_Or_Private_Type then
-         Append_Line ("Is_Incomplete_Or_Private_Type");
+      if Is_Incomplete (E) then
+         Append_Line ("Is_Incomplete");
       end if;
 
-      if E.Is_Private then
+      if Is_Private (E) then
          Append_Line ("Is_Private");
       end if;
 
-      if E.Is_Partial_View then
-         Append_Line ("Is_Partial_View");
+      if Is_Partial_View (E) then
+         Append_Line
+           ("Is_Partial_View "
+            & "(Full_View_Loc: "
+            & Image (E.Full_View.Xref.Loc)
+            & ")");
+
+      elsif Is_Full_View (E) then
+         if Present (E.Partial_View) then
+            Append_Line
+              ("Is_Full_View "
+               & "(Partial_View_Loc: "
+               & Image (E.Partial_View.Xref.Loc)
+               & ")");
+         else
+            Append_Line
+              ("Is_Full_View");
+         end if;
       end if;
 
-      if E.Is_Subtype then
+      if Is_Subtype (E) then
          Append_Line ("Is_Subtype");
       end if;
 
-      if E.Is_Tagged_Type then
+      if Is_Tagged_Type (E) then
          Append_Line ("Is_Tagged_Type");
       end if;
 
-      if E.Is_Generic_Formal then
+      if Is_Generic_Formal (E) then
          Append_Line ("Is_Generic_Formal");
       end if;
 
@@ -2356,16 +2396,6 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
-      end if;
-
-      if Present (LL.Get_Full_View (E)) then
-         Append_Line
-           (LL_Prefix
-            & "Full_View: "
-            & Get_Name (Db, LL.Get_Full_View (E))
-            & " ["
-            & Image (Db, LL.Get_Full_View (E))
-            & "]");
       end if;
 
       if Present (E.Xref.Scope_E) then

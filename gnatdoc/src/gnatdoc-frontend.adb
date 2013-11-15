@@ -619,9 +619,8 @@ package body GNATdoc.Frontend is
                            pragma Assert (Present (LL_Parent));
 
                            Parent :=
-                             Builder.Find_Unique_Entity
-                               (Get_Location (Context.Database, LL_Parent));
-                           pragma Assert (Present (Parent));
+                             Builder.Get_Unique_Entity
+                               (Context, File, LL_Parent);
 
                            Set_Parent (E, Parent);
 
@@ -643,6 +642,20 @@ package body GNATdoc.Frontend is
                   Prev_Token := Token;
                   Token      := Get_Token;
 
+                  --  Private types are not well recognized by Xref. Hence
+                  --  when the entity was built it was initially decorated
+                  --  as an Incomplete declaration. Now we complete its
+                  --  decoration.
+
+                  if Is_Partial_View (E)
+                    and then Token = Tok_Private
+                    and then not Is_Private (E)
+                  then
+                     pragma Assert (Is_Incomplete (E));
+                     Set_Is_Incomplete (E, False);
+                     Set_Is_Private (E);
+                  end if;
+
                   if Prev_Token = Tok_Is then
                      if Token = Tok_New then
                         In_Parent_Part := True;
@@ -653,8 +666,6 @@ package body GNATdoc.Frontend is
                      elsif Token = Tok_Tagged then
                         if not Is_Tagged_Type (E) then
                            Set_Is_Tagged_Type (E);
-
-                           pragma Assert (Get_Kind (E) = E_Record_Type);
                            Set_Kind (E, E_Tagged_Record_Type);
                         end if;
 
@@ -1247,7 +1258,9 @@ package body GNATdoc.Frontend is
                  Get_Record_Type_Source
                    (LL.Get_Location (E), Is_Full_View => False));
 
-               if Context.Options.Show_Private then
+               if Context.Options.Show_Private
+                 and then LL.Get_Body_Loc (E).File = File
+               then
                   Set_Full_View_Src (E,
                     Get_Record_Type_Source
                       (LL.Get_Body_Loc (E), Is_Full_View => True));
@@ -1265,6 +1278,13 @@ package body GNATdoc.Frontend is
 
          elsif Get_Kind (E) = E_Variable then
             if Is_Single_Protected_Object (E) then
+
+               --  Correct previous wrong decoration (done by
+               --  Atree.New_Internal_Entity).
+
+               Set_Is_Incomplete (E, False);
+               Remove_Full_View (E);
+
                Set_Kind (E, E_Single_Protected);
                Set_Src (E, Get_Concurrent_Type_Source (LL.Get_Location (E)));
             else
@@ -2276,7 +2296,7 @@ package body GNATdoc.Frontend is
          begin
             Body_File := P_Tree.Other_File (File);
 
-            if Body_File /= File then
+            if Body_File /= File and then Is_Regular_File (Body_File) then
                Buffer_Body := Body_File.Read_File;
             else
                Body_File := No_File;

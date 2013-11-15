@@ -47,8 +47,9 @@ package body GNATdoc is
    Serious_Errors : Natural := 0;
 
    procedure Check_Tree
-     (Context : access constant Docgen_Context;
-      Tree    : access Tree_Type);
+     (Context   : access constant Docgen_Context;
+      Tree      : access Tree_Type;
+      All_Files : Files_List.Vector);
    --  Verify that all the nodes of the tree have a minimum decoration
 
    procedure Process_Files
@@ -65,8 +66,9 @@ package body GNATdoc is
    ----------------
 
    procedure Check_Tree
-     (Context : access constant Docgen_Context;
-      Tree    : access Tree_Type)
+     (Context   : access constant Docgen_Context;
+      Tree      : access Tree_Type;
+      All_Files : Files_List.Vector)
    is
       function Check_Node
         (Entity      : Entity_Id;
@@ -83,19 +85,71 @@ package body GNATdoc is
          procedure Check_List (List : EInfo_List.Vector);
 
          procedure Check (Entity : Entity_Id) is
-         begin
-            if No (Get_Scope (Entity))
-              and then not Is_Standard_Entity (Entity)
-            then
+
+            procedure Error_Msg (Msg : String);
+            procedure Error_Msg (Msg : String) is
+            begin
                Serious_Errors := Serious_Errors + 1;
 
                GNAT.IO.Put_Line
-                 (">> Missing decoration on "
+                 (Image (LL.Get_Location (Entity))
+                  & ":"
                   & Get_Short_Name (Entity)
                   & ":"
-                  & Image (LL.Get_Location (Entity)));
-
+                  & Msg);
                Atree.pn (Entity);
+            end Error_Msg;
+
+         begin
+            --  We cannot verify entities which are not fully decorated
+            --  because they are not part of the project (for example,
+            --  entities defined in the runtime of the compiler)
+
+            if not Is_Decorated (Entity) then
+               if All_Files.Contains (LL.Get_Location (Entity).File) then
+                  Error_Msg ("missing full decoration");
+               end if;
+            else
+               if No (Get_Scope (Entity))
+                 and then not Is_Standard_Entity (Entity)
+               then
+                  Error_Msg ("missing scope decoration (decorated)");
+
+               elsif Has_Duplicated_Entities
+                       (LL.Get_Parent_Types (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Parent_Types)");
+
+               elsif Has_Duplicated_Entities
+                       (Get_Progenitors (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Progenitors)");
+
+               elsif Has_Duplicated_Entities
+                       (Get_Entities (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Entities)");
+
+               elsif Has_Duplicated_Entities
+                       (Get_Inherited_Methods (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Inherited_Methods)");
+
+               elsif Has_Duplicated_Entities
+                       (Get_Methods (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Methods)");
+
+               elsif Has_Duplicated_Entities
+                       (Get_Direct_Derivations (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Direct derivations)");
+
+               elsif Has_Duplicated_Entities
+                       (LL.Get_Child_Types (Entity).all)
+               then
+                  Error_Msg ("duplicated entities (Child types)");
+               end if;
             end if;
          end Check;
 
@@ -117,8 +171,8 @@ package body GNATdoc is
          Check (Entity);
 
          --  Temporarily disabled because it causes regressions!
-         --  Check_List (LL.Get_Parent_Types (Entity).all);
 
+         Check_List (LL.Get_Parent_Types (Entity).all);
          Check_List (LL.Get_Child_Types (Entity).all);
 
          return OK;
@@ -574,26 +628,24 @@ package body GNATdoc is
             Project_Files_List.Next (Prj_Index);
          end loop;
 
-         All_Files.Clear;
-
          if Tree_List.Has_Element (All_Trees.First) then
             declare
                Cursor           : Tree_List.Cursor;
                Tree             : aliased Tree_Type;
                Is_C_Header_File : Boolean;
             begin
-               --  Generate the tree output files. This cannot be done before
-               --  because as part of decorating a tree the frontend may
-               --  complete the decoration of entities defined in other trees
-               --  (for example, the decoration of a derived type completes
-               --  the decoration of its parent type, which may be located
-               --  in another file ---and hence in another tree).
+               --  Verify the trees and generate their output files. This
+               --  cannot be done before because as part of decorating a tree
+               --  the frontend may complete the decoration of entities defined
+               --  in other trees (for example, the decoration of a derived
+               --  type completes the decoration of its parent type, which may
+               --  be located in another file ---and hence in another tree).
 
                Cursor := All_Trees.First;
                while Tree_List.Has_Element (Cursor) loop
                   Tree := Tree_List.Element (Cursor);
 
-                  Check_Tree (Context, Tree'Access);
+                  Check_Tree (Context, Tree'Access, All_Files);
 
                   --  We cannot rely on the service Get_Language_From_File
                   --  because it does not work well with C/C++ header files
@@ -702,6 +754,8 @@ package body GNATdoc is
                end if;
             end;
          end if;
+
+         All_Files.Clear;
       end;
 
       Backend.Finalize (Update_Global_Index);
@@ -866,7 +920,7 @@ package body GNATdoc is
       -----------------
 
       procedure Print_Files
-        (Source : access Files_List.Vector)
+        (Source : Files_List.Vector)
       is
          File_Index : Files_List.Cursor;
       begin

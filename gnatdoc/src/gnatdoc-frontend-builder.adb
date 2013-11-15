@@ -87,6 +87,9 @@ package body GNATdoc.Frontend.Builder is
       function Get_Entity
         (Entity : Unique_Entity_Id) return Entity_Id;
 
+      function Get_Full_View
+        (Entity : Unique_Entity_Id) return Entity_Id;
+
       function Get_Kind
         (Entity : Unique_Entity_Id) return Entity_Kind;
 
@@ -98,9 +101,6 @@ package body GNATdoc.Frontend.Builder is
 
       function Get_LL_First_Private_Entity_Loc
         (Entity : Unique_Entity_Id) return General_Location;
-
-      function Get_LL_Full_View
-        (Entity : Unique_Entity_Id) return General_Entity;
 
       function Get_LL_Location
         (Entity : Unique_Entity_Id) return General_Location;
@@ -160,6 +160,9 @@ package body GNATdoc.Frontend.Builder is
       function Is_Package
         (Entity : Unique_Entity_Id) return Boolean;
 
+      function Is_Partial_View
+        (Entity : Unique_Entity_Id) return Boolean;
+
       function Is_Primitive
         (Entity : Unique_Entity_Id) return Boolean;
 
@@ -175,6 +178,11 @@ package body GNATdoc.Frontend.Builder is
          Name     : String) return Unique_Entity_Id;
       --  Allocate an internal entity. Used to build the standard entity.
 
+      function New_Internal_Entity
+        (Entity : Entity_Id) return Unique_Entity_Id;
+      --  Allocate  a new internal entity. Used to build the entities
+      --  associated with the full view of private and incomplete types.
+
       function Number_Of_Progenitors
         (Entity : Unique_Entity_Id) return Natural;
 
@@ -186,6 +194,9 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Set_Alias
         (Entity : Unique_Entity_Id; Value : Entity_Id);
+
+      procedure Set_In_Private_Part
+        (Entity : Unique_Entity_Id);
 
       procedure Set_Is_Decorated
         (Entity : Unique_Entity_Id);
@@ -264,11 +275,11 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Append_To_List);
       pragma Inline (Append_To_Scope);
       pragma Inline (Get_Entity);
+      pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Language);
       pragma Inline (Get_LL_Entity);
       pragma Inline (Get_LL_First_Private_Entity_Loc);
-      pragma Inline (Get_LL_Full_View);
       pragma Inline (Get_LL_Location);
       pragma Inline (Get_LL_Scope);
       pragma Inline (Get_Parent);
@@ -282,12 +293,14 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Incomplete_Or_Private_Type);
       pragma Inline (Is_New);
       pragma Inline (Is_Package);
+      pragma Inline (Is_Partial_View);
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Subprogram_Or_Entry);
       pragma Inline (Is_Tagged_Type);
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
       pragma Inline (Set_Alias);
+      pragma Inline (Set_In_Private_Part);
       pragma Inline (Set_Is_Decorated);
       pragma Inline (Set_Is_Generic_Formal);
       pragma Inline (Set_Kind);
@@ -480,6 +493,16 @@ package body GNATdoc.Frontend.Builder is
          return Entity.Entity;
       end Get_Entity;
 
+      -------------------
+      -- Get_Full_View --
+      -------------------
+
+      function Get_Full_View (Entity : Unique_Entity_Id) return Entity_Id is
+      begin
+         pragma Assert (Present (Entity));
+         return Get_Full_View (Entity.Entity);
+      end Get_Full_View;
+
       --------------
       -- Get_Kind --
       --------------
@@ -518,16 +541,6 @@ package body GNATdoc.Frontend.Builder is
       begin
          return LL.Get_First_Private_Entity_Loc (Get_Entity (Entity));
       end Get_LL_First_Private_Entity_Loc;
-
-      ----------------------
-      -- Get_LL_Full_View --
-      ----------------------
-
-      function Get_LL_Full_View
-        (Entity : Unique_Entity_Id) return General_Entity is
-      begin
-         return LL.Get_Full_View (Get_Entity (Entity));
-      end Get_LL_Full_View;
 
       ---------------------
       -- Get_LL_Location --
@@ -653,7 +666,8 @@ package body GNATdoc.Frontend.Builder is
       function Is_Incomplete_Or_Private_Type
         (Entity : Unique_Entity_Id) return Boolean is
       begin
-         return Is_Incomplete_Or_Private_Type (Get_Entity (Entity));
+         return Is_Incomplete (Get_Entity (Entity))
+           or else Is_Private (Get_Entity (Entity));
       end Is_Incomplete_Or_Private_Type;
 
       ------------
@@ -674,6 +688,16 @@ package body GNATdoc.Frontend.Builder is
       begin
          return Is_Package (Get_Entity (Entity));
       end Is_Package;
+
+      ---------------------
+      -- Is_Partial_View --
+      ---------------------
+
+      function Is_Partial_View
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Is_Partial_View (Get_Entity (Entity));
+      end Is_Partial_View;
 
       ------------------
       -- Is_Primitive --
@@ -823,12 +847,22 @@ package body GNATdoc.Frontend.Builder is
       exception
          when E : others =>
             Trace (Me, E);
-            return;
+            raise;
       end Get_Unique_Entity;
 
       -------------------------
       -- New_Internal_Entity --
       -------------------------
+
+      function New_Internal_Entity
+        (Entity : Entity_Id) return Unique_Entity_Id
+      is
+      begin
+         return
+           new Unique_Entity_Info'
+                 (Entity => Entity,
+                  Is_New => True);
+      end New_Internal_Entity;
 
       function New_Internal_Entity
         (Context  : access constant Docgen_Context;
@@ -837,12 +871,12 @@ package body GNATdoc.Frontend.Builder is
       is
       begin
          return
-           new Unique_Entity_Info'
-                 (Entity => New_Internal_Entity
-                              (Context  => Context,
-                               Language => Language,
-                               Name     => Name),
-                  Is_New => True);
+            new Unique_Entity_Info'
+                  (Entity => New_Internal_Entity
+                               (Context  => Context,
+                                Language => Language,
+                                Name     => Name),
+                   Is_New => True);
       end New_Internal_Entity;
 
       ---------------------------
@@ -884,6 +918,16 @@ package body GNATdoc.Frontend.Builder is
       begin
          Set_Alias (Get_Entity (Entity), Value);
       end Set_Alias;
+
+      -------------------------
+      -- Set_In_Private_Part --
+      -------------------------
+
+      procedure Set_In_Private_Part
+        (Entity : Unique_Entity_Id) is
+      begin
+         Set_In_Private_Part (Get_Entity (Entity));
+      end Set_In_Private_Part;
 
       ----------------------
       -- Set_Is_Decorated --
@@ -1136,6 +1180,8 @@ package body GNATdoc.Frontend.Builder is
                end if;
 
                Append_To_Scope (Current_Scope, Formal);
+
+               Set_Is_Decorated (Formal);
             end loop;
 
             Exit_Scope;
@@ -1294,11 +1340,26 @@ package body GNATdoc.Frontend.Builder is
                begin
                   for J in Discrim'Range loop
                      Get_Unique_Entity (Entity, Context, File, Discrim (J));
-                     pragma Assert (Is_New (Entity));
 
-                     Set_Kind (Entity, E_Discriminant);
-                     Append_To_Scope (E, Entity);
-                     Append_To_Map (Entity);
+                     if Is_New (Entity) then
+                        Set_Kind (Entity, E_Discriminant);
+                        Append_To_Scope (E, Entity);
+                        Append_To_Map (Entity);
+                        Set_Is_Decorated (Entity);
+
+                     --  For incomplete types Xref provides all the
+                     --  discriminants to the incomplete view and the full
+                     --  view and hence they are already decorated. This
+                     --  Xref behavior involves that more work is needed
+                     --  in the frontend to have a more precise decoration
+                     --  of the incomplete and full view???
+
+                     else
+                        pragma Assert (Is_Full_View (E));
+                        pragma Assert (Is_Decorated (Entity));
+                        pragma Assert (Get_Kind (Entity) = E_Discriminant);
+                        Append_To_Scope (E, Entity);
+                     end if;
                   end loop;
                end;
             end if;
@@ -1312,17 +1373,47 @@ package body GNATdoc.Frontend.Builder is
                   Entity     : Unique_Entity_Id;
 
                begin
-                  for J in Components'Range loop
-                     Get_Unique_Entity (Entity, Context, File, Components (J));
-                     pragma Assert (Is_New (Entity));
+                  --  For now skip processing the components of an incomplete
+                  --  type declaration whose full view is defined in the
+                  --  package body since Xref provides weird components.
+                  --  Seems a bug in Xref but more investigation needed???
 
-                     --  In C++ we have here formals of primitives???
-                     Set_Kind (Entity, E_Component);
+                  if LL.Is_Type (Get_Entity (E))
+                    and then Is_Partial_View (E)
+                    and then
+                      LL.Get_Location (Get_Full_View (Get_Entity (E))).File
+                        /= LL.Get_Location (Get_Entity (E)).File
+                  then
+                     null;
+                  else
+                     for J in Components'Range loop
+                        Get_Unique_Entity
+                          (Entity, Context, File, Components (J));
 
-                     Append_To_Scope (E, Entity);
-                     Append_To_File_Entities (Entity);
-                     Append_To_Map (Entity);
-                  end loop;
+                        if Is_New (Entity) then
+                           --  In C++ we have here formals of primitives???
+                           Set_Kind (Entity, E_Component);
+
+                           Append_To_Scope (E, Entity);
+                           Append_To_File_Entities (Entity);
+                           Append_To_Map (Entity);
+
+                           Set_Is_Decorated (Entity);
+
+                           --  For incomplete types Xref provides all the
+                           --  discriminants to the incomplete view and the
+                           --  full view and hence they are already decorated.
+                           --  This Xref behavior involves that more work is
+                           --  needed in the frontend to have a more precise
+                           --  decoration of the incomplete and full view???
+
+                        else
+                           pragma Assert (Is_Decorated (Entity));
+                           pragma Assert (Get_Kind (Entity) = E_Component);
+                           Append_To_Scope (E, Entity);
+                        end if;
+                     end loop;
+                  end if;
                end;
             end if;
 
@@ -1333,20 +1424,6 @@ package body GNATdoc.Frontend.Builder is
                   Recursive => False));
 
             if In_Ada_Language (E) then
-
-               --  Add information available in the full view (if the entity
-               --  of its full view is available; see the comment describing
-               --  this problem in gnatdoc-atree.adb???)
-
-               if Is_Incomplete_Or_Private_Type (E)
-                 and then Present (Get_LL_Full_View (E))
-               then
-                  Append_Parent_And_Progenitors
-                    (Parent_Types
-                       (Context.Database, Get_LL_Full_View (E),
-                        Recursive => False));
-               end if;
-
                if No (Get_Parent (E))
                  and then Number_Of_Progenitors (E) = 1
                then
@@ -1452,6 +1529,8 @@ package body GNATdoc.Frontend.Builder is
 
                            Decorate_Subprogram_Formals (Method);
                            Append_Method (E, Method);
+
+                           Set_Is_Decorated (Method);
                         end if;
 
                         Append_To_Map (Method);
@@ -1483,7 +1562,6 @@ package body GNATdoc.Frontend.Builder is
          ---------------------------------
 
          procedure Decorate_Subprogram_Formals (E : Unique_Entity_Id) is
-
          begin
             --  No extra action needed if we are processing the formals of the
             --  body
@@ -1522,15 +1600,23 @@ package body GNATdoc.Frontend.Builder is
                           (LL.Get_Entity (Get_Entity (Formal))
                            = Formals (J).Parameter);
 
+                        --  Correct previous wrong decoration (done by
+                        --  Atree.New_Internal_Entity).
+
+                        Set_Is_Incomplete
+                          (Get_Entity (Formal), False);
+                        Remove_Full_View (Get_Entity (Formal));
+
+                        --  Complete decoration
+
                         Set_Kind (Formal, E_Formal);
                         Set_Scope (Formal, E);
 
                         Append_To_Scope (Current_Scope, Formal);
                         Append_To_File_Entities (Formal);
-
                         Append_To_Map (Formal);
-                        --  Local variables defined in the body of this
-                        --  subprogram.
+
+                        Set_Is_Decorated (Formal);
                      end if;
                   end if;
                end loop;
@@ -1569,6 +1655,24 @@ package body GNATdoc.Frontend.Builder is
 
          elsif Is_Access_Type (E) then
             Decorate_Subprogram_Formals (E);
+         end if;
+
+         if Is_Partial_View (E) then
+            declare
+               Full_View : Unique_Entity_Id;
+            begin
+               Full_View := New_Internal_Entity (Get_Full_View (E));
+               Append_To_Map (Full_View);
+
+               --  For private types the entity associated with the full
+               --  view is not available available in the ALI file and hence
+               --  we must append it now to the scope; for incomplete type
+               --  declarations the ALI file may have two entities and hence
+               --  the full view will be fully decorated later.
+
+               Append_To_Scope (Current_Scope, Full_View);
+               Set_Is_Decorated (Full_View);
+            end;
          end if;
       end Complete_Decoration;
 
@@ -1777,6 +1881,7 @@ package body GNATdoc.Frontend.Builder is
                if Get_Kind (New_E) /= E_Formal then
                   Append_To_Scope (Current_Scope, New_E);
                   Append_To_File_Entities (New_E);
+                  Set_Is_Decorated (New_E);
 
                   Append_To_Map (New_E);
                end if;
@@ -1822,17 +1927,17 @@ package body GNATdoc.Frontend.Builder is
                Update_Scopes_Stack (New_E);
                Set_Scope (New_E);
 
-               if not Context.Options.Show_Private
-                 and then Is_Package (Current_Scope)
+               if Is_Package (Current_Scope)
                  and then
                    Present (Get_LL_First_Private_Entity_Loc (Current_Scope))
                  and then
                    Get_LL_Location (New_E).Line >=
                    Get_LL_First_Private_Entity_Loc (Current_Scope).Line
                then
-                  Skip_This_Entity := True;
+                  Set_In_Private_Part (New_E);
+               end if;
 
-               elsif not Is_New (New_E)
+               if not Is_New (New_E)
                  and then Kind_In (Get_Kind (New_E), E_Formal,
                                                      E_Discriminant,
                                                      E_Component)
@@ -1967,7 +2072,15 @@ package body GNATdoc.Frontend.Builder is
                end if;
 
                Append_To_File_Entities (New_E);
-               Append_To_Scope (Current_Scope, New_E);
+
+               --  Full views were unconditionally added to the scope as part
+               --  of processing their partial view (since for private types
+               --  the compiler does not generate two entities in the ALI
+               --  file). Hence we avoid adding them twice to their scope.
+
+               if not Is_Full_View (New_E) then
+                  Append_To_Scope (Current_Scope, New_E);
+               end if;
 
                if not Is_Decorated (New_E) then
                   Complete_Decoration (New_E);
@@ -2022,6 +2135,32 @@ package body GNATdoc.Frontend.Builder is
       end if;
    end Find_Unique_Entity;
 
+   -----------------------
+   -- Get_Unique_Entity --
+   -----------------------
+
+   function Get_Unique_Entity
+     (Context : access constant Docgen_Context;
+      File    : Virtual_File;
+      E       : General_Entity) return Entity_Id
+   is
+      Loc    : constant General_Location := Get_Location (Context.Database, E);
+      New_E  : Unique_Entity_Id;
+      Result : Entity_Id;
+   begin
+      pragma Assert (Present (E));
+
+      Result := Find_Unique_Entity (Loc);
+
+      if Present (Result) then
+         return Result;
+      else
+         Get_Unique_Entity (New_E, Context, File, E, Forced => True);
+         Append_To_Map (New_E);
+         return Get_Entity (New_E);
+      end if;
+   end Get_Unique_Entity;
+
    -----------------
    -- Scope_Stack --
    -----------------
@@ -2075,6 +2214,14 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Exit_Scope is
       begin
+         if Is_Package (Current_Scope)
+           and then
+             Present (Get_LL_First_Private_Entity_Loc (Current_Scope))
+         then
+            EInfo_Vector_Sort_Loc.Sort
+              (Get_Entities (Get_Entity (Current_Scope)).all);
+         end if;
+
          Stack.Delete_First;
       end Exit_Scope;
 
