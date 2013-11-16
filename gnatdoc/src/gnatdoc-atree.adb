@@ -1287,9 +1287,14 @@ package body GNATdoc.Atree is
    --------------------------
 
    function Less_Than_Short_Name (Left, Right : Entity_Id) return Boolean is
+      Left_Lower  : constant String := To_Lower (Get (Left.Short_Name).all);
+      Right_Lower : constant String := To_Lower (Get (Right.Short_Name).all);
    begin
-      return To_Lower (Get (Left.Short_Name).all) <
-        To_Lower (Get (Right.Short_Name).all);
+      if Left_Lower = Right_Lower then
+         return Less_Than_Loc (Left, Right);
+      else
+         return Left_Lower < Right_Lower;
+      end if;
    end Less_Than_Short_Name;
 
    -------------------
@@ -1301,7 +1306,7 @@ package body GNATdoc.Atree is
       Right_Loc : constant General_Location := LL.Get_Location (Right);
    begin
       if Left_Loc.File /= Right_Loc.File then
-         return False;
+         return Base_Name (Left_Loc.File) < Base_Name (Right_Loc.File);
       elsif Left_Loc.Line < Right_Loc.Line then
          return True;
       else

@@ -127,10 +127,20 @@ private package GNATdoc.Atree is
    procedure Free (List : in out EInfo_List.Vector);
 
    function Less_Than_Loc (Left, Right : Entity_Id) return Boolean;
+   --  Compare by location. When two entities are defined in different files
+   --  instead of returning False we extend the meaning of the comparison and
+   --  compare them using the base name of their files. Done to avoid spurious
+   --  output differences between continuous builders.
+
    package EInfo_Vector_Sort_Loc is new EInfo_List.Generic_Sorting
      ("<" => Less_Than_Loc);
 
    function Less_Than_Short_Name (Left, Right : Entity_Id) return Boolean;
+   --  Compare by name. When two entities have the same name (for example,
+   --  overloaded subprograms) instead of returning False we extend the
+   --  meaning of the comparison and compare them using their location.
+   --  Done to avoid spurious output differences between continuous builders.
+
    package EInfo_Vector_Sort_Short is new EInfo_List.Generic_Sorting
      ("<" => Less_Than_Short_Name);
 

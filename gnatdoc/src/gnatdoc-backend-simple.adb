@@ -374,7 +374,11 @@ package body GNATdoc.Backend.Simple is
             ReST_Append_Comment (Printout, E);
 
          else
-            Append_Line (Printout, "**Partial View:**");
+            if Is_Incomplete (E) then
+               Append_Line (Printout, "**Incomplete View:**");
+            else
+               Append_Line (Printout, "**Partial View:**");
+            end if;
 
             ReST_Append_Src (Printout, E);
             ReST_Append_Comment (Printout, E);
