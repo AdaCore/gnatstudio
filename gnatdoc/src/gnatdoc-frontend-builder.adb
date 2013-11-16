@@ -1341,7 +1341,14 @@ package body GNATdoc.Frontend.Builder is
                   for J in Discrim'Range loop
                      Get_Unique_Entity (Entity, Context, File, Discrim (J));
 
-                     if Is_New (Entity) then
+                     --  If the entity is not available that means that
+                     --  this is an incomplete type whose discriminants
+                     --  are defined in the package body.
+
+                     if Entity = null then
+                        null;
+
+                     elsif Is_New (Entity) then
                         Set_Kind (Entity, E_Discriminant);
                         Append_To_Scope (E, Entity);
                         Append_To_Map (Entity);
@@ -1390,7 +1397,14 @@ package body GNATdoc.Frontend.Builder is
                         Get_Unique_Entity
                           (Entity, Context, File, Components (J));
 
-                        if Is_New (Entity) then
+                        --  If the entity is not available that means that
+                        --  this is an incomplete type whose components are
+                        --  defined in the package body.
+
+                        if Entity = null then
+                           null;
+
+                        elsif Is_New (Entity) then
                            --  In C++ we have here formals of primitives???
                            Set_Kind (Entity, E_Component);
 
