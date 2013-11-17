@@ -768,7 +768,7 @@ package body GNATdoc.Atree is
    is
       Db : General_Xref_Database renames Context.Database;
 
-      procedure Complete_Decoration (New_E : Entity_Id);
+      procedure Complete_Decoration (New_E : in out Entity_Id);
       --  Complete the decoration of the Xref components. The decoration of
       --  other high-level components is done while traversing the tree since
       --  they require context information.
@@ -778,7 +778,7 @@ package body GNATdoc.Atree is
       ----------------------------
 
       procedure Complete_Decoration
-        (New_E : Entity_Id)
+        (New_E : in out Entity_Id)
       is
          E : General_Entity renames New_E.Xref.Entity;
 
@@ -894,6 +894,10 @@ package body GNATdoc.Atree is
 
          if Present (LL.Get_Body_Loc (New_E))
            and then (LL.Is_Type (New_E) or else Get_Kind (New_E) = E_Variable)
+           and then
+             (LL.Get_Location (New_E).File /= LL.Get_Body_Loc (New_E).File
+                or else
+              LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line)
            and then Get_Kind (New_E) /= E_Task_Type
            and then Get_Kind (New_E) /= E_Single_Task
            and then Get_Kind (New_E) /= E_Protected_Type
@@ -933,6 +937,38 @@ package body GNATdoc.Atree is
             --  type declaration is processed).
 
             Set_Kind (New_E.Full_View, Get_Kind (New_E));
+
+         --  The Xref service Child_Types returns direct references to the full
+         --  view of the child types. For homoneneity in creation of entities
+         --  we build here the partial view and full view and we return the
+         --  reference to the partial view.
+
+         elsif Present (LL.Get_Body_Loc (New_E))
+           and then LL.Is_Type (New_E)
+           and then LL.Get_Location (New_E).Line > LL.Get_Body_Loc (New_E).Line
+         then
+            declare
+               Full_View : constant Entity_Id := New_E;
+
+               Partial_View_Loc : constant General_Location :=
+                 LL.Get_Body_Loc (New_E);
+            begin
+               New_E :=
+                 Internal_New_Entity
+                   (Context, Lang, E, Partial_View_Loc, Name);
+               pragma Assert (No (New_E.Full_View));
+
+               --  Fix wrong decoration returned by Xref
+               pragma Assert (New_E.Xref.Body_Loc = New_E.Xref.Loc);
+               New_E.Xref.Body_Loc := Full_View.Xref.Loc;
+
+               Set_Is_Incomplete (New_E);
+               New_E.Full_View := Full_View;
+               New_E.Full_View.Partial_View := New_E;
+               Full_View.Partial_View := New_E;
+
+               return;
+            end;
          end if;
 
          --  Store the location of the end of scope. For subprogram specs

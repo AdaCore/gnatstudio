@@ -245,6 +245,11 @@ package body GNATdoc.Frontend.Builder is
          procedure Append_To_Map (E : Unique_Entity_Id);
          --  Append the entity of E to Entities_Map
 
+         procedure Append_To_Map (E : Entity_Id);
+         --  Append the entity of E to Entities_Map
+
+      private
+         pragma Inline (Append_To_Map);
       end Hash_Table;
       use Hash_Table;
 
@@ -332,8 +337,12 @@ package body GNATdoc.Frontend.Builder is
 
          procedure Append_To_Map (E : Unique_Entity_Id) is
          begin
-            Entities_Map.Include
-              (LL.Get_Location (Get_Entity (E)), Get_Entity (E));
+            Append_To_Map (Get_Entity (E));
+         end Append_To_Map;
+
+         procedure Append_To_Map (E : Entity_Id) is
+         begin
+            Entities_Map.Include (LL.Get_Location (E), E);
          end Append_To_Map;
 
          ---------------------
@@ -1235,6 +1244,10 @@ package body GNATdoc.Frontend.Builder is
 
                   if Is_New (Parent) then
                      Append_To_Map (Parent);
+
+                     if Present (Get_Full_View (Parent)) then
+                        Append_To_Map (Get_Full_View (Parent));
+                     end if;
                   end if;
                end loop;
             end Append_Parent_And_Progenitors;
@@ -1492,6 +1505,10 @@ package body GNATdoc.Frontend.Builder is
 
                         if Is_New (Child) then
                            Append_To_Map (Child);
+
+                           if Present (Get_Full_View (Child)) then
+                              Append_To_Map (Get_Full_View (Child));
+                           end if;
                         end if;
                      end if;
                   end if;

@@ -98,6 +98,10 @@ package body GNATdoc is
                   & ":"
                   & Msg);
                Atree.pn (Entity);
+
+               if Present (Get_Full_View (Entity)) then
+                  Atree.pn (Get_Full_View (Entity));
+               end if;
             end Error_Msg;
 
          begin
