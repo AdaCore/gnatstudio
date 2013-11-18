@@ -1165,6 +1165,32 @@ package body KeyManager_Module is
               (Keymanager_Module.Secondary_Keymap.Table, (Key, Modif));
          end if;
 
+         --  If we didn't find anything in the first attempt but the
+         --  shift key was pressed, attempt to find the key in the binding
+         --  using the same key but with shift not being pressed.
+         --
+         --  This is to solve the following: we register an action
+         --  (for instance 'uncomment lines') with the key shortcut
+         --     ctrl + '_'
+         --  the only way to generate this on a QWERTY keyboard is
+         --  to press the keys ctrl + shift + '-'.
+         --  GPS tries above to find this in the keymap above, and then
+         --  attempts to find ctrl + '_' below.
+
+         if Binding = No_Key
+           and then (Modif and Shift_Mask) > 0
+         then
+            if Keymanager_Module.Secondary_Keymap = null then
+               Binding := Get
+                 (Keymanager_Module.Table.all,
+                  (Key, Modif - Shift_Mask));
+            else
+               Binding := Get
+                 (Keymanager_Module.Secondary_Keymap.Table,
+                  (Key, Modif - Shift_Mask));
+            end if;
+         end if;
+
          Keymanager_Module.Secondary_Keymap := null;
 
          --  Execute all commands bound to this key. The order is somewhat
