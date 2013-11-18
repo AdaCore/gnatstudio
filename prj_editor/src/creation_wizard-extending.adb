@@ -415,10 +415,28 @@ package body Creation_Wizard.Extending is
          File_Names (F) := new String'(+Base_Name (Files (F)));
       end loop;
 
-      Extended.Set_Attribute
-        (Attribute => Source_Files_Attribute,
-         Values    => File_Names,
-         Prepend   => not Created);
+      if Created then
+         Extended.Set_Attribute
+           (Attribute => Source_Files_Attribute,
+            Values    => File_Names);
+
+      else
+         declare
+            F : File_Array_Access := Extended.Source_Files;
+            F2 : Argument_List (F'Range);
+         begin
+            for S in F'Range loop
+               F2 (S) := new String'(+F (S).Base_Name);
+            end loop;
+
+            Unchecked_Free (F);
+
+            Extended.Set_Attribute
+              (Attribute => Source_Files_Attribute,
+               Values    => File_Names & F2);
+            Free (F2);
+         end;
+      end if;
 
       Free (File_Names);
 
