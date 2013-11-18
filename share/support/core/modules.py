@@ -129,7 +129,6 @@ class Module(object):
         """
         This function should be overridden in your own class if you need to
         create menus, actions, connect to hooks,...
-        It must always call the inherited setup() first.
         When setup() is called, the project has already been loaded in GPS.
 
         Do not call this function directly.

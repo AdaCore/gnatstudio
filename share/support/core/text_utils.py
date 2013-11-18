@@ -747,7 +747,7 @@ class BlockIterator:
                          "keywords", "string" or "character"
       Example of use:
           buffer = EditorBuffer.get()
-          for start, end in BlockIterator (buffer, "comments"):
+          for start, end in BlockIterator (buffer, "comment"):
              ...
    """
    def __init__ (self, buffer, overlay_name):

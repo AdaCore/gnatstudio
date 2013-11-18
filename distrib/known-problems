@@ -8,6 +8,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB15-044: GPS: ispell.py plugin broken
+  Problem:    The plug-in no longer works with GPS 6.0.0
+  Workaround: run aspell manually on your files
+
 - MB13-064: GPS: title bar issues
   Problem:    GPS no longer displays title bars by default. However, if you
               chose to activate them in the preferences, there are a number
