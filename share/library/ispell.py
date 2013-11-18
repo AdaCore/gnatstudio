@@ -174,11 +174,11 @@ is sent to its stdin.""",
             if GPS.MDI.yes_no_dialog(
                 "Spell-checking personal dictionary modified. Save ?"):
                 self.ispell.send("#")
- 
+
                 # Make sure the dict is saved: since ispell doesn't show any
                 # output, we generate some
                 self.generate_fix("word").next()
- 
+
                 self.personal_dict_modified = False
 
     def ignore_word(self, word):
@@ -231,7 +231,7 @@ is sent to its stdin.""",
         the current value, so that replace() can be called).
         For efficiency, it passes whole lines at a time to ispell (which does
         not accept multi-line input).
-        
+
         Ispell runs forever, waiting for words to check on its standard input.
         Note the use of a timeout in the call to expect(). This is so that if
         for some reason ispell answers something unexpected, we don't keep
@@ -319,7 +319,7 @@ is sent to its stdin.""",
         editor. This displays a command window to interactive with the
         user. The processing is asynchronous.
         """
-                
+
         self.replace_mode = False   # User is typing his own replacement
         self.mispellings = self.generate_fix(category)  # init generator
         self._next_with_error_or_destroy()
@@ -351,7 +351,7 @@ is sent to its stdin.""",
             # Otherwise we end up with non-ASCII chars (26 letters + 10 digits)
             if index <= 36:
                 if index <= 9:
-                    key = "%s" % index 
+                    key = "%s" % index
                 else:
                     key = chr(ord('a') + index - 10)
 
@@ -432,14 +432,14 @@ class AbstractContextual(GPS.Contextual):
         that means we won't have to recompute the info if the user selects
         the menu.
         """
-    
+
         buffer = GPS.EditorBuffer.get()
         view = buffer.current_view()
         cursor = view.cursor()
-    
+
         start  = goto_word_start(cursor, underscore_is_word=False)
         cursor = goto_word_end(cursor, underscore_is_word=False)
-    
+
         context.ispell_module_start = start
         context.ispell_module_end = cursor
         context.ispell_module_word = buffer.get_chars(start, cursor)
@@ -453,11 +453,11 @@ class Static_Contextual(AbstractContextual):
         self.create(on_activate=self._on_activate,
                     filter=self._filter,
                     label=self._label)
- 
+
     def _on_activate(self, context):
         """Display in the console the message read from ispell"""
         self.ispell.spell_check_word()
- 
+
     def _filter(self, context):
         """Decide whether the contextual menu should be made visible"""
         if isinstance(context, GPS.EntityContext):
@@ -465,7 +465,7 @@ class Static_Contextual(AbstractContextual):
             return context.ispell_module_word != ""
         else:
             return False
- 
+
     def _label(self, context):
        """Return the label to use for the contextual menu entry"""
        return "Spell Check %s" % (context.ispell_module_word, )
@@ -480,7 +480,7 @@ class Dynamic_Contextual(AbstractContextual):
             on_activate=self._on_activate,
             filter=self._filter,
             factory=self._factory)
- 
+
     def _filter(self, context):
         """Decide whether the contextual menu should be made visible"""
         if isinstance(context, GPS.EntityContext):
@@ -488,7 +488,7 @@ class Dynamic_Contextual(AbstractContextual):
             return context.ispell_module_word != ""
         else:
             return False
- 
+
     def _factory(self, context):
         """
         Return a list of strings, each of which is the title to use for an
@@ -503,7 +503,7 @@ class Dynamic_Contextual(AbstractContextual):
             return current[3]
         else:
             return []
- 
+
     @with_save_excursion
     def _on_activate(self, context, choice, choice_index):
         self.ispell.replace(choice)
