@@ -954,8 +954,9 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Emit the Buffer_Modifed hook
-
-      Buffer_Modified (Buffer);
+      if Buffer.Current_Status = Modified then
+         Buffer_Modified (Buffer);
+      end if;
 
       --  Unregister the timeout
 

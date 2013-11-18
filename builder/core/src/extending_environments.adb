@@ -17,6 +17,7 @@
 
 with Projects;           use Projects;
 with GPS.Editors; use GPS.Editors;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body Extending_Environments is
 
@@ -105,9 +106,15 @@ package body Extending_Environments is
 
       --  Create the temporary directory in the object dir of the projet
 
-      Env.Temporary_Dir := Create_From_Dir
-        (P.Object_Dir,
-         Base_Name => Source.Base_Name);
+      declare
+         BN : constant Filesystem_String := Source.Base_Name;
+         Tmp_Dir_Name : constant Filesystem_String :=
+           BN (BN'First .. Find_Char (String (BN), '.') - 1) & "_Tmp";
+      begin
+         Env.Temporary_Dir := Create_From_Dir
+           (P.Object_Dir,
+            Base_Name => Tmp_Dir_Name);
+      end;
 
       if not Is_Directory (Env.Temporary_Dir) then
          Make_Dir (Env.Temporary_Dir);
