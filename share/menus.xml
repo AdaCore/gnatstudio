@@ -65,6 +65,12 @@
             <menu label='Untabify'                    action='untabify'/>
             <menu label='Pipe in External Program...' action='pipe' optional='true'/>
          </menu>
+         <menu label='Spe_ll Check'>
+            <menu label='Comments'          action='spell check comments' optional='True'/>
+            <menu label='Whole Editor'      action='spell check editor' optional='True'/>
+            <menu label='Selection'         action='spell check selection' optional='True'/>
+            <menu label='Word'              action='spell check word' optional='True'/>
+         </menu>
          <menu label='Rectangle' optional='True'>
             <menu label='Cut'               action='rectangle_cut'   optional='true'/>
             <menu label='Copy'              action='rectangle_copy'  optional='true'/>

@@ -478,14 +478,14 @@ package body Command_Window is
       --  the Applies_To widget.
 
       Get_Origin (Get_Window (Applies_To), X, Y);
-      Get_Preferred_Height (Window, Min_H, Natural_H);
-      Set_Size_Request
-        (Window,
-         Width  => Get_Allocated_Width (Applies_To),
-         Height => Natural_H);
+      Get_Preferred_Height_For_Width
+        (Window.Line, Applies_To.Get_Allocated_Width, Min_H, Natural_H);
+      Window.Set_Size_Request
+        (Width  => Get_Allocated_Width (Applies_To),
+         Height => Min_H);
       Move (Window,
             X => X,
-            Y => Y + Get_Allocated_Height (Applies_To) - Natural_H);
+            Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
