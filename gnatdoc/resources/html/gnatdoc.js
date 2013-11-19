@@ -170,13 +170,23 @@ function buildDocumentationPage()
                     if (iindex != 0)
                       paragraph.appendChild(document.createTextNode(', '));
 
-                    href = document.createElement('a');
-                    href.setAttribute(
-                      'href', '../' + entity.inherits[iindex].href);
-                    href.setAttribute('target', 'contentView');
-                    href.appendChild(
-                      document.createTextNode(entity.inherits[iindex].label));
-                    paragraph.appendChild(href);
+                    if (typeof entity.inherits[iindex].href == 'undefined')
+                    {
+                      paragraph.appendChild(
+                        document.createTextNode(
+                          entity.inherits[iindex].label));
+                    }
+                    else
+                    {
+                       href = document.createElement('a');
+                       href.setAttribute(
+                         'href', '../' + entity.inherits[iindex].href);
+                       href.setAttribute('target', 'contentView');
+                       href.appendChild(
+                         document.createTextNode(
+                           entity.inherits[iindex].label));
+                       paragraph.appendChild(href);
+                    }
                 }
 
                 pane.appendChild(paragraph);
