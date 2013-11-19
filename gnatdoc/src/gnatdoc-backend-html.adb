@@ -330,8 +330,7 @@ package body GNATdoc.Backend.HTML is
             Build (D, Derived);
          end loop;
 
-         Object.Set_Field ("label", Get_Short_Name (Entity));
-         Object.Set_Field ("href", Get_Docs_Href (Entity));
+         Set_Label_And_Href (Object, Entity);
 
          if Derived /= Empty_Array then
             Object.Set_Field ("inherited", Derived);
@@ -702,8 +701,7 @@ package body GNATdoc.Backend.HTML is
 
          for Entity of Set loop
             Object := Create_Object;
-            Object.Set_Field ("label", Get_Short_Name (Entity));
-            Object.Set_Field ("href", Get_Docs_Href (Entity));
+            Set_Label_And_Href (Object, Entity);
             Append (Entries, Object);
          end loop;
 
@@ -913,15 +911,13 @@ package body GNATdoc.Backend.HTML is
 
                   if Present (Super) then
                      Object := Create_Object;
-                     Object.Set_Field ("label", Get_Short_Name (Super));
-                     Object.Set_Field ("href", Get_Docs_Href (Super));
+                     Set_Label_And_Href (Object, Super);
                      Append (Inherits, Object);
                   end if;
 
                   for Progenitor of Get_Progenitors (E).all loop
                      Object := Create_Object;
-                     Object.Set_Field ("label", Get_Short_Name (Progenitor));
-                     Object.Set_Field ("href", Get_Docs_Href (Progenitor));
+                     Set_Label_And_Href (Object, Progenitor);
                      Append (Inherits, Object);
                   end loop;
 
@@ -933,8 +929,7 @@ package body GNATdoc.Backend.HTML is
 
                   for Derived of Get_Direct_Derivations (E).all loop
                      Object := Create_Object;
-                     Object.Set_Field ("label", Get_Short_Name (Derived));
-                     Object.Set_Field ("href", Get_Docs_Href (Derived));
+                     Set_Label_And_Href (Object, Derived);
                      Append (Inherited, Object);
                   end loop;
 
@@ -1090,6 +1085,21 @@ package body GNATdoc.Backend.HTML is
       Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
       Append (Self.Doc_Files, Index_Entry);
    end Generate_Lang_Documentation;
+
+   ------------------------
+   -- Set_Label_And_Href --
+   ------------------------
+
+   procedure Set_Label_And_Href
+     (Object : JSON_Value;
+      Entity : Entity_Id) is
+   begin
+      Object.Set_Field ("label", Get_Short_Name (Entity));
+
+      if Is_Decorated (Entity) then
+         Object.Set_Field ("href", Get_Docs_Href (Entity));
+      end if;
+   end Set_Label_And_Href;
 
    -------------------
    -- Get_Docs_Href --

@@ -228,7 +228,9 @@ package body GNATdoc.Backend.HTML.Source_Code is
           ((Self.File, First.Line, Visible_Column (First.Column)));
 
    begin
-      if No (Entity) then
+      if No (Entity)
+        or else not Is_Decorated (Entity)
+      then
          Self.Append_Text_Object
            ("identifier", Self.Buffer (First.Index .. Last.Index));
 

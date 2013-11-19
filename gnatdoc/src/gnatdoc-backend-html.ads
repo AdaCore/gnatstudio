@@ -59,4 +59,11 @@ private
    function Get_Docs_Href (Entity : Entity_Id) return String;
    --  Returns hyper reference to documentation of entity.
 
+   procedure Set_Label_And_Href
+     (Object : GNATCOLL.JSON.JSON_Value;
+      Entity : Entity_Id);
+   --  Set the "label" field of Object from the Short_Name of Entity.
+   --  If Entity contain hyper reference information, set the "href" field
+   --  of object to it.
+
 end GNATdoc.Backend.HTML;
