@@ -113,7 +113,7 @@ class Sqlite_Cross_References(object):
 
         if (target_name in ["Compile File", "Build Main", "Build All", "Make",
                "Compile All Sources", "Build <current file>", "Custom Build...",
-               "Check Semantic", "Update file XRef"]
+               "Check Semantic", "Update file XRef", "Update file XRef in background"]
             or category in ["Makefile"]):
             self.recompute_xref()
 
