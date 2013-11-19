@@ -1,14 +1,30 @@
 """This plug-in provides base class for custom output parser.
 
+Parsers are organized in chain. Output of one parser is passed as input
+to next one. Chain of parser could be attached to a build target.
+
 An example:
 
 import GPS, tool_output
 
 class PopupParser(tool_output.OutputParser):
     def on_stdout(self,text,command):
+        #  This call accepts all output during target build.
+        #  text    - piece of output of target's build.
+        #  command - GPS.Command caused build to execute.
         GPS.MDI.dialog (text)
         if self.child != None:
             self.child.on_stdout (text,command)
+
+    def on_exit(self,status,command):
+        #  This is called after build competed.
+        #  Then each output parser is destroyed.
+        #  status  - integer status of execution.
+        #  command - GPS.Command caused build to execute.
+
+        GPS.MDI.dialog ("Build complete!")
+        if self.child != None:
+            self.child.on_stdout (status,command)
 
 To add custom parser to a target insert next line to target description:
 
