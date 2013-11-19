@@ -1179,6 +1179,13 @@ package body KeyManager_Module is
 
          if Binding = No_Key
            and then (Modif and Shift_Mask) > 0
+
+         --  Do this only for actual graphical keys, so we let Gtk+ take
+         --  care of shift + <arrow> to extend the selection, for instance.
+         --  ??? This is temporary: we do need to react to shift + <arrows>
+         --  ourselves to handle extending selections for multi cursors
+           and then Key >= 32 and then Key <= 128
+
          then
             if Keymanager_Module.Secondary_Keymap = null then
                Binding := Get
