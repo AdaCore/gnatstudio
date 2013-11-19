@@ -111,7 +111,6 @@ def mc_all_entity_references():
         in alias expansion is highlighted (via the aliases overlay)
         """
         if editor == EditorBuffer.get(file_name):
-            print "IN DAS IF"
             editor.remove_overlay(
                 overlay,
                 editor.beginning_of_buffer(),
@@ -146,7 +145,6 @@ def mc_all_entity_references():
     cursor_loc_t = loc_tuple(loc)
     word_offset = loc.column() - loc_id_start.column()
     identifier = editor.get_chars(loc_id_start, loc_id_end)
-    print identifier
 
     entity = Entity(
         identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
