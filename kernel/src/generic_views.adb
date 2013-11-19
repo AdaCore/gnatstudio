@@ -640,6 +640,7 @@ package body Generic_Views is
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Button, Gtk.Tool_Button.Signal_Clicked,
                On_Display_Local_Config_Access, View);
+            Button.Show_All;
          end if;
 
          --  Child does not exist yet, create it

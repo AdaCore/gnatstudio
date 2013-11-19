@@ -764,8 +764,6 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
 
-      GPS.Stock_Icons.Register_Stock_Icons (Prefix_Dir);
-
       declare
          Global : constant Virtual_File :=
            Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
@@ -790,6 +788,7 @@ procedure GPS.Main is
       Parse_Switches;
 
       Gtk_New (GPS_Main, GPS_Home_Dir, Prefix_Dir);
+      GPS.Stock_Icons.Register_Stock_Icons (GPS_Main.Kernel, Prefix_Dir);
 
       Set_Project_Name;
 
