@@ -159,6 +159,11 @@ package GPS.Kernel.MDI is
       Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
 
+   overriding procedure Set_Title
+     (Child       : access GPS_MDI_Child_Record;
+      Title       : String;
+      Short_Title : String := "");
+
    overriding function Save_Desktop
      (Self : not null access GPS_MDI_Child_Record)
       return Glib.Xml_Int.Node_Ptr;

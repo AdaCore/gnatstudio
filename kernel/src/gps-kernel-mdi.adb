@@ -72,6 +72,8 @@ with GPS.Stock_Icons;          use GPS.Stock_Icons;
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body GPS.Kernel.MDI is
 
@@ -871,6 +873,32 @@ package body GPS.Kernel.MDI is
    begin
       Kernel_Desktop.Register_Desktop_Functions (Unch (Save), Unch (Load));
    end Register_Desktop_Functions;
+
+   ---------------
+   -- Set_Title --
+   ---------------
+
+   overriding procedure Set_Title
+     (Child       : access GPS_MDI_Child_Record;
+      Title       : String;
+      Short_Title : String := "")
+   is
+      type MDI_Child_Access is access all MDI_Child_Record;
+   begin
+      --  Add a CSS class to the mdi child corresponding to the title
+      declare
+         Encoded_Title : String := Short_Title;
+      begin
+         for C of Encoded_Title loop
+            if not Is_Alphanumeric (C) then
+               C := '_';
+            end if;
+         end loop;
+      end;
+      Get_Style_Context (Child).Add_Class (Short_Title);
+
+      Gtkada.MDI.Set_Title (MDI_Child_Access (Child), Title, Short_Title);
+   end Set_Title;
 
    ------------------
    -- Save_Desktop --
