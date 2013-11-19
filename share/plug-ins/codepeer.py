@@ -353,6 +353,14 @@ xml_codepeer = """<?xml version="1.0"?>
        </switches>
     </target-model>
 
+    <target-model name="codepeer_bridge" category="">
+       <description>Load CodePeer messages</description>
+       <icon>gps-build-all</icon>
+       <command-line>
+          <arg>gps_codepeer_bridge</arg>
+       </command-line>
+    </target-model>
+
     <target model="generate_scil" category="CodePeer" name="Generate SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
@@ -508,7 +516,7 @@ xml_codepeer = """<?xml version="1.0"?>
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer"
+    <target model="codepeer_bridge" category="CodePeer"
             name="CodePeer Bridge" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
