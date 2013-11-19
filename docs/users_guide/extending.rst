@@ -4726,6 +4726,60 @@ Targets are defined in a `target` node which has three attributes:
       </target>
     </my_target>
 
+*<output-parsers>*
+  Optional list of output filters. See :ref:`Processing_Targets_Output`
+  for details.
+
+.. _Processing_Targets_Output:
+
+Processing Target's Output
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Output produced by target's run could be filtered by custom code.
+Here is list of filters already provided by GPS. Each of them is executed
+during each run of a target.
+
+*output_chopper*
+  This filter breaks output stream to pieces. Each of the piece contains
+  one or more line of output and is rounded by end of line. Such rounding
+  makes further processing easier.
+
+*utf_converter*
+  The filter converts stream to UTF-8 encoding if output is not in UTF-8 yet.
+
+*progress_parser*
+  The filter drives GPS's progress bar by looking for progress messages
+  in the output stream. Such messages are excluded from the stream.
+
+*console_writer*
+  The filter populates GPS console with given output.
+
+*location_parser*
+  The filter looks for special patterns in output to extract messages
+  associated with processed files and locations in these files. Then it sends
+  such messages to Location view (:ref:`The_Locations_View`).
+
+*text_splitter*
+  This filter splits output to separate lines to suit further processing.
+
+*output_collector*
+  The filter aggregates output and associates it with build target.
+  As result, the output is available for scripting
+  (see :func:`GPS.get_build_output`)
+  after build finished::
+
+    text = GPS.get_build_output(<name of your target>)
+
+*elaboration_cycles*
+  This filter detects gnatbind report about circles in elaboration
+  dependencies and draws them in Elaboration Circularities browser
+  (:ref:`Elaboration_Cycles_Browser`).
+
+*end_of_build*
+  This is internal purpose filter. It cleans internal data up after
+  build run.
+
+See :class:`GPS.OutputParserWrapper` for example of writing custom filter.
+
 .. _Defining_new_Modes:
 
 Defining new Modes
