@@ -627,8 +627,6 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
 
-      GPS.Stock_Icons.Register_Stock_Icons (Prefix_Dir);
-
       declare
          Global : constant Virtual_File :=
                     Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
@@ -1279,6 +1277,8 @@ procedure GPS.Main is
       GPS.Main_Window.Gtk_New
         (GPS_Main, GPS_Home_Dir, Prefix_Dir,
          Gtkada_Application (Application));
+
+      GPS.Stock_Icons.Register_Stock_Icons (GPS_Main.Kernel, Prefix_Dir);
 
       --  We can now release the Application, as the main window took a
       --  hold on it

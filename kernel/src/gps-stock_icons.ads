@@ -33,7 +33,9 @@ with GPS.Kernel;
 
 package GPS.Stock_Icons is
 
-   procedure Register_Stock_Icons (System_Dir : GNATCOLL.VFS.Virtual_File);
+   procedure Register_Stock_Icons
+     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      System_Dir : GNATCOLL.VFS.Virtual_File);
    --  Register the stock icons for GPS.
    --  System_Dir is the installation prefix for GPS.
 

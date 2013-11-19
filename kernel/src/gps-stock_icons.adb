@@ -40,10 +40,14 @@ package body GPS.Stock_Icons is
    -- Register_Stock_Icons --
    --------------------------
 
-   procedure Register_Stock_Icons (System_Dir : GNATCOLL.VFS.Virtual_File) is
-      pragma Unreferenced (System_Dir);
+   procedure Register_Stock_Icons
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      System_Dir : GNATCOLL.VFS.Virtual_File)
+   is
       W, H    : Gint;
       Result  : Boolean;
+      Set     : Gtk_Icon_Set;
+      pragma Unreferenced (System_Dir, Set);
    begin
       Icon_Size_Action_Button := Icon_Size_Register ("ICON_SIZE_ACTION", 7, 7);
       Icon_Size_Local_Toolbar :=
@@ -69,6 +73,15 @@ package body GPS.Stock_Icons is
          Icon_Size_Lookup (Icon_Size_Button, W, H, Result);
          Trace (Me, "Icon size Button =>" & W'Img & "x" & H'Img);
       end if;
+
+      --  Register an initial value for some of the icons. For instance, the
+      --  Messages view has a local config menu and is created before we load
+      --  icons.py. We need however to have the stock icon registered or the
+      --  button will not be updated when we actually load the icons.
+      --  The exact path is irrelevant here.
+
+      Set := Set_Icon
+        (Kernel, GPS_Stock_Config_Menu, "", Create (+"svg/menu.svg"));
    end Register_Stock_Icons;
 
    ----------------------
