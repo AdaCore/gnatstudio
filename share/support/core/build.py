@@ -357,8 +357,36 @@ XML = r"""<?xml version="1.0" ?>
 
 <target model="gnatmake" category="_File_" name="U_pdate file XRef">
     <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
     <icon>gps-semantic-check</icon>
     <launch-mode>ON_FILE_SAVE</launch-mode>
+    <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
+    <always-clear-locations>FALSE</always-clear-locations>
+    <command-line>
+       <arg>%gnatmake</arg>
+       <arg>-q</arg>
+       <arg>-c</arg>
+       <arg>-gnatc</arg>
+       <arg>-u</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
+    </command-line>
+    <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         end_of_build
+    </output-parsers>
+</target>
+
+<target model="gnatmake" category="_File_" name="U_pdate file XRef in background">
+    <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
+    <icon>gps-semantic-check</icon>
+    <launch-mode>IN_BACKGROUND</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <always-clear-locations>FALSE</always-clear-locations>
