@@ -23,6 +23,7 @@ with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
@@ -107,7 +108,7 @@ package body Src_Editor_View.Commands is
      (Command : access Move_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       View         : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Kernel));
       Buffer       : constant Source_Buffer :=
@@ -118,7 +119,7 @@ package body Src_Editor_View.Commands is
       Adj          : Gtk_Adjustment;
       Moved        : Boolean;
       Column       : constant Gint := Buffer.Get_Column_Memory;
-      pragma Unreferenced (Moved);
+      pragma Unreferenced (Context, Moved);
 
    begin
       Set_Multi_Cursors_Manual_Sync (Buffer);
@@ -195,8 +196,8 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Command);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Command, Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       View : constant Source_View :=
                Source_View (Get_Current_Focus_Widget (Kernel));
 
@@ -225,12 +226,13 @@ package body Src_Editor_View.Commands is
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       View        : constant Source_View   :=
                       Source_View (Get_Current_Focus_Widget (Kernel));
       Buffer      : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
       Iter, Start : Gtk_Text_Iter;
+      pragma Unreferenced (Context);
 
    begin
       Set_Multi_Cursors_Manual_Sync (Buffer);
@@ -265,8 +267,8 @@ package body Src_Editor_View.Commands is
      (Command : access Indentation_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Context, Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
 
       --  Get the current MDI child. We know it is an editor, since the filter
       --  has matched, and this is faster than looking for the current focus
@@ -304,7 +306,8 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       View : constant Source_View :=
                Source_View (Get_Current_Focus_Widget (Kernel));
    begin
@@ -331,8 +334,8 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Command);
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
+      pragma Unreferenced (Context, Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
       View          : constant Source_View :=
                         Source_View
                           (Get_Current_Focus_Widget (Kernel));
