@@ -1827,7 +1827,6 @@ package body Src_Editor_Module is
                     (if Extend_Selection then " (extend selection)" else "");
                begin
                   Command := new Move_Command;
-                  Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
                   Move_Command (Command.all).Kind := Kind;
                   Move_Command (Command.all).Step := Step;
                   Move_Command (Command.all).Extend_Selection :=
@@ -1845,16 +1844,13 @@ package body Src_Editor_Module is
          end loop;
       end loop;
 
-      Command := new Scroll_Command;
-      Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Center cursor on screen", Command,
+        (Kernel, "Center cursor on screen", new Scroll_Command,
            -"Scroll the current source editor so that the cursor is centered",
          Category => "Editor",
          Filter   => Src_Action_Context);
 
       Command := new Delete_Command;
-      Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Delete_Command (Command.all).Kind := Word;
       Delete_Command (Command.all).Count := 1;
       Register_Action
@@ -1864,7 +1860,6 @@ package body Src_Editor_Module is
          Filter   => Src_Action_Context);
 
       Command := new Delete_Command;
-      Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Delete_Command (Command.all).Kind := Word;
       Delete_Command (Command.all).Count := -1;
       Register_Action
@@ -1952,7 +1947,6 @@ package body Src_Editor_Module is
          Group  => Integer'Last); --  Always keep last
 
       Command := new Control_Command;
-      Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Control_Command (Command.all).Mode := As_Is;
       Register_Action
         (Kernel, "No casing/indentation on next key",
@@ -1963,7 +1957,6 @@ package body Src_Editor_Module is
          Filter     => Src_Action_Context);
 
       Command := new Control_Command;
-      Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Control_Command (Command.all).Mode := Sticky_As_Is;
       Register_Action
         (Kernel, "Toggle auto casing/indentation",
@@ -1973,11 +1966,9 @@ package body Src_Editor_Module is
          Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
-      Command := new Tab_As_Space_Command;
-      Tab_As_Space_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Insert TAB with spaces",
-         Command,
+         new Tab_As_Space_Command,
          -("Insert spaces until a column multiple of the indentation level"
            & " as set in the Preferences for the corresponding language"),
          Category => "Editor",
@@ -2005,27 +1996,23 @@ package body Src_Editor_Module is
 
       --  Menus
 
-      Command := new New_File_Command;
       Register_Action
-        (Kernel, New_File_Command_Name, Command,
+        (Kernel, New_File_Command_Name, new New_File_Command,
          Description => -"Create a new empty editor",
          Stock_Id    => Stock_New);
 
-      Command := new New_View_Command;
       Register_Action
-        (Kernel, "new view", Command,
+        (Kernel, "new view", new New_View_Command,
          Description => -"Create a new view for the selected editor");
 
-      Command := new Open_Command;
       Register_Action
-        (Kernel, Open_Command_Name, Command,
+        (Kernel, Open_Command_Name, new Open_Command,
          Description => -"Open an existing file",
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3);
 
-      Command := new Open_Remote_Command;
       Register_Action
-        (Kernel, "open from host", Command,
+        (Kernel, "open from host", new Open_Remote_Command,
          Description => -"Open a file from a remote host",
          Stock_Id    => Stock_Open,
          Accel_Key   => GDK_F3,
@@ -2038,22 +2025,19 @@ package body Src_Editor_Module is
                  new On_Recent'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
 
-      Command := new Save_Command;
       Register_Action
-        (Kernel, Save_Command_Name, Command,
+        (Kernel, Save_Command_Name, new Save_Command,
          Stock_Id    => GPS_Save,
          Description => -"Save the current editor",
          Accel_Key   => GDK_LC_s,
          Accel_Mods  => Primary_Mod_Mask);
 
-      Command := new Save_As_Command;
       Register_Action
-        (Kernel, "save as", Command,
+        (Kernel, "save as", new Save_As_Command,
          Description => -"Save the current editor with a different name");
 
-      Command := new Src_Editor_Module.Commands.Print_Command;
       Register_Action
-        (Kernel, "print", Command,
+        (Kernel, "print", new Src_Editor_Module.Commands.Print_Command,
          Stock_Id    => Stock_Print,
          Description => -"Print the current editor");
 
@@ -2085,23 +2069,19 @@ package body Src_Editor_Module is
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
-      Command := new Undo_Command;
-      Filter  := new Has_Undo_Filter;
       Register_Action
-        (Kernel, "undo", Command,
+        (Kernel, "undo", new Undo_Command,
          Description => -"Undo the last command",
          Stock_Id    => Stock_Undo,
-         Filter      => Filter,
+         Filter      => new Has_Undo_Filter,
          Accel_Key   => GDK_LC_z,
          Accel_Mods  => Primary_Mod_Mask);
 
-      Command := new Redo_Command;
-      Filter  := new Has_Redo_Filter;
       Register_Action
-        (Kernel, "redo", Command,
+        (Kernel, "redo", new Redo_Command,
          Description => -"Redo the last command that was undone",
          Stock_Id    => Stock_Redo,
-         Filter      => Filter,
+         Filter      => new Has_Redo_Filter,
          Accel_Key   => GDK_LC_r,
          Accel_Mods  => Primary_Mod_Mask);
 
@@ -2123,39 +2103,34 @@ package body Src_Editor_Module is
 
       Toolbar.On_Destroy (Toolbar_Destroy_Cb'Access);
 
-      Command := new Select_All_Command;
       Register_Action
-        (Kernel, "select all", Command,
+        (Kernel, "select all", new Select_All_Command,
          -"Select the whole contents of the editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
-      Command := new Insert_File_Command;
       Register_Action
-        (Kernel, "insert file", Command,
+        (Kernel, "insert file", new Insert_File_Command,
          -"Insert the contents of the file into the current editor",
          Category => -"Editor",
          Filter   => Src_Action_Context);
 
-      Command := new Comment_Lines_Command;
       Register_Action
-        (Kernel, "comment lines", Command,
+        (Kernel, "comment lines", new Comment_Lines_Command,
          Description   => -"Comment the selected lines",
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_minus,
          Accel_Mods    => Primary_Mod_Mask);
 
-      Command := new Uncomment_Lines_Command;
       Register_Action
-        (Kernel, "uncomment lines", Command,
+        (Kernel, "uncomment lines", new Uncomment_Lines_Command,
          Description   => -"Uncomment the selected lines",
          Filter        => Src_Action_Context,
          Accel_Key     => GDK_underscore,
          Accel_Mods    => Primary_Mod_Mask);
 
-      Command := new Refill_Command;
       Register_Action
-        (Kernel, "refill", Command,
+        (Kernel, "refill", new Refill_Command,
          Description   =>
            -("Reformat selected lines or current paragraph so that the list"
            & " are shorter than the grey line on the right"),
@@ -2163,36 +2138,29 @@ package body Src_Editor_Module is
          Accel_Key     => GDK_equal,
          Accel_Mods    => Primary_Mod_Mask);
 
-      Command := new Print_Selection_Command;
       Register_Action
-        (Kernel, "print selection", Command,
+        (Kernel, "print selection", new Print_Selection_Command,
          Description   => -"Print the current selection",
          Filter        => Src_Action_Context);
 
-      Command := new Indentation_Command;
-      Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Autoindent selection",
-         Command, -"Automatically indent the current line or selection",
+        (Kernel, "Autoindent selection", new Indentation_Command,
+         -"Automatically indent the current line or selection",
          Category => "Editor",
          Filter   => Src_Action_Context and Is_Not_Makefile);
 
-      Command := new Fold_All_Blocks_Command;
       Register_Action
-        (Kernel, "fold all blocks", Command,
+        (Kernel, "fold all blocks", new Fold_All_Blocks_Command,
          -"Fold all blocks (if, loops,...)",
          Filter  => Src_Action_Context);
 
-      Command := new Unfold_All_Blocks_Command;
       Register_Action
-        (Kernel, "unfold all blocks", Command,
+        (Kernel, "unfold all blocks", new Unfold_All_Blocks_Command,
          -"Unfold all blocks (if, loops,...)",
          Filter => Src_Action_Context);
 
-      Command := new Goto_Line_Command;
-      Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "goto line", Command,
+        (Kernel, "goto line", new Goto_Line_Command,
          -"Open a dialog to select a line to go to",
          Accel_Key   => GDK_LC_g,
          Accel_Mods  => Primary_Mod_Mask);
@@ -2201,20 +2169,16 @@ package body Src_Editor_Module is
          Action => Command,
          Filter => Line_Numbers_Area_Filter);
 
-      Command := new Goto_Declaration_Command;
       Register_Action
-        (Kernel, "goto declaration", Command,
+        (Kernel, "goto declaration", new Goto_Declaration_Command,
          -"Jump to the declaration of the current entity");
 
-      Command := new Goto_Body_Command;
       Register_Action
-        (Kernel, "goto body", Command,
+        (Kernel, "goto body", new Goto_Body_Command,
          -"Jump to the implementation/body of the current entity");
 
-      Command := new Jump_To_Delimiter_Command;
-      Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "jump to matching delimiter", Command,
+        (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,
          -"Jump to the matching delimiter ()[]{}",
          Accel_Key  => GDK_apostrophe,
          Accel_Mods => Primary_Mod_Mask,

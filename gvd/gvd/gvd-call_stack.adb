@@ -426,15 +426,11 @@ package body GVD.Call_Stack is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-
-      Command := new Call_Stack_Command;
       Register_Action
-        (Kernel, "open debugger call stack", Command,
+        (Kernel, "open debugger call stack", new Call_Stack_Command,
          -"Open the Call Stack window for the debugger",
          Category => -"Views");
    end Register_Module;

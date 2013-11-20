@@ -2309,9 +2309,8 @@ package body Browsers.Call_Graph is
          Ref_Item   => "Goto file spec<->body",
          Add_Before => False);
 
-      Command := new Find_All_Refs_Command;
       Register_Action
-         (Kernel, "find all references", Command,
+         (Kernel, "find all references", new Find_All_Refs_Command,
           -("List all references to the entity under the cursor"
             & " in the Locations window"));
       Register_Contextual_Menu

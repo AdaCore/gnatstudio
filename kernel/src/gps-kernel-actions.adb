@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
@@ -33,6 +32,16 @@ package body GPS.Kernel.Actions is
    Me : constant Trace_Handle := Create ("ACTIONS");
 
    use Actions_Htable.String_Hash_Table;
+
+   Future            : constant String := ASCII.LF &
+     (-("Future references to this action will execute the last"
+        & " definition encountered"));
+   Overrides_Builtin : constant String :=
+     -"Action overrides a builtin action" & ASCII.LF;
+   Overrides_Old     : constant String :=
+     -"Action already defined in ";
+   Overridden_In     : constant String :=
+     -" and overriden in ";
 
    ----------
    -- Free --
@@ -73,45 +82,12 @@ package body GPS.Kernel.Actions is
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
    is
-      Action : Action_Record_Access;
-      pragma Unreferenced (Action);
-   begin
-      Action := Register_Action
-        (Kernel, Name, Command, Description, Filter, Category, Defined_In,
-         Stock_Id, Accel_Key, Accel_Mods);
-   end Register_Action;
-
-   ---------------------
-   -- Register_Action --
-   ---------------------
-
-   function Register_Action
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null;
-      Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Stock_Id    : String := "";
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
-      return Action_Record_Access
-   is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
       Overriden : Boolean := False;
       Cat : String_Access;
-      Future : constant String := ASCII.LF &
-        (-("Future references to this action will execute the last"
-         & " definition encountered"));
-      Overrides_Builtin : constant String :=
-        -"Action overrides a builtin action" & ASCII.LF;
-      Overrides_Old : constant String :=
-        -"Action already defined in ";
-      Overridden_In : constant String :=
-        -" and overriden in ";
       Action : Action_Record_Access;
       Stock  : String_Access;
+      Cmd    : access Interactive_Command'Class;
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
@@ -173,10 +149,20 @@ package body GPS.Kernel.Actions is
          Register_Filter (Kernel, Filter, Name => "");
       end if;
 
+      if Command /= null then
+         --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
+         --  user code :
+         --   * users can extend the Interactive_Command type in package bodies
+         --   * and still call Register_Action ( new My_Command);
+         --     without using a temporary variable to store the allocated
+         --     command.
+         Cmd := Command.all'Unrestricted_Access;
+      end if;
+
       --  Create the action
 
       Action := new Action_Record'
-        (Commands.Interactive.Interactive_Command_Access (Command),
+        (Cmd,
          Filter,
          new String'(Description),
          Name       => new String'(Name),
@@ -186,7 +172,7 @@ package body GPS.Kernel.Actions is
          Overriden  => Overriden,
          Stock_Id   => Stock);
 
-      Register_Perma_Command (Kernel, Command);
+      Register_Perma_Command (Kernel, Cmd);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
@@ -194,8 +180,6 @@ package body GPS.Kernel.Actions is
       if Accel_Key /= 0 then
          Kernel.Set_Default_Key (Name, Accel_Key, Accel_Mods);
       end if;
-
-      return Action;
    end Register_Action;
 
    -----------------------
@@ -293,7 +277,7 @@ package body GPS.Kernel.Actions is
 
    function Execute_In_Background
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Action  : not null Action_Record_Access;
+      Action  : String;
       Context : Selection_Context := No_Context;
       Event   : Gdk.Event.Gdk_Event := null;
       Repeat  : Positive := 1) return Boolean
@@ -330,20 +314,21 @@ package body GPS.Kernel.Actions is
          end if;
       end Undo_Group;
 
+      Act : constant Action_Record_Access := Lookup_Action (Kernel, Action);
       C : Selection_Context := Context;
    begin
+      if Act = null then
+         Insert (Kernel, -"Action not defined : " & Action);
+         return False;
+      end if;
+
       if Context = No_Context then
          C := Get_Current_Context (Kernel);  --  no need to free
       end if;
 
-      if Action.Filter = null
-         or else
-            (C /= No_Context
-             and then Filter_Matches (Action.Filter, C))
-      then
+      if Filter_Matches (Act.Filter, C) then
          if Active (Me) then
-            Trace (Me, "Executing action " & Action.Name.all
-                   & Repeat'Img & " times");
+            Trace (Me, "Executing action " & Action & Repeat'Img & " times");
          end if;
 
          Undo_Group (Start => True);
@@ -351,7 +336,7 @@ package body GPS.Kernel.Actions is
             Launch_Background_Command
                (Kernel,
                 Create_Proxy
-                   (Action.Command,
+                   (Act.Command,
                     (Event       => Event,
                      Context     => Context,
                      Synchronous => False,
@@ -361,7 +346,7 @@ package body GPS.Kernel.Actions is
                        Event /= null and then
                          (Get_Event_Type (Event) = Button_Press or else
                           Get_Event_Type (Event) = Button_Release),
-                     Label       => new String'(Action.Name.all),
+                     Label       => new String'(Action),
                      Repeat_Count => R,
                      Remaining_Repeat => Repeat - R)),
                 Destroy_On_Exit => True,

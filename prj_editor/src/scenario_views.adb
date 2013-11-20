@@ -729,7 +729,6 @@ package body Scenario_Views is
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       M : constant Scenario_View_Module := new Scenario_View_Module_Record;
-      Command : Interactive_Command_Access;
    begin
       Gtk_New (M.Modes, (0 => GType_String));
 
@@ -743,17 +742,15 @@ package body Scenario_Views is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Build_Modes, True);
 
-      Command := new Command_Edit_Variable;
       Register_Action
         (Kernel, Command_Edit_Variable_Name,
-         Command, Command_Edit_Variable_Tip,
+         new Command_Edit_Variable, Command_Edit_Variable_Tip,
          Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
          Category => -"Scenario");
 
-      Command := new Command_Delete_Variable;
       Register_Action
         (Kernel, Command_Delete_Variable_Name,
-         Command, Command_Delete_Variable_Tip,
+         new Command_Delete_Variable, Command_Delete_Variable_Tip,
          Stock_Id => Stock_Remove,
          Category => -"Scenario");
    end Register_Module;

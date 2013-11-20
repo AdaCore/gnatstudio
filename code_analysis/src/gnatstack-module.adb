@@ -1032,8 +1032,6 @@ package body GNATStack.Module is
       GNATStack_Path : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Locate_On_Path ("gnatstack");
       Factory        : GPS.Kernel.Modules.UI.Submenu_Factory;
-      Command        : Interactive_Command_Access;
-
    begin
       if GNATStack_Path = No_File then
          --  There is no GNATStack executable available, module is not
@@ -1055,18 +1053,14 @@ package body GNATStack.Module is
          Label   => -Stack_Analysis_Name,
          Submenu => Factory);
 
-      Command := new Analyze_Stack_Command;
-      Register_Action (Kernel, "analyze stack usage", Command);
-
-      Command := new Open_CIs_Editor_Command;
       Register_Action
-         (Kernel, "gnatstack open undefined subprogram editor", Command);
-
-      Command := new Load_Data_Command;
-      Register_Action (Kernel, "load last stack usage", Command);
-
-      Command := new Clear_Data_Command;  --  On_Clear_Data
-      Register_Action (Kernel, "clear stack usage information", Command);
+        (Kernel, "analyze stack usage", new Analyze_Stack_Command);
+      Register_Action
+        (Kernel, "gnatstack open undefined subprogram editor",
+         new Open_CIs_Editor_Command);
+      Register_Action (Kernel, "load last stack usage", new Load_Data_Command);
+      Register_Action
+        (Kernel, "clear stack usage information", new Clear_Data_Command);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,

@@ -1118,15 +1118,11 @@ package body GVD.Assembly_View is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-
-      Command := new Assembly_View_Command;
       Register_Action
-        (Kernel, "open assembly view", Command,
+        (Kernel, "open assembly view", new Assembly_View_Command,
          -"Open the Assembly view for the debugger",
          Category => -"Views");
    end Register_Module;

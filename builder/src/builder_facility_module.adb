@@ -1678,7 +1678,6 @@ package body Builder_Facility_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       P       : Kernel_Search_Provider_Access;
-      Command : Interactive_Command_Access;
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -1703,27 +1702,24 @@ package body Builder_Facility_Module is
 
       --  Register the menus
 
-      Command := new Targets_Settings_Command;
       Register_Action
-        (Kernel, "Build open targets settings", Command,
+        (Kernel, "Build open targets settings", new Targets_Settings_Command,
          Description => -"Open the Build Targets settings dialog");
 
       if Active (Modes_Trace) then
-         Command := new Modes_Settings_Command;
          Register_Action
-           (Kernel, "Build open modes settings", Command,
+           (Kernel, "Build open modes settings", new Modes_Settings_Command,
             Description => -"Open the Modes Targets settings dialog");
       end if;
 
-      Command := new Shadow_Console_Command;
       Register_Action
-        (Kernel, "open Auxiliary Builds", Command,
+        (Kernel, "open Auxiliary Builds", new Shadow_Console_Command,
          Category => -"Views",
          Description => -"Open the Auxiliary Builds console");
 
-      Command := new Background_Builds_Console_Command;
       Register_Action
-        (Kernel, "open Background Builds", Command,
+        (Kernel, "open Background Builds",
+         new Background_Builds_Console_Command,
          Category => -"Views",
          Description => -"Open the Backgorund Builds console");
 

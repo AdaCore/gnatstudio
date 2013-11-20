@@ -312,11 +312,9 @@ package body Toolchains_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
    begin
-      Command := new Toolchains_Command;
       Register_Action
-        (Kernel, "open toolchains editor", Command,
+        (Kernel, "open toolchains editor", new Toolchains_Command,
          -"Open the toolchains editor (for builds)",
          Category => -"Views");
 

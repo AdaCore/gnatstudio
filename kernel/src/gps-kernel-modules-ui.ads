@@ -217,8 +217,8 @@ package GPS.Kernel.Modules.UI is
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Action            : Commands.Interactive.Interactive_Command_Access;
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image       : String := "";
       Ref_Item          : String := "";
@@ -238,8 +238,8 @@ package GPS.Kernel.Modules.UI is
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Action         : Commands.Interactive.Interactive_Command_Access := null;
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
       Stock_Image       : String := "";
@@ -264,8 +264,8 @@ package GPS.Kernel.Modules.UI is
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Label             : String := "";
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
@@ -425,7 +425,7 @@ package GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
-      Command : Interactive_Command_Access := null;
+      Command : not null access Interactive_Command'Class;
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "");
    --  Add a button at the end of the toolbar
@@ -433,9 +433,16 @@ package GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel   : access Kernel_Handle_Record'Class;
       Stock_Id : String;
-      Command  : Interactive_Command_Access := null;
+      Command  : not null access Interactive_Command'Class;
       Tooltip  : String := "");
    --  Same as above but with a stock button
+
+   procedure Register_Button
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Action  : String;
+      Image   : Gtk.Image.Gtk_Image := null);
+   --  Register a button based on an action.
+   --  Image overrides the action's default image, if specified.
 
    procedure Add_Button
      (Kernel   : access Kernel_Handle_Record'Class;

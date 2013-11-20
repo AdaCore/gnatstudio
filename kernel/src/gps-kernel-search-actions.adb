@@ -153,16 +153,10 @@ package body GPS.Kernel.Search.Actions is
      (Self       : not null access Actions_Search_Result;
       Give_Focus : Boolean)
    is
-      A : constant Action_Record_Access :=
-         Lookup_Action (Self.Kernel, Self.Name.all);
       Dummy : Boolean;
       pragma Unreferenced (Dummy, Give_Focus);
    begin
-      if A /= null then
-         Dummy := Execute_In_Background
-            (Kernel   => Self.Kernel,
-             Action   => A);
-      end if;
+      Dummy := Execute_In_Background (Self.Kernel, Self.Name.all);
    end Execute;
 
    ----------

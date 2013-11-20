@@ -498,14 +498,11 @@ package body Startup_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Module : Module_ID;
-      Command : Interactive_Command_Access;
    begin
       Module := new Module_ID_Record;
       Register_Module (Module, Kernel, "Plug-ins manager");
-
-      Command := new Open_Plug_Ins_Dialog;
       Register_Action
-        (Kernel, "open plug-ins dialog", Command,
+        (Kernel, "open plug-ins dialog", new Open_Plug_Ins_Dialog,
          -"Opens a dialog to select which plug-ins should be activated");
    end Register_Module;
 

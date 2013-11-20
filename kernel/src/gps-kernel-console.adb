@@ -539,7 +539,6 @@ package body GPS.Kernel.Console is
       Msg     : GPS_Message;
       Msg2    : constant access Kernel_Messages_Window :=
         new Kernel_Messages_Window;
-      Command : Interactive_Command_Access;
       pragma Unreferenced (Msg);
    begin
       Messages_Views.Register_Module (Kernel);
@@ -547,24 +546,21 @@ package body GPS.Kernel.Console is
       Msg2.Kernel := Kernel_Handle (Kernel);
       Kernel.Set_Messages_Window (Msg2);
 
-      Command := new Clear_Messages_Command;
       Register_Action
         (Kernel, Command_Clear_Messages_Name,
-         Command, Command_Clear_Messages_Tip,
+         new Clear_Messages_Command, Command_Clear_Messages_Tip,
          Stock_Id => Stock_Clear,
          Category => -"Messages");
 
-      Command := new Save_Messages_Command;
       Register_Action
         (Kernel, Command_Save_Name,
-         Command, Command_Save_Tip,
+         new Save_Messages_Command, Command_Save_Tip,
          Stock_Id => GPS_Save,
          Category => -"Messages");
 
-      Command := new Load_Messages_Command;
       Register_Action
         (Kernel, Command_Load_Name,
-         Command, Command_Load_Tip,
+         new Load_Messages_Command, Command_Load_Tip,
          Stock_Id => Stock_Open,
          Category => -"Messages");
 

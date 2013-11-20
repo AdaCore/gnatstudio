@@ -779,9 +779,7 @@ package body Generic_Views is
 
       procedure Register_Module
         (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID          : GPS.Kernel.Modules.Module_ID := null)
-      is
-         Command : Interactive_Command_Access;
+         ID          : GPS.Kernel.Modules.Module_ID := null) is
       begin
          if ID = null then
             Module := new Module_ID_Record;
@@ -790,10 +788,9 @@ package body Generic_Views is
          end if;
 
          if Commands_Category /= "" then
-            Command := new Open_Command;
             Register_Action
               (Kernel, "open " & View_Name,
-               Command, "Open (or reuse if it already exists) the '"
+               new Open_Command, "Open (or reuse if it already exists) the '"
                & View_Name & "' view", null, Commands_Category);
          end if;
 

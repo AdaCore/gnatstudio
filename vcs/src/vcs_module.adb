@@ -519,7 +519,6 @@ package body VCS_Module is
                                New_Class (Kernel, "Activities");
 
       VCS_Action_Context   : constant Action_Filter := GPS.Kernel.Create;
-      Command : Interactive_Command_Access;
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
@@ -804,15 +803,13 @@ package body VCS_Module is
 
       Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
-      Command := new Explorer_Command;
       Register_Action
-        (Kernel, "VCS open explorer", Command,
+        (Kernel, "VCS open explorer", new Explorer_Command,
          Description => -"Open the VCS explorer",
          Category => -"Views");
 
-      Command := new Activities_Command;
       Register_Action
-        (Kernel, "VCS open activities window", Command,
+        (Kernel, "VCS open activities window", new Activities_Command,
          Description => -"Open the VCS activities window",
          Category    => -"Views");
 

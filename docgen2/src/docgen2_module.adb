@@ -421,9 +421,9 @@ package body Docgen2_Module is
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel, Data => null);
 
-      Command := new Generate_Project_Command;
       Register_Action
-        (Kernel, "Documentation generate for project", Command,
+        (Kernel, "Documentation generate for project",
+         new Generate_Project_Command,
          Description => -"Generate documentation for a single project",
          Filter => Lookup_Filter (Kernel, "Project only"));
       Register_Contextual_Menu
@@ -444,9 +444,9 @@ package body Docgen2_Module is
          Action => Command,
          Filter => Lookup_Filter (Kernel, "Project only"));
 
-      Command := new Generate_File_Command;
       Register_Action
-        (Kernel, "Documentation generate for current file", Command,
+        (Kernel, "Documentation generate for current file",
+         new Generate_File_Command,
          Description => -"Generate documentation for current file",
          Filter => Lookup_Filter (Kernel, "File")
              and Create (Language => "ada"));

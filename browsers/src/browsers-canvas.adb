@@ -2545,12 +2545,9 @@ package body Browsers.Canvas is
    ----------------------
 
    procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
-      Command : constant Interactive_Command_Access := new Select_All_Command;
    begin
       Register_Action
-        (Kernel,
-         "Select All In Browser",
-         Command,
+        (Kernel, "Select All In Browser", new Select_All_Command,
          -"Select all items in a browser",
          Category => "Browsers");
    end Register_Actions;

@@ -65,7 +65,6 @@ package body GPS.Menu is
 
    type Clipboard_Kind is (Cut, Copy, Paste, Paste_Previous);
    type Clipboard_Command is new Interactive_Command with record
-      Kernel : Kernel_Handle;
       Kind   : Clipboard_Kind;
    end record;
    overriding function Execute
@@ -208,9 +207,9 @@ package body GPS.Menu is
      (Command : access Clipboard_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
-      W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
-      Clipboard : constant Clipboard_Access := Get_Clipboard (Command.Kernel);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      W : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
    begin
       if W /= null then
          case Command.Kind is
@@ -354,15 +353,13 @@ package body GPS.Menu is
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
-      Command := new Open_Project_Command;
       Register_Action
-        (Kernel, "open project dialog", Command,
+        (Kernel, "open project dialog", new Open_Project_Command,
          Stock_Id => Stock_Open,
          Description => -"Open the Open Project dialog");
 
-      Command := new Open_From_Host_Command;
       Register_Action
-        (Kernel, "open remote project", Command,
+        (Kernel, "open remote project", new Open_From_Host_Command,
          Stock_Id    => Stock_Open,
          Description => -"Open remote project");
 
@@ -376,38 +373,32 @@ package body GPS.Menu is
                 Wrapper (On_Project_Changed'Access),
                 Name => "menu.project_changed");
 
-      Command := new Reload_Project_Command;
       Register_Action
-        (Kernel, "reload project", Command,
+        (Kernel, "reload project", new Reload_Project_Command,
          Description =>
            -("Recompute the list of source files for the project. This should"
            & " be used whenever you create or remove files outside of GPS"),
          Stock_Id => GPS_Refresh);
 
-      Command := new Save_All_Command;
       Register_Action
-        (Kernel, "save files and projects", Command,
+        (Kernel, "save files and projects", new Save_All_Command,
          Description => -("Save all modified files and projects"));
 
-      Command := new Save_Desktop_Command;
       Register_Action
-        (Kernel, "save desktop", Command,
+        (Kernel, "save desktop", new Save_Desktop_Command,
          Description =>
            -("Save the layout of the desktop to a file, so that it is"
            & " restored when GPS is restarted later with the same project"));
 
-      Command := new Change_Dir_Command;
       Register_Action
-        (Kernel, "change directory", Command,
+        (Kernel, "change directory", new Change_Dir_Command,
          Description => -"Change the current directory");
 
-      Command := new Exit_Command;
       Register_Action
-         (Kernel, "exit", Command,
+         (Kernel, "exit", new Exit_Command,
           -"Exit GPS, after confirming whether to save modified files");
 
       Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Cut;
       Register_Action
         (Kernel, "Cut to Clipboard", Command,
@@ -417,7 +408,6 @@ package body GPS.Menu is
          Accel_Mods  => Shift_Mask);
 
       Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Copy;
       Register_Action
         (Kernel, "Copy to Clipboard", Command,
@@ -427,7 +417,6 @@ package body GPS.Menu is
          Accel_Mods  => Primary_Mod_Mask);
 
       Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Paste;
       Register_Action
         (Kernel, "Paste From Clipboard", Command,
@@ -438,7 +427,6 @@ package body GPS.Menu is
          Accel_Mods => Shift_Mask);
 
       Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Clipboard_Command (Command.all).Kind   := Paste_Previous;
       Register_Action
         (Kernel, -"Paste Previous From Clipboard", Command,
@@ -486,9 +474,8 @@ package body GPS.Menu is
          Action      => -"Paste From Clipboard",
          Default_Key => "primary-v");
 
-      Command := new Preference_Dialog_Command;
       Register_Action
-        (Kernel, "open Preferences", Command,
+        (Kernel, "open Preferences", new Preference_Dialog_Command,
          Category    => -"Views",
          Stock_Id    => Stock_Preferences,
          Description => -"Open the preferences dialog");

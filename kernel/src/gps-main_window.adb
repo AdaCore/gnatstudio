@@ -156,7 +156,6 @@ package body GPS.Main_Window is
    --  Called when the the main window is destroyed
 
    type MDI_Child_Selection_Command is new Interactive_Command with record
-      Kernel       : Kernel_Handle;
       Move_To_Next : Boolean;
       Group        : Child_Group;
    end record;
@@ -173,7 +172,6 @@ package body GPS.Main_Window is
      (Split_H, Split_V, Clone, Reorder_Tab_Left, Reorder_Tab_Right,
       Move_To_Next_Tab, Move_To_Previous_Tab);
    type MDI_Window_Actions_Command is new Interactive_Command with record
-      Kernel : Kernel_Handle;
       Mode   : Window_Mode;
    end record;
    type MDI_Window_Actions_Command_Access is access all
@@ -233,7 +231,7 @@ package body GPS.Main_Window is
       Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Child : MDI_Child;
       Iter  : Child_Iterator;
       Note  : Gtk_Notebook;
@@ -241,15 +239,15 @@ package body GPS.Main_Window is
    begin
       case Command.Mode is
          when Split_H =>
-            Split (Get_MDI (Command.Kernel), Orientation_Horizontal,
+            Split (Get_MDI (Kernel), Orientation_Horizontal,
                    Mode => After);
          when Split_V =>
-            Split (Get_MDI (Command.Kernel), Orientation_Vertical,
+            Split (Get_MDI (Kernel), Orientation_Vertical,
                    Mode  => After);
          when Clone =>
             declare
                Focus : constant MDI_Child :=
-                 Get_Focus_Child (Get_MDI (Command.Kernel));
+                 Get_Focus_Child (Get_MDI (Kernel));
                N : MDI_Child;
                pragma Unreferenced (N);
             begin
@@ -258,7 +256,7 @@ package body GPS.Main_Window is
                end if;
             end;
          when Reorder_Tab_Left =>
-            Iter := First_Child (Get_MDI (Command.Kernel));
+            Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
                Note := Get_Notebook (Iter);
@@ -266,7 +264,7 @@ package body GPS.Main_Window is
             end if;
 
          when Reorder_Tab_Right =>
-            Iter := First_Child (Get_MDI (Command.Kernel));
+            Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
                Note := Get_Notebook (Iter);
@@ -278,7 +276,7 @@ package body GPS.Main_Window is
             end if;
 
          when Move_To_Next_Tab =>
-            Iter := First_Child (Get_MDI (Command.Kernel));
+            Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
                Note := Get_Notebook (Iter);
@@ -290,7 +288,7 @@ package body GPS.Main_Window is
             end if;
 
          when Move_To_Previous_Tab =>
-            Iter := First_Child (Get_MDI (Command.Kernel));
+            Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
                Note := Get_Notebook (Iter);
@@ -671,7 +669,6 @@ package body GPS.Main_Window is
       Command2         : MDI_Window_Actions_Command_Access;
    begin
       Command              := new MDI_Child_Selection_Command;
-      Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := True;
       Command.Group        := Group_Any;
       Register_Action
@@ -688,7 +685,6 @@ package body GPS.Main_Window is
          Default_Key => "alt-Tab");
 
       Command              := new MDI_Child_Selection_Command;
-      Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := False;
       Command.Group        := Group_Any;
       Register_Action
@@ -705,7 +701,6 @@ package body GPS.Main_Window is
          Default_Key => "alt-shift-ISO_Left_Tab");
 
       Command              := new MDI_Child_Selection_Command;
-      Command.Kernel       := Main_Window.Kernel;
       Command.Group        := Group_Default;
       Command.Move_To_Next := True;
       Register_Action
@@ -717,7 +712,6 @@ package body GPS.Main_Window is
          -("Select the next splitted window in the central area of GPS."));
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Split_H;
       Register_Action
         (Main_Window.Kernel,
@@ -727,7 +721,6 @@ package body GPS.Main_Window is
          Description => -("Split the current window in two horizontally"));
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Split_V;
       Register_Action
         (Main_Window.Kernel,
@@ -737,7 +730,6 @@ package body GPS.Main_Window is
          Description => -("Split the current window in two vertically"));
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Clone;
       Register_Action
         (Main_Window.Kernel,
@@ -749,7 +741,6 @@ package body GPS.Main_Window is
            & " windows support this operation."));
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Reorder_Tab_Left;
       Register_Action
         (Main_Window.Kernel,
@@ -765,7 +756,6 @@ package body GPS.Main_Window is
          Default_Key => "shift-control-alt-Left");
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Reorder_Tab_Right;
       Register_Action
         (Main_Window.Kernel,
@@ -781,7 +771,6 @@ package body GPS.Main_Window is
          Default_Key => "shift-control-alt-Right");
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Move_To_Next_Tab;
       Register_Action
         (Main_Window.Kernel,
@@ -795,7 +784,6 @@ package body GPS.Main_Window is
          Default_Key => "primary-alt-Right");
 
       Command2        := new MDI_Window_Actions_Command;
-      Command2.Kernel := Main_Window.Kernel;
       Command2.Mode   := Move_To_Previous_Tab;
       Register_Action
         (Main_Window.Kernel,
@@ -1379,16 +1367,18 @@ package body GPS.Main_Window is
 
    overriding function Execute
      (Command : access MDI_Child_Selection_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type is
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       if Command.Group /= Group_Any then
          Check_Interactive_Selection_Dialog
-           (Get_MDI (Command.Kernel), null,
+           (Get_MDI (Kernel), null,
             Move_To_Next            => Command.Move_To_Next,
             Only_Group              => Command.Group);
       else
          Check_Interactive_Selection_Dialog
-           (Get_MDI (Command.Kernel), Context.Event,
+           (Get_MDI (Kernel), Context.Event,
             Move_To_Next            => Command.Move_To_Next,
             Only_Group              => Command.Group);
       end if;

@@ -107,9 +107,9 @@ package body Src_Editor_View.Commands is
      (Command : access Move_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       View         : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+        Source_View (Get_Current_Focus_Widget (Kernel));
       Buffer       : constant Source_Buffer :=
         Source_Buffer (Get_Buffer (View));
       Iter         : Gtk_Text_Iter;
@@ -195,9 +195,10 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Command);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       View : constant Source_View :=
-               Source_View (Get_Current_Focus_Widget (Command.Kernel));
+               Source_View (Get_Current_Focus_Widget (Kernel));
 
       Adj : constant Gtk_Adjustment := View.Get_Hadjustment;
       Val : constant Gdouble := Adj.Get_Value;
@@ -224,9 +225,9 @@ package body Src_Editor_View.Commands is
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       View        : constant Source_View   :=
-                      Source_View (Get_Current_Focus_Widget (Command.Kernel));
+                      Source_View (Get_Current_Focus_Widget (Kernel));
       Buffer      : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
       Iter, Start : Gtk_Text_Iter;
@@ -264,7 +265,8 @@ package body Src_Editor_View.Commands is
      (Command : access Indentation_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Command);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
 
       --  Get the current MDI child. We know it is an editor, since the filter
       --  has matched, and this is faster than looking for the current focus
@@ -272,8 +274,7 @@ package body Src_Editor_View.Commands is
       --  that no widget has the focus, for instance because a dialog has
       --  temporarily been opened.
       Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI
-                   (Find_Current_Editor (Command.Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       View   : constant Source_View   := Get_View (Box);
       Buffer : constant Source_Buffer := Get_Buffer (Box);
       Result : Boolean;
@@ -283,9 +284,9 @@ package body Src_Editor_View.Commands is
          return Failure;
       end if;
 
-      Push_State (Command.Kernel, Busy);
+      Push_State (Kernel, Busy);
       Result := Do_Indentation (Buffer, Force => True);
-      Pop_State (Command.Kernel);
+      Pop_State (Kernel);
 
       if Result then
          return Success;
@@ -303,9 +304,9 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       View : constant Source_View :=
-               Source_View (Get_Current_Focus_Widget (Command.Kernel));
+               Source_View (Get_Current_Focus_Widget (Kernel));
    begin
       case Command.Mode is
          when As_Is =>
@@ -330,10 +331,11 @@ package body Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Command);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       View          : constant Source_View :=
                         Source_View
-                          (Get_Current_Focus_Widget (Command.Kernel));
+                          (Get_Current_Focus_Widget (Kernel));
       Buffer        : constant Source_Buffer :=
                         Source_Buffer (Get_Buffer (View));
       Indent_Params : Indent_Parameters;

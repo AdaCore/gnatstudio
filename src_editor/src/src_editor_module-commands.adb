@@ -262,11 +262,12 @@ package body Src_Editor_Module.Commands is
      (Command : access Goto_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Box : constant Source_Editor_Box :=
-              Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
+              Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
-      On_Goto_Line (Box, Command.Kernel);
+      On_Goto_Line (Box, Kernel);
       return Standard.Commands.Success;
    end Execute;
 

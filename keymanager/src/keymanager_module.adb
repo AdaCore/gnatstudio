@@ -240,9 +240,7 @@ package body KeyManager_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Process shell commands associated with this module
 
-   type Repeat_Next_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+   type Repeat_Next_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Repeat_Next_Command;
       Context : Interactive_Command_Context)
@@ -1069,7 +1067,6 @@ package body KeyManager_Module is
       Key              : Gdk_Key_Type;
       Modif            : Gdk_Modifier_Type;
       Binding          : Key_Description_List;
-      Command          : Action_Record_Access;
       Has_Secondary    : constant Boolean :=
                            Keymanager_Module.Secondary_Keymap /= null;
       Context          : Selection_Context;
@@ -1214,37 +1211,30 @@ package body KeyManager_Module is
                --  If we have not found the accelerator using the Gtk+
                --  mechanism, fallback on the standard mechanism to lookup
                --  the action.
-               Command := Lookup_Action (Kernel, Binding.Action.all);
 
-               if Command = null then
-                  Insert
-                    (Kernel, -"Action not defined: " & Binding.Action.all);
+               Compute_Context;
 
-               elsif Command.Command /= null then
-                  Compute_Context;
+               Keymanager_Module.Last_Command       :=
+                 Keymanager_Module.Current_Command;
+               Keymanager_Module.Current_Command    := null;
 
-                  Keymanager_Module.Last_Command :=
-                    Keymanager_Module.Current_Command;
-                  Keymanager_Module.Current_Command := null;
-
-                  if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
-                    and then Execute_In_Background
-                      (Kernel  => Kernel,
-                       Action  => Command,
-                       Context => Context,
-                       Event   => Event,
-                       Repeat  => Keymanager_Module.Repeat_Count)
+               if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
+                 and then Execute_In_Background
+                   (Kernel  => Kernel,
+                    Action  => Binding.Action.all,
+                    Context => Context,
+                    Event   => Event,
+                    Repeat  => Keymanager_Module.Repeat_Count)
+               then
+                  if Keymanager_Module.Last_Command /=
+                    Cst_String_Access (Binding.Action)
                   then
-                     if Keymanager_Module.Last_Command /=
-                       Cst_String_Access (Binding.Action)
-                     then
-                        Free (Keymanager_Module.Last_User_Command);
-                     end if;
-                     Keymanager_Module.Current_Command :=
-                       Cst_String_Access (Binding.Action);
-                     Found_Action := True;
-                     Keymanager_Module.Repeat_Count := 1;
+                     Free (Keymanager_Module.Last_User_Command);
                   end if;
+                  Keymanager_Module.Current_Command :=
+                    Cst_String_Access (Binding.Action);
+                  Found_Action                      := True;
+                  Keymanager_Module.Repeat_Count    := 1;
                end if;
             end if;
 
@@ -1998,7 +1988,6 @@ package body KeyManager_Module is
       end if;
 
       Command := new Repeat_Next_Command;
-      Repeat_Next_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Repeat Next", Command,
          -("Repeat the next action a number of times. Executing this action"

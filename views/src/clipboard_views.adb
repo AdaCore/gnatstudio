@@ -477,22 +477,19 @@ package body Clipboard_Views is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Generic_View.Register_Module (Kernel);
 
-      Command := new Merge_With_Previous_Command;
       Register_Action
-        (Kernel, Command_Append_To_Previous_Name, Command,
+        (Kernel, Command_Append_To_Previous_Name,
+         new Merge_With_Previous_Command,
          -"Append to previous clipboard entry",
          Stock_Id => Stock_Add,
          Category => -"Clipboard");
 
-      Command := new Remove_Entry_Command;
       Register_Action
-        (Kernel, Command_Remove_Name, Command,
+        (Kernel, Command_Remove_Name, new Remove_Entry_Command,
          -"Remove selected clipboard entry",
          Stock_Id => Stock_Remove,
          Category => -"Clipboard");

@@ -3152,11 +3152,13 @@ package body Project_Explorers is
         (Kernel => Kernel,
          ID     => Explorer_Module_ID);
 
-      Command := new Locate_File_In_Explorer_Command;
       Register_Action
         (Kernel, "Locate file in explorer",
-         Command, "Locate current file in project explorer",
+         new Locate_File_In_Explorer_Command,
+         "Locate current file in project explorer",
          Lookup_Filter (Kernel, "File"), -"Project Explorer");
+
+      Command := new Locate_File_In_Explorer_Command;
       Register_Contextual_Menu
         (Kernel, "Locate file in explorer",
          Action => Command,
@@ -3172,10 +3174,9 @@ package body Project_Explorers is
                      and not Create (Module => Explorer_Module_Name),
          Label  => "Locate in Project View: %p");
 
-      Command := new Toggle_Absolute_Path_Command;
       Register_Action
         (Kernel, Toggle_Absolute_Path_Name,
-         Command, Toggle_Absolute_Path_Tip,
+         new Toggle_Absolute_Path_Command, Toggle_Absolute_Path_Tip,
          null, -"Project Explorer");
 
       Extra := new Explorer_Search_Extra_Record;

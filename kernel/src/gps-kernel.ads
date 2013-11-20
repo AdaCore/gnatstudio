@@ -484,15 +484,18 @@ package GPS.Kernel is
    procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
    --  Set the error message to display if Filter doesn't match
 
-   function Get_Error_Message (Filter : Action_Filter) return String;
+   function Get_Error_Message
+     (Filter : access Action_Filter_Record'Class) return String;
    --  Return the error message to display if the filter doesn't match
 
-   function Get_Name (Filter : Action_Filter) return String;
+   function Get_Name
+     (Filter : access Action_Filter_Record'Class) return String;
    --  Return the description of the filter (a short string suitable for
    --  display in the key manager GUI
 
    function Filter_Matches
-     (Filter  : Action_Filter; Context : Selection_Context) return Boolean;
+     (Filter  : access Action_Filter_Record'Class;
+      Context : Selection_Context) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
    overriding procedure Register_Filter

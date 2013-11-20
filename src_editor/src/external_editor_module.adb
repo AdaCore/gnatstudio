@@ -793,9 +793,7 @@ package body External_Editor_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       External_Editor_Module_Id := new External_Editor_Module_Record;
 
@@ -828,9 +826,8 @@ package body External_Editor_Module is
                       & " needs to be explicitely called by the user."),
          Label   => -"Always use external editor");
 
-      Command := new Edit_With_External_Command;
       Register_Action
-        (Kernel, "Edit with external editor", Command,
+        (Kernel, "Edit with external editor", new Edit_With_External_Command,
          Description =>
            -("Edit the file with an external editor, as configued in the"
            & " preferences"),

@@ -422,10 +422,7 @@ package body Completion_Module is
    ------------------------
 
    type Completion_Command (Smart_Completion : Boolean) is
-     new Interactive_Command
-   with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+     new Interactive_Command with null record;
    overriding function Execute
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -957,9 +954,9 @@ package body Completion_Module is
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
       M             : Completion_Module_Access renames Completion_Module;
-      Widget        : constant Gtk_Widget :=
-                        Get_Current_Focus_Widget (Command.Kernel);
+      Widget        : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       View          : Source_View;
       Shell_Command : Editor_Replace_Slice;
       Iter          : Gtk_Text_Iter;
@@ -998,7 +995,7 @@ package body Completion_Module is
                return Commands.Success;
             else
                return Smart_Complete
-                 (Command.Kernel, Complete => True, Volatile => False);
+                 (Kernel, Complete => True, Volatile => False);
             end if;
          end if;
       end;
@@ -1194,8 +1191,6 @@ package body Completion_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command            : Interactive_Command_Access;
-      Command_Smart      : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
    begin
@@ -1205,20 +1200,18 @@ package body Completion_Module is
          Kernel      => Kernel,
          Module_Name => "Completion");
 
-      Command := new Completion_Command (Smart_Completion => False);
-      Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Complete identifier", Command,
+        (Kernel, "Complete identifier",
+         new Completion_Command (Smart_Completion => False),
          -("Complete current identifier based on the contents of the editor"),
          Category   => "Editor",
          Accel_Key  => GDK_slash,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
-      Command_Smart := new Completion_Command (Smart_Completion => True);
-      Completion_Command (Command_Smart.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Complete identifier (advanced)", Command_Smart,
+        (Kernel, "Complete identifier (advanced)",
+         new Completion_Command (Smart_Completion => True),
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
          Accel_Key  => GDK_space,

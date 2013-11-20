@@ -196,7 +196,6 @@ package body Project_Templates.GPS is
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
       Project_Template_Class : constant Class_Type :=
         New_Class (Kernel, "ProjectTemplate");
-      Command : Interactive_Command_Access;
    begin
       --  Register the default template dir.
       Module_Id.Dirs.Append
@@ -211,9 +210,9 @@ package body Project_Templates.GPS is
          Class         => Project_Template_Class,
          Static_Method => True);
 
-      Command := new Project_From_Template_Command;
       Register_Action
-        (Kernel, "create project from template", Command,
+        (Kernel, "create project from template",
+         new Project_From_Template_Command,
          -"Open a dialog to create a new project from an existing template");
    end Register_Module;
 

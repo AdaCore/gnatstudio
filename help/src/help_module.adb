@@ -1216,9 +1216,7 @@ package body Help_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
@@ -1231,9 +1229,8 @@ package body Help_Module is
                 Wrapper (Open_Help_Hook'Access),
                 Name => "help.html");
 
-      Command := new Display_Welcome_Command;
       Register_Action
-        (Kernel, "display GPS welcome view", Command,
+        (Kernel, "display GPS welcome view", new Display_Welcome_Command,
          -("Open a new view showing the GPS welcome, which contains quick"
            & " links to various areas of interests in GPS"));
 
@@ -1282,9 +1279,8 @@ package body Help_Module is
          Static_Method => True,
          Handler       => Command_Handler'Access);
 
-      Command := new Display_Contents_Command;
       Register_Action
-        (Kernel, "display help contents", Command,
+        (Kernel, "display help contents", new Display_Contents_Command,
          -("Display a HTML page with a pointer to all documentation known"
            & " to GPS"));
 
@@ -1292,9 +1288,8 @@ package body Help_Module is
       --  set before from other modules (through XML strings).
       Add_Doc_Path_From_Env (Kernel);
 
-      Command := new About_Command;
       Register_Action
-        (Kernel, "about gps", Command, -"Display the About dialog");
+        (Kernel, "about gps", new About_Command, -"Display the About dialog");
    end Register_Module;
 
 end Help_Module;

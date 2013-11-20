@@ -20,7 +20,7 @@
 --  Actions are named commands (or list of commands) in GPS. These can
 --  be associated with menus, keys and toolbar buttons among other things.
 
-with Commands.Interactive;
+with Commands.Interactive;  use Commands.Interactive;
 with Gdk.Event;
 with Gdk.Types;
 with GNAT.Strings;
@@ -29,8 +29,8 @@ with GNATCOLL.VFS;
 package GPS.Kernel.Actions is
 
    type Action_Record is record
-      Command     : Commands.Interactive.Interactive_Command_Access;
-      Filter      : Action_Filter;
+      Command     : not null access Interactive_Command'Class;
+      Filter      : not null access Action_Filter_Record'Class;
       Description : GNAT.Strings.String_Access;
       Name        : GNAT.Strings.String_Access;
       Modified    : Boolean;
@@ -40,7 +40,10 @@ package GPS.Kernel.Actions is
 
       Stock_Id    : GNAT.Strings.String_Access;
    end record;
-   --  Command is freed automatically by the kernel.
+   --  Command is freed automatically. We use an anonymous type so that calls
+   --  to Register_Action can call "new ..." directly when passing a value to
+   --  the parameter.
+   --
    --  Filter indicates when the action can be executed. If null, this means
    --  the action can always be executed. The filter mustn't be deallocated
    --  in the life of GPS, since there might be actions bound to it at any
@@ -65,18 +68,6 @@ package GPS.Kernel.Actions is
       Stock_Id    : String := "";
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0);
-   function Register_Action
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null;
-      Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Stock_Id    : String := "";
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
-      return Action_Record_Access;
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.
@@ -108,7 +99,7 @@ package GPS.Kernel.Actions is
 
    function Execute_In_Background
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Action  : not null Action_Record_Access;
+      Action  : String;
       Context : Selection_Context := No_Context;
       Event   : Gdk.Event.Gdk_Event := null;
       Repeat  : Positive := 1) return Boolean;

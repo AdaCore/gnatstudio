@@ -203,7 +203,6 @@ package body KeyManager_Module.Macros is
       Action_Play);
 
    type Macro_Command is new Interactive_Command with record
-      Kernel : Kernel_Handle;
       Action : Macro_Command_Action;
    end record;
    overriding function Execute
@@ -320,7 +319,7 @@ package body KeyManager_Module.Macros is
       Context : Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       case Command.Action is
          when Action_Start_Keyboard =>
@@ -334,7 +333,7 @@ package body KeyManager_Module.Macros is
                Trace (Me, "Start recording keyboard macro");
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
-                 (Command.Kernel, All_Keyboard_Events);
+                 (Kernel, All_Keyboard_Events);
             end if;
 
          when Action_Start_Mouse =>
@@ -348,7 +347,7 @@ package body KeyManager_Module.Macros is
                Trace (Me, "Start recording mouse macro");
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
-                 (Command.Kernel, All_Keyboard_Events or All_Mouse_Events);
+                 (Kernel, All_Keyboard_Events or All_Mouse_Events);
             end if;
 
          when Action_Stop =>
@@ -356,7 +355,7 @@ package body KeyManager_Module.Macros is
                Trace (Me, "Stop recording macro");
                Keymanager_Macro_Module.Recording := False;
                Remove_Event_Handler
-                 (Command.Kernel, General_Event_Handler'Access);
+                 (Kernel, General_Event_Handler'Access);
             end if;
 
          when Action_Play =>
@@ -366,12 +365,12 @@ package body KeyManager_Module.Macros is
                --  mouse events
                if Active (Mouse_Macro_Support) then
                   Play_Macro
-                    (Command.Kernel,
+                    (Kernel,
                      Macro => Keymanager_Macro_Module.Current_Macro,
                      Speed => 1.0);
                else
                   Play_Macro
-                    (Command.Kernel,
+                    (Kernel,
                      Macro => Keymanager_Macro_Module.Current_Macro,
                      Speed => 10_000.0);
                end if;
@@ -762,7 +761,6 @@ package body KeyManager_Module.Macros is
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Start_Keyboard;
-      Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel,
          Name        => "Macro Start Keyboard",
@@ -775,7 +773,6 @@ package body KeyManager_Module.Macros is
       if Active (Mouse_Macro_Support) then
          Command := new Macro_Command;
          Macro_Command (Command.all).Action := Action_Start_Mouse;
-         Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
          Register_Action
            (Kernel,
             Name        => "Macro Start Mouse",
@@ -788,7 +785,6 @@ package body KeyManager_Module.Macros is
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Stop;
-      Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Filter := new In_Macro_Filter;
       Register_Action
         (Kernel,
@@ -802,7 +798,6 @@ package body KeyManager_Module.Macros is
 
       Command := new Macro_Command;
       Macro_Command (Command.all).Action := Action_Play;
-      Macro_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Filter := new Has_Macro_Filter;
       Register_Action
         (Kernel,
@@ -812,14 +807,12 @@ package body KeyManager_Module.Macros is
          Category    => -"Macro",
          Filter      => Filter);
 
-      Command := new Macro_Load_Command;
       Register_Action
-         (Kernel, "macro load", Command,
+         (Kernel, "macro load", new Macro_Load_Command,
           -"Load a macro from an external file");
 
-      Command := new Macro_Save_Command;
       Register_Action
-         (Kernel, "macro save", Command,
+         (Kernel, "macro save", new Macro_Save_Command,
           -"Save the current macro to an external file",
           Filter => Filter);
 

@@ -374,23 +374,20 @@ package body GVD.Dialogs is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command  : Interactive_Command_Access;
    begin
-      Command := new Protection_Domains_Command;
       Register_Action
-        (Kernel, "open protection domains debugger window", Command,
+        (Kernel, "open protection domains debugger window",
+         new Protection_Domains_Command,
          -"Open the 'Protection Domains' window for the debugger",
          Category => -"Views");
 
-      Command := new Threads_Command;
       Register_Action
-        (Kernel, "open threads debugger window", Command,
+        (Kernel, "open threads debugger window", new Threads_Command,
          -"Open the 'Threads' window for the debugger",
          Category => -"Views");
 
-      Command := new Tasks_Command;
       Register_Action
-        (Kernel, "open tasks debugger window", Command,
+        (Kernel, "open tasks debugger window", new Tasks_Command,
          -"Open the 'Tasks' window for the debugger",
          Category => -"Views");
 

@@ -499,15 +499,11 @@ package body Breakpoints_Editor is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
-
-      Command := new Breakpoint_Editor_Command;
       Register_Action
-        (Kernel, "open breakpoints editor", Command,
+        (Kernel, "open breakpoints editor", new Breakpoint_Editor_Command,
          -"Open the Breakpoints Editor for the debugger",
          Category => -"Views");
    end Register_Module;

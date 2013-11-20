@@ -1855,13 +1855,10 @@ package body GVD.Canvas is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Command := new Data_Window_Command;
       Register_Action
-        (Kernel, "open debugger data window", Command,
+        (Kernel, "open debugger data window", new Data_Window_Command,
          Description => -"Open the Data Window for the debugger",
          Category => -"Views");
 

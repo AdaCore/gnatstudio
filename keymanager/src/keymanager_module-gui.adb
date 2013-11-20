@@ -1017,13 +1017,10 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    procedure Register_Key_Menu
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Command := new Open_Keyshortcuts_Command;
       Register_Action
-        (Kernel, "open key shortcuts dialog", Command,
+        (Kernel, "open key shortcuts dialog", new Open_Keyshortcuts_Command,
          -"Edit or create key shortcuts for all actions and menus",
          Category => -"Views");
    end Register_Key_Menu;

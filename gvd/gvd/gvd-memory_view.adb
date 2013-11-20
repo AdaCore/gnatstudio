@@ -1572,9 +1572,8 @@ package body GVD.Memory_View is
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
 
-      Command := new View_Memory_Command;
       Register_Action
-        (Kernel, "examine memory", Command,
+        (Kernel, "examine memory", new View_Memory_Command,
          -("Examine the contents of the memory at the location of the variable"
            & " under the cursor"),
          Category => -"Debug",

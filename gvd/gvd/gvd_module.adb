@@ -2509,18 +2509,16 @@ package body GVD_Module is
 
       --  Add debugger menus
 
-      Command := new Connect_To_Board_Command;
       Register_Action
-        (Kernel, "debug connect to board", Command,
+        (Kernel, "debug connect to board", new Connect_To_Board_Command,
          Description =>
            -("Opens a simple dialog to connect to a remote board. This option"
            & " is only relevant to cross debuggers."),
          Filter   => Debugger_Filter,
          Category => -"Debug");
 
-      Command := new Load_File_Command;
       Register_Action
-        (Kernel, "debug load file", Command,
+        (Kernel, "debug load file", new Load_File_Command,
          Description =>
            -("Opens a file selection dialog that allows you to choose a"
            & " program to debug. The program to debug is either an executable"
@@ -2529,9 +2527,8 @@ package body GVD_Module is
          Filter   => Debugger_Filter,
          Category => -"Debug");
 
-      Command := new Add_Symbols_Command;
       Register_Action
-        (Kernel, "debug add symbols", Command,
+        (Kernel, "debug add symbols", new Add_Symbols_Command,
          Description =>
            -("Add the symbols from a given file/module. This corresponds to"
            & " the gdb command add-symbol-file. This menu is particularly"
@@ -2543,30 +2540,26 @@ package body GVD_Module is
          Filter   => Debugger_Filter,
          Category => -"Debug");
 
-      Command := new Attach_Command;
       Register_Action
-        (Kernel, "debug attach", Command,
+        (Kernel, "debug attach", new Attach_Command,
          Description => -"Attach to a running process",
          Filter   => Debugger_Filter,
          Category => -"Debug");
 
-      Command := new Detach_Command;
       Register_Action
-        (Kernel, "debug detach", Command,
+        (Kernel, "debug detach", new Detach_Command,
          Description => -"Detach the application from the debugger",
          Filter   => Debugger_Filter,
          Category    => -"Debug");
 
-      Command := new Load_Core_Command;
       Register_Action
-        (Kernel, "debug core file", Command,
+        (Kernel, "debug core file", new Load_Core_Command,
          Description => -"Debug a core file instead of a running process",
          Filter   => Debugger_Filter,
          Category    => -"Debug");
 
-      Command := new Kill_Command;
       Register_Action
-        (Kernel, "debug kill", Command,
+        (Kernel, "debug kill", new Kill_Command,
          Description => -"Kill the debuggee process",
          Filter   => Debugger_Filter,
          Category    => -"Debug");
@@ -2579,59 +2572,52 @@ package body GVD_Module is
       Breakpoints_Editor.Register_Module (Kernel);
       GVD.Memory_View.Register_Module (Kernel);
 
-      Command := new Local_Vars_Command;
       Register_Action
-        (Kernel, "debug display local variables", Command,
+        (Kernel, "debug display local variables", new Local_Vars_Command,
          Accel_Key   => GDK_LC_l,
          Accel_Mods  => Mod1_Mask,
          Filter      => Debugger_Filter,
          Description => -"Display local variables in the data window",
          Category    => -"Debug");
 
-      Command := new Arguments_Command;
       Register_Action
-        (Kernel, "debug display arguments", Command,
+        (Kernel, "debug display arguments", new Arguments_Command,
          Accel_Key   => GDK_LC_u,
          Accel_Mods  => Mod1_Mask,
          Filter      => Debugger_Filter,
          Description => -"Display arguments to the current subprogram",
          Category    => -"Debug");
 
-      Command := new Registers_Command;
       Register_Action
-        (Kernel, "debug display registers", Command,
+        (Kernel, "debug display registers", new Registers_Command,
          Description => -"Display the contents of registers in data window",
          Filter      => Debugger_Filter,
          Category    => -"Debug");
 
-      Command := new Expression_Command;
       Register_Action
-        (Kernel, "Debug display any expression", Command,
+        (Kernel, "Debug display any expression", new Expression_Command,
          Description => -"Opens a dialog to choose an expression to display",
          Filter      => Debugger_Filter,
          Category    => -"Debug");
 
-      Command := new Start_Command;
       Register_Action
-        (Kernel, "debug run dialog", Command,
+        (Kernel, "debug run dialog", new Start_Command,
          Accel_Key   => GDK_F2,
          Filter      => Debugger_Active,
          Description =>
            -"Choose the arguments to the program, and start running it",
          Category    => -"Debug");
 
-      Command := new Step_Command;
       Register_Action
-        (Kernel, "debug step", Command,
+        (Kernel, "debug step", new Step_Command,
          Accel_Key   => GDK_F5,
          Filter      => Debugger_Active,
          Description =>
            -"Execute until program reaches a new line of source code",
          Category    => -"Debug");
 
-      Command := new Stepi_Command;
       Register_Action
-        (Kernel, "debug stepi", Command,
+        (Kernel, "debug stepi", new Stepi_Command,
          Accel_Key   => GDK_F5,
          Accel_Mods  => Shift_Mask,
          Filter      => Debugger_Active,
@@ -2639,9 +2625,8 @@ package body GVD_Module is
            -"Execute the program for one machine instruction only",
          Category    => -"Debug");
 
-      Command := new Next_Command;
       Register_Action
-        (Kernel, "debug next", Command,
+        (Kernel, "debug next", new Next_Command,
          Accel_Key   => GDK_F6,
          Filter      => Debugger_Active,
          Description =>
@@ -2649,9 +2634,8 @@ package body GVD_Module is
              & " subprogram calls"),
          Category    => -"Debug");
 
-      Command := new Nexti_Command;
       Register_Action
-        (Kernel, "debug nexti", Command,
+        (Kernel, "debug nexti", new Nexti_Command,
          Accel_Key   => GDK_F6,
          Accel_Mods  => Shift_Mask,
          Filter      => Debugger_Active,
@@ -2660,26 +2644,23 @@ package body GVD_Module is
              & " over subprogram calls"),
          Category    => -"Debug");
 
-      Command := new Finish_Command;
       Register_Action
-        (Kernel, "debug finish", Command,
+        (Kernel, "debug finish", new Finish_Command,
          Accel_Key   => GDK_F7,
          Filter      => Debugger_Active,
          Description =>
            -("Continue execution until selected stack frame returns"),
          Category    => -"Debug");
 
-      Command := new Continue_Command;
       Register_Action
-        (Kernel, "debug continue", Command,
+        (Kernel, "debug continue", new Continue_Command,
          Accel_Key   => GDK_F8,
          Filter      => Debugger_Active,
          Description => -"Continue execution until next breakpoint",
          Category    => -"Debug");
 
-      Command := new Interrupt_Command;
       Register_Action
-        (Kernel, "debug interrupt", Command,
+        (Kernel, "debug interrupt", new Interrupt_Command,
          Accel_Key   => GDK_backslash,
          Accel_Mods  => Primary_Mod_Mask,
          Stock_Id    => GPS_Stop_Task,
@@ -2687,15 +2668,13 @@ package body GVD_Module is
          Description => -"Asynchronously interrupt the debuggee program",
          Category    => -"Debug");
 
-      Command := new Terminate_Command;
       Register_Action
-        (Kernel, "terminate debugger", Command,
+        (Kernel, "terminate debugger", new Terminate_Command,
          Description => -"Terminate the current debugger",
          Filter      => Debugger_Active);
 
-      Command := new Terminate_All_Command;
       Register_Action
-        (Kernel, "terminate all debuggers", Command,
+        (Kernel, "terminate all debuggers", new Terminate_All_Command,
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
 

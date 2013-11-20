@@ -18,13 +18,11 @@
 --  This package handles commands related to the editor view
 
 with Commands.Interactive; use Commands.Interactive;
-with GPS.Kernel;
 
 package Src_Editor_View.Commands is
 
    type Movement_Type is (Word, Paragraph, Line, Char, Page);
    type Move_Command is new Interactive_Command with record
-      Kernel           : GPS.Kernel.Kernel_Handle;
       Kind             : Movement_Type;
       Step             : Integer;
       Extend_Selection : Boolean := False;
@@ -35,9 +33,7 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This command moves the cursor to a new position
 
-   type Scroll_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+   type Scroll_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Scroll_Command;
       Context : Interactive_Command_Context)
@@ -46,7 +42,6 @@ package Src_Editor_View.Commands is
    --  Currently, it can only be used to center the cursor.
 
    type Delete_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
       Kind   : Movement_Type := Word;
       Count  : Integer := 1;  --  Delete backward if negative
    end record;
@@ -56,9 +51,7 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This command deletes some text
 
-   type Indentation_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+   type Indentation_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Indentation_Command;
       Context : Interactive_Command_Context)
@@ -69,7 +62,6 @@ package Src_Editor_View.Commands is
    --  As_Is: The next key will be interpreted as-is (no casing/indentation)
 
    type Control_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
       Mode   : Control_Type;
    end record;
    overriding function Execute
@@ -79,9 +71,7 @@ package Src_Editor_View.Commands is
    --  This is used for control commands. A control command is an action whose
    --  purpose is to modify the status of the current view.
 
-   type Tab_As_Space_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-   end record;
+   type Tab_As_Space_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Tab_As_Space_Command;
       Context : Interactive_Command_Context)

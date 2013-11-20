@@ -1785,24 +1785,21 @@ package body Call_Graph_Views is
          Ref_Item   => "Entity calls",
          Add_Before => False);
 
-      Command := new Calltree_Clear_Command;
       Register_Action
         (Kernel, Command_Clear_Calltree_Name,
-         Command, Command_Clear_Calltree_Tip,
+         new Calltree_Clear_Command, Command_Clear_Calltree_Tip,
          Category => -"Call trees",
          Stock_Id => Stock_Clear);
 
-      Command := new Calltree_Remove_Command;
       Register_Action
         (Kernel, Command_Remove_Calltree_Name,
-         Command, Command_Remove_Calltree_Tip,
+         new Calltree_Remove_Command, Command_Remove_Calltree_Tip,
          Stock_Id => Stock_Remove,
          Category => -"Call trees");
 
-      Command := new Calltree_Collapse_All_Command;
       Register_Action
         (Kernel, Command_Collapse_All_Name,
-         Command, Command_Collapse_All_Tip,
+         new Calltree_Collapse_All_Command, Command_Collapse_All_Tip,
          Stock_Id => GPS_Collapse_All,
          Category => -"Call trees");
    end Register_Module;

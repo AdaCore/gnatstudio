@@ -2072,8 +2072,6 @@ package body Code_Analysis_Module is
       Contextual_Menu     : Code_Analysis_Contextual_Menu_Access;
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, CodeAnalysis_Cst);
-      Command             : Interactive_Command_Access;
-
    begin
       Binary_Coverage_Mode          := Active (Binary_Coverage_Trace);
 
@@ -2094,33 +2092,31 @@ package body Code_Analysis_Module is
                           or Lookup_Filter (Kernel, "In project"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
-      Command := new Show_Report_Command;
       Register_Action
-        (Kernel, "open Coverage Report", Command,
+        (Kernel, "open Coverage Report", new Show_Report_Command,
          Category    => -"Coverage",
          Description => -"Display the coverage report (must load data first)");
 
-      Command := new Load_Data_All_Projects_Command;
       Register_Action
-        (Kernel, "Coverage load data for all projects", Command,
+        (Kernel, "Coverage load data for all projects",
+         new Load_Data_All_Projects_Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for all projects");
 
-      Command := new Load_Data_Current_Project_Command;
       Register_Action
-        (Kernel, "Coverage load data for current project", Command,
+        (Kernel, "Coverage load data for current project",
+         new Load_Data_Current_Project_Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for current project");
 
-      Command := new Load_Data_Current_File_Command;
       Register_Action
-        (Kernel, "Coverage load data for current file", Command,
+        (Kernel, "Coverage load data for current file",
+         new Load_Data_Current_File_Command,
          Category    => -"Coverage",
          Description => -"Load coverage data for current file");
 
-      Command := new Clear_Memory_Command;
       Register_Action
-        (Kernel, "Coverage clear from memory", Command,
+        (Kernel, "Coverage clear from memory", new Clear_Memory_Command,
          Category    => -"Coverage",
          Description => -"Clear coverage information from memory");
 

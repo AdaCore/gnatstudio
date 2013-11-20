@@ -35,11 +35,11 @@ package body Src_Editor_Buffer.Buffer_Commands is
      (Command : access Jump_To_Delimiter_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
-
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View                 : Source_View;
       Widget               : constant Gtk_Widget :=
-                               Get_Current_Focus_Widget (Command.Kernel);
+                               Get_Current_Focus_Widget (Kernel);
       Buffer               : Source_Buffer;
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;

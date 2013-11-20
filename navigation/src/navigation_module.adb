@@ -1119,7 +1119,6 @@ package body Navigation_Module is
       Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Command            : Interactive_Command_Access;
       Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
@@ -1138,73 +1137,64 @@ package body Navigation_Module is
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
-      Command := new Goto_Other_File_Command;
       Register_Action
-        (Kernel, "goto other file", Command,
+        (Kernel, "goto other file", new Goto_Other_File_Command,
          -"Open the corresponding spec or body file");
 
-      Command := new Start_Statement_Command;
       Register_Action
-        (Kernel, "start of statement", Command,
+        (Kernel, "start of statement", new Start_Statement_Command,
          -"Move to the beginning of the current statement",
          Category   => -"Editor",
          Accel_Key  => GDK_Up,
          Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
-      Command := new End_Statement_Command;
       Register_Action
-        (Kernel, "end of statement", Command,
+        (Kernel, "end of statement", new End_Statement_Command,
          -"Move to the end of the current statement",
          Category   => -"Editor",
          Accel_Key  => GDK_Down,
          Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
-      Command := new Previous_Subprogram_Command;
       Register_Action
-        (Kernel, "previous subprogram", Command,
+        (Kernel, "previous subprogram", new Previous_Subprogram_Command,
          -"Move to the previous subprogram",
          Category   => -"Editor",
          Accel_Key  => GDK_Up,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
-      Command := new Next_Subprogram_Command;
       Register_Action
-        (Kernel, "next subprogram", Command,
+        (Kernel, "next subprogram", new Next_Subprogram_Command,
          -"Move to the next subprogram",
          Category   => -"Editor",
          Accel_Key  => GDK_Down,
          Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
-      Command := new Previous_Tag_Command;
       Register_Action
-        (Kernel, "previous tag", Command,
+        (Kernel, "previous tag", new Previous_Tag_Command,
          -"Move to the previous message from the Locations window",
          Category   => -"Locations",
          Accel_Key  => GDK_less,
          Accel_Mods => Primary_Mod_Mask);
 
-      Command := new Next_Tag_Command;
       Register_Action
-        (Kernel, "next tag", Command,
+        (Kernel, "next tag", new Next_Tag_Command,
          -"Move to the next message from the Locations window",
          Category   => -"Locations",
          Accel_Key  => GDK_greater,
          Accel_Mods => Primary_Mod_Mask);
 
-      Command := new Back_Command;
       Register_Action
-        (Kernel, "backward locations history", Command,
+        (Kernel, "backward locations history", new Back_Command,
          Description => -"Goto previous location",
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-back");
 
-      Command := new Forward_Command;
       Register_Action
-        (Kernel, "forward locations history", Command,
+        (Kernel, "forward locations history", new Forward_Command,
          Description => -"Goto next location",
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-forward");

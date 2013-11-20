@@ -2750,17 +2750,11 @@ Within this tag, the tag `<pixmap>` can be used to indicate the location of an
 image file (of the type `jpeg, png, gif` or `xpm`) to be used as icon for the
 button. An empty `<button>` tag indicates a separator in the tool bar.
 
-A title can also be specified with `<title>`. This will be visible only if the
-user choses to see both text and icons (or text only) in the tool bar.  This
-title also acts as a tooltip (popup help message) when the button is displayed
-as an icon only.
-
 The following example defines a new button::
 
   <?xml version="1.0" ?>
   <stats>
     <button action="execute my stats">
-      <title>stats</title>
       <pixmap>/my_pixmaps/button.jpg</pixmap>
     </button>
   </stats>

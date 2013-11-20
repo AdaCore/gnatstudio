@@ -1303,7 +1303,6 @@ package body GPS.Location_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Manager : constant View_Manager_Access := new View_Manager (Kernel);
-      Command : Commands.Interactive.Interactive_Command_Access;
    begin
       Location_Views.Register_Module (Kernel);
 
@@ -1324,44 +1323,39 @@ package body GPS.Location_View is
          Key  => Hist_Sort_Files_Alphabetical,
          Default_Value => False);
 
-      Command := new Remove_Selection_Command;
       Register_Action
         (Kernel, Command_Remove_Message_Name,
-         Command, Command_Remove_Message_Tip,
+         new Remove_Selection_Command, Command_Remove_Message_Tip,
          Stock_Id => Stock_Remove,
          Category => -"Locations");
       GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
 
-      Command := new Clear_Locations_Command;
       Register_Action
         (Kernel, Command_Clear_Locations_Name,
-         Command, Command_Clear_Locations_Tip,
+         new Clear_Locations_Command, Command_Clear_Locations_Tip,
          Stock_Id => Stock_Clear,
          Category => -"Locations");
 
-      Command := new Export_Command;
       Register_Action
-        (Kernel, Command_Export_Name, Command, Command_Export_Tip,
+        (Kernel, Command_Export_Name, new Export_Command, Command_Export_Tip,
          Stock_Id => GPS_Save,
          Category => -"Locations");
 
-      Command := new Toggle_Sort_By_Subcategory_Command;
       Register_Action
         (Kernel, Command_Toggle_Sort_By_Subcategory,
-         Command, Command_Toggle_Sort_By_Subcategory_Tip,
+         new Toggle_Sort_By_Subcategory_Command,
+         Command_Toggle_Sort_By_Subcategory_Tip,
          Category => -"Locations");
 
-      Command := new Expand_Category_Command;
       Register_Action
         (Kernel, Command_Expand_Category_Name,
-         Command, Command_Expand_Category_Tip,
+         new Expand_Category_Command, Command_Expand_Category_Tip,
          Stock_Id => GPS_Expand_All,
          Category => -"Locations");
 
-      Command := new Collapse_All_Files_Command;
       Register_Action
         (Kernel, Command_Collapse_All_Files_Name,
-         Command, Command_Collapse_All_Files_Tip,
+         new Collapse_All_Files_Command, Command_Collapse_All_Files_Tip,
          Stock_Id => GPS_Collapse_All,
          Category => -"Locations");
 

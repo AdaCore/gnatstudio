@@ -1271,7 +1271,6 @@ package body Bookmark_Views is
                              New_Class (Get_Scripts (Kernel), "Bookmark");
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Command   : Interactive_Command_Access;
       P         : Kernel_Search_Provider_Access;
 
    begin
@@ -1284,40 +1283,35 @@ package body Bookmark_Views is
 
       Load_Bookmarks (Kernel);
 
-      Command := new Rename_Bookmark_Command;
       Register_Action
-        (Kernel, Command_Rename_Name, Command,
+        (Kernel, Command_Rename_Name, new Rename_Bookmark_Command,
          -("Interactively rename the bookmark currently selected in the"
            & " bookmarks view"), Category => -"Bookmarks",
          Stock_Id => Stock_Convert);
 
-      Command := new Delete_Bookmark_Command;
       Register_Action
-        (Kernel, Command_Remove_Name, Command,
+        (Kernel, Command_Remove_Name, new Delete_Bookmark_Command,
          -"Delete the bookmark currently selected in the bookmarks view",
          Stock_Id => Stock_Remove,
          Category => -"Bookmarks");
 
-      Command := new Create_Bookmark_Command;
       Register_Action
-        (Kernel, Command_Add_Name, Command,
+        (Kernel, Command_Add_Name, new Create_Bookmark_Command,
          -("Create a bookmark at the current location"),
          Stock_Id => Stock_Add,
          Category => -"Bookmarks", Filter => Src_Action_Context);
 
-      Command := new Next_Bookmark_Command (Backward => False);
       Register_Action
         (Kernel      => Kernel,
          Name        => "Goto Next Bookmark",
-         Command     => Command,
+         Command     => new Next_Bookmark_Command (Backward => False),
          Description => -("Go to next bookmark in current file"),
          Filter      => Src_Action_Context);
 
-      Command := new Next_Bookmark_Command (Backward => True);
       Register_Action
         (Kernel      => Kernel,
          Name        => "Goto Previous Bookmark",
-         Command     => Command,
+         Command     => new Next_Bookmark_Command (Backward => True),
          Description => -("Go to previous bookmark in current file"),
          Filter      => Src_Action_Context);
 

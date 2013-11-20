@@ -1571,7 +1571,8 @@ package body GPS.Kernel is
    -- Get_Error_Message --
    -----------------------
 
-   function Get_Error_Message (Filter : Action_Filter) return String is
+   function Get_Error_Message
+     (Filter : access Action_Filter_Record'Class) return String is
    begin
       if Filter /= null and then Filter.Error_Msg /= null then
          return Filter.Error_Msg.all;
@@ -1584,7 +1585,8 @@ package body GPS.Kernel is
    -- Get_Name --
    --------------
 
-   function Get_Name (Filter : Action_Filter) return String is
+   function Get_Name
+     (Filter : access Action_Filter_Record'Class) return String is
    begin
       if Filter /= null and then Filter.Name /= null then
          return Filter.Name.all;
@@ -1716,7 +1718,7 @@ package body GPS.Kernel is
    --------------------
 
    function Filter_Matches
-     (Filter  : Action_Filter;
+     (Filter  : access Action_Filter_Record'Class;
       Context : Selection_Context) return Boolean
    is
       use Filter_Result_Map;
@@ -1725,6 +1727,10 @@ package body GPS.Kernel is
    begin
       if Filter = null then
          return True;
+      end if;
+
+      if Context = No_Context then
+         return False;
       end if;
 
       --  Cache the result of each filter on this context in Computed_Filters.

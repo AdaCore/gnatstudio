@@ -374,14 +374,12 @@ package body Vdiff2_Module is
          Wrapper (Diff_Hook'Access),
          Name => "vdiff2.diff");
 
-      Command := new Compare_Two_Files;
       Register_Action
-         (Kernel, "compare two files", Command,
+         (Kernel, "compare two files", new Compare_Two_Files,
           -"Compare two files");
 
-      Command := new Compare_Three_Files;
       Register_Action
-         (Kernel, "compare three files", Command,
+         (Kernel, "compare three files", new Compare_Three_Files,
           -"Compare three files");
 
       Register_Commands (Kernel);

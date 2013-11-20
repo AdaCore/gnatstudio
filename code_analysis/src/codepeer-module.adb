@@ -2098,7 +2098,6 @@ package body CodePeer.Module is
       Submenu_Factory : GPS.Kernel.Modules.UI.Submenu_Factory;
       Executable      : constant Virtual_File := Locate_On_Path ("codepeer");
       Filter          : GPS.Kernel.Action_Filter;
-      Command         : Interactive_Command_Access;
 
    begin
       if Executable = No_File then
@@ -2122,63 +2121,44 @@ package body CodePeer.Module is
 
       Filter := new Filters.Ada_Generic_Filter_Record;
 
-      Command := new Analyze_All_Command;
-      Register_Action (Kernel, "codepeer analyze all", Command);
-
-      Command := new Analyze_Root_Command;
-      Register_Action (Kernel, "codepeer analyze root", Command);
-
-      Command := new Analyze_File_Command;
       Register_Action
-         (Kernel, "codepeer analyze file", Command,
+        (Kernel, "codepeer analyze all", new Analyze_All_Command);
+      Register_Action
+        (Kernel, "codepeer analyze root", new Analyze_Root_Command);
+      Register_Action
+         (Kernel, "codepeer analyze file", new Analyze_File_Command,
           Filter     => Lookup_Filter (Kernel, "File")
                         and not Filter
                         and Create (Language => "ada"));
-
-      Command := new Display_Code_Review_Command;
-      Register_Action (Kernel, "codepeer display code review", Command);
-
-      Command := new Quick_Analyze_All_Command;
-      Register_Action (Kernel, "codepeer quick analyze all", Command);
-
-      Command := new Generate_SCIL_Command;
-      Register_Action (Kernel, "codepeer generate scil", Command);
-
-      Command := new Run_Codepeer_Command;
-      Register_Action (Kernel, "codepeer run", Command);
-
-      Command := new Regenerate_Report_Command;
-      Register_Action (Kernel, "codepeer regenerate report", Command);
-
-      Command := new Display_HTML_Command;
-      Register_Action (Kernel, "codepeer display html", Command);
-
-      Command := new Generate_CSV_Command;
-      Register_Action (Kernel, "codepeer generate csv", Command);
-
-      Command := new Text_Overview_Command;
-      Register_Action (Kernel, "codepeer text overview", Command);
-
-      Command := new Text_Listing_Command;
       Register_Action
-         (Kernel, "codepeer text listing", Command,
+        (Kernel, "codepeer display code review",
+         new Display_Code_Review_Command);
+      Register_Action
+        (Kernel, "codepeer quick analyze all", new Quick_Analyze_All_Command);
+      Register_Action
+        (Kernel, "codepeer generate scil", new Generate_SCIL_Command);
+      Register_Action (Kernel, "codepeer run", new Run_Codepeer_Command);
+      Register_Action
+        (Kernel, "codepeer regenerate report", new Regenerate_Report_Command);
+      Register_Action
+        (Kernel, "codepeer display html", new Display_HTML_Command);
+      Register_Action
+        (Kernel, "codepeer generate csv", new Generate_CSV_Command);
+      Register_Action
+        (Kernel, "codepeer text overview", new Text_Overview_Command);
+      Register_Action
+         (Kernel, "codepeer text listing", new Text_Listing_Command,
           Filter => Lookup_Filter (Kernel, "File")
                     and Create (Language => "ada"));
-
-      Command := new Log_Command;
-      Register_Action (Kernel, "codepeer log", Command);
-
-      Command := new Remove_Lock_Command;
-      Register_Action (Kernel, "codepeer remove lock", Command);
-
-      Command := new Remove_XML_Review_Command;
-      Register_Action (Kernel, "codepeer remove xml review", Command);
-
-      Command := new Remove_SCIL_Command;
-      Register_Action (Kernel, "codepeer remove scil", Command);
-
-      Command := new Remove_Codepeer_Command;
-      Register_Action (Kernel, "codepeer remove scil and db", Command);
+      Register_Action (Kernel, "codepeer log", new Log_Command);
+      Register_Action
+        (Kernel, "codepeer remove lock", new Remove_Lock_Command);
+      Register_Action
+        (Kernel, "codepeer remove xml review", new Remove_XML_Review_Command);
+      Register_Action
+        (Kernel, "codepeer remove scil", new Remove_SCIL_Command);
+      Register_Action
+        (Kernel, "codepeer remove scil and db", new Remove_Codepeer_Command);
 
       Module.Message_Colors (CodePeer.High) :=
         Default_Preferences.Create

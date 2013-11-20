@@ -2146,9 +2146,7 @@ package body Aliases_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Cmd        : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
@@ -2157,9 +2155,8 @@ package body Aliases_Module is
          Module_Name => "Aliases",
          Priority    => Default_Priority);
 
-      Cmd := new Edit_Aliases_Command;
       Register_Action
-         (Kernel, "aliases edit", Cmd,
+         (Kernel, "aliases edit", new Edit_Aliases_Command,
           -"Open the aliases editor",
           Category => -"Aliases");
 
@@ -2168,9 +2165,8 @@ package body Aliases_Module is
          Create_From_Dir (Get_Home_Dir (Kernel), "aliases"),
          Read_Only => False);
 
-      Cmd := new Interactive_Alias_Expansion_Command;
       Register_Action
-        (Kernel, "Expand alias", Cmd,
+        (Kernel, "Expand alias", new Interactive_Alias_Expansion_Command,
          Category    => -"Editor",
          Description => -"Expand the alias found just before the cursor",
          Accel_Key   => GDK_LC_o,

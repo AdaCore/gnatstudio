@@ -240,16 +240,12 @@ package body Task_Manager.GUI is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Event);
       GUI : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
-      Action      : constant Action_Record_Access := Lookup_Action
-        (GUI.Kernel, "open Task Manager");
       Success : Boolean;
-      pragma Unreferenced (Success);
+      pragma Unreferenced (Event, Success);
    begin
-      Success := Execute_In_Background (GUI.Kernel, Action);
-
+      Success := Execute_In_Background (GUI.Kernel, "open Task Manager");
       return False;
    end On_Main_Progress_Button_Press_Event;
 

@@ -39,8 +39,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item;       use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Commands.Custom;           use Commands.Custom;
@@ -850,20 +848,18 @@ package body Custom_Module is
       procedure Parse_Button_Node (Node : Node_Ptr) is
          Action  : constant String := Get_Attribute (Node, "action");
          Child   : Node_Ptr;
-         Title   : GNAT.OS_Lib.String_Access := new String'("");
          Pixmap  : GNAT.OS_Lib.String_Access := new String'("");
          Image   : Gtk_Image;
-         Command : Action_Record_Access;
-         Space   : Gtk_Separator_Tool_Item;
-         use type Glib.Gint;
 
       begin
          Child := Node.Child;
 
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
-               Free (Title);
-               Title := new String'(Child.Value.all);
+               Insert
+                 (Kernel,
+                  -("The <button> node now ignores its 'title' child (for"
+                    & " action '") & Action & "'");
             elsif To_Lower (Child.Tag.all) = "pixmap" then
                Free (Pixmap);
                Pixmap := new String'(Child.Value.all);
@@ -878,42 +874,20 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         if Title.all /= "" then
-            if Action = "" then
-               Insert (Kernel, -"<button> nodes must have an action attribute",
-                       Mode => Error);
-               pragma Assert (False);
-               return;
-            end if;
-
-            if Pixmap.all /= ""
-              and then Is_Regular_File (Pixmap.all)
-            then
-               Gtk_New (Image, Pixmap.all);
-            end if;
-
-            Command := Lookup_Action (Kernel, Action);
-
-            if Command /= null and then Command.Command /= null then
-               Register_Button
-                 (Kernel,
-                  Title.all,
-                  Command.Command,
-                  Image,
-                  Tooltip => Title.all);
-            end if;
-
-         else
-            Gtk_New (Space);
-            Space.Set_Name ("from action " & Action);
-            Show_All (Space);
-            Insert (Get_Toolbar (Kernel),
-                    Space,
-                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
+         if Action = "" then
+            Insert (Kernel, -"<button> nodes must have an action attribute",
+                    Mode => Error);
+            pragma Assert (False);
+            return;
          end if;
 
-         Free (Title);
-         Free (Pixmap);
+         if Pixmap.all /= ""
+           and then Is_Regular_File (Pixmap.all)
+         then
+            Gtk_New (Image, Pixmap.all);
+         end if;
+
+         Register_Button (Kernel, Action, Image);
       end Parse_Button_Node;
 
       ----------------------
@@ -1594,7 +1568,7 @@ package body Custom_Module is
       Inst             : Class_Instance;
       Cmd              : Subprogram_Command;
       Filter           : Subprogram_Filter;
-      The_Filter       : Action_Filter;
+      The_Filter       : access Action_Filter_Record'Class;
       Enable_Filter    : Action_Filter;
       Label            : Subprogram_Label;
       Subp             : Subprogram_Type;

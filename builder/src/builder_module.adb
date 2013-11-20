@@ -279,9 +279,7 @@ package body Builder_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command    : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       --  This memory is allocated once, and lives as long as the application
 
@@ -293,20 +291,17 @@ package body Builder_Module is
          Priority    => Default_Priority);
 
       if not Active (Xref.SQLITE) then
-         Command := new Recompute_Xref_Command;
          Register_Action
-           (Kernel, "Recompute Xref Info", Command,
+           (Kernel, "Recompute Xref Info", new Recompute_Xref_Command,
             Description => -"Reload the contents of all ALI files");
 
-         Command := new Load_Xref_In_Memory_Command;
          Register_Action
-           (Kernel, "Load Xref in memory", Command,
+           (Kernel, "Load Xref in memory", new Load_Xref_In_Memory_Command,
             Description => -"Load all ALI file in memory, for faster queries");
       end if;
 
-      Command := new Interrupt_Tool_Command;
       Register_Action
-        (Kernel, "Interrupt", Command,
+        (Kernel, "Interrupt", new Interrupt_Tool_Command,
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
          Stock_Id   => GPS_Stop_Task,

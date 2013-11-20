@@ -2416,7 +2416,6 @@ package body Vsearch is
            Id                => Module_ID (Id),
            Mask              => Mask,
            In_Selection      => In_Selection);
-      Command : Interactive_Command_Access;
    begin
       if Id /= null then
          Create_New_Key_If_Necessary
@@ -2436,13 +2435,11 @@ package body Vsearch is
          Ref_Sink (Data.Extra_Information);
       end if;
 
-      Command := new Search_Specific_Context'
-        (Interactive_Command with Context => new String'(Label));
-
       Register_Action
         (Kernel,
          Name        => -"Search in context: " & Label,
-         Command     => Command,
+         Command     => new Search_Specific_Context'
+           (Interactive_Command with Context => new String'(Label)),
          Description => -("Open the search dialog, and preset the ""Look In"""
            & " field to """ & Label & """"),
          Category    => -"Search");
@@ -2715,7 +2712,6 @@ package body Vsearch is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
       Filter  : Action_Filter;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
@@ -2728,10 +2724,10 @@ package body Vsearch is
 
       Vsearch_Module_Id.Tab_Width := Tab_Width;
 
-      Command := new Search_Specific_Context'
-        (Interactive_Command with Context => null);
       Register_Action
-        (Kernel, "Search", Command,
+        (Kernel, "Search",
+         new Search_Specific_Context'
+           (Interactive_Command with Context => null),
          Description => -("Open the search dialog. If you have selected the"
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
@@ -2741,18 +2737,16 @@ package body Vsearch is
          Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Search");
 
-      Command := new Find_Next_Command;
       Filter  := new Has_Search_Filter;
       Register_Action
-        (Kernel, "find next", Command,
+        (Kernel, "find next", new Find_Next_Command,
          Description => -"Find the next occurrence of the search pattern",
          Filter      => Filter,
          Accel_Key   => GDK_LC_n,
          Accel_Mods  => Primary_Mod_Mask);
 
-      Command := new Find_Previous_Command;
       Register_Action
-        (Kernel, "find previous", Command,
+        (Kernel, "find previous", new Find_Previous_Command,
          Description => -"Find the previous occurrence of the search pattern",
          Filter      => Filter,
          Accel_Key   => GDK_LC_p,

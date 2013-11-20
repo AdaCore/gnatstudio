@@ -1645,21 +1645,19 @@ package body Project_Viewers is
 
       File_Views.Register_Module (Kernel);
 
-      Command := new New_Project_Command;
       Register_Action
-        (Kernel, "new project", Command,
+        (Kernel, "new project", new New_Project_Command,
          Description => -"Interactively create a new project");
 
-      Command := new Edit_Project_Properties_Command;
       Register_Action
-        (Kernel, "open Project Properties", Command,
+        (Kernel, "open Project Properties",
+         new Edit_Project_Properties_Command,
          "Open the project properties editor",
          Stock_Id => Stock_Edit,
          Category => -"Views");
 
-      Command := new Save_All_Command;
       Register_Action
-        (Kernel, "save all projects", Command,
+        (Kernel, "save all projects", new Save_All_Command,
          Description => -"Save all modified projects to disk");
 
       --  ??? Disabled for now, pending resolution of related problems
@@ -1700,9 +1698,8 @@ package body Project_Viewers is
          Filter => Filter2,
          Label  => "Project/Save project %p");
 
-      Command := new Edit_Project_Source_Command;
       Register_Action
-        (Kernel, "Edit project source file", Command,
+        (Kernel, "Edit project source file", new Edit_Project_Source_Command,
          "Open an editor for the .gpr file of the current project",
          null, -"Projects");
       Register_Contextual_Menu
@@ -1723,10 +1720,9 @@ package body Project_Viewers is
          Action => Command,
          Label  => "Project/Add scenario variable",
          Filter => (Create (Module => Explorer_Module_Name) and Filter2));
-
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,
-         Command => Command,
+         Command     => new Add_Variable_Command,
          Stock_Id    => Stock_Add,
          Description => -"Add a new scenario variable to the selected project",
          Category => -"Projects");

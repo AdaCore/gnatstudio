@@ -602,9 +602,6 @@ package body GNATTest_Module is
       Go_Command : constant Commands.Interactive.Interactive_Command_Access
         := new Go_To_Tested_Command_Type;
 
-      Show_Command : constant Commands.Interactive.Interactive_Command_Access
-        := new Show_Not_Implemented_Tests_Command_Type;
-
       Submenu_Factory : constant GPS.Kernel.Modules.UI.Submenu_Factory
         := new Submenu_Factory_Record;
    begin
@@ -622,7 +619,7 @@ package body GNATTest_Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel      => Kernel,
          Name        => "Show not implemented tests",
-         Command     => Show_Command,
+         Command     => new Show_Not_Implemented_Tests_Command_Type,
          Filter      => Filter);
 
       Filter := new Non_Harness_Project_Filter;

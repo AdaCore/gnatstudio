@@ -895,7 +895,6 @@ package body Buffer_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
       P : Opened_Windows_Search_Access;
    begin
       Generic_View.Register_Module (Kernel);
@@ -905,10 +904,9 @@ package body Buffer_Views is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, History_Show_Notebooks, False);
 
-      Command := new Close_Command;
       Register_Action
         (Kernel, Command_Close_Windows_Name,
-         Command, Command_Close_Windows_Tip,
+         new Close_Command, Command_Close_Windows_Tip,
          Stock_Id => Stock_Close,
          Category => -"Windows view");
 

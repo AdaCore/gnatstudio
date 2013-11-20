@@ -125,20 +125,20 @@ package body GPS.Kernel.Modules.UI is
          case Menu_Type is
             when Type_Command =>
                Command       : Commands.Interactive.Interactive_Command_Access;
-               Filter        : GPS.Kernel.Action_Filter;
-               Enable_Filter : GPS.Kernel.Action_Filter;
+               Filter        : access Action_Filter_Record'Class := null;
+               Enable_Filter : access Action_Filter_Record'Class := null;
 
             when Type_Action =>
                Action           : Action_Record_Access;
 
             when Type_Submenu =>
                Submenu          : Submenu_Factory;
-               Submenu_Filter   : GPS.Kernel.Action_Filter;
-               Submenu_Enable   : GPS.Kernel.Action_Filter;
+               Submenu_Filter   : access Action_Filter_Record'Class := null;
+               Submenu_Enable   : access Action_Filter_Record'Class := null;
 
             when Type_Separator =>
                Ref_Item         : Contextual_Menu_Access;
-               Separator_Filter : GPS.Kernel.Action_Filter;
+               Separator_Filter : access Action_Filter_Record'Class := null;
          end case;
       end record;
    --  A contextual menu entry declared by a user or GPS itself internally
@@ -212,8 +212,8 @@ package body GPS.Kernel.Modules.UI is
 
    type Interactive_Action is record
       Kernel  : Kernel_Handle;
-      Command : Interactive_Command_Access;
-      Filter  : Action_Filter;
+      Command : not null access Interactive_Command'Class;
+      Filter  : access Action_Filter_Record'Class;
    end record;
 
    procedure Execute_Command
@@ -1512,15 +1512,12 @@ package body GPS.Kernel.Modules.UI is
       Accel_Path : String)
    is
       pragma Unreferenced (Accel_Path);
-      Command   : Menu_Command;
       Full_Path : constant String := "/Window/" & Item_Name;
    begin
-      Command := Create_Command_For_Menu (Kernel, Full_Path);
-
       Register_Action
         (Kernel      => Kernel,
          Name        => Full_Path,
-         Command     => Command,
+         Command     => Create_Command_For_Menu (Kernel, Full_Path),
          Description => "Menu " & Full_Path,
          Filter      => null,
          Category    => "Menus");
@@ -1548,7 +1545,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
-      Command : Interactive_Command_Access := null;
+      Command : not null access Interactive_Command'Class;
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "")
    is
@@ -1573,10 +1570,7 @@ package body GPS.Kernel.Modules.UI is
 
       Show_All (Button);
 
-      if Command /= null then
-         Register_Perma_Command (Kernel, Command);
-      end if;
-
+      Register_Perma_Command (Kernel, Command);
       Command_Callback.Connect
         (Button, Signal_Clicked, Execute_Command'Access,
          User_Data   => (Kernel_Handle (Kernel), Command, null));
@@ -1589,7 +1583,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel   : access Kernel_Handle_Record'Class;
       Stock_Id : String;
-      Command  : Interactive_Command_Access := null;
+      Command : not null access Interactive_Command'Class;
       Tooltip  : String := "")
    is
       Button : Gtk_Tool_Button;
@@ -1603,13 +1597,42 @@ package body GPS.Kernel.Modules.UI is
 
       Show_All (Button);
 
-      if Command /= null then
-         Register_Perma_Command (Kernel, Command);
-      end if;
-
+      Register_Perma_Command (Kernel, Command);
       Command_Callback.Connect
         (Button, Signal_Clicked, Execute_Command'Access,
          User_Data   => (Kernel_Handle (Kernel), Command, null));
+   end Register_Button;
+
+   ---------------------
+   -- Register_Button --
+   ---------------------
+
+   procedure Register_Button
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Action   : String;
+      Image   : Gtk.Image.Gtk_Image := null)
+   is
+      Act : constant Action_Record_Access :=
+        Lookup_Action (Kernel, Action);
+   begin
+      if Act /= null then
+         --  ??? Fragile and temporary, should not share a command
+
+         if Image = null then
+            Register_Button
+              (Kernel,
+               Stock_Id => Act.Stock_Id.all,
+               Command  => Act.Command,
+               Tooltip  => Act.Description.all);
+         else
+            Register_Button
+              (Kernel,
+               Text     => Act.Name.all,
+               Image    => Image,
+               Command  => Act.Command,
+               Tooltip  => Act.Description.all);
+         end if;
+      end if;
    end Register_Button;
 
    ------------------------
@@ -1789,7 +1812,7 @@ package body GPS.Kernel.Modules.UI is
       T      : Contextual_Label_Param;
       Pix    : GNAT.Strings.String_Access;
       Menu   : Contextual_Menu_Access;
-      Filter : Action_Filter;
+      Filter : access Action_Filter_Record'Class;
 
       Is_Separator : Boolean := False;
    begin
@@ -1921,8 +1944,8 @@ package body GPS.Kernel.Modules.UI is
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Action            : Commands.Interactive.Interactive_Command_Access;
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image       : String := "";
       Ref_Item          : String := "";
@@ -1982,8 +2005,8 @@ package body GPS.Kernel.Modules.UI is
       Name              : String;
       Action            : Commands.Interactive.Interactive_Command_Access :=
                             null;
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
       Stock_Image       : String := "";
@@ -2131,8 +2154,8 @@ package body GPS.Kernel.Modules.UI is
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
       Label             : String := "";
-      Filter            : GPS.Kernel.Action_Filter := null;
-      Enable_Filter     : GPS.Kernel.Action_Filter := null;
+      Filter            : access Action_Filter_Record'Class := null;
+      Enable_Filter     : access Action_Filter_Record'Class := null;
       Submenu           : Submenu_Factory := null;
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
