@@ -479,9 +479,15 @@ def end_of_buffer():
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.end_of_buffer(), should_extend_selection)
 
+@interactive ("Editor", filter_text_actions, name="goto beginning of line (extend selection)")
+def goto_beginning_of_line_ext_sel():
+    _goto_beginning_of_line(True)
 
 @interactive ("Editor", filter_text_actions, name="goto beginning of line")
 def goto_beginning_of_line():
+    _goto_beginning_of_line(False)
+
+def _goto_beginning_of_line(extend_selection):
     """Goto the beginning of line"""
     def goto_bol (buffer, mark):
         mark.move(mark.location().beginning_of_line())
@@ -498,8 +504,10 @@ def goto_beginning_of_line():
         it = b.get_iter_at_mark(b.get_mark("insert"))
         b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
     else:
-        execute_for_all_cursors(ed, goto_bol,
-                                extend_selection = should_extend_selection)
+        execute_for_all_cursors(
+            ed, goto_bol,
+            extend_selection = extend_selection or ed.current_view().get_extend_selection()
+        )
 
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
@@ -507,8 +515,17 @@ def end_of_line(file, line):
    loc  = GPS.EditorLocation (buffer, line, 1)
    buffer.current_view().goto (loc.end_of_line() - 1)
 
+
+@interactive("Editor", filter_text_actions, name="goto end of line (extend selection)")
+def goto_end_of_line_ext_sel():
+    _goto_end_of_line(True)
+
+
 @interactive("Editor", filter_text_actions, name="goto end of line")
 def goto_end_of_line():
+    _goto_end_of_line(False)
+
+def _goto_end_of_line(extend_selection):
     """Goto the end of line"""
 
     def goto_eol(buffer, mark):
@@ -527,8 +544,10 @@ def goto_end_of_line():
         it.forward_to_line_end()
         b.place_cursor(it)
     else:
-        execute_for_all_cursors (GPS.EditorBuffer.get(), goto_eol,
-                                 extend_selection = should_extend_selection)
+        execute_for_all_cursors(
+            GPS.EditorBuffer.get(), goto_eol,
+            extend_selection = extend_selection or ed.current_view().get_extend_selection()
+        )
 
 def is_space (char):
    return char == ' ' or char == '\t'

@@ -24,9 +24,10 @@ package Src_Editor_View.Commands is
 
    type Movement_Type is (Word, Paragraph, Line, Char, Page);
    type Move_Command is new Interactive_Command with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Kind   : Movement_Type;
-      Step   : Integer;
+      Kernel           : GPS.Kernel.Kernel_Handle;
+      Kind             : Movement_Type;
+      Step             : Integer;
+      Extend_Selection : Boolean := False;
    end record;
    overriding function Execute
      (Command : access Move_Command;

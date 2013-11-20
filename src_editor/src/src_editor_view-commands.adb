@@ -144,7 +144,10 @@ package body Src_Editor_View.Commands is
          Move_Iter (Iter, Command.Kind, Command.Step, Column);
          Move_Mark (Buffer, Mark, Iter);
 
-         if View.Get_Extend_Selection then
+         if
+           View.Get_Extend_Selection
+           or else Command.Extend_Selection
+         then
             Move_Mark (Buffer, Buffer.Get_Insert, Iter);
          else
             Place_Cursor (Buffer, Iter);

@@ -16,8 +16,17 @@ xml_conf = """
 <key action="Move to next word">primary-Right</key>
 <key action="Move to previous word">primary-Left</key>
 
-<key action="Move to previous character">Left</key>
-<key action="Move to next character">Right</key>
+<key action="Move to next word (extend selection)">shift-primary-Right</key>
+<key action="Move to previous word (extend selection)">shift-primary-Left</key>
+
+<key action="Move to previous char">Left</key>
+<key action="Move to next char">Right</key>
+
+<key action="Move to previous char (extend selection)">shift-Left</key>
+<key action="Move to next char (extend selection)">shift-Right</key>
+
+<key action="Move to previous line (extend selection)">shift-Up</key>
+<key action="Move to next line (extend selection)">shift-Down</key>
 
 <key action="Move to previous line">Up</key>
 <key action="Move to next line">Down</key>
@@ -28,6 +37,9 @@ xml_conf = """
 
 <key action="goto beginning of line" >Home</key>
 <key action="goto end of line" >End</key>
+
+<key action="goto beginning of line (extend selection)" >shift-Home</key>
+<key action="goto end of line (extend selection)" >shift-End</key>
 """
 
 

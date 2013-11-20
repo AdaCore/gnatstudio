@@ -1807,6 +1807,7 @@ package body Src_Editor_Module is
                                    new Is_Not_Makefile_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
+      Steps : constant array (1 .. 2) of Integer := (1, -1);
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
@@ -1815,105 +1816,34 @@ package body Src_Editor_Module is
 
       --  Commands
 
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Word;
-      Move_Command (Command.all).Step := 1;
-      Register_Action
-        (Kernel, "Move to next word", Command,
-           -"Move to the next word in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Word;
-      Move_Command (Command.all).Step := -1;
-      Register_Action
-        (Kernel, "Move to previous word", Command,
-           -"Move to the previous word in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Line;
-      Move_Command (Command.all).Step := 1;
-      Register_Action
-        (Kernel, "Move to next line", Command,
-           -"Move to the next line in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Line;
-      Move_Command (Command.all).Step := -1;
-      Register_Action
-        (Kernel, "Move to previous line", Command,
-           -"Move to the previous line in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Char;
-      Move_Command (Command.all).Step := 1;
-      Register_Action
-        (Kernel, "Move to next character", Command,
-         -"Move to the next character in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Char;
-      Move_Command (Command.all).Step := -1;
-      Register_Action
-        (Kernel, "Move to previous character", Command,
-           -"Move to the previous character in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Paragraph;
-      Move_Command (Command.all).Step := -1;
-      Register_Action
-        (Kernel, "Move to previous sentence", Command,
-           -"Move to the previous sentence in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Paragraph;
-      Move_Command (Command.all).Step := 1;
-      Register_Action
-        (Kernel, "Move to next sentence", Command,
-           -"Move to the next sentence in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Page;
-      Move_Command (Command.all).Step := -1;
-      Register_Action
-        (Kernel, "Move to previous page", Command,
-           -"Move to the previous page in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
-
-      Command := new Move_Command;
-      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Move_Command (Command.all).Kind := Page;
-      Move_Command (Command.all).Step := 1;
-      Register_Action
-        (Kernel, "Move to next page", Command,
-           -"Move to the next page in the current source editor",
-         Category => "Editor",
-         Filter   => Src_Action_Context);
+      for Kind in Movement_Type loop
+         for Step of Steps loop
+            for Extend_Selection in Boolean loop
+               declare
+                  Step_Str : constant String :=
+                    (if Step = 1 then "next" else "previous");
+                  Kind_Str : constant String := To_Lower (Kind'Img);
+                  ESel_Str : constant String :=
+                    (if Extend_Selection then " (extend selection)" else "");
+               begin
+                  Command := new Move_Command;
+                  Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+                  Move_Command (Command.all).Kind := Kind;
+                  Move_Command (Command.all).Step := Step;
+                  Move_Command (Command.all).Extend_Selection :=
+                    Extend_Selection;
+                  Register_Action
+                    (Kernel,
+                     "Move to " & Step_Str & " " & Kind_Str & ESel_Str,
+                     Command,
+                     -"Move to the " & Step_Str & " " & Kind_Str
+                     & "in the current source editor" & ESel_Str,
+                     Category => "Editor",
+                     Filter   => Src_Action_Context);
+               end;
+            end loop;
+         end loop;
+      end loop;
 
       Command := new Scroll_Command;
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
