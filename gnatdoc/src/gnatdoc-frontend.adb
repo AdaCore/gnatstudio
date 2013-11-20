@@ -1493,9 +1493,14 @@ package body GNATdoc.Frontend is
                Prev_Word_Begin := Idx + 1;
             end;
 
-            pragma Assert
-              (To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End))
-                = "class");
+            --  Xref returns E_Class for unions???
+
+            declare
+               Prev_Word : constant String :=
+                 To_Lower (Buffer.all (Prev_Word_Begin .. Prev_Word_End));
+            begin
+               pragma Assert (Prev_Word = "class" or else Prev_Word = "union");
+            end;
 
             Last_Idx := Prev_Word_Begin - 1;
             Parse_Entities

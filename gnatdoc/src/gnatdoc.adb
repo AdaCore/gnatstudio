@@ -568,6 +568,26 @@ package body GNATdoc is
 
       Backend.Initialize (Context);
 
+      --  Sort the list of projects and their files. Done to ensure that we
+      --  process all the projects in the same order in all the platforms.
+
+      declare
+         Prj_Index : Project_Files_List.Cursor;
+         Prj_Srcs  : Project_Files;
+      begin
+         Project_Files_Sort.Sort (Prj_Files);
+
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+            Files_Vector_Sort.Sort (Prj_Srcs.Src_Files.all);
+
+            Project_Files_List.Next (Prj_Index);
+         end loop;
+
+         Files_Vector_Sort.Sort (All_Include_Files);
+      end;
+
       --  Process all the files
 
       declare
@@ -958,6 +978,12 @@ package body GNATdoc is
       function Less_Than (Left, Right : Virtual_File) return Boolean is
       begin
          return To_Lower (+Base_Name (Left)) < To_Lower (+Base_Name (Right));
+      end Less_Than;
+
+      function Less_Than (Left, Right : Project_Files) return Boolean is
+      begin
+         return To_Lower (Name (Left.Project))
+                  < To_Lower (Name (Right.Project));
       end Less_Than;
 
       --------------------

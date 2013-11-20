@@ -154,6 +154,10 @@ private
       package Project_Files_List is new Ada.Containers.Vectors
         (Index_Type => Natural, Element_Type => Project_Files);
 
+      function Less_Than (Left, Right : Project_Files) return Boolean;
+      package Project_Files_Sort is new Project_Files_List.Generic_Sorting
+        ("<" => Less_Than);
+
    end Files;
    use Files;
 
