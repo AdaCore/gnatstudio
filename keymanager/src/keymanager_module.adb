@@ -283,7 +283,7 @@ package body KeyManager_Module is
 
    procedure Save_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant Virtual_File :=
-                   Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
+                   Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
       File     : Node_Ptr;
       Success  : Boolean;
 
@@ -1303,13 +1303,18 @@ package body KeyManager_Module is
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
+      Filename    : Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
       File, Child : Node_Ptr;
       Err         : String_Access;
       Prev        : Boolean;
+
    begin
       Keymanager_Module.Custom_Keys_Loaded := True;
+
+      if not Is_Regular_File (Filename) then
+         Filename := Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
+      end if;
 
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
