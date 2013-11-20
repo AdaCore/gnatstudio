@@ -2491,6 +2491,8 @@ package body GPS.Kernel.Modules.UI is
          N := First_Child (Toolbar_Node);
          while N /= null loop
             if Node_Name (N) = "button" then
+               Hide := False;
+
                if Get_Attribute (N, "hide") /= "" then
                   begin
                      Hide := Boolean'Value (Get_Attribute (N, "hide"));
