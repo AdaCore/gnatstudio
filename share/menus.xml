@@ -427,10 +427,10 @@
       <button action="new file"/>
       <button action="open file"/>
       <button action="save"/>
-      <separator/>
+      <separator id="editor"/>
       <button action="undo"/>
       <button action="redo"/>
-      <separator/>
+      <separator id="navigation"/>
       <button action="backward locations history"/>
       <button action="forward locations history"/>
       <separator id='build'/>
