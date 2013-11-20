@@ -1522,7 +1522,8 @@ package body Code_Analysis_Module is
                (File_Node.Analysis_Data.Coverage_Data.all).Children;
 
          if Project_Coverage
-           (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0 then
+           (Prj_Node.Analysis_Data.Coverage_Data.all).Children = 0
+         then
             --  No more children means no more usable coverage data
             Unchecked_Free (Prj_Node.Analysis_Data.Coverage_Data);
          end if;

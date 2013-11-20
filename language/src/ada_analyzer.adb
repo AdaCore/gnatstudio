@@ -2073,7 +2073,8 @@ package body Ada_Analyzer is
                   --  type N is new O with record ...
                   --  type N is new O with null record ...
                   if Prev_Token = Tok_With or
-                    (Prev_Prev_Token = Tok_With and Prev_Token = Tok_Null) then
+                    (Prev_Prev_Token = Tok_With and Prev_Token = Tok_Null)
+                  then
                      Top_Token.Attributes (Ada_Tagged_Attribute) := True;
                   end if;
 

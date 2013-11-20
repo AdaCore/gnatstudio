@@ -599,8 +599,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
                --    we're on the current protected object
 
                It := Next (Current_Tree, It, Jump_Into);
-            elsif Get_Construct (It).Category = Cat_Use
-              and then Use_Wise then
+            elsif Get_Construct (It).Category = Cat_Use and then Use_Wise then
                --  Seek this package and jump in its spec if it's a local one,
                --  that is to say if it's found in a parent file.
 

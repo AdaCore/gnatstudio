@@ -1436,8 +1436,7 @@ package body Xref is
    overriding function "=" (E1, E2 : General_Entity) return Boolean is
    begin
       if Active (SQLITE) then
-         if E1.Entity = No_Entity
-           and then E2.Entity = No_Entity then
+         if E1.Entity = No_Entity and then E2.Entity = No_Entity then
             return E1.Loc = E2.Loc;
          else
             return E1.Entity = E2.Entity;

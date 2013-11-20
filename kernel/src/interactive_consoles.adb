@@ -347,7 +347,8 @@ package body Interactive_Consoles is
             --      (Grab_Get_Current is not null and Console.Took_Grab > 0)
             --    * There  is no grab
             if Gtk.Main.Grab_Get_Current = null
-              or else Console.Took_Grab > 0 then
+              or else Console.Took_Grab > 0
+            then
                Console.Took_Grab := Console.Took_Grab + 1;
             end if;
 
