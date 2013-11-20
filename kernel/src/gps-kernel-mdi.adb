@@ -1404,30 +1404,6 @@ package body GPS.Kernel.MDI is
       end if;
    end Get_Toolbar;
 
-   ------------------------------------
-   -- Get_Toolbar_Separator_Position --
-   ------------------------------------
-
-   function Get_Toolbar_Separator_Position
-     (Handle    : access Kernel_Handle_Record'Class;
-      Separator : GPS_Toolbar_Separator) return Gint
-   is
-      W : GPS_Window;
-   begin
-      if Handle.Main_Window = null then
-         return -1;
-      end if;
-
-      W := GPS_Window (Handle.Main_Window);
-
-      case Separator is
-         when Before_Build =>
-            return W.Toolbar.Get_Item_Index (W.Build_Separator);
-         when Before_Debug =>
-            return W.Toolbar.Get_Item_Index (W.Debug_Separator);
-      end case;
-   end Get_Toolbar_Separator_Position;
-
    -------------------------
    -- Get_Current_Context --
    -------------------------

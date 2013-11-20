@@ -1191,15 +1191,15 @@ package body GPS.Location_View is
       use Generic_Views;
       Sep    : Gtk_Separator_Tool_Item;
    begin
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Clear_Locations_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Remove_Message_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Export_Name);
@@ -1207,11 +1207,11 @@ package body GPS.Location_View is
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Expand_Category_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Collapse_All_Files_Name);

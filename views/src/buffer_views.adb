@@ -580,7 +580,7 @@ package body Buffer_Views is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
    begin
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Close_Windows_Name);

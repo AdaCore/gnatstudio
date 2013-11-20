@@ -52,7 +52,6 @@ with Gtk.Css_Provider;          use Gtk.Css_Provider;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -536,7 +535,6 @@ package body GPS.Main_Window is
    is
       Vbox      : Gtk_Vbox;
       Menu_Item : Gtk_Menu_Item;
-      Tool_Item : Gtk_Separator_Tool_Item;
 
    begin
       --  Initialize the window first, so that it can be used while creating
@@ -587,17 +585,6 @@ package body GPS.Main_Window is
 
       Gtk_New (Main_Window.Menu_Bar);
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
-      Install_Menus
-        (Main_Window.Kernel,
-         Create_From_Base
-           ("menus.xml", Get_Share_Dir (Main_Window.Kernel).Full_Name.all));
-
-      Menu_Item := Find_Menu_Item (Main_Window.Kernel, -"/Window");
-      Set_Submenu
-        (Menu_Item, Kernel_Desktop.Create_Menu
-           (Main_Window.MDI,
-            User         => Main_Window.Kernel,
-            Registration => GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
@@ -612,17 +599,6 @@ package body GPS.Main_Window is
       Set_Style (Main_Window.Toolbar, Toolbar_Icons);
       Main_Window.Toolbar.Set_Show_Arrow (True);
       Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
-
-      Gtk_New (Tool_Item);
-      Tool_Item.Set_Name ("build separator");
-      Main_Window.Toolbar.Insert (Tool_Item);
-      Main_Window.Build_Separator := Gtk_Tool_Item (Tool_Item);
-
-      Gtk_New (Tool_Item);
-      Tool_Item.Set_Name ("debug separator");
-      Tool_Item.Set_Draw (False);  --  made visible when enabling the debugger
-      Main_Window.Toolbar.Insert (Tool_Item);
-      Main_Window.Debug_Separator := Gtk_Tool_Item (Tool_Item);
 
       Add (Vbox, Main_Window.MDI);
 
@@ -654,6 +630,17 @@ package body GPS.Main_Window is
       --  Set the generic user interface
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
+
+      Install_Menus
+        (Main_Window.Kernel,
+         Create_From_Base
+           ("menus.xml", Get_Share_Dir (Main_Window.Kernel).Full_Name.all));
+      Menu_Item := Find_Menu_Item (Main_Window.Kernel, -"/Window");
+      Set_Submenu
+        (Menu_Item, Kernel_Desktop.Create_Menu
+           (Main_Window.MDI,
+            User         => Main_Window.Kernel,
+            Registration => GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
    end Initialize;
 
    -------------------

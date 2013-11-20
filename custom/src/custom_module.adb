@@ -33,7 +33,6 @@ with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Set;              use Gtk.Icon_Set;
-with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -847,9 +846,8 @@ package body Custom_Module is
 
       procedure Parse_Button_Node (Node : Node_Ptr) is
          Action  : constant String := Get_Attribute (Node, "action");
+         Stock   : constant String := Get_Attribute (Node, "stock");
          Child   : Node_Ptr;
-         Pixmap  : GNAT.OS_Lib.String_Access := new String'("");
-         Image   : Gtk_Image;
 
       begin
          Child := Node.Child;
@@ -861,13 +859,14 @@ package body Custom_Module is
                   -("The <button> node now ignores its 'title' child (for"
                     & " action '") & Action & "'");
             elsif To_Lower (Child.Tag.all) = "pixmap" then
-               Free (Pixmap);
-               Pixmap := new String'(Child.Value.all);
+               Insert
+                 (Kernel,
+                  -("The <button> node now ignores its 'pixmap' child (for"
+                    & " action '") & Action & "'");
             else
                Insert
                  (Kernel, -"Invalid child node for <button> tag",
                   Mode => Error);
-               pragma Assert (False);
                return;
             end if;
 
@@ -877,17 +876,10 @@ package body Custom_Module is
          if Action = "" then
             Insert (Kernel, -"<button> nodes must have an action attribute",
                     Mode => Error);
-            pragma Assert (False);
             return;
          end if;
 
-         if Pixmap.all /= ""
-           and then Is_Regular_File (Pixmap.all)
-         then
-            Gtk_New (Image, Pixmap.all);
-         end if;
-
-         Register_Button (Kernel, Action, Image);
+         Register_Button (Kernel, Action, Stock_Id => Stock);
       end Parse_Button_Node;
 
       ----------------------

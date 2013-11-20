@@ -913,11 +913,11 @@ package body Call_Graph_Views is
    is
       Sep : Gtk_Separator_Tool_Item;
    begin
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Clear_Calltree_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Remove_Calltree_Name);
@@ -925,7 +925,7 @@ package body Call_Graph_Views is
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Collapse_All_Name);

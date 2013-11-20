@@ -2741,24 +2741,22 @@ tool bar, with a similar syntax, by using the `<button>` tag. As for the
 done when the button is pressed. The button is not created if no such action
 was created.
 
-.. index:: jpeg
-.. index:: png
-.. index:: gif
-.. index:: xpm
+This node accepts one optional attribute `stock` which can be used to override
+the default image registered for the action (or set one if the action had
+none). The value for this attribute is an icon defined through a
+`<stock>` node (which can also be used to provide a label for the button,
+or several sizes for the images for better rendering).
 
-Within this tag, the tag `<pixmap>` can be used to indicate the location of an
-image file (of the type `jpeg, png, gif` or `xpm`) to be used as icon for the
-button. An empty `<button>` tag indicates a separator in the tool bar.
+This `stock` attribute replaces the old `<pixmap>` child, which is no longer
+supported.
 
 The following example defines a new button::
 
   <?xml version="1.0" ?>
   <stats>
-    <button action="execute my stats">
-      <pixmap>/my_pixmaps/button.jpg</pixmap>
-    </button>
+    <button action="undo" />   <!--  use default icon -->
+    <button action="execute my stats" stock='my-image' />
   </stats>
-
 
 The `<button>` tag allows you to create a simple button that the user can press
 to start an action. GPS also supports another type of button, a combo box, from

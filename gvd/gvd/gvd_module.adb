@@ -32,17 +32,14 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Breakpoints_Editor;        use Breakpoints_Editor;
 with Commands.Debugger;         use Commands.Debugger;
@@ -164,13 +161,6 @@ package body GVD_Module is
 
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
-
-   procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class);
-   --  Add debugger related buttons to the main toolbar
-
-   procedure Remove_Debug_Buttons
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Remove debugger related buttons from the main toolbar
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
@@ -354,27 +344,15 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate
 
-   -----------------------
-   -- Toolbar Callbacks --
-   -----------------------
+   type Up_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Up_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure On_Start_Continue (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "start/continue" button
-
-   procedure On_Step (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "step" button
-
-   procedure On_Next (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "next" button
-
-   procedure On_Finish (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "finish" button
-
-   procedure On_Up (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "up" button
-
-   procedure On_Down (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "down" button
+   type Down_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Down_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    --------------------
    -- Misc Callbacks --
@@ -499,107 +477,6 @@ package body GVD_Module is
       Trace (Me, "Set_Current_Debugger");
       GVD_Module_ID.Current_Debugger := Current;
    end Set_Current_Debugger;
-
-   -----------------------
-   -- Add_Debug_Buttons --
-   -----------------------
-
-   procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
-      Toolbar : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
-      Window  : constant Gtk_Window := Get_Main_Window (Kernel);
-
-      Pos : constant Gint := Get_Toolbar_Separator_Position
-        (Kernel, Before_Debug);
-   begin
-      if GVD_Module_ID.Cont_Button /= null then
-         return;
-      end if;
-
-      Gtk_Separator_Tool_Item (Toolbar.Get_Nth_Item (Pos)).Set_Draw (True);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Cont_Button, "gps-debugger-run");
-      Set_Name (GVD_Module_ID.Cont_Button, "gps-debugger-run-button");
-      Set_Tooltip_Text
-        (GVD_Module_ID.Cont_Button,
-         -"Start/Continue the debugged program");
-      Insert (Toolbar, GVD_Module_ID.Cont_Button, Pos + 1);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Cont_Button, Signal_Clicked,
-         On_Start_Continue'Access, Window);
-      Show_All (GVD_Module_ID.Cont_Button);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Step_Button, "gps-debugger-step");
-      Set_Name (GVD_Module_ID.Step_Button, "gps-debugger-step-button");
-      Set_Tooltip_Text (GVD_Module_ID.Step_Button, -"Step");
-      Insert (Toolbar, GVD_Module_ID.Step_Button, Pos + 2);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Step_Button, Signal_Clicked, On_Step'Access, Window);
-      Show_All (GVD_Module_ID.Step_Button);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Next_Button, "gps-debugger-next");
-      Set_Name (GVD_Module_ID.Next_Button, "gps-debugger-next-button");
-      Set_Tooltip_Text (GVD_Module_ID.Next_Button, -"Next");
-      Insert (Toolbar, GVD_Module_ID.Next_Button, Pos + 3);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Next_Button, Signal_Clicked, On_Next'Access, Window);
-      Show_All (GVD_Module_ID.Next_Button);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Finish_Button, "gps-debugger-finish");
-      Set_Name (GVD_Module_ID.Finish_Button, "gps-debugger-finish-button");
-      Set_Tooltip_Text
-        (GVD_Module_ID.Finish_Button,
-         -"Execute until selected stack frame returns");
-      Insert (Toolbar, GVD_Module_ID.Finish_Button, Pos + 4);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Finish_Button,
-         Signal_Clicked, On_Finish'Access, Window);
-      Show_All (GVD_Module_ID.Finish_Button);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Up_Button, "gps-debugger-up");
-      Set_Name (GVD_Module_ID.Up_Button, "gps-debugger-up-button");
-      Set_Tooltip_Text
-        (GVD_Module_ID.Up_Button,
-         -"Select and print stack frame that called this one");
-      Insert (Toolbar, GVD_Module_ID.Up_Button, Pos + 5);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Up_Button, Signal_Clicked, On_Up'Access, Window);
-      Show_All (GVD_Module_ID.Up_Button);
-
-      Gtk_New_From_Stock (GVD_Module_ID.Down_Button, "gps-debugger-down");
-      Set_Name (GVD_Module_ID.Down_Button, "gps-debugger-down-button");
-      Set_Tooltip_Text (GVD_Module_ID.Down_Button,
-                        -"Select and print stack frame called by this one");
-      Insert (Toolbar, GVD_Module_ID.Down_Button, Pos + 6);
-      Widget_Callback.Object_Connect
-        (GVD_Module_ID.Down_Button, Signal_Clicked, On_Down'Access, Window);
-      Show_All (GVD_Module_ID.Down_Button);
-   end Add_Debug_Buttons;
-
-   --------------------------
-   -- Remove_Debug_Buttons --
-   --------------------------
-
-   procedure Remove_Debug_Buttons
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-
-   begin
-      if Toolbar /= null and then GVD_Module_ID.Cont_Button /= null then
-         Gtk_Separator_Tool_Item
-           (Toolbar.Get_Nth_Item
-              (Get_Toolbar_Separator_Position (Kernel, Before_Debug)))
-             .Set_Draw (False);
-
-         Remove (Toolbar, GVD_Module_ID.Cont_Button);
-         Remove (Toolbar, GVD_Module_ID.Step_Button);
-         Remove (Toolbar, GVD_Module_ID.Next_Button);
-         Remove (Toolbar, GVD_Module_ID.Finish_Button);
-         Remove (Toolbar, GVD_Module_ID.Up_Button);
-         Remove (Toolbar, GVD_Module_ID.Down_Button);
-         GVD_Module_ID.Cont_Button := null;
-      end if;
-   end Remove_Debug_Buttons;
 
    -------------------------
    -- Initialize_Debugger --
@@ -938,7 +815,13 @@ package body GVD_Module is
          return Commands.Failure;
       end if;
 
-      Continue (Process.Debugger, Mode => GVD.Types.Visible);
+      if Is_Started (Process.Debugger) then
+         Continue (Process.Debugger, Mode => GVD.Types.Visible);
+      else
+         --  Launch the dialog for starting the application
+         Start_Program (Process, Start_Cmd => True);
+      end if;
+
       return Commands.Success;
    end Execute;
 
@@ -1753,26 +1636,6 @@ package body GVD_Module is
          return null;
    end Tooltip_Handler;
 
-   -------------------
-   -- Set_Sensitive --
-   -------------------
-
-   procedure Set_Sensitive
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      State    : Debugger_State)
-   is
-   begin
-      if Get_Main_Window (Kernel) /= null
-        and then not Get_Main_Window (Kernel).In_Destruction
-      then
-         if State = Debug_Available then
-            Add_Debug_Buttons (Kernel);
-         elsif State = Debug_None then
-            Remove_Debug_Buttons (Kernel);
-         end if;
-      end if;
-   end Set_Sensitive;
-
    ----------------
    -- Debug_Init --
    ----------------
@@ -1868,8 +1731,6 @@ package body GVD_Module is
 
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
 
-      Set_Sensitive (Kernel, Debug_None);
-
       Pop_State (Kernel);
    end Debug_Terminate;
 
@@ -1964,86 +1825,43 @@ package body GVD_Module is
       return "";
    end Get_Variable_Name;
 
-   -----------------------
-   -- On_Start_Continue --
-   -----------------------
-
-   procedure On_Start_Continue (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      if Tab /= null and then Tab.Debugger /= null then
-         if Is_Started (Tab.Debugger) then
-            Continue (Tab.Debugger, Mode => GVD.Types.Visible);
-         else
-            --  Launch the dialog for starting the application
-
-            Start_Program (Tab, Start_Cmd => True);
-         end if;
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Start_Continue;
-
    -------------
-   -- On_Step --
+   -- Execute --
    -------------
 
-   procedure On_Step (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   overriding function Execute
+     (Command : access Up_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Tab /= null and then Tab.Debugger /= null then
-         Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
+      if Process /= null and then Process.Debugger /= null then
+         Stack_Up (Process.Debugger, Mode => GVD.Types.Visible);
       end if;
-   end On_Step;
+      return Commands.Success;
+   end Execute;
 
    -------------
-   -- On_Next --
+   -- Execute --
    -------------
 
-   procedure On_Next (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   overriding function Execute
+     (Command : access Down_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Tab /= null and then Tab.Debugger /= null then
-         Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
+      if Process /= null and then Process.Debugger /= null then
+         Stack_Down (Process.Debugger, Mode => GVD.Types.Visible);
       end if;
-   end On_Next;
-
-   ---------------
-   -- On_Finish --
-   ---------------
-
-   procedure On_Finish (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      if Tab /= null and then Tab.Debugger /= null then
-         Finish (Tab.Debugger, Mode => GVD.Types.Visible);
-      end if;
-   end On_Finish;
-
-   -----------
-   -- On_Up --
-   -----------
-
-   procedure On_Up (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      if Tab /= null and then Tab.Debugger /= null then
-         Stack_Up (Tab.Debugger, Mode => GVD.Types.Visible);
-      end if;
-   end On_Up;
-
-   -------------
-   -- On_Down --
-   -------------
-
-   procedure On_Down (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
-   begin
-      if Tab /= null and then Tab.Debugger /= null then
-         Stack_Down (Tab.Debugger, Mode => GVD.Types.Visible);
-      end if;
-   end On_Down;
+      return Commands.Success;
+   end Execute;
 
    ---------------------------
    -- On_Executable_Changed --
@@ -2610,6 +2428,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug step", new Step_Command,
+         Stock_Id    => "gps-debugger-step",
          Accel_Key   => GDK_F5,
          Filter      => Debugger_Active,
          Description =>
@@ -2627,6 +2446,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug next", new Next_Command,
+         Stock_Id    => "gps-debugger-next",
          Accel_Key   => GDK_F6,
          Filter      => Debugger_Active,
          Description =>
@@ -2646,6 +2466,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug finish", new Finish_Command,
+         Stock_Id    => "gps-debugger-finish",
          Accel_Key   => GDK_F7,
          Filter      => Debugger_Active,
          Description =>
@@ -2654,9 +2475,26 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug continue", new Continue_Command,
+         Stock_Id    => "gps-debugger-run",
          Accel_Key   => GDK_F8,
          Filter      => Debugger_Active,
-         Description => -"Continue execution until next breakpoint",
+         Description =>
+           -("Continue execution until next breakpoint." & ASCII.LF
+           & "Start the debugger if not started yet"),
+         Category    => -"Debug");
+
+      Register_Action
+        (Kernel, "debug up", new Up_Command,
+         Stock_Id    => "gps-debugger-up",
+         Filter      => Debugger_Active,
+         Description => "Move up one frame",
+         Category    => -"Debug");
+
+      Register_Action
+        (Kernel, "debug down", new Down_Command,
+         Stock_Id    => "gps-debugger-down",
+         Filter      => Debugger_Active,
+         Description => "Move down one frame",
          Category    => -"Debug");
 
       Register_Action
@@ -2677,8 +2515,6 @@ package body GVD_Module is
         (Kernel, "terminate all debuggers", new Terminate_All_Command,
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
-
-      Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

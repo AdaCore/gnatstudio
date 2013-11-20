@@ -574,13 +574,16 @@ package body Scenario_Views is
    is
       Sep : Gtk_Separator_Tool_Item;
    begin
-      Add_Button (View.Kernel, Toolbar, Action_Add_Scenario_Variable);
-      Add_Button (View.Kernel, Toolbar, Command_Delete_Variable_Name);
+      Register_Button
+        (View.Kernel, Action_Add_Scenario_Variable, Toolbar => Toolbar);
+      Register_Button
+        (View.Kernel, Command_Delete_Variable_Name, Toolbar => Toolbar);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Add_Button (View.Kernel, Toolbar, Command_Edit_Variable_Name);
+      Register_Button
+        (View.Kernel, Command_Edit_Variable_Name, Toolbar => Toolbar);
    end Create_Toolbar;
 
    -------------

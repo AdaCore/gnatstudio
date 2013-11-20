@@ -66,12 +66,6 @@ package GVD_Module is
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
 
-   procedure Set_Sensitive
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      State  : Debugger_State);
-   --  Change the sensitive state of the debugger menu items and toolbar
-   --  buttons
-
    procedure Setup_Side_Columns
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create the hooks that are responsible for refreshing the side column

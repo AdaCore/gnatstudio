@@ -23,7 +23,6 @@ with Gtk.Application_Window;  use Gtk.Application_Window;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Icon_Factory;        use Gtk.Icon_Factory;
 with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
-with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 
@@ -49,12 +48,6 @@ package GPS.Main_Window is
       Toolbar_Box       : Gtk_Box;
       Toolbar           : Gtk_Toolbar;
       MDI               : Gtkada.MDI.MDI_Window;
-
-      Build_Separator   : Gtk_Tool_Item;
-      --  The item just before the build items in the toolbar
-
-      Debug_Separator   : Gtk_Tool_Item;
-      --  The item just before the debug items
 
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu

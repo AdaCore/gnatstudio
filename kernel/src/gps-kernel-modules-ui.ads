@@ -62,7 +62,6 @@ with GNAT.Strings;
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
-with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
@@ -423,40 +422,30 @@ package GPS.Kernel.Modules.UI is
    ---------------------
 
    procedure Register_Button
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Text    : String;
-      Command : not null access Interactive_Command'Class;
-      Image   : Gtk.Image.Gtk_Image := null;
-      Tooltip : String := "");
-   --  Add a button at the end of the toolbar
-
-   procedure Register_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Stock_Id : String;
-      Command  : not null access Interactive_Command'Class;
-      Tooltip  : String := "");
-   --  Same as above but with a stock button
-
-   procedure Register_Button
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Action  : String;
-      Image   : Gtk.Image.Gtk_Image := null);
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Action   : String;
+      Stock_Id : String := "";
+      Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Position : Glib.Gint := -1;
+      Hide     : Boolean := False);
    --  Register a button based on an action.
-   --  Image overrides the action's default image, if specified.
+   --  The action need not be registered yet.
+   --  Stock_Id overrides the action's default image, if specified.
+   --  The button will be grayed out automatically whenever the action's filter
+   --  indicate the action is not available in the current context.
+   --
+   --  If Hide is true, the button is hidden when the action does not apply
+   --  to the context, instead of being grayed out.
+   --
+   --  The toolbar defaults to the global toolbar in GPS.
+   --  The position can be computed with Get_Toolbar_Separator_Position.
 
-   procedure Add_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Action   : String;
-      Position : Glib.Gint := -1);
-   function Add_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Action   : String;
-      Position : Glib.Gint := -1) return Gtk.Widget.Gtk_Widget;
-   --  Insert a button in the local toolbar, associated with the given named
-   --  action. The action will be lookuped up upon execution, so it is valid
-   --  even if it has not been registered yet.
+   function Get_Toolbar_Separator_Position
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Id      : String) return Glib.Gint;
+   --  Return the position of a given separator from its id.
+   --  It defaults to the main toolbar.
 
    -------------------------
    -- Drag'n'drop support --

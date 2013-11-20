@@ -23,12 +23,6 @@ with Gtk.Widget;   use Gtk.Widget;
 package Commands.Controls is
 
    type Undo_Redo_Information is record
-      Undo_Button    : Gtk.Widget.Gtk_Widget;
-      Redo_Button    : Gtk.Widget.Gtk_Widget;
-
-      Command : Commands.Command_Access;
-      --  A command used to follow changes in the queue
-
       Queue : Commands.Command_Queue;
       --  The queue from which undo and redo information is read
    end record;

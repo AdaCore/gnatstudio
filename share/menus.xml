@@ -1,9 +1,14 @@
 <?xml version="1.0" ?>
 <GPS>
    <!--
-        A <menu> can be marked as 'optional': in this case, the menu is hidden when the
-           action is not found, presumably because it is provided by a plug-in that has
-           not be loaded. When not optional, the menu is displayed greyed-out.
+        A <menu> or <button> can be marked as 'optional': in this case, the
+          menu is hidden when the action is not found, presumably because it is
+          provided by a plug-in that has not be loaded. When not optional, the
+          menu is displayed greyed-out.
+        A <menu> or <button> can be marked as 'hide': in this case, the menu
+          is hidden when the action's filter does not match, instead of being
+          grayed out.
+
         Naming conventions for menus:
            labels should end up with '...' when they display a dialog or another window.
            All words should be upper-cased, except small words like 'with', 'from',...
@@ -417,4 +422,24 @@
          <menu label='A_bout'       action='about gps'/>
       </menu>
    </menubar>
+
+   <toolbar id='main'>
+      <button action="new file"/>
+      <button action="open file"/>
+      <button action="save"/>
+      <separator/>
+      <button action="undo"/>
+      <button action="redo"/>
+      <separator/>
+      <button action="backward locations history"/>
+      <button action="forward locations history"/>
+      <separator id='build'/>
+      <separator id='debug'/>
+      <button action="debug continue" hide='true'/>
+      <button action="debug step" hide='true'/>
+      <button action="debug next" hide='true'/>
+      <button action="debug finish" hide='true'/>
+      <button action="debug up" hide='true'/>
+      <button action="debug down" hide='true'/>
+   </toolbar>
 </GPS>

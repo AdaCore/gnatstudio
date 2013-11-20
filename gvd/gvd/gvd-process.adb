@@ -495,12 +495,12 @@ package body GVD.Process is
       if In_Process then
          Run_Debugger_States_Hook
            (Proxy.Process, Debugger_State_Changed_Hook, Debug_Busy);
-         Set_Sensitive (Get_Kernel (Proxy.Process), Debug_Busy);
       else
          Run_Debugger_States_Hook
            (Proxy.Process, Debugger_State_Changed_Hook, Debug_Available);
-         Set_Sensitive (Get_Kernel (Proxy.Process), Debug_Available);
       end if;
+
+      Update_Menus_And_Buttons (Get_Kernel (Proxy.Process));
    end Set_Command_In_Process;
 
    -----------------------
@@ -1918,7 +1918,6 @@ package body GVD.Process is
          end if;
       end;
 
-      Set_Sensitive (Kernel, Debug_Available);
       Setup_Side_Columns (Kernel);
 
       --  Force the creation of the project if needed

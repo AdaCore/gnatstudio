@@ -36,8 +36,6 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Stock;                         use Gtk.Stock;
-with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
-with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -224,10 +222,6 @@ package body Src_Editor_Module is
    end record;
    overriding procedure Activate (Callback : access On_Recent; Item : String);
 
-   procedure Toolbar_Destroy_Cb (Widget : access Gtk_Widget_Record'Class);
-   --  Called when we are about to destroy the toolbar which contains the
-   --  undo/redo items.
-
    procedure On_Editor_Destroy
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
@@ -412,19 +406,6 @@ package body Src_Editor_Module is
          return MDI_Child (Child);
       end if;
    end Dnd_Data;
-
-   ------------------------
-   -- Toolbar_Destroy_Cb --
-   ------------------------
-
-   procedure Toolbar_Destroy_Cb (Widget : access Gtk_Widget_Record'Class) is
-      UR : constant Undo_Redo :=
-        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
-      pragma Unreferenced (Widget);
-   begin
-      UR.Undo_Button := null;
-      UR.Redo_Button := null;
-   end Toolbar_Destroy_Cb;
 
    -------------------------
    -- Get_File_Identifier --
@@ -1783,7 +1764,6 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar                  : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       UR                       : constant Undo_Redo :=
                                    new Undo_Redo_Information;
       Selector                 : Scope_Selector;
@@ -2085,24 +2065,6 @@ package body Src_Editor_Module is
          Accel_Key   => GDK_LC_r,
          Accel_Mods  => Primary_Mod_Mask);
 
-      declare
-         Space : Gtk_Separator_Tool_Item;
-      begin
-         Gtk_New (Space);
-         Space.Set_Name ("from editor");
-         Insert (Toolbar, Space,
-                 Get_Toolbar_Separator_Position (Kernel, Before_Build));
-      end;
-
-      UR.Undo_Button := Add_Button
-        (Kernel, Toolbar, "undo",
-         Get_Toolbar_Separator_Position (Kernel, Before_Build));
-      UR.Redo_Button := Add_Button
-        (Kernel, Toolbar, "redo",
-         Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
-      Toolbar.On_Destroy (Toolbar_Destroy_Cb'Access);
-
       Register_Action
         (Kernel, "select all", new Select_All_Command,
          -"Select the whole contents of the editor",
@@ -2184,12 +2146,6 @@ package body Src_Editor_Module is
          Accel_Mods => Primary_Mod_Mask,
          Category   => "Editor",
          Filter     => Src_Action_Context);
-
-      --  Toolbar buttons
-
-      Add_Button (Kernel, Toolbar, New_File_Command_Name, 0);
-      Add_Button (Kernel, Toolbar, Open_Command_Name, 1);
-      Add_Button (Kernel, Toolbar, Save_Command_Name, 2);
 
       Add_Hook (Kernel, File_Renamed_Hook,
                 Wrapper (File_Renamed_Cb'Access),

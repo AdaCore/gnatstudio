@@ -29,8 +29,6 @@ with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
-with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
-with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
@@ -39,7 +37,6 @@ with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -72,11 +69,6 @@ package body Navigation_Module is
 
       Last_Marker    : Natural := 0;
       --  The last marker set in Markers
-
-      Back_Button    : Gtk.Widget.Gtk_Widget;
-      Forward_Button : Gtk.Widget.Gtk_Widget;
-      --  Back and forward buttons on the toolbar.
-      --  ??? This might be put elsewhere.
 
       Previous_Project : Virtual_File := No_File;
       Markers_File     : Virtual_File := No_File;
@@ -125,10 +117,6 @@ package body Navigation_Module is
 
    overriding procedure Destroy (Id : in out Navigation_Module_Record);
    --  Free memory associated to Id
-
-   procedure Refresh_Location_Buttons
-     (Handle : access Kernel_Handle_Record'Class);
-   --  Refresh the active/inactive state of the location buttons
 
    type Back_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -234,13 +222,6 @@ package body Navigation_Module is
       Data   : access Hooks_Data'Class);
    --  Called when a new marker is added in the history
 
-   procedure Check_Marker_History_Status
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Can_Move_Back    : out Boolean;
-      Can_Move_Forward : out Boolean);
-   --  Check whether it is possible to keep moving backward or forward in the
-   --  list of markers.
-
    procedure Move_In_Marker_History
      (Kernel    : access Kernel_Handle_Record'Class;
       Move_Back : Boolean);
@@ -277,6 +258,7 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Kernel);
       D      : constant Marker_Hooks_Args_Access :=
                  Marker_Hooks_Args_Access (Data);
       Module : constant Navigation_Module :=
@@ -304,7 +286,6 @@ package body Navigation_Module is
 
          Module.Markers (Module.Current_Marker) := D.Marker;
          Module.Last_Marker := Module.Current_Marker;
-         Refresh_Location_Buttons (Kernel);
       else
          --  We are not storing marker: release memory now.
          Destroy (D.Marker.all);
@@ -522,25 +503,6 @@ package body Navigation_Module is
    begin
       Load_History_Markers (Kernel);
    end On_Desktop_Loaded_Hook;
-
-   ---------------------------------
-   -- Check_Marker_History_Status --
-   ---------------------------------
-
-   procedure Check_Marker_History_Status
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Can_Move_Back    : out Boolean;
-      Can_Move_Forward : out Boolean)
-   is
-      pragma Unreferenced (Kernel);
-      Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
-   begin
-      Can_Move_Back := Module.Markers /= null
-        and then Module.Current_Marker > Module.Markers'First;
-      Can_Move_Forward := Module.Markers /= null
-        and then Module.Current_Marker < Module.Last_Marker;
-   end Check_Marker_History_Status;
 
    ----------------------------
    -- Move_In_Marker_History --
@@ -846,7 +808,6 @@ package body Navigation_Module is
    begin
       Move_In_Marker_History (Kernel, Move_Back => True);
       Go_To_Current_Marker (Kernel);
-      Refresh_Location_Buttons (Kernel);
       return Commands.Success;
    end Execute;
 
@@ -863,7 +824,6 @@ package body Navigation_Module is
    begin
       Move_In_Marker_History (Kernel, Move_Back => False);
       Go_To_Current_Marker (Kernel);
-      Refresh_Location_Buttons (Kernel);
       return Commands.Success;
    end Execute;
 
@@ -1116,10 +1076,8 @@ package body Navigation_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
-      Space              : Gtk_Separator_Tool_Item;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
    begin
@@ -1204,18 +1162,6 @@ package body Navigation_Module is
                 Wrapper (On_Marker_Added_In_History'Access),
                 Name => "navigation.maker_added");
 
-      Gtk_New (Space);
-      Space.Set_Name ("navigation module");
-      Insert (Toolbar, Space,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
-      Navigation_Module (Navigation_Module_ID).Back_Button :=
-        Add_Button (Kernel, Toolbar, "backward locations history",
-                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
-      Navigation_Module (Navigation_Module_ID).Forward_Button :=
-        Add_Button (Kernel, Toolbar, "forward locations history",
-                    Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
       Add_Hook
         (Kernel  => Kernel,
          Hook    => Project_View_Changed_Hook,
@@ -1227,25 +1173,7 @@ package body Navigation_Module is
          Hook    => Desktop_Loaded_Hook,
          Func    => Wrapper (On_Desktop_Loaded_Hook'Access),
          Name    => "navigation_module.desktop_loaded");
-
-      Refresh_Location_Buttons (Kernel);
    end Register_Module;
-
-   ------------------------------
-   -- Refresh_Location_Buttons --
-   ------------------------------
-
-   procedure Refresh_Location_Buttons
-     (Handle : access Kernel_Handle_Record'Class)
-   is
-      Data : constant Navigation_Module :=
-               Navigation_Module (Navigation_Module_ID);
-      Can_Move_Back, Can_Move_Forward : Boolean;
-   begin
-      Check_Marker_History_Status (Handle, Can_Move_Back, Can_Move_Forward);
-      Set_Sensitive (Data.Back_Button, Can_Move_Back);
-      Set_Sensitive (Data.Forward_Button, Can_Move_Forward);
-   end Refresh_Location_Buttons;
 
    -------------
    -- Destroy --

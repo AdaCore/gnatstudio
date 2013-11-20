@@ -43,6 +43,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Style_Context;         use Gtk.Style_Context;
+with Gtk.Tool_Item;             use Gtk.Tool_Item;
 
 --  So that this type is correctly converted from C to Ada
 with Gtk.Image_Menu_Item;       use Gtk.Image_Menu_Item;
@@ -56,12 +57,12 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
@@ -210,20 +211,6 @@ package body GPS.Kernel.Modules.UI is
    --  Create a contextual menu as a result of a mouse event
    --  Return null if no menu was created.
 
-   type Interactive_Action is record
-      Kernel  : Kernel_Handle;
-      Command : not null access Interactive_Command'Class;
-      Filter  : access Action_Filter_Record'Class;
-   end record;
-
-   procedure Execute_Command
-     (Widget  : access GObject_Record'Class;
-      Command : Interactive_Action);
-   --  Execute a single command
-
-   package Command_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Interactive_Action);
-
    procedure Add_Contextual_Menu
      (Kernel     : access Kernel_Handle_Record'Class;
       Menu       : Contextual_Menu_Access;
@@ -247,55 +234,115 @@ package body GPS.Kernel.Modules.UI is
       Full_Path : String) return Menu_Command;
    --  Utility function: create a command for a given menu
 
-   ----------------------
-   -- Action_Menu_Item --
-   ----------------------
+   -------------------------
+   -- proxies for actions --
+   -------------------------
 
-   type Action_Menu_Item_Record is new Gtk_Image_Menu_Item_Record with record
-      Kernel   : Kernel_Handle;
-      Name     : GNAT.Strings.String_Access;
+   type Action_Proxy is record
+      Kernel   : access Kernel_Handle_Record'Class;
+      Action   : GNAT.Strings.String_Access;
+
       Optional : Boolean;
+      --  If True and the action is not found, the widget will be hidden.
 
-      Looked_Up : Action_Record_Access;
+      Hide     : Boolean;
+      --  If true, the widget is hidden when the filter does not match.
+
+      Looked_Up : access Action_Record;
       --  A field that must be used only to compare the current action with the
       --  one we previously looked up. Do not use to access the action itself,
       --  since this might be a dangling pointer if the action was
       --  unregistered. Use Lookup_Action instead.
    end record;
-   type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
+   --  Data required for all widgets that encapsulate an action.
+   --  A widget must never store a direct Action_Record_Access, since the
+   --  action might be unregistered at any point.
+   --  This type also provides support for setting various properties of the
+   --  widget based on the contents of the action.
 
+   function Get_Data
+     (Self : not null access Gtk_Widget_Record'Class)
+     return access Action_Proxy;
    function Lookup_Action
-     (Self : not null access Action_Menu_Item_Record'Class)
-     return Action_Record_Access;
-   --  lookup the action if needed
+     (Self : not null access Gtk_Widget_Record'Class)
+     return access Action_Record;
+   --  Lookup the action associated with the given widget.
+   --  Self should be one of Action_Menu_Item or Action_Tool_Button.
+   --
+   --  Self.Looked_Up provides the action that was looked up previously. If the
+   --  current action is different, various properties of the widget will be
+   --  updated, and Looked_Up will be set to the new value.
+
+   procedure Execute_Action
+     (Self : not null access Gtk_Widget_Record'Class;
+      Data : Action_Proxy);
+   --  Execute the action associated with the proxy
+
+   procedure On_Destroy_Action_Proxy_Widget
+     (Self : access Gtk_Widget_Record'Class);
+   --  Called when a widget that proxies an action is destroyed.
+
+   ------------------------
+   -- Action_Tool_Button --
+   ------------------------
+
+   type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
+      Data : aliased Action_Proxy;
+      Forced_Stock : Boolean := False;
+   end record;
+   type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
+
+   procedure Gtk_New
+     (Button   : out Action_Tool_Button;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Stock_Id : String := "";
+      Action   : String;
+      Optional : Boolean := False;
+      Hide     : Boolean := False);
+   --  Create a new button so that it executes action when pressed.
+   --  Hide and Optional are the same as for Data_Proxy
+
+   procedure On_Action_Button_Clicked
+     (Button : access Gtk_Tool_Button_Record'Class);
+   --  Called when an Action_Tool_Button has been activated.
+
+   ----------------------
+   -- Action_Menu_Item --
+   ----------------------
+
+   type Action_Menu_Item_Record is new Gtk_Image_Menu_Item_Record with record
+      Data : aliased Action_Proxy;
+   end record;
+   type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
 
    procedure On_Activate_Action_Item
      (Item : access Gtk_Menu_Item_Record'Class);
-   procedure On_Destroy_Action_Item (Item : access Gtk_Widget_Record'Class);
    --  Called when an Action_Menu_Item is mapped to screen
 
-   procedure On_Destroy_Menu_With_Filter
-     (Item : access Gtk_Widget_Record'Class);
-   --  Called when a menu item that has a custom filter is destroyed
+   ----------------------------------------------
+   --  Computing menu states in the background --
+   ----------------------------------------------
 
-   type Item_And_Filter is record
-      Item   : Gtk_Menu_Item;
+   type Proxy_And_Filter is record
+      Proxy  : access Gtk_Widget_Record'Class;
       Filter : Action_Filter;
    end record;
-   package Action_Menu_Item_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Item_And_Filter);
-   use Action_Menu_Item_Lists;
-   Global_Menu_Items : Action_Menu_Item_Lists.List;
-   --  List of all registered menu items for which the action has a filter.
-   --  This is needed to dynamically deactivate menus
+   package Proxy_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Proxy_And_Filter);
+   use Proxy_Lists;
+   Global_Proxy_Items : Proxy_Lists.List;
+   --  List of all registered menu items or tool buttons for which the action
+   --  has a filter. This is needed to dynamically deactivate menus and buttons
+   --  whenever the current context changes
 
-   ---------------------------------------------
-   --  Computing menu stats in the background --
-   ---------------------------------------------
+   procedure Remove_From_Global_Proxies
+     (Item : access Gtk_Widget_Record'Class);
+   --  Called when a proxy widget or a standard widget with a custom filter is
+   --  destroyed
 
    type Update_Menus_Data is record
       Context : Selection_Context;
-      Current : Action_Menu_Item_Lists.Cursor;
+      Current : Proxy_Lists.Cursor;
    end record;
    type Update_Menus_Data_Access is access all Update_Menus_Data;
 
@@ -312,31 +359,6 @@ package body GPS.Kernel.Modules.UI is
    package Update_Menus_Idle is new Glib.Main.Generic_Sources
      (Update_Menus_Data_Access);
    Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
-
-   --------------
-   -- Toolbars --
-   --------------
-
-   type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
-      Kernel : Kernel_Handle;
-      Action : GNAT.Strings.String_Access;
-   end record;
-   type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
-
-   procedure Gtk_New
-     (Button   : out Action_Tool_Button;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Stock_Id : String;
-      Action   : String);
-   --  Create a new button so that it executes action when pressed.
-
-   procedure On_Action_Button_Clicked
-     (Button : access Gtk_Widget_Record'Class);
-   --  Called when an Action_Tool_Button has been activated.
-
-   procedure On_Action_Button_Destroy
-     (Button : access Gtk_Widget_Record'Class);
-   --  Called when an Action_Tool_Button is destroyed.
 
    -----------------------------
    -- Create_Command_For_Menu --
@@ -1208,9 +1230,8 @@ package body GPS.Kernel.Modules.UI is
          Item.Show_All;
 
          if Filter /= null then
-            Item.On_Destroy (On_Destroy_Menu_With_Filter'Access);
-            Global_Menu_Items.Append
-              (Item_And_Filter'(Gtk_Menu_Item (Item), Filter));
+            Global_Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
+            Item.On_Destroy (Remove_From_Global_Proxies'Access);
          end if;
 
          if Item.Get_Child /= null then
@@ -1232,65 +1253,47 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Register_Menu;
 
-   ---------------------
-   -- Execute_Command --
-   ---------------------
+   --------------
+   -- Get_Data --
+   --------------
 
-   procedure Execute_Command
-     (Widget  : access GObject_Record'Class;
-      Command : Interactive_Action)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context :=
-                  Get_Current_Context (Command.Kernel);
+   function Get_Data
+     (Self : not null access Gtk_Widget_Record'Class)
+      return access Action_Proxy is
    begin
-      if Context /= No_Context
-        and then Filter_Matches (Command.Filter, Context)
-      then
-         Launch_Background_Command
-           (Command.Kernel,
-            Create_Proxy
-              (Command.Command,
-               (Event            => null,
-                Context          => Context,
-                Synchronous      => False,
-                Dir              => No_File,
-                Args             => null,
-                Label            => null,
-                Via_Menu         => False,
-                Repeat_Count     => 1,
-                Remaining_Repeat => 0)),
-            Destroy_On_Exit => False,  --  ??? Should this be True
-            Active          => True, Show_Bar => False, Queue_Id => "");
-
-      elsif Get_Error_Message (Command.Filter) /= "" then
-         Insert (Command.Kernel, Get_Error_Message (Command.Filter),
-                 Mode => Error);
-
+      if Self.all in Action_Menu_Item_Record'Class then
+         return Action_Menu_Item (Self).Data'Access;
+      elsif Self.all in Action_Tool_Button_Record'Class then
+         return Action_Tool_Button (Self).Data'Access;
       else
-         Insert (Command.Kernel,
-                 -"Invalid context for this action", Mode => Error);
+         return null;
       end if;
-   end Execute_Command;
+   end Get_Data;
 
    -------------------
    -- Lookup_Action --
    -------------------
 
    function Lookup_Action
-     (Self : not null access Action_Menu_Item_Record'Class)
-     return Action_Record_Access
+     (Self : not null access Gtk_Widget_Record'Class)
+     return access Action_Record
    is
       Label : Gtk_Accel_Label;
       Key   : Gdk_Key_Type;
       Mods  : Gdk_Modifier_Type;
       Pix   : Gtk_Image;
-      Action : Action_Record_Access;
-   begin
-      Action := Lookup_Action (Self.Kernel, Self.Name.all);
+      Action : access Action_Record;
+      Data   : constant access Action_Proxy := Get_Data (Self);
 
-      if Action /= Self.Looked_Up then
-         Self.Looked_Up := Action;
+   begin
+      if Data = null then
+         return null;
+      end if;
+
+      Action := Lookup_Action (Data.Kernel, Data.Action.all);
+
+      if Action /= Data.Looked_Up then
+         Data.Looked_Up := Action;
 
          if Action /= null then
             if Action.Category = null then
@@ -1305,7 +1308,7 @@ package body GPS.Kernel.Modules.UI is
                & "<b>Category:</b> "
                & Escape_Text (Action.Category.all) & ASCII.LF
                & "<b>Shortcut:</b> "
-               & Self.Kernel.Get_Shortcut
+               & Data.Kernel.Get_Shortcut
                  (Action          => Action.Name.all,
                   Use_Markup      => True,
                   Return_Multiple => True));
@@ -1313,9 +1316,15 @@ package body GPS.Kernel.Modules.UI is
             --  Update the image if the action has one
 
             if Action.Stock_Id /= null then
-               Gtk_New (Pix, Action.Stock_Id.all, Icon_Size_Menu);
-               Self.Set_Image (Pix);
-               Pix.Show;
+               if Self.all in Action_Menu_Item_Record'Class then
+                  Gtk_New (Pix, Action.Stock_Id.all, Icon_Size_Menu);
+                  Action_Menu_Item (Self).Set_Image (Pix);
+                  Pix.Show;
+               elsif Self.all in Action_Tool_Button_Record'Class
+                 and then not Action_Tool_Button (Self).Forced_Stock
+               then
+                  Action_Tool_Button (Self).Set_Stock_Id (Action.Stock_Id.all);
+               end if;
             end if;
 
             --  Lookup the keybinding. This is only done the first time we do
@@ -1324,20 +1333,22 @@ package body GPS.Kernel.Modules.UI is
             --  ??? We could use a timestamp somewhere to note we need a
             --  refresh.
 
-            Self.Kernel.Get_Shortcut_Simple
-              (Action    => Action.Name.all,
-               Key       => Key,
-               Mods      => Mods);
-            if Key /= 0 then
-               Label := Gtk_Accel_Label (Self.Get_Child);
-               Label.Set_Accel (Guint (Key), Mods);
+            if Self.all in Action_Menu_Item_Record'Class then
+               Data.Kernel.Get_Shortcut_Simple
+                 (Action => Action.Name.all,
+                  Key    => Key,
+                  Mods   => Mods);
+               if Key /= 0 then
+                  Label := Gtk_Accel_Label (Action_Menu_Item (Self).Get_Child);
+                  Label.Set_Accel (Guint (Key), Mods);
+               end if;
             end if;
 
-            Get_Style_Context (Self).Remove_Class ("nogpsaction");
+               Get_Style_Context (Self).Remove_Class ("nogpsaction");
 
          else
             Self.Set_Tooltip_Markup
-              ("Action not found: " & Escape_Text (Self.Name.all));
+              ("Action not found: " & Escape_Text (Data.Action.all));
             Get_Style_Context (Self).Add_Class ("nogpsaction");
          end if;
       end if;
@@ -1345,33 +1356,32 @@ package body GPS.Kernel.Modules.UI is
       return Action;
    end Lookup_Action;
 
-   -----------------------------
-   -- On_Activate_Action_Item --
-   -----------------------------
+   --------------------
+   -- Execute_Action --
+   --------------------
 
-   procedure On_Activate_Action_Item
-     (Item : access Gtk_Menu_Item_Record'Class)
+   procedure Execute_Action
+     (Self : not null access Gtk_Widget_Record'Class;
+      Data : Action_Proxy)
    is
-      Self : constant Action_Menu_Item := Action_Menu_Item (Item);
       Context : constant Selection_Context :=
-        Get_Current_Context (Self.Kernel);
-      Action : constant Action_Record_Access := Self.Lookup_Action;
+        Get_Current_Context (Data.Kernel);
+      Action : constant access Action_Record := Lookup_Action (Self);
    begin
-      Trace (Me, "Execute action " & Self.Name.all);
+      Trace (Me, "Execute action " & Data.Action.all);
 
       if Action = null then
-         Trace (Me, "Action not found: " & Self.Name.all);
+         Data.Kernel.Insert
+           ("Action not found: " & Data.Action.all, Mode => Error);
 
-      elsif Context /= No_Context
-        and then Filter_Matches (Action.Filter, Context)
-      then
+      elsif Filter_Matches (Action.Filter, Context) then
          --  Tests expect that using GPS.execute_action("/menu") will
          --  execute in the foreground, so we run Launch_Foreground_Command.
          --  However, when the user is using the GUI, it might make more
          --  sense to be in the background, not sure.
 
          Launch_Foreground_Command
-           (Self.Kernel,
+           (Data.Kernel,
             Create_Proxy
               (Action.Command,
                (Event            => null,
@@ -1386,44 +1396,58 @@ package body GPS.Kernel.Modules.UI is
             Destroy_On_Exit => True);
 
       elsif Get_Error_Message (Action.Filter) /= "" then
-         Insert (Self.Kernel, Get_Error_Message (Action.Filter),
+         Insert (Data.Kernel, Get_Error_Message (Action.Filter),
                  Mode => Error);
       else
-         Insert (Self.Kernel,
+         Insert (Data.Kernel,
                  -"Invalid context for this action", Mode => Error);
       end if;
-   end On_Activate_Action_Item;
+   end Execute_Action;
 
-   ----------------------------
-   -- On_Destroy_Action_Item --
-   ----------------------------
+   -----------------------------
+   -- On_Activate_Action_Item --
+   -----------------------------
 
-   procedure On_Destroy_Action_Item (Item : access Gtk_Widget_Record'Class) is
+   procedure On_Activate_Action_Item
+     (Item : access Gtk_Menu_Item_Record'Class)
+   is
       Self : constant Action_Menu_Item := Action_Menu_Item (Item);
    begin
-      On_Destroy_Menu_With_Filter (Item);
-      Free (Self.Name);
-   end On_Destroy_Action_Item;
+      Execute_Action (Self, Self.Data);
+   end On_Activate_Action_Item;
 
-   ---------------------------------
-   -- On_Destroy_Menu_With_Filter --
-   ---------------------------------
+   ------------------------------------
+   -- On_Destroy_Action_Proxy_Widget --
+   ------------------------------------
 
-   procedure On_Destroy_Menu_With_Filter
+   procedure On_Destroy_Action_Proxy_Widget
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      Data : constant access Action_Proxy := Get_Data (Self);
+   begin
+      Free (Data.Action);
+      Remove_From_Global_Proxies (Self);
+   end On_Destroy_Action_Proxy_Widget;
+
+   --------------------------------
+   -- Remove_From_Global_Proxies --
+   --------------------------------
+
+   procedure Remove_From_Global_Proxies
      (Item : access Gtk_Widget_Record'Class)
    is
-      It : Item_And_Filter;
-      C : Action_Menu_Item_Lists.Cursor := Global_Menu_Items.First;
+      It : Proxy_And_Filter;
+      C  : Proxy_Lists.Cursor := Global_Proxy_Items.First;
    begin
       while Has_Element (C) loop
          It := Element (C);
-         if It.Item = Gtk_Menu_Item (Item) then
-            Global_Menu_Items.Delete (C);
+         if Gtk_Widget (It.Proxy) = Gtk_Widget (Item) then
+            Global_Proxy_Items.Delete (C);
             exit;
          end if;
          Next (C);
       end loop;
-   end On_Destroy_Menu_With_Filter;
+   end Remove_From_Global_Proxies;
 
    -------------------
    -- Register_Menu --
@@ -1480,9 +1504,11 @@ package body GPS.Kernel.Modules.UI is
            (Self, Label => Base_Menu_Name (Full_Path));
       end if;
 
-      Self.Name := new String'(Action);
-      Self.Kernel := Kernel_Handle (Kernel);
-      Self.Optional := Optional;
+      Self.Data := (Action    => new String'(Action),
+                    Kernel    => Kernel,
+                    Optional  => Optional,
+                    Hide      => False,
+                    Looked_Up => null);
       Self.Set_Accel_Path (Accel_Path);
       Get_Style_Context (Self).Add_Class ("gpsaction");
 
@@ -1492,12 +1518,12 @@ package body GPS.Kernel.Modules.UI is
       Register_Menu
         (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
-      Global_Menu_Items.Append (Item_And_Filter'(Gtk_Menu_Item (Self), null));
+      Global_Proxy_Items.Append (Proxy_And_Filter'(Self, null));
 
       --  And now setup the dynamic behavior
 
       Self.On_Activate (On_Activate_Action_Item'Access);
-      Self.On_Destroy (On_Destroy_Action_Item'Access);
+      Self.On_Destroy (On_Destroy_Action_Proxy_Widget'Access);
 
       return Gtk_Menu_Item (Self);
    end Register_Menu;
@@ -1538,70 +1564,35 @@ package body GPS.Kernel.Modules.UI is
         (Kernel, Command, Destroy_On_Exit => False);
    end Execute_Menu;
 
-   ---------------------
-   -- Register_Button --
-   ---------------------
+   ------------------------------------
+   -- Get_Toolbar_Separator_Position --
+   ------------------------------------
 
-   procedure Register_Button
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Text    : String;
-      Command : not null access Interactive_Command'Class;
-      Image   : Gtk.Image.Gtk_Image := null;
-      Tooltip : String := "")
+   function Get_Toolbar_Separator_Position
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Id      : String) return Glib.Gint
    is
-      Button  : Gtk_Tool_Button;
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      T     : Gtk_Toolbar := Gtk_Toolbar (Toolbar);
+      Count : Gint;
+      Item  : Gtk_Tool_Item;
    begin
-      if Image = null then
-         Gtk_New (Button, null, Text);
-         --  Set_Relief (Button, Relief_None);
-      else
-         Gtk_New (Button, Gtk_Widget (Image), Text);
+      if Toolbar = null then
+         T := Get_Toolbar (Kernel);
       end if;
 
-      Set_Homogeneous (Button, False);
+      Count := T.Get_N_Items;
+      for J in 0 .. Count - 1 loop
+         Item := T.Get_Nth_Item (J);
 
-      Insert (Toolbar, Button,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build));
-
-      if Tooltip /= "" then
-         Set_Tooltip_Text (Button, Tooltip);
-      end if;
-
-      Show_All (Button);
-
-      Register_Perma_Command (Kernel, Command);
-      Command_Callback.Connect
-        (Button, Signal_Clicked, Execute_Command'Access,
-         User_Data   => (Kernel_Handle (Kernel), Command, null));
-   end Register_Button;
-
-   ---------------------
-   -- Register_Button --
-   ---------------------
-
-   procedure Register_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Stock_Id : String;
-      Command : not null access Interactive_Command'Class;
-      Tooltip  : String := "")
-   is
-      Button : Gtk_Tool_Button;
-   begin
-      Gtk_New_From_Stock (Button, Stock_Id);
-      if Tooltip /= "" then
-         Set_Tooltip_Text (Button, Tooltip);
-      end if;
-      Insert (Get_Toolbar (Kernel), Button,
-              Get_Toolbar_Separator_Position (Kernel, Before_Build) - 1);
-
-      Show_All (Button);
-
-      Register_Perma_Command (Kernel, Command);
-      Command_Callback.Connect
-        (Button, Signal_Clicked, Execute_Command'Access,
-         User_Data   => (Kernel_Handle (Kernel), Command, null));
-   end Register_Button;
+         if Item.all in Gtk_Separator_Tool_Item_Record'Class
+           and then Item.Get_Name = Id
+         then
+            return J;
+         end if;
+      end loop;
+      return -1;
+   end Get_Toolbar_Separator_Position;
 
    ---------------------
    -- Register_Button --
@@ -1610,29 +1601,23 @@ package body GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Action   : String;
-      Image   : Gtk.Image.Gtk_Image := null)
+      Stock_Id : String := "";
+      Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Position : Glib.Gint := -1;
+      Hide     : Boolean := False)
    is
-      Act : constant Action_Record_Access :=
-        Lookup_Action (Kernel, Action);
+      Button : Action_Tool_Button;
    begin
-      if Act /= null then
-         --  ??? Fragile and temporary, should not share a command
+      Gtk_New (Button, Kernel, Stock_Id => Stock_Id, Action => Action,
+               Hide => Hide);
 
-         if Image = null then
-            Register_Button
-              (Kernel,
-               Stock_Id => Act.Stock_Id.all,
-               Command  => Act.Command,
-               Tooltip  => Act.Description.all);
-         else
-            Register_Button
-              (Kernel,
-               Text     => Act.Name.all,
-               Image    => Image,
-               Command  => Act.Command,
-               Tooltip  => Act.Description.all);
-         end if;
+      if Toolbar = null then
+         Get_Toolbar (Kernel).Insert (Button, Position);
+      else
+         Toolbar.Insert (Button, Pos => Position);
       end if;
+
+      Show_All (Button);
    end Register_Button;
 
    ------------------------
@@ -2196,37 +2181,12 @@ package body GPS.Kernel.Modules.UI is
    ------------------------------
 
    procedure On_Action_Button_Clicked
-     (Button : access Gtk_Widget_Record'Class)
+     (Button : access Gtk_Tool_Button_Record'Class)
    is
       B      : constant Action_Tool_Button := Action_Tool_Button (Button);
-      Action : constant Action_Record_Access :=
-        Lookup_Action (B.Kernel, B.Action.all);
    begin
-      if Action = null then
-         B.Kernel.Insert
-           ("Command not found: '" & B.Action.all & "'",
-            Mode => Error);
-
-      else
-         Execute_Command
-           (Button,
-            Command => (Kernel  => B.Kernel,
-                        Command => Action.Command,
-                        Filter  => Action.Filter));
-      end if;
+      Execute_Action (B, B.Data);
    end On_Action_Button_Clicked;
-
-   ------------------------------
-   -- On_Action_Button_Destroy --
-   ------------------------------
-
-   procedure On_Action_Button_Destroy
-     (Button : access Gtk_Widget_Record'Class)
-   is
-      B : constant Action_Tool_Button := Action_Tool_Button (Button);
-   begin
-      GNAT.Strings.Free (B.Action);
-   end On_Action_Button_Destroy;
 
    -------------
    -- Gtk_New --
@@ -2235,62 +2195,41 @@ package body GPS.Kernel.Modules.UI is
    procedure Gtk_New
      (Button   : out Action_Tool_Button;
       Kernel   : not null access Kernel_Handle_Record'Class;
-      Stock_Id : String;
-      Action   : String)
+      Stock_Id : String := "";
+      Action   : String;
+      Optional : Boolean := False;
+      Hide     : Boolean := False)
    is
+      Act : access Action_Record;
    begin
       --  ??? Should automatically grey out when the context does not match.
       Button := new Action_Tool_Button_Record;
-      Button.Kernel := Kernel_Handle (Kernel);
-      Button.Action := new String'(Action);
-      Gtk.Tool_Button.Initialize_From_Stock (Button, Stock_Id);
-      Widget_Callback.Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked,
-         On_Action_Button_Clicked'Access);
-      Widget_Callback.Connect
-        (Button, Gtk.Widget.Signal_Destroy, On_Action_Button_Destroy'Access);
-   end Gtk_New;
+      Button.Forced_Stock := Stock_Id /= "";
+      Button.Data := (Kernel    => Kernel,
+                      Optional  => Optional,
+                      Hide      => Hide,
+                      Action    => new String'(Action),
+                      Looked_Up => null);
 
-   ----------------
-   -- Add_Button --
-   ----------------
-
-   function Add_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Action   : String;
-      Position : Glib.Gint := -1) return Gtk.Widget.Gtk_Widget
-   is
-      Button : Action_Tool_Button;
-      A : constant Action_Record_Access :=
-        Lookup_Action (Kernel, Action);
-   begin
-      if A /= null and then A.Stock_Id /= null then
-         Gtk_New (Button, Kernel, A.Stock_Id.all, Action);
-         Button.Set_Tooltip_Markup (A.Description.all);
+      if Stock_Id /= "" then
+         Initialize_From_Stock (Button, Stock_Id);
       else
-         Gtk_New (Button, Kernel, "", Action);
+         Initialize (Button, Label => Action);
       end if;
 
-      Toolbar.Insert (Button, Pos => Position);
-      return Gtk_Widget (Button);
-   end Add_Button;
+      --  The side effect is to set image, tooltip,... if the action already
+      --  exists.
+      --  If the action is unknown, or it has a filter, we will need to
+      --  monitor this button when the context changes.
 
-   ----------------
-   -- Add_Button --
-   ----------------
+      Act := Lookup_Action (Button);
+      if Act = null or else Act.Filter /= null then
+         Global_Proxy_Items.Append (Proxy_And_Filter'(Button, null));
+      end if;
 
-   procedure Add_Button
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Toolbar  : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Action   : String;
-      Position : Glib.Gint := -1)
-   is
-      Ignored : Gtk_Widget;
-      pragma Unreferenced (Ignored);
-   begin
-      Ignored := Add_Button (Kernel, Toolbar, Action, Position);
-   end Add_Button;
+      Button.On_Clicked (On_Action_Button_Clicked'Access);
+      Button.On_Destroy (On_Destroy_Action_Proxy_Widget'Access);
+   end Gtk_New;
 
    -------------
    -- Destroy --
@@ -2312,11 +2251,12 @@ package body GPS.Kernel.Modules.UI is
      (Data : Update_Menus_Data_Access) return Boolean
    is
       Max_Idle_Duration : constant Duration := 0.05;
-      A      : Item_And_Filter;
-      Action : Action_Record_Access;
+      A      : Proxy_And_Filter;
+      Action : access Action_Record;
       Start  : constant Time := Clock;
-      Tmp    : Action_Menu_Item_Lists.Cursor;
+      Tmp    : Proxy_Lists.Cursor;
       Menu_Bar : Gtk_Menu_Bar;
+      Available : Boolean;
 
       procedure Propagate_Visibility
         (Widget : not null access Gtk_Widget_Record'Class;
@@ -2380,6 +2320,7 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end Propagate_Visibility;
 
+      D : access Action_Proxy;
    begin
       loop
          if not Has_Element (Data.Current) then
@@ -2400,19 +2341,21 @@ package body GPS.Kernel.Modules.UI is
          A := Element (Data.Current);
 
          if A.Filter /= null then
-            A.Item.Set_Sensitive (Filter_Matches (A.Filter, Data.Context));
+            A.Proxy.Set_Sensitive (Filter_Matches (A.Filter, Data.Context));
          else
-            Action := Action_Menu_Item (A.Item).Lookup_Action;
+            Action := Lookup_Action (A.Proxy);
+            D := Get_Data (A.Proxy);
+
             if Action = null then
                --  The action is still unknown
-               if Action_Menu_Item (A.Item).Optional then
-                  A.Item.Hide;
+               if D.Optional then
+                  A.Proxy.Hide;
                else
-                  A.Item.Set_Sensitive (False);
+                  A.Proxy.Set_Sensitive (False);
                end if;
 
             else
-               A.Item.Show;  --  in case it was hidden earlier
+               A.Proxy.Show;  --  in case it was hidden earlier
 
                if Action.Filter = null then
                   --  The item is already active, and will remain so, so
@@ -2423,10 +2366,10 @@ package body GPS.Kernel.Modules.UI is
                   --  the policy here, but that should not happen.
 
                   Tmp := Previous (Data.Current);
-                  Global_Menu_Items.Delete (Data.Current);
+                  Global_Proxy_Items.Delete (Data.Current);
 
                   if not Has_Element (Tmp) then
-                     Data.Current := Global_Menu_Items.First;
+                     Data.Current := Global_Proxy_Items.First;
                   else
                      Data.Current := Tmp;
                   end if;
@@ -2435,8 +2378,15 @@ package body GPS.Kernel.Modules.UI is
                   --  The context caches the filter, so there is limited
                   --  cost in computing multiple times whether a given
                   --  filter matches.
-                  A.Item.Set_Sensitive
-                    (Filter_Matches (Action.Filter, Data.Context));
+
+                  Available := Filter_Matches (Action.Filter, Data.Context);
+
+                  if D.Hide and then not Available then
+                     A.Proxy.Hide;
+                  else
+                     A.Proxy.Show;
+                     A.Proxy.Set_Sensitive (Available);
+                  end if;
                end if;
             end if;
          end if;
@@ -2467,7 +2417,7 @@ package body GPS.Kernel.Modules.UI is
         (Update_Menus_And_Buttons_Chunk'Access,
          Data => new Update_Menus_Data'
            (Context => Ctxt,
-            Current => Global_Menu_Items.First),
+            Current => Global_Proxy_Items.First),
          Notify     => Destroy'Access);
    end Update_Menus_And_Buttons;
 
@@ -2515,6 +2465,57 @@ package body GPS.Kernel.Modules.UI is
          Parent      : not null access Gtk_Menu_Shell_Record'Class;
          Menu_Node   : Node);
       --  Process a <menu> node
+
+      procedure Process_Toolbar (Toolbar_Node : Node);
+      --  Process a <toolbar node>
+
+      ---------------------
+      -- Process_Toolbar --
+      ---------------------
+
+      procedure Process_Toolbar (Toolbar_Node : Node) is
+         Id : constant DOM_String := Get_Attribute (Toolbar_Node, "id");
+         Toolbar : Gtk_Toolbar;
+         N       : Node;
+         Sep     : Gtk_Separator_Tool_Item;
+         Hide    : Boolean;
+      begin
+         --  ??? Should get toolbar based on id
+
+         if Id = "main" then
+            Toolbar := Get_Toolbar (Kernel);
+         else
+            raise Program_Error with "no such toolbar: " & Id;
+         end if;
+
+         N := First_Child (Toolbar_Node);
+         while N /= null loop
+            if Node_Name (N) = "button" then
+               if Get_Attribute (N, "hide") /= "" then
+                  begin
+                     Hide := Boolean'Value (Get_Attribute (N, "hide"));
+                  exception
+                     when Constraint_Error =>
+                        Hide := False;
+                  end;
+               end if;
+
+               Register_Button
+                 (Kernel,
+                  Action   => Get_Attribute (N, "action"),
+                  Stock_Id => Get_Attribute (N, "stock"),
+                  Toolbar  => Toolbar,
+                  Hide     => Hide);
+
+            elsif Node_Name (N) = "separator" then
+               Gtk_New (Sep);
+               Sep.Set_Name (Get_Attribute (N, "id"));
+               Toolbar.Insert (Sep);
+            end if;
+
+            N := Next_Sibling (N);
+         end loop;
+      end Process_Toolbar;
 
       ------------------
       -- Process_Menu --
@@ -2610,6 +2611,8 @@ package body GPS.Kernel.Modules.UI is
       while N /= null loop
          if Node_Name (N) = "menubar" then
             Process_Menu_Bar (N);
+         elsif Node_Name (N) = "toolbar" then
+            Process_Toolbar (N);
          end if;
 
          N := Next_Sibling (N);

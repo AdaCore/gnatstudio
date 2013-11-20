@@ -1295,7 +1295,7 @@ package body Builder_Facility_Module is
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
       Pos     : constant Glib.Gint := Get_Toolbar_Separator_Position
-        (Get_Kernel, Before_Debug);
+        (Get_Kernel, null, "debug");
       Button : Gtk.Tool_Item.Gtk_Tool_Item;
 
       procedure Button_For_Target

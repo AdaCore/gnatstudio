@@ -697,19 +697,19 @@ package body Bookmark_Views is
    is
       Sep    : Gtk_Separator_Tool_Item;
    begin
-      Add_Button
-        (Kernel   => View.Kernel,
+      Register_Button
+        (View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Add_Name);
 
       Gtk_New (Sep);
       Toolbar.Insert (Sep);
 
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Rename_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Remove_Name);

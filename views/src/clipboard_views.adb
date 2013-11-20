@@ -255,11 +255,11 @@ package body Clipboard_Views is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
    begin
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Append_To_Previous_Name);
-      Add_Button
+      Register_Button
         (Kernel   => View.Kernel,
          Toolbar  => Toolbar,
          Action   => Command_Remove_Name);

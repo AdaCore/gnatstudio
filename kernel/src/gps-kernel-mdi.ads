@@ -356,12 +356,6 @@ package GPS.Kernel.MDI is
       return Gtk.Toolbar.Gtk_Toolbar;
    --  Return the main toolbar associated with the kernel
 
-   type GPS_Toolbar_Separator is (Before_Build, Before_Debug);
-
-   function Get_Toolbar_Separator_Position
-     (Handle    : access Kernel_Handle_Record'Class;
-      Separator : GPS_Toolbar_Separator) return Gint;
-   --  Get the position of the given named separator
    ---------------------
    -- Signal emission --
    ---------------------

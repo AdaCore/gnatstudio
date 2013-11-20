@@ -1353,7 +1353,8 @@ package body Browsers.Call_Graph is
      (Command : access Find_All_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle :=
+        Get_Kernel (Call_Graph_Module_Id.all);
       Entity  : General_Entity;
       Filter  : Custom_Filter;
    begin
@@ -2316,7 +2317,7 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Find all references",
          Label      => "References/Find all references to %e",
-         Action     => Command,
+         Action     => new Find_All_Refs_Command,
          Ref_Item   => "Entity called by in browser",
          Add_Before => False);
 

@@ -1068,8 +1068,10 @@ package body Project_Explorers is
      (View    : not null access Project_Explorer_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
-      Add_Button (View.Kernel, Toolbar, "reload project");
-      Add_Button (View.Kernel, Toolbar, "open Project Properties");
+      Register_Button
+        (View.Kernel, "reload project", Toolbar => Toolbar);
+      Register_Button
+        (View.Kernel, "open Project Properties", Toolbar => Toolbar);
    end Create_Toolbar;
 
    ------------------------------

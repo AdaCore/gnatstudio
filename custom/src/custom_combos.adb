@@ -36,6 +36,7 @@ with Gtk.Widget;         use Gtk.Widget;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Intl;           use GPS.Intl;
 
@@ -451,7 +452,7 @@ package body Custom_Combos is
               Gtk_Widget (GObject'(Get_Data (EntInst)));
             Tip    : constant String := Nth_Arg (Data, 3, "");
             Pos : constant Gint := Get_Toolbar_Separator_Position
-              (Kernel, Before_Build);
+              (Kernel, null, "build");
          begin
             Insert (Widget, Tip, Pos - 1);
          end;
