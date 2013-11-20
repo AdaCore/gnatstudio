@@ -335,8 +335,12 @@ package body GPS.Kernel.Modules.UI is
    --  has a filter. This is needed to dynamically deactivate menus and buttons
    --  whenever the current context changes
 
+   package Widget_Kernel_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Kernel_Handle);
+
    procedure Remove_From_Global_Proxies
-     (Item : access Gtk_Widget_Record'Class);
+     (Item   : access Gtk_Widget_Record'Class;
+      Kernel : Kernel_Handle);
    --  Called when a proxy widget or a standard widget with a custom filter is
    --  destroyed
 
@@ -1231,7 +1235,18 @@ package body GPS.Kernel.Modules.UI is
 
          if Filter /= null then
             Global_Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
-            Item.On_Destroy (Remove_From_Global_Proxies'Access);
+            Widget_Kernel_Callback.Connect
+              (Item,
+               Signal_Destroy,
+               Remove_From_Global_Proxies'Access,
+               Kernel);
+
+            --  We have modified Global_Proxy_Items: if the menu recomputer
+            --  is running, its cursors might be invalid: reset it now.
+
+            if Update_Menus_Idle_Id /= No_Source_Id then
+               Update_Menus_And_Buttons (Kernel);
+            end if;
          end if;
 
          if Item.Get_Child /= null then
@@ -1426,7 +1441,7 @@ package body GPS.Kernel.Modules.UI is
       Data : constant access Action_Proxy := Get_Data (Self);
    begin
       Free (Data.Action);
-      Remove_From_Global_Proxies (Self);
+      Remove_From_Global_Proxies (Self, Kernel_Handle (Data.Kernel));
    end On_Destroy_Action_Proxy_Widget;
 
    --------------------------------
@@ -1434,19 +1449,31 @@ package body GPS.Kernel.Modules.UI is
    --------------------------------
 
    procedure Remove_From_Global_Proxies
-     (Item : access Gtk_Widget_Record'Class)
+     (Item   : access Gtk_Widget_Record'Class;
+      Kernel : Kernel_Handle)
    is
       It : Proxy_And_Filter;
       C  : Proxy_Lists.Cursor := Global_Proxy_Items.First;
+      Did_Delete : Boolean := False;
    begin
       while Has_Element (C) loop
          It := Element (C);
          if Gtk_Widget (It.Proxy) = Gtk_Widget (Item) then
             Global_Proxy_Items.Delete (C);
+            Did_Delete := True;
             exit;
          end if;
          Next (C);
       end loop;
+
+      --  We have modified Global_Proxy_Items: if the menu recomputer
+      --  is running, its cursors might be invalid: reset it now.
+
+      if Did_Delete
+        and then Update_Menus_Idle_Id /= No_Source_Id
+      then
+         Update_Menus_And_Buttons (Kernel);
+      end if;
    end Remove_From_Global_Proxies;
 
    -------------------
@@ -1519,6 +1546,13 @@ package body GPS.Kernel.Modules.UI is
         (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
       Global_Proxy_Items.Append (Proxy_And_Filter'(Self, null));
+
+      --  We have modified Global_Proxy_Items: if the menu recomputer
+      --  is running, its cursors might be invalid: reset it now.
+
+      if Update_Menus_Idle_Id /= No_Source_Id then
+         Update_Menus_And_Buttons (Kernel);
+      end if;
 
       --  And now setup the dynamic behavior
 
@@ -2225,6 +2259,13 @@ package body GPS.Kernel.Modules.UI is
       Act := Lookup_Action (Button);
       if Act = null or else Act.Filter /= null then
          Global_Proxy_Items.Append (Proxy_And_Filter'(Button, null));
+
+         --  We have modified Global_Proxy_Items: if the menu recomputer
+         --  is running, its cursors might be invalid: reset it now.
+
+         if Update_Menus_Idle_Id /= No_Source_Id then
+            Update_Menus_And_Buttons (Kernel);
+         end if;
       end if;
 
       Button.On_Clicked (On_Action_Button_Clicked'Access);
@@ -2251,7 +2292,7 @@ package body GPS.Kernel.Modules.UI is
      (Data : Update_Menus_Data_Access) return Boolean
    is
       Max_Idle_Duration : constant Duration := 0.05;
-      A      : Proxy_And_Filter;
+      A, Tmp_Elem : Proxy_And_Filter;
       Action : access Action_Record;
       Start  : constant Time := Clock;
       Tmp    : Proxy_Lists.Cursor;
@@ -2330,6 +2371,7 @@ package body GPS.Kernel.Modules.UI is
               (Get_Kernel (Data.Context).Main_Window).Menu_Bar;
             Propagate_Visibility (Menu_Bar, Menu_Bar);
 
+            Update_Menus_Idle_Id := No_Source_Id;
             return False;
          end if;
 
@@ -2366,12 +2408,25 @@ package body GPS.Kernel.Modules.UI is
                   --  the policy here, but that should not happen.
 
                   Tmp := Previous (Data.Current);
-                  Global_Proxy_Items.Delete (Data.Current);
 
-                  if not Has_Element (Tmp) then
-                     Data.Current := Global_Proxy_Items.First;
-                  else
+                  --  Do this so that we don't hold a cursor on a container
+                  --  which is being modified.
+
+                  if Has_Element (Tmp) then
+                     Tmp_Elem := Element (Tmp);
+
+                     Global_Proxy_Items.Delete (Data.Current);
+
+                     Tmp := Global_Proxy_Items.First;
+                     while Has_Element (Tmp)
+                       and then Element (Tmp) /= Tmp_Elem
+                     loop
+                        Next (Tmp);
+                     end loop;
                      Data.Current := Tmp;
+                  else
+                     Global_Proxy_Items.Delete (Data.Current);
+                     Data.Current := Global_Proxy_Items.First;
                   end if;
 
                else
