@@ -1393,7 +1393,7 @@ package body GPS.Kernel.Modules.UI is
                 Context          => Context,
                 Synchronous      => False,
                 Dir              => No_File,
-                Via_Menu         => True,
+                Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
                 Args             => null,
                 Label            => null,
                 Repeat_Count     => 1,

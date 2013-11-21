@@ -174,6 +174,16 @@ package body Navigation_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for Navigate->Previous Subprogram menu
 
+   type Has_Forward_Navigation is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Forward_Navigation;
+      Context : Selection_Context) return Boolean;
+
+   type Has_Back_Navigation is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Back_Navigation;
+      Context : Selection_Context) return Boolean;
+
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -795,6 +805,38 @@ package body Navigation_Module is
             Command => Nth_Arg (Data, 1)));
    end Command_Handler;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Back_Navigation;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+      Module : constant Navigation_Module :=
+                 Navigation_Module (Navigation_Module_ID);
+   begin
+      return Module.Markers /= null
+        and then Module.Current_Marker > Module.Markers'First;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Forward_Navigation;
+      Context : Selection_Context) return Boolean
+   is
+      Module : constant Navigation_Module :=
+                 Navigation_Module (Navigation_Module_ID);
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Module.Markers /= null
+        and then Module.Current_Marker < Module.Last_Marker;
+   end Filter_Matches_Primitive;
+
    -------------
    -- Execute --
    -------------
@@ -1077,9 +1119,8 @@ package body Navigation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Src_Action_Context : constant Action_Filter :=
-                             Lookup_Filter (Kernel, "Source editor");
-      --  Memory is never freed, but this is needed for the whole life of
-      --  the application.
+        Lookup_Filter (Kernel, "Source editor");
+      Filter : Action_Filter;
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
 
@@ -1145,15 +1186,21 @@ package body Navigation_Module is
          Accel_Key  => GDK_greater,
          Accel_Mods => Primary_Mod_Mask);
 
+      Filter := new Has_Back_Navigation;
+      Kernel.Register_Filter (Filter, "has back navigation");
       Register_Action
         (Kernel, "backward locations history", new Back_Command,
          Description => -"Goto previous location",
+         Filter      => Filter,
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-back");
 
+      Filter := new Has_Forward_Navigation;
+      Kernel.Register_Filter (Filter, "has forward navigation");
       Register_Action
         (Kernel, "forward locations history", new Forward_Command,
          Description => -"Goto next location",
+         Filter      => Filter,
          Category    => -"Editor",
          Stock_Id    => "gps-navigate-forward");
 
