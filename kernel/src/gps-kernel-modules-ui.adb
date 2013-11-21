@@ -2250,7 +2250,7 @@ package body GPS.Kernel.Modules.UI is
       if Stock_Id /= "" then
          Initialize_From_Stock (Button, Stock_Id);
       else
-         Initialize (Button, Label => Action);
+         Initialize (Button, Label => "");
       end if;
 
       Get_Style_Context (Button).Add_Class ("gpsaction");
@@ -2455,6 +2455,7 @@ package body GPS.Kernel.Modules.UI is
       Context : GPS.Kernel.Selection_Context := No_Context)
    is
       Ctxt : Selection_Context := Context;
+      Data : Update_Menus_Data_Access;
    begin
       if Ctxt = No_Context then
          Ctxt := Get_Current_Context (Kernel);
@@ -2464,12 +2465,21 @@ package body GPS.Kernel.Modules.UI is
          Remove (Update_Menus_Idle_Id);
       end if;
 
-      Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
-        (Update_Menus_And_Buttons_Chunk'Access,
-         Data => new Update_Menus_Data'
-           (Context => Ctxt,
-            Current => Global_Proxy_Items.First),
-         Notify     => Destroy'Access);
+      Data := new Update_Menus_Data'
+        (Context => Ctxt,
+         Current => Global_Proxy_Items.First);
+
+      --  Do a first immediate pass, since it might look nicer. This is also
+      --  needed on startup to avoid flickering the toolbars
+
+      if Update_Menus_And_Buttons_Chunk (Data) then
+         Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
+           (Update_Menus_And_Buttons_Chunk'Access,
+            Data       => Data,
+            Notify     => Destroy'Access);
+      else
+         Destroy (Data);
+      end if;
    end Update_Menus_And_Buttons;
 
    ------------------------

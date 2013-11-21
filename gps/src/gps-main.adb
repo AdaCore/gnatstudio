@@ -2109,6 +2109,13 @@ procedure GPS.Main is
 
       Load_Preferences (GPS_Main.Kernel);
 
+      --  All/most actions are now loaded, we can reset the toolbars.
+      --  This order prevents some flickering in the toolbar (since otherwise
+      --  we would first be displaying empty buttons until their icon is
+      --  loaded).
+
+      Update_Menus_And_Buttons (GPS_Main.Kernel);
+
       --  Load the custom keys last, so that they override everything else set
       --  so far.
       KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
