@@ -1295,7 +1295,7 @@ package body Builder_Facility_Module is
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
       Pos     : constant Glib.Gint := Get_Toolbar_Separator_Position
-        (Get_Kernel, null, "debug");
+        (Get_Kernel, null, "build") + 1;
       Button : Gtk.Tool_Item.Gtk_Tool_Item;
 
       procedure Button_For_Target
@@ -1363,7 +1363,7 @@ package body Builder_Facility_Module is
          end if;
 
          Builder_Module_ID.Buttons.Prepend (Button);
-         Insert (Toolbar => Toolbar, Item    => Button, Pos => Pos);
+         Insert (Toolbar => Toolbar, Item => Button, Pos => Pos);
          Show_All (Button);
 
       end Button_For_Target;
