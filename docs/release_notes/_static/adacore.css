@@ -42,7 +42,7 @@ div.bodywrapper {
 
 div.sphinxsidebar {
    width: auto;
-   max-width: 400px;
+   max-width: 210px;
 }
 .toctree-l1 a, .toctree-l2 a, .toctree-l3 a,
 .toctree-l1 a tt, .toctree-l2 a tt, .toctree-l3 a tt
