@@ -278,10 +278,6 @@ package body GPS.Kernel.Modules.UI is
       Data : Action_Proxy);
    --  Execute the action associated with the proxy
 
-   procedure On_Destroy_Action_Proxy_Widget
-     (Self : access Gtk_Widget_Record'Class);
-   --  Called when a widget that proxies an action is destroyed.
-
    ------------------------
    -- Action_Tool_Button --
    ------------------------
@@ -325,7 +321,7 @@ package body GPS.Kernel.Modules.UI is
 
    type Proxy_And_Filter is record
       Proxy  : access Gtk_Widget_Record'Class;
-      Filter : Action_Filter;
+      Filter : access Action_Filter_Record'Class;
    end record;
    package Proxy_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Proxy_And_Filter);
@@ -338,11 +334,17 @@ package body GPS.Kernel.Modules.UI is
    package Widget_Kernel_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Kernel_Handle);
 
-   procedure Remove_From_Global_Proxies
+   procedure Add_To_Global_Proxies
+     (Item   : not null access Gtk_Widget_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Filter : access Action_Filter_Record'Class);
+   --  Store items when they might need to be filtered when the context changes
+
+   procedure On_Delete_Proxy
      (Item   : access Gtk_Widget_Record'Class;
       Kernel : Kernel_Handle);
-   --  Called when a proxy widget or a standard widget with a custom filter is
-   --  destroyed
+   --  Called when a proxied item is deleted. This frees some data from
+   --  the proxy's data, so must only be called when the item is destroyed.
 
    type Update_Menus_Data is record
       Context : Selection_Context;
@@ -1234,19 +1236,7 @@ package body GPS.Kernel.Modules.UI is
          Item.Show_All;
 
          if Filter /= null then
-            Global_Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
-            Widget_Kernel_Callback.Connect
-              (Item,
-               Signal_Destroy,
-               Remove_From_Global_Proxies'Access,
-               Kernel);
-
-            --  We have modified Global_Proxy_Items: if the menu recomputer
-            --  is running, its cursors might be invalid: reset it now.
-
-            if Update_Menus_Idle_Id /= No_Source_Id then
-               Update_Menus_And_Buttons (Kernel);
-            end if;
+            Add_To_Global_Proxies (Item, Kernel, Filter);
          end if;
 
          if Item.Get_Child /= null then
@@ -1431,50 +1421,63 @@ package body GPS.Kernel.Modules.UI is
       Execute_Action (Self, Self.Data);
    end On_Activate_Action_Item;
 
-   ------------------------------------
-   -- On_Destroy_Action_Proxy_Widget --
-   ------------------------------------
+   ---------------------------
+   -- Add_To_Global_Proxies --
+   ---------------------------
 
-   procedure On_Destroy_Action_Proxy_Widget
-     (Self : access Gtk_Widget_Record'Class)
+   procedure Add_To_Global_Proxies
+     (Item   : not null access Gtk_Widget_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Filter : access Action_Filter_Record'Class)
    is
-      Data : constant access Action_Proxy := Get_Data (Self);
    begin
-      Free (Data.Action);
-      Remove_From_Global_Proxies (Self, Kernel_Handle (Data.Kernel));
-   end On_Destroy_Action_Proxy_Widget;
+      Global_Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
+      Widget_Kernel_Callback.Connect
+        (Item,
+         Signal_Destroy,
+         On_Delete_Proxy'Access,
+         Kernel);
 
-   --------------------------------
-   -- Remove_From_Global_Proxies --
-   --------------------------------
+      --  If the background updating of menus was taking place, we need to
+      --  restart it since it's iterators are now invalid.
 
-   procedure Remove_From_Global_Proxies
+      if Update_Menus_Idle_Id /= No_Source_Id then
+         Update_Menus_And_Buttons (Kernel);
+      end if;
+   end Add_To_Global_Proxies;
+
+   ---------------------
+   -- On_Delete_Proxy --
+   ---------------------
+
+   procedure On_Delete_Proxy
      (Item   : access Gtk_Widget_Record'Class;
       Kernel : Kernel_Handle)
    is
       It : Proxy_And_Filter;
       C  : Proxy_Lists.Cursor := Global_Proxy_Items.First;
-      Did_Delete : Boolean := False;
+      Data : constant access Action_Proxy := Get_Data (Item);
    begin
+      if Data /= null then
+         Free (Data.Action);
+      end if;
+
       while Has_Element (C) loop
          It := Element (C);
          if Gtk_Widget (It.Proxy) = Gtk_Widget (Item) then
             Global_Proxy_Items.Delete (C);
-            Did_Delete := True;
+
+            --  Update cursor in the background updating, if needed
+
+            if Update_Menus_Idle_Id /= No_Source_Id then
+               Update_Menus_And_Buttons (Kernel);
+            end if;
+
             exit;
          end if;
          Next (C);
       end loop;
-
-      --  We have modified Global_Proxy_Items: if the menu recomputer
-      --  is running, its cursors might be invalid: reset it now.
-
-      if Did_Delete
-        and then Update_Menus_Idle_Id /= No_Source_Id
-      then
-         Update_Menus_And_Buttons (Kernel);
-      end if;
-   end Remove_From_Global_Proxies;
+   end On_Delete_Proxy;
 
    -------------------
    -- Register_Menu --
@@ -1545,7 +1548,7 @@ package body GPS.Kernel.Modules.UI is
       Register_Menu
         (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
 
-      Global_Proxy_Items.Append (Proxy_And_Filter'(Self, null));
+      Add_To_Global_Proxies (Self, Kernel, null);
 
       --  We have modified Global_Proxy_Items: if the menu recomputer
       --  is running, its cursors might be invalid: reset it now.
@@ -1557,7 +1560,6 @@ package body GPS.Kernel.Modules.UI is
       --  And now setup the dynamic behavior
 
       Self.On_Activate (On_Activate_Action_Item'Access);
-      Self.On_Destroy (On_Destroy_Action_Proxy_Widget'Access);
 
       return Gtk_Menu_Item (Self);
    end Register_Menu;
@@ -2251,6 +2253,8 @@ package body GPS.Kernel.Modules.UI is
          Initialize (Button, Label => Action);
       end if;
 
+      Get_Style_Context (Button).Add_Class ("gpsaction");
+
       --  The side effect is to set image, tooltip,... if the action already
       --  exists.
       --  If the action is unknown, or it has a filter, we will need to
@@ -2258,18 +2262,10 @@ package body GPS.Kernel.Modules.UI is
 
       Act := Lookup_Action (Button);
       if Act = null or else Act.Filter /= null then
-         Global_Proxy_Items.Append (Proxy_And_Filter'(Button, null));
-
-         --  We have modified Global_Proxy_Items: if the menu recomputer
-         --  is running, its cursors might be invalid: reset it now.
-
-         if Update_Menus_Idle_Id /= No_Source_Id then
-            Update_Menus_And_Buttons (Kernel);
-         end if;
+         Add_To_Global_Proxies (Button, Kernel, null);
       end if;
 
       Button.On_Clicked (On_Action_Button_Clicked'Access);
-      Button.On_Destroy (On_Destroy_Action_Proxy_Widget'Access);
    end Gtk_New;
 
    -------------
