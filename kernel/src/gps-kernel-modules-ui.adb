@@ -1600,18 +1600,20 @@ package body GPS.Kernel.Modules.UI is
         (Kernel, Command, Destroy_On_Exit => False);
    end Execute_Menu;
 
-   ------------------------------------
-   -- Get_Toolbar_Separator_Position --
-   ------------------------------------
+   -------------------------
+   -- Get_Toolbar_Section --
+   -------------------------
 
-   function Get_Toolbar_Separator_Position
+   function Get_Toolbar_Section
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Id      : String) return Glib.Gint
+      Section : String;
+      Last    : Boolean := True) return Glib.Gint
    is
       T     : Gtk_Toolbar := Gtk_Toolbar (Toolbar);
       Count : Gint;
       Item  : Gtk_Tool_Item;
+      In_Section : Boolean := False;
    begin
       if Toolbar = null then
          T := Get_Toolbar (Kernel);
@@ -1621,14 +1623,22 @@ package body GPS.Kernel.Modules.UI is
       for J in 0 .. Count - 1 loop
          Item := T.Get_Nth_Item (J);
 
-         if Item.all in Gtk_Separator_Tool_Item_Record'Class
-           and then Item.Get_Name = Id
-         then
-            return J;
+         if Item.all in Gtk_Separator_Tool_Item_Record'Class then
+            if In_Section then
+               --  We know that Last was set to True, necessarily
+               return J;
+
+            elsif Item.Get_Name = Section then
+               if not Last then
+                  return J + 1;  --  first item in following section
+               else
+                  In_Section := True;
+               end if;
+            end if;
          end if;
       end loop;
       return -1;
-   end Get_Toolbar_Separator_Position;
+   end Get_Toolbar_Section;
 
    ---------------------
    -- Register_Button --
@@ -2250,7 +2260,7 @@ package body GPS.Kernel.Modules.UI is
       if Stock_Id /= "" then
          Initialize_From_Stock (Button, Stock_Id);
       else
-         Initialize (Button, Label => "");
+         Initialize (Button, Label => Action);
       end if;
 
       Get_Style_Context (Button).Add_Class ("gpsaction");
@@ -2293,6 +2303,7 @@ package body GPS.Kernel.Modules.UI is
       Start  : constant Time := Clock;
       Tmp    : Proxy_Lists.Cursor;
       Menu_Bar : Gtk_Menu_Bar;
+      Tool_Bar : Gtk_Toolbar;
       Available : Boolean;
 
       procedure Propagate_Visibility
@@ -2303,6 +2314,10 @@ package body GPS.Kernel.Modules.UI is
       --  Widget's visibility and sensitivity will be updated based on the
       --  list of children of Parent.
 
+      procedure Cleanup_Toolbar_Separators
+        (Toolbar : not null access Gtk_Toolbar_Record'Class);
+      --  Cleanup separators in a toolbar
+
       procedure Propagate_Visibility
         (Widget : not null access Gtk_Widget_Record'Class;
          Parent : not null access Gtk_Container_Record'Class)
@@ -2312,6 +2327,7 @@ package body GPS.Kernel.Modules.UI is
          Iter     : Widget_List.Glist := Children;
          S, V : Boolean := False;
          W    : Gtk_Widget;
+         Last_Visible_Sep : Gtk_Widget;
          Prev_Is_Sep : Boolean := True;
       begin
          while Iter /= Null_List loop
@@ -2324,6 +2340,9 @@ package body GPS.Kernel.Modules.UI is
             if W.all in Gtk_Separator_Menu_Item_Record'Class then
                if Prev_Is_Sep then
                   W.Hide;
+               else
+                  W.Show;
+                  Last_Visible_Sep := W;
                end if;
                Prev_Is_Sep := True;
 
@@ -2335,7 +2354,7 @@ package body GPS.Kernel.Modules.UI is
                     (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
                end if;
 
-               Prev_Is_Sep := not W.Get_Visible;
+               Prev_Is_Sep := Prev_Is_Sep and then not W.Get_Visible;
                S := S or else W.Get_Sensitive;
                V := V or else W.Get_Visible;  --  do not check parents
             end if;
@@ -2343,8 +2362,8 @@ package body GPS.Kernel.Modules.UI is
             Iter := Next (Iter);
          end loop;
 
-         if Prev_Is_Sep and then W /= null then
-            W.Hide;
+         if Prev_Is_Sep and then Last_Visible_Sep /= null then
+            Last_Visible_Sep.Hide;
          end if;
 
          Widget_List.Free (Children);
@@ -2357,6 +2376,36 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end Propagate_Visibility;
 
+      procedure Cleanup_Toolbar_Separators
+        (Toolbar : not null access Gtk_Toolbar_Record'Class)
+      is
+         Count       : constant Gint := Toolbar.Get_N_Items;
+         Prev_Is_Sep : Boolean := True;
+         Item        : Gtk_Tool_Item;
+         Last_Visible_Sep : Gint := -1;
+      begin
+         for C in 0 .. Count - 1 loop
+            Item := Toolbar.Get_Nth_Item (C);
+
+            if Item.all in Gtk_Separator_Tool_Item_Record'Class then
+               if Prev_Is_Sep then
+                  Item.Hide;
+               else
+                  Item.Show;
+                  Last_Visible_Sep := C;
+               end if;
+               Prev_Is_Sep := True;
+
+            else
+               Prev_Is_Sep := Prev_Is_Sep and then not Item.Get_Visible;
+            end if;
+         end loop;
+
+         if Prev_Is_Sep and then Last_Visible_Sep /= -1 then
+            Toolbar.Get_Nth_Item (Last_Visible_Sep).Hide;
+         end if;
+      end Cleanup_Toolbar_Separators;
+
       D : access Action_Proxy;
    begin
       loop
@@ -2366,6 +2415,9 @@ package body GPS.Kernel.Modules.UI is
             Menu_Bar := GPS_Window
               (Get_Kernel (Data.Context).Main_Window).Menu_Bar;
             Propagate_Visibility (Menu_Bar, Menu_Bar);
+
+            Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
+            Cleanup_Toolbar_Separators (Tool_Bar);
 
             Update_Menus_Idle_Id := No_Source_Id;
             return False;

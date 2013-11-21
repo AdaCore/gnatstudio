@@ -440,12 +440,14 @@ package GPS.Kernel.Modules.UI is
    --  The toolbar defaults to the global toolbar in GPS.
    --  The position can be computed with Get_Toolbar_Separator_Position.
 
-   function Get_Toolbar_Separator_Position
+   function Get_Toolbar_Section
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Id      : String) return Glib.Gint;
-   --  Return the position of a given separator from its id.
-   --  It defaults to the main toolbar.
+      Section : String;
+      Last    : Boolean := True) return Glib.Gint;
+   --  Return the first or last item position in a given section of the
+   --  toolbar. A toolbar starts on the first item after the separator with
+   --  the name of the section, and ends just before the next separator.
 
    -------------------------
    -- Drag'n'drop support --

@@ -375,7 +375,6 @@ package body GPS.Main_Window is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Win   : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       P     : constant Preference := Get_Pref (Data);
       Dead   : Boolean;
       pragma Unreferenced (Dead);
@@ -446,26 +445,18 @@ package body GPS.Main_Window is
       then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Text_Only =>
-            Win.Toolbar_Box.Set_Child_Visible (True);
-            Win.Toolbar_Box.Show_All;
             Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
             Get_Toolbar (Kernel).Set_Style (Toolbar_Text);
 
          when Text_And_Icons =>
-            Win.Toolbar_Box.Set_Child_Visible (True);
-            Win.Toolbar_Box.Show_All;
             Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
             Get_Toolbar (Kernel).Set_Style (Toolbar_Both);
 
          when Small_Icons =>
-            Win.Toolbar_Box.Set_Child_Visible (True);
-            Win.Toolbar_Box.Show_All;
             Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
             Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
 
          when Large_Icons =>
-            Win.Toolbar_Box.Set_Child_Visible (True);
-            Win.Toolbar_Box.Show_All;
             Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Large_Toolbar);
             Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
          end case;

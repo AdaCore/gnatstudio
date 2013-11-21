@@ -15,6 +15,9 @@
         The label might include an underscore to indicate the key used to quickly
            select it once the menu is opened.
         Keyshortcuts and icons are provided by the GPS action itself.
+
+        In a toolbar, separators can have an id to mark sections. A named section
+        starts after the separator with that name.
    -->
    <menubar>
       <menu label='_File'>
@@ -441,5 +444,6 @@
       <button action="debug finish" hide='true'/>
       <button action="debug up" hide='true'/>
       <button action="debug down" hide='true'/>
+      <separator id='user'/>
    </toolbar>
 </GPS>
