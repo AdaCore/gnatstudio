@@ -1691,7 +1691,7 @@ package body Project_Viewers is
          null, -"Projects");
       Register_Contextual_Menu
         (Kernel, "Project/Edit source file",
-         Action => Command,
+         Action => new Edit_Project_Source_Command,
          Filter => Filter);
 
       Command := new Project_Dependency_Wizard_Command;
