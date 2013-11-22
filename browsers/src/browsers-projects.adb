@@ -347,7 +347,6 @@ package body Browsers.Projects is
       Item_Was_Present : Boolean;
    begin
       Trace (Me, "Examine_Project_Hierarchy for " & Project.Name);
-      Push_State (Kernel, Busy);
 
       Src := Find_Project (Browser, Project.Name);
       Item_Was_Present := Src /= null;
@@ -373,13 +372,6 @@ package body Browsers.Projects is
 
       Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
-
-      Pop_State (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel);
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -390,12 +382,10 @@ package body Browsers.Projects is
      (Browser : access Project_Browser_Record'Class;
       Project : Project_Type)
    is
-      Kernel    : constant Kernel_Handle := Get_Kernel (Browser);
       Src, Dest : Browser_Project_Vertex_Access;
       Iter      : Project_Iterator;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
-      Push_State (Kernel, Busy);
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
       Set_Parents_Shown (Dest, True);
@@ -416,12 +406,6 @@ package body Browsers.Projects is
 
       Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
-      Pop_State (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel);
    end Examine_Ancestor_Project_Hierarchy;
 
    ------------------

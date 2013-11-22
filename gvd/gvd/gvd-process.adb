@@ -59,7 +59,6 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Main_Window;            use GPS.Main_Window;
-with GUI_Utils;                  use GUI_Utils;
 with GVD.Assembly_View;          use GVD.Assembly_View;
 with GVD.Call_Stack;             use GVD.Call_Stack;
 with GVD.Canvas;                 use GVD.Canvas;
@@ -1007,7 +1006,6 @@ package body GVD.Process is
       Widget  : Gtk_Menu_Item;
 
    begin
-      Set_Busy (Process, True);
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
 
       --  Destroying the console should kill the debugger
@@ -1101,13 +1099,11 @@ package body GVD.Process is
       Raise_Child
         (Find_MDI_Child (Get_MDI (Window.Kernel), Process.Debugger_Text));
 
-      Set_Busy (Process, False);
       Success := True;
 
    exception
       when Process_Died =>
          GNATCOLL.Traces.Trace (Me, "could not launch the debugger");
-         Set_Busy (Process, False);
          Buttons :=
            Message_Dialog
              (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
@@ -1124,7 +1120,6 @@ package body GVD.Process is
          --  Do not display a dialog here since the Spawn procedure displays
          --  a dialog before raising Spawn_Error.
 
-         Set_Busy (Process, False);
          Success := False;
    end Configure;
 
@@ -1218,7 +1213,6 @@ package body GVD.Process is
       end if;
 
       Process.Exiting := True;
-      Push_State (Kernel, Busy);
 
       --  Save the breakpoints if needed
 
@@ -1266,10 +1260,6 @@ package body GVD.Process is
       if Process.Debugger /= null
         and then Get_Process (Process.Debugger) /= null
       then
-         if Command_In_Process (Get_Process (Process.Debugger)) then
-            Set_Busy (Process, False);
-         end if;
-
          Close (Process.Debugger);
       end if;
 
@@ -1301,8 +1291,6 @@ package body GVD.Process is
       if Get_Debugger_List (Kernel) = null then
          Debug_Terminate (Kernel);
       end if;
-
-      Pop_State (Kernel);
    end Close_Debugger;
 
    ---------------------------
@@ -1350,19 +1338,12 @@ package body GVD.Process is
                return;
             end if;
          end;
-
-      else
-         Set_Busy (Debugger);
       end if;
 
       Process_Graph_Cmd (Debugger, Command);
 
       if Mode in Visible_Command and then not Busy then
          Display_Prompt (Debugger.Debugger);
-      end if;
-
-      if not Busy then
-         Set_Busy (Debugger, False);
       end if;
    end Process_Graph_Command;
 
@@ -1681,24 +1662,6 @@ package body GVD.Process is
         (Get_Current_Debugger (GPS_Window (Main_Window).Kernel));
    end Get_Current_Process;
 
-   --------------
-   -- Set_Busy --
-   --------------
-
-   procedure Set_Busy
-     (Debugger      : access Visual_Debugger_Record;
-      Busy          : Boolean := True;
-      Force_Refresh : Boolean := False) is
-   begin
-      Set_Busy_Cursor (Get_Window (Debugger.Window), Busy, Force_Refresh);
-
-      if Busy then
-         Push_State (Get_Kernel (Debugger), Processing);
-      else
-         Pop_State (Get_Kernel (Debugger));
-      end if;
-   end Set_Busy;
-
    -------------
    -- Get_Num --
    -------------
@@ -1824,8 +1787,6 @@ package body GVD.Process is
       End_Of_Exec : Natural;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       --  Switch to the "Debug" perspective if available
       Load_Perspective (Kernel, "Debug");
 
@@ -1913,7 +1874,6 @@ package body GVD.Process is
 
          if not Success then
             Close_Debugger (Process);
-            Pop_State (Kernel_Handle (Kernel));
             return null;
          end if;
       end;
@@ -1944,13 +1904,11 @@ package body GVD.Process is
         (Process, Debugger_State_Changed_Hook, Debug_Available);
       Run_Debugger_Hook (Process, Debugger_Started_Hook);
 
-      Pop_State (Kernel_Handle (Kernel));
       return Process;
 
    exception
       when E : others =>
          GNATCOLL.Traces.Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
          return Process;
    end Spawn;
 

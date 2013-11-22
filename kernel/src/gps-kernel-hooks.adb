@@ -478,7 +478,7 @@ package body GPS.Kernel.Hooks is
             Args : aliased Hooks_Data'Class :=
                      Info.Parameters_Type.From_Data (Data);
          begin
-            Run_Hook (Kernel, Name, Args'Unchecked_Access, Set_Busy => True);
+            Run_Hook (Kernel, Name, Args'Unchecked_Access);
             Destroy (Args);
          end;
       end if;
@@ -532,11 +532,11 @@ package body GPS.Kernel.Hooks is
             if Command = "run" or else Command = "run_until_success" then
                Set_Return_Value
                  (Data, Run_Hook_Until_Success
-                    (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+                    (Kernel, Name, Args'Unchecked_Access));
             else
                Set_Return_Value
                  (Data, Run_Hook_Until_Failure
-                    (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+                    (Kernel, Name, Args'Unchecked_Access));
             end if;
             Destroy (Args);
          end;
@@ -587,7 +587,7 @@ package body GPS.Kernel.Hooks is
          begin
             Set_Return_Value
               (Data, Run_Hook_Until_Not_Empty
-                 (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+                 (Kernel, Name, Args'Unchecked_Access));
             Destroy (Args);
          end;
       end if;
@@ -617,7 +617,7 @@ package body GPS.Kernel.Hooks is
          begin
             Set_Return_Value
               (Data, Run_Hook_Until_Not_Empty
-                 (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+                 (Kernel, Name, Args'Unchecked_Access));
             Destroy (Args);
          end;
       end if;
@@ -672,7 +672,7 @@ package body GPS.Kernel.Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       Assert (Me, Command = "run", "Invalid command: " & Command);
-      Run_Hook (Kernel, Name, Set_Busy => True);
+      Run_Hook (Kernel, Name);
    end Command_Handler_No_Args;
 
    ---------------------------
@@ -1172,8 +1172,7 @@ package body GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : Hook_Name;
-      Set_Busy : Boolean := True)
+      Hook     : Hook_Name)
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1183,10 +1182,6 @@ package body GPS.Kernel.Hooks is
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -1200,13 +1195,10 @@ package body GPS.Kernel.Hooks is
                     & " for function: " & To_String (F.Name));
             Execute (Function_No_Args_Access (F.Func).all, Kernel);
          end loop;
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Run_Hook;
 
    --------------
@@ -1216,8 +1208,7 @@ package body GPS.Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True)
+      Data     : access Hooks_Data'Class)
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1229,10 +1220,6 @@ package body GPS.Kernel.Hooks is
          Insert (Kernel, -"No such hook: " & To_String (Hook));
 
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
 
          --  Unroll Info.Funcs into an array, so that it is safe for
@@ -1277,13 +1264,10 @@ package body GPS.Kernel.Hooks is
          end;
 
          Free (Data.Data);
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Run_Hook;
 
    ----------------------------
@@ -1293,8 +1277,7 @@ package body GPS.Kernel.Hooks is
    function Run_Hook_Until_Success
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Boolean
+      Data     : access Hooks_Data'Class) return Boolean
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1305,10 +1288,6 @@ package body GPS.Kernel.Hooks is
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -1326,10 +1305,6 @@ package body GPS.Kernel.Hooks is
          end loop;
 
          Free (Data.Data);
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
       return Tmp;
 
@@ -1346,8 +1321,7 @@ package body GPS.Kernel.Hooks is
    function Run_Hook_Until_Failure
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Boolean
+      Data     : access Hooks_Data'Class) return Boolean
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1358,10 +1332,6 @@ package body GPS.Kernel.Hooks is
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -1379,10 +1349,6 @@ package body GPS.Kernel.Hooks is
          end loop;
 
          Free (Data.Data);
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
 
       return Tmp;
@@ -1400,8 +1366,7 @@ package body GPS.Kernel.Hooks is
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return String
+      Data     : access Hooks_Data'Class) return String
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1411,10 +1376,6 @@ package body GPS.Kernel.Hooks is
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -1431,20 +1392,13 @@ package body GPS.Kernel.Hooks is
                   Kernel, Data);
             begin
                if Tmp /= "" then
-                  if Set_Busy then
-                     Pop_State (Kernel_Handle (Kernel));
-                     Free (Data.Data);
-                     return Tmp;
-                  end if;
+                  Free (Data.Data);
+                  return Tmp;
                end if;
             end;
          end loop;
 
          Free (Data.Data);
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
       return "";
 
@@ -1461,8 +1415,7 @@ package body GPS.Kernel.Hooks is
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Any_Type
+      Data     : access Hooks_Data'Class) return Any_Type
    is
       Info : constant Hook_Description_Access :=
                Hook_Description_Access (Get (Kernel.Hooks, Hook));
@@ -1472,10 +1425,6 @@ package body GPS.Kernel.Hooks is
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
       else
-         if Set_Busy then
-            Push_State (Kernel_Handle (Kernel), Busy);
-         end if;
-
          Trace (Me, "Run_Hook: " & To_String (Hook));
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -1493,20 +1442,13 @@ package body GPS.Kernel.Hooks is
                   Kernel, Data);
             begin
                if Tmp /= Empty_Any_Type then
-                  if Set_Busy then
-                     Pop_State (Kernel_Handle (Kernel));
-                     Free (Data.Data);
-                     return Tmp;
-                  end if;
+                  Free (Data.Data);
+                  return Tmp;
                end if;
             end;
          end loop;
 
          Free (Data.Data);
-
-         if Set_Busy then
-            Pop_State (Kernel_Handle (Kernel));
-         end if;
       end if;
       return Empty_Any_Type;
 

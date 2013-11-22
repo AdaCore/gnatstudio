@@ -58,11 +58,8 @@ with GVD.Types;               use GVD.Types;
 with GVD.Views;               use GVD.Views;
 with GVD_Module;              use GVD_Module;
 with String_Utils;            use String_Utils;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 
 package body GVD.Assembly_View is
-   Me : constant Trace_Handle := Create ("ASSEMBLY");
-
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
    type Cache_Data is record
@@ -691,10 +688,6 @@ package body GVD.Assembly_View is
       if View.Current_Range /= null
         and then Assembly_Range_Size.Get_Pref /= 0
       then
-         Set_Busy
-           (Get_Process (View), True,
-            Force_Refresh => True);
-
          if Down then
             declare
                Addr : constant Address_Type :=
@@ -719,8 +712,6 @@ package body GVD.Assembly_View is
          end if;
 
          Highlight (View);
-
-         Set_Busy (Get_Process (View), False);
       end if;
    end Meta_Scroll;
 
@@ -835,8 +826,6 @@ package body GVD.Assembly_View is
       if Start_In_Range and then End_In_Range then
          return;
       end if;
-
-      Set_Busy (Process, True);
 
       --  Should we prepend to the current buffer ?
       if not Start_In_Range and then End_In_Range then
@@ -958,12 +947,6 @@ package body GVD.Assembly_View is
       end if;
 
       Set_Text (View, View.Current_Range.Data.all);
-      Set_Busy (Process, False);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Set_Busy (Process, False);
    end On_Frame_Changed;
 
    ------------

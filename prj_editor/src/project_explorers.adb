@@ -1008,18 +1008,11 @@ package body Project_Explorers is
    begin
       Get_Selected (Get_Selection (E.Tree), Model, Node);
 
-      Push_State (E.Kernel, Busy);
       Parse_All_LI_Information
         (Kernel  => E.Kernel,
          Project => Get_Project_From_Node
            (E.Tree.Model, E.Kernel, Node, False),
          Recursive => False);
-      Pop_State (E.Kernel);
-
-   exception
-      when Exc : others =>
-         Trace (Me, Exc);
-         Pop_State (E.Kernel);
    end On_Parse_Xref;
 
    -----------------
@@ -1471,11 +1464,6 @@ package body Project_Explorers is
    begin
       Update_Project_Node (Explorer, Files.all, Node);
       Unchecked_Free (Files);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
    ----------------------------

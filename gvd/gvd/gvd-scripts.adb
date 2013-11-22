@@ -241,15 +241,10 @@ package body GVD.Scripts is
                   Length   => Command'Length,
                   Command  => Command,
                   Debugger => Visual_Debugger (Debugger));
+      Tmp : constant String := Run_Hook_Until_Not_Empty
+        (Kernel, Hook, Args'Unchecked_Access);
    begin
-      Set_Busy (Debugger);
-      declare
-         Tmp : constant String := Run_Hook_Until_Not_Empty
-           (Kernel, Hook, Args'Unchecked_Access, Set_Busy => True);
-      begin
-         Set_Busy (Debugger, False);
-         return Tmp;
-      end;
+      return Tmp;
    end Run_Debugger_Hook_Until_Not_Empty;
 
    -----------------

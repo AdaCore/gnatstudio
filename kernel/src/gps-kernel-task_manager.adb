@@ -112,11 +112,11 @@ package body GPS.Kernel.Task_Manager is
       Command         : access Root_Command'Class;
       Destroy_On_Exit : Boolean := True)
    is
+      pragma Unreferenced (Kernel);
       Wrapper : Scheduled_Command_Access :=
                   Create_Wrapper (Command, Destroy_On_Exit);
       Result  : Command_Return_Type;
    begin
-      Push_State (Kernel, Busy);
       loop
          begin
             Result := Execute (Command);
@@ -129,7 +129,6 @@ package body GPS.Kernel.Task_Manager is
          exit when Result = Success or Result = Failure;
       end loop;
 
-      Pop_State (Kernel);
       Unref (Command_Access (Wrapper));
    end Launch_Foreground_Command;
 

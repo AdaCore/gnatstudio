@@ -533,7 +533,6 @@ package body Project_Explorers_Files is
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
                  GObject (Close_Pixbufs (Directory_Node)));
-            Pop_State (D.Explorer.Kernel);
             New_D := D;
             Free (New_D);
 
@@ -594,11 +593,6 @@ package body Project_Explorers_Files is
 
          --  give the hand to gtk main until next file is analysed
          return True;
-      end if;
-
-      if D.Idle then
-         Pop_State (D.Explorer.Kernel);
-         Push_State (D.Explorer.Kernel, Busy);
       end if;
 
       for J in D.Files'Range loop
@@ -718,8 +712,6 @@ package body Project_Explorers_Files is
       D.Norm_Dest := No_File;
       Unchecked_Free (D.Files);
 
-      Pop_State (D.Explorer.Kernel);
-
       New_D := D;
       Free (New_D);
 
@@ -729,14 +721,11 @@ package body Project_Explorers_Files is
       when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions
 
-         Pop_State (D.Explorer.Kernel);
-
          New_D := D;
          Free (New_D);
          return False;
 
       when E : others =>
-         Pop_State (D.Explorer.Kernel);
          Trace (Me, E);
          return False;
    end Read_Directory;
@@ -769,12 +758,6 @@ package body Project_Explorers_Files is
       D.Explorer      := Project_Explorer_Files (Explorer);
       D.Idle          := Idle;
       D.Physical_Read := Physical_Read;
-
-      if Idle then
-         Push_State (Explorer.Kernel, Processing);
-      else
-         Push_State (Explorer.Kernel, Busy);
-      end if;
 
       if Idle then
          --  Do not append the first item in an idle loop.
@@ -1027,7 +1010,6 @@ package body Project_Explorers_Files is
      (Explorer : access Project_Explorer_Files_Record'Class) is
    begin
       while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
-         Pop_State (Explorer.Kernel);
          Glib.Main.Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
          Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
       end loop;

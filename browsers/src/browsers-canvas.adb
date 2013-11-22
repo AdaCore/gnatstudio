@@ -717,7 +717,6 @@ package body Browsers.Canvas is
    --------------------
 
    function On_Export_Idle (Data : Export_Idle_Data) return Boolean is
-      State_Pushed : Boolean := False;
       Canvas       : constant Interactive_Canvas := Get_Canvas (Data.Browser);
       Kernel       : constant Kernel_Handle := Get_Kernel (Data.Browser);
 
@@ -780,9 +779,6 @@ package body Browsers.Canvas is
 
       begin
          if Name /= GNATCOLL.VFS.No_File then
-            Push_State (Kernel, Busy);
-            State_Pushed := True;
-
             Gtkada.Canvas.Get_Bounding_Box (Canvas, Width, Height);
 
             case Data.Format is
@@ -824,22 +820,10 @@ package body Browsers.Canvas is
                  ("Cannot create " & Display_Full_Name (Name),
                   Mode => GPS.Kernel.Error);
             end if;
-
-            State_Pushed := False;
-            Pop_State (Kernel);
          end if;
       end;
 
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-
-         if State_Pushed then
-            Pop_State (Kernel);
-         end if;
-
-         return False;
    end On_Export_Idle;
 
    ---------------

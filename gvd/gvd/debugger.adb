@@ -470,10 +470,6 @@ package body Debugger is
 
          --  Put back the standard cursor
 
-         if Mode >= Visible then
-            Set_Busy (Process, False);
-         end if;
-
          Set_Command_In_Process (Get_Process (Debugger), False);
          Unregister_Dialog (Process);
 
@@ -540,7 +536,6 @@ package body Debugger is
             Set_Command_In_Process (Get_Process (Debugger), False);
          end if;
 
-         Set_Busy (Process, False);
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
          return False;
@@ -597,10 +592,6 @@ package body Debugger is
          then
             Unhighlight_Current_Line
               (Get_Source (Process.Editor_Text), GObject (Process));
-         end if;
-
-         if Mode >= Visible then
-            Set_Busy (Process);
          end if;
 
          --  Display the command in the output window if necessary
@@ -682,10 +673,6 @@ package body Debugger is
             end case;
 
             Update_Breakpoints (Process, Force => Bp_Changed);
-         end if;
-
-         if Mode >= Visible then
-            Set_Busy (Process, False);
          end if;
 
          Unregister_Dialog (Process);
@@ -794,7 +781,6 @@ package body Debugger is
 
                      Process_Proxies.Empty_Buffer (Get_Process (Debugger));
                      Process := GVD.Process.Convert (Debugger);
-                     Set_Busy (Process, False);
                   end if;
                end if;
          end case;
@@ -823,7 +809,6 @@ package body Debugger is
                 (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
                  (-"The underlying debugger died unexpectedly. Closing it"),
                  Error, Button_OK, Button_OK);
-            Set_Busy (Process, False);
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;
@@ -881,7 +866,6 @@ package body Debugger is
          Process := GVD.Process.Convert (Debugger);
          if Process /= null then
             Free (Process.Current_Command);
-            Set_Busy (Process, False);
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;

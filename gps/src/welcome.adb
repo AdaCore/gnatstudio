@@ -426,7 +426,6 @@ package body Welcome is
       --  ??? What if the filesystem path is non-UTF8?
       Dir          : Virtual_File;
    begin
-      Push_State (S.Kernel, Busy);
       if Project_Name'Length = 0 then
          Dir := Create (+Get_Text (S.Default_Dir));
       else
@@ -449,13 +448,6 @@ package body Welcome is
             Set_Active_Text (S.Open_Project, Display_Full_Name (File));
          end if;
       end;
-
-      Pop_State (S.Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (S.Kernel);
    end On_Browse_Load;
 
    --------------------------------

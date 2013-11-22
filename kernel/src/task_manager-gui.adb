@@ -414,14 +414,7 @@ package body Task_Manager.GUI is
       end if;
 
       Unregister_Timeout (GUI);
-
-      begin
-         Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access,
-                   Set_Busy => False);
-      exception
-         when others =>
-            null;
-      end;
+      Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access);
    end Queue_Added;
 
    -------------------
@@ -438,8 +431,7 @@ package body Task_Manager.GUI is
       Data : aliased Task_Hooks_Args := (Hooks_Data with Queue_ID => Index);
    begin
       begin
-         Run_Hook (Manager.Kernel, Task_Terminated_Hook, Data'Access,
-                   Set_Busy => False);
+         Run_Hook (Manager.Kernel, Task_Terminated_Hook, Data'Access);
       exception
          when others =>
             null;
@@ -480,11 +472,7 @@ package body Task_Manager.GUI is
             Hook_Data : aliased Task_Hooks_Args :=
               (Hooks_Data with Queue_ID => Index);
          begin
-            Run_Hook (GUI.Kernel, Task_Changed_Hook, Hook_Data'Access,
-                      Set_Busy => False);
-         exception
-            when others =>
-               null;
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Hook_Data'Access);
          end;
       end loop;
    end Process_Pending_Refreshes;
@@ -524,8 +512,7 @@ package body Task_Manager.GUI is
             Data : aliased Task_Hooks_Args :=
               (Hooks_Data with Queue_ID => Index);
          begin
-            Run_Hook (GUI.Kernel, Task_Changed_Hook, Data'Access,
-                      Set_Busy => False);
+            Run_Hook (GUI.Kernel, Task_Changed_Hook, Data'Access);
          end;
 
          Refresh (GUI);

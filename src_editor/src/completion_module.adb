@@ -818,8 +818,6 @@ package body Completion_Module is
               or else Lang = C_Lang
               or else Lang = Cpp_Lang
             then
-               Kernel.Push_State (Busy);
-
                Data.The_Text := Get_String (Buffer);
 
                Completion_Module.Has_Smart_Completion := True;
@@ -886,7 +884,6 @@ package body Completion_Module is
                if At_End (First (Data.Result, Kernel.Databases)) then
                   Trace (Me_Adv, "No completions found");
                   On_Completion_Destroy (View);
-                  Kernel.Pop_State;
                   return Commands.Success;
                end if;
 
@@ -937,8 +934,6 @@ package body Completion_Module is
                   Complete => Complete,
                   Volatile => Volatile,
                   Mode     => Smart_Completion_Pref);
-
-               Kernel.Pop_State;
             end if;
          end;
       end if;

@@ -389,8 +389,6 @@ package body Creation_Wizard is
       Tmp     : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Push_State (Get_Kernel (Wiz), Processing);
-
       for P in Pages'Range loop
          --  The first page will create the project (Name_And_Location_Page)
          Generate_Project
@@ -416,13 +414,11 @@ package body Creation_Wizard is
          end loop;
       end if;
 
-      Pop_State (Get_Kernel (Wiz));
-
    exception
       when Invalid_Project_Page =>
-         Pop_State (Get_Kernel (Wiz));
-
-      when E : others => Trace (Me, E);
+         null;
+      when E : others =>
+         Trace (Me, E);
    end Perform_Finish;
 
    -----------------

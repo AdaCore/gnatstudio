@@ -59,6 +59,13 @@ NF-61-MA18-018 GPS: New plug-in vim.py (2013-10-18)
   vim text editor in GPS editor buffers. It will be enabled by default in all
   buffers if you activate it via the plug-ins dialog.
 
+NF-61-MA04-035 GPS: remove busy cursor (2013-11-22)
+
+  GPS no longer uses a "busy" cursor when it is doing long operations,
+  since this is better replaced by the main progress bar. A busy cursor is
+  typically hard to aim. The corresponding python API GPS.set_busy,
+  GPS.unset_busy and GPS.get_busy have been removed.
+
 NF-61-LC05-020 GPS: Open shell from icons in Project View (2013-11-07)
 
   Shell plugin extends contextual menu to lauch shell from Project View and

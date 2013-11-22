@@ -688,15 +688,12 @@ package body VCS_View is
    procedure Refresh (Explorer : access VCS_View_Record'Class) is
       Sort_Col : Gint;
    begin
-      Push_State (Explorer.Kernel, Busy);
-
       Sort_Col := Freeze_Sort (Explorer.Model);
 
       Do_Refresh (Explorer);
 
       Thaw_Sort (Explorer.Model, Sort_Col);
       Columns_Autosize (Explorer.Tree);
-      Pop_State (Explorer.Kernel);
    end Refresh;
 
    ------------------

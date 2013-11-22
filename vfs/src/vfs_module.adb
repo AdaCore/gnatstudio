@@ -404,7 +404,6 @@ package body VFS_Module is
    begin
       Trace (Me, "deleting "
              & File_Information (Context.Context).Display_Full_Name);
-      Push_State (Get_Kernel (Context.Context), Busy);
 
       if Has_File_Information (Context.Context) then
          File := File_Information (Context.Context);
@@ -480,7 +479,6 @@ package body VFS_Module is
          end if;
       end if;
 
-      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -651,7 +649,6 @@ package body VFS_Module is
    begin
       Trace (Me, "renaming " &
              File_Information (Context.Context).Display_Full_Name);
-      Push_State (Get_Kernel (Context.Context), Busy);
 
       Is_Dir := not Has_File_Information (Context.Context);
 
@@ -668,8 +665,6 @@ package body VFS_Module is
       if Success and then Prj_Changed then
          Recompute_View (Get_Kernel (Context.Context));
       end if;
-
-      Pop_State (Get_Kernel (Context.Context));
 
       return Commands.Success;
    end Execute;

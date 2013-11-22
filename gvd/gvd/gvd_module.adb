@@ -880,8 +880,6 @@ package body GVD_Module is
          Display_Prompt (Process.Debugger);
       end if;
 
-      Set_Busy (Process, False);
-
       --  We used to flush the output here, so that if the program was
       --  outputting a lot of things, we just stop there.
       --  However, this is not doable, since it in fact also flushes the
@@ -1594,8 +1592,6 @@ package body GVD_Module is
          return null;
       end if;
 
-      Push_State (Kernel, Busy);
-
       declare
          Variable_Name : constant String := Get_Variable_Name
            (Context, Dereference => False);
@@ -1605,7 +1601,6 @@ package body GVD_Module is
            or else not Can_Tooltip_On_Entity
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
-            Pop_State (Kernel);
             return null;
 
          else
@@ -1623,16 +1618,14 @@ package body GVD_Module is
          end if;
 
          GNAT.Strings.Free (Value);
-         Pop_State (Kernel);
          return W;
       end;
 
    exception
       when Language.Unexpected_Type | Constraint_Error =>
-         Pop_State (Kernel);
          return null;
-      when E : others => Trace (Me, E);
-         Pop_State (Kernel);
+      when E : others =>
+         Trace (Me, E);
          return null;
    end Tooltip_Handler;
 
@@ -1707,8 +1700,6 @@ package body GVD_Module is
       Debugger_List    : Debugger_List_Link := Get_Debugger_List (Kernel);
       Current_Debugger : Visual_Debugger;
    begin
-      Push_State (Kernel, Busy);
-
       while Debugger_List /= null loop
          Current_Debugger := Visual_Debugger (Debugger_List.Debugger);
          Debugger_List := Debugger_List.Next;
@@ -1730,8 +1721,6 @@ package body GVD_Module is
       end if;
 
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
-
-      Pop_State (Kernel);
    end Debug_Terminate;
 
    -------------
@@ -1751,7 +1740,6 @@ package body GVD_Module is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Kernel);
          return Commands.Failure;
    end Execute;
 
@@ -1773,7 +1761,6 @@ package body GVD_Module is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Kernel);
          return Commands.Failure;
    end Execute;
 

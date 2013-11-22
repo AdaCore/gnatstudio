@@ -10375,19 +10375,6 @@ def get_build_output(target_name, shadow, background, as_string):
     pass  # implemented in Ada
 
 
-def get_busy():
-    """
-    Return the "busy" state
-
-    .. seealso::
-
-       :func:`GPS.set_busy`
-
-       :func:`GPS.unset_busy`
-    """
-    pass  # implemented in Ada
-
-
 def get_home_dir():
     """
     Return the directory that contains the user-specific files. This directory
@@ -10657,21 +10644,6 @@ def set_build_mode(mode=''):
     pass  # implemented in Ada
 
 
-def set_busy():
-    """
-    Activate the "busy" state in GPS by animating the GPS icon. This command
-    can be called recursively, and GPS.unset_busy should be called a
-    corresponding number of time to stop the animation.
-
-    .. seealso::
-
-       :func:`GPS.unset_busy`
-
-       :func:`GPS.get_busy`
-    """
-    pass  # implemented in Ada
-
-
 def set_last_command(command):
     """
     This function overrides the name of the last command executed by GPS. This
@@ -10722,19 +10694,6 @@ def thaw_xref():
     See GPS.freeze_xref for more information
 
     .. seealso:: :func:`GPS.freeze_xref`
-    """
-    pass  # implemented in Ada
-
-
-def unset_busy():
-    """
-    Reset the "busy" state
-
-    .. seealso::
-
-       :func:`GPS.set_busy`
-
-       :func:`GPS.get_busy`
     """
     pass  # implemented in Ada
 

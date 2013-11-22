@@ -347,15 +347,6 @@ package body GPS.Kernel.Scripts is
             Free (Langs);
          end;
 
-      elsif Command = "set_busy" then
-         Push_State (Kernel, Processing);
-
-      elsif Command = "get_busy" then
-         Set_Return_Value (Data, Get_Busy (Kernel));
-
-      elsif Command = "unset_busy" then
-         Pop_State (Kernel);
-
       elsif Command = "parse_xml" then
          Name_Parameters (Data, Xml_Custom_Parameters);
          declare

@@ -254,8 +254,6 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       --  Before getting its entity we check if the LI handler has unresolved
       --  imported references to force updating its references
 
@@ -274,7 +272,6 @@ package body Src_Editor_Box is
            (-"No cross-reference information found for "
             & Entity_Name_Information (Context) & ASCII.LF,
             Mode => Error);
-         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
@@ -303,12 +300,6 @@ package body Src_Editor_Box is
       end if;
 
       Unref (Entity);
-      Pop_State (Kernel_Handle (Kernel));
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
    end Goto_Declaration_Or_Body;
 
    -------------------------
@@ -1320,7 +1311,6 @@ package body Src_Editor_Box is
 
    begin
       Increase_Indent (Me, "Computing Dispatch_Submenu: " & Default_Title);
-      Push_State (Kernel, Busy);
 
       --  Before getting its entity we check if the LI handler has unresolved
       --  imported references to force updating its references
@@ -1357,13 +1347,7 @@ package body Src_Editor_Box is
          Add (Menu, Item);
       end if;
 
-      Pop_State (Kernel);
       Decrease_Indent (Me, "Done computing Dispatch_Declaration_Submenu");
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel);
    end Append_To_Dispatching_Menu;
 
    --------------------

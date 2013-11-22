@@ -134,7 +134,6 @@ package body Refactoring.Performers is
       Data.Errors        := new Renaming_Error_Record;
       Data.Make_Writable := Make_Writable;
 
-      Push_State (Data.Kernel, Busy);
       Data.Entity            := Entity;
       Kernel.Databases.Find_All_References
         (Iter                  => Data.Iter,
@@ -176,8 +175,6 @@ package body Refactoring.Performers is
       Confirmed : Boolean;
       C : Source_File_Sets.Cursor;
    begin
-      Pop_State (Data.Kernel);
-
       if Data.Make_Writable then
          Confirmed := Confirm_Files
            (Data.Kernel,
@@ -193,8 +190,6 @@ package body Refactoring.Performers is
       end if;
 
       if Confirmed then
-         Push_State (Data.Kernel, Busy);
-
          if Data.Make_Writable then
             C := Data.Read_Only_Files.First;
             while Has_Element (C) loop
@@ -211,7 +206,6 @@ package body Refactoring.Performers is
             Data.Refs,
             Data.Errors.No_LI_List,
             Data.Stale_LI_List);
-         Pop_State (Data.Kernel);
       end if;
    end On_End_Of_Search;
 

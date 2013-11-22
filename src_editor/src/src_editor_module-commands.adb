@@ -120,15 +120,11 @@ package body Src_Editor_Module.Commands is
       --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
 
       if Is_Dispatching_Call (Context) = Indeterminate then
-         Push_State (Kernel, Busy);
-
          Xref.For_Each_Dispatching_Call
            (Dbase     => Db,
             Entity    => Get_Entity (Context),
             Ref       => Get_Closest_Ref (Context),
             On_Callee => On_Callee'Access);
-
-         Pop_State (Get_Kernel (Context));
 
          --  See comment above to see why this code is commented out pragma
          --  Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);

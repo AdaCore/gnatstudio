@@ -66,9 +66,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
-with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Properties;            use GPS.Properties;
-with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -929,74 +927,6 @@ package body GPS.Kernel is
       return Handle.Main_Window;
    end Get_Main_Window;
 
-   --------------
-   -- Get_Busy --
-   --------------
-
-   function Get_Busy
-     (Handle : access Kernel_Handle_Record'Class) return Boolean is
-   begin
-      return GPS_Window (Handle.Main_Window).State_Level > 0;
-   end Get_Busy;
-
-   ----------------
-   -- Push_State --
-   ----------------
-
-   procedure Push_State
-     (Handle : access Kernel_Handle_Record'Class;
-      State  : Action_Kernel_State)
-   is
-      Window : GPS_Window;
-   begin
-      if Handle = null then
-         return;
-      end if;
-
-      Window := GPS_Window (Handle.Main_Window);
-
-      if Window = null or else Window.In_Destruction then
-         return;
-      end if;
-
-      if State = Busy then
-         Set_Busy_Cursor (Get_Window (Window), True, True);
-         Window.Busy_Level := Window.Busy_Level + 1;
-      end if;
-
-      Window.State_Level := Window.State_Level + 1;
-   end Push_State;
-
-   ---------------
-   -- Pop_State --
-   ---------------
-
-   procedure Pop_State (Handle : access Kernel_Handle_Record'Class) is
-      Window : GPS_Window;
-   begin
-      if Handle = null then
-         return;
-      end if;
-
-      Window := GPS_Window (Handle.Main_Window);
-
-      if Window = null or else Window.In_Destruction then
-         return;
-      end if;
-
-      if Window.State_Level > 0 then
-         Window.State_Level := Window.State_Level - 1;
-
-         if Window.Busy_Level > 0 then
-            Window.Busy_Level := Window.Busy_Level - 1;
-
-            if Window.Busy_Level = 0 then
-               Set_Busy_Cursor (Get_Window (Window), False, False);
-            end if;
-         end if;
-      end if;
-   end Pop_State;
-
    ------------------
    -- Get_Home_Dir --
    ------------------
@@ -1814,8 +1744,7 @@ package body GPS.Kernel is
    begin
       Run_Hook (Kernel,
                 Marker_Added_In_History_Hook,
-                Data'Unchecked_Access,
-                Set_Busy => False);
+                Data'Unchecked_Access);
    end Push_Marker_In_History;
 
    ----------------------------

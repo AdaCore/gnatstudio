@@ -177,13 +177,10 @@ package GPS.Kernel.Hooks is
 
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Hook     : Hook_Name;
-      Set_Busy : Boolean := True);
+      Hook     : Hook_Name);
    --  Call all functions that were added to the hook.
    --  The functions are executed in the reverse order in which they were
    --  registered.
-   --  Set_Busy indicates whether the busy cursor should be displayed while
-   --  processing the hook
 
    -----------------------------------
    -- Hook functions with arguments --
@@ -209,10 +206,10 @@ package GPS.Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True);
+      Data     : access Hooks_Data'Class);
    --  See doc above for Run_Hook
    --  It is your responsability to Destroy Data afterward.
+   --  This procedure does not propagate exceptions.
 
    ------------------------------------------------------
    -- Hook functions with arguments, returning boolean --
@@ -239,8 +236,7 @@ package GPS.Kernel.Hooks is
    function Run_Hook_Until_Success
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Boolean;
+      Data     : access Hooks_Data'Class) return Boolean;
    --  Same as Run_Doc above, but stops executing the functions as soon
    --  as one of the functions returns True.
    --  It is your responsability to Destroy Data afterward
@@ -249,8 +245,7 @@ package GPS.Kernel.Hooks is
    function Run_Hook_Until_Failure
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Boolean;
+      Data     : access Hooks_Data'Class) return Boolean;
    --  Same as above except stops as soon as a function returns False.
    --  It is your responsability to Destroy Data afterward
 
@@ -279,8 +274,7 @@ package GPS.Kernel.Hooks is
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return String;
+      Data     : access Hooks_Data'Class) return String;
    --  Same as Run_Doc above, but stops executing the functions as soon
    --  as one of the functions returns a non-empty string.
    --  Return the value returned by the last function executed
@@ -324,8 +318,7 @@ package GPS.Kernel.Hooks is
    function Run_Hook_Until_Not_Empty
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Hook     : Hook_Name;
-      Data     : access Hooks_Data'Class;
-      Set_Busy : Boolean := True) return Any_Type;
+      Data     : access Hooks_Data'Class) return Any_Type;
    --  See doc above.
    --  Caller must Free the result.
 

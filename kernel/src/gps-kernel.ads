@@ -136,23 +136,6 @@ package GPS.Kernel is
 
    subtype Action_Kernel_State is Kernel_State range Processing .. Busy;
 
-   procedure Push_State
-     (Handle : access Kernel_Handle_Record'Class;
-      State  : Action_Kernel_State);
-   --  Push a new state for kernel.
-   --  If State is Busy, no further action and calls to Push_State are
-   --  allowed. Several Processing states can be pushed.
-   --  This procedure usually involves changing the cursor appearance and
-   --  displaying an animation.
-   --  If Handle is null, do nothing.
-
-   procedure Pop_State (Handle : access Kernel_Handle_Record'Class);
-   --  Undo previous state
-
-   function Get_Busy
-     (Handle : access Kernel_Handle_Record'Class) return Boolean;
-   --  Return whether the current state of the Kernel is a processing state
-
    function Get_Home_Dir
      (Handle : access Kernel_Handle_Record)
      return Virtual_File;

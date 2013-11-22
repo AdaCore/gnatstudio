@@ -499,8 +499,6 @@ package body Browsers.Dependency_Items is
       Iter          : File_Iterator;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       --  Create the browser if it doesn't exist
       Browser := Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
 
@@ -560,12 +558,6 @@ package body Browsers.Dependency_Items is
       end if;
 
       Refresh_Canvas (Get_Canvas (Browser));
-      Pop_State (Kernel_Handle (Kernel));
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
    end Examine_Dependencies;
 
    ------------------
@@ -584,7 +576,6 @@ package body Browsers.Dependency_Items is
       begin
          Data.Browser.Idle_Id := 0;
          Destroy (Data.Iter);
-         Pop_State (Get_Kernel (Data.Browser));
       end Clean;
 
    begin
@@ -665,8 +656,6 @@ package body Browsers.Dependency_Items is
       Item          : File_Item;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       --  Create the browser if it doesn't exist
       Browser := Dependency_Views.Get_Or_Create_View (Kernel, Focus => True);
 
@@ -708,7 +697,6 @@ package body Browsers.Dependency_Items is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
          Destroy (Data.Iter);
    end Examine_From_Dependencies;
 

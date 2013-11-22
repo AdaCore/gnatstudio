@@ -130,8 +130,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       if File /= GNATCOLL.VFS.No_File then
          if not Run_Hook_Until_Success
-           (Kernel, File_Line_Action_Hook, Data'Unchecked_Access,
-            Set_Busy => False)
+           (Kernel, File_Line_Action_Hook, Data'Unchecked_Access)
          then
             Trace (Me, "No file editor with line info display "
                    & "capability was registered");
@@ -145,8 +144,7 @@ package body GPS.Kernel.Standard_Hooks is
                Data.File := Files (Node);
 
                if not Run_Hook_Until_Success
-                 (Kernel, File_Line_Action_Hook, Data'Unchecked_Access,
-                  Set_Busy => False)
+                 (Kernel, File_Line_Action_Hook, Data'Unchecked_Access)
                then
                   Trace (Me, "No file editor with line info display "
                          & "capability was registered");
@@ -359,7 +357,7 @@ package body GPS.Kernel.Standard_Hooks is
             Anchor            => URL_Or_File (Anchor + 1 .. URL_Or_File'Last));
       begin
          if not Run_Hook_Until_Success
-           (Kernel, Html_Action_Hook, Data'Unchecked_Access, False)
+           (Kernel, Html_Action_Hook, Data'Unchecked_Access)
          then
             Trace (Me, "No html viewer was registered");
          end if;

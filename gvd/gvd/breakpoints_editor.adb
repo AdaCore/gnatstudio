@@ -1037,8 +1037,6 @@ package body Breakpoints_Editor is
       View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
       Process : constant Visual_Debugger := Get_Process (View);
    begin
-      Set_Busy (Process, True);
-
       declare
          Exception_Arr : Exception_Array := List_Exceptions (Process.Debugger);
       begin
@@ -1059,8 +1057,6 @@ package body Breakpoints_Editor is
 
          Free (Exception_Arr);
       end;
-
-      Set_Busy (Process, False);
    end On_Load_Exception_List_Clicked;
 
    -----------------------

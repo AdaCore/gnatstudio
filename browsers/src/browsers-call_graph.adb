@@ -974,11 +974,6 @@ package body Browsers.Call_Graph is
          Background_Mode   => True,
          Dispatching_Calls => True,
          Watch             => Gtk_Widget (Data.Browser));
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
    end Examine_Ancestors_Call_Graph;
 
    -------------
@@ -1104,7 +1099,6 @@ package body Browsers.Call_Graph is
       Destroy (Data.Iter);
       Unref (Data.Entity);
       Free (Data.Category);
-      Pop_State (Data.Kernel);
    end Destroy_Idle;
 
    ---------------
@@ -1700,7 +1694,6 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Command);
       Node_Entity : General_Entity;
    begin
-      Push_State (Get_Kernel (Context.Context), Busy);
       Node_Entity := Get_Entity (Context.Context);
 
       if Node_Entity /= No_General_Entity then
@@ -1712,7 +1705,6 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Context.Context));
       end if;
 
-      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
@@ -1722,7 +1714,6 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
          Trace (Me, E);
-         Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
 
@@ -1761,7 +1752,6 @@ package body Browsers.Call_Graph is
             return Commands.Failure;
       end;
 
-      Push_State (Get_Kernel (Context.Context), Busy);
       Node_Entity := Get_Entity (Context.Context);
 
       if Node_Entity /= No_General_Entity then
@@ -1821,7 +1811,6 @@ package body Browsers.Call_Graph is
                        & Entity_Name_Information (Context.Context),
                        Mode => Error);
                Trace (Me, E);
-               Pop_State (Get_Kernel (Context.Context));
                return Commands.Failure;
          end;
 
@@ -1831,14 +1820,12 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Context.Context));
       end if;
 
-      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Get_Kernel (Context.Context));
-      return Commands.Failure;
+         return Commands.Failure;
    end Execute;
 
    overriding function Execute
@@ -1848,7 +1835,6 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Command);
       Info : General_Entity;
    begin
-      Push_State (Get_Kernel (Context.Context), Busy);
       Info := Get_Entity (Context.Context);
 
       if Info /= No_General_Entity then
@@ -1861,7 +1847,6 @@ package body Browsers.Call_Graph is
                  Mode => Error);
       end if;
 
-      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
@@ -1871,7 +1856,6 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Context.Context),
                  Mode => Error);
          Trace (Me, E);
-         Pop_State (Get_Kernel (Context.Context));
       return Commands.Failure;
    end Execute;
 
@@ -1905,8 +1889,6 @@ package body Browsers.Call_Graph is
       Message     : Simple_Message_Access;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       if All_From_Same_File then
          Get_Messages_Container (Kernel).Remove_Category
            (Title, Call_Graph_Message_Flags);
@@ -2025,8 +2007,6 @@ package body Browsers.Call_Graph is
             Filter             => Filter,
             Include_Overriding => Include_Overriding);
       end if;
-
-      Pop_State (Kernel_Handle (Kernel));
    end Parse_All_Refs;
 
    ------------------------

@@ -54,7 +54,6 @@ package body GVD.Dialogs.Callbacks is
          --  Wait_For_Prompt is false
 
          Unregister_Dialog (Process);
-         Set_Busy (Process, False);
 
          Send (Debugger,
                "y",
@@ -85,7 +84,6 @@ package body GVD.Dialogs.Callbacks is
          --  Unregister the dialog, since Send will not take care of it when
          --  Wait_For_Prompt is false
          Unregister_Dialog (Process);
-         Set_Busy (Process, False);
 
          Send (Debugger,
                "n",
@@ -149,7 +147,6 @@ package body GVD.Dialogs.Callbacks is
          --  Wait_For_Prompt is false
 
          Unregister_Dialog (Process);
-         Set_Busy (Process, False);
 
          Send (Debugger,
                To_String (S),
@@ -180,7 +177,6 @@ package body GVD.Dialogs.Callbacks is
 
       --  Destroy the dialog, since we will have to recreate it anyway.
       Unregister_Dialog (Process);
-      Set_Busy (Process, False);
 
       case Kind is
          when Yes_No_Dialog =>

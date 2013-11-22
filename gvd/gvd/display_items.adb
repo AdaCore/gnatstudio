@@ -221,7 +221,6 @@ package body Display_Items is
    procedure Parse_Type (Item : access Display_Item_Record'Class) is
    begin
       if Item.Is_A_Variable and then Item.Entity = null then
-         Set_Busy (Item.Debugger, True, Force_Refresh => True);
          begin
             Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
          exception
@@ -231,7 +230,6 @@ package body Display_Items is
                       & Exception_Information (E));
                Item.Entity := null;
          end;
-         Set_Busy (Item.Debugger, False);
 
          if Item.Entity = null then
             Trace (Me, "Result of Parse_Type is null");
@@ -247,7 +245,6 @@ package body Display_Items is
       Value_Found : Boolean;
    begin
       if Item.Entity /= null and then Item.Is_A_Variable then
-         Set_Busy (Item.Debugger, True, Force_Refresh => True);
          begin
             Parse_Value
               (Item.Debugger.Debugger,
@@ -261,7 +258,6 @@ package body Display_Items is
             when Language.Unexpected_Type | Constraint_Error =>
                Set_Valid (Item.Entity, False);
          end;
-         Set_Busy (Item.Debugger, False);
       elsif Item.Entity /= null then
          Set_Valid (Item.Entity, True);
       end if;

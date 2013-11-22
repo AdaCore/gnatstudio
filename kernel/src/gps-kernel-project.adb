@@ -150,8 +150,6 @@ package body GPS.Kernel.Project is
       Errors : Error_Report := null)
    is
    begin
-      Push_State (Self.Handle, Busy);
-
       Do_Subdirs_Cleanup (Self);
       Recompute_View (Project_Tree (Self), Errors);
 
@@ -161,7 +159,6 @@ package body GPS.Kernel.Project is
       --  anything else here
       --  ??? It would be nice to rely on a better indicator than this
       if Get_Icon_Factory (Self.Handle) = null then
-         Pop_State (Self.Handle);
          return;
       end if;
 
@@ -171,8 +168,6 @@ package body GPS.Kernel.Project is
         (Self.Handle.Databases, Get_Project_Tree (Self.Handle));
 
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
-
-      Pop_State (Self.Handle);
    end Recompute_View;
 
    --------------------
@@ -514,8 +509,6 @@ package body GPS.Kernel.Project is
          return;
       end if;
 
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       if Is_Regular_File (Project) then
          Found := True;
 
@@ -546,8 +539,6 @@ package body GPS.Kernel.Project is
          Close_All_Children (Kernel);
          Ignore := Load_Desktop (Kernel);
       end if;
-
-      Pop_State (Kernel_Handle (Kernel));
    end Load_Default_Project;
 
    ------------------------
@@ -600,8 +591,6 @@ package body GPS.Kernel.Project is
 
       Reloaded : Boolean := False;
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       Remove_Category
         (Get_Messages_Container (Kernel),
          Category => Location_Category,
@@ -613,7 +602,7 @@ package body GPS.Kernel.Project is
             Recompute_View => Recompute_View);
       exception
          when Invalid_Project =>
-            Pop_State (Kernel_Handle (Kernel));
+            null;
       end;
 
       if Reloaded then
@@ -623,8 +612,6 @@ package body GPS.Kernel.Project is
             Run_Hook (Kernel, Project_View_Changed_Hook);
          end if;
       end if;
-
-      Pop_State (Kernel_Handle (Kernel));
    end Reload_Project_If_Needed;
 
    ------------------
@@ -724,8 +711,6 @@ package body GPS.Kernel.Project is
       end if;
 
       if Is_Regular_File (Project) then
-         Push_State (Kernel_Handle (Kernel), Busy);
-
          Data.File := Project;
          Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
@@ -750,7 +735,6 @@ package body GPS.Kernel.Project is
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
                Ignore := Load_Desktop (Kernel);
-               Pop_State (Kernel_Handle (Kernel));
                return;
             end if;
 
@@ -860,8 +844,6 @@ package body GPS.Kernel.Project is
             Ignore := Load_Desktop
               (Kernel, For_Project => Local_Project);
          end if;
-
-         Pop_State (Kernel_Handle (Kernel));
 
       elsif not Same_Project then
          Kernel.Insert (-"Cannot find project file "

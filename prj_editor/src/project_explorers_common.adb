@@ -418,8 +418,6 @@ package body Project_Explorers_Common is
          Remove (Model, N2);
       end loop;
 
-      Push_State (Kernel, Busy);
-
       Lang := Get_Language_From_File (Languages, File_Name);
 
       if Lang /= null then
@@ -490,8 +488,6 @@ package body Project_Explorers_Common is
       else
          Trace (Me, "No known language for " & Display_Full_Name (File_Name));
       end if;
-
-      Pop_State (Kernel);
    end Append_File_Info;
 
    ---------------------

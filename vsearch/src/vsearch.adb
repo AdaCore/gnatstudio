@@ -699,7 +699,6 @@ package body Vsearch is
       end if;
 
       Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
-      Pop_State (Data.Vsearch.Kernel);
       Data.Vsearch.Search_Idle_Handler := 0;
 
       if not Data.Found then
@@ -719,7 +718,6 @@ package body Vsearch is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
 
          Result := Success;
@@ -757,7 +755,6 @@ package body Vsearch is
          Free (Data.Context);
          Free (Data.Replace_With);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
-         Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
          Result := Success;
       end if;
@@ -766,7 +763,6 @@ package body Vsearch is
       when E : others =>
          Trace (Me, E);
          Free (Data.Replace_With);
-         Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
          Result := Success;
    end Replace_Iterate;
@@ -971,8 +967,6 @@ package body Vsearch is
                Search_Category);
 
          else
-            Push_State (Vsearch.Kernel, Processing);
-
             Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
@@ -980,8 +974,6 @@ package body Vsearch is
                Give_Focus      => Get_Active (Vsearch.Select_Editor_Check),
                Found           => Found,
                Continue        => Has_Next);
-
-            Pop_State (Vsearch.Kernel);
 
             if not Found then
                Set_Sensitive
@@ -1032,7 +1024,6 @@ package body Vsearch is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Vsearch.Kernel);
    end Internal_Search;
 
    ---------------
@@ -1074,7 +1065,6 @@ package body Vsearch is
             return;
 
          else
-            Push_State (Vsearch.Kernel, Processing);
             Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
@@ -1082,7 +1072,6 @@ package body Vsearch is
                Give_Focus      => Get_Active (Vsearch.Select_Editor_Check),
                Found           => Found,
                Continue        => Has_Next);
-            Pop_State (Vsearch.Kernel);
 
             if not Found then
                Stop_Macro (Vsearch.Kernel);
@@ -1129,7 +1118,6 @@ package body Vsearch is
          Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
       end if;
 
-      Push_State (Vsearch.Kernel, Processing);
       Has_Next := Replace
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
@@ -1137,7 +1125,6 @@ package body Vsearch is
          Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
-      Pop_State (Vsearch.Kernel);
 
       Set_Sensitive (Vsearch.Replace_Button, False);
       Set_Sensitive (Vsearch.Replace_Search_Button, False);
@@ -1158,8 +1145,6 @@ package body Vsearch is
          Set_End_Notif_Done (Vsearch.Last_Search_Context.all, False);
       end if;
 
-      Push_State (Vsearch.Kernel, Processing);
-
       Has_Next := Replace
         (Vsearch.Last_Search_Context,
          Vsearch.Kernel,
@@ -1167,7 +1152,6 @@ package body Vsearch is
          Get_Active (Vsearch.Case_Preserving_Replace),
          Search_Backward => False,
          Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
-      Pop_State (Vsearch.Kernel);
 
       On_Search (Object);
 

@@ -681,7 +681,6 @@ package body GPS.Kernel.Modules.UI is
       C       : Command_Access;
       Context : Interactive_Command_Context;
    begin
-      Push_State (Action.Kernel, Busy);
       Context.Context := Action.Kernel.Last_Context_For_Contextual;
 
       Assert (Me, Context.Context.Data.Data /= null,
@@ -706,10 +705,8 @@ package body GPS.Kernel.Modules.UI is
          Active          => True,
          Show_Bar        => True,
          Destroy_On_Exit => True);
-      Pop_State (Action.Kernel);
    exception
       when E : others =>
-         Pop_State (Action.Kernel);
          Trace (Me, "Unexpected exception while executing "
                 & Action.Name.all & " " & Exception_Information (E));
    end Contextual_Action;
@@ -1070,8 +1067,6 @@ package body GPS.Kernel.Modules.UI is
       --  Do not Unref context, it will be automatically freed the next
       --  time a contextual menu is displayed.
 
-      Pop_State (Kernel);
-
       --  If the menu is empty, destroy it
 
       List := Get_Children (Menu);
@@ -1107,8 +1102,6 @@ package body GPS.Kernel.Modules.UI is
    begin
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
-
-      Push_State (User.Kernel, Busy);
 
       Set_Context_Information
         (Context,

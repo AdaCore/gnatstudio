@@ -52,8 +52,6 @@ package GPS.Main_Window is
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu
 
-      State_Level       : Integer := 0;
-      Busy_Level        : Integer := 0;
       Desktop_Loaded    : Boolean := False;
       Public_Version    : Boolean := True;
    end record;

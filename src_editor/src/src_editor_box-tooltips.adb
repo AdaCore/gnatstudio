@@ -103,8 +103,6 @@ package body Src_Editor_Box.Tooltips is
          return;
       end if;
 
-      Push_State (Editor.Kernel, Busy);
-
       Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
         (Loc => (File   => Get_Filename (Editor),
                  Line   => Contexts.Line_Information (Context),
@@ -113,12 +111,9 @@ package body Src_Editor_Box.Tooltips is
          Entity      => Entity,
          Closest_Ref => Ref);
 
-      Pop_State (Editor.Kernel);
-
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Editor.Kernel);
    end Get_Declaration_Info;
 
    ---------------------

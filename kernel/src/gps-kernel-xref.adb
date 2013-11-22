@@ -300,7 +300,6 @@ package body GPS.Kernel.Xref is
       Unchecked_Free (Data.Data);
       Destroy (Data.Iter);
       Unref (Data.Entity);
-      Pop_State (Data.Kernel);
       Unchecked_Free (Data);
    end Destroy_Idle;
 
@@ -416,8 +415,6 @@ package body GPS.Kernel.Xref is
       C      : Ancestor_Commands.Generic_Asynchronous_Command_Access;
       Result : Command_Return_Type;
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       Cb := new Examine_Callback'
         (Kernel            => Kernel_Handle (Kernel),
          Data              => Commands_User_Data (User_Data),
@@ -466,11 +463,6 @@ package body GPS.Kernel.Xref is
          end loop;
          Destroy_Idle (Cb);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Pop_State (Kernel_Handle (Kernel));
    end Examine_Ancestors_Call_Graph;
 
    -------------------------------
@@ -494,7 +486,6 @@ package body GPS.Kernel.Xref is
       Through_Dispatching : Boolean;
    begin
       if Entity /= No_General_Entity then
-         Push_State (Kernel_Handle (Kernel), Busy);
          Calls := Kernel.Databases.Get_All_Called_Entities (Entity);
 
          For_Each_Entity :
@@ -642,7 +633,6 @@ package body GPS.Kernel.Xref is
          Destroy (User_Data.all, Cancelled => False);
          Data := Commands_User_Data (User_Data);
          Unchecked_Free (Data);
-         Pop_State (Kernel_Handle (Kernel));
       end if;
    end Examine_Entity_Call_Graph;
 

@@ -721,7 +721,6 @@ package body External_Editor_Module is
       Line   : Integer := 1;
       Column : Visible_Column_Type := 1;
    begin
-      Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "Edit file with external editor "
              & Display_Full_Name (File_Information (Context.Context)));
 
@@ -735,13 +734,11 @@ package body External_Editor_Module is
          File   => File_Information (Context.Context),
          Line   => Line,
          Column => Column);
-      Pop_State (Get_Kernel (Context.Context));
       return Commands.Success;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Get_Kernel (Context.Context));
          return Commands.Failure;
    end Execute;
 
@@ -759,14 +756,12 @@ package body External_Editor_Module is
         and then Get_Pref (Always_Use_External_Editor)
       then
          if Is_Regular_File (D.File) then
-            Push_State (Kernel_Handle (Kernel), Processing);
             --  ??? Incorrect handling of remote files
             Client_Command
               (Kernel => Kernel,
                File   => D.File,
                Line   => Natural (D.Line),
                Column => D.Column);
-            Pop_State (Kernel_Handle (Kernel));
 
             return True;
          end if;

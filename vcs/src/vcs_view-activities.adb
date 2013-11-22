@@ -523,7 +523,6 @@ package body VCS_View.Activities is
 
       Status_Temp := File_Status_List.First (Status);
 
-      Push_State (Kernel, Busy);
       Sort_Id := Freeze_Sort (Explorer.Model);
 
       --  If activity is given, create the tree node now if needed
@@ -591,7 +590,6 @@ package body VCS_View.Activities is
       Expand_Nodes;
 
       Thaw_Sort (Explorer.Model, Sort_Id);
-      Pop_State (Kernel);
    end Display_File_Status;
 
    ------------------------

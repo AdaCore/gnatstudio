@@ -820,8 +820,6 @@ package body Remote.View is
       pragma Unreferenced (W, Ignore);
 
    begin
-      Push_State (User.View.Kernel, Busy);
-
       for S in Distant_Server_Type'Range loop
          declare
             Server_Name : constant String :=
@@ -882,8 +880,6 @@ package body Remote.View is
             Reasons := Reasons & "Could not connect to host " &
               New_Server & ": " & Exception_Message (E) & ASCII.LF;
       end;
-
-      Pop_State (User.View.Kernel);
 
       if not Failure then
          Ignore := Message_Dialog

@@ -286,9 +286,7 @@ package body Src_Editor_View.Commands is
          return Failure;
       end if;
 
-      Push_State (Kernel, Busy);
       Result := Do_Indentation (Buffer, Force => True);
-      Pop_State (Kernel);
 
       if Result then
          return Success;

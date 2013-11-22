@@ -175,8 +175,6 @@ package body GPS.Kernel.Timeout is
       Free (D.Name);
       D.Data.D.Command := null;
 
-      Pop_State (D.Data.D.Kernel);
-
       Unchecked_Free (D.Data.Expect_Regexp);
 
       if D.Data.D.Callback_Data /= null then
@@ -561,8 +559,6 @@ package body GPS.Kernel.Timeout is
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
       Scheduled     : Scheduled_Command_Access;
    begin
-      Push_State (Kernel, Processing);
-
       if not Is_Local (Server) then
          Synchronize (Kernel, GPS_Server, Server,
                       Blocking      => False,
@@ -652,7 +648,6 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Me, E);
-         Pop_State (Kernel);
          Success := False;
    end Launch_Process;
 

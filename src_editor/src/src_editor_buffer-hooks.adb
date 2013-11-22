@@ -53,7 +53,7 @@ package body Src_Editor_Buffer.Hooks is
            (Get_Buffer (Box), Editable_Line_Type (Data.Line),
             Character_Offset_Type (Data.Column));
          Run_Hook (Buffer.Kernel, Location_Changed_Hook,
-                   Data'Unchecked_Access, False);
+                   Data'Unchecked_Access);
          Destroy (Data);
       end if;
    end Location_Changed;
@@ -66,7 +66,7 @@ package body Src_Editor_Buffer.Hooks is
       Data : aliased  File_Hooks_Args :=
                (Hooks_Data with File => Buffer.Filename);
    begin
-      Run_Hook (Buffer.Kernel, Word_Added_Hook, Data'Unchecked_Access, False);
+      Run_Hook (Buffer.Kernel, Word_Added_Hook, Data'Unchecked_Access);
    end Word_Added;
 
    ---------------------
@@ -85,7 +85,7 @@ package body Src_Editor_Buffer.Hooks is
          Interactive => Interactive);
    begin
       Run_Hook
-        (Buffer.Kernel, Character_Added_Hook, Data'Unchecked_Access, False);
+        (Buffer.Kernel, Character_Added_Hook, Data'Unchecked_Access);
    end Character_Added;
 
    ---------------------
@@ -97,7 +97,7 @@ package body Src_Editor_Buffer.Hooks is
                (Hooks_Data with File => Buffer.Filename);
    begin
       Run_Hook
-        (Buffer.Kernel, Buffer_Modified_Hook, Data'Unchecked_Access, False);
+        (Buffer.Kernel, Buffer_Modified_Hook, Data'Unchecked_Access);
    end Buffer_Modified;
 
    ---------------------------

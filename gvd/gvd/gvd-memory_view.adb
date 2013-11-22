@@ -64,7 +64,6 @@ with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GUI_Utils;                use GUI_Utils;
 with GVD_Module;               use GVD_Module;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
@@ -896,9 +895,6 @@ package body GVD.Memory_View is
            * View.Unit_Size / 2;
       end if;
 
-      Set_Busy (Process, True);
-      Set_Busy_Cursor (Get_Window (View), True);
-
       declare
          use Ada.Strings.Unbounded;
          Values : String (1 .. 2 * View.Number_Of_Bytes);
@@ -946,8 +942,6 @@ package body GVD.Memory_View is
          Update_Display (View);
          Set_Text (View.Editor.Address_Entry,
                    "0x" & To_Standard_Base (Address, 16, Address_Length));
-         Set_Busy (Process, False);
-         Set_Busy_Cursor (Get_Window (View), False);
       end;
    end Display_Memory;
 
