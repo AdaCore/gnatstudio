@@ -115,9 +115,17 @@ function buildDocumentationPage()
             row = document.createElement('tr');
             cell = document.createElement('th');
             href = document.createElement('a');
-            href.setAttribute(
-              'href',
-              '#L' + entity.line.toString() + 'C' + entity.column.toString());
+
+            if (typeof entity.href !== 'undefined')
+            {
+                href.setAttribute('href', entity.href);
+            } else {
+                href.setAttribute(
+                  'href',
+                  '#L' + entity.line.toString() +
+                  'C' + entity.column.toString());
+            }
+
             href.appendChild(document.createTextNode(entity.label));
             cell.appendChild(href);
             row.appendChild(cell);
@@ -151,119 +159,130 @@ function buildDocumentationPage()
             var list = null;
             var entity = entity_set.entities[eindex];
 
-            header = document.createElement('h3');
-            header.setAttribute(
-              'id',
-              'L' + entity.line.toString() + 'C' + entity.column.toString());
-            text = document.createTextNode(entity.label);
-            header.appendChild(text);
-            pane.appendChild(header);
-            buildText(pane, entity.description);
-
-            if (typeof entity.inherits !== 'undefined')
+            if (typeof entity.href == 'undefined')
             {
-                var paragraph = document.createElement('p');
-                paragraph.appendChild(document.createTextNode('Inherits '));
+                header = document.createElement('h3');
+                header.setAttribute(
+                  'id',
+                  'L' + entity.line.toString() +
+                  'C' + entity.column.toString());
+                text = document.createTextNode(entity.label);
+                header.appendChild(text);
+                pane.appendChild(header);
+                buildText(pane, entity.description);
 
-                for (var iindex = 0; iindex < entity.inherits.length; iindex++)
+                if (typeof entity.inherits !== 'undefined')
                 {
-                    if (iindex != 0)
-                      paragraph.appendChild(document.createTextNode(', '));
+                    var paragraph = document.createElement('p');
+                    paragraph.appendChild(document.createTextNode('Inherits '));
 
-                    if (typeof entity.inherits[iindex].href == 'undefined')
+                    for (var iindex = 0;
+                         iindex < entity.inherits.length;
+                         iindex++)
                     {
-                      paragraph.appendChild(
-                        document.createTextNode(
-                          entity.inherits[iindex].label));
+                        if (iindex != 0)
+                          paragraph.appendChild(document.createTextNode(', '));
+
+                        if (typeof entity.inherits[iindex].href == 'undefined')
+                        {
+                          paragraph.appendChild(
+                            document.createTextNode(
+                              entity.inherits[iindex].label));
+                        }
+                        else
+                        {
+                           href = document.createElement('a');
+                           href.setAttribute(
+                             'href', '../' + entity.inherits[iindex].href);
+                           href.setAttribute('target', 'contentView');
+                           href.appendChild(
+                             document.createTextNode(
+                               entity.inherits[iindex].label));
+                           paragraph.appendChild(href);
+                        }
                     }
-                    else
+
+                    pane.appendChild(paragraph);
+                }
+
+                if (typeof entity.inherited !== 'undefined')
+                {
+                    var paragraph = document.createElement('p');
+                    paragraph.appendChild(
+                      document.createTextNode('Inherited by '));
+
+                    for (var iindex = 0;
+                         iindex < entity.inherited.length;
+                         iindex++)
                     {
-                       href = document.createElement('a');
-                       href.setAttribute(
-                         'href', '../' + entity.inherits[iindex].href);
-                       href.setAttribute('target', 'contentView');
-                       href.appendChild(
-                         document.createTextNode(
-                           entity.inherits[iindex].label));
-                       paragraph.appendChild(href);
+                        if (iindex != 0)
+                          paragraph.appendChild(document.createTextNode(', '));
+
+                        href = document.createElement('a');
+                        href.setAttribute(
+                          'href', '../' + entity.inherited[iindex].href);
+                        href.setAttribute('target', 'contentView');
+                        href.appendChild(
+                          document.createTextNode(
+                            entity.inherited[iindex].label));
+                        paragraph.appendChild(href);
+                    }
+
+                    pane.appendChild(paragraph);
+                }
+
+                if (typeof entity.parameters !== 'undefined')
+                {
+                    list = document.createElement('dl');
+
+                    for (var pindex = 0;
+                         pindex < entity.parameters.length;
+                         pindex++)
+                    {
+                        var parameter = entity.parameters[pindex];
+                        var term = document.createElement('dt');
+                        term.setAttribute(
+                          'id',
+                          'L' + parameter.line.toString() +
+                            'C' + parameter.column.toString());
+                        term.appendChild(
+                          document.createTextNode(parameter.label));
+                        var description = document.createElement('dd');
+                        buildText(description, parameter.description);
+
+                        list.appendChild(term);
+                        list.appendChild(description);
                     }
                 }
 
-                pane.appendChild(paragraph);
-            }
-
-            if (typeof entity.inherited !== 'undefined')
-            {
-                var paragraph = document.createElement('p');
-                paragraph.appendChild(document.createTextNode('Inherited by '));
-
-                for (var iindex = 0; iindex < entity.inherited.length; iindex++)
+                if (typeof entity.returns !== 'undefined')
                 {
-                    if (iindex != 0)
-                      paragraph.appendChild(document.createTextNode(', '));
+                    if (list == null) list = document.createElement('dl');
 
-                    href = document.createElement('a');
-                    href.setAttribute(
-                      'href', '../' + entity.inherited[iindex].href);
-                    href.setAttribute('target', 'contentView');
-                    href.appendChild(
-                      document.createTextNode(entity.inherited[iindex].label));
-                    paragraph.appendChild(href);
-                }
-
-                pane.appendChild(paragraph);
-            }
-
-            if (typeof entity.parameters !== 'undefined')
-            {
-                list = document.createElement('dl');
-
-                for (var pindex = 0;
-                     pindex < entity.parameters.length;
-                     pindex++)
-                {
-                    var parameter = entity.parameters[pindex];
                     var term = document.createElement('dt');
-                    term.setAttribute(
-                      'id',
-                      'L' + parameter.line.toString() +
-                        'C' + parameter.column.toString());
-                    term.appendChild(document.createTextNode(parameter.label));
+                    term.appendChild(document.createTextNode('Return value'));
                     var description = document.createElement('dd');
-                    buildText(description, parameter.description);
+                    buildText(description, entity.returns.description);
 
                     list.appendChild(term);
                     list.appendChild(description);
                 }
+
+                if (typeof entity.exceptions !== 'undefined')
+                {
+                    if (list == null) list = document.createElement('dl');
+
+                    var term = document.createElement('dt');
+                    term.appendChild(document.createTextNode('Exceptions'));
+                    var description = document.createElement('dd');
+                    buildText(description, entity.exceptions.description);
+
+                    list.appendChild(term);
+                    list.appendChild(description);
+                }
+
+                if (list != null) pane.appendChild(list);
             }
-
-            if (typeof entity.returns !== 'undefined')
-            {
-                if (list == null) list = document.createElement('dl');
-
-                var term = document.createElement('dt');
-                term.appendChild(document.createTextNode('Return value'));
-                var description = document.createElement('dd');
-                buildText(description, entity.returns.description);
-
-                list.appendChild(term);
-                list.appendChild(description);
-            }
-
-            if (typeof entity.exceptions !== 'undefined')
-            {
-                if (list == null) list = document.createElement('dl');
-
-                var term = document.createElement('dt');
-                term.appendChild(document.createTextNode('Exceptions'));
-                var description = document.createElement('dd');
-                buildText(description, entity.exceptions.description);
-
-                list.appendChild(term);
-                list.appendChild(description);
-            }
-
-            if (list != null) pane.appendChild(list);
         }
     }
 }

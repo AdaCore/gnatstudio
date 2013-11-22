@@ -1028,6 +1028,7 @@ package body GNATdoc.Backend.HTML is
                Extract_Summary_And_Description (E, Summary, Description);
                Entity_Entry := Create_Object;
                Entity_Entry.Set_Field ("label", Get_Short_Name (E));
+               Entity_Entry.Set_Field ("href", "../" & Get_Docs_Href (E));
                Entity_Entry.Set_Field ("summary", Summary);
                Entity_Entry.Set_Field ("description", Description);
                Append (Aux, Entity_Entry);
