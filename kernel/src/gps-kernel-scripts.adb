@@ -1378,15 +1378,6 @@ package body GPS.Kernel.Scripts is
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, "set_busy",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_busy",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "unset_busy",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
         (Kernel, "xref_db",
          Handler      => Default_Command_Handler'Access);
       Register_Command

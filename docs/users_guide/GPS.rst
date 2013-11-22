@@ -30,7 +30,6 @@ Functions
 .. autofunction:: freeze_xref
 .. autofunction:: get_build_mode
 .. autofunction:: get_build_output
-.. autofunction:: get_busy
 .. autofunction:: get_home_dir
 .. autofunction:: get_system_dir
 .. autofunction:: get_tmp_dir
@@ -47,12 +46,10 @@ Functions
 .. autofunction:: reset_xref_db
 .. autofunction:: save_persistent_properties
 .. autofunction:: set_build_mode
-.. autofunction:: set_busy
 .. autofunction:: set_last_command
 .. autofunction:: supported_languages
 .. autofunction:: thaw_prefs
 .. autofunction:: thaw_xref
-.. autofunction:: unset_busy
 .. autofunction:: version
 .. autofunction:: xref_db
 .. autofunction:: xref_frozen
