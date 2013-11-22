@@ -446,4 +446,59 @@
       <button action="debug down" hide='true'/>
       <separator id='user'/>
    </toolbar>
+
+   <toolbar id='Project'>
+      <button action='reload project'/>
+      <button action='open project properties'/>
+   </toolbar>
+
+   <toolbar id='Clipboard'>
+      <button action='clipboard View Append To Previous'/>
+      <button action='clipboard View Remove Entry'/>
+   </toolbar>
+
+   <toolbar id='Call Trees'>
+      <button action='calltree clear'/>
+      <button action='calltree remove selection'/>
+      <separator/>
+      <button action='calltree collapse all'/>
+   </toolbar>
+
+   <toolbar id='Windows'>
+      <button action='windows view close selected'/>
+   </toolbar>
+
+   <toolbar id='Bookmarks'>
+      <button action='bookmark create'/>
+      <separator/>
+      <button action='bookmark rename'/>
+      <button action='bookmark remove'/>
+   </toolbar>
+
+   <toolbar id='Scenario'>
+      <button action='add scenario variable'/>
+      <button action='scenario delete variable'/>
+      <separator/>
+      <button action='scenario edit variable'/>
+   </toolbar>
+
+   <toolbar id='Switches editor'>
+      <button action='edit switches for file'/>
+   </toolbar>
+
+   <toolbar id='Outline'>
+   </toolbar>
+
+   <toolbar id='Files'>
+      <button action='refresh files view'/>
+   </toolbar>
+
+   <toolbar id='Locations'>
+      <button action='locations clear'/>
+      <button action='locations remove selection'/>
+      <button action='locations export to text file'/>
+      <separator/>
+      <button action='locations expand files in category'/>
+      <button action='locations collapse all files'/>
+   </toolbar>
 </GPS>

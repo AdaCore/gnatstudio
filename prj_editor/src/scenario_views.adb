@@ -33,9 +33,7 @@ with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Toolbar;              use Gtk.Toolbar;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -65,7 +63,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;
 with Histories;                 use Histories;
-with Project_Viewers;           use Project_Viewers;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
 with XML_Utils;                 use XML_Utils;
@@ -95,9 +92,6 @@ package body Scenario_Views is
       Build_Node    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
 
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Scenario_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Scenario_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -164,16 +158,6 @@ package body Scenario_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a new build mode is selected
-
-   Command_Edit_Variable_Name : constant String :=
-     "Scenario edit variable";
-   Command_Edit_Variable_Tip : constant String :=
-     "Edit properties of the selected variable";
-
-   Command_Delete_Variable_Name : constant String :=
-     "Scenario delete variable";
-   Command_Delete_Variable_Tip : constant String :=
-     "Delete the selected variable";
 
    Hist_Show_Build_Modes : constant History_Key :=
      "scenario-show-build-modes";
@@ -564,28 +548,6 @@ package body Scenario_Views is
       Check.On_Toggled (On_Force_Refresh'Access, View);
    end Create_Menu;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Scenario_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Sep : Gtk_Separator_Tool_Item;
-   begin
-      Register_Button
-        (View.Kernel, Action_Add_Scenario_Variable, Toolbar => Toolbar);
-      Register_Button
-        (View.Kernel, Command_Delete_Variable_Name, Toolbar => Toolbar);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Register_Button
-        (View.Kernel, Command_Edit_Variable_Name, Toolbar => Toolbar);
-   end Create_Toolbar;
-
    -------------
    -- Execute --
    -------------
@@ -746,14 +708,16 @@ package body Scenario_Views is
         (Get_History (Kernel).all, Hist_Show_Build_Modes, True);
 
       Register_Action
-        (Kernel, Command_Edit_Variable_Name,
-         new Command_Edit_Variable, Command_Edit_Variable_Tip,
+        (Kernel, "Scenario edit variable",
+         new Command_Edit_Variable,
+         -"Edit properties of the selected variable",
          Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
          Category => -"Scenario");
 
       Register_Action
-        (Kernel, Command_Delete_Variable_Name,
-         new Command_Delete_Variable, Command_Delete_Variable_Tip,
+        (Kernel, "Scenario delete variable",
+         new Command_Delete_Variable,
+         -"Delete the selected variable",
          Stock_Id => Stock_Remove,
          Category => -"Scenario");
    end Register_Module;

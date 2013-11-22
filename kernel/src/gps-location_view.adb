@@ -44,7 +44,6 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;          use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                        use Gtk.Stock;
 with Gtk.Toolbar;                      use Gtk.Toolbar;
 with GPS.Tree_View;                    use GPS.Tree_View;
@@ -76,35 +75,6 @@ with GPS.Location_View_Sort;           use GPS.Location_View_Sort;
 with Histories;                        use Histories;
 
 package body GPS.Location_View is
-
-   Command_Remove_Message_Name : constant String  :=
-     "Locations remove selection";
-   Command_Remove_Message_Tip : constant String :=
-     "Remove the selected category, file or message";
-
-   Command_Clear_Locations_Name : constant String := "Locations clear";
-   Command_Clear_Locations_Tip : constant String :=
-     "Remove all the messages";
-
-   Command_Export_Name : constant String := "Locations export to text file";
-   Command_Export_Tip : constant String :=
-     "Export the selected category or file to a text file";
-
-   Command_Toggle_Sort_By_Subcategory : constant String :=
-     "Locations toggle sort by subcategory";
-   Command_Toggle_Sort_By_Subcategory_Tip : constant String :=
-     "Changes the sort order in the locations window. When active, this will"
-     & " group all error messages together, and then warning messages";
-
-   Command_Expand_Category_Name : constant String :=
-     "Locations expand files in category";
-   Command_Expand_Category_Tip : constant String :=
-     "Expand all files in the current category";
-
-   Command_Collapse_All_Files_Name : constant String :=
-     "Locations collapse all files";
-   Command_Collapse_All_Files_Tip : constant String :=
-     "Collapse all files in the locations view";
 
    History_Sort_By_Subcategory : constant History_Key :=
      "locations-sort-by-subcategory";
@@ -1189,33 +1159,7 @@ package body GPS.Location_View is
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
       use Generic_Views;
-      Sep    : Gtk_Separator_Tool_Item;
    begin
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Clear_Locations_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Remove_Message_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Export_Name);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Expand_Category_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Collapse_All_Files_Name);
-
       View.Build_Filter
         (Toolbar     => Toolbar,
          Hist_Prefix => "locations",
@@ -1324,38 +1268,45 @@ package body GPS.Location_View is
          Default_Value => False);
 
       Register_Action
-        (Kernel, Command_Remove_Message_Name,
-         new Remove_Selection_Command, Command_Remove_Message_Tip,
+        (Kernel, "locations remove selection",
+         new Remove_Selection_Command,
+         -"Remove the selected category, file or message",
          Stock_Id => Stock_Remove,
          Category => -"Locations");
       GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
 
       Register_Action
-        (Kernel, Command_Clear_Locations_Name,
-         new Clear_Locations_Command, Command_Clear_Locations_Tip,
+        (Kernel, "locations clear",
+         new Clear_Locations_Command,
+         -"Remove all the messages",
          Stock_Id => Stock_Clear,
          Category => -"Locations");
 
       Register_Action
-        (Kernel, Command_Export_Name, new Export_Command, Command_Export_Tip,
+        (Kernel, "locations export to text file", new Export_Command,
+         -"Export the selected category or file to a text file",
          Stock_Id => GPS_Save,
          Category => -"Locations");
 
       Register_Action
-        (Kernel, Command_Toggle_Sort_By_Subcategory,
+        (Kernel, "locations toggle sort by subcategory",
          new Toggle_Sort_By_Subcategory_Command,
-         Command_Toggle_Sort_By_Subcategory_Tip,
+         -("Changes the sort order in the locations window. When active,"
+           & " this will group all error messages together, and then"
+           & " warning messages"),
          Category => -"Locations");
 
       Register_Action
-        (Kernel, Command_Expand_Category_Name,
-         new Expand_Category_Command, Command_Expand_Category_Tip,
+        (Kernel, "locations expand files in category",
+         new Expand_Category_Command,
+         -"Expand all files in the current category",
          Stock_Id => GPS_Expand_All,
          Category => -"Locations");
 
       Register_Action
-        (Kernel, Command_Collapse_All_Files_Name,
-         new Collapse_All_Files_Command, Command_Collapse_All_Files_Tip,
+        (Kernel, "locations collapse all files",
+         new Collapse_All_Files_Command,
+         -"Collapse all files in the locations view",
          Stock_Id => GPS_Collapse_All,
          Category => -"Locations");
 

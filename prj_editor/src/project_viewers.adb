@@ -40,8 +40,6 @@ with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Stock;                    use Gtk.Stock;
-with Gtk.Toolbar;                  use Gtk.Toolbar;
-with Gtk.Tool_Button;              use Gtk.Tool_Button;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
@@ -156,9 +154,6 @@ package body Project_Viewers is
       Current_Dir : Virtual_File := No_File;
       --  The directory currently being shown
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Viewer_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
      (Viewer : access Project_Viewer_Record'Class)
@@ -251,8 +246,10 @@ package body Project_Viewers is
    --  Save the project associated with the kernel, and all its imported
    --  projects.
 
-   procedure Edit_Multiple_Switches
-     (Viewer : access Gtk_Widget_Record'Class);
+   type Edit_File_Switches is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_File_Switches;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit the switches for all the files selected in Viewer
 
    procedure Project_Command_Handler
@@ -491,17 +488,12 @@ package body Project_Viewers is
                Select_Iter (Get_Selection (V.Tree), Iter);
             end if;
 
-            Edit_Multiple_Switches (V);
-            return True;
+            return Execute_In_Background
+              (V.Kernel, Action => "edit switches for file");
          end if;
       end if;
 
       return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Select_Row;
 
    -------------
@@ -877,24 +869,6 @@ package body Project_Viewers is
       return Success;
    end Execute;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Viewer_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Button : Gtk_Tool_Button;
-   begin
-      Gtk_New_From_Stock (Button, Stock_Edit);
-      Button.Set_Tooltip_Text (-"Edit switches for all selected files");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Edit_Multiple_Switches'Access,
-         Slot_Object => View);
-   end Create_Toolbar;
-
    ------------------------------------
    -- Project_Editor_Context_Factory --
    ------------------------------------
@@ -936,19 +910,29 @@ package body Project_Viewers is
       end if;
    end Project_Editor_Context_Factory;
 
-   ----------------------------
-   -- Edit_Multiple_Switches --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Multiple_Switches
-     (Viewer : access Gtk_Widget_Record'Class)
+   overriding function Execute
+     (Command : access Edit_File_Switches;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      V         : constant Project_Viewer := Project_Viewer (Viewer);
-      Selection : constant Gtk_Tree_Selection := Get_Selection (V.Tree);
+      pragma Unreferenced (Command);
+      V         : constant Project_Viewer :=
+        File_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Selection : Gtk_Tree_Selection;
       Length    : Natural := 0;
-      Iter      : Gtk_Tree_Iter := Get_Iter_First (V.Model);
+      Iter      : Gtk_Tree_Iter;
 
    begin
+      if V = null then
+         return Commands.Failure;
+      end if;
+
+      Selection := V.Tree.Get_Selection;
+      Iter := V.Model.Get_Iter_First;
+
       while Iter /= Null_Iter loop
          if Iter_Is_Selected (Selection, Iter) then
             Length := Length + 1;
@@ -990,10 +974,8 @@ package body Project_Viewers is
             end loop;
          end if;
       end;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Edit_Multiple_Switches;
+      return Commands.Success;
+   end Execute;
 
    --------------------
    -- Widget_Factory --
@@ -1659,6 +1641,11 @@ package body Project_Viewers is
       Register_Action
         (Kernel, "save all projects", new Save_All_Command,
          Description => -"Save all modified projects to disk");
+
+      Register_Action
+        (Kernel, "edit switches for file", new Edit_File_Switches,
+         -"Edit the switches for the files selected in the switches editor",
+         Stock_Id => Stock_Edit);
 
       --  ??? Disabled for now, pending resolution of related problems
       --  encountered during testing

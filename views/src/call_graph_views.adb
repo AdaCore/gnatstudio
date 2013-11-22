@@ -38,14 +38,12 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Paned;                   use Gtk.Paned;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;     use Gtk.Separator_Tool_Item;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.List_Store;              use Gtk.List_Store;
 with Gtk.Stock;                   use Gtk.Stock;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -104,19 +102,6 @@ package body Call_Graph_Views is
 
    Computing_Label : constant String := "computing...";
    --  Label used while computing the ancestors call graph
-
-   Command_Clear_Calltree_Name : constant String := "Calltree clear";
-   Command_Clear_Calltree_Tip  : constant String :=
-     "Clear the contents of the call tree";
-
-   Command_Remove_Calltree_Name : constant String :=
-     "Calltree remove selection";
-   Command_Remove_Calltree_Tip  : constant String :=
-     "Remove the selected line from the calltree";
-
-   Command_Collapse_All_Name : constant String := "Calltree collapse all";
-   Command_Collapse_All_Tip  : constant String :=
-     "Close all nodes in the call tree";
 
    -----------------
    -- Local types --
@@ -185,9 +170,6 @@ package body Call_Graph_Views is
      (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    function Initialize
      (View   : access Callgraph_View_Record'Class) return Gtk_Widget;
-   overriding procedure Create_Toolbar
-     (View    : not null access Callgraph_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    --  Limit to the sides of the MDI, because it can open editors and they
    --  would be displayed on top of the callgraph.
@@ -902,34 +884,6 @@ package body Call_Graph_Views is
          Trace (Me, E);
          Thaw_Sort (M, Column);
    end On_Row_Expanded;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Callgraph_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Sep : Gtk_Separator_Tool_Item;
-   begin
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Clear_Calltree_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Remove_Calltree_Name);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Collapse_All_Name);
-   end Create_Toolbar;
 
    -------------
    -- Execute --
@@ -1786,20 +1740,23 @@ package body Call_Graph_Views is
          Add_Before => False);
 
       Register_Action
-        (Kernel, Command_Clear_Calltree_Name,
-         new Calltree_Clear_Command, Command_Clear_Calltree_Tip,
+        (Kernel, "calltree clear",
+         new Calltree_Clear_Command,
+         -"Clear the contents of the call tree",
          Category => -"Call trees",
          Stock_Id => Stock_Clear);
 
       Register_Action
-        (Kernel, Command_Remove_Calltree_Name,
-         new Calltree_Remove_Command, Command_Remove_Calltree_Tip,
+        (Kernel, "calltree remove selection",
+         new Calltree_Remove_Command,
+         -"Remove the selected line from the calltree",
          Stock_Id => Stock_Remove,
          Category => -"Call trees");
 
       Register_Action
-        (Kernel, Command_Collapse_All_Name,
-         new Calltree_Collapse_All_Command, Command_Collapse_All_Tip,
+        (Kernel, "calltree collapse all",
+         new Calltree_Collapse_All_Command,
+         -"Close all nodes in the call tree",
          Stock_Id => GPS_Collapse_All,
          Category => -"Call trees");
    end Register_Module;

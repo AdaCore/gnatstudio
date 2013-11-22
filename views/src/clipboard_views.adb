@@ -29,7 +29,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -48,8 +47,6 @@ with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
@@ -64,18 +61,10 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 package body Clipboard_Views is
    Me : constant Trace_Handle := Create ("CLIPBOARD");
 
-   Command_Append_To_Previous_Name : constant String :=
-     "Clipboard View Append To Previous";
-   Command_Remove_Name : constant String :=
-     "Clipboard View Remove Entry";
-
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
       Current : Gdk_Pixbuf;
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Clipboard_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    function Initialize
      (View   : access Clipboard_View_Record'Class) return Gtk_Widget;
@@ -245,25 +234,6 @@ package body Clipboard_Views is
          return -1;
       end if;
    end Get_Selected_From_Event;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Clipboard_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-   begin
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Append_To_Previous_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Remove_Name);
-   end Create_Toolbar;
 
    ------------------
    -- Button_Press --
@@ -482,14 +452,14 @@ package body Clipboard_Views is
       Generic_View.Register_Module (Kernel);
 
       Register_Action
-        (Kernel, Command_Append_To_Previous_Name,
+        (Kernel, "Clipboard View Append To Previous",
          new Merge_With_Previous_Command,
          -"Append to previous clipboard entry",
          Stock_Id => Stock_Add,
          Category => -"Clipboard");
 
       Register_Action
-        (Kernel, Command_Remove_Name, new Remove_Entry_Command,
+        (Kernel, "Clipboard View Remove Entry", new Remove_Entry_Command,
          -"Remove selected clipboard entry",
          Stock_Id => Stock_Remove,
          Category => -"Clipboard");

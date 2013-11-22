@@ -58,7 +58,6 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Toggle_Button;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -130,9 +129,6 @@ package body Project_Explorers is
 
       Expanding : Boolean := False;
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Explorer_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -1059,20 +1055,6 @@ package body Project_Explorers is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
       Menu.Add (Check);
    end Create_Menu;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Explorer_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
-   begin
-      Register_Button
-        (View.Kernel, "reload project", Toolbar => Toolbar);
-      Register_Button
-        (View.Kernel, "open Project Properties", Toolbar => Toolbar);
-   end Create_Toolbar;
 
    ------------------------------
    -- Explorer_Context_Factory --

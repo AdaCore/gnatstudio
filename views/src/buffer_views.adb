@@ -31,7 +31,6 @@ with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -82,19 +81,11 @@ package body Buffer_Views is
      "Windows_View_Show_Notebooks";
    --  Used to store the current view settings in histories
 
-   Command_Close_Windows_Name : constant String :=
-     "Windows view close selected";
-   Command_Close_Windows_Tip : constant String :=
-     "Close all windows currently selected in the Windows view";
-
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
       File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Buffer_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Buffer_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -571,21 +562,6 @@ package body Buffer_Views is
       Expand_All (V.Tree);
    end Refresh;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Buffer_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-   begin
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Close_Windows_Name);
-   end Create_Toolbar;
-
    -----------------
    -- Create_Menu --
    -----------------
@@ -905,8 +881,9 @@ package body Buffer_Views is
         (Get_History (Kernel).all, History_Show_Notebooks, False);
 
       Register_Action
-        (Kernel, Command_Close_Windows_Name,
-         new Close_Command, Command_Close_Windows_Tip,
+        (Kernel, "Windows view close selected",
+         new Close_Command,
+         -"Close all windows currently selected in the Windows view",
          Stock_Id => Stock_Close,
          Category => -"Windows view");
 

@@ -20,7 +20,9 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Hashed_Maps;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
@@ -83,10 +85,12 @@ with DOM.Readers;               use DOM.Readers;
 with DOM.Core.Nodes;            use DOM.Core, DOM.Core.Nodes;
 with DOM.Core.Documents;        use DOM.Core.Documents;
 with DOM.Core.Elements;         use DOM.Core.Elements;
+with Sax.Utils;                 use Sax.Utils;
 
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
+   use Sax.Utils.Symbol_Table_Pointers;
 
    Me : constant Trace_Handle :=
      Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
@@ -234,6 +238,12 @@ package body GPS.Kernel.Modules.UI is
       Full_Path : String) return Menu_Command;
    --  Utility function: create a command for a given menu
 
+   package Node_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Node,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => "=");
+
    -------------------------
    -- proxies for actions --
    -------------------------
@@ -326,7 +336,6 @@ package body GPS.Kernel.Modules.UI is
    package Proxy_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Proxy_And_Filter);
    use Proxy_Lists;
-   Global_Proxy_Items : Proxy_Lists.List;
    --  List of all registered menu items or tool buttons for which the action
    --  has a filter. This is needed to dynamically deactivate menus and buttons
    --  whenever the current context changes
@@ -364,7 +373,14 @@ package body GPS.Kernel.Modules.UI is
 
    package Update_Menus_Idle is new Glib.Main.Generic_Sources
      (Update_Menus_Data_Access);
-   Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
+
+   type Global_Data is record
+      Toolbar_Descriptions : Node_Maps.Map;
+      Symbols              : Symbol_Table := No_Symbol_Table;
+      Proxy_Items          : Proxy_Lists.List;
+      Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
+   end record;
+   Globals : Global_Data;
 
    -----------------------------
    -- Create_Command_For_Menu --
@@ -1431,7 +1447,7 @@ package body GPS.Kernel.Modules.UI is
       Filter : access Action_Filter_Record'Class)
    is
    begin
-      Global_Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
+      Globals.Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
       Widget_Kernel_Callback.Connect
         (Item,
          Signal_Destroy,
@@ -1441,7 +1457,7 @@ package body GPS.Kernel.Modules.UI is
       --  If the background updating of menus was taking place, we need to
       --  restart it since it's iterators are now invalid.
 
-      if Update_Menus_Idle_Id /= No_Source_Id then
+      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
          Update_Menus_And_Buttons (Kernel);
       end if;
    end Add_To_Global_Proxies;
@@ -1455,7 +1471,7 @@ package body GPS.Kernel.Modules.UI is
       Kernel : Kernel_Handle)
    is
       It : Proxy_And_Filter;
-      C  : Proxy_Lists.Cursor := Global_Proxy_Items.First;
+      C  : Proxy_Lists.Cursor := Globals.Proxy_Items.First;
       Data : constant access Action_Proxy := Get_Data (Item);
    begin
       if Data /= null then
@@ -1465,11 +1481,11 @@ package body GPS.Kernel.Modules.UI is
       while Has_Element (C) loop
          It := Element (C);
          if Gtk_Widget (It.Proxy) = Gtk_Widget (Item) then
-            Global_Proxy_Items.Delete (C);
+            Globals.Proxy_Items.Delete (C);
 
             --  Update cursor in the background updating, if needed
 
-            if Update_Menus_Idle_Id /= No_Source_Id then
+            if Globals.Update_Menus_Idle_Id /= No_Source_Id then
                Update_Menus_And_Buttons (Kernel);
             end if;
 
@@ -1553,7 +1569,7 @@ package body GPS.Kernel.Modules.UI is
       --  We have modified Global_Proxy_Items: if the menu recomputer
       --  is running, its cursors might be invalid: reset it now.
 
-      if Update_Menus_Idle_Id /= No_Source_Id then
+      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
          Update_Menus_And_Buttons (Kernel);
       end if;
 
@@ -1639,6 +1655,80 @@ package body GPS.Kernel.Modules.UI is
       end loop;
       return -1;
    end Get_Toolbar_Section;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   function Create_Toolbar
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Id      : String)
+      return Gtk.Toolbar.Gtk_Toolbar
+   is
+      Toolbar : Gtk_Toolbar;
+
+      procedure Process_Toolbar (Toolbar_Node : Node);
+      --  Process a <toolbar node>
+
+      ---------------------
+      -- Process_Toolbar --
+      ---------------------
+
+      procedure Process_Toolbar (Toolbar_Node : Node) is
+         N       : Node;
+         Sep     : Gtk_Separator_Tool_Item;
+         Hide    : Boolean;
+      begin
+         N := First_Child (Toolbar_Node);
+         while N /= null loop
+            if Node_Name (N) = "button" then
+               Hide := False;
+
+               if Get_Attribute (N, "hide") /= "" then
+                  begin
+                     Hide := Boolean'Value (Get_Attribute (N, "hide"));
+                  exception
+                     when Constraint_Error =>
+                        Hide := False;
+                  end;
+               end if;
+
+               Register_Button
+                 (Kernel,
+                  Action   => Get_Attribute (N, "action"),
+                  Stock_Id => Get_Attribute (N, "stock"),
+                  Toolbar  => Toolbar,
+                  Hide     => Hide);
+
+            elsif Node_Name (N) = "separator" then
+               Gtk_New (Sep);
+               Sep.Set_Name (Get_Attribute (N, "id"));
+               Toolbar.Insert (Sep);
+            end if;
+
+            N := Next_Sibling (N);
+         end loop;
+      end Process_Toolbar;
+
+      N : Node;
+   begin
+      Gtk_New (Toolbar);
+      Toolbar.Set_Name (Id);
+      Toolbar.Set_Icon_Size (Icon_Size_Small_Toolbar);
+      Toolbar.Set_Style (Toolbar_Icons);
+      Toolbar.Set_Show_Arrow (True);
+
+      begin
+         N := Globals.Toolbar_Descriptions.Element (Id);
+         if N /= null then
+            Process_Toolbar (N);
+         end if;
+      exception
+         when others =>
+            null;
+      end;
+      return Toolbar;
+   end Create_Toolbar;
 
    ---------------------
    -- Register_Button --
@@ -2287,7 +2377,7 @@ package body GPS.Kernel.Modules.UI is
         (Update_Menus_Data, Update_Menus_Data_Access);
    begin
       Unchecked_Free (Data);
-      Update_Menus_Idle_Id := No_Source_Id;
+      Globals.Update_Menus_Idle_Id := No_Source_Id;
    end Destroy;
 
    ------------------------------------
@@ -2419,7 +2509,7 @@ package body GPS.Kernel.Modules.UI is
             Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
             Cleanup_Toolbar_Separators (Tool_Bar);
 
-            Update_Menus_Idle_Id := No_Source_Id;
+            Globals.Update_Menus_Idle_Id := No_Source_Id;
             return False;
          end if;
 
@@ -2463,9 +2553,9 @@ package body GPS.Kernel.Modules.UI is
                   if Has_Element (Tmp) then
                      Tmp_Elem := Element (Tmp);
 
-                     Global_Proxy_Items.Delete (Data.Current);
+                     Globals.Proxy_Items.Delete (Data.Current);
 
-                     Tmp := Global_Proxy_Items.First;
+                     Tmp := Globals.Proxy_Items.First;
                      while Has_Element (Tmp)
                        and then Element (Tmp) /= Tmp_Elem
                      loop
@@ -2473,8 +2563,8 @@ package body GPS.Kernel.Modules.UI is
                      end loop;
                      Data.Current := Tmp;
                   else
-                     Global_Proxy_Items.Delete (Data.Current);
-                     Data.Current := Global_Proxy_Items.First;
+                     Globals.Proxy_Items.Delete (Data.Current);
+                     Data.Current := Globals.Proxy_Items.First;
                   end if;
 
                else
@@ -2513,19 +2603,19 @@ package body GPS.Kernel.Modules.UI is
          Ctxt := Get_Current_Context (Kernel);
       end if;
 
-      if Update_Menus_Idle_Id /= No_Source_Id then
-         Remove (Update_Menus_Idle_Id);
+      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
+         Remove (Globals.Update_Menus_Idle_Id);
       end if;
 
       Data := new Update_Menus_Data'
         (Context => Ctxt,
-         Current => Global_Proxy_Items.First);
+         Current => Globals.Proxy_Items.First);
 
       --  Do a first immediate pass, since it might look nicer. This is also
       --  needed on startup to avoid flickering the toolbars
 
       if Update_Menus_And_Buttons_Chunk (Data) then
-         Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
+         Globals.Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
            (Update_Menus_And_Buttons_Chunk'Access,
             Data       => Data,
             Notify     => Destroy'Access);
@@ -2578,59 +2668,6 @@ package body GPS.Kernel.Modules.UI is
          Parent      : not null access Gtk_Menu_Shell_Record'Class;
          Menu_Node   : Node);
       --  Process a <menu> node
-
-      procedure Process_Toolbar (Toolbar_Node : Node);
-      --  Process a <toolbar node>
-
-      ---------------------
-      -- Process_Toolbar --
-      ---------------------
-
-      procedure Process_Toolbar (Toolbar_Node : Node) is
-         Id : constant DOM_String := Get_Attribute (Toolbar_Node, "id");
-         Toolbar : Gtk_Toolbar;
-         N       : Node;
-         Sep     : Gtk_Separator_Tool_Item;
-         Hide    : Boolean;
-      begin
-         --  ??? Should get toolbar based on id
-
-         if Id = "main" then
-            Toolbar := Get_Toolbar (Kernel);
-         else
-            raise Program_Error with "no such toolbar: " & Id;
-         end if;
-
-         N := First_Child (Toolbar_Node);
-         while N /= null loop
-            if Node_Name (N) = "button" then
-               Hide := False;
-
-               if Get_Attribute (N, "hide") /= "" then
-                  begin
-                     Hide := Boolean'Value (Get_Attribute (N, "hide"));
-                  exception
-                     when Constraint_Error =>
-                        Hide := False;
-                  end;
-               end if;
-
-               Register_Button
-                 (Kernel,
-                  Action   => Get_Attribute (N, "action"),
-                  Stock_Id => Get_Attribute (N, "stock"),
-                  Toolbar  => Toolbar,
-                  Hide     => Hide);
-
-            elsif Node_Name (N) = "separator" then
-               Gtk_New (Sep);
-               Sep.Set_Name (Get_Attribute (N, "id"));
-               Toolbar.Insert (Sep);
-            end if;
-
-            N := Next_Sibling (N);
-         end loop;
-      end Process_Toolbar;
 
       ------------------
       -- Process_Menu --
@@ -2714,8 +2751,14 @@ package body GPS.Kernel.Modules.UI is
       Reader : Tree_Reader;
       Doc    : Document;
       N      : Node;
+      N2     : Node;
    begin
+      if Globals.Symbols = No_Symbol_Table then
+         Globals.Symbols := Allocate;
+      end if;
+
       Open (Description.Display_Full_Name, Input);
+      Reader.Set_Symbol_Table (Globals.Symbols);
       Parse (Reader, Input);
       Close (Input);
 
@@ -2727,7 +2770,13 @@ package body GPS.Kernel.Modules.UI is
          if Node_Name (N) = "menubar" then
             Process_Menu_Bar (N);
          elsif Node_Name (N) = "toolbar" then
-            Process_Toolbar (N);
+            N2 := Clone_Node (N, Deep => True);
+            if N2 = null then
+               raise Program_Error with "N2 is null";
+            end if;
+
+            Globals.Toolbar_Descriptions.Include
+              (Get_Attribute (N, "id"), Clone_Node (N, Deep => True));
          end if;
 
          N := Next_Sibling (N);

@@ -61,8 +61,7 @@ package Generic_Views is
 
    procedure Create_Toolbar
      (View    : not null access View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-     is null;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is null;
    --  If the view needs a local toolbar, this function is called when the
    --  toolbar needs to be filled. It is not called if Local_Toolbar is set to
    --  null in the instantiation of the generic below.

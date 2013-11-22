@@ -44,8 +44,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Selection_Data;         use Gtk.Selection_Data;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Toolbar;                use Gtk.Toolbar;
-with Gtk.Tool_Button;            use Gtk.Tool_Button;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gdk.Types;
@@ -53,8 +51,10 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with Generic_List;
 with Generic_Views;              use Generic_Views;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -113,9 +113,6 @@ package body Project_Explorers_Files is
          --  handler, in case the fill function should call itself recursively
          --  : to be investigated.
       end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Explorer_Files_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Files_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -136,6 +133,7 @@ package body Project_Explorers_Files is
       Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left);
+   use Explorer_Files_Views;
    subtype Project_Explorer_Files is Explorer_Files_Views.View_Access;
 
    type Append_Directory_Idle_Data is record
@@ -233,6 +231,10 @@ package body Project_Explorers_Files is
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
 
+   type Refresh_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Refresh_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer
 
@@ -1017,23 +1019,6 @@ package body Project_Explorers_Files is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Refresh'Access, View);
    end Create_Menu;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Project_Explorer_Files_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Button : Gtk_Tool_Button;
-   begin
-      Gtk_New_From_Stock (Button, GPS.Stock_Icons.GPS_Refresh);
-      Button.Set_Tooltip_Text (-"Refresh");
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Refresh'Access, View);
-      Toolbar.Insert (Button);
-   end Create_Toolbar;
-
    ----------------------------
    -- File_Remove_Idle_Calls --
    ----------------------------
@@ -1221,6 +1206,24 @@ package body Project_Explorers_Files is
    begin
       return On_Key_Press (T.Kernel, T.File_Tree, Event);
    end File_Key_Press;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Refresh_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      if V /= null then
+         Refresh (V);
+      end if;
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- Refresh --
@@ -1601,6 +1604,11 @@ package body Project_Explorers_Files is
         (Kernel,
          Filter => File_View_Filter,
          Name   => "File_View");
+
+      Register_Action
+        (Kernel, "refresh files view", new Refresh_Command,
+         -"Refrehs the contents of the Files view",
+         Stock_Id => GPS.Stock_Icons.GPS_Refresh);
    end Register_Module;
 
 end Project_Explorers_Files;

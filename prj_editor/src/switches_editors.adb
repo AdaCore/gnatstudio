@@ -798,6 +798,8 @@ package body Switches_Editors is
                   Flags  => Modal or Destroy_With_Parent);
       end if;
 
+      Dialog.Set_Default_Size (1024, 800);
+
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start
         (Get_Content_Area (Dialog), Box, Fill => True, Expand => True);

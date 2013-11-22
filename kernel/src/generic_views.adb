@@ -45,6 +45,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
@@ -611,7 +612,7 @@ package body Generic_Views is
             Initialize_Vbox (Box);
             Toplevel_Box (Box.all).Initial := View;
 
-            Gtk_New (Toolbar);
+            Toolbar := Create_Toolbar (Kernel, Id => View_Name);
             Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
             Toolbar.Set_Style (Toolbar_Icons);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");

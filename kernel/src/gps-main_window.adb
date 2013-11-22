@@ -585,12 +585,6 @@ package body GPS.Main_Window is
       Get_Style_Context (Main_Window.Toolbar_Box).Add_Class ("toolbar");
       Main_Window.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
 
-      Gtk_New (Main_Window.Toolbar);
-      Set_Orientation (Main_Window.Toolbar, Orientation_Horizontal);
-      Set_Style (Main_Window.Toolbar, Toolbar_Icons);
-      Main_Window.Toolbar.Set_Show_Arrow (True);
-      Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar);
-
       Add (Vbox, Main_Window.MDI);
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
@@ -598,7 +592,6 @@ package body GPS.Main_Window is
       Add_Hook (Main_Window.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "main_window.preferences_changed");
-      Preferences_Changed (Main_Window.Kernel, Data => null);
 
       Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),
@@ -632,6 +625,11 @@ package body GPS.Main_Window is
            (Main_Window.MDI,
             User         => Main_Window.Kernel,
             Registration => GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
+
+      Main_Window.Toolbar := Create_Toolbar (Main_Window.Kernel, Id => "main");
+      Main_Window.Toolbar_Box.Pack_Start (Main_Window.Toolbar);
+
+      Preferences_Changed (Main_Window.Kernel, Data => null);
    end Initialize;
 
    -------------------

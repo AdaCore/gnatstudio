@@ -338,7 +338,7 @@ package body GPS.Kernel.Actions is
                 Create_Proxy
                    (Act.Command,
                     (Event       => Event,
-                     Context     => Context,
+                     Context     => C,
                      Synchronous => False,
                      Dir         => No_File,
                      Args        => null,

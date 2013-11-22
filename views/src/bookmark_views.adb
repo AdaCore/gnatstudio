@@ -41,9 +41,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -83,10 +81,6 @@ package body Bookmark_Views is
    Data_Column     : constant := 2;
    Editable_Column : constant := 3;
 
-   Command_Add_Name    : constant String := "Bookmark Create";
-   Command_Rename_Name : constant String := "Bookmark Rename";
-   Command_Remove_Name : constant String := "Bookmark Remove";
-
    type Bookmark_Data is record
       Marker    : Location_Marker;
       Name      : GNAT.Strings.String_Access;
@@ -114,9 +108,6 @@ package body Bookmark_Views is
       --  Whether we are deleting multiple bookmarks
    end record;
    type Bookmark_View is access all Bookmark_View_Record'Class;
-   overriding procedure Create_Toolbar
-     (View    : not null access Bookmark_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    package Bookmarks_Selection_Foreach is new
      Gtk.Tree_Selection.Selected_Foreach_User_Data (Bookmark_View_Record);
@@ -687,34 +678,6 @@ package body Bookmark_Views is
       Unchecked_Free (Data);
    end Free;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Bookmark_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Sep    : Gtk_Separator_Tool_Item;
-   begin
-      Register_Button
-        (View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Add_Name);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Rename_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Remove_Name);
-   end Create_Toolbar;
-
    --------------------------
    -- View_Context_Factory --
    --------------------------
@@ -1284,19 +1247,19 @@ package body Bookmark_Views is
       Load_Bookmarks (Kernel);
 
       Register_Action
-        (Kernel, Command_Rename_Name, new Rename_Bookmark_Command,
+        (Kernel, "bookmark rename", new Rename_Bookmark_Command,
          -("Interactively rename the bookmark currently selected in the"
            & " bookmarks view"), Category => -"Bookmarks",
          Stock_Id => Stock_Convert);
 
       Register_Action
-        (Kernel, Command_Remove_Name, new Delete_Bookmark_Command,
+        (Kernel, "bookmark remove", new Delete_Bookmark_Command,
          -"Delete the bookmark currently selected in the bookmarks view",
          Stock_Id => Stock_Remove,
          Category => -"Bookmarks");
 
       Register_Action
-        (Kernel, Command_Add_Name, new Create_Bookmark_Command,
+        (Kernel, "bookmark create", new Create_Bookmark_Command,
          -("Create a bookmark at the current location"),
          Stock_Id => Stock_Add,
          Category => -"Bookmarks", Filter => Src_Action_Context);
