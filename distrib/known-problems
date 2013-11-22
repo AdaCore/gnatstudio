@@ -397,6 +397,11 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
               as write references.
   Workaround: None.
 
+- MB13-005: GPS: CodePeer report is not opened
+  Problem:    CodePeer report windows is not opened after analysis and
+              'key already in map' exception is reported in log file.
+  Workaround: Use HTML report.
+
 - LC11-030: GPS: Potential conflict when redefining key shortcuts
   Problem:    It is possible to associate by mistake key shortcuts to keys
               that are already bound because the key manager dialog does not
