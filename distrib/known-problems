@@ -8,17 +8,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
-- MB06-009: GPS: 'add to extending project' hides existing files
-  Problem:    If you load an extending project in GPS, there is a new
-              contextual menu 'Add to extending project' which can be
-              used to conveniently copy files from the extended project
-              into the extending one. However, if the extending project
-              was created manually and is not using the Source_Files
-              attribute, the result is that the files that were visible
-              before are no longer visible.
-  Workaround: edit the extending project and remove the Source_Files
-              attribute.
-
 - MB14-058: GPS: the 'next tag' action does not select the first item
   Problem:    In the Locations view, if the currently selected node is
               a file node, then using the 'next tag' action or the
@@ -35,6 +24,17 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Problem:    CodePeer report windows is not opened after analysis and
               'key already in map' exception is reported in log file.
   Workaround: Use HTML report.
+
+- MB06-009: GPS: 'add to extending project' hides existing files
+  Problem:    If you load an extending project in GPS, there is a new
+              contextual menu 'Add to extending project' which can be
+              used to conveniently copy files from the extended project
+              into the extending one. However, if the extending project
+              was created manually and is not using the Source_Files
+              attribute, the result is that the files that were visible
+              before are no longer visible.
+  Workaround: edit the extending project and remove the Source_Files
+              attribute.
 
 - MB01-006: GPS: create_missing_dirs not working with trailing separators
   Problem:    The plugin create_missing_dirs.py does not create directories
