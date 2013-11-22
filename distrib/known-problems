@@ -20,11 +20,6 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
               are present under the Build toplevel menu.
   Workaround: None.
 
-- MB13-005: GPS: CodePeer report is not opened
-  Problem:    CodePeer report windows is not opened after analysis and
-              'key already in map' exception is reported in log file.
-  Workaround: Use HTML report.
-
 - MB06-009: GPS: 'add to extending project' hides existing files
   Problem:    If you load an extending project in GPS, there is a new
               contextual menu 'Add to extending project' which can be
