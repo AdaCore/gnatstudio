@@ -426,7 +426,18 @@ package body CodePeer.Bridge.Inspection_Readers is
                        1,
                        1,
                        null);
-                  Self.Messages.Insert (Message.Id, Message);
+
+                  if Self.Messages.Contains (Message.Id) then
+                     Self.Kernel.Insert
+                       (Text   =>
+                          "CodePeer: duplicate message"
+                           & Natural'Image (Message.Id),
+                        Add_LF => False,
+                        Mode   => GPS.Kernel.Error);
+
+                  else
+                     Self.Messages.Insert (Message.Id, Message);
+                  end if;
             end case;
 
             if Attrs.Get_Index ("from_file") /= -1 then
