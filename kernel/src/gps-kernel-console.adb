@@ -30,7 +30,6 @@ with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -55,17 +54,6 @@ with String_Utils;           use String_Utils;
 package body GPS.Kernel.Console is
    Me : constant Trace_Handle := Create ("CONSOLE");
 
-   Command_Clear_Messages_Name : constant String := "Messages clear";
-   Command_Clear_Messages_Tip : constant String :=
-     "Clear the contents of the Messages window";
-   Command_Save_Name : constant String := "Messages save to file";
-   Command_Save_Tip  : constant String :=
-     "Save the contents of the messages window to a file";
-   Command_Load_Name : constant String := "Messages load from file";
-   Command_Load_Tip  : constant String :=
-     "Loads the contents of a file into the Messages window, and process"
-     & " locations into the Locations window.";
-
    History_Wrap_Lines : constant History_Key := "messages-wrap-line";
 
    type GPS_Message_Record is new Interactive_Console_Record with
@@ -73,9 +61,6 @@ package body GPS.Kernel.Console is
    --  Type for the messages window. This is mostly use to have a unique tag
    --  for this console, so that we can save it in the desktop
 
-   overriding procedure Create_Toolbar
-     (View    : not null access GPS_Message_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access GPS_Message_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -507,28 +492,6 @@ package body GPS.Kernel.Console is
       Menu.Add (Check);
    end Create_Menu;
 
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access GPS_Message_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
-   begin
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Clear_Messages_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Save_Name);
-      Register_Button
-        (Kernel   => View.Kernel,
-         Toolbar  => Toolbar,
-         Action   => Command_Load_Name);
-   end Create_Toolbar;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -547,20 +510,24 @@ package body GPS.Kernel.Console is
       Kernel.Set_Messages_Window (Msg2);
 
       Register_Action
-        (Kernel, Command_Clear_Messages_Name,
-         new Clear_Messages_Command, Command_Clear_Messages_Tip,
+        (Kernel, "messages clear",
+         new Clear_Messages_Command,
+         -"Clear the contents of the Messages window",
          Stock_Id => Stock_Clear,
          Category => -"Messages");
 
       Register_Action
-        (Kernel, Command_Save_Name,
-         new Save_Messages_Command, Command_Save_Tip,
+        (Kernel, "messages save to file",
+         new Save_Messages_Command,
+         -"Save the contents of the messages window to a file",
          Stock_Id => GPS_Save,
          Category => -"Messages");
 
       Register_Action
-        (Kernel, Command_Load_Name,
-         new Load_Messages_Command, Command_Load_Tip,
+        (Kernel, "messages load from file",
+         new Load_Messages_Command,
+         -("Loads the contents of a file into the Messages window, and process"
+           & " locations into the Locations window."),
          Stock_Id => Stock_Open,
          Category => -"Messages");
 

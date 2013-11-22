@@ -536,6 +536,17 @@ package body Generic_Views is
          end if;
       end Child_From_View;
 
+      -----------------------
+      -- Get_Actual_Widget --
+      -----------------------
+
+      overriding function Get_Actual_Widget
+        (Self : not null access Local_Formal_MDI_Child) return Gtk_Widget
+      is
+      begin
+         return Gtk_Widget (View_From_Widget (Get_Widget (Self)));
+      end Get_Actual_Widget;
+
       ----------------------
       -- View_From_Widget --
       ----------------------

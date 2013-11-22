@@ -1722,6 +1722,18 @@ package body GPS.Kernel.Modules.UI is
          N := Globals.Toolbar_Descriptions.Element (Id);
          if N /= null then
             Process_Toolbar (N);
+
+            loop
+               if Get_Attribute (N, "inherit") /= "" then
+                  N := Globals.Toolbar_Descriptions.Element
+                    (Get_Attribute (N, "inherit"));
+                  if N /= null then
+                     Process_Toolbar (N);
+                  end if;
+               else
+                  N := null;
+               end if;
+            end loop;
          end if;
       exception
          when others =>

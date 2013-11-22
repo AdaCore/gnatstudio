@@ -54,7 +54,6 @@ with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Menu_Tool_Button;              use Gtk.Menu_Tool_Button;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;           use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
 with Gtk.Style_Context;                 use Gtk.Style_Context;
@@ -71,12 +70,14 @@ with Gtkada.Style;                      use Gtkada.Style;
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
 with Default_Preferences;               use Default_Preferences;
+with Generic_Views;                     use Generic_Views;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Layouts;                           use Layouts;
@@ -124,20 +125,21 @@ package body Browsers.Canvas is
    package Contextual_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Cb_Data);
 
-   procedure Zoom_In (Browser : access Gtk_Widget_Record'Class);
+   type Zoom_In_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Zoom_In_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Zoom in to the previous zoom level, if any
 
-   procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class);
+   type Zoom_Out_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Zoom_Out_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Zoom out to the next zoom level, if any
 
    procedure Zoom_Level
      (Item : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Zoom directly to a specific level (Data.Zoom)
-
-   function Key_Press
-     (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-      return Boolean;
-   --  Callback for the key press event
 
    function On_Export_Idle (Data : Export_Idle_Data) return Boolean;
    --  Does the actual export in an idle, called by the bellow export
@@ -152,16 +154,19 @@ package body Browsers.Canvas is
    procedure On_Export_To_PDF (Browser : access Gtk_Widget_Record'Class);
    --  Export the contents of the browser to PDF
 
-   procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
+   type Refresh_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Refresh_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Recompute the layout of the canvas
 
    procedure Change_Align_On_Grid (Browser : access Gtk_Widget_Record'Class);
    --  Callback for the "align on grid" contextual menu item
 
-   procedure On_Select_All (Browser : access Gtk_Widget_Record'Class);
-   --  Select all the items in the canvas
-
-   procedure On_Data_Clear (Browser : access Gtk_Widget_Record'Class);
+   type Clear_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Clear_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  "Clear" contextual menu
 
    type Select_All_Command is new Interactive_Command with null record;
@@ -169,7 +174,16 @@ package body Browsers.Canvas is
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   procedure Toggle_Links (Browser : access Gtk_Widget_Record'Class);
+   type Is_In_Browser is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_In_Browser;
+      Context : Selection_Context) return Boolean;
+   --  Whether the focus is currently on a browser
+
+   type Toggle_Links is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Toggle_Links;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Toggle the display of links for the item
 
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
@@ -178,10 +192,20 @@ package body Browsers.Canvas is
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the drawing of the grid, and refresh the canvas.
 
-   procedure Set_Root (Browser : access Gtk_Widget_Record'Class);
+   type Remove_Unselected_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Remove_Unselected_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all unselected items
 
-   procedure Remove_Selected (Browser : access Gtk_Widget_Record'Class);
+   function Browser_From_Context
+     (Context : Selection_Context) return General_Browser;
+   --  Get the browser from the context
+
+   type Remove_Selected_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Remove_Selected_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all selected items
 
    procedure Close_Item
@@ -316,11 +340,6 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser, Signal_Destroy, Destroyed'Access, Browser);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Browser.Canvas, Signal_Key_Press_Event,
-         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
-         Browser);
-
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Browser.Kernel).all,
          Hist_Draw_Grid, Default_Value => True);
@@ -414,22 +433,6 @@ package body Browsers.Canvas is
       return Browser.Toolbar;
    end Get_Toolbar;
 
-   ---------------
-   -- Key_Press --
-   ---------------
-
-   function Key_Press
-     (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-      return Boolean is
-   begin
-      case Get_Key_Val (Event) is
-         when GDK_equal => Zoom_In (Browser);
-         when GDK_minus => Zoom_Out (Browser);
-         when others    => null;
-      end case;
-      return False;
-   end Key_Press;
-
    ----------------
    -- Get_Canvas --
    ----------------
@@ -464,25 +467,12 @@ package body Browsers.Canvas is
      (View    : not null access General_Browser_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      Button     : Gtk_Tool_Button;
+      Kernel     : constant Kernel_Handle := View.Kernel;
       Menu       : Gtk_Menu_Tool_Button;
       Zooms_Menu : Gtk_Menu;
       Export_Menu  : Gtk_Menu;
       Mitem      : Gtk_Menu_Item;
-      Sep        : Gtk_Separator_Tool_Item;
    begin
-      Gtk_New_From_Stock (Button, Stock_Zoom_Out);
-      Button.Set_Tooltip_Text (-"Zoom out");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Zoom_Out'Access, View);
-
-      Gtk_New_From_Stock (Button, Stock_Zoom_In);
-      Button.Set_Tooltip_Text (-"Zoom in");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Zoom_In'Access, View);
-
       Gtk_New (Zooms_Menu);
 
       for J in Zoom_Levels'Range loop
@@ -502,60 +492,13 @@ package body Browsers.Canvas is
       Menu.Set_Tooltip_Text (-"Reset zoom level");
       Menu.Set_Menu (Zooms_Menu);
       Zooms_Menu.Show_All;
-      Toolbar.Insert (Menu);
+      Toolbar.Insert (Menu, Get_Toolbar_Section (Kernel, Toolbar, "zoom"));
       Contextual_Cb.Connect
         (Menu, Gtk.Tool_Button.Signal_Clicked, Zoom_Level'Access,
          (Browser => General_Browser (View),
           Item    => null,
           Keep_Selected => True,
           Zoom    => 1.0));
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Gtk_New_From_Stock (Button, GPS_Toggle_Links);
-      Button.Set_Tooltip_Text
-        (-"Toggle display of links for the selected items");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Toggle_Links'Access,
-         View);
-
-      Gtk_New_From_Stock (Button, GPS_Refresh);
-      Button.Set_Tooltip_Text (-"Refresh layout");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, On_Refresh'Access, View);
-
-      Gtk_New_From_Stock (Button, Stock_Select_All);
-      Button.Set_Tooltip_Text (-"Select all");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, On_Select_All'Access, View);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
-
-      Gtk_New_From_Stock (Button, Stock_Clear);
-      Button.Set_Tooltip_Text (-"Clear");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, On_Data_Clear'Access, View);
-
-      Gtk_New_From_Stock (Button, GPS_Remove_Unselected);
-      Button.Set_Tooltip_Text (-"Remove unselected items");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Set_Root'Access, View);
-
-      Gtk_New_From_Stock (Button, Stock_Remove);
-      Button.Set_Tooltip_Text (-"Remove selected items");
-      Toolbar.Insert (Button);
-      Widget_Callback.Object_Connect
-        (Button, Gtk.Tool_Button.Signal_Clicked, Remove_Selected'Access, View);
-
-      Gtk_New (Sep);
-      Toolbar.Insert (Sep);
 
       Gtk_New (Export_Menu);
 
@@ -578,7 +521,7 @@ package body Browsers.Canvas is
       Menu.Set_Tooltip_Text (-"Export to...");
       Menu.Set_Menu (Export_Menu);
       Export_Menu.Show_All;
-      Toolbar.Insert (Menu);
+      Toolbar.Insert (Menu, Get_Toolbar_Section (Kernel, Toolbar, "export"));
       Widget_Callback.Object_Connect
         (Menu, Gtk.Tool_Button.Signal_Clicked, On_Export_To_PDF'Access, View);
    end Create_Toolbar;
@@ -668,82 +611,96 @@ package body Browsers.Canvas is
       end if;
    end Default_Browser_Context_Factory;
 
-   ---------------------
-   -- Remove_Selected --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Remove_Selected (Browser : access Gtk_Widget_Record'Class) is
-      View : constant General_Browser := General_Browser (Browser);
+   overriding function Execute
+     (Self    : access Remove_Selected_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Canvas_Item;
    begin
-      Iter := Start (Get_Canvas (View));
+      Iter := Start (B.Canvas);
       loop
          Item := Get (Iter);
          exit when Item = null;
 
          Next (Iter);
 
-         if Is_Selected (Get_Canvas (View), Item) then
-            Remove (Get_Canvas (View), Item);
+         if Is_Selected (B.Canvas, Item) then
+            Remove (B.Canvas, Item);
          else
             Reset (Browser_Item (Item), True, True);
          end if;
       end loop;
 
-      Layout (View);
-      Refresh_Canvas (Get_Canvas (View));
+      Layout (B);
+      Refresh_Canvas (B.Canvas);
 
-      Iter := Start (Get_Canvas (View));
+      Iter := Start (B.Canvas);
       Item := Get (Iter);
       if Item /= null then
-         Show_Item (Get_Canvas (View), Item);
+         Show_Item (B.Canvas, Item);
       end if;
-   end Remove_Selected;
+      return Commands.Success;
+   end Execute;
 
-   --------------
-   -- Set_Root --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Set_Root (Browser : access Gtk_Widget_Record'Class) is
-      View : constant General_Browser := General_Browser (Browser);
+   overriding function Execute
+     (Self    : access Remove_Unselected_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Canvas_Item;
    begin
-      Iter := Start (Get_Canvas (View));
+      Iter := Start (B.Canvas);
       loop
          Item := Get (Iter);
          exit when Item = null;
 
          Next (Iter);
 
-         if not Is_Selected (Get_Canvas (View), Item) then
-            Remove (Get_Canvas (View), Item);
+         if not Is_Selected (B.Canvas, Item) then
+            Remove (B.Canvas, Item);
          else
             Reset (Browser_Item (Item), True, True);
          end if;
       end loop;
 
-      Layout (View);
-      Refresh_Canvas (Get_Canvas (View));
+      Layout (B);
+      Refresh_Canvas (B.Canvas);
 
-      Iter := Start (Get_Canvas (View));
+      Iter := Start (B.Canvas);
       Item := Get (Iter);
       if Item /= null then
-         Show_Item (Get_Canvas (View), Item);
+         Show_Item (B.Canvas, Item);
       end if;
-   end Set_Root;
+      return Commands.Success;
+   end Execute;
 
-   ------------------
-   -- Toggle_Links --
-   ------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Toggle_Links (Browser : access Gtk_Widget_Record'Class) is
-      View : constant General_Browser := General_Browser (Browser);
+   overriding function Execute
+     (Self    : access Toggle_Links;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Canvas_Item;
    begin
-      Iter := Start (Get_Canvas (View));
+      Iter := Start (B.Canvas);
       loop
          Item := Get (Iter);
          exit when Item = null;
@@ -751,8 +708,9 @@ package body Browsers.Canvas is
          Browser_Item (Item).Hide_Links := not Browser_Item (Item).Hide_Links;
          Next (Iter);
       end loop;
-      Refresh_Canvas (Get_Canvas (View));
-   end Toggle_Links;
+      Refresh_Canvas (B.Canvas);
+      return Commands.Success;
+   end Execute;
 
    --------------------
    -- On_Export_Idle --
@@ -926,29 +884,38 @@ package body Browsers.Canvas is
           Format  => Export_SVG));
    end On_Export_To_SVG;
 
-   ----------------
-   -- On_Refresh --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
-      B : constant General_Browser := General_Browser (Browser);
+   overriding function Execute
+     (Self    : access Refresh_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      Push_State (Get_Kernel (B), Busy);
       Set_Layout_Algorithm (B.Canvas, Layer_Layout'Access);
       Layout (B, Force => True);
       Refresh_Canvas (Get_Canvas (B));
       Set_Layout_Algorithm (B.Canvas, Simple_Layout'Access);
-      Pop_State (Get_Kernel (B));
-   end On_Refresh;
+      return Commands.Success;
+   end Execute;
 
-   -------------------
-   -- On_Data_Clear --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Data_Clear (Browser : access Gtk_Widget_Record'Class) is
+   overriding function Execute
+     (Self    : access Clear_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      Clear (Get_Canvas (General_Browser (Browser)));
-   end On_Data_Clear;
+      Clear (B.Canvas);
+      return Commands.Success;
+   end Execute;
 
    --------------------------
    -- Change_Align_On_Grid --
@@ -961,16 +928,6 @@ package body Browsers.Canvas is
    begin
       Align_On_Grid (Get_Canvas (View), Align);
    end Change_Align_On_Grid;
-
-   -------------------
-   -- On_Select_All --
-   -------------------
-
-   procedure On_Select_All (Browser : access Gtk_Widget_Record'Class)  is
-      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-   begin
-      Select_All (Canvas);
-   end On_Select_All;
 
    -----------------------
    -- Toggle_Orthogonal --
@@ -1015,38 +972,48 @@ package body Browsers.Canvas is
    end Toggle_Draw_Grid;
 
    -------------
-   -- Zoom_In --
+   -- Execute --
    -------------
 
-   procedure Zoom_In (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-      Z : constant Gdouble := Get_Zoom (Canvas);
+   overriding function Execute
+     (Self    : access Zoom_In_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
+      Z : constant Gdouble := Get_Zoom (B.Canvas);
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
             if J /= Zoom_Levels'Last then
-               Zoom (Canvas, Zoom_Levels (J + 1), Zoom_Duration);
+               Zoom (B.Canvas, Zoom_Levels (J + 1), Zoom_Duration);
             end if;
          end if;
       end loop;
-   end Zoom_In;
+      return Commands.Success;
+   end Execute;
 
-   --------------
-   -- Zoom_Out --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
-      Z      : constant Gdouble := Get_Zoom (Canvas);
+   overriding function Execute
+     (Self    : access Zoom_Out_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
+      Z : constant Gdouble := Get_Zoom (B.Canvas);
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
             if J /= Zoom_Levels'First then
-               Zoom (Canvas, Zoom_Levels (J - 1), Zoom_Duration);
+               Zoom (B.Canvas, Zoom_Levels (J - 1), Zoom_Duration);
             end if;
          end if;
       end loop;
-   end Zoom_Out;
+      return Commands.Success;
+   end Execute;
 
    ----------------
    -- Zoom_Level --
@@ -2545,12 +2512,89 @@ package body Browsers.Canvas is
    ----------------------
 
    procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
+      Filter : constant Action_Filter := new Is_In_Browser;
    begin
       Register_Action
-        (Kernel, "Select All In Browser", new Select_All_Command,
+        (Kernel, "browser select all", new Select_All_Command,
          -"Select all items in a browser",
+         Stock_Id => Stock_Select_All,
+         Filter   => Filter,
          Category => "Browsers");
+
+      Register_Action
+        (Kernel, "browser zoom out", new Zoom_Out_Command,
+         -"Zoom out",
+         Stock_Id  => Stock_Zoom_Out,
+         Category  => -"Browsers",
+         Filter    => Filter,
+         Accel_Key => GDK_minus);
+
+      Register_Action
+        (Kernel, "browser zoom in", new Zoom_In_Command,
+         -"Zoom in",
+         Stock_Id  => Stock_Zoom_In,
+         Category  => -"Browsers",
+         Filter    => Filter,
+         Accel_Key => GDK_equal);
+
+      Register_Action
+        (Kernel, "browser toggle links", new Toggle_Links,
+         -"Toggle display of links for the selected items",
+         Stock_Id => GPS_Toggle_Links,
+         Filter   => Filter,
+         Category => -"Browsers");
+
+      Register_Action
+        (Kernel, "browser refresh", new Refresh_Command,
+         -"Refresh layout",
+         Stock_Id => GPS_Refresh,
+         Filter   => Filter,
+         Category => -"Browsers");
+
+      Register_Action
+        (Kernel, "browser clear", new Clear_Command,
+         -"Clear the contents of the browser",
+         Stock_Id => Stock_Clear,
+         Filter   => Filter,
+         Category => -"Browsers");
+
+      Register_Action
+        (Kernel, "browser remove unselected", new Remove_Unselected_Command,
+         -"Remove unselected items",
+         Stock_Id => GPS_Remove_Unselected,
+         Filter   => Filter,
+         Category => -"Browsers");
+
+      Register_Action
+        (Kernel, "browser remove selected", new Remove_Selected_Command,
+         -"Remove selected items",
+         Stock_Id => Stock_Remove,
+         Filter   => Filter,
+         Category => -"Browsers");
    end Register_Actions;
+
+   --------------------------
+   -- Browser_From_Context --
+   --------------------------
+
+   function Browser_From_Context
+     (Context : Selection_Context) return General_Browser
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      W      : Gtk_Widget;
+   begin
+      if Child /= null
+        and then Child.all in MDI_Child_With_Local_Toolbar'Class
+      then
+         W := MDI_Child_With_Local_Toolbar_Access (Child).Get_Actual_Widget;
+         if W.all in General_Browser_Record'Class then
+            return General_Browser (W);
+         end if;
+      end if;
+
+      return null;
+   end Browser_From_Context;
 
    -------------
    -- Execute --
@@ -2561,17 +2605,23 @@ package body Browsers.Canvas is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Child  : constant MDI_Child :=
-                  Get (First_Child (Get_MDI (Get_Kernel (Context.Context))));
-      Widget : constant Gtk_Widget := Get_Widget (Child);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      if Widget.all in General_Browser_Record'Class then
-         On_Select_All (General_Browser (Widget));
-         return Commands.Success;
-      else
-         return
-           Commands.Failure;
-      end if;
+      Select_All (B.Canvas);
+      return Commands.Success;
    end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_In_Browser;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Browser_From_Context (Context) /= null;
+   end Filter_Matches_Primitive;
 
 end Browsers.Canvas;

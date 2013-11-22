@@ -65,6 +65,9 @@ package Generic_Views is
    --  If the view needs a local toolbar, this function is called when the
    --  toolbar needs to be filled. It is not called if Local_Toolbar is set to
    --  null in the instantiation of the generic below.
+   --  In general, local toolbars should be described in menus.xml rather than
+   --  hard-coded. However, this procedure is still useful when you want to add
+   --  filters to your view.
    --  This toolbar should contain operations that apply to the current view,
    --  but not settings or preferences for that view (use Create_Menu for the
    --  latter).
@@ -135,6 +138,21 @@ package Generic_Views is
    --  Called when the user has changed the filter applied to the view.
    --  Pattern must be freed by the callee.
    --  null is passed when no pattern is set by the user.
+
+   type MDI_Child_With_Local_Toolbar is interface;
+   type MDI_Child_With_Local_Toolbar_Access
+      is access all MDI_Child_With_Local_Toolbar'Class;
+   function Get_Actual_Widget
+     (Self : not null access MDI_Child_With_Local_Toolbar)
+      return Gtk.Widget.Gtk_Widget
+      is abstract;
+   --  All MDI children created through the generic_views package implement
+   --  this interface. In some cases, the widget put in the child is not the
+   --  one created by the caller itself, but is encapsulated withint other
+   --  widgets so that we can have a local toolbar.
+   --  The function Get_Actual_Widget can be used to retrieve the initial
+   --  widget added to the MDI. If you have access to the instance of
+   --  Simple_Views, it is better to use View_From_Widget instead.
 
    ------------------
    -- Simple_Views --
@@ -236,14 +254,18 @@ package Generic_Views is
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Close the view
 
-   private
-      --  The following subprograms need to be in the spec so that we can get
-      --  access to them from callbacks in the body
-
-      type Local_Formal_MDI_Child is new Formal_MDI_Child with null record;
+      type Local_Formal_MDI_Child is new Formal_MDI_Child
+        and MDI_Child_With_Local_Toolbar with null record;
       overriding function Save_Desktop
         (Self : not null access Local_Formal_MDI_Child)
          return XML_Utils.Node_Ptr;
+      overriding function Get_Actual_Widget
+        (Self : not null access Local_Formal_MDI_Child)
+         return Gtk.Widget.Gtk_Widget;
+
+   private
+      --  The following subprograms need to be in the spec so that we can get
+      --  access to them from callbacks in the body
 
       function Load_Desktop
         (MDI  : Gtkada.MDI.MDI_Window;
