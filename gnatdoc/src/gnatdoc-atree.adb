@@ -2375,8 +2375,6 @@ package body GNATdoc.Atree is
       LL_Prefix : constant String := "xref: ";
       Printout  : aliased Unbounded_String;
 
-      Improve_Output : constant Boolean := False;
-
       procedure Append_Entities
         (Vector : access EInfo_List.Vector;
          Header : String;
@@ -2440,9 +2438,7 @@ package body GNATdoc.Atree is
                    else "[" & To_String (Get_Unique_Id (Entity)) & "] ");
 
          In_Private : constant String :=
-                        (if not In_Private_Part (Entity)
-                             or else not Improve_Output
-                         then ""
+                        (if not In_Private_Part (Entity) then ""
                          else " (private)");
       begin
          Append_Line
@@ -2544,21 +2540,6 @@ package body GNATdoc.Atree is
          Append_Entity ("Parent: ", Get_Parent (E));
       end if;
 
-      if not Improve_Output then
-         if (Is_Class_Or_Record_Type (E) and then Is_Tagged (E))
-           or else Get_Kind (E) = E_Class
-         then
-            Append_Entities
-              (Vector => Get_Progenitors (E),
-               Header => "Progenitors",
-               Prefix => " - ");
-            Append_Entities
-              (Vector => Get_Direct_Derivations (E),
-               Header => "Derivations",
-               Prefix => " - ");
-         end if;
-      end if;
-
       if Has_Private_Parent (E) then
          Append_Line ("Has_Private_Parent");
       end if;
@@ -2604,11 +2585,7 @@ package body GNATdoc.Atree is
       end if;
 
       if Is_Tagged (E) then
-         if not Improve_Output then
-            Append_Line ("Is_Tagged_Type");
-         else
-            Append_Line ("Is_Tagged");
-         end if;
+         Append_Line ("Is_Tagged");
       end if;
 
       if Is_Generic_Formal (E) then
@@ -2622,10 +2599,8 @@ package body GNATdoc.Atree is
       --  Display record type discriminants, components, entries and
       --  subprograms
 
-      if Improve_Output
-        and then
-          (Is_Class_Or_Record_Type (E)
-             or else Is_Concurrent_Type_Or_Object (E))
+      if Is_Class_Or_Record_Type (E)
+           or else Is_Concurrent_Type_Or_Object (E)
       then
          declare
             Discr : aliased EInfo_List.Vector :=
@@ -2788,7 +2763,7 @@ package body GNATdoc.Atree is
       --  Display record type components and dispatching primitives (methods)
 
       if Is_Class_Or_Record_Type (E)
-        or else (Improve_Output and then Is_Concurrent_Type_Or_Object (E))
+        or else Is_Concurrent_Type_Or_Object (E)
       then
          Append_Entities
            (Vector => LL.Get_Parent_Types (E),
