@@ -20,19 +20,20 @@ with GNATdoc.Atree; use GNATdoc.Atree;
 package GNATdoc.Backend.Base is
 
    type Collected_Entities is record
-      Access_Types     : EInfo_List.Vector;
-      CPP_Classes      : EInfo_List.Vector;
-      CPP_Constructors : EInfo_List.Vector;
-      Generic_Formals  : EInfo_List.Vector;
-      Interface_Types  : EInfo_List.Vector;
-      Methods          : EInfo_List.Vector;
-      Pkgs             : aliased EInfo_List.Vector;
-      Record_Types     : EInfo_List.Vector;
-      Simple_Types     : EInfo_List.Vector;
-      Subprgs          : aliased EInfo_List.Vector;
-      Tagged_Types     : EInfo_List.Vector;
-      Variables        : EInfo_List.Vector;
-      Tasks            : EInfo_List.Vector;
+      Access_Types      : EInfo_List.Vector;
+      CPP_Classes       : EInfo_List.Vector;
+      CPP_Constructors  : EInfo_List.Vector;
+      Generic_Formals   : EInfo_List.Vector;
+      Interface_Types   : EInfo_List.Vector;
+      Methods           : EInfo_List.Vector;
+      Pkgs              : aliased EInfo_List.Vector;
+      Record_Types      : EInfo_List.Vector;
+      Simple_Types      : EInfo_List.Vector;
+      Subprgs           : aliased EInfo_List.Vector;
+      Tagged_Types      : EInfo_List.Vector;
+      Variables         : EInfo_List.Vector;
+      Tasks             : EInfo_List.Vector;
+      Protected_Objects : EInfo_List.Vector;
    end record;
 
    type Base_Backend is

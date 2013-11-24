@@ -727,7 +727,7 @@ package body GNATdoc is
                procedure Set_Idepth (E : Entity_Id);
                procedure Set_Idepth (E : Entity_Id) is
                begin
-                  if Is_Tagged_Type (E) then
+                  if Is_Tagged (E) then
                      Set_IDepth_Level (E);
                   end if;
                end Set_Idepth;

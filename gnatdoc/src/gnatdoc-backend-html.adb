@@ -897,7 +897,7 @@ package body GNATdoc.Backend.HTML is
                   end loop;
                end;
 
-            elsif Is_Tagged_Type (E) then
+            elsif Is_Tagged (E) then
                declare
                   Super     : Entity_Id;
                   Inherits  : JSON_Array;

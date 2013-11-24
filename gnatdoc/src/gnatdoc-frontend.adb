@@ -154,7 +154,7 @@ package body GNATdoc.Frontend is
               Handler  => Context.Lang_Handler,
               Buffer   => Buffer,
               Location => LL.Get_Location (E),
-              End_Loc  => (if not Is_Subprogram (E) then No_Location
+              End_Loc  => (if not Is_Subprogram_Or_Entry (E) then No_Location
                            else Get_End_Of_Profile_Location (E))));
 
          --  For nested packages, if no documentation was found then we try
@@ -261,6 +261,13 @@ package body GNATdoc.Frontend is
          function Get_Declaration_Source return Unbounded_String;
          --  Retrieve the source of the declaration E
 
+         function Get_Discriminant_Doc return Comment_Result;
+         --  Return the comment of the discriminant (if any). Must be called
+         --  after Get_Discriminant_Source.
+
+         function Get_Discriminant_Source return Unbounded_String;
+         --  Retrieve the source of the discriminant E
+
          function Get_Instance_Source return Unbounded_String;
          --  Retrieve the source of the generic instance E
 
@@ -319,6 +326,90 @@ package body GNATdoc.Frontend is
 
             return Printout;
          end Get_Declaration_Source;
+
+         --------------------------
+         -- Get_Discriminant_Doc --
+         --------------------------
+
+         function Get_Discriminant_Doc return Comment_Result is
+            Src    : constant Unbounded_String := Get_Src (E);
+            Len    : constant Natural := Length (Src);
+            J      : Natural;
+            Line   : Natural := LL.Get_Location (E).Line;
+            Result : Comment_Result;
+         begin
+            if Src = Null_Unbounded_String then
+               return No_Comment_Result;
+            else
+               J := 1;
+               while J < Len loop
+                  while J < Len and then Element (Src, J) /= '-' loop
+                     if Element (Src, J) = ASCII.LF then
+                        Line := Line + 1;
+                     end if;
+
+                     J := J + 1;
+                  end loop;
+
+                  if J < Len then
+                     if Element (Src, J + 1) = '-' then
+                        Result :=
+                          Comment_Result'(
+                            Text => Unbounded_Slice (Src, J + 2, Len),
+                            Start_Line => Line);
+                        return Result;
+                     else
+                        J := J + 1;
+                     end if;
+                  end if;
+               end loop;
+
+               return No_Comment_Result;
+            end if;
+         end Get_Discriminant_Doc;
+
+         -----------------------------
+         -- Get_Discriminant_Source --
+         -----------------------------
+
+         function Get_Discriminant_Source return Unbounded_String is
+            Printout      : Unbounded_String;
+            From          : Natural;
+            Idx           : Natural;
+            Index         : Natural;
+            Lines_Skipped : Natural;
+
+         begin
+            --  Displace the pointer to the beginning of the declaration
+            Index := Buffer'First;
+            GNATCOLL.Utils.Skip_Lines
+              (Str           => Buffer.all,
+               Lines         => LL.Get_Location (E).Line - 1,
+               Index         => Index,
+               Lines_Skipped => Lines_Skipped);
+
+            GNATCOLL.Utils.Skip_To_Column
+              (Str           => Buffer.all,
+               Columns       => Natural (LL.Get_Location (E).Column),
+               Index         => Index);
+            From := Index;
+
+            Idx := Index;
+            while Idx < Buffer'Last
+              and then Buffer (Idx) /= ';'
+              and then Buffer (Idx) /= ')'
+            loop
+               Idx := Idx + 1;
+            end loop;
+
+            if Buffer (Idx) = ')' then
+               Idx := Idx - 1;
+            end if;
+
+            Printout := To_Unbounded_String (Buffer (From .. Idx));
+
+            return Printout;
+         end Get_Discriminant_Source;
 
          -------------------------
          -- Get_Instance_Source --
@@ -562,7 +653,7 @@ package body GNATdoc.Frontend is
                      --  and remove it from the list of progenitors.
 
                      if not Is_Full_View
-                       and then Is_Tagged_Type (E)
+                       and then Is_Tagged (E)
                      then
                         declare
                            Parent : Entity_Id;
@@ -580,7 +671,7 @@ package body GNATdoc.Frontend is
                      --     subtype Rec_B is Rec_A;
 
                      elsif not Is_Full_View
-                       and then not Is_Tagged_Type (E)
+                       and then not Is_Tagged (E)
                      then
                         --  Unhandled yet???
                         null;
@@ -624,8 +715,8 @@ package body GNATdoc.Frontend is
 
                            Set_Parent (E, Parent);
 
-                           if Is_Tagged_Type (Parent) then
-                              Set_Is_Tagged_Type (E);
+                           if Is_Tagged (Parent) then
+                              Set_Is_Tagged (E);
                            end if;
 
                            if Get_Progenitors (E).all.Contains (Parent) then
@@ -664,8 +755,8 @@ package body GNATdoc.Frontend is
                         Is_Null := True;
 
                      elsif Token = Tok_Tagged then
-                        if not Is_Tagged_Type (E) then
-                           Set_Is_Tagged_Type (E);
+                        if not Is_Tagged (E) then
+                           Set_Is_Tagged (E);
                            Set_Kind (E, E_Tagged_Record_Type);
                         end if;
 
@@ -688,8 +779,8 @@ package body GNATdoc.Frontend is
                      --  defined as abstract tagged null record without
                      --  primitives)
 
-                     if not Is_Tagged_Type (E) then
-                        Set_Is_Tagged_Type (E);
+                     if not Is_Tagged (E) then
+                        Set_Is_Tagged (E);
                      end if;
 
                   elsif Prev_Token = Tok_Interface
@@ -1271,7 +1362,20 @@ package body GNATdoc.Frontend is
            or else Get_Kind (E) = E_Task_Type
            or else Get_Kind (E) = E_Protected_Type
          then
-            Set_Src (E, Get_Concurrent_Type_Source (LL.Get_Location (E)));
+            if not Is_Partial_View (E) then
+               Set_Src (E,
+                 Get_Concurrent_Type_Source (LL.Get_Location (E)));
+
+            else
+               Set_Src (E,
+                 Get_Record_Type_Source
+                   (LL.Get_Location (E), Is_Full_View => False));
+
+               if Context.Options.Show_Private then
+                  Set_Full_View_Src (E,
+                    Get_Concurrent_Type_Source (LL.Get_Body_Loc (E)));
+               end if;
+            end if;
 
          elsif LL.Is_Type (E) then
             Set_Src (E, Get_Type_Declaration_Source);
@@ -1290,6 +1394,19 @@ package body GNATdoc.Frontend is
             else
                Set_Src (E, Get_Declaration_Source);
             end if;
+
+         elsif Present (Get_Scope (E))
+            and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
+            and then Get_Kind (E) = E_Discriminant
+         then
+            Set_Src (E, Get_Discriminant_Source);
+            Set_Doc (E, Get_Discriminant_Doc);
+
+         elsif Present (Get_Scope (E))
+            and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
+            and then Get_Kind (E) = E_Component
+         then
+            Set_Src (E, Get_Declaration_Source);
 
          --  Instantiations of generic packages and subprograms
 
@@ -2186,10 +2303,16 @@ package body GNATdoc.Frontend is
          --  must be retrieved always before Documentation because for some
          --  entities Ada_Get_Source completes the decoration of entities
          --  which are not available through Xref (for example, package
-         --  and subprogram declarations).
+         --  and subprogram declarations); in addition Ada_Get_Source also
+         --  tries to directly set the documentation if found when the
+         --  sources are retrieved (for example, see the management for
+         --  Discriminants).
 
          Ada_Get_Source (Entity);
-         Ada_Get_Doc (Entity);
+
+         if Get_Doc (Entity) = No_Comment_Result then
+            Ada_Get_Doc (Entity);
+         end if;
 
          return OK;
       end Process_Node;

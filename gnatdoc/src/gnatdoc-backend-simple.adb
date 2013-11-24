@@ -99,6 +99,13 @@ package body GNATdoc.Backend.Simple is
          E        : Entity_Id);
       --  Append to Printout the comment of E
 
+      procedure ReST_Append_Concurrent_Type_Declaration
+        (Printout : access Unbounded_String;
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context);
+      --  Append to Printout the reStructured output of a concurrent type or
+      --  object
+
       procedure ReST_Append_Label
         (Printout : access Unbounded_String;
          E        : Entity_Id);
@@ -232,6 +239,148 @@ package body GNATdoc.Backend.Simple is
             Append_Line (Printout, Comment_Str);
          end if;
       end ReST_Append_Comment;
+
+      ---------------------------------------------
+      -- ReST_Append_Concurrent_Type_Declaration --
+      ---------------------------------------------
+
+      procedure ReST_Append_Concurrent_Type_Declaration
+        (Printout : access Unbounded_String;
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context)
+      is
+         Name   : constant String := Get_Short_Name (E);
+         Header : constant String (Name'Range) := (others => '=');
+
+         Discriminants : constant EInfo_List.Vector := Get_Discriminants (E);
+         Components    : constant EInfo_List.Vector := Get_Components (E);
+         Entries       : constant EInfo_List.Vector := Get_Entries (E);
+         Subprograms   : constant EInfo_List.Vector := Get_Subprograms (E);
+
+      begin
+         ReST_Append_Label (Printout, E);
+
+         Append_Line (Printout, Name);
+         Append_Line (Printout, Header);
+         Append_Line (Printout, "");
+
+         if not Is_Partial_View (E) then
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+         elsif not Context.Options.Show_Private then
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+         else
+            if Is_Incomplete (E) then
+               Append_Line (Printout, "**Incomplete View:**");
+            else
+               Append_Line (Printout, "**Partial View:**");
+            end if;
+
+            ReST_Append_Src (Printout, E);
+            ReST_Append_Comment (Printout, E);
+
+            Append_Line (Printout, "**Full View:**");
+            Append_Line (Printout, "");
+            Append_Line (Printout, ".. code-block:: ada");
+            Append_Line (Printout, "");
+            Append_Line (Printout,
+                         To_String (Append_Tab (Get_Full_View_Src (E))));
+            Append_Line (Printout, "");
+
+            declare
+               Comment_Str : constant String :=
+                 To_String (To_ReST (Get_Full_View_Comment (E)));
+            begin
+               if Comment_Str /= "" then
+                  Append_Line (Printout, "");
+                  Append_Line (Printout, Comment_Str);
+               end if;
+            end;
+         end if;
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Discriminants,
+            Header   => "Discriminants");
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Components,
+            Header   => "Components");
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Entries,
+            Header   => "Entries");
+
+         ReST_Append_List
+           (Printout => Printout,
+            List     => Subprograms,
+            Header   => "Subprograms");
+
+         --  Append documentation of discriminants
+
+         declare
+            Cursor : EInfo_List.Cursor;
+            Entity : Entity_Id;
+         begin
+            Cursor := Discriminants.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Entity := EInfo_List.Element (Cursor);
+               ReST_Append_Simple_Declaration (Printout, Entity, Context);
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end;
+
+         --  Append documentation of components
+
+         declare
+            Cursor : EInfo_List.Cursor;
+            Entity : Entity_Id;
+         begin
+            Cursor := Components.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Entity := EInfo_List.Element (Cursor);
+               ReST_Append_Simple_Declaration (Printout, Entity, Context);
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end;
+
+         --  Append documentation of entries
+
+         declare
+            Cursor : EInfo_List.Cursor;
+            Entity : Entity_Id;
+         begin
+            Cursor := Entries.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Entity := EInfo_List.Element (Cursor);
+               ReST_Append_Subprogram (Printout, Entity);
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end;
+
+         --  Append documentation of subprograms
+
+         declare
+            Cursor : EInfo_List.Cursor;
+            Entity : Entity_Id;
+         begin
+            Cursor := Subprograms.First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Entity := EInfo_List.Element (Cursor);
+               ReST_Append_Subprogram (Printout, Entity);
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end;
+      end ReST_Append_Concurrent_Type_Declaration;
 
       -----------------------
       -- ReST_Append_Label --
@@ -402,7 +551,7 @@ package body GNATdoc.Backend.Simple is
             end;
          end if;
 
-         if Is_Tagged_Type (E)
+         if Is_Tagged (E)
            or else Get_Kind (E) = E_Class
          then
             if In_Ada_Language (E) then
@@ -1164,6 +1313,12 @@ package body GNATdoc.Backend.Simple is
 
             ReST_Append_List
               (Printout'Access,
+               Backend.Entities.Protected_Objects,
+               "Protected objects",
+               Filter => Filter);
+
+            ReST_Append_List
+              (Printout'Access,
                Backend.Entities.CPP_Classes,
                "C++ Classes",
                Filter => Filter);
@@ -1435,7 +1590,7 @@ package body GNATdoc.Backend.Simple is
                Cursor := List.First;
                while EInfo_List.Has_Element (Cursor) loop
                   E := EInfo_List.Element (Cursor);
-                  pragma Assert (Is_Tagged_Type (E));
+                  pragma Assert (Is_Tagged (E));
 
                   if Get_IDepth_Level (E) = Root_Level then
                      Root_Types.Append (E);
@@ -2098,6 +2253,8 @@ package body GNATdoc.Backend.Simple is
         or else Entities.Subprgs.Length > 0
         or else Entities.Tagged_Types.Length > 0
         or else Entities.Variables.Length > 0
+        or else Entities.Tasks.Length > 0
+        or else Entities.Protected_Objects.Length > 0
       then
          Append_Line (Printout'Access, "Entities");
          Append_Line (Printout'Access, "========");
@@ -2119,6 +2276,8 @@ package body GNATdoc.Backend.Simple is
            (Printout'Access, Entities.Tagged_Types, "Tagged types");
          ReST_Append_List
            (Printout'Access, Entities.Tasks, "Tasks & task types types");
+         ReST_Append_List
+           (Printout'Access, Entities.Protected_Objects, "Protected objects");
          ReST_Append_List
            (Printout'Access, Entities.CPP_Classes, "C++ Classes");
          ReST_Append_List
@@ -2189,6 +2348,16 @@ package body GNATdoc.Backend.Simple is
                Printout'Access,
                ReST_Append_Subprogram'Access);
          end if;
+
+         For_All
+           (Entities.Tasks,
+            Printout'Access,
+            ReST_Append_Concurrent_Type_Declaration'Access);
+
+         For_All
+           (Entities.Protected_Objects,
+            Printout'Access,
+            ReST_Append_Concurrent_Type_Declaration'Access);
 
          For_All
            (Entities.Subprgs,

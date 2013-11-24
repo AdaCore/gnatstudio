@@ -224,8 +224,18 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Entity_Id;
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
+
+   function Get_Components
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to record types, concurrent types and concurrent objects
+
    function Get_Direct_Derivations
      (E : Entity_Id) return access EInfo_List.Vector;
+
+   function Get_Discriminants
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to record types, concurrent types and concurrent objects
+
    function Get_Doc
      (E : Entity_Id) return Comment_Result;
 
@@ -278,6 +288,17 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Entity_Id;
    function Get_Short_Name
      (E : Entity_Id) return String;
+
+   function Get_Entries
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to concurrent types and concurrent objects
+   function Get_Subprograms
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to record types, concurrent types and concurrent objects
+   function Get_Subprograms_And_Entries
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to record types, concurrent types and concurrent objects
+
    function Get_Src
      (E : Entity_Id) return Unbounded_String;
    function Get_Unique_Id
@@ -298,6 +319,12 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    --  Return True for Ada record types (including tagged types and interface
    --  types), C structs and C++ classes
+   function Is_Concurrent_Object
+     (E : Entity_Id) return Boolean;
+   function Is_Concurrent_Type
+     (E : Entity_Id) return Boolean;
+   function Is_Concurrent_Type_Or_Object
+     (E : Entity_Id) return Boolean;
    function Is_Decorated
      (E : Entity_Id) return Boolean;
    function Is_Full_View
@@ -323,7 +350,7 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Subtype
      (E : Entity_Id) return Boolean;
-   function Is_Tagged_Type
+   function Is_Tagged
      (E : Entity_Id) return Boolean;
 
    function Kind_In
@@ -381,7 +408,7 @@ private package GNATdoc.Atree is
      (E : Entity_Id);
    procedure Set_Is_Subtype
      (E : Entity_Id);
-   procedure Set_Is_Tagged_Type
+   procedure Set_Is_Tagged
      (E : Entity_Id);
    procedure Set_Kind
      (E : Entity_Id; Value : Entity_Kind);
@@ -754,6 +781,9 @@ private
    pragma Inline (In_C_Or_CPP_Language);
    pragma Inline (In_Private_Part);
    pragma Inline (Is_Class_Or_Record_Type);
+   pragma Inline (Is_Concurrent_Object);
+   pragma Inline (Is_Concurrent_Type);
+   pragma Inline (Is_Concurrent_Type_Or_Object);
    pragma Inline (Is_Decorated);
    pragma Inline (Is_Doc_From_Body);
    pragma Inline (Is_Full_View);
@@ -764,7 +794,7 @@ private
    pragma Inline (Is_Private);
    pragma Inline (Is_Subprogram);
    pragma Inline (Is_Subtype);
-   pragma Inline (Is_Tagged_Type);
+   pragma Inline (Is_Tagged);
    pragma Inline (Kind_In);
    pragma Inline (No);
    pragma Inline (Present);
@@ -787,7 +817,7 @@ private
    pragma Inline (Set_Is_Incomplete);
    pragma Inline (Set_Is_Private);
    pragma Inline (Set_Is_Subtype);
-   pragma Inline (Set_Is_Tagged_Type);
+   pragma Inline (Set_Is_Tagged);
    pragma Inline (Set_Kind);
    pragma Inline (Set_Parent);
    pragma Inline (Set_Ref_File);

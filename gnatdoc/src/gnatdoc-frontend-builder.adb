@@ -134,6 +134,9 @@ package body GNATdoc.Frontend.Builder is
       function Is_Class_Or_Record_Type
         (Entity : Unique_Entity_Id) return Boolean;
 
+      function Is_Concurrent_Type_Or_Object
+        (Entity : Unique_Entity_Id) return Boolean;
+
       function Is_Container
         (Entity : Unique_Entity_Id) return Boolean;
 
@@ -169,7 +172,7 @@ package body GNATdoc.Frontend.Builder is
       function Is_Subprogram_Or_Entry
         (Entity : Unique_Entity_Id) return Boolean;
 
-      function Is_Tagged_Type
+      function Is_Tagged
         (Entity : Unique_Entity_Id) return Boolean;
 
       function New_Internal_Entity
@@ -291,6 +294,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Get_Scope);
       pragma Inline (In_Ada_Language);
       pragma Inline (Is_Class_Or_Record_Type);
+      pragma Inline (Is_Concurrent_Type_Or_Object);
       pragma Inline (Is_Container);
       pragma Inline (Is_Decorated);
       pragma Inline (Is_Full_View);
@@ -301,7 +305,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Partial_View);
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Subprogram_Or_Entry);
-      pragma Inline (Is_Tagged_Type);
+      pragma Inline (Is_Tagged);
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
       pragma Inline (Set_Alias);
@@ -620,6 +624,16 @@ package body GNATdoc.Frontend.Builder is
          return Is_Class_Or_Record_Type (Get_Entity (Entity));
       end Is_Class_Or_Record_Type;
 
+      ----------------------------------
+      -- Is_Concurrent_Type_Or_Object --
+      ----------------------------------
+
+      function Is_Concurrent_Type_Or_Object
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Is_Concurrent_Type_Or_Object (Get_Entity (Entity));
+      end Is_Concurrent_Type_Or_Object;
+
       ---------------
       -- Is_Global --
       ---------------
@@ -731,10 +745,10 @@ package body GNATdoc.Frontend.Builder is
       -- Is_Tagged_Type --
       --------------------
 
-      function Is_Tagged_Type (Entity : Unique_Entity_Id) return Boolean is
+      function Is_Tagged (Entity : Unique_Entity_Id) return Boolean is
       begin
-         return Is_Tagged_Type (Get_Entity (Entity));
-      end Is_Tagged_Type;
+         return Is_Tagged (Get_Entity (Entity));
+      end Is_Tagged;
 
       -----------------------
       -- Get_Unique_Entity --
@@ -1515,7 +1529,7 @@ package body GNATdoc.Frontend.Builder is
                end loop;
             end;
 
-            if Is_Tagged_Type (E)
+            if Is_Tagged (E)
               or else Get_Kind (E) = E_Class
             then
                declare
@@ -1661,6 +1675,12 @@ package body GNATdoc.Frontend.Builder is
       begin
          if Is_Container (E) then
             if Is_Class_Or_Record_Type (E) then
+               Decorate_Record_Type (E);
+
+            --  For concurrent types reuse the routine which processes record
+            --  types to collect their progenitors (if any)
+
+            elsif Is_Concurrent_Type_Or_Object (E) then
                Decorate_Record_Type (E);
 
             elsif Is_Generic (E) then
@@ -1955,18 +1975,37 @@ package body GNATdoc.Frontend.Builder is
             --  Decorate the new entity
 
             if In_Ada_Lang then
-               Update_Scopes_Stack (New_E);
+
+               --  Do not update the scope with discriminants of concurrent
+               --  types since Xref sets their scope to the enclosing package.
+               --  Need to investigate it???
+
+               if Get_Kind (New_E) = E_Discriminant
+                 and then Is_Concurrent_Type_Or_Object (Current_Scope)
+               then
+                  null;
+               else
+                  Update_Scopes_Stack (New_E);
+               end if;
+
                Set_Scope (New_E);
 
-               if Is_Package (Current_Scope)
-                 and then
-                   Present (Get_LL_First_Private_Entity_Loc (Current_Scope))
-                 and then
-                   Get_LL_Location (New_E).Line >=
-                   Get_LL_First_Private_Entity_Loc (Current_Scope).Line
-               then
-                  Set_In_Private_Part (New_E);
-               end if;
+               declare
+                  In_Scope_With_Private_Entities : constant Boolean :=
+                    (Is_Package (Current_Scope)
+                       or else Is_Concurrent_Type_Or_Object (Current_Scope))
+                    and then
+                      Present
+                        (Get_LL_First_Private_Entity_Loc (Current_Scope));
+               begin
+                  if In_Scope_With_Private_Entities
+                    and then
+                      Get_LL_Location (New_E).Line >=
+                        Get_LL_First_Private_Entity_Loc (Current_Scope).Line
+                  then
+                     Set_In_Private_Part (New_E);
+                  end if;
+               end;
 
                if not Is_New (New_E)
                  and then Kind_In (Get_Kind (New_E), E_Formal,
@@ -2120,6 +2159,9 @@ package body GNATdoc.Frontend.Builder is
 
                if In_Ada_Lang then
                   if Get_Kind (New_E) = E_Enumeration_Type then
+                     Enter_Scope (New_E);
+
+                  elsif Is_Concurrent_Type_Or_Object (New_E) then
                      Enter_Scope (New_E);
 
                   elsif Is_Package (New_E) then

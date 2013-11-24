@@ -118,22 +118,28 @@ package body GNATdoc.Backend.Base is
                Entities.Pkgs.Append (Entity);
                Self.Entities.Pkgs.Append (Entity);
 
-            elsif Get_Kind (Entity) = E_Variable then
-               Entities.Variables.Append (Entity);
-               Self.Entities.Variables.Append (Entity);
-
             elsif Get_Kind (Entity) = E_Single_Task
               or Get_Kind (Entity) = E_Task_Type
             then
                Entities.Tasks.Append (Entity);
                Self.Entities.Tasks.Append (Entity);
 
+            elsif Get_Kind (Entity) = E_Single_Protected
+              or Get_Kind (Entity) = E_Protected_Type
+            then
+               Entities.Protected_Objects.Append (Entity);
+               Self.Entities.Protected_Objects.Append (Entity);
+
+            elsif Get_Kind (Entity) = E_Variable then
+               Entities.Variables.Append (Entity);
+               Self.Entities.Variables.Append (Entity);
+
             elsif LL.Is_Type (Entity) then
                if Get_Kind (Entity) = E_Class then
                   Entities.CPP_Classes.Append (Entity);
                   Self.Entities.CPP_Classes.Append (Entity);
 
-               elsif Is_Tagged_Type (Entity) then
+               elsif Is_Tagged (Entity) then
                   if Get_Kind (Entity) = E_Interface then
                      Entities.Interface_Types.Append (Entity);
                      Self.Entities.Interface_Types.Append (Entity);

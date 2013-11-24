@@ -395,6 +395,32 @@ package body GNATdoc.Atree is
       return E.Comment;
    end Get_Comment;
 
+   --------------------
+   -- Get_Components --
+   --------------------
+
+   function Get_Components
+     (E : Entity_Id) return EInfo_List.Vector
+   is
+      Cursor : EInfo_List.Cursor;
+      Result : EInfo_List.Vector;
+      Entity : Entity_Id;
+
+   begin
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+
+         if Get_Kind (Entity) = E_Component then
+            Result.Append (Entity);
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return Result;
+   end Get_Components;
+
    ---------------------
    -- Get_Derivations --
    ---------------------
@@ -404,6 +430,32 @@ package body GNATdoc.Atree is
    begin
       return E.Direct_Derivations'Access;
    end Get_Direct_Derivations;
+
+   -----------------------
+   -- Get_Discriminants --
+   -----------------------
+
+   function Get_Discriminants
+     (E : Entity_Id) return EInfo_List.Vector
+   is
+      Cursor : EInfo_List.Cursor;
+      Result : EInfo_List.Vector;
+      Entity : Entity_Id;
+
+   begin
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+
+         if Get_Kind (Entity) = E_Discriminant then
+            Result.Append (Entity);
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return Result;
+   end Get_Discriminants;
 
    -------------
    -- Get_Doc --
@@ -452,6 +504,34 @@ package body GNATdoc.Atree is
    begin
       return E.Entities'Access;
    end Get_Entities;
+
+   -----------------
+   -- Get_Entries --
+   -----------------
+
+   function Get_Entries
+     (E : Entity_Id) return EInfo_List.Vector
+   is
+      Cursor : EInfo_List.Cursor;
+      Result : EInfo_List.Vector;
+      Entity : Entity_Id;
+
+   begin
+      pragma Assert (Is_Concurrent_Type_Or_Object (E));
+
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+
+         if Get_Kind (Entity) = E_Entry then
+            Result.Append (Entity);
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return Result;
+   end Get_Entries;
 
    -------------------
    -- Get_Error_Msg --
@@ -619,6 +699,58 @@ package body GNATdoc.Atree is
       return E.Src;
    end Get_Src;
 
+   ---------------------
+   -- Get_Subprograms --
+   ---------------------
+
+   function Get_Subprograms
+     (E : Entity_Id) return EInfo_List.Vector
+   is
+      Cursor : EInfo_List.Cursor;
+      Result : EInfo_List.Vector;
+      Entity : Entity_Id;
+
+   begin
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+
+         if Is_Subprogram (Entity) then
+            Result.Append (Entity);
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return Result;
+   end Get_Subprograms;
+
+   ---------------------------------
+   -- Get_Subprograms_And_Entries --
+   ---------------------------------
+
+   function Get_Subprograms_And_Entries
+     (E : Entity_Id) return EInfo_List.Vector
+   is
+      Cursor : EInfo_List.Cursor;
+      Result : EInfo_List.Vector;
+      Entity : Entity_Id;
+
+   begin
+      Cursor := Get_Entities (E).First;
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+
+         if Is_Subprogram_Or_Entry (Entity) then
+            Result.Append (Entity);
+         end if;
+
+         EInfo_List.Next (Cursor);
+      end loop;
+
+      return Result;
+   end Get_Subprograms_And_Entries;
+
    -------------------
    -- Get_Unique_Id --
    -------------------
@@ -782,6 +914,33 @@ package body GNATdoc.Atree is
       is
          E : General_Entity renames New_E.Xref.Entity;
 
+         function Full_View_Needed return Boolean;
+         --  Evaluate if New_E requires a full view
+
+         function Full_View_Needed return Boolean is
+         begin
+            if No (LL.Get_Body_Loc (New_E)) then
+               return False;
+
+            elsif Is_Concurrent_Type_Or_Object (New_E) then
+               return
+                  LL.Get_Location (New_E).File = LL.Get_Body_Loc (New_E).File
+                    and then
+                  LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line;
+
+            elsif LL.Is_Type (New_E)
+                    or else Get_Kind (New_E) = E_Variable
+            then
+               return
+                 LL.Get_Location (New_E).File /= LL.Get_Body_Loc (New_E).File
+                   or else
+                 LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line;
+
+            else
+               return False;
+            end if;
+         end Full_View_Needed;
+
       begin
          --  Stage 1: Complete decoration of low-level attributes.
 
@@ -796,11 +955,14 @@ package body GNATdoc.Atree is
 
          New_E.Xref.Is_Type   := Xref.Is_Type (Db, E);
 
-         --  (Ada) Interfaces are NOT decorated as types by Xref???
+         --  Ada single tasks are not types (they are objects) but we handle
+         --  them as tasks for homogeneity in the gnatdoc frontend. We cannot
+         --  do the same here for single protected objects because they are
+         --  decorated by Xref as E_Variable???
 
          if In_Ada_Language (New_E)
            and then not New_E.Xref.Is_Type
-           and then Get_Kind (New_E) = E_Interface
+           and then Get_Kind (New_E) = E_Single_Task
          then
             New_E.Xref.Is_Type := True;
          end if;
@@ -840,12 +1002,20 @@ package body GNATdoc.Atree is
          --  traversing the tree since they require context information.
 
          if New_E.Xref.Is_Type then
-            if Is_Class_Or_Record_Type (New_E) then
+            if Is_Class_Or_Record_Type (New_E)
+              or else Is_Concurrent_Type_Or_Object (New_E)
+            then
                New_E.Xref.Has_Methods := Db.Has_Methods (E);
 
                if In_Ada_Language (New_E) then
-                  if Get_Kind (New_E) = E_Interface then
-                     Set_Is_Tagged_Type (New_E);
+
+                  --  Tasks and protected objects are decorated as Is_Tagged
+                  --  since they may cover interface types.
+
+                  if Get_Kind (New_E) = E_Interface
+                    or else Is_Concurrent_Type_Or_Object (New_E)
+                  then
+                     Set_Is_Tagged (New_E);
 
                   else
                      --  Xref-bug: Xref.Has_Methods() is not reliable:
@@ -859,7 +1029,7 @@ package body GNATdoc.Atree is
                           Methods (Db, E, Include_Inherited => True);
                      begin
                         if All_Methods'Length > 0 then
-                           Set_Is_Tagged_Type (New_E);
+                           Set_Is_Tagged (New_E);
                            Set_Kind (New_E, E_Tagged_Record_Type);
 
                         --  last try
@@ -872,7 +1042,7 @@ package body GNATdoc.Atree is
                                 Parents'Length > 1;
                            begin
                               if Has_Progenitors then
-                                 Set_Is_Tagged_Type (New_E);
+                                 Set_Is_Tagged (New_E);
                                  Set_Kind (New_E, E_Tagged_Record_Type);
                               end if;
                            end;
@@ -892,16 +1062,8 @@ package body GNATdoc.Atree is
             end if;
          end if;
 
-         if Present (LL.Get_Body_Loc (New_E))
-           and then (LL.Is_Type (New_E) or else Get_Kind (New_E) = E_Variable)
-           and then
-             (LL.Get_Location (New_E).File /= LL.Get_Body_Loc (New_E).File
-                or else
-              LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line)
-           and then Get_Kind (New_E) /= E_Task_Type
-           and then Get_Kind (New_E) /= E_Single_Task
-           and then Get_Kind (New_E) /= E_Protected_Type
-         then
+         if Full_View_Needed then
+
             --  Xref does not help us to differentiate if New_E is a private
             --  type, an incomplete declaration, or a formal of a subprogram
             --  (because in this latter case Body_Loc references the same
@@ -945,6 +1107,7 @@ package body GNATdoc.Atree is
 
          elsif Present (LL.Get_Body_Loc (New_E))
            and then LL.Is_Type (New_E)
+           and then LL.Get_Location (New_E).File = LL.Get_Body_Loc (New_E).File
            and then LL.Get_Location (New_E).Line > LL.Get_Body_Loc (New_E).Line
          then
             declare
@@ -977,7 +1140,9 @@ package body GNATdoc.Atree is
          --  hence this attribute is currently set as part of retrieving the
          --  source of the subprogram specification.
 
-         if Is_Package (New_E) then
+         if Is_Package (New_E)
+           or else Is_Concurrent_Type_Or_Object (New_E)
+         then
             declare
                Cursor : Entity_Reference_Iterator;
                Ref    : General_Entity_Reference;
@@ -1142,6 +1307,44 @@ package body GNATdoc.Atree is
         or else E.Kind = E_Class_Wide_Type;
    end Is_Class_Or_Record_Type;
 
+   --------------------------
+   -- Is_Concurrent_Object --
+   --------------------------
+
+   function Is_Concurrent_Object
+     (E : Entity_Id) return Boolean
+   is
+      K : constant Entity_Kind := Get_Kind (E);
+   begin
+      return K = E_Single_Task
+        or else K = E_Single_Protected;
+   end Is_Concurrent_Object;
+
+   ------------------------
+   -- Is_Concurrent_Type --
+   ------------------------
+
+   function Is_Concurrent_Type
+     (E : Entity_Id) return Boolean
+   is
+      K : constant Entity_Kind := Get_Kind (E);
+   begin
+      return K = E_Task_Type
+        or else K = E_Protected_Type;
+   end Is_Concurrent_Type;
+
+   ----------------------------------
+   -- Is_Concurrent_Type_Or_Object --
+   ----------------------------------
+
+   function Is_Concurrent_Type_Or_Object
+     (E : Entity_Id) return Boolean
+   is
+   begin
+      return Is_Concurrent_Type (E)
+        or else Is_Concurrent_Object (E);
+   end Is_Concurrent_Type_Or_Object;
+
    ------------------
    -- Is_Decorated --
    ------------------
@@ -1263,10 +1466,10 @@ package body GNATdoc.Atree is
    -- Is_Tagged --
    ---------------
 
-   function Is_Tagged_Type (E : Entity_Id) return Boolean is
+   function Is_Tagged (E : Entity_Id) return Boolean is
    begin
       return E.Is_Tagged_Type;
-   end Is_Tagged_Type;
+   end Is_Tagged;
 
    -------------
    -- Kind_In --
@@ -1510,7 +1713,7 @@ package body GNATdoc.Atree is
       P      : Entity_Id;
       Idepth : Natural := 0;
    begin
-      pragma Assert (Is_Tagged_Type (E));
+      pragma Assert (Is_Tagged (E));
 
       P := E.Parent;
       while Present (P) loop
@@ -1630,11 +1833,12 @@ package body GNATdoc.Atree is
    -- Set_Is_Tagged --
    -------------------
 
-   procedure Set_Is_Tagged_Type (E : Entity_Id) is
+   procedure Set_Is_Tagged (E : Entity_Id) is
    begin
-      pragma Assert (Is_Class_Or_Record_Type (E));
+      pragma Assert (Is_Class_Or_Record_Type (E)
+        or else Is_Concurrent_Type_Or_Object (E));
       E.Is_Tagged_Type := True;
-   end Set_Is_Tagged_Type;
+   end Set_Is_Tagged;
 
    --------------
    -- Set_Kind --
@@ -1660,8 +1864,8 @@ package body GNATdoc.Atree is
       --  If the parent is not fully decorated (because it is an entity defined
       --  in the runtime of the compiler) we complete its decoration.
 
-      if Is_Tagged_Type (E) and then not Is_Tagged_Type (E.Parent) then
-         Set_Is_Tagged_Type (E.Parent);
+      if Is_Tagged (E) and then not Is_Tagged (E.Parent) then
+         Set_Is_Tagged (E.Parent);
       end if;
 
       Append_Direct_Derivation (E.Parent, E);
@@ -2171,6 +2375,8 @@ package body GNATdoc.Atree is
       LL_Prefix : constant String := "xref: ";
       Printout  : aliased Unbounded_String;
 
+      Improve_Output : constant Boolean := False;
+
       procedure Append_Entities
         (Vector : access EInfo_List.Vector;
          Header : String;
@@ -2232,6 +2438,12 @@ package body GNATdoc.Atree is
          UID  : constant String :=
                   (if not With_Unique_Id then ""
                    else "[" & To_String (Get_Unique_Id (Entity)) & "] ");
+
+         In_Private : constant String :=
+                        (if not In_Private_Part (Entity)
+                             or else not Improve_Output
+                         then ""
+                         else " (private)");
       begin
          Append_Line
            (Prefix
@@ -2239,7 +2451,8 @@ package body GNATdoc.Atree is
             & Name
             & " ["
             & Image (LL.Get_Location (Entity))
-            & "]");
+            & "]"
+            & In_Private);
       end Append_Entity;
 
       -----------------
@@ -2331,17 +2544,19 @@ package body GNATdoc.Atree is
          Append_Entity ("Parent: ", Get_Parent (E));
       end if;
 
-      if (Is_Class_Or_Record_Type (E) and then Is_Tagged_Type (E))
-        or else Get_Kind (E) = E_Class
-      then
-         Append_Entities
-           (Vector => Get_Progenitors (E),
-            Header => "Progenitors",
-            Prefix => " - ");
-         Append_Entities
-           (Vector => Get_Direct_Derivations (E),
-            Header => "Derivations",
-            Prefix => " - ");
+      if not Improve_Output then
+         if (Is_Class_Or_Record_Type (E) and then Is_Tagged (E))
+           or else Get_Kind (E) = E_Class
+         then
+            Append_Entities
+              (Vector => Get_Progenitors (E),
+               Header => "Progenitors",
+               Prefix => " - ");
+            Append_Entities
+              (Vector => Get_Direct_Derivations (E),
+               Header => "Derivations",
+               Prefix => " - ");
+         end if;
       end if;
 
       if Has_Private_Parent (E) then
@@ -2388,8 +2603,12 @@ package body GNATdoc.Atree is
          Append_Line ("Is_Subtype");
       end if;
 
-      if Is_Tagged_Type (E) then
-         Append_Line ("Is_Tagged_Type");
+      if Is_Tagged (E) then
+         if not Improve_Output then
+            Append_Line ("Is_Tagged_Type");
+         else
+            Append_Line ("Is_Tagged");
+         end if;
       end if;
 
       if Is_Generic_Formal (E) then
@@ -2398,6 +2617,48 @@ package body GNATdoc.Atree is
 
       if Is_Subprogram (E) then
          Append_Line ("Is_Subprogram");
+      end if;
+
+      --  Display record type discriminants, components, entries and
+      --  subprograms
+
+      if Improve_Output
+        and then
+          (Is_Class_Or_Record_Type (E)
+             or else Is_Concurrent_Type_Or_Object (E))
+      then
+         declare
+            Discr : aliased EInfo_List.Vector :=
+                      Get_Discriminants (E);
+            Comp  : aliased EInfo_List.Vector :=
+                      Get_Components (E);
+            Ops   : aliased EInfo_List.Vector :=
+                      Get_Subprograms_And_Entries (E);
+         begin
+            if Is_Tagged (E) then
+               Append_Entities
+                 (Vector => Get_Progenitors (E),
+                  Header => "Progenitors",
+                  Prefix => " - ");
+               Append_Entities
+                 (Vector => Get_Direct_Derivations (E),
+                  Header => "Derivations",
+                  Prefix => " - ");
+            end if;
+
+            Append_Entities
+              (Vector => Discr'Access,
+               Header => "Discriminants",
+               Prefix => " - ");
+            Append_Entities
+              (Vector => Comp'Access,
+               Header => "Components",
+               Prefix => " - ");
+            Append_Entities
+              (Vector => Ops'Access,
+               Header => "Subprograms and entries",
+               Prefix => " - ");
+         end;
       end if;
 
       --  Output information retrieved from Xref
@@ -2527,7 +2788,7 @@ package body GNATdoc.Atree is
       --  Display record type components and dispatching primitives (methods)
 
       if Is_Class_Or_Record_Type (E)
-        or else Get_Kind (E) = E_Class
+        or else (Improve_Output and then Is_Concurrent_Type_Or_Object (E))
       then
          Append_Entities
            (Vector => LL.Get_Parent_Types (E),
@@ -2539,10 +2800,17 @@ package body GNATdoc.Atree is
             Header => LL_Prefix & " Child types",
             Prefix => LL_Prefix & " - ");
 
-         Append_Entities
-           (Vector => Get_Entities (E),
-            Header => LL_Prefix & " Components:",
-            Prefix => LL_Prefix & " - ");
+         if Is_Class_Or_Record_Type (E) then
+            Append_Entities
+              (Vector => Get_Entities (E),
+               Header => LL_Prefix & " Components:",
+               Prefix => LL_Prefix & " - ");
+         else
+            Append_Entities
+              (Vector => Get_Entities (E),
+               Header => LL_Prefix & " Entities:",
+               Prefix => LL_Prefix & " - ");
+         end if;
 
          Append_Entities
            (Vector => Get_Inherited_Methods (E),
