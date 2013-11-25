@@ -1312,12 +1312,9 @@ package body GNATdoc.Atree is
    --------------------------
 
    function Is_Concurrent_Object
-     (E : Entity_Id) return Boolean
-   is
-      K : constant Entity_Kind := Get_Kind (E);
+     (E : Entity_Id) return Boolean is
    begin
-      return K = E_Single_Task
-        or else K = E_Single_Protected;
+      return Kind_In (Get_Kind (E), E_Single_Task, E_Single_Protected);
    end Is_Concurrent_Object;
 
    ------------------------
@@ -1639,6 +1636,7 @@ package body GNATdoc.Atree is
       Cursor := Scope.Entities.Find (E);
       Scope.Entities.Delete (Cursor);
    end Remove_From_Scope;
+
    ---------------
    -- Set_Alias --
    ---------------

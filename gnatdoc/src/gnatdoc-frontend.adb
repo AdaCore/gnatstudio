@@ -75,6 +75,62 @@ package body GNATdoc.Frontend is
       C_Headers_Buffer : GNAT.Strings.String_Access;
       Buffers_Swapped  : Boolean;
 
+      package Compiler_Workaround is
+
+         procedure Register_Delayed_Remove_From_Scope
+           (Scope : Entity_Id; Entity : Entity_Id);
+         --  Register Entity to be removed from Scope
+
+         procedure Delayed_Remove_From_Scope;
+         --  Remove all the registered entities from their registered
+         --  scope.
+
+      private
+         type Scope_Remove_Info is record
+            Scope  : Entity_Id;
+            Entity : Entity_Id;
+         end record;
+
+         package Scope_Remove_List is new Ada.Containers.Vectors
+           (Index_Type => Natural, Element_Type => Scope_Remove_Info);
+
+         Entities_Removed_From_Scope : Scope_Remove_List.Vector;
+
+      end Compiler_Workaround;
+      use Compiler_Workaround;
+
+      package body Compiler_Workaround is
+
+         procedure Register_Delayed_Remove_From_Scope
+           (Scope : Entity_Id; Entity : Entity_Id)
+         is
+            New_Entry : constant Scope_Remove_Info := (Scope, Entity);
+         begin
+            Entities_Removed_From_Scope.Append (New_Entry);
+         end Register_Delayed_Remove_From_Scope;
+
+         procedure Delayed_Remove_From_Scope is
+            Cursor : Scope_Remove_List.Cursor;
+            Info   : Scope_Remove_Info;
+         begin
+            Cursor := Entities_Removed_From_Scope.First;
+            while Scope_Remove_List.Has_Element (Cursor) loop
+               Info := Scope_Remove_List.Element (Cursor);
+
+               declare
+                  Scope : constant Entity_Id := Get_Scope (Info.Entity);
+               begin
+                  Set_Scope (Info.Entity, Info.Scope);
+                  Remove_From_Scope (Info.Entity);
+                  Set_Scope (Info.Entity, Scope);
+               end;
+
+               Scope_Remove_List.Next (Cursor);
+            end loop;
+         end Delayed_Remove_From_Scope;
+
+      end Compiler_Workaround;
+
       procedure Ada_Get_Doc (E : Entity_Id);
       --  Retrieve the documentation associated with E
 
@@ -259,7 +315,10 @@ package body GNATdoc.Frontend is
       procedure Ada_Get_Source (E : Entity_Id) is
 
          function Get_Declaration_Source return Unbounded_String;
-         --  Retrieve the source of the declaration E
+         --  Retrieve the source of the declaration E. In addition, for single
+         --  tasks and single protected objects modify the tree moving
+         --  their inner entities into their scopes; required to workaround
+         --  a problem with their scope caused by the compiler.
 
          function Get_Discriminant_Doc return Comment_Result;
          --  Return the comment of the discriminant (if any). Must be called
@@ -986,6 +1045,7 @@ package body GNATdoc.Frontend is
             pragma Unreferenced (Prev_Token);
 
             Token      : Tokens := Tok_Unknown;
+            End_Loc    : Source_Location;
 
             function CB
               (Entity         : Language_Entity;
@@ -1053,6 +1113,8 @@ package body GNATdoc.Frontend is
                end Get_Token;
 
             begin
+               End_Loc := Sloc_End;
+
                --  Print all text between previous call and current one
 
                if Last_Idx /= 0 then
@@ -1123,6 +1185,52 @@ package body GNATdoc.Frontend is
                   return True;
             end CB;
 
+            ------------------------------------
+            -- Workaround_Inner_Scope_Problem --
+            ------------------------------------
+
+            procedure Workaround_Compiler_Inner_Scope_Problem;
+            --  This subprogram workarounds a compiler problem in entities
+            --  defined in single tasks and single protected objects: the
+            --  compiler does not generate the correct scope of their entities.
+
+            procedure Workaround_Compiler_Inner_Scope_Problem is
+               Loc_Start : constant General_Location := LL.Get_Location (E);
+               Loc_End   : constant General_Location :=
+                             Get_End_Of_Syntax_Scope_Loc (E);
+               Scope     : constant Entity_Id := Get_Scope (E);
+               Cursor    : EInfo_List.Cursor;
+               Entity    : Entity_Id;
+               Location  : General_Location;
+
+            begin
+               Cursor := Get_Entities (Scope).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Entity   := EInfo_List.Element (Cursor);
+                  Location := LL.Get_Location (Entity);
+
+                  if Location.Line > Loc_Start.Line
+                    and then Location.Line < Loc_End.Line
+                  then
+                     --  We cannot remove the entity from the scope since at
+                     --  current stage we have two iterators active traversing
+                     --  the entities of the tree. Hence we delay its removal
+                     --  from the wrong scope until we can safely do it without
+                     --  corrupting the tree.
+
+                     Register_Delayed_Remove_From_Scope
+                       (Scope  => Get_Scope (Entity),
+                        Entity => Entity);
+
+                     Append_To_Scope (E, Entity);
+                     Set_Scope (Entity, E);
+                  end if;
+
+                  EInfo_List.Next (Cursor);
+
+               end loop;
+            end Workaround_Compiler_Inner_Scope_Problem;
+
             --  Local variables
 
             Entity_Index    : Natural;
@@ -1186,6 +1294,16 @@ package body GNATdoc.Frontend is
             Parse_Entities
               (Lang, Buffer.all (From .. Buffer'Last),
                CB'Unrestricted_Access);
+
+            Set_End_Of_Syntax_Scope_Loc (E,
+               General_Location'
+                 (File => File,
+                  Line => LL.Get_Location (E).Line + End_Loc.Line - 1,
+                  Column => Visible_Column (End_Loc.Column)));
+
+            if Is_Concurrent_Object (E) then
+               Workaround_Compiler_Inner_Scope_Problem;
+            end if;
 
             return Printout;
          end Get_Concurrent_Type_Source;
@@ -2445,6 +2563,8 @@ package body GNATdoc.Frontend is
 
          For_All (File_Entities.All_Entities, Filter_Doc'Access);
       end if;
+
+      Delayed_Remove_From_Scope;
 
       Free (Buffer_Body);
       Free (Buffer);

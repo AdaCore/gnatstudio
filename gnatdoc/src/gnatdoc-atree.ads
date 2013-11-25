@@ -249,8 +249,8 @@ private package GNATdoc.Atree is
 
    function Get_End_Of_Syntax_Scope_Loc
      (E : Entity_Id) return General_Location;
-   --  At current stage this attribute is set only for E_Package and
-   --  E_Generic_Package entities
+   --  At current stage this attribute is set only for E_Package,
+   --  E_Generic_Package entities, and concurrent types and objects.
 
    function Get_Entities
      (E : Entity_Id) return access EInfo_List.Vector;
@@ -382,6 +382,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Profile_Location_In_Body
      (E : Entity_Id; Loc : General_Location);
+   procedure Set_End_Of_Syntax_Scope_Loc
+     (E : Entity_Id; Loc : General_Location);
+   --  At current stage this attribute is set only for E_Package,
+   --  E_Generic_Package entities, and concurrent types and objects.
+
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
    procedure Set_Full_View_Comment
@@ -739,9 +744,6 @@ private
          --  Information retrieved directly from the Xref database.
 
       end record;
-
-   procedure Set_End_Of_Syntax_Scope_Loc
-     (E : Entity_Id; Loc : General_Location);
 
    pragma Inline (Append_Direct_Derivation);
    pragma Inline (Append_Inherited_Method);
