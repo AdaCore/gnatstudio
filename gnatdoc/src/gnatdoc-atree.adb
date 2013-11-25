@@ -1631,10 +1631,11 @@ package body GNATdoc.Atree is
       Cursor : EInfo_List.Cursor;
    begin
       pragma Assert (Present (Scope));
-      pragma Assert (Get_Entities (Scope).Contains (E));
 
-      Cursor := Scope.Entities.Find (E);
-      Scope.Entities.Delete (Cursor);
+      if Get_Entities (Scope).Contains (E) then
+         Cursor := Scope.Entities.Find (E);
+         Scope.Entities.Delete (Cursor);
+      end if;
    end Remove_From_Scope;
 
    ---------------

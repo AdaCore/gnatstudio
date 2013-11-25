@@ -74,6 +74,8 @@ package body GNATdoc.Frontend.Builder is
       --  Append E to the list of entities of the enclosing scope of Scope
 
       procedure Append_To_Scope
+        (Scope : Unique_Entity_Id; E : Entity_Id);
+      procedure Append_To_Scope
         (Scope : Unique_Entity_Id; E : Unique_Entity_Id);
       --  Append E to the list of entities of Scope
 
@@ -191,6 +193,9 @@ package body GNATdoc.Frontend.Builder is
 
       function Present (Entity : Unique_Entity_Id) return Boolean;
       --  Return True if Entity /= No_Entity
+
+      procedure Remove_Full_View (E : Unique_Entity_Id);
+      --  Remove the full view of E and set Is_Incomplete to false
 
       procedure Remove_From_Scope (E : Unique_Entity_Id);
       --  Remove E from its current scope
@@ -464,8 +469,18 @@ package body GNATdoc.Frontend.Builder is
       procedure Append_To_Scope
         (Scope : Unique_Entity_Id; E : Unique_Entity_Id) is
       begin
-         Append_To_Scope (Get_Entity (Scope), Get_Entity (E));
-         Set_Scope (Get_Entity (E), Get_Entity (Scope));
+         Append_To_Scope (Scope, Get_Entity (E));
+      end Append_To_Scope;
+
+      ---------------------
+      -- Append_To_Scope --
+      ---------------------
+
+      procedure Append_To_Scope
+        (Scope : Unique_Entity_Id; E : Entity_Id) is
+      begin
+         Append_To_Scope (Get_Entity (Scope), E);
+         Set_Scope (E, Get_Entity (Scope));
       end Append_To_Scope;
 
       ----------
@@ -921,6 +936,16 @@ package body GNATdoc.Frontend.Builder is
          return Entity /= No_Entity
            and then Present (Entity.Entity);
       end Present;
+
+      ----------------------
+      -- Remove_Full_View --
+      ----------------------
+
+      procedure Remove_Full_View (E : Unique_Entity_Id) is
+      begin
+         Set_Is_Incomplete (Get_Entity (E), False);
+         Remove_Full_View (Get_Entity (E));
+      end Remove_Full_View;
 
       -----------------------
       -- Remove_From_Scope --
@@ -1381,6 +1406,23 @@ package body GNATdoc.Frontend.Builder is
                         Append_To_Map (Entity);
                         Set_Is_Decorated (Entity);
 
+                        if Is_Partial_View (Entity) then
+
+                           --  If the discriminant is visible in the partial
+                           --  and full view of E then append its full view
+                           --  to the full view of E
+
+                           if Is_Partial_View (E) then
+                              Get_Entities
+                                (Get_Full_View (E)).Append
+                                  (Get_Full_View (Entity));
+                              Append_To_Scope (E, Get_Full_View (Entity));
+                              Set_Is_Decorated (Get_Full_View (Entity));
+                           else
+                              Remove_Full_View (Entity);
+                           end if;
+                        end if;
+
                      --  For incomplete types Xref provides all the
                      --  discriminants to the incomplete view and the full
                      --  view and hence they are already decorated. This
@@ -1648,9 +1690,7 @@ package body GNATdoc.Frontend.Builder is
                         --  Correct previous wrong decoration (done by
                         --  Atree.New_Internal_Entity).
 
-                        Set_Is_Incomplete
-                          (Get_Entity (Formal), False);
-                        Remove_Full_View (Get_Entity (Formal));
+                        Remove_Full_View (Formal);
 
                         --  Complete decoration
 
