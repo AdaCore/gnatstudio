@@ -51,7 +51,9 @@ BLOCKS_DEFS = {
     'CAT_PACKAGE'            : [r'end \2;', r'\s*package\s+(body\s+)?([^ \n]+).*'],
     'CAT_STRUCTURE'          : ['end record;', ''],
     'CAT_CLASS'              : ['end record;', ''],
-    'CAT_PROTECTED'          : [r'end \2;', r'\s*protected\s+(body\s+)?([^ \n]+).*'],
+    'CAT_PROTECTED'          : [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
+    'CAT_TASK'               : [r'end \3;', r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
+    'CAT_ACCEPT_STATEMENT'   : [r'end \1;', r'\s*accept\s+([^ \n\(]+).*'],
     'CAT_ENTRY'              : [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
     }
 
@@ -97,7 +99,7 @@ def block_complete_on_location(buffer, location):
       if re_pattern.match(bs_content):
          term = re_pattern.sub(term, bs_content)
       else:
-         # The pattern does not macth the content, remove the tags
+         # The pattern does not match the content, remove the tags
          term = term.replace(r' \1', '')
          term = term.replace(r'\1', '')
          term = term.replace(r' \2', '')
