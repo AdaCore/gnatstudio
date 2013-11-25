@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MB20-048: GB: code assist enable not applied to open editors
+  Problem:    Enabling or disabling code assist from the preferences
+              is not applied to open editors.
+  Workaround: Close and reopen the editor(s).
+
 - MB14-058: GPS: the 'next tag' action does not select the first item
   Problem:    In the Locations view, if the currently selected node is
               a file node, then using the 'next tag' action or the
