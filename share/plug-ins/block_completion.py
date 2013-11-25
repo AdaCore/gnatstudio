@@ -53,7 +53,6 @@ BLOCKS_DEFS = {
     'CAT_CLASS'              : ['end record;', ''],
     'CAT_PROTECTED'          : [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
     'CAT_TASK'               : [r'end \3;', r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
-    'CAT_ACCEPT_STATEMENT'   : [r'end \1;', r'\s*accept\s+([^ \n\(]+).*'],
     'CAT_ENTRY'              : [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
     }
 
