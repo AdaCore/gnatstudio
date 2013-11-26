@@ -122,6 +122,9 @@ package body Call_Graph_Views is
       Locations_Tree    : Gtk_Tree_View;
       Locations_Model   : Gtk_List_Store;
 
+      Stored_Pos        : Gint := 0;
+      --  The position to set when Realizing this view; 0 means 'do not modify'
+
       Pane              : Gtk_Hpaned;
    end record;
 
@@ -253,6 +256,10 @@ package body Call_Graph_Views is
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path);
    --  Called when a row is expanded by the user
+
+   procedure On_Realize
+     (View : access Gtk_Widget_Record'Class);
+   --  Called when the view is realized
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -789,6 +796,22 @@ package body Call_Graph_Views is
          Trace (Me, E);
    end On_Selection_Changed;
 
+   ----------------
+   -- On_Realize --
+   ----------------
+
+   procedure On_Realize
+     (View : access Gtk_Widget_Record'Class)
+   is
+      V : constant Callgraph_View_Access :=
+        Callgraph_View_Access (View);
+   begin
+      if V.Stored_Pos /= 0 then
+         V.Pane.Set_Position (V.Stored_Pos);
+         V.Stored_Pos := 0;
+      end if;
+   end On_Realize;
+
    ---------------------
    -- On_Row_Expanded --
    ---------------------
@@ -1273,7 +1296,7 @@ package body Call_Graph_Views is
          V_Type  : constant String := Get_Attribute (XML, "type");
       begin
          if Pos_Str /= "" then
-            Set_Position (View.Pane, Gint'Value (Pos_Str));
+            View.Stored_Pos := Gint'Value (Pos_Str);
          end if;
 
          Is_Calls := V_Type = "calls";
@@ -1410,6 +1433,12 @@ package body Call_Graph_Views is
         (View.Tree,
          Signal_Row_Expanded,
          Widget_Callback.To_Marshaller (On_Row_Expanded'Access),
+         Slot_Object => View);
+
+      Widget_Callback.Object_Connect
+        (View,
+         Signal_Realize,
+         Widget_Callback.To_Marshaller (On_Realize'Access),
          Slot_Object => View);
 
       Widget_Callback.Object_Connect
