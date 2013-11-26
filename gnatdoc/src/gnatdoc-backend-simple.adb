@@ -748,6 +748,12 @@ package body GNATdoc.Backend.Simple is
                Append_Line (Printout, "");
             end if;
 
+            if Present (Get_Alias (E)) then
+               ReST_Append_Reference (Printout,
+                 Entity => Get_Alias (E),
+                 Prefix => "Alias: ");
+            end if;
+
             ReST_Append_Comment (Printout, E);
          end if;
       end ReST_Append_Subprogram;

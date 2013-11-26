@@ -98,6 +98,9 @@ package body GNATdoc.Frontend.Builder is
       function Get_Language
         (Entity : Unique_Entity_Id) return Language_Access;
 
+      function Get_LL_Alias
+        (Entity : Unique_Entity_Id) return General_Entity;
+
       function Get_LL_Entity
         (Entity : Unique_Entity_Id) return General_Entity;
 
@@ -169,6 +172,9 @@ package body GNATdoc.Frontend.Builder is
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Primitive
+        (Entity : Unique_Entity_Id) return Boolean;
+
+      function Is_Subprogram
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Subprogram_Or_Entry
@@ -291,6 +297,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Language);
+      pragma Inline (Get_LL_Alias);
       pragma Inline (Get_LL_Entity);
       pragma Inline (Get_LL_First_Private_Entity_Loc);
       pragma Inline (Get_LL_Location);
@@ -309,6 +316,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Package);
       pragma Inline (Is_Partial_View);
       pragma Inline (Is_Primitive);
+      pragma Inline (Is_Subprogram);
       pragma Inline (Is_Subprogram_Or_Entry);
       pragma Inline (Is_Tagged);
       pragma Inline (Number_Of_Progenitors);
@@ -550,6 +558,16 @@ package body GNATdoc.Frontend.Builder is
          return Get_Language (Get_Entity (Entity));
       end Get_Language;
 
+      ------------------
+      -- Get_LL_Alias --
+      ------------------
+
+      function Get_LL_Alias
+        (Entity : Unique_Entity_Id) return General_Entity is
+      begin
+         return LL.Get_Alias (Get_Entity (Entity));
+      end Get_LL_Alias;
+
       -------------------
       -- Get_LL_Entity --
       -------------------
@@ -745,6 +763,16 @@ package body GNATdoc.Frontend.Builder is
       begin
          return LL.Is_Primitive (Get_Entity (Entity));
       end Is_Primitive;
+
+      -------------------
+      -- Is_Subprogram --
+      -------------------
+
+      function Is_Subprogram
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return Is_Subprogram (Get_Entity (Entity));
+      end Is_Subprogram;
 
       ----------------------------
       -- Is_Subprogram_Or_Entry --
@@ -1730,12 +1758,15 @@ package body GNATdoc.Frontend.Builder is
                   Decorate_Subprogram_Formals (E);
                end if;
 
-            --  Although formals are available in the list of entities of the
-            --  file we are traversing, it is not easy to identify and set
-            --  the scope of formals just traversing these entities since
-            --  some entities do not have its Xref.Scope entity available.
-
             elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
+               if Is_Subprogram (E)
+                 and then Present (Get_LL_Alias (E))
+               then
+                  Set_Alias (E,
+                    Find_Unique_Entity
+                      (Get_Location (Context.Database, Get_LL_Alias (E))));
+               end if;
+
                Decorate_Subprogram_Formals (E);
             end if;
 

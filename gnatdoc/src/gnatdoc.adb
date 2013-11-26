@@ -736,8 +736,9 @@ package body GNATdoc is
                procedure Set_Alias (E : Entity_Id) is
                   Alias : Entity_Id;
                begin
-                  if Present (LL.Get_Alias (E)) then
-                     pragma Assert (No (Get_Alias (E)));
+                  if Present (LL.Get_Alias (E))
+                    and then No (Get_Alias (E))
+                  then
                      Alias :=
                        Find_Unique_Entity
                          (Get_Location (Database, LL.Get_Alias (E)));

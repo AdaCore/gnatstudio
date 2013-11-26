@@ -2212,10 +2212,11 @@ package body GNATdoc.Frontend is
          -- CB --
          --------
 
-         Start_Line : Natural;
-         In_Profile : Boolean := False;
-         Last_Idx   : Natural := 0;
-         Par_Count  : Natural := 0;
+         Start_Line  : Natural;
+         In_Profile  : Boolean := False;
+         Is_Renaming : Boolean := False;
+         Last_Idx    : Natural := 0;
+         Par_Count   : Natural := 0;
 
          function CB
            (Entity         : Language_Entity;
@@ -2262,7 +2263,52 @@ package body GNATdoc.Frontend is
                           Line => Start_Line + Sloc_End.Line - 1,
                           Column => Visible_Column_Type (Sloc_End.Column)));
                      return True;
+
+                  elsif Par_Count = 0
+                    and then Keyword = "renames"
+                  then
+                     Is_Renaming := True;
                   end if;
+               end;
+
+            --  Complete decoration of subprogram renamings since Xref does
+            --  not provide the renamed entity when it is located in the same
+            --  package spec than the renaming subprogram.
+
+            elsif Is_Renaming
+              and then Entity = Identifier_Text
+              and then No (Get_Alias (E))
+            then
+               declare
+                  Current_Line   : constant Natural :=
+                    LL.Get_Location (E).Line + Sloc_Start.Line - 1;
+                  Current_Column : constant Visible_Column :=
+                    Visible_Column (Sloc_Start.Column);
+                  Current_Loc    : constant General_Location :=
+                    General_Location'(File   => File,
+                                      Line   => Current_Line,
+                                      Column => Current_Column);
+                  Renamed_Entity : General_Entity;
+                  Entity         : Entity_Id;
+               begin
+                  Renamed_Entity :=
+                    Xref.Get_Entity
+                      (Db   => Context.Database,
+                       Name => S,
+                       Loc  => Current_Loc);
+                  pragma Assert (Present (Renamed_Entity));
+
+                  --  This attribute is not set by Xref when the renamed entity
+                  --  is located in the SAME file where the renaming subprogram
+                  --  declaration is defined. Hence we can rely on the hash
+                  --  table to locate the entity.
+
+                  Entity :=
+                    Find_Unique_Entity
+                      (Get_Location (Context.Database, Renamed_Entity));
+                  pragma Assert (Present (Entity));
+
+                  Set_Alias (E, Entity);
                end;
 
             elsif Entity = Operator_Text then
@@ -2299,6 +2345,51 @@ package body GNATdoc.Frontend is
                Trace (Me, E);
                return True;
          end CB;
+
+         procedure Workaround_Scope_Problem_In_Subprogram_Renaming;
+         --  This subprogram workarounds a compiler problem in the formals
+         --  of subprogram renamings: the compiler does not generate the
+         --  correct scope of the formals.
+
+         procedure Workaround_Scope_Problem_In_Subprogram_Renaming is
+            Subp_Cursor  : EInfo_List.Cursor;
+            Subp_Formal  : Entity_Id;
+
+            Alias_Cursor : EInfo_List.Cursor;
+            Alias_Formal : Entity_Id;
+         begin
+            --  Given that the scope of the formals of E was not properly set
+            --  by Xref they are located immediately after E (in the list of
+            --  entities of its enclosing scope). Hence, this routine takes
+            --  care of moving them into the scope of E (relying on the number
+            --  of formals of its aliased subprogram)
+
+            pragma Assert (Get_Entities (Get_Scope (E)).Contains (E));
+            Subp_Cursor := Get_Entities (Get_Scope (E)).Find (E);
+
+            Alias_Cursor := Get_Entities (Get_Alias (E)).First;
+            while EInfo_List.Has_Element (Alias_Cursor) loop
+               EInfo_List.Next (Subp_Cursor);
+
+               Subp_Formal  := EInfo_List.Element (Subp_Cursor);
+               Alias_Formal := EInfo_List.Element (Alias_Cursor);
+               pragma Assert (Get_Kind (Subp_Formal) = E_Variable);
+
+               Set_Alias (Subp_Formal, Alias_Formal);
+               Set_Kind  (Subp_Formal, Get_Kind (Alias_Formal));
+
+               Register_Delayed_Remove_From_Scope
+                 (Scope  => Get_Scope (Subp_Formal),
+                  Entity => Subp_Formal);
+
+               Append_To_Scope (E, Subp_Formal);
+               Set_Scope (Subp_Formal, E);
+
+               EInfo_List.Next (Alias_Cursor);
+            end loop;
+         end Workaround_Scope_Problem_In_Subprogram_Renaming;
+
+         --  Local variables
 
          From          : Natural;
          Index         : Natural;
@@ -2362,6 +2453,10 @@ package body GNATdoc.Frontend is
          Parse_Entities
            (Lang, Buffer.all (Index .. Buffer'Last),
             CB'Unrestricted_Access);
+
+         if Present (Get_Alias (E)) then
+            Workaround_Scope_Problem_In_Subprogram_Renaming;
+         end if;
 
       end Parse_Ada_Profile;
 
