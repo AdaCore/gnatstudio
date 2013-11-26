@@ -10,6 +10,8 @@ function buildText(root, data)
             case 'code':
                 element = document.createElement('table');
                 element.setAttribute('class', 'code');
+                element.setAttribute('cellpadding', '0');
+                element.setAttribute('cellspacing', '0');
                 var code = document.createElement('tbody');
 
                 for (lineIndex = 0;
@@ -80,7 +82,7 @@ function buildDocumentationPage()
     buildText(pane, GNATdocDocumentation.summary);
     href = document.createElement('a');
     href.setAttribute('href', '#Description');
-    text = document.createTextNode(' More...');
+    text = document.createTextNode('More...');
     href.appendChild(text);
     pane.appendChild(href);
 
@@ -104,6 +106,8 @@ function buildDocumentationPage()
 
         table = document.createElement('table');
         table.setAttribute('class', 'entities');
+        table.setAttribute('cellpadding', '0');
+        table.setAttribute('cellspacing', '0');
         tbody = document.createElement('tbody');
 
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++)
