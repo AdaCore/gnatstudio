@@ -8921,13 +8921,14 @@ pragma Stream_Convert (
 [Read   =&gt;] function_NAME,
 [Write  =&gt;] function_NAME);
 
-This pragma provides an efficient way of providing stream functions for
-types defined in packages.  Not only is it simpler to use than declaring
-the necessary functions with attribute representation clauses, but more
-significantly, it allows the declaration to made in such a way that the
-stream packages are not loaded unless they are needed.  The use of the
-Stream_Convert pragma adds no overhead at all, unless the stream
-attributes are actually used on the designated type.
+This pragma provides an efficient way of providing user-defined stream
+attributes.  Not only is it simpler to use than specifying the
+attributes directly, but more importantly, it allows the specification
+to be made in such a way that the predefined unit Ada.Streams is not
+loaded unless it is actually needed (i.e. unless the stream attributes
+are actually used); the use of the Stream_Convert pragma adds no
+overhead at all, unless the stream attributes are actually used on the
+designated type.
 
 The first argument specifies the type for which stream functions are
 provided.  The second parameter provides a function used to read values
