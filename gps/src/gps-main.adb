@@ -456,6 +456,14 @@ procedure GPS.Main is
          end;
       end if;
 
+      declare
+         Tmp : constant String := Command_Line.Getenv ("PATH");
+      begin
+         Setenv
+           ("PATH",
+            Tmp & Path_Separator & Prefix_Dir.Display_Full_Name & "bin");
+      end;
+
       --  Python startup path
 
       declare
@@ -476,7 +484,6 @@ procedure GPS.Main is
          Trace (Me, "PYTHONPATH=" & New_Val.all);
          Free (New_Val);
       end;
-
    end Initialize_Environment_Variables;
 
    --------------------------
