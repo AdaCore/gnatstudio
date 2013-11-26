@@ -30,9 +30,10 @@ with Language;                 use Language;
 with Language.Ada;
 with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 with Xref;
+with GNAT.IO;
 
 package body GNATdoc.Frontend is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend");
@@ -2296,19 +2297,31 @@ package body GNATdoc.Frontend is
                       (Db   => Context.Database,
                        Name => S,
                        Loc  => Current_Loc);
-                  pragma Assert (Present (Renamed_Entity));
 
-                  --  This attribute is not set by Xref when the renamed entity
-                  --  is located in the SAME file where the renaming subprogram
-                  --  declaration is defined. Hence we can rely on the hash
-                  --  table to locate the entity.
+                  --  This case fails when the renamed entity is specified
+                  --  by means of its expanded name. Temporarily emit a
+                  --  warning until this case is supported???
 
-                  Entity :=
-                    Find_Unique_Entity
-                      (Get_Location (Context.Database, Renamed_Entity));
-                  pragma Assert (Present (Entity));
+                  if Present (Renamed_Entity) then
 
-                  Set_Alias (E, Entity);
+                     --  This attribute is not set by Xref when the renamed
+                     --  entity is located in the SAME file where the renaming
+                     --  subprogram declaration is defined. Hence we can rely
+                     --  on the hash table to locate the entity.
+
+                     Entity :=
+                       Find_Unique_Entity
+                         (Get_Location (Context.Database, Renamed_Entity));
+                     pragma Assert (Present (Entity));
+
+                     Set_Alias (E, Entity);
+
+                  else
+                     GNAT.IO.Put_Line
+                       (Utils.Image
+                          (LL.Get_Location (E), With_Filename => True)
+                        & ": warning renaming not fully decorated");
+                  end if;
                end;
 
             elsif Entity = Operator_Text then
@@ -2372,18 +2385,21 @@ package body GNATdoc.Frontend is
                EInfo_List.Next (Subp_Cursor);
 
                Subp_Formal  := EInfo_List.Element (Subp_Cursor);
-               Alias_Formal := EInfo_List.Element (Alias_Cursor);
-               pragma Assert (Get_Kind (Subp_Formal) = E_Variable);
 
-               Set_Alias (Subp_Formal, Alias_Formal);
-               Set_Kind  (Subp_Formal, Get_Kind (Alias_Formal));
+               if Get_Scope (Subp_Formal) /= E then
+                  Alias_Formal := EInfo_List.Element (Alias_Cursor);
+                  pragma Assert (Get_Kind (Subp_Formal) = E_Variable);
 
-               Register_Delayed_Remove_From_Scope
-                 (Scope  => Get_Scope (Subp_Formal),
-                  Entity => Subp_Formal);
+                  Set_Alias (Subp_Formal, Alias_Formal);
+                  Set_Kind  (Subp_Formal, Get_Kind (Alias_Formal));
 
-               Append_To_Scope (E, Subp_Formal);
-               Set_Scope (Subp_Formal, E);
+                  Register_Delayed_Remove_From_Scope
+                    (Scope  => Get_Scope (Subp_Formal),
+                     Entity => Subp_Formal);
+
+                  Append_To_Scope (E, Subp_Formal);
+                  Set_Scope (Subp_Formal, E);
+               end if;
 
                EInfo_List.Next (Alias_Cursor);
             end loop;

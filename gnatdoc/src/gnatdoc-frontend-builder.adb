@@ -1763,8 +1763,10 @@ package body GNATdoc.Frontend.Builder is
                  and then Present (Get_LL_Alias (E))
                then
                   Set_Alias (E,
-                    Find_Unique_Entity
-                      (Get_Location (Context.Database, Get_LL_Alias (E))));
+                    Get_Unique_Entity
+                      (Context,
+                       Get_Location (Context.Database, Get_LL_Alias (E)).File,
+                       Get_LL_Alias (E)));
                end if;
 
                Decorate_Subprogram_Formals (E);
