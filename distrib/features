@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.1.0 / GNATbench 2.9.0
 -------------------------------------------
 
+NF-61-MB26-054 GPS: New line number display preference (2013-11-27)
+
+  The "Display line numbers" preference now settings Never, Some_Lines,
+  All_Lines. The new Some_Lines option displays every fifth line number,
+  reducing visual clutter and making the source code stand out more.
+
 NF-61-MB13-030 GPS: Use a fallback by name for cross references (2013-11-14)
 
   The GPS cross reference engine will now use imprecise information from the
