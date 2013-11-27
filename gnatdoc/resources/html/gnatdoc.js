@@ -21,6 +21,7 @@ function buildText(root, data)
                     var line = data[index].children[lineIndex];
                     var row = document.createElement('tr');
                     var cell = document.createElement('th');
+                    cell.setAttribute('id', 'L' + line.number.toString());
                     cell.appendChild(document.createTextNode(line.number));
                     row.appendChild(cell);
                     cell = document.createElement('td');
@@ -492,6 +493,22 @@ function onLoad()
 function onSourceFileLoad()
 {
     displaySource();
+
+    /* Scroll view to requested element. */
+
+    var url = document.URL;
+    var index = url.indexOf('#');
+
+    if (index >= 0)
+    {
+        var id = url.slice(index + 1, url.length);
+        var element = document.getElementById(id);
+
+        if (element)
+        {
+            element.scrollIntoView();
+        }
+    }
 }
 
 function onInheritanceLoad()
