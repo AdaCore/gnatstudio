@@ -121,26 +121,6 @@ tabs at the left of the dialog.  Each page corresponds to a set of preferences.
     * `Gprbuild` to always use *gprbuild* for builds, even for Ada only
       projects.
 
-  *Jump to first location*
-    .. index:: location
-
-    Whether the first entry of the location window should be selected
-    automatically, and thus whether the corresponding editor should be
-    immediately open.
-
-  *Wrap around on next/previous*
-    .. index:: location
-
-    Whether using the `Next Tag` and `Previous Tag` actions/menus should wrap
-    around to the beginning when reaching the end of the category.  The default
-    is to wrap around, as was done in previous GPS versions.
-
-  *Auto close Locations view*
-    .. index:: location
-
-    Whether the Locations view should be closed automatically when it becomes
-    empty.
-
   *Hyper links*
     .. index:: hyper mode
 
