@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MB26-015: GB: Show complete command line in command line editor
+  Problem:    When editing the command line before launching the action
+              (ex: SPARK2014 > Prove Subprogram) the command line displayed at
+              the bottom is incomplete.
+  Workaround: None.
+
 - MB20-048: GB: code assist enable not applied to open editors
   Problem:    Enabling or disabling code assist from the preferences
               is not applied to open editors.
