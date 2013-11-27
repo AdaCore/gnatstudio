@@ -26,9 +26,6 @@ with Src_Editor_Buffer.Multi_Cursors;
 use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Glib;              use Glib;
-
 package body Commands.Editor is
 
    function g_utf8_strlen
@@ -144,27 +141,26 @@ package body Commands.Editor is
    ------------
 
    procedure Create
-     (Item              : out Editor_Command;
-      Mode              : Editor_Command_Mode;
-      Buffer            : Source_Buffer;
-      User_Executed     : Boolean;
-      Line              : Editable_Line_Type;
-      Column            : Character_Offset_Type;
-      Direction         : Direction_Type := Forward;
-      Cursor_Line       : Editable_Line_Type := 0;
-      Cursor_Column     : Character_Offset_Type := 0;
-      Cursor_Name       : String := "") is
+     (Item                : out Editor_Command;
+      Mode                : Editor_Command_Mode;
+      Buffer              : Source_Buffer;
+      User_Executed       : Boolean;
+      Cursor_Loc, Sel_Loc : Loc_T;
+      End_Loc             : Loc_T := (0, 0);
+      Direction           : Direction_Type := Forward;
+      Cursor_Name         : String := "") is
    begin
+
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
       Item.Current_Text := new String (1 .. 512);
       Item.Edition_Mode := Mode;
       Item.User_Executed := User_Executed;
-      Item.Line := Line;
-      Item.Column := Column;
+      Item.Locs.Start_Loc := Cursor_Loc;
       Item.Direction := Direction;
-      Item.Cursor_Line := Cursor_Line;
-      Item.Cursor_Column := Cursor_Column;
+      Item.Locs.Start_Sel_Loc := Sel_Loc;
+      Item.Locs.End_Loc := End_Loc;
+      Item.Locs.End_Sel_Loc := End_Loc;
       Item.Alternative_Cursor_Name := To_Unbounded_String (Cursor_Name);
    end Create;
 
@@ -270,11 +266,11 @@ package body Commands.Editor is
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
 
       if Start_Line /= 0 then
-         Item.Line := Start_Line;
+         Item.Locs.Start_Loc.Line := Start_Line;
       end if;
 
       if Start_Column /= 0 then
-         Item.Column := Start_Column;
+         Item.Locs.Start_Loc.Col := Start_Column;
       end if;
    end Add_Text;
 
@@ -311,17 +307,50 @@ package body Commands.Editor is
          --  The cursor is a multi cursor
          if Cursor_Name /= "" then
             Mark := Command.Buffer.Get_Mark (Cursor_Name);
+
             if Mark /= null then
-               Command.Buffer.Get_Iter_At_Line_Offset
-                 (Iter, Gint (Command.Line - 1), Gint (Command.Column - 1));
-               Command.Buffer.Move_Mark (Mark, Iter);
+               if Command.Locs.End_Loc.Line /= 0 then
+                  Command.Buffer.Get_Iter_At_Screen_Position
+                    (Iter, Command.Locs.End_Loc.Line,
+                     Command.Locs.End_Loc.Col);
+
+                  Command.Buffer.Move_Mark (Mark, Iter);
+
+                  --  Move the selection mark if we have meaningful values
+                  --  for End_Sel_Line and End_Sel_Col. The zero check is to
+                  --  prevent setting the selection mark when we just built
+                  --  the action and don't want the sel mark to move because
+                  --  end_sel_line and end_sel_col have not been set yet.
+
+                  Mark := Command.Buffer.Get_Mark
+                    (Get_Sel_Mark_Name (Cursor_Name));
+
+                  Command.Buffer.Get_Iter_At_Screen_Position
+                    (Iter,
+                     Command.Locs.End_Sel_Loc.Line,
+                     Command.Locs.End_Sel_Loc.Col);
+
+                  Command.Buffer.Move_Mark (Mark, Iter);
+                  Update_MC_Selection (Command.Buffer);
+               end if;
             end if;
          else
             Set_Cursor_Position
-              (Command.Buffer,
-               Command.Line,
-               Command.Column,
-               Internal  => True);
+              (Command.Buffer, Command.Locs.End_Loc.Line,
+               Command.Locs.End_Loc.Col, Internal => True);
+
+            --  Move the selection mark. See comment above
+            if Command.Locs.End_Sel_Loc.Line /= 0 then
+               Mark := Command.Buffer.Get_Selection_Bound;
+
+               Command.Buffer.Get_Iter_At_Screen_Position
+                 (Iter,
+                  Command.Locs.End_Sel_Loc.Line,
+                  Command.Locs.End_Sel_Loc.Col);
+
+               Command.Buffer.Move_Mark (Mark, Iter);
+            end if;
+
             Scroll_To_Cursor_Location (View);
          end if;
 
@@ -330,6 +359,11 @@ package body Commands.Editor is
          end if;
 
       end Set_Cursor_Position;
+
+      First_Loc : constant Loc_T :=
+        (if Command.Locs.Start_Loc < Command.Locs.End_Loc
+         then Command.Locs.Start_Loc
+         else Command.Locs.End_Loc);
 
    begin
       if Command.User_Executed then
@@ -356,42 +390,32 @@ package body Commands.Editor is
 
          case Command.Edition_Mode is
             when Insertion =>
-               if not Avoid_Move_Cursor (Command) then
-                  Set_Cursor_Position;
-               end if;
 
                Insert
                  (Command.Buffer,
-                  Command.Line,
-                  Command.Column,
+                  First_Loc.Line,
+                  First_Loc.Col,
                   Command.Current_Text
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
 
-               if not Avoid_Move_Cursor (Command)
-                 and then
-                   (Command.Direction = Extended
-                    or else Command.Direction = Backward)
-               then
-                  Set_Cursor_Position;
-               end if;
-
             when Deletion =>
                Delete
                  (Command.Buffer,
-                  Command.Line,
-                  Command.Column,
+                  First_Loc.Line,
+                  First_Loc.Col,
                   Natural
                     (g_utf8_strlen
-                       (Command.Current_Text
-                          (First .. Command.Current_Text_Size + First - 1),
-                        Interfaces.C.size_t (Command.Current_Text_Size))),
+                         (Command.Current_Text
+                              (First .. Command.Current_Text_Size + First - 1),
+                          Interfaces.C.size_t (Command.Current_Text_Size))),
                   False);
 
-               if not Avoid_Move_Cursor (Command) then
-                  Set_Cursor_Position;
-               end if;
          end case;
+
+         if not Avoid_Move_Cursor (Command) then
+            Set_Cursor_Position;
+         end if;
 
          Set_Multi_Cursors_Sync (Command.Buffer, MC_Sync_Save);
       end if;
@@ -406,24 +430,56 @@ package body Commands.Editor is
    ----------
 
    overriding function Undo
-     (Command : access Editor_Command_Type) return Boolean is
+     (Command : access Editor_Command_Type) return Boolean
+   is
+      New_Locs : constant Editor_Command_Locations :=
+        (Start_Loc     => Command.Locs.End_Loc,
+         End_Loc       => Command.Locs.Start_Loc,
+         Start_Sel_Loc => Command.Locs.End_Sel_Loc,
+         End_Sel_Loc   => Command.Locs.Start_Sel_Loc);
+      Old_Locs : constant Editor_Command_Locations := Command.Locs;
    begin
-      if Command.Edition_Mode = Insertion then
-         Command.Edition_Mode := Deletion;
-      else
-         Command.Edition_Mode := Insertion;
-      end if;
+
+      Command.Edition_Mode :=
+        (if Command.Edition_Mode = Insertion then Deletion else Insertion);
+      Command.Locs := New_Locs;
 
       Execute (Command);
 
-      if Command.Edition_Mode = Insertion then
-         Command.Edition_Mode := Deletion;
-      else
-         Command.Edition_Mode := Insertion;
-      end if;
+      Command.Edition_Mode :=
+        (if Command.Edition_Mode = Insertion then Deletion else Insertion);
+      Command.Locs := Old_Locs;
 
       return True;
    end Undo;
+
+   ----------------------
+   -- Set_End_Location --
+   ----------------------
+
+   procedure Set_End_Location
+     (Command : access Editor_Command_Type;
+      Position : Gtk_Text_Iter)
+   is
+      L : Editable_Line_Type;
+      C : Character_Offset_Type;
+   begin
+      Get_Iter_Position (Command.Buffer, Position, L, C);
+      Command.Set_End_Location ((L, C), (L, C));
+   end Set_End_Location;
+
+   ----------------------
+   -- Set_End_Location --
+   ----------------------
+
+   procedure Set_End_Location
+     (Command : access Editor_Command_Type;
+      Cursor_Loc, Sel_Loc : Loc_T)
+   is
+   begin
+      Command.Locs.End_Loc := Cursor_Loc;
+      Command.Locs.End_Sel_Loc := Sel_Loc;
+   end Set_End_Location;
 
    -------------
    -- Execute --
@@ -623,9 +679,14 @@ package body Commands.Editor is
 
    overriding function Debug_String
      (C : Editor_Command_Type) return String is
+      function Loc_String (L : Loc_T) return String is
+         (L.Line'Img & ":" & L.Col'Img);
    begin
       return C.Edition_Mode'Img
-        & " " & C.Current_Text (1 .. C.Current_Text_Size);
+        & " " & C.Current_Text (1 .. C.Current_Text_Size) & " - "
+        & "START POSITIONS : " & Loc_String (C.Locs.Start_Loc) & " "
+        & Loc_String (C.Locs.Start_Sel_Loc) & " END POSITIONS : "
+        & Loc_String (C.Locs.End_Loc) & " " & Loc_String (C.Locs.End_Sel_Loc);
    end Debug_String;
 
    overriding function Debug_String

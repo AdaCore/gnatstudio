@@ -1,9 +1,56 @@
+------------------------------------------------------------------------------
+--                                  G P S                                   --
+--                                                                          --
+--                     Copyright (C) 2001-2013, AdaCore                     --
+--                                                                          --
+-- This is free software;  you can redistribute it  and/or modify it  under --
+-- terms of the  GNU General Public License as published  by the Free Soft- --
+-- ware  Foundation;  either version 3,  or (at your option) any later ver- --
+-- sion.  This software is distributed in the hope  that it will be useful, --
+-- but WITHOUT ANY WARRANTY;  without even the implied warranty of MERCHAN- --
+-- TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public --
+-- License for  more details.  You should have  received  a copy of the GNU --
+-- General  Public  License  distributed  with  this  software;   see  file --
+-- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
+-- of the license.                                                          --
+------------------------------------------------------------------------------
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Glib.Properties;
 
 package body Src_Editor_Buffer.Multi_Cursors is
 
+   Mc_Selection_Tag : constant String := "mc_selection";
+
+   procedure Update_MC_Selection (B : Source_Buffer) is
+      Start_Loc, End_Loc : Gtk_Text_Iter;
+      T : constant Gtk_Text_Tag := B.Get_Tag_Table.Lookup (Mc_Selection_Tag);
+      Line : Editable_Line_Type;
+      Col  : Character_Offset_Type;
+   begin
+      if T = null then
+         return;
+      end if;
+      B.Get_Start_Iter (Start_Loc);
+      B.Get_End_Iter (End_Loc);
+      B.Remove_Tag (T, Start_Loc, End_Loc);
+
+      for C of B.Multi_Cursors_List loop
+         B.Get_Iter_At_Mark (Start_Loc, C.Sel_Mark);
+         B.Get_Iter_At_Mark (End_Loc, C.Mark);
+
+         Get_Iter_Position (B, End_Loc, Line, Col);
+
+         B.Apply_Tag (T, Start_Loc, End_Loc);
+      end loop;
+   end Update_MC_Selection;
+
    function Get_Mark (C : Cursor) return Gtk_Text_Mark
    is (C.Mark);
+
+   function Get_Sel_Mark (C : Cursor) return Gtk_Text_Mark
+   is (C.Sel_Mark);
 
    function Get_Column_Memory (C : Cursor) return Gint
    is (C.Column_Memory);
@@ -19,14 +66,27 @@ package body Src_Editor_Buffer.Multi_Cursors is
       function Next_Multi_Cursor_Name return String is
         ("multi_cursor_" & Buffer.Multi_Cursors_Next_Id'Img);
 
+      Cursor_Name : constant String := Next_Multi_Cursor_Name;
       Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
-        (Next_Multi_Cursor_Name, False);
+        (Cursor_Name, False);
+      Sel_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
+        (Get_Sel_Mark_Name (Cursor_Name), False);
+      T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
    begin
+      if T = null then
+         T := Buffer.Create_Tag (Mc_Selection_Tag);
+         Glib.Properties.Set_Property (T, Background_Property, "green");
+      end if;
+
       Buffer.Multi_Cursors_List.Append
-        ((Mark => Cursor_Mark,
+        ((Mark            => Cursor_Mark,
+          Sel_Mark        => Sel_Mark,
           Current_Command => null,
-          Column_Memory => Get_Offset (Location)));
+          Column_Memory   => Get_Offset (Location),
+          Clipboard       => <>));
+
       Buffer.Add_Mark (Cursor_Mark, Location);
+      Buffer.Add_Mark (Sel_Mark, Location);
       Buffer.Multi_Cursors_Next_Id := Buffer.Multi_Cursors_Next_Id + 1;
       Cursor_Mark.Set_Visible (True);
    end Add_Multi_Cursor;
@@ -37,6 +97,8 @@ package body Src_Editor_Buffer.Multi_Cursors is
          Buffer.Delete_Mark (Cursor.Mark);
          Cursor.Mark.Deallocate;
       end loop;
+
+      Buffer.Has_MC_Clipboard := False;
       Buffer.Multi_Cursors_List.Clear;
    end Remove_All_Multi_Cursors;
 

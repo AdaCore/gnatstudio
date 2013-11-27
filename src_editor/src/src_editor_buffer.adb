@@ -17,7 +17,6 @@
 
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
@@ -100,7 +99,11 @@ with String_Utils;                        use String_Utils;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 
+use Ada.Strings.Unbounded;
+
 package body Src_Editor_Buffer is
+
+   type Gtk_TB_Access is access all Gtk_Text_Buffer_Record;
 
    use Src_Editor_Buffer.Blocks;
    use Src_Editor_Module.Line_Highlighting;
@@ -508,6 +511,17 @@ package body Src_Editor_Buffer is
    --  Update column memory for every cursor, the main one and every existing
    --  multi cursor
 
+   function Get_Current_Command
+     (Buffer : access Source_Buffer_Record'Class) return Editor_Command
+   is
+     (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
+      then Editor_Command (Buffer.Multi_Cursors_Sync.MC.Current_Command)
+      else Editor_Command (Buffer.Current_Command));
+
+   procedure Set_Current_Command
+     (Buffer : access Source_Buffer_Record'Class;
+      Command : Editor_Command);
+
    -----------
    -- Hooks --
    -----------
@@ -537,6 +551,26 @@ package body Src_Editor_Buffer is
    procedure Reset_Multi_Cursors_Commands
      (Buffer : Source_Buffer);
 
+   -------------------------
+   -- Set_Current_Command --
+   -------------------------
+
+   procedure Set_Current_Command
+     (Buffer : access Source_Buffer_Record'Class;
+      Command : Editor_Command) is
+   begin
+      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
+         Buffer.Multi_Cursors_Sync.MC.Current_Command :=
+           Command_Access (Command);
+      else
+         Buffer.Current_Command := Command_Access (Command);
+      end if;
+   end Set_Current_Command;
+
+   ----------------------------------
+   -- Reset_Multi_Cursors_Commands --
+   ----------------------------------
+
    procedure Reset_Multi_Cursors_Commands
      (Buffer : Source_Buffer) is
    begin
@@ -546,6 +580,92 @@ package body Src_Editor_Buffer is
          end if;
       end loop;
    end Reset_Multi_Cursors_Commands;
+
+   ---------------------
+   -- Paste_Clipboard --
+   ---------------------
+
+   overriding procedure Paste_Clipboard
+     (Buffer      : not null access Source_Buffer_Record;
+      Clipboard   : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+      Default_Editable : Boolean := True)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if Buffer.Has_MC_Clipboard then
+         for Cursor of Buffer.Multi_Cursors_List loop
+            Set_Multi_Cursors_Manual_Sync
+              (Source_Buffer (Buffer), Cursor);
+            Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
+            Buffer.Insert
+              (Iter, To_String (Cursor.Clipboard));
+         end loop;
+
+         Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      end if;
+
+      Paste_Clipboard (Gtk_TB_Access (Buffer), Clipboard, Default_Editable);
+
+      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+   end Paste_Clipboard;
+
+   -------------------
+   -- Cut_Clipboard --
+   -------------------
+
+   overriding procedure Cut_Clipboard
+     (Buffer     : not null access Source_Buffer_Record;
+      Clipboard  : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+      Default_Editable : Boolean)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+   begin
+      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      Cut_Clipboard (Gtk_TB_Access (Buffer), Clipboard, Default_Editable);
+
+      for Cursor of Buffer.Multi_Cursors_List loop
+         Buffer.Has_MC_Clipboard := True;
+
+         Set_Multi_Cursors_Manual_Sync
+           (Source_Buffer (Buffer), Cursor);
+         Buffer.Get_Iter_At_Mark (Start_Iter, Cursor.Sel_Mark);
+         Buffer.Get_Iter_At_Mark (End_Iter, Cursor.Mark);
+         Cursor.Clipboard := To_Unbounded_String
+           (Buffer.Get_Text (Start_Iter, End_Iter));
+         Buffer.Delete (Start_Iter, End_Iter);
+      end loop;
+
+      Update_MC_Selection (Source_Buffer (Buffer));
+
+      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+   end Cut_Clipboard;
+
+   --------------------
+   -- Copy_Clipboard --
+   --------------------
+
+   overriding procedure Copy_Clipboard
+     (Buffer    : not null access Source_Buffer_Record;
+      Clipboard : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+   begin
+      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      Copy_Clipboard (Gtk_TB_Access (Buffer), Clipboard);
+
+      for Cursor of Buffer.Multi_Cursors_List loop
+         Buffer.Has_MC_Clipboard := True;
+
+         Set_Multi_Cursors_Manual_Sync
+           (Source_Buffer (Buffer), Cursor);
+         Buffer.Get_Iter_At_Mark (Start_Iter, Cursor.Sel_Mark);
+         Buffer.Get_Iter_At_Mark (End_Iter, Cursor.Mark);
+         Cursor.Clipboard := To_Unbounded_String
+           (Buffer.Get_Text (Start_Iter, End_Iter));
+      end loop;
+
+      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+   end Copy_Clipboard;
 
    -------------
    -- Execute --
@@ -1728,6 +1848,22 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Iter);
 
+      --  After a text insertion, both the selection mark and the insertion
+      --  mark are at the location where the insertion ended. Update the
+      --  corresponding editor command.
+
+      declare
+         C : constant Editor_Command := Get_Current_Command (Buffer);
+      begin
+         if C /= null
+           and then
+             ((not Buffer.Inserting)
+              or else Buffer.Multi_Cursors_Sync.Mode = Manual_Slave)
+         then
+            C.Set_End_Location (Iter);
+         end if;
+      end;
+
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Insert_Text_Cb (Buffer, Iter);
       end if;
@@ -1785,12 +1921,16 @@ package body Src_Editor_Buffer is
             Iter : Gtk_Text_Iter;
          begin
             Buffer.Enter_Current_Group;
+
             for Cursor of Buffer.Multi_Cursors_List loop
+
+               --  Perform insertion for the multi cursor
                Set_Multi_Cursors_Manual_Sync
                  (Source_Buffer (Buffer), Cursor);
                Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
                Buffer.Insert (Iter, Text (1 .. Length));
             end loop;
+
             Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
             Buffer.Leave_Current_Group;
 
@@ -1814,7 +1954,6 @@ package body Src_Editor_Buffer is
                  (Integer (Get_Line (Iter) + 1),
                Visible_Column (Get_Line_Offset (Iter) + 1)),
             not Buffer.Inserting);
-
       end loop;
 
    exception
@@ -1836,20 +1975,22 @@ package body Src_Editor_Buffer is
          User_Action : Action_Type;
          Command : out Editor_Command;
          Pos : Gtk_Text_Iter;
+         Sel_Pos : Gtk_Text_Iter;
          Text : String;
          Is_Main_Action : Boolean := True);
       --  Update the command with the given action
 
       procedure Update_Insert_Command
-        (Buffer : Source_Buffer;
-         User_Action : Action_Type;
-         Command : out Editor_Command;
-         Pos : Gtk_Text_Iter;
-         Text : String;
+        (Buffer         : Source_Buffer;
+         User_Action    : Action_Type;
+         Command        : out Editor_Command;
+         Pos            : Gtk_Text_Iter;
+         Sel_Pos        : Gtk_Text_Iter;
+         Text           : String;
          Is_Main_Action : Boolean := True)
       is
-         Line : constant Editable_Line_Type := Get_Editable_Line
-           (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+         Line, Sel_Line : Editable_Line_Type;
+         Col, Sel_Col :  Character_Offset_Type;
 
          procedure End_Action;
          procedure End_Action is
@@ -1866,8 +2007,9 @@ package body Src_Editor_Buffer is
               (Command,
                Insertion,
                Buffer,
-               False, Line,
-               Character_Offset_Type (Get_Line_Offset (Pos) + 1),
+               False,
+               Cursor_Loc => (Line, Col),
+               Sel_Loc => (Sel_Line, Sel_Col),
                Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
                                then To_String
                                  (Buffer.Multi_Cursors_Sync.Cursor_Name)
@@ -1876,6 +2018,9 @@ package body Src_Editor_Buffer is
          end Create_And_Enqueue_Command;
 
       begin
+         Get_Iter_Position (Buffer, Pos, Line, Col);
+         Get_Iter_Position (Buffer, Sel_Pos, Sel_Line, Sel_Col);
+
          if Is_Null_Command (Command) then
             Create_And_Enqueue_Command;
          elsif Get_Mode (Command) = Insertion then
@@ -1895,26 +2040,25 @@ package body Src_Editor_Buffer is
 
          Add_Text (Command, Text);
 
-         if Is_Main_Action then
-            Buffer.Current_Command := Command_Access (Command);
-         end if;
+         Buffer.Set_Current_Command (Command);
       end Update_Insert_Command;
 
-      Text        : constant Unchecked_String_Access :=
-                      To_Unchecked_String (Get_Chars (Nth (Params, 2)));
-      Length      : constant Integer := Integer (Get_Int (Nth (Params, 3)));
-      Pos         : Gtk_Text_Iter;
-      Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
+      Text         : constant Unchecked_String_Access :=
+        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
+      Length       : constant Integer := Integer (Get_Int (Nth (Params, 3)));
+      Pos, Sel_Pos : Gtk_Text_Iter;
+      Command      : Editor_Command := Get_Current_Command (Buffer);
       pragma Unreferenced (Command);
-      Line        : Editable_Line_Type;
-      Col         : Integer;
-      User_Action : Action_Type;
+      Line         : Editable_Line_Type;
+      Col          : Integer;
+      User_Action  : Action_Type;
+      Sel_Mark     : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
       Cursor_Previously_Held : Boolean;
    begin
       --  If in multi cursors manual slave mode, update corresponding command
+      --  and sel mark
       if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         Command :=
-           Editor_Command (Buffer.Multi_Cursors_Sync.MC.Current_Command);
+         Sel_Mark := Buffer.Multi_Cursors_Sync.MC.Sel_Mark;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Pos);
@@ -2047,9 +2191,10 @@ package body Src_Editor_Buffer is
          Buffer.No_Cursor_Move_On_Changes := True;
       end if;
 
+      Buffer.Get_Iter_At_Mark (Sel_Pos, Sel_Mark);
       Update_Insert_Command
         (Source_Buffer (Buffer),
-         User_Action, Command, Pos, Text (1 .. Length),
+         User_Action, Command, Pos, Sel_Pos, Text (1 .. Length),
          Is_Main_Action => Buffer.Multi_Cursors_Sync.Mode /= Manual_Slave);
 
       Buffer.No_Cursor_Move_On_Changes := Cursor_Previously_Held;
@@ -2087,6 +2232,18 @@ package body Src_Editor_Buffer is
       --  Move mark of start of re-highlight area into insertion position
 
       Move_Mark (Buffer, Buffer.First_Highlight_Mark, Start_Iter);
+
+      declare
+         C : constant Editor_Command := Get_Current_Command (Buffer);
+      begin
+         if C /= null
+           and then
+             ((not Buffer.Inserting)
+              or else Buffer.Multi_Cursors_Sync.Mode = Manual_Slave)
+         then
+            C.Set_End_Location (Start_Iter);
+         end if;
+      end;
 
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Delete_Range_Cb (Buffer, Start_Iter);
@@ -2149,8 +2306,7 @@ package body Src_Editor_Buffer is
    is
       Start_Iter          : Gtk_Text_Iter;
       End_Iter            : Gtk_Text_Iter;
-      Command             : Editor_Command :=
-                              Editor_Command (Buffer.Current_Command);
+      Command             : Editor_Command := Get_Current_Command (Buffer);
       Direction           : Direction_Type := Extended;
       Line, Column        : Gint;
       Line_Start          : Gint;
@@ -2160,14 +2316,18 @@ package body Src_Editor_Buffer is
       Line_Count          : Gint;
       Editable_Line_Start : Editable_Line_Type;
       Editable_Line_End   : Editable_Line_Type;
+      Delete_Offset       : Gint := 0;
+      Sel_Mark            : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
+
       First_Buffer_Line_To_Remove : Buffer_Line_Type;
       Last_Buffer_Line_To_Remove  : Buffer_Line_Type;
-      Delete_Offset : Gint := 0;
 
       procedure Get_Current_Cursor_Position
         (Line   : out Gint;
          Column : out Gint);
       --  Same as get cursor position, but takes multi-cursors into account
+
+      Cursor_Pos : Loc_T;
 
       procedure Get_Current_Cursor_Position
         (Line   : out Gint;
@@ -2187,13 +2347,16 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Mark (Buffer, Iter, Mark);
          Line   := Get_Line (Iter);
          Column := Get_Line_Offset (Iter);
+
+         Get_Iter_Position
+           (Source_Buffer (Buffer),
+            Iter, Cursor_Pos.Line, Cursor_Pos.Col);
       end Get_Current_Cursor_Position;
 
    begin
       --  If in multi cursors manual slave mode, update corresponding command
       if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         Command := Editor_Command
-           (Buffer.Multi_Cursors_Sync.MC.Current_Command);
+         Sel_Mark := Buffer.Multi_Cursors_Sync.MC.Sel_Mark;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -2389,16 +2552,20 @@ package body Src_Editor_Buffer is
                   or else (Get_Direction (Command) /= Direction))
       then
          End_Action (Buffer);
-         Command := Editor_Command (Buffer.Current_Command);
-
-         pragma Assert (Is_Null_Command (Command));
+         Command := Get_Current_Command (Buffer);
       end if;
 
       declare
-         Slice       : constant Basic_Types.UTF8_String :=
+         Slice        : constant Basic_Types.UTF8_String :=
            Get_Slice (Buffer, Start_Iter, End_Iter);
-         User_Action : Action_Type;
+         User_Action  : Action_Type;
+         Sel_Pos_Iter : Gtk_Text_Iter;
+         Sel_Pos      : Loc_T;
       begin
+         Buffer.Get_Iter_At_Mark (Sel_Pos_Iter, Sel_Mark);
+         Get_Iter_Position
+           (Source_Buffer (Buffer), Sel_Pos_Iter, Sel_Pos.Line, Sel_Pos.Col);
+
          if Slice = "" & ASCII.LF then
             User_Action := Delete_Line;
          elsif Slice = " " or else Slice = "" & ASCII.HT then
@@ -2413,23 +2580,17 @@ package body Src_Editor_Buffer is
                Deletion,
                Source_Buffer (Buffer),
                True,
-               Editable_Line_Start,
-               Character_Offset_Type (Column_Start + 1),
-               Direction,
-               Editable_Line_End,
-               Character_Offset_Type (Column + 1),
-               Cursor_Name => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
-                               then To_String
-                                 (Buffer.Multi_Cursors_Sync.Cursor_Name)
-                               else ""));
+               Cursor_Loc  => Cursor_Pos,
+               Sel_Loc     => Sel_Pos,
+               Direction   => Direction,
+               Cursor_Name =>
+                 (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
+                  then To_String (Buffer.Multi_Cursors_Sync.Cursor_Name)
+                  else ""));
 
             Enqueue (Buffer, Command_Access (Command), User_Action);
 
-            Add_Text
-              (Command,
-               Slice,
-               Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
-               Character_Offset_Type (Column_Start + 1));
+            Add_Text (Command, Slice);
          else
             if Direction = Forward then
                Add_Text
@@ -2444,11 +2605,7 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
-      if Direction = Extended
-        or else Line_Start /= Line_End
-      then
-         End_Action (Buffer);
-      end if;
+      Buffer.Set_Current_Command (Command);
 
    exception
       when E : others =>
@@ -4949,7 +5106,7 @@ package body Src_Editor_Buffer is
       Text        : String;
       Enable_Undo : Boolean := True)
    is
-      Iter                     : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 

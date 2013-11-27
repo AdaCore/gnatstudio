@@ -119,6 +119,9 @@ package body Src_Editor_View.Commands is
       Adj          : Gtk_Adjustment;
       Moved        : Boolean;
       Column       : constant Gint := Buffer.Get_Column_Memory;
+      Extend_Selection : constant Boolean :=
+        View.Get_Extend_Selection or Command.Extend_Selection;
+
       pragma Unreferenced (Context, Moved);
 
    begin
@@ -145,10 +148,7 @@ package body Src_Editor_View.Commands is
          Move_Iter (Iter, Command.Kind, Command.Step, Column);
          Move_Mark (Buffer, Mark, Iter);
 
-         if
-           View.Get_Extend_Selection
-           or else Command.Extend_Selection
-         then
+         if Extend_Selection then
             Move_Mark (Buffer, Buffer.Get_Insert, Iter);
          else
             Place_Cursor (Buffer, Iter);
@@ -156,9 +156,11 @@ package body Src_Editor_View.Commands is
 
          View.Scroll_To_Cursor_Location;
 
+         Update_MC_Selection (Buffer);
+
          for Cursor of Get_Multi_Cursors (Buffer) loop
             declare
-               Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
+               Mark : Gtk_Text_Mark := Get_Mark (Cursor);
                Horiz_Offset : constant Gint :=
                  Get_Column_Memory (Cursor);
             begin
@@ -166,13 +168,22 @@ package body Src_Editor_View.Commands is
                Move_Iter (Iter, Command.Kind, Command.Step,
                           Get_Column_Memory (Cursor));
                Buffer.Move_Mark (Mark, Iter);
+
+               if not Extend_Selection then
+                  Mark := Get_Sel_Mark (Cursor);
+                  Buffer.Move_Mark (Mark, Iter);
+               end if;
+
                if (Command.Kind = Line or Command.Kind = Page)
                  and then Get_Line (Iter) /= 0
                then
                   Set_Column_Memory (Cursor, Horiz_Offset);
                end if;
+
             end;
          end loop;
+
+         Update_MC_Selection (Buffer);
 
       end if;
 
