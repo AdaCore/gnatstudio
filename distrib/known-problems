@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB27-046: GPS: wrong documentation for the Preferences page
+  Problem:    The documentation for the preferences page wrongly refers to
+              items such as 'Jump to First Location' which have been moved
+              outside of the preferences dialog and to the local menu in
+              the Locations view.
+  Workarnound: None.
+
 - MB27-018: GPS: cannot select directory when creating project from template
   Problem:    When creating a project from a template, the dialog to choose
               the target directory for deployment might not allow clicking
