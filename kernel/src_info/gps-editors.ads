@@ -647,15 +647,6 @@ package GPS.Editors is
      (This : Editor_Buffer) return Mark_Lists.List is abstract;
    --  Get the list of all multi cursor's marks
 
-   function Get_Multi_Cursors_Sel_Marks
-     (This : Editor_Buffer) return Mark_Lists.List is abstract;
-   --  Get the list of all multi cursor's marks
-
-   procedure Update_Multi_Cursors_Selection
-     (This : Editor_Buffer) is abstract;
-   --  Update the overlay corresponding to the multi cursors selection. *MUST*
-   --  be called if you change any selection marks for multi cursors
-
    overriding function "="
      (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean;
    --     is abstract; --  ??? workaround, for J617-004
@@ -1025,13 +1016,6 @@ private
    overriding function Get_Multi_Cursors_Marks
      (This : Dummy_Editor_Buffer) return Mark_Lists.List
    is (Mark_Lists.Empty_List);
-
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Dummy_Editor_Buffer) return Mark_Lists.List
-   is (Mark_Lists.Empty_List);
-
-   overriding procedure Update_Multi_Cursors_Selection
-     (This : Dummy_Editor_Buffer) is null;
 
    overriding function Views
      (This : Dummy_Editor_Buffer) return View_Lists.List;

@@ -27,16 +27,8 @@ package Src_Editor_Buffer.Multi_Cursors is
      (Cursor);
 
    function Get_Mark (C : Cursor) return Gtk_Text_Mark;
-   function Get_Sel_Mark (C : Cursor) return Gtk_Text_Mark;
-
-   function Get_Sel_Mark_Name (Cursor_Mark_Name : String) return String
-   is
-     (Cursor_Mark_Name & "_sel");
-
    function Get_Column_Memory (C : Cursor) return Gint;
    procedure Set_Column_Memory (C : Cursor; Offset : Gint);
-
-   procedure Update_MC_Selection (B : Source_Buffer);
 
    procedure Add_Multi_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter);

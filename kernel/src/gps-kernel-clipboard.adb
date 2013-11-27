@@ -330,6 +330,8 @@ package body GPS.Kernel.Clipboard is
 
       elsif Widget.all in Gtk_Text_Buffer_Record'Class then
          Buffer := Gtk_Text_Buffer (Widget);
+         Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+         Append_To_Clipboard (Clipboard);
 
       elsif Widget.all in Gtk_Tree_View_Record'Class then
          Set_Text (Gtk.Clipboard.Get, Get_Selection (Gtk_Tree_View (Widget)));

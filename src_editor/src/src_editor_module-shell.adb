@@ -1871,8 +1871,6 @@ package body Src_Editor_Module.Shell is
       elsif Command = "remove_all_multi_cursors" then
          Get_Buffer (Data, 1).Remove_All_Multi_Cursors;
 
-      elsif Command = "update_multi_cursors_selections" then
-         Get_Buffer (Data, 1).Update_Multi_Cursors_Selection;
       elsif Command = "set_multi_cursors_manual_sync" then
 
          if Data.Number_Of_Arguments = 1 then
@@ -1886,30 +1884,13 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
 
       elsif Command = "get_multi_cursors_marks" then
-         Data.Set_Return_Value_As_List;
-         declare
-            package ML renames GPS.Editors.Mark_Lists;
-            Cursors_Sel_Marks : constant ML.List :=
-              Get_Buffer (Data, 1).Get_Multi_Cursors_Sel_Marks;
-            C : ML.Cursor := Cursors_Sel_Marks.First;
-         begin
-            for Cursor_Mark of
-              Get_Buffer (Data, 1).Get_Multi_Cursors_Marks
-            loop
-               declare
-                  L : List_Instance'Class := Data.Get_Script.New_List;
-               begin
-                  L.Set_Nth_Arg
-                    (Natural'Last,
-                     Cursor_Mark.Create_Instance (Data.Get_Script));
-                  L.Set_Nth_Arg
-                    (Natural'Last,
-                     ML.Element (C).Create_Instance (Data.Get_Script));
-                  Data.Set_Return_Value (L);
-                  ML.Next (C);
-               end;
-            end loop;
-         end;
+         Set_Return_Value_As_List (Data);
+         for Cursor_Mark of
+           Get_Buffer (Data, 1).Get_Multi_Cursors_Marks
+         loop
+            Data.Set_Return_Value
+              (Cursor_Mark.Create_Instance (Data.Get_Script));
+         end loop;
 
       elsif Command = "start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
@@ -2663,10 +2644,6 @@ package body Src_Editor_Module.Shell is
 
       Register_Command
         (Kernel, "add_multi_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel,
-         "update_multi_cursors_selections",  0, 0,
-         Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
          "remove_all_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);

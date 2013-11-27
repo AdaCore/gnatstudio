@@ -368,12 +368,6 @@ package body Src_Editor_Module.Editors is
    overriding function Get_Multi_Cursors_Marks
      (This : Src_Editor_Buffer) return Mark_Lists.List;
 
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List;
-
-   overriding procedure Update_Multi_Cursors_Selection
-     (This : Src_Editor_Buffer);
-
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
    overriding function Views
@@ -2892,29 +2886,17 @@ package body Src_Editor_Module.Editors is
       Add_Multi_Cursor (This.Contents.Buffer, Iter);
    end Add_Multi_Cursor;
 
-   ------------------------------
-   -- Remove_All_Multi_Cursors --
-   ------------------------------
-
    overriding procedure Remove_All_Multi_Cursors
      (This     : Src_Editor_Buffer) is
    begin
       Remove_All_Multi_Cursors (This.Contents.Buffer);
    end Remove_All_Multi_Cursors;
 
-   -----------------------------------
-   -- Set_Multi_Cursors_Manual_Sync --
-   -----------------------------------
-
    overriding procedure Set_Multi_Cursors_Manual_Sync
      (This : Src_Editor_Buffer) is
    begin
       Set_Multi_Cursors_Manual_Sync (This.Contents.Buffer);
    end Set_Multi_Cursors_Manual_Sync;
-
-   -----------------------------------
-   -- Set_Multi_Cursors_Manual_Sync --
-   -----------------------------------
 
    overriding procedure Set_Multi_Cursors_Manual_Sync
      (This : Src_Editor_Buffer; Mark : Editor_Mark'Class) is
@@ -2923,19 +2905,11 @@ package body Src_Editor_Module.Editors is
         (This.Contents.Buffer, This.Contents.Buffer.Get_Mark (Mark.Name));
    end Set_Multi_Cursors_Manual_Sync;
 
-   ---------------------------------
-   -- Set_Multi_Cursors_Auto_Sync --
-   ---------------------------------
-
    overriding procedure Set_Multi_Cursors_Auto_Sync
      (This : Src_Editor_Buffer) is
    begin
       Set_Multi_Cursors_Auto_Sync (This.Contents.Buffer);
    end Set_Multi_Cursors_Auto_Sync;
-
-   -----------------------------
-   -- Get_Multi_Cursors_Marks --
-   -----------------------------
 
    overriding function Get_Multi_Cursors_Marks
      (This : Src_Editor_Buffer) return Mark_Lists.List
@@ -2947,32 +2921,6 @@ package body Src_Editor_Module.Editors is
       end loop;
       return List;
    end Get_Multi_Cursors_Marks;
-
-   ---------------------------------
-   -- Get_Multi_Cursors_Sel_Marks --
-   ---------------------------------
-
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List
-   is
-      List : Mark_Lists.List;
-   begin
-      for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
-         List.Append (This.Create_Editor_Mark (Get_Sel_Mark (Cursor)));
-      end loop;
-      return List;
-   end Get_Multi_Cursors_Sel_Marks;
-
-   ------------------------------------
-   -- Update_Multi_Cursors_Selection --
-   ------------------------------------
-
-   overriding procedure Update_Multi_Cursors_Selection
-     (This : Src_Editor_Buffer)
-   is
-   begin
-      Update_MC_Selection (This.Contents.Buffer);
-   end Update_Multi_Cursors_Selection;
 
    ----------
    -- Name --

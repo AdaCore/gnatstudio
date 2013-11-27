@@ -521,57 +521,6 @@ def goto_end_of_line_ext_sel():
     _goto_end_of_line(True)
 
 
-@interactive("Editor", "Source editor", name="forward delete")
-def forward_delete():
-    delete(forward=True)
-
-@interactive("Editor", "Source editor", name="backward delete")
-def backward_delete():
-    delete(forward=False)
-
-def delete(forward=True):
-
-    offset = 1 if forward else -1
-    ed = GPS.EditorBuffer.get()
-    has_mcs = bool(ed.get_multi_cursors_marks())
-    main_cursor = ed.get_mark("insert").location()
-    sel = ed.get_mark("selection_bound").location()
-    if has_mcs:
-        ed.start_undo_group ()
-
-    def delete(s, e):
-        if s < e:
-            e = e.forward_char(-1)
-        else:
-            s = s.forward_char(-1)
-        ed.delete(s, e)
-
-    if sel == main_cursor:
-        ed.set_multi_cursors_manual_sync()
-        delete(main_cursor, main_cursor.forward_char(offset))
-
-        for (mc_mark, mc_sel_mark) in ed.get_multi_cursors_marks():
-            l = mc_mark.location()
-            ed.set_multi_cursors_manual_sync(mc_mark)
-            delete(l, l.forward_char(offset))
-
-        ed.set_multi_cursors_auto_sync()
-    else:
-        ed.set_multi_cursors_manual_sync()
-        delete(main_cursor, sel)
-
-        for (mc_mark, mc_sel_mark) in ed.get_multi_cursors_marks():
-            ed.set_multi_cursors_manual_sync(mc_mark)
-            delete(mc_mark.location(), mc_sel_mark.location())
-
-        ed.update_multi_cursors_selections()
-        ed.set_multi_cursors_auto_sync()
-
-    if has_mcs:
-        ed.finish_undo_group ()
-
-
-
 @interactive("Editor", filter_text_actions, name="goto end of line")
 def goto_end_of_line():
     _goto_end_of_line(False)
