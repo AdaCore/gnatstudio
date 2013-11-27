@@ -170,7 +170,12 @@ function buildDocumentationPage()
                   'id',
                   'L' + entity.line.toString() +
                   'C' + entity.column.toString());
-                text = document.createTextNode(entity.label);
+                text = document.createElement('a');
+                text.setAttribute(
+                  'href',
+                  '../' + entity.src +
+                  '#L' + entity.line.toString());
+                text.appendChild(document.createTextNode(entity.label));
                 header.appendChild(text);
                 pane.appendChild(header);
                 buildText(pane, entity.description);
