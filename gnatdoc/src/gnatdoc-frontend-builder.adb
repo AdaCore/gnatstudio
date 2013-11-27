@@ -1678,10 +1678,9 @@ package body GNATdoc.Frontend.Builder is
 
          procedure Decorate_Subprogram_Formals (E : Unique_Entity_Id) is
          begin
-            --  No extra action needed if we are processing the formals of the
-            --  body
+            --  No extra action needed if the formals are already present
 
-            if not Is_New (E) then
+            if not EInfo_List.Is_Empty (Get_Entities (Get_Entity (E)).all) then
                return;
             end if;
 
@@ -1762,11 +1761,37 @@ package body GNATdoc.Frontend.Builder is
                if Is_Subprogram (E)
                  and then Present (Get_LL_Alias (E))
                then
-                  Set_Alias (E,
-                    Get_Unique_Entity
-                      (Context,
-                       Get_Location (Context.Database, Get_LL_Alias (E)).File,
-                       Get_LL_Alias (E)));
+                  declare
+                     Alias : Entity_Id;
+
+                  begin
+                     --  Search for the alias in the hash table
+
+                     Alias :=
+                       Find_Unique_Entity
+                         (Get_Location (Context.Database, Get_LL_Alias (E)));
+
+                     --  If not found then force the creation of a new entity
+
+                     if No (Alias) then
+                        declare
+                           New_E : Unique_Entity_Id;
+                        begin
+                           Get_Unique_Entity
+                             (New_E,
+                              Context,
+                              Get_Location
+                                (Context.Database, Get_LL_Alias (E)).File,
+                              Get_LL_Alias (E),
+                              Forced => True);
+                           Complete_Decoration (New_E);
+
+                           Alias := Get_Entity (New_E);
+                        end;
+                     end if;
+
+                     Set_Alias (E, Alias);
+                  end;
                end if;
 
                Decorate_Subprogram_Formals (E);
