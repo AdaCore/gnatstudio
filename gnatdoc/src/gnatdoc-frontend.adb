@@ -78,13 +78,21 @@ package body GNATdoc.Frontend is
 
       package Compiler_Workaround is
 
-         procedure Register_Delayed_Remove_From_Scope
-           (Scope : Entity_Id; Entity : Entity_Id);
-         --  Register Entity to be removed from Scope
-
          procedure Delayed_Remove_From_Scope;
          --  Remove all the registered entities from their registered
          --  scope.
+
+         procedure Register_Delayed_Remove_From_Scope
+           (Scope : Entity_Id; Entity : Entity_Id);
+         --  Register Entity to be removed from Scope.
+
+         function Get_Entity
+           (Context : access constant Docgen_Context;
+            Name    : String;
+            Loc     : General_Location) return Entity_Id;
+         --  Retrieve the entity referenced at the given location. Name can be
+         --  an expanded name. This also works for operators, whether they are
+         --  quoted ("=") or not (=).
 
       private
          type Scope_Remove_Info is record
@@ -102,6 +110,47 @@ package body GNATdoc.Frontend is
 
       package body Compiler_Workaround is
 
+         ----------------
+         -- Get_Entity --
+         ----------------
+
+         function Get_Entity
+           (Context : access constant Docgen_Context;
+            Name    : String;
+            Loc     : General_Location) return Entity_Id
+         is
+            function Entity_Name (Name : String) return String;
+            --  For expanded names return the name without its prefix; for
+            --  single names return Name.
+
+            function Entity_Name (Name : String) return String is
+               J : Integer := Name'Last;
+            begin
+               while J >= Name'First and then Name (J) /= '.' loop
+                  J := J - 1;
+               end loop;
+
+               return Name (J + 1 .. Name'Last);
+            end Entity_Name;
+
+            Entity : constant General_Entity :=
+                       Xref.Get_Entity
+                         (Db   => Context.Database,
+                          Name => Entity_Name (Name),
+                          Loc  => Loc);
+
+         begin
+            if Present (Entity) then
+               return Get_Unique_Entity (Context, Loc.File, Entity);
+            else
+               return null;
+            end if;
+         end Get_Entity;
+
+         ----------------------------------------
+         -- Register_Delayed_Remove_From_Scope --
+         ----------------------------------------
+
          procedure Register_Delayed_Remove_From_Scope
            (Scope : Entity_Id; Entity : Entity_Id)
          is
@@ -109,6 +158,10 @@ package body GNATdoc.Frontend is
          begin
             Entities_Removed_From_Scope.Append (New_Entry);
          end Register_Delayed_Remove_From_Scope;
+
+         -------------------------------
+         -- Delayed_Remove_From_Scope --
+         -------------------------------
 
          procedure Delayed_Remove_From_Scope is
             Cursor : Scope_Remove_List.Cursor;
@@ -2289,38 +2342,22 @@ package body GNATdoc.Frontend is
                     General_Location'(File   => File,
                                       Line   => Current_Line,
                                       Column => Current_Column);
-                  Renamed_Entity : General_Entity;
-                  Entity         : Entity_Id;
+                  Entity         : constant Entity_Id :=
+                    Get_Entity
+                      (Context => Context,
+                       Name    => S,
+                       Loc     => Current_Loc);
                begin
-                  Renamed_Entity :=
-                    Xref.Get_Entity
-                      (Db   => Context.Database,
-                       Name => S,
-                       Loc  => Current_Loc);
-
-                  --  This case fails when the renamed entity is specified
-                  --  by means of its expanded name. Temporarily emit a
-                  --  warning until this case is supported???
-
-                  if Present (Renamed_Entity) then
-
-                     --  This attribute is not set by Xref when the renamed
-                     --  entity is located in the SAME file where the renaming
-                     --  subprogram declaration is defined. Hence we can rely
-                     --  on the hash table to locate the entity.
-
-                     Entity :=
-                       Find_Unique_Entity
-                         (Get_Location (Context.Database, Renamed_Entity));
-                     pragma Assert (Present (Entity));
-
+                  if Present (Entity) then
                      Set_Alias (E, Entity);
+
+                  --  This case should never occur!
 
                   else
                      GNAT.IO.Put_Line
                        (Utils.Image
                           (LL.Get_Location (E), With_Filename => True)
-                        & ": warning renaming not fully decorated");
+                        & ": (warning) renaming not fully decorated");
                   end if;
                end;
 
