@@ -109,6 +109,11 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Speed_Column_Policies);
    --  The list of possible behaviours for the speed column
 
+   type Line_Number_Policy is (Never, Some_Lines, All_Lines);
+   package Line_Number_Policy_Prefs is new
+     Default_Preferences.Enums.Generics (Line_Number_Policy);
+   --  The list of possible line number settings
+
    type Editor_Desktop_Policy is (Never, From_Project, Always);
    package Editor_Desktop_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Editor_Desktop_Policy);
@@ -206,7 +211,7 @@ package GPS.Kernel.Preferences is
    --  stripping blank lines at end of file
    Strip_Lines               : Strip_Trailing_Blanks_Policy_Prefs.Preference;
    Line_Terminator           : Line_Terminators_Prefs.Preference;
-   Display_Line_Numbers      : Boolean_Preference;
+   Display_Line_Numbers      : Line_Number_Policy_Prefs.Preference;
    Display_Subprogram_Names  : Boolean_Preference;
    Display_Tooltip           : Boolean_Preference;
    Highlight_Delimiters      : Boolean_Preference;

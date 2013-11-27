@@ -2375,6 +2375,9 @@ package body Src_Editor_View is
       Layout      : Pango_Layout;
       Src_Buffer  : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
+      Some_Lines  : constant Boolean :=
+                      Display_Line_Numbers.Get_Pref = Preferences.Some_Lines;
+      Num_Color   : Gdk_RGBA := View.Background_Color_Other;
 
       Prev_Side_Info_Width : constant Gint := View.Side_Info_Width;
    begin
@@ -2383,7 +2386,7 @@ package body Src_Editor_View is
       View.Side_Info_Width := Gint (Get_Total_Column_Width (Src_Buffer));
 
       --  If the size has changed, resize the window. We can return immediately
-      --  since the
+      --  since the window will be redrawn again as result of resizing.
       if View.Side_Info_Width /= Prev_Side_Info_Width then
          Size_Side_Column (View);
 
@@ -2401,12 +2404,23 @@ package body Src_Editor_View is
       --  Create the graphical elements
 
       Layout := Create_Pango_Layout (View);
-      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
+
+      if Some_Lines then
+         --  For the alternative line number format, where every fifth line
+         --  is numbered, use a smaller but slightly more constrasting type.
+         Num_Color := Shade_Or_Lighten (View.Background_Color_Other, 0.5);
+         Set_Font_Description (Layout, Small_Font.Get_Pref);
+
+      else
+         --  This is the regular line numbering, with every line numbered
+         Num_Color := Shade_Or_Lighten (View.Background_Color_Other, 0.4);
+         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
+      end if;
 
       Draw_Line_Info
         (Src_Buffer, View.Top_Line, View.Bottom_Line,
          Gtk_Text_View (View),
-         Shade_Or_Lighten (View.Background_Color_Other, 0.4),
+         Num_Color,
          Layout, Cr);
 
       Unref (Layout);

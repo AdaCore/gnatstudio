@@ -481,10 +481,10 @@ package body GPS.Kernel.Preferences is
          Default => Unchanged,
          Page    => -"Editor");
 
-      Display_Line_Numbers := Create
+      Display_Line_Numbers := Line_Number_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Display-Line_Numbers",
-         Default => True,
+         Default => Some_Lines,
          Doc     =>
            -"Whether the line numbers should be displayed in file editors",
          Label   => -"Display line numbers",

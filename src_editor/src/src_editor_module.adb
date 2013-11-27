@@ -2268,7 +2268,7 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class)
    is
       Pref_Display_Line_Numbers     : constant Boolean :=
-                                        Display_Line_Numbers.Get_Pref;
+                                        Display_Line_Numbers.Get_Pref /= Never;
       Pref_Display_Subprogram_Names : constant Boolean :=
                                         Display_Subprogram_Names.Get_Pref;
 

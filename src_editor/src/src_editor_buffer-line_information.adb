@@ -994,8 +994,10 @@ package body Src_Editor_Buffer.Line_Information is
       Y_Pix_In_Window : Gint;
       Line_Height     : Gint;
       Dummy_Gint      : Gint;
-      Dummy_Boolean   : Boolean;
+      More_Lines      : Boolean;
       Line_Info       : Line_Info_Width;
+      Some_Line_Nums  : constant Boolean :=
+                          Display_Line_Numbers.Get_Pref = Some_Lines;
 
       Line_Char_Width : constant Gint := Line_Number_Character_Width;
 
@@ -1037,7 +1039,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          Move_To (Cr,
                   Gdouble (Gint (Buffer.Line_Numbers_Width) - Width),
-                  Gdouble (Y_Pix_In_Window));
+                  Gdouble (Y_Pix_In_Window + Boolean'Pos (Some_Line_Nums)));
          Show_Layout (Cr, Layout);
       end Draw_Line_Info;
 
@@ -1106,16 +1108,20 @@ package body Src_Editor_Buffer.Line_Information is
                   + BL.all (Col).Starting_X));
             end loop;
 
-            if Line_Char_Width > 0 then
+            --  Check if line number should be shown
+
+            if Line_Char_Width > 0
+              and then (if Some_Line_Nums then Editable_Line mod 5 = 0)
+            then
                Draw_Line_Info;
             end if;
          else
             Draw_Blank_Line_Info;
          end if;
 
-         Forward_Line (Iter, Dummy_Boolean);
+         Forward_Line (Iter, More_Lines);
 
-         exit Drawing_Loop when Dummy_Boolean = False;
+         exit Drawing_Loop when not More_Lines;
 
          Current_Line := Current_Line + 1;
       end loop Drawing_Loop;
