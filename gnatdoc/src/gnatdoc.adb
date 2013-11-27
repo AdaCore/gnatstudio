@@ -766,7 +766,16 @@ package body GNATdoc is
                   For_All (Tree.All_Entities, Set_Idepth'Access);
                   For_All (Tree.All_Entities, Set_Alias'Access);
 
-                  Backend.Process_File (Tree'Access);
+                  begin
+                     Backend.Process_File (Tree'Access);
+                  exception
+                     when E : others =>
+                        Trace (Me, E);
+                        Kernel.Messages_Window.Insert
+                          (-("error: exception occurred when processing ") &
+                             Tree.File.Display_Full_Name,
+                           Mode => Info);
+                  end;
 
                   Tree_List.Next (Cursor);
                end loop;
