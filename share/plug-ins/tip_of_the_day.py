@@ -57,8 +57,8 @@ Img: tip_jump_to_first_location.png
 
 By default GPS will jump to the first location loaded in the <i>Locations</i>
 window (e.g. first build message, or first search result). If you do not
-like this behavior, you can go to Edit->Preferences, select the General
-page and then disable the <i>Jump to first location</i> preference.
+like this behavior, click the rightmost button in the local toolbar of the
+<i>Locations</i> window and uncheck the <i>Jump to first location</i> menus.
 
 Tip: Highlight all occurrences of a word
 Img: tip_all_occurrences.png
