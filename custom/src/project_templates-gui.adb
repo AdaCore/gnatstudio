@@ -29,7 +29,6 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.File_Chooser;         use Gtk.File_Chooser;
 with Gtk.File_Chooser_Button;  use Gtk.File_Chooser_Button;
-with Gtk.File_Filter;          use Gtk.File_Filter;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;
@@ -187,7 +186,6 @@ package body Project_Templates.GUI is
 
       use type Ada.Containers.Count_Type;
 
-      Filter  : Gtk_File_Filter;
       Label   : Gtk_Label;
       Box     : Gtk_Box;
 
@@ -208,10 +206,6 @@ package body Project_Templates.GUI is
 
       --  Create the chooser for the target directory
       Gtk_New (Widget.Chooser, "Select a directory", Action_Select_Folder);
-      Gtk_New (Filter);
-      Add_Mime_Type (Filter, "x-directory/normal");
-      Set_Name (Filter, "Directories only");
-      Add_Filter (+Widget.Chooser, Filter);
       Dummy := Set_Filename (+Widget.Chooser, +Get_Current_Dir.Full_Name.all);
 
       Gtk_New_Hbox (Box);
