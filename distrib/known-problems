@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MB27-018: GPS: cannot select directory when creating project from template
+  Problem:    When creating a project from a template, the dialog to choose
+              the target directory for deployment might not allow clicking
+              on directories.
+  Workaround: Use the first button in the dialog to enter the name of the
+              directory manually.
+
 - MB15-044: GPS: ispell.py plugin broken
   Problem:    The plug-in no longer works with GPS 6.0.0
   Workaround: run aspell manually on your files
