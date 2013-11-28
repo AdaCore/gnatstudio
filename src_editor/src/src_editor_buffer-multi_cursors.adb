@@ -94,8 +94,9 @@ package body Src_Editor_Buffer.Multi_Cursors is
    procedure Remove_All_Multi_Cursors (Buffer : Source_Buffer) is
    begin
       for Cursor of Buffer.Multi_Cursors_List loop
+         null;
          Buffer.Delete_Mark (Cursor.Mark);
-         Cursor.Mark.Deallocate;
+         Buffer.Delete_Mark (Cursor.Sel_Mark);
       end loop;
 
       Buffer.Has_MC_Clipboard := False;

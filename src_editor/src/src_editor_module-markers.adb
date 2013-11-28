@@ -194,7 +194,9 @@ package body Src_Editor_Module.Markers is
    is
       Iter : Gtk_Text_Iter;
    begin
-      if Marker.Mark /= null then
+      if Marker.Mark /= null
+        and then not Get_Deleted (Marker.Mark)
+      then
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
          Get_Iter_Position
            (Source_Buffer (Marker.Buffer), Iter,
