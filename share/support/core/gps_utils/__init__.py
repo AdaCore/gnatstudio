@@ -345,8 +345,11 @@ def execute_for_all_cursors(editor, mark_fn, extend_selection=False):
 
     view.goto(main_cursor_mark.location(), extend_selection)
 
-    for mc_mark in editor.get_multi_cursors_marks():
+    for (mc_mark, mc_sel_mark) in editor.get_multi_cursors_marks():
         editor.set_multi_cursors_manual_sync(mc_mark)
         mark_fn(editor, mc_mark)
+        if not extend_selection:
+            mark_fn(editor, mc_sel_mark)
 
+    editor.update_multi_cursors_selections()
     editor.set_multi_cursors_auto_sync()

@@ -32,6 +32,10 @@ xml_conf = """
 <key action="Move to next line">Down</key>
 
 <key action="Delete word forward" >primary-Delete</key>
+<key action="Delete word backward" >primary-BackSpace</key>
+
+<key action="forward delete" >Delete</key>
+<key action="backward delete" >BackSpace</key>
 
 <key action="Remove all multi cursors" >primary-Escape</key>
 

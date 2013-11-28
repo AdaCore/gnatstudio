@@ -55,6 +55,7 @@ with Language.Tree;
 with Src_Highlighting;
 with Ada.Strings.Unbounded;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
+with Gtk.Clipboard;
 
 package Src_Editor_Buffer is
 
@@ -118,6 +119,20 @@ package Src_Editor_Buffer is
    function Convert (L : Editable_Line_Type) return Natural;
    function Convert (C : Character_Offset_Type) return Natural;
    --  ??? temporary ?
+
+   overriding procedure Paste_Clipboard
+     (Buffer      : not null access Source_Buffer_Record;
+      Clipboard   : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+      Default_Editable : Boolean := True);
+
+   overriding procedure Cut_Clipboard
+     (Buffer     : not null access Source_Buffer_Record;
+      Clipboard  : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class;
+      Default_Editable : Boolean);
+
+   overriding procedure Copy_Clipboard
+     (Buffer    : not null access Source_Buffer_Record;
+      Clipboard : not null access Gtk.Clipboard.Gtk_Clipboard_Record'Class);
 
    function Expand_Tabs
      (Buffer : access Source_Buffer_Record;
@@ -1387,8 +1402,11 @@ private
 
    type Multi_Cursor is record
       Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
+      Sel_Mark                 : Gtk.Text_Mark.Gtk_Text_Mark;
       Current_Command          : Command_Access;
-      Column_Memory : Gint := 0;
+      Column_Memory            : Gint := 0;
+      Clipboard                : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String ("");
    end record;
    --  Represents the information we have to store about each multi-cursor
    --  The Mark field is the mark representing the multi cursor in the buffer
@@ -1676,6 +1694,9 @@ private
       Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
       Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The begin and end of the highlighted section
+
+      Has_MC_Clipboard                      : Boolean := False;
+      --  Has there been a cut/copy with multi cursors active ?
 
       Multi_Cursors_List                    : Multi_Cursors_Lists.List;
       --  The list of all active multi cursors

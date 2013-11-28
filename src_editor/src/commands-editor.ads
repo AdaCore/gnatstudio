@@ -22,6 +22,7 @@ with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with GNAT.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package Commands.Editor is
 
@@ -35,6 +36,23 @@ package Commands.Editor is
    function Debug_String
      (C : Base_Editor_Command_Type) return String is abstract;
    --  Print a string representation of the command. For debugging purposes.
+
+   type Loc_T is record
+      Line : Editable_Line_Type;
+      Col  : Character_Offset_Type;
+   end record;
+
+   function "<" (A, B : Loc_T) return Boolean
+   is ((A.Line <= B.Line and then A.Col < B.Col) or else A.Line < B.Line);
+   function "<=" (A, B : Loc_T) return Boolean is (A = B or else A < B);
+   function ">=" (A, B : Loc_T) return Boolean is (not (A < B));
+   function ">" (A, B : Loc_T) return Boolean is (not (A < B) and not (A = B));
+   function Min (A, B : Loc_T) return Loc_T is
+      (if A < B then A else B);
+
+   type Editor_Command_Locations is record
+      Start_Loc, End_Loc, Start_Sel_Loc, End_Sel_Loc : Loc_T;
+   end record;
 
    type Editor_Command_Type is new Base_Editor_Command_Type with private;
    type Editor_Command is access all Editor_Command_Type;
@@ -129,23 +147,22 @@ package Commands.Editor is
    --  Return the direction associated with Command
 
    procedure Create
-     (Item              : out Editor_Command;
-      Mode              : Editor_Command_Mode;
-      Buffer            : Source_Buffer;
-      User_Executed     : Boolean;
-      Line              : Editable_Line_Type;
-      Column            : Character_Offset_Type;
-      Direction         : Direction_Type := Forward;
-      Cursor_Line       : Editable_Line_Type := 0;
-      Cursor_Column     : Character_Offset_Type := 0;
-      Cursor_Name       : String := "");
+     (Item                : out Editor_Command;
+      Mode                : Editor_Command_Mode;
+      Buffer              : Source_Buffer;
+      User_Executed       : Boolean;
+      Cursor_Loc, Sel_Loc : Loc_T;
+      End_Loc             : Loc_T := (0, 0);
+      Direction           : Direction_Type := Forward;
+      Cursor_Name         : String := "");
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
-   --  Cursor_Line and Cursor_Column need to be specified only if the
-   --  Direction_Type is Extended.
    --  Cursor_Name needs to be set if the Command needs to be executed for
    --  a specific multi cursor, and not for the main cursor
+
+   overriding function Debug_String
+     (C : Editor_Command_Type) return String;
 
    procedure Add_Text
      (Item         : Editor_Command;
@@ -167,6 +184,14 @@ package Commands.Editor is
 
    overriding function Undo
      (Command : access Editor_Command_Type) return Boolean;
+
+   procedure Set_End_Location
+     (Command : access Editor_Command_Type;
+      Cursor_Loc, Sel_Loc : Loc_T);
+
+   procedure Set_End_Location
+     (Command : access Editor_Command_Type;
+      Position : Gtk_Text_Iter);
 
    overriding procedure Free (X : in out Editor_Command_Type);
    overriding procedure Free (X : in out Editor_Replace_Slice_Type);
@@ -195,12 +220,10 @@ private
       Current_Text_Size         : Natural := 0;
       Edition_Mode              : Editor_Command_Mode;
       User_Executed             : Boolean;
-      Line                      : Editable_Line_Type;
-      Column                    : Character_Offset_Type;
       Direction                 : Direction_Type;
 
-      Cursor_Line               : Editable_Line_Type;
-      Cursor_Column             : Character_Offset_Type;
+      Locs                      : Editor_Command_Locations;
+
       Alternative_Cursor_Name   : Unbounded_String;
       --  Name of the multi cursor this action is bound to, if there is one
    end record;
@@ -225,9 +248,6 @@ private
 
    overriding function Debug_String
      (C : Check_Modified_State_Type) return String;
-
-   overriding function Debug_String
-     (C : Editor_Command_Type) return String;
 
    overriding function Debug_String
      (C : Editor_Replace_Slice_Type) return String;
