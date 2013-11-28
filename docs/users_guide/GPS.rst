@@ -670,6 +670,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.unselect
 
+   .. automethod:: GPS.EditorBuffer.update_multi_cursors_selections
+
    .. automethod:: GPS.EditorBuffer.views
 
 :class:`GPS.EditorHighlighter`

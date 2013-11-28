@@ -3691,11 +3691,14 @@ class EditorBuffer(object):
 
     def get_multi_cursors_marks(self):
         """
-        Returns the list of all marks corresponding to existing multi cursors
-        in that buffer. Note that if you intend to perform actions with them
-        (in particular deletions/insertions), you should call
-        set_multi_cursors_manual_sync, with the cursor mark as argument.
-        See set_multi_cursors_* functions for more details
+        Returns a list of 2 elements tuples, the first element being the multi
+        cursor mark, and the second element being the multi cursor's selection
+        mark. Note that if you intend to perform actions with them (in
+        particular deletions/insertions), you should call
+        set_multi_cursors_manual_sync, with the cursor mark as argument.  Also,
+        if you move any selection mark, you should call
+        update_multi_cursors_selection afterwards?  See set_multi_cursors_*
+        functions for more details
 
         :return: A list of :class:`GPS.EditorMark` instances
         """
@@ -3720,6 +3723,12 @@ class EditorBuffer(object):
         cursor that is gonna be affected, or None if the action is from
         the main cursor. This info is useful to provide correct undo/redo
         actions for custom multi cursors actions.
+        """
+
+    def update_multi_cursors_selection():
+        """
+        Update the overlay used to show the multi cursor's current selection.
+        This must be called after any operation on multi cursor selection marks
         """
 
 
