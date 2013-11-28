@@ -3,7 +3,6 @@ Functionnality and actions related to multi cursors
 """
 
 
-
 import GPS
 from gps_utils import *
 from text_utils import goto_word_start, goto_word_end
@@ -46,6 +45,15 @@ xml_conf = """
 <key action="goto end of line (extend selection)" >shift-End</key>
 """
 
+mc_on_entity_color = GPS.Preference("Plugins/multi_cursors/mc_on_entity_color")
+
+mc_on_entity_color.create(
+    "Color for 'multi cursor on all references'", "color",
+    "Color for 'multi cursor on all references'"
+    " You must restart gps to take changes into account.",
+    "#3070A0"
+)
+
 
 @interactive("Editor",  name="Remove all multi cursors")
 def remove_all_multi_cursors():
@@ -86,7 +94,7 @@ def mc_all_entity_references():
     marks = []
     overlay = editor.create_overlay("entityrefs_overlay")
     overlay.set_property(
-        "background", "#37A"
+        "background", mc_on_entity_color.get()
     )
 
     def get_word_bounds(loc):
