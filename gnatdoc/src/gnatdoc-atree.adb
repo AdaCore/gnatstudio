@@ -547,8 +547,19 @@ package body GNATdoc.Atree is
    -------------------
 
    function Get_Full_Name (E : Entity_Id) return String is
+      Full_Name : Unbounded_String;
+      Scope     : Entity_Id := Get_Scope (E);
    begin
-      return Get (E.Full_Name).all;
+      Set_Unbounded_String (Full_Name, Get_Short_Name (E));
+
+      while Present (Scope)
+        and then not Is_Standard_Entity (Scope)
+      loop
+         Full_Name := Get_Short_Name (Scope) & "." & Full_Name;
+         Scope := Get_Scope (Scope);
+      end loop;
+
+      return To_String (Full_Name);
    end Get_Full_Name;
 
    -------------------
@@ -2061,6 +2072,11 @@ package body GNATdoc.Atree is
          return E.Xref.First_Private_Entity_Loc;
       end Get_First_Private_Entity_Loc;
 
+      function Get_Full_Name (E : Entity_Id) return String is
+      begin
+         return Get (E.Full_Name).all;
+      end Get_Full_Name;
+
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity is
       begin
@@ -2509,6 +2525,8 @@ package body GNATdoc.Atree is
       end;
 
       --  Synthesized attributes
+
+      Append_Line ("Full_Name: " & Get_Full_Name (E));
 
       if Present (E.Scope) then
          Append_Entity ("Scope: ", E.Scope);

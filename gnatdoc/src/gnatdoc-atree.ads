@@ -477,6 +477,8 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Entity;
       function Get_First_Private_Entity_Loc
         (E : Entity_Id) return General_Location;
+      function Get_Full_Name
+        (E : Entity_Id) return String;
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity;
       function Get_Kind
