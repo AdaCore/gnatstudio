@@ -247,6 +247,10 @@ package body GNATdoc is
       --  the C/C++ header files which are transitively referenced by all the
       --  sources of Prj_Files.
 
+      function Have_Files
+        (Prj_Files : Project_Files_List.Vector) return Boolean;
+      --  Return true if some project in Prj_Files has a file to be processed
+
       function Number_Of_Files
         (Prj_Files     : Project_Files_List.Vector;
          Include_Files : Files_List.Vector := Files_List.Empty_Vector)
@@ -471,6 +475,34 @@ package body GNATdoc is
          end;
       end Collect_C_Header_Files;
 
+      ----------------
+      -- Have_Files --
+      ----------------
+
+      function Have_Files
+        (Prj_Files : Project_Files_List.Vector) return Boolean
+      is
+         File_Index : Files_List.Cursor;
+         Prj_Index  : Project_Files_List.Cursor;
+         Prj_Srcs   : Project_Files;
+
+      begin
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            File_Index := Prj_Srcs.Src_Files.First;
+
+            if Files_List.Has_Element (File_Index) then
+               return True;
+            end if;
+
+            Project_Files_List.Next (Prj_Index);
+         end loop;
+
+         return False;
+      end Have_Files;
+
       ---------------------
       -- Number_Of_Files --
       ---------------------
@@ -480,12 +512,13 @@ package body GNATdoc is
          Include_Files : Files_List.Vector := Files_List.Empty_Vector)
          return Natural
       is
-         Count      : Natural := 0;
+         Count      : Natural;
          File_Index : Files_List.Cursor;
          Prj_Index  : Project_Files_List.Cursor;
          Prj_Srcs   : Project_Files;
 
-      --  Start of processing for Check_Files
+         All_Files  : Files_List.Vector;
+         File       : Virtual_File;
 
       begin
          Prj_Index := Prj_Files.First;
@@ -494,7 +527,12 @@ package body GNATdoc is
 
             File_Index := Prj_Srcs.Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
-               Count := Count + 1;
+               File := Files_List.Element (File_Index);
+
+               if not All_Files.Contains (File) then
+                  All_Files.Append (File);
+               end if;
+
                Files_List.Next (File_Index);
             end loop;
 
@@ -503,9 +541,17 @@ package body GNATdoc is
 
          File_Index := Include_Files.First;
          while Files_List.Has_Element (File_Index) loop
-            Count := Count + 1;
+            File := Files_List.Element (File_Index);
+
+            if not All_Files.Contains (File) then
+               All_Files.Append (File);
+            end if;
+
             Files_List.Next (File_Index);
          end loop;
+
+         Count := Natural (All_Files.Length);
+         All_Files.Clear;
 
          return Count;
       end Number_Of_Files;
@@ -545,7 +591,7 @@ package body GNATdoc is
 
       Check_Src_Files;
 
-      if Number_Of_Files (Prj_Files) = 0 then
+      if not Have_Files (Prj_Files) then
          Trace (Me, "No files to process");
          return;
       end if;
@@ -554,10 +600,6 @@ package body GNATdoc is
          Collect_C_Header_Files
            (Direct_Include_Files'Access, All_Include_Files'Access);
       end if;
-
-      Trace (Me,
-        "Number of files to process: "
-        & Number_Of_Files (Prj_Files, All_Include_Files)'Img);
 
       GNATdoc.Time.Reset;
 
@@ -615,7 +657,6 @@ package body GNATdoc is
          begin
             File_Index := Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
-               Count := Count + 1;
 
                declare
                   Current_File  : Virtual_File
@@ -623,17 +664,15 @@ package body GNATdoc is
                   Tree          : aliased Tree_Type;
 
                begin
-                  --  Progress notification: currently using GNAT.IO but this
-                  --  must be improved???
-
-                  if not Options.Quiet_Mode then
-                     GNAT.IO.Put_Line
-                       (Count'Img & "/" & To_String (Num_Files)
-                        & ": "
-                        & (+Current_File.Base_Name));
-                  end if;
-
                   if not All_Files.Contains (Current_File) then
+                     if not Options.Quiet_Mode then
+                        Count := Count + 1;
+                        GNAT.IO.Put_Line
+                          (Count'Img & "/" & To_String (Num_Files)
+                           & ": "
+                           & (+Current_File.Base_Name));
+                     end if;
+
                      Tree :=
                        Frontend.Build_Tree
                          (Context => Context,
@@ -649,6 +688,8 @@ package body GNATdoc is
          end Process_Src_Files;
 
       begin
+         Trace (Me, "Number of files to process: " & Num_Files'Img);
+
          Process_Src_Files (All_Include_Files'Access);
 
          Prj_Index := Prj_Files.First;
