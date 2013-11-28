@@ -1785,6 +1785,7 @@ package body GNATdoc.Frontend.Builder is
                               Get_LL_Alias (E),
                               Forced => True);
                            Complete_Decoration (New_E);
+                           Append_To_Map (New_E);
 
                            Alias := Get_Entity (New_E);
                         end;

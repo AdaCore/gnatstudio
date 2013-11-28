@@ -119,6 +119,13 @@ package body GNATdoc is
                then
                   Error_Msg ("missing scope decoration (decorated)");
 
+               elsif Present (Get_Alias (Entity))
+                 and then No (Get_Scope (Get_Alias (Entity)))
+                 and then All_Files.Contains
+                            (LL.Get_Location (Get_Alias (Entity)).File)
+               then
+                  Error_Msg ("missing scope decoration in alias");
+
                elsif Has_Duplicated_Entities
                        (LL.Get_Parent_Types (Entity).all)
                then
