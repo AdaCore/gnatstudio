@@ -173,6 +173,9 @@ package body Vsearch is
 
       Tab_Width      : Natural;
       --  The default tab width.
+
+      Has_Docus_On_Click : Boolean := False;
+      --  If Patern/Replace combo has focus on mouse click
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
@@ -232,11 +235,16 @@ package body Vsearch is
       Label  : String) return String;
    --  Substitute macros in the label of the search contexts.
 
-   function On_Focus_In
-     (Self : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Focus) return Boolean;
-   --  Select the full text of an entry when it gains the focus, to help users
-   --  clear the entry.
+   function On_Button_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+   --  Remember is an entry has focus at the moment of mouse click.
+
+   function On_Button_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+   --  Select the full text of an entry when it is clicked by left mouse
+   --  button and doesn't have focus, to help users clear the entry.
 
    procedure Set_Selected_Project
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -1624,22 +1632,38 @@ package body Vsearch is
       Refresh_Context_Combo (Kernel);
    end Search_Functions_Changed;
 
-   -----------------
-   -- On_Focus_In --
-   -----------------
+   -----------------------
+   -- On_Button_Release --
+   -----------------------
 
-   function On_Focus_In
-     (Self : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Focus) return Boolean
+   function On_Button_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      E : constant Gtk_Entry := Gtk_Entry (Self);
+   begin
+      if not Vsearch_Module_Id.Has_Docus_On_Click and Event.Button = 1 then
+         E.Select_Region (0, -1);
+      end if;
+
+      return False;
+   end On_Button_Release;
+
+   ---------------------
+   -- On_Button_Press --
+   ---------------------
+
+   function On_Button_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
    is
       pragma Unreferenced (Event);
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
-      --  This doesn't seem to work as expected, because when the focus is
-      --  given with a mouse, the button_release event will unset the selection
-      E.Select_Region (0, -1);
+      Vsearch_Module_Id.Has_Docus_On_Click := E.Is_Focus;
+
       return False;
-   end On_Focus_In;
+   end On_Button_Press;
 
    -------------
    -- Gtk_New --
@@ -1708,8 +1732,11 @@ package body Vsearch is
       Set_Tooltip_Text (Vsearch.Replace_Combo,
                -"The text that will replace each match");
 
-      Vsearch.Replace_Combo.Get_Child.On_Focus_In_Event
-        (On_Focus_In'Access, After => True);
+      Vsearch.Replace_Combo.Get_Child.On_Button_Press_Event
+        (On_Button_Press'Access, After => False);
+
+      Vsearch.Replace_Combo.Get_Child.On_Button_Release_Event
+        (On_Button_Release'Access, After => False);
 
       Gtk.List_Store.Gtk_New
         (Model,
@@ -1726,8 +1753,11 @@ package body Vsearch is
          Ypadding => 2);
       Layout := +Vsearch.Pattern_Combo;
 
-      Vsearch.Pattern_Combo.Get_Child.On_Focus_In_Event
-        (On_Focus_In'Access, After => True);
+      Vsearch.Pattern_Combo.Get_Child.On_Button_Press_Event
+        (On_Button_Press'Access, After => False);
+
+      Vsearch.Pattern_Combo.Get_Child.On_Button_Release_Event
+        (On_Button_Release'Access, After => False);
 
       Gtk_New (Renderer);
       Gtk.Cell_Layout.Clear (Layout);
