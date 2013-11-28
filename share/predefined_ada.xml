@@ -9495,6 +9495,13 @@ body, or one of its subunits).
 This is particularly useful for clearly signaling that a particular
 parameter is not modified, even though the spec suggests that it might
 be.
+
+For the variable case, warnings are never given for unreferenced
+variables whose name contains one of the substrings `DISCARD, DUMMY,
+IGNORE, JUNK, UNUSED' in any casing. Such names are typically to be
+used in cases where such warnings are expected.  Thus it is never
+necessary to use `pragma Unmodified' for such variables, though it is
+harmless to do so.
       </DOC>
    </PRAGMA>
 
@@ -9540,6 +9547,13 @@ clause. In this case the arguments must be unit names of units
 previously mentioned in `with' clauses (similar to the usage of pragma
 `Elaborate_All'. The effect is to suppress warnings about unreferenced
 units and unreferenced entities within these units.
+
+For the variable case, warnings are never given for unreferenced
+variables whose name contains one of the substrings `DISCARD, DUMMY,
+IGNORE, JUNK, UNUSED' in any casing. Such names are typically to be
+used in cases where such warnings are expected.  Thus it is never
+necessary to use `pragma Unreferenced' for such variables, though it is
+harmless to do so.
       </DOC>
    </PRAGMA>
 
@@ -9712,7 +9726,7 @@ pragma Warnings (On | Off, LOCAL_NAME [,REASON]);
 pragma Warnings (static_string_EXPRESSION [,REASON]);
 pragma Warnings (On | Off, static_string_EXPRESSION [,REASON]);
 
-REASON ::= Reason =&gt; static_string_EXPRESSION
+REASON ::= Reason =&gt; STRING_LITERAL {&amp; STRING_LITERAL}
 
 Normally warnings are enabled, with the output being controlled by the
 command line switch.  Warnings (`Off') turns off generation of warnings
