@@ -2318,6 +2318,8 @@ package body Src_Editor_Buffer is
       Editable_Line_End   : Editable_Line_Type;
       Delete_Offset       : Gint := 0;
       Sel_Mark            : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
+      Sel_Pos_Iter        : Gtk_Text_Iter;
+      Sel_Pos             : Loc_T;
 
       First_Buffer_Line_To_Remove : Buffer_Line_Type;
       Last_Buffer_Line_To_Remove  : Buffer_Line_Type;
@@ -2405,6 +2407,10 @@ package body Src_Editor_Buffer is
 
       Editable_Line_End :=
         Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
+
+      Buffer.Get_Iter_At_Mark (Sel_Pos_Iter, Sel_Mark);
+      Get_Iter_Position
+        (Source_Buffer (Buffer), Sel_Pos_Iter, Sel_Pos.Line, Sel_Pos.Col);
 
       --  If there are non-editable lines in the range, intercept the deletion
 
@@ -2559,12 +2565,7 @@ package body Src_Editor_Buffer is
          Slice        : constant Basic_Types.UTF8_String :=
            Get_Slice (Buffer, Start_Iter, End_Iter);
          User_Action  : Action_Type;
-         Sel_Pos_Iter : Gtk_Text_Iter;
-         Sel_Pos      : Loc_T;
       begin
-         Buffer.Get_Iter_At_Mark (Sel_Pos_Iter, Sel_Mark);
-         Get_Iter_Position
-           (Source_Buffer (Buffer), Sel_Pos_Iter, Sel_Pos.Line, Sel_Pos.Col);
 
          if Slice = "" & ASCII.LF then
             User_Action := Delete_Line;
