@@ -130,7 +130,16 @@ package body GNATdoc.Frontend is
                   J := J - 1;
                end loop;
 
-               return Name (J + 1 .. Name'Last);
+               --  Handle operators
+
+               if Name (J + 1) = '"' then
+                  return Name (J + 2 .. Name'Last - 1);
+
+               --  Common case
+
+               else
+                  return Name (J + 1 .. Name'Last);
+               end if;
             end Entity_Name;
 
             Entity : constant General_Entity :=
