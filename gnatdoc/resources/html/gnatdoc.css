@@ -238,3 +238,7 @@ h2 {
 #body p {
     color: #4d4d4d;
 }
+
+#body sup.srcHref {
+    font-size: 8px;
+}

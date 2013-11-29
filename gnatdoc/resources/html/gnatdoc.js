@@ -71,6 +71,7 @@ function buildDocumentationPage()
     var header;
     var text;
     var href;
+    var sup;
 
     pane = document.getElementById('body');
 
@@ -171,13 +172,17 @@ function buildDocumentationPage()
                   'id',
                   'L' + entity.line.toString() +
                   'C' + entity.column.toString());
-                text = document.createElement('a');
-                text.setAttribute(
+                header.appendChild(document.createTextNode(entity.label));
+                sup = document.createElement('sup');
+                sup.setAttribute('class', 'srcHref');
+                href = document.createElement('a');
+                href.setAttribute(
                   'href',
                   '../' + entity.src +
                   '#L' + entity.line.toString());
-                text.appendChild(document.createTextNode(entity.label));
-                header.appendChild(text);
+                href.appendChild(document.createTextNode(' [source]'));
+                sup.appendChild(href);
+                header.appendChild(sup);
                 pane.appendChild(header);
                 buildText(pane, entity.description);
 
