@@ -547,16 +547,25 @@ package body GNATdoc.Atree is
    -------------------
 
    function Get_Full_Name (E : Entity_Id) return String is
-      Full_Name : Unbounded_String;
-      Scope     : Entity_Id := Get_Scope (E);
+      Full_Name  : Unbounded_String;
+      Scope      : Entity_Id := Get_Scope (E);
+      Prev_Scope : Entity_Id;
    begin
       Set_Unbounded_String (Full_Name, Get_Short_Name (E));
 
+      Prev_Scope := E;
       while Present (Scope)
         and then not Is_Standard_Entity (Scope)
       loop
+         Full_Name  := Get_Short_Name (Scope) & "." & Full_Name;
+         Prev_Scope := Scope;
+         Scope      := Get_Scope (Scope);
+      end loop;
+
+      Scope := Prev_Scope;
+      while Present (Get_Parent_Package (Scope)) loop
+         Scope     := Get_Parent_Package (Scope);
          Full_Name := Get_Short_Name (Scope) & "." & Full_Name;
-         Scope := Get_Scope (Scope);
       end loop;
 
       return To_String (Full_Name);
@@ -653,6 +662,16 @@ package body GNATdoc.Atree is
    begin
       return E.Parent;
    end Get_Parent;
+
+   ------------------------
+   -- Get_Parent_Package --
+   ------------------------
+
+   function Get_Parent_Package
+     (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Parent_Package;
+   end Get_Parent_Package;
 
    ----------------------
    -- Get_Partial_View --
@@ -1177,6 +1196,25 @@ package body GNATdoc.Atree is
             end;
          end if;
 
+         if Is_Package (New_E) then
+            declare
+               Parent_Pkg : constant General_Entity :=
+                              Xref.Parent_Package (Db, E);
+            begin
+               if Present (Parent_Pkg) then
+                  New_E.Xref.Parent_Package := Parent_Pkg;
+
+                  --  Temporarily build here the entity of the parent
+                  --  package. Must be improved???
+
+                  Set_Parent_Package (New_E,
+                    Internal_New_Entity
+                      (Context, Lang, Parent_Pkg,
+                       Loc => Get_Location (Db, Parent_Pkg)));
+               end if;
+            end;
+         end if;
+
       exception
          when E : others =>
             Trace (Me, E);
@@ -1229,8 +1267,10 @@ package body GNATdoc.Atree is
              Instance_Of      => No_General_Entity,
              Loc              => Loc,
              Pointed_Type     => No_General_Entity,
+
              Scope_E          => No_General_Entity,
              Scope_Loc        => No_Location,
+             Parent_Package   => No_General_Entity,
 
              Has_Methods   => False,
 
@@ -1251,8 +1291,10 @@ package body GNATdoc.Atree is
            Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
            Alias           => No_Entity,
-           Scope           => No_Entity,
            Kind            => Kind,
+
+           Scope           => No_Entity,
+           Parent_Package  => No_Entity,
 
            End_Of_Syntax_Scope_Loc => No_Location,
            End_Of_Profile_Location => No_Location,
@@ -1881,6 +1923,18 @@ package body GNATdoc.Atree is
       Append_Direct_Derivation (E.Parent, E);
    end Set_Parent;
 
+   ------------------------
+   -- Set_Parent_Package --
+   ------------------------
+
+   procedure Set_Parent_Package
+     (E : Entity_Id; Value : Entity_Id)
+   is
+   begin
+      pragma Assert (Is_Package (E));
+      E.Parent_Package := Value;
+   end Set_Parent_Package;
+
    ------------------
    -- Set_Ref_File --
    ------------------
@@ -2092,6 +2146,11 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Loc;
       end Get_Location;
+
+      function Get_Parent_Package (E : Entity_Id) return General_Entity is
+      begin
+         return E.Xref.Parent_Package;
+      end Get_Parent_Package;
 
       function Get_Parent_Types
         (E : Entity_Id) return access EInfo_List.Vector is

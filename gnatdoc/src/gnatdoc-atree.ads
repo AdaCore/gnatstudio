@@ -278,6 +278,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Parent
      (E : Entity_Id) return Entity_Id;
+   function Get_Parent_Package
+     (E : Entity_Id) return Entity_Id;
    function Get_Partial_View
      (E : Entity_Id) return Entity_Id;
    function Get_Progenitors
@@ -419,6 +421,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Entity_Kind);
    procedure Set_Parent
      (E : Entity_Id; Value : Entity_Id);
+   procedure Set_Parent_Package
+     (E : Entity_Id; Value : Entity_Id);
    procedure Set_Ref_File
      (E : Entity_Id; Value : Virtual_File);
    procedure Set_Scope
@@ -485,6 +489,8 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return Entity_Kind;
       function Get_Location
         (E : Entity_Id) return General_Location;
+      function Get_Parent_Package
+        (E : Entity_Id) return General_Entity;
       function Get_Parent_Types
         (E : Entity_Id) return access EInfo_List.Vector;
       function Get_Pointed_Type
@@ -535,6 +541,7 @@ private package GNATdoc.Atree is
       pragma Inline (Get_First_Private_Entity_Loc);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
+      pragma Inline (Get_Parent_Package);
       pragma Inline (Get_Parent_Types);
       pragma Inline (Get_Pointed_Type);
       pragma Inline (Get_Scope);
@@ -615,8 +622,11 @@ private
          Instance_Of      : General_Entity;
          Loc              : General_Location;
          Pointed_Type     : General_Entity;
+
          Scope_E          : General_Entity;
          Scope_Loc        : General_Location;
+         Parent_Package   : General_Entity;
+         --  Present in packages
 
          First_Private_Entity_Loc : General_Location;
 
@@ -681,6 +691,8 @@ private
 
          Alias           : Entity_Id;
          Scope           : Entity_Id;
+         Parent_Package  : Entity_Id;
+         --  Present in packages
 
          End_Of_Syntax_Scope_Loc         : General_Location;
          End_Of_Profile_Location         : General_Location;
@@ -773,6 +785,7 @@ private
    pragma Inline (Get_Language);
    pragma Inline (Get_Methods);
    pragma Inline (Get_Parent);
+   pragma Inline (Get_Parent_Package);
    pragma Inline (Get_Partial_View);
    pragma Inline (Get_Progenitors);
    pragma Inline (Get_Ref_File);
@@ -824,6 +837,7 @@ private
    pragma Inline (Set_Is_Tagged);
    pragma Inline (Set_Kind);
    pragma Inline (Set_Parent);
+   pragma Inline (Set_Parent_Package);
    pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Src);
