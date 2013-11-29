@@ -9,30 +9,30 @@ Compilation/Build
 This chapter describes how to compile files, build executables and run them.
 Most capabilities can be accessed through the :menuselection:`Build` menu item,
 or through the :menuselection:`Build` and :menuselection:`Run` contextual menu
-items, as described in the following section.
+items, as described below.
 
-When compiler messages are detected by GPS, an entry is added in the *Locations
+When GPS detects compiler messages, it adds entries to the *Locations
 View*, allowing you to easily navigate through the compiler messages (see
-:ref:`The_Locations_View`), or even to automatically correct some errors or
+:ref:`The_Locations_View`) and even to automatically correct some errors or
 warnings (see :ref:`Code_Fixing`).
 
-Compiler messages also appear as icons on the side of lines in the source
-editors. When the mouse pointer is left on these icons, a tooltip appears,
-listing the error messages found on this line. When GPS is capable of
-automatically correcting the errors, clicking on the icon will apply the fix to
-the source code. The icons on the side of editors are removed when the
-corresponding entries are removed from :ref:`The_Locations_View`.
+In the source editors, compiler messages also appear as icons on the side
+of each line with a message. When the mouse pointer is placed on these
+icons, a tooltip appears, listing the error messages posted on the
+corresponding line. When GPS can automatical correct the errors, clicking
+the icon applies the fix. These icons are removed when the corresponding
+entries are removed from :ref:`The_Locations_View`.
 
 .. _The_Build_Menu:
 
 The Build Menu
 ==============
 
-The build menu gives access to capabilities related to checking, parsing and
-compiling files, as well as creating and running executables.  note that this
-menu is fully configurable via the `Targets` dialog, so what is documented in
-this manual are the default menus (see :menuselection:`Build --> Settings -->
-Targets` below).
+The build menu gives access to capabilities related to checking, parsing
+and compiling files as well as creating and running executables.  Note that
+this menu is fully configurable via the `Targets` dialog, so what's
+documented here are the default menus (see :menuselection:`Build -->
+Settings --> Targets` below).
 
 .. index:: menu; build --> check syntax
 
@@ -44,7 +44,7 @@ Targets` below).
 .. index:: menu; build --> check semantic
 
 :menuselection:`Build --> Check semantic`
-  Check the semantic of the current source file. Display an error message in
+  Check the semantics of the current source file. Display an error message in
   the *Messages* window if no file is currently selected.
 
 
@@ -53,10 +53,10 @@ Targets` below).
 :menuselection:`Build --> Compile file`
   Compile the current file.
 
-  By default, will display an intermediate dialog where you can add extra
-  switches, or simply press :kbd:`Enter` to get the standard (or previous)
-  switches.  Display an error message in the *Messages* window if no file is
-  selected.
+  By default, displays an intermediate dialog where you can add extra
+  switches or simply press :kbd:`Enter` to get the standard (or previous)
+  switches.  Display an error message in the *Messages* window if no file
+  is selected.
 
   If errors or warnings occur during the compilation, the corresponding
   locations will appear in the Locations View. If the corresponding Preference
@@ -69,7 +69,7 @@ Targets` below).
 .. index:: menu; build --> project --> <main>
 
 :menuselection:`Build --> Project --> <main>`
-  The menu will list of all mains defined in your project hierarchy.
+  List all main units defined in your project hierarchy, if any.
   Each menu item will build the selected main.
 
 
@@ -97,19 +97,19 @@ Targets` below).
 .. index:: menu; build --> project --> custom build
 
 :menuselection:`Build --> Project --> Custom build`
-   Display a text entry where you can enter any external command. This menu is
-   very useful when you already have existing build scripts, make files, ...
-   and want to invoke them from GPS. If the `SHELL` environment variable is
-   defined (to e.g. `/bin/sh`), then the syntax used to execute the command is
-   the one for this shell. Otherwise, the command will be spawned directly by
-   GPS without any shell interpretation.
+   Display a text entry where you can enter any external command. This menu
+   is very useful when you already have existing build scripts, make files,
+   or similar and want to invoke them from GPS. If the `SHELL` environment
+   variable is defined (to, e.g. `/bin/sh`), then the syntax used to execute
+   the command is the one for that shell. Otherwise, GPS will spawn the command
+   directly without any shell interpretation.
 
 
 .. index:: menu; build --> clean --> clean all
 
 :menuselection:`Build --> Clean --> Clean all`
-   Remove all object files and other compilation artifacts associated to all
-   projects related to the current one. It allows to restart a complete build
+   Remove all object files and other compilation artifacts associated with all
+   projects related to the current one. This allows restarting a complete build
    from scratch.
 
 
@@ -124,8 +124,8 @@ Targets` below).
 .. index:: makefile
 
 :menuselection:`Build --> Makefile`
-  If you have the *make* utility in your PATH, and have a file called
-  :file:`Makefile` in the same directory as your project file is, or if you've
+  If you have the *make* utility in your PATH and have a file called
+  :file:`Makefile` in the same directory as your project file or if you've
   set the `makefile` property in the `Make` section of the project properties
   (see :ref:`The_Project_Properties_Editor`), this menu will be displayed,
   giving access to all the targets defined in your makefile.
@@ -135,8 +135,8 @@ Targets` below).
 .. index:: ant
 
 :menuselection:`Build --> Ant`
-  If you have the *ant* utility in your PATH, and have a file called
-  :file:`build.xml` in the same directory as your project file is, or if you've
+  If you have the *ant* utility in your PATH and have a file called
+  :file:`build.xml` in the same directory as your project file or if you've
   set the `antfile` property in the `Ant` section of the project properties
   (see :ref:`The_Project_Properties_Editor`), this menu will be displayed,
   giving access to all the targets defined in your ant file.
@@ -145,23 +145,23 @@ Targets` below).
 .. index:: menu; build --> run --> <main>
 
 :menuselection:`Build --> Run --> <main>`
-   For each main source file defined in your top level project, an entry is
-   listed to run the executable associated with this main file.  Running an
-   application will first open a dialog where you can specify command line
+   For each main source file defined in your top level project, displays an
+   entry to run the executable associated with that main file.  Running an
+   application first opens a dialog where you can specify command line
    arguments to your application, if needed. You can also specify whether the
-   application should be run within GPS (the default), or using an external
+   application should be run within GPS (the default) or using an external
    terminal.
 
-   When running an application from GPS, a new execution window is added in
-   the bottom area where input and output of the application is handled. This
-   window is never closed automatically, even when the application terminates,
-   so that you can still have access to the application's output. If you
+   When running an application within GPS, a new execution window is added in
+   to bottom area, where input and output of the application is handled. This
+   window is not closed automatically, even when the application terminates,
+   so you can still have access to the application's output. If you
    explicitly close an execution window while an application is still running,
-   a dialog window will be displayed to confirm whether the application should
+   GPS will display a dialog window to confirm whether the application should
    be terminated.
 
    When using an external terminal, GPS launches an external terminal utility
-   that will take care of the execution and input/output of your application.
+   to perform the execution and input/output of your application.
    This external utility can be configured in the preferences dialog
    (:menuselection:`External Commands --> Execute command`).
 
@@ -177,26 +177,26 @@ Targets` below).
 .. index:: menu; build --> run --> custom
 
 :menuselection:`Build --> Run --> Custom...`
-   Similar to the entry above, except that you can run any arbitrary
+   Similar to the option above, except you can run any arbitrary
    executable.  If the `SHELL` environment variable is defined (to e.g.
-   `/bin/sh`), then the syntax used to execute the command is the one for this
-   shell. Otherwise, the command will be spawned directly by GPS without any
+   `/bin/sh`), then the syntax used to execute the command is the one for that
+   shell. Otherwise, the GPS will spawn the command directly without any
    shell interpretation.
 
 
 .. index:: menu; build --> settings --> targets
 
 :menuselection:`Build --> Settings --> Targets`
-    This opens the Target Configuration Dialog.
+    Opens the Target Configuration Dialog.
     :ref:`The_Target_Configuration_Dialog`.
 
 
 .. index:: menu; build --> settings --> toolchains
 
 :menuselection:`Build --> Settings --> Toolchains`
-    Open a dialog allowing the configuration of GPS for working with two
+    Opens a dialog allowing configurating GPS to work with two
     compilation toolchains. This is particulary useful when compiling a project
-    with an old compiler, while wanting up-to-date functionalities from the
+    with an old compiler, but wanting up-to-date functionality from the
     associated tools (gnatmetric, gnatcheck and so on).
     :ref:`Working_with_two_compilers`.
 
@@ -204,19 +204,19 @@ Targets` below).
 .. index:: menu; tools --> interrupt
 
 :menuselection:`Tools --> Interrupt`
-    This menu can be used to interrupt the last compilation or run
-    command. Once you have interrupted that last operation, you can interrupt
-    the previous one by selecting the same menu again.
+    Interrupts the last compilation or run command. Once you have interrupted
+    the last operation, you can interrupt the previous one by selecting the
+    same menu again.
 
 
 .. index:: menu; tools --> views --> tasks
 
 :menuselection:`Tools --> Views --> Tasks`
-    However, the easiest way to interrupt a specific operation, no matter if it
-    was started last or not, is to use the `Task Manager`, through the
-    :menuselection:`Tools --> Views --> Tasks` menu. It will show one line per
-    running process, and right-clicking on any of these lines gives the
-    possibility to interrupt that process.
+    The easiest way to interrupt a specific operation, whether it was the
+    last one started or not, is to use the `Task Manager`, through the
+    :menuselection:`Tools --> Views --> Tasks` menu, which shows one line for
+    each running process.  Right-clicking on any of these lines allows
+    interrupting that process.
 
 .. index:: plug-ins; makefile.py
 
