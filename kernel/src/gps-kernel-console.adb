@@ -428,6 +428,8 @@ package body GPS.Kernel.Console is
       if Console /= null then
          Set_Font_And_Colors
            (Get_View (Console), Fixed_Font => True, Pref => Get_Pref (Data));
+
+         Console.Set_Highlight_Color (Message_Highlight.Get_Pref);
       end if;
    end On_Preferences_Changed;
 
@@ -479,7 +481,7 @@ package body GPS.Kernel.Console is
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
 
-      Register_Contextual_Menu
+      Register_Context_Factory
         (Kernel          => Console.Kernel,
          Event_On_Widget => Get_View (Console),
          Object          => Console,

@@ -1676,6 +1676,7 @@ package body Interactive_Consoles is
      (Console : access Interactive_Console_Record'Class;
       Color   : Gdk_RGBA) is
    begin
+      Console.Highlight := Color;
       Set_Property (Console.Highlight_Tag, Foreground_Rgba_Property, Color);
    end Set_Highlight_Color;
 
