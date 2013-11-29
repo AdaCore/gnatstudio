@@ -65,6 +65,22 @@ NF-61-MA18-018 GPS: New plug-in vim.py (2013-10-18)
   vim text editor in GPS editor buffers. It will be enabled by default in all
   buffers if you activate it via the plug-ins dialog.
 
+NF-61-MA07-059 GPS: Copy/Paste operations using multi-cursors (2013-11-29)
+
+  When multiple selections are active, it is possible to cut, copy, and paste
+  with multiple cursors. If the copy buffer has been filled with the same
+  cursors, then the content of each individual cursor will be pasted. If the
+  buffer was filled with only the main cursor, or with other cursors in a
+  precedent operation, the content of the main buffer will be replicated on
+  every cursor's location. Cut and copy works as you would expect.
+  Multi-cursors buffers are ignored in the context of other applications, or
+  when there are no multi cursors active.
+
+NF-61-MA07-049 GPS: Multi selection using multi-cursors (2013-11-29)
+
+  When multiple cursors are active, it is now possible to select simultaneously
+  with all cursors as you would with one.
+
 NF-61-MA04-035 GPS: remove busy cursor (2013-11-22)
 
   GPS no longer uses a "busy" cursor when it is doing long operations,
