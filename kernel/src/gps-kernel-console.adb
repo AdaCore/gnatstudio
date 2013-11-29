@@ -466,7 +466,7 @@ package body GPS.Kernel.Console is
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
 
-      Register_Context_Factory
+      Register_Contextual_Menu
         (Kernel          => Console.Kernel,
          Event_On_Widget => Get_View (Console),
          Object          => Console,
