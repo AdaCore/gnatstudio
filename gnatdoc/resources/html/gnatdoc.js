@@ -416,6 +416,11 @@ function buildEntitiesCategoryPage()
         href.setAttribute('href', '../' + entity.href);
         href.appendChild(document.createTextNode(entity.label));
         item.appendChild(href);
+        item.appendChild(document.createTextNode(' from '));
+        href = document.createElement('a');
+        href.setAttribute('href', '../' + entity.srcHref);
+        href.appendChild(document.createTextNode(entity.declared));
+        item.appendChild(href);
         list.appendChild(item);
     }
 

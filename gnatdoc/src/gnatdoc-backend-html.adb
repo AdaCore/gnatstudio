@@ -77,8 +77,12 @@ package body GNATdoc.Backend.HTML is
      new Ada.Containers.Ordered_Sets (Entity_Id);
 
    function Get_Srcs_Base_Href (Entity : Entity_Id) return String;
-   --  Returns href to source file where this entity is declared. Returnes URI
+   --  Returns href to source file where this entity is declared. Returned URI
    --  doesn't have fragment identifier.
+
+   function Get_Srcs_Href (Entity : Entity_Id) return String;
+   --  Returns href to source file where this entity is declared. Returned URI
+   --  includes fragment identifier to navigate to source code line.
 
    ---------
    -- "<" --
@@ -700,6 +704,7 @@ package body GNATdoc.Backend.HTML is
       Entries : JSON_Array;
       Object  : JSON_Value;
       Set     : Entity_Id_Ordered_Sets.Set;
+      Scope   : Entity_Id;
 
    begin
       if not Entities.Is_Empty then
@@ -710,6 +715,13 @@ package body GNATdoc.Backend.HTML is
          for Entity of Set loop
             Object := Create_Object;
             Set_Label_And_Href (Object, Entity);
+
+            if Is_Decorated (Entity) then
+               Scope := Get_Scope (Entity);
+               Object.Set_Field ("declared", Get_Full_Name (Scope));
+               Object.Set_Field ("srcHref", Get_Srcs_Href (Entity));
+            end if;
+
             Append (Entries, Object);
          end loop;
 
@@ -1144,6 +1156,18 @@ package body GNATdoc.Backend.HTML is
         & String (LL.Get_Location (Entity).File.Base_Name)
         & ".html";
    end Get_Srcs_Base_Href;
+
+   -------------------
+   -- Get_Scrs_Href --
+   -------------------
+
+   function Get_Srcs_Href (Entity : Entity_Id) return String is
+   begin
+      return
+        Get_Srcs_Base_Href (Entity)
+        & "#L"
+        & Trim (Natural'Image (LL.Get_Location (Entity).Line), Both);
+   end Get_Srcs_Href;
 
    ------------------
    -- Get_Template --
