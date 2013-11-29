@@ -90,13 +90,6 @@ id_pattern = re.compile(r"[\w0-9_]")
 @interactive("Editor", name="Add multi cursor to all references of entity")
 def mc_all_entity_references():
 
-    editor = GPS.EditorBuffer.get()
-    marks = []
-    overlay = editor.create_overlay("entityrefs_overlay")
-    overlay.set_property(
-        "background", mc_on_entity_color.get()
-    )
-
     def get_word_bounds(loc):
         loc_id_start = goto_word_start(loc)
         loc_id_end = goto_word_end(loc)
@@ -111,11 +104,28 @@ def mc_all_entity_references():
 
         return loc_id_start, loc_id_end
 
+
+    editor = GPS.EditorBuffer.get()
+    marks = []
+    loc = editor.current_view().cursor()
+    loc_id_start, loc_id_end = get_word_bounds(loc)
+    identifier = editor.get_chars(loc_id_start, loc_id_end)
+
+    try:
+        entity = Entity(
+            identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
+        )
+    except GPS.Exception, e:
+        return
+
+    overlay = editor.create_overlay("entityrefs_overlay")
+    overlay.set_property(
+        "background", mc_on_entity_color.get()
+    )
+
     def loc_tuple(loc):
         return (loc.line(), loc.column())
 
-    loc = editor.current_view().cursor()
-    loc_id_start, loc_id_end = get_word_bounds(loc)
     mark_start = loc_id_start.create_mark()
     mark_end = loc_id_end.forward_char().create_mark(left_gravity=False)
 
@@ -168,11 +178,6 @@ def mc_all_entity_references():
     apply_overlay(editor, mark_start, mark_end, overlay)
     cursor_loc_t = loc_tuple(loc)
     word_offset = loc.column() - loc_id_start.column()
-    identifier = editor.get_chars(loc_id_start, loc_id_end)
-
-    entity = Entity(
-        identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
-    )
 
     locs = [EditorLocation(editor, floc.line(), floc.column())
             for floc in entity.references()
