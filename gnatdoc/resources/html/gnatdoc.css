@@ -1,4 +1,4 @@
-@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300);
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300|Inconsolata:400,700);
 
 html, body {
     height: 100%;
@@ -41,10 +41,22 @@ td {
     font-weight: bold;
 }
 
-#tocView {
+#toc {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 30%;
+
+    overflow: auto;
     background-color: #222;
+}
+
+#tocView {
     color: #bbb;
     font-weight: 300;
+    display: inline-block;
 }
 
 #tocView ul {
@@ -120,7 +132,7 @@ table.code {
 }
 
 table.code tbody th {
-    font-size: 11px;
+    font-size: 12px;
     text-align: right;
     font-weight: normal;
 }
@@ -140,7 +152,7 @@ table.code th {
 }
 
 table.code td {
-    font-size: 11px;
+    font-size: 12px;
     font-family: Inconsolata, monospace;
     white-space: pre;
 }
@@ -154,20 +166,6 @@ table#frameSet {
     height: 100%;
 
     position: relative;
-}
-
-table#frameSet td#toc {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-
-    width: 30%;
-
-    overflow: auto;
-}
-table#frameSet td {
-    width: 70%;
 }
 
 h1, h2, h3 {
