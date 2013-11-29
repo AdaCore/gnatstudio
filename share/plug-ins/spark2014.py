@@ -228,15 +228,15 @@ xml_gnatprove = """<?xml version="1.0"?>
           <combo-entry label="statistics" value="statistics"
                        tip="Detailed proof attempts"/>
         </combo>
-         <combo label="One proof by" switch="--proof" noswitch="no_split"
-               separator="=" column="1"
+         <combo label="Proof strategy" switch="--proof" noswitch="per_check"
+               separator="=" column="2"
                tip="Formulas generated for each check (faster) or each path (more precise)" >
-            <combo-entry label="check" value="no_split"
+            <combo-entry label="One proof per check" value="per_check"
                          tip="Generate one formula per check"/>
-            <combo-entry label="check first, then path" value="then_split"
-                         tip="Start with one formula per check, then split into paths when needed"/>
-            <combo-entry label="path" value="path_wp"
+            <combo-entry label="One proof per path" value="per_path"
                          tip="Generate one formula per path for each check"/>
+            <combo-entry label="Progressively split" value="progressive"
+                         tip="Start with one formula per check, then split into paths when needed"/>
          </combo>
         <spin label="Prover timeout" switch="--timeout="
               default="1" min="1" max="3600"
@@ -275,15 +275,15 @@ xml_gnatprove = """<?xml version="1.0"?>
          <check label="Report checks proved" switch="--report=all" column="1"
                 tip="Report the status of all checks, including those proved" />
          <title column="2" line="1" >Prover</title>
-         <combo label="One proof by" switch="--proof" noswitch="no_split"
+         <combo label="Proof strategy" switch="--proof" noswitch="per_check"
                separator="=" column="2"
                tip="Formulas generated for each check (faster) or each path (more precise)" >
-            <combo-entry label="check" value="no_split"
+            <combo-entry label="One proof per check" value="per_check"
                          tip="Generate one formula per check"/>
-            <combo-entry label="check first, then path" value="then_split"
-                         tip="Start with one formula per check, then split into paths when needed"/>
-            <combo-entry label="path" value="path_wp"
+            <combo-entry label="One proof per path" value="per_path"
                          tip="Generate one formula per path for each check"/>
+            <combo-entry label="Progressively split" value="progressive"
+                         tip="Start with one formula per check, then split into paths when needed"/>
          </combo>
          <spin label="Prover timeout" switch="--timeout=" column="2"
                 default="1" min="1" max="3600"
