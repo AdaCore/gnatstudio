@@ -1119,7 +1119,7 @@ package body GNATdoc.Backend.HTML is
       Object.Set_Field ("label", Get_Short_Name (Entity));
 
       if Is_Decorated (Entity) then
-         Object.Set_Field ("href", Get_Docs_Href (Entity));
+         Object.Set_Field ("docHref", Get_Docs_Href (Entity));
       end if;
    end Set_Label_And_Href;
 

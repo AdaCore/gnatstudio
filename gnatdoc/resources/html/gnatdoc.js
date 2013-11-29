@@ -198,7 +198,8 @@ function buildDocumentationPage()
                         if (iindex != 0)
                           paragraph.appendChild(document.createTextNode(', '));
 
-                        if (typeof entity.inherits[iindex].href == 'undefined')
+                        if (typeof entity.inherits[iindex].docHref ==
+                              'undefined')
                         {
                           paragraph.appendChild(
                             document.createTextNode(
@@ -208,7 +209,7 @@ function buildDocumentationPage()
                         {
                            href = document.createElement('a');
                            href.setAttribute(
-                             'href', '../' + entity.inherits[iindex].href);
+                             'href', '../' + entity.inherits[iindex].docHref);
                            href.setAttribute('target', 'contentView');
                            href.appendChild(
                              document.createTextNode(
@@ -235,7 +236,7 @@ function buildDocumentationPage()
 
                         href = document.createElement('a');
                         href.setAttribute(
-                          'href', '../' + entity.inherited[iindex].href);
+                          'href', '../' + entity.inherited[iindex].docHref);
                         href.setAttribute('target', 'contentView');
                         href.appendChild(
                           document.createTextNode(
@@ -413,7 +414,7 @@ function buildEntitiesCategoryPage()
 
         item = document.createElement('dd');
         href = document.createElement('a');
-        href.setAttribute('href', '../' + entity.href);
+        href.setAttribute('href', '../' + entity.docHref);
         href.appendChild(document.createTextNode(entity.label));
         item.appendChild(href);
         item.appendChild(document.createTextNode(' from '));
