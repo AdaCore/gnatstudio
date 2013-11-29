@@ -242,3 +242,7 @@ h2 {
 #body sup.srcHref {
     font-size: 8px;
 }
+
+#body th.target {
+    background-color: #FFFFBB;
+}

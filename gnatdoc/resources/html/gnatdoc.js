@@ -512,6 +512,7 @@ function onSourceFileLoad()
         if (element)
         {
             element.scrollIntoView();
+            element.classList.add('target');
         }
     }
 }
