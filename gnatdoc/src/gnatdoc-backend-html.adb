@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
-with Ada.Containers.Ordered_Sets;
 with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 
@@ -584,13 +583,18 @@ package body GNATdoc.Backend.HTML is
 
       declare
          Translation : Translate_Set;
+         Result      : GNATCOLL.JSON.JSON_Array;
 
       begin
+         for Object of Self.Doc_Files loop
+            Append (Result, Object);
+         end loop;
+
          Insert
            (Translation,
             Assoc
               ("DOCUMENTATION_INDEX_DATA",
-               String'(Write (Create (Self.Doc_Files), False))));
+               String'(Write (Create (Result), False))));
          Write_To_File
            (Self.Context,
             Get_Doc_Directory (Self.Context.Kernel),
@@ -1089,7 +1093,7 @@ package body GNATdoc.Backend.HTML is
 
       Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
       Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
-      Append (Self.Doc_Files, Index_Entry);
+      Self.Doc_Files.Insert (Index_Entry);
    end Generate_Lang_Documentation;
 
    ------------------------
@@ -1275,6 +1279,21 @@ package body GNATdoc.Backend.HTML is
 
       Generate_Support_Files;
    end Initialize;
+
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left  : GNATCOLL.JSON.JSON_Value;
+      Right : GNATCOLL.JSON.JSON_Value) return Boolean
+   is
+      L : constant String := Left.Get ("label");
+      R : constant String := Right.Get ("label");
+
+   begin
+      return L < R;
+   end Less;
 
    ----------
    -- Name --

@@ -17,6 +17,8 @@
 
 --  This package implements a HTML backend of Docgen.
 
+private with Ada.Containers.Ordered_Sets;
+
 with GNATCOLL.JSON;
 
 with GNATdoc.Atree;        use GNATdoc.Atree;
@@ -48,9 +50,18 @@ private package GNATdoc.Backend.HTML is
 
 private
 
+   function Less
+     (Left  : GNATCOLL.JSON.JSON_Value;
+      Right : GNATCOLL.JSON.JSON_Value) return Boolean;
+   --  Compares values of "label" attributes of two objects,
+
+   package Docs_Sets is
+     new Ada.Containers.Ordered_Sets
+       (GNATCOLL.JSON.JSON_Value, Less, GNATCOLL.JSON."=");
+
    type HTML_Backend is new GNATdoc.Backend.Base.Base_Backend with record
-      Doc_Files : GNATCOLL.JSON.JSON_Array;
-      --  List of generated documentation files.
+      Doc_Files : Docs_Sets.Set;
+      --  Set of generated documentation files.
    end record;
 
    overriding function Name (Self : HTML_Backend) return String;
