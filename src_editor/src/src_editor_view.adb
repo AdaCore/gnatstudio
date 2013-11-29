@@ -73,6 +73,8 @@ with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
 with Gtk.Selection_Data;
@@ -2114,6 +2116,24 @@ package body Src_Editor_View is
       case Get_Event_Type (Event) is
          when Button_Press =>
             if Get_Button (Event) = 1 then
+               if
+                 (Get_State (Event) and Shift_Mask) /= 0
+                 and then (Get_State (Event) and Mod1_Mask) /= 0
+               then
+                  declare
+                     L, C    : Gint;
+                     Iter    : Gtk_Text_Iter;
+                  begin
+                     Window_To_Buffer_Coords
+                       (View, Text_Window_Text,
+                        Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
+                     Get_Iter_At_Location (View, Iter, L, C);
+                     Grab_Focus (View);
+                     Multi_Cursors.Add_Multi_Cursor
+                       (Buffer, Iter);
+                  end;
+                  return True;
+               end if;
                if not View.Button_Pressed then
                   View.Button_Pressed := True;
                   View.Button_Event := Copy (Event);
