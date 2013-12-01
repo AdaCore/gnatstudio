@@ -34,6 +34,9 @@ package body GNATdoc.Atree is
    --  Internal counter used to associate an unique identifier to all the
    --  nodes.
 
+   Disable_Free : constant Boolean := True;
+   --  Value used to temporarily disable free of entities???
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -349,7 +352,11 @@ package body GNATdoc.Atree is
 
    procedure Free (E : in out Entity_Id) is
    begin
-      Internal_Free (E);
+      if Disable_Free then
+         E := null;
+      else
+         Internal_Free (E);
+      end if;
    end Free;
 
    procedure Free (List : in out EInfo_List.Vector) is
@@ -370,11 +377,15 @@ package body GNATdoc.Atree is
       end EInfo_List_Free;
 
    begin
-      for J in List.First_Index .. List.Last_Index loop
-         List.Update_Element (J, EInfo_List_Free'Access);
-      end loop;
+      if Disable_Free then
+         List := EInfo_List.Empty_Vector;
+      else
+         for J in List.First_Index .. List.Last_Index loop
+            List.Update_Element (J, EInfo_List_Free'Access);
+         end loop;
 
-      List.Clear;
+         List.Clear;
+      end if;
    end Free;
 
    ---------------
@@ -1656,7 +1667,11 @@ package body GNATdoc.Atree is
             Remove_From_Scope (E.Full_View);
          end if;
 
-         Free (E.Full_View);
+         if Disable_Free then
+            E.Full_View := null;
+         else
+            Free (E.Full_View);
+         end if;
       end if;
    end Remove_Full_View;
 
