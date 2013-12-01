@@ -98,7 +98,8 @@ host` to `target_ppc`.
 Once the debugger is initialized, you can also connect to a remote agent by
 using the menu :menuselection:`Debug->Debug->Connect to Board...`. This
 will open a dialog where you can specify the target name (e.g. the name of
-your .. index:: board
+your
+.. index:: board
 
 board or debug agent) and the communication protocol.
 
