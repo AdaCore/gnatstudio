@@ -363,26 +363,12 @@ procedure GPS.Main is
       end;
 
       --  Reset the environment that was set before GPS was started (since
-      --  starting GPS will generally imply a change in LD_LIBRARY_PATH and
-      --  PATH to point to the right libraries
-
-      declare
-         Tmp : constant String := Command_Line.Getenv ("GPS_STARTUP_PATH");
-      begin
-         if Tmp /= "" then
-            --  We assume that the GPS_STARTUP_PATH variable is only set
-            --  through the startup script, and that the PATH is never
-            --  empty. Therefore, if GPS_STARTUP_PATH contains something,
-            --  this means we're launching through the script, and
-            --  GPS_STARTUP_LD_LIBRARY_PATH will also always be set.
-
-            Setenv ("PATH", Tmp);
-         end if;
-      end;
+      --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
+      --  point to the right libraries
 
       declare
          Tmp : constant String :=
-                 Command_Line.Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
+           Command_Line.Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
       begin
          if Tmp /= "" then
             Setenv ("LD_LIBRARY_PATH", Tmp);
@@ -391,7 +377,7 @@ procedure GPS.Main is
 
       declare
          Tmp : constant String :=
-                 Command_Line.Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
+           Command_Line.Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
       begin
          if Tmp /= "" then
             Setenv ("DYLD_LIBRARY_PATH", Tmp);
