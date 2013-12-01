@@ -524,25 +524,13 @@ procedure GPS.Main is
       OS_Utils.Install_Ctrl_C_Handler (Callbacks.Ctrl_C_Handler'Access);
 
       --  Reset the environment that was set before GPS was started (since
-      --  starting GPS will generally imply a change in LD_LIBRARY_PATH and
-      --  PATH to point to the right libraries
+      --  starting GPS will generally imply a change in LD_LIBRARY_PATH
+      --  to point to the right libraries).
 
-      Tmp := Getenv ("GPS_STARTUP_PATH");
+      Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
 
       if Tmp.all /= "" then
-         --  We assume that the GPS_STARTUP_PATH variable is only set through
-         --  the startup script, and that the PATH is never empty. Therefore,
-         --  if GPS_STARTUP_PATH contains something, this means we're launching
-         --  through the script, and GPS_STARTUP_LD_LIBRARY_PATH will also
-         --  always be set.
-
-         Setenv ("PATH", Tmp.all);
-         Free (Tmp);
-
-         Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
-         if Tmp.all /= "" then
-            Setenv ("LD_LIBRARY_PATH", Tmp.all);
-         end if;
+         Setenv ("LD_LIBRARY_PATH", Tmp.all);
       end if;
 
       Free (Tmp);
@@ -608,6 +596,15 @@ procedure GPS.Main is
 
       Prefix_Dir := Create (+Prefix.all);
 
+      declare
+         Tmp : constant String := Getenv ("PATH");
+      begin
+         Setenv
+           ("PATH",
+            Tmp & Path_Separator
+            & Prefix_Dir.Display_Full_Name & Directory_Separator & "bin");
+      end;
+
       Gtk.Main.Init;
 
       --  Python startup path
@@ -631,7 +628,6 @@ procedure GPS.Main is
          Free (Python_Path);
          Free (New_Val);
       end;
-
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
         ("gps", +Create_From_Dir (Prefix_Dir, "share/locale").Full_Name);
