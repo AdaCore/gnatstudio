@@ -87,27 +87,27 @@ environments. You'll find more information on debugging at
 :ref:`Debugging`.
 
 To automatically connect to the correct remote debug agent when starting a
-debugging session (using the menu `Debug->Initialize`), be sure to specify
-the `Program host` and `Protocol` project properties, as described in the
-previous section.
+debugging session (using the menu :menuselection:`Debug->Initialize`), be
+sure to specify the `Program host` and `Protocol` project properties, as
+described in the previous section.
 
 For example, if you're using the *Tornado* environment, with a target
 server called `target_ppc`, set the `Protocol` to `wtx` and the `Program
 host` to `target_ppc`.
 
 Once the debugger is initialized, you can also connect to a remote agent by
-using the menu `Debug->Debug->Connect to Board...`. This will open a dialog
-where you can specify the target name (e.g. the name of your
-.. index:: board
+using the menu :menuselection:`Debug->Debug->Connect to Board...`. This
+will open a dialog where you can specify the target name (e.g. the name of
+your .. index:: board
 
 board or debug agent) and the communication protocol.
 
 In order to load a new module on the target, you can select the menu
-`Debug->Debug->Load File...`.
+:menuselection:`Debug->Debug->Load File...`.
 
-If a module has been loaded on the target and is not known to the current debug
-session, use the menu `Debug->Debug->Add Symbols...` to load the symbol tables
-in the current debugger.
+If a module has been loaded on the target and is not known to the current
+debug session, use the menu :menuselection:`Debug->Debug->Add Symbols...`
+to load the symbol tables in the current debugger.
 
 Similarly, if you are running the underlying debugger (gdb) on a remote
 machine, you can specify the name of this machine by setting the `Tools host`
