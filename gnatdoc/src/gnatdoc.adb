@@ -239,6 +239,12 @@ package body GNATdoc is
       --  Check the contents of Src_Files and remove from the list those files
       --  which can not be processed
 
+      function Collect_All_Src_Files
+        (Prj_Files     : Project_Files_List.Vector;
+         Include_Files : Files_List.Vector)
+        return Files_List.Vector;
+      --  Collect all the files of the project in a single list
+
       procedure Collect_C_Header_Files
         (Direct_Include_Files : access Files_List.Vector;
          All_Include_Files    : access Files_List.Vector);
@@ -247,16 +253,17 @@ package body GNATdoc is
       --  the C/C++ header files which are transitively referenced by all the
       --  sources of Prj_Files.
 
+      procedure Sort_Dependencies (Files : in out Files_List.Vector);
+      --  Sort the list of files to ensure that dependent files are located
+      --  in the resulting list after the files from which they depend.
+
       function Have_Files
         (Prj_Files : Project_Files_List.Vector) return Boolean;
       --  Return true if some project in Prj_Files has a file to be processed
 
-      function Number_Of_Files
-        (Prj_Files     : Project_Files_List.Vector;
-         Include_Files : Files_List.Vector := Files_List.Empty_Vector)
-        return Natural;
-      --  Return the total number of source files stored in Prj_Files plus
-      --  the number of files stored in Include_Files
+      ---------------------
+      -- Check_Src_Files --
+      ---------------------
 
       procedure Check_Src_Files is
 
@@ -367,6 +374,55 @@ package body GNATdoc is
          end loop;
       end Check_Src_Files;
 
+      ---------------------------
+      -- Collect_All_Src_Files --
+      ---------------------------
+
+      function Collect_All_Src_Files
+        (Prj_Files     : Project_Files_List.Vector;
+         Include_Files : Files_List.Vector)
+         return Files_List.Vector
+      is
+         File_Index : Files_List.Cursor;
+         Prj_Index  : Project_Files_List.Cursor;
+         Prj_Srcs   : Project_Files;
+
+         All_Files  : Files_List.Vector;
+         File       : Virtual_File;
+
+      begin
+         Prj_Index := Prj_Files.First;
+         while Project_Files_List.Has_Element (Prj_Index) loop
+            Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            File_Index := Prj_Srcs.Src_Files.First;
+            while Files_List.Has_Element (File_Index) loop
+               File := Files_List.Element (File_Index);
+
+               if not All_Files.Contains (File) then
+                  All_Files.Append (File);
+               end if;
+
+               Files_List.Next (File_Index);
+            end loop;
+
+            Project_Files_List.Next (Prj_Index);
+         end loop;
+
+         File_Index := Include_Files.First;
+         while Files_List.Has_Element (File_Index) loop
+            File := Files_List.Element (File_Index);
+
+            if not All_Files.Contains (File) then
+               All_Files.Append (File);
+            end if;
+
+            Files_List.Next (File_Index);
+         end loop;
+
+         return All_Files;
+      end Collect_All_Src_Files;
+
       ----------------------------
       -- Collect_C_Header_Files --
       ----------------------------
@@ -475,6 +531,100 @@ package body GNATdoc is
          end;
       end Collect_C_Header_Files;
 
+      ------------------------
+      --  Sort_Dependencies --
+      ------------------------
+
+      procedure Sort_Dependencies (Files : in out Files_List.Vector) is
+         Pending_Files : Files_List.Vector := Files.Copy;
+
+         type Node;
+         type Node_Ptr is access Node;
+
+         package Childs_List is new Ada.Containers.Vectors
+           (Index_Type => Natural, Element_Type => Node_Ptr);
+
+         type Node is record
+            File   : Virtual_File;
+            Childs : Childs_List.Vector;
+         end record;
+
+         procedure Append (Subtree : Node_Ptr);
+         --  Traverse the list of dependencies in post-order appending all the
+         --  files to Files
+
+         function Build_Dependencies_Tree
+           (File : Virtual_File) return Node_Ptr;
+
+         ------------
+         -- Append --
+         ------------
+
+         procedure Append (Subtree : Node_Ptr) is
+            Cursor : Childs_List.Cursor;
+         begin
+            Cursor := Subtree.Childs.First;
+            while Childs_List.Has_Element (Cursor) loop
+               Append (Childs_List.Element (Cursor));
+               Childs_List.Next (Cursor);
+            end loop;
+
+            Files.Append (Subtree.File);
+         end Append;
+
+         ----------------
+         -- Build_Tree --
+         ----------------
+
+         function Build_Dependencies_Tree
+           (File : Virtual_File) return Node_Ptr
+         is
+            Result        : constant Node_Ptr := new Node;
+            It            : File_Iterator;
+            Dep_File      : Virtual_File;
+            Dep_File_Info : Node_Ptr;
+            Cursor        : Files_List.Cursor;
+         begin
+            Cursor := Pending_Files.Find (File);
+            Pending_Files.Delete (Cursor);
+
+            Result.File := File;
+
+            It := Find_Dependencies (Database, File);
+            while It.Has_Element loop
+               Dep_File := It.Element;
+
+               if Pending_Files.Contains (Dep_File) then
+                  Dep_File_Info := Build_Dependencies_Tree (Dep_File);
+                  Result.Childs.Append (Dep_File_Info);
+               end if;
+
+               It.Next;
+            end loop;
+
+            return Result;
+         end Build_Dependencies_Tree;
+
+         Subtree    : Node_Ptr;
+         File_Index : Files_List.Cursor;
+      begin
+         Files.Clear;
+
+         loop
+            File_Index := Pending_Files.First;
+            exit when not Files_List.Has_Element (File_Index);
+
+            --  Compute a file dependencies subtree
+
+            Subtree :=
+              Build_Dependencies_Tree (Files_List.Element (File_Index));
+
+            --  Append this subtree to the output
+
+            Append (Subtree);
+         end loop;
+      end Sort_Dependencies;
+
       ----------------
       -- Have_Files --
       ----------------
@@ -503,59 +653,6 @@ package body GNATdoc is
          return False;
       end Have_Files;
 
-      ---------------------
-      -- Number_Of_Files --
-      ---------------------
-
-      function Number_Of_Files
-        (Prj_Files     : Project_Files_List.Vector;
-         Include_Files : Files_List.Vector := Files_List.Empty_Vector)
-         return Natural
-      is
-         Count      : Natural;
-         File_Index : Files_List.Cursor;
-         Prj_Index  : Project_Files_List.Cursor;
-         Prj_Srcs   : Project_Files;
-
-         All_Files  : Files_List.Vector;
-         File       : Virtual_File;
-
-      begin
-         Prj_Index := Prj_Files.First;
-         while Project_Files_List.Has_Element (Prj_Index) loop
-            Prj_Srcs := Project_Files_List.Element (Prj_Index);
-
-            File_Index := Prj_Srcs.Src_Files.First;
-            while Files_List.Has_Element (File_Index) loop
-               File := Files_List.Element (File_Index);
-
-               if not All_Files.Contains (File) then
-                  All_Files.Append (File);
-               end if;
-
-               Files_List.Next (File_Index);
-            end loop;
-
-            Project_Files_List.Next (Prj_Index);
-         end loop;
-
-         File_Index := Include_Files.First;
-         while Files_List.Has_Element (File_Index) loop
-            File := Files_List.Element (File_Index);
-
-            if not All_Files.Contains (File) then
-               All_Files.Append (File);
-            end if;
-
-            Files_List.Next (File_Index);
-         end loop;
-
-         Count := Natural (All_Files.Length);
-         All_Files.Clear;
-
-         return Count;
-      end Number_Of_Files;
-
       ----------
       -- Free --
       ----------
@@ -579,6 +676,8 @@ package body GNATdoc is
       --  All the C and C++ header files which transitively included by all
       --  the header files of the project
 
+      All_Src_Files : Files_List.Vector;
+
    --  Start of processing for Process_Files
 
    begin
@@ -586,20 +685,6 @@ package body GNATdoc is
       --  which can be called directly from gdb
 
       Atree.Register_Database (Database);
-
-      --  Remove from the list those files which cannot be processed
-
-      Check_Src_Files;
-
-      if not Have_Files (Prj_Files) then
-         Trace (Me, "No files to process");
-         return;
-      end if;
-
-      if not Context.Options.Skip_C_Files then
-         Collect_C_Header_Files
-           (Direct_Include_Files'Access, All_Include_Files'Access);
-      end if;
 
       GNATdoc.Time.Reset;
 
@@ -617,88 +702,75 @@ package body GNATdoc is
 
       Backend.Initialize (Context);
 
-      --  Sort the list of projects and their files. Done to ensure that we
-      --  process all the projects in the same order in all the platforms.
+      --  Remove from the list those files which cannot be processed
 
-      declare
-         Prj_Index : Project_Files_List.Cursor;
-         Prj_Srcs  : Project_Files;
-      begin
-         Project_Files_Sort.Sort (Prj_Files);
+      if not Options.Quiet_Mode then
+         GNAT.IO.Put_Line ("Collecting source files");
+      end if;
 
-         Prj_Index := Prj_Files.First;
-         while Project_Files_List.Has_Element (Prj_Index) loop
-            Prj_Srcs := Project_Files_List.Element (Prj_Index);
-            Files_Vector_Sort.Sort (Prj_Srcs.Src_Files.all);
+      Check_Src_Files;
 
-            Project_Files_List.Next (Prj_Index);
-         end loop;
+      if not Have_Files (Prj_Files) then
+         Trace (Me, "No files to process");
+         return;
+      end if;
 
-         Files_Vector_Sort.Sort (All_Include_Files);
-      end;
+      if not Context.Options.Skip_C_Files then
+         Collect_C_Header_Files
+           (Direct_Include_Files'Access, All_Include_Files'Access);
+      end if;
+
+      All_Src_Files := Collect_All_Src_Files (Prj_Files, All_Include_Files);
+
+      if not Options.Quiet_Mode then
+         GNAT.IO.Put_Line ("Computing file dependencies");
+      end if;
+
+      Sort_Dependencies (All_Src_Files);
 
       --  Process all the files
 
       declare
-         Num_Files  : constant Natural :=
-                        Number_Of_Files (Prj_Files, All_Include_Files);
-         Count      : Natural := 0;
-         All_Files  : Files_List.Vector;
-         --  Used to avoid processing a file twice
-
          All_Trees  : Frontend.Tree_List.Vector;
-         Prj_Index  : Project_Files_List.Cursor;
-         Prj_Srcs   : Project_Files;
 
-         procedure Process_Src_Files (Src_Files : access Files_List.Vector);
-         procedure Process_Src_Files (Src_Files : access Files_List.Vector) is
+      begin
+         declare
+            Num_Files  : constant Natural :=
+                           Natural (Files_List.Length (All_Src_Files));
+            Count      : Natural := 0;
             File_Index : Files_List.Cursor;
 
          begin
-            File_Index := Src_Files.First;
+            Trace (Me, "Number of files to process: " & Num_Files'Img);
+
+            File_Index := All_Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
 
                declare
-                  Current_File  : Virtual_File
-                                    renames Files_List.Element (File_Index);
-                  Tree          : aliased Tree_Type;
+                  Current_File : Virtual_File
+                                   renames Files_List.Element (File_Index);
+                  Tree         : aliased Tree_Type;
 
                begin
-                  if not All_Files.Contains (Current_File) then
-                     if not Options.Quiet_Mode then
-                        Count := Count + 1;
-                        GNAT.IO.Put_Line
-                          (Count'Img & "/" & To_String (Num_Files)
-                           & ": "
-                           & (+Current_File.Base_Name));
-                     end if;
-
-                     Tree :=
-                       Frontend.Build_Tree
-                         (Context => Context,
-                          File    => Current_File);
-
-                     All_Files.Append (Current_File);
-                     All_Trees.Append (Tree);
+                  if not Options.Quiet_Mode then
+                     Count := Count + 1;
+                     GNAT.IO.Put_Line
+                       (Count'Img & "/" & To_String (Num_Files)
+                        & ": "
+                        & (+Current_File.Base_Name));
                   end if;
+
+                  Tree :=
+                    Frontend.Build_Tree
+                      (Context => Context,
+                       File    => Current_File);
+
+                  All_Trees.Append (Tree);
                end;
 
                Files_List.Next (File_Index);
             end loop;
-         end Process_Src_Files;
-
-      begin
-         Trace (Me, "Number of files to process: " & Num_Files'Img);
-
-         Process_Src_Files (All_Include_Files'Access);
-
-         Prj_Index := Prj_Files.First;
-         while Project_Files_List.Has_Element (Prj_Index) loop
-            Prj_Srcs := Project_Files_List.Element (Prj_Index);
-            Process_Src_Files (Prj_Srcs.Src_Files);
-
-            Project_Files_List.Next (Prj_Index);
-         end loop;
+         end;
 
          if Tree_List.Has_Element (All_Trees.First) then
             declare
@@ -717,7 +789,7 @@ package body GNATdoc is
                while Tree_List.Has_Element (Cursor) loop
                   Tree := Tree_List.Element (Cursor);
 
-                  Check_Tree (Context, Tree'Access, All_Files);
+                  Check_Tree (Context, Tree'Access, All_Src_Files);
 
                   --  We cannot rely on the service Get_Language_From_File
                   --  because it does not work well with C/C++ header files
@@ -836,8 +908,6 @@ package body GNATdoc is
                end if;
             end;
          end if;
-
-         All_Files.Clear;
       end;
 
       Backend.Finalize (Update_Global_Index);

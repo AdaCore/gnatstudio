@@ -1505,6 +1505,7 @@ package body GNATdoc.Backend.Simple is
                   Prj_Name : constant String := Name (Prj_Srcs.Project);
                   Filename : constant String := "prj__" & To_Lower (Prj_Name);
                begin
+                  Files_Vector_Sort.Sort (Prj_Srcs.Src_Files.all);
                   Generate_Files_Index
                     (Src_Files => Prj_Srcs.Src_Files.all,
                      Filename  => Filename,
