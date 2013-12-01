@@ -230,19 +230,19 @@ Plug-ins`).
 The Target Configuration Dialog
 ===============================
 
-GPS provides an interface for launching operations like building projects,
-compiling individual files, performing syntax or semantic checks, and so on.
-All these operations have in common that they involve launching an external
-command, and parsing the output for error messages. In GPS, these operations
-are called "Targets", and can be configured either through the Target
-Configuration dialog, or through XML configuration.
+GPS provides an interface for launching operations such as building
+projects, compiling individual files, and performing syntax or semantic
+checks.  These operations all involve launching an external command and
+parsing the output for error messages. In GPS, these operations are called
+"Targets", and can be configured either through the Target Configuration
+dialog or through XML configuration.
 :ref:`Customizing_build_Targets_and_Models`.
 
 .. image:: target-configuration-dialog.jpg
 
-This dialog is divided in two areas: on the left, a tree listing Targets, and,
-in the main area, a panel for configuring the Target which is currently
-selected in the tree.
+This dialog is divided in two areas: on the left is a tree listing Targets
+and, in the main area is a panel for configuring the Target which is
+currently selected in the tree.
 
 The Targets tree
 ----------------
@@ -253,16 +253,17 @@ On top of the tree are three buttons:
 
 * The Add button creates a new target.
 * The Remove button removes the currently selected target. Note that only
-  user-defined targets can be removed, the default targets created by GPS cannot
-  be removed.
-* The Clone button creates a new user-defined target which is identical
+  user-defined targets can be removed; the default targets created by GPS
+  cannot be removed.
+* The Clone button creates a new user-defined target that is identical
   to the currently selected target.
 
 The configuration panel
 -----------------------
 
-On top of the configuration panel, one can select the Target model.  The Model
-determines the graphical options available in the :guilabel:`Command line` frame.
+From the top of the configuration panel, you can select the Target model.
+That Model determines the graphical options available in the
+:guilabel:`Command line` frame.
 
 The :guilabel:`Revert` button resets all target settings to their original
 value.
@@ -270,11 +271,11 @@ value.
 The :guilabel:`Options` frame contains a number of options that are available
 for all Targets.
 
-* The Launch mode indicates the way the target is launched:
+* The Launch mode selects the way the target is launched:
 
   * Manually:
     the target is launched when clicking on the corresponding icon
-    in the toolbar, or when activating the corresponding menu item.
+    in the toolbar or when activating the corresponding menu item.
     In the latter case, a dialog is displayed, allowing last-minute
     modifications of the command line.
 
@@ -295,26 +296,27 @@ for all Targets.
     modification in the source editor. See `Background compilations`
     below.
 
-* Icon: the icon to use for representing this target in the menus and in the
-  toolbar. To use one of your icons, you must register a icons using the
-  `<stock>` XML customization node. (:ref:`Adding_stock_icons`). Then, use
-  "custom" choice and enter in the text field the ID of the icon.
+* Icon: the icon to use for representing this target in the menus and in
+  the toolbar. To use one of your icons, you must register a icons using
+  the `<stock>` XML customization node. (:ref:`Adding_stock_icons`). Then
+  use "custom" choice and enter the ID of the icon into the text field .
 
-* Target type: type of target described. If empty, or set to `Normal`,
-  represents a simple target. If set to another value, represents multiple
-  subtargets.  For example, if set to `main`, each subtarget corresponds to a
-  Main source as defined in the currently loaded project.  Other custom values
-  may be defined, and then handled via the `compute_build_targets` hook.
+* Target type: type of target described. If empty, or set to `Normal`, it
+  represents a simple target. If set to another value, it represents
+  multiple subtargets.  For example, if set to `main`, each subtarget
+  corresponds to a Main source as defined in the currently loaded project.
+  Other custom values may be defined and handled via the
+  `compute_build_targets` hook.
 
 The :guilabel:`Display` frame indicates where the launcher for this target
 should be visible.
 
-* in the toolbar: when active, a button is displayed in the main toolbar,
-  allowing to quickly launch a Target.
+* in the toolbar: when active, a button is displayed in the main toolbar
+  that can be used to quickly launch a Target.
 
 * in the main menu: whether to display a menu item corresponding to the Target
   in the main GPS menu. By default, Targets in the "File" category are listed
-  directly in the Build menu, and Targets in other categories are listed in a
+  directly in the Build menu and Targets in other categories are listed in a
   submenu corresponding to the name of the category.
 
 * in contextual menus for projects: whether to display an item in the
@@ -324,11 +326,12 @@ should be visible.
   menus for files, for instance in file items in the Project View or directly
   on source file editors.
 
-The :guilabel:`Command line` contains a graphical interface for some configurable
-elements of the Target, which are specific to the Model of this Target.
+The :guilabel:`Command line` contains a graphical interface for some
+configurable elements of the Target that are specific to the Model of this
+Target.
 
 The full command line is displayed at the bottom. Note that it may contain
-Macro Arguments. For instance if the command line contains the string "%PP",
+Macro Arguments. For example, if the command line contains the string "%PP",
 GPS will expand this to the full path to the current project. For a full list
 of available Macros, see :ref:`Macro_arguments`.
 
@@ -342,26 +345,27 @@ editor.
 .. index:: menu; tools --> consoles --> background builds
 
 Error messages resulting from background compilations are not listed in the
-Locations view or the Messages window. The full messages are listed in the
-Background Build console, accessible from the menu :menuselection:`Tools -->
-Consoles --> Background Builds`.  Error messages which contain a source location
-indication are shown as icons on the side of lines in editors, and the exact
-location is highlighted directly in the editor. On both of these places,
-tooltips show the contents of the error messages.
+Locations view or the Messages window. The full list of messages are shown
+in the Background Build console, accessible from the menu
+:menuselection:`Tools --> Consoles --> Background Builds`.  Error messages
+which contain a source location indication are shown as icons on the side
+of lines in editors and the exact location is highlighted directly in the
+editor. In both of these places, tooltips show the contents of the error
+messages.
 
-Messages from background compilations are removed automatically either when a
-new background compilation has finished, or when a non-background compilation
-is launched.
+Messages from background compilations are removed automatically either when
+a new background compilation has finished or when a non-background
+compilation is launched.
 
 GPS will launch background compilations for all targets that have a
-:guilabel:`Launch mode` set to :guilabel:`In background`, after modifications
-occur in a source editor.  Background compilation is useful mostly for targets
+:guilabel:`Launch mode` set to :guilabel:`In background` after modifications
+occur in a source editor.  Background compilation is mostly useful for targets
 such as `Compile File` or `Check Syntax`. For targets that work on Mains, the
 last main that was used in a non-background is considered, defaulting to the
 first main defined in the project hierarchy.
 
 Background compilations are not launched while GPS is already listing results
-from non-background compilations, ie as long as there are entries in the
+from non-background compilations, i.e. as long as there are entries in the
 Locations View showing entries in the `Builder results` category.
 
 
@@ -371,22 +375,22 @@ Locations View showing entries in the `Builder results` category.
 The Build Mode
 ==============
 
-GPS provides an easy way to build your project with different options, through
-the mode selection, located in the :guilabel:`Scenario` view (:ref:`Scenario
-view <Scenario_View>`).
+GPS provides an easy way to build your project with different options,
+through the mode selection, located in the :guilabel:`Scenario` view
+(:ref:`Scenario view <Scenario_View>`).
 
-When the mode is set to `default`, the build is done using the switches defined
-in the project. When the mode is set to another value, then specialized
-parameters are passed to the builder. For instance, the `gcov` Mode adds all
-the compilation parameters needed to instrument the produced objects and
-executables to work with the `gcov` tool.
+When the mode is set to `default`, GPS performs the build using the
+switches defined in the project. When the mode is set to another value,
+specialized parameters are passed to the builder. For instance, the `gcov`
+Mode adds all the compilation parameters needed to instrument the generated
+objects and executables to work with the `gcov` tool.
 
-In addition to changing the build parameters, the mode has the effect of
-changing the output directory for objects and executables. For instance,
-objects produced under the `debug` mode will be located in the :file:`debug`
-subdirectories of the object directories defined by the project.  This allows
-switching from one Mode to another without having to erase the objects
-pertaining to a different Mode.
+In addition to changing the build parameters, the mode will change the
+output directory for objects and executables. For example, objects produced
+under the `debug` mode will be located in the :file:`debug` subdirectories
+of the object directories defined by the project.  This allows switching
+from one Mode to another without having to erase the objects pertaining to
+a different Mode.
 
 It is possible to define new modes using XML customization, see
 :ref:`Customizing_build_Targets_and_Models`.
@@ -404,69 +408,70 @@ Targets that launch other builders.
 Working with two compilers
 ==========================
 
-This functionality is intended for people whose projects need to be compiled
-with a specific (old) version of the GNAT toolchain, while still desiring to
-take full advantage of up-to-date associated tools for non-compilation actions,
-such as checking the code against a coding standard, getting better
-cross-reference browsing in GPS, computing metrics and so on.
+This functionality is intended for those whose projects need to be compiled
+with a specific (old) version of the GNAT toolchain while still being able
+to take full advantage of up-to-date associated tools for non-compilation
+actions, such as checking the code against a coding standard, and getting
+better cross-reference browsing in GPS, computing metrics.
 
 .. index:: menu; build --> settings --> toolchains
 
-GPS now allows you to handle this case. To configure GPS to make it handle two
-compiler toolchains, you need to use the :menuselection:`Build --> Settings -->
-Toolchains` menu.  This will open a dialog where you can activate the
-multiple-toolchains mode.
+To configure GPS to handle two compiler toolchains, use the
+:menuselection:`Build --> Settings --> Toolchains` menu.  This opens a
+dialog from which you can activate the multiple-toolchains mode.
 
 .. image:: toolchains-config.jpg
 
 In this dialog, two paths need to be configured: the compiler path and the
-tools path. The first one is used to actually compile the code, while the
-second one is used to run up-to-date tools to get more functionalities or
-accurate results.
+tools path. The first is used to actually compile the code, while the
+second is used to run up-to-date tools in order to get more functionality
+or accurate results.
 
-Note that GPS will only enable the :guilabel:`OK` button when the two paths are
-set to different location, since otherwise it does not make sense to enable the
-multiple toolchains set up.
+Note that GPS only enables the :guilabel:`OK` button when the two paths are
+set to different location since it doesn't make sense to enable the
+multiple toolchains mode unless that's the case.
 
-From this dialog, you can also activate an automated cross-reference
-generation. The cross-reference files are the .ali files generated by the GNAT
-compiler together with the compiled object. Those files are used by GPS for
-several functionalities, such as cross-reference browsing or documentation
-generation. Having those .ali files produced by a recent compiler helps having
-more accurate results with those functionalities, but might interract badly
-with an old compiler also reading those .ali files for compiling a project.
+From this dialog you can also activate an automated cross-reference
+generation. The cross-reference files are the .ali files generated by the
+GNAT compiler together with the compiled object files. The .ali files are
+used by GPS for several purposes, such as cross-reference browsing and
+documentation generation. Having those .ali files produced by a recent
+compiler produces more accurate results for those purposes but might
+interact badly if an old compiler were to also read those .ali files for
+compiling a project.
 
-If the automated xref generation is activated, then GPS will generate those
-.ali files using the compiler found in the tools path, and place them in a
-directory distinct from the one used by the actual compiler. This allows GPS to
-take full benefit of up-to-date cross-reference files, while keeping the old
-toolchain happy as its .ali files remain untouched.
+If the automated xref generation is activated, GPS will generate those .ali
+files using the compiler found in the tools path and place them in a
+directory distinct from the one used by the actual compiler. This allows
+GPS to take full benefit of up-to-date cross-reference files, while keeping
+the old toolchain happy as its .ali files remain untouched.
 
 .. index:: menu; tools --> consoles --> auxiliary builds
 
-Note that the cross-reference files generation does not output anything in the
-"Messages" window, so as to not confuse the output of the regular build
-process. If needed, you can see the output of the cross-ref generation command
-by selecting the :menuselection:`Tools --> Consoles --> Auxiliary Builds` menu.
+Note that the cross-reference files generation does not output anything in
+the "Messages" window so as to not confuse the output of the regular build
+process. If needed, you can see the output of the cross-ref generation
+command by selecting the :menuselection:`Tools --> Consoles --> Auxiliary
+Builds` menu.
 
 
 Interaction with the remote mode
 --------------------------------
 
 The ability to work with two compilers has impacts on the remote mode
-configuration: paths defined here are local paths, so they have no meaning on
+configuration: paths defined here are local paths so they have no meaning on
 the server side.
 
 To handle the case of using a specific compiler version on the remote side
-while still wanting up-to-date tools, the following behavior is applied when
-both a remote compilation server is defined, and the multiple toolchains mode
-is activated:
+while using wanting up-to-date tools, the GPS does the following when both
+a remote compilation server is defined and the multiple toolchains mode is
+in use:
 
 * The compiler path is ignored when a remote build server is defined. All
-  compilation actions are then performed normally on the build server.
-* The tools path is however taken into account, and all related actions
+  compilation actions are performed normally on the build server.
+* The tools path is taken into account and all related actions
   are performed on the local machine using this path.
-* The cross-reference files are taken care of by the rsync mechanism
-  so that they don't get overwritten during local and remote host
-  synchronisations, as build and cross-reference generation actions occur at
-  the same time, on the local machine and on the distant server.
+* The cross-reference files are handled using the rsync mechanism so they
+  don't get overwritten during local and remote host synchronizations.
+  They otherwise would because build and cross-reference generation actions
+  occur at the same time on the local machine and on the distant server.
