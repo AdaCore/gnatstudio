@@ -27,7 +27,7 @@ with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;
 with Language;                 use Language;
-with Language.Ada;
+with Language.Ada;             use Language.Ada;
 with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -217,6 +217,12 @@ package body GNATdoc.Frontend is
       --  Parse the profile of a subprogram or an entry and complete the
       --  decoration of entity E setting attributes:
       --   - End_Of_Profile_Location (or End_Of_Profile_Location_In_Body)
+
+      procedure Parse_Package_Header
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access);
+      --  Parse the profile of a package to complete the decoration of E
+      --  setting attribute Parent_Package
 
       procedure Parse_Ada_Profile
         (E        : Entity_Id;
@@ -1487,13 +1493,18 @@ package body GNATdoc.Frontend is
          --  No action needed for entities for which we don't need to retrieve
          --  its sources
 
-         elsif Is_Package (E)
-           or else Get_Kind (E) = E_Formal
-         then
+         elsif Get_Kind (E) = E_Formal then
             return;
          end if;
 
-         if Is_Subprogram_Or_Entry (E) then
+         if Is_Package (E) then
+            if No (LL.Get_Scope (E))
+              and then No (LL.Get_Parent_Package (E))
+            then
+               Parse_Package_Header (E, Buffer);
+            end if;
+
+         elsif Is_Subprogram_Or_Entry (E) then
             declare
                Profile : Unbounded_String;
             begin
@@ -2521,6 +2532,102 @@ package body GNATdoc.Frontend is
          end if;
 
       end Parse_Ada_Profile;
+
+      --------------------------
+      -- Parse_Package_Header --
+      --------------------------
+
+      procedure Parse_Package_Header
+        (E        : Entity_Id;
+         Buffer   : GNAT.Strings.String_Access)
+      is
+         Index : Natural;
+
+         procedure CB (Token : Token_Record;
+                       Stop  : in out Boolean);
+
+         procedure Workaround_Compiler_Get_Parent_Problem (Full_Name : String);
+         --  This subprogram workarounds a compiler problem in entities
+         --  associated with child packages: the compiler does not generate
+         --  their scope and hence Xref cannot compute its Parent entity.
+
+         procedure Workaround_Compiler_Get_Parent_Problem (Full_Name : String)
+         is
+            Parent : Entity_Id;
+         begin
+            if Full_Name = "" then
+               return;
+            end if;
+
+            Parent := Builder.Find_Unique_Entity (Full_Name);
+            pragma Assert (Present (Parent) and then Is_Package (Parent));
+            Set_Parent_Package (E, Parent);
+         end Workaround_Compiler_Get_Parent_Problem;
+
+         --------
+         -- CB --
+         --------
+
+         Is_First_Dot : Boolean := True;
+         Full_Name    : Unbounded_String;
+
+         procedure CB (Token : Token_Record;
+                       Stop  : in out Boolean) is
+         begin
+            case Token.Tok_Type is
+               when Tok_Dot =>
+                  if Is_First_Dot then
+                     Is_First_Dot := False;
+                  else
+                     Full_Name := "." & Full_Name;
+                  end if;
+
+               when Tok_Identifier =>
+                  declare
+                     Name : String renames
+                        Buffer.all
+                          (Integer (Token.Token_First)
+                           .. Integer (Token.Token_Last));
+
+                  begin
+                     Full_Name := Name & Full_Name;
+                  end;
+
+               when others =>
+                  Workaround_Compiler_Get_Parent_Problem
+                    (To_String (Full_Name));
+                  Stop := True;
+            end case;
+         end CB;
+
+         --  Local variables
+
+         Location      : constant General_Location := LL.Get_Location (E);
+         Lines_Skipped : Natural;
+
+      begin
+         --  Displace the pointer to the beginning of the package spec
+
+         Index := Buffer'First;
+         GNATCOLL.Utils.Skip_Lines
+           (Str           => Buffer.all,
+            Lines         => Location.Line - 1,
+            Index         => Index,
+            Lines_Skipped => Lines_Skipped);
+
+         GNATCOLL.Utils.Skip_To_Column
+           (Str           => Buffer.all,
+            Columns       => Natural (Location.Column),
+            Index         => Index);
+
+         Index := Index - 1;
+
+         Parse_Tokens_Backwards
+           (Lang         => Lang,
+            Buffer       =>  Buffer.all (Buffer'First .. Index),
+            Start_Offset => String_Index_Type (Index),
+            Callback     => CB'Unrestricted_Access);
+      end Parse_Package_Header;
 
       -------------------
       -- Previous_Word --

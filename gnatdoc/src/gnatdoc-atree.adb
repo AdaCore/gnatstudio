@@ -977,6 +977,10 @@ package body GNATdoc.Atree is
          New_E.Xref.Scope_E   := Caller_At_Declaration (Db, E);
          New_E.Xref.Scope_Loc := Get_Location (Db, New_E.Xref.Scope_E);
 
+         if Is_Package (New_E) then
+            New_E.Xref.Parent_Package := Xref.Parent_Package (Db, E);
+         end if;
+
          New_E.Xref.Alias     := Xref.Renaming_Of (Db, E);
          New_E.Xref.Etype     := Get_Type_Of (Db, E);
          New_E.Xref.Body_Loc  := Get_Body (Db, E);
@@ -1193,25 +1197,6 @@ package body GNATdoc.Atree is
                end loop;
 
                Destroy (Cursor);
-            end;
-         end if;
-
-         if Is_Package (New_E) then
-            declare
-               Parent_Pkg : constant General_Entity :=
-                              Xref.Parent_Package (Db, E);
-            begin
-               if Present (Parent_Pkg) then
-                  New_E.Xref.Parent_Package := Parent_Pkg;
-
-                  --  Temporarily build here the entity of the parent
-                  --  package. Must be improved???
-
-                  Set_Parent_Package (New_E,
-                    Internal_New_Entity
-                      (Context, Lang, Parent_Pkg,
-                       Loc => Get_Location (Db, Parent_Pkg)));
-               end if;
             end;
          end if;
 
@@ -2587,6 +2572,10 @@ package body GNATdoc.Atree is
 
       Append_Line ("Full_Name: " & Get_Full_Name (E));
 
+      if Present (E.Parent_Package) then
+         Append_Entity ("Parent_Package: ", E.Parent_Package);
+      end if;
+
       if Present (E.Scope) then
          Append_Entity ("Scope: ", E.Scope);
       end if;
@@ -2749,6 +2738,16 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
+      end if;
+
+      if Present (E.Xref.Parent_Package) then
+         Append_Line
+           (LL_Prefix
+            & "Parent_Package: "
+            & Get_Name (Db, E.Xref.Parent_Package)
+            & " ["
+            & Image (Get_Location (Db, E.Xref.Parent_Package))
+            & "]");
       end if;
 
       if Present (E.Xref.Scope_E) then

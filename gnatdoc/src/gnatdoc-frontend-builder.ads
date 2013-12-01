@@ -33,6 +33,10 @@ private package GNATdoc.Frontend.Builder is
    --  which takes care of building the tree and leaves more clear the high
    --  level actions performed by Build_Tree.
 
+   function Find_Unique_Entity (Full_Name : String) return Entity_Id;
+   --  Iterate through all entities stored in the hash table searching for an
+   --  an entity with Full_Name. No_Entity is returned if not found.
+
    function Find_Unique_Entity (Location : General_Location) return Entity_Id;
    --  Search for the entity defined at Location in a hash table containing
    --  all the entities of the project. No_Entity is returned if not found.
@@ -43,7 +47,7 @@ private package GNATdoc.Frontend.Builder is
       E       : General_Entity) return Entity_Id;
    --  Search for E in a hash table containing all the project entities.
    --  If found then return such entity; if not found then allocate a new
-   --  unique entity for E and return it.
+   --  unique entity for E, append it to the hash table and return it.
 
    procedure Initialize;
 

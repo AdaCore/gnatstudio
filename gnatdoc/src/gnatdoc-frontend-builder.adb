@@ -824,6 +824,14 @@ package body GNATdoc.Frontend.Builder is
             if No (Entity) then
                return No_Entity;
             else
+               if Is_Package (Entity)
+                 and then Present (LL.Get_Parent_Package (Entity))
+               then
+                  Set_Parent_Package (Entity,
+                    Get_Unique_Entity
+                      (Context, File, LL.Get_Parent_Package (Entity)));
+               end if;
+
                return
                  new Unique_Entity_Info'(Entity => Entity,
                                          Is_New => True);
@@ -1971,6 +1979,7 @@ package body GNATdoc.Frontend.Builder is
 
       Total_Entities_Count : Natural := 0;
       Entities_Count       : Natural := 0;
+      Is_Large_File        : Boolean := False;
 
    --  Start of processing for Build_File_Tree
 
@@ -1985,23 +1994,15 @@ package body GNATdoc.Frontend.Builder is
          File_Entities_Cursor.Next;
       end loop;
 
-      --  Temporarily disable construction of large trees (until we improve
-      --  the performance!). For example, sqlite3.c has 14860 entities and
-      --  requires 46 minutes to build the tree in my virtual machine???
+      --  For large files emit a warning since the user may think that the tool
+      --  entered into a never-ending loop while it its processing the file.
 
       if Total_Entities_Count > 3000 then
          if not Context.Options.Quiet_Mode then
             GNAT.IO.Put_Line
-              (" Skipping large file " & (+File.Base_Name));
+              ("warning: large file " & (+File.Base_Name));
+            Is_Large_File := True;
          end if;
-
-         Trace (Me,
-           ">> Build_File_Tree (skipped): "
-           & Total_Entities_Count'Img
-           & " entities");
-
-         Scopes_Stack.Clear;
-         return Atree.No_Entity;
       end if;
 
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
@@ -2053,8 +2054,9 @@ package body GNATdoc.Frontend.Builder is
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
-         if not Context.Options.Quiet_Mode
-           and then Entities_Count mod 125 = 0
+         if Is_Large_File
+           and then not Context.Options.Quiet_Mode
+           and then Entities_Count mod 300 = 0
          then
             GNAT.IO.Put_Line
               ("   "
@@ -2291,9 +2293,9 @@ package body GNATdoc.Frontend.Builder is
       EInfo_Map.Clear (Entities_Map);
    end Initialize;
 
-   -----------------
-   -- Find_Entity --
-   -----------------
+   ------------------------
+   -- Find_Unique_Entity --
+   ------------------------
 
    function Find_Unique_Entity (Location : General_Location) return Entity_Id
    is
@@ -2305,6 +2307,28 @@ package body GNATdoc.Frontend.Builder is
       else
          return Atree.No_Entity;
       end if;
+   end Find_Unique_Entity;
+
+   ------------------------
+   -- Find_Unique_Entity --
+   ------------------------
+
+   function Find_Unique_Entity (Full_Name : String) return Entity_Id
+   is
+      Cursor : EInfo_Map.Cursor := Entities_Map.First;
+      E      : Entity_Id;
+   begin
+      while EInfo_Map.Has_Element (Cursor) loop
+         E := EInfo_Map.Element (Cursor);
+
+         if Get_Full_Name (E) = Full_Name then
+            return E;
+         end if;
+
+         EInfo_Map.Next (Cursor);
+      end loop;
+
+      return Atree.No_Entity;
    end Find_Unique_Entity;
 
    -----------------------
