@@ -461,7 +461,8 @@ procedure GPS.Main is
       begin
          Setenv
            ("PATH",
-            Tmp & Path_Separator & Prefix_Dir.Display_Full_Name & "bin");
+            Tmp & Path_Separator
+            & Prefix_Dir.Display_Full_Name & Directory_Separator & "bin");
       end;
 
       --  Python startup path
