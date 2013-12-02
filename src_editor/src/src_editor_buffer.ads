@@ -109,19 +109,6 @@ package Src_Editor_Buffer is
    --  File lines identify lines that were in the file the last time that the
    --  buffer was saved.
 
-   type Loc_T is record
-      Line : Editable_Line_Type;
-      Col  : Character_Offset_Type;
-   end record;
-
-   function "<" (A, B : Loc_T) return Boolean
-   is ((A.Line <= B.Line and then A.Col < B.Col) or else A.Line < B.Line);
-   function "<=" (A, B : Loc_T) return Boolean is (A = B or else A < B);
-   function ">=" (A, B : Loc_T) return Boolean is (not (A < B));
-   function ">" (A, B : Loc_T) return Boolean is (not (A < B) and not (A = B));
-   function Min (A, B : Loc_T) return Loc_T is
-      (if A < B then A else B);
-
    ------------------
    -- Column types --
    ------------------
@@ -354,18 +341,6 @@ package Src_Editor_Buffer is
       Line   : out Editable_Line_Type;
       Column : out Visible_Column_Type);
    --  Return the current editable cursor position for Iter
-
-   procedure Get_Iter_Position
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Loc    : out Loc_T);
-   --  Return the current editable cursor position for Iter
-
-   procedure Get_Mark_Position
-     (Buffer : Source_Buffer;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-      Loc    : out Loc_T);
-   --  Return the current editable cursor position for Mark
 
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;

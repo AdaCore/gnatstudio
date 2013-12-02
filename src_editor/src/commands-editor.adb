@@ -25,7 +25,6 @@ use  Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Multi_Cursors;
 use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Commands.Editor is
 
@@ -265,16 +264,12 @@ package body Commands.Editor is
 
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
 
-      if Item.Edition_Mode = Insertion then
-         if Start_Line /= 0 then
-            Item.Locs.Start_Loc.Line := Start_Line;
-         end if;
+      if Start_Line /= 0 then
+         Item.Locs.Start_Loc.Line := Start_Line;
+      end if;
 
-         if Start_Column /= 0 then
-            Put_Line (Item.Locs.Start_Loc.Col'Img);
-            Put_Line (Start_Column'Img);
-            Item.Locs.Start_Loc.Col := Start_Column;
-         end if;
+      if Start_Column /= 0 then
+         Item.Locs.Start_Loc.Col := Start_Column;
       end if;
    end Add_Text;
 
@@ -503,11 +498,8 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
-      Sync   : constant Multi_Cursors_Sync_Type :=
-        Get_Multi_Cursors_Sync (Command.Buffer);
-   begin
-      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
 
+   begin
       Replace_Slice
         (Command.Buffer,
          Command.Start_Line,
@@ -546,8 +538,6 @@ package body Commands.Editor is
 
       Command_Finished (Command, True);
 
-      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
-
       return Success;
    end Execute;
 
@@ -559,8 +549,6 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Boolean
    is
       Editor : Source_Editor_Box;
-      Sync   : constant Multi_Cursors_Sync_Type :=
-        Get_Multi_Cursors_Sync (Command.Buffer);
    begin
       if not Is_Valid_Position
         (Command.Buffer,
@@ -569,8 +557,6 @@ package body Commands.Editor is
       then
          return True;
       end if;
-
-      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
 
       Replace_Slice
         (Command.Buffer,
@@ -601,7 +587,6 @@ package body Commands.Editor is
       Scroll_To_Cursor_Location (Get_View (Editor));
 
       Command_Finished (Command, True);
-      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
       return True;
    end Undo;
 

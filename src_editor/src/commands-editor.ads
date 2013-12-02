@@ -37,6 +37,19 @@ package Commands.Editor is
      (C : Base_Editor_Command_Type) return String is abstract;
    --  Print a string representation of the command. For debugging purposes.
 
+   type Loc_T is record
+      Line : Editable_Line_Type;
+      Col  : Character_Offset_Type;
+   end record;
+
+   function "<" (A, B : Loc_T) return Boolean
+   is ((A.Line <= B.Line and then A.Col < B.Col) or else A.Line < B.Line);
+   function "<=" (A, B : Loc_T) return Boolean is (A = B or else A < B);
+   function ">=" (A, B : Loc_T) return Boolean is (not (A < B));
+   function ">" (A, B : Loc_T) return Boolean is (not (A < B) and not (A = B));
+   function Min (A, B : Loc_T) return Loc_T is
+      (if A < B then A else B);
+
    type Editor_Command_Locations is record
       Start_Loc, End_Loc, Start_Sel_Loc, End_Sel_Loc : Loc_T;
    end record;
