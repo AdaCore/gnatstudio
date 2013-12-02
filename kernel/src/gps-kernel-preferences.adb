@@ -483,7 +483,7 @@ package body GPS.Kernel.Preferences is
 
       Display_Line_Numbers := Line_Number_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Display-Line_Numbers",
+         Name    => "GPS6-Src-Editor-Display-Line_Numbers",
          Default => All_Lines,
          Doc     =>
            -"Whether the line numbers should be displayed in file editors",
