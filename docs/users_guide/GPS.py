@@ -1738,7 +1738,8 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
         """
         pass  # implemented in Ada
 
-    def create_link(self, regexp, on_click):
+    def create_link(self, regexp, on_click, foreground="blue", background="",
+                    underline=True):
         """
         Register a regular expression that should be highlight in this console
         to provide hyper links. These links are searched for when calling
@@ -1755,10 +1756,23 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
         highlighted (so that you can test for the presence of text before or
         after the actual hyper link).
 
+        Parameters foreground and background specify colors to visualize
+        matched text, while underline turns underscore on.
+
         :param regexp: A string
         :param on_click: A subprogram
+        :param foreground: A string
+        :param background: A string
+        :param underline: A boolean
 
         .. seealso:: :func:`GPS.Console.write_with_links`
+        """
+        pass  # implemented in Ada
+
+    def delete_links(self):
+        """
+        Drop each regular expression registered with create_link.
+
         """
         pass  # implemented in Ada
 

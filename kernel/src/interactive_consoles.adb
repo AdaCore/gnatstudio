@@ -1386,14 +1386,7 @@ package body Interactive_Consoles is
    ----------------
 
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hyper_Link_Record, Hyper_Links);
-      C     : constant Interactive_Console := Interactive_Console (Console);
-      L, L2 : Hyper_Links;
+      C : constant Interactive_Console := Interactive_Console (Console);
    begin
       if C.Idle_Registered
         and then C.Idle_Id /= 0
@@ -1402,15 +1395,7 @@ package body Interactive_Consoles is
          C.Idle_Id := 0;
       end if;
 
-      L := C.Links;
-      while L /= null loop
-         L2 := L.Next;
-         On_Destroy (L.Callback.all);
-         Unchecked_Free (L.Callback);
-         Unchecked_Free (L.Pattern);
-         Unchecked_Free (L);
-         L := L2;
-      end loop;
+      Delete_Hyper_Links (C);
 
       Unref (C.Uneditable_Tag);
       Unref (C.Prompt_Tag);
@@ -1937,17 +1922,29 @@ package body Interactive_Consoles is
    -----------------------
 
    procedure Create_Hyper_Link
-     (Console  : access Interactive_Console_Record;
-      Regexp   : GNAT.Regpat.Pattern_Matcher;
-      Callback : not null access Hyper_Link_Callback_Record'Class)
+     (Console    : access Interactive_Console_Record;
+      Regexp     : GNAT.Regpat.Pattern_Matcher;
+      Callback   : not null access Hyper_Link_Callback_Record'Class;
+      Foreground : String;
+      Background : String;
+      Underline  : Boolean)
    is
       Tag : Gtk_Text_Tag;
    begin
       Gtk_New (Tag);
       Add (Get_Tag_Table (Console.Buffer), Tag);
-      Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, "blue");
-      Set_Property
-        (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+      if Foreground /= "" then
+         Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, Foreground);
+      end if;
+
+      if Background /= "" then
+         Set_Property (Tag, Gtk.Text_Tag.Background_Property, Background);
+      end if;
+
+      if Underline then
+         Set_Property
+           (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+      end if;
 
       Console.Links := new Hyper_Link_Record'
         (Pattern  => new Pattern_Matcher'(Regexp),
@@ -1956,6 +1953,70 @@ package body Interactive_Consoles is
          Next     => Console.Links);
       Console.Links_Count := Console.Links_Count + 1;
    end Create_Hyper_Link;
+
+   ------------------------
+   -- Delete_Hyper_Links --
+   ------------------------
+
+   procedure Delete_Hyper_Links
+     (Console : access Interactive_Console_Record)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Pattern_Matcher, Pattern_Matcher_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hyper_Link_Record, Hyper_Links);
+
+      procedure Get_Tag
+        (Tag   : not null access Gtk_Text_Tag_Record'Class;
+         Dummy : Boolean);
+      --  Save given Tag into local tag array
+
+      L, L2 : Hyper_Links;
+
+      Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Console.Buffer);
+
+      Tags  : array (1 .. Table.Get_Size) of Gtk_Text_Tag;
+      Index : Gint := Tags'First;
+
+      -------------
+      -- Get_Tag --
+      -------------
+
+      procedure Get_Tag
+        (Tag   : not null access Gtk_Text_Tag_Record'Class;
+         Dummy : Boolean)
+      is
+         pragma Unreferenced (Dummy);
+      begin
+         Tags (Index) := Gtk_Text_Tag (Tag);
+         Index := Index + 1;
+      end Get_Tag;
+
+      package Foreach_Tag is new Foreach_User_Data (Boolean);
+   begin
+      --  Extract all tags from the table
+      Foreach_Tag.Foreach (Table, Get_Tag'Access, False);
+
+      --  Destroy all tags in the table
+      for J in Tags'Range loop
+         Table.Remove (Tags (J));
+      end loop;
+
+      L := Console.Links;
+      while L /= null loop
+         L2 := L.Next;
+         On_Destroy (L.Callback.all);
+         Unchecked_Free (L.Callback);
+         Unchecked_Free (L.Pattern);
+         Unchecked_Free (L);
+         L := L2;
+      end loop;
+
+      Console.Links := null;
+      Console.Links_Count := 0;
+   end Delete_Hyper_Links;
 
    -----------------------
    -- Insert_With_Links --

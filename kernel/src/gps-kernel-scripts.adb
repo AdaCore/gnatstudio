@@ -219,11 +219,16 @@ package body GPS.Kernel.Scripts is
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
+   Foreground_Cst : aliased constant String := "foreground";
+   Background_Cst : aliased constant String := "background";
+   Underline_Cst  : aliased constant String := "underline";
    Approximate_Search_Cst : aliased constant String :=
      "approximate_search_fallback";
 
    Create_Link_Args         : constant Cst_Argument_List :=
-     (1 => Regexp_Cst'Access, 2 => On_Click_Cst'Access);
+     (1 => Regexp_Cst'Access,     2 => On_Click_Cst'Access,
+      3 => Foreground_Cst'Access, 4 => Background_Cst'Access,
+      5 => Underline_Cst'Access);
    Write_With_Link_Args         : constant Cst_Argument_List :=
      (1 => Text_Cst'Access);
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
@@ -1149,12 +1154,19 @@ package body GPS.Kernel.Scripts is
          begin
             Create_Hyper_Link
               (Console,
-               Regexp => Compile (Nth_Arg (Data, 2)),
-               Callback => Cb);
+               Regexp     => Compile (Nth_Arg (Data, 2)),
+               Callback   => Cb,
+               Foreground => Nth_Arg (Data, 4, "blue"),
+               Background => Nth_Arg (Data, 5, ""),
+               Underline  => Nth_Arg (Data, 6, True));
          exception
             when GNAT.Regpat.Expression_Error =>
                Set_Error_Msg (Data, "Invalid regular expression");
          end;
+
+      elsif Command = "delete_links" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         Console.Delete_Hyper_Links;
 
       elsif Command = "add_input" then
          Name_Parameters (Data, (1 => Text_Cst'Access));
@@ -1304,7 +1316,11 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "create_link",
          Minimum_Args => 1,
-         Maximum_Args => 2,
+         Maximum_Args => 5,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "delete_links",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command

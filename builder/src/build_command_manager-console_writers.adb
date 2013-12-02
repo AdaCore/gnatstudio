@@ -145,7 +145,7 @@ package body Build_Command_Manager.Console_Writers is
                (Msg, ", elapsed time: "
                 & Elapsed (Self.Start_Time, End_Time) & "s");
 
-            Self.Console.Insert (To_String (Msg));
+            Self.Console.Insert_With_Links (To_String (Msg));
          end;
       end if;
 
@@ -170,7 +170,7 @@ package body Build_Command_Manager.Console_Writers is
       Item    : String;
       Command : Command_Access) is
    begin
-      Self.Console.Insert (Item, Add_LF => False);
+      Self.Console.Insert_With_Links (Item, Add_LF => False);
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 

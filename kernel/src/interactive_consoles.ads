@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2012, AdaCore                     --
+--                     Copyright (C) 2001-2013, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -281,9 +281,12 @@ package Interactive_Consoles is
    --  Called when Link is destroyed
 
    procedure Create_Hyper_Link
-     (Console  : access Interactive_Console_Record;
-      Regexp   : GNAT.Regpat.Pattern_Matcher;
-      Callback : not null access Hyper_Link_Callback_Record'Class);
+     (Console    : access Interactive_Console_Record;
+      Regexp     : GNAT.Regpat.Pattern_Matcher;
+      Callback   : not null access Hyper_Link_Callback_Record'Class;
+      Foreground : String;
+      Background : String;
+      Underline  : Boolean);
    --  Register a regular expression that will highlight links when some text
    --  is inserted through Insert_With_Links. Callback will be destroyed when
    --  the console itself is destroyed.
@@ -294,6 +297,11 @@ package Interactive_Consoles is
    --  If Regexp contains parenthesis, then the part that is highlighted
    --  corresponds to the first group of parenthesis, otherwise the whole
    --  regexp is highlighted.
+   --  You can specify hightliting colors by providint non empty values for
+   --  Foreground/Background. Set Underline = True to have underline links.
+
+   procedure Delete_Hyper_Links (Console : access Interactive_Console_Record);
+   --  Delete all hyper-links registered in console
 
    procedure Insert_With_Links
      (Console   : access Interactive_Console_Record;
