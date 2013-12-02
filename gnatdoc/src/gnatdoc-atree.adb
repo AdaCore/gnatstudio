@@ -2588,9 +2588,7 @@ package body GNATdoc.Atree is
 
       Append_Line ("Full_Name: " & Get_Full_Name (E));
 
-      if not Reliable_Mode
-        and then Present (E.Parent_Package)
-      then
+      if Present (E.Parent_Package) then
          Append_Entity ("Parent_Package: ", E.Parent_Package);
       end if;
 
@@ -2760,7 +2758,9 @@ package body GNATdoc.Atree is
             & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
       end if;
 
-      if Present (E.Xref.Parent_Package) then
+      if not Reliable_Mode
+       and then Present (E.Xref.Parent_Package)
+      then
          Append_Line
            (LL_Prefix
             & "Parent_Package: "
