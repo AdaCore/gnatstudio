@@ -597,7 +597,7 @@ procedure GPS.Main is
       Prefix_Dir := Create (+Prefix.all);
 
       declare
-         Tmp : constant String := Getenv ("PATH");
+         Tmp : constant String := Getenv ("PATH").all;
       begin
          Setenv
            ("PATH",
