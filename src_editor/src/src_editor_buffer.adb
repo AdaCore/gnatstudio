@@ -591,12 +591,17 @@ package body Src_Editor_Buffer is
       Default_Editable : Boolean := True)
    is
       Iter : Gtk_Text_Iter;
+      S : Loc_T;
+      From, To : Gtk_Text_Iter;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
+      Buffer.Start_Undo_Group;
+
       if Buffer.Has_MC_Clipboard then
          for Cursor of Buffer.Multi_Cursors_List loop
             Set_Multi_Cursors_Manual_Sync
               (Source_Buffer (Buffer), Cursor);
-            Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
             Buffer.Insert
               (Iter, To_String (Cursor.Clipboard));
          end loop;
@@ -604,9 +609,19 @@ package body Src_Editor_Buffer is
          Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
       end if;
 
+      Get_Mark_Position (Source_Buffer (Buffer), Buffer.Get_Insert, S);
       Paste_Clipboard (Gtk_TB_Access (Buffer), Clipboard, Default_Editable);
+      Get_Iter_At_Screen_Position (Buffer, From, S.Line, S.Col);
+      Buffer.Get_Iter_At_Mark (To, Buffer.Get_Insert);
+
+      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      if Get_Line (From) /= Get_Line (To) then
+         Success := Do_Indentation (Source_Buffer (Buffer), From, To);
+      end if;
 
       Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+
+      Buffer.Finish_Undo_Group;
    end Paste_Clipboard;
 
    -------------------
@@ -1990,7 +2005,7 @@ package body Src_Editor_Buffer is
          Is_Main_Action : Boolean := True)
       is
          Line, Sel_Line : Editable_Line_Type;
-         Col, Sel_Col :  Character_Offset_Type;
+         Col, Sel_Col   : Character_Offset_Type;
 
          procedure End_Action;
          procedure End_Action is
@@ -4786,6 +4801,10 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Iter);
    end Get_Cursor_Position;
 
+   -----------------------
+   -- Get_Iter_Position --
+   -----------------------
+
    procedure Get_Iter_Position
      (Buffer : Source_Buffer;
       Iter   : Gtk_Text_Iter;
@@ -4804,6 +4823,10 @@ package body Src_Editor_Buffer is
       Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
    end Get_Iter_Position;
 
+   -----------------------
+   -- Get_Iter_Position --
+   -----------------------
+
    procedure Get_Iter_Position
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
@@ -4815,6 +4838,34 @@ package body Src_Editor_Buffer is
       Get_Iter_Position (Buffer, Iter, Line, Col);
       Column := Expand_Tabs (Buffer, Line, Col);
    end Get_Iter_Position;
+
+   -----------------------
+   -- Get_Iter_Position --
+   -----------------------
+
+   procedure Get_Iter_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Loc    : out Loc_T)
+   is
+   begin
+      Get_Iter_Position (Buffer, Iter, Loc.Line, Loc.Col);
+   end Get_Iter_Position;
+
+   -----------------------
+   -- Get_Mark_Position --
+   -----------------------
+
+   procedure Get_Mark_Position
+     (Buffer : Source_Buffer;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Loc    : out Loc_T)
+   is
+      I : Gtk_Text_Iter;
+   begin
+      Buffer.Get_Iter_At_Mark (I, Mark);
+      Get_Iter_Position (Buffer, I, Loc);
+   end Get_Mark_Position;
 
    -------------------------
    -- Get_Cursor_Position --

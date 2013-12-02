@@ -25,6 +25,7 @@ use  Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Multi_Cursors;
 use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Commands.Editor is
 
@@ -264,12 +265,16 @@ package body Commands.Editor is
 
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
 
-      if Start_Line /= 0 then
-         Item.Locs.Start_Loc.Line := Start_Line;
-      end if;
+      if Item.Edition_Mode = Insertion then
+         if Start_Line /= 0 then
+            Item.Locs.Start_Loc.Line := Start_Line;
+         end if;
 
-      if Start_Column /= 0 then
-         Item.Locs.Start_Loc.Col := Start_Column;
+         if Start_Column /= 0 then
+            Put_Line (Item.Locs.Start_Loc.Col'Img);
+            Put_Line (Start_Column'Img);
+            Item.Locs.Start_Loc.Col := Start_Column;
+         end if;
       end if;
    end Add_Text;
 
