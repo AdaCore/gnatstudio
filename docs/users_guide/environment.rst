@@ -189,7 +189,7 @@ Files
   :ref:`Adding_support_for_new_languages`.
 
 
-:file:`$HOME/.gps/keys.xml`
+:file:`$HOME/.gps/keys6.xml`
   Contains all the key bindings for the actions defined in GPS or in the
   custom files. This only contains the key bindings overridden through the
   key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
