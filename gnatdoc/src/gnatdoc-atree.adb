@@ -2444,7 +2444,8 @@ package body GNATdoc.Atree is
       With_Src       : Boolean := False;
       With_Doc       : Boolean := False;
       With_Errors    : Boolean := False;
-      With_Unique_Id : Boolean := False) return String
+      With_Unique_Id : Boolean := False;
+      Reliable_Mode  : Boolean := True) return String
    is
       LL_Prefix : constant String := "xref: ";
       Printout  : aliased Unbounded_String;
@@ -2587,7 +2588,9 @@ package body GNATdoc.Atree is
 
       Append_Line ("Full_Name: " & Get_Full_Name (E));
 
-      if Present (E.Parent_Package) then
+      if not Reliable_Mode
+        and then Present (E.Parent_Package)
+      then
          Append_Entity ("Parent_Package: ", E.Parent_Package);
       end if;
 
@@ -2731,10 +2734,12 @@ package body GNATdoc.Atree is
             & Image (E.Xref.Loc));
       end if;
 
-      Append_Line
-        (LL_Prefix
-         & "Full Name: "
-         & Get (E.Full_Name).all);
+      if not Reliable_Mode then
+         Append_Line
+           (LL_Prefix
+            & "Full_Name: "
+            & Get (E.Full_Name).all);
+      end if;
 
       if Present (E.Xref.Body_Loc) then
          Append_Line
@@ -3054,12 +3059,16 @@ package body GNATdoc.Atree is
 
    procedure pn (E : Entity_Id) is
    begin
+      --  Reliable_Mode is set to False to display all the information of the
+      --  entity (including unreliable LL attributes) when debugging.
+
       GNAT.IO.Put_Line
         (To_String (E,
            With_Src => True,
            With_Doc => True,
            With_Full_Loc => True,
-           With_Unique_Id => True));
+           With_Unique_Id => True,
+           Reliable_Mode => False));
    end pn;
 
    ---------

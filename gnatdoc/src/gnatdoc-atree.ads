@@ -597,7 +597,8 @@ private package GNATdoc.Atree is
       With_Src       : Boolean := False;
       With_Doc       : Boolean := False;
       With_Errors    : Boolean := False;
-      With_Unique_Id : Boolean := False) return String;
+      With_Unique_Id : Boolean := False;
+      Reliable_Mode  : Boolean := True) return String;
    --  Returns a string containing all the information associated with E.
    --  Prefix is used by routines of package GNATdoc.Treepr to generate the
    --  bar which represents the enclosing scopes. If With_Full_Loc is true then
@@ -608,7 +609,8 @@ private package GNATdoc.Atree is
    --  reported on the node are added to the output; if With_Unique_Id is true
    --  then the unique identifier of E as well as the unique identifier of all
    --  the entities associated with E (ie. Parent, Scope, etc.) is added to
-   --  the output.
+   --  the output. If Reliable_Mode is True then Xref information which is not
+   --  fully reliable and can vary between platforms is not added to the output
 
 private
    type Xref_Info is
