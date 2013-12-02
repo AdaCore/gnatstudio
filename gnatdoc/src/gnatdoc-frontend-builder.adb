@@ -1485,9 +1485,9 @@ package body GNATdoc.Frontend.Builder is
                                   (Get_Full_View (Entity));
                               Append_To_Scope (E, Get_Full_View (Entity));
                               Set_Is_Decorated (Get_Full_View (Entity));
-                           else
-                              Remove_Full_View (Entity);
                            end if;
+
+                           Remove_Full_View (Entity);
                         end if;
 
                      --  For incomplete types Xref provides all the
