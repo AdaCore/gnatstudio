@@ -116,6 +116,9 @@ package body GNATdoc.Frontend.Builder is
       function Get_Parent
         (Entity : Unique_Entity_Id) return Entity_Id;
 
+      function Get_Parent_Package
+        (Entity : Unique_Entity_Id) return Entity_Id;
+
       function Get_Scope
         (Entity : Unique_Entity_Id) return Entity_Id;
 
@@ -137,6 +140,9 @@ package body GNATdoc.Frontend.Builder is
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Class_Or_Record_Type
+        (Entity : Unique_Entity_Id) return Boolean;
+
+      function Is_Compilation_Unit
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Concurrent_Type_Or_Object
@@ -303,9 +309,11 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Get_LL_Location);
       pragma Inline (Get_LL_Scope);
       pragma Inline (Get_Parent);
+      pragma Inline (Get_Parent_Package);
       pragma Inline (Get_Scope);
       pragma Inline (In_Ada_Language);
       pragma Inline (Is_Class_Or_Record_Type);
+      pragma Inline (Is_Compilation_Unit);
       pragma Inline (Is_Concurrent_Type_Or_Object);
       pragma Inline (Is_Container);
       pragma Inline (Is_Decorated);
@@ -618,6 +626,16 @@ package body GNATdoc.Frontend.Builder is
          return Get_Parent (Get_Entity (Entity));
       end Get_Parent;
 
+      ------------------------
+      -- Get_Parent_Package --
+      ------------------------
+
+      function Get_Parent_Package
+        (Entity : Unique_Entity_Id) return Entity_Id is
+      begin
+         return Get_Parent_Package (Get_Entity (Entity));
+      end Get_Parent_Package;
+
       ---------------
       -- Get_Scope --
       ---------------
@@ -656,6 +674,19 @@ package body GNATdoc.Frontend.Builder is
       begin
          return Is_Class_Or_Record_Type (Get_Entity (Entity));
       end Is_Class_Or_Record_Type;
+
+      -------------------------
+      -- Is_Compilation_Unit --
+      -------------------------
+
+      function Is_Compilation_Unit
+        (Entity : Unique_Entity_Id) return Boolean is
+      begin
+         return
+           (Is_Package (Entity) or else Is_Subprogram (Entity))
+             and then
+           (Is_Global (Entity) or else Present (Get_Parent_Package (Entity)));
+      end Is_Compilation_Unit;
 
       ----------------------------------
       -- Is_Concurrent_Type_Or_Object --
@@ -2037,9 +2068,7 @@ package body GNATdoc.Frontend.Builder is
                   Append_To_Map (New_E);
                end if;
 
-               if Is_Container (New_E)
-                 and then (Is_Global (New_E) or else Is_Generic (New_E))
-               then
+               if Is_Compilation_Unit (New_E) then
                   Enter_Scope (New_E);
                   exit;
                end if;

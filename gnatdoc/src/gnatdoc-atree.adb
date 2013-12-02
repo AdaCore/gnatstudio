@@ -561,6 +561,28 @@ package body GNATdoc.Atree is
       Full_Name  : Unbounded_String;
       Scope      : Entity_Id := Get_Scope (E);
       Prev_Scope : Entity_Id;
+
+      function In_Neverending_Loop return Boolean;
+      --  Return True if the computation enters into a never ending loop
+
+      Parents : array (1 .. 50) of Entity_Id;
+      P_Count : Natural := 0;
+
+      function In_Neverending_Loop return Boolean is
+      begin
+         for J in 1 .. P_Count loop
+            if Parents (J) = Scope then
+               pragma Assert (False);
+               return True;
+            end if;
+         end loop;
+
+         P_Count := P_Count + 1;
+         Parents (P_Count) := Scope;
+
+         return False;
+      end In_Neverending_Loop;
+
    begin
       Set_Unbounded_String (Full_Name, Get_Short_Name (E));
 
@@ -568,6 +590,11 @@ package body GNATdoc.Atree is
       while Present (Scope)
         and then not Is_Standard_Entity (Scope)
       loop
+         if In_Neverending_Loop then
+            return "";
+         end if;
+
+         --  ---
          Full_Name  := Get_Short_Name (Scope) & "." & Full_Name;
          Prev_Scope := Scope;
          Scope      := Get_Scope (Scope);
