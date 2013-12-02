@@ -596,14 +596,12 @@ procedure GPS.Main is
 
       Prefix_Dir := Create (+Prefix.all);
 
-      declare
-         Tmp : constant String := Getenv ("PATH").all;
-      begin
-         Setenv
-           ("PATH",
-            Tmp & Path_Separator
-            & Prefix_Dir.Display_Full_Name & Directory_Separator & "bin");
-      end;
+      Tmp := Getenv ("PATH");
+      Setenv
+        ("PATH",
+         Tmp.all & Path_Separator
+         & Prefix_Dir.Display_Full_Name & Directory_Separator & "bin");
+      Free (Tmp);
 
       Gtk.Main.Init;
 
