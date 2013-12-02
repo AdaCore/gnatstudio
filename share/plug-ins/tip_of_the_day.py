@@ -415,6 +415,7 @@ def display_tip (title, doc, img):
     doc_label = Gtk.Label()
     doc_label.set_use_markup(True)
     doc_label.set_markup ("""%s""" % doc)
+    doc_label.set_selectable(True)
 
     hbox.pack_start (doc_label, False, False, 10)
 
@@ -489,7 +490,7 @@ class Tip:
         self.window = window
 
         window.set_default_size (550, 350)
-        window.set_decorated (False)
+        window.set_decorated (True)
 
         if isinstance (parent, Gtk.Window):
             window.set_transient_for (parent)
