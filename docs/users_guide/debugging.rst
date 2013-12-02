@@ -475,7 +475,7 @@ the mouse, gives access to the following options:
 
 :menuselection:`Hide all *component*`
   Hides all subcomponents of the selected item. To select a particular field or
-  item in a record/array, move the mouse over the name of this component, not
+  item in a record/array, move the cursor over the name of this component, not
   over the box containing the values for this item.
 
 :menuselection:`Show all *component*`
@@ -708,7 +708,7 @@ setting these properties:
 
 * Per breakpoint settings:
 
-  after setting a breakpoint (the default Scope/Action values will be
+  After setting a breakpoint (the default Scope/Action values will be
   task/task), select the :guilabel:`Scope/Action` tab in the
   :guilabel:`Advanced` settings.  To change these settings on a given
   breakpoint, select it from the breakpoints list, select the desired values of
@@ -716,7 +716,7 @@ setting these properties:
 
 * Default session settings:
 
-  select the :guilabel:`Scope/Action` tab in the :guilabel:`Advanced`
+  Select the :guilabel:`Scope/Action` tab in the :guilabel:`Advanced`
   settings. Select the desired Scope and Action settings, check the
   :guilabel:`Set as session defaults` check box and click the
   :guilabel:`Close` button. From then on, every new breakpoint will have the
@@ -726,8 +726,8 @@ setting these properties:
 .. index:: breakpoints, saving
 .. index:: preferences; debugger --> preserve state on exit
 
-If you have enabled the preference :menuselection:`Debugger --> Preserve
-state on exit`, GPS automatically saves the currently set breakpoints and
+If you enabled the preference :menuselection:`Debugger --> Preserve state
+on exit`, GPS automatically saves the currently set breakpoints and
 restores them the next time you debug the same executable. This allows you
 to immediately start debugging your application without having to set the
 breakpoints every time.
@@ -743,16 +743,17 @@ The Memory Window
 .. image:: memory-view.jpg
 
 The memory window allows you to display the contents of memory by
-specifying either an address, or a variable name.
+specifying either an address or a variable name.
 
 .. index:: C
 .. index:: hexadecimal
 
-To display memory contents, enter the address using the C hexadecimal notation:
-0xabcd, or the name of a variable, e.g foo, in the :guilabel:`Location` text
-entry.  In the latter case, its address is computed automatically. Then either
-press :kbd:`Enter` or click on the :guilabel:`View` button. This will display
-the memory with the corresponding addresses in the bottom text area.
+To display memory contents, enter either the address using the C
+hexadecimal notation: 0xabcd or the name of a variable in the
+:guilabel:`Location` text entry.  (If a variable is entered, the underlying
+debugger will compute its address automatically.)  Then either press
+:kbd:`Enter` or click the :guilabel:`View` button. GPS will display the
+memory with the corresponding addresses in the bottom text area.
 
 .. index:: ASCII
 
@@ -765,12 +766,12 @@ The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and :kbd:`Pag
 keys in the memory text area allows you to walk through the memory in order of
 ascending/descending addresses respectively.
 
-Finally, you can modify a memory area by simply clicking on the location you
-want to modify, and by entering the new values. Modified values will appear in
-a different color (red by default) and will only be taken into account (i.e
+Finally, you can modify a memory area by clicking on the location you want
+to modify, and by entering the new values. Modified values will appear in a
+different color (red by default) and will only be written account (i.e
 written to the target) when you click on the :guilabel:`Submit changes`
-button. Clicking on the :guilabel:`Undo changes` or going up/down in the memory
-will undo your editing.
+button. Clicking on the :guilabel:`Undo changes` or going up/down in the
+memory will undo your editing.
 
 Clicking on :guilabel:`Close` will close the memory window, canceling your last
 pending changes, if any.
@@ -787,13 +788,13 @@ information:
 
 *Lines with code*
 
-  In this area, blue dots are present next to lines for which the debugger has
-  debug information, in other words, lines that have been compiled with debug
-  information and for which the compiler has generated some code.  Currently,
-  there is no check when you try to set a breakpoint on a non dotted line: this
-  will simply send the breakpoint command to the underlying debugger, and
-  usually (e.g in the case of gdb) result in setting a breakpoint at the
-  closest location that matches the file and line that you specified.
+  In this area, blue dots are shown next to lines for which the debugger
+  has debug information.  These are lines that have been compiled with
+  debug information and for which the compiler has generated some code.  If
+  you try to set a breakpoint on a non dotted line, GPS will send the
+  breakpoint command to the underlying debugger, and usually (e.g in the
+  case of `gdb`) results in setting a breakpoint at the closest location to
+  the file and line you specified.
 
 *Current line executed*
   This is a green arrow showing the line about to be executed.
@@ -813,20 +814,21 @@ information:
 .. index:: tooltip
 
 The second area in the source window is a text window on the right that
-displays the source files, with syntax highlighting.  If you leave the cursor
-over a variable, a tooltip will appear showing the value of this variable.
-Automatic tooltips can be disabled in the preferences menu.
+displays the source files, with syntax highlighting.  If you hover the
+cursor over a variable, GPS will display a tooltip showing the value of that
+variable.  You can disable these automatic tooltips using the preferences
+menu.
 
 See :ref:`Preferences Dialog <preferences_dialog>`.
 
 When the debugger is active, the contextual menu of the source window contains
-a sub menu called :menuselection:`Debug` providing the following entries.
+a sub menu called :menuselection:`Debug` providing the entries below.
 
-Note that these entries are dynamic: they will apply to the entity found under
-the cursor when the menu is displayed (depending on the current language). In
-addition, if a selection has been made in the source window the text of the
+These entries are dynamic and apply to the entity found under the cursor
+when the menu is displayed (depending on the current language). In
+addition, you have made a selection in the source window, the text of the
 selection will be used instead. This allows you to display more complex
-expressions easily (for example by adding some comments to your code with the
+expressions easily (for example, you can add comments to your code with the
 complex expressions you want to be able to display in the debugger).
 
 
@@ -836,12 +838,12 @@ complex expressions you want to be able to display in the debugger).
 
 
 :menuselection:`Debug --> Display *selection*`
-  Displays the selection (or by default the name under the cursor) in the data
-  window. The value will be automatically refreshed each time the process state
-  changes (e.g after a step or a next command). To freeze the display in the
-  canvas, you can either click on the corresponding icon in the data window, or
-  use the contextual menu for the specific item (see :ref:`The_Data_Window` for
-  more information).
+  Displays the selection (or by default the name under the cursor) in the
+  data window. GPS automatically refreshes this value each time the process
+  state changes (e.g after a step or a next command). To freeze the display
+  in the canvas, either click on the corresponding icon in the data window,
+  or use the contextual menu for the specific item (see
+  :ref:`The_Data_Window` for more information).
 
 
 :menuselection:`Debug --> Print *selection*.all`
@@ -860,7 +862,7 @@ complex expressions you want to be able to display in the debugger).
 
 
 :menuselection:`Set Breakpoint on Line *xx*`
-  Sets a breakpoint on the line under the cursor, in the current file.
+  Sets a breakpoint on the line under the cursor.
 
 
 :menuselection:`Set Breakpoint on *selection*`
@@ -894,44 +896,46 @@ You can open the assembly window by using the menu
 
 .. image:: assembly.jpg
 
-The current assembly instruction is highlighted with a green arrow on its left.
-The instructions corresponding to the current source line are highlighted in
-red by default. This allows you to easily see where the program counter will
-point to, once you have pressed the :guilabel:`Next` button on the tool bar.
+The current assembly instruction is highlighted on the left with a green
+arrow.  The instructions corresponding to the current source line are
+highlighted in red by default. This allows you to easily see where the
+program counter will point to after you press the :guilabel:`Next` button
+on the tool bar.
 
-Moving to the next assembly instruction is done through the :guilabel:`Nexti` (next
-instruction) button in the tool bar. If you choose "Stepi" instead (step
-instruction), this will also jump to the subprogram being called.
+You can move to the next assembly instruction using the :guilabel:`Nexti`
+(next instruction) button in the tool bar. If you choose "Stepi" instead
+(step instruction), this it will step into any subprogram being called by
+that instruction.
 
-For efficiency reasons, only a small part of the assembly code around the
-current instruction is displayed.  You can specify in the :ref:`Preferences
-Dialog <preferences_dialog>` how many instructions are displayed by default.
-Also, you can easily display the instructions immediately preceding or
-following the currently displayed instructions by pressing one of the
-:kbd:`Page up` or :kbd:`Page down` keys, or by using the contextual menu in the
-assembly window.
+For efficiency purposes, GPS only display a small part of the assembly code
+around the current instruction.  You can specify in the :ref:`Preferences
+Dialog <preferences_dialog>` how many instructions are displayed by
+default.  Also, you can easily display the instructions immediately
+preceding or following the currently displayed instructions by pressing one
+of the :kbd:`Page up` or :kbd:`Page down` keys or by using the contextual
+menu in the assembly window.
 
 .. index:: menu; debug --> data --> display registers
 
-A convenient complement when debugging at the assembly level is the ability of
-displaying the contents of machine registers.  When the debugger supports it
-(as gdb does), you can select the :menuselection:`Debug --> Data --> Display
-Registers` menu to get an item in the canvas that will show the current
-contents of each machine register, and that will be updated every time one of
-them changes.
+A convenient complement when debugging at the assembly level is the ability
+to display the contents of machine registers.  When the debugger supports
+it (as `gdb` does), you can select the :menuselection:`Debug --> Data -->
+Display Registers` menu to get an item in the canvas that shows the current
+contents of each machine register and that's updated every time one of them
+changes.
 
 
 .. index:: menu; debug --> Data --> display any expression
 
-You might also choose to look at a single register.  With gdb, select the
-:menuselection:`Debug --> Data --> Display Any Expression`, entering something
-like::
+You might also choose to look at a single register.  With `gdb`, select the
+:menuselection:`Debug --> Data --> Display Any Expression`, entering
+something like::
 
   output /x $eax
 
-in the field, and selecting the toggle button :guilabel:`Expression is a subprogram
-call`. This will create a new canvas item that will be refreshed every time the
-value of the register (in this case eax) changes.
+in the field, and selecting the toggle button :guilabel:`Expression is a
+subprogram call`. This creates a new canvas item that is refreshed every
+time the value of the register (in this case `eax`) changes.
 
 
 
@@ -949,11 +953,10 @@ usually typing *help* will give you an overview of the commands available).
 If the underlying debugger allows it, pressing :kbd:`Tab` in this window will
 provide completion for the command that is being typed (or for its arguments).
 
-There are also additional commands defined to provide a simple text interface
-to some graphical features.
-
-Here is the complete list of such commands. The arguments between square
-brackets are optional and can be omitted.
+There are also additional commands defined to provide a simple text
+interface to some graphical features.  Here is the complete list of such
+commands. The arguments between square brackets are optional and can be
+omitted.
 
 
 *graph (print|display) expression [dependent on display_num] [link_name name] [at x, y] [num num]*
@@ -961,56 +964,52 @@ brackets are optional and can be omitted.
   .. index:: graph print
   .. index:: graph display
 
-  This command creates a new item in the canvas, that shows the value of
-  `Expression`. `Expression` should be the name of a variable, or one of its
-  fields, that is in the current scope for the debugger.
+  Create a new item in the canvas showing the value of
+  `Expression`. `Expression` should be the name of a variable, or one of
+  its fields, that is in the current scope for the debugger.
 
-  The command `graph print` will create a frozen item, that is not
+  The command `graph print` will create a frozen item, one that is not
   automatically refreshed when the debugger stops, whereas `graph display`
   displays an automatically refreshed item.
 
-  The new item is associated with a number, that is visible in its title bar.
-  This number can be specified through the `num` keyword, and will be taken
-  into account if no such item already exists.  These numbers can be used to
-  create links between the items, using the second argument to the command,
-  `dependent on`. The link itself (i.e. the line) can be given a name that is
-  automatically displayed, using the third argument.
+  The new item is associated with a number that is displayed in its title
+  bar.  This number can be specified with the `num` keyword.  These numbers
+  can be used to create links between the items, using the second argument
+  to the command, `dependent on`. By specifying the third argument, the
+  link itself (i.e. the line) can be given a name that is also displayed.
 
 *graph (print|display) `command`*
 
   This command is similar to the one above, except it should be used to display
   the result of a debugger command in the canvas.
 
-  For instance, if you want to display the value of a variable in hexadecimal
-  rather than the default decimal with gdb, you should use a command like::
+  For example, using `gdb`, if you want to display the value of a variable
+  in hexadecimal rather than the default decimal, you should use a command
+  like::
 
     graph display `print /x my_variable`
 
-  This will evaluate the command between back-quotes every time the debugger
-  stops, and display this in the canvas. The lines that have changed will be
-  automatically highlighted (in red by default).
-
-  This command is the one used by default to display the value of registers for
-  instance.
+  This evaluates the command between back-quotes every time the debugger
+  stops and displays the result in the canvas. The lines that have changed
+  will be automatically highlighted (by default, in red).
 
 *graph (enable|disable) display display_num [display_num ...]*
 
   .. index:: graph enable
   .. index:: graph disable
 
-  This command will change the refresh status of items in the canvas. As
-  explained above, items are associated with a number visible in their title
-  bar.
+  Change the refresh status of items in the canvas. As explained above,
+  items are associated with a number visible in their title bar.
 
-  Using the `graph enable` command will force the item to be automatically
-  refreshed every time the debugger stops, whereas the `graph disable` command
-  will freeze the item.
+  The `graph enable` command forces the item to be refreshed automatically
+  every time the debugger stops and the `graph disable` command will freeze
+  the item, preventing its display from being changed.
 
 *graph undisplay display_num*
 
   .. index:: graph undisplay
 
-  This command will remove an item from the canvas
+  Remove an item from the canvas.
 
 
 
@@ -1019,28 +1018,28 @@ brackets are optional and can be omitted.
 Customizing the Debugger
 ========================
 
-GPS is a high-level interface to several debugger backends, in particular gdb.
-Each back end has its own strengths, but you can enhance the command line
-interface to these backends through GPS, using Python.
+GPS is a high-level interface to several debugger backends, in particular
+`gdb`.  Each back end has its own advantages, but you can enhance the
+command line interface to these backends through GPS by using Python.
 
-This section will provide a small such example. The idea is to provide the
+This section provide a small such example. The goal is to provide the
 notion of "alias" in the debugger console. For example, this can be used so
-that you type "foo", and this really executes a longer command, like displaying
-the value of a variable with a long name.
+that you if type "foo", this really executes a longer command, like
+displaying the value of a variable with a long name.
 
-`gdb` already provides this feature through the `define` keywords, but we will
-in fact rewrite that feature in terms of python.
+`gdb` already provides this feature through the `define` keywords, but here
+we implement that feature using python in GPS.
 
 GPS provides an extensive Python API to interface with each of the running
-debugger. In particular, it provides the function "send", which can be used to
-send a command to the debugger, and get its output, and the function
-"set_output", which can be used when you implement your own functions.
+debuggers. In particular, it provides the function "send", used to send a
+command to the debugger and get its output, and the function "set_output",
+used when you implement your own functions.
 
-It also provides, through `hook`, the capability to monitor the state of the
-debugger back-end. In particular, one such hook, `debugger_command_action_hook`
-is called when the user has typed a command in the debugger console, and before
-the command is executed. This can be used to add your own commands. The example
-below uses this hook.
+It also provides, through `hook`, the capability to monitor the state of
+the debugger back-end. In particular, one such hook,
+`debugger_command_action_hook` is called when the user typed a command in
+the debugger console and before the command is executed. This can be used
+to add your own commands. The example below uses this hook.
 
 .. highlight:: python
 
@@ -1052,7 +1051,7 @@ Here is the code::
 
   def set_alias (name, command):
      """Set a new debugger alias. Typing this alias in a debugger window
-        will then execute command"""
+        will execute command"""
      global aliases
      aliases[name] = command
 
@@ -1075,13 +1074,13 @@ Here is the code::
 
 
 The list of aliases is stored in the global variable `aliases`, which is
-modified by `set_alias`. Whenever the user executes an alias, the real command
-send to the debugger is sent through `execute_alias`.
+modified by `set_alias`. Whenever the user executes an alias, the real
+command is sent to the debugger through `execute_alias`.
 
-The real part of the work is done by `debugger_commands`. If the user is
-executing the `alias` command, it defines a new alias. Otherwise, if he typed
-the name of an alias, we really want to execute that alias. Else, we let the
-debugger back-end handle that command.
+The real work is done by `debugger_commands`. If the user executes the
+`alias` command, it defines a new alias. Otherwise, if he typed the name of
+an alias, we want to execute that alias.  Otherwise, we let the debugger
+back-end handle that command.
 
 After you have copied this example in the :file:`$HOME/.gps/plug-ins`
 directory, you can start a debugger as usual in GPS, and type the following in
@@ -1093,14 +1092,13 @@ its console::
 
 The first command defines the alias, the second line executes it.
 
-This alias can also be used within the `graph display` command, so that the
-value of the variable is in fact displayed in the data window automatically,
-for instance::
+This alias can also be used within the `graph display` command so the value
+of the variable is displayed in the data window, for example::
 
      (gdb) graph display `foo`
 
-Other examples can be programmed. You could write complex python functions,
-which would for instance query the value of several variables, and pretty print
-the result. This complex python function can then be called from the debugger
-console, or automatically every time the debugger stops through the `graph
-display` command.
+You can also program other examples. You could write complex python
+functions, which would for example query the value of several variables and
+pretty-print the result.  Any of these complex python functions can be
+called either from the debugger console or automatically every time the
+debugger stops via the `graph display` command.
