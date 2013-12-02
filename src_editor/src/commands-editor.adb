@@ -498,8 +498,11 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
-
+      Sync   : constant Multi_Cursors_Sync_Type :=
+        Get_Multi_Cursors_Sync (Command.Buffer);
    begin
+      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+
       Replace_Slice
         (Command.Buffer,
          Command.Start_Line,
@@ -538,6 +541,8 @@ package body Commands.Editor is
 
       Command_Finished (Command, True);
 
+      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
+
       return Success;
    end Execute;
 
@@ -549,6 +554,8 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Boolean
    is
       Editor : Source_Editor_Box;
+      Sync   : constant Multi_Cursors_Sync_Type :=
+        Get_Multi_Cursors_Sync (Command.Buffer);
    begin
       if not Is_Valid_Position
         (Command.Buffer,
@@ -557,6 +564,8 @@ package body Commands.Editor is
       then
          return True;
       end if;
+
+      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
 
       Replace_Slice
         (Command.Buffer,
@@ -587,6 +596,7 @@ package body Commands.Editor is
       Scroll_To_Cursor_Location (Get_View (Editor));
 
       Command_Finished (Command, True);
+      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
       return True;
    end Undo;
 

@@ -2211,7 +2211,6 @@ package body Src_Editor_View is
       View        : constant Source_View   := Source_View (Widget);
       Buffer      : constant Source_Buffer :=
                       Source_Buffer (Get_Buffer (View));
-      Start, Last : Gtk_Text_Iter;
       Result      : Boolean;
       Ignore      : Boolean;
 
@@ -2297,29 +2296,46 @@ package body Src_Editor_View is
                External_End_Action (Buffer);
 
             elsif Should_Indent (Buffer) then
+               Buffer.Start_Undo_Group;
+
                Result :=
                  Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
 
                if Result then
-                  --  ??? Could be a key handler as well
-                  Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
-                  Copy (Last, Dest => Start);
+                  declare
+                     Current_Sync_Mode : constant Multi_Cursors_Sync_Type :=
+                       Get_Multi_Cursors_Sync (Buffer);
+                     procedure Indent_Cursor (M : Gtk_Text_Mark);
+                     procedure Indent_Cursor
+                       (M : Gtk_Text_Mark)
+                     is
+                        S, L : Gtk_Text_Iter;
+                     begin
+                        Get_Iter_At_Mark (Buffer, L, M);
+                        Copy (L, S);
+                        if not View.As_Is_Enabled then
+                           Backward_Line (S, Ignore);
+                        end if;
 
-                  --  We do not want to get the previous line if we have the
-                  --  as-is modifier set.
+                        if not Ends_Line (L) then
+                           Forward_To_Line_End (L, Ignore);
+                        end if;
 
-                  if not View.As_Is_Enabled then
-                     Backward_Line (Start, Ignore);
-                  end if;
-
-                  if not Ends_Line (Last) then
-                     Forward_To_Line_End (Last, Ignore);
-                  end if;
-
-                  Ignore := Do_Indentation (Buffer, Start, Last);
+                        Ignore := Do_Indentation (Buffer, S, L);
+                     end Indent_Cursor;
+                  begin
+                     Set_Multi_Cursors_Manual_Sync (Buffer);
+                     Indent_Cursor (Get_Insert (Buffer));
+                     for Cursor of Get_Multi_Cursors (Buffer) loop
+                        Indent_Cursor (Get_Mark (Cursor));
+                     end loop;
+                     Set_Multi_Cursors_Sync (Buffer, Current_Sync_Mode);
+                  end;
                end if;
 
                View.Reset_As_Is_Mode;
+
+               Buffer.Finish_Undo_Group;
                return True;
             end if;
 
