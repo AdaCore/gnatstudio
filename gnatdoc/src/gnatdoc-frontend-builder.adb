@@ -2037,9 +2037,9 @@ package body GNATdoc.Frontend.Builder is
                   Append_To_Map (New_E);
                end if;
 
-               --  Avoid spurious entity GNATCOLL.Any_Types (procedure???)
-
-               if Is_Container (New_E) then
+               if Is_Container (New_E)
+                 and then (Is_Global (New_E) or else Is_Generic (New_E))
+               then
                   Enter_Scope (New_E);
                   exit;
                end if;
