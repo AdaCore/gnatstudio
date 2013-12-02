@@ -300,7 +300,8 @@ package body MI.Lexer is
    overriding function "=" (Left, Right : Token_Type) return Boolean is
    begin
       if Left.Code /= Right.Code or else Left.Line /= Right.Line or else
-        Left.Column /= Right.Column then
+        Left.Column /= Right.Column
+      then
          return False;
       end if;
 

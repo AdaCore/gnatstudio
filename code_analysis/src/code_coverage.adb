@@ -590,7 +590,8 @@ package body Code_Coverage is
                               & Txt_Cal (Cal_Count));
             end;
          elsif Coverage.all in Project_Coverage'Class and then
-           Project_Coverage (Coverage.all).Have_Runs then
+           Project_Coverage (Coverage.all).Have_Runs
+         then
 
             declare
                Run_Count : constant Natural :=

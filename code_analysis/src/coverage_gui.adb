@@ -216,7 +216,8 @@ package body Coverage_GUI is
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
-              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
+              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0
+            then
                Remove_Location_Category
                  (Kernel,
                   Uncovered_Category,

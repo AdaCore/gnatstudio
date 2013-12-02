@@ -1431,7 +1431,8 @@ package body Xref is
    begin
       if Active (SQLITE) then
          if E1.Entity = No_Entity
-           and then E2.Entity = No_Entity then
+           and then E2.Entity = No_Entity
+         then
             return E1.Loc = E2.Loc;
          else
             return E1.Entity = E2.Entity;

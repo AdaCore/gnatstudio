@@ -173,7 +173,8 @@ package body Ada_Semantic_Tree.Std_Entities is
          end loop;
 
          if Kind = A_Pragma or else Kind = An_Attribute
-           or else Kind = An_Aspect then
+           or else Kind = An_Aspect
+         then
             if Is_Standard_Ada then
                New_Element.Origin := Ada_Standard;
                New_Element.Documentation := new String'(Doc.all);

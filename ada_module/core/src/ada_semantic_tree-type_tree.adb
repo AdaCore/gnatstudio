@@ -655,7 +655,8 @@ package body Ada_Semantic_Tree.Type_Tree is
                --  avoids infinite loops
 
                if Parent_Type /= Null_Entity_Access and then
-                 not Is_Excluded (Excluded, Parent_Type) then
+                 not Is_Excluded (Excluded, Parent_Type)
+               then
                   Perform_Type_Analyzis_If_Needed (Parent_Type, Excluded);
 
                   Parent_Info := Get_Type_Info (Ada_Type_Key, Parent_Type);
