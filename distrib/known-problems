@@ -8,6 +8,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MA29-023: GPS: Goto declaration/body with a floating window
+  Problem:    When having a spec (ads) file open in a non floating window, and
+  the corresponding body open in a floating window, using go-to body in the
+  spec does not scroll to the corresponding location in the body.  
+  Workaround: None.
+
+- MA29-025: GPS: Search in a floating window
+  Problem:    When having a floating window source editor open, as well as a
+  non floating one, focusing on the floating and then using the search window
+  to search into it would search in the non floating window.
+  Workaround: None.
+
 - MB26-015: GB: Show complete command line in command line editor
   Problem:    When editing the command line before launching the action
               (ex: SPARK2014 > Prove Subprogram) the command line displayed at
