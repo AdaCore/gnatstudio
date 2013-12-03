@@ -226,6 +226,10 @@ package body Interactive_Consoles is
    --  care of the prompt, making the text read-only,... Any highlighting of
    --  the text must be done separately.
 
+   procedure Replace_Zeros (S : in out String);
+   pragma Inline (Replace_Zeros);
+   --  Replace ASCII.NULs in S.
+
    ---------
    -- Ref --
    ---------
@@ -527,18 +531,6 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      procedure Replace_Zeros (S : in out String);
-      pragma Inline (Replace_Zeros);
-      --  Replace ASCII.NULs in S.
-
-      procedure Replace_Zeros (S : in out String) is
-      begin
-         for C in S'Range loop
-            if S (C) = ASCII.NUL then
-               S (C) := '0';
-            end if;
-         end loop;
-      end Replace_Zeros;
 
       UTF8 : String := Iconv
         (Input           => Text,
@@ -866,6 +858,19 @@ package body Interactive_Consoles is
    exception
       when E : others => Trace (Me, E);
    end Size_Allocate_Handler;
+
+   -------------------
+   -- Replace_Zeros --
+   -------------------
+
+   procedure Replace_Zeros (S : in out String) is
+   begin
+      for C in S'Range loop
+         if S (C) = ASCII.NUL then
+            S (C) := '0';
+         end if;
+      end loop;
+   end Replace_Zeros;
 
    --------------------------------
    -- Selection_Received_Handler --
@@ -2035,7 +2040,11 @@ package body Interactive_Consoles is
       Locs : array (1 .. Console.Links_Count) of Link_And_Location;
       --  Index in Text of the first occurrence of each regexp
 
-      Index : Natural := Text'First;
+      Fixed : String := Text;
+      --  This is copy of Text argument with ASCII.NUL chars replaced by '0'
+      --  since Gtk+ does not handle them well.
+
+      Index : Natural := Fixed'First;
 
       procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links);
       --  Update the next location of the pattern after Index
@@ -2047,7 +2056,7 @@ package body Interactive_Consoles is
       procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links) is
          Matches : Match_Array (0 .. 1);
       begin
-         Match (Link.Pattern.all, Text, Matches, Data_First => Index);
+         Match (Link.Pattern.all, Fixed, Matches, Data_First => Index);
 
          if Matches (0) = No_Match then
             Locs (L) := (Link  => Link,
@@ -2073,6 +2082,8 @@ package body Interactive_Consoles is
       Start_Iter, Last_Iter : Gtk_Text_Iter;
 
    begin
+      Replace_Zeros (Fixed);
+
       --  Initialize the locations array, so that we try and match the regexps
       --  as few times as possible for efficiency.
       for L in Locs'Range loop
@@ -2084,8 +2095,8 @@ package body Interactive_Consoles is
         (Console, Text_Is_Input => False,
          Internal => Internal, Last_Iter => Last_Iter);
 
-      while Index <= Text'Last loop
-         Min         := Text'Last + 1;
+      while Index <= Fixed'Last loop
+         Min         := Fixed'Last + 1;
          Min_Pattern := Locs'Last + 1;
          for L in Locs'Range loop
             if Locs (L).First < Min then
@@ -2094,7 +2105,7 @@ package body Interactive_Consoles is
             end if;
          end loop;
 
-         if Min <= Text'Last then
+         if Min <= Fixed'Last then
             --  Found a regexp. Insert the leading text first, no hyper link
             if Min - 1 >= Index then
                Get_End_Iter (Console.Buffer, Start_Iter);
@@ -2103,14 +2114,14 @@ package body Interactive_Consoles is
                     (Buffer => Console.Buffer,
                      Iter   => Start_Iter,
                      Text   => Glib.Convert.Locale_To_UTF8
-                       (Text (Index .. Min - 1)),
+                       (Fixed (Index .. Min - 1)),
                      Tag    => Console.Highlight_Tag);
                else
                   Insert
                     (Buffer => Console.Buffer,
                      Iter   => Start_Iter,
                      Text   => Glib.Convert.Locale_To_UTF8
-                       (Text (Index .. Min - 1)));
+                       (Fixed (Index .. Min - 1)));
                end if;
             end if;
 
@@ -2120,7 +2131,7 @@ package body Interactive_Consoles is
               (Buffer         => Console.Buffer,
                Iter           => Start_Iter,
                Text           => Glib.Convert.Locale_To_UTF8
-                 (Text (Min .. Locs (Min_Pattern).Last)),
+                 (Fixed (Min .. Locs (Min_Pattern).Last)),
                Tag            => Locs (Min_Pattern).Link.Tag);
 
             Index := Locs (Min_Pattern).Last + 1;
@@ -2142,15 +2153,15 @@ package body Interactive_Consoles is
                Insert_With_Tags
                  (Buffer => Console.Buffer,
                   Iter   => Start_Iter,
-                  Text   => Text (Index .. Text'Last),
+                  Text   => Fixed (Index .. Fixed'Last),
                   Tag    => Console.Highlight_Tag);
             else
                Insert
                  (Buffer => Console.Buffer,
                   Iter   => Start_Iter,
-                  Text   => Text (Index .. Text'Last));
+                  Text   => Fixed (Index .. Fixed'Last));
             end if;
-            Index := Text'Last + 1;
+            Index := Fixed'Last + 1;
          end if;
       end loop;
 
