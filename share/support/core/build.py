@@ -469,7 +469,7 @@ XML = r"""<?xml version="1.0" ?>
     <command-line>
        <arg>%builder</arg>
        <arg>-c</arg>
-       <arg>-u</arg>
+       <arg>-U</arg>
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
