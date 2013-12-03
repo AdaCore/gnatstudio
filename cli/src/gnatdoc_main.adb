@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;           use Ada.Text_IO;
 
 with GNAT.Command_Line;     use GNAT.Command_Line;
+with GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Strings;          use GNAT.Strings;
 
@@ -35,6 +36,10 @@ with GNATdoc;               use GNATdoc;
 with Xref;                  use Xref;
 
 procedure GNATdoc_Main is
+
+   procedure Launch_Gnatinspect;
+   --  Launch gnatinspect on the loaded project
+
    Kernel : constant GPS.CLI_Kernels.CLI_Kernel :=
               new GPS.CLI_Kernels.CLI_Kernel_Record;
 
@@ -52,6 +57,72 @@ procedure GNATdoc_Main is
    Process_Private_Part : aliased Boolean;
    Quiet_Mode           : aliased Boolean;
    Suppress_Warnings    : aliased Boolean;
+
+   ------------------------
+   -- Launch_Gnatinspect --
+   ------------------------
+
+   procedure Launch_Gnatinspect is
+      Result : Integer;
+
+      Args   : GNAT.OS_Lib.Argument_List (1 .. 20) := (others => null);
+      --  Right now the number of arguments is 3, but this will allow
+      --  a flexible number of arguments in the future.
+
+      Index  : Positive := 1;  --  The index of the first available argument
+
+      procedure Add_Arg (Arg : String);
+      --  Add one argument to the command line
+
+      procedure Add_Arg (Arg : String) is
+      begin
+         Args (Index) := new String'(Arg);
+         Index := Index + 1;
+      end Add_Arg;
+
+      Gnatinspect : GNAT.OS_Lib.String_Access;
+   begin
+      if not Quiet_Mode then
+         Put_Line ("Computing cross-reference information");
+      end if;
+
+      Gnatinspect := GNAT.OS_Lib.Locate_Exec_On_Path ("gnatinspect");
+      if Gnatinspect = null then
+         Gnatinspect := GNAT.OS_Lib.Locate_Exec_On_Path ("gnatinspect.exe");
+      end if;
+
+      if Gnatinspect = null then
+         Put_Line ("warning: could not find gnatinspect");
+         return;
+      end if;
+
+      --  Compute the arguments to launch
+      Add_Arg ("--exit");
+      Add_Arg ("-P" & (+Project_File.Full_Name.all));
+      Add_Arg ("--db=" &
+               (+Kernel.Databases.Xref_Database_Location
+                    (Kernel.Registry.Tree.Root_Project).Full_Name.all));
+
+      Result := GNAT.OS_Lib.Spawn
+        (Program_Name => Gnatinspect.all,
+         Args         => Args (1 .. Index - 1));
+
+      if Result /= 0 then
+         Put_Line ("warning: could not generate the database with:");
+         Put (Gnatinspect.all & " ");
+         for J in 1 .. Index - 1 loop
+            Put (Args (J).all & " ");
+         end loop;
+         New_Line;
+         Put_Line ("exit code:" & Result'Img);
+      end if;
+
+      for J in 1 .. Index - 1 loop
+         GNAT.OS_Lib.Free (Args (J));
+      end loop;
+
+      GNAT.OS_Lib.Free (Gnatinspect);
+   end Launch_Gnatinspect;
 
 begin
    --  Retrieve log configuration
@@ -147,8 +218,14 @@ begin
      (Root_Project_Path => Project_File,
       Env               => Kernel.Registry.Environment);
 
+   --  Setup the xref databases
+
    Project_Changed (Kernel.Databases);
    Project_View_Changed (Kernel.Databases, Kernel.Registry.Tree);
+
+   --  Run GNATinspect
+
+   Launch_Gnatinspect;
 
    --  Run GNATdoc
    declare
