@@ -345,7 +345,9 @@ package body GPS.Kernel.Actions is
                      Via_Menu    =>
                        Event /= null and then
                          (Get_Event_Type (Event) = Button_Press or else
-                          Get_Event_Type (Event) = Button_Release),
+                          Get_Event_Type (Event) = Button_Release or else
+                          Get_Event_Type (Event) = Key_Press or else
+                          Get_Event_Type (Event) = Key_Release),
                      Label       => new String'(Action),
                      Repeat_Count => R,
                      Remaining_Repeat => Repeat - R)),
