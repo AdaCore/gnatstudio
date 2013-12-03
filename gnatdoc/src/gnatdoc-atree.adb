@@ -881,6 +881,15 @@ package body GNATdoc.Atree is
       return E.Has_Private_Parent;
    end Has_Private_Parent;
 
+   ------------------------------
+   -- Has_Unknown_Discriminant --
+   ------------------------------
+
+   function Has_Unknown_Discriminants (E : Entity_Id) return Boolean is
+   begin
+      return E.Has_Unknown_Discriminants;
+   end Has_Unknown_Discriminants;
+
    ---------------------
    -- In_Ada_Language --
    ---------------------
@@ -1324,6 +1333,8 @@ package body GNATdoc.Atree is
            End_Of_Profile_Location_In_Body => No_Location,
 
            Has_Private_Parent => False,
+           Has_Unknown_Discriminants => False,
+
            In_Private_Part    => False,
 
            Is_Decorated      => False,
@@ -1335,7 +1346,6 @@ package body GNATdoc.Atree is
            Is_Incomplete     => False,
            Is_Private        => False,
            Idepth_Level      => 0,
-           --  Inheritance depth level of the tagged type.
 
            Doc               => No_Comment_Result,
            Comment           => No_Structured_Comment,
@@ -1918,6 +1928,15 @@ package body GNATdoc.Atree is
         or else Is_Concurrent_Type_Or_Object (E));
       E.Is_Tagged_Type := True;
    end Set_Is_Tagged;
+
+   -----------------------------------
+   -- Set_Has_Unknown_Discriminants --
+   -----------------------------------
+
+   procedure Set_Has_Unknown_Discriminants (E : Entity_Id) is
+   begin
+      E.Has_Unknown_Discriminants := True;
+   end Set_Has_Unknown_Discriminants;
 
    --------------
    -- Set_Kind --
@@ -2650,6 +2669,10 @@ package body GNATdoc.Atree is
 
       if Has_Private_Parent (E) then
          Append_Line ("Has_Private_Parent");
+      end if;
+
+      if Has_Unknown_Discriminants (E) then
+         Append_Line ("Has_Unknown_Discriminants");
       end if;
 
       if In_Private_Part (E) then

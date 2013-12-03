@@ -195,8 +195,10 @@ private package GNATdoc.Atree is
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
       Name     : String) return Entity_Id;
-   --  Tree node constructors. New_Internal_Entity is currently used only to
-   --  build the entity associated with the Standard scope.
+   --  Tree node constructors. New_Internal_Entity is used only to build the
+   --  entity associated with the Standard scope, the full-view of private
+   --  and incomplete types, and the entity associated with unknown
+   --  discriminants of private types.
 
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
@@ -310,6 +312,9 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    --  True if E has a parent which is visible only in its full view
 
+   function Has_Unknown_Discriminants
+     (E : Entity_Id) return Boolean;
+
    function In_Ada_Language
      (E : Entity_Id) return Boolean;
    function In_C_Or_CPP_Language
@@ -329,8 +334,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Decorated
      (E : Entity_Id) return Boolean;
+
    function Is_Full_View
      (E : Entity_Id) return Boolean;
+   --  Return true if E is the full view of a private or incomplete type
+
    function Is_Doc_From_Body
      (E : Entity_Id) return Boolean;
    function Is_Generic_Formal
@@ -339,8 +347,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    function Is_Package
      (E : Entity_Id) return Boolean;
+
    function Is_Partial_View
      (E : Entity_Id) return Boolean;
+   --  Return true if E is the partial view of a private or incomplete type
+
    function Is_Private
      (E : Entity_Id) return Boolean;
    function Is_Standard_Entity
@@ -399,6 +410,9 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Unbounded_String);
    procedure Set_Has_Private_Parent
      (E : Entity_Id; Value : Boolean := True);
+   procedure Set_Has_Unknown_Discriminants
+     (E : Entity_Id);
+
    procedure Set_In_Private_Part
      (E : Entity_Id);
    procedure Set_IDepth_Level
@@ -706,6 +720,8 @@ private
          Has_Private_Parent : Boolean;
          --  True if the parent type is only visible in the full view
 
+         Has_Unknown_Discriminants : Boolean;
+
          In_Private_Part   : Boolean;
          --  True if the entity is defined in the private part of a package
 
@@ -796,6 +812,7 @@ private
    pragma Inline (Get_Src);
    pragma Inline (Get_Unique_Id);
    pragma Inline (Has_Private_Parent);
+   pragma Inline (Has_Unknown_Discriminants);
    pragma Inline (In_Ada_Language);
    pragma Inline (In_C_Or_CPP_Language);
    pragma Inline (In_Private_Part);
@@ -830,6 +847,7 @@ private
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
    pragma Inline (Set_Has_Private_Parent);
+   pragma Inline (Set_Has_Unknown_Discriminants);
    pragma Inline (Set_Is_Decorated);
    pragma Inline (Set_Is_Doc_From_Body);
    pragma Inline (Set_Is_Generic_Formal);

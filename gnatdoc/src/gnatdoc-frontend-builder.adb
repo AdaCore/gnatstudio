@@ -76,6 +76,8 @@ package body GNATdoc.Frontend.Builder is
       procedure Append_To_Scope
         (Scope : Unique_Entity_Id; E : Entity_Id);
       procedure Append_To_Scope
+        (Scope : Entity_Id; E : Unique_Entity_Id);
+      procedure Append_To_Scope
         (Scope : Unique_Entity_Id; E : Unique_Entity_Id);
       --  Append E to the list of entities of Scope
 
@@ -462,8 +464,10 @@ package body GNATdoc.Frontend.Builder is
          Enclosing_Scope : constant Entity_Id :=
                              Get_Scope (Get_Entity (Scope));
       begin
-         Append_To_Scope (Enclosing_Scope, Get_Entity (E));
-         Set_Scope (Get_Entity (E), Enclosing_Scope);
+         if not Get_Entities (Enclosing_Scope).Contains (Get_Entity (E)) then
+            Append_To_Scope (Enclosing_Scope, Get_Entity (E));
+            Set_Scope (Get_Entity (E), Enclosing_Scope);
+         end if;
       end Append_To_Enclosing_Scope;
 
       ------------
@@ -488,9 +492,12 @@ package body GNATdoc.Frontend.Builder is
          Append_To_Scope (Scope, Get_Entity (E));
       end Append_To_Scope;
 
-      ---------------------
-      -- Append_To_Scope --
-      ---------------------
+      procedure Append_To_Scope
+        (Scope : Entity_Id; E : Unique_Entity_Id) is
+      begin
+         Append_To_Scope (Scope, Get_Entity (E));
+         Set_Scope (Get_Entity (E), Scope);
+      end Append_To_Scope;
 
       procedure Append_To_Scope
         (Scope : Unique_Entity_Id; E : Entity_Id) is
@@ -815,9 +822,9 @@ package body GNATdoc.Frontend.Builder is
          return Is_Subprogram_Or_Entry (Get_Entity (Entity));
       end Is_Subprogram_Or_Entry;
 
-      --------------------
-      -- Is_Tagged_Type --
-      --------------------
+      ---------------
+      -- Is_Tagged --
+      ---------------
 
       function Is_Tagged (Entity : Unique_Entity_Id) return Boolean is
       begin
@@ -1469,17 +1476,25 @@ package body GNATdoc.Frontend.Builder is
 
                      elsif Is_New (Entity) then
                         Set_Kind (Entity, E_Discriminant);
-                        Append_To_Scope (E, Entity);
                         Append_To_Map (Entity);
                         Set_Is_Decorated (Entity);
 
+                        --  For partial and incomplete types in the ALI file
+                        --  in their full view we don't have available their
+                        --  discriminants.
+                        pragma Assert (not Is_Full_View (Entity));
+
                         if Is_Partial_View (Entity) then
+                           Append_To_Scope (E, Entity);
 
                            --  If the discriminant is visible in the partial
                            --  and full view of E then append its full view
-                           --  to the full view of E
+                           --  to the full view of E and we remove it from
+                           --  the scope of E
 
                            if Is_Partial_View (E) then
+                              Set_Kind
+                                (Get_Full_View (Entity), E_Discriminant);
                               Get_Entities
                                 (Get_Full_View (E)).Append
                                   (Get_Full_View (Entity));
@@ -1488,6 +1503,15 @@ package body GNATdoc.Frontend.Builder is
                            end if;
 
                            Remove_Full_View (Entity);
+
+                        --  Unknown discriminant of a private or limited type
+
+                        elsif Is_Partial_View (E) then
+                           Set_Has_Unknown_Discriminants (Get_Entity (E));
+                           Append_To_Scope (Get_Full_View (E), Entity);
+
+                        else
+                           Append_To_Scope (E, Entity);
                         end if;
 
                      --  For incomplete types Xref provides all the
@@ -1544,7 +1568,13 @@ package body GNATdoc.Frontend.Builder is
                            --  In C++ we have here formals of primitives???
                            Set_Kind (Entity, E_Component);
 
-                           Append_To_Scope (E, Entity);
+                           if Is_Partial_View (E) then
+                              Append_To_Scope
+                                (Get_Full_View (Get_Entity (E)), Entity);
+                           else
+                              Append_To_Scope (E, Entity);
+                           end if;
+
                            Append_To_File_Entities (Entity);
                            Append_To_Map (Entity);
 
@@ -1657,7 +1687,13 @@ package body GNATdoc.Frontend.Builder is
                      if Is_Inherited_Primitive
                          (Get_Entity (E), All_Methods (J))
                      then
-                        Append_Inherited_Method (E, Method);
+                        if not Is_Partial_View (E) then
+                           Append_Inherited_Method (E, Method);
+                        else
+                           Append_Inherited_Method
+                             (Get_Full_View (Get_Entity (E)),
+                              Get_Entity (Method));
+                        end if;
 
                      elsif In_Ada_Language (Method) then
 
@@ -1675,14 +1711,28 @@ package body GNATdoc.Frontend.Builder is
                            --  files/scopes we cannot set their scope.
 
                            Decorate_Subprogram_Formals (Method);
-                           Append_Inherited_Method (E, Method);
+
+                           if not Is_Partial_View (E) then
+                              Append_Inherited_Method (E, Method);
+                           else
+                              Append_Inherited_Method
+                                (Get_Full_View (Get_Entity (E)),
+                                 Get_Entity (Method));
+                           end if;
 
                         else
                            Append_To_Enclosing_Scope (E, Method);
                            Append_To_File_Entities (Method);
 
                            Decorate_Subprogram_Formals (Method);
-                           Append_Method (E, Method);
+
+                           if not Is_Partial_View (E) then
+                              Append_Method (E, Method);
+                           else
+                              Append_Method
+                                (Get_Full_View (Get_Entity (E)),
+                                 Get_Entity (Method));
+                           end if;
 
                            Set_Is_Decorated (Method);
                         end if;
@@ -2302,6 +2352,13 @@ package body GNATdoc.Frontend.Builder is
          File_Entities_Cursor.Next;
       end loop;
 
+      --  Exit all the scopes: required to ensure that we complete the
+      --  decoration of all the private entities
+
+      while not Is_Standard_Entity (Get_Entity (Current_Scope)) loop
+         Exit_Scope;
+      end loop;
+
       Scopes_Stack.Clear;
 
       return Get_Entity (Std_Entity);
@@ -2435,7 +2492,75 @@ package body GNATdoc.Frontend.Builder is
          Stack.Prepend (Scope);
       end Enter_Scope;
 
+      ----------------
+      -- Exit_Scope --
+      ----------------
+
       procedure Exit_Scope is
+
+         procedure Complete_Private_Tagged_Types_Decoration
+           (Scope : Unique_Entity_Id);
+         --  Append to the partial view all its primitives defined in the
+         --  public part.
+
+         procedure Complete_Private_Tagged_Types_Decoration
+           (Scope : Unique_Entity_Id)
+         is
+            Cursor : EInfo_List.Cursor;
+            E      : Entity_Id;
+
+         begin
+            Cursor := Get_Entities (Get_Entity (Scope)).First;
+            while EInfo_List.Has_Element (Cursor) loop
+               E := EInfo_List.Element (Cursor);
+
+               if Get_Short_Name (E) = "Tagged_Private" then
+                  GNAT.IO.New_Line;
+               end if;
+
+               if LL.Is_Type (E)
+                 and then Is_Tagged (E)
+                 and then Is_Partial_View (E)
+               then
+                  declare
+                     P_Cursor : EInfo_List.Cursor;
+                     Prim     : Entity_Id;
+                  begin
+                     P_Cursor :=
+                       Get_Inherited_Methods (Get_Full_View (E)).First;
+                     while EInfo_List.Has_Element (P_Cursor) loop
+                        Prim := EInfo_List.Element (P_Cursor);
+
+                        if not In_Private_Part (Prim) then
+                           Append_Inherited_Method (E, Prim);
+                        end if;
+
+                        EInfo_List.Next (P_Cursor);
+                     end loop;
+                  end;
+
+                  declare
+                     P_Cursor : EInfo_List.Cursor;
+                     Prim     : Entity_Id;
+                  begin
+                     P_Cursor :=
+                       Get_Methods (Get_Full_View (E)).First;
+                     while EInfo_List.Has_Element (P_Cursor) loop
+                        Prim := EInfo_List.Element (P_Cursor);
+
+                        if not In_Private_Part (Prim) then
+                           Append_Method (E, Prim);
+                        end if;
+
+                        EInfo_List.Next (P_Cursor);
+                     end loop;
+                  end;
+               end if;
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end Complete_Private_Tagged_Types_Decoration;
+
       begin
          if Is_Package (Current_Scope)
            and then
@@ -2443,6 +2568,8 @@ package body GNATdoc.Frontend.Builder is
          then
             EInfo_Vector_Sort_Loc.Sort
               (Get_Entities (Get_Entity (Current_Scope)).all);
+
+            Complete_Private_Tagged_Types_Decoration (Current_Scope);
          end if;
 
          Stack.Delete_First;
