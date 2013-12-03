@@ -26,6 +26,7 @@ with GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Strings;          use GNAT.Strings;
 
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
@@ -65,9 +66,11 @@ procedure GNATdoc_Main is
    procedure Launch_Gnatinspect is
       Result : Integer;
 
-      Args   : GNAT.OS_Lib.Argument_List (1 .. 20) := (others => null);
-      --  Right now the number of arguments is 3, but this will allow
-      --  a flexible number of arguments in the future.
+      Vars : constant Scenario_Variable_Array :=
+        Kernel.Registry.Tree.Scenario_Variables;
+
+      Args   : GNAT.OS_Lib.Argument_List (1 .. Vars'Length + 3) :=
+        (others => null);
 
       Index  : Positive := 1;  --  The index of the first available argument
 
@@ -102,6 +105,11 @@ procedure GNATdoc_Main is
       Add_Arg ("--db=" &
                (+Kernel.Databases.Xref_Database_Location
                     (Kernel.Registry.Tree.Root_Project).Full_Name.all));
+
+      for J in Vars'Range loop
+         Add_Arg ("-X" & External_Name (Vars (J))
+                  & "=" & Value (Vars (J)));
+      end loop;
 
       Result := GNAT.OS_Lib.Spawn
         (Program_Name => Gnatinspect.all,
