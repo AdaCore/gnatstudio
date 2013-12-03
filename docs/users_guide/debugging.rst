@@ -186,7 +186,7 @@ Debug
 .. index:: menu; debug --> debug --> add symbols
 
 :menuselection:`Debug --> Debug --> Add Symbols`
-  Adds the symbols from a given file/module. This corresponds to the `gdb`
+  Adds the symbols from a given file. This corresponds to the `gdb`
   command `add-symbol-file`. This menu is particularly useful under VxWorks
   targets, where the modules can be loaded independently of the debugger.
   For instance, if a module is independently loaded on the target
@@ -311,7 +311,8 @@ commands. Failure to do so will result in empty windows.
 .. index:: menu; debug --> data --> examine memory
 
 :menuselection:`Debug --> Data --> Examine Memory`
-  Opens a memory viewer/editor. See :ref:`The_Memory_Window` for more details.
+  Opens a memory viewer and editor. See :ref:`The_Memory_Window` for
+  more details.
 
 
 .. index:: menu; debug --> data --> command history
@@ -371,7 +372,7 @@ The Call Stack Window
 .. image:: call-stack.jpg
 
 The call stack window lists the frames corresponding to the current
-execution stack for the current thread/task.
+execution stack for the current thread or task.
 
 The bottom frame corresponds to the outermost frame (where the thread is
 currently stopped). This frame corresponds to the first function executed
@@ -455,28 +456,29 @@ following information:
     next).
 
   * An icon representing an 'X'.
-    You can click on this icon to close/delete any box.
+    Click on this to close and delete any box.
 
 * A main area.
 
   The main area will display the data value hierarchically in a
   language-sensitive manner. The canvas knows about data structures of
-  various languages (e.g `C`, `Ada`, `C++`) and organizes them accordingly.
-  For example, each field of a record/struct/class or each item of an array
-  will be displayed separately. For each subcomponent, a thin box is
-  displayed to separate it from other components.
+  various languages (e.g `C`, `Ada`, `C++`) and organizes them
+  accordingly.  For example, each field of a record, struct, or class
+  or each item of an array will be displayed separately. For each
+  subcomponent, a thin box is displayed to separate it from other
+  components.
 
 
 A contextual menu, that takes into account the current component selected by
-the mouse, gives access to the following options:
+the pointer, gives access to the following options:
 
 :menuselection:`Close *component*`
   Closes the selected item.
 
 :menuselection:`Hide all *component*`
-  Hides all subcomponents of the selected item. To select a particular field or
-  item in a record/array, move the cursor over the name of this component, not
-  over the box containing the values for this item.
+  Hides all subcomponents of the selected item. To select a particular
+  field or item in a record or array, move the pointer over the name of
+  the component, not over the box containing its values.
 
 :menuselection:`Show all *component*`
   Shows all subcomponents of the selected item.
@@ -489,9 +491,10 @@ the mouse, gives access to the following options:
   component.
 
 :menuselection:`Set value of *component*`
-  Sets the value of a selected component. This opens an entry box where you
-  can enter the new value of a variable/component.  The underlying debugger
-  does not perform any type or range checking on the value entered.
+  Sets the value of a selected component. This opens an entry box
+  where you can enter the new value of a variable or component.  The
+  underlying debugger does not perform any type or range checking on
+  the value entered.
 
 :menuselection:`Update Value`
   Refreshes the value displayed in the selected item.
@@ -547,16 +550,15 @@ Moving items
 ^^^^^^^^^^^^
 
 All the items on the canvas can be manipulated with the mouse.  They can be
-freely moved anywhere on the canvas by clicking on them and then dragging
-the mouse.  If you're trying to move an item outside of the visible area of
-the data window, GPS will scroll the window to make the new position
-visible.
+freely moved anywhere on the canvas by clicking and then dragging them.  If
+you're trying to move an item outside of the visible area of the data
+window, GPS will scroll the window to make the new position visible.
 
-GPS also provides automatic scrolling if you move the mouse while dragging
-an item near the borders of the data window.  While the mouse remains close
-to the border and the button is pressed while hovering on the item, GPS
-scrolls the data window and moves the item. This provides an easy way to
-move an item a long distance from its initial position.
+GPS also provides automatic scrolling if you move the pointer while
+dragging an item near the borders of the data window.  While the pointer
+remains close to the border and the mouse button is pressed while hovering
+on the item, GPS scrolls the data window and moves the item. This provides
+an easy way to move an item a long distance from its initial position.
 
 Colors
 ^^^^^^
@@ -664,8 +666,8 @@ breakpoints.
 
 .. index:: VxWorks AE
 
-Scope/Action Settings for VxWorks AE
-------------------------------------
+Scope and Action Settings for VxWorks AE
+----------------------------------------
 
 In VxWorks AE breakpoints have two extra properties:
 
@@ -702,17 +704,18 @@ In VxWorks AE breakpoints have two extra properties:
     stop all stoppable tasks in the system
 
 
-These two properties can be set/changed through the advanced breakpoints
+These two properties can be set or changed through the advanced breakpoints
 characteristics by clicking on the *Advanced* button. There are two ways of
 setting these properties:
 
 * Per breakpoint settings:
 
-  After setting a breakpoint (the default Scope/Action values will be
-  task/task), select the :guilabel:`Scope/Action` tab in the
-  :guilabel:`Advanced` settings.  To change these settings on a given
-  breakpoint, select it from the breakpoints list, select the desired values of
-  Scope and Action and click on the :guilabel:`Update` button.
+  After setting a breakpoint (the default Scope or Action values will
+  both be task), select the :guilabel:`Scope/Action` tab in the
+  :guilabel:`Advanced` settings.  To change these settings for a
+  specific breakpoint, select it from the breakpoints list, select the
+  desired values of Scope and Action and click on the
+  :guilabel:`Update` button.
 
 * Default session settings:
 
@@ -762,16 +765,17 @@ You can also specify the unit size (:guilabel:`Byte`, :guilabel:`Halfword` or
 :guilabel:`Octal` or :guilabel:`ASCII`), and you can display the corresponding
 ASCII value at the same time.
 
-The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and :kbd:`Page down`
-keys in the memory text area allows you to walk through the memory in order of
-ascending/descending addresses respectively.
+The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and
+:kbd:`Page down` keys in the memory text area allows you to walk
+through the memory in order of ascending or descending addresses
+respectively.
 
-Finally, you can modify a memory area by clicking on the location you want
-to modify, and by entering the new values. Modified values will appear in a
-different color (red by default) and will only be written account (i.e
-written to the target) when you click on the :guilabel:`Submit changes`
-button. Clicking on the :guilabel:`Undo changes` or going up/down in the
-memory will undo your editing.
+Finally, you can modify a memory area by clicking on the location you
+want to modify, and by entering the new values. Modified values will
+appear in a different color (red by default) and will only be written
+account (i.e written to the target) when you click on the
+:guilabel:`Submit changes` button. Clicking on the :guilabel:`Undo
+changes` or going up or down in the memory will undo your editing.
 
 Clicking on :guilabel:`Close` will close the memory window, canceling your last
 pending changes, if any.
@@ -814,8 +818,8 @@ information:
 .. index:: tooltip
 
 The second area in the source window is a text window on the right that
-displays the source files, with syntax highlighting.  If you hover the
-cursor over a variable, GPS will display a tooltip showing the value of that
+displays the source files, with syntax highlighting.  If you hold the
+pointer over a variable, GPS displays a tooltip showing the value of that
 variable.  You can disable these automatic tooltips using the preferences
 menu.
 
@@ -824,7 +828,7 @@ See :ref:`Preferences Dialog <preferences_dialog>`.
 When the debugger is active, the contextual menu of the source window contains
 a sub menu called :menuselection:`Debug` providing the entries below.
 
-These entries are dynamic and apply to the entity found under the cursor
+These entries are dynamic and apply to the entity found under the pointer
 when the menu is displayed (depending on the current language). In
 addition, you have made a selection in the source window, the text of the
 selection will be used instead. This allows you to display more complex
@@ -833,12 +837,12 @@ complex expressions you want to be able to display in the debugger).
 
 
 :menuselection:`Debug --> Print *selection*`
-  Prints the selection (or by default the name under the cursor) in the
+  Prints the selection (or by default the name under the pointer) in the
   debugger console.
 
 
 :menuselection:`Debug --> Display *selection*`
-  Displays the selection (or by default the name under the cursor) in the
+  Displays the selection (or by default the name under the pointer) in the
   data window. GPS automatically refreshes this value each time the process
   state changes (e.g after a step or a next command). To freeze the display
   in the canvas, either click on the corresponding icon in the data window,
@@ -847,12 +851,12 @@ complex expressions you want to be able to display in the debugger).
 
 
 :menuselection:`Debug --> Print *selection*.all`
-  Dereferences the selection (or by default the name under the cursor) and
+  Dereferences the selection (or by default the name under the pointer) and
   prints the value in the debugger console.
 
 
 :menuselection:`Display *selection*.all`
-  Dereferences the selection (or by default the name under the cursor) and
+  Dereferences the selection (or by default the name under the pointer) and
   displays the value in the data window.
 
 
@@ -862,7 +866,7 @@ complex expressions you want to be able to display in the debugger).
 
 
 :menuselection:`Set Breakpoint on Line *xx*`
-  Sets a breakpoint on the line under the cursor.
+  Sets a breakpoint on the line under the pointer.
 
 
 :menuselection:`Set Breakpoint on *selection*`
