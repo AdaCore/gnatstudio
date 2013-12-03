@@ -349,6 +349,8 @@ Classes
 
    .. automethod:: GPS.Console.create_link
 
+   .. automethod:: GPS.Console.delete_links
+
    .. automethod:: GPS.Console.enable_input
 
    .. automethod:: GPS.Console.flush
