@@ -22,6 +22,11 @@ Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
   Workaround: Use the first button in the dialog to enter the name of the
               directory manually.
 
+- MB26-028: the build target for "Compile all sources" doesn't work
+  Problem:    The target "Compile all sources" only recompiles sources
+              in the root project, not in subprojects.
+  Workaround: in the command line for this target, change "-u" for "-U"
+
 - MB15-044: GPS: ispell.py plugin broken
   Problem:    The plug-in no longer works with GPS 6.0.0
   Workaround: run aspell manually on your files
