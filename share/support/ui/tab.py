@@ -68,16 +68,9 @@ def smart_tab():
         editor.insert(editor.current_view().cursor(), "\t")
 
 
-def escape_filter(context):
-    if in_editor(context):
-        editor = GPS.EditorBuffer.get()
-        return aliases.is_in_alias_expansion(editor)
-    return False
-
-
 @interactive(name='smart escape',
              category='Editor',
-             filter=escape_filter,
+             filter="Source editor",
              key='Escape')
 def smart_escape():
     """
@@ -85,5 +78,8 @@ def smart_escape():
     interrupt the current alias expansion (if any).
     """
     editor = GPS.EditorBuffer.get()
-    aliases.exit_alias_expand(editor)
+    if aliases.is_in_alias_expansion(editor):
+        aliases.exit_alias_expand(editor)
+
+    editor.remove_all_multi_cursors()
 

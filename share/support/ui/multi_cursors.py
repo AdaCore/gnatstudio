@@ -36,8 +36,6 @@ xml_conf = """
 <key action="forward delete" >Delete</key>
 <key action="backward delete" >BackSpace</key>
 
-<key action="Remove all multi cursors" >primary-Escape</key>
-
 <key action="goto beginning of line" >Home</key>
 <key action="goto end of line" >End</key>
 
@@ -53,13 +51,6 @@ mc_on_entity_color.create(
     " You must restart gps to take changes into account.",
     "#3070A0"
 )
-
-
-@interactive("Editor",  name="Remove all multi cursors")
-def remove_all_multi_cursors():
-    buffer = GPS.EditorBuffer.get()
-    buffer.remove_all_multi_cursors()
-
 
 @interactive("Editor", name="Add multi cursor and go down")
 def mc_down():
