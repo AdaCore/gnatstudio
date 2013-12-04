@@ -1131,7 +1131,9 @@ package body GNATdoc.Backend.HTML is
       Parent : Entity_Id := Entity;
 
    begin
-      while Get_Scope (Parent) /= null loop
+      while Get_Kind (Parent) /= E_Package
+        and then Get_Scope (Parent) /= null
+      loop
          Parent := Get_Scope (Parent);
       end loop;
 
