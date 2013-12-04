@@ -402,6 +402,8 @@ private package GNATdoc.Atree is
 
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
+   procedure Set_Full_View
+     (E : Entity_Id; Value : Entity_Id);
    procedure Set_Full_View_Comment
      (E : Entity_Id; Value : Structured_Comment);
    procedure Set_Full_View_Doc
@@ -436,6 +438,8 @@ private package GNATdoc.Atree is
    procedure Set_Parent
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Parent_Package
+     (E : Entity_Id; Value : Entity_Id);
+   procedure Set_Partial_View
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Ref_File
      (E : Entity_Id; Value : Virtual_File);
@@ -544,6 +548,9 @@ private package GNATdoc.Atree is
       --  named typedef structs (the compiler generates two entites in the LI
       --  file with the same name).
 
+      procedure Set_Location
+        (E : Entity_Id; Value : General_Location);
+
    private
       pragma Inline (Append_Child_Type);
       pragma Inline (Append_Parent_Type);
@@ -570,6 +577,8 @@ private package GNATdoc.Atree is
       pragma Inline (Is_Predef);
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Type);
+
+      pragma Inline (Set_Location);
    end LL;
 
    ------------------------------------------
@@ -843,6 +852,7 @@ private
    pragma Inline (Set_End_Of_Profile_Location_In_Body);
    pragma Inline (Set_End_Of_Syntax_Scope_Loc);
    pragma Inline (Set_Error_Msg);
+   pragma Inline (Set_Full_View);
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
@@ -858,6 +868,7 @@ private
    pragma Inline (Set_Kind);
    pragma Inline (Set_Parent);
    pragma Inline (Set_Parent_Package);
+   pragma Inline (Set_Partial_View);
    pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Src);

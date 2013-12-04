@@ -369,6 +369,7 @@ package body GNATdoc.Frontend.Builder is
 
          procedure Append_To_Map (E : Entity_Id) is
          begin
+            pragma Assert (Present (E));
             Entities_Map.Include (LL.Get_Location (E), E);
          end Append_To_Map;
 
@@ -855,26 +856,135 @@ package body GNATdoc.Frontend.Builder is
          --  Local routine which factorizes code used to allocate a new
          --  entity
 
+         function Full_View_Needed (New_E : Entity_Id) return Boolean;
+         --  Evaluate if New_E requires a full view
+
          function Build_New_Entity return Unique_Entity_Id is
-            Entity : constant Entity_Id :=
-                       New_Entity (Context, Lang, E, E_Loc);
+            New_E : Entity_Id := New_Entity (Context, Lang, E, E_Loc);
          begin
-            if No (Entity) then
+            if No (New_E) then
                return No_Entity;
             else
-               if Is_Package (Entity)
-                 and then Present (LL.Get_Parent_Package (Entity))
+               if Is_Package (New_E)
+                 and then Present (LL.Get_Parent_Package (New_E))
                then
-                  Set_Parent_Package (Entity,
+                  Set_Parent_Package (New_E,
                     Get_Unique_Entity
-                      (Context, File, LL.Get_Parent_Package (Entity)));
+                      (Context, File, LL.Get_Parent_Package (New_E)));
+               end if;
+
+               if Full_View_Needed (New_E) then
+                  declare
+                     Partial_View  : constant Entity_Id := New_E;
+
+                     Full_View_Loc : constant General_Location :=
+                                       LL.Get_Body_Loc (Partial_View);
+
+                     Full_View     : Entity_Id :=
+                                       Find_Unique_Entity (Full_View_Loc);
+
+                  begin
+                     if No (Full_View) then
+                        Full_View :=
+                          New_Entity (Context, Lang, E, Full_View_Loc);
+                     end if;
+
+                     --  Xref does not help us to differentiate if New_E is a
+                     --  private type, an incomplete declaration, or a formal
+                     --  of a subprogram (because in this latter case Body_Loc
+                     --  references the same formal in the subprogram body).
+                     --  For this reasons at this stage the best action we can
+                     --  do is to decorate the entity as "incomplete". At later
+                     --  stages the entity will be fully decorated (and this
+                     --  value will be reset in subprogram formals).
+
+                     Set_Is_Incomplete (New_E);
+
+                     --  For private types the entity associated with the full
+                     --  view is not available available in Xref since the
+                     --  compiler does not generate it; by contrast, for
+                     --  incomplete types the compiler generates two entities.
+
+                     Set_Full_View (New_E, Full_View);
+
+                     --  Link the full view with its partial view
+
+                     Set_Partial_View (Get_Full_View (New_E), New_E);
+
+                     --  Adding a minimum high level decoration to the full
+                     --  view. For incomplete types this value may be updated
+                     --  later (when the type declaration is processed).
+
+                     Set_Kind (Get_Full_View (New_E), Get_Kind (New_E));
+                  end;
+
+               --  The Xref service Child_Types returns direct references
+               --  to the full view of the child types. For homoneneity in
+               --  creation of entities we build here the partial view and
+               --  full view and we return the reference to the partial view.
+
+               elsif Present (LL.Get_Body_Loc (New_E))
+                 and then LL.Is_Type (New_E)
+                 and then LL.Get_Location (New_E).File
+                            = LL.Get_Body_Loc (New_E).File
+                 and then LL.Get_Location (New_E).Line
+                            > LL.Get_Body_Loc (New_E).Line
+               then
+                  declare
+                     Full_View        : constant Entity_Id := New_E;
+
+                     Partial_View_Loc : constant General_Location :=
+                                          LL.Get_Body_Loc (New_E);
+                     Partial_View     : Entity_Id :=
+                                          Find_Unique_Entity
+                                            (Partial_View_Loc);
+                  begin
+                     if No (Partial_View) then
+                        Partial_View :=
+                          New_Entity (Context, Lang, E, Partial_View_Loc);
+                     end if;
+
+                     Set_Is_Incomplete (Partial_View);
+                     Set_Full_View (Partial_View, Full_View);
+                     Set_Partial_View (Full_View, Partial_View);
+
+                     New_E := Partial_View;
+                  end;
                end if;
 
                return
-                 new Unique_Entity_Info'(Entity => Entity,
+                 new Unique_Entity_Info'(Entity => New_E,
                                          Is_New => True);
             end if;
          end Build_New_Entity;
+
+         ----------------------
+         -- Full_View_Needed --
+         ----------------------
+
+         function Full_View_Needed (New_E : Entity_Id) return Boolean is
+         begin
+            if No (LL.Get_Body_Loc (New_E)) then
+               return False;
+
+            elsif Is_Concurrent_Type_Or_Object (New_E) then
+               return
+                 LL.Get_Location (New_E).File = LL.Get_Body_Loc (New_E).File
+                 and then
+                   LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line;
+
+            elsif LL.Is_Type (New_E)
+              or else Get_Kind (New_E) = E_Variable
+            then
+               return
+                 LL.Get_Location (New_E).File /= LL.Get_Body_Loc (New_E).File
+                 or else
+                   LL.Get_Location (New_E).Line < LL.Get_Body_Loc (New_E).Line;
+
+            else
+               return False;
+            end if;
+         end Full_View_Needed;
 
          --  Local variables
 
@@ -1475,43 +1585,57 @@ package body GNATdoc.Frontend.Builder is
                         null;
 
                      elsif Is_New (Entity) then
-                        Set_Kind (Entity, E_Discriminant);
-                        Append_To_Map (Entity);
-                        Set_Is_Decorated (Entity);
+                        --  For incomplete types whose discriminant is
+                        --  repeated in the partial and full-view the
+                        --  compiler generates two entities and we must
+                        --  handle just one.
 
-                        --  For partial and incomplete types in the ALI file
-                        --  in their full view we don't have available their
-                        --  discriminants.
-                        pragma Assert (not Is_Full_View (Entity));
+                        if not
+                          Get_Entities (Get_Entity (E)).Contains
+                            (Get_Entity (Entity))
+                        then
+                           Set_Kind (Entity, E_Discriminant);
+                           Append_To_Map (Entity);
+                           Set_Is_Decorated (Entity);
 
-                        if Is_Partial_View (Entity) then
-                           Append_To_Scope (E, Entity);
+                           pragma Assert (not Is_Full_View (Entity));
 
-                           --  If the discriminant is visible in the partial
-                           --  and full view of E then append its full view
-                           --  to the full view of E and we remove it from
-                           --  the scope of E
+                           --  For partial and incomplete types in the ALI file
+                           --  in their full view we don't have available their
+                           --  discriminants.
 
-                           if Is_Partial_View (E) then
-                              Set_Kind
-                                (Get_Full_View (Entity), E_Discriminant);
-                              Get_Entities
-                                (Get_Full_View (E)).Append
-                                  (Get_Full_View (Entity));
-                              Append_To_Scope (E, Get_Full_View (Entity));
-                              Set_Is_Decorated (Get_Full_View (Entity));
+                           if Is_Partial_View (Entity) then
+                              Append_To_Scope (E, Entity);
+
+                              --  If the discriminant is visible in the partial
+                              --  and full view of E then append its full view
+                              --  to the full view of E and we remove it from
+                              --  the scope of E
+
+                              if Is_Partial_View (E) then
+                                 Set_Kind
+                                   (Get_Full_View (Entity), E_Discriminant);
+                                 Get_Entities
+                                   (Get_Full_View (E)).Append
+                                     (Get_Full_View (Entity));
+                                 Append_To_Scope (E, Get_Full_View (Entity));
+                                 Append_To_Map (Get_Full_View (Entity));
+
+                                 Set_Is_Decorated (Get_Full_View (Entity));
+                              end if;
+
+                              Remove_Full_View (Entity);
+
+                           --  Unknown discriminant of a private or limited
+                           --  type
+
+                           elsif Is_Partial_View (E) then
+                              Set_Has_Unknown_Discriminants (Get_Entity (E));
+                              Append_To_Scope (Get_Full_View (E), Entity);
+
+                           else
+                              Append_To_Scope (E, Entity);
                            end if;
-
-                           Remove_Full_View (Entity);
-
-                        --  Unknown discriminant of a private or limited type
-
-                        elsif Is_Partial_View (E) then
-                           Set_Has_Unknown_Discriminants (Get_Entity (E));
-                           Append_To_Scope (Get_Full_View (E), Entity);
-
-                        else
-                           Append_To_Scope (E, Entity);
                         end if;
 
                      --  For incomplete types Xref provides all the
@@ -1564,13 +1688,22 @@ package body GNATdoc.Frontend.Builder is
                         if Entity = null then
                            null;
 
+                        --  Workaround Xref problem: for incomplete types with
+                        --  discriminants in the partial and full view, Xref
+                        --  returns discriminants in the list of fields.
+
+                        elsif Get_Kind (Entity) = E_Discriminant then
+                           null;
+
                         elsif Is_New (Entity) then
+
                            --  In C++ we have here formals of primitives???
                            Set_Kind (Entity, E_Component);
 
                            if Is_Partial_View (E) then
                               Append_To_Scope
                                 (Get_Full_View (Get_Entity (E)), Entity);
+
                            else
                               Append_To_Scope (E, Entity);
                            end if;
@@ -1595,6 +1728,15 @@ package body GNATdoc.Frontend.Builder is
                      end loop;
                   end if;
                end;
+
+               pragma Assert
+                 (not Has_Duplicated_Entities
+                        (Get_Entities (Get_Entity (E)).all));
+               if Is_Partial_View (E) then
+                  pragma Assert
+                    (not Has_Duplicated_Entities
+                          (Get_Entities (Get_Full_View (Get_Entity (E))).all));
+               end if;
             end if;
 
             Append_Parent_And_Progenitors
@@ -2513,10 +2655,6 @@ package body GNATdoc.Frontend.Builder is
             Cursor := Get_Entities (Get_Entity (Scope)).First;
             while EInfo_List.Has_Element (Cursor) loop
                E := EInfo_List.Element (Cursor);
-
-               if Get_Short_Name (E) = "Tagged_Private" then
-                  GNAT.IO.New_Line;
-               end if;
 
                if LL.Is_Type (E)
                  and then Is_Tagged (E)

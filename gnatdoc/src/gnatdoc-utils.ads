@@ -42,6 +42,9 @@ private package GNATdoc.Utils is
    --  With_Filename is false then the name of the file is not added to the
    --  returned string.
 
+   function Is_Expanded_Name (Name : String) return Boolean;
+   --  Return True if Name may contain an expanded name
+
    function Is_Spec_File
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean;

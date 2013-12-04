@@ -820,36 +820,45 @@ package body GNATdoc.Frontend is
                         declare
                            Tok_Loc   : General_Location;
                            LL_Parent : General_Entity;
-                           Parent    : Entity_Id;
+                           Parent    : Entity_Id := null;
 
                         begin
-                           Tok_Loc :=
-                             General_Location'
-                               (File   => File,
-                                Line   => Loc.Line + Sloc_Start.Line - 1,
-                                Column =>
-                                  Visible_Column_Type (Sloc_Start.Column));
-
-                           LL_Parent :=
-                             Xref.Get_Entity
-                               (Db   => Context.Database,
-                                Name => Get_Short_Name (S),
-                                Loc  => Tok_Loc);
-                           pragma Assert (Present (LL_Parent));
-
-                           Parent :=
-                             Builder.Get_Unique_Entity
-                               (Context, File, LL_Parent);
-
-                           Set_Parent (E, Parent);
-
-                           if Is_Tagged (Parent) then
-                              Set_Is_Tagged (E);
+                           if Is_Expanded_Name (S) then
+                              Parent := Find_Unique_Entity (S);
                            end if;
 
-                           if Get_Progenitors (E).all.Contains (Parent) then
-                              Delete_Entity
-                                (Get_Progenitors (E).all, Parent);
+                           if No (Parent) then
+                              Tok_Loc :=
+                                General_Location'
+                                  (File   => File,
+                                   Line   => Loc.Line + Sloc_Start.Line - 1,
+                                   Column =>
+                                     Visible_Column_Type (Sloc_Start.Column));
+
+                              LL_Parent :=
+                                Xref.Get_Entity
+                                  (Db   => Context.Database,
+                                   Name => Get_Short_Name (S),
+                                   Loc  => Tok_Loc);
+                              pragma Assert (Present (LL_Parent));
+
+                              Parent :=
+                                Builder.Get_Unique_Entity
+                                  (Context, File, LL_Parent);
+                           end if;
+
+                           if Present (Parent) then
+                              pragma Assert (LL.Is_Type (Parent));
+                              Set_Parent (E, Parent);
+
+                              if Is_Tagged (Parent) then
+                                 Set_Is_Tagged (E);
+                              end if;
+
+                              if Get_Progenitors (E).all.Contains (Parent) then
+                                 Delete_Entity
+                                   (Get_Progenitors (E).all, Parent);
+                              end if;
                            end if;
                         end;
                      end if;
