@@ -69,7 +69,7 @@ procedure GNATdoc_Main is
       Vars : constant Scenario_Variable_Array :=
         Kernel.Registry.Tree.Scenario_Variables;
 
-      Args   : GNAT.OS_Lib.Argument_List (1 .. Vars'Length + 3) :=
+      Args   : GNAT.OS_Lib.Argument_List (1 .. Vars'Length + 4) :=
         (others => null);
 
       Index  : Positive := 1;  --  The index of the first available argument
@@ -101,6 +101,7 @@ procedure GNATdoc_Main is
 
       --  Compute the arguments to launch
       Add_Arg ("--exit");
+      Add_Arg ("--symlinks");
       Add_Arg ("-P" & (+Project_File.Full_Name.all));
       Add_Arg ("--db=" &
                (+Kernel.Databases.Xref_Database_Location
