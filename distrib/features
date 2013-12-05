@@ -93,6 +93,11 @@ NF-61-MA04-035 GPS: remove busy cursor (2013-11-22)
   typically hard to aim. The corresponding python API GPS.set_busy,
   GPS.unset_busy and GPS.get_busy have been removed.
 
+NF-61-M108-043 GPS: Highlight custom patterns in Messages View (2013-12-02)
+
+   The Message View highlights text according to user defined regular
+   expressions and colors.
+
 NF-61-LC05-020 GPS: Open shell from icons in Project View (2013-11-07)
 
   Shell plugin extends contextual menu to lauch shell from Project View and
