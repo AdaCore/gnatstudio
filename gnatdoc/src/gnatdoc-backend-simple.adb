@@ -53,6 +53,18 @@ package body GNATdoc.Backend.Simple is
    function File_Containing (E : Entity_Id) return String;
    --  Returns the name of the backend file containing the documentation of E
 
+   function Get_Entities
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector;
+
+   function Get_Inherited_Methods
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector;
+
+   function Get_Methods
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector;
+
    function Get_Name
      (E : Entity_Id; Use_Full_Name : Boolean := False) return String;
    --  Return the name of an entity. When Use_Full_Name is false, for Ada
@@ -117,6 +129,7 @@ package body GNATdoc.Backend.Simple is
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
+         Context       : access constant Docgen_Context;
          Use_Full_Name : Boolean := False;
          Filter        : List_Filter_Kind := None);
       --  Append to Printout the Header plus the reStructured Text of all the
@@ -151,7 +164,8 @@ package body GNATdoc.Backend.Simple is
 
       procedure ReST_Append_Subprogram
         (Printout : access Unbounded_String;
-         E        : Entity_Id);
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context);
       --  Append to Printout the reStructured output of a subprogram
 
       function ReST_Label
@@ -258,6 +272,12 @@ package body GNATdoc.Backend.Simple is
          Subprograms   : constant EInfo_List.Vector := Get_Subprograms (E);
 
       begin
+         if In_Private_Part (E)
+           and then not Context.Options.Show_Private
+         then
+            return;
+         end if;
+
          ReST_Append_Label (Printout, E);
 
          Append_Line (Printout, Name);
@@ -304,22 +324,26 @@ package body GNATdoc.Backend.Simple is
          ReST_Append_List
            (Printout => Printout,
             List     => Discriminants,
-            Header   => "Discriminants");
+            Header   => "Discriminants",
+            Context  => Context);
 
          ReST_Append_List
            (Printout => Printout,
             List     => Components,
-            Header   => "Components");
+            Header   => "Components",
+            Context  => Context);
 
          ReST_Append_List
            (Printout => Printout,
             List     => Entries,
-            Header   => "Entries");
+            Header   => "Entries",
+            Context  => Context);
 
          ReST_Append_List
            (Printout => Printout,
             List     => Subprograms,
-            Header   => "Subprograms");
+            Header   => "Subprograms",
+            Context  => Context);
 
          --  Append documentation of discriminants
 
@@ -360,7 +384,7 @@ package body GNATdoc.Backend.Simple is
             Cursor := Entries.First;
             while EInfo_List.Has_Element (Cursor) loop
                Entity := EInfo_List.Element (Cursor);
-               ReST_Append_Subprogram (Printout, Entity);
+               ReST_Append_Subprogram (Printout, Entity, Context);
 
                EInfo_List.Next (Cursor);
             end loop;
@@ -375,7 +399,7 @@ package body GNATdoc.Backend.Simple is
             Cursor := Subprograms.First;
             while EInfo_List.Has_Element (Cursor) loop
                Entity := EInfo_List.Element (Cursor);
-               ReST_Append_Subprogram (Printout, Entity);
+               ReST_Append_Subprogram (Printout, Entity, Context);
 
                EInfo_List.Next (Cursor);
             end loop;
@@ -402,22 +426,26 @@ package body GNATdoc.Backend.Simple is
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
+         Context       : access constant Docgen_Context;
          Use_Full_Name : Boolean  := False;
          Filter        : List_Filter_Kind := None)
       is
          function Gen_Suffix (E : Entity_Id) return String;
          function Gen_Suffix (E : Entity_Id) return String is
+            Private_Suffix : constant String :=
+              (if In_Private_Part (E) then " *(private)*"
+                                      else "");
          begin
             if LL.Is_Generic (E) then
-               return " *(generic)*";
+               return " *(generic)*" & Private_Suffix;
             elsif Is_Generic_Formal (E) then
-               return " *(generic formal)*";
+               return " *(generic formal)*" & Private_Suffix;
             elsif Get_Kind (E) = E_Interface then
-               return " *(interface)*";
+               return " *(interface)*" & Private_Suffix;
             elsif LL.Is_Abstract (E) then
-               return " *(abstract)*";
+               return " *(abstract)*" & Private_Suffix;
             else
-               return "";
+               return Private_Suffix;
             end if;
          end Gen_Suffix;
 
@@ -430,29 +458,33 @@ package body GNATdoc.Backend.Simple is
             return;
          end if;
 
-         --  Check if there is some entity passing the filter; otherwise no
+         --  Check if there is some entity to be printed; otherwise no
          --  output is generated.
 
-         if Filter /= None then
-            Found := False;
-            Cursor := List.First;
-            while EInfo_List.Has_Element (Cursor) loop
-               E := EInfo_List.Element (Cursor);
+         Found := False;
+         Cursor := List.First;
+         while EInfo_List.Has_Element (Cursor) loop
+            E := EInfo_List.Element (Cursor);
 
-               if (Filter = Lang_Ada and then In_Ada_Language (E))
-                 or else
-                   (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
+            if Filter = None
+              or else
+                (Filter = Lang_Ada and then In_Ada_Language (E))
+              or else
+                (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
+            then
+               if not In_Private_Part (E)
+                 or else Context.Options.Show_Private
                then
                   Found := True;
                   exit;
                end if;
-
-               EInfo_List.Next (Cursor);
-            end loop;
-
-            if not Found then
-               return;
             end if;
+
+            EInfo_List.Next (Cursor);
+         end loop;
+
+         if not Found then
+            return;
          end if;
 
          Append_Line (Printout, "- " & Header);
@@ -465,15 +497,19 @@ package body GNATdoc.Backend.Simple is
               or else (Filter = Lang_Ada and then In_Ada_Language (E))
               or else (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
             then
-               Append (Printout, "   * :ref:`");
-               Append (Printout, Get_Name (E, Use_Full_Name));
+               if not In_Private_Part (E)
+                 or else Context.Options.Show_Private
+               then
+                  Append (Printout, "   * :ref:`");
+                  Append (Printout, Get_Name (E, Use_Full_Name));
 
-               Append_Line (Printout,
-                 " <"
-                 & Get_Unique_Name (E)
-                 & ">` "
-                 & Image (LL.Get_Location (E))
-                 & Gen_Suffix (E));
+                  Append_Line (Printout,
+                    " <"
+                    & Get_Unique_Name (E)
+                    & ">` "
+                    & Image (LL.Get_Location (E))
+                    & Gen_Suffix (E));
+               end if;
             end if;
 
             EInfo_List.Next (Cursor);
@@ -495,6 +531,12 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
+         if In_Private_Part (E)
+           and then not Context.Options.Show_Private
+         then
+            return;
+         end if;
+
          ReST_Append_Label (Printout, E);
 
          --  Append labels to all the components. Required to facilitate
@@ -503,7 +545,7 @@ package body GNATdoc.Backend.Simple is
          declare
             Cursor : EInfo_List.Cursor;
          begin
-            Cursor := Get_Entities (E).First;
+            Cursor := Get_Entities (Context, E).First;
             while EInfo_List.Has_Element (Cursor) loop
                ReST_Append_Label (Printout, EInfo_List.Element (Cursor));
                EInfo_List.Next (Cursor);
@@ -573,20 +615,23 @@ package body GNATdoc.Backend.Simple is
                ReST_Append_List
                  (Printout => Printout,
                   List     => Get_Progenitors (E).all,
-                  Header   => "Progenitors");
+                  Header   => "Progenitors",
+                  Context  => Context);
 
             else
                ReST_Append_List
                  (Printout => Printout,
                   List     => LL.Get_Parent_Types (E).all,
-                  Header   => "Parent types");
+                  Header   => "Parent types",
+                  Context  => Context);
             end if;
          end if;
 
          ReST_Append_List
            (Printout => Printout,
             List     => LL.Get_Child_Types (E).all,
-            Header   => "Child types");
+            Header   => "Child types",
+            Context  => Context);
 
          if In_Ada_Language (E)
            and then LL.Has_Methods (E)
@@ -594,20 +639,18 @@ package body GNATdoc.Backend.Simple is
             if not Has_Private_Parent (E)
               or else Context.Options.Show_Private
             then
-               EInfo_Vector_Sort_Short.Sort (Get_Inherited_Methods (E).all);
-
                ReST_Append_List
                  (Printout => Printout,
-                  List     => Get_Inherited_Methods (E).all,
-                  Header   => "Inherited dispatching subprograms");
+                  List     => Get_Inherited_Methods (Context, E).all,
+                  Header   => "Inherited dispatching subprograms",
+                  Context  => Context);
             end if;
-
-            EInfo_Vector_Sort_Short.Sort (Get_Methods (E).all);
 
             ReST_Append_List
               (Printout => Printout,
-               List     => Get_Methods (E).all,
-               Header   => "New and overridden dispatching subprograms");
+               List     => Get_Methods (Context, E).all,
+               Header   => "New and overridden dispatching subprograms",
+               Context  => Context);
          end if;
       end ReST_Append_Record_Type_Declaration;
 
@@ -648,6 +691,12 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
+         if In_Private_Part (E)
+           and then not Context.Options.Show_Private
+         then
+            return;
+         end if;
+
          ReST_Append_Label (Printout, E);
 
          Append_Line (Printout, Name);
@@ -708,7 +757,8 @@ package body GNATdoc.Backend.Simple is
 
       procedure ReST_Append_Subprogram
         (Printout : access Unbounded_String;
-         E        : Entity_Id)
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context)
       is
          Name   : constant String :=
                     Get_Name (E,
@@ -717,6 +767,12 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
+         if In_Private_Part (E)
+           and then not Context.Options.Show_Private
+         then
+            return;
+         end if;
+
          if Get_Src (E) /= Null_Unbounded_String then
             ReST_Append_Label (Printout, E);
 
@@ -727,7 +783,7 @@ package body GNATdoc.Backend.Simple is
                Cursor : EInfo_List.Cursor;
                Formal : Entity_Id;
             begin
-               Cursor := Get_Entities (E).First;
+               Cursor := Get_Entities (Context, E).First;
                while EInfo_List.Has_Element (Cursor) loop
                   Formal := EInfo_List.Element (Cursor);
                   exit when Get_Kind (Formal) /= E_Formal;
@@ -1279,66 +1335,77 @@ package body GNATdoc.Backend.Simple is
               (Printout'Access,
                Backend.Entities.Variables,
                "Constants & variables",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Simple_Types,
                "Simple types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Access_Types,
                "Access types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Record_Types,
                "Record types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Interface_Types,
                "Interface types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tagged_Types,
                "Tagged types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tasks,
                "Tasks & Task types",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Protected_Objects,
                "Protected objects",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.CPP_Classes,
                "C++ Classes",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Subprgs,
                "Subprograms",
+               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Pkgs,
                "Packages",
+               Context => Backend.Context,
                Filter => Filter);
 
             Insert
@@ -1561,11 +1628,19 @@ package body GNATdoc.Backend.Simple is
             is
                Result : EInfo_List.Vector;
                Cursor : EInfo_List.Cursor;
+               Entity : Entity_Id;
 
             begin
                Cursor := Backend.Entities.Tagged_Types.First;
                while EInfo_List.Has_Element (Cursor) loop
-                  Result.Append (EInfo_List.Element (Cursor));
+                  Entity := EInfo_List.Element (Cursor);
+
+                  if not In_Private_Part (Entity)
+                    or else Backend.Context.Options.Show_Private
+                  then
+                     Result.Append (EInfo_List.Element (Cursor));
+                  end if;
+
                   EInfo_List.Next (Cursor);
                end loop;
 
@@ -1968,6 +2043,57 @@ package body GNATdoc.Backend.Simple is
       end if;
    end Finalize;
 
+   ------------------
+   -- Get_Entities --
+   ------------------
+
+   function Get_Entities
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector is
+   begin
+      if Is_Partial_View (Entity) and then Context.Options.Show_Private then
+         return Get_Entities (Get_Full_View (Entity));
+      else
+         return Get_Entities (Entity);
+      end if;
+   end Get_Entities;
+
+   ---------------------------
+   -- Get_Inherited_Methods --
+   ---------------------------
+
+   function Get_Inherited_Methods
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector is
+   begin
+      if Is_Partial_View (Entity) and then Context.Options.Show_Private then
+         EInfo_Vector_Sort_Short.Sort
+           (Get_Inherited_Methods (Get_Full_View (Entity)).all);
+         return Get_Inherited_Methods (Get_Full_View (Entity));
+      else
+         EInfo_Vector_Sort_Short.Sort (Get_Inherited_Methods (Entity).all);
+         return Get_Inherited_Methods (Entity);
+      end if;
+   end Get_Inherited_Methods;
+
+   -----------------
+   -- Get_Methods --
+   -----------------
+
+   function Get_Methods
+     (Context : access constant Docgen_Context;
+      Entity  : Entity_Id) return access EInfo_List.Vector is
+   begin
+      if Is_Partial_View (Entity) and then Context.Options.Show_Private then
+         EInfo_Vector_Sort_Short.Sort
+           (Get_Methods (Get_Full_View (Entity)).all);
+         return Get_Methods (Get_Full_View (Entity));
+      else
+         EInfo_Vector_Sort_Short.Sort (Get_Methods (Entity).all);
+         return Get_Methods (Entity);
+      end if;
+   end Get_Methods;
+
    --------------
    -- Get_Name --
    --------------
@@ -2127,13 +2253,6 @@ package body GNATdoc.Backend.Simple is
       procedure For_All
         (Vector   : EInfo_List.Vector;
          Printout : access Unbounded_String;
-         Process  : access procedure (Printout : access Unbounded_String;
-                                      E_Info   : Entity_Id));
-      --  Call subprogram Process for all the elements of Vector
-
-      procedure For_All
-        (Vector   : EInfo_List.Vector;
-         Printout : access Unbounded_String;
          Process  : access procedure
                              (Printout : access Unbounded_String;
                               E_Info   : Entity_Id;
@@ -2142,28 +2261,9 @@ package body GNATdoc.Backend.Simple is
 
       procedure Append_Generic_Formal
         (Printout : access Unbounded_String;
-         E        : Entity_Id);
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context);
       --  Append to Printout the reStructured output of a generic formal
-
-      -------------
-      -- For_All --
-      -------------
-
-      procedure For_All
-        (Vector   : EInfo_List.Vector;
-         Printout : access Unbounded_String;
-         Process  : access procedure (Printout : access Unbounded_String;
-                                      E_Info   : Entity_Id))
-      is
-         Cursor  : EInfo_List.Cursor;
-
-      begin
-         Cursor := Vector.First;
-         while EInfo_List.Has_Element (Cursor) loop
-            Process (Printout, EInfo_List.Element (Cursor));
-            EInfo_List.Next (Cursor);
-         end loop;
-      end For_All;
 
       -------------
       -- For_All --
@@ -2195,7 +2295,8 @@ package body GNATdoc.Backend.Simple is
 
       procedure Append_Generic_Formal
         (Printout : access Unbounded_String;
-         E        : Entity_Id) is
+         E        : Entity_Id;
+         Context  : access constant Docgen_Context) is
       begin
          if Is_Package (E) then
             null;  --  unsupported yet???
@@ -2212,7 +2313,7 @@ package body GNATdoc.Backend.Simple is
             end if;
 
          elsif Is_Subprogram (E) then
-            ReST_Append_Subprogram (Printout, E);
+            ReST_Append_Subprogram (Printout, E, Context);
 
             --  Here we cover generic formals which are not fully decorated
             --  We assume that the output associated with these missing
@@ -2268,44 +2369,58 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout'Access, "");
 
          ReST_Append_List
-           (Printout'Access, Entities.Generic_Formals, "Generic formals");
+           (Printout'Access, Entities.Generic_Formals, "Generic formals",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Variables, "Constants & variables");
+           (Printout'Access, Entities.Variables, "Constants & variables",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Simple_Types, "Simple Types");
+           (Printout'Access, Entities.Simple_Types, "Simple Types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Access_Types, "Access Types");
+           (Printout'Access, Entities.Access_Types, "Access Types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Record_Types, "Record Types");
+           (Printout'Access, Entities.Record_Types, "Record Types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Interface_Types, "Interface types");
+           (Printout'Access, Entities.Interface_Types, "Interface types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Tagged_Types, "Tagged types");
+           (Printout'Access, Entities.Tagged_Types, "Tagged types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Tasks, "Tasks & task types types");
+           (Printout'Access, Entities.Tasks, "Tasks & task types types",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Protected_Objects, "Protected objects");
+           (Printout'Access, Entities.Protected_Objects, "Protected objects",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.CPP_Classes, "C++ Classes");
+           (Printout'Access, Entities.CPP_Classes, "C++ Classes",
+            Context => Backend.Context);
          ReST_Append_List
-           (Printout'Access, Entities.Subprgs, "Subprograms");
+           (Printout'Access, Entities.Subprgs, "Subprograms",
+            Context => Backend.Context);
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Methods,
-               "Dispatching subprograms");
+              (Printout'Access, Entities.Methods, "Dispatching subprograms",
+               Context => Backend.Context);
          else
             ReST_Append_List
               (Printout'Access, Entities.CPP_Constructors, "Constructors",
+               Context => Backend.Context,
                Use_Full_Name => True);
             ReST_Append_List
               (Printout'Access, Entities.Methods, "Methods",
+               Context => Backend.Context,
                Use_Full_Name => True);
          end if;
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Pkgs, "Nested packages");
+              (Printout'Access, Entities.Pkgs, "Nested packages",
+               Context => Backend.Context);
          end if;
 
          --  Generate full documentation
@@ -2435,7 +2550,8 @@ package body GNATdoc.Backend.Simple is
                  (Printout'Access, Entity, Backend.Context);
 
             elsif Is_Subprogram (Entity) then
-               ReST_Append_Subprogram (Printout'Access, Entity);
+               ReST_Append_Subprogram
+                 (Printout'Access, Entity, Backend.Context);
             end if;
 
          elsif Get_Kind (Entity) = E_Class then
