@@ -60,6 +60,11 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Create the directories manually, or remove the directory
               separator at the end of the directory specification.
 
+- MC04-015: GPS: doesn't launch after opening non-ASCII named file
+  Problem:    When hisotry of recently open files contains names with
+              non-ASCII characters GPS sometime fails to start.
+  Workaround: Set UTF-8 locale before launching GPS.
+
 - JC07-006: GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
