@@ -53,6 +53,7 @@ with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
+with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
@@ -1083,7 +1084,7 @@ package body Src_Editor_Module is
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Add_To_History (Kernel, Hist_Key, +Full_Name (File));
+      Add_To_History (Kernel, Hist_Key, UTF8_Full_Name (File));
    end Add_To_Recent_Menu;
 
    ---------------

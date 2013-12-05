@@ -45,6 +45,7 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with Projects;               use Projects;
+with File_Utils;             use File_Utils;
 
 package body GPS.Menu is
    Me : constant Trace_Handle := Create ("MENU");
@@ -249,11 +250,7 @@ package body GPS.Menu is
       if Get_Registry (Kernel).Tree.Status = From_File
         and then Path /= No_File
       then
-         Add_To_History
-           (Kernel, Project_History_Key,
-            --  ??? What if the file is not utf8 ? The saved xml file might
-            --  get corrupted ...
-            String (Full_Name (Path).all));
+         Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
       end if;
 
    exception
