@@ -452,8 +452,11 @@ procedure GPS.Main is
            "bin";
 
       begin
-         --  Apparently under Windows XP, Command_Line.Getenv will return "",
-         --  so add an extra safety guard.
+         --  Command_Line.Getenv is unfortunately case sensitive, which is
+         --  incompatible with Windows where the PATH environment variable
+         --  might be called "Path", so add an extra safety guard by using
+         --  Ada.Environment_Variables.Value which is case insensitive.
+         --  ??? Consider fixing Command_Line.Getenv
 
          if Tmp /= "" then
             Setenv ("PATH", Tmp & Path_Separator & Bin);
@@ -463,6 +466,10 @@ procedure GPS.Main is
                Ada.Environment_Variables.Value ("PATH")
                & Path_Separator & Bin);
          end if;
+      exception
+         --  Value may raise Constraint_Error if PATH is not set, nothing
+         --  to do in this case
+         when Constraint_Error => null;
       end;
 
       --  Python startup path
