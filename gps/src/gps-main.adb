@@ -443,12 +443,26 @@ procedure GPS.Main is
       end if;
 
       declare
-         Tmp : constant String := Command_Line.Getenv ("PATH");
+         Tmp     : constant String := Command_Line.Getenv ("PATH");
+         Prefix  : constant String := Prefix_Dir.Display_Full_Name;
+         Bin     : constant String :=
+           Prefix &
+           (if Prefix (Prefix'Last) /= Directory_Separator
+            then (1 => Directory_Separator) else "") &
+           "bin";
+
       begin
-         Setenv
-           ("PATH",
-            Tmp & Path_Separator
-            & Prefix_Dir.Display_Full_Name & Directory_Separator & "bin");
+         --  Apparently under Windows XP, Command_Line.Getenv will return "",
+         --  so add an extra safety guard.
+
+         if Tmp /= "" then
+            Setenv ("PATH", Tmp & Path_Separator & Bin);
+         else
+            Setenv
+              ("PATH",
+               Ada.Environment_Variables.Value ("PATH")
+               & Path_Separator & Bin);
+         end if;
       end;
 
       --  Python startup path
@@ -477,8 +491,7 @@ procedure GPS.Main is
    -- Initialize_Low_Level --
    --------------------------
 
-   procedure Initialize_Low_Level (Status_Code : out Glib.Gint)
-   is
+   procedure Initialize_Low_Level (Status_Code : out Glib.Gint) is
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
@@ -576,7 +589,7 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp    : constant Virtual_File := Get_Tmp_Directory;
+         Tmp : constant Virtual_File := Get_Tmp_Directory;
       begin
          if not Is_Directory (Tmp) then
             Button := Message_Dialog
