@@ -225,7 +225,8 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
       Entity : constant Entity_Id :=
         Find_Unique_Entity
-          ((Self.File, First.Line, Visible_Column (First.Column)));
+          (Location => (Self.File, First.Line, Visible_Column (First.Column)),
+           In_References => True);
 
    begin
       if No (Entity)

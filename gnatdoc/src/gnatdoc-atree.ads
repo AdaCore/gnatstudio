@@ -527,7 +527,12 @@ private package GNATdoc.Atree is
       --  In_Ada_Lang is used to enable an assertion since in Ada we are not
       --  processing bodies yet???
 
-      function Has_Methods      (E : Entity_Id) return Boolean;
+      function Has_Methods
+        (E : Entity_Id) return Boolean;
+      function Has_Reference
+        (E   : Entity_Id;
+         Loc : General_Location) return Boolean;
+      --  Return True if E is referenced from location Loc
 
       function Is_Abstract      (E : Entity_Id) return Boolean;
       function Is_Access        (E : Entity_Id) return Boolean;
@@ -636,6 +641,14 @@ private package GNATdoc.Atree is
    --  fully reliable and can vary between platforms is not added to the output
 
 private
+   type Ref_Info is record
+      Ref : General_Entity_Reference;
+      Loc : General_Location;
+   end record;
+
+   package Ref_List is new Ada.Containers.Vectors
+     (Index_Type => Natural, Element_Type => Ref_Info);
+
    type Xref_Info is
       record
          Alias            : General_Entity;
@@ -660,6 +673,8 @@ private
 
          Child_Types   : aliased EInfo_List.Vector;
          --  Derivations of tagged types (or C++ classes)
+
+         References    : aliased Ref_List.Vector;
 
          Has_Methods   : Boolean;
 

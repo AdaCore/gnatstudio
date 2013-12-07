@@ -3718,10 +3718,11 @@ package body GNATdoc.Frontend is
    -- Find_Entity --
    -----------------
 
-   function Find_Unique_Entity (Location : General_Location) return Entity_Id
-   is
+   function Find_Unique_Entity
+     (Location      : General_Location;
+      In_References : Boolean := False) return Entity_Id is
    begin
-      return Builder.Find_Unique_Entity (Location);
+      return Builder.Find_Unique_Entity (Location, In_References);
    end Find_Unique_Entity;
 
 end GNATdoc.Frontend;

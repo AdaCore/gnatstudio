@@ -1104,7 +1104,7 @@ package body GNATdoc.Backend.Simple is
                         Column => Visible_Column_Type (Sloc_Start.Column));
                      E   : Entity_Id;
                   begin
-                     E := Find_Unique_Entity (Loc);
+                     E := Find_Unique_Entity (Loc, In_References => True);
 
                      --  Cannot generate the reference if we don't know the
                      --  file where the entity is defined.

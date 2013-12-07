@@ -2523,16 +2523,40 @@ package body GNATdoc.Frontend.Builder is
    -- Find_Unique_Entity --
    ------------------------
 
-   function Find_Unique_Entity (Location : General_Location) return Entity_Id
+   function Find_Unique_Entity
+      (Location      : General_Location;
+       In_References : Boolean := False) return Entity_Id
    is
       Map_Cursor : constant EInfo_Map.Cursor := Entities_Map.Find (Location);
       use type EInfo_Map.Cursor;
    begin
       if Map_Cursor /= EInfo_Map.No_Element then
          return EInfo_Map.Element (Map_Cursor);
-      else
-         return Atree.No_Entity;
       end if;
+
+      --  If not found then search for an entity which is referenced from
+      --  this location
+
+      if In_References then
+         declare
+            Cursor : EInfo_Map.Cursor := Entities_Map.First;
+            E      : Entity_Id;
+         begin
+            while EInfo_Map.Has_Element (Cursor) loop
+               E := EInfo_Map.Element (Cursor);
+
+               if LL.Is_Type (E)
+                 and then LL.Has_Reference (E, Location)
+               then
+                  return E;
+               end if;
+
+               EInfo_Map.Next (Cursor);
+            end loop;
+         end;
+      end if;
+
+      return Atree.No_Entity;
    end Find_Unique_Entity;
 
    ------------------------

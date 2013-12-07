@@ -37,9 +37,14 @@ private package GNATdoc.Frontend.Builder is
    --  Iterate through all entities stored in the hash table searching for an
    --  an entity with Full_Name. No_Entity is returned if not found.
 
-   function Find_Unique_Entity (Location : General_Location) return Entity_Id;
+   function Find_Unique_Entity
+     (Location      : General_Location;
+      In_References : Boolean := False) return Entity_Id;
    --  Search for the entity defined at Location in a hash table containing
-   --  all the entities of the project. No_Entity is returned if not found.
+   --  all the entities of the project. If the entity is not found in the
+   --  hash table but In_References is True then search for the reference
+   --  in the list of references associated with each entity stored in the
+   --  hash table. No_Entity is returned if not found.
 
    function Get_Unique_Entity
      (Context : access constant Docgen_Context;

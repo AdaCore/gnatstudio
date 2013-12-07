@@ -56,9 +56,14 @@ private package GNATdoc.Frontend is
 
    procedure Finalize;
 
-   function Find_Unique_Entity (Location : General_Location) return Entity_Id;
-   --  Search for the entity defined at Location in the hash table containing
-   --  all the entities of the project. No_Entity is returned if not found.
+   function Find_Unique_Entity
+     (Location      : General_Location;
+      In_References : Boolean := False) return Entity_Id;
+   --  Search for the entity defined at Location in a hash table containing
+   --  all the entities of the project. If the entity is not found in the
+   --  hash table but In_References is True then search for the reference
+   --  in the list of references associated with each entity stored in the
+   --  hash table. No_Entity is returned if not found.
 
    package Tree_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Tree_Type);

@@ -1117,6 +1117,29 @@ package body GNATdoc.Atree is
             end if;
          end if;
 
+         --  Store all the references to types; required to support clickable
+         --  types in the html output
+
+         if LL.Is_Type (New_E) then
+            declare
+               Cursor : Entity_Reference_Iterator;
+               Info   : Ref_Info;
+
+            begin
+               Find_All_References
+                 (Db, Cursor, LL.Get_Entity (New_E), Include_All => True);
+               while not At_End (Cursor) loop
+                  Info.Ref := Get (Cursor);
+                  Info.Loc := Get_Location (Info.Ref);
+                  New_E.Xref.References.Append (Info);
+
+                  Next (Cursor);
+               end loop;
+
+               Destroy (Cursor);
+            end;
+         end if;
+
          --  Store the location of the end of scope. For subprogram specs
          --  this information is not provided by Xref but it is needed by the
          --  frontend of Docgen to retrieve comments located after the spec;
@@ -1220,7 +1243,8 @@ package body GNATdoc.Atree is
              Is_Generic    => False,
 
              Parent_Types  => <>,
-             Child_Types   => <>),
+             Child_Types   => <>,
+             References    => <>),
 
            Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
            Short_Name      => Context.Kernel.Symbols.Find (S_Name),
@@ -2153,6 +2177,23 @@ package body GNATdoc.Atree is
          return E.Xref.Has_Methods;
       end Has_Methods;
 
+      function Has_Reference
+        (E : Entity_Id; Loc : General_Location) return Boolean
+      is
+         Cursor : Ref_List.Cursor;
+      begin
+         Cursor := E.Xref.References.First;
+         while Ref_List.Has_Element (Cursor) loop
+            if Ref_List.Element (Cursor).Loc = Loc then
+               return True;
+            end if;
+
+            Ref_List.Next (Cursor);
+         end loop;
+
+         return False;
+      end Has_Reference;
+
       function Is_Abstract (E : Entity_Id) return Boolean is
       begin
          return E.Xref.Is_Abstract;
@@ -2927,6 +2968,25 @@ package body GNATdoc.Atree is
             & Image (Get_Location (Db, E.Xref.Instance_Of))
             & ":"
             & Get_Name (Db, E.Xref.Instance_Of));
+      end if;
+
+      if not Reliable_Mode
+        and then  LL.Is_Type (E)
+      then
+         declare
+            Cursor : Ref_List.Cursor;
+         begin
+            Append_Line (LL_Prefix & "References:");
+
+            Cursor := E.Xref.References.First;
+            while Ref_List.Has_Element (Cursor) loop
+               Append_Line
+                 (LL_Prefix
+                  & "- "
+                  & Image (Ref_List.Element (Cursor).Loc));
+               Ref_List.Next (Cursor);
+            end loop;
+         end;
       end if;
 
       if With_Src then
