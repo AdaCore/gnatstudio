@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Basic_Types;              use Basic_Types;
 with GNATdoc.Comment;          use GNATdoc.Comment;
 with GNATdoc.Utils;            use GNATdoc.Utils;
@@ -37,6 +38,9 @@ with GNAT.IO;
 
 package body GNATdoc.Frontend is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend");
+
+   XML_Regpat : constant Pattern_Matcher :=
+     Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
    ----------------------
    -- Local_Subrograms --
@@ -2862,7 +2866,22 @@ package body GNATdoc.Frontend is
       --  block of comments retrieved from sources (and clean it), and report
       --  errors/warnings on missing documentation.
 
+      procedure Parse_Doc_Wrapper
+        (Context      : access constant Docgen_Context;
+         E            : Entity_Id;
+         S            : String;
+         Is_Full_View : Boolean := False);
+      --  Perform a fast analysis of S and invoke Parse_Doc or Parse_XML_Doc
+
       procedure Parse_Doc
+        (Context      : access constant Docgen_Context;
+         E            : Entity_Id;
+         S            : String;
+         Is_Full_View : Boolean := False);
+      --  Parse the contents of S and store its contents in the structured
+      --  comment of E (ie. E.Comment)
+
+      procedure Parse_XML_Doc
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
          S            : String;
@@ -2913,6 +2932,33 @@ package body GNATdoc.Frontend is
             --  Proposed enhancements
            or else Tag = "field";
       end Is_Custom_Tag;
+
+      -----------------------
+      -- Parse_Doc_Wrapper --
+      -----------------------
+
+      procedure Parse_Doc_Wrapper
+        (Context      : access constant Docgen_Context;
+         E            : Entity_Id;
+         S            : String;
+         Is_Full_View : Boolean := False)
+      is
+         Matches : Match_Array (0 .. 3);
+
+      begin
+         if Index (S, "@") > 0 then
+            Parse_Doc (Context, E, S, Is_Full_View);
+            return;
+         end if;
+
+         Match (XML_Regpat, S, Matches);
+
+         if Matches (0) /= No_Match then
+            Parse_XML_Doc (Context, E, S, Is_Full_View);
+         else
+            Parse_Doc (Context, E, S, Is_Full_View);
+         end if;
+      end Parse_Doc_Wrapper;
 
       ---------------
       -- Parse_Doc --
@@ -3331,7 +3377,7 @@ package body GNATdoc.Frontend is
          --  Parse the documentation of the subprogram
 
          if Get_Doc (Subp) /= No_Comment_Result then
-            Parse_Doc (Context, Subp, To_String (Get_Doc (Subp).Text));
+            Parse_Doc_Wrapper (Context, Subp, To_String (Get_Doc (Subp).Text));
             Set_Doc (Subp, No_Comment_Result);
          end if;
 
@@ -3361,6 +3407,186 @@ package body GNATdoc.Frontend is
          end if;
       end Parse_Subprogram_Comments;
 
+      -------------------
+      -- Parse_XML_Doc --
+      -------------------
+
+      procedure Parse_XML_Doc
+        (Context      : access constant Docgen_Context;
+         E            : Entity_Id;
+         S            : String;
+         Is_Full_View : Boolean := False)
+      is
+         Comment : constant Structured_Comment :=
+                    (if Is_Full_View then Get_Full_View_Comment (E)
+                                     else Get_Comment (E));
+         Current : Tag_Cursor := New_Cursor (Comment);
+
+         procedure Parse (S : String);
+         --  Parse the contents of S searching for the next tag
+
+         procedure Parse (S : String) is
+            Matches      : Match_Array (0 .. 3);
+            Tag_Text     : Unbounded_String;
+            --  Stand_Alone  : Boolean;
+
+         begin
+            Match (XML_Regpat, S, Matches);
+
+            --  Regular string. Let's append it to the current node value.
+
+            if Matches (0) = No_Match then
+               Append_Text (Current, S);
+               return;
+            end if;
+
+            --  Append characters to the last opened tag.
+            if Matches (0).First > S'First then
+               Append_Text (Current, S (S'First .. Matches (0).First - 1));
+            end if;
+
+            declare
+               Full_Text : String renames
+                 S (Matches (0).First .. Matches (0).Last);
+               Prefix    : String renames
+                 S (Matches (1).First .. Matches (1).Last);
+               Tag       : String renames
+                 S (Matches (2).First .. Matches (2).Last);
+
+               Attribute  : String renames
+                 S (Matches (3).First .. Matches (3).Last);
+               Attr_First : constant Natural := Matches (3).First;
+               Attr_Last  : Natural := Matches (3).Last;
+
+               Closing_Tag  : constant Boolean := Prefix = "/";
+               Is_Param_Tag : Boolean := False;
+            begin
+               if To_Lower (Tag) = "parameter" then
+                  Tag_Text     := To_Unbounded_String ("param");
+                  Is_Param_Tag := True;
+               else
+                  Tag_Text := To_Unbounded_String (Tag);
+               end if;
+
+               --  Treat closing tags; missing check???
+
+               if Closing_Tag then
+                  null;
+
+               --  If we found an unexpected tag, then treat it like raw text
+
+               elsif not Is_Custom_Tag (To_String (Tag_Text)) then
+                  Append_Text (Current, Full_Text);
+
+               --  Opening parameter tag
+
+               elsif Is_Param_Tag then
+
+                  --  Example of contents in attribute: `name="parameter name"`
+
+                  declare
+                     function Get_Name (S : String) return String;
+
+                     function Get_Name (S : String) return String is
+                        First : Natural := S'First;
+                        Last  : Natural := S'Last;
+                     begin
+                        while First < Last
+                          and then S (First) /= '"'
+                        loop
+                           First := First + 1;
+                        end loop;
+
+                        while First < Last
+                          and then S (First) = '"'
+                        loop
+                           First := First + 1;
+                        end loop;
+
+                        while Last > First
+                          and then S (Last) /= '"'
+                        loop
+                           Last := Last - 1;
+                        end loop;
+
+                        while Last > First
+                          and then S (Last) = '"'
+                        loop
+                           Last := Last - 1;
+                        end loop;
+
+                        return S (First .. Last);
+                     end Get_Name;
+
+                     Param_Name : constant String := Get_Name (Attribute);
+                  begin
+                     Current :=
+                       Append_Tag
+                         (Comment,
+                          Tag       => Tag_Text,
+                          Entity    => No_General_Entity,
+                          Attribute => To_Unbounded_String (Param_Name));
+                  end;
+
+               --  Opening other tag
+
+               else
+                  declare
+                     Attribute : Unbounded_String;
+
+                  begin
+                     --  See if the tag finishes by '/>'
+                     --  Stand_Alone := False;
+
+                     if Matches (3).First >= Matches (3).Last
+                       and then S (Matches (3).Last) = '/'
+                     then
+                        --  Stand_Alone := True;
+                        Attr_Last := Attr_Last - 1;
+                     end if;
+
+                     --  Now initialize the attributes field
+                     if Attr_First <= Attr_Last then
+                        Attribute :=
+                          To_Unbounded_String (S (Attr_First .. Attr_Last));
+                     end if;
+
+                     Current :=
+                       Append_Tag
+                         (Comment,
+                          Tag       => Tag_Text,
+                          Entity    => No_General_Entity,
+                          Attribute => Attribute);
+                  end;
+               end if;
+
+               if Matches (0).Last < S'Last then
+                  Parse (S (Matches (0).Last + 1 .. S'Last));
+               end if;
+            end;
+
+         end Parse;
+
+      --  Start of processing for Parse_XML_Doc
+
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         Parse (S);
+
+         --  Check unclosed XML tags: not implemented yet???
+
+         if Is_Full_View then
+            if Context.Options.Show_Private then
+               Set_Full_View_Comment (E, Comment);
+            end if;
+         else
+            Set_Comment (E, Comment);
+         end if;
+      end Parse_XML_Doc;
+
       ------------------
       -- Process_Node --
       ------------------
@@ -3382,14 +3608,15 @@ package body GNATdoc.Frontend is
 
          elsif Get_Doc (Entity).Text /= Null_Unbounded_String then
             Set_Comment (Entity, New_Structured_Comment);
-            Parse_Doc (Context, Entity, To_String (Get_Doc (Entity).Text));
+            Parse_Doc_Wrapper
+              (Context, Entity, To_String (Get_Doc (Entity).Text));
             Set_Doc (Entity, No_Comment_Result);
 
             if Is_Partial_View (Entity)
               and then Context.Options.Show_Private
             then
                Set_Full_View_Comment (Entity, New_Structured_Comment);
-               Parse_Doc
+               Parse_Doc_Wrapper
                  (Context      => Context,
                   E            => Entity,
                   S            => To_String (Get_Full_View_Doc (Entity).Text),
