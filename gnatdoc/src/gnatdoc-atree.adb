@@ -1094,6 +1094,22 @@ package body GNATdoc.Atree is
          end if;
 
          New_E.Xref.Alias     := Xref.Renaming_Of (Db, E);
+
+         --  Protect GNATdoc against wrong information in the ALI file.
+         --  We should investigate the compiler???
+
+         if Present (New_E.Xref.Alias) then
+            declare
+               Alias_Loc : General_Location;
+            begin
+               Alias_Loc := Get_Location (Db, New_E.Xref.Alias);
+
+               if not Is_Spec_File (Context.Kernel, Alias_Loc.File) then
+                  New_E.Xref.Alias := No_General_Entity;
+               end if;
+            end;
+         end if;
+
          New_E.Xref.Etype     := Get_Type_Of (Db, E);
          New_E.Xref.Body_Loc  := Get_Body (Db, E);
 
@@ -1757,7 +1773,16 @@ package body GNATdoc.Atree is
 
    procedure Set_Alias (E : Entity_Id; Value : Entity_Id) is
    begin
-      E.Alias := Value;
+      --  Using the sources of the gnat project there are wrong values
+      --  in the renamings returned by Xref value. Hence for now we
+      --  disable the assertion and protect GNATdoc aganinst wrong
+      --  obvious values. To be investigated???
+
+      --  pragma Assert (Get_Kind (E) = Get_Kind (Value));
+
+      if Get_Kind (E) = Get_Kind (Value) then
+         E.Alias := Value;
+      end if;
    end Set_Alias;
 
    -----------------
