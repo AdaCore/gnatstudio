@@ -663,11 +663,12 @@ package body GNATdoc.Frontend is
             --  token corresponds with the parent type of a tagged type or an
             --  interface type.
 
-            Is_Interface : Boolean := False;
-            Is_Null      : Boolean := False;
-            Tagged_Null  : Boolean := False;
-            With_Null    : Boolean := False;
-            With_Private : Boolean := False;
+            Is_Interface   : Boolean := False;
+            Is_Null        : Boolean := False;
+            Tagged_Null    : Boolean := False;
+            Tagged_Private : Boolean := False;
+            With_Null      : Boolean := False;
+            With_Private   : Boolean := False;
 
             type Tokens is
               (Tok_Unknown,
@@ -893,7 +894,12 @@ package body GNATdoc.Frontend is
                      Set_Is_Private (E);
                   end if;
 
-                  if Prev_Token = Tok_Is then
+                  if Token = Tok_Type
+                    or else Token = Tok_Is
+                  then
+                     null;
+
+                  elsif Prev_Token = Tok_Is then
                      if Token = Tok_New then
                         In_Parent_Part := True;
 
@@ -901,54 +907,73 @@ package body GNATdoc.Frontend is
                         Is_Null := True;
 
                      elsif Token = Tok_Tagged then
+
+                        --  Complete the decoration of this type since Xref
+                        --  does not facilitate decorating well tagged types
+                        --  that have no primitives (for example, a root of
+                        --  derivation defined as abstract tagged null record
+                        --  without primitives)
+
                         if not Is_Tagged (E) then
                            Set_Is_Tagged (E);
                            Set_Kind (E, E_Tagged_Record_Type);
                         end if;
+
+                     elsif Token = Tok_Abstract then
+                        --  Missing Xref decoration???
+                        --  pragma Assert (LL.Is_Abstract (E));
+                        --  Is_Abstract := True;
+
+                        null;
 
                      elsif Token = Tok_Interface then
                         pragma Assert (Get_Kind (E) = E_Interface);
                         Is_Interface := True;
                      end if;
 
-                  elsif Prev_Token = Tok_Limited then
-                     if Token = Tok_Interface then
-                        Is_Interface := True;
+                  elsif Token = Tok_Tagged then
+                     if Prev_Token = Tok_Abstract then
+
+                        --  Complete the decoration of this type since Xref
+                        --  does not facilitate decorating well tagged types
+                        --  that have no primitives (for example, a root of
+                        --  derivation defined as abstract tagged null record
+                        --  without primitives)
+
+                        if not Is_Tagged (E) then
+                           Set_Is_Tagged (E);
+                           Set_Kind (E, E_Tagged_Record_Type);
+                        end if;
                      end if;
 
-                  elsif (Prev_Token = Tok_Is or else Prev_Token = Tok_Abstract)
-                    and then Token = Tok_Tagged
-                  then
-                     --  Complete the decoration of this type since Xref does
-                     --  not facilitate decorating well tagged types that
-                     --  have no primitives (for example, a root of derivation
-                     --  defined as abstract tagged null record without
-                     --  primitives)
+                  elsif Token = Tok_Limited then
+                     null;
 
-                     if not Is_Tagged (E) then
-                        Set_Is_Tagged (E);
+                  elsif Token = Tok_Interface then
+                     pragma Assert (Get_Kind (E) = E_Interface);
+                     Is_Interface := True;
+
+                  elsif Token = Tok_And then
+                     if Prev_Token = Tok_Interface then
+                        In_Parent_Part := True;
                      end if;
 
-                  elsif Prev_Token = Tok_Interface
-                    and then Token = Tok_And
-                  then
-                     In_Parent_Part := True;
+                  elsif Token = Tok_Null then
+                     if Prev_Token = Tok_Tagged
+                       or else Prev_Token = Tok_Limited
+                     then
+                        Tagged_Null := True;
 
-                  elsif Prev_Token = Tok_Tagged
-                    and then Token = Tok_Null
-                  then
-                     Tagged_Null := True;
+                     elsif Prev_Token = Tok_With then
+                        With_Null := True;
+                     end if;
 
-                  elsif Prev_Token = Tok_With
-                    and then Token = Tok_Null
-                  then
-                     With_Null := True;
-
-                  elsif Prev_Token = Tok_With
-                    and then Token = Tok_Private
-                  then
-                     With_Private := True;
-                     pragma Assert (With_Private);
+                  elsif Token = Tok_Private then
+                     if Prev_Token = Tok_With then
+                        With_Private := True;
+                     elsif Prev_Token = Tok_Tagged then
+                        Tagged_Private := True;
+                     end if;
 
                   elsif (Is_Null
                            or else Tagged_Null
@@ -979,6 +1004,8 @@ package body GNATdoc.Frontend is
                           or else Is_Interface
                           or else End_Record_Found
                           or else (With_Private
+                                     and then Prev_Token = Tok_Private)
+                          or else (Tagged_Private
                                      and then Prev_Token = Tok_Private);
                      end if;
                   end if;
@@ -2465,8 +2492,8 @@ package body GNATdoc.Frontend is
                   Alias_Formal := EInfo_List.Element (Alias_Cursor);
                   pragma Assert (Get_Kind (Subp_Formal) = E_Variable);
 
-                  Set_Alias (Subp_Formal, Alias_Formal);
                   Set_Kind  (Subp_Formal, Get_Kind (Alias_Formal));
+                  Set_Alias (Subp_Formal, Alias_Formal);
 
                   Register_Delayed_Remove_From_Scope
                     (Scope  => Get_Scope (Subp_Formal),
