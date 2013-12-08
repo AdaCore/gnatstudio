@@ -2538,22 +2538,7 @@ package body GNATdoc.Frontend.Builder is
       --  this location
 
       if In_References then
-         declare
-            Cursor : EInfo_Map.Cursor := Entities_Map.First;
-            E      : Entity_Id;
-         begin
-            while EInfo_Map.Has_Element (Cursor) loop
-               E := EInfo_Map.Element (Cursor);
-
-               if LL.Is_Type (E)
-                 and then LL.Has_Reference (E, Location)
-               then
-                  return E;
-               end if;
-
-               EInfo_Map.Next (Cursor);
-            end loop;
-         end;
+         return Atree.Find_Entity (Location);
       end if;
 
       return Atree.No_Entity;

@@ -171,6 +171,11 @@ private package GNATdoc.Atree is
    --  Find the entity with Name in List. Name may be a short name or an
    --  expanded name. If not found then return No_Entity.
 
+   function Find_Entity
+     (Location : General_Location) return Entity_Id;
+   --  Find the entity reference from this location. If not found then
+   --  return No_Entity.
+
    procedure For_All
      (Vector  : in out EInfo_List.Vector;
       Process : access procedure (E_Info : Entity_Id));
@@ -642,8 +647,9 @@ private package GNATdoc.Atree is
 
 private
    type Ref_Info is record
-      Ref : General_Entity_Reference;
-      Loc : General_Location;
+      Entity : Entity_Id;
+      Ref    : General_Entity_Reference;
+      Loc    : General_Location;
    end record;
 
    package Ref_List is new Ada.Containers.Vectors

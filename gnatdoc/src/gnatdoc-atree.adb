@@ -17,8 +17,12 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Hashed_Maps;
 
+with GNAT.HTable;
 with GNATdoc.Utils;               use GNATdoc.Utils;
+
+with Basic_Types;                 use Basic_Types;
 with Language.Ada;
 with Language.C;
 with Language.Tree;               use Language.Tree;
@@ -56,6 +60,71 @@ package body GNATdoc.Atree is
       Is_Internal : Boolean := False) return Entity_Id;
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
+
+   package Hash_Table is
+      function Hash
+        (Key : General_Location) return Ada.Containers.Hash_Type;
+
+      function Equivalent_Keys
+        (Left, Right : General_Location) return Boolean;
+
+      package Ref_Map is new Ada.Containers.Indefinite_Hashed_Maps
+        (Key_Type        => General_Location,
+         Element_Type    => Ref_Info,
+         Hash            => Hash,
+         Equivalent_Keys => Equivalent_Keys);
+
+      References_Map : Ref_Map.Map;
+
+      procedure Append_To_Map (Ref : Ref_Info);
+      --  Append the entity of E to Entities_Map
+
+   private
+      pragma Inline (Append_To_Map);
+   end Hash_Table;
+   use Hash_Table;
+
+   package body Hash_Table is
+
+      -------------------
+      -- Append_To_Map --
+      -------------------
+
+      procedure Append_To_Map (Ref : Ref_Info) is
+      begin
+         References_Map.Include (Ref.Loc, Ref);
+      end Append_To_Map;
+
+      ---------------------
+      -- Equivalent_Keys --
+      ---------------------
+
+      function Equivalent_Keys
+        (Left, Right : General_Location) return Boolean is
+      begin
+         return Left.File = Right.File
+           and then Left.Line = Right.Line
+           and then Left.Column = Right.Column;
+      end Equivalent_Keys;
+
+      ----------
+      -- Hash --
+      ----------
+
+      function Hash (Key : General_Location) return Ada.Containers.Hash_Type
+      is
+         type Internal_Hash_Type is range 0 .. 2 ** 31 - 1;
+         function Internal is new GNAT.HTable.Hash
+           (Header_Num => Internal_Hash_Type);
+      begin
+         return Ada.Containers.Hash_Type
+           (Internal
+              (+Key.File.Full_Name
+               & Natural'Image (Key.Line)
+               & Basic_Types.Visible_Column_Type'Image (Key.Column)));
+      end Hash;
+
+   end Hash_Table;
 
    -----------------------
    -- Append_Derivation --
@@ -326,6 +395,23 @@ package body GNATdoc.Atree is
       return No_Entity;
    end Find_Entity;
 
+   -----------------
+   -- Find_Entity --
+   -----------------
+
+   function Find_Entity
+     (Location : General_Location) return Entity_Id
+   is
+      Map_Cursor : constant Ref_Map.Cursor := References_Map.Find (Location);
+      use type Ref_Map.Cursor;
+   begin
+      if Map_Cursor /= Ref_Map.No_Element then
+         return Ref_Map.Element (Map_Cursor).Entity;
+      else
+         return No_Entity;
+      end if;
+   end Find_Entity;
+
    -------------
    -- For_All --
    -------------
@@ -592,7 +678,7 @@ package body GNATdoc.Atree is
         and then not Is_Standard_Entity (Scope)
       loop
          if In_Neverending_Loop then
-            return "";
+            return To_String (Full_Name);
          end if;
 
          --  ---
@@ -604,6 +690,11 @@ package body GNATdoc.Atree is
       Scope := Prev_Scope;
       while Present (Get_Parent_Package (Scope)) loop
          Scope     := Get_Parent_Package (Scope);
+
+         if In_Neverending_Loop then
+            return To_String (Full_Name);
+         end if;
+
          Full_Name := Get_Short_Name (Scope) & "." & Full_Name;
       end loop;
 
@@ -1124,14 +1215,20 @@ package body GNATdoc.Atree is
             declare
                Cursor : Entity_Reference_Iterator;
                Info   : Ref_Info;
+               Ref    : General_Entity_Reference;
 
             begin
                Find_All_References
                  (Db, Cursor, LL.Get_Entity (New_E), Include_All => True);
                while not At_End (Cursor) loop
-                  Info.Ref := Get (Cursor);
-                  Info.Loc := Get_Location (Info.Ref);
+                  Ref  := Get (Cursor);
+                  Info :=
+                    Ref_Info'(Entity => New_E,
+                              Ref    => Ref,
+                              Loc    => Get_Location (Ref));
+
                   New_E.Xref.References.Append (Info);
+                  Append_To_Map (Info);
 
                   Next (Cursor);
                end loop;

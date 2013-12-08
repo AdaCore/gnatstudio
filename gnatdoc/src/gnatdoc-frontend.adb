@@ -824,7 +824,7 @@ package body GNATdoc.Frontend is
                         declare
                            Tok_Loc   : General_Location;
                            LL_Parent : General_Entity;
-                           Parent    : Entity_Id := null;
+                           Parent    : Entity_Id := Atree.No_Entity;
 
                         begin
                            if Is_Expanded_Name (S) then
@@ -844,11 +844,16 @@ package body GNATdoc.Frontend is
                                   (Db   => Context.Database,
                                    Name => Get_Short_Name (S),
                                    Loc  => Tok_Loc);
-                              pragma Assert (Present (LL_Parent));
 
-                              Parent :=
-                                Builder.Get_Unique_Entity
-                                  (Context, File, LL_Parent);
+                              --  Tolerate the case in which the package
+                              --  containing the parent type is not
+                              --  available.
+
+                              if Present (LL_Parent) then
+                                 Parent :=
+                                   Builder.Get_Unique_Entity
+                                     (Context, File, LL_Parent);
+                              end if;
                            end if;
 
                            if Present (Parent) then
@@ -859,7 +864,7 @@ package body GNATdoc.Frontend is
                                  Set_Is_Tagged (E);
                               end if;
 
-                              if Get_Progenitors (E).all.Contains (Parent) then
+                              if Get_Progenitors (E).Contains (Parent) then
                                  Delete_Entity
                                    (Get_Progenitors (E).all, Parent);
                               end if;
@@ -2573,8 +2578,11 @@ package body GNATdoc.Frontend is
             end if;
 
             Parent := Builder.Find_Unique_Entity (Full_Name);
-            pragma Assert (Present (Parent) and then Is_Package (Parent));
-            Set_Parent_Package (E, Parent);
+
+            if Present (Parent) then
+               pragma Assert (Is_Package (Parent));
+               Set_Parent_Package (E, Parent);
+            end if;
          end Workaround_Compiler_Get_Parent_Problem;
 
          --------
@@ -2633,13 +2641,28 @@ package body GNATdoc.Frontend is
             Columns       => Natural (Location.Column),
             Index         => Index);
 
-         Index := Index - 1;
+         --  Locate the end of the package name
 
-         Parse_Tokens_Backwards
-           (Lang         => Lang,
-            Buffer       =>  Buffer.all (Buffer'First .. Index),
-            Start_Offset => String_Index_Type (Index),
-            Callback     => CB'Unrestricted_Access);
+         while Index > Buffer'First
+           and then Buffer (Index) /= '.'
+           and then Buffer (Index) /= ' '
+           and then Buffer (Index) /= ASCII.LF
+           and then Buffer (Index) /= ASCII.HT
+         loop
+            Index := Index - 1;
+         end loop;
+
+         if Index > Buffer'First
+           and then Buffer (Index) = '.'
+         then
+            Index := Index - 1;
+
+            Parse_Tokens_Backwards
+              (Lang         => Lang,
+               Buffer       => Buffer.all (Buffer'First .. Index),
+               Start_Offset => String_Index_Type (Index),
+               Callback     => CB'Unrestricted_Access);
+         end if;
       end Parse_Package_Header;
 
       -------------------
