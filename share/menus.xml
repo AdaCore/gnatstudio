@@ -424,6 +424,7 @@
          <menu label='GNAT'/>
          <menu label='GNU Tools'/>
          <menu label='Gprbuild'/>
+         <menu label='XMLAda'/>
          <menu label='Python'/>
          <menu label='Python Extensions' action='display documentation GPS extensions for Python'/>
          <menu label='A_bout'       action='about gps'/>

@@ -4,6 +4,7 @@
    <doc_path>share/doc/gprbuild/html</doc_path>
    <doc_path>share/doc/gnat-cross/html</doc_path>
    <doc_path>share/doc/gps</doc_path>
+   <doc_path>share/doc/</doc_path>
 
    <!--  Backward compatibility with earlier versions of GNAT -->
    <doc_path>doc/gnat/html</doc_path>
@@ -42,6 +43,13 @@
       <descr>GPS Release Notes</descr>
       <category>GPS</category>
       <menu>/Help/GPS/Release Notes</menu>
+   </documentation_file>
+
+   <documentation_file>
+      <name>xmlada/index.html</name>
+      <descr>XML/Ada User's Guide</descr>
+      <category>XML</category>
+      <menu>/Help/XMLAda/User's Guide</menu>
    </documentation_file>
 
    <documentation_file>

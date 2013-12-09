@@ -84,6 +84,13 @@ settings in GPS:
 
   Set the search path for the documentation. :ref:`Adding_Documentation`.
 
+  If you installed GPS in a directory different from that of the GNAT
+  compiler, you will need to set this variable for GPS to find the
+  documentation for GNAT. In the case of the compiler documentation,
+  for instance, the gps_index.xml file installed with GPS assumes that
+  GPS_DOC_PATH points to the directory containing gnat_ugn.html, so
+  it should contain :file:`gnat_prefix/share/doc/gnat/html`.
+
 *GPS_CUSTOM_PATH*
   .. index:: GPS_CUSTOM_PATH
 
