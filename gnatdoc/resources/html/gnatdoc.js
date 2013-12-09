@@ -38,6 +38,16 @@ function buildText(root, data)
                 buildText(element, data[index].children);
                 break;
 
+            case 'ul':
+                element = document.createElement('ul');
+                buildText(element, data[index].children);
+                break;
+
+            case 'li':
+                element = document.createElement('li');
+                buildText(element, data[index].children);
+                break;
+
             case 'span':
                 element = document.createElement('span');
 

@@ -15,18 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;          use Ada.Characters.Handling;
-with Ada.Strings;                      use Ada.Strings;
-with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Strings;                       use Ada.Strings;
+with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 
-with GNAT.Strings;                     use GNAT.Strings;
-with GNATCOLL.JSON;                    use GNATCOLL.JSON;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with Language;                         use Language;
-with Templates_Parser;                 use Templates_Parser;
+with GNAT.Strings;                      use GNAT.Strings;
+with GNATCOLL.JSON;                     use GNATCOLL.JSON;
+with GNATCOLL.Traces;                   use GNATCOLL.Traces;
+with Language;                          use Language;
+with Templates_Parser;                  use Templates_Parser;
 
-with GNATdoc.Backend.HTML.Source_Code; use GNATdoc.Backend.HTML.Source_Code;
-with GNATdoc.Comment;                  use GNATdoc.Comment;
+with GNATdoc.Backend.HTML.JSON_Builder; use GNATdoc.Backend.HTML.JSON_Builder;
+with GNATdoc.Backend.HTML.Source_Code;  use GNATdoc.Backend.HTML.Source_Code;
+with GNATdoc.Backend.Text_Parser;       use GNATdoc.Backend.Text_Parser;
+with GNATdoc.Comment;                   use GNATdoc.Comment;
 
 package body GNATdoc.Backend.HTML is
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
@@ -1338,49 +1340,9 @@ package body GNATdoc.Backend.HTML is
 
    function To_JSON_Representation
      (Text : Ada.Strings.Unbounded.Unbounded_String)
-      return GNATCOLL.JSON.JSON_Array
-   is
-      Result      : JSON_Array;
-      Delimiter   : Natural;
-      Slice_First : Positive := 1;
-      Slice_Last  : Positive;
-      Paragraph   : JSON_Value;
-      Span        : JSON_Value;
-      Aux         : JSON_Array;
-
+      return GNATCOLL.JSON.JSON_Array is
    begin
-      while Slice_First <= Length (Text) loop
-         Delimiter := Index (Text, ASCII.LF & ASCII.LF, Slice_First);
-
-         if Delimiter = 0 then
-            Slice_Last := Length (Text);
-
-         else
-            Slice_Last := Delimiter - 1;
-         end if;
-
-         Span := Create_Object;
-         Span.Set_Field ("kind", "span");
-         Span.Set_Field
-           ("text", Slice (Text, Slice_First, Slice_Last));
-
-         Paragraph := Create_Object;
-         Paragraph.Set_Field ("kind", "paragraph");
-         Aux := Empty_Array;
-         Append (Aux, Span);
-         Paragraph.Set_Field ("children", Aux);
-
-         Append (Result, Paragraph);
-
-         Slice_First := Slice_Last + 1;
-
-         while Slice_First <= Length (Text) loop
-            exit when Element (Text, Slice_First) /= ASCII.LF;
-            Slice_First := Slice_First + 1;
-         end loop;
-      end loop;
-
-      return Result;
+      return To_JSON_Representation (Parse_Text (To_String (Text)));
    end To_JSON_Representation;
 
 end GNATdoc.Backend.HTML;

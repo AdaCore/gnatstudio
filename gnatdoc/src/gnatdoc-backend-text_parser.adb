@@ -59,11 +59,11 @@ package body GNATdoc.Backend.Text_Parser is
    LI_Pattern : constant Pattern_Matcher := Compile ("\s*([-*])\s*(\S)");
    P_Pattern  : constant Pattern_Matcher := Compile ("\s*(\S)");
 
-   -----------
-   -- Parse --
-   -----------
+   ----------------
+   -- Parse_Text --
+   ----------------
 
-   procedure Parse (Comment_Text : String) is
+   function Parse_Text (Comment_Text : String) return Event_Vectors.Vector is
       Lines       : constant Unbounded_String_Vectors.Vector :=
         Split_Lines (Comment_Text);
       Result      : Event_Vectors.Vector;
@@ -305,8 +305,7 @@ package body GNATdoc.Backend.Text_Parser is
       loop
          case State.Kind is
             when Initial =>
-               State := State_Stack.Last_Element;
-               State_Stack.Delete_Last;
+               null;
 
             when Paragraph =>
                Close_P_And_Pop;
@@ -320,7 +319,9 @@ package body GNATdoc.Backend.Text_Parser is
 
          exit when State_Stack.Is_Empty;
       end loop;
-   end Parse;
+
+      return Result;
+   end Parse_Text;
 
    -----------------
    -- Split_Lines --

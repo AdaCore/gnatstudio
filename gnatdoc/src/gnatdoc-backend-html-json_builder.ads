@@ -14,27 +14,17 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+--  This package contains code to convert stream of markup events into JSON
+--  array which is used by JavaScript to render documentation page.
 
-with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with GNATdoc.Backend.Text_Parser;
 
-package GNATdoc.Backend.Text_Parser is
+private package GNATdoc.Backend.HTML.JSON_Builder is
 
-   type Event_Kinds is (Start_Tag, Text, End_Tag);
+   function To_JSON_Representation
+     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector)
+      return GNATCOLL.JSON.JSON_Array;
+   --  Converts stream of markup events to JSON_Array to be used by JavaScript
+   --  to render documentation page.
 
-   type Event_Type (Kind : Event_Kinds := Text) is record
-      case Kind is
-         when Start_Tag | End_Tag =>
-            Name : Ada.Strings.Unbounded.Unbounded_String;
-
-         when Text =>
-            Text : Ada.Strings.Unbounded.Unbounded_String;
-      end case;
-   end record;
-
-   package Event_Vectors is
-     new Ada.Containers.Vectors (Positive, Event_Type);
-
-   function Parse_Text (Comment_Text : String) return Event_Vectors.Vector;
-
-end GNATdoc.Backend.Text_Parser;
+end GNATdoc.Backend.HTML.JSON_Builder;
