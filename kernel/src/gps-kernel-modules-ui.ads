@@ -87,6 +87,11 @@ package GPS.Kernel.Modules.UI is
    -----------
    --  See also the types defined in gps-kernel.ads
 
+   type GPS_Contextual_Menu_Record is new Gtk.Menu.Gtk_Menu_Record with record
+      Kernel : access Kernel_Handle_Record'Class;
+   end record;
+   type GPS_Contextual_Menu is access all GPS_Contextual_Menu_Record'Class;
+
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context);
 

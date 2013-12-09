@@ -740,7 +740,10 @@ package body GPS.Kernel.Modules.UI is
    procedure On_Contextual_Menu_Hide
      (Self  : access Gtk_Widget_Record'Class) is
    begin
-      Destroy (Self);
+      null;
+      if Self.all in GPS_Contextual_Menu_Record'Class then
+         GPS_Contextual_Menu (Self).Kernel.Contextual_Menu_Open := False;
+      end if;
    end On_Contextual_Menu_Hide;
 
    ----------------------------
@@ -1117,7 +1120,9 @@ package body GPS.Kernel.Modules.UI is
       Menu    : Gtk_Menu := null;
    begin
       --  Create the menu and add all the modules information
-      Gtk_New (Menu);
+      Menu := new GPS_Contextual_Menu_Record;
+      Gtk.Menu.Initialize (Menu);
+      GPS_Contextual_Menu (Menu).Kernel := User.Kernel;
 
       Set_Context_Information
         (Context,
