@@ -8,6 +8,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MC05-001: GPS: Keyboard not working in editor's contextual menus
+  Problem:    When in a contextual menu in the editor, keys would be grabbed by
+  the editor rather than by the menu
+  Workaround: None
+
 - MA29-023: GPS: Goto declaration/body with a floating window
   Problem:    When having a spec (ads) file open in a non floating window, and
   the corresponding body open in a floating window, using go-to body in the

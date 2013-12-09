@@ -722,12 +722,26 @@ package body GPS.Kernel.Modules.UI is
       pragma Unreferenced (Object);
       Kernel : constant Kernel_Handle := Convert (Data);
    begin
+      Kernel.Contextual_Menu_Open := False;
       if Kernel.Last_Context_For_Contextual /= No_Context then
          Trace (Me, "Running Hook " & To_String (Contextual_Menu_Close_Hook));
          Run_Hook (Kernel, Contextual_Menu_Close_Hook);
          Trace (Me, "Destroying contextual menu and its context");
       end if;
    end Contextual_Menu_Destroyed;
+
+   procedure On_Contextual_Menu_Hide
+     (Self  : access Gtk_Widget_Record'Class);
+
+   -----------------------------
+   -- On_Contextual_Menu_Hide --
+   -----------------------------
+
+   procedure On_Contextual_Menu_Hide
+     (Self  : access Gtk_Widget_Record'Class) is
+   begin
+      Destroy (Self);
+   end On_Contextual_Menu_Hide;
 
    ----------------------------
    -- Create_Contextual_Menu --
@@ -1078,8 +1092,10 @@ package body GPS.Kernel.Modules.UI is
       Widget_List.Free (List);
 
       if Menu /= null then
-         Weak_Ref (Menu, Contextual_Menu_Destroyed'Access,
-                   Data => Kernel.all'Address);
+         Menu.On_Hide (On_Contextual_Menu_Hide'Access, False);
+         Menu.Weak_Ref
+           (Contextual_Menu_Destroyed'Access, Data => Kernel.all'Address);
+         Kernel.Contextual_Menu_Open := True;
       end if;
 
    exception

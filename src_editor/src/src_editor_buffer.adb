@@ -7720,7 +7720,8 @@ package body Src_Editor_Buffer is
       --  just check the current module from there.
       return not Completion_Module.In_Smart_Completion
         and then GPS.Kernel.Modules.Module_ID
-          (Get_Creator (Ctxt)) = Src_Editor_Module_Id;
+          (Get_Creator (Ctxt)) = Src_Editor_Module_Id
+            and then not Get_Kernel (Ctxt).Get_Contextual_Menu_Open;
    end Filter_Matches_Primitive;
 
    ----------

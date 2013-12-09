@@ -196,6 +196,9 @@ package GPS.Kernel is
    --  Print out an error message in messages window, or display a dialog
    --  if GPS is exiting.
 
+   function Get_Contextual_Menu_Open
+     (Handle : access Kernel_Handle_Record) return Boolean;
+
    ------------------
    -- Key managing --
    ------------------
@@ -1221,6 +1224,8 @@ private
       --  Messages that should be inserted in the Messages window.
       --  We use this to store messages until the Messages window is
       --  created.
+
+      Contextual_Menu_Open : Boolean := False;
    end record;
 
    overriding procedure Create_Registry
@@ -1237,6 +1242,11 @@ private
 
    overriding function Process_Launcher
      (Self : not null access Kernel_Handle_Record)
-     return GPS.Process_Launchers.Process_Launcher;
+      return GPS.Process_Launchers.Process_Launcher;
+
+   function Get_Contextual_Menu_Open
+     (Handle : access Kernel_Handle_Record) return Boolean
+   is
+      (Handle.Contextual_Menu_Open);
 
 end GPS.Kernel;
