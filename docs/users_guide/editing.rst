@@ -10,73 +10,81 @@ Editing Files
 General Information
 ===================
 
-Source editing is one of the central parts of GPS, giving in turn access to
+Source editing is one of the central parts of GPS.  It allows access to
 many other functionalities, including extended source navigation and source
-analyzing tools.
+analyzing tools.  You can have as many editor windows as you need and
+each editor window receives annotations from other components in GPS,
+such as a debugger.
+
+We use the term "pointer" to refer to the mouse pointer and "cursor" to
+refer to the text cursor.
 
 .. image:: source-editor.png
 
 The source editor provides an extensive set of features, including:
 
 *Title bar*
-  Showing the full name of the file including path information in the title
-  bar of the GPS window.
+  Displays the full name of the file including path information in the title
+  bar of the editor window.
 
 *Line number information*
-  This is the left area of the source editor.  :index:`Line numbers <single:
-  preferences; editor --> display line numbers>` can be disabled with the
-  :menuselection:`Editor --> Display line numbers` preference.  Note that this
-  area can also display additional information, such as the current line of
-  execution when debugging, or cvs annotations.
+  Located to the left of the source editor, :index:`Line numbers
+  <single: preferences; editor --> display line numbers>` can be disabled
+  using the :menuselection:`Editor --> Display line numbers` preference.
+  This area may also display additional information in some cases, such as
+  the current line of execution when debugging or cvs annotations.
 
 *Scrollbar*
-  Located on the right of the editor, it allows you to scroll through the
-  source file. When you scroll, GPS displays a convenient tooltip that shows
-  the subprogram the cursor currently is in.
+  Located to the right of the editor, this allows scrolling through
+  the source file.  The highlighted area of the scrollbar corresponds
+  to the visible portion of the file.  While you are scrolling, the
+  editor displays a tooltip showing the file, line number, and
+  subprogram corresponding to the center of the visible portion.
 
 *Speed column*
-  This :index:`column <single: preferences; editor --> speed column policy>`,
-  when visible, is located on the left of the editor. It allows you to view all
-  the highlighted lines in a file, at a glance. For example, all the lines
-  containing compilation errors are displayed in the Speed Column. The
-  preference :menuselection:`Editor --> Speed column policy` can be used to
-  control the display of this area. It can sometimes be convenient to keep it
-  visible at all time (to avoid resizing of the editors when new information
-  becomes available), or on the other hand to hide it automatically when it is
-  not needed to save some space on the screen.
+  This :index:`column <single: preferences; editor --> speed
+  column policy>`, when visible, is located on the left of the editor. It
+  allows you to view all the highlighted lines in a file at a glance. For
+  example, all the lines containing compilation errors are displayed in the
+  Speed Column. The preference :menuselection:`Editor --> Speed column
+  policy` can be used to control the display of this area. It can sometimes
+  be convenient to keep it visible at all times (to avoid resizing the
+  editors when new information becomes available) or to hide it
+  automatically when it is not needed to save some space on the screen.
 
 *Status bar*
-  Giving information about the file. It is divided in two sections, one
-  on the left and one on the right of the window.
+  Gives information about the file. It is divided in two sections, one each
+  on the left and right of the window.
 
-  - the left part of the status bar shows the current :index:`subprogram
+  - The left part of the status bar shows the current :index:`subprogram
     <single: preferences; editor --> display subprogram names>` name for
-    languages that support this capability. Currently `Ada`, `C` and `C++` have
-    this ability. The preference :menuselection:`Editor --> Display subprogram
-    names` controls this display.
+    languages that support this capability. Currently `Ada`, `C` and `C++`
+    have this ability. The preference :menuselection:`Editor --> Display
+    subprogram names` controls this display.
 
 
-  - The right section contains multiple pieces of information:
+  - The right section contains multiple items:
 
-    * The box displays the position of the cursor in the file by a line and a
-      column number. When a selection is performed in the editor, this area
-      also displays the size of the selection (number of lines and number of
-      characters).
+    * The box displays the position of the cursor in the file as a line and
+      column number. When you've made a selection in the editor, this area
+      also displays the size of the selection (number of lines and number
+      of characters).
 
-    * next to it is an icon that shows whether the file is writable or
-      read-only.  You can change this state by clicking on the icon directly:
-      this will toggle between *Writable* and *Read Only*.  Note that this will
-      not change the permissions of the file on disk, it will only change the
-      writable state of the source editor within GPS.
+    * Next to the box is an icon that shows whether the file is writable or
+      read-only.  You can change this state by clicking on the icon, which
+      toggles between *Writable* and *Read Only*.  This will not change the
+      permissions of the file on disk, it will only change the writability
+      of the view in the source editor.
 
-      When trying to save a file which is read only on the disk, GPS will ask
-      for confirmation, and if possible, will force saving of the file, keeping
-      its read only state.
+      When you try to save a file which is read only on the disk, GPS will
+      ask for confirmation, and if possible, save of the file, keeping its
+      read only state.
 
-    * If the file is maintained under version control, and version control is
-      supported and enabled in GPS, the next icon will show VCS information on
-      the file: the VCS kind (e.g. CVS or subversion), followed by the revision
-      number, and if available, the status of the file.
+    * If the file is maintained under version control, and version control
+      is supported and enabled in GPS, the next icon will show VCS
+      information on the file: the VCS kind (e.g. CVS or subversion)
+      followed by the revision number and, if available, the status of the
+      file.
 
 *Contextual menu*
   Displayed when you right-click on any area of the source editor.  See in
@@ -92,33 +100,32 @@ The source editor provides an extensive set of features, including:
   provide syntax highlighting in the editor.
 
 *Automatic indentation*
-  When enabled, lines are automatically :index:`indented <indentation>` each
-  time you press the :kbd:`Enter` key, or by pressing the indentation key.  The
-  indentation key is :kbd:`Tab` by default, and can be changed in the key
-  manager dialog, :ref:`The_Key_Manager_Dialog`.
+  When enabled, lines are automatically :index:`indented <indentation>`
+  each time you press the :kbd:`Enter` key or the indentation key.  By
+  default, the indentation key is :kbd:`Tab`.  You can change it
+  in the key manager dialog, :ref:`The_Key_Manager_Dialog`.
 
-  If a set of lines is selected when you press the indentation key, this whole
-  set of lines will be indented.
+  If a list of lines is selected when you press the indentation key, GPS
+  will indent all the lines.
 
 *Tooltips*
-  When you leave the mouse over a word in the source editor, a small
-  :index:`window <tooltip>` will automatically pop up if there are relevant
-  contextual information to display about the word.
+  When you place the pointer over a word in the source editor, the editor
+  displays a small :index:`window <tooltip>` if there is relevant
+  contextual information to display about that word.  The type of information
+  displayed depends on the current state of GPS.
 
-  The type of information displayed depends on the current state of GPS.
-
-  In normal mode, the entity kind and the location of declaration is displayed
-  when this information is available. That is, when the cross-reference
-  information about the current file has been generated. If there is no
-  relevant information, no tooltip is displayed.  See
+  In normal mode, the editor displays the entity kind and location of the
+  declaration when this information is available, i.e., when the
+  cross-reference information about the current file has been generated. If
+  there is no relevant information, no tooltip is displayed.  See
   :ref:`Support_for_Cross-References` for more information.
 
   .. highlight:: ada
 
-  In addition, the documentation for the entity is displayed. This is the block
-  of comments just before or just after the entity's declaration of body. There
-  mustn't be any blank line between the two. For instance, the following are
-  valid documentation for Ada and C::
+  In addition, the editor displays documentation for the entity, if
+  available.  This is the block of comments immediately before or after the
+  entity's declaration (without any intervening blank lines). For example,
+  instance, the editor will display the following documentation for Ada::
 
     --  A comment for A
     A : Integer;
@@ -130,69 +137,68 @@ The source editor provides an extensive set of features, including:
 
     --  Not a comment for C, there is a blank linke
 
-  When comments appear both before and after the entity, GPS will chose the one
+  When comments appear both before and after the entity, GPS choses the one
   given by the :index:`preference <preferences; documentation --> leading
   documentation>` :menuselection:`Documentation --> Leading documentation`.
 
-  In debugging mode, the value of the variable under the mouse is displayed in
-  the pop up window if the variable is known to the debugger.  Otherwise, the
-  normal mode information is displayed.
+  In debugging mode, the editor shows the value of the variable under the
+  pointer if the variable is known to the debugger.  Otherwise, the normal
+  information (see above) is displayed.
 
-  You can disable the automatic pop up of tool tips via the :index:`preference
-  <preferences; editor --> tooltips>` :menuselection:`Editor --> Tooltips`.
+  You can disable the automatic pop up of tool tips via the
+  :index:`preference <preferences; editor --> tooltips>`
+  :menuselection:`Editor --> Tooltips`.
 
 *Code completion*
   GPS provides two kinds of code :index:`completion`: a :ref:`smart code
-  completion <Smart_Completion>` based on semantic information, and a text
+  completion <Smart_Completion>` based on semantic information and a text
   completion.
 
-  The simple text completion is useful when editing a file and using often the
-  same words to get automatic word completion. This is possible by typing the
-  :kbd:`Ctrl-/` key combination (customizable through the key manager dialog)
-  after a partial word: the next possible completion will be inserted in the
-  editor. Typing this key again will cycle through the list of possible
-  completions.
-
-  Text completions are searched in all currently open source files, by first
-  looking at the closest words and then looking further in the source as
-  needed.
+  Simple text completion is useful when editing a file using the same words
+  repeatedly, where it provides automatic word completion.  When you type
+  the :kbd:`Ctrl-/` key combination (customizable through the key manager
+  dialog) after a partial word, GPS will insert the next potential
+  completion into the editor. Typing this key again will cycle through the
+  list of potential completions.  GPS searches for text completions in all
+  currently open files.
 
 *Delimiter highlighting*
   When the cursor is moved before an opening :index:`delimiter` or after a
-  closing delimiter, then both delimiters will be highlighted. The following
-  characters are considered delimiters: ()[]{}.  You can disable highlighting
-  of delimiters with the :index:`preference <preferences;editor --> highlight
-  delimiters>` :menuselection:`Editor --> Highlight delimiters`.
+  closing delimiter, the editor will highlight both delimiters.  The
+  following characters are considered delimiters: ()[]{}.  You can disable
+  highlighting of delimiters with the :index:`preference
+  <preferences;editor --> highlight delimiters>` :menuselection:`Editor -->
+  Highlight delimiters`.
 
-  You can also jump to a corresponding delimiter by using the :kbd:`Ctrl-'`
-  key, that can be configured in the shortcuts editor. Typing twice on this key
-  will move the cursor back to its original position.
+  You can also jump to a corresponding delimiter by invoking the `jump
+  to matching delimiter` action (which can be bound to a key in the
+  key shortcuts editor).  Invoking this action a second time moves the
+  cursor back to its original position.
 
 *Current line highlighting*
   You can configure the editor to highlight the :index:`current line` with a
-  certain color (see the :index:`preference <preferences;
+  specified color (see the :index:`preference <preferences;
   editor --> fonts & colors --> current line color>` :menuselection:`Editor -->
   Fonts & Colors --> Current line color`).
 
 *Current block highlighting*
   If the :index:`preference <preferences;editor --> block highlighting>`
   :menuselection:`Editor --> Block highlighting` is enabled, the editor will
-  highlight the current block of code, e.g. the current `begin...end` block, or
-  loop statement, etc... with a vertical bar to its left side.
+  highlight the current block of code, e.g. the current `begin...end`
+  block, or loop statement by placing a vertical bar to its left.
 
-  The block highlighting will also take into account the changes made in your
-  source code, and will recompute automatically the current block when needed.
-
-  This capability is currently implemented for Ada, C and C++ languages.
+  Block highlighting also takes into account the changes made in your
+  source code and is recomputed to determine the current block when needed.
+  This capability is currently implemented for the Ada, C, and C++
+  languages.
 
 *Block folding*
   When the :index:`preference <preferences;editor --> block folding>`
   :menuselection:`Editor --> Block folding` is enabled, the editor will display
-  `-` icons on the left side, corresponding to the beginning of subprograms. If
-  you click on one of these icons, all the lines corresponding to this
-  block are hidden, except the first one. As for the block highlighting,
-  these icons are recomputed automatically when you modify your sources and are
-  always kept up to date.
+  `-` icons on the left side corresponding to the beginning of blocks. If
+  you click on one of these icons, all lines corresponding to this block
+  are hidden except the first.  Like block highlighting, these icons are
+  recomputed automatically when you modify your sources.
 
   This capability is currently implemented for Ada, C and C++ languages.
 
@@ -202,10 +208,11 @@ The source editor provides an extensive set of features, including:
   capability.
 
 *Automatic highlighting of entities*
-  When the cursor is positioned on an entity in the source editor, GPS will
+  When the pointer is positioned on an entity in the source editor, GPS will
   highlight all references to this entity in the current editor.
 
-  When the cursor moves away from the entity, the highlighting is removed.
+  When the pointer is moved away from the entity, the highlighting is
+  removed.
 
   .. index:: plug-ins; auto_highlight_occurrences.py
 
@@ -279,15 +286,15 @@ There are also several ways to define new key bindings, see
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-End`         | Go to the end of the file                                                |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-up`          | Go to the beginning of the line, or to the previous line if already at   |
+| :kbd:`Ctrl-up`          | Go to the beginning of the line or to the previous line if already at    |
 |                         | the beginning of the line.                                               |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-down`        | Go to the end of the line, or to the beginning of the next line if       |
+| :kbd:`Ctrl-down`        | Go to the end of the line or to the beginning of the next line if        |
 |                         | already at the end of the line.                                          |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-delete`      | Delete end of the current word.                                          |
+| :kbd:`Ctrl-delete`      | Delete to the end of the current word.                                   |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-backspace`   | Delete beginning of the current word.                                    |
+| :kbd:`Ctrl-backspace`   | Delete to the beginning of the current word.                             |
 +-------------------------+--------------------------------------------------------------------------+
 
 .. _Menu_Items:
@@ -295,7 +302,7 @@ There are also several ways to define new key bindings, see
 Menu Items
 ==========
 
-The main menus that give access to extended functionalities related to source
+The main menus that give access to extended functionality related to source
 editing are described in this section.
 
 .. _The_File_Menu:
@@ -307,27 +314,28 @@ The :menuselection:`File` Menu
 
 :menuselection:`File --> New`
   Open a new untitled source editor.  No syntax highlighting is performed until
-  the file is saved, since GPS needs to know the file name in order to choose
+  the file is saved since GPS needs to know the file name in order to choose
   the programming language associated with a file.
 
-  When you save a new file for the first time, GPS will ask you to enter the
-  name of the file. In case you have started typing Ada code, GPS will try to
-  guess based on the first main entity in the editor and on the current naming
-  scheme, what should be the default name of this new file.
+  When you save a new file for the first time, GPS asks you to enter the
+  name of the file. If have started typing Ada code, GPS tries to guess a
+  name for the new file based on the first main entity in the editor and
+  the current naming scheme.
 
 .. index:: menu; file --> new view
 
 :menuselection:`File --> New View`
   Create a new view of the current editor. The new view shares the same
-  contents: if you modify one of the source views, the other view is updated at
-  the same time. This is particularly useful when you want to display two
-  separate parts of the same file, for example a function spec and its body.
+  contents: if you modify one of the source views, the other view is
+  updated at the same time. This is particularly useful when you want to
+  display two different parts of the same file, for example a function spec
+  and its body.
 
-  A new view can also be created by keeping the :kbd:`shift` key pressed while
-  drag-and-dropping the editor (see :ref:`Moving_Windows`). This second method
-  is preferred, since you can then specify directly where you want to put the
-  new view. The default when using the menu is that the new view is put on top
-  of the editor itself.
+  You can also create a new view by holding the :kbd:`shift` key down while
+  drag-and-dropping the editor (see :ref:`Moving_Windows`). This second
+  method is preferred becasue you can then specify where you want to put
+  the new view. The default when using the menu is to put the new view
+  on top of the current editor.
 
 .. index:: menu; file --> open
 
@@ -340,56 +348,58 @@ The :menuselection:`File` Menu
 .. _open_from_project:
 
 :menuselection:`File --> Open From Project...`
-  Moves the focus to the :ref:`omni_search` field, where you can immediately
-  start typing part of the file name you wish to open. This is the fastest
+  Move the focus to the :ref:`omni_search` field, where you can immediately
+  start typing part of the file name you want to open. This is the fastest
   way to select files to open.
 
 .. index:: menu; file --> open from host
 .. _Open_From_Host:
 
 :menuselection:`File --> Open From Host...`
-  Open a file selector dialog where you can specify a remote host, as defined
-  in :ref:`The_remote_configuration_dialog`. You have access to a remote host
-  file system, can specify a file which can be edited in GPS. When you hit the
-  save button or menu, the file will be saved on the remote host.
+  Open a file selector dialog where you can specify a remote host, as
+  defined in :ref:`The_remote_configuration_dialog`. If you have access to
+  a remote host file system, you can specify a file which can be edited in
+  GPS. When you press the save button or menu item, the file will be saved
+  on the remote host.
 
-  See also :ref:`Using_GPS_for_Remote_Development` for a more efficient way to
+  See :ref:`Using_GPS_for_Remote_Development` for a more efficient way to
   work locally on remote files.
 
 .. index:: menu; file --> recent
 
 :menuselection:`File --> Recent`
-  Open a sub menu containing a list of the ten most recent files opened in GPS,
-  so that you can reopen them easily.
+  Open a submenu containing a list of the ten most recent files opened
+  in GPS.
 
 .. index:: menu; file --> save
 
 :menuselection:`File --> Save`
-  Save the current source editor if needed.
+  Save the file corresponding to current source editor, if there are changes.
 
 .. index:: menu; file --> save as
 
 :menuselection:`File --> Save As...`
-  Same current file under a different name, using the file selector dialog.
-  :ref:`The_File_Selector`.
+  Save the current file under a different name, using the file selector
+  dialog.  :ref:`The_File_Selector`.
 
 .. index:: menu; file --> save more
 
 :menuselection:`File --> Save More`
-  Give access to extra save capabilities:
+  Give access to additional save capabilities:
 
   - :menuselection:`File --> Save More --> All`
-     Save all items, including projects, etc...
+     Save all items, including projects.
 
   - :menuselection:`File --> Save More -->Desktop`
-     Save the desktop to a file. The desktop includes information about files,
-     graphs, ... and their window size and position in GPS. The desktop is
-     saved per top level project, so that if you reload the same project you
-     get back to the same situation you were in when you left GPS. Instead, if
-     you load a different project another desktop will be loaded (or the
-     default desktop).  Through the :index:`preference <preferences; general
-     --> save desktop on exit>` :menuselection:`General-->Save Desktop On
-     Exit`, you can also automatically save this desktop when you quit GPS.
+     Save the desktop to a file. The desktop includes information about
+     files, graphs and their window sizes and positions in GPS. One desktop
+     is saved per top level project so that when you reload the same
+     project you get back to into the same state you were in when you left
+     GPS. If you load a different project, another desktop will be loaded
+     (or the default desktop).  You can also request GPS to automatically
+     save this desktop when you quit with the :index:`preference
+     <preferences; general --> save desktop on exit>`
+     :menuselection:`General-->Save Desktop On Exit`.
 
 .. index:: menu; file --> change directory
 
@@ -400,31 +410,30 @@ The :menuselection:`File` Menu
 .. index:: menu; file --> locations
 
 :menuselection:`File --> Locations`
-  This sub menu gives access to functionalities related to the
+  This submenu gives access to functionalities related to the
   :guilabel:`Locations` window.
 
   - :menuselection:`File --> Locations --> Export Locations to Editor`
-     List the contents of the :guilabel:`Locations` view in a standard text
-     editor.
+     List the contents of the :guilabel:`Locations` view in an editor.
 
 .. index:: menu; file --> print
 .. index:: print
 
 :menuselection:`File --> Print`
-  Print the current window contents, optionally saving it interactively if it
+  Print the current window contents, optionally saving it if it
   has been modified. The Print Command specified in the preferences is used if
   it is defined. On Unix this command is required; on Windows it is optional.
 
-  On Windows, if no command is specified in the preferences the standard
-  Windows print dialog box is displayed. This dialog box allows the user to
-  specify the target printer, the properties of the printer, which pages to
-  print (all, or a specific range of pages), the number of copies to print,
-  and, when more than one copy is specified, whether the pages should be
-  collated.  Pressing the :guilabel:`Cancel` button on the dialog box returns
-  to GPS without printing the window contents; otherwise the specified pages
-  and copies are printed on the selected printer. Each page is printed with a
-  header containing the name of the file (if the window has ever been saved).
-  The page number is printed on the bottom of each page.
+  On Windows, if no command is specified in the preferences, GPS
+  displays the standard Windows print dialog box, which allows you to
+  specify the target printer, the properties of the printer, which
+  pages to print (all, or a specific range of pages), the number of
+  copies to print, and, when more than one copy is specified, whether
+  the pages should be collated.  Pressing the :guilabel:`Cancel`
+  button on the dialog box returns to GPS without printing the window
+  contents. Each page is printed with a header containing the name of
+  the file (if the window has ever been saved).  The page number is
+  printed on the bottom of each page.
 
   See also:ref:`Print Command <Print_Command>`.
 
@@ -459,29 +468,30 @@ The :menuselection:`Edit` Menu
 .. index:: menu; edit --> paste
 
 :menuselection:`Edit --> Paste`
-  Paste the contents of the clipboard to the current cursor position.
+  Paste the contents of the clipboard at the current cursor position.
 
 .. index:: menu; edit --> paste previous
 
 :menuselection:`Edit --> Paste previous`
-  GPS stores a list of all the text that was previously copied into the
+  GPS stores a list of all the text that was previously copied to the
   clipboard through the use of :guilabel:`Copy` or :guilabel:`Cut`.
 
-  By default, if you press :guilabel:`Paste`, the newest text will be copied at
-  the current position. But if you select :guilabel:`Paste Previous`
-  immediately after (one or more times) you can instead paste text that was
-  copied previously in the clipboard.
+  By default, if you press :guilabel:`Paste`, the newest text will be
+  copied to the cursor's current position.  If you pres
+  :guilabel:`Paste Previous` (one or more times) immediately after
+  that, you can instead paste the text that was previously copied to
+  the clipboard.
 
-  For instance, if you copy through :menuselection:`Edit --> Copy` the text
-  "First", then copy the text "Second", you can then select
+  For example, if you use :menuselection:`Edit --> Copy` to copy the
+  text "First", then copy the text "Second", you can select
   :menuselection:`Edit --> Paste` to insert "Second" at the current
-  location. If you then select :menuselection:`Edit --> Paste Previous`,
-  "Second" will be replaced by "First".
+  cursor position. If you then select :menuselection:`Edit --> Paste
+  Previous`, "Second" will be replaced by "First".
 
-  Selecting this menu several times will replace the text previously pasted by
-  the previous one in the list saved in the clipboard. When reaching the end of
-  this list, GPS will started from the beginning, and insert again the last
-  text copied into the clipboard.
+  Selecting this menu several times replaces the text previously
+  pasted by the previous one in the list saved in the clipboard. When
+  reaching the end of this list, GPS starts from the beginning, and
+  again inserts the last text that was copied to the clipboard.
 
   The size of this list is controlled by the :menuselection:`General -->
   Clipboard Size` :index:`preference <preferences; general --> clipboard
@@ -492,12 +502,12 @@ The :menuselection:`Edit` Menu
 .. index:: menu; edit --> undo
 
 :menuselection:`Edit --> Undo`
-  Undo previous insertion/deletion in the current editor.
+  Undo previous insertion or deletion in the current editor.
 
 .. index:: menu; edit --> redo
 
 :menuselection:`Edit --> Redo`
-  Redo previous insertion/deletion in the current editor.
+  Redo previous insertion or deletion in the current editor.
 
 .. index:: menu; edit --> rectangles
 
@@ -507,43 +517,46 @@ The :menuselection:`Edit` Menu
 .. index:: menu; edit --> rectangles --> serialize
 
 :menuselection:`Edit --> Rectangles... -> Serialize`
-  Increment a set of numbers found on adjacent lines.  The exact behavior
-  depends on whether there is a current selection or not.
+  Increment a set of numbers found on adjacent lines.  The behavior
+  depends on whether or not there is a current selection.
 
-  If there is no selection, then the set of lines considered is from the
-  current line on and includes all adjacent lines that have at least one
-  digit in the original columns. In the following example, '|' marks the
-  place where the cursor is at the beginning::
+  If there is no selection, the set of lines modified begins with the
+  current line and includes all adjacent lines that have at least one
+  digit in the same column as the cursor. In the following example,
+  '|' marks the place where the cursor starts::
 
      AAA |10 AAA
      CCC 34567 CCC
      DDD DDD
 
-  then only the first two lines will be modified, and will become::
+  Only the first two lines will be modified and will become::
 
      AAA 10 AAA
      CCC 11 CCC
      DDD DDD
 
   If there is a selection, all the lines in the selection are
-  modified. For each line, the columns that had digits in the first
-  line are modified, no matter what they actually contain. In the
-  example above, if you select all three lines, the replacement becomes::
+  modified. For each line, the columns of each line that had digits in
+  the same column of the first line are modified. Starting from the
+  original example above, if you select all three lines, the
+  replacement becomes::
 
      AAA 10 AAA
      CCC 11567 CCC
      DDD 12D
 
-  ie only the fifth and sixth columns are modified since only those
-  columns contained digits in the first line. This feature assumes that
-  you are selecting a relevant set of lines. But it allows you to
-  transform blank lines more easily. For instance, if you have::
+  Only the fifth and sixth columns are modified since only those
+  columns contained digits in the first line.
+
+  This feature assumes you are selecting a relevant set of lines. But
+  it's designed most specifically for modifying blank parts of
+  lines. For example, if you start with::
 
      AAA 1
      BBB
      CCC
 
-  this is transformed into::
+  it becomes::
 
      AAA 1
      BBB 2
@@ -552,21 +565,22 @@ The :menuselection:`Edit` Menu
 .. index:: menu; edit --> select all
 
 :menuselection:`Edit --> Select all`
-  Select the whole contents of the current source editor.
+  Select the entire contents of the current source editor.
 
 .. index:: menu; edit --> insert file
 
 :menuselection:`Edit --> Insert File...`
-  Open a file selection dialog and insert the contents of this file in the
-  current source editor, at the current cursor location.
+  Open a file selection dialog and insert the contents of that file in the
+  current source editor at the current cursor position.
 
 .. index:: menu; edit --> insert shell output
 
 :menuselection:`Edit --> Insert Shell Output...`
-  Open an input window at the bottom of the GPS window where you can specify
-  any external command. The output of the command will be inserted at the
-  current editor location in case of success. If text is selected, the text is
-  passed to the external command and replaced by the command's output.
+  Open an input window at the bottom of the GPS window where you can
+  specify any external command.  If the command succeeds, the output
+  of the command is inserted at the current cursor position, or, if text
+  is selected, the text is passed to the external command and replaced
+  by the command's output.
 
 .. index:: menu; edit --> format selection
 
@@ -579,58 +593,61 @@ The :menuselection:`Edit` Menu
 .. _Smart_Completion:
 
 :menuselection:`Edit --> Smart completion`
-  Complete the identifier prefix under the cursor, and list the results in a
-  pop-up list. Used with Ada sources this command can take advantage of an
-  entity database as well as Ada parsers embedded in GPS which analyze the
-  context, and offer completions from the entire project along with
-  documentation extracted from comments surrounding declarations. To take full
-  advantage of this feature, the smart completion preference must be enabled,
-  which will imply the computation of the entity database at GPS startup.
+  Complete the identifier prefix under the cursor and list the results
+  in a pop-up window.  When used with Ada sources, this takes
+  advantage of an entity database as well as Ada parsers embedded in
+  GPS which analyze the context and offer completions from the entire
+  project along with documentation extracted from comments surrounding
+  declarations. To take full advantage of this feature, the smart
+  completion preference must be enabled, which causes the computation
+  of the entity database at GPS startup.
 
   .. index:: gcc; -fdump-xref
 
-  The support for C and C++ is not as powerful as the support for Ada since it
-  relies completely on the xref information files generated by the compiler,
-  does not have into account the C/C++ context around the cursor, and does not
-  extract documentation from comments around candidate declarations. To take
-  advantage of this feature, in addition to enable the smart completion
-  preference, the C/C++ application must be built with `-fdump-xref`.
+  The support for C and C++ is not as powerful as the support for Ada
+  since it relies completely on the xref information files generated
+  by the compiler, does not take into account the C/C++ context around
+  the cursor, and does not extract documentation from comments around
+  candidate declarations. To take advantage of this feature, in
+  addition to enabling the smart completion preference, the C/C++
+  application must be built with `-fdump-xref`.
 
-  In order to use this feature, open any Ada, C or C++ file, and begin to type
-  an identifier. It has to be an identifier declared either in the current file
-  (and accessible from the cursor location) or in one of the packages of the
-  project loaded. Move the cursor right after the last character of the
-  incomplete identifier and hit the completion key (which is :kbd:`control-space`
-  by default).  GPS will open a popup displaying all the known identifiers
-  beginning with the prefix you typed. You can then browse among the various
-  proposals by clicking on the  :kbd:`up` and :kbd:`down` keys, or using the
-  left scrollbar. For each entity, a documentation box is filled. If the
-  location of the entity is known, it's displayed as an hyperlink, and you can
-  jump directly to its declaration by clicking on it.
+  In order to use this feature, open any Ada, C or C++ file and begin
+  to type an identifier, which must be declared either in the current
+  file (and accessible from the cursor location) or in one of the
+  packages of the loaded project.  Move the cursor after the last
+  character of the incomplete identifier and hit the completion key
+  (:kbd:`control-space` by default).  GPS opens a popup displaying all
+  known identifiers that begin with the prefix you typed.  You can
+  then browse among the various possibilities by clicking on the
+  :kbd:`up` and :kbd:`down` keys or using the left scrollbar. For each
+  entity, a documentation box is display. If the location of the
+  entity is known, it's displayed as an hyperlink and you can jump
+  directly to its declaration by clicking on it.
 
-  Typing new letters will reduce the range of proposal, as long as there remain
-  solutions. Once you've selected the expected completion, you can validate by
-  pressing :kbd:`Enter`.
+  Typing additional letters will reduce the range of possibilities, as
+  long as possibilities remain. Once you've selected the expected
+  completion, you can confirm it by pressing :kbd:`Enter`.
 
-  Typing control characters (ie, characters which cannot be used in
-  identifiers) will also validate the current selection.
+  Typing control characters (i.e., characters which cannot be used in
+  identifiers) also confirms the current selection.
 
-  GPS is also able to complete automatically subprogram parameter or dotted
-  notations. For example, if you type::
+  GPS is also able to automatically complete subprogram parameters or
+  dotted notation for child and nested packages. For example, if you type::
 
     with Ada.
 
-  the smart completion window will appear automatically, listing all the child
-  and nested packages of Ada. You can configure the time interval after which
-  the completion window appears (:ref:`The_Preferences_Dialog`).
+  the smart completion window appears, listing all the child and
+  nested packages of Ada. You can configure the time interval after
+  which the completion window appears (:ref:`The_Preferences_Dialog`).
 
   You can also write the beginning of the package, e.g.::
 
     with Ada.Text
 
-  pressing the completion key will offer you Text_IO.
+  and pressing the completion key will offer you Text_IO.
 
-  If you are in a code section, you will be able to complete the fields of a
+  If you are in a code section, you can complete the fields of a
   record, or the contents of a package, e.g.::
 
      declare
@@ -645,44 +662,46 @@ The :menuselection:`Edit` Menu
 
   Completing V. will propose Field1 and Field2.
 
-  The smart completion can also give you the possible parameters of a call
+  The smart completion also lists the possible parameters of a call
   you're currently making. For example, in the following code::
 
        procedure Proc (A, B, C : Integer);
     begin
        Proc (1,
 
-  If you hit the completion key after the comma, the smart completion engine
-  will propose you to complete with the named parameters "B =>", "C =>" or
-  directly to complete with all the remaining parameters, which in this case
-  will be "B =>, C => )".
+  If you hit the completion key after the comma, the smart completion
+  engine proposes completing with the named parameters "B =>", "C =>"
+  or directly to complete with all the remaining parameters, in this
+  case "B =>, C => )".
 
   .. image:: smart-completion.jpg
 
   Limitations:
 
-  * This feature is currently only available for Ada, C and C++. Using the smart
-    completion on sources of other languages behaves as the :ref:`identifier
-    completion <Complete_Identifier>` does.
+  * This feature is currently only available for Ada, C and C++. Using
+    the smart completion on sources of other languages behaves as the
+    :ref:`identifier completion <Complete_Identifier>` does.
 
-  * Smart completion for C and C++ is based on the xref information generated by
-    the compiler. Therefore, GPS has no knowledge on recently edited files. You
-    must rebuild with `-fdump-xref` to update the completion database.
+  * Smart completion for C and C++ is based on the xref information
+    generated by the compiler. Therefore, GPS has no knowledge of
+    recently edited files: you must rebuild with `-fdump-xref` to
+    update the completion database.
 
-  * Smart completion for C and C++ is only triggered at the beginning of an
-    expression (that is, it is not triggered on special characters such as '(',
-    '->', or the C++ operator '::') and it may propose too much candidates since
-    it does not have into account the C/C++ syntax context. Typing new letters
-    will reduce the range of proposal, as long as there remain solutions.
+  * Smart completion for C and C++ is only triggered at the beginning
+    of an expression (that is, it is not triggered on special
+    characters such as '(', '->', or the C++ operator '::') and may
+    propose too many candidates since it does not have knowlege of the
+    C/C++ syntax context. Typing new letters reduces the range of
+    possibilities, as long as possibilitites remain.
 
-  * Smart completion of subprogram parameters, fields and dotted notation are not
-    available yet for C and C++.
+  * Smart completion of subprogram parameters, fields and dotted
+    notation are not yet available for C and C++.
 
 
 .. index:: menu; edit --> more completion
 
 :menuselection:`Edit --> More Completion`
-  This submenu contains more ways to automatically complete code
+  This submenu contains more ways to automatically complete code.
 
   .. index:: menu; edit --> more completion --> expand alias
 
@@ -697,8 +716,8 @@ The :menuselection:`Edit` Menu
 
   * :menuselection:`Edit --> More Completion --> Completion Identifier`
 
-    Complete the identifier prefix under the cursor. This command will cycle
-    through all identifiers starting with the given prefix.
+    Complete the identifier prefix at the cursor. This command cycles
+    through all identifiers starting with the specified prefix.
 
   .. index:: menu; edit --> more completion --> complete block
   .. index:: complete block
@@ -718,8 +737,8 @@ The :menuselection:`Edit` Menu
 
   * :menuselection:`Edit --> Selection --> Comment lines`
 
-     Comment the current selection or line based on the current programming
-     language syntax.
+     Make the current selection or line into a comment based on the
+     current programming language syntax.
 
   .. index:: menu; edit --> selection --> uncomment lines
 
@@ -731,17 +750,17 @@ The :menuselection:`Edit` Menu
 
   * :menuselection:`Edit --> Selection --> Refill`
 
-     Refill text on the selection or current line: rearrange line breaks in
-     the paragraph so that line lengths do not exceed the maximum length, as
-     set in the "Right margin" preference (:ref:`The_Preferences_Dialog`).
+     Rearrange line breaks in the selection or current line so that
+     line lengths do not exceed the maximum length, as set in the
+     "Right margin" preference (:ref:`The_Preferences_Dialog`).
 
   .. index:: menu; edit --> selection --> sort
 
   * :menuselection:`Edit --> Selection --> Sort`
 
-      Sort the selected lines alphabetically. This is particularly useful when
-      editing non source code, or for specific parts of the code, like with
-      clauses in Ada.
+      Sort the selected lines alphabetically. This is particularly
+      useful when editing files that are not source code or for
+      specific parts of code, such as `with` clauses in Ada.
 
   .. index:: menu; edit --> selection --> sort reverse
 
@@ -753,10 +772,10 @@ The :menuselection:`Edit` Menu
 
   * :menuselection:`Edit --> Selection --> Pipe in external program...`
 
-      Open an input window at the bottom of the GPS window where you can
-      specify any external command, which will take the current selection as
-      input. The output of the command will replace the contents of the
-      selection on success.
+      Open an input window at the bottom of the GPS window where you
+      can specify any external command which will be passed the
+      current selection as input. If the command succeeds, the
+      selection will be replaced by the output of the command.
 
   .. index:: menu; edit --> selection --> untabify
   .. index:: tabs
@@ -772,8 +791,8 @@ The :menuselection:`Edit` Menu
   * :menuselection:`Edit --> Selection --> Move Right`
   * :menuselection:`Edit --> Selection --> Move Left`
 
-      Shift the currently selected lines (or the current line if there is no
-      selection) one character to the right or to the left
+      Shift the currently selected lines (or the current line if there
+      is no selection) one character to the right or left.
 
 .. index:: menu; edit --> fold all blocks
 .. index:: code folding
@@ -797,8 +816,8 @@ The :menuselection:`Edit` Menu
 .. index:: gnatpp
 
 :menuselection:`Edit --> Pretty Print`
-  Pretty print the current source editor by calling the external tool `gnatpp`.
-  It is possible to specify `gnatpp` switches in the switch editor.
+  Pretty print the current source editor by calling the external tool
+  `gnatpp`.  `gnatpp` switches may be specified in the switch editor.
   :ref:`The_Switches_Editor`.
 
 .. index:: menu; edit --> generate body
@@ -806,8 +825,8 @@ The :menuselection:`Edit` Menu
 .. index:: gnatstub
 
 :menuselection:`Edit --> Generate Body`
-  Generate Ada body stub for the current source editor by calling the external
-  tool `gnatstub`.
+  Generate an Ada body stub for the current source editor by calling
+  the external tool `gnatstub`.
 
 .. index:: menu; edit --> edit with external editor
 
@@ -824,13 +843,13 @@ The :menuselection:`Edit` Menu
 .. index:: key shortcuts
 
 :menuselection:`Edit --> Key shortcuts`
-  Give access to the key manager dialog, to associate commands with special
-  keys. :ref:`The_Key_Manager_Dialog`.
+  Bring up the key manager dialog, used to associate commands
+  with special keys. :ref:`The_Key_Manager_Dialog`.
 
 .. index:: menu; edit --> preferences
 
 :menuselection:`Edit --> Preferences`
-  Give access to the preferences dialog. :ref:`The_Preferences_Dialog`.
+  Bring up the preferences dialog. :ref:`The_Preferences_Dialog`.
 
 
 .. index:: rectangle
@@ -840,28 +859,31 @@ The :menuselection:`Edit` Menu
 Rectangles
 ==========
 
-Rectangle commands operate on a rectangular area of the text, that is all the
-characters between two columns in a certain range of lines.
+Rectangle commands operate on a rectangular area of the text, in other
+words all the characters between two columns in a certain range of
+lines.
 
 .. index:: plug-ins; emacs.py
 
-A rectangle is selected using the standard selection mechanism. You can
-therefore use either the mouse to highlight the proper region, or :kbd:`shift`
-and the cursor keys to extend the selection, or the Emacs selection (with the
-mark and the current cursor location) if you have activated the
-:file:`emacs.py` plugin.
+A rectangle is selected using the standard selection mechanism. You
+can either use the mouse to highlight the proper region or use
+:kbd:`shift` and the cursor keys to extend the selection or use the
+Emacs selection (with the mark and the current cursor location) if you
+have activated the :file:`emacs.py` plugin.
 
-Visually, a selected rectangle is exactly the same as the standard selection.
-In particular, the characters after the last column, on each line, will also be
-highlighted. The way the selection is interpreted (either as a full text or as
-a rectangle) depends on the command you then chose to manipulate the selection.
+Visually, a selected rectangle appears exactly the same as the
+standard selection.  In particular, the characters after the last
+column on each line will also be highlighted. Whether a selection is
+interpreted as full text or a rectangle depends on the command you use
+to manipulate the selection.
 
-If you chose one of the commands from the :menuselection:`Edit --> Rectangles`
-menu, the actual rectangle will extend from the top-left corner down to the
-bottom-right corner.  All characters to the right of the right-most column,
-although they are highlighted, are not part of the rectangle.
+If you use one of the commands from the :menuselection:`Edit -->
+Rectangles` menu, the rectangle extends from the top-left corner down
+to the bottom-right corner.  All characters to the right of the
+right-most column, although they are highlighted, are not considered
+part of the rectangle.
 
-Consider for instance the following initial text::
+Consider for instance the following text::
 
   package A is
      procedure P;
@@ -870,20 +892,20 @@ Consider for instance the following initial text::
   end A;
 
 
-and assume we have selected from the character "p" in "procedure P", down to
-the character "c" in "procedure Q".
+and assume we have selected from the character "p" in "procedure P"
+down to the character "c" in "procedure Q".
 
-The following commands can then be used (either from the menu, or you can
-assign key shortcuts to them via the usual :menuselection:`Edit --> Key
-shortcuts` menu.
+You can then used one of the following commands (either from the menu
+or you can assign key shortcuts to them via the usual
+:menuselection:`Edit --> Key shortcuts` menu).
 
 * :menuselection:`Edit --> Rectangles --> Cut` or :menuselection:`Edit -->
   Rectangles --> Delete`
 
-  These commands will remove the selected text (and have no effect on empty
-  lines within the rectangle). The former will in addition copy the rectangle
-  to the clipboard, so that you can paste it later. In our example, we end up
-  with::
+  Remove the selected text (and have no effect on empty lines within
+  the rectangle). The former command will, in addition, copy the
+  rectangle to the clipboard so you can paste it later. In our
+  example, we end up with::
 
     package A is
        edure P;
@@ -892,16 +914,16 @@ shortcuts` menu.
     end A;
 
 * :menuselection:`Edit --> Rectangles --> Copy`
-  This command has no visual effect, but copies the contents of the rectangle
-  into the clipboard.
+  Copies the contents of the rectangle into the clipboard without
+  affecting the current editor.
 
 * :menuselection:`Edit --> Rectangles --> Paste`
   Pastes the contents of the clipboard as a rectangle: each line from the
-  clipboard is treated independently, and inserted on successive lines in the
-  current editor. They all start in the same column (the one where the cursor
-  is initially in), and existing text in the editor lines is shifted to the
-  right). If for instance you now place the cursor in the second line, first
-  column, and paste, we end up with::
+  clipboard is treated independently and inserted on successive lines in
+  the current editor. They all start in the same column (the one where the
+  cursor was initially in) and existing text in the editor lines is shifted
+  to the right. If, for example, you now place the cursor in the first
+  column of the second line and paste, we end up with::
 
     package A is
     proc   edure P;
@@ -912,7 +934,7 @@ shortcuts` menu.
 * :menuselection:`Edit --> Rectangles --> Clear`
   Replaces the contents of the selected rectangle with spaces. If we start
   from our initial exmaple, we end up with the following. Note the difference
-  with :menuselection:`Edit --> Rectangles --> Delete`::
+  between this and :menuselection:`Edit --> Rectangles --> Delete`::
 
     package A is
            edure P;
@@ -921,9 +943,9 @@ shortcuts` menu.
     end A;
 
 * :menuselection:`Edit --> Rectangles --> Open`
-  Replaces the contents of the selected rectangle with spaces, but shifts the
-  lines to the right to do so. Note the difference with :menuselection:`Edit
-  --> Rectangles --> Clear`::
+  Replaces the contents of the selected rectangle with spaces but shifts
+  the lines to the right to do so. Note the difference between this and
+  :menuselection:`Edit --> Rectangles --> Clear`::
 
     package A is
            procedure P;
@@ -932,13 +954,13 @@ shortcuts` menu.
     end A;
 
 * :menuselection:`Edit --> Rectangles --> Replace With Text`
-  This is similar to :menuselection:`Edit --> Rectangles --> Clear`, but the
-  rectangle is replaced with user-defined text. The lines will be shifted left
-  or right if the text you insert is shorter (resp. longer) than the width of
-  the rectangle. If for instance we replace our initial rectangle with the text
-  TMP, we end up with the following. Note that the character "c" has
-  disappeared, since TMP is shorter than our rectangle width (4
-  characters). This command will impact lines that are empty in the initial
+  Similar to :menuselection:`Edit --> Rectangles --> Clear` but the
+  rectangle is replaced with user-defined text. The lines are shifted left
+  or right if the inserted text is shorter (respectively, longer) than the
+  width of the rectangle. If, for example, we replace our initial rectangle
+  with the text "TMP", we end up with the following. Note that the character
+  "c" has disappeared, since "TMP" is shorter than our rectangle width (4
+  characters).  This command affects lines that are empty in the initial
   rectangle::
 
     package A is
@@ -948,10 +970,10 @@ shortcuts` menu.
     end A;
 
 * :menuselection:`Edit --> Rectangles --> Insert Text`
-  This inserts a text to the left of the rectangle on each line. The following
-  example inserts TMP. Note the difference with :menuselection:`Edit -->
-  Rectangles --> Replace With Text`. This command will also insert the text on
-  lines that are empty in the initial rectangle::
+  Inserts text to the left of the rectangle on each line. The following
+  example inserts "TMP". Note the difference between this command and
+  :menuselection:`Edit --> Rectangles --> Replace With Text`. This command
+  also inserts the text on lines that are empty in the initial rectangle::
 
     package A is
        TMPprocedure P;
@@ -960,15 +982,15 @@ shortcuts` menu.
     end A;
 
 * :menuselection:`Edit --> Rectangles --> Sort`
-  This sorts the selected lines according to the key which starts and ends on
-  the corresponding rectangle's columns::
+  Sorts the selected lines according to the key which starts and ends on
+  the rectangle's columns::
 
     aaa 15 aa
     bbb 02 bb
     ccc 09 cc
 
-  With a selection starting from the 1 on the first line and ending on the 9 on
-  the last one, sorting will result with the following content::
+  With a selection starting from the 1 on the first line and ending on the
+  9 on the last, the lines will be sorted as follows::
 
     bbb 02 bb
     ccc 09 cc
@@ -986,8 +1008,8 @@ shortcuts` menu.
 Recording and replaying macros
 ==============================
 
-It is often convenient to be able to repeat a given key sequence a number of
-times.
+It is often convenient to be able to repeat a given key sequence a number
+of times.
 
 GPS supports this with several different methods:
 
@@ -995,39 +1017,39 @@ GPS supports this with several different methods:
 
   .. index:: action; repeat next
 
-  If there is a single key press that you wish to repeat a number of times, you
-  should first use the GPS action `"Repeat Next"` (bound by default to
-  :kbd:`control-u`, but this can be changed as usual through the
-  :menuselection:`Edit --> Key Shortcuts` menu), then entering the number of
-  times you wish to repeat, and finally pressing the key you want.
+  If you want to repeat the action of pressing a single key that you wish
+  to repeat a number of times, you should first use the GPS action `"Repeat
+  Next"` (bound by default to :kbd:`control-u`, but this can be changed as
+  usual through the :menuselection:`Edit --> Key Shortcuts` menu),
+  entering the number of times you wish to repeat, and then pressing the
+  key whose action you want to repeat.
 
-  For instance, the following sequence :kbd:`control-u 79 -` will insert
-  79 characters '-' in the current editor. This proves often useful to insert
-  separators.
+  For example, the sequence :kbd:`control-u 79 -` inserts 79 characters of
+  '-' in the current editor.  This is often useful to insert separators.
 
   If you are using the emacs mode (see :menuselection:`Tools --> Plug-ins`
-  menu), you can also use the sequence :kbd:`control-u 30 control-k` to delete
-  30 lines.
+  menu), you can also use the sequence :kbd:`control-u 30 control-k` to
+  delete 30 lines.
 
 * Recording macros
 
   .. index:: menu; tools --> macros
 
-  If you wish to repeat a sequence of more than 1 key, you should record this
-  sequence as a macro. All macro-related menus are found in
-  :menuselection:`Tools --> Macros`, although it is often more convenient to
-  use these through key bindings, which you can of course override.
+  To repeat a sequence of more than 1 key, you should record the sequence
+  as a macro. All macro-related menus are found in :menuselection:`Tools
+  --> Macros`, but it's often more convenient to use these through key
+  bindings, which you can of course override.
 
-  You must indicate to GPS that it should start recording the keys you are
-  pressing. This is done through the :menuselection:`Tools --> Macros --> Start
+  First, you must tell GPS to should start recording the keys you are
+  pressing.  You do this via the :menuselection:`Tools --> Macros --> Start
   Keyboard Macro` menu.  As its name indicates, this only records keyboard
-  events, not mouse events.  Until you select :menuselection:`Tools --> Macros
-  --> Stop Macro`, GPS will keep recording the events.
+  events, not mouse events.  GPS will keep recording the events until you
+  select :menuselection:`Tools --> Macros --> Stop Macro`.
 
   In Emacs mode, the macro actions are bound to :kbd:`control-x (`,
-  :kbd:`control-x )` and :kbd:`control-x e` key shortcuts. For instance, you
+  :kbd:`control-x )` and :kbd:`control-x e` key shortcuts. For example, you
   can execute the following to create a very simple macro that deletes the
-  current line, wherever your cursor initially is on that line:
+  current line wherever your cursor initially is on that line:
 
   *  :kbd:`control-x (`     start recording
   *  :kbd:`control-a`      go to beginning of line
@@ -1042,10 +1064,10 @@ Contextual Menus for Editing Files
 ==================================
 
 Whenever you ask for a contextual menu (using e.g. the right button on your
-mouse) on a source file, you will get access to a number of entries, displayed
-or not depending on the current context.
+mouse) on a source file, you will get access to a number of entries, which
+are displayed or not depending on the current context.
 
-Menu entries include the following categories:
+These menu entries include the following categories:
 
 *Source Navigation*
   :ref:`Contextual_Menus_for_Source_Navigation`.
@@ -1074,74 +1096,74 @@ Menu entries include the following categories:
 .. index:: language, editor
 .. index:: character set
 
-In addition, an entry :guilabel:`Properties...` is always visible in this contextual
-menu. When you select it, a dialog pops up that allows you to override the
-language used for the file, or the character set.
+In addition, an entry :guilabel:`Properties...` is always visible in this
+contextual menu. When you select it, a dialog pops allowing you to override
+the language or the character set used for the file.  This is useful when
+opening a file that does not belong to the current project but where you
+want to benefit from the syntax highlighting, which depends on knowing
+the file's language.
 
-This can be used for instance if you want to open a file that does not belong
-to the current project, but where you want to benefit from the syntax
-highlighting.
-
-It is not recommended to override the language for source files that belong to
-the project. Instead, you should use the :menuselection:`Project --> Edit
-Project Properties` menu and change the naming scheme if appropriate. This will
-ensure better consistency between GPS and the compiler in the way they
+You should not override the language for source files belonging to the
+current project. Instead, use the :menuselection:`Project --> Edit Project
+Properties` menu and change the naming scheme as appropriate. This will
+provide better consistency between GPS and the compiler in the way they
 manipulate the file.
 
 .. index:: casing; automatic
 .. _Handling_of_case_exceptions:
 
-Handling of case exceptions
-===========================
+Handling of casing
+==================
 
-GPS keeps a set of case exceptions that is used by all case insensitive
-languages. When editing or reformatting a buffer for such a language the case
-exception dictionary will be checked first. If an exception is found for this
-word or a substring of the word, it will be used; otherwise the specified
-casing for keywords or identifiers is used. A substring is defined as a part of
-the word separated by underscores.
+GPS maintains a dictionary of identifiers and a corresponding casinga that
+are used by all case insensitive languages. When editing or reformatting a
+buffer for such a language, the dictionary will be checked first. If GPS
+finds an entry for a word or a substring of a word, it will be used;
+otherwise the specified default casing for keywords or identifiers is
+used. A substring is defined as a part of the word separated by
+underscores.
 
 .. index:: preferences; editor --> ada --> casing policy
 .. index:: preferences; editor --> ada --> reserved word casing
 .. index:: preferences; editor --> ada --> identifier casing
 
-Note that this feature is not activated for entities (keywords or identifiers)
-for which the casing is set to :guilabel:`Unchanged` in the preferences
+This feature is not activated for entities (keywords or identifiers) for
+which the casing is set to :guilabel:`Unchanged` in the preferences
 :menuselection:`Editor --> Ada --> Reserved word casing` or
 :menuselection:`Editor --> Ada --> Identifier casing`.
 
 A contextual menu named :menuselection:`Casing` has the following entries:
 
 :menuselection:`Casing --> Lower *entity*`
-  Set the selected entity in lower case.
+  Set the selected entity to be in lower case.
 
 :menuselection:`Casing --> Upper *entity*`
-  Set the selected entity in upper case.
+  Set the selected entity to be in upper case.
 
 :menuselection:`Casing --> Mixed *entity*`
-  Set the selected entity in mixed case (set the first letter and
-  letters before an underscore in upper case, all other letters are set
-  to lower case).
+  Set the selected entity to be in mixed case (the first letter and letters
+  before an underscore are in upper case and all other letters are in lower
+  case).
 
 :menuselection:`Casing --> Smart Mixed *entity*`
-  Set the selected entity in smart mixed case. Idem as above except that
-  upper case letters are kept unchanged.
+  Set the selected entity as smart mixed case, which is the same as above
+  except that upper case letters are kept unchanged.
 
 :menuselection:`Casing --> Add exception for *entity*`
-  Add the current entity into the case exception dictionary.
+  Add the current entity into the dictionary.
 
 :menuselection:`Casing --> Remove exception for *entity*`
-  Remove the current entity from the case exception dictionary.
+  Remove the current entity from the dictionary.
 
-To add or remove a substring exception into/from the dictionary you need to
-first select the substring on the editor. In this case the last two contextual
-menu entries will be:
+To add or remove a substring from the dictionary, first select the
+substring in the editor.  Then, the last two contextual menu entries will
+be:
 
 :menuselection:`Casing --> Add substring exception for *str*`
-  Add the selected substring into the case substring exception dictionary.
+  Add the selected substring into the dictionary.
 
 :menuselection:`Casing --> Remove substring exception for *str*`
-  Remove the selected substring from the case substring exception dictionary.
+  Remove the selected substring from the dictionary.
 
 
 .. index:: refactoring
@@ -1150,24 +1172,25 @@ menu entries will be:
 Refactoring
 ===========
 
-GPS includes basic facilities for refactoring your code. Refactoring is the
-standard term used to describe manipulation of the source code that do not
-affect the behavior of the application, but help reorganize the source code to
-make it more readable, more extendable, ...
+GPS includes basic facilities to refactor your code.  "Refactoring" is the
+term used to describe manipulation of source code that do not affect the
+behavior of the code but help reorganize it to make it more readable, more
+extendable, or make other types of improvements.
 
-Refactoring technics are generally things that programmers are used to do by
-hand, but which are faster and more secure to do automatically through a tool.
+Refactoring techniques are generally things that programmers have done by
+hand, but which can be done faster and more securely when done
+automatically through a tool.
 
-One of the basic recommendations when you refactor your code is to recompile
-and test your application very regularly, to make sure that each of the small
-modifications you made to it didn't break the behavior of your application.
+A basic recommendations when you refactor your code is to recompile and
+test your application regularly to make sure each of the small
+modifications you made didn't change the behavior of your application.
 This is particularly true with GPS, since it relies on the cross-references
-information that is generated by the compiler. If some of the source files have
-not been recompiled recently, GPS will print warning messages indicating that
-the renaming operation might be dangerous and/or only partial.
+information generated by the compiler. If some source files have not been
+recompiled recently, GPS will print warning messages indicating that the
+operation might be dangerous and/or only performed partially.
 
-One of the reference books that was used in the choice of refactoring methods
-to implement is "Refactoring", by Martin Fowler (Addison Wesley).
+One of the reference books used in the choice of refactoring methods for
+GPS to implement is "Refactoring", by Martin Fowler (Addison Wesley).
 
 .. _Rename_Entity:
 
@@ -1175,32 +1198,33 @@ Rename Entity
 -------------
 
 Clicking on an entity in a source file and selecting the
-:menuselection:`Refactoring --> Rename` contextual menu will open a dialog
+:menuselection:`Refactoring --> Rename` contextual menu opens a dialog
 asking for the new name of the entity. GPS will rename all instances of the
-entity in your application.  This includes the definition of the entity, its
-body, all calls to it, etc...  Of course, no comment is updated, and you should
-probably check manually that the comment for the entity still applies.
+entity in your application, including the definition of the entity, its
+body, and all calls to it.  No comments is updated so you should probably
+manually check that the comment for the entity still applies.
 
-GPS will handle primitive operations by also renaming the operations it
-overrides or that overrides it. This means that any dispatching call to that
-operation will also be renamed, and the application should still work as
-before. If you are renaming a parameter to a subprogram, GPS can also rename
-parameters with similar names in overriding or overridden subprograms.
+GPS handles primitive operations by also renaming the operations it
+overrides or that overrides it, so that any dispatching call to that
+operation is also renamed and the application will still work as before. If
+you're renaming a parameter to a subprogram, GPS will also rename
+parameters with the same name in overriding or overridden subprograms.
 
-The behavior when handling read-only files can be specified: by default, GPS
-will not do any refactoring in these files, and will display a dialog listing
-all of them; but you can also choose to make them writable just as if you had
-clicked on the "Read-Only" button in the status bar of the editor and then have
-GPS perform the renaming in them as well.
+The behavior for read-only files can be specified: by default, GPS will not
+do any refactoring in these files and will instead display a dialog listing
+all of them.  However, you can also choose to make them writable just as if
+you had clicked on the "Read-Only" button in the status bar of the editor
+and then have GPS perform the renaming in them as well.
 
 .. _Name_Parameters:
 
 Name Parameters
 ---------------
 
-If you are editing Ada code and click on a call to a subprogram, GPS will
-display a contextual menu :menuselection:`Refactoring --> Name parameters`,
-which will replace all unnamed parameters by named parameters, as in::
+If you are editing Ada code and click on a call to a subprogram, GPS
+displays a contextual menu :menuselection:`Refactoring --> Name
+parameters`, which will replace all unnamed parameters by named parameters,
+for example::
 
      Call (1, 2)
   =>
@@ -1212,12 +1236,12 @@ which will replace all unnamed parameters by named parameters, as in::
 Extract Subprogram
 ------------------
 
-This refactoring is used to move some code from one place to a separate
-subprogram. The goal is to simplify the original subprogram, by moving part of
-its code elsewhere.
+This refactoring is used to move some code from into a separate subprogram.
+This is done to simplify the original subprogram by moving part of its
+code elsewhere.
 
-Here is an example from the "Refactoring" book. The refactoring will take place
-in the body of the package :file:`pkg.adb`, but the spec is needed so that you
+Here's an example from the "Refactoring" book. The refactoring takes place
+in the body of the package :file:`pkg.adb`, but the spec is needed so you
 can compile the source code (a preliminary step mandatory before you can
 refactor the code)::
 
@@ -1292,19 +1316,20 @@ The initial implementation for this code is given by the following code::
      end Print_Owing;
   end Pkg;
 
-The procedure `Print_Owing` is too long and does several independent actions.
-We will perform a series of three successive refactoring steps to extract the
-code and move it elsewhere.
+We feel that the procedure `Print_Owing` is too long and does several
+independent actions, so we'll perform a series of three successive
+refactoring steps to extract the code and move it elsewhere.
 
-The first is the code that prints the banner. Moving it is easy, since this
-code does not depend on any context. We could just do a copy-paste, but then we
-would have to create the new subprogram. Instead, we select lines 30 to 35, and
-then select the contextual menu :menuselection:`Refactoring --> Extract
-Subprogram`.  GPS will then automatically change `Print_Owing` and create a new
-procedure `Print_Banner` (the name is specified by the user, GPS does not try
-to guess it). Also, since the chunk of code that is extracted starts with a
-comment, GPS automatically uses that comment as the documentation for the new
-subprogram.  Here is part of the resulting file::
+First, we move the code that prints the banner. Moving it is easy, since
+this code does not depend on any context. We could just do a copy-paste,
+but then we would have to create the new subprogram. Instead, we select
+lines 30 to 35 and then select the contextual menu
+:menuselection:`Refactoring --> Extract Subprogram`.  GPS removes those
+lines from the subprogram `Print_Owing` and creates a new procedure
+`Print_Banner` (the name is specified by the user; GPS does not try to
+guess a name). Also, since the chunk of code that is extracted starts with
+a comment, GPS automatically uses that comment as the documentation for the
+new subprogram.  Here is the relevant part of the resulting file::
 
   package body Pkg is
 
@@ -1348,19 +1373,19 @@ subprogram.  Here is part of the resulting file::
 
 A more interesting example is when we want to extract the code to print the
 details of the invoice. This code depends on one local variable and the
-parameter to Print_Owing. When we select lines 54 to 57 and extract it into a
-new `Print_Details` subprogram, we get the following result. GPS automatically
-decides which variables to extract, and whether they should become parameters
-of the new subprogram, or local variables. In the former case, it will also
+parameter to Print_Owing.  When we select lines 54 to 57 and extract it
+into a new `Print_Details` subprogram, GPS automatically decides which
+variables to extract and whether they should become parameters of the new
+subprogram or local variables. In the former case, it will also
 automatically decide whether to create `"in"`, `"out"` or `"in out"`
-parameters. If there is a single `"out"` parameter, it will automatically
+parameters. If there's a single `"out"` parameter, GPS will automatically
 create a function rather than a procedure.
 
-GPS will use, for the parameters, the same name that was used for the local
-variable. Very often, it will make sense to recompile the new version of the
-source, and then apply the :menuselection:`Refactoring --> Rename Entity`
+GPS will use the same name used for the local variable for the
+parameters. Often, it makes sense to recompile the new version of the
+source and apply the :menuselection:`Refactoring --> Rename Entity`
 refactoring to have more specific names for the parameters, or the
-:menuselection:`Refactoring --> Name Parameters` refactoring so that the call
+:menuselection:`Refactoring --> Name Parameters` refactoring so that call
 to the new method uses named parameters to further clarify the code::
 
      ... code not shown
@@ -1401,13 +1426,13 @@ to the new method uses named parameters to further clarify the code::
         Print_Details (Self, Outstanding);
      end Print_Owing;
 
-Finally, we want to extract the code that computes the outstanding amount. When
-this code is moved, the variables `E` and `Each` become useless in
-`Print_Owing` and are moved into the new subprogram (which we will call
-`Get_Outstanding`. Here is the result of that last refactoring (the initial
-selection should include the blank lines before and after the code, to keep the
-resulting `Print_Owing` simpler). GPS will automatically ignore those blank
-lines::
+Finally, we want to extract the code that computes the outstanding
+balance. When this code is moved, the variables `E` and `Each` become dead
+in `Print_Owing` and are moved into the new subprogram (which we call
+`Get_Outstanding`). Here's the result of that last refactoring (the initial
+selection should include the blank lines before and after the code to keep
+the resulting `Print_Owing` simpler). GPS will automatically ignore those
+blank lines::
 
      ... code not shown
 
@@ -1437,16 +1462,16 @@ lines::
         Print_Details (Self, Outstanding);
      end Print_Owing;
 
-Note that the final version of `Print_Owing` is not perfect. For instance,
-passing the initial value 0 to `Get_Outstanding` is useless, and in fact that
-should probably be a function with no parameter. But GPS already saves a lot of
-time and manipulation.
+The final version of `Print_Owing` is not perfect. For example, passing the
+initial value 0 to `Get_Outstanding` is useless and in fact it should
+probably be a function with no parameter. But GPS already saves a lot of
+time and manipulation even despite that.
 
-Finally, a word of caution: this refactoring does not check that you are giving
-a valid input. For instance, if the text you select includes a `declare` block,
-you should always include the full block, not just a part of it (or select text
-between `begin` and `end`). Likewise, GPS does not expect you to select any
-part of the variable declarations, just the code.
+Finally, a word of caution: this refactoring does not check that you are
+giving a valid input. For instance, if the text you select includes a
+`declare` block, you should always include the full block, not just a part
+of it (or select text between `begin` and `end`). Likewise, GPS does not
+expect you to select any part of the variable declarations, just the code.
 
 
 .. index:: external editor
@@ -1457,9 +1482,9 @@ Using an External Editor
 
 .. index:: preferences; editor --> external editor
 
-GPS is integrated with a number of external editors, in particular `Emacs` and
-`vi`. The choice of the default external editor is done in the preferences,
-via :menuselection:`Editor --> External editor`.
+GPS is integrated with a number of external editors, in particular `Emacs`
+and `vi`. The choice of the default external editor is done in the
+preferences, via :menuselection:`Editor --> External editor`.
 
 The following values are recognized:
 
@@ -1468,12 +1493,13 @@ The following values are recognized:
 :guilabel:`gnuclient`
   This is the recommended client. It is based on Emacs, but needs an extra
   package to be installed. This is the only client that provides a full
-  integration in GPS, since any extended lisp command can be sent to the Emacs
-  server.
+  integration in GPS, since any extended lisp command can be sent to the
+  Emacs server.
 
   By default, gnuclient will open a new Emacs frame for every file that is
-  opened. You might want to add the following code to your :file:`.emacs` file
-  (create one if needed) so that the same Emacs frame is reused every time::
+  opened. You might want to add the following code to your :file:`.emacs`
+  file (create one if needed) so that the same Emacs frame is reused every
+  time::
 
        (setq gnuserv-frame (car (frame-list)))
 
@@ -1487,34 +1513,33 @@ The following values are recognized:
 :guilabel:`emacsclient`
   This is a program that is always available if you have installed Emacs. As
   opposed to starting a new Emacs every time, it will reuse an existing Emacs
-  session. It is then extremely fast to open a file.
-
+  session. It's then extremely fast to open a file.
 
 .. index:: emacs
 
 :guilabel:`emacs`
   This client will start a new Emacs session every time a file needs to be
-  opened. You should use `emacsclient` instead, since it is much faster, and
-  makes it easier to copy and paste between multiple files. Basically, the only
-  reason to use this external editor is if your system doesn't support
-  `emacsclient`.
+  opened. You should use `emacsclient` instead, since it's much faster,
+  and it makes it easier to copy and paste between multiple files.
+  The only reason to use this external editor is if your system doesn't
+  support `emacsclient`.
 
 
 .. index:: vi
 
 :guilabel:`vim`
   `Vim` is a vi-like editor that provides a number of enhancements, for
-  instance syntax highlighting for all the languages supported by GPS.
-  Selecting this external editor will start an xterm (or command window,
+   example syntax highlighting for all the languages supported by GPS.
+  Selecting this external editor will start an `xterm` (or command window,
   depending on your system) with a running `vim` process editing the file.
 
-  Note that one limitation of this editor is that if GPS needs to open the same
-  file a second time, it will open a new editor, instead of reusing the
-  existing one.
+  One limitation of this editor is that if GPS needs to open the same file
+  a second time, it will open a new editor instead of reusing the existing
+  one.
 
-  To enable this capability, the xterm executable must be found in the PATH,
-  and thus is not supported on Windows systems. Under Windows systems, you can
-  use the `custom` editor instead.
+  To enable this capability, the `xterm` executable must be found in the
+  PATH and thus is not supported on Windows systems.  On Windows systems,
+  you can use the `custom` editor instead.
 
 :guilabel:`vi`
   This editor works exactly like vim, but uses the standard `vi` command
@@ -1524,22 +1549,22 @@ The following values are recognized:
 .. index:: preferences; editor --> custom editor command
 
 :guilabel:`custom`
-  You can specify any external editor by choosing this item. The full command
-  line used to call the editor can be specified in the preference
+  You can specify any external editor by choosing this item.  You specify
+  the complete command line used to call the editor in the preference
   :menuselection:`Editor --> Custom editor command`.
 
 :guilabel:`none`
-  No external editor is used, and the contextual menus simply won't appear.
+  No external editor is used, and the contextual menus won't appear.
 
-In the cases that require an Emacs server, the project file currently used in
-GPS will be set appropriately the first time Emacs is spawned. This means that
-if you load a new project in GPS, or modify the paths of the current project,
-you should kill any running Emacs, so that a new one is spawned by GPS with the
-appropriate project.
+In the cases that require an Emacs server, the project file currently used
+in GPS are set appropriately the first time Emacs is spawned. This means
+that if you load a new project in GPS or modify the paths of the current
+project, you should kill any running Emacs, so a new one is spawned by GPS
+with the appropriate project.
 
-Alternatively, you can reload explicitly the project from Emacs itself by using
-the menu :menuselection:`Project --> Load` in emacs (if the ada-mode was
-correctly installed).
+Alternatively, you can explicitly reload the project from Emacs itself by
+using the menu :menuselection:`Project --> Load` in emacs (if the ada-mode
+was correctly installed).
 
 .. index:: preferences; editor --> always use external editor
 
@@ -1558,24 +1583,26 @@ a file, instead of opening GPS' own editor.
 Using the Clipboard
 ===================
 
-This section concerns X-Window users who are used to cutting and pasting with
-the middle mouse button. In the GPS text editor, as in many recent X
-applications, the *GPS clipboard* is set by explicit cut/copy/paste actions,
-either through menu items or keyboard shortcuts, and the *primary clipboard*
-(i.e. the 'middle button' clipboard) is set by the current selection.
+This section is of interest to X-Window users who are used to cutting and
+pasting with the middle mouse button. In the GPS text editor, as in many
+recent X applications, the *GPS clipboard* is set by explicit
+cut/copy/paste actions, either through menu items or keyboard shortcuts,
+and the *primary clipboard* (i.e. the 'middle button' clipboard) is set by
+the current selection.
 
-Therefore, copy/paste between GPS and other X applications using the *primary
-clipboard* will still work, provided that there is some text currently
-selected. The *GPS clipboard*, when set, will override the *primary clipboard*.
+Therefore, copy/paste between GPS and other X applications using the
+*primary clipboard* will still work provided there is some text currently
+selected. The *GPS clipboard*, when set, overrides the *primary clipboard*.
 
-By default, GPS overrides the X mechanism. To prevent this, add the following
-line: `OVERRIDE_MIDDLE_CLICK_PASTE = no` to your :file:`traces.cfg` file
-(typically in :file:`~/.gps/`). Note, however, that the X mechanism pastes all
-attributes of text, including coloring and editability, which can be confusing.
+By default, GPS overrides the X mechanism. To prevent this, add the
+following line: `OVERRIDE_MIDDLE_CLICK_PASTE = no` to your
+:file:`traces.cfg` file (typically in :file:`~/.gps/`). Note, that the X
+mechanism pastes all attributes of text, including coloring and
+editability, which can be confusing.
 
 See `http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt
-<http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt>`_ for
-more information.
+<http://standards.freedesktop.org/clipboards-spec/clipboards-latest.txt>`_
+for more information.
 
 
 .. index:: saving
@@ -1586,40 +1613,38 @@ Saving Files
 
 .. index:: menu; file --> save
 
-After you have finished modifying your files, you need to save them. The basic
-method to do that is to select the menu :menuselection:`File --> Save`, which
-saves the currently selected file.
+After you have finished editing your files, you need to save them.  You do
+that by selecting the menu :menuselection:`File --> Save`, which saves the
+currently selected file.
 
 .. index:: menu; file --> save as
 
-You can also use the menu :menuselection:`File --> Save As...` if you want to
-save the file with another name, or in another directory.
+You can also use the menu :menuselection:`File --> Save As...` if you want
+to save the file with another name or in another directory.
 
 .. index:: menu; file --> save more --> all
 
-If you have multiple files to save, another possibility is to use the menu
-:menuselection:`File --> Save More --> All`. This will open a dialog listing
-all the currently modified editors that need saving. You can then select
-individually which one should be saved, and click on :guilabel:`Save` to do the
-actual saving.
+If you have multiple files to save, you can also use the menu
+:menuselection:`File --> Save More --> All`. This opens a dialog listing
+all the currently modified editors. You can then select which ones should
+be saved and click on :guilabel:`Save` to save those editors.
 
 .. index:: preferences; editor --> autosave delay
 .. index:: saving; automatic
 
 When calling external commands, such as compiling a file, if the
-:menuselection:`Editor --> Autosave delay` preference is set to 0, this same
-dialog is also used, to make sure that e.g.  the compiler will take into
-account your local changes.  If the preference is enabled, the saving is
-performed automatically.
+:menuselection:`Editor --> Autosave delay` preference is set to 0, this
+same dialog is also used to make sure that the external command will see
+your changes.  If the preference is enabled, the editors are saved
+automatically.
 
 .. image:: save-dialog.jpg
 
-You can conveniently select or unselect all the files at once by clicking on
-the title of the first column (labeled :guilabel:`Select`). This will toggle the
-selection status of the first line, and have the same status for all other
-editors.
+You can conveniently select or unselect all the files at once by clicking
+on the title of the first column (labeled :guilabel:`Select`). This toggles
+the selection status of all files.
 
-If you press :guilabel:`Cancel` instead of :guilabel:`Save`, no saving will
-take place, and the action that displayed this dialog is also canceled. Such
-actions can be for instance starting a compilation command, a VCS operation, or
-quitting GPS with unsaved files.
+If you press :guilabel:`Cancel` instead of :guilabel:`Save`, nothing will
+be saved and the action that displayed this dialog is also canceled. Such
+actions can be, for example, starting a compilation command, a VCS
+operation, or quitting GPS with unsaved files.
