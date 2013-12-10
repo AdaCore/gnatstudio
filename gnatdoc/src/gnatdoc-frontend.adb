@@ -459,6 +459,7 @@ package body GNATdoc.Frontend is
                if Buffer (Idx) = '(' then
                   Par_Count := Par_Count + 1;
                elsif Buffer (Idx) = ')' then
+                  exit when Par_Count = 0; -- Should never occur???
                   Par_Count := Par_Count - 1;
                end if;
 
