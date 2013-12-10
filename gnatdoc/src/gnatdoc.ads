@@ -129,8 +129,9 @@ private
       --  already stored in Target
 
       procedure Print_Files
-        (Source : Files_List.Vector);
-      --  (gdb) Prints the name of all the files in Source
+        (Source         : Files_List.Vector;
+         With_Full_Name : Boolean := False);
+      --  Prints the name of all the files in Source
 
       function Less_Than
         (Left, Right : GNATCOLL.VFS.Virtual_File) return Boolean;

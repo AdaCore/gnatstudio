@@ -18,6 +18,8 @@
 with Ada.Unchecked_Deallocation;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Config;
+with GNAT.Strings;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
@@ -232,8 +234,10 @@ package body GNATdoc is
       Prj_Files           : in out Project_Files_List.Vector;
       Update_Global_Index : Boolean)
    is
-      Database     : constant General_Xref_Database := Kernel.Databases;
-      Lang_Handler : constant Language_Handler := Kernel.Lang_Handler;
+      Database       : constant General_Xref_Database := Kernel.Databases;
+      Lang_Handler   : constant Language_Handler := Kernel.Lang_Handler;
+      All_Src_Files  : Files_List.Vector;
+      Error_Reported : Boolean := False;
 
       procedure Check_Src_Files;
       --  Check the contents of Src_Files and remove from the list those files
@@ -253,13 +257,22 @@ package body GNATdoc is
       --  the C/C++ header files which are transitively referenced by all the
       --  sources of Prj_Files.
 
-      procedure Sort_Dependencies (Files : in out Files_List.Vector);
-      --  Sort the list of files to ensure that dependent files are located
-      --  in the resulting list after the files from which they depend.
+      procedure Compute_Dependencies
+        (File : Virtual_File; Files : in out Files_List.Vector);
+      --  Compute the transitive list of dependencies of File using only the
+      --  files contained in this list of files
 
       function Have_Files
         (Prj_Files : Project_Files_List.Vector) return Boolean;
       --  Return true if some project in Prj_Files has a file to be processed
+
+      procedure Report_Error (File : Virtual_File);
+      --  Output a banner describing the error detected processing File plus
+      --  the list of dependencies of File.
+
+      procedure Sort_Dependencies (Files : in out Files_List.Vector);
+      --  Sort the list of files to ensure that dependent files are located
+      --  in the resulting list after the files from which they depend.
 
       ---------------------
       -- Check_Src_Files --
@@ -531,6 +544,89 @@ package body GNATdoc is
          end;
       end Collect_C_Header_Files;
 
+      ---------------------------
+      --  Compute_Dependencies --
+      ---------------------------
+
+      procedure Compute_Dependencies
+        (File : Virtual_File; Files : in out Files_List.Vector)
+      is
+         Pending_Files : Files_List.Vector := Files.Copy;
+
+         type Node;
+         type Node_Ptr is access Node;
+
+         package Childs_List is new Ada.Containers.Vectors
+           (Index_Type => Natural, Element_Type => Node_Ptr);
+
+         type Node is record
+            File   : Virtual_File;
+            Childs : Childs_List.Vector;
+         end record;
+
+         procedure Append (Subtree : Node_Ptr);
+         --  Traverse the list of dependencies in post-order appending all the
+         --  files to Files
+
+         function Build_Dependencies_Tree
+           (File : Virtual_File) return Node_Ptr;
+
+         ------------
+         -- Append --
+         ------------
+
+         procedure Append (Subtree : Node_Ptr) is
+            Cursor : Childs_List.Cursor;
+         begin
+            Cursor := Subtree.Childs.First;
+            while Childs_List.Has_Element (Cursor) loop
+               Append (Childs_List.Element (Cursor));
+               Childs_List.Next (Cursor);
+            end loop;
+
+            Files.Append (Subtree.File);
+         end Append;
+
+         ----------------
+         -- Build_Tree --
+         ----------------
+
+         function Build_Dependencies_Tree
+           (File : Virtual_File) return Node_Ptr
+         is
+            Result        : constant Node_Ptr := new Node;
+            It            : File_Iterator;
+            Dep_File      : Virtual_File;
+            Dep_File_Info : Node_Ptr;
+            Cursor        : Files_List.Cursor;
+         begin
+            Cursor := Pending_Files.Find (File);
+            Pending_Files.Delete (Cursor);
+
+            Result.File := File;
+
+            It := Find_Dependencies (Database, File);
+            while It.Has_Element loop
+               Dep_File := It.Element;
+
+               if Pending_Files.Contains (Dep_File) then
+                  Dep_File_Info := Build_Dependencies_Tree (Dep_File);
+                  Result.Childs.Append (Dep_File_Info);
+               end if;
+
+               It.Next;
+            end loop;
+
+            return Result;
+         end Build_Dependencies_Tree;
+
+         Subtree : Node_Ptr;
+      begin
+         Files.Clear;
+         Subtree := Build_Dependencies_Tree (File);
+         Append (Subtree);
+      end Compute_Dependencies;
+
       ------------------------
       --  Sort_Dependencies --
       ------------------------
@@ -653,6 +749,130 @@ package body GNATdoc is
          return False;
       end Have_Files;
 
+      --------------------
+      -- Internal_Error --
+      --------------------
+
+      procedure Report_Error (File : Virtual_File) is
+         Header_Eq : constant Natural := 25;
+         Header    : constant String  := " GNATdoc BUG DETECTED ";
+         Length    : constant Natural := 2 * Header_Eq + Header'Length;
+         use GNAT.IO;
+
+         procedure Write (C : Character; N : Natural := 1);
+         --  Output N times character C
+
+         procedure Write_Line (S : String := "");
+         --  Write the text S delimited by characters '|'. The right margin
+         --  is extended to put the right delimited at position Length - 1
+
+         procedure Write_Line (S : String := "") is
+            Prefix : constant String := "| " & S;
+         begin
+            Put (Prefix);
+            Write (' ', Length - Prefix'Length + 1);
+            Write ('|');
+            New_Line;
+         end Write_Line;
+
+         procedure Write (C : Character; N : Natural := 1) is
+         begin
+            for J in 1 .. N loop
+               Put (C);
+            end loop;
+         end Write;
+
+         Is_GPL_Version : constant Boolean := False;
+         GNAT_Version   : GNAT.Strings.String_Access;
+
+      begin
+         Write ('+');
+         Write ('=', Header_Eq);
+         Put   (Header);
+         Write ('=', Header_Eq);
+         Write ('+');
+         New_Line;
+
+         --  Output compiler version/date???
+         --  Output gnatdoc version/date???
+
+         Write_Line ("Error detected processing file:");
+         Write_Line ("- " & (+File.Base_Name));
+         Write_Line;
+
+         Kernel.Registry.Environment.Set_Path_From_Gnatls
+           ("gnatls", GNAT_Version);
+
+         Write_Line ("Compiler version: " & GNAT_Version.all);
+         Write_Line (" GNATdoc version: 0.9w (" & Config.Source_Date & ")");
+         Write_Line ("            Host: " & Config.Target);
+
+         Write_Line;
+
+         if Is_GPL_Version then
+            Write_Line
+              ("Please submit a bug report by email " &
+               "to report@adacore.com.");
+            Write_Line
+              ("GAP members can alternatively use GNAT Tracker:");
+            Write_Line
+              ("http://www.adacore.com/ " &
+               "section 'send a report'.");
+            Write_Line
+              ("See gnatinfo.txt for full info on procedure " &
+               "for submitting bugs.");
+         else
+            Write_Line
+              ("Please submit a bug report using GNAT Tracker:");
+            Write_Line
+              (" http://www.adacore.com/gnattracker/ " &
+               "section 'send a report'.");
+            Write_Line
+              ("Alternatively submit a bug report by email " &
+               "to report@adacore.com,");
+            Write_Line
+              ("including your customer number #nnn " &
+               "in the subject line.");
+         end if;
+
+         Write_Line;
+
+         Write_Line
+           ("Use a subject line meaningful to you" &
+            " and us to track the bug.");
+         Write_Line
+           ("Include the entire contents of this bug " &
+            "box in the report.");
+         Write_Line
+           ("Include the exact command that you entered.");
+
+         Write_Line;
+
+         Write_Line
+           ("Also include sources listed below in gnatchop format");
+         Write_Line
+           ("(concatenated together with no headers between files).");
+
+         Write ('+');
+         Write ('=', Length);
+         Write ('+');
+         New_Line;
+
+         New_Line;
+         Put_Line ("Please include these source files with error report.");
+         New_Line;
+
+         Put_Line ("  Note that list may not be accurate in some cases, ");
+         Put_Line ("  so please double check that the problem can still ");
+         Put_Line ("  be reproduced with the set of files listed.");
+         New_Line;
+
+         Compute_Dependencies (File, All_Src_Files);
+
+         Print_Files (All_Src_Files, With_Full_Name => True);
+         Error_Reported := True;
+      end Report_Error;
+
       ----------
       -- Free --
       ----------
@@ -675,8 +895,6 @@ package body GNATdoc is
       All_Include_Files    : aliased Files_List.Vector;
       --  All the C and C++ header files which transitively included by all
       --  the header files of the project
-
-      All_Src_Files : Files_List.Vector;
 
    --  Start of processing for Process_Files
 
@@ -766,6 +984,10 @@ package body GNATdoc is
                        File    => Current_File);
 
                   All_Trees.Append (Tree);
+               exception
+                  when others =>
+                     Report_Error (Current_File);
+                     raise;
                end;
 
                Files_List.Next (File_Index);
@@ -890,11 +1112,8 @@ package body GNATdoc is
                      Backend.Process_File (Tree'Access);
                   exception
                      when E : others =>
+                        Report_Error (Tree.File);
                         Trace (Me, E);
-                        Kernel.Messages_Window.Insert
-                          (-("error: exception occurred when processing ") &
-                             Tree.File.Display_Full_Name,
-                           Mode => Info);
                   end;
 
                   Tree_List.Next (Cursor);
@@ -922,7 +1141,10 @@ package body GNATdoc is
 
    exception
       when E : others =>
-         GNAT.IO.Put_Line ("Internal error: program terminated");
+         if not Error_Reported then
+            GNAT.IO.Put_Line ("Internal error: Program aborted");
+         end if;
+
          Free (Context);
          Trace (Me, E);
    end Process_Files;
@@ -1072,15 +1294,21 @@ package body GNATdoc is
       -----------------
 
       procedure Print_Files
-        (Source : Files_List.Vector)
+        (Source         : Files_List.Vector;
+         With_Full_Name : Boolean := False)
       is
          File_Index : Files_List.Cursor;
+         File       : Virtual_File;
       begin
-         GNAT.IO.Put_Line ("---------------");
          File_Index := Source.First;
          while Files_List.Has_Element (File_Index) loop
-            GNAT.IO.Put_Line
-              (String (Files_List.Element (File_Index).Base_Name));
+            File := Files_List.Element (File_Index);
+
+            if With_Full_Name then
+               GNAT.IO.Put_Line (+File.Full_Name);
+            else
+               GNAT.IO.Put_Line (+File.Base_Name);
+            end if;
 
             Files_List.Next (File_Index);
          end loop;
