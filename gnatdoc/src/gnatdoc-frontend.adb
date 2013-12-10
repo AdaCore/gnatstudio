@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Strings;              use Ada.Strings;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Basic_Types;              use Basic_Types;
 with GNATdoc.Comment;          use GNATdoc.Comment;
@@ -34,7 +35,6 @@ with Language.Tree.Database;   use Language.Tree.Database;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 with Xref;
-with GNAT.IO;
 
 package body GNATdoc.Frontend is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend");
@@ -153,7 +153,9 @@ package body GNATdoc.Frontend is
                           Loc  => Loc);
 
          begin
-            if Present (Entity) then
+            if Present (Entity)
+              and then not Is_Fuzzy (Entity)
+            then
                return Get_Unique_Entity (Context, Loc.File, Entity);
             else
                return null;
@@ -388,10 +390,7 @@ package body GNATdoc.Frontend is
       procedure Ada_Get_Source (E : Entity_Id) is
 
          function Get_Declaration_Source return Unbounded_String;
-         --  Retrieve the source of the declaration E. In addition, for single
-         --  tasks and single protected objects modify the tree moving
-         --  their inner entities into their scopes; required to workaround
-         --  a problem with their scope caused by the compiler.
+         --  Retrieve the source of the declaration E.
 
          function Get_Discriminant_Doc return Comment_Result;
          --  Return the comment of the discriminant (if any). Must be called
@@ -411,7 +410,10 @@ package body GNATdoc.Frontend is
          function Get_Concurrent_Type_Source
            (Loc : General_Location) return Unbounded_String;
          --  Retrieve the source of a protected type or a task type (including
-         --  the case of single protected object and single task type)
+         --  the case of single protected object and single task type) In
+         --  addition, for single tasks and single protected objects modify the
+         --  tree moving their inner entities into their scopes; required to
+         --  workaround a problem with their scope caused by the compiler.
 
          function Get_Type_Declaration_Source return Unbounded_String;
          --  Retrieve the source of the declaration E
@@ -431,6 +433,7 @@ package body GNATdoc.Frontend is
             Idx           : Natural;
             Index         : Natural;
             Lines_Skipped : Natural;
+            Par_Count     : Natural;
 
          begin
             --  Displace the pointer to the beginning of the declaration
@@ -447,10 +450,18 @@ package body GNATdoc.Frontend is
                Columns       => Natural (LL.Get_Location (E).Column),
                Index         => Index);
 
-            Idx := Index;
+            Par_Count := 0;
+            Idx       := Index;
+
             while Idx < Buffer'Last
-              and then Buffer (Idx) /= ';'
+              and then (Buffer (Idx) /= ';' or else Par_Count > 0)
             loop
+               if Buffer (Idx) = '(' then
+                  Par_Count := Par_Count + 1;
+               elsif Buffer (Idx) = ')' then
+                  Par_Count := Par_Count - 1;
+               end if;
+
                Idx := Idx + 1;
             end loop;
 
@@ -826,10 +837,17 @@ package body GNATdoc.Frontend is
                            Tok_Loc   : General_Location;
                            LL_Parent : General_Entity;
                            Parent    : Entity_Id := Atree.No_Entity;
+                           Dot_Pos   : Natural := 0;
 
                         begin
                            if Is_Expanded_Name (S) then
-                              Parent := Find_Unique_Entity (S);
+                              declare
+                                 Idx : Natural;
+                              begin
+                                 Parent  := Find_Unique_Entity (S);
+                                 Idx     := Index (S, ".", Going => Backward);
+                                 Dot_Pos := Idx - S'First + 1;
+                              end;
                            end if;
 
                            if No (Parent) then
@@ -838,7 +856,8 @@ package body GNATdoc.Frontend is
                                   (File   => File,
                                    Line   => Loc.Line + Sloc_Start.Line - 1,
                                    Column =>
-                                     Visible_Column_Type (Sloc_Start.Column));
+                                     Visible_Column_Type
+                                       (Sloc_Start.Column + Dot_Pos));
 
                               LL_Parent :=
                                 Xref.Get_Entity
@@ -850,7 +869,9 @@ package body GNATdoc.Frontend is
                               --  containing the parent type is not
                               --  available.
 
-                              if Present (LL_Parent) then
+                              if Present (LL_Parent)
+                                and then not Is_Fuzzy (LL_Parent)
+                              then
                                  Parent :=
                                    Builder.Get_Unique_Entity
                                      (Context, File, LL_Parent);
@@ -1535,126 +1556,172 @@ package body GNATdoc.Frontend is
          elsif LL.Get_Location (E).File /= File then
             return;
 
-         --  No action needed for entities for which we don't need to retrieve
-         --  its sources
-
-         elsif Get_Kind (E) = E_Formal then
-            return;
-         end if;
-
-         if Is_Package (E) then
-            if No (LL.Get_Scope (E))
-              and then No (LL.Get_Parent_Package (E))
-            then
-               Parse_Package_Header (E, Buffer);
-            end if;
-
-         elsif Is_Subprogram_Or_Entry (E) then
-            declare
-               Profile : Unbounded_String;
-            begin
-               Parse_Ada_Profile
-                 (E        => E,
-                  Buffer   => Buffer,
-                  Location => LL.Get_Location (E),
-                  Is_Body  => False,
-                  Profile  => Profile);
-
-               Set_Src (E, Profile);
-            end;
-
-         elsif Is_Class_Or_Record_Type (E) then
-
-            --  Xref is not able to indicate us if the parent type is visible
-            --  only in the full-view of a private type. Hence we decorate it
-            --  here as visible only in the full-view and Get_Record_Type_Src
-            --  takes care of removing this flag if it is also visible in the
-            --  partial view.
-
-            if Is_Partial_View (E) then
-               Set_Has_Private_Parent (E);
-            end if;
-
-            --  Public full type declaration of a record
-
-            if not Is_Partial_View (E) then
-               Set_Src (E,
-                 Get_Record_Type_Source
-                   (LL.Get_Location (E), Is_Full_View => True));
-            else
-               Set_Src (E,
-                 Get_Record_Type_Source
-                   (LL.Get_Location (E), Is_Full_View => False));
-
-               if Context.Options.Show_Private
-                 and then LL.Get_Body_Loc (E).File = File
-               then
-                  Set_Full_View_Src (E,
-                    Get_Record_Type_Source
-                      (LL.Get_Body_Loc (E), Is_Full_View => True));
-               end if;
-            end if;
-
-         elsif Get_Kind (E) = E_Single_Task
-           or else Get_Kind (E) = E_Task_Type
-           or else Get_Kind (E) = E_Protected_Type
-         then
-            if not Is_Partial_View (E) then
-               Set_Src (E,
-                 Get_Concurrent_Type_Source (LL.Get_Location (E)));
-
-            else
-               Set_Src (E,
-                 Get_Record_Type_Source
-                   (LL.Get_Location (E), Is_Full_View => False));
-
-               if Context.Options.Show_Private then
-                  Set_Full_View_Src (E,
-                    Get_Concurrent_Type_Source (LL.Get_Body_Loc (E)));
-               end if;
-            end if;
-
-         elsif LL.Is_Type (E) then
-            Set_Src (E, Get_Type_Declaration_Source);
-
-         elsif Get_Kind (E) = E_Variable then
-            if Is_Single_Protected_Object (E) then
-
-               --  Correct previous wrong decoration (done by
-               --  Atree.New_Internal_Entity).
-
-               Set_Is_Incomplete (E, False);
-               Remove_Full_View (E);
-
-               Set_Kind (E, E_Single_Protected);
-               Set_Src (E, Get_Concurrent_Type_Source (LL.Get_Location (E)));
-            else
-               Set_Src (E, Get_Declaration_Source);
-            end if;
-
-         elsif Present (Get_Scope (E))
-            and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
-            and then Get_Kind (E) = E_Discriminant
-         then
-            Set_Src (E, Get_Discriminant_Source);
-            Set_Doc (E, Get_Discriminant_Doc);
-
-         elsif Present (Get_Scope (E))
-            and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
-            and then Get_Kind (E) = E_Component
-         then
-            Set_Src (E, Get_Declaration_Source);
-
-         --  Instantiations of generic packages and subprograms
+         --  Handle generic instances
 
          elsif Present (LL.Get_Instance_Of (E)) then
             Set_Src (E, Get_Instance_Source);
-
-         else
-            Set_Src (E,
-              To_Unbounded_String
-                ("<<Get_Source under development for this kind of entity>>"));
+            return;
          end if;
+
+         case Get_Kind (E) is
+
+            when E_Enumeration_Literal |
+                 E_Formal              |
+                 E_Named_Number =>
+               null;
+
+            when E_Access_Type              |
+                 E_Access_Subprogram_Type   |
+                 E_Array_Type               |
+                 E_Boolean_Type             |
+                 E_Decimal_Fixed_Point_Type |
+                 E_Enumeration_Type         |
+                 E_Fixed_Point_Type         |
+                 E_Floating_Point_Type      |
+                 E_Integer_Type             |
+                 E_String_Type              =>
+               Set_Src (E, Get_Type_Declaration_Source);
+
+            when E_Variable |
+                 E_Exception =>
+               if Is_Single_Protected_Object (E) then
+
+                  --  Correct previous wrong decoration (done by
+                  --  Atree.New_Internal_Entity).
+
+                  Set_Is_Incomplete (E, False);
+                  Remove_Full_View (E);
+
+                  Set_Kind (E, E_Single_Protected);
+                  Set_Src (E,
+                    Get_Concurrent_Type_Source (LL.Get_Location (E)));
+               else
+                  Set_Src (E, Get_Declaration_Source);
+               end if;
+
+            when E_Discriminant =>
+               if Present (Get_Scope (E))
+                 and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
+                 and then False --  Disabled for now???
+               then
+                  Set_Src (E, Get_Discriminant_Source);
+                  Set_Doc (E, Get_Discriminant_Doc);
+               end if;
+
+            when E_Component =>
+               if Present (Get_Scope (E))
+                 and then Is_Concurrent_Type_Or_Object (Get_Scope (E))
+                 and then False --  Disabled for now???
+               then
+                  Set_Src (E, Get_Declaration_Source);
+               end if;
+
+            when E_Abstract_Record_Type |
+                 E_Private_Object       |
+                 E_Record_Type          |
+                 E_Tagged_Record_Type   |
+                 E_Interface            |
+                 E_Class_Wide_Type      =>
+
+               pragma Assert (Get_Kind (E) /= E_Private_Object);
+
+               --  Xref is not able to indicate us if the parent type is
+               --  visible only in the full-view of a private type. Hence
+               --  we decorate it here as visible only in the full-view and
+               --  Get_Record_Type_Src takes care of removing this flag if
+               --  it is also visible in the partial view.
+
+               if Is_Partial_View (E) then
+                  Set_Has_Private_Parent (E);
+               end if;
+
+               --  Public full type declaration of a record
+
+               if not Is_Partial_View (E) then
+                  Set_Src (E,
+                           Get_Record_Type_Source
+                             (LL.Get_Location (E), Is_Full_View => True));
+               else
+                  Set_Src (E,
+                    Get_Record_Type_Source
+                      (LL.Get_Location (E), Is_Full_View => False));
+
+                  if Context.Options.Show_Private
+                    and then LL.Get_Body_Loc (E).File = File
+                  then
+                     Set_Full_View_Src (E,
+                       Get_Record_Type_Source
+                         (LL.Get_Body_Loc (E), Is_Full_View => True));
+                  end if;
+               end if;
+
+            when E_Single_Task      |
+                 E_Task_Type        |
+                 E_Protected_Type   =>
+               if not Is_Partial_View (E) then
+                  Set_Src (E,
+                    Get_Concurrent_Type_Source (LL.Get_Location (E)));
+
+               else
+                  Set_Src (E,
+                    Get_Record_Type_Source
+                      (LL.Get_Location (E), Is_Full_View => False));
+
+                  if Context.Options.Show_Private then
+                     Set_Full_View_Src (E,
+                       Get_Concurrent_Type_Source (LL.Get_Body_Loc (E)));
+                  end if;
+               end if;
+
+            when E_Single_Protected =>
+               --  At current stage this case never occurs because the compiler
+               --  references single protected objects as E_Variable (see above
+               --  the management of E_Variable covering this case).
+               pragma Assert (False);
+
+            when E_Generic_Formal =>
+               Set_Src (E, Get_Declaration_Source);
+
+            when E_Abstract_Function  |
+                 E_Abstract_Procedure |
+                 E_Function           |
+                 E_Procedure          |
+                 E_Generic_Function   |
+                 E_Generic_Procedure  |
+                 E_Entry              =>
+               declare
+                  Profile : Unbounded_String;
+               begin
+                  Parse_Ada_Profile
+                    (E        => E,
+                     Buffer   => Buffer,
+                     Location => LL.Get_Location (E),
+                     Is_Body  => False,
+                     Profile  => Profile);
+
+                  Set_Src (E, Profile);
+               end;
+
+            when E_Package         |
+                 E_Generic_Package =>
+               if No (LL.Get_Scope (E))
+                 and then No (LL.Get_Parent_Package (E))
+               then
+                  Parse_Package_Header (E, Buffer);
+               end if;
+
+            --  C and C++ values
+
+            when E_Macro          |
+                 E_Function_Macro |
+                 E_Class          |
+                 E_Class_Instance |
+                 E_Include_File   |
+                 E_Attribute      |
+                 E_Unknown        =>
+               pragma Assert (False);
+
+         end case;
       end Ada_Get_Source;
 
       -----------------
@@ -2415,14 +2482,6 @@ package body GNATdoc.Frontend is
                begin
                   if Present (Entity) then
                      Set_Alias (E, Entity);
-
-                  --  This case should never occur!
-
-                  else
-                     GNAT.IO.Put_Line
-                       (Utils.Image
-                          (LL.Get_Location (E), With_Filename => True)
-                        & ": (warning) renaming not fully decorated");
                   end if;
                end;
 
