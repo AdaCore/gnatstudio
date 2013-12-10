@@ -266,7 +266,9 @@ package body GNATdoc is
         (Prj_Files : Project_Files_List.Vector) return Boolean;
       --  Return true if some project in Prj_Files has a file to be processed
 
-      procedure Report_Error (File : Virtual_File);
+      type Stages is (Frontend_Stage, Backend_Stage);
+
+      procedure Report_Error (File : Virtual_File; Stage : Stages);
       --  Output a banner describing the error detected processing File plus
       --  the list of dependencies of File.
 
@@ -753,7 +755,7 @@ package body GNATdoc is
       -- Internal_Error --
       --------------------
 
-      procedure Report_Error (File : Virtual_File) is
+      procedure Report_Error (File : Virtual_File; Stage : Stages) is
          Header_Eq : constant Natural := 25;
          Header    : constant String  := " GNATdoc BUG DETECTED ";
          Length    : constant Natural := 2 * Header_Eq + Header'Length;
@@ -793,8 +795,11 @@ package body GNATdoc is
          Write ('+');
          New_Line;
 
-         --  Output compiler version/date???
-         --  Output gnatdoc version/date???
+         if Stage = Frontend_Stage then
+            Write_Line ("Code: 01");
+         else
+            Write_Line ("Code: 02");
+         end if;
 
          Write_Line ("Error detected processing file:");
          Write_Line ("- " & (+File.Base_Name));
@@ -963,7 +968,6 @@ package body GNATdoc is
 
             File_Index := All_Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
-
                declare
                   Current_File : Virtual_File
                                    renames Files_List.Element (File_Index);
@@ -985,8 +989,9 @@ package body GNATdoc is
 
                   All_Trees.Append (Tree);
                exception
-                  when others =>
-                     Report_Error (Current_File);
+                  when E : others =>
+                     Report_Error (Current_File, Frontend_Stage);
+                     Trace (Me, E);
                      raise;
                end;
 
@@ -1112,8 +1117,9 @@ package body GNATdoc is
                      Backend.Process_File (Tree'Access);
                   exception
                      when E : others =>
-                        Report_Error (Tree.File);
+                        Report_Error (Tree.File, Backend_Stage);
                         Trace (Me, E);
+                        raise;
                   end;
 
                   Tree_List.Next (Cursor);
