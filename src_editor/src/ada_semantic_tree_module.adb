@@ -73,7 +73,7 @@ package body Ada_Semantic_Tree_Module is
 
          if Editor /= null then
             return
-              Get_Timestamp
+              Get_Version
                 (Get_Buffer (Source_Editor_Box (Get_Widget (Editor))));
          end if;
       end if;

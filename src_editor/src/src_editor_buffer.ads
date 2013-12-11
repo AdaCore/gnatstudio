@@ -1129,10 +1129,10 @@ package Src_Editor_Buffer is
       N      : Positive) return Basic_Types.UTF8_String;
    --  Returns the N last typed characters
 
-   function Get_Timestamp
+   function Get_Version
      (Buffer : access Source_Buffer_Record'Class) return Integer;
-   --  Return the logical timestamp in Buffer. This logical timestamp is
-   --  increased with every modification in Buffer.
+   --  Return the version of the buffer. Version is an integer that is
+   --  incremented every time the buffer is modified
 
    procedure Start_Undo_Group (Buffer : access Source_Buffer_Record'Class);
    procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class);
@@ -1746,7 +1746,8 @@ private
       Editor_Buffer : Editor_Buffer_Access;
       Listeners : Listener_Lists.List;
 
-      Logical_Timestamp : Integer := -1;
+      Last_Checked_Version : Integer := -1;
+      Version : Integer := -1;
    end record;
 
    procedure Emit_By_Name

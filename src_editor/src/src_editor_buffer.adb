@@ -1090,7 +1090,9 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Emit the Buffer_Modifed hook
-      if Buffer.Current_Status = Modified then
+      if Buffer.Get_Version > 0
+        and then Buffer.Get_Version /= Buffer.Last_Checked_Version
+      then
          Buffer_Modified (Buffer);
       end if;
 
@@ -8401,11 +8403,11 @@ package body Src_Editor_Buffer is
    -- Get_Timestamp --
    -------------------
 
-   function Get_Timestamp
+   function Get_Version
      (Buffer : access Source_Buffer_Record'Class) return Integer is
    begin
-      return Buffer.Logical_Timestamp;
-   end Get_Timestamp;
+      return Buffer.Version;
+   end Get_Version;
 
    ------------------------------
    -- Update_Logical_Timestamp --
@@ -8414,10 +8416,10 @@ package body Src_Editor_Buffer is
    procedure Update_Logical_Timestamp
      (Buffer : access Source_Buffer_Record'Class) is
    begin
-      if Buffer.Logical_Timestamp = Integer'Last then
-         Buffer.Logical_Timestamp := 0;
+      if Buffer.Version = Integer'Last then
+         Buffer.Version := 0;
       else
-         Buffer.Logical_Timestamp := Buffer.Logical_Timestamp + 1;
+         Buffer.Version := Buffer.Version + 1;
       end if;
    end Update_Logical_Timestamp;
 
