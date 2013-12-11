@@ -3739,7 +3739,7 @@ class EditorBuffer(object):
         actions for custom multi cursors actions.
         """
 
-    def update_multi_cursors_selection():
+    def update_multi_cursors_selections():
         """
         Update the overlay used to show the multi cursor's current selection.
         This must be called after any operation on multi cursor selection marks
