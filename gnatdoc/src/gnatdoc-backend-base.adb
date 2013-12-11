@@ -101,6 +101,14 @@ package body GNATdoc.Backend.Base is
                return;
             end if;
 
+            --  Skip storing of entities declared in private part
+
+            if not Self.Context.Options.Show_Private
+              and then In_Private_Part (Entity)
+            then
+               return;
+            end if;
+
             --  Package generic formals are stored at the beginning of the
             --  list of entities
 

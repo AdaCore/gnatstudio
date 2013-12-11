@@ -129,7 +129,6 @@ package body GNATdoc.Backend.Simple is
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
-         Context       : access constant Docgen_Context;
          Use_Full_Name : Boolean := False;
          Filter        : List_Filter_Kind := None);
       --  Append to Printout the Header plus the reStructured Text of all the
@@ -272,12 +271,6 @@ package body GNATdoc.Backend.Simple is
          Subprograms   : constant EInfo_List.Vector := Get_Subprograms (E);
 
       begin
-         if In_Private_Part (E)
-           and then not Context.Options.Show_Private
-         then
-            return;
-         end if;
-
          ReST_Append_Label (Printout, E);
 
          Append_Line (Printout, Name);
@@ -324,26 +317,22 @@ package body GNATdoc.Backend.Simple is
          ReST_Append_List
            (Printout => Printout,
             List     => Discriminants,
-            Header   => "Discriminants",
-            Context  => Context);
+            Header   => "Discriminants");
 
          ReST_Append_List
            (Printout => Printout,
             List     => Components,
-            Header   => "Components",
-            Context  => Context);
+            Header   => "Components");
 
          ReST_Append_List
            (Printout => Printout,
             List     => Entries,
-            Header   => "Entries",
-            Context  => Context);
+            Header   => "Entries");
 
          ReST_Append_List
            (Printout => Printout,
             List     => Subprograms,
-            Header   => "Subprograms",
-            Context  => Context);
+            Header   => "Subprograms");
 
          --  Append documentation of discriminants
 
@@ -426,7 +415,6 @@ package body GNATdoc.Backend.Simple is
         (Printout      : access Unbounded_String;
          List          : EInfo_List.Vector;
          Header        : String;
-         Context       : access constant Docgen_Context;
          Use_Full_Name : Boolean  := False;
          Filter        : List_Filter_Kind := None)
       is
@@ -472,12 +460,8 @@ package body GNATdoc.Backend.Simple is
               or else
                 (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
             then
-               if not In_Private_Part (E)
-                 or else Context.Options.Show_Private
-               then
-                  Found := True;
-                  exit;
-               end if;
+               Found := True;
+               exit;
             end if;
 
             EInfo_List.Next (Cursor);
@@ -497,19 +481,16 @@ package body GNATdoc.Backend.Simple is
               or else (Filter = Lang_Ada and then In_Ada_Language (E))
               or else (Filter = Lang_C_CPP and then In_C_Or_CPP_Language (E))
             then
-               if not In_Private_Part (E)
-                 or else Context.Options.Show_Private
-               then
-                  Append (Printout, "   * :ref:`");
-                  Append (Printout, Get_Name (E, Use_Full_Name));
+               Append (Printout, "   * :ref:`");
+               Append (Printout, Get_Name (E, Use_Full_Name));
 
-                  Append_Line (Printout,
-                    " <"
-                    & Get_Unique_Name (E)
-                    & ">` "
-                    & Image (LL.Get_Location (E))
-                    & Gen_Suffix (E));
-               end if;
+               Append_Line
+                 (Printout,
+                  " <"
+                  & Get_Unique_Name (E)
+                  & ">` "
+                  & Image (LL.Get_Location (E))
+                  & Gen_Suffix (E));
             end if;
 
             EInfo_List.Next (Cursor);
@@ -531,12 +512,6 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
-         if In_Private_Part (E)
-           and then not Context.Options.Show_Private
-         then
-            return;
-         end if;
-
          ReST_Append_Label (Printout, E);
 
          --  Append labels to all the components. Required to facilitate
@@ -615,23 +590,20 @@ package body GNATdoc.Backend.Simple is
                ReST_Append_List
                  (Printout => Printout,
                   List     => Get_Progenitors (E).all,
-                  Header   => "Progenitors",
-                  Context  => Context);
+                  Header   => "Progenitors");
 
             else
                ReST_Append_List
                  (Printout => Printout,
                   List     => LL.Get_Parent_Types (E).all,
-                  Header   => "Parent types",
-                  Context  => Context);
+                  Header   => "Parent types");
             end if;
          end if;
 
          ReST_Append_List
            (Printout => Printout,
             List     => LL.Get_Child_Types (E).all,
-            Header   => "Child types",
-            Context  => Context);
+            Header   => "Child types");
 
          if In_Ada_Language (E)
            and then LL.Has_Methods (E)
@@ -642,15 +614,13 @@ package body GNATdoc.Backend.Simple is
                ReST_Append_List
                  (Printout => Printout,
                   List     => Get_Inherited_Methods (Context, E).all,
-                  Header   => "Inherited dispatching subprograms",
-                  Context  => Context);
+                  Header   => "Inherited dispatching subprograms");
             end if;
 
             ReST_Append_List
               (Printout => Printout,
                List     => Get_Methods (Context, E).all,
-               Header   => "New and overridden dispatching subprograms",
-               Context  => Context);
+               Header   => "New and overridden dispatching subprograms");
          end if;
       end ReST_Append_Record_Type_Declaration;
 
@@ -691,12 +661,6 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
-         if In_Private_Part (E)
-           and then not Context.Options.Show_Private
-         then
-            return;
-         end if;
-
          ReST_Append_Label (Printout, E);
 
          Append_Line (Printout, Name);
@@ -767,12 +731,6 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
-         if In_Private_Part (E)
-           and then not Context.Options.Show_Private
-         then
-            return;
-         end if;
-
          if Get_Src (E) /= Null_Unbounded_String then
             ReST_Append_Label (Printout, E);
 
@@ -1335,77 +1293,66 @@ package body GNATdoc.Backend.Simple is
               (Printout'Access,
                Backend.Entities.Variables,
                "Constants & variables",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Simple_Types,
                "Simple types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Access_Types,
                "Access types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Record_Types,
                "Record types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Interface_Types,
                "Interface types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tagged_Types,
                "Tagged types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Tasks,
                "Tasks & Task types",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Protected_Objects,
                "Protected objects",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.CPP_Classes,
                "C++ Classes",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Subprgs,
                "Subprograms",
-               Context => Backend.Context,
                Filter => Filter);
 
             ReST_Append_List
               (Printout'Access,
                Backend.Entities.Pkgs,
                "Packages",
-               Context => Backend.Context,
                Filter => Filter);
 
             Insert
@@ -1628,19 +1575,11 @@ package body GNATdoc.Backend.Simple is
             is
                Result : EInfo_List.Vector;
                Cursor : EInfo_List.Cursor;
-               Entity : Entity_Id;
 
             begin
                Cursor := Backend.Entities.Tagged_Types.First;
                while EInfo_List.Has_Element (Cursor) loop
-                  Entity := EInfo_List.Element (Cursor);
-
-                  if not In_Private_Part (Entity)
-                    or else Backend.Context.Options.Show_Private
-                  then
-                     Result.Append (EInfo_List.Element (Cursor));
-                  end if;
-
+                  Result.Append (EInfo_List.Element (Cursor));
                   EInfo_List.Next (Cursor);
                end loop;
 
@@ -2369,58 +2308,43 @@ package body GNATdoc.Backend.Simple is
          Append_Line (Printout'Access, "");
 
          ReST_Append_List
-           (Printout'Access, Entities.Generic_Formals, "Generic formals",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Generic_Formals, "Generic formals");
          ReST_Append_List
-           (Printout'Access, Entities.Variables, "Constants & variables",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Variables, "Constants & variables");
          ReST_Append_List
-           (Printout'Access, Entities.Simple_Types, "Simple Types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Simple_Types, "Simple Types");
          ReST_Append_List
-           (Printout'Access, Entities.Access_Types, "Access Types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Access_Types, "Access Types");
          ReST_Append_List
-           (Printout'Access, Entities.Record_Types, "Record Types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Record_Types, "Record Types");
          ReST_Append_List
-           (Printout'Access, Entities.Interface_Types, "Interface types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Interface_Types, "Interface types");
          ReST_Append_List
-           (Printout'Access, Entities.Tagged_Types, "Tagged types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Tagged_Types, "Tagged types");
          ReST_Append_List
-           (Printout'Access, Entities.Tasks, "Tasks & task types types",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Tasks, "Tasks & task types types");
          ReST_Append_List
-           (Printout'Access, Entities.Protected_Objects, "Protected objects",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Protected_Objects, "Protected objects");
          ReST_Append_List
-           (Printout'Access, Entities.CPP_Classes, "C++ Classes",
-            Context => Backend.Context);
+           (Printout'Access, Entities.CPP_Classes, "C++ Classes");
          ReST_Append_List
-           (Printout'Access, Entities.Subprgs, "Subprograms",
-            Context => Backend.Context);
+           (Printout'Access, Entities.Subprgs, "Subprograms");
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Methods, "Dispatching subprograms",
-               Context => Backend.Context);
+              (Printout'Access, Entities.Methods, "Dispatching subprograms");
          else
             ReST_Append_List
               (Printout'Access, Entities.CPP_Constructors, "Constructors",
-               Context => Backend.Context,
                Use_Full_Name => True);
             ReST_Append_List
               (Printout'Access, Entities.Methods, "Methods",
-               Context => Backend.Context,
                Use_Full_Name => True);
          end if;
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Pkgs, "Nested packages",
-               Context => Backend.Context);
+              (Printout'Access, Entities.Pkgs, "Nested packages");
          end if;
 
          --  Generate full documentation
