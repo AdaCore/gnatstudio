@@ -617,6 +617,11 @@ package body GNATdoc.Frontend is
                   if S = "(" then
                      Par_Count := Par_Count + 1;
                   elsif S = ")" then
+                     --  Workaround problem caused by the actual parameters
+                     --  of generic instantiations???
+                     if Par_Count = 0 then
+                        return True;
+                     end if;
                      Par_Count := Par_Count - 1;
                   elsif S = ";" then
                      if Par_Count = 0 then
