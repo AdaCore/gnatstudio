@@ -446,7 +446,7 @@ function buildInheritanceIndex(page)
         {
             var item = document.createElement('li');
             var href = document.createElement('a');
-            href.setAttribute('href', entities[index].href);
+            href.setAttribute('href', entities[index].docHref);
             href.appendChild(document.createTextNode(entities[index].label));
             item.appendChild(href);
 
