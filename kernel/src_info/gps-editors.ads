@@ -52,6 +52,9 @@ package GPS.Editors is
    type Editor_Buffer is abstract new Controlled with null record;
    Nil_Editor_Buffer : constant Editor_Buffer'Class;
 
+   type Multi_Cursor is abstract new Controlled with null record;
+   Nil_Multi_Cursor : constant Multi_Cursor'Class;
+
    type Editor_View is abstract new Controlled with null record;
    Nil_Editor_View : constant Editor_View'Class;
 
@@ -297,6 +300,19 @@ package GPS.Editors is
 
    package Mark_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Mark'Class);
+
+   ------------------
+   -- Multi_Cursor --
+   ------------------
+
+   function Get_Insert_Mark
+     (This : Multi_Cursor) return Editor_Mark'Class is abstract;
+
+   function Get_Selection_Mark
+     (This : Multi_Cursor) return Editor_Mark'Class is abstract;
+
+   package Cursors_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Multi_Cursor'Class);
 
    -----------------
    -- Editor_View --
@@ -614,6 +630,12 @@ package GPS.Editors is
       Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
    --  Add a multi cursor at the specified location
 
+   function Add_Multi_Cursor
+     (This     : Editor_Buffer;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+      return Multi_Cursor'Class is abstract;
+   --  Add a multi cursor at the specified location
+
    procedure Remove_All_Multi_Cursors (This : Editor_Buffer) is abstract;
    --  Remove all multi cursors from current buffer
 
@@ -643,12 +665,8 @@ package GPS.Editors is
    --  in the buffer. Do not forget to set that back after a manual multi
    --  cursor operation !
 
-   function Get_Multi_Cursors_Marks
-     (This : Editor_Buffer) return Mark_Lists.List is abstract;
-   --  Get the list of all multi cursor's marks
-
-   function Get_Multi_Cursors_Sel_Marks
-     (This : Editor_Buffer) return Mark_Lists.List is abstract;
+   function Get_Multi_Cursors
+     (This : Editor_Buffer) return Cursors_Lists.List is abstract;
    --  Get the list of all multi cursor's marks
 
    procedure Update_Multi_Cursors_Selection
@@ -1010,6 +1028,12 @@ private
      (This : Dummy_Editor_Buffer;
       Location : Editor_Location'Class) is null;
 
+   overriding function Add_Multi_Cursor
+     (This : Dummy_Editor_Buffer;
+      Location : Editor_Location'Class) return Multi_Cursor'Class
+   is
+      (Nil_Multi_Cursor);
+
    overriding procedure Remove_All_Multi_Cursors
      (This : Dummy_Editor_Buffer) is null;
 
@@ -1022,13 +1046,9 @@ private
    overriding procedure Set_Multi_Cursors_Auto_Sync
      (This : Dummy_Editor_Buffer) is null;
 
-   overriding function Get_Multi_Cursors_Marks
-     (This : Dummy_Editor_Buffer) return Mark_Lists.List
-   is (Mark_Lists.Empty_List);
-
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Dummy_Editor_Buffer) return Mark_Lists.List
-   is (Mark_Lists.Empty_List);
+   overriding function Get_Multi_Cursors
+     (This : Dummy_Editor_Buffer) return Cursors_Lists.List
+   is (Cursors_Lists.Empty_List);
 
    overriding procedure Update_Multi_Cursors_Selection
      (This : Dummy_Editor_Buffer) is null;
@@ -1107,5 +1127,20 @@ private
 
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
      Dummy_Editor_Overlay'(Controlled with others => <>);
+
+   type Dummy_Multi_Cursor is new Multi_Cursor with null record;
+
+   function Get_Insert_Mark
+     (This : Dummy_Multi_Cursor) return Editor_Mark'Class
+   is
+     (Nil_Editor_Mark);
+
+   function Get_Selection_Mark
+     (This : Dummy_Multi_Cursor) return Editor_Mark'Class
+   is
+     (Nil_Editor_Mark);
+
+   Nil_Multi_Cursor : constant Multi_Cursor'Class
+     := Dummy_Multi_Cursor'(Controlled with others => <>);
 
 end GPS.Editors;

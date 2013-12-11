@@ -61,8 +61,7 @@ package body Src_Editor_Buffer.Multi_Cursors is
    end Set_Column_Memory;
 
    procedure Add_Multi_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter)
-   is
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) is
       function Next_Multi_Cursor_Name return String is
         ("multi_cursor_" & Buffer.Multi_Cursors_Next_Id'Img);
 
@@ -89,6 +88,19 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Buffer.Add_Mark (Sel_Mark, Location);
       Buffer.Multi_Cursors_Next_Id := Buffer.Multi_Cursors_Next_Id + 1;
       Cursor_Mark.Set_Visible (True);
+   end Add_Multi_Cursor;
+
+   function Add_Multi_Cursor
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor
+   is
+   begin
+      Add_Multi_Cursor (Buffer, Location);
+      declare
+         Last_El : constant Multi_Cursors_Lists.Cursor :=
+           Buffer.Multi_Cursors_List.Last;
+      begin
+         return Buffer.Multi_Cursors_List.Reference (Last_El).Element;
+      end;
    end Add_Multi_Cursor;
 
    procedure Remove_All_Multi_Cursors (Buffer : Source_Buffer) is

@@ -624,7 +624,7 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_mark
 
-   .. automethod:: GPS.EditorBuffer.get_multi_cursors_marks
+   .. automethod:: GPS.EditorBuffer.get_multi_cursors
 
    .. automethod:: GPS.EditorBuffer.get_new
 
@@ -1302,6 +1302,19 @@ Classes
 .. autoclass:: Missing_Arguments
 
    .. inheritance-diagram:: GPS.Missing_Arguments
+
+:class:`GPS.MultiCursor`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: MultiCursor
+
+   
+
+   .. automethod:: GPS.MultiCursor.__init__
+
+   .. automethod:: GPS.MultiCursor.get_insert_mark
+
+   .. automethod:: GPS.MultiCursor.get_selection_mark
 
 :class:`GPS.OutputParserWrapper`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

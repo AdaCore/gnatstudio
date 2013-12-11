@@ -40,6 +40,8 @@ package Src_Editor_Buffer.Multi_Cursors is
 
    procedure Add_Multi_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
+   function Add_Multi_Cursor
+     (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor;
    --  Add a new multi cursor at the specified location
    --  in the specified buffer
 

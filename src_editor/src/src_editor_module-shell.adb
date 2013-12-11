@@ -18,6 +18,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Containers.Indefinite_Holders;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -57,8 +58,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Text_Handling;
-use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Debug;
@@ -173,6 +173,16 @@ package body Src_Editor_Module.Shell is
       Index_Cst'Access,
       Secondary_Action_Cst'Access);
 
+   package Editor_Mark_Holders is new Ada.Containers.Indefinite_Holders
+     (Editor_Mark'Class);
+
+   type MC_Property_Record is new Instance_Property_Record with record
+      Insertion_Mark : Editor_Mark_Holders.Holder;
+      Selection_Mark : Editor_Mark_Holders.Holder;
+   end record;
+
+   type MC_Property is access all MC_Property_Record;
+
    type Highlighter_Property is new Instance_Property_Record with record
       Highlighter : Highlighter_Record;
    end record;
@@ -212,6 +222,9 @@ package body Src_Editor_Module.Shell is
      (Child   : access Gtk_Widget_Record'Class;
       Triplet : Child_Triplet_Access);
    --  Called when synchronized editor Child in Triplet is deleted
+
+   procedure MC_Cmds (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the EditorBuffer class
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
@@ -255,6 +268,10 @@ package body Src_Editor_Module.Shell is
      (Script   : access Scripting_Language_Record'Class;
       Location : Editor_Location'Class) return Class_Instance;
    --  Return an instance of EditorLocation
+
+   function Create_Multi_Cursor
+     (Script   : access Scripting_Language_Record'Class;
+      Cursor   : GPS.Editors.Multi_Cursor'Class) return Class_Instance;
 
    function Get_Location
      (Data    : Callback_Data'Class;
@@ -420,6 +437,26 @@ package body Src_Editor_Module.Shell is
         (Src_Editor_Buffer_Factory
            (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Mark;
+
+   -------------------------
+   -- Create_Multi_Cursor --
+   -------------------------
+
+   function Create_Multi_Cursor
+     (Script   : access Scripting_Language_Record'Class;
+      Cursor   : GPS.Editors.Multi_Cursor'Class) return Class_Instance
+   is
+      MultiCursor : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "MultiCursor");
+      Inst : constant Class_Instance := New_Instance (Script, MultiCursor);
+      use Editor_Mark_Holders;
+   begin
+      Set_Data
+        (Inst, "MultiCursor", MC_Property_Record'
+           (Insertion_Mark => To_Holder (Cursor.Get_Insert_Mark),
+            Selection_Mark => To_Holder (Cursor.Get_Selection_Mark)));
+      return Inst;
+   end Create_Multi_Cursor;
 
    ----------------------------
    -- Create_Editor_Location --
@@ -1650,6 +1687,29 @@ package body Src_Editor_Module.Shell is
       end if;
    end Edit_Command_Handler;
 
+   procedure MC_Cmds (Data : in out Callback_Data'Class; Command : String)
+   is
+      MultiCursor : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "MultiCursor");
+      Multi_Cursor_Data : constant MC_Property :=
+        MC_Property
+          (Instance_Property'
+             (Get_Data (Data.Nth_Arg (1, MultiCursor, True), "MultiCursor")));
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -("Cannot build instances of MultiCursor."
+                        & " Use EditorBuffer multi cursors methods instead"));
+      elsif Command = "get_insert_mark" then
+         Data.Set_Return_Value
+           (Create_Editor_Mark
+              (Data.Get_Script, Multi_Cursor_Data.Insertion_Mark.Element));
+      elsif Command = "get_selection_mark" then
+         Data.Set_Return_Value
+           (Create_Editor_Mark
+              (Data.Get_Script, Multi_Cursor_Data.Selection_Mark.Element));
+      end if;
+   end MC_Cmds;
+
    -----------------
    -- Buffer_Cmds --
    -----------------
@@ -1657,8 +1717,8 @@ package body Src_Editor_Module.Shell is
    procedure Buffer_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel      : constant Kernel_Handle := Get_Kernel (Data);
-      File_Inst   : Class_Instance;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
+      File_Inst : Class_Instance;
 
    begin
       if Command = Constructor_Method then
@@ -1865,9 +1925,16 @@ package body Src_Editor_Module.Shell is
             Get_Location (Data, 3), Get_Location (Data, 4));
 
       elsif Command = "add_multi_cursor" then
-         Get_Buffer (Data, 1).Add_Multi_Cursor
-           (Get_Location (Data, 2));
-
+         null;
+         declare
+            C : constant GPS.Editors.Multi_Cursor'Class :=
+              Get_Buffer (Data, 1).Add_Multi_Cursor
+              (Get_Location (Data, 2));
+            Cursor_Instance : constant Class_Instance := Create_Multi_Cursor
+              (Data.Get_Script, C);
+         begin
+            Data.Set_Return_Value (Cursor_Instance);
+         end;
       elsif Command = "remove_all_multi_cursors" then
          Get_Buffer (Data, 1).Remove_All_Multi_Cursors;
 
@@ -1885,31 +1952,12 @@ package body Src_Editor_Module.Shell is
       elsif Command = "set_multi_cursors_auto_sync" then
          Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
 
-      elsif Command = "get_multi_cursors_marks" then
+      elsif Command = "get_multi_cursors" then
          Data.Set_Return_Value_As_List;
-         declare
-            package ML renames GPS.Editors.Mark_Lists;
-            Cursors_Sel_Marks : constant ML.List :=
-              Get_Buffer (Data, 1).Get_Multi_Cursors_Sel_Marks;
-            C : ML.Cursor := Cursors_Sel_Marks.First;
-         begin
-            for Cursor_Mark of
-              Get_Buffer (Data, 1).Get_Multi_Cursors_Marks
-            loop
-               declare
-                  L : List_Instance'Class := Data.Get_Script.New_List;
-               begin
-                  L.Set_Nth_Arg
-                    (Natural'Last,
-                     Cursor_Mark.Create_Instance (Data.Get_Script));
-                  L.Set_Nth_Arg
-                    (Natural'Last,
-                     ML.Element (C).Create_Instance (Data.Get_Script));
-                  Data.Set_Return_Value (L);
-                  ML.Next (C);
-               end;
-            end loop;
-         end;
+         for Cursor of Get_Buffer (Data, 1).Get_Multi_Cursors loop
+            Data.Set_Return_Value
+              (Create_Multi_Cursor (Data.Get_Script, Cursor));
+         end loop;
 
       elsif Command = "start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
@@ -2538,6 +2586,7 @@ package body Src_Editor_Module.Shell is
                        New_Class (Kernel, Editor_Location_Class_Name);
       Editor_Class : constant Class_Type := New_Class (Kernel, "Editor");
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
+      MultiCursor  : constant Class_Type := New_Class (Kernel, "MultiCursor");
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
       EditorView   : constant Class_Type :=
                        New_Class
@@ -2644,6 +2693,15 @@ package body Src_Editor_Module.Shell is
         (Kernel, "location", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command (Kernel, "move", 1, 1, Mark_Cmds'Access, EditorMark);
 
+      --  MultiCursor
+
+      Register_Command
+        (Kernel, Constructor_Method, 0, 0, MC_Cmds'Access, MultiCursor);
+      Register_Command
+        (Kernel, "get_insert_mark", 0, 0, MC_Cmds'Access, MultiCursor);
+      Register_Command
+        (Kernel, "get_selection_mark", 0, 0, MC_Cmds'Access, MultiCursor);
+
       --  EditorBuffer
 
       Register_Command
@@ -2680,7 +2738,7 @@ package body Src_Editor_Module.Shell is
          EditorBuffer);
       Register_Command
         (Kernel,
-         "get_multi_cursors_marks",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+         "get_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);

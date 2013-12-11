@@ -533,7 +533,7 @@ def delete(forward=True):
 
     offset = 1 if forward else -1
     ed = GPS.EditorBuffer.get()
-    has_mcs = bool(ed.get_multi_cursors_marks())
+    has_mcs = bool(ed.get_multi_cursors())
     main_cursor = ed.get_mark("insert").location()
     sel = ed.get_mark("selection_bound").location()
     if has_mcs:
@@ -550,7 +550,8 @@ def delete(forward=True):
         ed.set_multi_cursors_manual_sync()
         delete(main_cursor, main_cursor.forward_char(offset))
 
-        for (mc_mark, mc_sel_mark) in ed.get_multi_cursors_marks():
+        for c in ed.get_multi_cursors():
+            mc_mark = c.get_insert_mark()
             l = mc_mark.location()
             ed.set_multi_cursors_manual_sync(mc_mark)
             delete(l, l.forward_char(offset))
@@ -560,9 +561,10 @@ def delete(forward=True):
         ed.set_multi_cursors_manual_sync()
         delete(main_cursor, sel)
 
-        for (mc_mark, mc_sel_mark) in ed.get_multi_cursors_marks():
+        for c in ed.get_multi_cursors():
+            mc_mark = c.get_insert_mark()
             ed.set_multi_cursors_manual_sync(mc_mark)
-            delete(mc_mark.location(), mc_sel_mark.location())
+            delete(mc_mark.location(), c.get_selection_mark().location())
 
         ed.update_multi_cursors_selections()
         ed.set_multi_cursors_auto_sync()

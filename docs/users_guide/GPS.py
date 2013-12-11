@@ -3701,20 +3701,20 @@ class EditorBuffer(object):
     def add_multi_cursor(self, location):
         """
         Adds a new multi cursor at the given location.
+
+        :return: The resulting :class:`MultiCursor` instance
         """
 
-    def get_multi_cursors_marks(self):
+    def get_multi_cursors(self):
         """
-        Returns a list of 2 elements tuples, the first element being the multi
-        cursor mark, and the second element being the multi cursor's selection
-        mark. Note that if you intend to perform actions with them (in
-        particular deletions/insertions), you should call
-        set_multi_cursors_manual_sync, with the cursor mark as argument.  Also,
-        if you move any selection mark, you should call
-        update_multi_cursors_selection afterwards?  See set_multi_cursors_*
-        functions for more details
+        Returns a list of :class:`MultiCursor` instances.  Note that if you
+        intend to perform actions with them (in particular
+        deletions/insertions), you should call set_multi_cursors_manual_sync,
+        with the cursor mark as argument.  Also, if you move any selection
+        mark, you should call update_multi_cursors_selection afterwards?  See
+        set_multi_cursors_* functions for more details
 
-        :return: A list of :class:`GPS.EditorMark` instances
+        :return: A list of :class:`MultiCursor` instances
         """
 
     def remove_all_multi_cursors(self):
@@ -7547,6 +7547,32 @@ class Missing_Arguments(Exception):
     module with missing arguments
     """
     pass  # implemented in Ada
+
+
+###########################################################
+# MultiCursor
+###########################################################
+
+class MultiCursor(object):
+    """
+    Interface to a multi cursor in a GPS EditorBuffer. Just gives access to the
+    insertion mark and to the selection mark of the cursor
+    """
+
+    def get_selection_mark(self):
+        """
+        :return: The :class:`GPS.EditorMark` instance corresponding to the
+        cursor's selection mark
+        """
+        pass
+
+    def get_insert_mark(self):
+        """
+        :return: The :class:`GPS.EditorMark` instance corresponding to the
+        cursor's insert mark
+        """
+        pass
+
 
 
 ###########################################################

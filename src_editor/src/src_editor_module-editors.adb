@@ -58,7 +58,9 @@ package body Src_Editor_Module.Editors is
    use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Trace_Handle :=
-          Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
+     Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
+
+   package MC renames Src_Editor_Buffer.Multi_Cursors;
 
    type Buffer_Reference is record
       Kernel    : Kernel_Handle;
@@ -68,7 +70,8 @@ package body Src_Editor_Module.Editors is
       Ref_Count : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
-   type Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
+   type
+     Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
    with record
       Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
@@ -109,6 +112,11 @@ package body Src_Editor_Module.Editors is
 
    type Src_Editor_Overlay is new GPS.Editors.Editor_Overlay with record
       Tag    : Gtk_Text_Tag; --  one ref owned by the overlay
+   end record;
+
+   type Src_Editor_Multi_Cursor is new GPS.Editors.Multi_Cursor with record
+      C : MC.Cursor;
+      Buffer : Src_Editor_Buffer;
    end record;
 
    type Editor_Properties_Type is (Locations);
@@ -353,6 +361,16 @@ package body Src_Editor_Module.Editors is
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class);
 
+   overriding function Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class) return GPS.Editors.Multi_Cursor'Class;
+
+   overriding function Get_Insert_Mark
+     (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
+
+   overriding function Get_Selection_Mark
+     (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
+
    overriding procedure Remove_All_Multi_Cursors
      (This     : Src_Editor_Buffer);
 
@@ -365,11 +383,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Set_Multi_Cursors_Auto_Sync
      (This : Src_Editor_Buffer);
 
-   overriding function Get_Multi_Cursors_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List;
-
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List;
+   overriding function Get_Multi_Cursors
+     (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List;
 
    overriding procedure Update_Multi_Cursors_Selection
      (This : Src_Editor_Buffer);
@@ -2892,6 +2907,45 @@ package body Src_Editor_Module.Editors is
       Add_Multi_Cursor (This.Contents.Buffer, Iter);
    end Add_Multi_Cursor;
 
+   ----------------------
+   -- Add_Multi_Cursor --
+   ----------------------
+
+   overriding function Add_Multi_Cursor
+     (This     : Src_Editor_Buffer;
+      Location : Editor_Location'Class) return GPS.Editors.Multi_Cursor'Class
+   is
+      Iter : Gtk_Text_Iter;
+      C    : MC.Cursor;
+   begin
+      This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
+      C := Add_Multi_Cursor (This.Contents.Buffer, Iter);
+      return Src_Editor_Multi_Cursor'
+        (GPS.Editors.Multi_Cursor with
+           C => C,
+           Buffer => Src_Editor_Location (Location).Buffer);
+   end Add_Multi_Cursor;
+
+   ---------------------
+   -- Get_Insert_Mark --
+   ---------------------
+
+   overriding function Get_Insert_Mark
+     (This : Src_Editor_Multi_Cursor) return Editor_Mark'Class is
+   begin
+      return This.Buffer.Create_Editor_Mark (Get_Mark (This.C));
+   end Get_Insert_Mark;
+
+   ------------------------
+   -- Get_Selection_Mark --
+   ------------------------
+
+   overriding function Get_Selection_Mark
+     (This : Src_Editor_Multi_Cursor) return Editor_Mark'Class is
+   begin
+      return This.Buffer.Create_Editor_Mark (Get_Sel_Mark (This.C));
+   end Get_Selection_Mark;
+
    ------------------------------
    -- Remove_All_Multi_Cursors --
    ------------------------------
@@ -2933,35 +2987,22 @@ package body Src_Editor_Module.Editors is
       Set_Multi_Cursors_Auto_Sync (This.Contents.Buffer);
    end Set_Multi_Cursors_Auto_Sync;
 
-   -----------------------------
-   -- Get_Multi_Cursors_Marks --
-   -----------------------------
+   -----------------------
+   -- Get_Multi_Cursors --
+   -----------------------
 
-   overriding function Get_Multi_Cursors_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List
+   overriding function Get_Multi_Cursors
+     (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List
    is
-      List : Mark_Lists.List;
+      List : GPS.Editors.Cursors_Lists.List;
    begin
       for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
-         List.Append (This.Create_Editor_Mark (Get_Mark (Cursor)));
+         List.Append
+           (Src_Editor_Multi_Cursor'
+              (GPS.Editors.Multi_Cursor with C => Cursor, Buffer => This));
       end loop;
       return List;
-   end Get_Multi_Cursors_Marks;
-
-   ---------------------------------
-   -- Get_Multi_Cursors_Sel_Marks --
-   ---------------------------------
-
-   overriding function Get_Multi_Cursors_Sel_Marks
-     (This : Src_Editor_Buffer) return Mark_Lists.List
-   is
-      List : Mark_Lists.List;
-   begin
-      for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
-         List.Append (This.Create_Editor_Mark (Get_Sel_Mark (Cursor)));
-      end loop;
-      return List;
-   end Get_Multi_Cursors_Sel_Marks;
+   end Get_Multi_Cursors;
 
    ------------------------------------
    -- Update_Multi_Cursors_Selection --
@@ -3433,7 +3474,7 @@ package body Src_Editor_Module.Editors is
       Mark    : Editor_Mark'Class) return Class_Instance
    is
       Inst : Class_Instance;
-      Tag  : Gtk_Text_Mark;
+      Gtk_Mark  : Gtk_Text_Mark;
    begin
       if Mark not in Src_Editor_Mark'Class
         or else Src_Editor_Mark (Mark).Mark = null
@@ -3441,17 +3482,17 @@ package body Src_Editor_Module.Editors is
          return No_Class_Instance;
       end if;
 
-      Tag := Get_Mark (Src_Editor_Mark (Mark).Mark.Mark);
+      Gtk_Mark := Get_Mark (Src_Editor_Mark (Mark).Mark.Mark);
 
-      if Tag = null then
+      if Gtk_Mark = null then
          return No_Class_Instance;
       end if;
 
-      Inst := Get_Instance (Script, Tag);
+      Inst := Get_Instance (Script, Gtk_Mark);
 
       if Inst = No_Class_Instance then
          Inst := New_Instance (Script, Class);
-         Set_Data (Inst, GObject (Tag));
+         Set_Data (Inst, GObject (Gtk_Mark));
       end if;
 
       return Inst;
