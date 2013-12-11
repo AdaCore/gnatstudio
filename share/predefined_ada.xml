@@ -3894,12 +3894,23 @@ section 7.1.4.
       <DOC>
 Syntax:
 pragma Ada_05;
+pragma Ada_05 (local_NAME);
 
 A configuration pragma that establishes Ada 2005 mode for the unit to
 which it applies, regardless of the mode set by the command line
 switches.  This pragma is useful when writing a reusable component that
 itself uses Ada 2005 features, but which is intended to be usable from
 either Ada 83 or Ada 95 programs.
+
+The one argument form (which is not a configuration pragma) is used
+for managing the transition from Ada 95 to Ada 2005 in the run-time
+library. If an entity is marked as Ada_2005 only, then referencing the
+entity in Ada_83 or Ada_95 mode will generate a warning. In addition,
+in Ada_83 or Ada_95 mode, a preference rule is established which does
+not choose such an entity unless it is unambiguously specified. This
+avoids extra subprograms marked this way from generating ambiguities in
+otherwise legal pre-Ada_2005 programs. The one argument form is
+intended for exclusive use in the GNAT run-time library.
       </DOC>
    </PRAGMA>
 
@@ -3907,6 +3918,7 @@ either Ada 83 or Ada 95 programs.
       <DOC>
 Syntax:
 pragma Ada_12;
+pragma Ada_12 (local_NAME);
 
 A configuration pragma that establishes Ada 2012 mode for the unit to
 which it applies, regardless of the mode set by the command line
@@ -3915,6 +3927,16 @@ packages and their children, so you need not specify it in these
 contexts.  This pragma is useful when writing a reusable component that
 itself uses Ada 2012 features, but which is intended to be usable from
 Ada 83, Ada 95, or Ada 2005 programs.
+
+The one argument form, which is not a configuration pragma, is used
+for managing the transition from Ada 2005 to Ada 2012 in the run-time
+library. If an entity is marked as Ada_201 only, then referencing the
+entity in any pre-Ada_2012 mode will generate a warning. In addition,
+in any pre-Ada_2012 mode, a preference rule is established which does
+not choose such an entity unless it is unambiguously specified. This
+avoids extra subprograms marked this way from generating ambiguities in
+otherwise legal pre-Ada_2012 programs. The one argument form is
+intended for exclusive use in the GNAT run-time library.
       </DOC>
    </PRAGMA>
 
