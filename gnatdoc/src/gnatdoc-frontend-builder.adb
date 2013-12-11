@@ -53,6 +53,9 @@ package body GNATdoc.Frontend.Builder is
       procedure Append_Child_Type
         (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
 
+      procedure Append_Generic_Formal
+        (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
+
       procedure Append_Inherited_Method
         (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
 
@@ -148,9 +151,6 @@ package body GNATdoc.Frontend.Builder is
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Concurrent_Type_Or_Object
-        (Entity : Unique_Entity_Id) return Boolean;
-
-      function Is_Container
         (Entity : Unique_Entity_Id) return Boolean;
 
       function Is_Decorated
@@ -283,6 +283,11 @@ package body GNATdoc.Frontend.Builder is
       --  (gdb) Prints a single tree node (full output), without printing
       --  descendants.
 
+      procedure uplid (Unique_Id : Natural);
+      --  (gdb) Search for and entity in the hash-table with Unique_Id and
+      --  print the list of entities defined in the scope of E. No output
+      --  generated if the entity is not found.
+
       procedure upnid (Unique_Id : Natural);
       --  (gdb) Search for and entity in the hash-table with Unique_Id and
       --  prints its contents. No output generated if the entity is not found.
@@ -294,6 +299,7 @@ package body GNATdoc.Frontend.Builder is
       end record;
 
       pragma Inline (Append_Child_Type);
+      pragma Inline (Append_Generic_Formal);
       pragma Inline (Append_Inherited_Method);
       pragma Inline (Append_Method);
       pragma Inline (Append_Parent_Type);
@@ -317,7 +323,6 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Class_Or_Record_Type);
       pragma Inline (Is_Compilation_Unit);
       pragma Inline (Is_Concurrent_Type_Or_Object);
-      pragma Inline (Is_Container);
       pragma Inline (Is_Decorated);
       pragma Inline (Is_Full_View);
       pragma Inline (Is_Global);
@@ -340,6 +345,7 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Set_Scope);
 
       pragma Export (Ada, upn);
+      pragma Export (Ada, uplid);
       pragma Export (Ada, upnid);
    end Unique_Entity_Allocator;
 
@@ -414,6 +420,16 @@ package body GNATdoc.Frontend.Builder is
       begin
          LL.Append_Child_Type (Get_Entity (Entity), Get_Entity (Value));
       end Append_Child_Type;
+
+      ---------------------------
+      -- Append_Generic_Formal --
+      ---------------------------
+
+      procedure Append_Generic_Formal
+        (Entity : Unique_Entity_Id; Value : Unique_Entity_Id) is
+      begin
+         Append_Generic_Formal (Get_Entity (Entity), Get_Entity (Value));
+      end Append_Generic_Formal;
 
       -----------------------------
       -- Append_Inherited_Method --
@@ -716,15 +732,6 @@ package body GNATdoc.Frontend.Builder is
       end Is_Global;
 
       ------------------
-      -- Is_Container --
-      ------------------
-
-      function Is_Container (Entity : Unique_Entity_Id) return Boolean is
-      begin
-         return LL.Is_Container (Get_Entity (Entity));
-      end Is_Container;
-
-      ------------------
       -- Is_Decorated --
       ------------------
 
@@ -887,6 +894,7 @@ package body GNATdoc.Frontend.Builder is
                      if No (Full_View) then
                         Full_View :=
                           New_Entity (Context, Lang, E, Full_View_Loc);
+                        Append_To_Map (Full_View);
                      end if;
 
                      --  Xref does not help us to differentiate if New_E is a
@@ -1248,9 +1256,30 @@ package body GNATdoc.Frontend.Builder is
          end if;
       end upn;
 
-      ----------
-      -- pnid --
-      ----------
+      -----------
+      -- uplid --
+      -----------
+
+      procedure uplid (Unique_Id : Natural) is
+         Cursor : EInfo_Map.Cursor;
+         E      : Entity_Id;
+      begin
+         Cursor := Entities_Map.First;
+         while EInfo_Map.Has_Element (Cursor) loop
+            E := EInfo_Map.Element (Cursor);
+
+            if Get_Unique_Id (E) = Unique_Id then
+               pl (E);
+               exit;
+            end if;
+
+            EInfo_Map.Next (Cursor);
+         end loop;
+      end uplid;
+
+      -----------
+      -- upnid --
+      -----------
 
       procedure upnid (Unique_Id : Natural) is
          Cursor : EInfo_Map.Cursor;
@@ -1262,11 +1291,13 @@ package body GNATdoc.Frontend.Builder is
 
             if Get_Unique_Id (E) = Unique_Id then
                pn (E);
-               exit;
+               return;
             end if;
 
             EInfo_Map.Next (Cursor);
          end loop;
+
+         GNAT.IO.Put_Line ("Entity" & Unique_Id'Img & " not found");
       end upnid;
 
    end Unique_Entity_Allocator;
@@ -1402,16 +1433,16 @@ package body GNATdoc.Frontend.Builder is
                pragma Assert (not Is_New (Formal));
                Remove_From_Scope (Formal);
 
-               Set_Is_Generic_Formal (Formal);
-               Set_Scope (Formal, E);
-
                --  Adding minimum decoration to undecorated generic formals
 
                if Get_Kind (Formal) = E_Unknown then
                   Set_Kind (Formal, E_Generic_Formal);
                end if;
 
-               Append_To_Scope (Current_Scope, Formal);
+               Set_Is_Generic_Formal (Formal);
+               Set_Scope (Formal, E);
+
+               Append_Generic_Formal (E, Formal);
 
                Set_Is_Decorated (Formal);
             end loop;
@@ -1615,10 +1646,16 @@ package body GNATdoc.Frontend.Builder is
                               if Is_Partial_View (E) then
                                  Set_Kind
                                    (Get_Full_View (Entity), E_Discriminant);
-                                 Get_Entities
-                                   (Get_Full_View (E)).Append
-                                     (Get_Full_View (Entity));
-                                 Append_To_Scope (E, Get_Full_View (Entity));
+
+                                 if Present
+                                   (Get_Scope (Get_Full_View (Entity)))
+                                 then
+                                    Remove_From_Scope (Get_Full_View (Entity));
+                                 end if;
+
+                                 Append_To_Scope (Get_Full_View (E),
+                                   Get_Full_View (Entity));
+
                                  Append_To_Map (Get_Full_View (Entity));
 
                                  Set_Is_Decorated (Get_Full_View (Entity));
@@ -1953,9 +1990,10 @@ package body GNATdoc.Frontend.Builder is
                         --  Complete decoration
 
                         Set_Kind (Formal, E_Formal);
-                        Set_Scope (Formal, E);
 
                         Append_To_Scope (Current_Scope, Formal);
+                        Set_Scope (Formal, E);
+
                         Append_To_File_Entities (Formal);
                         Append_To_Map (Formal);
 
@@ -1971,63 +2009,61 @@ package body GNATdoc.Frontend.Builder is
       --  Start of processing for Complete_Decoration
 
       begin
-         if Is_Container (E) then
-            if Is_Class_Or_Record_Type (E) then
-               Decorate_Record_Type (E);
+         if Is_Class_Or_Record_Type (E) then
+            Decorate_Record_Type (E);
 
-            --  For concurrent types reuse the routine which processes record
-            --  types to collect their progenitors (if any)
+         --  For concurrent types reuse the routine which processes record
+         --  types to collect their progenitors (if any)
 
-            elsif Is_Concurrent_Type_Or_Object (E) then
-               Decorate_Record_Type (E);
+         elsif Is_Concurrent_Type_Or_Object (E) then
+            Decorate_Record_Type (E);
 
-            elsif Is_Generic (E) then
-               Decorate_Generic_Formals (E);
+         elsif Is_Generic (E) then
+            Decorate_Generic_Formals (E);
 
-               if Is_Subprogram_Or_Entry (E) then
-                  Decorate_Subprogram_Formals (E);
-               end if;
-
-            elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
-               if Is_Subprogram (E)
-                 and then Present (Get_LL_Alias (E))
-               then
-                  declare
-                     Alias : Entity_Id;
-
-                  begin
-                     --  Search for the alias in the hash table
-
-                     Alias :=
-                       Find_Unique_Entity
-                         (Get_Location (Context.Database, Get_LL_Alias (E)));
-
-                     --  If not found then force the creation of a new entity
-
-                     if No (Alias) then
-                        declare
-                           New_E : Unique_Entity_Id;
-                        begin
-                           Get_Unique_Entity
-                             (New_E,
-                              Context,
-                              Get_Location
-                                (Context.Database, Get_LL_Alias (E)).File,
-                              Get_LL_Alias (E),
-                              Forced => True);
-                           Complete_Decoration (New_E);
-                           Append_To_Map (New_E);
-
-                           Alias := Get_Entity (New_E);
-                        end;
-                     end if;
-
-                     Set_Alias (E, Alias);
-                  end;
-               end if;
-
+            if Is_Subprogram_Or_Entry (E) then
                Decorate_Subprogram_Formals (E);
             end if;
+
+         elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
+            if Is_Subprogram (E)
+              and then Present (Get_LL_Alias (E))
+            then
+               declare
+                  Alias : Entity_Id;
+
+               begin
+                  --  Search for the alias in the hash table
+
+                  Alias :=
+                    Find_Unique_Entity
+                      (Get_Location (Context.Database, Get_LL_Alias (E)));
+
+                  --  If not found then force the creation of a new entity
+
+                  if No (Alias) then
+                     declare
+                        New_E : Unique_Entity_Id;
+                     begin
+                        Get_Unique_Entity
+                          (New_E,
+                           Context,
+                           Get_Location
+                             (Context.Database, Get_LL_Alias (E)).File,
+                           Get_LL_Alias (E),
+                           Forced => True);
+                        Complete_Decoration (New_E);
+                        Append_To_Map (New_E);
+
+                        Alias := Get_Entity (New_E);
+                     end;
+                  end if;
+
+                  Set_Alias (E, Alias);
+               end;
+            end if;
+
+            Decorate_Subprogram_Formals (E);
 
          elsif Get_Kind (E) = E_Interface then
             Decorate_Record_Type (E);
@@ -2051,7 +2087,13 @@ package body GNATdoc.Frontend.Builder is
                --  declarations the ALI file may have two entities and hence
                --  the full view will be fully decorated later.
 
-               Append_To_Scope (Current_Scope, Full_View);
+               if No (Get_Scope (Full_View)) then
+                  Append_To_Scope (Current_Scope, Full_View);
+               else
+                  pragma Assert
+                    (Get_Scope (Full_View) = Get_Entity (Current_Scope));
+               end if;
+
                Set_Is_Decorated (Full_View);
             end;
          end if;
@@ -2261,6 +2303,7 @@ package body GNATdoc.Frontend.Builder is
                end if;
 
                if Is_Compilation_Unit (New_E) then
+                  Append_To_File_Entities (New_E);
                   Enter_Scope (New_E);
                   exit;
                end if;
@@ -2307,8 +2350,6 @@ package body GNATdoc.Frontend.Builder is
                else
                   Update_Scopes_Stack (New_E);
                end if;
-
-               Set_Scope (New_E);
 
                declare
                   In_Scope_With_Private_Entities : constant Boolean :=
@@ -2470,6 +2511,10 @@ package body GNATdoc.Frontend.Builder is
 
                if not Is_Full_View (New_E) then
                   Append_To_Scope (Current_Scope, New_E);
+               end if;
+
+               if In_Ada_Lang then
+                  Set_Scope (New_E);
                end if;
 
                if not Is_Decorated (New_E) then

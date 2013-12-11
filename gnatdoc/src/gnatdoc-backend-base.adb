@@ -86,8 +86,6 @@ package body GNATdoc.Backend.Base is
          -- Classify_Entity --
          ---------------------
 
-         In_Pkg_Generic_Formals : Boolean := True;
-
          procedure Classify_Entity
            (Entity   : Entity_Id;
             Parent   : Entity_Id;
@@ -109,17 +107,13 @@ package body GNATdoc.Backend.Base is
                return;
             end if;
 
-            --  Package generic formals are stored at the beginning of the
-            --  list of entities
-
-            if In_Pkg_Generic_Formals then
-               if Is_Generic_Formal (Entity) then
-                  Entities.Generic_Formals.Append (Entity);
-                  Self.Entities.Generic_Formals.Append (Entity);
-                  return;
-               end if;
-
-               In_Pkg_Generic_Formals := False;
+            if LL.Is_Generic (Entity)
+              and then Has_Generic_Formals (Entity)
+            then
+               for Current of Get_Generic_Formals (Entity).all loop
+                  Entities.Generic_Formals.Append (Current);
+                  Self.Entities.Generic_Formals.Append (Current);
+               end loop;
             end if;
 
             if Is_Package (Entity) then
@@ -212,6 +206,15 @@ package body GNATdoc.Backend.Base is
          Entities : Collected_Entities;
 
       begin
+         if LL.Is_Generic (Entity)
+           and then Has_Generic_Formals (Entity)
+         then
+            for Current of Get_Generic_Formals (Entity).all loop
+               Entities.Generic_Formals.Append (Current);
+               Self.Entities.Generic_Formals.Append (Current);
+            end loop;
+         end if;
+
          for Current of Get_Entities (Entity).all loop
             Classify_Entity (Current, Entity, Entities);
          end loop;

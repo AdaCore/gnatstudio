@@ -137,6 +137,18 @@ package body GNATdoc.Atree is
       end if;
    end Append_Direct_Derivation;
 
+   ---------------------------
+   -- Append_Generic_Formal --
+   ---------------------------
+
+   procedure Append_Generic_Formal (E : Entity_Id; Value : Entity_Id) is
+   begin
+      pragma Assert (E.Xref.Is_Generic);
+      pragma Assert (Is_Generic_Formal (Value));
+
+      E.Generic_Formals.Append (Value);
+   end Append_Generic_Formal;
+
    -----------------------------
    -- Append_Inherited_Method --
    -----------------------------
@@ -195,6 +207,14 @@ package body GNATdoc.Atree is
       pragma Assert (not Get_Entities (E).Contains (Value));
       pragma Assert (Check_Unique);
       E.Entities.Append (Value);
+
+      if Present (Get_Full_View (Value)) then
+         if Present (Get_Scope (Get_Full_View (Value))) then
+            pragma Assert (Get_Scope (Get_Full_View (Value)) = E);
+         else
+            Append_To_Scope (E, Get_Full_View (Value));
+         end if;
+      end if;
    end Append_To_Scope;
 
    ------------------------
@@ -737,6 +757,27 @@ package body GNATdoc.Atree is
       return E.Full_View_Src;
    end Get_Full_View_Src;
 
+   -----------------------------
+   -- Get_Generic_Formals_Loc --
+   -----------------------------
+
+   function Get_Generic_Formals_Loc
+     (E : Entity_Id) return General_Location is
+   begin
+      return E.Generic_Formals_Loc;
+   end Get_Generic_Formals_Loc;
+
+   -------------------------
+   -- Get_Generic_Formals --
+   -------------------------
+
+   function Get_Generic_Formals
+     (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      pragma Assert (LL.Is_Generic (E));
+      return E.Generic_Formals'Access;
+   end Get_Generic_Formals;
+
    ----------------------
    -- Get_IDepth_Level --
    ----------------------
@@ -963,6 +1004,28 @@ package body GNATdoc.Atree is
       Aux_List.Clear;
       return False;
    end Has_Duplicated_Entities;
+
+   -----------------
+   -- Has_Formals --
+   -----------------
+
+   function Has_Formals (E : Entity_Id) return Boolean is
+      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
+   begin
+      pragma Assert (Is_Subprogram_Or_Entry (E));
+      return EInfo_List.Has_Element (Cursor);
+   end Has_Formals;
+
+   -------------------------
+   -- Has_Generic_Formals --
+   -------------------------
+
+   function Has_Generic_Formals (E : Entity_Id) return Boolean is
+      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
+   begin
+      pragma Assert (LL.Is_Generic (E));
+      return EInfo_List.Has_Element (Cursor);
+   end Has_Generic_Formals;
 
    ------------------------
    -- Has_Private_Parent --
@@ -1370,6 +1433,7 @@ package body GNATdoc.Atree is
            End_Of_Syntax_Scope_Loc => No_Location,
            End_Of_Profile_Location => No_Location,
            End_Of_Profile_Location_In_Body => No_Location,
+           Generic_Formals_Loc => No_Location,
 
            Has_Private_Parent => False,
            Has_Unknown_Discriminants => False,
@@ -1399,6 +1463,7 @@ package body GNATdoc.Atree is
            Full_View_Src     => Null_Unbounded_String,
 
            Entities           => <>,
+           Generic_Formals    => <>,
            Inherited_Methods  => <>,
            Methods            => <>,
            Parent             => null,
@@ -1912,6 +1977,18 @@ package body GNATdoc.Atree is
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
 
+   -----------------------------
+   -- Set_Generic_Formals_Loc --
+   -----------------------------
+
+   procedure Set_Generic_Formals_Loc
+     (E : Entity_Id; Value : General_Location) is
+   begin
+      pragma Assert (LL.Is_Generic (E));
+      pragma Assert (No (E.Generic_Formals_Loc));
+      E.Generic_Formals_Loc := Value;
+   end Set_Generic_Formals_Loc;
+
    ----------------------------
    -- Set_Has_Private_Parent --
    ----------------------------
@@ -2068,6 +2145,14 @@ package body GNATdoc.Atree is
    procedure Set_Scope (E : Entity_Id; Value : Entity_Id) is
    begin
       pragma Assert (Value /= E); --  Avoid circularity
+
+      --  Generic formals are not added to the list of entities of the
+      --  enclosing scope; they are stored in a separate list.
+
+      pragma Assert (Value = No_Entity
+                       or else Is_Generic_Formal (E)
+                       or else Get_Entities (Value).Contains (E));
+
       E.Scope := Value;
 
       if Present (Get_Full_View (E)) then
@@ -2162,6 +2247,14 @@ package body GNATdoc.Atree is
          Result := Process (E_Info, Scope_Level);
 
          if Result = OK then
+            if LL.Is_Generic (E_Info)
+              and then Has_Generic_Formals (E_Info)
+            then
+               for Current of Get_Generic_Formals (E_Info).all loop
+                  Do_Process (Current, Scope_Level + 1);
+               end loop;
+            end if;
+
             Cursor := Get_Entities (E_Info).First;
             while EInfo_List.Has_Element (Cursor) loop
                Do_Process (EInfo_List.Element (Cursor), Scope_Level + 1);
@@ -2184,7 +2277,6 @@ package body GNATdoc.Atree is
                end if;
             end if;
          end if;
-
       end Do_Process;
 
    begin
@@ -2746,6 +2838,12 @@ package body GNATdoc.Atree is
             & Image (E.End_Of_Profile_Location));
       end if;
 
+      if Present (E.Generic_Formals_Loc) then
+         Append_Line
+           ("Generic_Formals_Location:"
+            & Image (E.Generic_Formals_Loc));
+      end if;
+
       if Present (E.End_Of_Profile_Location_In_Body) then
          Append_Line
            ("End_Of_Profile_Location_In_Body: "
@@ -3047,29 +3145,76 @@ package body GNATdoc.Atree is
 
       if E.Xref.Is_Subprogram then
          Append_Line (LL_Prefix & " Is_Subprogram");
+      end if;
 
-         declare
-            Cursor : EInfo_List.Cursor;
-            E_Info : Entity_Id;
+      if E.Xref.Is_Generic then
+         if Has_Generic_Formals (E) then
+            declare
+               Cursor : EInfo_List.Cursor;
+               Formal : Entity_Id;
 
-         begin
-            Cursor := Get_Entities (E).First;
+            begin
+               Append_Line (LL_Prefix & " Generic Formals:");
 
-            if EInfo_List.Has_Element (Cursor) then
+               Cursor := Get_Generic_Formals (E).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Formal := EInfo_List.Element (Cursor);
+                  pragma Assert (Is_Generic_Formal (Formal));
+
+                  declare
+                     UID : constant String :=
+                             (if With_Unique_Id
+                              then To_String (Formal.Id) & ": "
+                              else "");
+                  begin
+                     Append_Line
+                       (LL_Prefix
+                        & " - "
+                        & UID
+                        & Image (LL.Get_Location (Formal))
+                        & ":"
+                        & Get_Short_Name (Formal));
+                  end;
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+            end;
+         end if;
+      end if;
+
+      if E.Xref.Is_Subprogram then
+         if Has_Formals (E) then
+            declare
+               Cursor : EInfo_List.Cursor;
+               Formal : Entity_Id;
+
+            begin
                Append_Line (LL_Prefix & " Formals:");
-            end if;
 
-            while EInfo_List.Has_Element (Cursor) loop
-               E_Info := EInfo_List.Element (Cursor);
-               Append_Line
-                 (LL_Prefix
-                  & " - "
-                  & Image (LL.Get_Location (E_Info))
-                  & ":"
-                  & Get_Short_Name (E_Info));
-               EInfo_List.Next (Cursor);
-            end loop;
-         end;
+               Cursor := Get_Entities (E).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Formal := EInfo_List.Element (Cursor);
+                  pragma Assert (Get_Kind (Formal) = E_Formal);
+
+                  declare
+                     UID : constant String :=
+                             (if With_Unique_Id
+                              then To_String (Formal.Id) & ": "
+                              else "");
+                  begin
+                     Append_Line
+                       (LL_Prefix
+                        & " - "
+                        & UID
+                        & Image (LL.Get_Location (Formal))
+                        & ":"
+                        & Get_Short_Name (Formal));
+                  end;
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+            end;
+         end if;
       end if;
 
       if E.Xref.Is_Primitive then

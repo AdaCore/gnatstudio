@@ -98,6 +98,12 @@ package body GNATdoc.Frontend is
          --  an expanded name. This also works for operators, whether they are
          --  quoted ("=") or not (=).
 
+         procedure Workaround_Compiler_Inner_Scope_Problem (E : Entity_Id);
+         --  This subprogram workarounds a compiler problem in formals of
+         --  subprograms with renamings and also in entities defined in single
+         --  tasks and single protected objects: the compiler does not generate
+         --  the correct scope of their entities.
+
       private
          type Scope_Remove_Info is record
             Scope  : Entity_Id;
@@ -197,6 +203,136 @@ package body GNATdoc.Frontend is
                Scope_Remove_List.Next (Cursor);
             end loop;
          end Delayed_Remove_From_Scope;
+
+         ------------------------------------
+         -- Workaround_Inner_Scope_Problem --
+         ------------------------------------
+
+         procedure Workaround_Compiler_Inner_Scope_Problem (E : Entity_Id) is
+            Scope     : constant Entity_Id := Get_Scope (E);
+            Cursor    : EInfo_List.Cursor;
+            Entity    : Entity_Id;
+            Location  : General_Location;
+            Loc_End   : General_Location;
+            Loc_Start : General_Location;
+
+            procedure Check_Ordered_Entities_In_Scope;
+            procedure Check_Ordered_Entities_In_Scope is
+               Cursor    : EInfo_List.Cursor;
+               Entity    : Entity_Id;
+               Location  : General_Location;
+               Prev_Loc  : General_Location := No_Location;
+
+            begin
+               Cursor := Get_Entities (Scope).First;
+               while EInfo_List.Has_Element (Cursor) loop
+                  Entity   := EInfo_List.Element (Cursor);
+                  Location := LL.Get_Location (Entity);
+
+                  if Present (Prev_Loc) then
+                     pragma Assert (Location.File = Prev_Loc.File
+                                    and then (Location.Line > Prev_Loc.Line
+                                      or else (Location.Line = Prev_Loc.Line
+                                        and then
+                                        Location.Column > Prev_Loc.Column)));
+                     Prev_Loc := Location;
+                  end if;
+
+                  EInfo_List.Next (Cursor);
+               end loop;
+            end Check_Ordered_Entities_In_Scope;
+
+            Check_Generic_Formals : constant Boolean :=
+              LL.Is_Generic (E)
+                and then Is_Subprogram (E)
+                and then Present (Get_Generic_Formals_Loc (E))
+                and then not Has_Generic_Formals (E);
+
+         begin
+            Check_Ordered_Entities_In_Scope;
+
+            if Is_Concurrent_Object (E) then
+               Loc_Start := LL.Get_Location (E);
+               Loc_End := Get_End_Of_Syntax_Scope_Loc (E);
+
+            elsif Get_Kind (E) = E_Entry then
+               Loc_Start := LL.Get_Location (E);
+               Loc_End := Get_End_Of_Profile_Location (E);
+
+            elsif Is_Subprogram (E) then
+               if LL.Is_Generic (E) then
+                  pragma Assert (Present (Get_Generic_Formals_Loc (E)));
+                  Loc_Start := Get_Generic_Formals_Loc (E);
+               else
+                  Loc_Start := LL.Get_Location (E);
+               end if;
+
+               Loc_End := Get_End_Of_Profile_Location (E);
+
+            else pragma Assert (Get_Kind (E) = E_Generic_Package);
+               pragma Assert (Present (Get_Generic_Formals_Loc (E)));
+               Loc_Start := Get_Generic_Formals_Loc (E);
+               Loc_End := LL.Get_Location (E);
+            end if;
+
+            Cursor := Get_Entities (Scope).First;
+            while EInfo_List.Has_Element (Cursor) loop
+               Entity   := EInfo_List.Element (Cursor);
+               Location := LL.Get_Location (Entity);
+
+               exit when Location.Line > Loc_End.Line;
+
+               if Entity /= E then
+
+                  --  We cannot remove the entities from their scope since at
+                  --  current stage we have two iterators active traversing
+                  --  the entities of the tree. Hence we delay its removal
+                  --  from the wrong scope until we can safely do it without
+                  --  corrupting the tree.
+
+                  if Check_Generic_Formals
+                    and then Location.Line >= Get_Generic_Formals_Loc (E).Line
+                    and then Location.Line < LL.Get_Location (E).Line
+                    and then Get_Scope (Entity) /= E
+                  then
+                     Register_Delayed_Remove_From_Scope
+                       (Scope  => Get_Scope (Entity),
+                        Entity => Entity);
+
+                     Set_Is_Generic_Formal (Entity);
+
+                     --  Adding minimum decoration to undecorated generic
+                     --  formals
+
+                     if Get_Kind (Entity) = E_Unknown then
+                        Set_Kind (Entity, E_Generic_Formal);
+                     end if;
+
+                     Append_Generic_Formal (E, Entity);
+                     Set_Scope (Entity, E);
+
+                  elsif Location.Line >= Loc_Start.Line
+                    and then Location.Line <= Loc_End.Line
+                    and then Get_Scope (Entity) /= E
+                  then
+
+                     Register_Delayed_Remove_From_Scope
+                       (Scope  => Get_Scope (Entity),
+                        Entity => Entity);
+
+                     Append_To_Scope (E, Entity);
+
+                     if Is_Subprogram_Or_Entry (E) then
+                        Set_Kind (Entity, E_Formal);
+                     end if;
+
+                     Set_Scope (Entity, E);
+                  end if;
+               end if;
+
+               EInfo_List.Next (Cursor);
+            end loop;
+         end Workaround_Compiler_Inner_Scope_Problem;
 
       end Compiler_Workaround;
 
@@ -428,12 +564,76 @@ package body GNATdoc.Frontend is
          ----------------------------
 
          function Get_Declaration_Source return Unbounded_String is
-            Printout      : Unbounded_String;
-            From          : Natural;
-            Idx           : Natural;
+            Printout : Unbounded_String;
+
+            procedure Append (Text : String);
+            --  Append Text to Printout
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean;
+            --  Callback for entity parser
+
+            -----------------
+            -- Append_Line --
+            -----------------
+
+            procedure Append (Text : String) is
+            begin
+               Printout := Printout & Text;
+            end Append;
+
+            --------
+            -- CB --
+            --------
+
+            Par_Count : Natural := 0;
+            Last_Idx  : Natural := 0;
+
+            function CB
+              (Entity         : Language_Entity;
+               Sloc_Start     : Source_Location;
+               Sloc_End       : Source_Location;
+               Partial_Entity : Boolean) return Boolean
+            is
+               pragma Unreferenced (Partial_Entity);
+
+               S : String renames
+                     Buffer (Sloc_Start.Index .. Sloc_End.Index);
+
+            begin
+               --  Print all text between previous call and current one
+
+               if Last_Idx /= 0 then
+                  Append (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+               Append (S);
+
+               if Entity = Operator_Text then
+                  if S = "(" then
+                     Par_Count := Par_Count + 1;
+                  elsif S = ")" then
+                     Par_Count := Par_Count - 1;
+                  elsif S = ";" then
+                     if Par_Count = 0 then
+                        return True;
+                     end if;
+                  end if;
+               end if;
+
+               return False;
+            exception
+               when E : others =>
+                  Trace (Me, E);
+                  return True;
+            end CB;
+
             Index         : Natural;
             Lines_Skipped : Natural;
-            Par_Count     : Natural;
 
          begin
             --  Displace the pointer to the beginning of the declaration
@@ -443,30 +643,34 @@ package body GNATdoc.Frontend is
                Lines         => LL.Get_Location (E).Line - 1,
                Index         => Index,
                Lines_Skipped => Lines_Skipped);
-            From := Index;
 
             GNATCOLL.Utils.Skip_To_Column
               (Str           => Buffer.all,
                Columns       => Natural (LL.Get_Location (E).Column),
                Index         => Index);
 
-            Par_Count := 0;
-            Idx       := Index;
+            if Is_Generic_Formal (E) then
+               declare
+                  Prev_Word_Begin : Natural;
+                  Prev_Word_End   : Natural;
+               begin
+                  Previous_Word (Index, Prev_Word_Begin, Prev_Word_End);
 
-            while Idx < Buffer'Last
-              and then (Buffer (Idx) /= ';' or else Par_Count > 0)
-            loop
-               if Buffer (Idx) = '(' then
-                  Par_Count := Par_Count + 1;
-               elsif Buffer (Idx) = ')' then
-                  exit when Par_Count = 0; -- Should never occur???
-                  Par_Count := Par_Count - 1;
-               end if;
+                  declare
+                     Word : constant String :=
+                       To_Lower
+                         (Buffer.all (Prev_Word_Begin .. Prev_Word_End));
+                  begin
+                     if Word = "type" or else Word = "subtype" then
+                        Index := Prev_Word_Begin;
+                     end if;
+                  end;
+               end;
+            end if;
 
-               Idx := Idx + 1;
-            end loop;
-
-            Printout := To_Unbounded_String (Buffer (From .. Idx));
+            Parse_Entities
+              (Lang, Buffer.all (Index .. Buffer'Last),
+               CB'Unrestricted_Access);
 
             return Printout;
          end Get_Declaration_Source;
@@ -709,6 +913,7 @@ package body GNATdoc.Frontend is
 
             Prev_Token : Tokens := Tok_Unknown;
             Token      : Tokens := Tok_Unknown;
+            End_Loc    : Source_Location;
 
             function CB
               (Entity         : Language_Entity;
@@ -768,6 +973,8 @@ package body GNATdoc.Frontend is
                end Get_Token;
 
             begin
+               End_Loc := Sloc_End;
+
                --  Print all text between previous call and current one
 
                if Last_Idx /= 0 then
@@ -1106,6 +1313,12 @@ package body GNATdoc.Frontend is
               (Lang, Buffer.all (From .. Buffer'Last),
                CB'Unrestricted_Access);
 
+            Set_End_Of_Syntax_Scope_Loc (E,
+               General_Location'
+                 (File => File,
+                  Line => LL.Get_Location (E).Line + End_Loc.Line - 1,
+                  Column => Visible_Column (End_Loc.Column)));
+
             return Printout;
          end Get_Record_Type_Source;
 
@@ -1321,52 +1534,6 @@ package body GNATdoc.Frontend is
                   return True;
             end CB;
 
-            ------------------------------------
-            -- Workaround_Inner_Scope_Problem --
-            ------------------------------------
-
-            procedure Workaround_Compiler_Inner_Scope_Problem;
-            --  This subprogram workarounds a compiler problem in entities
-            --  defined in single tasks and single protected objects: the
-            --  compiler does not generate the correct scope of their entities.
-
-            procedure Workaround_Compiler_Inner_Scope_Problem is
-               Loc_Start : constant General_Location := LL.Get_Location (E);
-               Loc_End   : constant General_Location :=
-                             Get_End_Of_Syntax_Scope_Loc (E);
-               Scope     : constant Entity_Id := Get_Scope (E);
-               Cursor    : EInfo_List.Cursor;
-               Entity    : Entity_Id;
-               Location  : General_Location;
-
-            begin
-               Cursor := Get_Entities (Scope).First;
-               while EInfo_List.Has_Element (Cursor) loop
-                  Entity   := EInfo_List.Element (Cursor);
-                  Location := LL.Get_Location (Entity);
-
-                  if Location.Line > Loc_Start.Line
-                    and then Location.Line < Loc_End.Line
-                  then
-                     --  We cannot remove the entity from the scope since at
-                     --  current stage we have two iterators active traversing
-                     --  the entities of the tree. Hence we delay its removal
-                     --  from the wrong scope until we can safely do it without
-                     --  corrupting the tree.
-
-                     Register_Delayed_Remove_From_Scope
-                       (Scope  => Get_Scope (Entity),
-                        Entity => Entity);
-
-                     Append_To_Scope (E, Entity);
-                     Set_Scope (Entity, E);
-                  end if;
-
-                  EInfo_List.Next (Cursor);
-
-               end loop;
-            end Workaround_Compiler_Inner_Scope_Problem;
-
             --  Local variables
 
             Entity_Index    : Natural;
@@ -1438,7 +1605,7 @@ package body GNATdoc.Frontend is
                   Column => Visible_Column (End_Loc.Column)));
 
             if Is_Concurrent_Object (E) then
-               Workaround_Compiler_Inner_Scope_Problem;
+               Workaround_Compiler_Inner_Scope_Problem (E);
             end if;
 
             return Printout;
@@ -1562,6 +1729,10 @@ package body GNATdoc.Frontend is
          elsif Present (LL.Get_Instance_Of (E)) then
             Set_Src (E, Get_Instance_Source);
             return;
+
+         elsif Is_Generic_Formal (E) then
+            Set_Src (E, Get_Declaration_Source);
+            return;
          end if;
 
          case Get_Kind (E) is
@@ -1681,6 +1852,13 @@ package body GNATdoc.Frontend is
                pragma Assert (False);
 
             when E_Generic_Formal =>
+               --  Although all generic formals should be catched and handled
+               --  before we enter into this case-statement (see above)
+               --  we must still process here generic formals that
+               --  have not been yet moved into their correct scope
+               --  by the routine which completes its decoration (cf.
+               --  Workaround_Compiler_Inner_Scope_Problem).
+
                Set_Src (E, Get_Declaration_Source);
 
             when E_Abstract_Function  |
@@ -2521,52 +2699,6 @@ package body GNATdoc.Frontend is
                return True;
          end CB;
 
-         procedure Workaround_Scope_Problem_In_Subprogram_Renaming;
-         --  This subprogram workarounds a compiler problem in the formals
-         --  of subprogram renamings: the compiler does not generate the
-         --  correct scope of the formals.
-
-         procedure Workaround_Scope_Problem_In_Subprogram_Renaming is
-            Subp_Cursor  : EInfo_List.Cursor;
-            Subp_Formal  : Entity_Id;
-
-            Alias_Cursor : EInfo_List.Cursor;
-            Alias_Formal : Entity_Id;
-         begin
-            --  Given that the scope of the formals of E was not properly set
-            --  by Xref they are located immediately after E (in the list of
-            --  entities of its enclosing scope). Hence, this routine takes
-            --  care of moving them into the scope of E (relying on the number
-            --  of formals of its aliased subprogram)
-
-            pragma Assert (Get_Entities (Get_Scope (E)).Contains (E));
-            Subp_Cursor := Get_Entities (Get_Scope (E)).Find (E);
-
-            Alias_Cursor := Get_Entities (Get_Alias (E)).First;
-            while EInfo_List.Has_Element (Alias_Cursor) loop
-               EInfo_List.Next (Subp_Cursor);
-
-               Subp_Formal  := EInfo_List.Element (Subp_Cursor);
-
-               if Get_Scope (Subp_Formal) /= E then
-                  Alias_Formal := EInfo_List.Element (Alias_Cursor);
-                  pragma Assert (Get_Kind (Subp_Formal) = E_Variable);
-
-                  Set_Kind  (Subp_Formal, Get_Kind (Alias_Formal));
-                  Set_Alias (Subp_Formal, Alias_Formal);
-
-                  Register_Delayed_Remove_From_Scope
-                    (Scope  => Get_Scope (Subp_Formal),
-                     Entity => Subp_Formal);
-
-                  Append_To_Scope (E, Subp_Formal);
-                  Set_Scope (Subp_Formal, E);
-               end if;
-
-               EInfo_List.Next (Alias_Cursor);
-            end loop;
-         end Workaround_Scope_Problem_In_Subprogram_Renaming;
-
          --  Local variables
 
          From          : Natural;
@@ -2597,11 +2729,37 @@ package body GNATdoc.Frontend is
                                Word_1 => "with");
 
          elsif LL.Is_Generic (E) then
-            Index :=
-              Search_Backward (Lines_Skipped,
-                               Buffer => Buffer,
-                               From   => Index - 1,
-                               Word_1 => "generic");
+            declare
+               Formals_Loc : General_Location;
+               Idx         : Natural;
+            begin
+               Index :=
+                 Search_Backward (Lines_Skipped,
+                                  Buffer => Buffer,
+                                  From   => Index - 1,
+                                  Word_1 => "generic");
+
+               --  For now we only set the attribute Generic_Formals_Loc when
+               --  processing generics defined in compilation units containing
+               --  specs ???
+
+               if not Is_Body then
+                  Idx := Index;
+                  while Idx > Buffer'First
+                    and then Buffer (Idx) /= ASCII.LF
+                  loop
+                     Idx := Idx - 1;
+                  end loop;
+
+                  Formals_Loc :=
+                    General_Location'
+                      (File => File,
+                       Line => Location.Line - Lines_Skipped,
+                       Column => Visible_Column (Index - Idx));
+
+                  Set_Generic_Formals_Loc (E, Formals_Loc);
+               end if;
+            end;
 
          elsif Get_Kind (E) = E_Entry then
             Index :=
@@ -2632,10 +2790,18 @@ package body GNATdoc.Frontend is
            (Lang, Buffer.all (Index .. Buffer'Last),
             CB'Unrestricted_Access);
 
-         if Present (Get_Alias (E)) then
-            Workaround_Scope_Problem_In_Subprogram_Renaming;
-         end if;
+         --  Initially we tried to restrict the invocation of the following
+         --  routine to subprogram renamings; unfortunately similar problems
+         --  occur with the formals of annonymous access to subprograms.
 
+         --  For now we only set the attribute Generic_Formals_Loc when
+         --  processing generics found in generics defined in compilation
+         --  units containing specs (and hence we cannot rely on that attribute
+         --  to workaround wrong decoration of formals) ???
+
+         if not Is_Body then
+            Workaround_Compiler_Inner_Scope_Problem (E);
+         end if;
       end Parse_Ada_Profile;
 
       --------------------------
@@ -2728,6 +2894,34 @@ package body GNATdoc.Frontend is
             Columns       => Natural (Location.Column),
             Index         => Index);
 
+         if LL.Is_Generic (E) then
+            declare
+               Formals_Loc : General_Location;
+               Idx         : Natural;
+            begin
+               Index :=
+                 Search_Backward (Lines_Skipped,
+                                  Buffer => Buffer,
+                                  From   => Index - 1,
+                                  Word_1 => "generic");
+
+               Idx := Index;
+               while Idx > Buffer'First
+                 and then Buffer (Idx) /= ASCII.LF
+               loop
+                  Idx := Idx - 1;
+               end loop;
+
+               Formals_Loc :=
+                 General_Location'
+                   (File => File,
+                    Line => Location.Line - Lines_Skipped,
+                    Column => Visible_Column (Index - Idx));
+
+               Set_Generic_Formals_Loc (E, Formals_Loc);
+            end;
+         end if;
+
          --  Locate the end of the package name
 
          while Index > Buffer'First
@@ -2749,6 +2943,15 @@ package body GNATdoc.Frontend is
                Buffer       => Buffer.all (Buffer'First .. Index),
                Start_Offset => String_Index_Type (Index),
                Callback     => CB'Unrestricted_Access);
+         end if;
+
+         --  For generic packages the information provided by the compiler is
+         --  correct. However, for homogeneity in the management of generic
+         --  formals we invoke here the workaround routine to move all the
+         --  generic formals into the scope of the generic package.
+
+         if LL.Is_Generic (E) then
+            Workaround_Compiler_Inner_Scope_Problem (E);
          end if;
       end Parse_Package_Header;
 
@@ -3400,6 +3603,7 @@ package body GNATdoc.Frontend is
 
          while EInfo_List.Has_Element (Cursor) loop
             Param := EInfo_List.Element (Cursor);
+
             pragma Assert (Get_Kind (Param) = E_Formal);
             EInfo_List.Next (Cursor);
 

@@ -104,7 +104,12 @@ private package GNATdoc.Atree is
       E_Discriminant,
       E_Component,
       E_Formal,
+
       E_Generic_Formal,
+        --  This value is used only to provide a minimum decoration to
+        --  undecorated generic formals. To safely identify generic
+        --  formals use Is_Generic_Formal
+
       E_Tagged_Record_Type,
 
       --  C/C++
@@ -217,6 +222,8 @@ private package GNATdoc.Atree is
    --  down in the tree of tagged type derivations. If all the derivations of
    --  a type are needed then attribute LL.Get_Child_Types must be used.
 
+   procedure Append_Generic_Formal
+     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Inherited_Method
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
@@ -273,6 +280,12 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Comment_Result;
    function Get_Full_View_Src
      (E : Entity_Id) return Unbounded_String;
+
+   function Get_Generic_Formals_Loc
+     (E : Entity_Id) return General_Location;
+
+   function Get_Generic_Formals
+     (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Inherited_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_IDepth_Level
@@ -312,6 +325,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Unbounded_String;
    function Get_Unique_Id
      (E : Entity_Id) return Natural;
+
+   function Has_Formals
+     (E : Entity_Id) return Boolean;
+   function Has_Generic_Formals
+     (E : Entity_Id) return Boolean;
 
    function Has_Private_Parent
      (E : Entity_Id) return Boolean;
@@ -403,10 +421,12 @@ private package GNATdoc.Atree is
    procedure Set_End_Of_Syntax_Scope_Loc
      (E : Entity_Id; Loc : General_Location);
    --  At current stage this attribute is set only for E_Package,
-   --  E_Generic_Package entities, and concurrent types and objects.
+   --  E_Generic_Package entities, concurrent types and objects,
+   --  record types and interface types.
 
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
+
    procedure Set_Full_View
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Full_View_Comment
@@ -415,6 +435,10 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Comment_Result);
    procedure Set_Full_View_Src
      (E : Entity_Id; Value : Unbounded_String);
+
+   procedure Set_Generic_Formals_Loc
+     (E : Entity_Id; Value : General_Location);
+
    procedure Set_Has_Private_Parent
      (E : Entity_Id; Value : Boolean := True);
    procedure Set_Has_Unknown_Discriminants
@@ -542,7 +566,11 @@ private package GNATdoc.Atree is
       function Is_Abstract      (E : Entity_Id) return Boolean;
       function Is_Access        (E : Entity_Id) return Boolean;
       function Is_Array         (E : Entity_Id) return Boolean;
+
       function Is_Container     (E : Entity_Id) return Boolean;
+      --  The value returned by Xref.Is_Container() is not fully reliable
+      --  (not set for e_class_wide_type???)
+
       function Is_Generic       (E : Entity_Id) return Boolean;
       function Is_Global        (E : Entity_Id) return Boolean;
       function Is_Predef        (E : Entity_Id) return Boolean;
@@ -743,6 +771,7 @@ private
          End_Of_Syntax_Scope_Loc         : General_Location;
          End_Of_Profile_Location         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
+         Generic_Formals_Loc             : General_Location;
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
@@ -791,6 +820,8 @@ private
          --  the entities defined in the scope of a package, all the components
          --  of a record, etc.
 
+         Generic_Formals   : aliased EInfo_List.Vector;
+
          Methods           : aliased EInfo_List.Vector;
          Inherited_Methods : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
@@ -808,6 +839,7 @@ private
       end record;
 
    pragma Inline (Append_Direct_Derivation);
+   pragma Inline (Append_Generic_Formal);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
    pragma Inline (Append_Progenitor);
@@ -827,6 +859,8 @@ private
    pragma Inline (Get_Full_View_Comment);
    pragma Inline (Get_Full_View_Doc);
    pragma Inline (Get_Full_View_Src);
+   pragma Inline (Get_Generic_Formals_Loc);
+   pragma Inline (Get_Generic_Formals);
    pragma Inline (Get_Inherited_Methods);
    pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_Kind);
@@ -841,6 +875,8 @@ private
    pragma Inline (Get_Short_Name);
    pragma Inline (Get_Src);
    pragma Inline (Get_Unique_Id);
+   pragma Inline (Has_Formals);
+   pragma Inline (Has_Generic_Formals);
    pragma Inline (Has_Private_Parent);
    pragma Inline (Has_Unknown_Discriminants);
    pragma Inline (In_Ada_Language);
@@ -877,6 +913,7 @@ private
    pragma Inline (Set_Full_View_Comment);
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
+   pragma Inline (Set_Generic_Formals_Loc);
    pragma Inline (Set_Has_Private_Parent);
    pragma Inline (Set_Has_Unknown_Discriminants);
    pragma Inline (Set_Is_Decorated);
