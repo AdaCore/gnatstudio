@@ -190,4 +190,12 @@ private
       Text      : String);
    --  Write the contents of Printout in the specified file
 
+   function Get_Doc_Directory
+     (Kernel : access Core_Kernel_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  If the Directory_Dir attribute is defined in the project, then use the
+   --  value; otherwise use the default directory (that is, a subdirectory
+   --  'doc' in the object directory, or in the project directory if no
+   --  object dir is defined).
+
 end GNATdoc;

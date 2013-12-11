@@ -155,14 +155,6 @@ package GPS.Core_Kernels is
       Tag    : Ada.Tags.Tag) return Abstract_Module_List.List;
    --  Return list of modules that implement service with given Tag
 
-   function Get_Doc_Directory
-     (Kernel : access Core_Kernel_Record'Class)
-      return GNATCOLL.VFS.Virtual_File;
-   --  If the Directory_Dir attribute is defined in the project, then use the
-   --  value; otherwise use the default directory (that is, a subdirectory
-   --  'doc' in the object directory, or in the project directory if no
-   --  object dir is defined).
-
    type Editor_Listener_Factory is abstract new Controlled with null record;
    type Editor_Listener_Factory_Access is
      access all Editor_Listener_Factory'Class;
