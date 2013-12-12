@@ -173,12 +173,11 @@ package body Src_Editor_Module.Shell is
       Index_Cst'Access,
       Secondary_Action_Cst'Access);
 
-   package Editor_Mark_Holders is new Ada.Containers.Indefinite_Holders
-     (Editor_Mark'Class);
+   package Multi_Cursors_Holders is new Ada.Containers.Indefinite_Holders
+     (GPS.Editors.Multi_Cursor'Class);
 
    type MC_Property_Record is new Instance_Property_Record with record
-      Insertion_Mark : Editor_Mark_Holders.Holder;
-      Selection_Mark : Editor_Mark_Holders.Holder;
+      C : Multi_Cursors_Holders.Holder;
    end record;
 
    type MC_Property is access all MC_Property_Record;
@@ -449,12 +448,11 @@ package body Src_Editor_Module.Shell is
       MultiCursor : constant Class_Type :=
         New_Class (Get_Kernel (Script), "MultiCursor");
       Inst : constant Class_Instance := New_Instance (Script, MultiCursor);
-      use Editor_Mark_Holders;
+      use Multi_Cursors_Holders;
    begin
       Set_Data
         (Inst, "MultiCursor", MC_Property_Record'
-           (Insertion_Mark => To_Holder (Cursor.Get_Insert_Mark),
-            Selection_Mark => To_Holder (Cursor.Get_Selection_Mark)));
+           (C => To_Holder (Cursor)));
       return Inst;
    end Create_Multi_Cursor;
 
@@ -1691,7 +1689,7 @@ package body Src_Editor_Module.Shell is
    is
       MultiCursor : constant Class_Type :=
         New_Class (Get_Kernel (Data), "MultiCursor");
-      Multi_Cursor_Data : constant MC_Property :=
+      MC_Data : constant MC_Property :=
         MC_Property
           (Instance_Property'
              (Get_Data (Data.Nth_Arg (1, MultiCursor, True), "MultiCursor")));
@@ -1702,11 +1700,14 @@ package body Src_Editor_Module.Shell is
       elsif Command = "get_insert_mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
-              (Data.Get_Script, Multi_Cursor_Data.Insertion_Mark.Element));
+              (Data.Get_Script,
+               MC_Data.C.Element.Get_Insert_Mark));
       elsif Command = "get_selection_mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
-              (Data.Get_Script, Multi_Cursor_Data.Selection_Mark.Element));
+              (Data.Get_Script, MC_Data.C.Element.Get_Selection_Mark));
+      elsif Command = "set_manual_sync" then
+         MC_Data.C.Element.Set_Manual_Sync;
       end if;
    end MC_Cmds;
 
@@ -1940,14 +1941,9 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "update_multi_cursors_selections" then
          Get_Buffer (Data, 1).Update_Multi_Cursors_Selection;
-      elsif Command = "set_multi_cursors_manual_sync" then
 
-         if Data.Number_Of_Arguments = 1 then
-            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync;
-         elsif Data.Number_Of_Arguments = 2 then
-            Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync
-              (Get_Mark (Data, 2));
-         end if;
+      elsif Command = "set_multi_cursors_manual_sync" then
+         Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync;
 
       elsif Command = "set_multi_cursors_auto_sync" then
          Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
@@ -2700,6 +2696,8 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "get_insert_mark", 0, 0, MC_Cmds'Access, MultiCursor);
       Register_Command
+        (Kernel, "set_manual_sync",  0, 0, MC_Cmds'Access, MultiCursor);
+      Register_Command
         (Kernel, "get_selection_mark", 0, 0, MC_Cmds'Access, MultiCursor);
 
       --  EditorBuffer
@@ -2730,7 +2728,7 @@ package body Src_Editor_Module.Shell is
          "remove_all_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
-         "set_multi_cursors_manual_sync",  0, 1, Buffer_Cmds'Access,
+         "set_multi_cursors_manual_sync",  0, 0, Buffer_Cmds'Access,
          EditorBuffer);
       Register_Command
         (Kernel,

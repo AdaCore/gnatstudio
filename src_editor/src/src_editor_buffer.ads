@@ -63,6 +63,7 @@ package Src_Editor_Buffer is
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
    type Multi_Cursor is private;
+   type Multi_Cursor_Access is access all Multi_Cursor;
 
    type MC_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
    --  This type represents the mode the buffer is in regarding multi cursors
@@ -1426,6 +1427,7 @@ private
    ------------------
 
    type Multi_Cursor is record
+      Id                       : Integer := -1;
       Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
       Sel_Mark                 : Gtk.Text_Mark.Gtk_Text_Mark;
       Current_Command          : Command_Access;
@@ -1444,11 +1446,8 @@ private
 
    type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
       case Mode is
-         when Auto => null;
-         when Manual_Master => null;
-         when Manual_Slave =>
-            Cursor_Name : Ada.Strings.Unbounded.Unbounded_String;
-            MC : Multi_Cursor;
+         when Manual_Slave => MC : Multi_Cursor_Access;
+         when others => null;
       end case;
    end record;
 
@@ -1726,7 +1725,8 @@ private
       Multi_Cursors_List                    : Multi_Cursors_Lists.List;
       --  The list of all active multi cursors
 
-      Multi_Cursors_Next_Id                 : Natural := 0;
+      Multi_Cursors_Last_Alive_Id           : Natural := 0;
+      Multi_Cursors_Next_Id                 : Natural := 1;
       --  Unique id for the next multi cursor. Incremented at multi cursor
       --  creation
 

@@ -15,13 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Glib.Properties;
 
 package body Src_Editor_Buffer.Multi_Cursors is
 
    Mc_Selection_Tag : constant String := "mc_selection";
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (C : Multi_Cursor_Access; Buffer : Source_Buffer) return Cursor
+   is
+     ((Cursor    => C,
+       Cursor_Id => C.Id,
+       Buffer    => Buffer));
+
+   --------------
+   -- Is_Alive --
+   --------------
+
+   function Is_Alive (C : Cursor) return Boolean is
+     (C.Cursor_Id > C.Buffer.Multi_Cursors_Last_Alive_Id);
+
+   -------------------------
+   -- Update_MC_Selection --
+   -------------------------
 
    procedure Update_MC_Selection (B : Source_Buffer) is
       Start_Loc, End_Loc : Gtk_Text_Iter;
@@ -46,26 +67,53 @@ package body Src_Editor_Buffer.Multi_Cursors is
       end loop;
    end Update_MC_Selection;
 
+   --------------
+   -- Get_Mark --
+   --------------
+
    function Get_Mark (C : Cursor) return Gtk_Text_Mark
-   is (C.Mark);
+   is (C.Cursor.Mark);
+
+   -----------------------
+   -- Get_Sel_Mark_Name --
+   -----------------------
+
+   function Get_Sel_Mark_Name (Cursor_Mark_Name : String) return String
+   is
+     (Cursor_Mark_Name & "_sel");
+
+   ------------------
+   -- Get_Sel_Mark --
+   ------------------
 
    function Get_Sel_Mark (C : Cursor) return Gtk_Text_Mark
-   is (C.Sel_Mark);
+   is (C.Cursor.Sel_Mark);
+
+   -----------------------
+   -- Get_Column_Memory --
+   -----------------------
 
    function Get_Column_Memory (C : Cursor) return Gint
-   is (C.Column_Memory);
+   is (C.Cursor.Column_Memory);
+
+   -----------------------
+   -- Set_Column_Memory --
+   -----------------------
 
    procedure Set_Column_Memory (C : Cursor; Offset : Gint) is
    begin
-      C.Column_Memory := Offset;
+      C.Cursor.Column_Memory := Offset;
    end Set_Column_Memory;
+
+   ----------------------
+   -- Add_Multi_Cursor --
+   ----------------------
 
    procedure Add_Multi_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter) is
-      function Next_Multi_Cursor_Name return String is
-        ("multi_cursor_" & Buffer.Multi_Cursors_Next_Id'Img);
 
-      Cursor_Name : constant String := Next_Multi_Cursor_Name;
+      Cursor_Name : constant String :=
+        "multi_cursor_" & Buffer.Multi_Cursors_Next_Id'Img;
       Cursor_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Cursor_Name, False);
       Sel_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
@@ -78,7 +126,8 @@ package body Src_Editor_Buffer.Multi_Cursors is
       end if;
 
       Buffer.Multi_Cursors_List.Append
-        ((Mark            => Cursor_Mark,
+        ((Id              => Buffer.Multi_Cursors_Next_Id,
+          Mark            => Cursor_Mark,
           Sel_Mark        => Sel_Mark,
           Current_Command => null,
           Column_Memory   => Get_Offset (Location),
@@ -90,6 +139,10 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Cursor_Mark.Set_Visible (True);
    end Add_Multi_Cursor;
 
+   ----------------------
+   -- Add_Multi_Cursor --
+   ----------------------
+
    function Add_Multi_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor
    is
@@ -99,14 +152,22 @@ package body Src_Editor_Buffer.Multi_Cursors is
          Last_El : constant Multi_Cursors_Lists.Cursor :=
            Buffer.Multi_Cursors_List.Last;
       begin
-         return Buffer.Multi_Cursors_List.Reference (Last_El).Element;
+         return Create
+           (Buffer.Multi_Cursors_List.Reference (Last_El).Element, Buffer);
       end;
    end Add_Multi_Cursor;
+
+   ------------------------------
+   -- Remove_All_Multi_Cursors --
+   ------------------------------
 
    procedure Remove_All_Multi_Cursors (Buffer : Source_Buffer) is
    begin
       for Cursor of Buffer.Multi_Cursors_List loop
-         null;
+         if Cursor.Id > Buffer.Multi_Cursors_Last_Alive_Id then
+            Buffer.Multi_Cursors_Last_Alive_Id := Cursor.Id;
+         end if;
+
          Buffer.Delete_Mark (Cursor.Mark);
          Buffer.Delete_Mark (Cursor.Sel_Mark);
       end loop;
@@ -115,35 +176,45 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Buffer.Multi_Cursors_List.Clear;
    end Remove_All_Multi_Cursors;
 
+   -----------------------------------
+   -- Set_Multi_Cursors_Manual_Sync --
+   -----------------------------------
+
    procedure Set_Multi_Cursors_Manual_Sync (Buffer : Source_Buffer)
    is
    begin
       Buffer.Multi_Cursors_Sync := (Mode => Manual_Master);
    end Set_Multi_Cursors_Manual_Sync;
 
+   -----------------------------------
+   -- Set_Multi_Cursors_Manual_Sync --
+   -----------------------------------
+
    procedure Set_Multi_Cursors_Manual_Sync
-     (Buffer  : Source_Buffer;
-      MC_Mark : Gtk_Text_Mark)
+     (C : Cursor)
    is
-      MC : Multi_Cursor;
+      MC : constant Multi_Cursor_Access := C.Cursor;
    begin
-      for Multi of Buffer.Multi_Cursors_List loop
-         if MC_Mark = Multi.Mark then
-            MC := Multi;
-         end if;
-      end loop;
-      Buffer.Multi_Cursors_Sync :=
-        (Manual_Slave, To_Unbounded_String (MC_Mark.Get_Name), MC);
+      C.Buffer.Multi_Cursors_Sync :=
+        (Manual_Slave, MC);
    end Set_Multi_Cursors_Manual_Sync;
+
+   -----------------------------------
+   -- Set_Multi_Cursors_Manual_Sync --
+   -----------------------------------
 
    procedure Set_Multi_Cursors_Manual_Sync
      (Buffer : Source_Buffer;
-      MC     : Multi_Cursor)
+      MC     : Multi_Cursor_Access)
    is
    begin
       Buffer.Multi_Cursors_Sync :=
-        (Manual_Slave, To_Unbounded_String (MC.Mark.Get_Name), MC);
+        (Manual_Slave, MC);
    end Set_Multi_Cursors_Manual_Sync;
+
+   ---------------------------------
+   -- Set_Multi_Cursors_Auto_Sync --
+   ---------------------------------
 
    procedure Set_Multi_Cursors_Auto_Sync (Buffer : Source_Buffer)
    is
@@ -160,15 +231,25 @@ package body Src_Editor_Buffer.Multi_Cursors is
       return List : Cursors_Lists.List do
          C := Buffer.Multi_Cursors_List.First;
          while L.Has_Element (C) loop
-            List.Append (Buffer.Multi_Cursors_List.Reference (C).Element);
+            List.Append
+              (Create
+                 (Buffer.Multi_Cursors_List.Reference (C).Element, Buffer));
             C := L.Next (C);
          end loop;
       end return;
    end Get_Multi_Cursors;
 
+   ----------------------------
+   -- Get_Multi_Cursors_Sync --
+   ----------------------------
+
    function Get_Multi_Cursors_Sync
      (Buffer : Source_Buffer) return Multi_Cursors_Sync_Type
    is (Buffer.Multi_Cursors_Sync);
+
+   ----------------------------
+   -- Set_Multi_Cursors_Sync --
+   ----------------------------
 
    procedure Set_Multi_Cursors_Sync
      (Buffer : Source_Buffer; Sync : Multi_Cursors_Sync_Type)

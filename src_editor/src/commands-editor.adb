@@ -22,8 +22,6 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Multi_Cursors;
-use  Src_Editor_Buffer.Multi_Cursors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -149,7 +147,7 @@ package body Commands.Editor is
       Cursor_Loc, Sel_Loc : Loc_T;
       End_Loc             : Loc_T := (0, 0);
       Direction           : Direction_Type := Forward;
-      Cursor_Name         : String := "") is
+      C                   : Cursor := Nil_Cursor) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -161,7 +159,7 @@ package body Commands.Editor is
       Item.Locs.Start_Sel_Loc := Sel_Loc;
       Item.Locs.End_Loc := End_Loc;
       Item.Locs.End_Sel_Loc := End_Loc;
-      Item.Alternative_Cursor_Name := To_Unbounded_String (Cursor_Name);
+      Item.Alternative_Cursor := C;
    end Create;
 
    -----------------------
@@ -288,9 +286,7 @@ package body Commands.Editor is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
       View   : Source_View;
-      Cursor_Name : constant String
-        := To_String (Command.Alternative_Cursor_Name);
-      Mark : Gtk_Text_Mark;
+      C      : constant Cursor := Command.Alternative_Cursor;
       MC_Sync_Save : Multi_Cursors_Sync_Type;
 
       procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T);
@@ -309,8 +305,8 @@ package body Commands.Editor is
          end if;
 
          --  The cursor is a multi cursor
-         if Cursor_Name /= "" then
-            Mark := Command.Buffer.Get_Mark (Cursor_Name);
+         if C /= Nil_Cursor then
+            Mark := Get_Mark (C);
 
             if Mark /= null then
                if Loc.Line /= 0 then
@@ -325,8 +321,7 @@ package body Commands.Editor is
                   --  the action and don't want the sel mark to move because
                   --  end_sel_line and end_sel_col have not been set yet.
 
-                  Mark := Command.Buffer.Get_Mark
-                    (Get_Sel_Mark_Name (Cursor_Name));
+                  Mark := Get_Sel_Mark (C);
 
                   Command.Buffer.Get_Iter_At_Screen_Position
                     (Iter, Sel_Loc.Line, Sel_Loc.Col);
@@ -382,10 +377,9 @@ package body Commands.Editor is
          MC_Sync_Save := Get_Multi_Cursors_Sync (Command.Buffer);
 
          --  The cursor is a multi cursor
-         if Cursor_Name /= "" then
-            Mark := Command.Buffer.Get_Mark (Cursor_Name);
-            if Mark /= null then
-               Set_Multi_Cursors_Manual_Sync (Command.Buffer, Mark);
+         if C /=  Nil_Cursor then
+            if Is_Alive (C) then
+               Set_Multi_Cursors_Manual_Sync (C);
             else
                Set_Multi_Cursors_Manual_Sync (Command.Buffer);
             end if;

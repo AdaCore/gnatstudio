@@ -21,8 +21,8 @@ with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with GNAT.Strings;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
 
 package Commands.Editor is
 
@@ -141,7 +141,7 @@ package Commands.Editor is
       Cursor_Loc, Sel_Loc : Loc_T;
       End_Loc             : Loc_T := (0, 0);
       Direction           : Direction_Type := Forward;
-      Cursor_Name         : String := "");
+      C                   : Cursor := Nil_Cursor);
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
@@ -211,7 +211,7 @@ private
 
       Locs                      : Editor_Command_Locations;
 
-      Alternative_Cursor_Name   : Unbounded_String;
+      Alternative_Cursor        : Cursor := Nil_Cursor;
       --  Name of the multi cursor this action is bound to, if there is one
    end record;
 

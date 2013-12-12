@@ -551,9 +551,8 @@ def delete(forward=True):
         delete(main_cursor, main_cursor.forward_char(offset))
 
         for c in ed.get_multi_cursors():
-            mc_mark = c.get_insert_mark()
-            l = mc_mark.location()
-            ed.set_multi_cursors_manual_sync(mc_mark)
+            c.set_manual_sync()
+            l = c.get_insert_mark().location()
             delete(l, l.forward_char(offset))
 
         ed.set_multi_cursors_auto_sync()
@@ -562,9 +561,9 @@ def delete(forward=True):
         delete(main_cursor, sel)
 
         for c in ed.get_multi_cursors():
-            mc_mark = c.get_insert_mark()
-            ed.set_multi_cursors_manual_sync(mc_mark)
-            delete(mc_mark.location(), c.get_selection_mark().location())
+            c.set_manual_sync()
+            delete(c.get_insert_mark().location(),
+                   c.get_selection_mark().location())
 
         ed.update_multi_cursors_selections()
         ed.set_multi_cursors_auto_sync()

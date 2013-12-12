@@ -115,7 +115,7 @@ package body Src_Editor_Module.Editors is
    end record;
 
    type Src_Editor_Multi_Cursor is new GPS.Editors.Multi_Cursor with record
-      C : MC.Cursor;
+      C      : MC.Cursor;
       Buffer : Src_Editor_Buffer;
    end record;
 
@@ -368,6 +368,9 @@ package body Src_Editor_Module.Editors is
    overriding function Get_Insert_Mark
      (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
 
+   overriding procedure Set_Manual_Sync
+     (This : Src_Editor_Multi_Cursor);
+
    overriding function Get_Selection_Mark
      (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
 
@@ -376,9 +379,6 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Set_Multi_Cursors_Manual_Sync
      (This : Src_Editor_Buffer);
-
-   overriding procedure Set_Multi_Cursors_Manual_Sync
-     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class);
 
    overriding procedure Set_Multi_Cursors_Auto_Sync
      (This : Src_Editor_Buffer);
@@ -2926,6 +2926,17 @@ package body Src_Editor_Module.Editors is
            Buffer => Src_Editor_Location (Location).Buffer);
    end Add_Multi_Cursor;
 
+   -----------------------------------
+   -- Set_Multi_Cursors_Manual_Sync --
+   -----------------------------------
+
+   overriding procedure Set_Manual_Sync
+     (This : Src_Editor_Multi_Cursor)
+   is
+   begin
+      Set_Multi_Cursors_Manual_Sync (This.C);
+   end Set_Manual_Sync;
+
    ---------------------
    -- Get_Insert_Mark --
    ---------------------
@@ -2964,17 +2975,6 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer) is
    begin
       Set_Multi_Cursors_Manual_Sync (This.Contents.Buffer);
-   end Set_Multi_Cursors_Manual_Sync;
-
-   -----------------------------------
-   -- Set_Multi_Cursors_Manual_Sync --
-   -----------------------------------
-
-   overriding procedure Set_Multi_Cursors_Manual_Sync
-     (This : Src_Editor_Buffer; Mark : Editor_Mark'Class) is
-   begin
-      Set_Multi_Cursors_Manual_Sync
-        (This.Contents.Buffer, This.Contents.Buffer.Get_Mark (Mark.Name));
    end Set_Multi_Cursors_Manual_Sync;
 
    ---------------------------------
