@@ -25,6 +25,7 @@ action_name = "Block Completion"
 ## Name of the action and the menu defined by this package.
 
 import re, string, GPS
+logger = GPS.Logger("block_complete")
 
 # BLOCKS_DEFS is a dictionary describing the action to be done for each block.
 #
@@ -43,12 +44,13 @@ BLOCKS_DEFS = {
     'CAT_IF_STATEMENT'       : ['end if;', ''],
     'CAT_CASE_STATEMENT'     : ['end case;', ''],
     'CAT_CASE_INSIDE_RECORD' : ['end case;', ''],
-    'CAT_LOOP_STATEMENT'     : [r'end loop \1;', r'\s*([^ ]+)\s*:\s*loop.*'],
+    'CAT_LOOP_STATEMENT'     : [r'end loop \1;', r'\s*([^ ]+)\s*:.*?loop.*'],
     'CAT_RETURN_BLOCK'       : [r'end return;', ''],
-    'CAT_PROCEDURE'          : [r'end \2;', r'\s*(overriding\s+)?\s*procedure\s+([^ \n(]+).*'],
-    'CAT_FUNCTION'           : [r'end \2;', r'\s*(overriding\s+)?\s*function\s+([^ \n(]+).*'],
+    'CAT_PROCEDURE'          : [r'end \1;', r'.*?procedure\s+([^ \n(]+).*'],
+    'CAT_FUNCTION'           : [r'end \1;', r'.*?function\s+([^ \n(]+).*'],
     'CAT_DECLARE_BLOCK'      : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_PACKAGE'            : [r'end \2;', r'\s*package\s+(body\s+)?([^ \n]+).*'],
+    'CAT_SIMPLE_BLOCK'       : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
+    'CAT_PACKAGE'            : [r'end \2;', r'.*?package\s+(body\s+)?([^ \n]+).*'],
     'CAT_STRUCTURE'          : ['end record;', ''],
     'CAT_CLASS'              : ['end record;', ''],
     'CAT_PROTECTED'          : [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
@@ -79,6 +81,7 @@ def block_complete_on_location(buffer, location):
       location = location.forward_line()
 
    block = location.block_type()
+   logger.log(str(block))
 
    if block not in BLOCKS_DEFS:
       return
@@ -89,9 +92,10 @@ def block_complete_on_location(buffer, location):
       # Retrieve the line at the start of the block
 
       start = GPS.EditorLocation(buffer, location.block_start_line(), 1)
-      end = GPS.EditorLocation(buffer, location.block_start_line() + 1, 1)
+      end = location
 
       bs_content = buffer.get_chars(start, end)
+      logger.log(bs_content)
 
       re_pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
 
