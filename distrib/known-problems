@@ -11,7 +11,7 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 - MC05-001: GPS: Keyboard not working in editor's contextual menus
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
               the editor rather than by the menu
-  Workaround: None
+  Workaround: Use the mouse to navigate the contextual menus
 
 - MC04-015: GPS: doesn't launch after opening non-ASCII named file
   Problem:    When hisotry of recently open files contains names with
@@ -63,14 +63,15 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
               the corresponding body open in a floating window, using go-to
               body in the spec does not scroll to the corresponding location in
               the body.  
-  Workaround: None.
+  Workaround: Use goto declaration/body with non floating windows.
 
 - MA29-025: GPS: Search in a floating window
   Problem:    When having a floating window source editor open, as well as a
               non floating one, focusing on the floating and then using the
               search window to search into it would search in the non floating
               window.
-  Workaround: None.
+  Workaround: Clicking on the window two times will make the search work
+  properly.
 
 - JC07-006: GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
