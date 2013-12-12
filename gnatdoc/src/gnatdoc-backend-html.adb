@@ -1278,22 +1278,30 @@ package body GNATdoc.Backend.HTML is
          Ents_Dir : constant Virtual_File :=
            Root_Dir.Create_From_Dir ("entities");
 
+         procedure Try_Mkdir (D : Virtual_File);
+         --  Attempt to make the directory if it does not exist, and
+         --  print an error in case of failure
+
+         ---------------
+         -- Try_Mkdir --
+         ---------------
+
+         procedure Try_Mkdir (D : Virtual_File) is
+         begin
+            if not D.Is_Directory then
+               D.Make_Dir;
+            end if;
+         exception
+            when others =>
+               Trace
+                 (Me, "Could not create directory: " & D.Display_Full_Name);
+         end Try_Mkdir;
+
       begin
-         if not Root_Dir.Is_Directory then
-            Root_Dir.Make_Dir;
-         end if;
-
-         if not Srcs_Dir.Is_Directory then
-            Srcs_Dir.Make_Dir;
-         end if;
-
-         if not Docs_Dir.Is_Directory then
-            Docs_Dir.Make_Dir;
-         end if;
-
-         if not Ents_Dir.Is_Directory then
-            Ents_Dir.Make_Dir;
-         end if;
+         Try_Mkdir (Root_Dir);
+         Try_Mkdir (Srcs_Dir);
+         Try_Mkdir (Docs_Dir);
+         Try_Mkdir (Ents_Dir);
       end Create_Documentation_Directories;
 
    begin
