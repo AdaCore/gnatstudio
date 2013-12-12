@@ -16,6 +16,15 @@ Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
   Workaround: In a lot of cases, the functions GPS.Entity.is_* provide more
               accurate information than GPS.Entity.category.
 
+- MC04-005: GPS: default fonts difficult to read.
+  Problem:    On some versions of Linux, the default selections of fonts are
+              difficult to read.
+  Workaround: Use the preferences dialog to select different fonts. If the
+              dialogs do not present a wide range of fonts, try modifying
+              the file <gps_install>/etc/fonts/fonts.conf, and add:
+                  <dir>/usr/share/X11/fonts/Type1</dir>
+              after line 27.
+
 - MB27-046: GPS: wrong documentation for the Preferences page
   Problem:    The documentation for the preferences page wrongly refers to
               items such as 'Jump to First Location' which have been moved
