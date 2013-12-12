@@ -537,13 +537,12 @@ package body GPS.Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Data);
+      Entity : General_Entity;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "category" then
-         raise Program_Error
-           with "GPS.Entity.category has been deprecated, see is_*";
---       Set_Return_Value (Data, Category_To_String (Get_Category (Entity)));
-
+         Entity := Get_Data (Data, 1);
+         Set_Return_Value (Data, Kernel.Databases.Get_Display_Kind (Entity));
       end if;
    end Create_Entity_Command_Handler;
 

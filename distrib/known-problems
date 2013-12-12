@@ -10,20 +10,13 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
 - MC05-001: GPS: Keyboard not working in editor's contextual menus
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
-  the editor rather than by the menu
+              the editor rather than by the menu
   Workaround: None
 
-- MA29-023: GPS: Goto declaration/body with a floating window
-  Problem:    When having a spec (ads) file open in a non floating window, and
-  the corresponding body open in a floating window, using go-to body in the
-  spec does not scroll to the corresponding location in the body.  
-  Workaround: None.
-
-- MA29-025: GPS: Search in a floating window
-  Problem:    When having a floating window source editor open, as well as a
-  non floating one, focusing on the floating and then using the search window
-  to search into it would search in the non floating window.
-  Workaround: None.
+- MC04-015: GPS: doesn't launch after opening non-ASCII named file
+  Problem:    When hisotry of recently open files contains names with
+              non-ASCII characters GPS sometime fails to start.
+  Workaround: Set UTF-8 locale before launching GPS.
 
 - MB26-015: GB: Show complete command line in command line editor
   Problem:    When editing the command line before launching the action
@@ -65,10 +58,19 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Create the directories manually, or remove the directory
               separator at the end of the directory specification.
 
-- MC04-015: GPS: doesn't launch after opening non-ASCII named file
-  Problem:    When hisotry of recently open files contains names with
-              non-ASCII characters GPS sometime fails to start.
-  Workaround: Set UTF-8 locale before launching GPS.
+- MA29-023: GPS: Goto declaration/body with a floating window
+  Problem:    When having a spec (ads) file open in a non floating window, and
+              the corresponding body open in a floating window, using go-to
+              body in the spec does not scroll to the corresponding location in
+              the body.  
+  Workaround: None.
+
+- MA29-025: GPS: Search in a floating window
+  Problem:    When having a floating window source editor open, as well as a
+              non floating one, focusing on the floating and then using the
+              search window to search into it would search in the non floating
+              window.
+  Workaround: None.
 
 - JC07-006: GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
