@@ -171,7 +171,7 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "is_container" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
+         Set_Return_Value (Data, Kernel.Databases.Is_Container (Entity));
 
       elsif Command = "declaration" then
          declare

@@ -8,12 +8,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MC11-062: GPS.Entity.category now returns useful value
+  Problem:    This python function had been deprecated in GPS 6.0.0, but is
+              in fact useful in some scripts, so it has been put back.
+              GPS.Entity.is_container was returning the same information as
+              is_type, which has now been fixed as well.
+  Workaround: In a lot of cases, the functions GPS.Entity.is_* provide more
+              accurate information than GPS.Entity.category.
+
 - MB27-046: GPS: wrong documentation for the Preferences page
   Problem:    The documentation for the preferences page wrongly refers to
               items such as 'Jump to First Location' which have been moved
               outside of the preferences dialog and to the local menu in
               the Locations view.
-  Workarnound: None.
+  Workaround: Check the local configuration menus in all the views, they now
+              contain preferences that apply specifically to that view.
 
 - MB27-018: GPS: cannot select directory when creating project from template
   Problem:    When creating a project from a template, the dialog to choose

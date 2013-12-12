@@ -4672,10 +4672,10 @@ class Entity(object):
 
     def category(self):
         """
-        Deprecated
-
         Return the category of a given entity. Possible values include: label,
-        literal, object, subprogram, package/namespace, type, unknown.
+        literal, object, subprogram, package, namespace, type, unknown.
+        The exact list of strings is not hard-coded in GPS and depends on the
+        programming language of the corresponding source.
 
         See instead is_access, is_array, is_subprogram,...
 
