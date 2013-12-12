@@ -1316,6 +1316,8 @@ Classes
 
    .. automethod:: GPS.MultiCursor.get_selection_mark
 
+   .. automethod:: GPS.MultiCursor.set_manual_sync
+
 :class:`GPS.OutputParserWrapper`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

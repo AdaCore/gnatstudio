@@ -3730,13 +3730,11 @@ class EditorBuffer(object):
         be propagated.
         """
 
-    def set_multi_cursors_manual_sync(self, multi_cursor_mark=None):
+    def set_multi_cursors_manual_sync(self):
         """
-        Set the buffer in manual sync mode regarding multi cursors.
-        multi_cursor_mark should be the mark corresponding to the multi
-        cursor that is gonna be affected, or None if the action is from
-        the main cursor. This info is useful to provide correct undo/redo
-        actions for custom multi cursors actions.
+        Set the buffer in manual sync mode regarding multi cursors. This will
+        set sync to be manual and all actions will be considered as coming from
+        the main cursor
         """
 
     def update_multi_cursors_selections():
@@ -7558,6 +7556,13 @@ class MultiCursor(object):
     Interface to a multi cursor in a GPS EditorBuffer. Just gives access to the
     insertion mark and to the selection mark of the cursor
     """
+
+    def set_manual_sync(self):
+        """
+        Set the buffer in manual sync mode regarding multi cursors. This will
+        set sync to be manual and all actions will be considered as coming from
+        the cursor instance
+        """
 
     def get_selection_mark(self):
         """
