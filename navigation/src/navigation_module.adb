@@ -1193,7 +1193,9 @@ package body Navigation_Module is
          Description => -"Goto previous location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-back");
+         Stock_Id    => "gps-navigate-back",
+         Accel_Key => GDK_Left,
+         Accel_Mods => Mod1_Mask);
 
       Filter := new Has_Forward_Navigation;
       Kernel.Register_Filter (Filter, "has forward navigation");
@@ -1202,7 +1204,9 @@ package body Navigation_Module is
          Description => -"Goto next location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-forward");
+         Stock_Id    => "gps-navigate-forward",
+         Accel_Key => GDK_Right,
+         Accel_Mods => Mod1_Mask);
 
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,
