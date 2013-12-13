@@ -923,7 +923,15 @@ package body GNATdoc is
       --  destination directory with support files before processing the
       --  first file.
 
-      Backend.Initialize (Context);
+      begin
+         Backend.Initialize (Context);
+      exception
+         when others =>
+            GNAT.IO.Put_Line
+              ("Cannot generate output in directory " &
+               (+Get_Doc_Directory (Kernel).Full_Name));
+            return;
+      end;
 
       --  Remove from the list those files which cannot be processed
 
