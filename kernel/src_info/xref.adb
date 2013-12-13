@@ -630,8 +630,9 @@ package body Xref is
          declare
             Tree_Lang : Tree_Language_Access;
             Result       : Entity_Access;
+            Result_Loc   : Source_Location;
             New_Location : General_Location;
-            New_Entity   : General_Entity;
+            New_Entity   : General_Entity := No_General_Entity;
 
          begin
             Trace (Me, "Searching entity declaration in constructs");
@@ -648,24 +649,27 @@ package body Xref is
                   (Entity_Name = "" or else
                    Get (Get_Construct (Result).Name).all = Entity_Name)
             then
+               Result_Loc := Get_Construct (Result).Sloc_Entity;
+
                --  First, try to see if there's already a similar entity in
                --  the database. If that's the case, it's better to use it
                --  than the dummy one created from the construct.
 
-               New_Location :=
-                 (File   => Get_File_Path (Get_File (Result)),
-                  Line   => Get_Construct (Result).Sloc_Entity.Line,
-                  Column => To_Visible_Column
-                    (Get_File (Result),
-                     Get_Construct (Result).Sloc_Entity.Line,
-                     String_Index_Type
-                       (Get_Construct (Result).Sloc_Entity.Column)));
+               if Result_Loc.Line > 0 then
+                  New_Location :=
+                    (File   => Get_File_Path (Get_File (Result)),
+                     Line   => Result_Loc.Line,
+                     Column => To_Visible_Column
+                       (Get_File (Result),
+                        Result_Loc.Line,
+                        String_Index_Type (Result_Loc.Column)));
 
-               New_Entity := Internal_No_Constructs
-                 (Name  => Get (Get_Construct (Result).Name).all,
-                  Loc   => (File   => New_Location.File,
-                            Line   => New_Location.Line,
-                            Column => New_Location.Column));
+                  New_Entity := Internal_No_Constructs
+                    (Name  => Get (Get_Construct (Result).Name).all,
+                     Loc   => (File   => New_Location.File,
+                               Line   => New_Location.Line,
+                               Column => New_Location.Column));
+               end if;
 
                if New_Entity /= No_General_Entity
                  and then not Is_Fuzzy (New_Entity)
