@@ -35,7 +35,7 @@ private package GNATdoc.Backend.HTML.Source_Code is
 
    not overriding procedure End_File
      (Self     : in out Source_Code_Printer;
-      Text     : out Ada.Strings.Unbounded.Unbounded_String;
+      Result   : out GNATCOLL.JSON.JSON_Value;
       Continue : in out Boolean);
    --  Called after processing of source code file independently it was
    --  terminated or file was processed completely. It is not called only when

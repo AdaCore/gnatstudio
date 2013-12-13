@@ -177,7 +177,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
    not overriding procedure End_File
      (Self     : in out Source_Code_Printer;
-      Text     : out Ada.Strings.Unbounded.Unbounded_String;
+      Result   : out GNATCOLL.JSON.JSON_Value;
       Continue : in out Boolean)
    is
       pragma Unreferenced (Continue);
@@ -199,11 +199,9 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
       --  Construct "code" object
 
-      Object := Create_Object;
-      Object.Set_Field ("kind", "code");
-      Object.Set_Field ("children", Self.Result);
-
-      Text := Write (Object, False);
+      Result := Create_Object;
+      Result.Set_Field ("kind", "code");
+      Result.Set_Field ("children", Self.Result);
 
       --  Cleanup
 

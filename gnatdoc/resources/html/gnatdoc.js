@@ -468,7 +468,13 @@ function buildInheritanceIndex(page)
 
 function displaySource()
 {
+    var pane;
+    var header;
+
     pane = document.getElementById('body');
+    header = document.createElement('h1');
+    header.appendChild(document.createTextNode(GNATdocSourceFile.label));
+    pane.appendChild(header);
     buildText(pane, [GNATdocSourceFile]);
 }
 

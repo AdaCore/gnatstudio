@@ -267,6 +267,7 @@ package body GNATdoc.Backend.HTML is
 
       Lang     : Language_Access;
       Continue : Boolean := True;
+      Code     : JSON_Value;
 
    begin
       Lang := Get_Language_From_File (Self.Context.Lang_Handler, File);
@@ -276,7 +277,8 @@ package body GNATdoc.Backend.HTML is
 
       if Continue then
          Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
-         Printer.End_File (Text, Continue);
+         Printer.End_File (Code, Continue);
+         Text := Write (Code, False);
       end if;
    end Print_Source_Code;
 
@@ -412,7 +414,7 @@ package body GNATdoc.Backend.HTML is
       Printer    : Source_Code_Printer;
       Sloc_First : Source_Location;
       Sloc_Last  : Source_Location;
-      Text       : Unbounded_String;
+      Code       : JSON_Value;
       Continue   : Boolean := True;
 
       Sources    : JSON_Array;
@@ -513,7 +515,8 @@ package body GNATdoc.Backend.HTML is
 
          if Continue then
             Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
-            Printer.End_File (Text, Continue);
+            Printer.End_File (Code, Continue);
+            Code.Set_Field ("label", String (File.Base_Name));
 
             if Continue then
                --  Write HTML page
@@ -542,7 +545,9 @@ package body GNATdoc.Backend.HTML is
                   Translation : Translate_Set;
 
                begin
-                  Insert (Translation, Assoc ("SOURCE_FILE_DATA", Text));
+                  Insert
+                    (Translation,
+                     Assoc ("SOURCE_FILE_DATA", String'(Write (Code, False))));
                   Write_To_File
                     (Self.Context,
                      Get_Doc_Directory
