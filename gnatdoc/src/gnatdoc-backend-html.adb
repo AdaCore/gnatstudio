@@ -86,6 +86,14 @@ package body GNATdoc.Backend.HTML is
    --  Returns href to source file where this entity is declared. Returned URI
    --  includes fragment identifier to navigate to source code line.
 
+   procedure Print_Source_Code
+     (Self       : HTML_Backend'Class;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Buffer     : GNAT.Strings.String_Access;
+      First_Line : Positive;
+      Printer    : in out Source_Code.Source_Code_Printer'Class;
+      Code       : out GNATCOLL.JSON.JSON_Value);
+
    ---------
    -- "<" --
    ---------
@@ -163,15 +171,7 @@ package body GNATdoc.Backend.HTML is
       Buffer     : GNAT.Strings.String_Access;
       First_Line : Positive;
       Printer    : in out Source_Code.Source_Code_Printer'Class;
-      Text       : out Ada.Strings.Unbounded.Unbounded_String);
-
-   procedure Print_Source_Code
-     (Self       : HTML_Backend'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Buffer     : GNAT.Strings.String_Access;
-      First_Line : Positive;
-      Printer    : in out Source_Code.Source_Code_Printer'Class;
-      Text       : out Ada.Strings.Unbounded.Unbounded_String)
+      Code       : out GNATCOLL.JSON.JSON_Value)
    is
 
       function Callback
@@ -267,7 +267,6 @@ package body GNATdoc.Backend.HTML is
 
       Lang     : Language_Access;
       Continue : Boolean := True;
-      Code     : JSON_Value;
 
    begin
       Lang := Get_Language_From_File (Self.Context.Lang_Handler, File);
@@ -278,7 +277,6 @@ package body GNATdoc.Backend.HTML is
       if Continue then
          Lang.Parse_Entities (Buffer.all, Callback'Unrestricted_Access);
          Printer.End_File (Code, Continue);
-         Text := Write (Code, False);
       end if;
    end Print_Source_Code;
 
@@ -822,8 +820,8 @@ package body GNATdoc.Backend.HTML is
 
             if Get_Src (E) /= Null_Unbounded_String then
                declare
-                  Buffer     : aliased String := To_String (Get_Src (E));
-                  Aux_String : Unbounded_String;
+                  Buffer : aliased String := To_String (Get_Src (E));
+                  Code   : JSON_Value;
 
                begin
                   Self.Print_Source_Code
@@ -831,8 +829,8 @@ package body GNATdoc.Backend.HTML is
                      Buffer'Unchecked_Access,
                      LL.Get_Location (E).Line,
                      Printer,
-                     Aux_String);
-                  Prepend (Description, Read (To_String (Aux_String)));
+                     Code);
+                  Prepend (Description, Code);
                end;
             end if;
 
