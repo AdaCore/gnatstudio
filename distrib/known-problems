@@ -9,7 +9,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
 support for 'operator!=' in C++ files
-- MC09-024: GPS: C++ code navigation not working
+- MC09-024: GPS: C++ sources navigation not working
   Problem:    When the C++ sources have classes which define the operator !=
               the navigation through the C++ files does not work.
   Workaround: None.
