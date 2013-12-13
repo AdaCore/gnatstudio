@@ -982,6 +982,8 @@ package body GNATdoc.Backend.HTML is
       Entity_Entries : JSON_Array;
 
    begin
+      Documentation.Set_Field ("label", Get_Full_Name (Entity));
+
       --  Extract package's "summary" and "description".
 
       Extract_Summary_And_Description (Entity, Summary, Description);

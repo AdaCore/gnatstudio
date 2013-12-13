@@ -87,8 +87,8 @@ function buildDocumentationPage()
 
     /* Build 'Summary' section */
 
-    header = document.createElement('h2');
-    text = document.createTextNode('Summary');
+    header = document.createElement('h1');
+    text = document.createTextNode(GNATdocDocumentation.label);
     header.appendChild(text);
     pane.appendChild(header);
     buildText(pane, GNATdocDocumentation.summary);
