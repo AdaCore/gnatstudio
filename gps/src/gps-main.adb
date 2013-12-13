@@ -2123,16 +2123,19 @@ procedure GPS.Main is
 
       Load_Preferences (GPS_Main.Kernel);
 
+      --  Load the custom keys last, so that they override everything else set
+      --  so far.
+      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
+
       --  All/most actions are now loaded, we can reset the toolbars.
+      --  We must have the keybindings in place already, since the clean up of
+      --  the menus also looks up the actions, and their keyshortcut is loaded
+      --  at that point.
       --  This order prevents some flickering in the toolbar (since otherwise
       --  we would first be displaying empty buttons until their icon is
       --  loaded).
 
       Update_Menus_And_Buttons (GPS_Main.Kernel);
-
-      --  Load the custom keys last, so that they override everything else set
-      --  so far.
-      KeyManager_Module.Load_Custom_Keys (GPS_Main.Kernel);
 
       --  Set default icon for dialogs and windows
       --  ??? as soon as gdk_pixbuf is modified to derive from Glib.GObject
