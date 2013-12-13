@@ -557,7 +557,9 @@ package body GNATdoc.Backend.HTML is
                --  Append source file to the index
 
                Object := Create_Object;
-               Object.Set_Field ("file", "srcs/" & String (File.Base_Name));
+               Object.Set_Field ("label", String (File.Base_Name));
+               Object.Set_Field
+                 ("srcHref", "srcs/" & String (File.Base_Name) & ".html");
                Append (Sources, Object);
             end if;
          end if;

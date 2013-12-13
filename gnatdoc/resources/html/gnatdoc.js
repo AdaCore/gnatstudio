@@ -383,9 +383,9 @@ function buildSourcesIndex(toc)
 
         item = document.createElement('li');
         href = document.createElement('a');
-        href.setAttribute('href', source.file + '.html');
+        href.setAttribute('href', source.srcHref);
         href.setAttribute('target', 'contentView');
-        text = document.createTextNode(source.file);
+        text = document.createTextNode(source.label);
         href.appendChild(text);
         item.appendChild(href);
         list.appendChild(item);
