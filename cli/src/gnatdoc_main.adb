@@ -163,11 +163,23 @@ begin
       Output       => Process_Bodies'Access,
       Switch       => "-b",
       Help         => "Process bodies");
-   Define_Switch
-     (Cmdline,
-      Output       => Process_C_Files'Access,
-      Switch       => "-c",
-      Help         => "Process C/C++ files");
+
+   --  Search for the hidden switch -c in the command line arguments; if
+   --  found then enable it. Done to temporarily hide the support for C/C++
+   --  sources in the alpha version, but at the same time to have the ability
+   --  to execute the C/C++ tests of the testsuite.
+
+   for J in 1 .. Ada.Command_Line.Argument_Count loop
+      if Ada.Command_Line.Argument (J) = "-c" then
+         Define_Switch
+           (Cmdline,
+            Output       => Process_C_Files'Access,
+            Switch       => "-c",
+            Help         => "Process C/C++ files");
+         exit;
+      end if;
+   end loop;
+
    Define_Switch
      (Cmdline,
       Output       => Process_Private_Part'Access,
