@@ -41,5 +41,8 @@ private package GNATdoc.Backend is
 
    function New_Backend (Name : String) return GNATdoc_Backend'Class;
    --  Factory method
+   --  Raises Unknown_Backend if the specified backend is not supported.
+
+   Unknown_Backend : exception;
 
 end GNATdoc.Backend;

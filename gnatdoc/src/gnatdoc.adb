@@ -1236,6 +1236,10 @@ package body GNATdoc is
          Update_Global_Index => True);
 
       Src_Files.Clear; -- Free???
+
+   exception
+      when GNATdoc.Backend.Unknown_Backend =>
+         GNAT.IO.Put_Line ("wrong value for switch --output");
    end Process_Project_Files;
 
    -------------------------

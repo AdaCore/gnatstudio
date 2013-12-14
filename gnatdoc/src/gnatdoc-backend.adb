@@ -33,7 +33,7 @@ package body GNATdoc.Backend is
          return Result : Simple_Backend;
 
       else
-         raise Program_Error;
+         raise Unknown_Backend;
       end if;
    end New_Backend;
 
