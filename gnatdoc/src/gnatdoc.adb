@@ -240,8 +240,8 @@ package body GNATdoc is
       Error_Reported : Boolean := False;
 
       procedure Check_Src_Files;
-      --  Check the contents of Src_Files and remove from the list those files
-      --  which can not be processed
+      --  Check the source files of Prj_Files and remove those files which can
+      --  not be processed.
 
       function Collect_All_Src_Files
         (Prj_Files     : Project_Files_List.Vector;
@@ -369,12 +369,20 @@ package body GNATdoc is
          Prj_Index  : Project_Files_List.Cursor;
          Prj_Srcs   : Project_Files;
 
+         use type Ada.Containers.Count_Type;
+
       --  Start of processing for Check_Files
 
       begin
          Prj_Index := Prj_Files.First;
          while Project_Files_List.Has_Element (Prj_Index) loop
             Prj_Srcs := Project_Files_List.Element (Prj_Index);
+
+            if not Options.Quiet_Mode
+              and then Prj_Files.Length > 1
+            then
+               GNAT.IO.Put_Line ("- Project: " & Prj_Srcs.Project.Name);
+            end if;
 
             File_Index := Prj_Srcs.Src_Files.First;
             while Files_List.Has_Element (File_Index) loop
@@ -634,6 +642,7 @@ package body GNATdoc is
       ------------------------
 
       procedure Sort_Dependencies (Files : in out Files_List.Vector) is
+         Num_Files     : constant Natural  := Natural (Files.Length);
          Pending_Files : Files_List.Vector := Files.Copy;
 
          type Node;
@@ -674,6 +683,8 @@ package body GNATdoc is
          -- Build_Tree --
          ----------------
 
+         Files_Count : Natural := 0;
+
          function Build_Dependencies_Tree
            (File : Virtual_File) return Node_Ptr
          is
@@ -683,6 +694,19 @@ package body GNATdoc is
             Dep_File_Info : Node_Ptr;
             Cursor        : Files_List.Cursor;
          begin
+            Files_Count := Files_Count + 1;
+
+            --  For large number of files we enable an extra output to
+            --  confirm that the tool is not in an infinite loop
+
+            if not Options.Quiet_Mode
+              and then Num_Files > 600
+              and then (Files_Count mod 300) = 0
+            then
+               GNAT.IO.Put_Line
+                 (Files_Count'Img & "/" & To_String (Num_Files));
+            end if;
+
             Cursor := Pending_Files.Find (File);
             Pending_Files.Delete (Cursor);
 
@@ -901,6 +925,8 @@ package body GNATdoc is
       --  All the C and C++ header files which transitively included by all
       --  the header files of the project
 
+      use type Ada.Containers.Count_Type;
+
    --  Start of processing for Process_Files
 
    begin
@@ -939,6 +965,12 @@ package body GNATdoc is
          GNAT.IO.Put_Line ("Collecting source files");
       end if;
 
+      --  Check the source files of Prj_Files and remove those files which
+      --  can not be processed. This action it not done at later stage (that
+      --  is, checking directly the full list of source files All_Src_Files)
+      --  because the backend needs this information to generate the list of
+      --  files processed per project.
+
       Check_Src_Files;
 
       if not Have_Files (Prj_Files) then
@@ -954,6 +986,14 @@ package body GNATdoc is
       All_Src_Files := Collect_All_Src_Files (Prj_Files, All_Include_Files);
 
       if not Options.Quiet_Mode then
+
+         --  For large projects enable an extra output
+
+         if All_Src_Files.Length > 400 then
+            GNAT.IO.Put_Line
+              (All_Src_Files.Length'Img & " files to process");
+         end if;
+
          GNAT.IO.Put_Line ("Computing file dependencies");
       end if;
 
