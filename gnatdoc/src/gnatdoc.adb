@@ -704,7 +704,10 @@ package body GNATdoc is
               and then (Files_Count mod 300) = 0
             then
                GNAT.IO.Put_Line
-                 (Files_Count'Img & "/" & To_String (Num_Files));
+                 (Files_Count'Img
+                    & "/"
+                    & To_String (Num_Files)
+                    & " files");
             end if;
 
             Cursor := Pending_Files.Find (File);
@@ -1049,10 +1052,21 @@ package body GNATdoc is
 
          if Tree_List.Has_Element (All_Trees.First) then
             declare
+               Num_Files : constant Natural := Natural (All_Src_Files.Length);
+
                Cursor           : Tree_List.Cursor;
                Tree             : aliased Tree_Type;
                Is_C_Header_File : Boolean;
+               Files_Count      : Natural := 0;
             begin
+               --  For large projects enable an extra output
+
+               if not Options.Quiet_Mode
+                 and then All_Src_Files.Length > 400
+               then
+                  GNAT.IO.Put_Line ("Checking consistency");
+               end if;
+
                --  Verify the trees and generate their output files. This
                --  cannot be done before because as part of decorating a tree
                --  the frontend may complete the decoration of entities defined
@@ -1062,6 +1076,19 @@ package body GNATdoc is
 
                Cursor := All_Trees.First;
                while Tree_List.Has_Element (Cursor) loop
+                  Files_Count := Files_Count + 1;
+
+                  if not Options.Quiet_Mode
+                    and then Num_Files > 600
+                    and then (Files_Count mod 300) = 0
+                  then
+                     GNAT.IO.Put_Line
+                       (Files_Count'Img
+                         & "/"
+                         & To_String (Num_Files)
+                         & " files");
+                  end if;
+
                   Tree := Tree_List.Element (Cursor);
 
                   Check_Tree (Context, Tree'Access, All_Src_Files);
@@ -1150,12 +1177,36 @@ package body GNATdoc is
                   end if;
                end Set_Alias;
 
-               Cursor : Tree_List.Cursor;
-               Tree   : aliased Tree_Type;
+               Num_Files : constant Natural := Natural (All_Src_Files.Length);
+
+               Cursor      : Tree_List.Cursor;
+               Tree        : aliased Tree_Type;
+               Files_Count : Natural := 0;
 
             begin
+               --  For large projects enable an extra output
+
+               if not Options.Quiet_Mode
+                 and then All_Src_Files.Length > 400
+               then
+                  GNAT.IO.Put_Line ("Generating documentation");
+               end if;
+
                Cursor := All_Trees.First;
                while Tree_List.Has_Element (Cursor) loop
+                  Files_Count := Files_Count + 1;
+
+                  if not Options.Quiet_Mode
+                    and then Num_Files > 600
+                    and then (Files_Count mod 300) = 0
+                  then
+                     GNAT.IO.Put_Line
+                       (Files_Count'Img
+                         & "/"
+                         & To_String (Num_Files)
+                         & " files");
+                  end if;
+
                   Tree := Tree_List.Element (Cursor);
 
                   For_All (Tree.All_Entities, Set_Idepth'Access);
@@ -1172,20 +1223,28 @@ package body GNATdoc is
 
                   Tree_List.Next (Cursor);
                end loop;
-
-               if not Options.Quiet_Mode then
-                  Kernel.Messages_Window.Insert
-                    (-("info: Documentation generated in ") &
-                       Get_Doc_Directory (Kernel).Display_Full_Name,
-                     Mode => Info);
-               end if;
             end;
          end if;
       end;
 
+      --  For large projects enable an extra output
+
+      if not Options.Quiet_Mode
+        and then All_Src_Files.Length > 400
+      then
+         GNAT.IO.Put_Line ("Generating indexes");
+      end if;
+
       Backend.Finalize (Update_Global_Index);
 
       Templates_Parser.Release_Cache;
+
+      if not Options.Quiet_Mode then
+         Kernel.Messages_Window.Insert
+           (-("info: Documentation generated in ") &
+              Get_Doc_Directory (Kernel).Display_Full_Name,
+            Mode => Info);
+      end if;
 
       if Options.Display_Time then
          Time.Print_Time (Context);

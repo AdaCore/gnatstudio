@@ -2320,13 +2320,18 @@ package body GNATdoc.Frontend.Builder is
            and then not Context.Options.Quiet_Mode
            and then Entities_Count mod 300 = 0
          then
-            GNAT.IO.Put_Line
-              ("   "
-               & (+File.Base_Name)
-               & ":"
-               & To_String (Entities_Count)
-               & "/"
-               & To_String (Total_Entities_Count));
+            declare
+               Percent : constant Float :=
+                 (Float (Entities_Count) / Float (Total_Entities_Count))
+                   * 100.0;
+            begin
+               GNAT.IO.Put_Line
+                 ("   "
+                  & (+File.Base_Name)
+                  & ": "
+                  & To_String (Natural (Percent))
+                  & "%");
+            end;
          end if;
 
          Skip_This_Entity := False;
