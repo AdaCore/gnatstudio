@@ -266,6 +266,10 @@ package body GNATdoc is
         (Prj_Files : Project_Files_List.Vector) return Boolean;
       --  Return true if some project in Prj_Files has a file to be processed
 
+      function Is_Large_Project return Boolean;
+      --  Return true if the project is large enough to enable additional
+      --  messages.
+
       type Stages is (Frontend_Stage, Backend_Stage);
 
       procedure Report_Error (File : Virtual_File; Stage : Stages);
@@ -637,6 +641,16 @@ package body GNATdoc is
          Append (Subtree);
       end Compute_Dependencies;
 
+      ----------------------
+      -- Is_Large_Project --
+      ----------------------
+
+      function Is_Large_Project return Boolean is
+         use type Ada.Containers.Count_Type;
+      begin
+         return All_Src_Files.Length > 400;
+      end Is_Large_Project;
+
       ------------------------
       --  Sort_Dependencies --
       ------------------------
@@ -928,8 +942,6 @@ package body GNATdoc is
       --  All the C and C++ header files which transitively included by all
       --  the header files of the project
 
-      use type Ada.Containers.Count_Type;
-
    --  Start of processing for Process_Files
 
    begin
@@ -992,7 +1004,7 @@ package body GNATdoc is
 
          --  For large projects enable an extra output
 
-         if All_Src_Files.Length > 400 then
+         if Is_Large_Project then
             GNAT.IO.Put_Line
               (All_Src_Files.Length'Img & " files to process");
          end if;
@@ -1001,6 +1013,12 @@ package body GNATdoc is
       end if;
 
       Sort_Dependencies (All_Src_Files);
+
+      if not Options.Quiet_Mode
+        and then Is_Large_Project
+      then
+         GNAT.IO.Put_Line ("Processing files");
+      end if;
 
       --  Process all the files
 
@@ -1062,7 +1080,7 @@ package body GNATdoc is
                --  For large projects enable an extra output
 
                if not Options.Quiet_Mode
-                 and then All_Src_Files.Length > 400
+                 and then Is_Large_Project
                then
                   GNAT.IO.Put_Line ("Checking consistency");
                end if;
@@ -1187,7 +1205,7 @@ package body GNATdoc is
                --  For large projects enable an extra output
 
                if not Options.Quiet_Mode
-                 and then All_Src_Files.Length > 400
+                 and then Is_Large_Project
                then
                   GNAT.IO.Put_Line ("Generating documentation");
                end if;
@@ -1230,7 +1248,7 @@ package body GNATdoc is
       --  For large projects enable an extra output
 
       if not Options.Quiet_Mode
-        and then All_Src_Files.Length > 400
+        and then Is_Large_Project
       then
          GNAT.IO.Put_Line ("Generating indexes");
       end if;
