@@ -59,6 +59,8 @@ with Completion.History; use Completion.History;
 
 with Completion_Utils; use Completion_Utils;
 with Engine_Wrappers;  use Engine_Wrappers;
+with GPS.Editors;
+with Ada.Containers.Indefinite_Holders;
 
 package Completion_Window is
 
@@ -95,15 +97,17 @@ package Completion_Window is
    --  Internal initialization procedure
 
    procedure Show
-     (Window         : Completion_Window_Access;
-      View           : Gtk_Text_View;
-      Buffer         : Gtk_Text_Buffer;
-      Iter           : Gtk_Text_Iter;
-      Mark           : Gtk_Text_Mark;
-      Lang           : Language_Access;
-      Complete       : Boolean;
-      Volatile       : Boolean;
-      Mode           : Smart_Completion_Type);
+     (Window   : Completion_Window_Access;
+      View     : Gtk_Text_View;
+      Buffer   : Gtk_Text_Buffer;
+      Iter     : Gtk_Text_Iter;
+      Mark     : Gtk_Text_Mark;
+      Lang     : Language_Access;
+      Complete : Boolean;
+      Volatile : Boolean;
+      Mode     : Smart_Completion_Type;
+      Editor   : GPS.Editors.Editor_Buffer'Class
+                   := GPS.Editors.Nil_Editor_Buffer);
    --  Attach the completion window to a text view, and set the completion
    --  to start on the given mark.
    --  Mark is set on the position which the cursor should occupy after a
@@ -225,9 +229,15 @@ private
       --  access to the parent completion window
    end record;
 
+   use type GPS.Editors.Editor_Buffer;
+
+   package Editors_Holders is
+     new Ada.Containers.Indefinite_Holders (GPS.Editors.Editor_Buffer'Class);
+
    type Completion_Window_Record is new Gtk_Window_Record with record
       Explorer : Completion_Explorer_Access;
 
+      Editor     : Editors_Holders.Holder := Editors_Holders.Empty_Holder;
       Text       : Gtk_Text_View;
       Buffer     : Gtk_Text_Buffer;
       Start_Mark : Gtk_Text_Mark;

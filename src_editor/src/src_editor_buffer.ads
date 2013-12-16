@@ -62,6 +62,9 @@ package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
+   function "+" (B : access Source_Buffer_Record) return Source_Buffer
+   is (Source_Buffer (B));
+
    type Multi_Cursor is private;
    type Multi_Cursor_Access is access all Multi_Cursor;
 
@@ -545,6 +548,11 @@ package Src_Editor_Buffer is
    --  highlight preference. This routine handles simple text and comments. The
    --  indentation and comment detection is done according to the first line
    --  selected.
+
+   procedure Newline_And_Indent
+     (Buffer : access Source_Buffer_Record;
+      As_Is : Boolean);
+   --  Insert a newline and indent atomically
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
    --  Return true if auto-indentation is supported for this buffer, and if

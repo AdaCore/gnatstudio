@@ -311,6 +311,9 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_Buffer --
    -----------------------
 
+   overriding procedure Newline_And_Indent
+     (This : Src_Editor_Buffer);
+
    overriding procedure Close (This : Src_Editor_Buffer; Force : Boolean);
 
    overriding function New_Location
@@ -742,6 +745,16 @@ package body Src_Editor_Module.Editors is
 
       return Src_Editor_Mark'(Editor_Mark with Mark => New_Ref);
    end Create_Editor_Mark;
+
+   ------------------------
+   -- Newline_And_Indent --
+   ------------------------
+
+   overriding procedure Newline_And_Indent
+     (This : Src_Editor_Buffer) is
+   begin
+      This.Contents.Buffer.Newline_And_Indent (False);
+   end Newline_And_Indent;
 
    -----------
    -- Close --

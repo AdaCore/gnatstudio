@@ -923,7 +923,6 @@ package body Completion_Module is
                        (I => First (Data.Result, Kernel.Databases))));
 
                Set_History (Win, Completion_Module.Completion_History);
-
                Show
                  (Window   => Win,
                   View     => Gtk_Text_View (View),
@@ -933,7 +932,8 @@ package body Completion_Module is
                   Lang     => Lang,
                   Complete => Complete,
                   Volatile => Volatile,
-                  Mode     => Smart_Completion_Pref);
+                  Mode     => Smart_Completion_Pref,
+                  Editor   => Buffer.Get_Editor_Buffer.all);
             end if;
          end;
       end if;

@@ -404,6 +404,9 @@ package GPS.Editors is
    -- Editor_Buffer --
    -------------------
 
+   procedure Newline_And_Indent
+     (This : Editor_Buffer) is abstract;
+
    function New_Location
      (This   : Editor_Buffer;
       Line   : Integer;
@@ -888,6 +891,9 @@ private
    -----------------------
 
    type Dummy_Editor_Buffer is new Editor_Buffer with null record;
+
+   overriding procedure Newline_And_Indent
+     (This : Dummy_Editor_Buffer) is null;
 
    overriding procedure Close
      (This : Dummy_Editor_Buffer; Force : Boolean) is null;

@@ -1472,7 +1472,7 @@ package body Completion_Window is
       C       : Character;
       Dummy   : Boolean;
       pragma Unreferenced (Dummy);
-
+      use type Editors_Holders.Holder;
    begin
       if Unichar <= 16#80# then
          C := Character'Val (Unichar);
@@ -1520,7 +1520,11 @@ package body Completion_Window is
                   Select_Next (Completion_Window_Access (Window));
                   return Complete;
                else
-                  return False;
+                  if Window.Editor /= Editors_Holders.Empty_Holder then
+                     Window.Editor.Element.Newline_And_Indent;
+                  else
+                     return False;
+                  end if;
                end if;
 
             else
@@ -1819,7 +1823,9 @@ package body Completion_Window is
       Lang     : Language_Access;
       Complete : Boolean;
       Volatile : Boolean;
-      Mode     : Smart_Completion_Type)
+      Mode     : Smart_Completion_Type;
+      Editor   : GPS.Editors.Editor_Buffer'Class
+                  := GPS.Editors.Nil_Editor_Buffer)
    is
       Iter_Coords        : Gdk_Rectangle;
       Window_X, Window_Y : Gint;
@@ -1841,11 +1847,11 @@ package body Completion_Window is
       Tree_Iter               : Gtk_Tree_Iter;
 
    begin
+      Window.Editor := Editors_Holders.To_Holder (Editor);
       Window.Text := View;
       Window.Buffer := Buffer;
       Window.Start_Mark := Create_Mark (Buffer, "", Iter);
       Window.End_Mark := Mark;
-
       Window.Mode := Mode;
 
       Get_Iter_At_Mark (Buffer, Cursor, Get_Insert (Buffer));
