@@ -14,6 +14,11 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Use the "find or replace" menu to locate the entity or the
               omni-search facility.
 
+- MC11-034: GPS: Block completions not working in all cases
+  Problem:    The block completion plug-in was not working with simple begin
+              blocks, generic packages, procedures and functions.
+  Workaround: Complete the blocks manually.
+
 - MC05-001: GPS: Keyboard not working in editor's contextual menus
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
               the editor rather than by the menu
