@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MC13-030: GPS: no xref for some C++ operators
+  Problem:    A large number of operators can be redefined in C++, and GPS
+              was missing support for a number of them (type conversion,
+              comma operator, bitwise operators, among others)
+  Workaround: In a lot of cases, GPS falls back on a different xref engine
+              in this case, although there might be missing references.
+
 - MC11-062: GPS.Entity.category now returns useful value
   Problem:    This python function had been deprecated in GPS 6.0.0, but is
               in fact useful in some scripts, so it has been put back.
@@ -15,6 +22,12 @@ Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
               is_type, which has now been fixed as well.
   Workaround: In a lot of cases, the functions GPS.Entity.is_* provide more
               accurate information than GPS.Entity.category.
+
+- MC09-024: GPS: no xref generated for C++ files overriding '!='
+  Problem:    gnatinspect fails to parse a xref file that includes
+              overridings of the '!=' operator
+  Workaround: In a lot of cases, GPS falls back on a different xref engine
+              in this case, although there might be missing references.
 
 - MC04-005: GPS: default fonts difficult to read.
   Problem:    On some versions of Linux, the default selections of fonts are
