@@ -2,74 +2,71 @@
 Welcome to the GNAT Programming Studio
 **************************************
 
-GPS is a complete integrated development environment that gives access
-to a wide range of tools and integrates them smoothly. It integrates
-especially well with AdaCore's tools, but can easily be extended to
-drive other tools, through small plug-ing written in python.
+GPS is a complete integrated development environment.  It integrates with a
+wide range of tools to give easy access to each. It integrates especially
+well with AdaCore's tools, but can easily be extended to work with other
+tools through small plug-ing written in Python.
 
-Here is a rough list of the GNAT Programming Studio features:
+Here's a summary of the features of the GNAT Programming Studio:
 
 * :ref:`Multiple_Document_Interface`
 
-  GPS is based on a multiple document interface, which allows you to
-  organize windows the way you want, float them to other screens,
-  drag them to other places to reorganize your desktop, and of course
-  restore the desktop the next time GPS is restarted.
+  GPS is based on a multiple document interface, allowing you to organize
+  windows the way you want and organize your desktop by floating them to
+  other screens or dragging them to any location.  (GPS restores the
+  desktop the next time it's restarted.)
 
 * Built-in editor (:ref:`Editing_Files`)
 
   Fully customizable editor with syntax highlighting, smart completion of text,
   multiple views of the same file, automatic indentation, block-level
   navigation, support for Emacs keybindings, code folding, refactoring, visual
-  comparison of files, alias expansion,...
+  comparison of files, and alias expansion, among other features.
 
 * Support for compile/build/run cycle (:ref:`Compilation/Build`)
 
-  Any command line compiler can be integrated in GPS, with built in
-  support for GNAT, gcc and make. Error messages are easily navigable,
-  and automatic code fixing is provided for a number of typical error
-  messages.
-  This includes support for cross-compilers, or running compilers on
-  separate hosts than the machine on which GPS itself is running.
+  Any compiler called by a command line can be integrated in GPS, with
+  built in support for GNAT, `gcc` and `make`.  You can easily navigate
+  error messages and automatic code fixing is provided for many common
+  errors.  GPS includes support for cross-compilers (running compilers on a
+  different machine than the one on which GPS is running).
 
 * Project management (:ref:`Project_Handling`)
 
   Project files (editable either graphically or manually) are used to
-  describe the location of sources, their naming schemes, how they
-  should be built,...
-  Graphical browsers exist to analyze the dependencies between your
-  projects and the sources within your projects.
+  describe attributes of a project, including the location of sources,
+  their naming schemes, and how they should be built.  A graphical browser
+  is provided to analyze both dependencies between your projects and
+  between sources within your projects.
 
 * Integration with various :ref:`Version_Control_System`
 
-  CVS, subversion, git and clearcase are supported out of the box, but
-  others can be added by customizing some XML plug-ins.
+  CVS, subversion, git and ClearCase are supported out of the box.  You can
+  add support for others by customizing some XML plug-ins.
 
 * Intelligent :ref:`Source_Navigation`
 
-  By leveraging on information provided by the compilers, or using
-  its own parses, GPS makes it possible to find the declaration of
-  entities, their references,... It also provides advanced capabilities
-  like call graphs, UML-like entity browsers,...
+  By leveraging on information provided by the compilers and using its own
+  parsers, GPS allows you to find program information such as the
+  declaration of entities and their references.  It also provides advanced
+  capabilities such as call graphs and UML-like entity browsers.
 
 * Full debugger integration (:ref:`Debugging`)
 
-  GPS integrates fully with gdb, and provides multiple graphical views
-  to monitor the state of your application, include a call stack, a
-  visual display for the values of the variables, a breakpoint editor,...
+  GPS fully integrates with `gdb` and provides multiple graphical views to
+  monitor the state of your application, including a call stack, a visual
+  display for the values of the variables, and a breakpoint editor.
 
 * Integration with code analysis tools (:ref:`Tools`)
 
-  GPS integrates well with various command-line tools like gcov and
-  GNATcoverage (for the coverage of your code), codepeer and Spark
-  (to analyze your code),... In a lot of cases, it provides nice
-  graphical rendering of their output, often integrated with the editor
-  itself so that the information is available where you need it.
+  GPS integrates tightly with various command-line tools such as `gcov` and
+  GNATcoverage (for the coverage of your code) and CodePeer and Spark (to
+  analyze your code). In most cases, it provides graphical rendering of
+  their output, often integrated with the editor itself so the information
+  is available where you need it.
 
 * Fully customizable (:ref:`Customizing_and_Extending_GPS`)
 
-  GPS provides an extensive python API which allows you to customize
-  existing features, or develop your own new plug-ins easily.
-  Simpler customization can be done through one of the numerous
-  preferences or local settings.
-
+  GPS provides an extensive Python API, allowing you to customize existing
+  features or easily develop your own new plug-ins.  Simpler customization
+  can be done through one of the numerous preferences or local settings.
