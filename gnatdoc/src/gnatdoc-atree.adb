@@ -691,6 +691,16 @@ package body GNATdoc.Atree is
       end In_Neverending_Loop;
 
    begin
+      --  Workaround missing value of LL.Scope() in subprogram which causes
+      --  wrong computation of the full name.
+
+      if No (LL.Get_Scope (E))
+        and then Is_Subprogram (E)
+        and then Is_Expanded_Name (LL.Get_Full_Name (E))
+      then
+         return LL.Get_Full_Name (E);
+      end if;
+
       Set_Unbounded_String (Full_Name, Get_Short_Name (E));
 
       Prev_Scope := E;
