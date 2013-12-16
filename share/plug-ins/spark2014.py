@@ -635,8 +635,7 @@ class GNATprove_Message(GPS.Message):
         for sloc in (self.lines or []):
             if sloc.file() != f:
                 f = sloc.file()
-                buf = GPS.EditorBuffer.get(f)
-                goto_location(sloc)
+                buf = GPS.EditorBuffer.get(f, open=False)
                 if buf:
                     overlay = get_overlay(buf,"trace")
                     buf.remove_overlay(overlay)
@@ -647,7 +646,7 @@ class GNATprove_Message(GPS.Message):
            highlighting of other messages
         """
         self.clear_trace()
-        buf = GPS.EditorBuffer.get(self.get_file())
+        buf = GPS.EditorBuffer.get(self.get_file(), open=False)
         for k in Overlays:
             o = get_overlay(buf, k)
             buf.remove_overlay(o)
@@ -864,9 +863,12 @@ def compute_subp_sloc(self):
        currently in"""
     try:
         curloc = self.location()
-        buf = GPS.EditorBuffer.get(curloc.file())
-        edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
-        start_loc = subprogram_start(edloc)
+        buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+        if buf:
+            edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
+            start_loc = subprogram_start(edloc)
+        else:
+            return None
     except:
         return None
 
