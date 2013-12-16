@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MC13-014: GPS: spark2014.py plug-in changes focus to previous file
+  Problem:    In some cases, when running the SPARK tools using this plug-in,
+              an old file buffer will be opened even though no message was
+              issued concerning this source file.
+  Workaround: Select the desired file buffer manually.
+
 - MC13-030: GPS: no xref for some C++ operators
   Problem:    A large number of operators can be redefined in C++, and GPS
               was missing support for a number of them (type conversion,
