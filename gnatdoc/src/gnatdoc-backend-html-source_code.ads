@@ -24,11 +24,12 @@ private package GNATdoc.Backend.HTML.Source_Code is
    type Source_Code_Printer is tagged limited private;
 
    not overriding procedure Start_File
-     (Self       : in out Source_Code_Printer;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Buffer     : not null GNAT.Strings.String_Access;
-      First_Line : Positive;
-      Continue   : in out Boolean);
+     (Self         : in out Source_Code_Printer;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Buffer       : not null GNAT.Strings.String_Access;
+      First_Line   : Positive;
+      Show_Private : Boolean;
+      Continue     : in out Boolean);
    --  Called on start of processing source code file. When subprograms sets
    --  Continue to False processing is terminated and End_File doesn't
    --  executed.
@@ -142,6 +143,7 @@ private
 
       Scope        : GNATdoc.Atree.Entity_Id;
       --  Current scope entity to suppress private part.
+      Show_Private : Boolean;
    end record;
 
 end GNATdoc.Backend.HTML.Source_Code;

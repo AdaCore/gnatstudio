@@ -74,6 +74,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
          if Slice_Last >= Slice_First then
             if No (Self.Scope)
+              or else Self.Show_Private
               or else Self.Current_Line
                 not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
                    .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
@@ -104,6 +105,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
          else
             if No (Self.Scope)
+              or else Self.Show_Private
               or else Self.Current_Line
                 not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
                   .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
@@ -304,10 +306,10 @@ package body GNATdoc.Backend.HTML.Source_Code is
          return False;
       end if;
 
-      return
-        LL.Get_Location (Entity).Line
-          in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
-            .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line;
+      return not Self.Show_Private
+        and LL.Get_Location (Entity).Line
+              in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
+                .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line;
    end Is_In_Private_Part;
 
    ------------------
@@ -386,11 +388,12 @@ package body GNATdoc.Backend.HTML.Source_Code is
    ----------------
 
    not overriding procedure Start_File
-     (Self       : in out Source_Code_Printer;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Buffer     : not null GNAT.Strings.String_Access;
-      First_Line : Positive;
-      Continue   : in out Boolean)
+     (Self         : in out Source_Code_Printer;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Buffer       : not null GNAT.Strings.String_Access;
+      First_Line   : Positive;
+      Show_Private : Boolean;
+      Continue     : in out Boolean)
    is
       pragma Unreferenced (Continue);
 
@@ -398,6 +401,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Self.File         := File;
       Self.Buffer       := Buffer;
       Self.Current_Line := First_Line;
+      Self.Show_Private := Show_Private;
    end Start_File;
 
    -----------------
