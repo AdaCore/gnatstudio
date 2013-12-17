@@ -24,8 +24,7 @@ Example of use:
 action_name = "Block Completion"
 ## Name of the action and the menu defined by this package.
 
-import re
-import GPS
+import re, string, GPS
 logger = GPS.Logger("block_complete")
 
 # BLOCKS_DEFS is a dictionary describing the action to be done for each block.
@@ -42,99 +41,77 @@ logger = GPS.Logger("block_complete")
 #                         pattern.
 
 BLOCKS_DEFS = {
-    'CAT_IF_STATEMENT':       ['end if;', ''],
-    'CAT_CASE_STATEMENT':     ['end case;', ''],
-    'CAT_CASE_INSIDE_RECORD': ['end case;', ''],
-    'CAT_LOOP_STATEMENT':     [r'end loop \1;', r'\s*([^ ]+)\s*:.*?loop.*'],
-    'CAT_RETURN_BLOCK':       [r'end return;', ''],
-    'CAT_PROCEDURE':          [r'end \1;', r'.*?procedure\s+([^ \n(]+).*'],
-    'CAT_FUNCTION':           [r'end \1;', r'.*?function\s+([^ \n(]+).*'],
-    'CAT_DECLARE_BLOCK':      [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_SIMPLE_BLOCK':       [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_PACKAGE':            [r'end \2;',
-                               r'.*?package\s+(body\s+)?([^ \n]+).*'],
-    'CAT_STRUCTURE':          ['end record;', ''],
-    'CAT_CLASS':              ['end record;', ''],
-    'CAT_PROTECTED':          [r'end \3;',
-                               r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
-    'CAT_TASK':               [r'end \3;',
-                               r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
-    'CAT_ENTRY':              [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
-}
+    'CAT_IF_STATEMENT'       : ['end if;', ''],
+    'CAT_CASE_STATEMENT'     : ['end case;', ''],
+    'CAT_CASE_INSIDE_RECORD' : ['end case;', ''],
+    'CAT_LOOP_STATEMENT'     : [r'end loop \1;', r'\s*([^ ]+)\s*:.*?loop.*'],
+    'CAT_RETURN_BLOCK'       : [r'end return;', ''],
+    'CAT_PROCEDURE'          : [r'end \1;', r'.*?procedure\s+([^ \n(]+).*'],
+    'CAT_FUNCTION'           : [r'end \1;', r'.*?function\s+([^ \n(]+).*'],
+    'CAT_DECLARE_BLOCK'      : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
+    'CAT_SIMPLE_BLOCK'       : [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
+    'CAT_PACKAGE'            : [r'end \2;', r'.*?package\s+(body\s+)?([^ \n]+).*'],
+    'CAT_STRUCTURE'          : ['end record;', ''],
+    'CAT_CLASS'              : ['end record;', ''],
+    'CAT_PROTECTED'          : [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
+    'CAT_TASK'               : [r'end \3;', r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
+    'CAT_ENTRY'              : [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
+    }
 
 
 def on_gps_started(hook_name):
-    GPS.Hook("character_added").add(block_complete_on_keyword)
-    "Initializes this module."
-    init = """<action name='%(action)s' category='Editor'>
-      <description>End the current Ada block, by providing the appropriate "end" statement</description>
-       <filter language="ada" error='%(action)s requires an Ada file' />
-       <shell lang="python" output="none">block_completion.block_complete("%%F");</shell>
-    </action>""" % {"action": action_name}
-    GPS.parse_xml(init)
+   "Initializes this module."
+   init = """<action name='%(action)s' category='Editor'>
+     <description>End the current Ada block, by providing the appropriate "end" statement</description>
+      <filter language="ada" error='%(action)s requires an Ada file' />
+      <shell lang="python" output="none">block_completion.block_complete("%%F");</shell>
+   </action>""" % {"action": action_name}
+   GPS.parse_xml(init)
 
 
 def block_complete_on_location(buffer, location):
-    # Check if we need to insert a new-line character
-    start = GPS.EditorLocation(buffer, location.line(), 1)
-    end = GPS.EditorLocation(buffer, location.line(), location.column())
+   # Check if we need to insert a new-line character
+   start = GPS.EditorLocation(buffer, location.line(), 1)
+   end = GPS.EditorLocation(buffer, location.line(), location.column())
 
-    block = location.block_type()
-    logger.log(str(block))
+   # A new-line character is inserted if there is some text on the left
+   # of the current cursor position.
+   if buffer.get_chars(start, end).strip() != "":
+      buffer.insert(location, '\n')
+      location = location.forward_line()
 
-    if block not in BLOCKS_DEFS:
-        return
+   block = location.block_type()
+   logger.log(str(block))
 
-    (term, pattern) = BLOCKS_DEFS[block]
+   if block not in BLOCKS_DEFS:
+      return
 
-    if pattern != '':
-        # Retrieve the line at the start of the block
+   (term, pattern) = BLOCKS_DEFS[block]
 
-        start = GPS.EditorLocation(buffer, location.block_start_line(), 1)
-        end = location
+   if pattern != '':
+      # Retrieve the line at the start of the block
 
-        bs_content = buffer.get_chars(start, end)
-        logger.log(bs_content)
+      start = GPS.EditorLocation(buffer, location.block_start_line(), 1)
+      end = location
 
-        re_pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
+      bs_content = buffer.get_chars(start, end)
+      logger.log(bs_content)
 
-        term_re_str = ""
-        if re_pattern.match(bs_content):
-            term = re_pattern.sub(term, bs_content)
-            termarray = term[:-1].split(" ")
-            termarray[1] = "({0})?".format(termarray[1])
-            term_re_str = ".*?" + r'\s*'.join(termarray + [";"])
-        else:
-            # The pattern does not match the content, remove the tags
-            term = term.replace(r' \1', '')
-            term = term.replace(r'\1', '')
-            term = term.replace(r' \2', '')
-            term = term.replace(r'\2', '')
+      re_pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
 
-    if not term_re_str:
-        term_re_str = ".*?" + r'\s*'.join(term[:-1].split(" ") + [";"])
+      if re_pattern.match(bs_content):
+         term = re_pattern.sub(term, bs_content)
+      else:
+         # The pattern does not match the content, remove the tags
+         term = term.replace(r' \1', '')
+         term = term.replace(r'\1', '')
+         term = term.replace(r' \2', '')
+         term = term.replace(r'\2', '')
 
-    term_re = re.compile(term_re_str, re.IGNORECASE | re.DOTALL)
-    end_block_chars = buffer.get_chars(
-        location.block_end(), location.block_end().forward_line(-1)
-    )
-
-    print term_re_str.__repr__()
-    print end_block_chars
-    print term_re.match(end_block_chars)
-
-    if not term_re.match(end_block_chars):
-        buffer.start_undo_group()
-
-        # A new-line character is inserted if there is some text on the left
-        # of the current cursor position.
-        if buffer.get_chars(start, end).strip() != "":
-            buffer.insert(location, '\n')
-            location = location.forward_line()
-
-        buffer.insert(location, term)
-        buffer.indent(location, location)
-        buffer.finish_undo_group()
+   buffer.start_undo_group()
+   buffer.insert (location, term)
+   buffer.indent (location, location)
+   buffer.finish_undo_group()
 
 
 def block_complete(filename):
@@ -148,20 +125,6 @@ def block_complete(filename):
    ev = eb.current_view()
    el = ev.cursor()
    block_complete_on_location(eb, el)
-
-def block_complete_on_keyword(a, b, c):
-    print a, b, c
-    print "IN BLOCK COMPLETE ON KW"
-    ed = GPS.EditorBuffer.get()
-    curs = ed.current_view().cursor()
-    if chr(c) == "\n":
-        kw = ed.get_chars(curs, curs.forward_line(-1)).strip().split(" ")[-1].strip()
-        print kw.__repr__()
-        if kw in ["begin", "then", "else", "loop"]:
-            block_complete_on_location(ed, curs)
-            ed.current_view().goto(curs)
-            GPS.execute_action("/Edit/Format Selection")
-    # block_complete_on_location(ed, ed.current_view().cursor())
 
 
 GPS.Hook("gps_started").add(on_gps_started)

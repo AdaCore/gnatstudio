@@ -33,11 +33,6 @@ package Src_Editor_Buffer.Hooks is
       Character   : Gunichar;
       Interactive : Boolean;
    end record;
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access File_Edition_Hooks_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access;
    type File_Edition_Hooks_Args_Access is access all
      File_Edition_Hooks_Args'Class;
 

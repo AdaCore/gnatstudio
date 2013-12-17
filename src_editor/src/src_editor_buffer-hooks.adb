@@ -16,10 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Src_Editor_Buffer.Hooks is
 
@@ -27,27 +25,6 @@ package body Src_Editor_Buffer.Hooks is
      null record;
    overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args);
    --  See inherited documentation
-
-   --------------------------
-   -- Create_Callback_Data --
-   --------------------------
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access File_Edition_Hooks_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access
-   is
-      F : constant Class_Instance :=
-         GPS.Kernel.Scripts.Create_File (Script, Data.File);
-      D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 3));
-   begin
-      Set_Nth_Arg (D.all, 1, To_String (Hook));
-      Set_Nth_Arg (D.all, 2, F);
-      Set_Nth_Arg (D.all, 3, Integer (Data.Character));
-      return D;
-   end Create_Callback_Data;
 
    -------------
    -- Destroy --
@@ -107,7 +84,6 @@ package body Src_Editor_Buffer.Hooks is
          Character   => Character,
          Interactive => Interactive);
    begin
-      Put_Line ("IN CHAR ADDED");
       Run_Hook
         (Buffer.Kernel, Character_Added_Hook, Data'Unchecked_Access);
    end Character_Added;
