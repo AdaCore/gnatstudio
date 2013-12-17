@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.1.0 / GNATbench 2.9.0
 -------------------------------------------
 
+NF-61-MC17-032 GPS: Improved auto-align end of line comments (2013-12-17)
+
+  Align end of line comments now ignores comments that don't have code before
+  them.
+
 NF-61-MC02-033 GPS: Minor enhancements to the tip-of-the-day (2013-12-02)
 
   The "tip of the day" dialog can now be moved, and the text for the

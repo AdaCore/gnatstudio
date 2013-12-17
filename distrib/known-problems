@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- MC16-032: GPS: Source window not scrolling after auto complete.
+  Problem:    When auto-completing manually (via Ctrl+Space for example), if
+              the cursor location after the completion is outside of the
+              screen, then the source editor won't scroll to show the cursor.
+  Workaround: Scroll manually.
+
 - MC09-024: GPS: C++ sources navigation not working
   Problem:    When the C++ sources have classes which define the operator !=
               the navigation through the C++ files does not work.
