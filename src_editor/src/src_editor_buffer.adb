@@ -1916,7 +1916,7 @@ package body Src_Editor_Buffer is
       --  than one character, so as not to have to perform UTF8 computations
       --  in these cases.
 
-      if Number = 0 and then Length < 4 then
+      if Length < 4 then
          declare
             Index : Natural;
          begin

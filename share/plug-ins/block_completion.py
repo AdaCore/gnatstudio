@@ -64,6 +64,7 @@ BLOCKS_DEFS = {
 
 
 def on_gps_started(hook_name):
+    GPS.Hook("character_added").add(block_complete_on_keyword)
     "Initializes this module."
     init = """<action name='%(action)s' category='Editor'>
       <description>End the current Ada block, by providing the appropriate "end" statement</description>
@@ -77,12 +78,6 @@ def block_complete_on_location(buffer, location):
     # Check if we need to insert a new-line character
     start = GPS.EditorLocation(buffer, location.line(), 1)
     end = GPS.EditorLocation(buffer, location.line(), location.column())
-
-    # A new-line character is inserted if there is some text on the left
-    # of the current cursor position.
-    if buffer.get_chars(start, end).strip() != "":
-        buffer.insert(location, '\n')
-        location = location.forward_line()
 
     block = location.block_type()
     logger.log(str(block))
@@ -103,8 +98,12 @@ def block_complete_on_location(buffer, location):
 
         re_pattern = re.compile(pattern, re.IGNORECASE | re.DOTALL)
 
+        term_re_str = ""
         if re_pattern.match(bs_content):
             term = re_pattern.sub(term, bs_content)
+            termarray = term[:-1].split(" ")
+            termarray[1] = "({0})?".format(termarray[1])
+            term_re_str = ".*?" + r'\s*'.join(termarray + [";"])
         else:
             # The pattern does not match the content, remove the tags
             term = term.replace(r' \1', '')
@@ -112,14 +111,30 @@ def block_complete_on_location(buffer, location):
             term = term.replace(r' \2', '')
             term = term.replace(r'\2', '')
 
-        term_re = re.compile(".*?" + r"\s*".join(term[:-1].split(" ") + [";"]))
-        print location.block_end()
-        print buffer.get_chars(location.block_end(), location.block_end().forward_line(-1))
+    if not term_re_str:
+        term_re_str = ".*?" + r'\s*'.join(term[:-1].split(" ") + [";"])
 
-    buffer.start_undo_group()
-    buffer.insert(location, term)
-    buffer.indent(location, location)
-    buffer.finish_undo_group()
+    term_re = re.compile(term_re_str, re.IGNORECASE | re.DOTALL)
+    end_block_chars = buffer.get_chars(
+        location.block_end(), location.block_end().forward_line(-1)
+    )
+
+    print term_re_str.__repr__()
+    print end_block_chars
+    print term_re.match(end_block_chars)
+
+    if not term_re.match(end_block_chars):
+        buffer.start_undo_group()
+
+        # A new-line character is inserted if there is some text on the left
+        # of the current cursor position.
+        if buffer.get_chars(start, end).strip() != "":
+            buffer.insert(location, '\n')
+            location = location.forward_line()
+
+        buffer.insert(location, term)
+        buffer.indent(location, location)
+        buffer.finish_undo_group()
 
 
 def block_complete(filename):
@@ -133,6 +148,20 @@ def block_complete(filename):
    ev = eb.current_view()
    el = ev.cursor()
    block_complete_on_location(eb, el)
+
+def block_complete_on_keyword(a, b, c):
+    print a, b, c
+    print "IN BLOCK COMPLETE ON KW"
+    ed = GPS.EditorBuffer.get()
+    curs = ed.current_view().cursor()
+    if chr(c) == "\n":
+        kw = ed.get_chars(curs, curs.forward_line(-1)).strip().split(" ")[-1].strip()
+        print kw.__repr__()
+        if kw in ["begin", "then", "else", "loop"]:
+            block_complete_on_location(ed, curs)
+            ed.current_view().goto(curs)
+            GPS.execute_action("/Edit/Format Selection")
+    # block_complete_on_location(ed, ed.current_view().cursor())
 
 
 GPS.Hook("gps_started").add(on_gps_started)
