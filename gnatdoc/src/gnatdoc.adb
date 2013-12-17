@@ -48,11 +48,18 @@ package body GNATdoc is
 
    Serious_Errors : Natural := 0;
 
+   procedure Check_Duplicated_Full_Names
+     (Context   : access constant Docgen_Context;
+      All_Trees : Frontend.Tree_List.Vector);
+   --  Check that each compilation unit has a different full name
+
    procedure Check_Tree
      (Context   : access constant Docgen_Context;
       Tree      : access Tree_Type;
       All_Files : Files_List.Vector);
-   --  Verify that all the nodes of the tree have a minimum decoration
+   --  Verify that all the nodes of the tree have a minimum decoration.
+   --  All_Files is used to exclude from the check those files which are not
+   --  part of the project (for example, runtime files of the compiler).
 
    procedure Process_Files
      (Kernel              : Core_Kernel;
@@ -62,6 +69,72 @@ package body GNATdoc is
    --  This subprogram factorizes the functionality shared by routines
    --  Process_Single_File and Process_Project_Files. It processes all
    --  the files in Src_Files and generates their documentation.
+
+   ---------------------------------
+   -- Check_Duplicated_Full_Names --
+   ---------------------------------
+
+   procedure Check_Duplicated_Full_Names
+     (Context   : access constant Docgen_Context;
+      All_Trees : Frontend.Tree_List.Vector)
+   is
+      Units : EInfo_List.Vector;
+
+      Cursor : EInfo_List.Cursor;
+      Prev_E : Entity_Id;
+      Entity : Entity_Id;
+      use type Ada.Containers.Count_Type;
+   begin
+      for Tree of All_Trees loop
+         declare
+            Lang         : constant Language_Access :=
+              Get_Language_From_File
+                (Context.Lang_Handler, Tree.File);
+            In_Ada_Lang  : constant Boolean :=
+              Lang.all in Language.Ada.Ada_Language'Class;
+            Root         : Entity_Id renames Tree.Tree_Root;
+            Root_E       : Entity_Id;
+         begin
+            if In_Ada_Lang then
+               declare
+                  C : constant EInfo_List.Cursor := Get_Entities (Root).First;
+               begin
+                  if EInfo_List.Has_Element (C) then
+                     Root_E := EInfo_List.Element (C);
+                  else
+                     Root_E := null;
+                  end if;
+               end;
+
+               if Present (Root_E) then
+                  pragma Assert (Is_Compilation_Unit (Root_E));
+                  Units.Append (Root_E);
+               end if;
+            end if;
+         end;
+      end loop;
+
+      --  No test needed if we have a single unit (or none in case of
+      --  serious error)
+
+      if Units.Length < 2 then
+         return;
+      end if;
+
+      EInfo_Vector_Sort_Full.Sort (Units);
+
+      Cursor := Units.First;
+      Prev_E := EInfo_List.Element (Cursor);
+      EInfo_List.Next (Cursor);
+
+      while EInfo_List.Has_Element (Cursor) loop
+         Entity := EInfo_List.Element (Cursor);
+         pragma Assert (Get_Full_Name (Prev_E) /= Get_Full_Name (Entity));
+
+         Prev_E := Entity;
+         EInfo_List.Next (Cursor);
+      end loop;
+   end Check_Duplicated_Full_Names;
 
    ----------------
    -- Check_Tree --
@@ -77,6 +150,10 @@ package body GNATdoc is
          Scope_Level : Natural) return Traverse_Result;
       --  Check a single node
 
+      ----------------
+      -- Check_Node --
+      ----------------
+
       function Check_Node
         (Entity      : Entity_Id;
          Scope_Level : Natural) return Traverse_Result
@@ -85,6 +162,10 @@ package body GNATdoc is
 
          procedure Check (Entity : Entity_Id);
          procedure Check_List (List : EInfo_List.Vector);
+
+         -----------
+         -- Check --
+         -----------
 
          procedure Check (Entity : Entity_Id) is
 
@@ -165,6 +246,10 @@ package body GNATdoc is
                end if;
             end if;
          end Check;
+
+         ----------------
+         -- Check_List --
+         ----------------
 
          procedure Check_List (List : EInfo_List.Vector) is
             Cursor : EInfo_List.Cursor;
@@ -270,7 +355,8 @@ package body GNATdoc is
       --  Return true if the project is large enough to enable additional
       --  messages.
 
-      type Stages is (Frontend_Stage, Backend_Stage);
+      type Stages is
+        (Unknown_Stage, Frontend_Stage, Backend_Stage, TreeOutput_Stage);
 
       procedure Report_Error (File : Virtual_File; Stage : Stages);
       --  Output a banner describing the error detected processing File plus
@@ -353,10 +439,10 @@ package body GNATdoc is
                return True;
             end if;
 
-            if Lang.all in Language.Ada.Ada_Language'Class
-              and then not Is_Spec_File (Kernel, File)
-            then
-               return True;
+            if Lang.all in Language.Ada.Ada_Language'Class then
+               if not Is_Spec_File (Kernel, File) then
+                  return True;
+               end if;
 
             elsif Options.Skip_C_Files
               and then Lang.all in Language.C.C_Language'Class
@@ -375,7 +461,7 @@ package body GNATdoc is
 
          use type Ada.Containers.Count_Type;
 
-      --  Start of processing for Check_Files
+      --  Start of processing for Check_Src_CheFiles
 
       begin
          Prj_Index := Prj_Files.First;
@@ -836,11 +922,16 @@ package body GNATdoc is
          Write ('+');
          New_Line;
 
-         if Stage = Frontend_Stage then
-            Write_Line ("Code: 01");
-         else
-            Write_Line ("Code: 02");
-         end if;
+         case Stage is
+            when Unknown_Stage =>
+               Write_Line ("Code: 00");
+            when Frontend_Stage =>
+               Write_Line ("Code: 01");
+            when Backend_Stage =>
+               Write_Line ("Code: 02");
+            when TreeOutput_Stage =>
+               Write_Line ("Code: 03");
+         end case;
 
          Write_Line ("Error detected processing file:");
          Write_Line ("- " & (+File.Base_Name));
@@ -1094,57 +1185,67 @@ package body GNATdoc is
 
                Cursor := All_Trees.First;
                while Tree_List.Has_Element (Cursor) loop
-                  Files_Count := Files_Count + 1;
+                  begin
+                     Files_Count := Files_Count + 1;
 
-                  if not Options.Quiet_Mode
-                    and then Num_Files > 600
-                    and then (Files_Count mod 300) = 0
-                  then
-                     GNAT.IO.Put_Line
-                       (Files_Count'Img
-                         & "/"
-                         & To_String (Num_Files)
-                         & " files");
-                  end if;
+                     if not Options.Quiet_Mode
+                       and then Num_Files > 600
+                       and then (Files_Count mod 300) = 0
+                     then
+                        GNAT.IO.Put_Line
+                          (Files_Count'Img
+                           & "/"
+                           & To_String (Num_Files)
+                           & " files");
+                     end if;
 
-                  Tree := Tree_List.Element (Cursor);
+                     Tree := Tree_List.Element (Cursor);
 
-                  Check_Tree (Context, Tree'Access, All_Src_Files);
+                     Check_Tree (Context, Tree'Access, All_Src_Files);
 
-                  --  We cannot rely on the service Get_Language_From_File
-                  --  because it does not work well with C/C++ header files
+                     --  We cannot rely on the service Get_Language_From_File
+                     --  because it does not work well with C/C++ header files
 
-                  Is_C_Header_File := All_Include_Files.Contains (Tree.File);
+                     Is_C_Header_File :=
+                       All_Include_Files.Contains (Tree.File);
 
-                  --  Target dependant include files generate supurious output
-                  --  differences (even processing only the files which are
-                  --  directly included from the C body files referenced in
-                  --  the project ---available in Direct_Include_Files). For
-                  --  this reason we disable their output. More work will be
-                  --  needed in this area when we decide to provide full
-                  --  support of gnatdoc for C/C++ files.
+                     --  Target dependant include files generate supurious
+                     --  output differences (even processing only the
+                     --  files which are directly included from the C body
+                     --  files referenced in the project ---available in
+                     --  Direct_Include_Files). For this reason we disable
+                     --  their output. More work will be needed in this area
+                     --  when we decide to provide full support of gnatdoc for
+                     --  C/C++ files.
 
-                  if not Is_C_Header_File then
-                     if Options.Tree_Output.Kind /= None then
-                        if Options.Tree_Output.Kind = Short then
-                           Treepr.Print_Short_Tree
-                             (Context     => Context,
-                              Tree        => Tree'Access,
-                              With_Scopes => True);
-                        else
-                           Treepr.Print_Full_Tree
-                             (Context     => Context,
-                              Tree        => Tree'Access,
-                              With_Scopes => True);
+                     if not Is_C_Header_File then
+                        if Options.Tree_Output.Kind /= None then
+                           if Options.Tree_Output.Kind = Short then
+                              Treepr.Print_Short_Tree
+                                (Context     => Context,
+                                 Tree        => Tree'Access,
+                                 With_Scopes => True);
+                           else
+                              Treepr.Print_Full_Tree
+                                (Context     => Context,
+                                 Tree        => Tree'Access,
+                                 With_Scopes => True);
+                           end if;
+                        end if;
+
+                        if Options.Output_Comments then
+                           Treepr.Print_Comments
+                             (Context => Context,
+                              Tree    => Tree'Access);
                         end if;
                      end if;
 
-                     if Options.Output_Comments then
-                        Treepr.Print_Comments
-                          (Context => Context,
-                           Tree    => Tree'Access);
-                     end if;
-                  end if;
+                  exception
+                     when E : others =>
+                        Report_Error (Tree.File, TreeOutput_Stage);
+                        Trace (Me, E);
+                        raise;
+                  end;
 
                   Tree_List.Next (Cursor);
                end loop;
@@ -1156,6 +1257,8 @@ package body GNATdoc is
             if Serious_Errors > 0 then
                return;
             end if;
+
+            Check_Duplicated_Full_Names (Context, All_Trees);
 
             --  Set the inheritance depth level of tagged types. This cannot
             --  be done before because files are not processed following their
@@ -1273,11 +1376,9 @@ package body GNATdoc is
    exception
       when E : others =>
          if not Error_Reported then
-            GNAT.IO.Put_Line ("Internal error: Program aborted");
+            Report_Error (No_File, Unknown_Stage);
+            Trace (Me, E);
          end if;
-
-         Free (Context);
-         Trace (Me, E);
    end Process_Files;
 
    ---------------------------

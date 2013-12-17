@@ -345,6 +345,8 @@ private package GNATdoc.Atree is
    function In_Private_Part
      (E : Entity_Id) return Boolean;
 
+   function Is_Compilation_Unit
+     (E : Entity_Id) return Boolean;
    function Is_Class_Or_Record_Type
      (E : Entity_Id) return Boolean;
    --  Return True for Ada record types (including tagged types and interface
@@ -882,6 +884,7 @@ private
    pragma Inline (In_Ada_Language);
    pragma Inline (In_C_Or_CPP_Language);
    pragma Inline (In_Private_Part);
+   pragma Inline (Is_Compilation_Unit);
    pragma Inline (Is_Class_Or_Record_Type);
    pragma Inline (Is_Concurrent_Object);
    pragma Inline (Is_Concurrent_Type);

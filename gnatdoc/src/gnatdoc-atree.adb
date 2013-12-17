@@ -1503,6 +1503,22 @@ package body GNATdoc.Atree is
       return New_E;
    end Internal_New_Entity;
 
+   -------------------------
+   -- Is_Compilation_Unit --
+   -------------------------
+
+   function Is_Compilation_Unit
+     (E : Entity_Id) return Boolean is
+   begin
+      --  The Scope attribute is not available in entities of packages which
+      --  are not part of the project (for example, entities defined in the
+      --  runtime of the compiler)
+
+      return Present (Get_Scope (E))
+        and then Is_Standard_Entity (Get_Scope (E))
+        and then (Is_Subprogram (E) or else Is_Package (E));
+   end Is_Compilation_Unit;
+
    -----------------------------
    -- Is_Class_Or_Record_Type --
    -----------------------------
