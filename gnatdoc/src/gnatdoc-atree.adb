@@ -1377,11 +1377,21 @@ package body GNATdoc.Atree is
                                  else E_Unknown);
       New_E  : Entity_Id;
 
+      Xref_Loc : General_Location := Loc;
+      --  Local variable used to workaround the wrong decoration of location
+
    --  Start of processing for Internal_New_Entity
 
    begin
       Unique_Id := Unique_Id + 1;
       New_Entity_Begin (Unique_Id);
+
+      --  Workaround wrong decoration of Xref.Location which causes crash
+      --  in the backend. To be investigated???
+
+      if Xref_Loc.Column < 0 then
+         Xref_Loc.Column := 1;
+      end if;
 
       --  Initially E.Kind and E.Xref.Ekind are initialized with the same
       --  values. However, E.Kind may be decorated with other values at later
@@ -1408,7 +1418,7 @@ package body GNATdoc.Atree is
              First_Private_Entity_Loc  => No_Location,
 
              Instance_Of      => No_General_Entity,
-             Loc              => Loc,
+             Loc              => Xref_Loc,
              Pointed_Type     => No_General_Entity,
 
              Scope_E          => No_General_Entity,
@@ -2652,9 +2662,18 @@ package body GNATdoc.Atree is
       end Get_Ekind;
 
       procedure Set_Location
-        (E : Entity_Id; Value : General_Location) is
+        (E : Entity_Id; Value : General_Location)
+      is
+         Xref_Loc : General_Location := Value;
       begin
-         E.Xref.Loc := Value;
+         --  Workaround wrong decoration of Xref.Location which causes crash
+         --  in the backend. To be investigated???
+
+         if Xref_Loc.Column < 0 then
+            Xref_Loc.Column := 1;
+         end if;
+
+         E.Xref.Loc := Xref_Loc;
       end Set_Location;
 
    end LL;
