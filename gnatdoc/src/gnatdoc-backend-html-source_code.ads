@@ -139,6 +139,9 @@ private
       Result       : GNATCOLL.JSON.JSON_Array;
       Line         : GNATCOLL.JSON.JSON_Array;
       Current_Line : Positive;
+
+      Scope        : GNATdoc.Atree.Entity_Id;
+      --  Current scope entity to suppress private part.
    end record;
 
 end GNATdoc.Backend.HTML.Source_Code;

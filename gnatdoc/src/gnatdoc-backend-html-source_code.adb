@@ -27,6 +27,12 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Text  : String;
       Href  : String := "");
 
+   function Is_In_Private_Part
+     (Self   : Source_Code_Printer'Class;
+      Entity : Entity_Id) return Boolean;
+   --  Returns True when Entity located in private part of currently processed
+   --  scope.
+
    ----------------------------
    -- Annotated_Comment_Text --
    ----------------------------
@@ -67,11 +73,45 @@ package body GNATdoc.Backend.HTML.Source_Code is
          Slice_Last := Index (Text (Slice_First .. Text'Last), LF_Pattern);
 
          if Slice_Last >= Slice_First then
-            if Slice_First < Slice_Last then
+            if No (Self.Scope)
+              or else Self.Current_Line
+                not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
+                   .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
+            then
+               if Slice_First < Slice_Last then
+                  Object := Create_Object;
+                  Object.Set_Field ("kind", "span");
+                  Object.Set_Field ("class", Class);
+                  Object.Set_Field
+                    ("text", Text (Slice_First .. Slice_Last - 1));
+
+                  if Href /= "" then
+                     Object.Set_Field ("href", Href);
+                  end if;
+
+                  Append (Self.Line, Object);
+               end if;
+
+               Object := Create_Object;
+               Object.Set_Field ("kind", "line");
+               Object.Set_Field ("number", Self.Current_Line);
+               Object.Set_Field ("children", Self.Line);
+               Append (Self.Result, Object);
+               Self.Line := Empty_Array;
+            end if;
+
+            Self.Current_Line := Self.Current_Line + 1;
+
+         else
+            if No (Self.Scope)
+              or else Self.Current_Line
+                not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
+                  .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
+            then
                Object := Create_Object;
                Object.Set_Field ("kind", "span");
                Object.Set_Field ("class", Class);
-               Object.Set_Field ("text", Text (Slice_First .. Slice_Last - 1));
+               Object.Set_Field ("text", Text (Slice_First .. Text'Last));
 
                if Href /= "" then
                   Object.Set_Field ("href", Href);
@@ -80,31 +120,26 @@ package body GNATdoc.Backend.HTML.Source_Code is
                Append (Self.Line, Object);
             end if;
 
-            Object := Create_Object;
-            Object.Set_Field ("kind", "line");
-            Object.Set_Field ("number", Self.Current_Line);
-            Object.Set_Field ("children", Self.Line);
-            Append (Self.Result, Object);
-            Self.Line := Empty_Array;
-            Self.Current_Line := Self.Current_Line + 1;
-
-         else
-            Object := Create_Object;
-            Object.Set_Field ("kind", "span");
-            Object.Set_Field ("class", Class);
-            Object.Set_Field ("text", Text (Slice_First .. Text'Last));
-
-            if Href /= "" then
-               Object.Set_Field ("href", Href);
-            end if;
-
-            Append (Self.Line, Object);
-
             Slice_Last := Text'Last;
          end if;
 
          Slice_First := Slice_Last + 1;
       end loop;
+
+      --  Unwind scope when went outside of current scope.
+
+      if Present (Self.Scope)
+        and then Self.Current_Line
+          > Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line
+      then
+         loop
+            Self.Scope := Get_Scope (Self.Scope);
+
+            exit when No (Self.Scope)
+              or else Get_Kind (Self.Scope)
+                        in E_Package | E_Task_Type | E_Protected_Type;
+         end loop;
+      end if;
    end Append_Text_Object;
 
    -------------------------
@@ -227,6 +262,22 @@ package body GNATdoc.Backend.HTML.Source_Code is
            In_References => True);
 
    begin
+      --  Detect whether current entity can have private part and set scope to
+      --  it when it can.
+
+      if Present (Entity)
+        and then not Self.Is_In_Private_Part (Entity)
+      then
+         Self.Scope := Entity;
+
+         while Present (Self.Scope) loop
+            exit when Get_Kind (Self.Scope)
+            in E_Package | E_Task_Type | E_Protected_Type;
+
+            Self.Scope := Get_Scope (Self.Scope);
+         end loop;
+      end if;
+
       if No (Entity)
         or else not Is_Decorated (Entity)
       then
@@ -240,6 +291,24 @@ package body GNATdoc.Backend.HTML.Source_Code is
             Get_Docs_Href (Entity));
       end if;
    end Identifier_Text;
+
+   ------------------------
+   -- Is_In_Private_Part --
+   ------------------------
+
+   function Is_In_Private_Part
+     (Self   : Source_Code_Printer'Class;
+      Entity : Entity_Id) return Boolean is
+   begin
+      if No (Self.Scope) then
+         return False;
+      end if;
+
+      return
+        LL.Get_Location (Entity).Line
+          in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
+            .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line;
+   end Is_In_Private_Part;
 
    ------------------
    -- Keyword_Text --
