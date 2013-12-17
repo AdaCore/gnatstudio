@@ -9,7 +9,6 @@ GNATdoc v0.9
    :maxdepth: 2
 
    gnatdoc
-   license
 
 Search and indices
 ==================
