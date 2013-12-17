@@ -104,7 +104,7 @@ import GPS
 from gps_utils import *
 
 
-def range_align_on(top, bottom, sep, replace_with=None):
+def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
     """Align each line from top to bottom, aligning, for each line, sep in
        the same column. For instance:
            a sep b
@@ -137,12 +137,11 @@ def range_align_on(top, bottom, sep, replace_with=None):
         chars = top.buffer().get_chars(line, line.end_of_line())
         matched = sep_re.search(chars)
         if matched:
-            nb_group = matched.lastindex or 0
-            pos = max(pos, len(chars[:matched.start(nb_group)].rstrip()) + 1)
+            pos = max(pos, len(chars[:matched.start(sep_group)].rstrip()) + 1)
             try:
-                sub = sep_re.sub(replace_with, matched.group(nb_group))
+                sub = sep_re.sub(replace_with, matched.group(sep_group))
             except:
-                sub = matched.group(nb_group)
+                sub = matched.group(sep_group)
             if sub == " : out ":
                 fout = True
             elif sub == " : in " or sub == " : in out ":
@@ -163,12 +162,11 @@ def range_align_on(top, bottom, sep, replace_with=None):
             chars = top.buffer().get_chars(line, line.end_of_line())
             matched = sep_re.search(chars)
             if matched:
-                nb_group = matched.lastindex or 0
-                width = pos - len(chars[:matched.start(nb_group)].rstrip()) - 1
+                width = pos - len(chars[:matched.start(sep_group)].rstrip()) - 1
                 try:
-                    sub = sep_re.sub(replace_with, matched.group(nb_group))
+                    sub = sep_re.sub(replace_with, matched.group(sep_group))
                 except:
-                    sub = matched.group(nb_group)
+                    sub = matched.group(sep_group)
                 width2 = replace_len - len(sub)
 
                 # special case for out parameters, spaces before only if there is
@@ -179,16 +177,16 @@ def range_align_on(top, bottom, sep, replace_with=None):
 
                 top.buffer().delete(line, line.end_of_line())
                 # do not left-strip if a single char as this will remove the \n
-                if len(chars[matched.end(nb_group):]) == 1:
+                if len(chars[matched.end(sep_group):]) == 1:
                     top.buffer().insert \
-                        (line, chars[:matched.start(nb_group)].rstrip()
+                        (line, chars[:matched.start(sep_group)].rstrip()
                             + (' ' * width) + sub + (' ' * width2)
-                         + chars[matched.end(nb_group):])
+                         + chars[matched.end(sep_group):])
                 else:
                     top.buffer().insert \
-                        (line, chars[:matched.start(nb_group)].rstrip()
+                        (line, chars[:matched.start(sep_group)].rstrip()
                          + (' ' * width) + sub + (' ' * width2)
-                         + chars[matched.end(nb_group):].lstrip())
+                         + chars[matched.end(sep_group):].lstrip())
             prev = line
             line = line.forward_line()
             if prev == line:
@@ -437,7 +435,7 @@ def align_end_of_line_comments():
     """Align end of line comments"""
     buffer = GPS.EditorBuffer.get()
     if buffer.file().language() == "ada":
-        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)", replace_with=" --  ")
+        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)", replace_with=" --  ", sep_group=1)
     else:
         buffer_align_on(sep=" //\s*", replace_with=" // ")
         buffer_align_on(sep=" #\s*", replace_with=" # ")
