@@ -1266,6 +1266,7 @@ package body Completion_Window is
       Proposal : Completion_Proposal_Access := null;
 
    begin
+
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
       if Iter /= Null_Iter then
@@ -1318,6 +1319,11 @@ package body Completion_Window is
          --  Put the cursor at the offest corresponding to the completion
          if Result then
             Place_Cursor (Window.Buffer, Text_Begin);
+            Scroll_To_Mark
+              (Window.Text, Window.Buffer.Get_Insert, Use_Align => False,
+               Within_Margin                           => 0.0,
+               Xalign                                  => 0.5,
+               Yalign                                  => 0.5);
          else
             --  We could not forward with the given number of characters: this
             --  means we are hitting the end of the text buffer. In this case
