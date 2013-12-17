@@ -442,6 +442,8 @@ package body GNATdoc is
             if Lang.all in Language.Ada.Ada_Language'Class then
                if not Is_Spec_File (Kernel, File) then
                   return True;
+               elsif Is_GNAT_Binder_File (File) then
+                  return True;
                end if;
 
             elsif Options.Skip_C_Files

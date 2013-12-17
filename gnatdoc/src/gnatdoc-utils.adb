@@ -125,6 +125,21 @@ package body GNATdoc.Utils is
         and then Name (Index) = '.';
    end Is_Expanded_Name;
 
+   -------------------------
+   -- Is_GNAT_Binder_File --
+   -------------------------
+
+   function Is_GNAT_Binder_File
+     (File : GNATCOLL.VFS.Virtual_File) return Boolean
+   is
+      Name          : constant String := +File.Base_Name;
+      Binder_Prefix : constant String := "b_";
+   begin
+      return Name'Length > Binder_Prefix'Length
+        and then Name (Name'First .. Name'First + Binder_Prefix'Length - 1)
+                   = Binder_Prefix;
+   end Is_GNAT_Binder_File;
+
    ------------------
    -- Is_Spec_File --
    ------------------
