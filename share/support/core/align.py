@@ -6,7 +6,7 @@ criteria are Ada specific, but could easily be changed for other
 languages. The contextual menus that do not apply will not be visible
 when editing other languages
 
- - Aligning on use clauses (Ada specific)
+ - Aligning on use clauses(Ada specific)
    For example:
        with Ada.Text_IO; use Ada.Text_IO;
        with Foo; use Foo;
@@ -93,9 +93,9 @@ when editing other languages
          B_Long := 3; --  bar
 """
 
-
+
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import re
@@ -105,299 +105,317 @@ from gps_utils import *
 
 
 def range_align_on(top, bottom, sep, replace_with=None):
-   """Align each line from top to bottom, aligning, for each line, sep in
-      the same column. For instance:
-          a sep b
-          long    sep    short
-      becomes:
-          a    sep b
-          long sep short
-      sep is a regular expression.
-      top and bottom are instances of GPS.EditorLocation
-      replace_with is the text that should replace the text matched by sep.
-      It can do backward references to parenthesis groups in sep by using the
-      usual \1, \2,... strings. All the replacement texts will occupy the same
-      length in the editor, that is they will also be aligned.
-   """
+    """Align each line from top to bottom, aligning, for each line, sep in
+       the same column. For instance:
+           a sep b
+           long    sep    short
+       becomes:
+           a    sep b
+           long sep short
+       sep is a regular expression.
+       top and bottom are instances of GPS.EditorLocation
+       replace_with is the text that should replace the text matched by sep.
+       It can do backward references to parenthesis groups in sep by using the
+       usual \1, \2,... strings. All the replacement texts will occupy the same
+       length in the editor, that is they will also be aligned.
+    """
 
-   if bottom.beginning_of_line() == bottom:
-      bottom = bottom.forward_char(-1)
+    if bottom.beginning_of_line() == bottom:
+        bottom = bottom.forward_char(-1)
 
-   if not replace_with:
-      replace_with = sep
-   sep_re = re.compile (sep)
-   pos = 0
-   replace_len = 0
-   fin = False  # whether formal in are found
-   fout = False # whether formal out are found
+    if not replace_with:
+        replace_with = sep
+    sep_re = re.compile(sep)
+    pos = 0
+    replace_len = 0
+    fin = False  # whether formal in are found
+    fout = False  # whether formal out are found
 
-   line = top.beginning_of_line ()
+    line = top.beginning_of_line()
 
-   while line <= bottom:
-      chars   = top.buffer().get_chars (line, line.end_of_line())
-      matched = sep_re.search (chars)
-      if matched:
-         pos = max (pos, len (chars[:matched.start()].rstrip()) + 1)
-         try:
-            sub = sep_re.sub (replace_with, matched.group())
-         except:
-            sub = matched.group()
-         if sub == " : out ":
-            fout = True
-         elif sub == " : in " or sub == " : in out ":
-            fin = True
-         replace_len = max (replace_len, len (sub))
-      prev = line
-      line = line.forward_line ()
-      if prev == line:
-         break
-
-   # special case when in and out are used
-   if fin == True and fout == True:
-      replace_len = 10
-
-   if pos != 0:
-     line = top.beginning_of_line ()
-     while line <= bottom:
-        chars   = top.buffer ().get_chars (line, line.end_of_line())
-        matched = sep_re.search (chars)
+    while line <= bottom:
+        chars = top.buffer().get_chars(line, line.end_of_line())
+        matched = sep_re.search(chars)
         if matched:
-           width  = pos - len (chars[:matched.start()].rstrip()) - 1
-           try:
-              sub = sep_re.sub (replace_with, matched.group())
-           except:
-              sub = matched.group()
-           width2 = replace_len - len (sub)
-
-           # special case for out parameters, spaces before only if there is
-           # also some in parameters.
-           if sub == " : out " and fin == True:
-              sub = " :    out "
-              width2 = width2 - 3
-
-           top.buffer().delete (line, line.end_of_line())
-           # do not left-strip if a single char as this will remove the \n
-           if len (chars[matched.end():]) == 1:
-              top.buffer().insert \
-                  (line, chars[:matched.start()].rstrip() \
-                      + (' ' * width) + sub + (' ' * width2) \
-                      + chars[matched.end():])
-           else:
-              top.buffer().insert \
-                  (line, chars[:matched.start()].rstrip() \
-                      + (' ' * width) + sub + (' ' * width2) \
-                      + chars[matched.end():].lstrip())
+            nb_group = matched.lastindex or 0
+            pos = max(pos, len(chars[:matched.start(nb_group)].rstrip()) + 1)
+            try:
+                sub = sep_re.sub(replace_with, matched.group(nb_group))
+            except:
+                sub = matched.group(nb_group)
+            if sub == " : out ":
+                fout = True
+            elif sub == " : in " or sub == " : in out ":
+                fin = True
+            replace_len = max(replace_len, len(sub))
         prev = line
-        line = line.forward_line ()
+        line = line.forward_line()
         if prev == line:
-           break
+            break
 
-def buffer_align_on (sep, replace_with=None, buffer=None):
-   """Align the current selection in buffer, based on the separator sep.
-      See the description for range_align_on"""
-   if not buffer:
-      buffer = GPS.EditorBuffer.get ()
-   top    = buffer.selection_start ()
-   bottom = buffer.selection_end ()
-   tmark  = top.create_mark ("top")
-   bmark  = bottom.create_mark ("bottom")
-   if top == bottom:
-      GPS.MDI.dialog ("You must first select the intended text (at least two lines)")
-      return False
-   try:
-      buffer.start_undo_group ()
-      buffer.indent (top, bottom)
-      top = buffer.get_mark ("top").location ()
-      bottom = buffer.get_mark ("bottom").location ()
-      range_align_on (top, bottom, sep, replace_with)
-      # re-select the region to be able to call back this routine
-      top = buffer.get_mark ("top").location ()
-      bottom = buffer.get_mark ("bottom").location ()
-      buffer.select (top, bottom)
-   finally:
-      top.buffer().finish_undo_group ()
-   return True
+    # special case when in and out are used
+    if fin == True and fout == True:
+        replace_len = 10
+
+    if pos != 0:
+        line = top.beginning_of_line()
+        while line <= bottom:
+            chars = top.buffer().get_chars(line, line.end_of_line())
+            matched = sep_re.search(chars)
+            if matched:
+                nb_group = matched.lastindex or 0
+                width = pos - len(chars[:matched.start(nb_group)].rstrip()) - 1
+                try:
+                    sub = sep_re.sub(replace_with, matched.group(nb_group))
+                except:
+                    sub = matched.group(nb_group)
+                width2 = replace_len - len(sub)
+
+                # special case for out parameters, spaces before only if there is
+                # also some in parameters.
+                if sub == " : out " and fin == True:
+                    sub = " :    out "
+                    width2 = width2 - 3
+
+                top.buffer().delete(line, line.end_of_line())
+                # do not left-strip if a single char as this will remove the \n
+                if len(chars[matched.end(nb_group):]) == 1:
+                    top.buffer().insert \
+                        (line, chars[:matched.start(nb_group)].rstrip()
+                            + (' ' * width) + sub + (' ' * width2)
+                         + chars[matched.end(nb_group):])
+                else:
+                    top.buffer().insert \
+                        (line, chars[:matched.start(nb_group)].rstrip()
+                         + (' ' * width) + sub + (' ' * width2)
+                         + chars[matched.end(nb_group):].lstrip())
+            prev = line
+            line = line.forward_line()
+            if prev == line:
+                break
+
+
+def buffer_align_on(sep, replace_with=None, buffer=None):
+    """Align the current selection in buffer, based on the separator sep.
+       See the description for range_align_on"""
+    if not buffer:
+        buffer = GPS.EditorBuffer.get()
+    top = buffer.selection_start()
+    bottom = buffer.selection_end()
+    tmark = top.create_mark("top")
+    bmark = bottom.create_mark("bottom")
+    if top == bottom:
+        GPS.MDI.dialog(
+            "You must first select the intended text (at least two lines)")
+        return False
+    try:
+        buffer.start_undo_group()
+        buffer.indent(top, bottom)
+        top = buffer.get_mark("top").location()
+        bottom = buffer.get_mark("bottom").location()
+        range_align_on(top, bottom, sep, replace_with)
+        # re-select the region to be able to call back this routine
+        top = buffer.get_mark("top").location()
+        bottom = buffer.get_mark("bottom").location()
+        buffer.select(top, bottom)
+    finally:
+        top.buffer().finish_undo_group()
+    return True
+
 
 def get_comas(l):
-   n=0
-   enabled=True
-   res = []
-   for k in range(0, len(l)-1):
-      if l[k] == '"':
-         enabled = not enabled
-      elif enabled and l[k] == ',':
-         res.append(k)
-         n=n+1
-   res.insert(0,n)
-   return res
+    n = 0
+    enabled = True
+    res = []
+    for k in range(0, len(l) - 1):
+        if l[k] == '"':
+            enabled = not enabled
+        elif enabled and l[k] == ',':
+            res.append(k)
+            n = n + 1
+    res.insert(0, n)
+    return res
 
-def max_min (e1, e2):
-   res=[min(e1[0], e2[0])]
-   for k in range(1,res[0]+1):
-      if k == 1:
-         m = max(e1[k],e2[k])
-      else:
-         m = max(e1[k]+m-e1[k-1],e2[k]+m-e2[k-1])
-      res.append(m)
-   return res
 
-def in_rw_ada_file (context):
-   return (context.module_name == "Source_Editor"
-           and in_ada_file(context)
-           and is_writable (context))
+def max_min(e1, e2):
+    res = [min(e1[0], e2[0])]
+    for k in range(1, res[0] + 1):
+        if k == 1:
+            m = max(e1[k], e2[k])
+        else:
+            m = max(e1[k] + m - e1[k - 1], e2[k] + m - e2[k - 1])
+        res.append(m)
+    return res
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Colons",
-              name="Align colons")
-def align_colons ():
-   """Aligns colons (eg in object and record type declarations) and trailing text in current selection"""
-   buffer_align_on (sep=":(?!=)", replace_with=" : ")
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Comas",
-              name="Align comas")
-def align_comas ():
-   """Aligns comas (eg actual parameters or arguments in pragmas) in current selection"""
-   buffer = GPS.EditorBuffer.get ()
-   top    = buffer.selection_start ()
-   bottom = buffer.selection_end ()
-   tmark  = top.create_mark ("top")
-   bmark  = bottom.create_mark ("bottom")
+def in_rw_ada_file(context):
+    return (context.module_name == "Source_Editor"
+            and in_ada_file(context)
+            and is_writable(context))
 
-   if top == bottom:
-      GPS.MDI.dialog ("You must first select the intended text (at least two lines)")
-      return False
 
-   if top.beginning_of_line() != top:
-      top = top.beginning_of_line()
+@interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
+             name="Align colons")
+def align_colons():
+    """Aligns colons (eg in object and record type declarations) and trailing text in current selection"""
+    buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
-   if bottom.beginning_of_line() == bottom:
-      bottom = bottom.forward_char(-1)
 
-   try:
-      content = []
-      data = []
-      chars = ""
-      buffer.start_undo_group()
+@interactive("Ada", in_rw_ada_file, contextual="Align/Comas",
+             name="Align comas")
+def align_comas():
+    """Aligns comas (eg actual parameters or arguments in pragmas) in current selection"""
+    buffer = GPS.EditorBuffer.get()
+    top = buffer.selection_start()
+    bottom = buffer.selection_end()
+    tmark = top.create_mark("top")
+    bmark = bottom.create_mark("bottom")
 
-      line = top.beginning_of_line ()
+    if top == bottom:
+        GPS.MDI.dialog(
+            "You must first select the intended text (at least two lines)")
+        return False
 
-      while line <= bottom:
-         content.append(top.buffer().get_chars (line, line.end_of_line()))
-         line = line.forward_line ()
+    if top.beginning_of_line() != top:
+        top = top.beginning_of_line()
 
-      for l in content:
-         data.append(get_comas(l))
-      mm = reduce (max_min, data)
+    if bottom.beginning_of_line() == bottom:
+        bottom = bottom.forward_char(-1)
 
-      for l in range(0,len(content)):
-         nl=""
-         for c in range(0,mm[0]+1):
-            if c == 0:
-               nl = nl + content[l][:data[l][c+1]+1]
-               nl = nl + ' ' * (mm[c+1] - len(nl) + 1)
-            elif c == mm[0]:
-               nl = nl + content[l][data[l][c]+1:]
-            else:
-               nl = nl + content[l][data[l][c]+1:data[l][c+1]+1]
-               nl = nl + ' ' * (mm[c+1] - len(nl) + 1)
-         chars = chars + nl
+    try:
+        content = []
+        data = []
+        chars = ""
+        buffer.start_undo_group()
 
-      buffer.delete (top, bottom)
-      buffer.insert (top, chars)
-      tloc = buffer.get_mark ("top").location ()
-      bloc = buffer.get_mark ("bottom").location ()
-      buffer.select (tloc, bloc)
-   except:
-      GPS.Console ().write (str (sys.exc_info ()) + "\n")
-   finally:
-      top.buffer().finish_undo_group()
+        line = top.beginning_of_line()
 
-   return True
+        while line <= bottom:
+            content.append(top.buffer().get_chars(line, line.end_of_line()))
+            line = line.forward_line()
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
-              name="Align reserved is")
-def align_reserved_is ():
-   """Aligns reserved word 'is' (eg in type declarations) in current selection"""
-   buffer_align_on (sep=" is ")
+        for l in content:
+            data.append(get_comas(l))
+        mm = reduce(max_min, data)
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Reserved word 'renames'", name="Align reserved renames")
-def align_renaming ():
-   """Aligns reserved word 'renames' in current selection"""
-   buffer_align_on (sep=" renames ")
+        for l in range(0, len(content)):
+            nl = ""
+            for c in range(0, mm[0] + 1):
+                if c == 0:
+                    nl = nl + content[l][:data[l][c + 1] + 1]
+                    nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+                elif c == mm[0]:
+                    nl = nl + content[l][data[l][c] + 1:]
+                else:
+                    nl = nl + content[l][data[l][c] + 1:data[l][c + 1] + 1]
+                    nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+            chars = chars + nl
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Use clauses",
-              name="Align use clauses")
-def align_use_clauses ():
-   """Aligns Ada use-clauses in current selection"""
-   buffer_align_on (sep=" use ")
+        buffer.delete(top, bottom)
+        buffer.insert(top, chars)
+        tloc = buffer.get_mark("top").location()
+        bloc = buffer.get_mark("bottom").location()
+        buffer.select(tloc, bloc)
+    except:
+        GPS.Console().write(str(sys.exc_info()) + "\n")
+    finally:
+        top.buffer().finish_undo_group()
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
-              name="Align arrows")
-def align_arrows ():
-   """Aligns Ada arrow symbol '=>' in current selection"""
-   # The algorithm is the following:
-   #   - indent the selection
-   #   - for N 1 .. 9:
-   #      - replace level Nth of => by a special tag @>
-   #      - aling on the special tag @> replacing it with =>
-   buffer = GPS.EditorBuffer.get ()
-   top    = buffer.selection_start ()
-   bottom = buffer.selection_end ()
-   tmark  = top.create_mark("top")
-   bmark  = bottom.create_mark("bottom")
-   found  = False
-   if top == bottom:
-      GPS.MDI.dialog ("You must first select the intended text")
-      return
-   try:
-      buffer.start_undo_group()
-      for lr in range(9):
-         buffer.indent (top, bottom)
-         top = buffer.get_mark ("top").location()
-         bottom = buffer.get_mark ("bottom").location()
-         chars = buffer.get_chars (top, bottom)
-         level = 0
-         for k in range(len(chars)):
-            if chars[k] == '(':
-               level = level + 1
-            elif chars[k] == ')':
-               level = level - 1
-            elif chars[k] == '\n':
-               found = False
-            elif k + 4 < len(chars) and chars[k:k+4] == "case":
-               level = level + 1
-            elif k + 8 < len(chars) and chars[k:k+8] == "end case":
-               level = level - 1
-            elif level == lr and k + 2 < len(chars) and chars[k:k+2] == "=>" and not found:
-               chars = chars[:k] + "@>" + chars[k+2:]
-               found=True
-         buffer.delete (top, bottom)
-         buffer.insert (top, chars)
-         tmark = top.create_mark("top")
-         bmark = bottom.create_mark("bottom")
-         top = buffer.get_mark ("top").location()
-         bottom = buffer.get_mark ("bottom").location()
-         range_align_on (top, bottom, sep="@>", replace_with=" => ")
-         top = buffer.get_mark ("top").location ()
-         bottom = buffer.get_mark ("bottom").location ()
-         buffer.select (top, bottom)
-   except:
-      GPS.Console ().write (str (sys.exc_info ()) + "\n")
-   finally:
-      top.buffer().finish_undo_group()
+    return True
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Assignment symbols",
-              name="Align assignments")
-def align_assignments ():
-   """Aligns Ada assignment symbol ':=' in current selection"""
-   buffer_align_on (sep=":=", replace_with=" := ")
 
-@interactive ("Ada", in_rw_ada_file, contextual="Align/Formal parameters",
-              name="Align formal parameters")
+@interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
+             name="Align reserved is")
+def align_reserved_is():
+    """Aligns reserved word 'is' (eg in type declarations) in current selection"""
+    buffer_align_on(sep=" is ")
+
+
+@interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'renames'", name="Align reserved renames")
+def align_renaming():
+    """Aligns reserved word 'renames' in current selection"""
+    buffer_align_on(sep=" renames ")
+
+
+@interactive("Ada", in_rw_ada_file, contextual="Align/Use clauses",
+             name="Align use clauses")
+def align_use_clauses():
+    """Aligns Ada use-clauses in current selection"""
+    buffer_align_on(sep=" use ")
+
+
+@interactive("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
+             name="Align arrows")
+def align_arrows():
+    """Aligns Ada arrow symbol '=>' in current selection"""
+    # The algorithm is the following:
+    #   - indent the selection
+    #   - for N 1 .. 9:
+    #      - replace level Nth of => by a special tag @>
+    #      - aling on the special tag @> replacing it with =>
+    buffer = GPS.EditorBuffer.get()
+    top = buffer.selection_start()
+    bottom = buffer.selection_end()
+    tmark = top.create_mark("top")
+    bmark = bottom.create_mark("bottom")
+    found = False
+    if top == bottom:
+        GPS.MDI.dialog("You must first select the intended text")
+        return
+    try:
+        buffer.start_undo_group()
+        for lr in range(9):
+            buffer.indent(top, bottom)
+            top = buffer.get_mark("top").location()
+            bottom = buffer.get_mark("bottom").location()
+            chars = buffer.get_chars(top, bottom)
+            level = 0
+            for k in range(len(chars)):
+                if chars[k] == '(':
+                    level = level + 1
+                elif chars[k] == ')':
+                    level = level - 1
+                elif chars[k] == '\n':
+                    found = False
+                elif k + 4 < len(chars) and chars[k:k + 4] == "case":
+                    level = level + 1
+                elif k + 8 < len(chars) and chars[k:k + 8] == "end case":
+                    level = level - 1
+                elif level == lr and k + 2 < len(chars) and chars[k:k + 2] == "=>" and not found:
+                    chars = chars[:k] + "@>" + chars[k + 2:]
+                    found = True
+            buffer.delete(top, bottom)
+            buffer.insert(top, chars)
+            tmark = top.create_mark("top")
+            bmark = bottom.create_mark("bottom")
+            top = buffer.get_mark("top").location()
+            bottom = buffer.get_mark("bottom").location()
+            range_align_on(top, bottom, sep="@>", replace_with=" => ")
+            top = buffer.get_mark("top").location()
+            bottom = buffer.get_mark("bottom").location()
+            buffer.select(top, bottom)
+    except:
+        GPS.Console().write(str(sys.exc_info()) + "\n")
+    finally:
+        top.buffer().finish_undo_group()
+
+
+@interactive("Ada", in_rw_ada_file, contextual="Align/Assignment symbols",
+             name="Align assignments")
+def align_assignments():
+    """Aligns Ada assignment symbol ':=' in current selection"""
+    buffer_align_on(sep=":=", replace_with=" := ")
+
+
+@interactive("Ada", in_rw_ada_file, contextual="Align/Formal parameters",
+             name="Align formal parameters")
 def align_formal_params():
-   """Aligns the colons, modes, and formal types in parameter specifications"""
-   ## The regexp needs the three nested groups, since we want \\1 to always
-   ## returns at least the empty string
-   buffer_align_on (sep=":\s*(((in\s+out|out|in|access) )?)",
+    """
+    Aligns the colons, modes, and formal types in parameter specifications
+    """
+    # The regexp needs the three nested groups, since we want \\1 to always
+    # returns at least the empty string
+    buffer_align_on(sep=":\s*(((in\s+out|out|in|access) )?)",
                     replace_with=" : \\1")
 
 
@@ -406,9 +424,9 @@ def align_formal_params():
              contextual="Align/Record representation clause",
              name="Align record representation clause")
 def align_record_rep_clause():
-   """Aligns the various parts of a record representation clause"""
-   buffer_align_on(sep=" at ")
-   buffer_align_on(sep=" range ")
+    """Aligns the various parts of a record representation clause"""
+    buffer_align_on(sep=" at ")
+    buffer_align_on(sep=" range ")
 
 
 @interactive(category="Ada",
@@ -417,7 +435,9 @@ def align_record_rep_clause():
              name="Align end of line comments")
 def align_end_of_line_comments():
     """Align end of line comments"""
-    if buffer_align_on(sep=" --\s*", replace_with=" --  "):
+    buffer = GPS.EditorBuffer.get()
+    if buffer.file().language() == "ada":
+        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)", replace_with=" --  ")
+    else:
         buffer_align_on(sep=" //\s*", replace_with=" // ")
         buffer_align_on(sep=" #\s*", replace_with=" # ")
-
