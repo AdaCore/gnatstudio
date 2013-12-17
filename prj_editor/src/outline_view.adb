@@ -90,6 +90,7 @@ package body Outline_View is
    Hist_Show_Types        : constant History_Key := "outline-show-types";
    Hist_Show_Tasks        : constant History_Key := "outline-show-tasks";
    Hist_Show_Objects      : constant History_Key := "outline-show-objects";
+   Hist_Show_With         : constant History_Key := "outline-show-with";
    Hist_Group_Spec_And_Body : constant History_Key :=
      "outline-group-spec-and-body";
    Hist_Flat_View         : constant History_Key := "outline-flat-view";
@@ -476,6 +477,12 @@ package body Outline_View is
       Widget_Callback.Object_Connect
         (Check, Signal_Toggled, Force_Refresh'Access, View);
 
+      Gtk_New (Check, Label => -"Show with clauses");
+      Associate (Get_History (View.Kernel).all, Hist_Show_With, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Force_Refresh'Access, View);
+
       Gtk_New (Sep);
       Menu.Append (Sep);
 
@@ -524,6 +531,8 @@ package body Outline_View is
            (Get_History (Kernel).all, Hist_Show_Decls),
          Hide_Tasks => not Get_History
            (Get_History (Kernel).all, Hist_Show_Tasks),
+         Hide_Withes => not Get_History
+           (Get_History (Kernel).all, Hist_Show_With),
          Show_Profile => Get_History
            (Get_History (Kernel).all, Hist_Show_Profile),
          Sorted       => Get_History

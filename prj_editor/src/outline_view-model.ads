@@ -55,6 +55,7 @@ private package Outline_View.Model is
       Hide_Objects      : Boolean := False;
       Hide_Declarations : Boolean := False;
       Hide_Tasks        : Boolean := False;
+      Hide_Withes       : Boolean := False;
       Show_Profile      : Boolean := False;
       Sorted            : Boolean;
       Group_Spec_And_Body : Boolean := False;
@@ -229,6 +230,8 @@ private
       Phantom_Root : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children
       --  of that node.
+      Root_With    : Sorted_Node_Access;
+      --  Container for with clauses.
    end record;
 
 end Outline_View.Model;

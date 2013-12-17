@@ -32,6 +32,7 @@ with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Search;                  use GPS.Search;
 with Language.Profile_Formaters;  use Language.Profile_Formaters;
+with Language.Icons;              use Language.Icons;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -56,10 +57,11 @@ package body Outline_View.Model is
    --  This array provide a way of sorting / grouping entities when order
    --  is required.
    Sort_Entities : constant array (Language_Category) of Natural :=
-     (Namespace_Category  => 1,
-      Subprogram_Category => 3,
-      Type_Category       => 2,
-      Data_Category       => 4,
+     (Dependency_Category => 1,
+      Namespace_Category  => 2,
+      Type_Category       => 3,
+      Subprogram_Category => 4,
+      Data_Category       => 5,
       others              => 99);
 
    function Construct_Filter
@@ -275,6 +277,11 @@ package body Outline_View.Model is
                return False;
             end if;
 
+         when Cat_With =>
+            if Model.Filter.Hide_Withes then
+               return False;
+            end if;
+
          when others =>
             return False;
       end case;
@@ -398,6 +405,9 @@ package body Outline_View.Model is
 
             if Model.Filter.Flat_View then
                Parent_Node := Model.Phantom_Root'Access;
+            elsif Construct.Category = Cat_With then
+               --  Place any with-clause into top with-root node
+               Parent_Node := Model.Root_With;
             else
                Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
                if Parent = Null_Construct_Tree_Iterator then
@@ -541,9 +551,40 @@ package body Outline_View.Model is
      (Model : not null access Outline_Model_Record'Class;
       File  : Structured_File_Access)
    is
+      procedure Add_Root_With;
+      --  Create Root_With node and append it to model
+
       It : Construct_Tree_Iterator;
+
+      -------------------
+      -- Add_Root_With --
+      -------------------
+
+      procedure Add_Root_With is
+         Path   : Gtk_Tree_Path;
+      begin
+         if Model.Filter.Hide_Withes then
+            return;
+         end if;
+
+         Model.Root_With := new Sorted_Node;
+         Model.Root_With.Parent := Model.Phantom_Root'Access;
+         Model.Root_With.Model := Outline_Model (Model);
+         Model.Root_With.Category := Cat_With;
+         Model.Root_With.Index_In_Siblings := 0;
+
+         Insert
+           (Container => Model.Phantom_Root.Children,
+            New_Item  => Model.Root_With);
+
+         Path := Get_Path (Model, Model.Root_With);
+         Row_Inserted (+Model, Path, New_Iter (Model.Root_With));
+         Path_Free (Path);
+      end Add_Root_With;
+
    begin
       Model.Clear_Nodes (Model.Phantom_Root'Access);
+      Add_Root_With;
 
       --  Order is important here, in case File=Model.File. This whole blocks
       --  also needs to be called after we clear the tree.
@@ -672,12 +713,18 @@ package body Outline_View.Model is
       then
          Init (Value, Gdk.Pixbuf.Get_Type);
 
-         if Entity = Null_Entity_Access then
-            Set_Object (Value, null);
-         else
+         if Entity /= Null_Entity_Access then
             It := To_Construct_Tree_Iterator (Entity);
             Set_Object
               (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
+         elsif Iter /= Null_Iter
+           and then Get_Sorted_Node (Iter) = Self.Root_With
+         then
+            Set_Object
+              (Value, Entity_Icons (False, Visibility_Public) (Cat_With));
+         else
+
+            Set_Object (Value, null);
          end if;
 
       elsif Column = Display_Name_Column then
@@ -708,6 +755,8 @@ package body Outline_View.Model is
                  (Value, Escape_Text (Get (Get_Construct (It).Name).all));
             end if;
 
+         elsif Get_Sorted_Node (Iter) = Self.Root_With then
+            Set_String (Value, "with clauses");
          else
             Set_String (Value, "no name");
          end if;
@@ -974,6 +1023,33 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
    is
+
+      procedure Delete_Root_With (Root : Sorted_Node_Access);
+      --  Destroy Model.Root_With phantom node
+
+      ----------------------
+      -- Delete_Root_With --
+      ----------------------
+
+      procedure Delete_Root_With (Root : Sorted_Node_Access) is
+         Path : constant Gtk_Tree_Path := Get_Path (Model, Root);
+      begin
+         --  Kill the children if any
+         Clear_Nodes (Model, Root);
+
+         --  Finally, free this node
+         Root.Parent.Children.Delete (Root);
+
+         --  Now unlink & destroy this node
+
+         if Path /= Null_Gtk_Tree_Path then
+            Row_Deleted (+Model, Path);
+         end if;
+
+         Free (Model.Root_With);
+         Path_Free (Path);
+      end Delete_Root_With;
+
       It        : Sorted_Node_Access;
       BE        : Entity_Persistent_Access;
       Construct : Construct_Tree_Iterator;
@@ -1005,6 +1081,11 @@ package body Outline_View.Model is
             Construct_Annotations_Pckg.Free_Annotation
               (Get_Annotation_Container (Tree, Construct).all,
                Model.Annotation_Key);
+         end if;
+
+         if Model.Root_With = It then
+            --  Delete phantom root of with clauses, because it hasn't annot.
+            Delete_Root_With (Model.Root_With);
          end if;
       end loop;
    end Clear_Nodes;
@@ -1077,6 +1158,7 @@ package body Outline_View.Model is
          end if;
 
          if Node = Model.Phantom_Root'Access
+           or else Node = Model.Root_With
            or else Exists (Node.Spec_Entity)
            or else Exists (Node.Body_Entity)
          then
