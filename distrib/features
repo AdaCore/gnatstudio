@@ -44,6 +44,13 @@ NF-61-MB26-054 GPS: New line number display preference (2013-11-27)
   All_Lines. The new Some_Lines option displays every fifth line number,
   reducing visual clutter and making the source code stand out more.
 
+NF-61-MB18-023 GPS: Periodic recomputation of XRefs while editing (2013-12-18)
+
+  Cross references information is recomputed regularly with the live content of
+  the editor every time the content of the buffer is changed. This in turns
+  gives better support for navigation, highlighting, and every functionality
+  based on cross references.
+
 NF-61-MB13-030 GPS: Use a fallback by name for cross references (2013-11-14)
 
   The GPS cross reference engine will now use imprecise information from the
