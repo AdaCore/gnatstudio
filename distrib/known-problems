@@ -8,6 +8,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MC17-037: GPS: error connecting to the open_file_action_hook
+  Problem:    When trying to connect a custom python function to this hook,
+              GPS complains that the function should return a boolean (even
+              if it does).
+  Workaround: This hook is only useful if you want to open a file in your own
+              editor. In this case, you can in general call the editor
+              directly instead.
+
 - MC13-030: GPS: no xref for some C++ operators
   Problem:    A large number of operators can be redefined in C++, and GPS
               was missing support for a number of them (type conversion,

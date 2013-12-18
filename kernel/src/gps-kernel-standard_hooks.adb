@@ -888,7 +888,7 @@ package body GPS.Kernel.Standard_Hooks is
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 8));
+            new Callback_Data'Class'(Create (Script, 9));
    begin
       Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
@@ -898,6 +898,7 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 6, Data.Enable_Navigation);
       Set_Nth_Arg (D.all, 7, Data.New_File);
       Set_Nth_Arg (D.all, 8, Data.Force_Reload);
+      Set_Nth_Arg (D.all, 9, Data.Focus);
       return D;
    end Create_Callback_Data;
 
@@ -1134,7 +1135,7 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, Open_File_Hook_Type,
          Args_Creator => From_Callback_Data_Open_File'Access);
-      Register_Hook_No_Return
+      Register_Hook_Return_Boolean
         (Kernel, Open_File_Action_Hook, Open_File_Hook_Type);
 
       Register_Hook_Data_Type
