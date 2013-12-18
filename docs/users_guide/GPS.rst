@@ -590,6 +590,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.apply_overlay
 
+   .. automethod:: GPS.EditorBuffer.at
+
    .. automethod:: GPS.EditorBuffer.beginning_of_buffer
 
    .. automethod:: GPS.EditorBuffer.blocks_fold

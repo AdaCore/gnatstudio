@@ -3245,6 +3245,13 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def at(self, line, column):
+        """
+        Returns a new location at the given line and column in the buffer
+        :return: A new instance of :class:`GPS.EditorLocation`
+        """
+        pass  # implemented in Ada
+
     def beginning_of_buffer(self):
         """
         Returns a location pointing to the first character in the buffer

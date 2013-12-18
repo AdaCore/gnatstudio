@@ -1997,8 +1997,9 @@ package body Src_Editor_Module.Shell is
            (Create_Editor_Location
               (Data.Get_Script,
                Get_Buffer (Data, 1).New_Location
-               (Data.Nth_Arg (2),
-                Visible_Column (Integer'(Data.Nth_Arg (3))))));
+               (Line   => Integer'Max (1, Nth_Arg (Data, 2)),
+                Column =>
+                  Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 3))))));
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
