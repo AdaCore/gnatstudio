@@ -1674,17 +1674,17 @@ package body GNATdoc is
       Base_Dir : Virtual_File;
 
    begin
-      if Attr /= "" then
-         Base_Dir := Create_From_Base (+Attr);
-         Base_Dir.Ensure_Directory;
-
-         return Base_Dir;
-      end if;
-
       if Project.Object_Dir /= No_File then
          Base_Dir := Project.Object_Dir;
       else
          Base_Dir := Project.Project_Path.Get_Parent;
+      end if;
+
+      if Attr /= "" then
+         Base_Dir := Create_From_Base (+Attr, Base_Dir.Full_Name);
+         Base_Dir.Ensure_Directory;
+
+         return Base_Dir;
       end if;
 
       return Create_From_Dir (Base_Dir, +"gnatdoc/");
