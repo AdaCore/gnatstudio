@@ -193,7 +193,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
                 break
 
 
-def buffer_align_on(sep, replace_with=None, buffer=None):
+def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
     """Align the current selection in buffer, based on the separator sep.
        See the description for range_align_on"""
     if not buffer:
@@ -211,7 +211,7 @@ def buffer_align_on(sep, replace_with=None, buffer=None):
         buffer.indent(top, bottom)
         top = buffer.get_mark("top").location()
         bottom = buffer.get_mark("bottom").location()
-        range_align_on(top, bottom, sep, replace_with)
+        range_align_on(top, bottom, sep, replace_with, sep_group=sep_group)
         # re-select the region to be able to call back this routine
         top = buffer.get_mark("top").location()
         bottom = buffer.get_mark("bottom").location()
@@ -435,7 +435,8 @@ def align_end_of_line_comments():
     """Align end of line comments"""
     buffer = GPS.EditorBuffer.get()
     if buffer.file().language() == "ada":
-        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)", replace_with=" --  ", sep_group=1)
+        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)",
+                        replace_with=" --  ", sep_group=1)
     else:
         buffer_align_on(sep=" //\s*", replace_with=" // ")
         buffer_align_on(sep=" #\s*", replace_with=" # ")
