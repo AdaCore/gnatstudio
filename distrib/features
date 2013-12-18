@@ -33,6 +33,11 @@ NF-61-MC02-033 GPS: Minor enhancements to the tip-of-the-day (2013-12-02)
   The "tip of the day" dialog can now be moved, and the text for the
   documentation can be selected.
 
+NF-61-MC02-016 GPS: Automatic indentation of pasted content (2013-12-17)
+
+  When you paste content in a source editor that supports automatic
+  indentation, it will be indented automatically.
+
 NF-61-MB26-054 GPS: New line number display preference (2013-11-27)
 
   The "Display line numbers" preference now settings Never, Some_Lines,
