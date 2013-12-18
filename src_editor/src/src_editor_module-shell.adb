@@ -26,6 +26,7 @@ with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Xref;
+use GNATCOLL.Xref;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -1720,7 +1721,6 @@ package body Src_Editor_Module.Shell is
    is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       File_Inst : Class_Instance;
-
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -("Cannot build instances of EditorBuffer."
@@ -1989,6 +1989,14 @@ package body Src_Editor_Module.Shell is
          Get_Buffer (Data, 1).Remove_Special_Lines
            (Mark  => Get_Mark (Data, 2),
             Lines => Nth_Arg (Data, 3, 0));
+
+      elsif Command = "at" then
+         Data.Set_Return_Value
+           (Create_Editor_Location
+              (Data.Get_Script,
+               Get_Buffer (Data, 1).New_Location
+               (Data.Nth_Arg (2),
+                Visible_Column (Integer'(Data.Nth_Arg (3))))));
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
@@ -2813,6 +2821,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel,
          "remove_special_lines", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 
