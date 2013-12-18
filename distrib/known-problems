@@ -23,6 +23,12 @@ Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
   Workaround: In a lot of cases, GPS falls back on a different xref engine
               in this case, although there might be missing references.
 
+- MC13-025: GPS: empty area in desktop after deleting files
+  Problem:    If you delete (from the disk) some files that were edited in
+              the previous GPS session, then GPS leaves empty areas in
+              the desktop when it is restarted.
+  Workaround: exit GPS a second time and restart. The areas have been removed.
+
 - MC13-014: GPS: spark2014.py plug-in changes focus to previous file
   Problem:    In some cases, when running the SPARK tools using this plug-in,
               an old file buffer will be opened even though no message was
