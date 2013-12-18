@@ -680,7 +680,7 @@ package body Remote.Rsync is
                             Natural'Image (Total_Files));
 
                else
-                  Set_Progress (Data.Command,
+                  Set_Progress (Data.Command.Get_Command,
                                 Progress => (Activity => Running,
                                              Current  => File_Nb,
                                              Total    => Total_Files));

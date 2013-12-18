@@ -19,6 +19,7 @@ with Commands;                use Commands;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Task_Manager;            use Task_Manager;
 
 package body GPS.Kernel.Command_API is
@@ -41,14 +42,7 @@ package body GPS.Kernel.Command_API is
       Data_Command     : Scheduled_Command_Access;
       Command_Instance : Class_Instance;
    begin
-      if Command = Destructor_Method then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         if Data_Command /= null then
-            Remove_Instance (Data_Command, Get_Script (Data));
-            Unref (Command_Access (Data_Command));
-         end if;
-      elsif Command = "list" then
+      if Command = "list" then
          declare
             Commands : constant Command_Array := Get_Scheduled_Commands
                 (GPS.Kernel.Task_Manager.Get_Task_Manager
@@ -86,29 +80,10 @@ package body GPS.Kernel.Command_API is
             end loop;
          end;
 
-      elsif Command = "progress" then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         Set_Return_Value (Data, Progress (Data_Command).Current);
-         Set_Return_Value_Key (Data, "current");
-         Set_Return_Value (Data, Progress (Data_Command).Total);
-         Set_Return_Value_Key (Data, "total");
-
       elsif Command = "interrupt" then
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
          Data_Command := Get_Data (Command_Instance);
          Interrupt_Queue (Get_Kernel (Data), Command_Access (Data_Command));
-
-      elsif Command = "name" then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         Set_Return_Value (Data, Name (Data_Command));
-
-      elsif Command = "get_result" then
-         Set_Return_Value
-           (Data,
-            String'
-              ("Error: this primitive should be implemeted by subclasses"));
       end if;
    end Command_Cmds;
 
@@ -120,19 +95,11 @@ package body GPS.Kernel.Command_API is
       Command_Class  : constant Class_Type := New_Class (Kernel, "Command");
    begin
       Register_Command
-        (Kernel, Destructor_Method, 0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
         (Kernel, "list", 0, 0, Command_Cmds'Access, Command_Class, True);
       Register_Command
         (Kernel, "get", 0, 0, Command_Cmds'Access, Command_Class, True);
       Register_Command
-        (Kernel, "progress", 0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
         (Kernel, "interrupt", 0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
-        (Kernel, "name", 0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
-        (Kernel, "get_result", 0, 0, Command_Cmds'Access, Command_Class);
    end Register_Commands;
 
 end GPS.Kernel.Command_API;

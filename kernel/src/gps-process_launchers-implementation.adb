@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
 with Interactive_Consoles;             use Interactive_Consoles;
 with GPS.Kernel;                       use GPS.Kernel;
@@ -40,7 +40,8 @@ package body GPS.Process_Launchers.Implementation is
         renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.Parse_Standard_Output (Output, Data.Command);
+         Build_Data.Output_Parser.Parse_Standard_Output
+           (Output, Command_Access (Data.Command));
       end if;
    end Build_Callback;
 
@@ -54,7 +55,8 @@ package body GPS.Process_Launchers.Implementation is
 
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.End_Of_Stream (Status, Data.Command);
+         Build_Data.Output_Parser.End_Of_Stream
+           (Status, Command_Access (Data.Command));
       end if;
    end End_Build_Callback;
 

@@ -39,11 +39,12 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
+with Commands;                   use Commands;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
---  with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Time_Utils;                 use Time_Utils;
@@ -558,6 +559,7 @@ package body GPS.Kernel.Timeout is
       C             : Monitor_Command_Access;
       No_Handler    : Handler_Id;
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
+      Scheduled     : Scheduled_Command_Access;
    begin
       Push_State (Kernel, Processing);
 
@@ -571,6 +573,8 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C := new Monitor_Command;
+      Scheduled := Create_Wrapper (Command         => C,
+                                   Destroy_On_Exit => True);
 
       No_Handler.Id := Null_Handler_Id;
 
@@ -606,7 +610,7 @@ package body GPS.Kernel.Timeout is
                                   Callback      => Callback,
                                   Exit_Cb       => Exit_Cb,
                                   Callback_Data => Callback_Data,
-                                  Command       => Command_Access (C),
+                                  Command       => Scheduled,
                                   Process_Died  => False),
          Died                 => False,
          Interrupted          => False,

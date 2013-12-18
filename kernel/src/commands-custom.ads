@@ -64,7 +64,7 @@ with XML_Utils;
 with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
 with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Interactive_Consoles;
 
 package Commands.Custom is

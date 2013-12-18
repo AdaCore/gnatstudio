@@ -25,6 +25,7 @@ with GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
 with GPS.Scripts.Projects;
+with GPS.Scripts.Commands;
 with GPS.Tools_Output;                         use GPS.Tools_Output;
 
 with Ada_Semantic_Tree.Lang;
@@ -66,6 +67,7 @@ package body GPS.CLI_Utils is
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
       GPS.Scripts.Files.Register_Commands (Kernel);
       GPS.Scripts.Projects.Register_Commands (Kernel);
+      GPS.Scripts.Commands.Register_Commands (Kernel);
       Commands.Builder.Scripts.Register_Commands (Kernel);
       GPS.CLI_Scripts.Register_Commands (Kernel);
    end Register_Classes;

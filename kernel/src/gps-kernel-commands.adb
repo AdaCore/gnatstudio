@@ -27,6 +27,7 @@ with Commands.Generic_Asynchronous;
 
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 
 package body GPS.Kernel.Commands is
 
