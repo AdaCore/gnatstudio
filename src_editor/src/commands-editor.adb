@@ -306,10 +306,12 @@ package body Commands.Editor is
 
          --  The cursor is a multi cursor
          if C /= Nil_Cursor then
-            Mark := Get_Mark (C);
+            if Is_Alive (C) then
+               Mark := Get_Mark (C);
 
-            if Mark /= null then
-               if Loc.Line /= 0 then
+               if Mark /= null
+                 and then Loc.Line /= 0
+               then
                   Command.Buffer.Get_Iter_At_Screen_Position
                     (Iter, Loc.Line, Loc.Col);
 
