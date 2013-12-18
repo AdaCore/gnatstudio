@@ -4,13 +4,13 @@
 Description of the Main Window
 ******************************
 
-The GNAT Programming Studio has one main window, where most
-of your work will be performed. However, it is also very flexible
-in how it lets you organize your desktop, which will be discussed
-in a later section (:ref:`Multiple_Document_Interface`).
+The GNAT Programming Studio has one main window, which is where you perform
+most of your work.  However, GPS is very flexible in the ways it lets you
+organize your desktop, which is discussed in a later section
+(:ref:`Multiple_Document_Interface`).
 
-But there are also various other windows that might pop up at
-various times, and this section documents them.
+There are also other windows that might pop up at various times, documented
+in this section.
 
 
 .. _The_Work_Space:
@@ -23,11 +23,11 @@ The Workspace
 .. index:: see: MDI; Multiple Document Interface
 .. index:: Multiple Document Interface
 
-The whole work space is based on a multiple document interface,
-:ref:`Multiple_Document_Interface`. It can contain any number of
-windows, the most important of which are probably the editors. However,
-GPS also provides a large number of views that can be added to the
-workspace. The following sections will list them all.
+The overall work space is based on a multiple document interface,
+:ref:`Multiple_Document_Interface` and can contain any number of windows,
+the most important of which are usually the editors. However, GPS also
+provides a large number of views for you to add to the workspace. The
+sections below list them.
 
 Common features of the views
 ----------------------------
@@ -35,161 +35,157 @@ Common features of the views
 .. index:: menu; tools
 .. index:: menu; tools --> views
 
-Some views are part of the default desktop, and thus are visible by default.
-The other views can always be opened through one of the submenus of the
+Some views are part of the default desktop and thus are visible by default.
+You can open the other views through one of the submenus of the
 :menuselection:`Tools` menu, most often :menuselection:`Tools --> Views`.
 
 .. index:: windows; local toolbar
 
-Some of the view have their own local toolbar that contains shortcuts
-to the most often used features of the view.
+Some of the view have their own local toolbar that contains shortcuts to
+the most often used features of that view.
 
 .. index:: windows; local settings menu
 
-To the right of these local toolbars, there is often a button to open
-a local settings menu. This menu can contain more actions that can be
-performed in this view, or various configuration settings that affect
-the behavior or the display of the view.
+There is often a button to the right of these local toolbars that opens a
+local settings menu. This menu either contains more actions you can perform
+in that view or various configuration settings that allow you to change the
+behavior or the display of the view.
 
 .. index:: windows; filter
 
-Some of the views also have a filter in their local toolbar. These
-filters can be used to reduce the amount of information that is
-displayed on the screen, by only leaving those lines that match
-the filter.
+Some views also have a filter in their local toolbar. These filters can be
+used to reduce the amount of information displayed on the screen by only
+showing those lines matching the filter.
 
-If you click on the left icon of the filter, this will bring up a
-popup menu to configure the filter:
+If you click on the left icon of the filter, GPS brings up a popup menu to
+allow you to configure the filter:
 
-* The first three entries are used to chose the search algorith (from
-  full text match, to regular expression, to fuzzy matching). These
-  modes are similar to the ones used in the omni-search (:ref:`omni_search`).
+* You can use the first three entries to chose the search algorith (full
+  text match, regular expression, or fuzzy matching). These modes are
+  similar to the ones used in the omni-search (:ref:`omni_search`).
 
-* The next entry is :guilabel:`Revert filter`. When this is selected, the
-  lines that do not match the filter are displayed, as opposed to the ones
-  that match the filter otherwise. This mode can also be enabled temporarily
-  if you start the filter with the string `not:`. For instance, a filter
-  in the :guilabel:`Locations` view that says `not:warning` will hide all
-  warning messages.
+* The next entry is :guilabel:`Revert filter`. When you select this option,
+  the lines that do not match the filter are displayed, instead of the
+  default behavior that displays ones that match the filter.  You can also
+  enabled this mode temporarily by starting the filter with the string
+  `not:`. For example, a filter in the :guilabel:`Locations` view saying
+  `not:warning` will hide all warning messages.
 
-* The last entry :guilabel:`Whole word` should be used when you only want
-  to match on full words, not on substrings.
+* Select the last entry, :guilabel:`Whole word`, when you only want to
+  match on full words, not on substrings.
 
 
 .. _browsers_features:
 
-Common features of the browsers
--------------------------------
+Common features of browsers
+---------------------------
 
-A number of the views described below are interactive displays called
-browsers. They represent their information as boxes that can be manipulated
-with the mouse, and provide the following additional capabilities:
-
-* Scrolling
-
-  When a lot of items are displayed in the canvas, the currently visible area
-  might be too small to display all of them. In this case, scrollbars will be
-  added on the sides, so that you can make other items visible. Scrolling can
-  also be done with the arrow keys.
-
-* Layout
-
-  A basic layout algorithm is used to organize the items. This algorithm is
-  layer oriented: items with no parents are put in the first layer, then their
-  direct children are put in the second layer, and so on. Depending on the type
-  of browser, these layers are organized either vertically or horizontally.
-  This algorithm tries to preserve as much as possible the positions of the
-  items that were moved interactively.
-
-  The :guilabel:`Refresh layout` button in the local toolbar can be used
-  to recompute the layout of items at any time, even for items that were
-  previously moved interactively.
-
-* Interactive moving of items
-
-  Items can be moved interactively with the mouse. Click and drag the item by
-  clicking on its title bar. The links will still be displayed during the move,
-  so that you can check whether it overlaps any other item. If you are trying
-  to move the item outside of the visible part of the browser, the latter will
-  be scrolled.
-
-* Selecting items
-
-  Items can be selected by clicking on them. Multiple items can be selected
-  by holding the :kbd:`control` key while clicking in the item. Alternatively,
-  you can click and drag the mouse inside the background of the browser. All
-  the items found in the selection rectangle when the mouse is released will be
-  selected.
-
-  Selected items are drawn with a different title bar color. All items linked
-  to them also use a different title bar color, as well as the links. This is
-  the most convenient way to understand the relationships between items when
-  lots of them are present in the browser.
-
-  Buttons in the local toolbar are provided to remove either the selected
-  items, or on the contrary the ones that are not selected.
+GPS presents a view of various types of information using an interactive
+display called a "browser", which shows a canvas containing boxes you can
+manipulate.  Browsers provide the following additional capabilities:
 
 * Links
 
-  Items can be linked together, and will remain connected when items are moved.
-  Different types of links exist, see the description of the various browsers.
+  Boxes can be linked together and remain linked when they're moved.
+  Different types of links exist; see the description of the various
+  browsers for more details.
 
-  The local toolbar provides a button to hide the display of the links. This
-  will keep the canvas more readable, at the cost of losing some information.
-  You can also hide only a subset of the links. Even when the links are hidden,
-  if you select an item then the items linked to it will still be highlighted.
+  You can hide links using a button on the local toolbar. This keeps the
+  canvas more readable at the cost of losing information.  You can also
+  hide only a subset of links. Even when links are hidden, if you select a
+  box, boxes linked to it are still highlighted.
 
-  The local settings menu in browsers has an option :guilabel:`straight links`
-  which can be toggled if you prefer to have orthogonal links.
+  You can toggle the :guilabel:`straight links` local settings menu in
+  browsers if you prefer to avoid diagonal links.
 
-* :index:`export <single: callgraph; export>`
+* Scrolling
 
-  The entire contents of a browser can be exported as a :guilabel:`PNG` or
-  :guilabel:`SVG` images using the entry :guilabel:`Export to...` in the local
-  toolbar.
+  When many boxes are being displayed, the currently visible area may be
+  too small for all of them.  When that happens, GPS adds scrollbars on the
+  sides that you can use to make other items visible. You can also scroll
+  using the arrow keys.
+
+* Layout
+
+  GPS organizes the boxes in a browser using a simple layout algorithm,
+  which is layer oriented: items with no parents are put in the first
+  layer, their direct children are put in the second layer, and so
+  on. Depending on the type of browser, these layers are organized either
+  vertically or horizontally.  If you moved boxes, this algorithm tries to
+  preserve their positions as much as possible.
+
+  You can use the :guilabel:`Refresh layout` button in the local toolbar to
+  recompute the layout at any time, even of boxes that you moved.
+
+* Moving boxes
+
+  You can move items with your mouse. Drag the box by clicking on its title
+  bar. The box's links are still be displayed during the move, so you can
+  see whether it overlaps any other box. If you try to move the box outside
+  the visible part of the browser, it will be scrolled.
+
+* Selecting boxes
+
+  You can select a box by clicking on it.  You can select multiple boxes by
+  holding the :kbd:`control` key while clicking in each box. Alternatively,
+  you can create a rectangle using your mouse.  All boxes found in the
+  rectangle when the mouse is released are selected.
+
+  Selected boxes have a different title bar color.  All boxes linked to
+  them also use a different title bar color, and so do the links. This is
+  the most convenient way to visualize the relationships between boxes when
+  many are present in the browser.
+
+  You can use buttons in the local toolbar to either remove the selected
+  boxes or remove the boxes that are not selected.
 
 * Zooming
 
-  Several different zoom levels are available. The local toolbar provides
-  multiple buttons to change the zoom level: :guilabel:`zoom in`,
-  :guilabel:`zoom out` and :guilabel:`zoom`.  The latter is used to select
-  directly the zoom level you want.
+  GPS provides several different zoom levels.  You can use the
+  :guilabel:`zoom in`, :guilabel:`zoom out` and :guilabel:`zoom` buttons in
+  the local toolbar to change the level: use the latter to explicitly
+  select the level you want.
 
-  This zooming capability is generally useful when lots of items are displayed
-  in the browser, to get a more general view of the layout and the
-  relationships between the items.
+  This capability is generally useful when many boxes are displayed in the
+  browser to allow you to get an overview of the layout and the
+  relationships between the boxes.
+
+* :index:`export <single: callgraph; export>`
+
+  You can export the entire contents of a browser as a :guilabel:`PNG` or
+  :guilabel:`SVG` image using the :guilabel:`Export to...` button in the
+  local toolbar.
 
 * Hyper-links
 
-  Some of the items will contain hyper links, displayed in blue by default, and
-  underlined. Clicking on these will generally display new items.
+  Some of boxes contain hyper links, displayed in blue by default, and
+  underlined.  Clicking on these will generally display new boxes.
 
-* contextual menus
+* Contextual menus
 
-  Right-clicking on items will bring a contextual menu with actions that can be
-  performed on that item. These actions are specific to the kind of item you
-  clicked on.
+  Right-clicking on boxes displays a contextual menu with actions you can
+  perform on that box.  These actions are specific to the kind of box you
+  clicked.
 
 * Grid
 
-  By default, a grid (small dots) is displayed in the background of the
-  browsers.  Using the local settings menu, it is possible to hide the grid
-  (:guilabel:`Draw grid`) and to force items to align on the grid
-  (:guilabel:`Align on grid`).
+  By default, GPS displays a grid (small dots) on the canvas.  You can use
+  the local settings menu to hide the grid (:guilabel:`Draw grid`) or to
+  force items to align on the grid (:guilabel:`Align on grid`).
 
 Icons for source language entities
 __________________________________
 
-Entities in the source code are presented with representative icons within the
-various GPS views (the :guilabel:`Outline` and :guilabel:`Project` views, for
-example).  These icons indicate both the language categories of the entities,
-such as packages and methods, as well as compile-time visibility.  In addition,
-the icons distinguish entity declarations from other entities.  The same icons
-are used for all programming languages supported by the viewers, with
+Entities in the source code are represented by icons within the various GPS
+views (for example, the :guilabel:`Outline` and :guilabel:`Project` views).
+These icons indicate both the semantic category of the entity within the
+language, such as packages and methods, as well as compile-time visibility.
+The icons also distinguish entity declarations from other entities.  The
+same icons are used for all programming languages supported by GPS, with
 language-specific interpretations for both compile-time visibility and
-recognizing declarations.
+distinguishing declarations and uses of entities.
 
-There are five language categories used for all supported languages:
+These five language categories are used for all supported languages:
 
 * The *package* category's icon is a square.
 
@@ -207,50 +203,47 @@ There are five language categories used for all supported languages:
 
   .. image:: dot_x.png
 
-* The *generic* category's  icon is a diamond.
+* The *generic* category's icon is a diamond.
 
   .. image:: diamond_x.png
 
-These basic icons are enhanced with decorators, when appropriate, to indicate
+These icons are enhanced with decorations, when appropriate, to indicate
 compile-time visibility constraints and to distinguish declarations from
-completions. For example, the icons for entity declarations have a small 'S'
-decorator added, denoting a 'spec'.
+completions. For example, the icons for entity declarations have a small
+'S' decorator added, denoting a 'spec'.
 
-With respect to compile-time visibility, icons for 'protected' and 'private'
-entities appear within an enclosing box indicating a visibility constraint. For
-entities with 'protected' visibility, this enclosing box is colored in gray.
-'Private' entities are enclosed within a red box.  The icons for 'public'
-entities have no such enclosing box. For example, a variable with 'private'
-visibility would be represented by an icon consisting of a dot enclosed within
-a red box.
+Icons for 'protected' and 'private' entities appear within an enclosing box
+indicating a compile-time visibility constraint. For entities with
+'protected' visibility, the enclosing box is gray.  'Private' entities are
+enclosed by a red box.  The icons for 'public' entities have no enclosing
+box. For example, a variable with 'private' visibility is represented by an
+icon consisting of a dot enclosed by a red box.
 
-These additional decorators are combined when appropriate. For example, the
-icon corresponding to the 'private' declaration of a 'package' entity would be
-a square, as for any package entity, with a small 'S' added, all enclosed
-within a red box.
+These additional decorations are combined when appropriate. For example,
+the icon corresponding to the 'private' declaration of a 'package' entity
+would be a square, as for any package entity, with a small 'S' added, all
+enclosed by a red box.
 
-Language constructs are mapped to the categories in a language-specific manner.
+Language constructs are mapped to categories in a language-specific manner.
 For example, C++ namespaces and Ada packages correspond to the *package*
-category.  C functions and Ada subprograms correspond to the *method* category,
-and so on.  The *generic* category is a general category representing other
-language entities, but note that not all possible language constructs are
-mapped to categories and icons.  (Note also that the *generic* category does
-not correspond to Ada generic units or C++ templates.)
+category and C functions and Ada subprograms correspond to the *method*
+category.  The *generic* category is a general category representing other
+language entities, but not all possible language constructs are mapped to
+categories and icons.  (Specifically, the *generic* category does not
+correspond to Ada generic units or C++ templates.)
 
-The names of the categories should not be interpreted literally in terms of
-language constructs because the categories are rather general, in order to
-limit the number used. The *variable* category includes both constants and
-variables in Ada, for example. Limiting the number of categories maintains a
-balance between presentation complexity and the need to support distinct
-programming languages.
+The names of the categories should not be interpreted literally as language
+constructs because the categories are meant to be general in order to limit
+the number of categories.  For example, the *variable* category includes
+both constants and variables in Ada. Limiting the number of categories
+maintains a balance between presentation complexity and the need to support
+many different programming languages.
 
-Icons for a given entity may appear more than once within a view. For example,
-an Ada private type will have both a partial view in the visible part of the
-enclosing package as well as a full view in the private part of the package.
-Two triangle icons will therefore appear for the two occurrences of the type
-name, one with the additional decorator indicating the 'private' compile-time
-visibility.
-
+Icons for a given entity may appear more than once within a view. For
+example, an Ada private type has both a partial view in the visible part of
+the enclosing package and a full view in the private part of the package.
+A triangle icon will appear for each of the two occurrences of the type
+name, one with the additional decoration indicating 'private' visibility.
 
 .. index:: welcome dialog
 .. index:: windows; welcome dialog
@@ -264,90 +257,90 @@ The Welcome Dialog
 .. index:: command line; -P
 .. index:: project; startup
 
-When it starts, GPS is looking for a project file to load, so that it knows
-where to find the sources of your project. This project is in general specified
-on the command line (via a :command:`-P` switch). Alternatively, if the current
-directory only contains one project file, GPS will select it automatically.
-Finally, if you specify the name of a source file to edit, GPS will load
-a default project and start the editing immediately.
-if no project file can be found, GPS displays a welcome dialog, which gives you
-the following choices:
+When GPS starts, it looks for a project file to load so that it knows where
+to find the sources of your project. This project is often specified on the
+command line (via a :command:`-P` switch).  If not, and the current
+directory contains only one project file, GPS selects it automatically.
+Finally, if you specify the name of a source file to edit, GPS loads a
+default project.  If GPS can't find a project file, it displays a welcome
+dialog, giving you the following choices:
 
 :guilabel:`Create new project from template`
-  If you select this option and then click the :guilabel:`OK` button, GPS will
-  launch an assistant to create a project using one of the predefined project
+
+  Selecting this option and clicking the :guilabel:`OK` button launchs an
+  assistant to create a project using one of the predefined project
   templates. This makes it easy to create GtkAda-based applications, or
-  applications using the Ada Web Server, for instance.
+  applications using the Ada Web Server, for example.
 
 .. index:: project; default
 
 :guilabel:`Start with default project in directory`
 
-  If you select this option and click on the :guilabel:`OK` button, GPS will
-  first look for a project called :file:`default.gpr` in the current directory
-  and load it if found. Otherwise, it will copy in the current directory the
-  default project found under :file:`<prefix>/share/gps/default.gpr` and load
-  it.  GPS will remove this temporary copy when exiting or loading another
-  project, if the copy has not been modified during the session.
+  Selecting this option and clicking the :guilabel:`OK` button causes GPS
+  to look for a project called :file:`default.gpr` in the current directory
+  and load it if found. Otherwise, it copies into the current directory the
+  default project found it :file:`<prefix>/share/gps/default.gpr` and loads
+  it.  GPS removs this temporary copy when exiting or loading another
+  project if the copy has not been modified during the session.
 
-  The default project will contain all the Ada source files from the given
-  directory (assuming they use the default GNAT naming scheme :file:`.ads`
-  and :file:`.adb`).
+  The default project will contain all the Ada source files from the
+  specified directory (assuming they use the default GNAT naming scheme
+  :file:`.ads` and :file:`.adb`).
 
-  If the current directory is not writable, GPS will instead load directly
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS will work in a
-  degraded mode, where some capabilities will not work (such as building and
-  source navigation). This project does not contain any sources.
+  If the current directory is not writable, GPS instead loads
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS works in a
+  degraded mode, where some capabilities (such as building and source
+  navigation) will not work. This project will not contain any sources.
 
 .. index:: project; wizard
 
 :guilabel:`Create new project with wizard`
 
-  Selecting this option and clicking on the :guilabel:`OK` button will start a
-  wizard allowing you to specify most of the properties for a new project. Once
-  the project is created, GPS will save it and load it automatically.
-  See :ref:`The_Project_Wizard` for more details.
+  Selecting this option and clicking on the :guilabel:`OK` button starts a
+  wizard allowing you to specify most of the properties for a new
+  project. Once the project is created, GPS saves it and loads it
+  automatically.  See :ref:`The_Project_Wizard` for more details.
 
   There are several kinds of wizards, ranging from creating a single project,
   to creating a set of project that attempt to adapt to an existing directory
   layout. The list of pages in the wizard will depend on the kind of project
   you want to create.
 
-  One of the wizard, :guilabel:`Project Tree`, will try and import a set of
-  sources and object files, and attempt to create one or more project files so
-  that building your application through these project files will put the
-  objects in the same directory they are currently in. If you have not compiled
-  your application when launching this wizard, GPS will create a single project
-  file and all object files will be put in the same object directory. This is
-  the prefered method when importing sources with duplicate file names, since
-  the latter is only authorized in a single project file, not across various
-  project files.
+  One of the wizards, :guilabel:`Project Tree`, tries to import a set of
+  sources and object files and attempt to create one or more project files
+  so building your application through these project files puts the objects
+  in the same directory they're currently in. If you haven't compiled your
+  application when launching this wizard, GPS creates a single project file
+  that puts all object files in the same object directory.  This is the
+  prefered method when importing sources with duplicate file names, since
+  the latter is only authorized in a single project file, not across
+  various project files.
 
 .. index:: project; load existing project
 
 :guilabel:`Open existing project`
 
   You can select an existing project by clicking on the :guilabel:`Browse`
-  button, or by using a previously loaded project listed in the combo box. When
-  a project is selected, click on the :guilabel:`OK` button to load this
-  project and open the main window.
+  button or by using a previously loaded project listed in the combo
+  box. When a project is selected, click on the :guilabel:`OK` button to
+  load this project and open the main window.
 
 :guilabel:`Always show this dialog when GPS starts`
 
   If unset, the welcome dialog won't be shown in future sessions.  In this
-  case, GPS will behave as follows: it will first look for a :command:`-P`
-  switch on the command line, and load the corresponding project if present;
-  otherwise, it will look for a project file in the current directory and will
-  load it if there is only of them; if no project file was loaded, GPS will
-  start with the default project, as if you had selected :guilabel:`Start with
-  default project in directory` in the welcome dialog.
+  case, GPS behaves as follows: it first looks for a :command:`-P` switch
+  on the command line and loads the corresponding project if so; otherwise,
+  it looks for a project file in the current directory and loads it if
+  there is only one; if no project file was loaded, GPS starts with the
+  default project, as if you had selected :guilabel:`Start with default
+  project in directory` in the welcome dialog.
 
   .. index:: preferences; display welcome window
 
   To reset this property, go to the menu :menuselection:`Edit --> Preferences`.
 
 :guilabel:`Quit`
-  If you click on this button, GPS will terminate immediately.
+  If you click on this button, GPS terminates immediately.
 
 .. index:: tip of the day
 .. index:: windows; tip of the day
@@ -358,16 +351,16 @@ The Tip of the Day
 
 .. image:: tip-of-the-day.png
 
-This dialog displays short tips on how to make the most efficient use of the
-GNAT Programming Studio. You can click on the :guilabel:`Previous` and
-:guilabel:`Next` buttons to access all tips, and close the dialog by either
+This dialog displays short tips on how to make the most efficient use of
+the GNAT Programming Studio. You can click on the :guilabel:`Previous` and
+:guilabel:`Next` buttons to access all tips or close the dialog by either
 clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
 
 .. index:: preferences; tip of the day
 
-You can also disable this dialog by unchecking the :guilabel:`Display Tip of
-the Day on startup` check box. If you would like to reenable this dialog, you
-can go to the :menuselection:`Edit --> Preferences` dialog.
+You can disable this dialog by unchecking the :guilabel:`Display Tip of the
+Day on startup` check box. If you want to reenable this dialog, go to the
+:menuselection:`Edit --> Preferences` dialog.
 
 
 .. index:: menu bar
