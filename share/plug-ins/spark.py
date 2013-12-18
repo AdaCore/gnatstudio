@@ -337,7 +337,7 @@ def do_pogs_xref(context, siv, dpc, zlg):
             proof_file = proof_file.replace('.vcg', '.siv')
 
     f = GPS.EditorBuffer.get(GPS.File(proof_file))
-    loc = GPS.EditorLocation(f, 1, 1)
+    loc = f.at(1, 1)
     if zlg:
         (frm, to) = loc.search(
             "^@@@@@@@@@@  VC: (procedure|function)_\S+_%s\." % number,

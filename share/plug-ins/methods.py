@@ -61,7 +61,7 @@ class Methods_Contextual (GPS.Contextual):
      decl = context.methods_list [choice_index].body()
      buffer = GPS.EditorBuffer.get (decl.file())
      buffer.current_view().goto \
-        (GPS.EditorLocation (buffer, decl.line(), decl.column()))
+        (buffer.at(decl.line(), decl.column()))
 
 def on_gps_started (hook_name):
    Methods_Contextual()

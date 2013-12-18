@@ -244,7 +244,7 @@ class Rectangle(object):
             buffer.start_undo_group()
             for line in selection.splitlines():
                 buffer.insert(start, line)
-                start = EditorLocation(buffer, start.line() + 1,
+                start = buffer.at(start.line() + 1,
                                        start.column())
             buffer.finish_undo_group()
         except:

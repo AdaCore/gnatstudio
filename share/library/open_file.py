@@ -43,7 +43,7 @@ def open_and_raise_editor (filename, line=0, column=0):
    try:
       ed   = GPS.EditorBuffer.get (GPS.File (filename))
       view = ed.current_view ()
-      loc  = GPS.EditorLocation (ed, line=line, column=column)
+      loc  = ed.at(line=line, column=column)
       view.goto (loc)
       GPS.MDI.get_by_child (view).raise_window()
    except:

@@ -21,7 +21,7 @@ def on_goto_separate (context):
    loc = context.entity().body (2)
    buffer = GPS.EditorBuffer.get (loc.file())
    buffer.current_view().goto \
-      (GPS.EditorLocation (buffer, loc.line(), loc.column()))
+      (buffer.at(loc.line(), loc.column()))
 
 def separate_filter (context):
    if isinstance (context, GPS.EntityContext) and context.entity():

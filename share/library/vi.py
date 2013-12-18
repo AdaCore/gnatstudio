@@ -169,7 +169,7 @@ class CmdLine (CommandWindow):
            if cmd[0] == "+" or cmd[0] == "-":
               return (loc.forward_line (line), match.group(2))
            else:
-              return (EditorLocation (buffer, line, 1), match.group(2))
+              return (buffer.at(line, 1), match.group(2))
         else:
            return (loc,cmd)
 

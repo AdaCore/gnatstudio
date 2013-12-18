@@ -72,9 +72,9 @@ class Addr2line (Console):
      line = int (matched.group (3))
      column = matched.group (5)
      if column != None:
-        buffer.current_view().goto (EditorLocation (buffer, line, int (column)))
+        buffer.current_view().goto (buffer.at(line, int (column)))
      else:
-        buffer.current_view().goto (EditorLocation (buffer, line, 1))
+        buffer.current_view().goto (buffer.at(line, 1))
 
 def open_addr2line_console (menu):
   executable = MDI.input_dialog ("Location of the executable ?", "Exec")[0]

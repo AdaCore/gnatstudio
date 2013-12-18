@@ -556,7 +556,7 @@ def goto_location(sloc):
     buf = GPS.EditorBuffer.get(sloc.file())
     v = buf.current_view()
     GPS.MDI.get_by_child(v).raise_window()
-    v.goto(GPS.EditorLocation(buf, sloc.line(),sloc.column()))
+    v.goto(buf.at(sloc.line(),sloc.column()))
     v.center()
 
 def get_overlay(buf,overlay_name):
@@ -626,7 +626,7 @@ class GNATprove_Message(GPS.Message):
         else:
             needed_overlay = "error"
         overlay = get_overlay(msg_buffer, needed_overlay)
-        loc = GPS.EditorLocation(msg_buffer, self.get_line(),1)
+        loc = msg_buffer.at(self.get_line(),1)
         msg_buffer.apply_overlay(overlay, loc, loc)
 
     def clear_trace(self):
@@ -690,8 +690,8 @@ class GNATprove_Message(GPS.Message):
                 buf.remove_overlay(overlay)
             buf.apply_overlay(
                 overlay,
-                GPS.EditorLocation(buf, sloc.line(), 1),
-                GPS.EditorLocation(buf, sloc.line(), 1))
+                buf.at(sloc.line(), 1),
+                buf.at(sloc.line(), 1))
 
 # this variable is used to clear GNATprove messages whenever a new
 # builder action is run. It is too early to do it in the menu entry
@@ -865,7 +865,7 @@ def compute_subp_sloc(self):
         curloc = self.location()
         buf = GPS.EditorBuffer.get(curloc.file(), open=False)
         if buf:
-            edloc = GPS.EditorLocation(buf, curloc.line(), curloc.column())
+            edloc = buf.at(curloc.line(), curloc.column())
             start_loc = subprogram_start(edloc)
         else:
             return None

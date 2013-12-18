@@ -62,7 +62,7 @@ def edit_dg (dg, source_filename, line, for_subprogram, in_external_editor):
   # jump to the line
   if in_external_editor:
     buf = GPS.EditorBuffer.get (GPS.File (dg))
-    loc = GPS.EditorLocation (buf, 1, 1)
+    loc = buf.at(1, 1)
     try:
       (frm, to) = loc.search ("^-- " + `line` + ":", regexp=True)
       if frm:

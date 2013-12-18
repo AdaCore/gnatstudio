@@ -71,8 +71,8 @@ def on_gps_started(hook_name):
 
 def block_complete_on_location(buffer, location):
    # Check if we need to insert a new-line character
-   start = GPS.EditorLocation(buffer, location.line(), 1)
-   end = GPS.EditorLocation(buffer, location.line(), location.column())
+   start = buffer.at(location.line(), 1)
+   end = buffer.at(location.line(), location.column())
 
    # A new-line character is inserted if there is some text on the left
    # of the current cursor position.
@@ -91,7 +91,7 @@ def block_complete_on_location(buffer, location):
    if pattern != '':
       # Retrieve the line at the start of the block
 
-      start = GPS.EditorLocation(buffer, location.block_start_line(), 1)
+      start = buffer.at(location.block_start_line(), 1)
       end = location
 
       bs_content = buffer.get_chars(start, end)

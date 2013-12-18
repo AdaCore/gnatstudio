@@ -179,7 +179,7 @@ def get_selection_or_line (buffer, location):
       The buffer is returned as the first field of the tuple"""
 
    if isinstance (location, FileLocation):
-      location = GPS.EditorLocation(buffer, location.line(), location.column())
+      location = buffer.at(location.line(), location.column())
 
    buffer = location.buffer ()
    start  = buffer.selection_start ()
@@ -238,18 +238,18 @@ def move_block (chars=1):
 
    buffer.start_undo_group ()
    buffer.delete (beg_loc, end_loc)
-   buffer.insert (EditorLocation (buffer, start_line, 1), "\n".join(newtext))
+   buffer.insert (buffer.at(start_line, 1), "\n".join(newtext))
    buffer.finish_undo_group ()
 
    if had_selection:
        # Reselect the range of lines
-       start_loc = EditorLocation (buffer, start_line, 1)
-       end_loc   = EditorLocation (buffer, end_line, 1).end_of_line()
+       start_loc = buffer.at(start_line, 1)
+       end_loc   = buffer.at(end_line, 1).end_of_line()
        buffer.select (start_loc, end_loc)
    else:
        # Replace the cursor
        buffer.current_view().goto (
-          EditorLocation (buffer,
+          buffer.at(
              cursor_line,
              max (0, cursor_col + chars)))
 
@@ -512,7 +512,7 @@ def _goto_beginning_of_line(extend_selection):
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
    buffer = GPS.EditorBuffer.get (GPS.File (file))
-   loc  = GPS.EditorLocation (buffer, line, 1)
+   loc  = buffer.at(line, 1)
    buffer.current_view().goto (loc.end_of_line() - 1)
 
 

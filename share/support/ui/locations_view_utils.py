@@ -107,5 +107,5 @@ def export_locations_to_editor():
     buf = GPS.EditorBuffer.get()
 
     # Write the contents
-    buf.insert(GPS.EditorLocation (buf, 1, 1), text)
+    buf.insert(buf.at(1, 1), text)
 

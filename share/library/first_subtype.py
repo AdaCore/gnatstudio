@@ -35,7 +35,7 @@ def goto_first_subtype(context):
         decl = context.first_subtype.declaration()
         buffer = GPS.EditorBuffer.get(decl.file())
         buffer.current_view().goto(
-            GPS.EditorLocation(buffer, decl.line(), decl.column()))
+            buffer.at(decl.line(), decl.column()))
 
 
 def has_first_subtype(context):

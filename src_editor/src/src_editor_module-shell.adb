@@ -1991,6 +1991,8 @@ package body Src_Editor_Module.Shell is
             Lines => Nth_Arg (Data, 3, 0));
 
       elsif Command = "at" then
+         Name_Parameters (Data, (1 => Line_Cst'Access,
+                                 2 => Col_Cst'Access));
          Data.Set_Return_Value
            (Create_Editor_Location
               (Data.Get_Script,

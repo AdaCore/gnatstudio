@@ -10,8 +10,8 @@ def on_open_generated_file(name, file):
     ebuf = GPS.EditorBuffer.get()
 
     def apply_overlay(overlay, from_line, to_line, line_len):
-        start_loc = GPS.EditorLocation(ebuf, from_line, 1)
-        end_loc = GPS.EditorLocation(ebuf, to_line, line_len)
+        start_loc = ebuf.at(from_line, 1)
+        end_loc = ebuf.at(to_line, line_len)
         ebuf.apply_overlay(overlay, start_loc, end_loc)
 
     f_path = os.path.abspath(file.name())

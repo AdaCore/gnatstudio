@@ -1870,7 +1870,7 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
               matched = re.match("([\w+-]+):(\d+)", text)
               buffer = GPS.EditorBuffer.get(GPS.File (matched.group(1)))
               buffer.current_view().goto(
-                 GPS.EditorLocation(buffer, int(matched.group(2)), 1))
+                 buffer.at(int(matched.group(2)), 1))
 
         """
         pass  # implemented in Ada
@@ -3468,7 +3468,7 @@ class EditorBuffer(object):
         .. code-block:: python
 
            ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
-           loc = GPS.EditorLocation(ed, 4, 5)
+           loc = ed.at(4, 5)
            mark = loc.create_mark("name")
            mark.data = "whatever"
 
@@ -3834,7 +3834,7 @@ class EditorLocation(object):
         .. code-block:: python
 
             ed   = GPS.EditorBuffer.get(GPS.File("a.adb"))
-            loc  = GPS.EditorLocation(ed, line=4, column=5)
+            loc  = ed.at(line=4, column=5)
             loc2 = loc + 3
         """
         pass  # implemented in Ada
@@ -3866,9 +3866,9 @@ class EditorLocation(object):
         .. code-block:: python
 
            ed  = GPS.EditorBuffer.get(GPS.File("a.adb"))
-           loc = GPS.EditorLocation(ed, line=4, column=5)
+           loc = ed.at(line=4, column=5)
            loc.data = "MY OWN DATA"
-           loc2 = GPS.EditorLocation(ed, line=4, column=5)
+           loc2 = ed.at(line=4, column=5)
            # loc2.data is not defined at this point
 
         """
@@ -4028,7 +4028,7 @@ class EditorLocation(object):
         .. code-block:: python
 
            buffer = GPS.EditorBuffer.get(GPS.File("a.adb"))
-           loc = GPS.EditorLocation(buffer, 3, 4)
+           loc = buffer.at(3, 4)
            mark = loc.create_mark()
            buffer.insert(loc, "text")
            loc = mark.location()
@@ -4276,7 +4276,7 @@ class EditorMark(object):
         .. code-block:: python
 
            ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
-           loc = GPS.EditorLocation(ed, 3, 5)
+           loc = ed.at(3, 5)
            mark = loc.create_mark()
            # ...
            loc = mark.location()

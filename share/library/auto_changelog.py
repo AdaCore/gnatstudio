@@ -40,12 +40,12 @@ def on_file_edited (hook, file):
    first_insert = True
 
    #  Find out which is the "enclosing" program/package.
-   loc = EditorLocation (buffer, buffer.lines_count() - 1, 1)
+   loc = buffer.at(buffer.lines_count() - 1, 1)
    global_proc = loc.subprogram_name()
 
    i = 0
    while i < len(locations)/2:
-      loc = EditorLocation (buffer,
+      loc = buffer.at(
                             locations[2*i].line(),
                             locations[2*i].column())
 
@@ -60,7 +60,7 @@ def on_file_edited (hook, file):
       i = i+1
 
    # Jump to the end of the first line
-   log.current_view().goto(EditorLocation(log, 1, 1).end_of_line())
+   log.current_view().goto(log.at(1, 1).end_of_line())
 
 
 Hook ("file_edited").add (on_file_edited)

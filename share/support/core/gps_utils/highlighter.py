@@ -366,8 +366,8 @@ class Background_Highlighter(object):
             if min_line >= start_line:
                 from_line = max(start_line, min_line - self.batch_size)
 
-                f = GPS.EditorLocation(buffer, from_line, 1)
-                e = GPS.EditorLocation(buffer, min_line, 1).end_of_line()
+                f = buffer.at(from_line, 1)
+                e = buffer.at(min_line, 1).end_of_line()
 
                 if self.style:
                     self.style.remove(f, e)
@@ -382,8 +382,8 @@ class Background_Highlighter(object):
                 # It is possible that the buffer has been changed so that one
                 # of the locations is now invalid, so we just protect.
                 try:
-                    f = GPS.EditorLocation(buffer, max_line, 1)
-                    e = GPS.EditorLocation(buffer, to_line, 1).end_of_line()
+                    f = buffer.at(max_line, 1)
+                    e = buffer.at(to_line, 1).end_of_line()
 
                     if self.style:
                         self.style.remove(f, e)
@@ -549,8 +549,8 @@ class Location_Highlighter(Background_Highlighter):
         for entity_name, ref in self._refs:
             if s <= ref <= e:
                 u = entity_name.decode("utf-8").lower()
-                s2 = GPS.EditorLocation(buffer, ref.line(), ref.column())
-                
+                s2 = buffer.at(ref.line(), ref.column())
+
                 try:
                     e2 = s2 + (len(u) - 1)
                 except:

@@ -38,7 +38,7 @@ def add_skeleton(hook_name, file):
     if not os.path.exists(file.name()):
         # Only for new files
         ed = GPS.EditorBuffer.get(file)
-        loc = GPS.EditorLocation(ed, 1, 1)
+        loc = ed.at(1, 1)
         ed.insert(loc, GPS.Preference(template_pref).get())
 
 GPS.Hook ("file_edited").add (add_skeleton)

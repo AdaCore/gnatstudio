@@ -18,7 +18,7 @@ parse_xml ("""
 def make_readonly():
    """Make every other line readonly in the current file"""
    buffer = EditorBuffer.get ()
-   loc = EditorLocation (buffer, 1, 1)
+   loc = buffer.at(1, 1)
 
    overlay = buffer.create_overlay ("readonly")
    overlay.set_property ("editable", False)

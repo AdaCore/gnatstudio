@@ -60,7 +60,7 @@ def mc_down():
     buffer.add_multi_cursor(loc)
 
     buffer.set_multi_cursors_manual_sync()
-    view.goto(GPS.EditorLocation(buffer, loc.line() + 1, loc.column()))
+    view.goto(buffer.at(loc.line() + 1, loc.column()))
     buffer.set_multi_cursors_auto_sync()
 
 
@@ -72,7 +72,7 @@ def mc_up():
     buffer.add_multi_cursor(loc)
 
     buffer.set_multi_cursors_manual_sync()
-    view.goto(GPS.EditorLocation(buffer, max(loc.line() - 1, 1), loc.column()))
+    view.goto(buffer.at(max(loc.line() - 1, 1), loc.column()))
     buffer.set_multi_cursors_auto_sync()
 
 id_pattern = re.compile(r"[\w0-9_]")
@@ -170,7 +170,7 @@ def mc_all_entity_references():
     cursor_loc_t = loc_tuple(loc)
     word_offset = loc.column() - loc_id_start.column()
 
-    locs = [EditorLocation(editor, floc.line(), floc.column())
+    locs = [editor.at(floc.line(), floc.column())
             for floc in entity.references()
             if floc.file() == editor.file()]
 

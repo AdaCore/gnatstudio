@@ -53,7 +53,7 @@ class Gnatfind_Contextual (GPS.Contextual):
        loc = context.location()
 
        buf = GPS.EditorBuffer.get(loc.file())
-       location = GPS.EditorLocation(buf, loc.line(), loc.column())
+       location = buf.at(loc.line(), loc.column())
 
        entity_name = entity.name()
        length = len(entity_name)
