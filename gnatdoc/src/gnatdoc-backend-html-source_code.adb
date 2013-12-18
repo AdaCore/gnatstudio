@@ -75,9 +75,12 @@ package body GNATdoc.Backend.HTML.Source_Code is
          if Slice_Last >= Slice_First then
             if No (Self.Scope)
               or else Self.Show_Private
-              or else Self.Current_Line
-                not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
-                   .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
+              or else LL.Get_First_Private_Entity_Loc (Self.Scope)
+                        = No_Location
+              or else
+                Self.Current_Line
+                  not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
+                    .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
             then
                if Slice_First < Slice_Last then
                   Object := Create_Object;
@@ -106,6 +109,8 @@ package body GNATdoc.Backend.HTML.Source_Code is
          else
             if No (Self.Scope)
               or else Self.Show_Private
+              or else LL.Get_First_Private_Entity_Loc (Self.Scope)
+                        = No_Location
               or else Self.Current_Line
                 not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
                   .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
@@ -303,6 +308,10 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Entity : Entity_Id) return Boolean is
    begin
       if No (Self.Scope) then
+         return False;
+      end if;
+
+      if LL.Get_First_Private_Entity_Loc (Self.Scope) = No_Location then
          return False;
       end if;
 
