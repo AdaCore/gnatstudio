@@ -658,7 +658,7 @@ package body GNATdoc.Backend.HTML is
             "tagged_types",
             Categories_Index);
          Self.Generate_Entities_Category
-           (Self.Entities.Tagged_Types,
+           (Self.Entities.Tasks,
             "Tasks & Task Types",
             "tasks",
             Categories_Index);
