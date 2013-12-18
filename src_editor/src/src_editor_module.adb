@@ -694,10 +694,15 @@ package body Src_Editor_Module is
             end if;
 
             if not Is_Open (User, F) then
+               --  If the file no longer exists on the disk, we still want to
+               --  create an empty editor: this preserves the user's desktop
+               --  and points out possible disk issues...
+
                Src := Open_File
-                 (User, F, False,
+                 (User, F,
                   Focus  => False,
                   Line   => Line,
+                  Create_New => True,
                   Column => Column,
                   Column_End => Column);
                Child := Find_Editor (User, F);
