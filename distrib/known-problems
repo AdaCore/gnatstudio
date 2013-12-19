@@ -8,6 +8,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- MC18-026: GPS: crash on Windows when project contains errors
+  Problem:    When a project file contains errors (for instance its name
+              does not match the file name), GPS crashes on windows because
+              it is trying to display error message on standard output, which
+              does not exist.
+  Workaround: use gprbuild to check (and fix) any error in the project file.
+
 - MC17-037: GPS: error connecting to the open_file_action_hook
   Problem:    When trying to connect a custom python function to this hook,
               GPS complains that the function should return a boolean (even
