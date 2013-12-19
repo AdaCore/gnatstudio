@@ -372,15 +372,15 @@ The Menu Bar
 
 .. image:: menubar.png
 
-This is a standard menu bar that gives access to all the global functionalities
-of GPS. It is usually easier to access a given functionality using the various
-contextual menus provided throughout GPS: these menus give direct access to the
-most relevant actions given the current context (e.g. a project, a directory, a
-file, an entity, ...). Contextual menus pop up when the right mouse button is
-clicked or when using the special :kbd:`open contextual menu` key on most PC
-keyboards.
+GPS provides a standard menu bar giving access to all its
+functionality. However, it's usually easier to access a feature using the
+various contextual menus provided throughout GPS: these give direct access
+to the most relevant actions in the current context (for example, a
+project, a directory, a file, or an entity). Contextual menus pop up when
+you click the right mouse button or use the special :kbd:`open contextual
+menu` key on most keyboards.
 
-The menu bar gives access to the following items:
+You can access to the following items from the menu bar:
 
 * :menuselection:`File` (:ref:`The_File_Menu`)
 
@@ -400,16 +400,15 @@ The menu bar gives access to the following items:
 
 * :menuselection:`SPARK`
 
-  If the SPARK toolset is installed on your system and available on your
-  PATH, then this menu is available. See
-  :menuselection:`Help --> SPARK --> Reference --> Using SPARK with GPS`
-  for more details.
+  This menu is available if the SPARK toolset is installed on your system
+  and available on your PATH. See :menuselection:`Help --> SPARK -->
+  Reference --> Using SPARK with GPS` for more details.
 
 * :menuselection:`CodePeer`
 
-  If the CodePeer toolset is installed on your system and available on your
-  PATH, then this menu is available. See your CodePeer documentation for more
-  details.
+  This menu is available if the CodePeer toolset is installed on your
+  system and available on your PATH. See your CodePeer documentation for
+  more details.
 
 * :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
 
@@ -425,31 +424,33 @@ The Tool Bar
 
 .. image:: toolbar.png
 
-The tool bar provides shortcuts via buttons to some typical actions:
+The tool bar provides shortcuts to some typical actions:
 
-* creating a new file
-* opening an existing file (see laso the omni-search on the right of the bar)
-* saving the current file
-* undo / redo last editing
-* go to previous or next saved location
+* Create a new file
+* Open an existing file (see laso the omni-search on the right of the bar)
+* Save the current file
+* Undo or redo last editing
+* Go to previous or next saved location
 
-* multiple customizable
+* Multiple customizable
   :index:`buttons <single: build; toolbar buttons>`
   to build, clean or run your project
 
-* when a debugger is started, multiple
-  :index:`buttons <single: debugger; toolbar buttons>`
-  to stop and continue the debugger, step to the next instruction,...
+* multiple
+  :index:`buttons <single: debugger; toolbar buttons>` to stop and continue
+  the debugger, step to the next instruction, and other similar actions
+  when a debugger is running.
 
 .. index:: progress bar
 .. index:: tool bar; progress bar
 
-When GPS is performing background actions, like loading the cross-reference
-information, compiling or indeed all actions involving external processes,
-a progress bar is displayed in the toolbar. This shows when the current
-task(s) will be completed. A small :guilabel:`interrupt` button can be clicked
-on to interrupt all background tasks. Clicking on the progress bar will
-open the :guilabel:`Tasks` view (:ref:`The_Task_Manager`).
+When GPS is performing background actions, such as loading cross-reference
+information or all actions involving external processes (including
+compiling), it displays a progress bar in the toolbar showing when the
+current task(s) will be completed.  You can click on a small
+:guilabel:`interrupt` button to interrupt all background tasks. Clicking on
+the progress bar opens the :guilabel:`Tasks` view
+(:ref:`The_Task_Manager`).
 
 
 .. index:: omni-search
@@ -461,136 +462,132 @@ The omni-search
 
 .. image:: omnisearch.png
 
-The final item in the toolbar is the omni-search. This is a search field that
-will search the text you type in various contexts in GPS, like filenames (for
-convenient access to the source files), the entities referenced in your
-application, your code,...
+The final item in the toolbar is "omni-search".  You can use this to search
+for text in various contexts in GPS, such as filenames (for convenient
+access to the source files), the entities referenced in your application,
+and your code.
 
 There are various ways to use the omni-search:
 
-* The simplest is of course to click in it, and type the pattern you are
-  interested in. GPS will immediately start searching in the background for
-  possible matching open windows, file names, entities, GPS actions, bookmarks,
-  and source files. For each context, GPS only displays the five matches with
+* The simplest way is to click in it and type the pattern you want to
+  find. GPS immediately starts searching in the background for possible
+  matching open windows, file names, entities, GPS actions, bookmarks, and
+  source files. For each context, GPS only displays the five matches with
   the highest score.
 
-  For each context, GPS tells you how many matches there. You can click on the
-  name of the context to only search in that context. So for instance, if GPS
-  tells you there are 20 file names matching your search (but only displaying
-  the five first ones), you can click on :guilabel:`file names` to view all
-  20 names, and exclude the results from all the other contexts.
+  For each context, GPS display how many matches there are in that
+  context. You can click on the name of the context to only search in that
+  context.  For example, if GPS shows 20 file names matching your search
+  (while only displaying the five first), you can click on :guilabel:`file
+  names` to view all 20 names and exclude the results from all the other
+  contexts.
 
-  If you click again on the context, GPS is back to displaying the results in
+  If you click on the context again, GPS again displays the results from
   all contexts.
 
-* If you are searching in a specific context, the above requires too many
-  clicks.  GPS defines a number of actions to which you can bind key shortcuts
-  via the :menuselection:`Edit --> Key Shortcuts` dialog. These actions are found
-  in :guilabel:`Search` category, and are called :guilabel:`Global Search in
-  context:`. GPS includes a :index:`menu <single: menu; file --> open from
-  project>` for two of them by default: :menuselection:`File --> Open From
-  Project...` will search amongst filenames, :index:`wheras <single: menu;
+* If you're searching in a single context, GPS defines a number of actions
+  to which you can bind key shortcuts via the :menuselection:`Edit --> Key
+  Shortcuts` dialog instead of using the above procedure. These actions are
+  found in :guilabel:`Search` category and are called :guilabel:`Global
+  Search in context:`. GPS includes a :index:`menu <single: menu; file -->
+  open from project>` for two of them by default: :menuselection:`File -->
+  Open From Project...` searches filenames, :index:`while <single: menu;
   navigate --> goto entity>` :menuselection:`Navigate --> Goto Entity...`
-  will search amonst all entities defined in your project.
+  searches all entities defined in your project.
 
 
-Each context displays its results sligthly differently, and clicking on a
-result will have different effects depending on a context. For instance,
-clicking on a file name will open the corresponding file, whereas clicking on
-an entity will jump to its declaration, and clicking on a bookmark while show
-the source file it is in.
+Each context displays its results slightly differently and clicking on a
+result has different effects in each context. For example, clicking on a
+file name opens the corresponding file, while clicking on an entity jumps
+to its declaration and clicking on a bookmark displays the source file
+containing the bookmark.
 
-Pressing :kbd:`enter` at any point will select the top item in the list of
-search results, which is in general faster than clicking on it.
+You can press :kbd:`enter` at any point to select the top item in the list
+of search results.
 
 
 .. image:: omnisearch-settings.png
 
 .. index:: menu; file --> open from project
 
-It is possible that you have no interest in some of the search contexts.  You
-can chose to disable some of them by clicking on the :guilabel:`Settings` icon
-at the bottom-right corner of the completion popup. The resulting dialog shows
-you the list of all contexts that are searched, and clicking on any of the
-checkboxes next to the names will enable to disable the context. Note that
-this list is only displayed when you have accessed the omni-search by clicking
-directly into it. If you accessed it via :kbd:`shift-F3` or the equivalent
-menu :menuselection:`File --> Open From Project...`, then only a subset of the
-settings will be displayed.
+You may have no interest in some of the search contexts.  You can disable
+some of them by clicking on the :guilabel:`Settings` icon at the
+bottom-right corner of the completion popup. The resulting dialog display a
+list of all contexts to be searched and clicking on any of the checkboxes
+next to the names disables that context.  That this list is only displayed
+when you started the omni-search by clicking directly into it. If you
+started it via :kbd:`shift-F3` or the equivalent menu :menuselection:`File
+--> Open From Project...`, only a subset of the settings are displayed.
 
-Still in this settings dialog, you can also reorder the context. This
-influences both the order in which they are searched and the order in which
-they are displayed. We recommend keeping the :guilabel:`Sources` context last,
-because it is the slowest, and while GPS is searching it, it would not be able
-to search the other faster contexts.
+You can also reorder the contexts from this settings dialog. This affects
+both the order in which they're searched and displayed. We recommend
+keeping the :guilabel:`Sources` context last, because it'ss the slowest and
+while GPS is searching it, it's not able to search the other, faster,
+contexts.
 
-In the settings dialog, you can chose whether to display a :guilabel:`Preview`
-for the matches. This preview is displayed when you use the :kbd:`down arrow`
-key to select some of the search results. In general, it will display the
-corresponding source file, or the details for the matching GPS action or
-bookmark.
+In the settings dialog, you can chose whether to display a
+:guilabel:`Preview` for the matches. This preview is displayed when you use
+the :kbd:`down arrow` key to select some of the search results. In general,
+it displays the corresponding source file or the details for the matching
+GPS action or bookmark.
 
-The settings dialog also allows you to select the number of results that
-should be displayed for each context when multiple contexts are displayed,
-or the size of the search field (which depends on how big your screen and
-the GPS window are).
+You can also select the number of results to be displayed for each context
+when multiple contexts are displayed or the size of the search field (which
+depends on how big your screen and the GPS window are) using the settings
+dialog.
 
-One of the search context looks at file names, and is convenient for quickly
-opening files. By default, it will look at all files found in any of the
-source directories of your project, even if those files are not explicit
-sources of the project (for instance because they do not match the naming
-scheme for any of the languages used by the project). This is often
-convenient because you can easily open support files like Makefiles or
-documentation, but it can also sometimes get in the way if the source
-directories include too many irrelevant files. The :guilabel:`Include all
-files from source dirs` setting can be used to control this behavior.
+One search context looks for file name, and is convenient for quickly
+opening files. By default, it looks at all files found in any of the source
+directories of your project, even if those files are not explicit sources
+of the project (for example because they don't match the naming scheme for
+any of the languages used by the project). This is often convenient because
+you can easily open support files like :file:`Makefiles` or documentation,
+but it can also sometimes be annoying if the source directories include too
+many irrelevant files. Use the :guilabel:`Include all files from source
+dirs` setting to control this behavior.
 
-GPS proposes various algorithms to do the search:
+GPS allows you to chose amog various search algorithms:
 
-* :guilabel:`Full Text` simply checks whether the text you typed appears
-  exactly as is in the context (be it a file name, the contents of a file,
-  the name of an entity,...)
+* :guilabel:`Full Text` checks whether the text you typed appears exactly
+  as you specified it within the context (for example, a file name, the
+  contents of a file, or the name of an entity).
 
 * :guilabel:`Regular Expression` assumes the text you typed is a valid
-  regular expression, and searches for it. If this isn't a valid regexp,
-  it tries to search for the exact text.
+  regular expression and searches for it. If it isn't a valid regexp, it
+  tries to search for the exact text (like :guilabel:`Full Text`).
 
-* :guilabel:`Fuzzy Match` will try to find each of the characters you
-  typed, in that order, but possibly with extra characters in between.
-  This is likely to be the fastest way to search, but it might requires
-  a bit of getting used to. For instance, the text 'mypks' will match
-  the file name 'MY_PacKage.adS' because the letters shown in
-  upper cases match the text.
+* :guilabel:`Fuzzy Match` tries to find each of the characters you typed,
+  in that order, but possibly with extra characters in between.  This is
+  often the fastest way to search, but might requires a bit of getting used
+  to. For example, the text 'mypks' matches the file name 'MY_PacKage.adS'
+  because the letters shown in upper cases are contained in the filename.
 
-  When searching in the source files, the algorithm is changed slightly,
-  since otherwise there would obviously be too many matches. In that
-  context, GPS only allows a few approximations between the text you
-  typed and the text it tries to match (one or two extra characters
-  or missing characters, for instance).
+  When searching within source files, the algorithm is changed slightly,
+  since otherwise there would be too many matches. In that context, GPS
+  only allows a clos approximations between the text you typed and the text
+  it tries to match (for example, one or two extra or missing characters).
 
-You can select the algorithm you wish to use by changing it at the
-bottom of the popup window that contains the search results.
+You can select the algorithm to use by changing it at the bottom of the
+popup window containing the search results.
 
-
-Once it has found a match, GPS assigns it a score, so that it can
-order the results in the most meaningful way for you. Scoring is
-based on a number of criteria:
+Once it finds a match, GPS assigns it a score, used to order the results in
+the most meaningful way for you. Scoring is based on a number of criteria:
 
 * length of the match
 
-  For instance, when searching file names, it is more likely that by typing
-  'foo' you intended to match 'foo.ads' rather than 'the_long_foo.ads'.
+  For example, when searching file names, it's more likely that typing
+  'foo' was intended to match 'foo.ads' than 'the_long_foo.ads'.
 
-* the grouping of characters in match
+* the grouping of characters in the match
 
-  As we have seen, when doing a fuzzy match, GPS allows extra characters in
+  As we've seen, when doing a fuzzy match, GPS allows extra characters
   between the ones you typed. But the closer the ones you typed are in the
   match result, the more likely it is this is what you were looking for.
 
 * when was the item last selected
 
-  If you recently selected an item (like a file name), GPS assumes you are more
-  likely to want it again, and will raise its score appropriately.
+  If you recently selected an item (like a file name), GPS assumes you're
+  more likely to want it again and will raise its score appropriately.
 
 
 .. index:: windows; messages
