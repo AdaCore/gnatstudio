@@ -61,11 +61,12 @@ package body Src_Editor_Buffer.Multi_Cursors is
 
    procedure Update_MC_Selection (B : Source_Buffer) is
       Start_Loc, End_Loc : Gtk_Text_Iter;
-      T : constant Gtk_Text_Tag := B.Get_Tag_Table.Lookup (Mc_Selection_Tag);
+      T : Gtk_Text_Tag;
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
    begin
       Check_Mc_Selection_Tag (B);
+      T := B.Get_Tag_Table.Lookup (Mc_Selection_Tag);
       B.Get_Start_Iter (Start_Loc);
       B.Get_End_Iter (End_Loc);
       B.Remove_Tag (T, Start_Loc, End_Loc);
