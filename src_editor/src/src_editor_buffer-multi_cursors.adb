@@ -22,6 +22,21 @@ package body Src_Editor_Buffer.Multi_Cursors is
 
    Mc_Selection_Tag : constant String := "mc_selection";
 
+   procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
+
+   -----------------------------
+   -- Create_Mc_Selection_Tag --
+   -----------------------------
+
+   procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer) is
+      T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
+   begin
+      if T = null then
+         T := Buffer.Create_Tag (Mc_Selection_Tag);
+      end if;
+      Glib.Properties.Set_Property (T, Background_Property, "green");
+   end Check_Mc_Selection_Tag;
+
    ------------
    -- Create --
    ------------
@@ -50,9 +65,7 @@ package body Src_Editor_Buffer.Multi_Cursors is
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
    begin
-      if T = null then
-         return;
-      end if;
+      Check_Mc_Selection_Tag (B);
       B.Get_Start_Iter (Start_Loc);
       B.Get_End_Iter (End_Loc);
       B.Remove_Tag (T, Start_Loc, End_Loc);
@@ -118,12 +131,8 @@ package body Src_Editor_Buffer.Multi_Cursors is
         (Cursor_Name, False);
       Sel_Mark : constant Gtk_Text_Mark := Gtk_Text_Mark_New
         (Get_Sel_Mark_Name (Cursor_Name), False);
-      T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
    begin
-      if T = null then
-         T := Buffer.Create_Tag (Mc_Selection_Tag);
-         Glib.Properties.Set_Property (T, Background_Property, "green");
-      end if;
+      Check_Mc_Selection_Tag (Buffer);
 
       Buffer.Multi_Cursors_List.Append
         ((Id              => Buffer.Multi_Cursors_Next_Id,
