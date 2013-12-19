@@ -78,6 +78,24 @@ def mc_up():
 id_pattern = re.compile(r"[\w0-9_]")
 
 
+@interactive("Editor", name="Add multi cursor to next occurence of selection")
+def mc_select_next_occurence():
+    ed = GPS.EditorBuffer.get()
+    mc_sel = ed.create_overlay("mc_selection")
+    text = ed.get_chars(ed.selection_start(),
+                        ed.selection_end().forward_char(-1))
+
+    st, end = ed.current_view().cursor().search(text)
+    while st.has_overlay(mc_sel):
+        st, end = end.search(text)
+
+    mc = ed.add_multi_cursor(st)
+    mc.get_selection_mark().move(st)
+    mc.get_insert_mark().move(end)
+    ed.update_multi_cursors_selections()
+    ed.set_multi_cursors_auto_sync()
+
+
 @interactive("Editor", name="Add multi cursor to all references of entity")
 def mc_all_entity_references():
 
