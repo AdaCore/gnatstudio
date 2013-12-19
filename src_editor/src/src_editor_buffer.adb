@@ -6853,6 +6853,10 @@ package body Src_Editor_Buffer is
 
          Buffer.Finish_Undo_Group;
       end if;
+
+      Update_Contents
+        (Db      => Buffer.Kernel.Get_Construct_Database,
+         File    => Buffer.Filename);
    end Newline_And_Indent;
 
    ---------------
