@@ -12,9 +12,9 @@ General Information
 
 Source editing is one of the central parts of GPS.  It allows access to
 many other functionalities, including extended source navigation and source
-analyzing tools.  You can have as many editor windows as you need and
-each editor window receives annotations from other components in GPS,
-such as a debugger.
+analyzing tools.  You can have as many editor windows as you need.  Each
+editor window receives annotations from other components in GPS, such as a
+debugger.
 
 We use the term "pointer" to refer to the mouse pointer and "cursor" to
 refer to the text cursor.
@@ -71,8 +71,8 @@ The source editor provides an extensive set of features, including:
       of characters).
 
     * Next to the box is an icon that shows whether the file is writable or
-      read-only.  You can change this state by clicking on the icon, which
-      toggles between *Writable* and *Read Only*.  This will not change the
+      read-only.  Change this state by clicking on the icon, which toggles
+      between *Writable* and *Read Only*.  This will not change the
       permissions of the file on disk, it will only change the writability
       of the view in the source editor.
 
@@ -102,8 +102,8 @@ The source editor provides an extensive set of features, including:
 *Automatic indentation*
   When enabled, lines are automatically :index:`indented <indentation>`
   each time you press the :kbd:`Enter` key or the indentation key.  By
-  default, the indentation key is :kbd:`Tab`.  You can change it
-  in the key manager dialog, :ref:`The_Key_Manager_Dialog`.
+  default, the indentation key is :kbd:`Tab`.  Change it in the key manager
+  dialog, :ref:`The_Key_Manager_Dialog`.
 
   If a list of lines is selected when you press the indentation key, GPS
   will indent all the lines.
@@ -145,9 +145,8 @@ The source editor provides an extensive set of features, including:
   pointer if the variable is known to the debugger.  Otherwise, the normal
   information (see above) is displayed.
 
-  You can disable the automatic pop up of tool tips via the
-  :index:`preference <preferences; editor --> tooltips>`
-  :menuselection:`Editor --> Tooltips`.
+  Disable the automatic pop up of tool tips via the :index:`preference
+  <preferences; editor --> tooltips>` :menuselection:`Editor --> Tooltips`.
 
 *Code completion*
   GPS provides two kinds of code :index:`completion`: a :ref:`smart code
@@ -165,21 +164,21 @@ The source editor provides an extensive set of features, including:
 *Delimiter highlighting*
   When the cursor is moved before an opening :index:`delimiter` or after a
   closing delimiter, the editor will highlight both delimiters.  The
-  following characters are considered delimiters: ()[]{}.  You can disable
+  following characters are considered delimiters: ()[]{}.  Disable
   highlighting of delimiters with the :index:`preference
   <preferences;editor --> highlight delimiters>` :menuselection:`Editor -->
   Highlight delimiters`.
 
-  You can also jump to a corresponding delimiter by invoking the `jump
-  to matching delimiter` action (which can be bound to a key in the
-  key shortcuts editor).  Invoking this action a second time moves the
-  cursor back to its original position.
+  Jump to a corresponding delimiter by invoking the `jump to matching
+  delimiter` action (which can be bound to a key in the key shortcuts
+  editor).  Invoking this action a second time moves the cursor back to its
+  original position.
 
 *Current line highlighting*
-  You can configure the editor to highlight the :index:`current line` with a
-  specified color (see the :index:`preference <preferences;
-  editor --> fonts & colors --> current line color>` :menuselection:`Editor -->
-  Fonts & Colors --> Current line color`).
+  Configure the editor to highlight the :index:`current line` with a
+  specified color (see the :index:`preference <preferences; editor -->
+  fonts & colors --> current line color>` :menuselection:`Editor --> Fonts
+  & Colors --> Current line color`).
 
 *Current block highlighting*
   If the :index:`preference <preferences;editor --> block highlighting>`
@@ -203,7 +202,7 @@ The source editor provides an extensive set of features, including:
   This capability is currently implemented for Ada, C and C++ languages.
 
 *Auto save*
-  You can configure the editor to periodically save modified files.  See
+  Configure the editor to periodically save modified files.  See
   :ref:`Autosave delay <autosave_delay>` for a full description of this
   capability.
 
@@ -333,9 +332,9 @@ The :menuselection:`File` Menu
 
   You can also create a new view by holding the :kbd:`shift` key down while
   drag-and-dropping the editor (see :ref:`Moving_Windows`). This second
-  method is preferred becasue you can then specify where you want to put
-  the new view. The default when using the menu is to put the new view
-  on top of the current editor.
+  method is preferred becasue you can specify where you want to put the new
+  view. The default when using the menu is to put the new view on top of
+  the current editor.
 
 .. index:: menu; file --> open
 
@@ -396,10 +395,10 @@ The :menuselection:`File` Menu
      is saved per top level project so that when you reload the same
      project you get back to into the same state you were in when you left
      GPS. If you load a different project, another desktop will be loaded
-     (or the default desktop).  You can also request GPS to automatically
-     save this desktop when you quit with the :index:`preference
-     <preferences; general --> save desktop on exit>`
-     :menuselection:`General-->Save Desktop On Exit`.
+     (or the default desktop).  Request GPS to automatically save this
+     desktop when you quit with the :index:`preference <preferences;
+     general --> save desktop on exit>` :menuselection:`General-->Save
+     Desktop On Exit`.
 
 .. index:: menu; file --> change directory
 
@@ -482,11 +481,11 @@ The :menuselection:`Edit` Menu
   that, you can instead paste the text that was previously copied to
   the clipboard.
 
-  For example, if you use :menuselection:`Edit --> Copy` to copy the
-  text "First", then copy the text "Second", you can select
-  :menuselection:`Edit --> Paste` to insert "Second" at the current
-  cursor position. If you then select :menuselection:`Edit --> Paste
-  Previous`, "Second" will be replaced by "First".
+  For example, if you use :menuselection:`Edit --> Copy` to copy the text
+  "First", then copy the text "Second", select :menuselection:`Edit -->
+  Paste` to insert "Second" at the current cursor position. If you then
+  select :menuselection:`Edit --> Paste Previous`, "Second" will be
+  replaced by "First".
 
   Selecting this menu several times replaces the text previously
   pasted by the previous one in the list saved in the clipboard. When
@@ -612,22 +611,21 @@ The :menuselection:`Edit` Menu
   addition to enabling the smart completion preference, the C/C++
   application must be built with `-fdump-xref`.
 
-  In order to use this feature, open any Ada, C or C++ file and begin
-  to type an identifier, which must be declared either in the current
-  file (and accessible from the cursor location) or in one of the
-  packages of the loaded project.  Move the cursor after the last
-  character of the incomplete identifier and hit the completion key
-  (:kbd:`control-space` by default).  GPS opens a popup displaying all
-  known identifiers that begin with the prefix you typed.  You can
-  then browse among the various possibilities by clicking on the
-  :kbd:`up` and :kbd:`down` keys or using the left scrollbar. For each
-  entity, a documentation box is display. If the location of the
-  entity is known, it's displayed as an hyperlink and you can jump
-  directly to its declaration by clicking on it.
+  In order to use this feature, open any Ada, C or C++ file and begin to
+  type an identifier, which must be declared either in the current file
+  (and accessible from the cursor location) or in one of the packages of
+  the loaded project.  Move the cursor after the last character of the
+  incomplete identifier and hit the completion key (:kbd:`control-space` by
+  default).  GPS opens a popup displaying all known identifiers that begin
+  with the prefix you typed.  Browse among the various possibilities by
+  clicking on the :kbd:`up` and :kbd:`down` keys or using the left
+  scrollbar. For each entity, a documentation box is display. If the
+  location of the entity is known, it's displayed as an hyperlink and you
+  can jump directly to its declaration by clicking on it.
 
-  Typing additional letters will reduce the range of possibilities, as
-  long as possibilities remain. Once you've selected the expected
-  completion, you can confirm it by pressing :kbd:`Enter`.
+  Typing additional letters will reduce the range of possibilities, as long
+  as possibilities remain. Once you've selected the expected completion,
+  confirm it by pressing :kbd:`Enter`.
 
   Typing control characters (i.e., characters which cannot be used in
   identifiers) also confirms the current selection.
@@ -637,9 +635,9 @@ The :menuselection:`Edit` Menu
 
     with Ada.
 
-  the smart completion window appears, listing all the child and
-  nested packages of Ada. You can configure the time interval after
-  which the completion window appears (:ref:`The_Preferences_Dialog`).
+  the smart completion window appears, listing all the child and nested
+  packages of Ada. You can configure the time interval after which the
+  completion window appears (:ref:`The_Preferences_Dialog`).
 
   You can also write the beginning of the package, e.g.::
 
@@ -895,9 +893,9 @@ Consider for instance the following text::
 and assume we have selected from the character "p" in "procedure P"
 down to the character "c" in "procedure Q".
 
-You can then used one of the following commands (either from the menu
-or you can assign key shortcuts to them via the usual
-:menuselection:`Edit --> Key shortcuts` menu).
+You can then use one of the following commands (either from the menu or
+assign key shortcuts to them via the usual :menuselection:`Edit --> Key
+shortcuts` menu).
 
 * :menuselection:`Edit --> Rectangles --> Cut` or :menuselection:`Edit -->
   Rectangles --> Delete`
@@ -1539,7 +1537,7 @@ The following values are recognized:
 
   To enable this capability, the `xterm` executable must be found in the
   PATH and thus is not supported on Windows systems.  On Windows systems,
-  you can use the `custom` editor instead.
+  use the `custom` editor instead.
 
 :guilabel:`vi`
   This editor works exactly like vim, but uses the standard `vi` command
@@ -1549,8 +1547,8 @@ The following values are recognized:
 .. index:: preferences; editor --> custom editor command
 
 :guilabel:`custom`
-  You can specify any external editor by choosing this item.  You specify
-  the complete command line used to call the editor in the preference
+  Specify any external editor by choosing this item.  You specify the
+  complete command line used to call the editor in the preference
   :menuselection:`Editor --> Custom editor command`.
 
 :guilabel:`none`
@@ -1562,9 +1560,9 @@ that if you load a new project in GPS or modify the paths of the current
 project, you should kill any running Emacs, so a new one is spawned by GPS
 with the appropriate project.
 
-Alternatively, you can explicitly reload the project from Emacs itself by
-using the menu :menuselection:`Project --> Load` in emacs (if the ada-mode
-was correctly installed).
+Alternatively, explicitly reload the project from Emacs itself by using the
+menu :menuselection:`Project --> Load` in emacs (if the ada-mode was
+correctly installed).
 
 .. index:: preferences; editor --> always use external editor
 
@@ -1619,15 +1617,15 @@ currently selected file.
 
 .. index:: menu; file --> save as
 
-You can also use the menu :menuselection:`File --> Save As...` if you want
-to save the file with another name or in another directory.
+Use the menu :menuselection:`File --> Save As...` if you want to save the
+file with another name or in another directory.
 
 .. index:: menu; file --> save more --> all
 
-If you have multiple files to save, you can also use the menu
-:menuselection:`File --> Save More --> All`. This opens a dialog listing
-all the currently modified editors. You can then select which ones should
-be saved and click on :guilabel:`Save` to save those editors.
+If you have multiple files to save, use the menu :menuselection:`File -->
+Save More --> All`. This opens a dialog listing all the currently modified
+editors. You can then select which ones should be saved and click on
+:guilabel:`Save` to save those editors.
 
 .. index:: preferences; editor --> autosave delay
 .. index:: saving; automatic
@@ -1640,9 +1638,9 @@ automatically.
 
 .. image:: save-dialog.jpg
 
-You can conveniently select or unselect all the files at once by clicking
-on the title of the first column (labeled :guilabel:`Select`). This toggles
-the selection status of all files.
+Conveniently select or unselect all the files at once by clicking on the
+title of the first column (labeled :guilabel:`Select`). This toggles the
+selection status of all files.
 
 If you press :guilabel:`Cancel` instead of :guilabel:`Save`, nothing will
 be saved and the action that displayed this dialog is also canceled. Such

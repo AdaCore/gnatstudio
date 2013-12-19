@@ -35,9 +35,10 @@ Common features of the views
 .. index:: menu; tools
 .. index:: menu; tools --> views
 
-Some views are part of the default desktop and thus are visible by default.
-You can open the other views through one of the submenus of the
-:menuselection:`Tools` menu, most often :menuselection:`Tools --> Views`.
+Some views are part of the default desktop and thus are visible by
+default.  Open the other views through one of the submenus of the
+:menuselection:`Tools` menu, most often :menuselection:`Tools -->
+Views`.
 
 .. index:: windows; local toolbar
 
@@ -60,14 +61,14 @@ showing those lines matching the filter.
 If you click on the left icon of the filter, GPS brings up a popup menu to
 allow you to configure the filter:
 
-* You can use the first three entries to chose the search algorith (full
-  text match, regular expression, or fuzzy matching). These modes are
+* Use the first three entries to chose the search algorith (full text
+  match, regular expression, or fuzzy matching). These modes are
   similar to the ones used in the omni-search (:ref:`omni_search`).
 
 * The next entry is :guilabel:`Revert filter`. When you select this option,
   the lines that do not match the filter are displayed, instead of the
   default behavior that displays ones that match the filter.  You can also
-  enabled this mode temporarily by starting the filter with the string
+  enable this mode temporarily by beginning the filter with the string
   `not:`. For example, a filter in the :guilabel:`Locations` view saying
   `not:warning` will hide all warning messages.
 
@@ -90,12 +91,12 @@ manipulate.  Browsers provide the following additional capabilities:
   Different types of links exist; see the description of the various
   browsers for more details.
 
-  You can hide links using a button on the local toolbar. This keeps the
+  Hide links using a button on the local toolbar. This keeps the
   canvas more readable at the cost of losing information.  You can also
   hide only a subset of links. Even when links are hidden, if you select a
   box, boxes linked to it are still highlighted.
 
-  You can toggle the :guilabel:`straight links` local settings menu in
+  Enable the :guilabel:`straight links` local settings menu in
   browsers if you prefer to avoid diagonal links.
 
 * Scrolling
@@ -114,21 +115,21 @@ manipulate.  Browsers provide the following additional capabilities:
   vertically or horizontally.  If you moved boxes, this algorithm tries to
   preserve their positions as much as possible.
 
-  You can use the :guilabel:`Refresh layout` button in the local toolbar to
+  Use the :guilabel:`Refresh layout` button in the local toolbar to
   recompute the layout at any time, even of boxes that you moved.
 
 * Moving boxes
 
-  You can move items with your mouse. Drag the box by clicking on its title
-  bar. The box's links are still be displayed during the move, so you can
-  see whether it overlaps any other box. If you try to move the box outside
-  the visible part of the browser, it will be scrolled.
+  Move boxes with your mouse. Drag the box by clicking on its title
+  bar. The box's links are still be displayed during the move, so you
+  can see whether it overlaps any other box. If you try to move the
+  box outside the visible part of the browser, it will be scrolled.
 
 * Selecting boxes
 
-  You can select a box by clicking on it.  You can select multiple boxes by
-  holding the :kbd:`control` key while clicking in each box. Alternatively,
-  you can create a rectangle using your mouse.  All boxes found in the
+  Select a box by clicking it.  Select multiple boxes by holding the
+  :kbd:`control` key while clicking in each box. Alternatively, you
+  can create a rectangle using your mouse; all boxes found in the
   rectangle when the mouse is released are selected.
 
   Selected boxes have a different title bar color.  All boxes linked to
@@ -136,12 +137,12 @@ manipulate.  Browsers provide the following additional capabilities:
   the most convenient way to visualize the relationships between boxes when
   many are present in the browser.
 
-  You can use buttons in the local toolbar to either remove the selected
-  boxes or remove the boxes that are not selected.
+  Use buttons in the local toolbar to either remove the selected boxes
+  or remove the boxes that are not selected.
 
 * Zooming
 
-  GPS provides several different zoom levels.  You can use the
+  GPS provides several different zoom levels.  Use the
   :guilabel:`zoom in`, :guilabel:`zoom out` and :guilabel:`zoom` buttons in
   the local toolbar to change the level: use the latter to explicitly
   select the level you want.
@@ -152,7 +153,7 @@ manipulate.  Browsers provide the following additional capabilities:
 
 * :index:`export <single: callgraph; export>`
 
-  You can export the entire contents of a browser as a :guilabel:`PNG` or
+  Export the entire contents of a browser as a :guilabel:`PNG` or
   :guilabel:`SVG` image using the :guilabel:`Export to...` button in the
   local toolbar.
 
@@ -169,9 +170,9 @@ manipulate.  Browsers provide the following additional capabilities:
 
 * Grid
 
-  By default, GPS displays a grid (small dots) on the canvas.  You can use
-  the local settings menu to hide the grid (:guilabel:`Draw grid`) or to
-  force items to align on the grid (:guilabel:`Align on grid`).
+  By default, GPS displays a grid (small dots) on the canvas.  Use the
+  local settings menu to hide the grid (:guilabel:`Draw grid`) or to force
+  items to align on the grid (:guilabel:`Align on grid`).
 
 Icons for source language entities
 __________________________________
@@ -320,10 +321,10 @@ dialog, giving you the following choices:
 
 :guilabel:`Open existing project`
 
-  You can select an existing project by clicking on the :guilabel:`Browse`
-  button or by using a previously loaded project listed in the combo
-  box. When a project is selected, click on the :guilabel:`OK` button to
-  load this project and open the main window.
+  Select an existing project by clicking on the :guilabel:`Browse` button
+  or by using a previously loaded project listed in the combo box. When a
+  project is selected, click on the :guilabel:`OK` button to load this
+  project and open the main window.
 
 :guilabel:`Always show this dialog when GPS starts`
 
@@ -352,14 +353,14 @@ The Tip of the Day
 .. image:: tip-of-the-day.png
 
 This dialog displays short tips on how to make the most efficient use of
-the GNAT Programming Studio. You can click on the :guilabel:`Previous` and
+the GNAT Programming Studio.  Click on the :guilabel:`Previous` and
 :guilabel:`Next` buttons to access all tips or close the dialog by either
 clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
 
 .. index:: preferences; tip of the day
 
-You can disable this dialog by unchecking the :guilabel:`Display Tip of the
-Day on startup` check box. If you want to reenable this dialog, go to the
+Disable this dialog by unchecking the :guilabel:`Display Tip of the Day on
+startup` check box. If you want to reenable this dialog, go to the
 :menuselection:`Edit --> Preferences` dialog.
 
 
@@ -380,7 +381,7 @@ project, a directory, a file, or an entity). Contextual menus pop up when
 you click the right mouse button or use the special :kbd:`open contextual
 menu` key on most keyboards.
 
-You can access to the following items from the menu bar:
+You can access the following items from the menu bar:
 
 * :menuselection:`File` (:ref:`The_File_Menu`)
 
@@ -447,7 +448,7 @@ The tool bar provides shortcuts to some typical actions:
 When GPS is performing background actions, such as loading cross-reference
 information or all actions involving external processes (including
 compiling), it displays a progress bar in the toolbar showing when the
-current task(s) will be completed.  You can click on a small
+current task(s) will be completed.  Click on the small
 :guilabel:`interrupt` button to interrupt all background tasks. Clicking on
 the progress bar opens the :guilabel:`Tasks` view
 (:ref:`The_Task_Manager`).
@@ -462,10 +463,10 @@ The omni-search
 
 .. image:: omnisearch.png
 
-The final item in the toolbar is "omni-search".  You can use this to search
-for text in various contexts in GPS, such as filenames (for convenient
-access to the source files), the entities referenced in your application,
-and your code.
+The final item in the toolbar is "omni-search".  Use this to search for
+text in various contexts in GPS, such as filenames (for convenient access
+to the source files), the entities referenced in your application, and your
+code.
 
 There are various ways to use the omni-search:
 
@@ -475,12 +476,11 @@ There are various ways to use the omni-search:
   source files. For each context, GPS only displays the five matches with
   the highest score.
 
-  For each context, GPS display how many matches there are in that
-  context. You can click on the name of the context to only search in that
-  context.  For example, if GPS shows 20 file names matching your search
-  (while only displaying the five first), you can click on :guilabel:`file
-  names` to view all 20 names and exclude the results from all the other
-  contexts.
+  For each context, GPS display how many matches there are in that context.
+  click on the name of the context to search only in that context.  For
+  example, if GPS shows 20 file names matching your search (while only
+  displaying the five first), click on :guilabel:`file names` to view all
+  20 names and exclude the results from all the other contexts.
 
   If you click on the context again, GPS again displays the results from
   all contexts.
@@ -502,22 +502,22 @@ file name opens the corresponding file, while clicking on an entity jumps
 to its declaration and clicking on a bookmark displays the source file
 containing the bookmark.
 
-You can press :kbd:`enter` at any point to select the top item in the list
-of search results.
+Press :kbd:`enter` at any point to select the top item in the list of
+search results.
 
 
 .. image:: omnisearch-settings.png
 
 .. index:: menu; file --> open from project
 
-You may have no interest in some of the search contexts.  You can disable
-some of them by clicking on the :guilabel:`Settings` icon at the
-bottom-right corner of the completion popup. The resulting dialog display a
-list of all contexts to be searched and clicking on any of the checkboxes
-next to the names disables that context.  That this list is only displayed
-when you started the omni-search by clicking directly into it. If you
-started it via :kbd:`shift-F3` or the equivalent menu :menuselection:`File
---> Open From Project...`, only a subset of the settings are displayed.
+You may have no interest in some of the search contexts.  Disable some of
+them by clicking on the :guilabel:`Settings` icon at the bottom-right
+corner of the completion popup. The resulting dialog display a list of all
+contexts to be searched and clicking on any of the checkboxes next to the
+names disables that context.  That this list is only displayed when you
+started the omni-search by clicking directly into it. If you started it via
+:kbd:`shift-F3` or the equivalent menu :menuselection:`File --> Open From
+Project...`, only a subset of the settings are displayed.
 
 You can also reorder the contexts from this settings dialog. This affects
 both the order in which they're searched and displayed. We recommend
@@ -567,8 +567,8 @@ GPS allows you to chose amog various search algorithms:
   only allows a clos approximations between the text you typed and the text
   it tries to match (for example, one or two extra or missing characters).
 
-You can select the algorithm to use by changing it at the bottom of the
-popup window containing the search results.
+Select the algorithm to use at the bottom of the popup window containing
+the search results.
 
 Once it finds a match, GPS assigns it a score, used to order the results in
 the most meaningful way for you. Scoring is based on a number of criteria:
@@ -763,8 +763,8 @@ Note however, that the contents of the :guilabel:`Project` view is computed
 lazily, so not all files are known to this search capability.
 
 This will open a small window at the bottom of the view where you can
-interactively type names.  The first matching name in the tree will be selected
-while you type it.  You can then also use the :kbd:`up` and :kbd:`down` keys to
+interactively type names.  The first matching name in the tree will be
+selected while you type it.  Use the :kbd:`up` and :kbd:`down` keys to
 navigate through all the items matching the current text.
 
 The various components that are displayed are:

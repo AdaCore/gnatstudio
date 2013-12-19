@@ -187,8 +187,8 @@ Files
 
 :file:`$HOME/.gps/plug-ins`
   Directory containing files with user-defined plug-ins.  All xml and
-  python files found under this directory are loaded by GPS during start
-  up.  You can create or edit these files to add your own menu and/or
+  python files found under this directory are loaded by GPS during
+  start up.  Create or edit these files to add your own menu and/or
   tool-bar entries in GPS or define support for new languages.
   :ref:`Customizing_through_XML_and_Python_files` and
   :ref:`Adding_support_for_new_languages`.
@@ -425,8 +425,8 @@ installing GPS.
   take significant time to finish. If GPS is still not responding after a
   few minutes, you can usually get control back in GPS by either typing
   :kbd:`Ctrl-C` in the shell where you've started GPS, which should unblock
-  it. If it doesn't work, you can kill the `gdb` process launched by GPS
-  using `ps` and `kill` or the `top` command under Unix,
+  it. If it doesn't work, kill the `gdb` process launched by GPS using `ps`
+  and `kill` or the `top` command under Unix,
 
   .. index:: Unix
   .. index:: Windows
@@ -446,10 +446,10 @@ installing GPS.
 
   The name of this package containing the main program is
   :file:`b~xxx.ads/adb` where xxx is the name of the Ada main unit given in
-  the `gnatbind` command and you can edit and debug this file in the normal
+  the `gnatbind` command.  Edit and debug this file in the normal
   manner. You'll see a series of calls to the elaboration routines of the
-  packages and you can debug these in the usual manner, just as if you
-  were debugging code in your application.
+  packages and debug these in the usual manner, just as if you were
+  debugging code in your application.
 
 *How can I debug the Ada run-time library ?*
 
@@ -469,8 +469,8 @@ installing GPS.
 
 *The GPS main window is not displayed*
 
-  If when launching GPS, nothing happens, you can try to rename the
-  :file:`.gps` directory (see :ref:`Files`) to start from a fresh set up.
+  If when launching GPS, nothing happens, try to rename the :file:`.gps`
+  directory (see :ref:`Files`) to start from a fresh set up.
 
 *My project have several files with the same name. How can I import it in GPS?*
 

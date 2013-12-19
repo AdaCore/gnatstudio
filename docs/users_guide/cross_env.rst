@@ -51,10 +51,10 @@ the *Gnatmake* switches in the switch editor.  See :ref:`Switches
 <Switches>` for more details on the switch editor.
 
 To modify your project to support configurations such as multiple targets
-or multiple hosts, you can create scenario variables and modify the
-setting of the Toolchains parameters based on the value of these
-variables. See :ref:`Scenarios_and_Configuration_Variables` for more
-information on these variables.
+or multiple hosts, create scenario variables and modify the setting of the
+Toolchains parameters based on the value of these variables. See
+:ref:`Scenarios_and_Configuration_Variables` for more information on these
+variables.
 
 For example, you may want to create a variable called `Target` to handle
 the different kind of targets handled in your project:
@@ -95,15 +95,14 @@ For example, if you're using the *Tornado* environment, with a target
 server called `target_ppc`, set the `Protocol` to `wtx` and the `Program
 host` to `target_ppc`.
 
-Once the debugger is initialized, you can also connect to a remote agent by
-using the menu :menuselection:`Debug->Debug->Connect to Board...`. This
-will open a dialog where you can specify the target name (e.g. the name of
-your
+Once the debugger is initialized, connect to a remote agent by using the
+menu :menuselection:`Debug->Debug->Connect to Board...`. This will open a
+dialog where you can specify the target name (e.g. the name of your
 .. index:: board
 
 board or debug agent) and the communication protocol.
 
-In order to load a new module on the target, you can select the menu
+In order to load a new module on the target, select the menu
 :menuselection:`Debug->Debug->Load File...`.
 
 If a module has been loaded on the target and is not known to the current
@@ -111,5 +110,5 @@ debug session, use the menu :menuselection:`Debug->Debug->Add Symbols...`
 to load the symbol tables in the current debugger.
 
 Similarly, if you are running the underlying debugger (gdb) on a remote
-machine, you can specify the name of this machine by setting the `Tools host`
+machine, specify the name of this machine by setting the `Tools host`
 field of the project properties.

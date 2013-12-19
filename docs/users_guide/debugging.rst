@@ -31,11 +31,12 @@ You first need to build your executable with debug information (`-g`
 switch), either explicitly as part of your project properties or via the
 `Debug` build mode (see :ref:`The_Build_Mode` for more details).
 
-You can create multiple debuggers by using the :menuselection:`Debug -->
-Initialize` menu several times: this will create a new debugger each time.
-All debugger-related actions (e.g. stepping, running) are performed on the
-current debugger, which is represented by the current debugger console.  To
-switch between debuggers, simply select its corresponding console.
+Create multiple debuggers by using the :menuselection:`Debug -->
+Initialize` menu several times: this will create a new debugger each
+time.  All debugger-related actions (e.g. stepping, running) are
+performed on the current debugger, which is represented by the current
+debugger console.  To switch between debuggers, simply select its
+corresponding console.
 
 After the debugger has been initialized, you have access to two new
 windows: the data window (in the top of the working area), and the debugger
@@ -131,10 +132,10 @@ menu items found in the menu bar:
 .. index:: preferences; debugger --> debugger windows
 
 :menuselection:`Debug --> Terminate Current`
-  Terminate the current debug session by terminating the underlying debugger
-  (e.g `gdb`) used to handle the low level debugging. You can control what
-  happens to the windows through the :menuselection:`Debugger --> Debugger
-  Windows` preference.
+  Terminate the current debug session by terminating the underlying
+  debugger (e.g `gdb`) used to handle the low level debugging.  Control
+  what happens to the windows through the :menuselection:`Debugger -->
+  Debugger Windows` preference.
 
 
 .. index:: menu; debug --> termiante
@@ -156,8 +157,8 @@ saved breakpoints, and data display).
 
 :menuselection:`Debug --> Initialize --> <No Main File>`
 
-  Initializes the debugger with no executable. You can then use one of the
-  other menu items like :menuselection:`Debug --> Debug --> Load File` or
+  Initializes the debugger with no executable.  Then use one of the other
+  menu items like :menuselection:`Debug --> Debug --> Load File` or
   :menuselection:`Debug --> Debug --> Attach`.
 
 
@@ -207,8 +208,8 @@ Debug
 .. index:: menu; debug --> debug --> detach
 
 :menuselection:`Debug --> Debug --> Detach`
-  Detaches the currently debugged process from the underlying debugger.  This
-  means the executable will continue to run independently. You can use the
+  Detaches the currently debugged process from the underlying debugger; the
+  executable will continue to run independently.  Use the
   :menuselection:`Debug --> Debug --> Attach To Process` menu later to
   re-attach to this process.
 
@@ -319,7 +320,7 @@ commands. Failure to do so will result in empty windows.
 
 :menuselection:`Debug --> Data --> Command History`
   Opens a dialog with the list of commands executed in the current session.
-  You can select any number of items in this list to replay the selection.
+  Select any number of items in this list to replay the selection.
 
 
 .. index:: menu; debug --> data --> display local variables
@@ -376,10 +377,10 @@ execution stack for the current thread or task.
 
 The bottom frame corresponds to the outermost frame (where the thread is
 currently stopped). This frame corresponds to the first function executed
-by the current thread (e.g `main` if the main thread is in C).  You can click
-on any frame to switch to that caller's context; this will update the
-display in the source window. See also the up and down buttons in the tool
-bar to go up and down one frame in the call stack.
+by the current thread (e.g `main` if the main thread is in C).  Click on
+any frame to switch to that caller's context; this will update the display
+in the source window. See also the up and down buttons in the tool bar to
+go up and down one frame in the call stack.
 
 The contextual menu (right mouse button) allows you to choose which information
 you want to display in the call stack window (via check buttons):
@@ -394,9 +395,9 @@ you want to display in the call stack window (via check buttons):
 
 .. index:: menu; debug --> data --> call stack
 
-By default, only the subprogram name is displayed.  You can hide the call stack
-window by closing it, as for other windows, and show it again using the menu
-:menuselection:`Debug --> Data --> Call Stack`.
+By default, only the subprogram name is displayed.  Hide the call stack
+window by closing it, as for other windows, and show it again using the
+menu :menuselection:`Debug --> Data --> Call Stack`.
 
 
 
@@ -415,8 +416,8 @@ variables, the current contents of registers, and local variables.
 
 .. index:: debugger; data window
 
-This window is open by default when you start the debugger. You can force
-it to display through the menu :menuselection:`Debug --> Data --> Data Window`.
+This window is open by default when you start the debugger.  Force it to
+display through the menu :menuselection:`Debug --> Data --> Data Window`.
 
 .. index:: preferences; debugger --> preserve state on exit
 
@@ -639,15 +640,14 @@ The Breakpoint Editor
 
 .. index:: menu; debug --> data --> edit breaakpoints
 
-You can access the breakpoint editor from the menu :menuselection:`Debug
---> Data --> Edit Breakpoints`.  It allows manipulation of various kinds of
+Access the breakpoint editor from the menu :menuselection:`Debug --> Data
+--> Edit Breakpoints`.  It allows manipulation of various kinds of
 breakpoints: those at a source location, on a subprogram, at an executable
 address, on memory access (watchpoints), and on Ada exceptions.
 
-You can double-click on any breakpoint in the list to open the
-corresponding source editor at the corresponding location. Alternatively,
-you can select the breakpoint and then click on the :guilabel:`View`
-button.
+Double-click on any breakpoint in the list to open the corresponding source
+editor at the corresponding location.  Or select the breakpoint and then
+click the :guilabel:`View` button.
 
 The top area provides an interface to create the different kinds of
 breakpoints, while the bottom area lists existing breakpoints and their
@@ -760,22 +760,22 @@ memory with the corresponding addresses in the bottom text area.
 
 .. index:: ASCII
 
-You can also specify the unit size (:guilabel:`Byte`, :guilabel:`Halfword` or
-:guilabel:`Word`), the format (:guilabel:`Hexadecimal`, :guilabel:`Decimal`,
-:guilabel:`Octal` or :guilabel:`ASCII`), and you can display the corresponding
-ASCII value at the same time.
+Specify the unit size (:guilabel:`Byte`, :guilabel:`Halfword` or
+:guilabel:`Word`) and the format (:guilabel:`Hexadecimal`,
+:guilabel:`Decimal`, :guilabel:`Octal` or :guilabel:`ASCII`) and you can
+display the corresponding ASCII value at the same time.
 
 The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and
 :kbd:`Page down` keys in the memory text area allows you to walk
 through the memory in order of ascending or descending addresses
 respectively.
 
-Finally, you can modify a memory area by clicking on the location you
-want to modify, and by entering the new values. Modified values will
-appear in a different color (red by default) and will only be written
-account (i.e written to the target) when you click on the
-:guilabel:`Submit changes` button. Clicking on the :guilabel:`Undo
-changes` or going up or down in the memory will undo your editing.
+Finally, modify a memory area by clicking on the location you want to
+modify, and by entering the new values. Modified values will appear in a
+different color (red by default) and will only be written account (i.e
+written to the target) when you click on the :guilabel:`Submit changes`
+button. Clicking on the :guilabel:`Undo changes` or going up or down in the
+memory will undo your editing.
 
 Clicking on :guilabel:`Close` will close the memory window, canceling your last
 pending changes, if any.
@@ -806,8 +806,8 @@ information:
 *Lines with breakpoints*
   .. index:: breakpoint
 
-  For lines where breakpoints have been set, a red mark is displayed on top of
-  the blue dot for the line. You can add and delete breakpoints by clicking on
+  For lines where breakpoints have been set, a red mark is displayed on top
+  of the blue dot for the line.  Add or delete breakpoints by clicking on
   this area (the first click will set a breakpoint, the second click will
   remove it).
 
@@ -820,8 +820,7 @@ information:
 The second area in the source window is a text window on the right that
 displays the source files, with syntax highlighting.  If you hold the
 pointer over a variable, GPS displays a tooltip showing the value of that
-variable.  You can disable these automatic tooltips using the preferences
-menu.
+variable.  Disable these automatic tooltips using the preferences menu.
 
 See :ref:`Preferences Dialog <preferences_dialog>`.
 
@@ -895,8 +894,8 @@ or source line you are currently debugging.
 
 .. index:: menu; debug --> data --> assembly
 
-You can open the assembly window by using the menu
-:menuselection:`Debug --> Data --> Assembly`.
+Open the assembly window by using the menu :menuselection:`Debug --> Data
+--> Assembly`.
 
 .. image:: assembly.jpg
 
@@ -906,25 +905,24 @@ highlighted in red by default. This allows you to easily see where the
 program counter will point to after you press the :guilabel:`Next` button
 on the tool bar.
 
-You can move to the next assembly instruction using the :guilabel:`Nexti`
-(next instruction) button in the tool bar. If you choose "Stepi" instead
-(step instruction), this it will step into any subprogram being called by
-that instruction.
+Move to the next assembly instruction using the :guilabel:`Nexti` (next
+instruction) button in the tool bar. If you choose "Stepi" instead (step
+instruction), this it will step into any subprogram being called by that
+instruction.
 
 For efficiency purposes, GPS only display a small part of the assembly code
-around the current instruction.  You can specify in the :ref:`Preferences
-Dialog <preferences_dialog>` how many instructions are displayed by
-default.  Also, you can easily display the instructions immediately
-preceding or following the currently displayed instructions by pressing one
-of the :kbd:`Page up` or :kbd:`Page down` keys or by using the contextual
-menu in the assembly window.
+around the current instruction.  Specify how many instructions are
+displayed by default in the :ref:`Preferences Dialog <preferences_dialog>`.
+Display the instructions immediately preceding or following the currently
+displayed instructions by pressing one of the :kbd:`Page up` or :kbd:`Page
+down` keys or by using the contextual menu in the assembly window.
 
 .. index:: menu; debug --> data --> display registers
 
 A convenient complement when debugging at the assembly level is the ability
 to display the contents of machine registers.  When the debugger supports
-it (as `gdb` does), you can select the :menuselection:`Debug --> Data -->
-Display Registers` menu to get an item in the canvas that shows the current
+it (as `gdb` does), select the :menuselection:`Debug --> Data --> Display
+Registers` menu to get an item in the canvas that shows the current
 contents of each machine register and that's updated every time one of them
 changes.
 
@@ -1087,8 +1085,8 @@ an alias, we want to execute that alias.  Otherwise, we let the debugger
 back-end handle that command.
 
 After you have copied this example in the :file:`$HOME/.gps/plug-ins`
-directory, you can start a debugger as usual in GPS, and type the following in
-its console::
+directory, start a debugger as usual in GPS, and type the following in its
+console::
 
      (gdb) alias foo print a_long_long_name
      (gdb) foo
