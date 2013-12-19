@@ -590,143 +590,133 @@ the most meaningful way for you. Scoring is based on a number of criteria:
   more likely to want it again and will raise its score appropriately.
 
 
-.. index:: windows; messages
+.. index:: views; messages
 .. index:: messages
 .. index:: console
-.. _The_Messages_Window:
+.. _The_Messages_View:
 
-The :guilabel:`Messages` window
-===============================
+The :guilabel:`Messages` view
+=============================
 
 .. image:: messages.png
 
-The Messages window is used by GPS to display information and feedback about
-operations, such as build output, information about processes launched, error
-messages.
-
-This is a read-only window, which means that only output is available, no input
-is possible.
+The Messages view, which is readonly, display information feedback about
+operations, including build output, information about processes launched,
+and error messages.
 
 Its local toolbar contains buttons to :guilabel:`Clear` the contents of the
-window, as well as to :guilabel:`Save` and :guilabel:`Load` from files.
+window, as well as :guilabel:`Save` and :guilabel:`Load` from files.  The
+latter operation also parses those messages into the :guilabel:`Locations`
+window.
 
-In general the output of the compilation is displayed in the
-:guilabel:`Messages` window, but will also be parsed and displayed more
-conveniently in the :guilabel:`Locations` window (:ref:`The_Locations_View`).
-
-When a compilation finishes, GPS also displays the total elapsed time. If the
-process ended with errors, GPS will display the total progress (as is also
-displayed in the progress bar in the GPS toolbar), which is convenient to see
-how many files were compiled successfully.
+The actual output of the compilation is displayed in the
+:guilabel:`Messages` view, but is also parsed and many of its messages are
+displayed more conveniently in the :guilabel:`Locations` view
+(:ref:`The_Locations_View`).  When a compilation finishes, GPS displays the
+total elapsed time.
 
 .. index:: menu; tools --> views --> messages
 
-The :guilabel:`Messages` window can not be closed, because it might contain
-important messages at any time. However, it might happen that it has been
-closed anyway, and in this case it can be reopened with the
+You cannot close the :guilabel:`Messages` view because it might contain
+important messages.  If GPS closed it, you can reopen it with the
 :menuselection:`Tools --> Views --> Messages` menu.
 
 
-
-.. index:: windows; locations
+.. index:: views; locations
 .. _The_Locations_View:
 
-The :guilabel:`Locations` view
+The :guilabel:`Locations` View
 ==============================
 
 .. image:: locations-view.png
 
-The :guilabel:`Location` window is used whenever GPS needs to display a list of
-locations in the source files (typically, when performing a global search,
-or displaying compilation results).
+GPS uses the :guilabel:`Location` view, which is also readonly, to display
+a list of locations in source files (for example, when performing a global
+search or displaying compilation results).
 
-The :guilabel:`Locations` shows a hierarchy of categories, which contain files,
-which contain messages at specific locations. The category describes the type
-of messages (search results, build results,...).  Clicking on a location item
-will bring up a file editor at the requested place.
+It displays a hierarchy of categories, each of which contain files, each,
+in turn, containing messages at specific locations. The category describes
+the type of messages (for example, search or build results).  If the full
+text of a message is too large to be completely shown in the window,
+placing the mouse over it pops up a tooltip window with the full text.
 
-Placing the mouse over an item automatically pop up a tooltip window with full
-text of the message if this text can't be completely shown in the window.
-
-In general, each message in this window is associated with a special
-full line highlighting in the corresponding source editor, as well as a mark
-on the left side of editors to visually navigate between these locations.
+Each message in this window corresponds to a line in a source editor.  This
+line has been highlighted and has a mark on its left side.  Clicking on a
+message brings up a file editor pointing to that line.
 
 The :guilabel:`Locations` view provides a local toolbar with the following
 buttons:
 
-* :guilabel:`Clear` will remove all entries from the window. Depending on
-  your settings, this might also close the window.
+* :guilabel:`Clear` removes all entries from the view and, depending on
+  your settings, may also close the view.
 
-* :guilabel:`Remove` will remove the currently selected category, file or
-  message. This of course removes the corresponding highlighting in the
-  source editor.
+* :guilabel:`Remove` removes the currently selected category, file or
+  message as well as the corresponding highlighting in the source editor.
 
-* :guilabel:`Save` can be used to save the contents of the window to a
-  text file, for later reference. This text file can not be imported by
-  GPS into the locations view later. If you want to reload the contents
-  of the locations (in the case of build errors, for instance), it is
-  better to save and load the contents of the :guilabel:`Messages`
-  window.
+* :guilabel:`Save` saves the contents of the view to a text file for later
+  reference.  This file cannot be loaded back into the
+  :guilabel:`Locations` view, but can be loaded into the
+  :guilabel:`Messages` view.  However, if you plan to reload it later, it's
+  better to save and reload the contents of the :guilabel:`Messages` view
+  instead.
 
-* :guilabel:`Expand All` and :guilabel:`Collapse All` can be used
-  to quickly show or hide all messages in this window.
+* :guilabel:`Expand All` and :guilabel:`Collapse All` shows or hides all
+  messages in the view.
 
-* a filter that can be used to show or hide some of the messages.  Filtering is
-  done on the text of the message itself (either as a text or as a regular
-  expression). It can also be reversed, so that for instance typing `warning`
-  in the filter field and reversing the filter will
-  :index:`hide warning messages <single: build; hiding warning messages>`
+* a filter to selectively show or hide some messages.  Filtering is done on
+  the text of the message itself (the filter is either text or a regular
+  expression).  You can also reverse the filter.  For example, typing
+  `warning` in the filter field and reversing the filter :index:`hides
+  warning messages <single: build; hiding warning messages>`
 
 The local settings menu contains the following entries:
 
 * :guilabel:`Sort by subcategory`
-  Toggle the sorting of the entries by sub-categories. This is useful,
-  for example, for separating the warnings from the errors in the build
-  results. The error messages will appear first. The default is to sort
-  the message by their location.
+  Toggle the sorting of messages by sub-categories. This is useful for
+  separating warnings from errors in build results. The error messages
+  appear first. The default is to sort the message by their location.
 
 * :guilabel:`Sort files alphabetically`
-  Force files to be sorted alphabetically. The default is that files are not
-  sorted, which makes manipulation of the :guilabel:`Locations` window easier
-  before all messages are added to it (otherwise the nodes might be switched
-  while you are trying to click on them).
+  Sort messages by filenames (sorted alphabetically). The default does not
+  sort by filenames to make it easier to manipulate :guilabel:`Locations`
+  view while the compilation is proceeding.  (If sorted, the messages might
+  be reordered while you're trying to click on them).
 
-* :guilabel:`Jump to first location`: Every time a new category is created, as
-  a result of a compilation or a search operation for example, the first entry
-  of that category is automatically selected, and the corresponding editor
-  opened.
+* :guilabel:`Jump to first location`
+  Every time a new category is created, for example, as a result of a
+  compilation or search operation, the first message in that category is
+  automatically selected and the corresponding editor opened.
 
 * :guilabel:`Warp around on next/previous` controls the behavior of the
   guilabel:`Previous tag` and :guilabel:`Next tag` menus (see below).
 
-* :guilabel:`Auto close locations` will automatically close this window when
+* :guilabel:`Auto close locations` automatically closes this window when
   it becomes empty.
 
 * :guilabel:`Save locations on exit` controls whether GPS should save and
-  restore the contents of this window between sessions. The loaded contents
-  might not apply the next time, because for instance the source files have
-  changed, or build errors have been fixed, so it might be an inconvenience
-  to automatically reload the messages.
+  restore the contents of this window between sessions.  Be careful,
+  because the loaded contents might not apply the next time.  For example,
+  the source files have changed, or build errors have been fixed.  So you 
+  should not select this option if those conditions might apply.
 
 
 .. index:: menu; navigate --> previous tag
 .. index:: menu; navigate --> next tag
 
-To navigate through the locations with the keyboard, GPS provides two menus:
-:menuselection:`Navigate --> Previous Tag` and :menuselection:`Navigate --> Next
-Tag`. Depending on your settings, they might wrap around after reaching the
-first or last message.
+GPS provides two menus to navigate through the locations using the
+keyboard: :menuselection:`Navigate --> Previous Tag` and
+:menuselection:`Navigate --> Next Tag`. Depending on your settings, they
+might wrap around after reaching the first or last message.
 
-It is also possible to bind key shortcuts to these menus via the
-:menuselection:`Edit --> Key Shortcuts` menu.
+You can also bind key shortcuts to these menus via the :menuselection:`Edit
+--> Key Shortcuts` menu.
 
 .. index:: codefix
 .. index:: build; auto fix errors
 
 In some cases, a wrench icon will be visible on the left of a compilation
-message. See :ref:`Code_Fixing` for more information on how to take advantage
-of this icon.
+message. See :ref:`Code_Fixing` for more information on how to take
+advantage of this icon.
 
 
 .. index:: project view

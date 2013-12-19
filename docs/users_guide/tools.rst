@@ -49,9 +49,9 @@ The list of active items includes:
     :ref:`The_Outline_View`.
 
   *Messages*
-    Open the Messages winbdow
+    Open the Messages view
 
-    :ref:`The_Messages_Window`.
+    :ref:`The_Messages_View`.
 
   *Project*
     :ref:`The_Project_View`.
