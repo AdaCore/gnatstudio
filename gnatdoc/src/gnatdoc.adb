@@ -37,7 +37,7 @@ with Language.Tree.Database;  use Language.Tree.Database;
 with Templates_Parser;        use Templates_Parser;
 with Xref.Docgen;             use Xref.Docgen;
 
-with GNAT.IO;  -- to be removed???
+with GNAT.IO;
 
 package body GNATdoc is
    Me : constant Trace_Handle := Create ("GNATdoc.1");
@@ -400,8 +400,7 @@ package body GNATdoc is
             end if;
 
             File := Files_List.Element (File_Index);
-            Lang := Get_Language_From_File
-              (Lang_Handler, Files_List.Element (File_Index));
+            Lang := Get_Language_From_File (Lang_Handler, File);
 
             --  We don't support yet other parsers than Ada, C and C++
 
@@ -1082,6 +1081,10 @@ package body GNATdoc is
       Check_Src_Files;
 
       if not Have_Files (Prj_Files) then
+         if not Options.Quiet_Mode then
+            GNAT.IO.Put_Line ("No files to process");
+         end if;
+
          Trace (Me, "No files to process");
          return;
       end if;

@@ -42,6 +42,36 @@ package body GNATdoc.Frontend is
    XML_Regpat : constant Pattern_Matcher :=
      Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
+   type Tokens is
+     (Tok_Unknown,
+      --  Reserved words
+      Tok_Abstract,
+      Tok_And,
+      Tok_Aliased,
+      Tok_Case,
+      Tok_End,
+      Tok_Entry,
+      Tok_Function,
+      Tok_Interface,
+      Tok_Is,
+      Tok_Limited,
+      Tok_New,
+      Tok_Null,
+      Tok_Others,
+      Tok_Package,
+      Tok_Private,
+      Tok_Procedure,
+      Tok_Record,
+      Tok_Tagged,
+      Tok_Task,
+      Tok_Type,
+      Tok_When,
+      Tok_With,
+      --  Other tokens
+      Tok_Left_Paren,
+      Tok_Right_Paren,
+      Tok_Semicolon);
+
    ----------------------
    -- Local_Subrograms --
    ----------------------
@@ -58,6 +88,9 @@ package body GNATdoc.Frontend is
       In_C_Lang : Boolean);
    --  Traverse the Tree of entities and replace blocks of comments by
    --  structured comments.
+
+   function Get_Token (S : String) return Tokens;
+   --  Return the token associated with S
 
    ---------------------------------
    -- Append_Comments_And_Sources --
@@ -891,31 +924,6 @@ package body GNATdoc.Frontend is
             With_Null      : Boolean := False;
             With_Private   : Boolean := False;
 
-            type Tokens is
-              (Tok_Unknown,
-               --  Reserved words
-               Tok_Abstract,
-               Tok_And,
-               Tok_Aliased,
-               Tok_Case,
-               Tok_End,
-               Tok_Interface,
-               Tok_Is,
-               Tok_Limited,
-               Tok_New,
-               Tok_Null,
-               Tok_Others,
-               Tok_Private,
-               Tok_Record,
-               Tok_Tagged,
-               Tok_Type,
-               Tok_When,
-               Tok_With,
-               --  Other tokens
-               Tok_Left_Paren,
-               Tok_Right_Paren,
-               Tok_Semicolon);
-
             Prev_Token : Tokens := Tok_Unknown;
             Token      : Tokens := Tok_Unknown;
             End_Loc    : Source_Location;
@@ -930,52 +938,6 @@ package body GNATdoc.Frontend is
 
                S : String renames
                      Buffer (Sloc_Start.Index .. Sloc_End.Index);
-
-               function Get_Token return Tokens;
-               --  Return the token associated with S
-
-               function Get_Token return Tokens is
-                  Keyword : constant String := To_Lower (S);
-
-               begin
-                  if Keyword = "abstract" then
-                     return Tok_Abstract;
-                  elsif Keyword = "aliased" then
-                     return Tok_Aliased;
-                  elsif Keyword = "and" then
-                     return Tok_And;
-                  elsif Keyword = "case" then
-                     return Tok_Case;
-                  elsif Keyword = "end" then
-                     return Tok_End;
-                  elsif Keyword = "is" then
-                     return Tok_Is;
-                  elsif Keyword = "interface" then
-                     return Tok_Interface;
-                  elsif Keyword = "limited" then
-                     return Tok_Limited;
-                  elsif Keyword = "new" then
-                     return Tok_New;
-                  elsif Keyword = "null" then
-                     return Tok_Null;
-                  elsif Keyword = "others" then
-                     return Tok_Others;
-                  elsif Keyword = "private" then
-                     return Tok_Private;
-                  elsif Keyword = "record" then
-                     return Tok_Record;
-                  elsif Keyword = "tagged" then
-                     return Tok_Tagged;
-                  elsif Keyword = "type" then
-                     return Tok_Type;
-                  elsif Keyword = "when" then
-                     return Tok_When;
-                  elsif Keyword = "with" then
-                     return Tok_With;
-                  else
-                     return Tok_Unknown;
-                  end if;
-               end Get_Token;
 
             begin
                End_Loc := Sloc_End;
@@ -1112,7 +1074,7 @@ package body GNATdoc.Frontend is
 
                elsif Entity = Keyword_Text then
                   Prev_Token := Token;
-                  Token      := Get_Token;
+                  Token      := Get_Token (S);
 
                   --  Private types are not well recognized by Xref. Hence
                   --  when the entity was built it was initially decorated
@@ -1366,35 +1328,6 @@ package body GNATdoc.Frontend is
             In_Item_Decl   : Boolean := False;
             End_Decl_Found : Boolean := False;
 
-            type Tokens is
-              (Tok_Unknown,
-               --  Reserved words
-               Tok_Abstract,
-               Tok_And,
-               Tok_Aliased,
-               Tok_Case,
-               Tok_End,
-               Tok_Entry,
-               Tok_Function,
-               Tok_Interface,
-               Tok_Is,
-               Tok_Limited,
-               Tok_New,
-               Tok_Null,
-               Tok_Others,
-               Tok_Private,
-               Tok_Procedure,
-               Tok_Record,
-               Tok_Tagged,
-               Tok_Task,
-               Tok_Type,
-               Tok_When,
-               Tok_With,
-               --  Other tokens
-               Tok_Left_Paren,
-               Tok_Right_Paren,
-               Tok_Semicolon);
-
             Prev_Token : Tokens := Tok_Unknown;
             pragma Unreferenced (Prev_Token);
 
@@ -1411,60 +1344,6 @@ package body GNATdoc.Frontend is
 
                S : String renames
                      Buffer (Sloc_Start.Index .. Sloc_End.Index);
-
-               function Get_Token return Tokens;
-               --  Return the token associated with S
-
-               function Get_Token return Tokens is
-                  Keyword : constant String := To_Lower (S);
-
-               begin
-                  if Keyword = "abstract" then
-                     return Tok_Abstract;
-                  elsif Keyword = "aliased" then
-                     return Tok_Aliased;
-                  elsif Keyword = "and" then
-                     return Tok_And;
-                  elsif Keyword = "case" then
-                     return Tok_Case;
-                  elsif Keyword = "end" then
-                     return Tok_End;
-                  elsif Keyword = "entry" then
-                     return Tok_Entry;
-                  elsif Keyword = "function" then
-                     return Tok_Function;
-                  elsif Keyword = "is" then
-                     return Tok_Is;
-                  elsif Keyword = "interface" then
-                     return Tok_Interface;
-                  elsif Keyword = "limited" then
-                     return Tok_Limited;
-                  elsif Keyword = "new" then
-                     return Tok_New;
-                  elsif Keyword = "null" then
-                     return Tok_Null;
-                  elsif Keyword = "others" then
-                     return Tok_Others;
-                  elsif Keyword = "private" then
-                     return Tok_Private;
-                  elsif Keyword = "procedure" then
-                     return Tok_Procedure;
-                  elsif Keyword = "record" then
-                     return Tok_Record;
-                  elsif Keyword = "tagged" then
-                     return Tok_Tagged;
-                  elsif Keyword = "task" then
-                     return Tok_Task;
-                  elsif Keyword = "type" then
-                     return Tok_Type;
-                  elsif Keyword = "when" then
-                     return Tok_When;
-                  elsif Keyword = "with" then
-                     return Tok_With;
-                  else
-                     return Tok_Unknown;
-                  end if;
-               end Get_Token;
 
             begin
                End_Loc := Sloc_End;
@@ -1483,7 +1362,7 @@ package body GNATdoc.Frontend is
 
                elsif Entity = Keyword_Text then
                   Prev_Token := Token;
-                  Token      := Get_Token;
+                  Token      := Get_Token (S);
 
                   if Token = Tok_Is then
                      In_Definition := True;
@@ -3240,15 +3119,15 @@ package body GNATdoc.Frontend is
             --  or else Tag = "code"  --  ???
 
             --  JavaDoc possible additional tags???
-           or else Tag = "author"
-           or else Tag = "deprecated"
-           or else Tag = "return"
-           or else Tag = "serial"
-           or else Tag = "since"
-           or else Tag = "version"
+            --  or else Tag = "author"
+            --  or else Tag = "deprecated"
+           or else Tag = "return";
+            --  or else Tag = "serial"
+            --  or else Tag = "since"
+            --  or else Tag = "version"
 
             --  Proposed enhancements
-           or else Tag = "field";
+            --  or else Tag = "field";
       end Is_Custom_Tag;
 
       -----------------------
@@ -4043,5 +3922,62 @@ package body GNATdoc.Frontend is
    begin
       return Builder.Find_Unique_Entity (Location, In_References);
    end Find_Unique_Entity;
+
+   ---------------
+   -- Get_Token --
+   ---------------
+
+   function Get_Token (S : String) return Tokens is
+      Keyword : constant String := To_Lower (S);
+
+   begin
+      if Keyword = "abstract" then
+         return Tok_Abstract;
+      elsif Keyword = "aliased" then
+         return Tok_Aliased;
+      elsif Keyword = "and" then
+         return Tok_And;
+      elsif Keyword = "case" then
+         return Tok_Case;
+      elsif Keyword = "end" then
+         return Tok_End;
+      elsif Keyword = "entry" then
+         return Tok_Entry;
+      elsif Keyword = "function" then
+         return Tok_Function;
+      elsif Keyword = "is" then
+         return Tok_Is;
+      elsif Keyword = "interface" then
+         return Tok_Interface;
+      elsif Keyword = "limited" then
+         return Tok_Limited;
+      elsif Keyword = "new" then
+         return Tok_New;
+      elsif Keyword = "null" then
+         return Tok_Null;
+      elsif Keyword = "others" then
+         return Tok_Others;
+      elsif Keyword = "package" then
+         return Tok_Package;
+      elsif Keyword = "private" then
+         return Tok_Private;
+      elsif Keyword = "procedure" then
+         return Tok_Procedure;
+      elsif Keyword = "record" then
+         return Tok_Record;
+      elsif Keyword = "tagged" then
+         return Tok_Tagged;
+      elsif Keyword = "task" then
+         return Tok_Task;
+      elsif Keyword = "type" then
+         return Tok_Type;
+      elsif Keyword = "when" then
+         return Tok_When;
+      elsif Keyword = "with" then
+         return Tok_With;
+      else
+         return Tok_Unknown;
+      end if;
+   end Get_Token;
 
 end GNATdoc.Frontend;
