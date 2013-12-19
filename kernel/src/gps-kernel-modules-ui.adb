@@ -284,8 +284,9 @@ package body GPS.Kernel.Modules.UI is
    --  updated, and Looked_Up will be set to the new value.
 
    procedure Execute_Action
-     (Self : not null access Gtk_Widget_Record'Class;
-      Data : Action_Proxy);
+     (Self          : not null access Gtk_Widget_Record'Class;
+      Data          : Action_Proxy;
+      In_Foreground : Boolean := False);
    --  Execute the action associated with the proxy
 
    ------------------------
@@ -416,13 +417,20 @@ package body GPS.Kernel.Modules.UI is
      (Command : access Menu_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
       Menu : constant Gtk_Menu_Item := Find_Menu_Item
         (Command.Kernel, Command.Menu_Name.all);
    begin
       if Menu /= null then
          Trace (Me, "Executing " & Command.Menu_Name.all);
-         Activate (Menu);
+
+         if Menu.all in Action_Menu_Item_Record'Class then
+            Execute_Action
+              (Menu, Action_Menu_Item (Menu).Data,
+               In_Foreground => Context.Synchronous);
+         else
+            Activate (Menu);
+         end if;
+
          return Success;
       else
          Command.Kernel.Insert
@@ -1396,12 +1404,14 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    procedure Execute_Action
-     (Self : not null access Gtk_Widget_Record'Class;
-      Data : Action_Proxy)
+     (Self          : not null access Gtk_Widget_Record'Class;
+      Data          : Action_Proxy;
+      In_Foreground : Boolean := False)
    is
       Context : constant Selection_Context :=
         Get_Current_Context (Data.Kernel);
       Action : constant access Action_Record := Lookup_Action (Self);
+      Proxy  : Command_Access;
    begin
       Trace (Me, "Execute action " & Data.Action.all);
 
@@ -1415,20 +1425,29 @@ package body GPS.Kernel.Modules.UI is
          --  However, when the user is using the GUI, it might make more
          --  sense to be in the background, not sure.
 
-         Launch_Foreground_Command
-           (Data.Kernel,
-            Create_Proxy
-              (Action.Command,
-               (Event            => null,
-                Context          => Context,
-                Synchronous      => False,
-                Dir              => No_File,
-                Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
-                Args             => null,
-                Label            => null,
-                Repeat_Count     => 1,
-                Remaining_Repeat => 0)),
-            Destroy_On_Exit => True);
+         Proxy := Create_Proxy
+           (Action.Command,
+            (Event            => null,
+             Context          => Context,
+             Synchronous      => False,
+             Dir              => No_File,
+             Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
+             Args             => null,
+             Label            => null,
+             Repeat_Count     => 1,
+             Remaining_Repeat => 0));
+
+         if In_Foreground then
+            Launch_Foreground_Command
+              (Data.Kernel, Proxy, Destroy_On_Exit => True);
+         else
+            Launch_Background_Command
+              (Data.Kernel,
+               Proxy,
+               Active          => True,
+               Show_Bar        => True,
+               Destroy_On_Exit => True);
+         end if;
 
       elsif Get_Error_Message (Action.Filter) /= "" then
          Insert (Data.Kernel, Get_Error_Message (Action.Filter),
