@@ -428,9 +428,9 @@ package body GPS.Kernel.Scripts is
                   Launch_Background_Command
                     (Kernel, Custom,
                      Destroy_On_Exit => True,
-                     Active          => Synchronous,
-                     Show_Bar        => True,
-                     Queue_Id        => "");
+                     Active     => True,  --  as much as possible immediately
+                     Show_Bar   => True,
+                     Queue_Id   => "");
                end if;
             end if;
          end;

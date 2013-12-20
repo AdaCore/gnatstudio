@@ -1413,7 +1413,8 @@ package body GPS.Kernel.Modules.UI is
       Action : constant access Action_Record := Lookup_Action (Self);
       Proxy  : Command_Access;
    begin
-      Trace (Me, "Execute action " & Data.Action.all);
+      Trace (Me, "Execute action " & Data.Action.all
+             & " in foreground ? " & In_Foreground'Img);
 
       if Action = null then
          Data.Kernel.Insert
@@ -1429,7 +1430,7 @@ package body GPS.Kernel.Modules.UI is
            (Action.Command,
             (Event            => null,
              Context          => Context,
-             Synchronous      => False,
+             Synchronous      => True,
              Dir              => No_File,
              Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
              Args             => null,
