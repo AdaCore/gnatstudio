@@ -15,9 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with GNATCOLL.JSON;           use GNATCOLL.JSON;
+with GNATCOLL.JSON;     use GNATCOLL.JSON;
+with Xref.Docgen;       use Xref.Docgen;
 
 package body GNATdoc.Backend.HTML.Source_Code is
 
@@ -287,6 +288,10 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
       if No (Entity)
         or else not Is_Decorated (Entity)
+        or else (Get_Kind (Entity) = E_Package
+                 and then Present (LL.Get_Instance_Of (Entity)))
+        --  Documentation pages for generic package instantiations are not
+        --  generated, thus links to them is not generated too.
       then
          Self.Append_Text_Object
            ("identifier", Self.Buffer (First.Index .. Last.Index));

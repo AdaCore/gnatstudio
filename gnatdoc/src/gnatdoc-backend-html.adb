@@ -29,6 +29,7 @@ with GNATdoc.Backend.HTML.JSON_Builder; use GNATdoc.Backend.HTML.JSON_Builder;
 with GNATdoc.Backend.HTML.Source_Code;  use GNATdoc.Backend.HTML.Source_Code;
 with GNATdoc.Backend.Text_Parser;       use GNATdoc.Backend.Text_Parser;
 with GNATdoc.Comment;                   use GNATdoc.Comment;
+with Xref.Docgen;                       use Xref.Docgen;
 
 package body GNATdoc.Backend.HTML is
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
@@ -993,6 +994,10 @@ package body GNATdoc.Backend.HTML is
       Entity_Entries : JSON_Array;
 
    begin
+      if Present (LL.Get_Instance_Of (Entity)) then
+         return;
+      end if;
+
       Documentation.Set_Field ("label", Get_Full_Name (Entity));
 
       --  Extract package's "summary" and "description".
