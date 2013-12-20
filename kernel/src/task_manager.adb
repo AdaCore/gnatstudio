@@ -460,6 +460,7 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Id /= null
+           and then Manager.Queues (J).Id /= null
            and then Manager.Queues (J).Id.all = Queue_Id
          then
             return True;
@@ -543,13 +544,16 @@ package body Task_Manager is
    function Head
      (Manager : Task_Manager_Access; Id : String) return Command_Access
    is
+      use GNAT.Strings;
    begin
       if Manager.Queues = null then
          return null;
       end if;
 
       for J in Manager.Queues'Range loop
-         if Manager.Queues (J).Id.all = Id then
+         if Manager.Queues (J).Id /= null
+           and then Manager.Queues (J).Id.all = Id
+         then
             if Manager.Queues (J).Queue.Is_Empty then
                return null;
             else

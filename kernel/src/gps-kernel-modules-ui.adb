@@ -1444,7 +1444,7 @@ package body GPS.Kernel.Modules.UI is
             Launch_Background_Command
               (Data.Kernel,
                Proxy,
-               Active          => True,
+               Active          => True,  --  start executing immediately
                Show_Bar        => True,
                Destroy_On_Exit => True);
          end if;
