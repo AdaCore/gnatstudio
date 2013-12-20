@@ -27,6 +27,9 @@ package GNATdoc.Backend.Base is
       Interface_Types   : EInfo_List.Vector;
       Methods           : EInfo_List.Vector;
       Pkgs              : aliased EInfo_List.Vector;
+      --  Ordinary and generic packages.
+      Pkgs_Instances    : EInfo_List.Vector;
+      --  Generic packages instantiations.
       Record_Types      : EInfo_List.Vector;
       Simple_Types      : EInfo_List.Vector;
       Subprgs           : aliased EInfo_List.Vector;

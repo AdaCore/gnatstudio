@@ -1198,6 +1198,11 @@ package body GNATdoc.Backend.Simple is
            (List      : access EInfo_List.Vector;
             Filename  : String;
             Header    : String);
+         procedure Generate_Instances_Index
+           (Generics  : EInfo_List.Vector;
+            Instances : EInfo_List.Vector;
+            Filename  : String;
+            Header    : String);
          --  Generate the ReST file Filename with this Header containing an
          --  index with the tree of dependencies of Ada tagged types.
 
@@ -1475,6 +1480,71 @@ package body GNATdoc.Backend.Simple is
                end if;
 
                EInfo_List.Next (Cursor1);
+            end loop;
+
+            Insert
+              (Translation, Assoc ("PRINTOUT", Printout));
+
+            Write_To_File
+              (Context   => Backend.Context,
+               Directory => Get_Doc_Directory (Backend.Context.Kernel),
+               Filename  => To_ReST_Name (Filesystem_String (Filename)),
+               Text =>
+                 Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         end Generate_Instances_Index;
+
+         ------------------------------
+         -- Generate_Instances_Index --
+         ------------------------------
+
+         procedure Generate_Instances_Index
+           (Generics  : EInfo_List.Vector;
+            Instances : EInfo_List.Vector;
+            Filename  : String;
+            Header    : String)
+         is
+            Header_U    : constant String (Header'Range) := (others => '=');
+            Tmpl        : constant Virtual_File :=
+              Backend.Get_Template (Tmpl_Entities);
+            Printout    : aliased Unbounded_String;
+            Translation : Translate_Set;
+
+         begin
+            Append_Line (Printout'Access, Header);
+            Append_Line (Printout'Access, Header_U);
+            Append_Line (Printout'Access, "");
+
+            for Generic_Entity of Generics loop
+
+               --  Locate a generic
+
+               if LL.Is_Generic (Generic_Entity) then
+                  ReST_Append_Reference
+                    (Printout => Printout'Access,
+                     Entity   => Generic_Entity,
+                     Prefix   => "- ");
+                  Append_Line (Printout'Access, "");
+
+                  --  Append all its instantiations
+
+                  declare
+                     LL_Generic_Entity : constant General_Entity :=
+                       LL.Get_Entity (Generic_Entity);
+
+                  begin
+                     for Instance_Entity of Instances loop
+                        if LL.Get_Instance_Of (Instance_Entity)
+                          = LL_Generic_Entity
+                        then
+                           ReST_Append_Reference
+                             (Printout => Printout'Access,
+                              Entity   => Instance_Entity,
+                              Prefix   => "  - ");
+                           Append_Line (Printout'Access, "");
+                        end if;
+                     end loop;
+                  end;
+               end if;
             end loop;
 
             Insert
@@ -1804,6 +1874,7 @@ package body GNATdoc.Backend.Simple is
          Trace (Me, "Generate_Global_Index");
 
          EInfo_Vector_Sort_Short.Sort (Backend.Entities.Pkgs);
+         EInfo_Vector_Sort_Short.Sort (Backend.Entities.Pkgs_Instances);
          EInfo_Vector_Sort_Short.Sort (Backend.Entities.Variables);
          EInfo_Vector_Sort_Short.Sort (Backend.Entities.Simple_Types);
          EInfo_Vector_Sort_Short.Sort (Backend.Entities.Record_Types);
@@ -1852,14 +1923,16 @@ package body GNATdoc.Backend.Simple is
                end;
             end if;
 
-            if Has_Instances (Backend.Entities.Pkgs) then
+            if not Backend.Entities.Pkgs_Instances.Is_Empty then
                declare
                   Filename : constant String := "ada_pkg_instances_idx";
+
                begin
                   Generate_Instances_Index
-                    (List     => Backend.Entities.Pkgs'Access,
-                     Filename => Filename,
-                     Header   =>
+                    (Generics  => Backend.Entities.Pkgs,
+                     Instances => Backend.Entities.Pkgs_Instances,
+                     Filename  => Filename,
+                     Header    =>
                        "Ada generic packages and their instantiations");
                   Append_Line (Printout'Access, "   " & Filename);
                end;

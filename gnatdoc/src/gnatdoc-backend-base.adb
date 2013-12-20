@@ -17,6 +17,7 @@
 
 with Language;      use Language;
 with Language.Ada;  use Language.Ada;
+with Xref.Docgen;   use Xref.Docgen;
 
 package body GNATdoc.Backend.Base is
 
@@ -117,8 +118,14 @@ package body GNATdoc.Backend.Base is
             end if;
 
             if Is_Package (Entity) then
-               Entities.Pkgs.Append (Entity);
-               Self.Entities.Pkgs.Append (Entity);
+               if No (LL.Get_Instance_Of (Entity)) then
+                  Entities.Pkgs.Append (Entity);
+                  Self.Entities.Pkgs.Append (Entity);
+
+               else
+                  Entities.Pkgs_Instances.Append (Entity);
+                  Self.Entities.Pkgs_Instances.Append (Entity);
+               end if;
 
             elsif Get_Kind (Entity) = E_Single_Task
               or Get_Kind (Entity) = E_Task_Type
