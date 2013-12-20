@@ -76,6 +76,8 @@ package body GNATdoc.Backend.Base is
       procedure Generate_Documentation
         (Entity : Entity_Id; Scope_Level : Natural)
       is
+         use type EInfo_List.Vector;
+
          procedure Classify_Entity
            (Entity   : Entity_Id;
             Parent   : Entity_Id;
@@ -211,7 +213,7 @@ package body GNATdoc.Backend.Base is
          end Classify_Entity;
 
          Entities : Collected_Entities;
-
+         All_Pkgs : EInfo_List.Vector;
       begin
          if LL.Is_Generic (Entity)
            and then Has_Generic_Formals (Entity)
@@ -232,7 +234,9 @@ package body GNATdoc.Backend.Base is
 
          --  Handle nested Ada packages
 
-         for Nested of Entities.Pkgs loop
+         All_Pkgs := Entities.Pkgs & Entities.Pkgs_Instances;
+
+         for Nested of All_Pkgs loop
             Generate_Documentation (Nested, Scope_Level + 1);
          end loop;
 

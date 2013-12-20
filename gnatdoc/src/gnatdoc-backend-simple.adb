@@ -36,6 +36,8 @@ with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 
 package body GNATdoc.Backend.Simple is
+   use type EInfo_List.Vector;
+
    Me : constant Trace_Handle := Create ("GNATdoc.1-Backend");
 
    type Template_Kind is
@@ -2368,6 +2370,7 @@ package body GNATdoc.Backend.Simple is
         or else Entities.Interface_Types.Length > 0
         or else Entities.Methods.Length > 0
         or else Entities.Pkgs.Length > 0
+        or else Entities.Pkgs_Instances.Length > 0
         or else Entities.Record_Types.Length > 0
         or else Entities.Simple_Types.Length > 0
         or else Entities.Subprgs.Length > 0
@@ -2417,7 +2420,9 @@ package body GNATdoc.Backend.Simple is
 
          if In_Ada_Language (Entity) then
             ReST_Append_List
-              (Printout'Access, Entities.Pkgs, "Nested packages");
+              (Printout'Access,
+               Entities.Pkgs & Entities.Pkgs_Instances,
+               "Nested packages");
          end if;
 
          --  Generate full documentation
