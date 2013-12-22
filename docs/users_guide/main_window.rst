@@ -1120,68 +1120,63 @@ GPS has an advanced mechanism for handling copy/paste operations.
 .. index:: menu; edit --> copy
 .. index:: menu; edit --> cut
 
-When you select the menus :menuselection:`Edit --> Copy` or
-:menuselection:`Edit --> Cut`, GPS adds the current selection to the clipboard.
-As opposed to what lots of applications do, it doesn't discard the previous
-contents of the clipboard, but save it for future usage. It saves a number of
-entries this way, up to 10 by default.  This value is configurable through the
-:guilabel:`Clipboard Size` preference.
+When you click the menus :menuselection:`Edit --> Copy` or
+:menuselection:`Edit --> Cut`, GPS adds the current selection to the
+clipboard.  However, unlike many applications, GPS doesn't discard the
+previous contents of the clipboard, but instead saves it for future use.
+By default, up to 10 entries are saved, but you can change that number
+using the :guilabel:`Clipboard Size` preference.
 
 .. index:: menu; edit --> paste
 .. index:: menu; edit --> paste previous
 
-When you select the menu :menuselection:`Edit --> Paste`, GPS will paste the last
-entry made in the clipboard at the current location in the editor.  If you
-immediately select :menuselection:`Edit --> Paste Previous`, this newly inserted
-text will be removed, and GPS will instead insert the second to last entry
-added to the clipboard. You can keep selecting the same menu to get access to
+When you select the menu :menuselection:`Edit --> Paste`, GPS pastes the
+last entry added to the clipboard at the current location in the editor.
+If you then immediately select :menuselection:`Edit --> Paste Previous`,
+this newly inserted text is removed and GPS instead inserts the second to
+last entry.  You can keep selecting the same menu to insert progressively
 older entries.
 
-This is a very powerful mechanism, since it means you can copy several distinct
-lines from a place in an editor, move to an other editor and paste all these
-separate lines, without having to go back and forth between the two editors.
+This mechanism allows you to copy several noncontiguous lines from one
+place in an editor, switch to another editor, and paste all those lines
+without having to go back and forth between the two editors.
 
 .. index:: menu; tools --> views --> clipboard
 
-The :guilabel:`Clipboard` view provides a graphical mean of seeing what is
-currently stored in the clipboard. It can be opened via
-:menuselection:`Tools --> Views --> Clipboard`.
+The :guilabel:`Clipboard` view graphically displays what's currently stored
+in the clipboard. Open it via the :menuselection:`Tools --> Views -->
+Clipboard`.
 
-It appears as a list of lines, each of which
-is associated with one level of the clipboard. The text that shows in these
-lines is the first line of the selection at that level that contains non blank
-characters. Leading characters are discarded. `[...]` is prepended or appended
-in case the selection has been truncated.
+That view displays a list of entries, each of which is associated with one
+level of the clipboard. The text displayed for each entry is its first line
+containing non blank characters with leading characters discarded. GPS
+prepends or appends `[...]` if the entry is truncated.  If you hover
+over an entry, a tooltip pops up displaying all lines in the entry.
 
-If you bring the mouse over a line in the :guilabel:`Clipboard` view, a tooltip
-will pop up showing the entire selection corresponding to the line by
-opposition to the possibly truncated one.
+In addition, one entry has an arrow on its left. This indicates the entry
+to be pasted if you select the menu :menuselection:`Edit --> Paste`. If you
+select instead the menu :menuselection:`Edit --> Paste Previous`, the entry
+below that is inserted instead.
 
-In addition, one of the lines has an arrow on its left. This indicates the line
-that will be pasted when you select the menu :menuselection:`Edit --> Paste`. If
-you select instead the menu :menuselection:`Edit --> Paste Previous`, then the
-line below that one will be inserted instead.
-
-If you double-click on any of these lines, GPS will insert the corresponding
-text in the current editor, and make the line you clicked on the current line,
-so that selecting :menuselection:`Edit --> Paste` or the equivalent shortcut will
-now insert that line.
+If you double-click on any of these entries, GPS inserts the corresponding
+text in the current editor and make the entry you click current, so
+selecting :menuselection:`Edit --> Paste` or the equivalent shortcut will
+insert that same entry again.
 
 The local toolbar in the clipboard view provides two buttons:
 
-* :guilabel:`Append To Previous`. If you select this button, the select line will
-   be append to the one below, and removed from the clipboard. This means that
-   selection :menuselection:`Edit --> Paste` will in fact paste the two entries at
-   the same time.  This is in particular useful when you want to copy lines from
-   separate places in the initial file, merge them, and then paste them together
-   one or more times later on, through a single operation.
+* :guilabel:`Append To Previous`.  The selected entry is appended to the
+   one below and removed from the clipboard so that selecting
+   :menuselection:`Edit --> Paste` pastes the two entries simultaneously.
+   Use this when you want to copy lines from separate places in a file,
+   merge them, and paste them together one or more times later, using a
+   single operation.
 
-* :guilabel:`Remove`. If you select this button, the selected line is removed
-  from the clipboard.
+* :guilabel:`Remove`. The selected entry is removed from the clipboard.
 
-The Clipboard View content is preserved between GPS sessions. As an exception,
-huge entries are removed and replaced with an entry saying "[Big entry has been
-removed]".
+The :guilabel:`Clipboard` view content is preserved between GPS sessions.
+However very large entries are removed and replaced with an entry saying
+"[Big entry has been removed]".
 
 .. index:: windows; call trees
 .. index:: windows; callgraph browser
@@ -1191,22 +1186,22 @@ removed]".
 The :guilabel:`Call trees` view and :guilabel:`Callgraph` browser
 =================================================================
 
-These two views play a similar role.  They display the same information about
-entities, but in two different ways: the callgraph view displays the
-information in a tree, easily navigable and perhaps easier to manipulate when
-lots of entities are involved; the callgraph browser displays the information
-as graphical boxes that can be manipulated on the screen, and is best suited to
-generate a diagram that can be later exported to your own documents.
+These two views play similar roles in that they display the same
+information about entities, but in two different ways: the callgraph view
+displays the information in a tree, easily navigable and perhaps easier to
+manipulate when lots of entities are involved, and the callgraph browser
+displays the information as graphical boxes that you can manipulate on the
+screen.  The latter is best suited to generate a diagram that you can later
+export to your own documents.
 
-These views are used to display the information about what subprograms
-are called by a given entity, and, opposite, what entities are calling a given
-entity.
+These views are used to display the information about what subprograms are
+called by a given entity, and what entities are calling a given subprogram.
 
-Some references might be reported with an additional " (dispatching)" text.  In
-such a case, this indicates that the call to the entity is not explicit in the
-sources, but could occur through dynamic dispatching. This of course depends on
-what arguments are passed to the caller at run time, and it is possible that
-the subprogram is in fact never dispatched to.
+Some references might be displayed with an additional "(dispatching)" text.
+This indicates the call to the entity is not explicit in the sources but
+could potentially occur through dynamic dispatching.  (This depends on what
+arguments are passed to the caller at run time; it's possible the
+subprogram is in fact never called.)
 
 .. index:: contextual menu; calls
 .. index:: contextual menu; called by
@@ -1221,25 +1216,24 @@ menus :menuselection:`<entity> calls` and :menuselection:`<entity> is called
 by`. Every time you select one of these menus, a new view is opened to display
 that entity.
 
-Whenever you expand a node from the tree by clicking on the small expander
-arrow on the left of the line, further callgraph information is computed for
-the selected entity, which makes it very easy to get information for a full
-callgraph tree.
+You expand a node from the tree by clicking on the small expander arrow on
+the left of the line.  Further callgraph information is computed for the
+selected entity, making it very easy to get the information contained in a
+full callgraph tree.  Closing and expanding a node again recomputes the
+callgraph for the entity.
 
-Closing and expanding a node again will recompute the callgraph for the entity.
-
-On the right side of the main tree, a list displays the locations of calls for
-the selected entity. Clicking on entries in this list opens editors showing the
-corresponding location.
+On the right side of the main tree, a list displays the locations of calls
+for the selected entity.  Click on a entry in this list to open an editor
+showing the corresponding location.
 
 The :guilabel:`Calltree` supports keyboard navigation: :kbd:`Up` and
 :kbd:`Down` keys navigate between listed locations, :kbd:`Left` collapses the
 current level, :kbd:`Right` expands the current level, and :kbd:`Return` jumps
 to the currently selected location.
 
-The contents of the calltree is not restored the next time GPS is restarted,
-because its contents might be misleading if the sources have changed in-between,
-and GPS would be wasting time loading the information again.
+The contents of the calltree is not restored when GPS is restarted because
+its contents might be misleading if the sources have changed in-between and
+GPS would be wasting time loading the information again.
 
 The local toolbar provides the following buttons:
 
@@ -1260,56 +1254,51 @@ Callgraph browser
 .. image:: callgraph.png
 .. image:: callgraph_orth.png
 
-The callgraph shows graphically the relationship between subprogram callers and
-callees. A link between two items indicate that one of them is calling the
-other.
+The callgraph graphically displays the relationship between subprogram
+callers and callees. A link between two items indicates one of them is
+calling the other.
 
 .. index:: renaming entities; in callgraph
 
-A special handling is provided for renaming entities (in Ada): if a subprogram
-is a renaming of another one, both items will be displayed in the browser, with
-a special hashed link between the two. Since the renaming subprogram doesn't
-have a proper body, you will then need to ask for the subprograms called by the
-renamed to get the list.
+GPS provides special handling for renamed entities (in Ada): if a
+subprogram is a renaming of another, both items are displayed in the
+browser with a special hashed link between the two. Since the renamed
+subprogram doesn't have a proper body, you need to ask for the subprograms
+called by the renamed entity to get the list.
 
-In this browser, clicking on the right arrow in the title bar will display all
-the entities that are called by the selected item.
-
-Clicking on the left arrow will display all the entities that call the selected
-item (i.e. its callers).
+In this browser, clicking on the right arrow in the title bar displays all
+the entities called by the selected item.  Clicking on the left arrow
+displays all the entities that call the selected item (i.e. its callers).
 
 .. index:: contextual menu; browsers --> calls
 .. index:: contextual menu; browsers --> calls (recursively)
 .. index:: contextual menu; browsers --> called by
 
-This browser is generally opened by right-clicking on the name of an entity in
-source editors or :guilabel:`Project` view, and selecting one of
-:menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers --> <entity>
-calls (recursive)` or :menuselection:`Browsers --> <entity> is called by`.
+Open this browser by right-clicking on the name of an entity in a source
+editor or :guilabel:`Project` view and selecting one of
+:menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers -->
+<entity> calls (recursive)` or :menuselection:`Browsers --> <entity> is
+called by`.
 
-All boxes in this browser list several information: the location of their
-declaration, and the list of all their references in the other entities
-currently displayed in the browser. If you close the box for an entity that
-calls them, the matching references are also hidden, to keep the contents of
-the browser simpler.
+All boxes in this browser display the location of their declaration and the
+list of all their references in the other entities currently displayed in
+the browser. If you close the box for an entity that calls them, the
+matching references are also hidden.
 
-If you right-click on the title of one of the entity boxes, you will get the
-same contextual menu as when you click on the name of an entity in an editor,
-with the additional items:
+If you right-click on the title of one of the entity boxes, you get the
+same contextual menu as when you click on the name of an entity in an
+editor, with the additional items:
 
 * :guilabel:`Go To Spec`
-  Selecting this item will open a source editor that displays the
-  declaration of the entity.
+  Open a source editor displaying the declaration of the entity.
 
 * :guilabel:`Go To Body`
-  Selecting this item will open a source editor that displays the
-  body of the entity.
+  Open a source editor displaying the body of the entity.
 
 * :guilabel:`Locate in Project View`
-  Selecting this menu entry will move the focus to the project view,
-  and select the first node representing the file in which the entity is
-  declared. This makes it easier to see which other entities are
-  declared in the same file.
+  Move the focus to the project view, and select the first node
+  representing the file in which the entity is declared. This makes it
+  easier to see which other entities are declared in the same file.
 
 See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 
