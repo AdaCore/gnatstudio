@@ -1004,7 +1004,7 @@ the disk (including Windows drives).  Each source file can also be explored
 as described in :ref:`The_Project_View`.  You can also a files into the
 files view to conveniently open a file.
 
-By default, the :guilabel:`Files` view display all files on disk. You can
+By default, the :guilabel:`Files` view displays all files on disk. You can
 set filters through the local settings menu to restrict the display to the
 files and directories belonging to the project (use the :guilabel:`Show
 files from project only` menu).
@@ -1028,21 +1028,20 @@ In the contextual menu, you can configure the display in one of two ways:
 
 * Sorted alphabetically
 * Organized by notebooks, as in the GPS window itself. This view
-  is mainly useful if you have lots of opened windows.
+  is particularly useful if you have many windows open.
 
 You can also choose, through the contextual menu, whether only source
-editors should be visible, or whether all windows should be displayed.
+editors should be visible or whether all windows should be displayed.
 
 This view allows you to quickly select and focus on a particular window by
-clicking on the corresponding line with the left button. If you click and
-leave the button pressed, you can also move the window to some other place
-in the desktop (see the description of the
-:ref:`Multiple_Document_Interface`)
+clicking on the corresponding line with the left button. If you leave the
+button pressed, you can move the window to another place on the desktop
+(see the description of the :ref:`Multiple_Document_Interface`)
 
-You can select multiple windows by clicking while pressing the control or
-shift keys. The Window view provides a contextual menu to easily close all
-selected windows at once, a fast way to clean up your desktop after you've
-finished working on a task.
+Select multiple windows by clicking while pressing the control or shift
+keys. The Window view provides a contextual menu to easily close all
+selected windows at once, which is a fast way to clean up your desktop
+after you've finished working on a task.
 
 
 
@@ -1058,53 +1057,53 @@ The :guilabel:`Outline` view
 .. image:: outline-view3.png
 .. index:: menu; tools --> views --> outline
 
-The :guilabel:`Outline` view, which you can choose to activate through the
-:menuselection:`Tools --> Views --> Outline` menu, shows the contents of the
-current file.
+The :guilabel:`Outline` view, which you activate through the
+:menuselection:`Tools --> Views --> Outline` menu, shows the contents of
+the current file.
 
-The exact semantics depends on the language you are seeing. For Ada, C and C++
-files, this is the list of entities that are declared at the global level in
-your current file (Ada packages, C++ classes, subprograms, Ada types, ...).
+Exactly what's displayed depends on the language of the file seeing. For
+Ada, C and C++ files, this view displays the list of entities declared at
+the global level in your current file (such as Ada packages, C++ classes,
+subprograms, and Ada types).  This view is refreshed whenever the current
+editor is modified.
 
-The contents of this view is refreshed every time the current editor is
-modified.
+Clicking on any entity in this view automatically jumps to the
+corresponding line in the file (the spec or the body).
 
-Clicking on any entity in this view will automatically jump to the right line
-in the file (either to the spec or the body).
-
-The local settings menu contains multiple check boxes that alter the display
-of the outline view:
+The local settings menu contains multiple check boxes you can use to alter
+how the outline view is displayed:
 
 * :guilabel:`Show profiles` indicates whether the list of parameters of the
-  subprograms should be displayed. This is in particular useful for languages
-  that allow overriding of entities.
+  subprograms should be displayed. This is particularly useful for
+  languages allowing overriding of entities.
 
-* :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks, entries
-  and protected types` controls the display of specific categories of entities.
+* :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks,
+  entries and protected types` controls the display of the specified
+  categories of entities.
 
-* :guilabel:`Show specifications` indicates whether GPS should display a line
-  for the specification (declaration) of entities, in addition to the location
+* :guilabel:`Show specifications` indicates whether GPS displays a line for
+  the specification (declaration) of entities in addition to the location
   of their bodies.
 
-* :guilabel:`Sort alphabetically` controls the order in which the entities are
-  displayed (either alphabetically or in the same order as in the source file)
+* :guilabel:`Sort alphabetically` controls the order in which the entities
+  are displayed (either alphabetically or in the same order as in the
+  source file).
 
-* :guilabel:`Flat View` controls whether the entities are always displayed at
-  the top level of the outline view. When this is disabled, nested subprograms
-  are displayed below the subprogram in the scope of which they are declared.
+* :guilabel:`Flat View` controls whether the entities are always displayed
+  at the top level of the outline view. When disabled, nested subprograms
+  are displayed below the subprogram in which they're declared.
 
-* :guilabel:`Group spec and body` can be enabled to display up to two icons on
-  each line (one for the spec, one for the body in case both occur in the
-  file). You can then click directly on one or the other icon to go directly to
-  that location. If you click on the name of the entity you are first taken to
-  its declaration, unless this is already the current location in the editor in
-  which case you are moved to the body.
+* :guilabel:`Group spec and body` displays up to two icons on each line
+  (one for the spec and one for the body if both occur in the file).  Click
+  on one of the icons to go directly to that location. If you click on the
+  name of the entity, you're taken to its declaration unless this is
+  already the current location in the editor, in which case you're taken to
+  its body.
 
-* :guilabel:`Dynamic link with editor`: If this option is set, the current
-  subprogram will be selected in the outline view every time the cursor
-  position changes in the current editor.  This option requires some
-  computation for GPS, and you might want to avoid the slow down by disabling
-  it.
+* :guilabel:`Dynamic link with editor` causes the current subprogram to be
+  selected in the outline view every time the cursor position changes in
+  the current editor.  This option requires GPS to perform some computation
+  for GPS, so will slow it down.
 
 
 .. index: windows; clipboard
