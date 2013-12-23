@@ -6,47 +6,36 @@
 Multiple Document Interface
 ***************************
 
-All the windows that are part of the GPS environment are under control of what
+All windows that are part of the GPS environment are under control of what
 is commonly called a multiple document interface (MDI for short). This is a
 common paradigm on windowing systems, where related windows are put into a
-bigger window which is itself under control of the system or the windows
+larger window which is itself under control of the system or the windows
 manager.
 
-This means that, by default, no matter how many editors, browsers, views, ...
-windows you have opened, your system will still see only one window (On Windows
-systems, the task bar shows only one icon). However, you can organize the GPS
-windows exactly the way you want, all inside the GPS main window.
-
-This section will show the various capacities that GPS provides to help you
-organize your workspace.
+By default, no matter how many editors, browsers, and views you opened,
+your system still only sees one window (on Windows systems, the task bar
+shows only one icon). However, you can organize the GPS windows precisely
+the way you want, all inside the GPS main window.  This section describes
+the capacities GPS provides to help you do this.
 
 
 Window layout
 =============
 
-The desktop area is organized into various area.
+The desktop is organized into various area.  The most important distinction
+is between the central area (which usually occupies the most space) and the
+side areas.  Some windows in GPS area restricted to either the central or
+the side areas. Each of these areas can be further split into smaller
+areas, as described below. They can contain any number of windows, which
+are then organized into notebooks with tabs, possibly displaying names.
+Right-clicking on a tab displays a contextual menu providing capabilities
+showing the :guilabel:`Tabs location` and :guilabel:`Tabs rotation`. This
+allows you to display the tabs on any side of the notebook or make them
+vertical if you want to save screen space.
 
-The most important distinction is that of the central area (which in general
-occupies the most space) and the side areas.
-
-The central area is meant to contain the source editors (which
-in fact can only go into that area) as well as the bigger views like the
-browsers. The property of the central area is that its contents is
+The central area can contain the source editors (which can only go there)
+as well as larger views like browsers.  The contents of the central area is
 preserved when switching perspectives (see below).
-
-Some windows in GPS area restricted to either the central or the side
-areas.
-
-Each of these areas can be further split into smaller area, as will be
-described below. They can contain any number of window, which are then
-organized into notebooks (with tabs that can show the names).
-
-Right-clicking on the tab displays a contextual menu that provides various
-capabilities, including showing the :guilabel:`Tabs location` and
-:guilabel:`Tabs rotation`. This allows you to display the tabs on any
-side of the notebook, and make them vertical if you want to save screen
-space.
-
 
 
 .. index:: MDI; selecting windows
@@ -55,25 +44,23 @@ space.
 Selecting Windows
 =================
 
-At any time, there is only one selected window in GPS (the **active window**).
-You can select a window either by clicking in its title bar, which will then
-get a different color, or by selecting its name in the menu :menuselection:`Window`.
+There is only one selected window in GPS (the **active window**) at a time.
+Select a window either by clicking in its title bar, which then gets a
+different color, or selecting its name in the menu :menuselection:`Window`.
+You can also use the :guilabel:`Windows` view (see :`The_Windows_View`),
+which also provides a convenient mechanism for closing multiple windows at
+once.
 
-An alternative is to use the :guilabel:`Windows` view (see :`The_Windows_View`),
-which also provides a convenient solution to close multiple windows at once.
-
-Alternatively, windows can be selected with the omni-search, that is the search
-field in the global toolbar. One of the contexts where the search is done is the
-list of opened window. To make things more convenient, you can bind a key
-shortcut via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
-action is :menuselection:`Search --> Global Search in context: Opened`. If you
-load the :file:`emacs.py` plugin, a standard key binding is set for
-:kbd:`control-xb`.
-
-The filter is matched by any window whose name contains the letter you have
-typed. For instance, if you are currently editing the files :file:`unit1.adb`
-and :file:`file.adb`, pressing :kbd:`t` will only leave :file:`unit1.adb`
-selectable.
+Alternatively, you can select windows with the omni-search, the search
+field in the global toolbar. One of the contexts for the search is the list
+of opened windows. To make things more convenient, you can bind a key
+shortcut via the :menuselection:`Edit --> Key Shortcuts` menu (the name of
+the action is :menuselection:`Search --> Global Search in context:
+Opened`. If you load the :file:`emacs.py` plugin, a standard key binding is
+set for :kbd:`control-xb`.  The search field is matched by any window whose
+name contains the specified letter. For example, if you're currently
+editing the files :file:`unit1.adb` and :file:`file.adb`, pressing :kbd:`t`
+leaves only :file:`unit1.adb` selectable.
 
 
 .. index:: MDI; closing windows
@@ -82,32 +69,31 @@ selectable.
 Closing Windows
 ===============
 
-Wherever the windows are displayed, they are always closed in the same manner,
-by clicking on the small :guilabel:`X` icon in their tab.
+Wherever a window is displayed, it can always be closed by clicking on the
+small :guilabel:`X` icon in their tab or by selecting the window by
+clicking anywhere in its title bar and then selecting the menu
+:menuselection:`Window --> Close`.
 
 .. index:: preferences; windows --> show title bars
 
-If you have chosen to display the title bars for the windows, you can also
-click either in the :guilabel:`X` button in the title bar, or double-click
-on the icon to the left of the title bar (when there is such an icon).
+If you've chosen to display the window title bars, you can also click in
+the :guilabel:`X` button in the title bar or double-click on the icon to
+the left of the title bar (when such an icon is present).
 
-When a window is closed, the focus is given to the window in the same notebook
-that previously had the focus.  Therefore, if you simply open an editor as a
-result of a cross-reference query, you can simply close that editor to go back
-to where you were before.
+When you close a window, the focus is set to the window in the same
+notebook that previously had the focus.  Therefore, if you open an editor
+as a result of a cross-reference query, simply close that editor to go back
+to where you were.
 
 .. index:: menu; window --> close
 
-Alternatively, you can also select the window by clicking anywhere in its title
-bar, and then select the menu :menuselection:`Window --> Close`.
+Finally, a window can be closed by right-clicking in the associated
+notebook tab (if the tabs are visible) and selecting :guilabel:`Close` in
+the contextual menu.
 
-Finally, a window can be closed by right-clicking in the associated notebook
-tab (if the tabs are visible), and select :guilabel:`Close` in the contextual
-menu.
-
-In the notebook tab (when you are in an editor), you will also find a
-:guilabel:`Close all other editors` menu, which, as its name implies, will keep
-a single editor open, the one you are clicking on.
+There's a :guilabel:`Close all other editors` menu in the notebook tab when
+you're in an editor) that closes most windows but keeps only a single
+editor open, the one you're using.
 
 
 
