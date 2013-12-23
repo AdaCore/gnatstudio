@@ -109,20 +109,20 @@ The list of active items includes:
     shell console, but a GPS shell console, where you can type GPS specific
     commands such as `help`.
 
-    :ref:`The_Shell_and_Python_Windows`.
+    :ref:`The_Shell_and_Python_Consoles`.
 
   *Python*
     .. index:: python
 
     Open a python console to access the python interpreter.
-    :ref:`The_Shell_and_Python_Windows`.
+    :ref:`The_Shell_and_Python_Consoles`.
 
   *OS Shell*
     .. index:: shell
 
     Open an OS (Windows or Unix) console, using the environment variables
     `SHELL` and `COMSPEC` to determine which shell to use.
-    :ref:`The_Shell_and_Python_Windows`.
+    :ref:`The_Shell_and_Python_Consoles`.
 
     On Unix, this terminal behaves a lot like a standard Unix terminal. In
     particular, you need to make sure that your shell will output all the

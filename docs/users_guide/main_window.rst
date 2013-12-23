@@ -1312,108 +1312,102 @@ The :guilabel:`Bookmarks` view
 .. image:: bookmarks.png
 
 Bookmarks are a convenient way to remember places in your code or in your
-environment so that you can go back to them at any point in the future.  These
-bookmarks are saved automatically whenever they are modified, and restored when
-GPS is reloaded, so that they exist across GPS sessions.
+environment so you can go back to them at some later point.  These
+bookmarks are saved automatically and restored when GPS is reloaded, so
+they exist across GPS sessions.
 
-Bookmarks will automatically remember the exact location in an editor, not in
-terms of line/column, but in terms of which word they point to. If you modify
-the file through GPS, the bookmark will be automatically updated to keep
-refering to the same place. Likewise if you close and reopen the file.
-However, when the file is modified outside of GPS, the bookmark will not be
-aware of that change, and will thus reference another place in the file.
+Bookmarks automatically remember the exact location in an editor, not in
+terms of line and column, but in terms of which character they point to. If
+you modify the file through GPS, the bookmark is automatically updated so
+it refers to the same place.  However, is the file is modified outside of
+GPS, it will not be aware of that change, and the bookmark may reference
+another place in the file.
 
 .. index:: menu; edit --> create bookmark
 
-The menu :menuselection:`Edit --> Create Bookmark` allows you to create a
-bookmark at the current location (either in the editor, or the browser for
-instance).
+Use menu :menuselection:`Edit --> Create Bookmark` to create a bookmark at
+the current location (either in the editor, or the browser for instance).
 
 .. index:: menu; tools --> views --> bookmarks
 
-All the bookmarks you have created will be visible in the
-:menuselection:`Tools --> Views --> Bookmarks` window. Clicking on the line will
-immediately open an editor with the cursor at that position.
+All bookmarks you have created are visible in the :menuselection:`Tools -->
+Views --> Bookmarks` view. Clicking on the booking opens an editor with the
+cursor at that position.
 
-In the :guilabel:`Bookmarks` window, the local toolbar provides three buttons
+The local toolbar of the :guilabel:`Bookmarks` view provides three buttons
 to act on the bookmarks:
 
-* :guilabel:`Create` is similar to the :menuselection:`Edit --> Create Bookmark`
-  and will create a bookmark at the current location. After pressing this
-  button, you can immediately start typing a custom name for the new bookmark
-  (or just press :kbd:`enter` to keep the default name, which is based on the
-  name of the enclosing subprogram).
+* :guilabel:`Create` is similar to the :menuselection:`Edit --> Create
+  Bookmark` and create a bookmark at the current location. After pressing
+  that button, you can type a custom name for the bookmark or just press
+  :kbd:`enter` to keep the default name, which is based on the name of the
+  enclosing subprogram.
 
-* :guilabel:`Rename` can be used to rename the currently selected bookmark.
-  Editing is inline, so you can immediately start typing the new name and
-  press :kbd:`enter` when done.
+* :guilabel:`Rename` renames the currently-selected bookmark.
 
-* :guilabel:`Remove` is used to delete the selected bookmark.
+* :guilabel:`Remove` deletes the selected bookmark.
 
 
 
-.. index:: windows; python console
-.. index:: windows; shell console
+.. index:: consoles; python console
+.. index:: consoles; shell console
 .. index:: python; console
-.. _The_Shell_and_Python_Windows:
+.. _The_Shell_and_Python_Consoles:
 
-The :guilabel:`Shell` and :guilabel:`Python` Windows
-====================================================
+The :guilabel:`Shell` and :guilabel:`Python` Consoles
+=====================================================
 
 .. image:: shell-window.png
 .. image:: python-window.png
 
-These windows give access to the various scripting languages supported by GPS,
-and allow you to type interactive commands such as editing a file or compiling
-without using the menu items or the mouse.
-
-.. index:: menu; tools --> consoles --> GPS Shell
-
-The menu :menuselection:`Tools --> Consoles --> GPS Shell` can be used to open the
-shell console. The GPS shell is a custom language that was mostly used when
-GPS did not have python support, and is obsolete at this point.
+These consoles provide access to the various scripting languages supported
+by GPS, allowing you to type interactive commands such as editing a file or
+compiling without using the menu items or the mouse.
 
 .. index:: menu; tools --> consoles --> Python
 
 The menu :menuselection:`Tools --> Consoles --> Python` opens the python
-console. Python is the preferred language to customize your GPS (and many
-more details will be provided in later sections of this documentation).
-The console is mostly useful for testing interactive commands before you
-use them in your own scripts.
+console. Python is the preferred language to customize GPS (many more
+details will be provided in later sections of this documentation).  The
+console is mostly useful for testing interactive commands before you use
+them in your own scripts.
+
+.. index:: menu; tools --> consoles --> GPS Shell
+
+The menu :menuselection:`Tools --> Consoles --> GPS Shell` opens the shell
+console. The GPS shell is a custom language that was mostly used when GPS
+did not have python support and is obsolete at this point.
 
 See :ref:`Scripting_GPS` for more information on using scripting languages
 within GPS.
 
-In both these consoles, GPS provides a history of previously typed commands.
-You can use the :kbd:`up` and :kbd:`down` keys to navigate through the history
-of commands.
+Both consoles provide a history of previously typed commands.  Use the
+:kbd:`up` and :kbd:`down` keys to navigate through the command history.
 
 
-.. index:: windows; os shell
+.. index:: consoles; os shell
 .. index:: bash
 .. index:: vi
 .. index:: plug-ins; shell.py
 
-The OS shell window
-===================
+The OS Shell Console
+====================
 
 .. image:: os_shell-window.png
 .. index:: menu; tools --> consoles --> OS Shell
 
-An OS shell window is also available in GPS, providing a simple access to the
-underlying OS shell as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
-environment variables.
+GPS also provides an OS shell console, providing a access to the underlying
+OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
+environment variables).
 
-This console is opened via the :menuselection:`Tools --> Consoles --> OS Shell`
-menu. This menu is available only if the plug-in :file:`shell.py` was
-loaded in GPS (which is the default).
+Open this console via the :menuselection:`Tools --> Consoles --> OS Shell`
+menu, which is available only if the plug-in :file:`shell.py` was loaded in
+GPS (the default).  Check the documentation of that plug-in, which lists a
+few settings that might be useful.
 
 This console behaves like the standard shell on your system, including
-support for ANSI sequences (and thus color output). For instance, it has been
-used to run :command:`vi` within GPS.
-
-Check the documentation of that plug-in, which lists a few settings that
-might be useful.
+support for ANSI sequences (and thus color output). For example, it has
+been used to run :command:`vi` within GPS.
 
 
 .. index:: run
@@ -1426,16 +1420,13 @@ The Execution window
 
 .. index:: menu; build --> run
 
-Each time a program is launched using the menu :menuselection:`Build --> Run`, a
-new execution window is created to provide input and output for this program.
-
-In order to allow post mortem analysis and copy/pasting, the execution windows
-are not destroyed when the application terminates. It must be closed explictly.
-
-If you close the execution window while the application is still running, a
-dialog window is displayed, asking whether you want to kill the application, or
-to cancel the close operation.
-
+When a program is launched using the menu :menuselection:`Build --> Run`,
+GPS creates a new execution window allowing input and output for the
+program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
+execution windows when the program terminates; you must close them
+explictly.  If you try to close the execution window while the program is
+still running, GPS displays a dialog window asking if you want to kill the
+application.
 
 
 .. index:: tasks
@@ -1447,27 +1438,89 @@ The :guilabel:`Task Manager`
 
 .. image:: task-manager.png
 
-The Task Manager window lists all the currently running GPS operations that run
-in the background, such as builds, searches or VCS commands.
+The Check the documentation of that plug-in, which lists a
+few settings that might be useful.
 
-For each of these tasks, the Task Manager shows the status of the task, and the
-current progress. The execution of theses tasks can be suspended by clicking on
-the smalle :guilabel:`pause` button next to the task. The tasks can also be
-killed by clicking on the :guilabel:`interrupt` button.
+This console behaves like the standard shell on your system, including
+support for ANSI sequences (and thus color output). For example, it has
+been used to run :command:`vi` within GPS.
+
+
+.. index:: run
+.. index:: build; executing application
+.. index:: windows; execution window
+.. _The_Execution_Window:
+
+The Execution window
+====================
+
+.. index:: menu; build --> run
+
+When a program is launched using the menu :menuselection:`Build --> Run`,
+GPS creates a new execution window allowing input and output for the
+program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
+execution windows when the program terminates; you must close them
+explictly.  If you try to close the execution window while the program is
+still running, GPS displays a dialog window asking if you want to kill the
+application.
+
+
+.. index:: tasks
+.. index:: windows; task manager
+.. _The_Task_Manager:
+
+The :guilabel:`Task Manager` window displays all running GPS operations
+currently running in the background, such as builds, searches or VCS
+commands.
+
+For each task, the Check the documentation of that plug-in, which lists a
+few settings that might be useful.
+
+This console behaves like the standard shell on your system, including
+support for ANSI sequences (and thus color output). For example, it has
+been used to run :command:`vi` within GPS.
+
+
+.. index:: run
+.. index:: build; executing application
+.. index:: windows; execution window
+.. _The_Execution_Window:
+
+The Execution window
+====================
+
+.. index:: menu; build --> run
+
+When a program is launched using the menu :menuselection:`Build --> Run`,
+GPS creates a new execution window allowing input and output for the
+program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
+execution windows when the program terminates; you must close them
+explictly.  If you try to close the execution window while the program is
+still running, GPS displays a dialog window asking if you want to kill the
+application.
+
+
+.. index:: tasks
+.. index:: views; task manager
+.. _The_Task_Manager:
+
+The :guilabel:`Task Manager` displays the status of the task and its current
+progress.  You can suspect the execution of a task by clicking on the small
+:guilabel:`pause` button next to the task. Oor you can kill a task by
+clicking on the :guilabel:`interrupt` button.
 
 .. index:: menu; tools --> views --> tasks
 
-The Task Manager is opened by double clicking on the progress bar in the main
-toolbar, or using the :menuselection:`Tools --> Views --> Tasks` menu, and can be put
-anywhere in your desktop.
+Open the :guilabel:`Task Manager` by double clicking on the progress bar in
+the main toolbar or using the :menuselection:`Tools --> Views --> Tasks`
+menu.  You can move it placed anywhere on your desktop.
 
 .. image:: task-manager-exit.png
 
-When exiting GPS, if there are tasks running in the Task Manager, a window will
-display those tasks. You can force the exit at any time by pressing the
-confirmation button, which will kill all remaining tasks, or continue working
-in GPS by pressing the :guilabel:`Cancel` button.
-
+If there are tasks running when exiting GPS, a window is displayed showing
+those tasks. You can force the exit by pressing the confirmation button,
+which kills all remaining tasks, or continue working in GPS by pressing the
+:guilabel:`Cancel` button.
 
 
 
@@ -1480,54 +1533,51 @@ The :guilabel:`Project Browser`
 
 .. image:: project-browser.png
 
-The project browser shows the dependencies between all the projects in the
-project hierarchy. Two items in this browser will be linked if one of them
-imports the other.
+The :guilabel:`Project Browser` shows the dependencies between all the
+projects in the project hierarchy. Two items in this browser are linked if
+one of them imports the other.
 
-It is accessed through the contextual menu in the :guilabel:`Project` view, by
-selecting the :menuselection:`Show projects imported by...` item, when
+Access it through the contextual menu in the :guilabel:`Project` view by
+selecting the :menuselection:`Show projects imported by...` item when
 right-clicking on a project node.
 
-Clicking on the left arrow in the title bar of the items will display all the
-projects that import that project. Similarly, clicking on the right arrow will
-display all the projects that are imported by that project.
+Click on the left arrow in the title bar of a project to display all
+projects that import that project. Similarly, click on the right arrow to
+display all projects imported by that project.
 
-The contextual menu obtained by right-clicking on a project item contains
-several items. Most of them are added by the project editor, and gives direct
-access to editing the properties of the project, adding dependencies...
+Right-clicking on a project brings up a menu containing several items. Most
+are added by the project editor and provide direct access to such features
+as editing the properties of the project, adding dependencies.
 
-Some new items are added to the menu:
+Some items in the menu are specific to the :guilabel:`Project Browser`:
 
 * :menuselection:`Locate in Project View`
 
-  Selecting this menu will switch the focus to the :guilabel:`Project` view,
-  and highlight the first project node found that matches the project in the
-  browser item.  This is a convenient way to get information like the list of
-  directories or source files for that project.
+  Switch the focus to the :guilabel:`Project` view and highlight the first
+  project node that matches the project.  This is a convenient way to get
+  information such as the list of directories or source files for a
+  project.
 
 * :menuselection:`Show projects imported by...`
 
-  This menu plays the same role as the right arrow in the title bar, and
-  display all the projects in the hierarchy that are imported directly by the
-  selected projecto
+  Like the right arrow in the title bar, displays all the projects in the
+  hierarchy that are directly imported by the selected project.
 
 * :menuselection:`Show projects imported by ... (recursively)`
 
-  This menu will display all the dependencies recursively for the project (i.e.
-  the projects it imports directly, the projects that are imported by them, and
-  so on).
+  Display all dependencies recursively for the project (i.e.  the projects
+  it imports directly the projects they import).
 
 * :menuselection:`Show projects importing...`
 
-  This item plays the same role as the left arrow in the title bar, and
-  displays all the projects that directly import the selected project.
+  Like the left arrow in the title bar, display all the projects that
+  directly import the selected project.
 
 See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 
 
 
-
-.. index:: windows; dependency browser
+.. index:: views; dependency browser
 .. index:: project; dependencies
 .. _The_Dependency_Browser:
 
@@ -1536,85 +1586,80 @@ The :guilabel:`Dependency Browser`
 
 .. image:: dependency-browser.png
 
-The dependency browser shows the dependencies between source files. Each item
-in the browser represents one source file.
-
-In this browser, clicking on the right arrow in the title bar will display the
-list of files that the selected file depends on. A file depend on another one
-if it explicitly imports it (:samp:`with` statement in Ada, or :samp:`#include`
-in C/C++).  Implicit dependencies are currently not displayed in this browser,
-since the information is accessible by opening the other direct dependencies.
-
-Clicking on the left arrow in the title bar will display the list of files that
+The dependency browser displays dependencies between source files. Each
+item in the browser represents one source file.  Click on the right arrow
+in the title bar to display the list of files that the selected file
+depends on. A file depend on another if it explicitly imports it
+(:samp:`with` statement in Ada, or :samp:`#include` in C/C++).  Implicit
+dependencies are currently not displayed in this browser, since you can
+access that information by opening the direct dependencies.
+Click on the left arrow in the title bar to display the list of files that
 depend on the selected file.
 
 This browser is accessible through the contextual menu in the
-:guilabel:`Project` view, by selecting one of the following items:
+:guilabel:`Project` view by selecting one of the following items:
 
 * :menuselection:`Show dependencies for ...`
 
-  This has the same effect as clicking on the right arrow for a file already in
-  the browser, and will display the direct dependencies for that file.
+  Like clicking on the right arrow for a file already in the browser,
+  displays the direct dependencies for that file.
 
 * :menuselection:`Show files depending on ...`
 
-  This has the same effect as clicking on the left arrow for a file already in
-  the browser, and will display the list of files that directly depend on that
-  file.
+  Like clicking on the left arrow for a file already in the browser, will
+  displays the list of files that directly depend on that file.
 
 The background contextual menu in the browser adds a few entries to the
 standard menu:
 
 * :menuselection:`Open file...`
 
-  This menu entry will display an external dialog in which you can select the
-  name of a file to analyze.
+  Display an external dialog where you can select the name of a file to
+  analyze.
 
 * :menuselection:`Recompute dependencies`
 
-  This menu entry will check that all links displays in the dependency browser
-  are still valid. If not, they are removed. The arrows in the title bar are
-  also reset if necessary, in case new dependencies were added for the files.
-
-  The browser is not refreshed automatically, since there are lots of cases
-  where the dependencies might change (editing source files, changing the
-  project hierarchy or the value of the scenario variables, ...)
-
-  It also recomputes the layout of the graph, and will change the current
-  position of the boxes.
+  Check that all links displays in the dependency browser are still
+  valid. Any that not are removed. The arrows in the title bar are also
+  reset if new dependencies were added for the files.  Also recompute the
+  layout of the graph and changes the current position of the boxes.
+  However, the browser is not refreshed automatically, since there are lots
+  of cases where the dependencies might change.  * :menuselection:`Show
+  system files`
 
 * :menuselection:`Show system files`
 
-  This menu entry indicates whether standard system files (runtime files for
-  instance in the case of Ada) are displayed in the browser. By default, these
-  files will only be displayed if you explicitly select them through the
-  :menuselection:`Open file` menu, or the contextual menu in the project view.
+  Indicates whether standard system files (runtime files for instance in
+  the case of Ada) are displayed in the browser. By default, these files
+  are only displayed if you explicitly select them through the
+  :menuselection:`Open file` menu or the contextual menu in the project
+  view.
 
 * :menuselection:`Show implicit dependencies`
 
-  This menu entry indicates whether implicit dependencies should also be
-  displayed for the files. Implicit dependencies are files that are required to
-  compile the selected file, but that are not explicitly imported through a
-  :samp:`with` or :samp:`#include` statement. For instance, the body of
-  generics in Ada is an implicit dependency.  Any time one of the implicit
-  dependencies is modified, the selected file should be recompiled as well.
+  Indicates whether implicit dependencies should also be displayed for
+  files. Implicit dependencies are ones required to compile the selected
+  file but not explicitly imported through a :samp:`with` or
+  :samp:`#include` statement. For example, the body of a generic in Ada is
+  an implicit dependency.  Whenever an implicit dependency is modified, the
+  selected file should be recompiled as well.
 
-The contextual menu available by right clicking on an item also adds a
-number of entries:
+The contextual menu available by right clicking on an item also contain
+these entries:
 
 * :menuselection:`Analyze other file`
 
-  This will open a new item in the browser, displaying the complement file for
-  the selected one. In Ada, this would be the body if you clicked on a spec
-  file, or the opposite. In C, it depends on the naming conventions you
-  specified in the project properties, but you would generally go from a
+  Open a new item in the browser, displaying the a file that's associated
+  with the selected one. In Ada, this is be the body if you clicked on a
+  spec file, or vice versa. In C, it depends on the naming conventions you
+  specified in the project properties, but it generally goes from a
   :file:`.h` file to a :file:`.c` file and back.
 
 * :menuselection:`Show dependencies for ...`
 
-  These play the same role as in the project view contextual menu
+  These have the same function as in the project view contextual menu
 
-See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GPS browsers.
 
 
 .. index:: windows; elaboration circularities
@@ -1626,22 +1671,22 @@ The :guilabel:`Elaboration Circularities` browser
 
 .. image:: elaboration-graph.jpg
 
-GPS can detect elaboration cycles reported by build processes, and
-construct a visual representation of elaboration dependencies, in an
+GPS detects elaboration cycles reported by build processes and constructs a
+visual representation of elaboration dependencies in an
 :guilabel:`Elaboration Cycles` browser.
 
-This visual representation represents program units as items in the browsers,
-and direct dependencies between program units as links.
-All units involved in a dependency cycle caused by the presence of a
-pragma Elaborate_All (whether explicit or implicit) are also presented
-in the browser and connected by links with labels "body" and "with".
+This visual representation depicts program units as items in the browser
+and direct dependencies between program units as links.  All units involved
+in a dependency cycle caused by the presence of a pragma Elaborate_All
+(whether explicit or implicit) are also presented and connected by links
+labeled "body" and "with".
 
 .. index:: preferences; browsers --> show elaboration cycles
 
 The preference :menuselection:`Browsers --> Show elaboration cycles` controls
 whether to automatically create a graph from cycles listed in build output.
 
-See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GPS browsers.
 
 
 
@@ -1653,18 +1698,18 @@ The :guilabel:`Entity Browser`
 
 .. image:: entity-browser.png
 
-The entity browser displays static information about any source entity.  The
-exact content of the items depend on the type of the item. For instance:
+The entity browser displays static information about any source entity.
+What's displayed for each entity depends on the type of the entity, but are
+normally other entities.  For example:
 
 * :samp:`Ada record / C struct`
 
-  The list of fields, each as an hyper link, is displayed. Clicking on
-  one of the fields will open a new item for the type.
+  The list of fields is displayed.
+  item.
 
 * :samp:`Ada tagged type / C++ class`
 
-  The list of attributes and methods is displayed. They are also
-  click-able hyper-links.
+  The list of attributes and methods is displayed.
 
 * :samp:`Subprograms`
 
@@ -1674,31 +1719,28 @@ exact content of the items depend on the type of the item. For instance:
 
   The list of all the entities declared in that package is displayed
 
-* and more...
+Access this browser via the contextual menu :menuselection:`Browsers -->
+Examine entity` in the project view and source editor when clicking on an
+entity.
 
+Most entities displayed are clickable (by default, they appear as
+underlined blue text). Clicking on one opens a new item in the entity
+browser for the selected entity.
 
-This browser is accessible through the contextual menu
-:menuselection:`Browsers --> Examine entity` in the project view and source
-editor, when clicking on an entity.
+You can display the parent entities for an entity. For example, in a C++
+class or Ada tagged type, this is the type it derives from.  Display the
+parent by clicking on the up arrow in the title bar of the entity.
 
-Most information in the items are clickable (by default, they appear as
-underlined blue text). Clicking on one of these hyper links will open a new
-item in the entity browser for the selected entity.
+Similarly, you can display child entities (for example, types that derive
+from the item) by clicking on the down arrow in the title bar.
 
-This browser can display the parent entities for an item. For instance, for a
-C++ class or Ada tagged type, this would be the types it derives from. This is
-accessible by clicking on the up arrow in the title bar of the item.
+An extra buttons appear in the title bar for the C++ class or Ada tagged
+types that toggles whether the inherited methods (or primitive operations
+in Ada) should be displayed. By default, only new methods, or ones that
+override an inherited one, are displayed. The parent's methods are not
+shown unless you click on this button.
 
-Likewise, children entities (for instance types that derive from the item) can
-be displayed by clicking on the down arrow in the title bar.
-
-An extra button appear in the title bar for the C++ class or Ada tagged types,
-which toggles whether the inherited methods (or primitive operations in Ada)
-should be displayed. By default, only the new methods, or the ones that
-override an inherited one, are displayed. The parent's methods are not shown,
-unless you click on this title bar button.
-
-See also :ref:`browsers_features` for more capabilities of the GPS browsers.
+See also :ref:`browsers_features` for more capabilities of GPS browsers.
 
 
 .. index:: file selector
@@ -1710,14 +1752,11 @@ The File Selector
 
 .. image:: open-file.png
 
-The file selector is a dialog used to select a file. On Windows, the default is
-to use the standard file selection widget. On other platforms, the file
-selector is a built-in dialog:
+The file selector is a dialog used to select a file. On Windows, the
+default is to use the standard file selection widget. On other platforms,
+the file selector provides the following contents:
 
-This dialog provides the following areas and capabilities:
-
-* A tool bar on the top composed of five buttons giving access to common
-  navigation features:
+* A tool bar on the top consists of five buttons:
 
   - :guilabel:`left arrow` go back in the list of directories visited
   - :guilabel:`right arrow` go forward
@@ -1726,32 +1765,33 @@ This dialog provides the following areas and capabilities:
   - :guilabel:`home` go to home directory (value of the HOME environment variable,
     or `/` if not defined)
 
-* A list with the current directory and the last directories explored.  You can
-  modify the current directory by modifying the text entry and hitting
-  :kbd:`Enter`, or by clicking on the right arrow and choose a previous
+* A list with the current directory and the last directories explored.
+  Modify the current directory by modifying the text entry and pressing
+  :kbd:`Enter` or by clicking on the right arrow and choosing a previous
   directory in the pop down list displayed.
 
-* A directory tree. You can open or close directories by clicking on the `+`
-  and `-` icons on the left of the directories, or navigate using the keyboard
-  keys: :kbd:`up` and :kbd:`down` to select the previous or the next directory,
+* A directory tree.  Open or close directories by clicking on the `+` and
+  `-` icons on the left of the directories or navigate using the keyboard
+  keys: :kbd:`up` and :kbd:`down` to select the previous or next directory,
   :kbd:`+` and :kbd:`-` to expand and collapse the current directory, and
   :kbd:`backspace` to select the parent directory.
 
-* A file list. This area lists the files contained in the selected directory.
-  If a filter is selected in the filter area, only the relevant files for the
-  given filter are displayed. Depending on the context, the list of files may
-  include additional information about the files, e.g. the kind of a file, its
-  size, etc...
+* A filter area. Depending on the context, one or several filters are
+  available to select only a subset of files to display. The filter *All
+  files* is always available and displays all files in the selected
+  directory.
 
-* A filter area. Depending on the context, one or several filters are available
-  to select only a subset of files to display. The filter *All files* which is
-  always available will display all files in the directory selected.
+* A file list. This area lists the files contained in the selected
+  directory.  If you specified a filter in the filter area, only the
+  matching files are displayed. Depending on the context, the list of files
+  may include additional information about the files such as the type of
+  file or its size.
 
-* A file name area. This area will display the name of the current file
-  selected, if any.  You can also type a file or directory name directly, and
-  complete the name automatically by using the :kbd:`Tab` key.
+* A file name area. This area displays the name of the current file, if
+  any.  You can also type a file or directory name, with file completion
+  provided by the :kbd:`Tab` key.
 
-* A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.  When
-  you have selected the right file, click on :guilabel:`OK` to confirm, or
-  click on :guilabel:`Cancel` at any time to cancel and close the file
+* A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.
+  When you have selected the desired file, click on :guilabel:`OK` to
+  confirm or click on :guilabel:`Cancel` at any time to cancel the file
   selection.
