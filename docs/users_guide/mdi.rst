@@ -193,59 +193,48 @@ Floating` preference.
 Moving Windows
 ==============
 
-As we have seen, the organization of windows can be changed at any time by
-selecting a notebook containing several editors or browsers, and selecting one
-of the Split menus in the :menuselection:`Window` menu.
+You can change the organization of windows at any time by selecting a
+notebook containing several editors or browsers and selecting one of the
+Split menus in the :menuselection:`Window` menu.
 
-A more intuitive method is also provided, based on the drag-and-drop paradigm.
-The idea is simply to select a window, wherever it is, and then, by clicking on
-it and moving the mouse while keeping the left button pressed, drop it anywhere
-else inside GPS.
+But you can also drag and drop the window anywhere inside GPS.  Select an
+item to dragged by left-clicking in its title bar.  If the window is inside
+a notebook, you can also select the notebook.  If so, the windows within
+the notebook can also be reordered: select the tab, then start moving left
+or right to the window's new position.  Your mouse must remain within the
+tab area or GPS will drop the window into other notebooks.
 
-Selecting an item so that it can be dragged is done simply by clicking with the
-left mouse button in its title bar, and keep the button pressed while moving
-the mouse.
-
-If the window is inside a notebook, you can also choose to select the notebook
-tab to start dragging the window around. In such a case, the windows within the
-notebook can also be reordered: select the tab, then start moving left or right
-to the new position the window should have. Note that your mouse must remain
-within the tab area, since otherwise GPS will enter in the mode where the
-window can be put in other notebooks.
-
-Here are the various places where a window can be dropped:
+Here are the various places where you can drop a window:
 
 * Inside the MDI
 
-  While you keep the mouse button pressed, and move the mouse around, the target
-  area is highlighted. This shows precisely where the window would be put if you
-  were to release the mouse button at that point. The background color of the
-  highlight indicates whether the window will be preserved (if the color is the
-  same as the title bar) or not when changing perspectives (for instance when
-  starting a debug session). You can drag to one of the sides of a notebook
-  to split that notebook.
+  While the mouse button is pressed, the target area is highlighted and
+  shows where the window would be put if you release the mouse button. The
+  background color of the highlight indicates whether the window will be
+  preserved (if the color is the same as the title bar) or not when
+  changing perspectives (for example, when starting a debug session). You
+  can drag a window to one side of a notebook to split that notebook.
 
-  If you move your mouse all the way to the side of the desktop, and then drop
-  the window, that window will occupy the full width (resp. height) of the
-  desktop on that side.
+  If you drop a window all the way to a side of the desktop, the window
+  will occupy the full width (or height) of the desktop.
 
 * System window
 
-  If you drop a window outside of GPS (for instance, on the background of your
-  screen), the window will be floated.
+  If you drop a window outside of GPS (for example, on the background of
+  your screen), GPS will float the window.
 
 .. index:: cloning editors
 
-If you maintain the :kbd:`shift` key pressed while dropping the window, this
-might result in a copy operation instead of a simple move. For instance, if you
-are dropping an editor, a new view of the same editor will be created,
-resulting in two views present in GPS: the original one is left at its initial
-location, and a second view is created at the new location.
+Keeping the :kbd:`shift` key pressed while dropping the window results in a
+copy operation instead of a simple move, if possible. For example, if you
+drop an editor, a new view of the same editor is created, resulting in two
+views: the original one at its initial location and a second at the new
+location.
 
-If you maintain the :kbd:`control` key pressed while dropping the window, all
-the windows that were in the same notebook are moved, instead of the single one
-you selected. This is the fastest way to move a group of windows to a new
-location, instead of moving them one by one.
+If you keep the :kbd:`control` key pressed while dropping the window, all
+the windows in the same notebook are moved, instead of the single one you
+selected. This is the fastest way to move a group of windows to a new
+location.
 
 
 .. index:: perspectives
@@ -255,47 +244,46 @@ location, instead of moving them one by one.
 Perspectives
 ============
 
-GPS supports the concept of perspectives. These are activity-specific desktops,
-each with their own set of windows, but sharing some common windows like the
-editors.
+GPS supports the concept of perspectives. These are activity-specific
+desktops, each with their own set of windows, but sharing some common
+windows like the editors.
 
-Depending on the activity you want to perform (debugging, version control,...)
-you could switch to another perspective. For instance, in the context of the
-debugger, the new perspective would by default contain the call stack window,
-the data window, the debugger consoles,... each at your favorite location.
-Whenever the debug starts, you therefore do not have to open these windows
-again.
+You can switch to a different spective for different types of activities
+you want to perform (for example, debugging or version control operations).
+For example, when using the debugger, the perspective by default consists
+of windows containing the call stack, data window, and the debugger
+console, each at the location you've set.  Whenever you start the debugger again, don't have to reopen these windows.
 
 .. index:: menu; window --> perspectives
 .. index:: menu; window --> perspectives --> create new
 
-The perspectives have names, and you switch perspectives by selecting the menu
-:menuselection:`/Window/Perspectives/`. You can also create a new perspective
-by selecting the menu :menuselection:`/Window/Perspectives/Create New`.
+Each perspective has a names.  Switch perspectives by selecting the menu
+:menuselection:`/Window/Perspectives/`.  Create a new perspective by
+selecting the menu :menuselection:`/Window/Perspectives/Create New`.
 
-GPS will sometimes automatically change perspectives. For instance, if you
-start a debugger, it will switch to the perspective called :guilabel:`Debug`
-(if it exists). When the debugger terminates, you are switched back to the
-"Default" perspective (again, if it exists).
+GPS will sometimes automatically change perspectives. For example, if you
+start a debugger, it switches to the perspective called :guilabel:`Debug`
+(if one exists). When the debugger terminates, you'rere switched back to
+the "Default" perspective (again, if one exists).
 
-When you leave a perspective, GPS automatically saves its contents (which
-windows are opened, their location,...), so that when you are going back to the
-same perspective you find the same layout.
+When you leave a perspective, GPS automatically saves its contents
+(including which windows are opened and their location) so when you return
+to the same perspective you find the same layout.
 
 .. index:: preferences; general --> save desktop on exit
 
-Likewise, when GPS exits, it will save the layout of all perspectives into a
-file called :file:`perspectives6.xml`, so that it can restore them when you
-restart GPS. This behavior is controlled by the :menuselection:`General --> Save
-desktop on exit` preference, and can be disabled.
+When GPS exits, it saves the layout of all perspectives to a file called
+:file:`perspectives6.xml` so it can restore them when you restart GPS. This
+behavior is controlled by the :menuselection:`General --> Save desktop on
+exit` preference, and you can disable it.
 
-One of the difficulties in working with perspectives is knowing which windows
-will be preserved when you switch to another perspective, and which windows
-will be hidden. There is a central area where all preserved windows are found.
-Typically, it only contains editors (including if you have split them side by
-side for instance). If you drag and drop another window on top or to the sides
-of an editor, that window will be preserved when changing perspectives, unless
-it was already found elsewhere in the new perspective.  The color of the
-highlight that appears on the screen while you drag and drop will tell you
-whether the window (if dropped at the current location) will be visible in
-other perspectives or not.
+A difficulty in working with perspectives is knowing which windows are
+preserved when you switch to another perspective and which are hidden.  To
+help in this determination, there's a central area where all preserved
+windows are found.  It usually only contains editors (including those that
+you've split side by side). If you drop another window on top or to one
+side of an editor, that window is preserved when changing perspectives,
+unless it's already in the new perspective.  The color of the highlight
+appearing on the screen while you drag drop tells you whether the window
+(if dropped at the current location) will be visible in other perspectives
+or not.
