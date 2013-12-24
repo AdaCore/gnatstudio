@@ -104,43 +104,42 @@ editor open, the one you're using.
 Splitting Windows
 =================
 
-Windows can be split at will, through any combination of horizontal and
-vertical splits.  This feature requires at least two windows (text editors,
-browsers, ...) to be superimposed in a given notebook. Selecting either the
-:menuselection:`Window --> Split Horizontally` or :menuselection:`Window --> Split
-Vertically` menus will then split the selected window in two. In the left
-(resp. top) pane, the currently selected window will be left on its own. The
-rest of the previously superimposed windows will be put in the right (resp.
-bottom) pane. You can then in turn split these remaining windows to achieve any
-layout you want.
+You can split windows in any combination of horizontal and vertical splits.
+To do this requires at least two windows (for example text editors or
+browsers) to be present in a given notebook.  Select either the
+:menuselection:`Window --> Split Horizontally` or :menuselection:`Window
+--> Split Vertically` menus to split the selected window in two. In the
+left (respectively, top) pane, the currently selected window is left on its
+own. The rest of the previously superimposed windows are put in the right
+(respectively, bottom) pane. You can further split these remaining windows
+to achieve any desired layout.
 
-All split windows can be resized interactively by dragging the handles that
-separate them. A preference (menu :menuselection:`Edit --> Preferences`) controls
+All split windows can be resized by dragging the handles that separate
+them. A preference (menu :menuselection:`Edit --> Preferences`) controls
 whether this resizing is done in opaque mode or border mode. In the latter
-case, only the new handle position will be displayed while the mouse is
+mode, only the new handle position is displayed while the window is
 dragged.
 
-You may want to bind the key shortcuts to the menus
-:menuselection:`Window --> Split Horizontally` as well as
-:menuselection:`Window --> Split Vertically` using the key manager. In addition,
-if you want to achieve an effect similar to e.g. the standard Emacs behavior
-(where :kbd:`control-x 2` splits a window horizontally, and :kbd:`control-x 3`
-splits a window vertically), you can use the key manager
-(:ref:`The_Key_Manager_Dialog`).
+You may want to bind the key shortcuts to the menus :menuselection:`Window
+--> Split Horizontally` as well as :menuselection:`Window --> Split
+Vertically` using the key manager. If you want to achieve an effect similar
+to the standard Emacs behavior (where :kbd:`control-x 2` splits a
+window horizontally, and :kbd:`control-x 3` splits a window vertically),
+you can use the key manager (:ref:`The_Key_Manager_Dialog`).
 
-:ref:`Moving_Windows` will show how to do the splitting through drag-and-drop
-and the mouse, which in general is the fastest way to do.
+:ref:`Moving_Windows` shows how to split windows using drag-and-drop, which
+is the fastest way to do so.
 
-Several editors or browsers can be put in the same area of the MDI. In such a
-case, they will be grouped together in a notebook widget, and you can select
-any of them by clicking on the corresponding tab. Note that if there are lots
-of windows, two small arrows will appear on the right of the tabs.  Clicking on
-these arrows will show the remaining tabs.
+You can put several editors or browsers in the same area of the MDI. In
+that case, they're grouped together in a notebook widget and you can select
+any of them by clicking on the corresponding tab.  If there are many of
+windows, two small arrows appear on the right of the tabs.  Click on these
+arrows to show the remaining tabs.
 
-In some cases GPS will change the color and size of the title (name) of a
-window in the notebook tab. This indicates that the window content has been
-updated, but the window wasn't visible. Typically, this is used to indicate
-that new messages have been written in the messages or console window.
+GPS changes the color and size of the title (name) of a window in the
+notebook tab to indicate that the window content has been updated but the
+window isn't visible.  This commonly occurs when new messages have been
+written in the messages or console views.
 
 
 .. index:: MDI; floating windows
@@ -149,43 +148,43 @@ that new messages have been written in the messages or console window.
 Floating Windows
 ================
 
-Although the MDI, as described so far, is already extremely flexible, it is
-possible that you prefer to have several top-level windows under direct control
-of your system or window manager. This would be the case for instance if you
-want to benefit from some extra possibilities that your system might provide
-(virtual desktops, different window decoration depending on the window's type,
-transparent windows, multiple screens, ...).
+You may prefer to have several top-level windows under direct control of
+your system's window manager.  For example, you want to benefit from some
+additional options your system might provide such as virtual desktops,
+different window decoration depending on the window's type, transparent
+windows, and/or multiple screens.
 
 .. index:: menu; window --> floating
 
-GPS is fully compatible with this behavior, since windows can also be
-**floating windows**. Any window that is currently embedded in the MDI can be
-made floating at any time, simply by selecting the window and then selecting
-the menu :menuselection:`Window --> Floating`. The window will then be detached,
-and can be moved anywhere on your screen, even outside of GPS's main window.
+You can make any window currently embedded in the MDI a **floating window**
+by selecting the window and then selecting the menu :menuselection:`Window
+--> Floating`. The window is detached and can be moved anywhere on your
+screen, even outside of GPS's main window.
 
 There are two ways to put a floating window back under control of GPS.  The
-more general method is to select the window through its title in the menu
-:menuselection:`Window`, and then unselect :menuselection:`Window --> Floating`.
+most general method is to select the window through its title in the menu
+:menuselection:`Window`, and then unselect :menuselection:`Window -->
+Floating`.
 
 .. index:: preferences; windows --> destroy floats
 
-The second method assumes that the preference :guilabel:`Destroy Floats` in the
-menu :menuselection:`Edit --> Preferences` has been set to false. Then, you can
-simply close the floating window by clicking in the appropriate title bar
-button, and the window will be put back in GPS. If you actually want to close
-it, you need to click once again on the cross button in its title bar.
+The second method assumes you've set the preference :guilabel:`Destroy
+Floats` in the menu :menuselection:`Edit --> Preferences` to false.  In
+that case, simply close the floating window by clicking in the appropriate
+title bar button and the window is put back in GPS's main windows. If you
+actually want to close it, you need to click a second time on the cross
+button in its title bar.
 
 .. index:: preferences; windows --> all floating
 
-A special mode is also available in GPS, where all windows are floating. The
-MDI area in the main window becomes invisible. This can be useful if you rely
-on windows handling facilities supported by your system or window manager but
-not available in GPS. This might also be useful if you want to have windows on
-various virtual desktops, should your window manager support this.
+A mode is also available in GPS where all windows are floating and the MDI
+area in the main window is invisible. This can be useful if you rely on
+windows handling facilities supported by your system or window manager but
+not available in GPS, for example if you want to have windows on various
+virtual desktops and your window manager supports this.
 
-This special mode is activated through the :menuselection:`Windows --> All Floating`
-preference.
+This mode is activated through the :menuselection:`Windows --> All
+Floating` preference.
 
 
 .. index:: drag-and-drop
