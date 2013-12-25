@@ -4,47 +4,46 @@
 Searching and Replacing
 ***********************
 
-GPS provides extensive search capabilities among its different elements. For
-instance, it is possible to search in the currently edited source file, or in
-all the source files belonging to the project, even those that are not
-currently open. It is also possible to search in the project view (on the left
-side of the main GPS window), ...
+GPS provides extensive search capabilities. For example, you can search in
+the currently edited source file or in all the source files belonging to
+the project, even those that are not currently open. You can also search in
+the project view (on the left side of the main GPS window).
 
 .. index:: project view
 .. index:: search context
 .. index:: menu; navigate --> find or replace
 
-All these search contexts are grouped into a single graphical window, that you
-can open either through the menu :menuselection:`Navigate --> Find or
+All these search contexts are grouped into a single graphical window that
+you can open either through the menu :menuselection:`Navigate --> Find or
 Replace...`, or the shortcut :kbd:`Ctrl-F`.
 
-By default, the search window is floating, ie appears as a dialog on top of
-GPS. You can choose to put it inside the multiple document interface
-permanently for easier access. This can be done by selecting the menu
-:menuselection:`Window --> Floating`, and then drag-and-dropping the search
-window in a new location if you wish (for instance above the Project View).
+By default, the search window is floating and appears as a dialog on top of
+GPS. You can put it inside the multiple document interface permanently for
+easier access by selecting the menu :menuselection:`Window --> Floating`,
+and then dropping the search window in a new location (for example, above
+the Project View).
 
-Selecting either of these two options will pop up a dialog on the screen,
+Selecting either of these two options pops up a dialog on the screen,
 similar to the following:
 
 .. image:: search-hide.jpg
 
-On this screen shot, you can see three entry fields:
+This dialog contains three fields:
 
 *Search for*
   .. index:: search for
 
-  This is the location where you type the string or pattern you are looking
-  for. The search widget supports two modes, either fixed strings or regular
-  expressions. You can commute between the two modes by either clicking on the
-  :guilabel:`Options` button and selecting the appropriate check box, or by
-  opening the combo box (click on the arrow on the right of the entry field).
+  Where you type the string or pattern to search for. The search widget
+  supports two modes, either strings or regular expressions. You can toggle
+  between the two modes either by clicking on the :guilabel:`Options`
+  button and selecting the appropriate check box or by opening the combo
+  box (click on the arrow on the right of the entry field).
 
-  In this combo box, a number of predefined patterns are provided. The top two
-  ones are empty patterns, that automatically set up the appropriate fixed
-  strings/regular expression mode. The other regular expressions are
-  language-specific, and will match patterns like Ada type definition, C++
-  method declaration, ...
+  The combo box provides a number of predefined patterns. The top two are
+  empty patterns that automatically set up the appropriate fixed strings or
+  regular expression mode. The other regular expressions are
+  language-specific and will match patterns such as Ada type definitions or
+  C++ method declarations.
 
   .. index:: C++
   .. index:: Ada
@@ -52,54 +51,51 @@ On this screen shot, you can see three entry fields:
 *Replace with*
   .. index:: replace with
 
-  This field should contain the string that will replace the occurrences of the
-  pattern defined above.  The combo box provides a history of previously used
-  replacement strings. If regular expression is used for search, special
-  escapes `\1`, `\2` .. `\9` in this field refer to the corresponding matching
-  sub-expressions and \0 refers whole matched string.
+  Contains the string to replace the occurrences of the pattern defined
+  above.  The combo box provides a history of previously used replacement
+  strings. If a regular expression is used for search, special escapes
+  `\1`, `\2` .. `\9` in this field refer to the corresponding matching
+  subexpressions and \0 refers whole matched string.
 
 *Look in*
   .. index:: look in
 
-  This field defines the context in which the search should occur.
+  The context in which the search should occur.
 
   .. index:: search context
 
-  GPS will automatically select the most appropriate context when you open the
+  GPS automatically selects the most appropriate context when you open the
   search dialog, depending on which component currently has the focus. If
-  several contexts are possible for one component (for example, the editor has
-  :guilabel:`Current_File`, :guilabel:`Files from Project`,
-  :guilabel:`Files...` and :guilabel:`Open Files`), then the last one you've
-  been using will be selected. You can of course change the context to another
-  one if needed.
-
-  Clicking on the arrow on the right will display the list of all possible
-  contexts. This list includes:
+  several contexts are possible for one component (for example, the editor
+  has :guilabel:`Current_File`, :guilabel:`Files from Project`,
+  :guilabel:`Files...` and :guilabel:`Open Files`) then the last one you've
+  been using will be selected. You can change the context to another one if
+  needed, by clicking on the arrow on the right. It displays the list of
+  all possible contexts, inluding:
 
   *Project View*
-    Search in the project view. An extra *Scope* box will be displayed
-    where you can specify the scope of your search, which can be a set of:
-    `Projects, Directories, Files, Entities`. The search in entities
-    may take a long time, search each file is parsed during the search.
+    Search in the project view. An extra *Scope* box is displayed where you
+    can specify the scope of your search, which is a set of: `Projects,
+    Directories, Files, Entities`. The search in entities may take a long
+    time since each file is parsed during the search.
 
 
   *Open Files*
-    Search in all the files that are currently open in the source editor. The
+    Search in all the files currently open in the source editor. The
     *Scope* entry is described in the `Files...` section below.
 
   *Files...*
 
-    Search in a given set of files. An extra *Files* box will be displayed
-    where you can specify the files by using standard shell (Unix or Windows)
-    regular expression, e.g. :file:`*.ad?` for all files ending with .ad and
-    any trailing character. The directory specified where the search starts,
-    and the *Recursive search* button whether sub directories will be searched
-    as well.
+    Search in a given set of files. An extra *Files* box is displayed where
+    you specify the files using standard shell (Unix or Windows) regular
+    expressions such as :file:`*.ad?` for all files ending with .ad and any
+    trailing character. The directory specifies where the search starts and
+    the *Recursive search* button whether subdirectories are also searched.
 
-    The *Scope* entry is used to restrict the search to a set of language
-    constructs, e.g. to avoid matching on comments when you are only interested
-    in actual code, or to only search strings and comments, and ignore the
-    code.
+    The *Scope* entry restricts the search to a set of language constructs.
+    For example, use this to to avoid matching on comments when you're only
+    interested in actual code or to only search strings and comment,
+    ignoring the code.
 
   *Files From Projects*
 
@@ -109,12 +105,11 @@ On this screen shot, you can see three entry fields:
 
   *Files From Current Project*
 
-    Search in all the files from the currently selected project, defaulting on
-    the root project if there is no project currently selected. The currently
-    selected project might be the one to which the source file belongs (if you
-    are in an editor), or the selected project (if you are in the Project view)
-    for instance.
-    The *Scope* entry is described in the `Files...` section above.
+    Search in all the files from the currently selected project, defaulting
+    to the root project if no project is currently selected. The currently
+    selected project might be the one to which the source file belongs (if
+    you;re in an editor) or the selected project (if you are in the Project
+    view).  The *Scope* entry is described in the `Files...` section above.
 
   *Files From Runtime*
 
@@ -133,114 +128,109 @@ On this screen shot, you can see three entry fields:
 
   .. index:: preferences; search --> preserve search context
 
-  The default value for :guilabel:`Look In` is set through various means: by
-  default, GPS will select a context that matches the currently selected
-  window. For instance, if you are in an editor and open the search dialog, the
-  context will be set to :guilabel:`Current File`. But if the project view is
-  the active window, the context will be set to :guilabel:`Project` view.
+  GPS sets the default value for :guilabel:`Look In` in various ways:
+  normally, GPS selects a context that matches the currently selected
+  window. For example, if you're in an editor and open the search dialog,
+  the context is set to :guilabel:`Current File`. If the project view is
+  the active window, the context is set to the :guilabel:`Project` view.
   Optionally, GPS can remember the last context that was set (see the
-  preference :menuselection:`Search --> Preserve Search Context`. If this is
-  set, and an editor is selected, GPS will remember whether the last time you
-  started a search from an editor you decided to search in :guilabel:`Current
-  File` or :guilabel:`Files From Project` for instance.
+  preference :menuselection:`Search --> Preserve Search Context`). In that
+  case, if an editor is selected, GPS remembers whether the last time you
+  started a search from an editor you decided to search in (for example)
+  :guilabel:`Current File` or :guilabel:`Files From Project`.
 
   Finally, you can create key shortcuts (through the :menuselection:`Edit -->
   Key Shortcuts` menu, in the :guilabel:`Search` category) to open the search
   dialog and set the context to a specific value.
 
-The second part of the window is a row of buttons, to start the search (or
-continue to the next occurrence), and to display the options.
-
 .. image:: search-options.jpg
 
-There are five check boxes in this options box.
+The second section in the dialog is a row of five buttons, used to start
+the search (or continue to the next occurrence) to display options:
+
 
 :guilabel:`Regexp`
   .. index:: regular expression
 
-  This button commutes between fixed string patterns and regular expressions.
-  You can also commute between these two modes by selecting the arrow on the
-  right of the :guilabel:`Search for:` field.  The grammar followed by the
-  regular expressions is similar to the Perl and Python regular expressions
-  grammar, and is documented in the GNAT run time file :file:`g-regpat.ads`. To
-  open it from GPS, you can use the :ref:`open from project
-  <Open_From_Project>` dialog (:menuselection:`File --> Open From Project...`)
-  and type `g-regpat.ads`.
+  Toggles between strings and regular expressions for patternns.  You can
+  also toggle between these two modes by selecting the arrow on the right
+  of the :guilabel:`Search for:` field.  The grammar used by the regular
+  expressions is similar to the Perl and Python regular expressions grammar
+  and is documented in the GNAT Pro run time file :file:`g-regpat.ads`. To
+  open it from GPS, use the :ref:`open from project <Open_From_Project>`
+  dialog (:menuselection:`File --> Open From Project...`) and type
+  `g-regpat.ads`.
 
 :guilabel:`Whole Word`
   .. index:: whole word
 
-  If activated, this check box will force the search engine to ignore
-  substrings. "sensitive" will no longer match "insensitive".
+  Force the search engine to ignore substrings. "sensitive" will no longer
+  match "insensitive".
 
 :guilabel:`Select on Match`
   .. index:: select window on match
 
-  When this button is selected, the focus is given to the editor that contains
-  the match, so that you can start editing the text immediatly. If the button
-  is not selected, the focus is left on the search window, so that you can
-  press Enter to search for the next occurrence.
+  Gives the focus to the editor containing the match. If the button is not
+  selected, the focus remains on the search window.  In that case, press
+  Enter to search for the next occurrence.
 
 :guilabel:`Close on Match`
   .. index:: close dialog on match
 
-  This button only appears if the search window is floating. If this button is
-  enabled, the search window will be automatically closed when an occurrence of
-  the search string is found.
+  This button only appears if the search window is floating. If pressed,
+  the search window is automatically closed when an occurrence of the
+  search string is found.
 
 :guilabel:`Case Sensitive Search`
   .. index:: case sensitive
 
-  By default, patterns are case insensitive (upper-case letters and lower-case
-  letters are considered as equivalent). You can change this behavior by
-  clicking on this check box.
+  By default, patterns are case insensitive (upper-case letters and
+  lower-case letters are considered equivalent).  Change this behavior by
+  clicking this check box.
 
 :guilabel:`Case Preserving Replace`
   .. index:: case preserving
 
   When this is checked, replacements preserve casing. Three casings are
-  detected and preserved: all lower, all UPPER, and Mixed_Case where the first
-  character of each word is capitalized. Note that when the replace pattern is
-  not all lower case, replacement is never case-preserving, the original casing
-  of the replace pattern is used.
+  detected and preserved: all lower, all UPPER, and Mixed_Case (where the
+  first character of each word is capitalized).  When the replacement
+  pattern is not all lower case, replacement is never case-preserving: the
+  original casing of the replacement pattern is used.
 
 
-Pressing the :guilabel:`Find` / :guilabel:`Previous` buttons performs an
+Press the :guilabel:`Find` or :guilabel:`Previous` button to perform an
 interactive search.  It stops as soon as one occurrence of the pattern is
-found.  search. Once a first occurrence has been found, the :guilabel:`Find`
-button is renamed to :guilabel:`Next`.  You then have to press the `Next`
-button (or the equivalent shortcut :kbd:`Ctrl-N`) to go to the next occurrence.
+found.  At that point, the :guilabel:`Find` button is renamed to
+:guilabel:`Next`, which you press (or type the equivalent shortcut
+:kbd:`Ctrl-N`) to go to the next occurrence.
 
-If you use the :guilabel:`Find all` button, the search widget will start
-searching for all occurrences right away, and put the results in a new window
-called :guilabel:`Locations`, :ref:`The_Locations_View`.
+The :guilabel:`Find all` button starts a search for all occurrences and
+puts the results in a view called :guilabel:`Locations`,
+:ref:`The_Locations_View`.
 
-The :guilabel:`Replace` and :guilabel:`Replace & Find` buttons are grayed out
-as long as no occurence of the pattern is found. In order to enable them, you
-have to start a search, e.g. by pressing the :guilabel:`Find` button. Pressing
-:guilabel:`Replace` will replace the current occurence (and therefore the two
-buttons will be grayed out), and :guilabel:`Replace & Find` will replace the
-occurence and then jump to the next one, if any. If you don't want to replace
-the current occurence, you can jump directly to the next one by pressing
-:guilabel:`Next`.
+The :guilabel:`Replace` and :guilabel:`Replace & Find` buttons are grayed
+out if no occurence of the pattern is found. To enable them you must start
+a search, for example by pressing the :guilabel:`Find` button. Pressing
+:guilabel:`Replace` replaces the current occurrence (grayes out the two
+buttons) and :guilabel:`Replace & Find` replaces the occurrence and jump to
+the next one, if any. If you don't want to replace the current occurence,
+you can jump to the next one by pressing :guilabel:`Next`.
 
-The :guilabel:`Repl all` button will replace all the occurences found. By
-default, a popup is displayed and ask for confirmation. It's possible to
-disable this popup by either checking the box "Do not ask this question again",
-or by going in the Search pannel of the preferences pages, and unchecking
-"Confirmation for 'Replace all'". The confirmation popup can be reenabled
-through this checkbox.
+The :guilabel:`Repl all` button replaces all the occurences found. By
+default, a popup is displayed that asks for confirmation. You can disable
+this popup by either checking the box "Do not ask this question again" or
+by going to the Search pannel of the preferences pages and unchecking
+"Confirmation for 'Replace all'".
 
 .. index:: Multiple Document Interface
 
-As most GPS components, the search window is under control of the multiple
-document interface, and can thus be integrated into the main GPS window instead
-of being an external window.
+Like most GPS components, the search window is under control of the
+multiple document interface and can be integrated into the main GPS window
+instead of being an external window.  To do this, open the menu
+:menuselection:`Window --> Search` in the list at the bottom of the menu,
+and either select :menuselection:`Window --> Floating` or
+:menuselection:`Window --> Docked`.
 
-To force this behavior, open the menu :menuselection:`Window --> Search` in the list at
-the bottom of the menu, and then select either :menuselection:`Window -->
-Floating` or :menuselection:`Window --> Docked`.
-
-If you save the desktop (:menuselection:`File --> Save More --> Desktop`, GPS
-will automatically reopen the search dialog in its new place when it is started
-next time.
+If you save the desktop (:menuselection:`File --> Save More --> Desktop`,
+GPS automaticallys reopen the search dialog in its new place when it's
+next started.
