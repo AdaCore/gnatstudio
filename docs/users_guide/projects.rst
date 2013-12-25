@@ -209,8 +209,8 @@ User's Guide for the full list):
 Supported Languages
 ===================
 
-Other information stored in the project is the list of languages used by
-the project. GPS supports any language, each with a name you choose, but
+Other information stored in the project file is the list of languages used
+by the project. GPS supports any language, each with a name you choose, but
 advanced support is only provided by default for some languages (Ada, C and
 C++).  You can specify other properties of the languages through
 customization files (:ref:`Adding_support_for_new_languages`).
@@ -377,7 +377,7 @@ when it was removed.
 Extending Projects
 ==================
 
-Description of project extentions
+Description of project extensions
 ---------------------------------
 
 Project files were designed to large big projects, with several hundreds or
@@ -390,21 +390,21 @@ However, it can still be useful to access other source files of the
 application, for example to find out whether a subprogram can be changed
 and where it is currently called.
 
-Such a setup can be achieved through project extentions. These are special
+Such a setup can be achieved through project extensions. These are special
 types of projects that inherit most of their attributes and source files
 from another project and can have, in their source directories, some source
 files that hide those inherited from the original project.
 
 When compiling such projects, the compiler puts the newly created project
-files in the extention project's directory and leaves the original
+files in the extension project's directory and leaves the original
 directory untouched. As a result, the original project can be shared
 read-only among several developers (for example, the original project will
 often be the result of a nightly build of the application).
 
-Creating project extentions
+Creating project extensions
 ---------------------------
 
-The project wizard allows you to create extention projects.  Select an
+The project wizard allows you to create extension projects.  Select an
 empty directory (which is created if it doesn't exist) as well as a list of
 initial source files.  (New files can also be added later.)  GPS will copy
 the selected source files to the directory and create a number of project
@@ -413,22 +413,22 @@ previous one, except that some files are found in the new directory and
 object files resulting from the compilation are put into that directory
 instead of the object directory of the original project.
 
-Adding files to project extentions
+Adding files to project extensions
 ----------------------------------
 
 .. index:: Add To Extending Project
 
-Once you loaded a project extention in GPS, most things are transparent to
-the extention. If you open a file through the :menuselection:`File --> Open
+Once you loaded a project extension in GPS, most things are transparent to
+the extension. If you open a file through the :menuselection:`File --> Open
 From Project` dialog, the files found in the local directory of the
-extention project will be picked up first.  Build actions create object
-files in the project extentions's directory, leaving the original project
+extension project will be picked up first.  Build actions create object
+files in the project extensions's directory, leaving the original project
 untouched.
 
 You may want to work on a source file you didn't put in the project
-extention when you created it. You could edit the file in the original
+extension when you created it. You could edit the file in the original
 project provided you have write access to it.  However, it's generally
-better to edit it in the context of the project extention, so the original
+better to edit it in the context of the project extension, so the original
 project can be shared among developers.  Do this by clicking on the file in
 the :guilabel:`Project` view and selecting the menu :menuselection:`Add To
 Extending Project`.  Pop up a dialog asking whether you want GPS to copy
@@ -436,7 +436,7 @@ the file to the extending project's directory.  GPS may also create some
 new project files in that directory if necessary and automatically reload
 the project as needed. From that point on, if you use the menu
 :menuselection:`File --> Open From Project`, GPS see the file from the
-project extention.  Open editors will still be editing the same file they
+project extension.  Open editors will still be editing the same file they
 were, so you should open the new file in them if needed.
 
 
@@ -493,87 +493,79 @@ The Project Menu
 ================
 
 The menu bar item :menuselection:`Project` contains several commands that
-generally act on the whole project hierarchy. If you only want to act on a
-single project, use the contextual menu in the project view.
+act on the whole project hierarchy.  To act on only a single project, use
+the contextual menu in the project view.
 
-Some of these menus apply to the currently selected project. This notion
-depends on what window is currently active in GPS: if it is the project view,
-the selected project is either the selected node (if it is a project), or its
-parent project (for a file, directory, ...).  If the currently active window is
-an editor, the selected project is the one that contains the file.
-
-In all cases, if there is no currently selected project, the menu will apply to
-the root project of the hierarchy.
+GPS loads a single project hierarchy at any one time.  Some of these
+commands apply to the currently selected project.  Which project is
+considered currently selected depends on what window is currently active in
+GPS: if it's the project view, the selected project is either the selected
+node (if a project) or its parent project (for a file or directory, for
+example).  If the currently active window is an editor, the selected
+project is the one containing that file.  If none of those are the case,
+it's the root project of the hierarchy.
 
 These commands are:
 
 .. index:: menu; project --> new
 
 :menuselection:`Project --> New`
-  This menu will open the project wizard (:ref:`The_Project_Wizard`), so
-  that you can create new project. On exit, the wizard asks whether the
-  newly created project should be loaded. If you select :guilabel:`Yes`, the new
-  project will replace the currently loaded project hierarchy.
-
-  You will get asked what information you would like to create the project
-  from.  In particular, you can create a set of project files from existing Ada
-  sources.
-
+  Open the project wizard (:ref:`The_Project_Wizard`) so you can create a
+  new project.  You'll be asked for other information used to create the
+  project. For example you can create a set of project files from existing
+  Ada sources.  On exit, the wizard asks whether the new project should be
+  loaded. If you select :guilabel:`Yes`, the new project replaces the
+  currently loaded project hierarchy.
 
 .. index:: menu; project --> new from template
 
 :menuselection:`Project --> New from template`
-  This menu will open the project template wizard, allowing you to create a new
-  project using one of the project templates defined in GPS.
+  Open the project template wizard, allowing you to create a new project
+  using one of the project templates defined in GPS.
   :ref:`Adding_project_templates`.
-
 
 .. index:: menu; project --> open
 
 :menuselection:`Project --> Open`
-  This menu opens a file selection dialog, so that any existing project
-  can be loaded into GPS. The newly loaded project replaces the currently
-  loaded project hierarchy. GPS works on a single project hierarchy at
-  a time.
+  Open a file selection dialog, allowing any existing project to be loaded
+  into GPS. The newly loaded project replaces the currently loaded project
+  hierarchy.
 
 
 .. index:: menu; project --> recent
 
 :menuselection:`Project --> Recent`
-  This menu can be used to easily switch between the last projects that
-  were loaded in GPS.
+  Switch back to the last project loaded into GPS.
 
 
 .. index:: menu; project --> edit project properties
 
 :menuselection:`Project --> Edit Project Properties`
-  This menu applies to the currently selected project, and will open the
-  project properties dialog for this project.
+  Open the  project properties dialog for the currently selected project.
 
 
 .. index:: menu; project --> save all
 
 :menuselection:`Project --> Save All`
-  This will save all the modified projects in the hierarchy.
+  Save all the modified projects in the hierarchy.
 
 
 .. index:: menu; project --> edit file switches
 .. _File_Switches:
 
 :menuselection:`Project --> Edit File Switches`
-  This menu applies to the currently selected project. This will open a new
-  window in GPS, listing all the source files for this project, along with the
-  switches that will be used to compile them, :ref:`The_Switches_Editor`.
+  Open a new window in GPS listing all the source files for the currently
+  selected project along with the switches used to compile them.
+  :ref:`The_Switches_Editor`.
 
 
 .. index:: menu; project --> reload project
 
 :menuselection:`Project --> Reload project`
-  Reload the project from the disk, to take into account modifications done
-  outside of GPS. In particular, it will take into account new files added
-  externally to the source directories.  This isn't needed for modifications
-  made through GPS.
-
+  Reload the project from disk to take into account modifications done
+  outside of GPS. In particular, it takes into account new files added
+  externally to the source directories.  If all modifications were makde
+  though GPS, this command isn't neeed.
 
 .. index:: menu; project --> project view
 
@@ -589,19 +581,19 @@ These commands are:
 The Project Wizard
 ==================
 
-The project wizard allows you to create in a few steps a new project file.  It
-has a number of pages, each dedicated to editing a specific set of attributes
-for the project.
+The project wizard allows you to create a new project file in a few steps.
+It has a number of pages, each dedicated to editing a specific set of
+attributes of the project.
 
-The typical way to access this wizard is through the :menuselection:`Project
---> New...` menu.
+You normally access this wizard through the :menuselection:`Project -->
+New...` menu.
 
 The project wizard is also launched when a new dependency is created between
 two projects, through the contextual menu in the project view.
 
 .. image:: project-wizard.jpg
 
-The wizard gives access to the following list of pages:
+The wizard has the following pages:
 
 * Project type
 * Project Naming
@@ -617,31 +609,30 @@ The wizard gives access to the following list of pages:
 Project Type
 ------------
 
-Several types of project wizards are provided in GPS. Depending on the
-information you have or your current setup, you will choose one or the other.
+Several types of project wizards are provided in GPS:
 
 * Single Project
 
-  This is likely the wizard you will use most often. It creates a project file
-  from scratch, and asks you for the location of source directories, the object
-  directory, ...; The rest of this chapter describes this wizard in more
-  details
+  This is probably the wizard you'll use most often. It creates a project
+  file from scratch and asks you for the location of source directories and
+  the object directory.  The rest of this chapter describes this wizard in
+  more detail.
 
 * Project Tree
 
-  This wizard will attempt to create a set of one or more project files to
-  represent your current build environment. It will analyze what your sources
-  are, where the corresponding object files are, and will try and find some
-  possible setup for the project files (remember that a given :file:`.gpr`
-  project file can be associated with a single object directory.
+  This wizard attempts to create a set of one or more project files to
+  represent your current build environment. It analyzes the location of
+  your sources and corresponding object files and tries to find a possible
+  configuration for the project files (a given :file:`.gpr` project file
+  can only be associated with a single object directory).
 
-  This wizard might not work in all cases, but is worth a try to get you
-  started if you already have an existing set of sources
+  This wizard might not work in all cases, but is worth trying if you
+  already have an existing set of sources
 
 * Convert GLIDE Project (.adp)
 
-  This wizard will help you convert a :file:`.adp` project file that is used by
-  the GLIDE environment. The same restrictions apply as above, except that the
+  This wizard helps you convert a :file:`.adp` project file used by the
+  GLIDE environment. The same restrictions apply as above, except that the
   list of source directories, object directories and tool switches are read
   directly from that file.
 
@@ -653,55 +644,51 @@ information you have or your current setup, you will choose one or the other.
   project is a library (shared or static), as opposed to an executable in the
   case of `Single Project`.
 
-* Extending Project
+* Project Extention
   .. index:: project; extending
 
-  This specialized wizard allows you to easily create extending projects
+  This specialized wizard allows you to easily create project extentions.
   (:ref:`Extending_Projects`).
 
 
-Project Naming
---------------
+Project Name
+------------
 
-This is the first page displayed by any of the wizard.
+This is the first page displayed by any of the wizards.
 
-You must enter the name and location of the project to create. This name must
-be a valid Ada identifier (i.e. start with a letter, optionally followed by a
-series of digits, letters or underscores). Spaces are not allowed. Likewise,
-reserved Ada keywords must be avoided. If the name is invalid, GPS will display
-an error message when you press the :guilabel:`Forward` button.
+Here you enter the name and location of the project to create. The name
+must be a valid Ada identifier (start with a letter, optionally followed by
+a series of digits, letters or underscores). Spaces and reserved Ada
+keywords are not allowed. If the name is invalid, GPS displays an error
+message when you press the :guilabel:`Forward` button.
 
-Child projects can be created from this dialog. These are project whose name is
-of the form `Parent.Child`. GPS will automatically generate the dependency to
-the parent project so as to make the child project valid.
+Child projects can be created from this dialog. These are projects whose
+name is of the form `Parent.Child`. GPS will automatically generate the
+dependency to the parent project.
 
-In this page, you should also select what languages the source files in this
-project are written in. Currently supported languages are `Ada`, `C` and `C++`.
-Multiple languages can be used for a single project.
-
-The last part of this page is used to indicate how the path should be stored in
-the generated project file. Most of the time, this setting will have no impact
-on your work. However, if you wish to edit the project files by hand, or be
-able to duplicate a project hierarchy to another location on your disk, it
-might be useful to indicate that paths should be stored as relative paths (they
-will be relative to the location of the project file).
+The last part of this page indicates how the path should be stored in the
+generated project file. Most of the time, this setting will have no impact
+on your work. However, if you plan to edit the project files by hand or be
+able to duplicate a project hierarchy to another location on your disk it
+might be useful to indicate that paths should be stored as relative paths
+(they are relative to the location of the project file).
 
 Languages Selection
 -------------------
 
-This page is used to select the programming languages used for the sources of
-this project. By default, only `Ada` is selected.  New languages can be added
-to this list by using XML files, see the section on customizing GPS
+Use this page to select the programming languages used for the sources of
+this project. By default, only `Ada` is selected.  New languages can be
+added to this list by using XML files, see the section on customizing GPS
 (:ref:`Adding_support_for_new_languages`).
 
-Additionally, this page allows you to select the toolchain used when working on
-your project. There you can select one of the pre-defined toolchains or scan
-your system for installed toolchains. You can also manually define some of the
-tools in the toolchain such as the debugger to use, the gnat driver to use or
-the gnatls tool to use.
+This page allows you to select the toolchain used when working on your
+project.  You can select one of the pre-defined toolchains or scan your
+system for installed toolchains. You can also manually define some of the
+tools in the toolchain such as which debugger, GNAT driver, or `gnatls`
+tool to use.
 
-If you need to select a toolchain for a cross environment, you should have a
-look at :ref:`Working_in_a_Cross_Environment` for more info on this subject.
+If you need to select a toolchain for a cross environment, see
+:ref:`Working_in_a_Cross_Environment` for more information on this subject.
 
 
 .. index:: Version Control System
@@ -711,19 +698,15 @@ VCS Selection
 -------------
 
 The second page in the project wizard allows you to select which Version
-Control system is to be used for the source files of this project.
+Control system you want to use for the source files of this project.  GPS
+doesn't attempt to automatically guess what it should use, so you must
+specify it if you want VCS operations to be available to you.
 
-GPS doesn't attempt to automatically guess what it should use, so you must
-specify it if you want the VCS operations to be available to you.
-
-The two actions :guilabel:`Log checker` and :guilabel:`File checker` are the
-name and location of programs to be run just prior an actual commit of the
-files in the Version Control System. These should be used for instance if you
-wish to enforce style checks before a file is actually made available to other
-developers in your team.
-
-If left blank, no program will be run.
-
+The two actions :guilabel:`Log checker` and :guilabel:`File checker` are
+the name and location of programs to be run just prior an actual commit of
+the files in the Version Control System. These should be used if you wish
+to enforce style checks before a file is actually made available to other
+developers in your team.  If left blank, no program will be run.
 
 
 .. _Source_Directories_Selection:
@@ -731,29 +714,28 @@ If left blank, no program will be run.
 Source Directories Selection
 ----------------------------
 
-This page lists and edits the list of source directories for the project. Any
-number of source directory can be used (the default is to use the directory
-which contains the project file, as specified in the first page of the wizard).
+This page displays and allows you to edit the list of source directories
+for the project. You can use an arbitrary number of source directories (the
+default is to use the directory which contains the project file, specified
+in the first page of the wizard).  If you don't specify any source
+directories, no source files will be associated with the project.
 
-If you do not specify any source directory, no source file will be associated
-with the project, since GPS wouldn't know where to look for them.
+The top frame is used to select a directory to add and the bottom frame
+displays the current list of directories. The sizes of the frames can be
+changed by dragging the separation line between them.
 
-To add source directories to the project, select a directory in the top frame,
-and click on the down arrow. This will add the directory to the bottom frame,
-which contains the current list of source directories.
-
-You can also add a directory and all its subdirectories recursively by using
-the contextual menu in the top frame. This contextual menu also provides an
+To add source directories to the project, select a directory in the top
+frame and click on the down arrow. This adds the directory to the bottom
+frame, which contains the current list of source directories.  You can also
+add a directory and all its subdirectories recursively by using the
+contextual menu in the top frame. This contextual menu also provides an
 entry to create new directories, if needed.
 
 To remove source directories from the project, select the directory in the
-bottom frame, and click on the up arrow, or use the contextual menu.
+bottom frame and click on the up arrow or use the contextual menu.
 
-All the files in these directories that match one of the language supported by
+All files in these directories that match one of the language supported by
 the project are automatically associated with that project.
-
-The relative sizes of the top and bottom frame can be changed by clicking on
-the separation line between the two frames and dragging the line up or down.
 
 
 .. index:: project; object directory
@@ -763,8 +745,8 @@ Build Directory
 ---------------
 
 The object directory is the location where the files resulting from the
-compilation of sources (e.g. :file:`.o` files) are placed.  One object
-directory is associated for each project.
+compilation of sources (usually, :file:`.o` files) are placed.  One object
+directory is associated with each project.
 
 The exec directory is the location where the executables are put. By default,
 this is the same directory as the object directory.
@@ -775,27 +757,27 @@ this is the same directory as the object directory.
 Main Units
 ----------
 
-The main units of a project are the files that should be compiled and linked to
-obtain executables.
+The main units of a project are the files that should be compiled and
+linked to obtain executables.
 
-Typically, for C applications, these are the files that contain the `main()`
+Typically, for C applications, these are the files that contain the `main`
 function. For Ada applications, these are the files that contain the main
 subprogram each partition in the project.
 
-These files are treated specially by GPS. Some sub-menus of
-:menuselection:`Build` and :menuselection:`Debug` will have predefined entries
+These files are treated specially by GPS. Some submenus of
+:menuselection:`Build` and :menuselection:`Debug` have predefined entries
 for the main units, which makes it more convenient to compile and link your
 executables.
 
-To add main units click on the :guilabel:`Add` button. This opens a file
-selection dialog. No check is currently done that the selected file belongs to
-the project, but GPS will complain later if it doesn't.
+To add main units, click the :guilabel:`Add` button, which opens a file
+selection dialog. No check is done at that point to ensure that the
+selected file belongs to the project, but GPS complains later if it
+doesn't.
 
-When compiled, each main unit will generate an executable, whose name is
-visible in the second column in this page. If you are using a recent enough
+When compiled, each main unit generates an executable, whose name is
+visible in the second column in this page. If you're using a recent enough
 version of GNAT (3.16 or more recent), you can change the name of this
-executable by clicking in the second column and changing the name
-interactively.
+executable by clicking in the second column.
 
 
 .. index:: project; library
@@ -803,22 +785,22 @@ interactively.
 Library
 -------
 
-This page allows you to configure your project so that the output of its
-compilation is a library (shared or static), as opposed to an executable or a
-simple set of objet files. This library can then be linked with other
-executables (and will be automatically if the project is imported by another
-one.
+This page allows you to configure your project so the output of its
+compilation is a library (shared or static), as opposed to an executable or
+a set of objet files. This library can then be linked with other
+executables (and will automatically be if the project is imported by
+another project).
 
-You need to define the attributes in the top box to transform your project into
-a library project. See the tooltips that appear when you leave your mouse on
-top of the label to the left of each field.
+You need to define the attributes in the top box to transform your project
+into a library project. See the tooltips that appear to the left of each
+field.
 
-If you define any of the attributes in the Standalone Library box, you will
-compile a standalone library. This is a library that takes care of its
-elaboration by itself, instead of relying on its caller to elaborate it as is
-standard in Ada. You also have more control over what files make up the public
-interface to the library, and what files are private to the library and
-invisible from the outside.
+If you define any of the attributes in the Standalone Library box, your
+project will create a standalone library. This is a library that does its
+own elaboration instead of relying on its caller to elaborate it as is
+standard in Ada. You also have more control over which files make up the
+public interface to the library and which files are private to the library
+and invisible from the outside.
 
 
 .. index:: gnatname
@@ -827,11 +809,10 @@ GNATname
 --------
 
 This page allows you to add Ada units stored in files with irregular or
-arbitrary naming conventions into you project.
-To take advantage of this ability you need to specify file name patterns.
-GPS will use these patterns to search for Ada units in each of source
-directories specified in :ref:`Source_Directories_Selection` page.
-Then GPS utilises gnatname tool to generate the required pragmas for a set
+arbitrary naming conventions into your project.  To do this, specify file
+name patterns.  GPS uses these patterns to search for Ada units in each of
+source directories specified in the :ref:`Source_Directories_Selection`
+page using the `gnatname` tool to generate the required pragmas for the set
 of files. Files with arbitrary naming convention are not compatible with
 naming scheme customization, so next page will be skipped.
 
@@ -841,56 +822,55 @@ naming scheme customization, so next page will be skipped.
 Naming Scheme
 -------------
 
-A naming scheme indicates the file naming conventions used in the different
-languages supported by a given project.  For example, all :file:`.adb` files
+A naming scheme indicates the file naming conventions used by each of the
+different languages used in a project.  For example, all :file:`.adb` files
 are Ada files, all :file:`.c` files are C files.
 
-GPS is very flexible in this respect, and allows you to specify the default
-extension for the files in a given programming language. GPS makes a
-distinction between spec (or header) files, which generally contain no
-executable code, only declarations, and body files which contain the actual
-code. For languages other than Ada, this header file is used rather than the
-body file when you select :menuselection:`Go To Declaration` in the contextual
-menu of editors.
-
-In a language like Ada, the distinction between spec and body is part of the
-definition of the language itself, and you should be sure to specify the
-appropriate extensions.
+GPS is very flexible with naming schemes and allows you to specify the
+default extension for the files in each language. GPS makes a distinction
+between spec (or header) files, which generally contain only declarations
+and no executable code, and body files, which contain the actual code. For
+languages other than Ada, this header file is used as the "body" file when
+you select :menuselection:`Go To Declaration` in the contextual menu of
+editors.  In a language like Ada, the distinction between spec and body is
+part of the language itself.
 
 The default naming scheme for Ada is GNAT's naming scheme (:file:`.ads` for
-specs and :file:`.adb` for bodies). In addition, a number of predefined naming
-schemes for other compilers are available in the first combo box on the page.
-You can also create your own customized scheme by entering a free text in the
-text entries.
+specs and :file:`.adb` for bodies). In addition, a number of predefined
+naming schemes for other compilers are available in the first combo box on
+the page.  You can also create your own customized scheme by entering text
+in the text entries.
 
 .. image:: naming-scheme.jpg
 
-For all languages, GPS accepts exceptions to this standard naming scheme. For
-instance, this let you specify that in addition to using :file:`.adb` for Ada
-body files, the file :file:`foo.ada` should also be considered as an Ada file.
+For all languages, GPS accepts exceptions to this standard naming
+scheme. For instance, you can specify that, in addition to using
+:file:`.adb` for Ada body files, the file :file:`foo.ada` should also be
+considered as an Ada file.
 
 The list of exceptions is displayed in the bottom list of the naming scheme
-editor. To remove entries from this list, select the line you want to remove,
-and then press the :kbd:`Del` key.  The contents of the lines can be edited
-interactively, by double-clicking on the line and column you want to edit.
+editor. To remove entries from this list, select the line you want to
+remove and then press the :kbd:`Del` key.  The contents of the lines can be
+edited interactively by double-clicking on the line and column you want to
+edit.
 
-To add new entries to this list, use the fields at the bottom of the window,
+To add new entries to this list, use the fields at the bottom of the window
 and press the update button.
 
 .. index:: multi-unit source files
 
-GNAT and GPS both support Ada source files that contain multiple Ada units
-(typically a single file would contain both the spec and the body of the unit
-for instance). This is not a recommend approach if you can avoid it, since that
-might trigger unnecessary recompilation of your source files. Such source files
-are always handled as naming scheme exceptions, and you can specify those in
-the editor by adding `at 1`, `at 2`,... after the file name for either the
-spec, the body or both. The digit after `at` is the index (starting at 1) of
-the unit in the source file.
+GNAT and GPS both support Ada source files containing multiple Ada units
+(typically a single file would contain both the spec and the body of a unit
+for instance). This is not recommended if you can avoid it, since that
+might trigger unnecessary recompilation of your source files, but you can
+handle such source files as naming scheme exceptions.  You specify those in
+the editor by adding `at 1`, `at 2` (and so on) after the file name for
+either the spec, the body, or both. The digit after `at` is the index
+(starting at 1) of the unit in the source file.
 
-For instance, specifying `file.ada at 1` for the spec and `file.ada at 2` for
-the body of the unit "unit" indicates that the two components of the unit are
-in the same file, first the spec, followed by the body.
+For example, specifying `file.ada at 1` for the spec and `file.ada at 2`
+for the body of the unit "unit" indicates that the two components of the
+unit are in the same file, with the spec first, followed by the body.
 
 .. index:: project; switches
 .. _Switches:
@@ -898,32 +878,33 @@ in the same file, first the spec, followed by the body.
 Switches
 --------
 
-The last page of the project wizard is used to select the default switches to
-be used by the various tools that GPS calls (compiler, linker, binder, pretty
-printer, ...).
+Use the last page of the project wizard to specify the default switches to
+be used by the various tools that GPS calls such as the compiler, linker,
+binder, and pretty printer.
 
 .. image:: switch-editor.jpg
 
-This page appears as a notebook, where each page is associated with a specific
-tool. All these pages have the same structure:
+This page appears as a notebook, where each page is associated with a
+specific tool. All pages have the same structure:
 
 *Graphical selection of switches*
-  The top part of each page contains a set of buttons, combo boxes,
-  entry fields, ... which give fast and intuitive access to the most
-  commonly used switches for that tool.
+  The top of each page contains a set of buttons, combo boxes, and entry
+  fields which give quick and intuitive access to the most commonly used
+  switches for that tool.
 
 *Textual selection of switches*
-  The bottom part is an editable entry field, where you can directly
-  type the switches. This makes it easier to move from
-  an older setup (e.g. Makefile, script) to GPS, by copy-pasting switches.
+  The bottom is an editable entry field, where you can directly type the
+  switches you need. This makes it easier to move from an older setup
+  (e.g. Makefile, script) to GPS by copy and pasting switches.
 
-The two parts of the pages are kept synchronized at any time: clicking on a
-button will edit the entry field to show the new switch; adding a new switch by
-hand in the entry field will activate the corresponding button if there is one.
+  Any switch can be added to the entry field, even if there is no
+  corresponding button. In this case, GPS forwards it to the tool when
+  called, without trying to represent it graphically here.
 
-Any switch can be added to the entry field, even if there is no corresponding
-button. In this case, GPS will simply forward it to the tool when it is called,
-without trying to represent it graphically.
+The two parts of the pages are kept synchronized at all times: clicking on
+a button modifies the entry field to show the new switch; adding a new
+switch by hand in the entry field will activate the corresponding button,
+if such button exists.
 
 
 .. index:: project; dependencies
@@ -932,44 +913,44 @@ without trying to represent it graphically.
 The Project Dependencies Editor
 ===============================
 
-You can edit the dependencies between projects through the contextual menu
+Edit the dependencies between projects through the contextual menu
 :menuselection:`Project --> Dependencies...` in the Project View.
 
 This view makes it easy to indicate that your project depends on external
-libraries, or other modules in your source code. For instance, you can give
+libraries or other modules in your source code. For example, you can get
 access to the GtkAda graphical library in your project by adding a project
-dependency to gtkada.gpr, assuming GtkAda has been installed in your system.
+dependency to `gtkada.gpr`, assuming GtkAda has been installed in your
+system.
 
-The dependencies also determine in what order your application is built.  When
-you compile a project, the builder will first make sure that the projects it
-depends on are up-to-date, and otherwise recompile them.
+The dependencies also determine in what order your application is built.
+When you compile a project, the builder first makes sure the projects it
+depends on are up-to-date.  If not, it recompiles them.
 
 .. image:: project-deps.jpg
 
-When you select that contextual menu, GPS will open a dialog that allows you to
-add or remove dependencies to your project. New dependencies are added by
-selecting a project file name from one of several sources:
+When you select that contextual menu, GPS opens a dialog allowing you to
+add to or remove dependencies from your project. You add a new dependency
+by selecting a project file name from one of the following sources:
 
 * One of the loaded project from the current project tree
 
 * One of the predefined projects
 
-  These are the projects that are found in one of the directories referenced in
-  the `ADA_PROJECT_PATH` environment variable. Typically, these include third
-  party libraries, such as GtkAda, win32ada, ...
+  These are the projects are found in one of the directories referenced by
+  the `ADA_PROJECT_PATH` environment variable. Typically, these include
+  third party libraries, such as GtkAda or win32ada.
 
 * A new project created through the project wizard
 
 * Any project file located on the disk
 
-In all these cases, you will generally be able to choose whether this should be
-a simple dependency, or a limited dependency. The latter allows you to have
-mutually dependent projects (A depends on B, which in turns depends on A even
-indirectly), although you cannot reference the attribute of such a project in
-the current project (for instance to indicate that the compiler switches to use
-for A are the same as for B -- you need to duplicate that information).
-
-In some cases, GPS will force a limited dependency on you to avoid loops in the
+In all cases, you can choose whether this should be a simple dependency or
+a limited dependency. The latter allows you to have mutually dependent
+projects (A depends on B, which in turns depends on A even indirectly),
+although you cannot reference the attributes of such a project in the
+current project (for example, to indicate that the compiler switches to use
+for A are the same as for B: you need to duplicate that information).  In
+some cases, GPS forces a limited dependency to avoid loops in the
 dependencies that would make the project tree illegal.
 
 
@@ -980,22 +961,22 @@ dependencies that would make the project tree illegal.
 The Project Properties Editor
 =============================
 
-The project properties editor gives you access at any time to the properties of
-your project. It is accessible through the menu :menuselection:`Project -->
-Edit Project Properties`, and through the contextual menu :menuselection:`Edit
-project properties` on any project item, e.g. from the Project View or the
-Project Browser.
+Use project properties editor at any time to access the properties of your
+project through the menu :menuselection:`Project --> Edit Project
+Properties` or the contextual menu :menuselection:`Edit project properties`
+on any project item, e.g. from the:guilabel:`Project` views or the
+:guilabel:`Project browser`.
 
-If there was an error loading the project (invalid syntax, non-existing
-directories, ...), a warning dialog is displayed when you select the menu. This
-reminds you that the project might be only partially loaded, and editing it
-might result in the loss of data. In such cases, it is recommended that you
-edit the project file manually, which you can do directly from the pop-up
-dialog.
+If there was an error loading the project (such as invalid syntax or
+non-existing directories), GPS displays a warning dialog when you select
+the menu. This reminds you that the project might be only partially loaded,
+and editing it might result in the loss of data. In such cases, it's
+recommended you edit the project file manually, which you can do directly
+from the pop-up dialog.
 
-Fix the project file as you would for any text file, and then reload it
-manually (through the :menuselection:`Project --> Open...` or
-:menuselection:`Project --> Recent` menus.
+Correct the errors in the project file by editing it as you would any text
+file and reload it manually (through the :menuselection:`Project -->
+Open...` or :menuselection:`Project --> Recent` menus.
 
 .. image:: project-properties.jpg
 
@@ -1003,45 +984,43 @@ The project properties editor is divided in three parts:
 
 *The attributes editor*
 
-  The contents of this editor are very similar to that of the project wizard
-  (:ref:`The_Project_Wizard`). In fact, all pages but the :guilabel:`General`
-  page are exactly the same, and you should therefore read the description for
-  these in the project wizard chapter.
+  The contents of this editor are very similar to that of the project
+  wizard (:ref:`The_Project_Wizard`). In fact, all pages but the
+  :guilabel:`General` page are exactly the same and you should read their
+  description in the project wizard section.
 
   See also :ref:`Working_in_a_Cross_Environment` for more info on the
   :guilabel:`Cross environment` attributes.
 
 *The project selector*
 
-  This area, in the top-right corner of the properties editor, contains a list
-  of all the projects in the hierarchy. The value in the attributes editor is
-  applied to all the selected projects in this selector. You cannot unselect
-  the project for which you activated the contextual menu.
+  This area, the top-right corner of the properties editor, display a list
+  of all the projects in the hierarchy. The value in the attributes editor
+  is applied to all the selected projects in this selector. You cannot
+  unselect the project for which you activated the contextual menu.
 
-  Clicking on the right title bar (`Project`) of this selector will sort the
-  projects in ascending or descending order.
+  Clicking on the right title bar (`Project`) of this selector sorts the
+  projects in ascending or descending order.  Clicking on the left title
+  bar (untitled) selects or deselect all the projects.
 
-  Clicking on the left title bar (untitled) will select or unselect all the
-  projects.
-
-  This selector has two different possible presentations, chosen by the toggle
-  button on top: you can either get a sorted list of all the projects, each one
-  appearing only once. Or you can have the same project hierarchy as displayed
-  in the project view.
+  This selector has two different possible presentations, chosen by the
+  toggle button on top: you can either get a sorted list of all the
+  projects, each appearing only once, or the same project hierarchy
+  displayed in the project view.
 
 *The scenario selector*
 
-  This area, in the bottom-right corner of the properties editor, lists all the
-  scenario variables declared for the project hierarchy. By selecting some or
-  all of their values, you can chose to which scenario the modifications in the
-  attributes editor apply.
+  This area, the bottom-right corner of the properties editor, displays all
+  scenario variables declared in the project hierarchy. By selecting some
+  or all of their values, you can chose to which scenario the modifications
+  in the attributes editor apply.
 
   Clicking on the left title bar (untitled, on the left of the
-  :guilabel:`Scenario` label) will select or unselect all values of all
+  :guilabel:`Scenario` label) selects or deselects all values of all
   variables.
 
-  To select all values of a given variable, click on the corresponding check
-  button.
+  To select all values of a given variable, click on the corresponding
+  check button.
 
 
 .. _The_Switches_Editor:
@@ -1050,25 +1029,23 @@ The Switches Editor
 ===================
 
 The switches editor, available through the menu :menuselection:`Project -->
-Edit Switches`, lists all the source files associated with the selected
+Edit Switches`, displays all the source files associated with the selected
 project.
 
-For each file, the compiler switches are listed. These switches are displayed
-in gray if they are the default switches defined at the project level
-(:ref:`The_Project_Properties_Editor`). They are defined in black if they are
-specific to a given file.
+For each file, it lists the compiler switches for that file. These switches
+are displayed in gray if they're the default switches defined at the
+project level (:ref:`The_Project_Properties_Editor`) and in black if
+they're specific to that file.
 
-Double-clicking in the switches column allows you to edit the switches for a
-specific file. It is possible to edit the switches for multiple files at the
-same time by selecting them before displaying the contextual menu
-(:menuselection:`Edit switches for all selected files`).
+Edit the switches for the file by double-clicking in the switches column.
+You can edit the switches for multiple files at the same time by selecting
+them before displaying the contextual menu (:menuselection:`Edit switches
+for all selected files`).
 
-When you double-click in one of the columns that contain the switches, a new
-dialog is opened that allows you to edit the switches specific to the selected
-files.
-
-This dialog has a button titled :guilabel:`Revert`. Clicking on this button
-will cancel any file-specific switch, and revert to the default switches
-defined at the project level.
+When you double-click in one of the columns that contain the switches, GPS
+opens a new dialog allowing you to edit the switches specific to the
+selected files.  This dialog has a button titled :guilabel:`Revert`, which
+cancels any file-specific switch and revert to the default switches defined
+at the project level.
 
 .. image:: switch-editor-revert.jpg
