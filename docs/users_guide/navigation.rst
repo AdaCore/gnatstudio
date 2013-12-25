@@ -25,17 +25,17 @@ Here's language specific information about source navigation:
 *Ada*
   .. index:: Ada; cross-references
 
-  By default, the GNAT Pro compiler is used to generate the cross-reference
+  By default, the GNAT compiler is used to generate the cross-reference
   information needed by GPS.  However, if you're using the `-gnatD` or
   `-gnatx` switches, no cross reference information will be available to
   GPS.
 
-  .. index:: GNAT Pro; -gnatQ
-  .. index:: GNAT Pro; -k
+  .. index:: GNAT; -gnatQ
+  .. index:: GNAT; -k
 
   If you need to navigate through sources that don't compile (for example
   after modifications or while porting or initially developing an
-  application), GNAT Pro can generate partial cross-reference information
+  application), GNAT can generate partial cross-reference information
   if you specify the `-gnatQ` option. Using this along with the `-k` option
   of gnatmake allows generating as much relevant information from your non
   compilable sources as possible.
@@ -62,7 +62,7 @@ Here's language specific information about source navigation:
   .. index:: C++; cross-references
   .. index:: gcc; -fdump-xref
 
-  You need to use the GCC C and C++ compilers that come with GNAT Pro to
+  You need to use the GCC C and C++ compilers that come with GNAT to
   generate the cross-references information needed by GPS and call them
   with the `-fdump-xref` switch, so you need to first add that switch to
   your project's switches for C and C++ sources and compile your
@@ -402,12 +402,11 @@ cross-references.
    Open or raise the call graph browser on the specified entity and display
    all the subprograms calling *entity*. :ref:`Call_Graph`.
 
-:menuselection:`Expanded code`
-  Present for Ada files only. This menu generates a :file:`.dg` file by
-  calling your GNAT Pro compiler with the `:index:`-gnatGL`` switch and
-  displays the expanded code.  Use this when investigating low-level issues
-  and tracing how your source code is transformed by the GNAT Pro
-  front-end.
+:menuselection:`Expanded code` Present for Ada files only. This menu
+  generates a :file:`.dg` file by calling your GNAT compiler with the
+  `:index:`-gnatGL`` switch and displays the expanded code.  Use this when
+  investigating low-level issues and tracing how your source code is
+  transformed by the GNAT front-end.
 
 :menuselection:`Expanded code --> Show subprogram`
   Display expanded code for the current subprogram in the current editor.

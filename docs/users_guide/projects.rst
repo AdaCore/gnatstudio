@@ -5,11 +5,10 @@
 Project Handling
 ****************
 
-The section on the project view (:ref:`The_Project_View`) has already given a
-brief overview of what the projects are, and the information they contain.
-
-This chapter provides more in-depth information, and describes how such
-projects can be created and maintained.
+The discussion of the project view (:ref:`The_Project_View`) gave a brief
+overview of what the projects are and the information they contain.  This
+chapter provides more in-depth information and describes how you create and
+maintain projects.
 
 .. index:: project; description
 .. _Description_of_the_Projects:
@@ -20,78 +19,72 @@ Description of the Projects
 Project files and GNAT tools
 ----------------------------
 
-This section describes what the projects are, and what information they
-contain.
+The projects used by GPS are the same as the ones used by GNAT: all
+command-line GNAT tools are project aware.  Projects files are text
+(with the extension :file:`.gpr`), which you can edit either with any text
+editor or through GPS's interface.  GPS can load any project file, even
+those you created or edited manually, and you can manually edit project
+files created by GPS.  Most capabilities of project files can be accessed
+without using GPS itself.
 
-The most important thing to note is that the projects used by GPS are the same
-as the ones used by GNAT. These are text files (using the extension
-:file:`.gpr`) which can be edited either manually, with any text editor, or
-through the more advanced GPS interface.
+The detailed syntax and semantics of project files fully described in the
+GNAT Pro User's Guide (`gnat_ug.html <gnat_ug.html>`_) and GNAT Pro
+Reference Manual (`gnat_rm.html <gnat_rm.html>`_).  You should read these
+sections if you want to use the more advanced capabilities of project files
+which are not supported by GPS's graphical interface.
 
-The exact syntax of the project files is fully described in the GNAT User's
-Guide (`gnat_ug.html <gnat_ug.html>`_) and GNAT Reference Manual (`gnat_rm.html
-<gnat_rm.html>`_). This is recommended reading if you want to use some of the
-more advanced capabilities of project files which are not yet supported by the
-graphical interface.
-
-GPS can load any project file, even those that you have been edited manually.
-Furthermore, you can manually edit project files created by GPS.
-
-Typically you will not need to edit project files manually, since several
-graphical tools such as the project wizard (:ref:`The_Project_Wizard`) and the
-properties editor(:ref:`The_Project_Properties_Editor`) are provided.
+You usually won't need to edit project files manually, since GPS provides
+several graphical tools such as the project wizard
+(:ref:`The_Project_Wizard`) and the properties
+editor(:ref:`The_Project_Properties_Editor`).
 
 .. index:: project; normalization
 
-GPS doesn't preserve the layout nor comments of manually created projects after
-you have edited them in GPS. For instance, multiple case statements in the
-project will be coalesced into a single case statement.  This normalization is
-required for GPS to be able to preserve the previous semantic of the project in
-addition to the new settings.
+GPS doesn't preserve the layout or comments of projects you created
+manually after you've edited them in GPS. For example, multiple case
+statements in the project are merged into a single case statement.  GPS
+needs to do this normalization to be able to preserve the previous
+semantics of the project in addition to the new settings.
 
-All command-line GNAT tools are project aware, meaning that the notion of
-project goes well beyond GPS' user interface. Most capabilities of project
-files can be accessed without using GPS itself, making project files very
-attractive.
 
 .. index:: ADA_PROJECT_PATH
 .. index:: GPR_PROJECT_PATH
 
-GPS uses the same mechanisms to locate project files as GNAT itself:
+GPS uses the same mechanisms to locate project files as GNAT:
 
 * absolute paths
 
 * relative paths.
-  These paths, when used in a with line as described below, are relative
-  to the location of the project that does the with.
+  These paths, when used in a `with` line as described below, are relative
+  to the location of the project containing the `with`.
 
 * ADA_PROJECT_PATH.
-  If this environment variable is set, it contains a colon-separated (or
-  semicolon under Windows) list of directories in which the project files are
-  searched.
+  If set, an environment variable containing a colon-separated (semicolon
+  under Windows) list of directories to be searched for project files.
+  searched for.
 
 * GPR_PROJECT_PATH.
-  If this environment variable is set, it contains a colon-separated (or
-  semicolon under Windows) list of directories in which the project files are
-  searched.
+  If set, an environment variable containing a colon-separated (semicolon
+  under Windows) list of directories to be searched for project files.
 
 * predefined project path.
-  The compiler itself defines a predefined project path, in which standard
-  libraries can be installed, like XML/Ada for instance.
+  The compiler internally defines a predefined project path in which standard
+  libraries can be installed, for example XML/Ada.
 
 Contents of project files
 -------------------------
 
-Project files contain all the information that describe the organization of
-your source files, object files and executables.
+Project files contain all the information describing the organization of
+your source files, object files, and executables.
 
 .. index:: project; comments
 
-A project file can contain comments, which have the same format as in Ada, that
-is they start by "--" and extend to the end of the line.  You can add comments
-when you edit the project file manually. GPS will attempt to preserve them when
-you save the project through the menu, but this will not always be possible. It
-helps if the comments are put at the end of the line, as in::
+A project file can contain comments, which have the same format as in Ada:
+they start by "--" and extend to the end of the line.  You can add comments
+when you edit the project file manually. GPS attempts to preserve them when
+you save the project through the menu, but this is not always possible.
+GPS is more likely to preserve them if the comments are put at the end of
+the line::
 
   project Default is
       for Source_Dirs use ();  --  No source in this project
@@ -99,117 +92,115 @@ helps if the comments are put at the end of the line, as in::
 
 .. index:: project; subprojects
 
-Generally, one project file will not be enough to describe a complex
-organization. In this case, you will create and use a project hierarchy, with a
-root project importing other sub projects. Each of the projects and sub
-projects is responsible for its own set of sources (compiling them with the
-appropriate switches, put the resulting files in the right directories, ...).
+Often, one project file is not enough to describe a complex system. If so,
+you'll create and use a project hierarchy, with a root project importing
+the subprojects. Each project and subproject is responsible for its own set
+of sources (including compiling them with the appropriate switches and
+putting the resulting files in the correct directories).
 
-Each project contains the following information (see the GNAT user's guide for
-the full list)
+Each project file contains the following information (see the GNAT Pro
+User's Guide for the full list):
 
 * **List of imported projects**:
   .. index:: project; imported project
 
-  When you are compiling sources from this project, the builder will first make
-  sure that all the imported projects have been correctly recompiled and are
-  up-to-date. This way, dependencies between source files are properly handled.
+  When compiling sources from this project, the builder first makes sure it
+  has correctly recompiled all the imported projects and they're up to
+  date. This properly handles dependencies between source files.
 
-  If one of the source files of project A depends on some source files from
-  project B, then B must be imported by A. If this isn't the case, the compiler
-  will complain that some of the source files cannot be found.
+  If one source file of project A depends on some source files from project
+  B, B must be marked as imported by A.  If this isn't done, the compiler
+  will complain that those source files can't be found.
 
-  One important rule is that each source file name must be unique in the
-  project hierarchy (i.e. a file cannot be under control of two different
-  projects). This ensures that the same file will be found no matter what
-  project is managing the source file that uses
+  Each source file name must be unique in the project hierarchy (i.e., a
+  file cannot be under control of two different projects), ensuring that
+  the file will be found no matter what project is managing it.
 
 * **List of source directories**:
   .. index:: project; source directory
 
-  All the sources managed by a project are found in one or more source
-  directories. Each project can have multiple source directories, and a given
-  source directory might be shared by multiple projects.
+  All sources managed by a project are located in one or more source
+  directories. Each project can have multiple source directories and a
+  given source directory might be shared by multiple projects.
 
 * **Object directory**:
   .. index:: project; object directory
 
-  When the sources of the project are compiled, the resulting object files are
-  put into this object directory. There exist exactly one object directory for
-  each project. If you need to split the object files among multiple object
-  directories, you need to create multiple projects importing one another as
-  appropriate.
+  When sources of the project are compiled, the resulting object files are
+  put in this directory. There must be exactly one object directory for
+  each project. If you need to split the object files across multiple
+  directories, you must create multiple projects importing each another.
 
-  When sources from imported sub-projects are recompiled, the resulting object
-  files are put in the sub project's own object directory, and will never
-  pollute the parent's object directory.
+  When sources from imported subprojects are recompiled, the resulting
+  object files are put in the subproject's own object directory and not the
+  parent's object directory.
 
 * **Exec directory**:
   .. index:: project; exec directory
 
-  When a set of object files is linked into an executable, this executable is
-  put in the exec directory of the project file. If this attribute is
-  unspecified, the object directory is used.
+  When the object files are linked into an executable, this executable is
+  put in the exec directory specified by this attribute. If it's omitted,
+  the builder put the executable into the object directory.
 
 * **List of source files**:
   .. index:: project; source files
 
-  The project is responsible for managing a set of source files. These files
-  can be written in any programming languages. Currently, the graphical
-  interface supports Ada, C and C++.
+  Each project is responsible for managing its set of source files. These
+  files can be written in any programming language. The graphical interface
+  supports Ada, C and C++.
 
-  The default to find this set of source files is to take all the files in the
+  By default, these source files are found by taking all the files in the
   source directories that follow the naming scheme (see below) for each
-  language. In addition if you edit the project file manually, it is possible
-  to provide an explicit list of source files.
+  language. You can edit the project file manually to provide an explicit
+  list of source files.
 
-  This attribute cannot be modified graphically yet.
+  This attribute cannot be modified graphically.
 
 * **List of main units**:
   .. index:: project; main units
 
-  The main units of a project (or main files in some languages) are the units
-  that contain the main subprogram of the application, and that can be used to
-  link the rest of the application.
+  The main units of a project (or main files in some languages) are the
+  units containing the main subprogram of the application.  The name of the
+  file is generally related to the name of the executable.
 
-  The name of the file is generally related to the name of the executable.
-
-  A given project file hierarchy can be used to compile and link several
-  executables. GPS will automatically update the Compile, Run and Debug menu
+  A project file hierarchy can be used to compile and link several
+  executables. GPS automatically updates the Compile, Run and Debug menu
   with the list of executables, based on this list.
 
 * **Naming schemes**:
   .. index:: project; naming schemes
 
-  The naming scheme refers to the way files are named for each languages of the
-  project. This is used by GPS to choose the language support to use when a
-  source file is opened. This is also used to know what tools should be used to
-  compile or otherwise work with a source file.
+  The naming scheme refers to the way files are named for each language
+  used by the project.  GPS uses this to choose the language to use when
+  you open a source file and what tools should be used to compile or
+  otherwise manipulate a source file.
 
 * **Embedded targets and cross environments**:
   .. index:: project; cross environment
 
-  GPS supports cross environment software development: GPS itself can run on a
-  given host, such as GNU/Linux, while compilations, runs and debugging occur
-  on a different remote host, such as Sun/Solaris.
+  GPS supports cross environment software development: GPS itself can run
+  on one host, such as GNU/Linux, while compilation, execution, and
+  debugging occur on a different remote host, such as Sun/Solaris.
 
   .. index:: VxWorks
 
-  GPS also supports embedded targets (VxWorks, ...) by specifying alternate
-  names for the build and debug tools.
+  GPS also supports embedded targets such as VxWorks by specifying
+  alternate names for the build and debug tools.
 
-  The project file contains the information required to log on the remote host.
+  The project file contains the information required to log on to the
+  remote host.
 
 * **Tools**:
-  Project files provide a simple way to specify the compiler and debugger
+  Project files provide a simple way of specifying the compiler and debugger
   commands to use.
 
 * **Switches**:
   .. index:: project; switches
 
-  Each tool that is used by GPS (compiler, pretty-printer, debugger, ...) has
-  its own set of switches. Moreover, these switches may depend on the specific
-  file being processed, and the programming language it is written in.
+  Each tool used by GPS (such as the compiler, pretty-printer, and
+  debugger) has its own set of switches. Moreover, these switches may
+  depend on the file being processed and the programming language it's
+  written in.
 
 
 .. index:: project; languages
@@ -218,47 +209,38 @@ the full list)
 Supported Languages
 ===================
 
-Another information stored in the project is the list of languages that this
-project knows about. GPS support any number of language, with any name you
-choose. However, advanced support is only provided by default for some
-languages (Ada, C and C++), and you can specify other properties of the
-languages through customization files
-(:ref:`Adding_support_for_new_languages`).
+Other information stored in the project is the list of languages used by
+the project. GPS supports any language, each with a name you choose, but
+advanced support is only provided by default for some languages (Ada, C and
+C++).  You can specify other properties of the languages through
+customization files (:ref:`Adding_support_for_new_languages`).
 
-By default, the graphical interface will only give you a choice of languages
-among the ones that are known to GPS at that point, either through the default
-GPS support or your customization files. But you can also edit the project
-files by hand to add support for any language.
+The graphical interface only gives you a choice of the languages currently
+known to GPS, either through built-in support or your customization files.
+Supporting a languages means syntax highlighting in the editor, and
+possibly the :guilabel:`Outline` View.  Other languages have advanced
+cross-references available.  You can edit the project files by hand to add
+support for any language.
 
 Languages are a very important part of the project definition. For each
-language, you should specify a naming scheme that allows GPS to associate files
-with that language. You would for instance specify that all :file:`.adb` files
-are Ada, all :file:`.txt` files are standard text files, and so on.
+language, you should specify a naming scheme allow GPS to associate files
+with that language.  For example, you could specify that all :file:`.adb`
+files are Ada, all :file:`.txt` files are standard text files, etc.
 
 .. index:: menu; file --> open from project
 
-Only the files that have a known language associated with them are displayed in
-the `Project View`, or available for easy selection through the
-:menuselection:`File --> Open From Project` menu. Similarly, only these files
-are shown in the Version Control System interface.
+Only files that have an associated known language are displayed in the
+`Project View` and available for easy selection through the
+:menuselection:`File --> Open From Project` menu. Similarly, only these
+files are shown in the Version Control System interface.  It's important to
+properly set up your project to make these files conveniently available in
+GPS although you can still open any file through the :menuselection:`File
+--> Open` menu.
 
-It is therefore important to properly setup your project to make these files
-available conveniently in GPS, although of course you can still open any file
-through the :menuselection:`File --> Open` menu.
-
-If your project includes some README files, or other text files, you should add
-"txt" as a language (or any other name you want), and make sure that these
-files are associated with that language in the :menuselection:`Project --> Edit
-project properties`.
-
-By default, GPS provides support for a number of languages. In most cases, this
-support takes the form of syntax highlighting in the editor, and possibly the
-Outline View. Other languages have advanced cross-references available.
-
-All the supported languages can be added to the project, but you can also add
-your own languages as you need (either by editing the project files by hand, or
-by creating XML files to add GPS support for these languages, which will then
-show in the project properties editor graphically).
+If your project includes :file`README` files, or other text files, you
+should add "txt" as a language (the name is arbitrary) and ensure these
+files are associated with that language in the :menuselection:`Project -->
+Edit project properties`.
 
 
 
@@ -268,39 +250,38 @@ show in the project properties editor graphically).
 Scenarios and Configuration Variables
 =====================================
 
-The behavior of projects can be further tailored by the use of scenarios.
+You can further tailor the behavior of project by using scenarios.
 
 .. index:: project; attribute
 
-All the attributes of a project, except its list of imported projects, can be
-chosen based on the value of external variables, whose value is generally
-coming from the host computer environment, or directly set in GPS. The
-interface to manipulate these scenarios is the scenario view, which can be
-displayed by selecting the menu :menuselection:`Tools --> Views --> Scenario`
-(:ref:`The Scenario View <Scenario_View>`) It can be convenient to drag this
-window with your mouse, and drop it above the project view, so that you can see
-both at the same time.
+The value of all attributes of a project, except its list of imported
+projects, can be specified based on the value of external variables, each
+of whose value comes from either the host computer environment or
+specifically set in GPS. The interface to manipulate these scenarios is the
+:guilabel:`Scenario` view, which can be displayed by selecting the menu
+:menuselection:`Tools --> Views --> Scenario` (:ref:`The Scenario View
+<Scenario_View>`).  You may want to drop this window above the project view
+so you can see both at the same time.
 
-This area allows you to select new values for the scenario variables defined in
-your project, and thus change dynamically the view GPS has of your project and
-your source files.
+The :guilabel:`Scenario` view allows you to select new values for the
+scenario variables defined in your project and thus dynamically change the
+view GPS has of your project and your source files.
 
-This facility can for instance be used to compile all the sources either in
-debug mode (so that the executables can be run in the debugger), or in
-optimized mode (to reduce the space and increase the speed when delivering the
-software).  In this configuration scenario, all the attributes (source
-directories, tools, ...) remain the same, except for the compilation switches.
-It would be more difficult to maintain a completely separate hierarchy of
-project, and it is much more efficient to create a new configuration variable
-and edit the switches for the appropriate scenario
+For example, you can use this facility to compile all the sources either in
+debug mode (so that the executables can be run in the debugger) or in
+optimized mode (to reduce the space and increase the speed when delivering
+the software).  In that scenario, most of the attributes (such as source
+directories and tools) remain the same, but compilation switches differ.
+You could also maintain a completely separate hierarchy of projects, but
+it's much more efficient to create a new configuration variable and edit
+the switches for the appropriate scenario
 (:ref:`The_Project_Properties_Editor`).
 
-There is one limitation in what GPS can do with scenario variables: although
-gnatmake and gprbuild have no problem dealing with scenario variables whose
-default value is not a static string (for instance a concatenation, or the
-value of another scenario variable), GPS will not be able to edit such a
-project graphically. Such projects will load fine in GPS though.
-
+There's one limitation on what GPS can do with scenario variables: although
+`gnatmake` and `gprbuild` are able to use scenario variables whose default
+value is not a static string (for example, a concatenation or the value of
+another scenario variable), GPS can't edit such a project graphically,
+though such projects load correctly.
 
 
 .. index:: project; creating scenario variables
@@ -308,46 +289,44 @@ project graphically. Such projects will load fine in GPS though.
 Creating new scenario variables
 -------------------------------
 
-Creating a new scenario variable is done through the contextual menu
-(right-click) in the Project View or the Scenario View itself. Select the menu
-:menuselection:`Project --> Add Configuration Variable`. This opens the
-following dialog:
+You create a new scenario variable through the contextual menu (right-click)
+in the :guilabel:`Project` view or the :guilabel:`Scenario` view
+itself. Select the menu :menuselection:`Project --> Add Configuration
+Variable`. This opens the following dialog:
 
 .. image:: scenarios.png
 
-There are two main areas in this dialog: in the top line, you specify the name
-of the variable. This name is used for two purposes:
+There are two main areas in this dialog.  You specify the name of the
+variable in the top line. This name is used for two purposes:
 
-* It is displayed in the :guilabel:`Scenario` view
+* It's displayed in the :guilabel:`Scenario` view
 
-* This is the name of the environment variable from which the initial value is
-  read. When GPS is started, all configuration variables are initialized from
-  the host computer environment, although you can of course change its value
-  later on inside GPS. Note that selecting a new value for the scenario
-  variable does not change the actual value of the environment variable, which
-  is only used to get the default initial value of the scenario variable.
+* It's the name of the environment variable from which the initial value is
+  read. When GPS starts, all configuration variables are initialized from
+  the host computer environment, although you can later change its value
+  inside GPS.  Selecting a new value for the scenario variable doesn't
+  change the value of the environment variable, which is only used to get
+  the default initial value of the scenario variable.
 
-  When you spawn external tools like gnatmake for instance, you can also
-  specify the value they will use for the scenario variable by using a command
-  line switch, typically `-X`.
+  When you spawn external tools like `gnatmake`, you can also specify the
+  value they should use for the scenario variable by using a command line
+  switch, typically `-X`.
 
-If you click on the arrow on the right of this name area, GPS will display the
-list of all the environment variables that are currently defined. However, you
-don't need to pick the name of an existing variable, neither must the variable
-exist when GPS is started.
+Click on the arrow on the right of this name area to display the list of
+all environment variables that are currently defined. However, you can
+choose any variable; the environment variable need not exist when you start
+GPS.
 
-The second part of this dialog is the list of authorized value for this
-variable. Any other value will generate an error reported by GPS, and the
-project won't be loaded as a result.
-
-One of these values is the default value (the one whose button in the Default
-column is selected). This means that if the environment variable doesn't exist
-when GPS is started, GPS will behave as if it did exist with this default
+The second area in this dialog is the list of possible value for this
+variable.  GPS will generate an error and won't load the project if you
+specify any other value.  One of these values is the default (the one whose
+button in the Default column is selected): if the environment variable
+isn't defined exist when GPS starts, it behaves as if had this default
 value.
 
-The list of possible values can be edited by right-clicking on the name of the
-variable, and selecting one of :guilabel:`Edit properties` or :guilabel:`Delete
-variable`.
+You can edit the list of possible values by right-clicking on the name of
+the variable and selecting either :guilabel:`Edit properties` or
+:guilabel:`Delete variable`.
 
 
 .. index:: project; editing scenario variable
@@ -356,43 +335,39 @@ Editing existing scenario variables
 -----------------------------------
 
 If at least one configuration variable is defined in your project, the
-:guilabel:`Scenario` view will contain something similar to:
+:guilabel:`Scenario` view contains something similar to:
 
 .. image:: scenario-view.png
 
-You can easily change the current value of any of these variables by clicking
-on the value. This will display a pop-up window with the list of possible
-values, from which you select the one you wish to use.
+You can change the current value of any of these variables by clicking on
+it. This displays a pop-up window with the list of possible values, from
+which you select the one you to use.
 
-As soon as a new value is selected, GPS will recompute the project view (in
+As soon as a new value is selected, GPS recomputes the project view (in
 case source directories, object directories or list of source files have
-changed). A number of things will also be updated (like the list of executables
-in the `Compile`, `Run` and `Debug` menus).
+changed).  GPS will also update other items such as the list of executables
+in the `Compile`, `Run`, and `Debug` menus.
 
 .. index:: browsers
 .. index:: call graph
 
-Currently, GPS will not recompute the contents of the various browsers (call
-graph, dependencies, ...) for this updated project. This would be too expensive
-to do every time the value changes, and therefore you need to explicitly
-request an update.
+Because of the expense, GPS does not recompute the contents of the various
+browsers such as the call graph and dependencies for this updated project,
+so you need to explicitly request an update.
 
-You can change the list of possible values for a configuration variable at any
-time by clicking on the :guilabel:`edit` button in the local toolbar. This will
-pop up the same dialog that is used to create new variables. This dialog also
-allows you to change the name of the scenario variable. This name is the same
-as the environment variable that is used to set the initial value of the
+You can change the list of possible values for a configuration variable at
+any time by clicking on the :guilabel:`edit` button in the local
+toolbar. This pops up the same dialog used to create new variables and also
+allows you to change the name of the scenario variable. This name is the
+same as the environment variable used to set the initial value of the
 scenario variable.
 
 .. index:: removing variable
 
-Removing a variable is done by clicking the :guilabel:`remove` the button in
-the local toolbar, after selecting the variable. GPS will then display a
-confirmation dialog.
-
-If you confirm that you want to delete the variable, GPS will simply remove the
-variable, and from now on act as if the variable always had the value it had
-when it was deleted.
+To remove a variable, select it and click the :guilabel:`remove` button in
+the local toolbar. GPS displays a confirmation dialog.  When the variable
+is removed, GPS will act as if the variable always had the value it had
+when it was removed.
 
 
 
@@ -402,115 +377,107 @@ when it was deleted.
 Extending Projects
 ==================
 
-Description of extending projects
+Description of project extentions
 ---------------------------------
 
-The project files were designed to support big projects, with several hundreds
-or thousands of source files. In such contexts, one developer will generally
-work on a subset of the sources. It is also not rare for such a project to take
-several hours to fully compile. Most developers therefore do not need to have
-the full copy of the project compiled on their own machine or personal disk
-space.
+Project files were designed to large big projects, with several hundreds or
+even thousands of source files. In such contexts, one developer will
+generally work on a subset of the sources.  Such a project may often take
+several hours to be fully compiled.  Most developers don't need to have the
+full copy of the project compiled on their own machine.
 
-However, it is still useful to be able to access other source files of the
-application, for instance to find out whether a subprogram can be changed and
-where it is currently called.
+However, it can still be useful to access other source files of the
+application, for example to find out whether a subprogram can be changed
+and where it is currently called.
 
-Such a setup can be achieved through extending projects. These are special
-types of projects that inherit most of their attributes and source files from
-another project, and can have, in their source directories, some source files
-that hide/replace those inherited from the original project.
+Such a setup can be achieved through project extentions. These are special
+types of projects that inherit most of their attributes and source files
+from another project and can have, in their source directories, some source
+files that hide those inherited from the original project.
 
-When compiling such projects, the compiler will put the newly created project
-files in the extending project's directory, and will leave the original
-untouched. As a result, the original project can be shared read-only among
-several developers (for instance, it is usual for this original project to be
-the result of a nightly build of the application).
+When compiling such projects, the compiler puts the newly created project
+files in the extention project's directory and leaves the original
+directory untouched. As a result, the original project can be shared
+read-only among several developers (for example, the original project will
+often be the result of a nightly build of the application).
 
-Creating extending projects
+Creating project extentions
 ---------------------------
 
-This project wizard allows you to easily create extending projects. You should
-select an empty directory (which will be created automatically if needed), as
-well as a list of source files you want to work on initially.  New files can
-also be added later.
+The project wizard allows you to create extention projects.  Select an
+empty directory (which is created if it doesn't exist) as well as a list of
+initial source files.  (New files can also be added later.)  GPS will copy
+the selected source files to the directory and create a number of project
+files there. It then loads a new project, with the same properties as the
+previous one, except that some files are found in the new directory and
+object files resulting from the compilation are put into that directory
+instead of the object directory of the original project.
 
-As a result, GPS will copy the selected source files to the new directory (if
-you so decided), and create a number of project files there. It will then load
-a new project, which has the same properties as the previous one, except that
-some files are found transparently in the new directory, and object files
-resulting from the compilation are create into that directory as opposed to the
-object directory of the original project.
-
-Adding files to extending projects
+Adding files to project extentions
 ----------------------------------
 
 .. index:: Add To Extending Project
 
-Once you have loaded an extending project in GPS, things work mostly
-transparently. If you open a file through the :menuselection:`File --> Open
-From Project` dialog, the files found in the local directory of your extending
-project will be picked up first.
+Once you loaded a project extention in GPS, most things are transparent to
+the extention. If you open a file through the :menuselection:`File --> Open
+From Project` dialog, the files found in the local directory of the
+extention project will be picked up first.  Build actions create object
+files in the project extentions's directory, leaving the original project
+untouched.
 
-The build actions will create object files in the extending project's
-directory, leaving the original project untouched.
-
-It might happen that you want to start working on a source file that you had
-not added in the extending project when it was created. You can of course edit
-the file found in the original project, provided you have write access to it.
-However, it is generally better to edit it in the context of the extending
-project, so that the original project can be shared among developers.
-
-This can be done by clicking on the file in the :guilabel:`Project` view, then
-selecting the menu :menuselection:`Add To Extending Project`. This will popup a
-dialog asking whether you want GPS to copy the file to the extending project's
-directory for you. GPS might also create some new project files in that
-directory if necessary, and automatically reload the project as needed. From
-then on, if you use the menu :menuselection:`File --> Open From Project`, GPS
-will first see the file from the extending project.
-
-Note that open editors will still be editing the same file they were before, so
-you should open the new file if needed.
-
+You may want to work on a source file you didn't put in the project
+extention when you created it. You could edit the file in the original
+project provided you have write access to it.  However, it's generally
+better to edit it in the context of the project extention, so the original
+project can be shared among developers.  Do this by clicking on the file in
+the :guilabel:`Project` view and selecting the menu :menuselection:`Add To
+Extending Project`.  Pop up a dialog asking whether you want GPS to copy
+the file to the extending project's directory.  GPS may also create some
+new project files in that directory if necessary and automatically reload
+the project as needed. From that point on, if you use the menu
+:menuselection:`File --> Open From Project`, GPS see the file from the
+project extention.  Open editors will still be editing the same file they
+were, so you should open the new file in them if needed.
 
 
 .. index:: project; editing
 .. _Disabling_Project_Edition_Features:
 
-Disabling Project Edition Features
-==================================
+Disabling Editing of the Project File
+=====================================
 
-The project files should generally be considered as part of the sources, and
-thus be put under control of a version control system. As such, you might want
-to prevent accidental editing of the project files, either by you or some other
-person using the same GPS installation.
+Project files should generally be considered part of the sources and put
+under control of a version control system, so you might want to prevent
+accidental editing of the project files, either by you or someone else
+using the same GPS installation.
 
-The main thing to do to prevent such accidental edition is to change the write
-permissions on the project files themselves. On Unix systems, you could also
-change the owner of the file. When GPS cannot write a project file, it will
-report an error to the user.
+One way to prevent such accidental edition is to change the write
+permissions on the project files themselves. On Unix systems, you could
+also change the owner of the file. When GPS cannot write a project file, it
+reports an error to the user.
 
-However, the above doesn't prevent a user from trying to do some modifications
-at the GUI level, since the error message only occurs when trying to save the
+However, the above doesn't prevent a user from trying to make changes at
+the GUI level, since the error message only occurs when trying to save the
 project (this is by design, so that temporary modification can be done in
 memory).
 
-You can disable all the project editing related menus in GPS by adding special
-startup switches. The recommended way is to create a small batch script that
-spawns GPS with these switches. You should use the following command line::
+You can disable all the project editing related menus in GPS by adding
+special startup switch, typically by creating a small script that spawns
+GPS with these switches. You should use the following command line::
 
    gps --traceoff=MODULE.PROJECT_VIEWER --traceoff=MODULE.PROJECT_PROPERTIES
 
 
 .. highlight:: python
 
-What these do it prevent the loading of the two GPS modules that are
-responsible for project edition. However, this also has an impact on the python
-functions that are exported by GPS, and thus could break some plug-ins. Another
-solution which might apply is simply to hide the corresponding project-editing
-menus and contextual menus. This could be done by creating a small python
-plugin for GPS (:ref:`Customizing_through_XML_and_Python_files`, which contains
-the following code::
+This prevents the loading of the two GPS modules that are responsible for
+editing project files. However, this also has an impact on the Python
+functions that are exported by GPS and thus could break some
+plug-ins. Another possible solution is to hide the corresponding
+project-editing menus and contextual menus.  You could do this by creating
+a small python plugin for GPS
+(:ref:`Customizing_through_XML_and_Python_files`, which contains the
+following code::
 
   import GPS
   GPS.Menu.get('/Project/Edit Project Properties').hide()
