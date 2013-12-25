@@ -4,13 +4,13 @@ Useful plug-ins
 User plug-ins
 ^^^^^^^^^^^^^
 
-GPS comes with a number of plug-ins. Some of these plugins are activated by
-default, others are not. In both cases, you can control which plug-ins should
-be activated by using the menu `/Tools/Plug-ins`.
+GPS comes with a number of plug-ins, some of which are activated by
+default and some not.  You can control which plug-ins are activated by
+using the menu `/Tools/Plug-ins`.
 
-This section highlights a few of these plug-ins, but GPS comes with many
-more plug-ins. The dialog `Tools/Plug-ins` will show their description, so
-that you can decide whether you want them or not.
+This section discusses a few of the many plug-ins that GPS has
+built-in. The dialog `Tools/Plug-ins` shows their description, so you
+can decide whether you want them enabled.
 
 The :file:`auto_highlight_occurrences.py` module
 ------------------------------------------------
@@ -26,8 +26,8 @@ The :file:`dispatching.py` module
 Helper plug-ins
 ^^^^^^^^^^^^^^^
 
-A number of plug-ins are in fact useful when you want to create your
-own plug-ins.
+A number of plug-ins are useful when you want to create your own
+plug-ins.
 
 The :file:`gps_utils` module
 ----------------------------
