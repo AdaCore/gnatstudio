@@ -12,49 +12,49 @@ Source Navigation
 Support for Cross-References
 ============================
 
-GPS provides cross-reference navigation for program entities, such as types,
-procedures, functions, variables, ..., defined in your application. The
-cross-reference support in GPS relies on the compiler generated xref
-information, which means that you need to compile your project first before
-being able to navigate.  Similarly when your sources have been modified, you
-need to rebuild and recompute xref information so that your changes are taken
-into account.
+GPS provides cross-reference navigation for program entities defined in
+your application such as types, procedures, functions, and variables.  This
+cross-reference support relies on the compiler generated xref information,
+so you need to compile your project before being able to navigate within
+it.  Similarly, you've modified your sources, you need to rebuild and
+recompute xref information it you want your changes to be taken into
+account by GPS.
 
-Here are language specific information about source navigation:
+Here's language specific information about source navigation:
 
 *Ada*
   .. index:: Ada; cross-references
 
-  The GNAT compiler is used to generate the cross-references information needed
-  by GPS by default, unless you are using the `-gnatD` or `-gnatx` switches, in
-  which case no cross reference information will be available.
+  By default, the GNAT Pro compiler is used to generate the cross-reference
+  information needed by GPS.  However, if you're using the `-gnatD` or
+  `-gnatx` switches, no cross reference information will be available to
+  GPS.
 
-  .. index:: GNAT; -gnatQ
-  .. index:: GNAT; -k
+  .. index:: GNAT Pro; -gnatQ
+  .. index:: GNAT Pro; -k
 
-  If you need to navigate through sources that do not compile (e.g after
-  modifications, or while porting an application), GNAT can still generate
-  partial cross-reference information if you specify the `-gnatQ` compilation
-  option. Along with the `-k` option of gnatmake, it is then possible to
-  generate as much relevant information as possible for your non compilable
-  sources.
+  If you need to navigate through sources that don't compile (for example
+  after modifications or while porting or initially developing an
+  application), GNAT Pro can generate partial cross-reference information
+  if you specify the `-gnatQ` option. Using this along with the `-k` option
+  of gnatmake allows generating as much relevant information from your non
+  compilable sources as possible.
 
   .. index:: GNAT; ALI files
 
-  There are a few special cases where GPS cannot find the external file (called
-  :file:`ALI file`) that contains the cross-reference information. Most likely,
-  this is either because you haven't compiled your sources yet, or because the
-  source code has changed since the :file:`ALI file` was generated.
-
-  It could also be that you haven't included in the project the object
-  directories that contain the :file:`ALI files`.
+  Sometimes, GPS can't find the external files (called :file:`ALI files`)
+  that contain the cross-reference information. Most likely, this is either
+  because you haven't compiled your sources yet or because the source code
+  changed since the :file:`ALI files` were generated.  Another possibility
+  is that you haven't included the object directories that contain the
+  :file:`ALI files` in the project.
 
   .. index:: separate unit
   .. index:: gnatkr
 
-  In addition, one special case cannot be handled automatically. This is for
-  separate units, whose file names have been crunched through the :program:`gnatkr`
-  command.
+  In addition, GPS can't automatically handle one special case, when you
+  have separate units whose file names have been crunched by the
+  :program:`gnatkr` command.
 
 
 *C/C++*
@@ -62,50 +62,45 @@ Here are language specific information about source navigation:
   .. index:: C++; cross-references
   .. index:: gcc; -fdump-xref
 
-  The GCC C and C++ compilers that come with GNAT need to be used to generate
-  the cross-references information needed by GPS, via the `-fdump-xref` switch.
-  This means that you need to first add the `-fdump-xref` switch to your
-  project's switches for C and C++ sources, and compile your application before
-  you browse through the cross-references or view various graphs in GPS.  If
+  You need to use the GCC C and C++ compilers that come with GNAT Pro to
+  generate the cross-references information needed by GPS and call them
+  with the `-fdump-xref` switch, so you need to first add that switch to
+  your project's switches for C and C++ sources and compile your
+  application before you browse through the cross-references.  If your
   sources have been modified, you should recompile the modified files.
 
 
 Ada xrefs heuristics
 --------------------
 
-GPS is able to provide some basic navigation support for Ada, C and C++ sources
-in the absence of information coming from the compiler. It uses a built-in
-parser,  parsing the files at startup and everytime they are modified.
+GPS can provide some basic navigation support for Ada, C and C++ sources
+even in the absence of information coming from the compiler. It uses a
+built-in parser, parsing the files at startup and when they're modified.
 This provides basic navigation in simple cases.
 
-In this mode, GPS is able to navigate to an entity body from the declaration,
-and to an entity declaration from the body. In case of other references, GPS
-will navigate to the declaration on simple cases, namely if the heuristics
-provide an information without ambiguity. In particular, it may not work with
-overloaded entities.
+In this mode, GPS can navigate to an entity body from the declaration, and
+vice versa. In case of other references, GPS will navigate to the
+declaration only if the heuristics provides the necessary information
+without ambiguity, which may not be the case with overloaded entities.
 
-These heuristics are not used in global reference searching operations or call
-graphs.
-
-Note that this parser is also used to provide the Ada outline view, code
-completion and entity view.
-
+This parser is also used to provide the Ada outline view, code completion
+and entity view, but these heuristics are not used in global reference
+searching operations or to generate call graphs.
 
 
 The xref database
 -----------------
 
 GPS parses the cross-reference information generated by the compiler (the
-:file:`.ali` and :file:`.gli` files into an sqlite database. This database
-can become quite big, and should preferrably be on a fast local disk.
+:file:`.ali` and :file:`.gli`) files into an `sqlite` database. This
+database can become quite large and should preferrably be on a fast local
+disk.
 
-By default, GPS will place this database in the object directory of the
-root project that is currently loaded. You can override this choice by
-adding an attribute :guilabel:`Xref_Database` in the :guilabel:`IDE`
-package of your project file. This attribute can be either an absolute
-path, or a path relative to the location of the project file itself
-
-We recommend that this path be specific to each user, and to each
+By default, GPS places this database in the object directory of the
+currently-loaded root project.  Override this choice by adding an attribute
+:guilabel:`Xref_Database` in the :guilabel:`IDE` package of your project
+file, either as an absolute path or a path relative to the location of the
+project file.  We recommend this path be specific to each use, and to each
 project this user might be working on, as in the following examples::
 
    --  assume this is in /home/user1/work/default.gpr
@@ -126,12 +121,9 @@ project this user might be working on, as in the following examples::
    end Default;
 
 One of the drawbacks in altering the default location is that
-:program:`gprclean` will not be able to remove this database when
-you clean your project.
-
-On the other hand, it might speed up your system if you can put the
-database on a fast local disk.
-
+:program:`gprclean` will not remove this database when you clean your
+project.  But it might speed up GPS if you can put the database on a fast
+local disk and your project isn't.
 
 
 .. _The_Navigate_Menu:
@@ -162,118 +154,111 @@ The Navigate Menu
 .. _Find_All_References:
 
 :menuselection:`Navigate --> Find All References`
-  Find all the references to the current entity in the project. The search is
-  based on the semantic information extracted from the sources, this is not a
-  simple text search. The result of the search is displayed in the location
-  window, see :ref:`The_Locations_View`.
-
+  Find all the references to the current entity in the project.  This is
+  not a simple text search: the search is based on the semantic information
+  extracted from the sources.  The result of the search is displayed in the
+  location view. See :ref:`The_Locations_View`.
 
 .. index:: menu; navigate --> goto declaration
 .. index:: goto declaration
 
 :menuselection:`Navigate --> Goto declaration`
-  Go to the declaration/spec of the current entity. The current entity is
-  determined by the word located around the cursor.  This item is also
-  accessible through the editor's contextual menu directly.  This capability
-  requires the availability of cross-reference information.
+  Go to the declaration (spec) of the current entity.  You can also access
+  this option through the editor's contextual menu.  This option requires
+  the availability of cross-reference information.
   :ref:`Support_for_Cross-References`.
-
 
 .. index:: menu; navigate --> goto body
 .. index:: goto body
 
 :menuselection:`Navigate --> Goto body`
-  Go to the body/implementation of the current entity. If the current entity is
-  the declaration of an Ada subprogram imported from C it goes to the location
-  where the C function is defined.  This item is also accessible through the
-  editor's contextual menu directly.  This capability requires the availability
-  of cross-reference information.  :ref:`Support_for_Cross-References`.
+  Go to the body (implementation) of the current entity. If the current
+  entity is the declaration of an Ada subprogram imported from C, it goes
+  to the location where the C function is defined.  You can also access
+  this option through the editor's contextual menu.  This option requires
+  the availability of cross-reference information.
+  :ref:`Support_for_Cross-References`.
 
 
 .. index:: menu; navigate --> goto matching delimiter
 
 :menuselection:`Navigate --> Goto matching delimiter`
-  Go to the delimiter matching the one right before (for a closing delimiter) or
-  right after (for an opening delimiter) the cursor if any.
+  Go to the delimiter matching the one right before (for a closing
+  delimiter) or right after (for an opening delimiter) the cursor, if any.
 
 
 .. index:: menu; navigate --> goto line
 .. index:: goto line
 
 :menuselection:`Navigate --> Goto line`
-  Open a dialog where you can type a line number,  in order to jump to a
-  specific location in the current source editor. This feature is also
-  available by clicking on the location at the bottom of editors.
+  Open a dialog where you can type a line number and jump to that line in
+  the current source editor. This option is also available by clicking on
+  the location at the bottom of editors.
 
 
 .. index:: menu; navigate --> goto entity
 
 :menuselection:`Navigate --> Goto entity`
-  Moves the focus to the :ref:`omni_search` window. You can the enter the
-  name (or part of the name) for any entity defined in your project, and
-  clicking on one of the results will take you to its declaration.
+  Moves the focus to the :ref:`omni_search` view. You can the enter the
+  name (or part of the name) for any entity defined in your project.
+  Clicking on one of the results takes you to its declaration.
 
 
 .. index:: menu; navigate --> goto file spec<->body
 
 :menuselection:`Navigate --> Goto file spec<->body`
-  Open the corresponding spec file if the current edited file is a body file,
-  or body file otherwise.  This item is also accessible through the editor's
-  contextual menu
-
-  This capability requires support for cross-references.  This item is also
-  accessible through the editor's contextual menu
+  Open the corresponding spec file if the current edited file is a body
+  file, or body file otherwise.  You can also access this option through
+  the editor's contextual menu.  This option requires support for
+  cross-references.
 
 
 .. index:: menu; navigate --> start of statement
 
 :menuselection:`Navigate --> Start of statement`
-  Move the cursor position to the start of the current statement, move to the
-  start of the enclosing statement if the cursor position is already at the
-  start of the statement.
+  Move the cursor to the start of the current statement or the start of the
+  enclosing statement if the cursor is already at the start of a statement.
 
 
 .. index:: menu; navigate --> end of statement
 
 :menuselection:`Navigate --> End of statement`
-  Move the current cursor position to the end of the statement, move to the end
-  of the enclosing statement if the cursor position is already at the end of
-  the statement.
+  Move the cursor to the end of the current statement or the end of the
+  enclosing statement if the cursor position is already at the end of a
+  statement.
 
 
 .. index:: menu; navigate --> previous subprogram
 
 :menuselection:`Navigate --> Previous subprogram`
-  Move the current cursor position to the start of the previous procedure,
-  function, task, protected record or entry.
+  Move the cursor to the start of the previous procedure, function, task,
+  protected record, or entry.
 
 
 .. index:: menu; navigate --> next subprogram
 
 :menuselection:`Navigate --> Next subprogram`
-  Move the current cursor position to the start of the next procedure,
-  function, task, protected record or entry.
+  Move the cursor to the start of the next procedure, function, task,
+  protected record or entry.
 
 
 .. index:: menu; navigate --> previous tag
 
 :menuselection:`Navigate --> Previous tag`
-  Go to previous tag/location. :ref:`The_Locations_View`.
-
+  Go to previous tag or location. :ref:`The_Locations_View`.
 
 .. index:: menu; navigate --> next tag
 
 :menuselection:`Navigate --> Next tag`
-  Go to next tag/location. :ref:`The_Locations_View`.
-
+  Go to next tag or location. :ref:`The_Locations_View`.
 
 .. index:: menu; navigate --> back
 
 :menuselection:`Navigate --> Back`
-  Everytime you use one of the navigation feature in GPS, GPS will first store
-  the current location in a history, and then move the focus to another part of
-  the editor or to another editor. This menu allows you to navigate backward in
-  the history, and thus go to the location you were previously viewing.
+  Each time you use one of the navigation feature in GPS, GPS first stores
+  the current location in a history and then move the cursor. This option
+  allows you to navigate backward in the history, going to the location you
+  were previously viewing.
 
 
 .. index:: menu; navigate --> forward
@@ -287,69 +272,63 @@ The Navigate Menu
 Contextual Menus for Source Navigation
 ======================================
 
-This contextual menu is available from any source editor.  If you right click
-on an entity, or first select text, the contextual menu will apply to this
-selection or entity.
+This contextual menu is available from any source editor.  If you right
+click on an entity or selected text, the contextual menu applies to the
+selection or entity.  Mostof these options requires support for
+cross-references.
 
 :menuselection:`Goto declaration of *entity*`
-  Go to the declaration/spec of *entity*. The current entity is determined by
-  the word located around the cursor or by the current selection if any.  This
-  capability requires support for cross-references.
+  Go to the declaration (spec) of *entity*.
 
 .. index:: plug-ins; methods.py
 
 :menuselection:`Goto declarations of *entity*`
-  This contextual menu appears when you are clicking on a subprogram call that
-  is a dispatching call. In such a case, there is no possibility for GPS to
-  know what subprogram will actually be called at run time, since that depends
-  on dynamic information. It therefore gives you a list of all entities in the
-  tagged type hierarchy, and lets you choose which of the declarations you want
-  to jump to. See also the :file:`methods.py` plug-in (enabled by default)
-  which, given an object, lists all its primitive operations in a contextual
-  menu so that you can easily jump to them. See also the contextual menu
-  :menuselection:`References --> Find References To...` which allows you to
-  find all calls to a subprogram or to one of its overriding subprograms.
+  This option appears when clicking on a subprogram call that is a
+  dispatching call. In such a case, GPS can't know what subprogram will
+  actually be called at run time, so it gives you a list of all entities in
+  the tagged type hierarchy and lets you choose which of the declarations
+  you want to jump to. See also the :file:`methods.py` plug-in (enabled by
+  default) which, given an object, lists all its primitive operations in a
+  contextual menu so you can easily jump to them. See also the contextual
+  menu :menuselection:`References --> Find References To...` which allows
+  you to find all calls to a subprogram or one of its overriding
+  subprograms.
 
 :menuselection:`Goto full declaration of *entity*`
-  This contextual menu appears for a private or limited private types. Go to
-  the full declaration/spec of *entity*. The current entity is determined by
-  the word located around the cursor or by the current selection if any.  This
-  capability requires support for cross-references.
+  This option appears for a private or limited private types. Go to the
+  full declaration (spec) of *entity*.
 
 :menuselection:`Goto type declaration of *entity*`
-  Go to the type declaration of *entity*. The current entity is determined by
-  the word located around the cursor or by the current selection if any.  This
-  capability requires support for cross-references.
+  Go to the type declaration of *entity*.
 
 :menuselection:`Display type hierarchy for *entity*`
-  This contextual menu appears for derived or access types. Output the :index:`type
-  hierarchy` for *entity* into the location view. The current entity is
-  determined by the word located around the cursor or by the current selection
-  if any.  This capability requires support for cross-references.
+  This contextual menu appears for derived or access types. Output the
+  :index:`type hierarchy` for *entity* into the location view.
 
 :menuselection:`Goto body of *entity*`
-  Go to the body/implementation of *entity*. If *entity* is the declaration of
-  an Ada subprogram imported from C it goes to the the location where the C
-  function is defined.  This capability requires support for cross-references.
+  Go to the body (implementation of *entity*.) If *entity* is the
+  declaration of an Ada subprogram imported from C it goes to the the
+  location where the C function is defined. 
 
 :menuselection:`Goto bodies of *entity*`
   This is similar to :menuselection:`Goto declarations of`, but applies to the
-  bodies of the entities.
+  bodies of entities.
 
 :menuselection:`Goto file spec/body`
-  Open the corresponding spec file if the current edited file is a body file,
-  or body file otherwise. This option is only available for the Ada language.
+  Open the corresponding spec file if the current edited file is a body
+  file, or the body file otherwise. This option is only available for the
+  Ada language.
 
 :menuselection:`*Entity* calls`
-  Display a list of all subprograms called by *entity* in a tree view. This is
-  generally more convenient than using the corresponding
-  :menuselection:`Browsers/` submenu if you expect lots of references,
+  Display a list of all subprograms called by *entity* in a tree view. This
+  is generally more convenient than using the corresponding
+  :menuselection:`Browsers/` submenu if you expect many references.
   :ref:`The_Callgraph_View`.
 
 :menuselection:`*Entity* is called by`
-  Display a list of all subprograms calling *entity* in a tree view. This is
-  generally more convenient than using the correponding
-  :menuselection:`Browsers/` submenu if you expect lots of references,
+  Display a list of all subprograms calling *entity* in a tree view. This
+  is generally more convenient than using the correponding
+  :menuselection:`Browsers/` submenu if you expect many references.
   :ref:`The_Callgraph_View`.
 
 :menuselection:`References --> Find all references`
@@ -357,36 +336,34 @@ selection or entity.
     files in the project.
 
 :menuselection:`References --> Find all references...`
-    This menu is similar to the one above, except it is possible to select more
-    precisely what kind of reference should be displayed. It is also possible to
-    indicate the scope of the search, and whether the context (or caller) at
-    each reference should be displayed.
+    Similar to the option above except that you can select more precisely what
+    kind of reference should be displayed.  You can also specify the scope
+    of the search and whether the context (or caller) at each reference
+    should be displayed.
 
     .. index:: primitive operations
     .. index:: overriding operations
     .. index:: methods
 
-    This dialog has an option :guilabel:`Include overriding and overriden
-    operations`, which, when activated, will include references to overriden or
-    overriding entities of the one you selected.
-
-    This is particularly useful when you are wondering whether you can easily
-    modify the profile of a primitive operation or method, since you can then
-    see what other entities will also be impacted. If you select only the
-    `declaration` check box, you will see the list of all related primitive
+    The option :guilabel:`Include overriding and overriden operations`,
+    includes references to overriden or overriding entities.  This is
+    particularly useful when if you need to know whether you can easily
+    modify the profile of a primitive operation or method since you can see
+    what other entities will also be impacted. If you select only the
+    `declaration` check box, you see the list of all related primitive
     operations.
 
     .. index:: imported entities
 
-    This dialog also allows you to find out which entities are imported from a
-    given file/unit. Click on any entity from that file (for instance on the
-    `with` line for Ada code), then select the :guilabel:`All entities imported
-    from same file` toggle button. This will display in the location window the
-    list of all entities imported from the same file as the entity selected.
+    This dialog allows you to determine which entities are imported from a
+    given file or unit. Click on any entity from that file (for example on
+    the `with` line for Ada code) and select the :guilabel:`All entities
+    imported from same file` toggle. This displays in the location view the
+    list of all entities imported from the same file.
 
-    In addition, if you have selected the :guilabel:`Show context` option, you
-    will get a list of all the exact references to these entities within the
-    file.  Otherwise, you just get a pointer to the declaration of the imported
+    Selecting the :guilabel:`Show context` option produces a list of all
+    the references to these entities within the file.  If that option is
+    not selected, you just get a pointer to the declaration of the imported
     entities.
 
 :menuselection:`References --> Find all local references to *entity*`
@@ -403,15 +380,16 @@ selection or entity.
 .. index:: plug-ins; methods.py
 
 :menuselection:`References --> Methods of *entity*`
-  This submenu is only visible if you have activated the plug-in
-  :file:`methods.py` (which is the case by default), and when you click on a
-  tagged type or an instance of a tagged type. This menu lists all the
-  :index:`primitive operations` or :index:`methods` of that type, and you can
-  therefore easily jump to the declaration of any of these operations.
+
+  This option is only visible if you activated the plug-in
+  :file:`methods.py` (which is the default) and when you click on a tagged
+  type or an instance of a tagged type.  It lists all the :index:`primitive
+  operations` or :index:`methods` of that type, allowing you to jump to the
+  declaration of any of these operations or methods.
 
 :menuselection:`Browsers --> *Entity* calls`
-  Open or raise the :index:`call graph` browser on the specified entity and display
-  all the subprograms called by *entity*. :ref:`Call_Graph`.
+  Open or raise the :index:`call graph` browser on the specified entity and
+  display all the subprograms called by it. :ref:`Call_Graph`.
 
 :menuselection:`Browsers --> *Entity* calls (recursively)`
   Open or raise the call graph browser on the specified entity and display
@@ -425,10 +403,11 @@ selection or entity.
    all the subprograms calling *entity*. :ref:`Call_Graph`.
 
 :menuselection:`Expanded code`
-  Present for Ada files only. This menu generates a :file:`.dg` file using your gnat
-  compiler (using the `:index:`-gnatGL`` switch) and displays the expanded code. This can
-  be useful when investigating low-level issues and tracing precisely how the
-  source code is transformed by the GNAT front-end.
+  Present for Ada files only. This menu generates a :file:`.dg` file by
+  calling your GNAT Pro compiler with the `:index:`-gnatGL`` switch and
+  displays the expanded code.  Use this when investigating low-level issues
+  and tracing how your source code is transformed by the GNAT Pro
+  front-end.
 
 :menuselection:`Expanded code --> Show subprogram`
   Display expanded code for the current subprogram in the current editor.
@@ -442,14 +421,10 @@ selection or entity.
 :menuselection:`Expanded code --> Clear`
   Remove expanded code from the current editor.
 
-  For Ada files only, this entry will generate, and will open this file
-  at the location corresponding to the current source line.
-
 :menuselection:`Open *filename*`
   When you click on a filename (for instance a C' `#include`, or an error
-  message in a log file), this menu gives you a way to open the corresponding
-  file. If the file name was followed by ":" and a line number, the
-  corresponding line is activated.
+  message in a log file), this option opens that file. If the file name was
+  followed by ":" and a line number the cursor points to that line.
 
 
 .. index:: hyperlinks
@@ -458,30 +433,28 @@ selection or entity.
 Navigating with hyperlinks
 ==========================
 
-When the :kbd:`Control` key is pressed and you start moving the mouse, entities
-in the editors under the mouse cursor become hyperlinks and the mouse cursor
-aspect changes.
+When you press the :kbd:`Control` key and start moving the mouse, entities
+in the editors under the pointer become hyperlinks and the form of the
+pointer changes.
 
-Left-clicking on a reference to an entity will open a source editor on the
-declaration of this entity, and left-clicking on an entity declaration will
-open an editor on the implementation of this entity.
+Left-clicking on a reference to an entity opens a source editor on the
+declaration of the entity and left-clicking on an entity declaration opens
+an editor on the implementation of the entity.  Left-clicking on the Ada
+declaration of a subprogram imported from C opens a source editor on the
+definition of the corresponding C entity. This capability requires support
+for cross-references.
 
-Left-clicking on the Ada declaration of a subprogram imported from C will open
-a source editor on the definition of the corresponding C entity. This
-capability requires support for cross-references.
+Middle-clicking on either a reference to an entity or the declaration of an
+entity jumps to the implementation (or type completion) of the entity.
 
-Clicking with the middle button on either a reference to an entity or the
-declaration of an entity will jump directly to the implementation or type
-completion) of this entity.
-
-Note that for efficiency, GPS may create hyperlinks for some entities which
-have no associated cross reference. In this case, clicking will have no effect,
-even though an hyperlink may have been displayed.
+For efficiency, GPS may create hyperlinks for some entities which have no
+associated cross reference. In this case, clicking has no effect even
+though an hyperlink may have been displayed.
 
 .. index:: preferences; general --> hyper links
 
-This behavior is controlled by the :menuselection:`General --> Hyper links` preference.
-
+This behavior is controlled by the :menuselection:`General --> Hyper links`
+preference.
 
 
 .. index:: dispatching
@@ -491,17 +464,15 @@ This behavior is controlled by the :menuselection:`General --> Hyper links` pref
 Highlighting dispatching calls
 ==============================
 
-Dispatching calls in Ada and C++ source code are highlighted by default in GPS
-via the :file:`dispatching.py` plug-in.
+By default, dispatching calls in Ada and C++ source code are highlighted in
+GPS via the :file:`dispatching.py` plug-in.
 
-Based on the cross-reference information, this plug-in will highlight (with a
-special color that you can configure in the preferences dialog) all calls that
-are dispatching (or calls to virtual methods in C++).  A dispatching call, in
-Ada, is a subprogram call where the actual subprogram that is called is not
-known until run time, and is chosen based on the tag of the object (so this of
-course only exists when you are using object-oriented programming).
+Based on the cross-reference information, this plug-in highlights (with a
+special color you can configure in the preferences dialog) all calls that
+are dispatching in Ada or calls to virtual methods in C++.  A dispatching
+call in Ada is a subprogram call where the actual subprogram called is not
+known until run time and is chosen based on the tag of the object.
 
-To disable this highlighting (which might sometimes be slow if you are using
-big sources, even though the highlighting itself is done in the background),
-you can go to the :menuselection:`Tools --> Plug-ins` menu, and disable the
+Disable this highlighting (which may be slow if you have large sources), go
+to the :menuselection:`Tools --> Plug-ins` menu and disable the
 :file:`dispatching.py` plug-in.
