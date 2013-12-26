@@ -524,16 +524,17 @@ contains the following options:
 The Contextual Menu
 -------------------
 
-When relevant to the context, right-clicking display GNATtest-related
-contextual menu entries.  From a source file containing a library package
-declaration, there's an option called "GNATtest/Generate unit test setup
-for <file>" that generates the harness for this single package.  From a
-project contextual menu (:ref:`The_Project_View`), there's an option
-"GNATtest/Generate unit test setup for <project>" that generates the
-harness for the entire project.  The "GNATtest/Generate unit test setup for
-<project> recursive" option generates a harness for whole hierarchy of
-projects. If a harness project already exists, the "GNATtest/Open harness
-project" option switches GPS to the harness project.
+When relevant to the context, right-clicking displays GNATtest-related
+contextual menu entries.  From a source file containing a library
+package declaration, there's an option called "GNATtest/Generate unit
+test setup for <file>" that generates the harness for this single
+package.  From a project contextual menu (:ref:`The_Project_View`),
+there's an option "GNATtest/Generate unit test setup for <project>"
+that generates the harness for the entire project.  The
+"GNATtest/Generate unit test setup for <project> recursive" option
+generates a harness for whole hierarchy of projects. If a harness
+project already exists, the "GNATtest/Open harness project" option
+switches GPS to the harness project.
 
 While a harness project is opened, you can easily navigate between the
 tested routine and its test code.  Clicking on the name of a tested routine
@@ -545,9 +546,8 @@ files of test cases or setup and teardown code has an option called
 Project Properties
 ------------------
 
-Gnattest's behaviour could be configured through project properties.
-GNATtest page in (:ref:`The_Project_Properties_Editor`) gives you
-convenient access to these properties.
+You configure gnattest's behavior through the GNATtest page in
+(:ref:`The_Project_Properties_Editor`).
 
 .. _Metrics:
 
@@ -556,49 +556,45 @@ Metrics
 
 .. index:: Metrics
 
-GPS provides an interface with the GNAT software metrics generation tool
-`gnatmetric`.
+GPS provides an interface to the GNAT software metrics generation tool
+`gnatmetric`.  Metrics can be computed for the one source file, for
+the current project, or for the current project and all its imported
+subprojects
 
-The metrics can be computed for the one source file, for the current project,
-or for the current project and its imported subprojects
-
-The metrics generator can be invoked either from the `Tools->Metrics`
-menu or from the contextual menu.
+Invoke the metrics generator from the :guimenu:`Tools->Metrics` menu
+or the contextual menu.
 
 The Metrics Menu
 ----------------
 
-The `Metrics` submenu is available from the `Tools` global menu and
+The `Metrics` submenu is available from the :guimenu:`Tools` global menu and
 contains:
 
 *Compute metrics for current file*
   Generate metrics for the current source file.
 
 *Compute metrics for current project*
-  Generate metrics for all files from the current project.
+  Generate metrics for all files in the current project.
 
 *Compute metrics for current project and subprojects*
-  Generate metrics for all files from the current project and subprojects.
+  Generate metrics for all files in the current project and subprojects.
 
 The Contextual Menu
 -------------------
 
-When relevant (depending on the context), right-clicking with your mouse will
-show metrics-related contextual menu entries.
-
-From a source file contextual menu, you have an option called *Metrics for
-file* that will generate the metrics for the current file.
-
-From a project contextual menu (:ref:`The_Project_View`), you have an option
-*Metrics for project* that will generate the metrics for all files in the
+When relevant to the context, right-clicking displays metrics-related
+contextual menu entries.  A source file contextual menu has an option
+"Metrics for file" that generates the metrics for the current file.  A
+project contextual menu (:ref:`The_Project_View`) has an option
+"Metrics for project" that generates the metrics for all files in the
 project.
 
-After having computed metrics, a new window in the left-side area is displayed
-showing the computed metrics as a hierarchical tree view. The metrics are
-arranged by files, and then by scopes inside the files in a nested fashion.
-Double-clicking on any of the files or scopes displayed will open the
+After computing the requested metrics, GPS displays a new window in the
+left-side area showing the computed metrics in a hierarchical tree
+form. The metrics are arranged first by files and then by scopes inside the
+files.  Double-clicking on any of the files or scopes displayed opens the
 appropriate source location in the editor. Any errors encountered during
-metrics computation will be displayed in the Locations Window.
+metrics computation will be displayed in the :gnulabel:`locations` view.
 
 .. _Code_Coverage:
 
