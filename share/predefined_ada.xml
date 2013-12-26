@@ -4802,13 +4802,25 @@ Syntax:
 
 pragma Compiler_Unit;
 
+This pragma is obsolete. It is equivalent to Compiler_Unit_Warning. It
+is retained so that old versions of the GNAT run-time that use this
+pragma can be compiled with newer versions of the compiler.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Compiler_Unit_Warning" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Compiler_Unit_Warning;
+
 This pragma is intended only for internal use in the GNAT run-time
 library.  It indicates that the unit is used as part of the compiler
-build. The effect is to disallow constructs (raise with message,
-conditional expressions etc) that would cause trouble when
-bootstrapping using an older version of GNAT.  For the exact list of
+build. The effect is to generate warnings for the use of constructs
+(for example, conditional expressions) that would cause trouble when
+bootstrapping using an older version of GNAT. For the exact list of
 restrictions, see the compiler sources and references to
-Is_Compiler_Unit.
+Check_Compiler_Unit.
       </DOC>
    </PRAGMA>
 
@@ -8348,6 +8360,21 @@ warnings on obsolescent features are enabled, is ignored.  It is
 retained for compatibility purposes. It used to be used in connection
 with optimization of a now-obsolete mechanism for implementation of
 exceptions.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Provide_Shift_Operators" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Provide_Shift_Operators (integer_first_subtype_LOCAL_NAME);
+
+This pragma can be applied to a first subtype local name that specifies
+either an unsigned or signed type. It has the effect of providing the
+five shift operators (Shift_Left, Shift_Right, Shift_Right_Arithmetic,
+Rotate_Left and Rotate_Right) for the given type. It is equivalent to
+including the function declarations for these five operators, together
+with the pragma Import (Intrinsic, ...) statements.
       </DOC>
    </PRAGMA>
 
