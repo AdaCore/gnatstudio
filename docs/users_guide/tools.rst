@@ -720,21 +720,21 @@ Stack Analysis
 
 .. index:: Stack Analysis
 
-GPS provides an interface to `GNATstack`, the static stack analysis tool.  This
-interface is enabled only if you have the *gnatstack* executable installed on
-your system and available on the path.
+GPS provides an interface to `GNATstack`, the static stack analysis tool.
+This interface is only availbale if you have the `gnatstack` executable
+installed and available on the path.  GPS computes, loads, and visually
+displays stack usage information for the entire project hierarchy used in
+GPS.  You can enter stack usage information for unknown and unbounded calls
+within GPS.
 
-Stack usage information can be computed from, loaded and visualized in GPS for
-the entire project hierarchy used in GPS. Stack usage information for unknown
-and unbounded calls can be edited in GPS.
+Once computed and loaded, GPS summarizes the stack usage information in a
+report and uses it to annotate source code with stack usage
+annotations. The largest stack usage path is loaded into the
+:guilabel:`Locations` view.  :ref:`The_Locations_View`.
 
-Once computed and loaded, the stack usage information is summarized in a
-report, and used to decorate source code through stack usage annotations. The
-largest stack usage path is filled into the :ref:`The_Locations_View`.
-
-Stack usage information for undefined subprograms can be specified by adding a
-:file:`.ci` file to the set of GNATStack switches in the `Switches` attribute
-of the `Stack` package of your root project, e.g::
+Specify stack usage information for undefined subprograms by adding one or
+more :file:`.ci` files to the set of GNATStack switches in the `Switches`
+attribute of the `Stack` package of your root project.  For example::
 
   project P is
      package Stack is
@@ -744,78 +744,79 @@ of the `Stack` package of your root project, e.g::
   
 
 You can also specify this information by using the `GNATStack` page of the
-`Switches` section in the :ref:`The_Project_Properties_Editor`. Several files
-can be specified.
-
-:ref:`The Stack Usage Editor <The_Stack_Usage_Editor>` can be used to edit
-stack usage information for undefined subprograms.
+`Switches` section in the :ref:`The_Project_Properties_Editor`.  Use
+:ref:`The Stack Usage Editor <The_Stack_Usage_Editor>` to edit stack usage
+information for undefined subprograms.
 
 The Stack Analysis Menu
 -----------------------
 
-All stack analysis related operations are reachable via the `Tools->Stack Analysis` menu:
+You can access all the stack analysis operations via the
+:guimenu:`Tools->Stack Analysis` menu:
 
 *Analyze stack usage*
-  Generates stack usage information for the root project.
+  Generate stack usage information for the root project.
 
 *Open undefined subprograms editor*
-  Opens undefined subprograms editor.
+  Open the undefined subprograms editor.
 
 *Load last stack usage*
-  Loads or re-loads last stack usage information for the root project.
+  Load (or reload) the latest stack usage information for the root project.
 
 *Clear stack usage data*
-  Removes stack analysis data loaded in GPS and any associated information such
+  Remove stack analysis data loaded in GPS and any associated information such
   as annotations in source editors.
 
 
 The Contextual Menu
 -------------------
 
-When clicking on a project, file or subprogram entity (including the entities
-listed in the coverage report), you have access to a *Stack Analysis* submenu.
-
-This submenu contains the following entries, related to the entity selected:
+The contextual menu for a project, file or subprogram entity (including the
+entities listed in the coverage report) has a 'Stack Analysis' submenu
+containing the following options, dependong on the type of entity selected:
 
 *Show stack usage*
-  Shows stack usage information for every subprogram of currently selected file.
+  Show stack usage information for every subprogram in the currently
+  selected file.
 
 *Hide stack usage*
-  Hides stack usage information for every subprogram of currently selected file.
+  Hide stack usage information for every subprogram in the currently
+  selected file.
 
 *Call tree for xxx*
-  Opens Call Tree view for currently selected subprogram.
+  Open the :guilabel:`Call Tree` view for the currently selected subprogram.
 
 The Stack Usage Report
 ----------------------
 
 .. _The_Stack_Usage_Report:
 
-When the stack usage information is loaded, a report is displayed containing
-a summary of the stack analysis.
+Once GPS has loaded the stack usage information, it displays a report
+containing a summary of the stack analysis.
 
 The Stack Usage Editor
 ----------------------
 
 .. _The_Stack_Usage_Editor:
 
-The Stack Usage Editor allows to specify stack usage for undefined subprograms
-and use these values to refine results of future analysis.
+The Stack Usage Editor allows you to specify the stack usage of undefined
+subprograms so these values can be used to refine results of future
+analysis.
 
 .. index:: screen shot
 .. image:: stack-usage-editor.jpg
 
-The Stack Usage Editor consists of two main areas. The notebook in the top area
-allows to select the file to edit. It displays the contents of the file and
-allows changing the stack usage of subprograms. The table in the bottom area
-displays all subprograms whose stack usage information is not specified so that
-they can be set.
+The Stack Usage Editor contains two main areas. The notebook on the top
+allows selecting the file to edit. It displays the contents of the file and
+allows you to enter or change the stack usage of subprograms in that
+file. The table in the area displays all subprograms whose stack usage
+information is not specified so you can set them.
 
-Stack usage information for subprograms can be specified or changed by clicking
-in the stack usage column on the right of the subprogram's name.  When a value
-is specified in the bottom area table, the subprogram is moved to the top table
-of the currently selected file. When a negative value is specified, the
-subprogram is moved to the bottom table.
+Specify of change stack usage information for subprograms by clicking in
+the stack usage column to the right of the subprogram's name.  When you
+specify a value in the bottom table, the subprogram is moved to the top
+table of the currently selected file. When a negative value is specified,
+the subprogram is moved to the bottom table.
 
-All changes are saved when the stack usage editor window is closed.
+GPS saves all changes when the stack usage editor window is closed.
 
