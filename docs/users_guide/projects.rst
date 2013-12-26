@@ -1042,10 +1042,10 @@ You can edit the switches for multiple files at the same time by selecting
 them before displaying the contextual menu (:menuselection:`Edit switches
 for all selected files`).
 
-When you double-click in one of the columns that contain the switches, GPS
-opens a new dialog allowing you to edit the switches specific to the
-selected files.  This dialog has a button titled :guilabel:`Revert`, which
-cancels any file-specific switch and revert to the default switches defined
-at the project level.
+When you double-click in one of the columns containing switches, GPS opens
+a new dialog allowing you to edit the switches specific to the selected
+files.  This dialog has a button titled :guilabel:`Revert`, which cancels
+any file-specific switch and revert to the default switches defined at the
+project level.
 
 .. image:: switch-editor-revert.jpg

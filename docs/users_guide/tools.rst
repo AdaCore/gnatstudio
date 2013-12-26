@@ -11,8 +11,8 @@ Tools
 The Tools Menu
 ==============
 
-The `Tools` menu gives access to additional tools. Some items are currently
-disabled, meaning that these are planned tools not yet available.
+The `Tools` menu gives access to additional tools.  If an option is
+disabled, it means it's a planned tool that's not yet available.
 
 The list of active items includes:
 
@@ -25,8 +25,7 @@ The list of active items includes:
     :ref:`Bookmarks`.
 
   *Call Trees*
-    Open a tree view of function callers and callees. See also
-
+    Open a tree view of displaying function callers and callees. See also
     :ref:`Call_Graph`.
 
   *Clipboard*
@@ -36,7 +35,7 @@ The list of active items includes:
     :ref:`Coverage Report <Coverage_Report>`.
 
   *Files*
-    Open a file system explorer on the left area.
+    Open a file system explorer in the left area.
 
     :ref:`The_File_View`.
 
@@ -45,12 +44,10 @@ The list of active items includes:
 
   *Outline*
     Open a view of the current source editor.
-
     :ref:`The_Outline_View`.
 
   *Messages*
-    Open the Messages view
-
+    Open the :guilabel:`Messages` view.
     :ref:`The_Messages_View`.
 
   *Project*
@@ -73,7 +70,6 @@ The list of active items includes:
 
   *Windows*
     Open a view containing all currently opened files.
-
     :ref:`The_Window_View`.
 
 *Browsers*
@@ -105,9 +101,9 @@ The list of active items includes:
   *GPS Shell*
     .. index:: shell
 
-    Open a shell console at the bottom area of GPS. Note that this not an OS
-    shell console, but a GPS shell console, where you can type GPS specific
-    commands such as `help`.
+    Open a shell console in the bottom area of the GPS window.  This not an
+    OS shell console, but a GPS shell console, where you can type GPS
+    specific commands such as `help`.
 
     :ref:`The_Shell_and_Python_Consoles`.
 
@@ -124,23 +120,23 @@ The list of active items includes:
     `SHELL` and `COMSPEC` to determine which shell to use.
     :ref:`The_Shell_and_Python_Consoles`.
 
-    On Unix, this terminal behaves a lot like a standard Unix terminal. In
-    particular, you need to make sure that your shell will output all the
+    On Unix, this terminal behaves a lot like a standard Unix terminal.
+    You need to make sure your shell will output all necessary
     information. In some cases, the configuration of your shell
-    (:file:`.bashrc` if you are running bash for instance) will deactivate the
-    echo of what you type to the terminal. Since GPS is not outputing anything
-    on its own, just showing what the shell is outputing, you need to somehow
-    ensure that your shell always echos what you type. This is done by running
-    the command::
+    (:file:`.bashrc` if you are running bash for instance) deactivates the
+    echo of what you type. Since GPS is not writing anything on its own,
+    but just showing what the shell is outputing, you need to ensure that
+    your shell always echos what you type.  You can do this by running the
+    command::
 
       stty echo
       
-    in such cases. In general, this can be safely done in your :file:`.bashrc`
+    in such cases.  You can normally safely put this in your
+    :file:`.bashrc`
 
-  *Auxiliary Builds*
-    Open the console containing auxiliary builds output. For now, only
-    cross-reference automated generation output is redirected to this console.
-    :ref:`Working_with_two_compilers`.
+  *Auxiliary Builds* Open the console containing auxiliary buils
+    output. Only cross-reference automated generation output is currently
+    sent to this console.  :ref:`Working_with_two_compilers`.
 
 *Coverage*
   .. index:: code coverage
@@ -180,7 +176,7 @@ The list of active items includes:
 *Interrupt*
   .. index:: interrupt
 
-  Interrupt the last task launched (e.g. compilation, vcs query, ...).
+  Interrupt the last task launched such as a compilation or vcs operation.
 
 .. _Coding_Standard:
 
@@ -189,25 +185,23 @@ Coding Standard
 
 .. index:: coding standard
 
-The Coding Standard menu allows you to edit your coding standard file, as can
-be understood by gnatcheck, as well as run it against your code, to verifiy its
-compliance with this coding standard.
+Use the Coding Standard menu to edit your coding standard file and run it
+against your code, to verifiy its compliance with this coding standard.
+This file is the input to the `gnatcheck` tool.  You can also use the
+contextual menu to check the conformance of a particular project or source
+file against a Coding Standard.
 
-Note that you can also use the contextual menu to check the conformance of a
-particular project or source file against a Coding Standard.
+Access the Coding standard editor using the :menuselection:`Tools->Coding
+Standard->Edit Rules File` menu.  You can select an existing coding
+standard file or create a new one. The editor adapts itself to the version
+of `gnatcheck` on your local machine.
 
-The Coding standard editor is triggered by the menu Tools->Coding
-Standard->Edit Rules File. The editor allows you to select an existing coding
-standard file, or create a new one. The editor adapts itself to the version of
-gnatcheck you are using on your local machine.
-
-The currently used rules are summarized in the bottom of the editor. Once all
-rules are defined, you can check the box 'Open rules file after exit' to
-manually verify the created file.
-
-Once the Coding Standard file is created, you can define it as the default
-coding standard file for a project by going to the project editor, selecting
-the 'Switches' tab, and using this file in the 'Gnatcheck' section.
+The rules currently in use are summarized in the bottom of the editor. Once
+all rules are defined, check the box 'Open rules file after exit' to
+manually verify the created file.  Once you've created the Coding Standard
+file, set it as the default coding standard file for a project by going to
+the project editor, selecting the 'Switches' tab, and specifying this file
+in the 'Gnatcheck' section.
 
 .. _Visual_Comparison:
 
@@ -216,79 +210,76 @@ Visual Comparison
 
 .. index:: visual diff
 
-The visual comparison, available either from the VCS menus or from the Tools
-menu, provide a way to display graphically differences between two or three
-files, or two different versions of the same file.
+The visual comparison, available either from the VCS menus or from the
+Tools menu, provides a way to graphically display differences between two
+or three files or two different versions of the same file.
 
-The 2-file comparison tool is based on the standard text command *diff*,
-available on all Unix systems. Under Windows, a default implementation is
-provided with GPS, called *gnudiff.exe*.  You may want to provide an alternate
-implementation by e.g. installing a set of Unix tools such as cygwin
-(`http://www.cygwin.com <http://www.cygwin.com>`_).
+The 2-file comparison tool uses the standard command `diff`, available on
+all Unix systems. Under Windows, a default implementation is provided with
+GPS, called :file:`gnudiff.exe`.  You may want to provide an alternate
+implementation, for example by installing a set of Unix tools such as
+Cygwin (`http://www.cygwin.com <http://www.cygwin.com>`_).  The 3-file
+comparison tool is based on the text command `diff3`, available on all Unix
+systems. Under Windows, this tool is not provided with GPS, but is
+available as part of Cygwin.
 
-The 3-file comparison tool is based on the text command *diff3*, available on
-all Unix systems. Under Windows, this tool is not shipped with GPS. It is
-available as part of cygwin, for example.
+GPS displays visual comparisons in either Side-by-Side or Unified mode.  In
+side-by-side mode, the user area displays editors for the files involved in
+the comparison side by side.  By default, GPS places the reference file on
+the left. In Unified mode, GPS doesn't open a new editor, but shows all the
+changes in the original editor.  Unified mode is used only when comparing
+two files; when comparing three files, only side-by-side mode is available.
 
-When querying a visual comparison in GPS, in Side_By_Side mode, the user area
-will show, side by side, editors for the files involved in the comparison.  The
-reference file is placed by default on the left side. When in Unified mode, GPS
-will not open a new editor, but will show all the changes directly in the
-original editor. Note that Unified mode is relevant only when comparing two
-files: when comparing three files, the Side_By_Side mode is used.
-
-Color highlighting will be added to the file editors:
+Lines in the file editors are highlighted with various colors.  In
+side-by-side mode, only the right editor (for the modified file) has
+different colors.
 
 *gray*
-  This color is used for all the chunks on the reference (left) file. Only
-  the modified (right) file is displayed with different colors.
+ Used for all the chunks on the reference (left) file.
 
 *yellow*
-  This color is used to display lines that have been modified compared to the
-  reference file. When there are fine differences within one line, they are
-  shown in a brighter yellow.
+  Used to display lines modified from the reference file. Small differences
+  within one line are shown in a brighter yellow.
 
 *green*
-  Used to display lines added compared to the reference file; in other words,
-  lines that are not present in the reference file.
+  Used to display lines not originally in the reference file but added to
+  the modified file.
 
 *red*
-  Used to display lines removed from the reference file; in other words,
-  lines that are present only in the reference file.
+  Used to display lines present in the reference file but deleted from the
+  modified file.
 
-These colors can be configured, :ref:`The_Preferences_Dialog`.
+You can configure these colors. :ref:`The_Preferences_Dialog`.
 
-As with all highlighted lines in GPS, the visual differences highlights are
+Like all highlighted lines in GPS, the visual differences highlights are
 visible in the Speed Column at the left of the editors.
 
-Blank lines are also added in the editors, in places that correspond to
-existing lines in the other editors. The vertical and horizontal scrolling are
-synchronized between all editors involved in a visual comparison.
-
-When a visual comparison is created, the Locations View is populated with the
-entries for each chunk of differences, and can be used to navigate between
-those.
-
-Closing one of the editors involved in a visual comparison removes the
+GPS adds blank lines in one editor in places corresponding to existing
+lines in the other editors.  Vertical and horizontal scrolling are
+synchronized between the editors involved in a visual comparison.  If you
+close one of the editors involved in a visual comparison, GPS removes the
 highlighting, blank lines, and scrolling in the other editors.
 
-Editors involved in a visual comparison have a contextual menu `Visual diff`
-that contains the following entries:
+When you create a visual comparison, GPS populates the
+:guilabel:`Locations` view with the entries for each chunk of differences.
+You can use those to navigate between the differences.
+
+Editors involved in a visual comparison have a contextual menu `Visual
+diff` containing the following entries:
 
 *Recompute*
-  Regenerates the visual comparison. This is useful, for example, when one of
-  the editors has been modified by hand while it was involved in a visual
-  comparison
+  Regenerate the visual comparison.  Use this when one of the files in an
+  editor has been modified by hand while involved in a visual comparison.
 
 *Hide*
-  Removes the highlighting corresponding to the visual comparison from all
-  editors involved
+  Remove the highlighting corresponding to the visual comparison from all
+  involved editors.
 
 *Close editors*
   Closes all editors involved in this visual comparison
 
 *Use this editor as reference*
-  Change the reference to this editor. (This is only visible when displaying a
+  Make this editor the reference. (This is only visible when displaying a
   visual comparison involving 3 files).
 
 .. index:: screen shot
