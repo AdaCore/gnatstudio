@@ -603,90 +603,86 @@ Code Coverage
 
 .. index:: Code Coverage
 
-GPS provides a tight integration with Gcov, the GNU code coverage utility.
+GPS is integrated with `gcov`, the GNU code coverage utility.  Within GPS,
+you can compute, load and visualize code coverage information.  You can do
+this for individual files, for each file of the current project, for
+individual projects in a hierarchy, or for the entire project hierarchy
+currently loaded by GPS.
 
-Code coverage information can be computed from, loaded and visualized in GPS.
-This can be done file by file, for each files of the current project, project
-by project (in case of dependencies) or for the entire project hierarchy
-currently used in GPS.
-
-Once computed then loaded, the coverage information is summarized in a
-graphical report (shaped as a tree-view with percentage bars for each item) and
-used to decorate source code through mechanisms such as line highlighting or
+Once computed and loaded, GPS summarizes the coverage information in a
+graphical report formatted as a tree-view with percentage bars for each
+item and uses it to decorate source code through line highlighting and
 coverage annotations.
 
-All the coverage related operations are reachable via the
-`Tools->Coverage` menu.
-
-In order to be loaded in GPS, the coverage information need to be computed
-before, using the `Tools->Coverage->Gcov->Compute coverage files` menu for
-instance.
-
-At each attempt, GPS automatically tries to load the needed information and
+You'll find all coverage related operations in the
+:guimenu:`Tools->Coverage` menu.  Before GPS can load coverage information,
+it must be computed, for example by using the
+:guimenu:`Tools->Coverage->Gcov->Compute coverage files` option.  After
+each coverage computation, GPS tries to load the needed information and
 reports errors for missing or corrupted :file:`.gcov` files.
 
-To be able to produce coverage information from Gcov, your project must have
-been compiled with the *-fprofile-arcs* and *-ftest-coverage*" switches,
-respectively "Instrument arcs" and "Code coverage" entries in
-:ref:`The_Project_Properties_Editor`, and run once.
+To produce coverage information from `gcov`, your project must be compiled
+with the "-fprofile-arcs" and "-ftest-coverage" switches, respectively
+"Instrument arcs" and "Code coverage" entries in
+:ref:`The_Project_Properties_Editor` and executed.
 
 Coverage Menu
 -------------
 
-The `Tools->Coverage` menu has a number of entries, depending on the
-context:
+The :guimenu:`Tools->Coverage` menu has a number of options, depending on
+the context:
 
 *Gcov->Compute coverage files*
-  Generates the *.gcov* files of current and properly compiled and run
-  projects.
+  Generate the :file:`.gcov` files of loaded projects that have been compiled
+  and executed.
 
 *Gcov->Remove coverage files*
-  Deletes all the *.gcov* of current projects.
+  Delete all the :file:`.gcov` of loaded projects.
 
 *Show report*
   Open a new window summarizing the coverage information currently loaded in
   GPS.
 
 *Load data for all projects*
-  Load or re-load the coverage information of every projects and subprojects.
+  Load (or reload) coverage information for every project and subproject.
 
 *Load data for project `XXX`*
-  Load or re-load the coverage information of the project `XXX`.
+  Load or re-load coverage information for the project `XXX`.
 
 *Load data for :file:`xxxxxxxx.xxx`*
-  Load or re-load the coverage information of the specified source file.
+  Load (or reload) coverage information for the specified source file.
 
 *Clear coverage from memory*
-  Drop every coverage information loaded in GPS.
+  Remove all coverage information loaded in GPS.
 
 The Contextual Menu
 -------------------
 
-When clicking on a project, file or subprogram entity (including the entities
-listed in the coverage report), you have access to a *Coverage* submenu.
-
-This submenu contains the following entries, adapted to the entity selected.
-For instance, if you click on a file, you will have:
+When clicking on a project, file or subprogram entity (including the
+entities listed in the coverage report), you'll see a :guimenu:`Coverage`
+submenu that contains the following options, depending on the type of
+entity selected.  For example, if you click on a file, the options are:
 
 *Show coverage information*
-  Append an annotation column to the left side of the current source editor.
-  This column indicates which lines are covered and which aren't. Unexecuted
-  lines are also listed in the :ref:`The_Locations_View`.
+  Display an annotation column on the left side of the current source
+  editor to indicates which lines are covered and which aren't.  Lines that
+  aren't covered are also listed in the :guilabel:`Locations` view.
+  :ref:`The_Locations_View`.
 
 *Hide coverage information*
-  Withdraw from the current source editor a previously set coverage annotation
-  column and clear :ref:`The_Locations_View` from the eventually listed
-  uncovered lines.
+
+  Remove the annotation column from the current source editor and clear
+  converage information from the :guilabel:`Locations` view.
 
 *Load data for :file:`xxxxxxxx.xxx`*
-  Load or re-load the coverage information of the specified source file.
+  Load (or reload) coverage information for the specified source file.
 
 *Remove data of :file:`xxxxxxxx.xxx`*
-  Remove the coverage information of the specified source file from GPS memory.
+  Delete coverage information from the specified source file.
 
 *Show Coverage report*
   Open a new window summarizing the coverage information. (This entry appears
-  only if the contextual menu has been created from outside of the Coverage
+  only if the contextual menu has been created from outside the Coverage
   Report.)
 
 The Coverage Report
@@ -694,30 +690,28 @@ The Coverage Report
 
 .. _Coverage_Report:
 
-When coverage information is loaded, a graphical coverage report is displayed.
-This report contains a tree of Projects, Files and Subprograms with
-corresponding coverage information for each node in sided columns.
+Once GPS has loaded coverage information, it displays a graphical coverage
+report that contains a tree of Projects, Files and Subprograms with
+corresponding coverage information for each node shown in a column on the
+side.
 
 .. index:: screen shot
 .. image:: report-of-analysis_tree.jpg
 
 The contextual menus generated on this widget contain, in addition to the
-regular entries, some specific Coverage Report entries.
-
-These entries allow you to expand or fold the tree, and also to display flat
-lists of files or subprograms instead of the tree. A flat list of file will
-look like:
+regular entries, some specific Coverage Report options that allow you to
+expand or fold the tree or to display flat lists of files or subprograms
+instead of a tree. A flat list of file looks like:
 
 .. index:: screen shot
 .. image:: report-of-analysis_flat.jpg
 
-GPS and Gcov both support many different programming languages, and so code
-coverage features are available in GPS for many languages. But, note that
-subprogram coverage details are not available for every supported languages.
-
-Note also that if you change the current main project in GPS, using the
-*Project->Open* menu for instance, you will also drop every loaded coverage
-information as they are related to the working project.
+GPS and `gcov` both support many different programming languages so code
+coverage features are available in GPS for many languages. But subprogram
+coverage details are not available for every supported language.  If you
+change the current main project in GPS, using the :guimenu:`Project->Open`
+menu, for example, GPS will delete all loaded coverage information for the
+loaded project.
 
 .. _Stack_Analysis:
 
