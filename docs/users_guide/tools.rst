@@ -63,7 +63,7 @@ The list of active items includes:
     :ref:`The_Task_Manager`.
 
   *VCS Activities*
-    :ref:`The_VCS_Activities`.
+    :ref:`VCS_Activities`.
 
   *VCS Explorer*
     :ref:`The_VCS_Explorer`.
