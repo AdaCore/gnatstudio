@@ -151,8 +151,6 @@ Default value for a scalar subtype. See 3.5.
    <ASPECT id = "0" name = "Depends" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Depends'.
-
-* Dimension::
       </DOC>
    </ASPECT>
 
@@ -206,12 +204,12 @@ This aspect is applied to a type, which must be a numeric derived type
 the dimension system. Each `DIMENSION' corresponds to one particular
 dimension. A maximum of 7 dimensions may be specified. `Unit_Name' is
 the name of the dimension (for example `Meter'). `Unit_Symbol' is the
-shorthand used for quantities of this dimension (for example 'm' for
-Meter). `Dim_Symbol' gives the identification within the dimension
-system (typically this is a single letter, e.g. 'L' standing for length
-for unit name Meter). The Unit_Smbol is used in formatted output of
-dimensioned quantities. The Dim_Symbol is used in error messages when
-numeric operations have inconsistent dimensions.
+shorthand used for quantities of this dimension (for example `m' for
+`Meter').  `Dim_Symbol' gives the identification within the dimension
+system (typically this is a single letter, e.g. `L' standing for length
+for unit name `Meter').  The `Unit_Symbol' is used in formatted output
+of dimensioned quantities.  The `Dim_Symbol' is used in error messages
+when numeric operations have inconsistent dimensions.
 
 GNAT provides the standard definition of the International MKS
 system in the run-time package `System.Dim.Mks'. You can easily define
