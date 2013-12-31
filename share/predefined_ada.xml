@@ -9093,6 +9093,11 @@ same representation is expected when a value of this type is read from
 the stream. Note that the value written always includes the bounds,
 even for Unbounded_String'Write, since Unbounded_String is not an array
 type.
+
+Note that the `Stream_Convert' pragma is not effective in the case of
+a derived type of a non-limited tagged type. If such a type is
+specified then the pragma is silently ignored, and the default
+implementation of the stream attributes is used instead.
       </DOC>
    </PRAGMA>
 
