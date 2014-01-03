@@ -197,7 +197,7 @@ htmlhelp_basename = 'GPSdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'GPS.tex', u'GPS Documentation',
+  ('index', 'GPS.tex', u"GPS User's Guide",
    u'AdaCore', 'manual'),
 ]
 
