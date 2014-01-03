@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2013, AdaCore                     --
+--                     Copyright (C) 2001-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -6812,13 +6812,13 @@ package body Src_Editor_Buffer is
 
          External_End_Action (Buffer);
 
-      elsif Should_Indent (+Buffer) then
+      else
          Buffer.Start_Undo_Group;
 
          Result :=
            Insert_Interactive_At_Cursor (Buffer, (1 => ASCII.LF), True);
 
-         if Result then
+         if Should_Indent (+Buffer) and then Result then
             declare
                Current_Sync_Mode : constant Multi_Cursors_Sync_Type :=
                  Get_Multi_Cursors_Sync (+Buffer);
