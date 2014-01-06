@@ -1442,12 +1442,17 @@ package body GPS.Kernel.Modules.UI is
             Launch_Foreground_Command
               (Data.Kernel, Proxy, Destroy_On_Exit => True);
          else
+            --  Do not block GPS exit (only if the command itself spawns
+            --  another command, like an external process, and that other
+            --  command could block).
+
             Launch_Background_Command
               (Data.Kernel,
                Proxy,
                Active          => True,  --  start executing immediately
                Show_Bar        => True,
-               Destroy_On_Exit => True);
+               Destroy_On_Exit => True,
+               Block_Exit      => False);
          end if;
 
       elsif Get_Error_Message (Action.Filter) /= "" then
