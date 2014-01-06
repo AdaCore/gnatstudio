@@ -873,21 +873,13 @@ package body GVD.Process is
                Last_Match := Matched (0).Last;
             end if;
 
-            if Str_Match then
-               Current_Filter.Filter
-                 (Process,
-                  Process.Current_Output
-                    (Process.Current_Output_Pos - Str'Length + Offset ..
-                       Process.Current_Output_Pos - 1),
-                  Matched);
-            else
-               Current_Filter.Filter
-                 (Process,
-                  Process.Current_Output
-                    (Process.Last_Match + 1 + Offset ..
-                       Process.Current_Output_Pos - 1),
-                  Matched);
-            end if;
+            pragma Assert (not Str_Match);
+            Current_Filter.Filter
+              (Process,
+               Process.Current_Output
+                 (Process.Last_Match + 1 + Offset ..
+                      Process.Current_Output_Pos - 1),
+               Matched);
          end if;
 
          --  Now we can set the offset for next iteration
