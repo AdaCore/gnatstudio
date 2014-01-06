@@ -4,7 +4,7 @@
  *	This file contains utility procedures.  It primarily handled
  *	processes for Expect.
  *
- * Copyright (c) 2006-2013, AdaCore
+ * Copyright (c) 2006-2014, AdaCore
  * Copyright (c) 1997 Mitel Corporation
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  * Copyright (c) 1987-1993 The Regents of the University of California.
