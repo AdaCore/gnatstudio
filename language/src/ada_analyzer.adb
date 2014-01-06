@@ -357,6 +357,8 @@ package body Ada_Analyzer is
    is
       S : String (Str'Range);
    begin
+      pragma Assert (S'First = 1);
+
       --  First convert Str to lower case for the token parser below
 
       for K in Str'Range loop
