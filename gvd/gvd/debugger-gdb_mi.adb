@@ -2239,7 +2239,8 @@ package body Debugger.Gdb_MI is
      return GVD.Types.Exception_Array
    is
       S     : constant String :=
-                Send (Debugger, "info exceptions", Mode => Internal);
+        Send (Debugger, "info exceptions", Mode => Internal);
+      --  ??? replace with -info-ada-exceptions
       Nums  : Natural := 0;
    begin
       --  Count the number of exceptions listed
