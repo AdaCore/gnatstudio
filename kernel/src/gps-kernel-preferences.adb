@@ -985,8 +985,9 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Pattern used to detect file locations (e.g error messages)",
          Default =>
-           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(info|Note|check)?" &
-           "(\(style)?.*)",
+           "^([^:]:?[^:]*):(\d+):((\d+):)? " &
+           "(((medium )?warning|medium:)?(info|Note|check)?" &
+           "(\(style|low:|low warning:)?.*)",
          Page => -"Messages");
 
       File_Pattern_Index := Create
@@ -1044,7 +1045,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Messages-Info-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
-         Default => 7,
+         Default => 8,
          Doc     => -"Index of compiler info in the pattern, 0 if none",
          Label   => -"Info index",
          Page    => -"Messages");
@@ -1054,7 +1055,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Messages-Style-Regexp-Index-1",
          Minimum => 0,
          Maximum => 99,
-         Default => 8,
+         Default => 9,
          Doc     => -"Index of style indication in the pattern, 0 if none",
          Label   => -"Style index",
          Page    => -"Messages");
