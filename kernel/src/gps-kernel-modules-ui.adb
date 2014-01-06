@@ -1434,7 +1434,7 @@ package body GPS.Kernel.Modules.UI is
              Dir              => No_File,
              Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
              Args             => null,
-             Label            => null,
+             Label            => new String'(Data.Action.all),
              Repeat_Count     => 1,
              Remaining_Repeat => 0));
 
