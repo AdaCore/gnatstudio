@@ -2240,7 +2240,18 @@ package body Debugger.Gdb_MI is
    is
       S     : constant String :=
         Send (Debugger, "info exceptions", Mode => Internal);
-      --  ??? replace with -info-ada-exceptions
+      --  ??? replace with -info-ada-exceptions:
+
+      --  -info-ada-exceptions
+      --  ^done,ada-exceptions=
+      --   {nr_rows="2",nr_cols="2",
+      --    hdr=[{width="1",alignment="-1",col_name="name",colhdr="Name"},
+      --       {width="1",alignment="-1",col_name="address",colhdr="Address"}],
+      --    body=[{name="global_exceptions.a_global_exception",
+      --           address="0x0000000000613a80"},
+      --          {name="global_exceptions.a_private_exception",
+      --           address="0x0000000000613ac0"}]}
+
       Nums  : Natural := 0;
    begin
       --  Count the number of exceptions listed
