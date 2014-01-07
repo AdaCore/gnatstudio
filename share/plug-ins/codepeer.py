@@ -386,7 +386,7 @@ xml_codepeer = """<?xml version="1.0"?>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>%gprclean</arg>
+          <arg>codepeer-gnatclean</arg>
           <arg>-q</arg>
           <arg>-r</arg>
           <arg>%eL</arg>
