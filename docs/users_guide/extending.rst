@@ -4534,7 +4534,7 @@ The attributes for the node `mirror_path` are:
 
 *sync (mandatory)*
   Specify the synchronization mechanism used for the paths (see
-  :ref:`Paths_settings`). Possible values are `NEVER`, `ONCE_TO_LOCAL`,
+  :ref:`Path_settings`). Possible values are `NEVER`, `ONCE_TO_LOCAL`,
   `ONCE_TO_REMOTE` and `ALWAYS`.
 
 .. _Customizing_build_Targets_and_Models:
