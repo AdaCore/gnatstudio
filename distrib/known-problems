@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
+- N107-010: GB: GNAT warnings changes cannot be saved in Coding Standard Editor
+  Problem:    When the GNAT warnings page of the Coding Standard Editor is
+              changed, the Save menu is not enabled, preventing the changes to
+              be saved in the rules file.
+  Workaround: Toggle any field in any other page to enable the Save command.
+
 - MC18-026: GPS: crash on Windows when project contains errors
   Problem:    When a project file contains errors (for instance its name
               does not match the file name), GPS crashes on windows because
