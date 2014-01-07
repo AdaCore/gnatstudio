@@ -8,7 +8,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
-- N107-006: GB: GNAT warnings changes cannot be saved in Coding Standard Editor
+- N107-010: GB: GNAT warnings changes cannot be saved in Coding Standard Editor
   Problem:    When the GNAT warnings page of the Coding Standard Editor is
               changed, the Save menu is not enabled, preventing the changes to
               be saved in the rules file.
