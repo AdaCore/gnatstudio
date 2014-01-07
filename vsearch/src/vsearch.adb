@@ -174,7 +174,7 @@ package body Vsearch is
       Tab_Width      : Natural;
       --  The default tab width.
 
-      Has_Docus_On_Click : Boolean := False;
+      Has_Focus_On_Click : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
@@ -1642,7 +1642,7 @@ package body Vsearch is
    is
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
-      if not Vsearch_Module_Id.Has_Docus_On_Click and Event.Button = 1 then
+      if not Vsearch_Module_Id.Has_Focus_On_Click and Event.Button = 1 then
          E.Select_Region (0, -1);
       end if;
 
@@ -1660,7 +1660,7 @@ package body Vsearch is
       pragma Unreferenced (Event);
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
-      Vsearch_Module_Id.Has_Docus_On_Click := E.Is_Focus;
+      Vsearch_Module_Id.Has_Focus_On_Click := E.Is_Focus;
 
       return False;
    end On_Button_Press;
