@@ -50,13 +50,11 @@ The command line options are::
   `tools_host` corresponds to a remote host's nickname as defined in
   :ref:`Setup_the_remote_servers`.
 
-By default, files specified on the command line can be absolute or relative
-pathnames.  If you prepend a filename with the `=` character, GPS will look
-for the file in the source search path of the project.
-
-When no project is specified on the command line, GPS tries to find one.
-Otherwise, it displays the :ref:`welcome dialog <The_Welcome_Dialog>`.
-
+By default, files you specify on the command line can have absolute or
+relative pathnames.  If you prepend a filename with the `=` character, GPS
+looks for the file in the source search path of the project.  If you don't
+specify a project on the command line, GPS tries to find one.  Otherwise,
+it displays the :ref:`welcome dialog <The_Welcome_Dialog>`.
 
 
 .. index:: environment
@@ -66,7 +64,7 @@ Otherwise, it displays the :ref:`welcome dialog <The_Welcome_Dialog>`.
 Environment Variables
 =====================
 
-The following environment variables can be set to override default
+You can set the following environment variables to override default
 settings in GPS:
 
 *GPS_HOME*
@@ -81,7 +79,7 @@ settings in GPS:
 *GPS_DOC_PATH*
   .. index:: GPS_DOC_PATH
 
-  Sets the search path for the documentation. :ref:`Adding_Documentation`.
+  Sets the search path for the documentation. See :ref:`Adding_Documentation`.
 
   If you installed GPS in a directory different from that of the GNAT
   compiler, you need to set this variable for GPS to find the documentation
@@ -99,8 +97,8 @@ settings in GPS:
 *GPS_CHANGELOG_USER*
   .. index:: GPS_CHANGELOG_USER
 
-  Contains the user and e-mail to use in the global ChangeLog files.
-  Common usage is to have two spaces between the name and the e-mail, like
+  Contains the user and e-mail to use in the global ChangeLog files.  The
+  convention is to have two spaces between the name and the e-mail, such as
   "John Does <john.doe@home.com>"
 
 *GPS_STARTUP_PATH*
@@ -108,8 +106,8 @@ settings in GPS:
 
   Contains the value of the `PATH` environment variable just before GPS was
   started.  GPS uses this to restore the proper environment before spawning
-  applications no matter what directories it needed to set for its own
-  purposes.
+  applications independently of what directories it needs to put into its
+  own path.
 
 *GPS_STARTUP_LD_LIBRARY_PATH*
   .. index:: GPS_STARTUP_LD_LIBRARY_PATH
@@ -121,35 +119,33 @@ settings in GPS:
   .. index:: GPS_PYTHONHOME
 
   If set, the Python interpreter looks for libraries in the subdirectory
-  :file:`lib/python<version>` of the directory specified by
-  `GPS_PYTHONHOME`.
+  :file:`lib/python<version>` of the directory specified.
 
 *GNAT_CODE_PAGE*
   .. index:: GNAT_CODE_PAGE
 
   You can set this variable to `CP_ACP` or `CP_UTF8`.  It's used to control
   the code page used on Windows platform. The default is `CP_UTF8` (to
-  support more languages).  If file or directory names are using accents
-  (for example) it may be necessary to set this variable to `CP_ACP` which
-  is the default Windows ANSI code page.
+  support more languages).  If file or directory names are using accents,
+  it may be necessary to set this variable to `CP_ACP` which is the default
+  Windows ANSI code page.
 
 *GPS_ROOT*
   .. index:: GPS_ROOT
 
-  Overrides and hardcodes the default root installation directory.  This
-  variable will usually not need to be set, except by GPS developers in
-  some rare circumstances. GPS finds all its resource files (e.g., images,
-  plug-ins, and xml files) from this root prefix, so setting `GPS_ROOT` to
-  an incorrect value will cause GPS to misbehave.
+  Overrides and hardcodes the default root installation directory.  You
+  usually don't need to set this variable unless you're a GPS developer in
+  unusual circumstances. GPS finds all its resource files (e.g., images,
+  plug-ins, and xml files) from this variable, so setting it to an
+  incorrect value will cause GPS to misbehave.
 
 *GPS_MEMORY_MONITOR*
   .. index:: GPS_MEMORY_MONITOR
 
   If set, GPS adds special code on every allocation and deallocation to
-  make it possible to check where the largest amount of memory is
-  allocated, by using the `GPS.debug_memory_usage` python command.  Setting
-  this variable will slow GPS down a bit.
-
+  make it possible to check where the largest amount of memory is allocated
+  using the `GPS.debug_memory_usage` python command.  Setting this variable
+  will slow GPS down.
 
 .. _Files:
 
@@ -161,48 +157,49 @@ Files
   .. index:: HOME
 
   GPS state directory. Defaults to :file:`C:\.gps` under Windows systems if
-  `HOME` or `USERPROFILE` environment variables are not defined.
-
+  the `HOME` or `USERPROFILE` environment variables are not defined.
 
 
 .. index:: log file
 .. _log_file:
 
 :file:`$HOME/.gps/log`
-  Log file created automatically by GPS.  When GPS is running, it creates a
+
+  Log file automatically created by GPS.  When GPS is running, it creates a
   file :file:`log.<pid>`, where :file:`<pid>` is the GPS process id, so
-  that multiple GPS sessions don't clobber each other's log. In case of a
+  multiple GPS sessions don't clobber each other's log. In case of a
   successful session, this file is renamed to :file:`log` when exiting; in
   case of an unexpected exit (when bug box is displayed), the log file
-  retains its original name.
-
-  The name of the log file is configured by the :file:`traces.cfg` file.
+  retains its original name.  The name of the log file is configured by the
+  :file:`traces.cfg` file.
 
 
 :file:`$HOME/.gps/aliases`
   .. index:: aliases
 
-  File containing the user-defined aliases (:ref:`Defining_text_aliases`).
-
+  File containing user-defined aliases (see :ref:`Defining_text_aliases`).
 
 :file:`$HOME/.gps/plug-ins`
-  Directory containing files with user-defined plug-ins.  All xml and
-  python files found under this directory are loaded by GPS during
-  start up.  Create or edit these files to add your own menu and/or
-  tool-bar entries in GPS or define support for new languages.
+
+  Directory containing files with user-defined plug-ins.  GPS loads all xml
+  and python files found under this directory during start up.  Create or
+  edit these files to add your own menu and/or tool-bar entries in GPS or
+  to define support for new languages.  See
   :ref:`Customizing_through_XML_and_Python_files` and
   :ref:`Adding_support_for_new_languages`.
 
 
 :file:`$HOME/.gps/keys6.xml`
-  Contains all key bindings for the actions defined in GPS or in the
-  custom files. This only contains the key bindings overridden through the
+
+  Contains all key bindings for the actions defined in GPS or custom
+  files. This file only contains the key bindings overridden through the
   key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
 
 
 .. index:: CSS
 
 :file:`$HOME/.gps/gps.css`
+
   Configuration and theme file for gtk. This file can change specific
   aspects of the look of GPS. Its contents overrides any other style
   information set by your default gtk+ theme (as selected in the Preferences
@@ -210,20 +207,23 @@ Files
 
 
 :file:`$HOME/.gps/perspectives6.xml`
-  Desktop file in XML format (using the menu :menuselection:`File --> Save
-  More --> Desktop`).  It is loaded automatically if found.
+
+  Desktop file in XML format (created using the :menuselection:`File -->
+  Save More --> Desktop` menu).  It's loaded automatically if found.
 
 
 :file:`$HOME/.gps/locations.xml`
-  This file contains the list of locations that GPS previously edited. It
-  corresponds to the history navigation (:menuselection:`Navigate --> Back`
-  and :menuselection:`Navigate --> Forward`)
+
+  List of locations GPS previously edited. It corresponds to the history
+  navigation (:menuselection:`Navigate --> Back` and
+  :menuselection:`Navigate --> Forward`) menus.
 
 
 :file:`$HOME/.gps/properties.xml`
-  This file is used to store file-specific properties across GPS sessions. In
-  particular, it contains the encoding to use for various files when the
-  default encoding isn't appropriate.
+
+  Stores file-specific properties across GPS sessions. In particular, it
+  contains the encoding to use for files where the default encoding isn't
+  appropriate.
 
 
 :file:`$HOME/.gps/histories.xml`
@@ -247,7 +247,8 @@ Files
 
 
 :file:`$HOME/.gps/traces.cfg`
-  Default configuration for the system traces. These traces are used to analyze
+
+  Default configuration for system traces. These traces are used to analyze
   problems with GPS.  By default, they are sent to the file
   :file:`$HOME/.gps/log.<pid>`.
 
@@ -257,61 +258,73 @@ Files
 
 
 :file:`$HOME/.gps/startup.xml`
-  This file contains the list of scripts to load at startup as well as
-  additional code that needs to be executed to setup the scripts.
 
+  List of scripts to load at startup as well as additional code that needs
+  to be executed to set up the scripts.
 
 .. index:: activity log template
 .. index:: activity, log template
 
 :file:`$HOME/.gpe/activity_log.tmplt`
+
   Template file used to generate activities' group commit-log and patch
   file's header. If not present, the system wide template (see below) is
   used. The set of configurable tags are described into this template.
 
-
 :file:`prefix`
+
   Prefix directory where GPS is installed, e.g :file:`/opt/gps`.
 
 :file:`prefix/bin`
+
   Directory containing the GPS executables.
 
 :file:`prefix/etc/gps`
+
   Directory containing global configuration files for GPS.
 
 :file:`prefix/lib`
+
   Directory containing the shared libraries used by GPS.
 
 :file:`prefix/share/doc/gps/html`
+
   GPS looks for all the documentation files under this directory.
 
 :file:`prefix/share/examples/gps`
+
   Directory containing source code examples.
 
 :file:`prefix/share/examples/gps/language`
+
   Directory containing sources showing how to provide a shared library to
   dynamically define a new language. See
   :ref:`Adding_support_for_new_languages`.
 
 :file:`prefix/share/examples/gps/tutorial`
+
   Directory containing the sources used by the GPS tutorial.
 
   See `gps-tutorial.html <gps-tutorial.html>`_.
 
 :file:`prefix/share/gps/support`
-  Directoring containing required plug-ins for GPS, which are automatically
+
+  Directoring containing required plug-ins for GPS that are automatically
   loaded at startup.
 
 :file:`prefix/share/gps/plug-ins`
+
   Directory containing files with system-wide plug-ins (xml and python
   files) that are loaded automatically at start-up.
 
 :file:`prefix/share/gps/library`
+
   Directory containing files with system-wide plug-ins (xml and python files)
   that are not loaded automatically at startup but can be selected in the
   Plug-ins editor.
 
 :file:`prefix/share/gps/gps-splash.png`
+
   Splash screen displayed by default when GPS is started.
 
 
@@ -319,7 +332,7 @@ Files
   .. index:: default desktop
   .. index:: desktop, default
 
-  The description of the default desktop that GPS uses when the user hasn't
+  Description of the default desktop that GPS uses when the user hasn't
   defined any default desktop and no project specific desktop exists.  You
   can modify this file if needed, but keep in mind that this will impact
   all users of GPS sharing this installation.  The format of this file is
@@ -333,17 +346,19 @@ Files
   provide defaults for a given system or project.
 
 :file:`prefix/share/gps/readonly.gpr`
+
   Project used by GPS as the default project when working in a read-only
   directory.
 
 :file:`prefix/share/gps/activity_log.tmplt`
+
   Template file used by default to generate activities' group commit-log
   and patch file's header. This file can be copied into a user's home
   directory and customized (see above).
 
 :file:`prefix/share/locale`
-  Directory used to retrieve the translation files, when relevant.
 
+  Directory used to retrieve the translation files, when relevant.
 
 .. _Reporting_Suggestions_and_Bugs:
 
@@ -353,9 +368,9 @@ Reporting Suggestions and Bugs
 .. index:: suggestions
 .. index:: submitting bugs
 
-If you'd like to make suggestions about GPS, or if you encounter a bug,
-please report it to `mailto:report@gnat.com <mailto:report@gnat.com>`_ if
-you are a supported user, and to `mailto:gps-devel@lists.act-europe.fr
+If you'd like to make suggestions about GPS or if you encounter a bug,
+please send it to `mailto:report@gnat.com <mailto:report@gnat.com>`_ if you
+are a supported user and to `mailto:gps-devel@lists.act-europe.fr
 <mailto:gps-devel@lists.act-europe.fr>`_ otherwise.
 
 Please try to include a detailed description of the problem, including
@@ -363,11 +378,11 @@ sources to reproduce it if needed, and/or a scenario describing the actions
 performed to reproduce the problem as well as lising all the tools (e.g
 *debugger*, *compiler*, *call graph*) involved.
 
-The files :file:`$HOME/.gps/log` may also
-bring some useful information when reporting a bug.
+The files :file:`$HOME/.gps/log` may also bring some useful information
+when reporting a bug.
 
 If GPS generates a bug box, the log file is kept under a separate name
-(:file:`$HOME/.gps/log.<pid>` so it does not get erased by further
+(:file:`$HOME/.gps/log.<pid>` so it doesn't get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
@@ -382,25 +397,27 @@ installing GPS.
 
 *GPS crashes on some GNU/Linux distributions at start up*
 
-  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
+  Look at the :file:`~/.gps/log.xxx` file and if there's a message that
   looks like:
 
     [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
     [UNEXPECTED_EXCEPTION] 1/17 Unexpected exception: Exception name: CONSTRAINT_ERROR
     _UNEXPECTED_EXCEPTION_ Message: gtk-image.adb:281 access check failed
 
-  It means either that there is a conflict with
-  :file:`~/.local/share/mime/mime.cache`, in which case, removing this file
-  will solve this conflict, or that you need to install the
-  `shared-mime-info` package on your system.
+  it means either that there is a conflict with
+  :file:`~/.local/share/mime/mime.cache`, in which case removing this file
+  solves this conflict, or that you need to install the `shared-mime-info`
+  package on your system.
 
 *Non-privileged users cannot start GPS*
-  If you have installed GPS originally as super user and ran GPS
+
+  If you have originally installed GPS as root and can run GPS
   successfully, but normal users can't, you should check the permissions of
   the directory :file:`$HOME/.gps` and its subdirectories: they should be
   owned by the user.
 
 *GPS crashes whenever I open a source editor*
+
   This is usually due to font problems. Editing the file
   :file:`$HOME/.gps/preferences` and changing the name of the fonts, e.g
   changing *Courier* by *Courier Medium*, and *Helvetica* by *Sans*
@@ -409,13 +426,13 @@ installing GPS.
 *GPS refuses to start the debugger*
   .. index:: debugger
 
-  If GPS cannot properly initialize the debugger (using the menu
-  :menuselection:`Debug --> Initialize`), it's usually because the
-  underlying debugger (gdb) can't be launched properly. To verify that this
-  is the problem, try to launch the `gdb` command from a shell (i.e.,
-  outside of GPS). If `gdb` cannot be launched from a shell, it usually
-  means that you are using a wrong version of `gdb` (e.g a version of `gdb`
-  built for Solaris 8 but run on Solaris 2.6).
+  If GPS cannot properly initialize the debugger (using the
+  :menuselection:`Debug --> Initialize`menu), it's usually because the
+  underlying debugger (gdb) can't be launched properly. To verify this is
+  the problem, try to launch the `gdb` command from a shell (i.e., outside
+  of GPS). If you can't launch `gdb` from a shell, it usually means you are
+  using the wrong version of `gdb` (e.g a version of `gdb` built for
+  Solaris 8 but run on Solaris 2.6).
 
 *GPS is frozen during a debugging session*
   .. index:: debugger
@@ -425,8 +442,8 @@ installing GPS.
   take significant time to finish. If GPS is still not responding after a
   few minutes, you can usually get control back in GPS by either typing
   :kbd:`Ctrl-C` in the shell where you've started GPS, which should unblock
-  it. If it doesn't work, kill the `gdb` process launched by GPS using `ps`
-  and `kill` or the `top` command under Unix,
+  it. If that doesn't work, kill the `gdb` process launched by GPS using
+  `ps` and `kill` or the `top` command under Unix,
 
   .. index:: Unix
   .. index:: Windows
@@ -439,55 +456,55 @@ installing GPS.
   .. index:: gnatmake
 
   If your program was compiled with GNAT, the main program is generated by
-  the binder. This program is an ordinary Ada (or C if the *-C* switch was
+  the binder. This program is an ordinary Ada (or C if the `-C` switch was
   used) program, compiled in the usual manner, and fully debuggable
-  provided that the *-g* switch is used on the *gnatlink* command (or *-g*
-  is used in the *gnatmake* command itself).
+  provided the `-g` switch is used on the `gnatlink` command (or `-g` is
+  used in the `gnatmake` command).
 
-  The name of this package containing the main program is
-  :file:`b~xxx.ads/adb` where xxx is the name of the Ada main unit given in
-  the `gnatbind` command.  Edit and debug this file in the normal
-  manner. You'll see a series of calls to the elaboration routines of the
-  packages and debug these in the usual manner, just as if you were
-  debugging code in your application.
+  The name of the package containing the main program is
+  :file:`b~xxx.ads/adb` where *xxx* is the name of the Ada main unit
+  specified in the `gnatbind` command.  Edit and debug this file in the
+  usual manner. You'll see a series of calls to the elaboration routines of
+  packages.  Debug these in the usual manner, just as if you were debugging
+  code in your application.
 
 *How can I debug the Ada run-time library ?*
 
   The run time distributed in binary versions of GNAT hasn't been compiled
-  with debug information, so it needs to be recompiled before you can
-  actually debug it.
+  with debug information, so it needs to be recompiled before you can debug
+  it.
 
   The simplest way is to recompile your application and add the switches
   `-a` and `-f` to the `gnatmake` command line. This extra step is only
-  required to be done once assuming you keep the generated object and ali
-  files corresponding to the GNAT run time available.
+  required to be done once assuming you keep the generated object and
+  :file:`ali` files corresponding to the GNAT run time available.
 
   Another possibility on Unix systems is to use the file
-  :file:`Makefile.adalib`, which can be found in the adalib directory of
-  your GNAT installation, and specify e.g `-g -O2` for the `CFLAGS`
+  :file:`Makefile.adalib`, which is found in the :file:`adalib` directory
+  of your GNAT installation, and specify e.g `-g -O2` for the `CFLAGS`
   switches.
 
 *The GPS main window is not displayed*
 
-  If when launching GPS, nothing happens, try to rename the :file:`.gps`
+  If, when launching GPS, nothing happens, try to rename the :file:`.gps`
   directory (see :ref:`Files`) to start from a fresh set up.
 
 *My project have several files with the same name. How can I import it in GPS?*
 
-  GPS's projects do not allow implicit overriding of sources files, so you
-  can't have the same file name multiple times in the project
+  GPS's projects don't allow implicit overriding of sources files, so you
+  can't have the same filename multiple times in the project
   hierarchy. This is because GPS needs to know exactly where the file is
   and can't reliably guess which occurrence to use.
 
-  There are several ways of handling this issue:
+  There are several ways to handle this issue:
 
   *Put all duplicate files in the same project*
 
-    There is one specific case where a project is allowed to have duplicate
+    There's one specific case where a project is allowed to have duplicate
     source files: if the list of source directories is specified
     explicitly.  All duplicate files must be in the same project. Under
-    these conditions, there is no ambiguity for GPS and the GNAT tools as
-    to which file to use and the first file found on the source path is the
+    these conditions, there's no ambiguity for GPS and the GNAT tools as to
+    which file to use and the first file found on the source path is the
     one hiding all the others. GPS only shows the first file.
 
     You can then have a scenario variable that changes the order of source
@@ -500,8 +517,8 @@ installing GPS.
     directories depending on the scenario.  Such projects can be edited
     directly from GPS (in the project properties editor, on the right part
     of the window, as described in this documentation). On top of the
-    project view (left part of the GPS main window), you have a combo box
-    displayed for each variable, allowing you to simply switch between
+    :guilabel:`Project` view (left part of the GPS main window), a combo
+    box is displayed for each variable, allowing you to switch between
     scenarios depending on what you want to build.
 
   *Use extended projects*
@@ -511,9 +528,9 @@ installing GPS.
     extending projects.
 
     The idea behind this approach is that you can have a local overriding
-    of some source files from the common build/source setup (if you're
-    working on a small part of the whole system, you may not want to have a
-    complete copy of the code on your local machine).
+    of some source files from the common build/source setup (e.g., if
+    you're working on a small part of the whole system, you may not want to
+    have a complete copy of the code on your local machine).
 
 *GPS is very slow compared to previous versions under unix (GPS < 4.0.0)*
 
@@ -525,8 +542,9 @@ installing GPS.
 
   This is specific to the way GNOME is configured on Ubuntu distributions.
   To address this incompatibility, close GPS, then go to the GNOME menu
-  *System->Preferences->Keyboard* (or launch *gnome-keyboard-properties*).
+  :menuselect`System->Preferences->Keyboard` (or launch :file:`gnome-keyboard-properties`).
 
-  Select the *Layout* tab, click on *Layout Options*. Then click twice on
-  *Using space key to input non-breakable space character*, select *Usual
-  space at any level*, and then close the dialogs.
+  Select the :guilabel:`Layout` tab and click on :guilabel:`Layout
+  Options`. Then click twice on :guilabel:`Using space key to input
+  non-breakable space character`, select :guilabel:`Usual space at any
+  level`, and then close the dialogs.
