@@ -64,6 +64,5 @@ private
       Show_Status    : Boolean;
       Start_Time     : Ada.Calendar.Time;
    end record;
-   type Console_Writer_Access is access all Console_Writer'Class;
 
 end Build_Command_Manager.Console_Writers;

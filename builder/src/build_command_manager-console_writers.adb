@@ -25,32 +25,7 @@ with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Messages.Legacy;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
-with Gtk.Handlers;
-with Gtk.Widget;
-
 package body Build_Command_Manager.Console_Writers is
-
-   package Console_Writer_Cb is new Gtk.Handlers.User_Callback
-     (Widget_Type => Interactive_Console_Record,
-      User_Type   => Console_Writer_Access);
-
-   procedure On_Destroy
-     (Console : access Interactive_Console_Record'Class;
-      User    : Console_Writer_Access);
-   --  Called when Console is being destroyed
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy
-     (Console : access Interactive_Console_Record'Class;
-      User    : Console_Writer_Access)
-   is
-      pragma Unreferenced (Console);
-   begin
-      User.Console := null;
-   end On_Destroy;
 
    ------------
    -- Create --
@@ -67,7 +42,6 @@ package body Build_Command_Manager.Console_Writers is
       Raise_On_Error : Boolean := False;
       Cmd_Console    : Interactive_Console;
       Console        : Interactive_Console;
-      Result         : Console_Writer_Access;
    begin
       if Is_Run (Build.Target) then
          if not Build.Quiet then
@@ -114,22 +88,13 @@ package body Build_Command_Manager.Console_Writers is
       if Console =  null then
          return Child;
       else
-         Result := new Console_Writer'(Child          => Child,
+         return new Console_Writer'(Child          => Child,
                                     Builder        => Self.Builder,
                                     Build          => Build,
                                     Console        => Console,
                                     Raise_On_Error => Raise_On_Error,
                                     Show_Status    => Show_Status,
-                                       Start_Time     => Ada.Calendar.Clock);
-
-         Console_Writer_Cb.Connect
-           (Widget    => Console,
-            Name      => Gtk.Widget.Signal_Destroy,
-            Cb        => On_Destroy'Access,
-            User_Data => Result,
-            After     => False);
-
-         return Tools_Output_Parser_Access (Result);
+                                    Start_Time     => Ada.Calendar.Clock);
       end if;
    end Create;
 
@@ -180,9 +145,7 @@ package body Build_Command_Manager.Console_Writers is
                (Msg, ", elapsed time: "
                 & Elapsed (Self.Start_Time, End_Time) & "s");
 
-            if Self.Console /= null then
-               Self.Console.Insert_With_Links (To_String (Msg));
-            end if;
+            Self.Console.Insert_With_Links (To_String (Msg));
          end;
       end if;
 
@@ -207,10 +170,7 @@ package body Build_Command_Manager.Console_Writers is
       Item    : String;
       Command : Command_Access) is
    begin
-      if Self.Console /= null then
-         Self.Console.Insert_With_Links (Item, Add_LF => False);
-      end if;
-
+      Self.Console.Insert_With_Links (Item, Add_LF => False);
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);
    end Parse_Standard_Output;
 
