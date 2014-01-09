@@ -26,9 +26,9 @@
 
    <documentation_file>
       <name>html/users_guide/index.html</name>
-      <descr>Using the GNAT Programming Studio</descr>
+      <descr>GPS User's Guide</descr>
       <category>GPS</category>
-      <menu>/Help/GPS/Using the GNAT Programming Studio</menu>
+      <menu>/Help/GPS/GPS User's Guide</menu>
    </documentation_file>
 
    <documentation_file>
