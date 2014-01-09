@@ -2,7 +2,7 @@
 GPS 6.1 and GNATbench 2.9 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2011-2013, AdaCore
+Copyright (C) 2011-2014, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -50,6 +50,10 @@ NF-61-MB18-023 GPS: Periodic recomputation of XRefs while editing (2013-12-18)
   the editor every time the content of the buffer is changed. This in turns
   gives better support for navigation, highlighting, and every functionality
   based on cross references.
+
+NF-61-MB13-072 GPS: new block completions available (2013-11-25)
+
+  Block completion now supports protected types and tasks.
 
 NF-61-MB13-030 GPS: Use a fallback by name for cross references (2013-11-14)
 
