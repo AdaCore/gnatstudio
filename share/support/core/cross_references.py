@@ -103,7 +103,7 @@ class Sqlite_Cross_References(object):
         # switch will not be handled correctly.
         extra_args = ['--db=%s' % (GPS.xref_db(), )]
         if not self.trusted_mode:
-            extra_args.append(" --symlinks")
+            extra_args.append("--symlinks")
 
         target.execute(synchronous=GPS.Logger("TESTSUITE").active, quiet=True, extra_args=extra_args)
 
@@ -140,4 +140,4 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
 GPS.Hook.register("xref_updated")
 
 if GPS.Logger("ENTITIES.SQLITE").active:
-    Sqlite_Cross_References()
+    r = Sqlite_Cross_References()
