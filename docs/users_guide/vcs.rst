@@ -6,32 +6,31 @@ Version Control System
 
 .. index:: version control
 
-GPS provides integration with a version control system (VCS) so that
-multiple developers can work on the same projectEach project can be
-associated to a VCS, through the `VCS` tab in the Project properties
-editor.  :ref:`The_Project_Properties_Editor`.
+GPS provides integration with a version control system (VCS) so multiple
+developers can work on the same project.  Each project can be associated
+with a VCS, through the :guilabel:`VCS` tab in the Project properties
+editor.  See :ref:`The_Project_Properties_Editor`.
 
-GPS does not come with any version control system.  Instead, it uses a
-command-line systems such as Subversion or ClearCase that you may already
-have on your system to perform the low level operations and provides a high
-level user interface for of them.
+GPS doesn't come with any version control system.  Instead, it provides a
+high level user interface to a command-line system such as Subversion or
+ClearCase that you may already have on your system.
 
-GPS has builtin support for the following VSC systems:
+GPS has builtin support for the following VCS systems:
 
 *Auto*
   .. index:: VCS, auto
 
-  You can set up GPS to auto-detect the VCS to use for each project by by
-  selecting `Auto` in the `VCS` tab of the Project properties
-  editor. :ref:`The_Project_Properties_Editor`.  This is the default
-  behavior when no VCS is specified in the project.
+  You can set GPS to auto-detect the VCS to use for each project by
+  selecting :guilabel:`Auto` in the :guilabel:`VCS` tab of the Project
+  properties editor. (See :ref:`The_Project_Properties_Editor`.)  This is
+  the default behavior when no VCS is specified in the project.
 
 *ClearCase*
   .. index:: VCS, ClearCase
 
-  The standard ClearCase interface, which is built-in and uses a generic
-  GPS terminology for VCS operations. Only Snapshot Views are supported in
-  the ClearCase integration; Dynamic Views are not supported.
+  The standard ClearCase interface, which is built-in and uses generic GPS
+  terminology for VCS operations. Only Snapshot Views are supported in the
+  ClearCase integration; Dynamic Views are not supported.
 
 *ClearCase Native*
   .. index:: VCS, ClearCase Native
@@ -51,7 +50,7 @@ GPS has builtin support for the following VSC systems:
 
   Distributed fast source code management. Git is only partially supported
   by GPS: basic commands are supported but the full power of Git (such as
-  working with the index) is only available on the command line.  To use
+  working with the index) is only available from the command line.  To use
   this, you must have a `diff` command, which usually comes with Git.
 
 *Mercurial*
@@ -76,19 +75,20 @@ GPS has builtin support for the following VSC systems:
   you must have `patch` and `diff` commands that usually come with
   Subversion.
 
-By default, GPS will use "Auto" for a VCS.  You can configured this through
-the :ref:`The_Preferences_Dialog`.
+By default, GPS uses "Auto" for a VCS.  You can configured this through the
+:ref:`The_Preferences_Dialog`.
 
 You can also add support for other version control systems or modify one of
 the existing interfaces, see
 :ref:`Adding_support_for_new_Version_Control_Systems` for more information.
 
-You should first get familiar with the version control system you intend to
-use in GPS, since many concepts used in GPS assume basic knowledge of the
-underlying system.  Associating a VCS to a project enables the use of basic
-VCS features on the source files contained in the project. Those basic
-features typically include checking in and out of files, querying of file
-status, file revision history, and comparison between various revisions.
+Before using it under GPS, you should first get familiar with the version
+control system you intend to use, since many concepts used in GPS assume
+basic knowledge of the underlying system.  Associating a VCS to a project
+allows using basic VCS features on the source files contained in the
+project. Those basic features typically include checking in and out files,
+querying of file status and revision history, and comparison between
+various revisions.
 
 .. index:: password
 
@@ -103,28 +103,31 @@ The VCS Explorer
 .. index:: VCS explorer
 .. index:: version control
 
-The VCS Explorer provides an overview of source files and their status. A
-file edited in GPS is automatically added to the VCS Explorer with a
-Modified status (see below).
+The :guilabel:`VCS Explorer` provides an overview of source files and their
+status. GPS automatically adds a file edited in GPS to the :guilabel:`VCS
+Explorer` with a *Modified* status (see below).
 
 .. index:: screen shot
 .. image:: vcs-explorer.jpg
 
-Bring up the VCS Explorer is through the :guimenu:`VCS->Explorer` menu or
-using the contextual menu :guimenu:`Version Control->Query status` on
-files, directories and projects in the file and project views, and in
-editors.  :ref:`The_Version_Control_Contextual_Menu`.
+Start the :guilabel:`VCS Explorer` through the :menuselection:`VCS -->
+Explorer` menu or using the contextual menu :menuselection:`Version Control
+--> Query status` on files, directories and projects in the file and
+project views, and in editors.  See
+:ref:`The_Version_Control_Contextual_Menu`.
 
-The VCS Explorer contains the following columns:
+The :guilabel:`VCS Explorer` contains the following columns:
 
 *Project / File*
+
   This is a two-level tree. The first level contains the name of the
   project and the second the name of files inside the project. Next to the
-  project name the VCS name, if any, is displayed. This is the only
-  information available for a project. The columns described below are for
-  files only. You can sort this column by clicking on its header.
+  project name, the VCS name, if any, is displayed.  You can sort this
+  column by clicking on its header.  For a project, this is the only
+  information available: the columns described below are for files only.
 
 *Status*
+
   Shows the status of the file. You can sort this column by clicking on
   its header. The possible status for files are:
 
@@ -160,13 +163,12 @@ The VCS Explorer contains the following columns:
   *Modified*
     .. image:: gps-vcs-modified.jpg
 
-    The file has been modified by the user or has been explicitly opened
-    for editing.
+    You've modified the file or explicitly opened it for editing.
 
   *Needs merge*
     .. image:: gps-vcs-needs-merge.jpg
 
-    The file has been modified locally and in the repository.
+    You've modified the file both locally and in the repository.
 
   *Needs update*
     .. image:: gps-vcs-needs-update.jpg
@@ -179,34 +181,37 @@ The VCS Explorer contains the following columns:
     The file contains conflicts from a previous update operation.
 
 *Log*
-  This column indicates whether a revision log exists for this file.
+
+  Indicates whether a revision log exists for this file.
 
 *Activity*
   The name of the activity the file belongs to. See :ref:`The_VCS_Activities`
   for more details.
 
 *Working rev.*
+
   Indicates the version of the local file.
 
 *Head rev.*
+
   Indicates the most recent version of the file in the repository.
 
-The VCS Explorer supports multiple selections. To select a single line,
-left-click on it. To select a range of lines, select the first line, then
-hold the :kbd:`Shift` key and select the last line. To add or remove single
-columns from the selection, hold the :kbd:`Control` key and left-click on
-the columns you want to select or deselect.  You can also select files
-having the same status using the `Select files same status` menu entry. See
-:ref:`The_Version_Control_Contextual_Menu`.
+The :guilabel:`VCS Explorer` supports multiple selections. To select a
+single file, left-click on it. To select a range of files, select the
+first, then hold the :kbd:`Shift` key and select the last. To add or remove
+single columns from the selection, hold the :kbd:`Control` key and
+left-click on the columns you want to select or remove.  You can also
+select files having the same status using the :guilabel:`Select files same
+status` menu entry. See :ref:`The_Version_Control_Contextual_Menu`.
 
 .. index:: interactive search
 
-The explorer also provides an :ref:`interactive search <Interactive_Search>`
-capability allowing you to quickly look for a given file name. The default key
-to start an interactive search is :kbd:`Ctrl-i`.
+The explorer also provides an :ref:`interactive search
+<Interactive_Search>` capability allowing you to quickly look for a given
+file name. The default key to start an interactive search is :kbd:`Ctrl-i`.
 
-You can bring up the VCS contextual menu from the VCS explorer by
-left-clicking on a selection or single line.
+You can bring up the VCS contextual menu from the :guilabel:`VCS Explorer`
+by left-clicking on a selection or single line. See
 :ref:`The_Version_Control_Contextual_Menu`.
 
 .. _VCS_Activities:
@@ -223,95 +228,115 @@ can be committed atomically if supported by the version control system.
 .. index:: screen shot
 .. image:: vcs-activities.jpg
 
-Bring up the VCS Activities view through the :guimenu:`VCS->Activities`
-menu.  It contains the following columns:
+Start the :gnulabel:`VCS Activities` view through the :menuselection:`VCS
+--> Activities` menu.  It contains the following columns:
 
 *Activity / File*
+
   The name of the activity or files belonging to an activity. You can sort
   this column by clicking on its header.
 
 *Status*
-  Shows the status of the file. You can sort this column by clicking on
-  its header. See :ref:`The_VCS_Explorer` for a full description.
+
+  Shows the status of each file. You can sort this column by clicking on its
+  header. See :ref:`The_VCS_Explorer` for a full description.
 
 *Log*
+
   Indicates whether a revision log exists for the file.
 
 *Working rev.*
+
   Indicates the version of the local file.
 
 *Head rev.*
+
   Indicates the most recent version of the file in the repository.
 
-The VCS Explorer supports multiple selections. To select a single line,
-left-click on it. To select a range of lines, select the first line, hold
-the :kbd:`Shift` key, and select the last line. To add or remove single
-lines from the selection, hold down the :kbd:`Control` key and left-click
-what you want to select or deselect.
+The :guilabel:`VCS Explorer` supports multiple selections. To select a
+single file, left-click on it. To select a range of files, select the
+first, hold the :kbd:`Shift` key, and select the last. To add or remove
+single lines from the selection, hold down the :kbd:`Control` key and
+left-click what you want to select or remove.
 
 There are different contextual menu entries depending on the position on the
 screen.  An empty area has only the following option:
 
 *Create new activity*
+
   Create a new activity.   Edit the name by double clicking on it.
 
-On an activity line the contextual menu contains:
+On an activity line, the contextual menu contains:
 
 *Group commit*
-  This is a selectable menu entry. It is activated only if the
-  VCS supports atomic commit and absolute filenames. See :ref:`The_VCS_node`
-  for full details.
+
+  This is a selectable menu entry, activated only if the VCS supports
+  atomic commit and absolute filenames. See :ref:`The_VCS_node` for full
+  details.
 
 *Create new activity*
+
   Create a new activity.  Edit the name by double clicking on it.
 
 *Re-open activity / Close activity*
+
   If the activity is closed, re-open it.  If open, close the activity.
 
 *Delete activity*
+
   Remove the activity.
 
 *Commit activity*
+
   Commit the activity. If group commit is activated then the commit log
   content is generated using a fully configurable template file.  See
   :ref:`Files`.  If group commit is not activated, the log content for each
-  activity file is the file log catenated with the activity log. After this
-  operation the file's log are removed but the activity log is retained as
-  documentation.
+  activity file is the file log concatenated with the activity log. After
+  this operation the file's log are removed but the activity log is
+  retained as documentation.
 
 *Query status*
-  Query the status for all the source files contained in the activity.
+
+  Query the status for all source files contained in the activity.
 
 *Update*
-  Update all the source files contained in the activity.
+
+  Update all source files contained in the activity.
 
 *Compare against head revision*
-  Show a visual comparison between the local activity files and the most recent
-  version of those files in the repository.
+
+  Show a visual comparison between the local activity files and the most
+  recent version of those files in the repository.
 
 *Build patch file*
+
   Create a patch file (in text format) for the activity. The patch file
   contains a header (the activity log and file's logs) and the diff of
   each file. The header format is fully configurable using a template
   file. See :ref:`Files`.
 
 *Edit revision log*
-  Edit the current revision log for activity. This log is shared with
-  all the activity files.
+
+  Edit the current revision log for activity. This log is shared with all
+  the activity files.
 
 *Remove revision log*
+
   Remove the current revision log for activity. This menu is present
   only if the activity revision log exists.
 
 On a line containing a filename, the contextual menu contains:
 
 *Create new activity*
+
   Create a new activity. Edit the name by double clicking on it.
 
 *Remove from activity*
+
   Remove the selected file from the activity and delete the activity log.
 
 *Edit revision log*
+
   Edit the current revision log for the selected file.
 
 .. _The_VCS_Menu:
@@ -322,32 +347,37 @@ The VCS Menu
 .. index:: version control
 .. index:: menu
 
-You can access basic VCS operations through the VCS menu. Most of these
-functions act on the current selection: the selected items in the VCS
-Explorer if it is present, the currently selected file editor, or the
-currently selected item in the :guimenu:`Tools->Views->Files` menu.  In
+Access basic VCS operations through the VCS menu. Most of these functions
+act on the current selection: the selected items in the :guilabel:`VCS
+Explorer` if present, the currently selected file editor, or the currently
+selected item in the :menuselection:`Tools --> Views --> Files` menu.  In
 most cases, the VCS contextual menu offers more control of VCS operations.
-:ref:`The_Version_Control_Contextual_Menu`.
+See :ref:`The_Version_Control_Contextual_Menu`.
 
 *Explorer*
-  Open or raise the VCS Explorer. :ref:`The_VCS_Explorer`.
+
+  Open or raise the :guilabel:`VCS Explorer`. See :ref:`The_VCS_Explorer`.
 
 *Update all projects*
+
   Update the source files in the current project and all imported
   subprojects.
 
 *Query status for all projects*
+
   Query the status of all files in the project and all imported subprojects.
 
 *Create tag...*
+
   Create a tag or branch tag starting from a specific root
   directory. The name of the tag is a simple name.
 
 *Switch tag...*
-  Switch the local copy to a specific tag. The name of the tag depends
-  on the external VCS used. For CVS this this the simple tag name, for
-  Subversion the tag must conform to the default repository layout. For
-  a branch tag this is `/branches/<tag_name>/<root_dir>`.
+
+  Switch the local copy to a specific tag. The name of the tag depends on
+  the external VCS used. For CVS this is a simple tag name and for
+  Subversion the tag must conform to the default repository layout, which,
+  for a branch tag, is `/branches/<tag_name>/<root_dir>`.
 
 For a description of the other entries in the VCS menu, see
 :ref:`The_Version_Control_Contextual_Menu` below.
@@ -360,26 +390,31 @@ The Version Control Contextual Menu
 This section describes the version control contextual menu displayed when
 you right-click on an entity (a file, a directory, or a project) from
 various parts of GPS, including the project view, the source editor and the
-VCS Explorer.
+:guilabel:`VCS Explorer`.
 
 Depending on the context, some of the items described in this section
 aren't shown because they're not relevant to that context.
 
 *Remove project*
-  Only displayed on a project line. Remove the selected
-  project from the VCS Explorer.
+
+  Only displayed for a project. Remove the selected project from the
+  :guilabel:`VCS Explorer`.
 
 *Expand all*
-  Expand all VCS Explorer project nodes.
+
+  Expand all :guilabel:`VCS Explorer` project nodes.
 
 *Collapse all*
-  Collapse all VCS Explorer project nodes.
+
+  Collapse all :guilabel:`VCS Explorer` project nodes.
 
 *Clear View*
-  Clear the VCS Explorer.
+
+  Clear the :guilabel:`VCS Explorer`.
 
 *Query status*
-  Query the status of the selected item. Brings up the VCS Explorer.
+
+  Query the status of the selected item. Starts the :guilabel:`VCS Explorer`.
 
 *Update*
   .. _Update:
@@ -390,17 +425,17 @@ aren't shown because they're not relevant to that context.
   .. _Commit:
 
   Submits the changes made to the file to the repository and queries the
-  status for the file once the change is made.
+  file's status file once the change is made.
 
-  You can tell GPS to check the file before the actual commit occurs by
-  specifying a `File checker` in the `VCS` tab of the project properties
-  dialog.  This `File checker` is a script or executable taking an absolute
-  file name as argument and displaying any error message on the standard
-  output. The VCS commit operation will occur only if nothing was written
-  on the standard output.  You can also check the change-log of a file
-  before commit by specifying a `Log checker` in the project properties
-  dialog. This works on change-log files the same way as the `File checker`
-  works on source files.
+  Tell GPS to check the file before the actual commit occurs by specifying
+  a :guilabel:`File checker` in the :guilabel:`VCS` tab of the project
+  properties dialog.  This :guilabel:`File checker` is a script or
+  executable that takes an absolute file name as argument and displays any
+  error message on its standard output. The VCS commit operation occurs
+  only if nothing was written to the standard output.  You can also check
+  the changelog of a file before commit by specifying a :guilabel:`Log
+  checker` in the project properties dialog. This works on changelog files
+  in the same way as the :guilabel:`File checker` works on source files.
 
 *Open*
   .. _Open:
@@ -414,6 +449,7 @@ aren't shown because they're not relevant to that context.
   Show the revision logs for all previous revisions of this file.
 
 *View specific revision history*
+
   Show the revision logs for one previous revision of this file.
 
 *Compare against head revision*
@@ -452,156 +488,190 @@ aren't shown because they're not relevant to that context.
 *Annotate*
   .. _Annotate:
 
-  Display the annotations for the file, .e. the information for each line
+  Display the annotations for the file, i.e. the information for each line
   of the file showing the revision corresponding to that line.  This may
-  also display additional information, depending on the VCS system.
+  also display additional information on some VCS systems.
 
-  When using CVS or Subversion, you can click the annotations to display
-  the changelog associated to the specific revision of that line.
+  When using CVS or Subversion, click the annotations to display the
+  changelog associated with the specific revision of that line.
 
 *Remove Annotate*
+
   Remove annotations from the selected file.
 
 *Edit revision log*
+
   Edit the current revision log for the selected file.
 
 *Edit global ChangeLog*
+
   Edit the global ChangeLog entry for the selected file.
-  :ref:`Working_with_global_ChangeLog_file`.
+  See :ref:`Working_with_global_ChangeLog_file`.
 
 *Remove revision log*
+
   Clear the current revision associated with the selected file.
 
 *Add*
-  Add a file to the repository, using the current revision log for this
-  file. If no revision log exists, create one. The file is committed in the
-  repository.
+
+  Add a file to the repository, using the current revision log for the
+  current file. If no revision log exists, create one. The file is
+  committed in the repository.
 
 *Add/No commit*
+
   Likewise, but don't commit the file.
 
 *Remove*
-  Remove a file from the repository, using the current revision log for
-  this file. If no revision log exists, create one. The modification is
+
+  Remove a file from the repository, using the current revision log for the
+  current file. If no revision log exists, create one. The modification is
   committed in the repository.
 
 *Remove/No commit*
+
   Likewise, but don't commit.
 
 *Revert*
+
   Revert a file to the repository revision, discarding all local
   changes.
 
 *Resolved*
+
   Mark a file's merge conflics as resolved. Some version control systems
-  (like Subversion) block any commit until this action is performed.
+  (e.g., Subversion) block any commit until this action is performed.
 
 *Switch tag/bracnh*
+
   Only available on a Revision View and over a tag or branch name
   Switch the tree starting from a selected root to this specific tag or
   branch.
 
 *Merge*
+
   Only available on a Revision View and over a tag or branch name. Merge
   file changes made on this specific tag or branch.
 
 *View revision*
+
   Only available on a Revision View and over a revision.
 
 *Commit as new Activity*
-  Prepare a group-commit in just one-click. This action will:
 
-  * create an anonymous activity
+  Prepare a group-commit in just one-click. This action:
 
-  * add all files selected into the VCS Explorer into the newly
+  * creates an anonymous activity
+
+  * adds all files selected into the VCS Explorer into the newly
   created anonymous activity,
 
-  * open the activity log
+  * opens the activity log
 
-  * commit the anonymous activity.
+  * commits the anonymous activity.
 
 *Add to Activity*
-  A menu containing all the current activities. Selecting one will add
-  the current file to this activity. This menu is present only if the
-  file is not already part of an activity.
+
+  A menu containing all the current activities. Selecting one adds the
+  current file to this activity. This menu is present only if the file is
+  not already part of an activity.
 
 *Remove from Activity*
+
   Remove file from the given activity. This menu is present only if the
   file is already part of an activity.
 
 *Directory*
+
   Only available when the current context contains directory information
 
   *Add/No commit*
+
     Add the selected directory into the VCS.
 
   *Remove/No commit*
-    Remove the selected directory from the VCS.
+
+    Removes the selected directory from the VCS.
 
   *Commit*
+
     Commit the selected directory into the VCS. This action is available
-    only if the VCS supports commit on directories, :ref:`The_VCS_node`.
+    only if the VCS supports commit on directories.  See :ref:`The_VCS_node`.
 
   *Add to Activity*
-    Add the selected directory into the VCS. This action is available
-    only if the VCS supports commit on directories, :ref:`The_VCS_node`.
+
+    Add the selected directory to the VCS. This action is available
+    only if the VCS supports commit on directories.  See :ref:`The_VCS_node`.
 
   *Query status for directory*
-    Query status for the files contained in the selected directory.
+
+    Query the status for files contained in the selected directory.
 
   *Update directory*
+
     Update the files in the selected directory.
 
   *Query status for directory recursively*
-    Query status for the files in the selected directory and all
-    subdirectories recursively. Links and hidden directories are not
-    included.
+
+    Query status for files in the selected directory and all subdirectories
+    recursively. Links and hidden directories are not included.
 
   *Update directory recursively*
-    Update the files in the selected directory and all
-    subdirectories recursively. Links and hidden directories not included..
+
+    Update the files (bring them up to date with the repository) in the
+    selected directory and all subdirectories recursively. Links and hidden
+    directories not included..
 
 *Project*
+
   Only available when the current context contains project information
 
   *List all files in project*
-    Bring up the VCS Explorer with all the source files contained in the
-    project.
+
+    Start the :guilabel:`VCS Explorer` with all source files contained
+    in the project.
 
   *Query status for project*
-    Query the status for all the source files contained in the project.
+
+    Query the status for all source files contained in the project.
 
   *Update project*
-    Update all the source files in the project.
+
+    Update all source files in the project.
 
   *List all files in project and sub-projects*
-    Bring up the VCS Explorer with all the source files contained in the
-    project and all imported subprojects.
+
+    Start the :guilabel:`VCS Explorer` with all source files contained in
+    the project and all imported subprojects.
 
   *Query status for project and sub-projects*
-    Query the status for all the source files contained in the project
-    and all imported subprojects.
+
+    Query the status for all source files contained in the project and all
+    imported subprojects.
 
   *Update project and subprojects*
-    Update all the source files in the project and all imported
-    subprojects.
+
+    Update all source files in the project and all imported subprojects.
 
 *Select files same status*
-  Select the files having the same status as the current selected file.
+
+  Select the files having the same status as the current file.
 
 *Filters*
-  Only available from the VCS Explorer. This menu controls filtering of the
-  items displayed in the list.
+
+  Only available from the :guilabel:`VCS Explorer. This menu controls the
+  filtering of the items displayed in the list.
 
   *Show all status*
-    Do not exclude any file from the list in the VCS Explorer.
+
+    Don't exclude any file from the list.
 
   *Hide all status*
-    Filter all the files from the list in the VCS Explorer.
+    Remove all files from the list.
 
   *Show <status>*
-    When disabled, filter the files with the given status from the VCS
-    Explorer.
+
+    When disabled, filter the files with the given status from the list.
 
 .. _Working_with_global_ChangeLog_file:
 
@@ -611,8 +681,8 @@ Working with global ChangeLog file
 .. index:: global ChangeLog
 .. index:: ChangeLog file
 
-A global ChangeLog file contains revision logs for all files in a directory
-and is named :file:`ChangeLog`. The format for such a file is::
+A global :file:`ChangeLog` file contains revision logs for all files in a
+directory. Its format is::
 
      **ISO-DATE  *name  <e-mail>***
 
@@ -622,18 +692,22 @@ and is named :file:`ChangeLog`. The format for such a file is::
 where:
 
 *ISO-DATE*
-  A date with the ISO format YYYY-MM-DD.
+
+  A date with the ISO format: YYYY-MM-DD.
 
 *name*
+
   A name, generally the developer's name.
 
 *<e-mail>*
+
   The e-mail address of the developer surrounded with '<' and '>' characters.
 
 *HT*
+
   Horizontal tab (or 8 spaces)
 
-You can enter the *name* and *<e-mail>* items automatically by setting the
+You can supply the *name* and *<e-mail>* items automatically by setting the
 `GPS_CHANGELOG_USER` environment variable. There are two spaces between the
 *name* and the *<e-mail>*::
 
@@ -645,16 +719,17 @@ You can enter the *name* and *<e-mail>* items automatically by setting the
      set GPS_CHANGELOG_USER="John Doe  <john.doe@home.com>"
   
 
-The menu entry **Edit global ChangeLog** opens the file :file:`ChangeLog`
-in the directory containing the currently selected file and creatse the
-corresponding :file:`ChangeLog` entry.  The ISO date and filename headers
-will be created if not yet present. You need to enter your name and e-mail
-address.
+The menu entry :guilabel:`Edit global ChangeLog` opens the file
+:file:`ChangeLog` in the directory containing the current file and creates
+the corresponding :file:`ChangeLog` entry.  The ISO date and filename
+headers are created if not yet present. You need to enter your name and
+e-mail address unless the `GPS_CHANGELOG_USER` environment variable is
+present.
 
 This :file:`ChangeLog` file serves as a location for revision logs.  When
-you're ready to check-in a file, use the standard **Edit revision log**
-menu command to the standard revision log buffer with the content filled
-from the global :file:`ChangeLog` file.
+you're ready to check-in a file, use the :guilabel:`Edit revision log` menu
+command in the standard revision log buffer with the content filled from
+the global :file:`ChangeLog` file.
 
 .. _The_Revision_View:
 
@@ -668,12 +743,15 @@ file. Each node contains information about a specific revision of the file.
 .. image:: revision-view.jpg
 
 *the revision number*
+
   This corresponds to the external VCS revision number.
 
 *author*
+
   The author of this revision.
 
 *date / log*
+
   For root nodes, this column contains the check-in date and any
   list of tags and branches associated with this revision. For
   child nodes, this contains the log for the corresponding revision.
