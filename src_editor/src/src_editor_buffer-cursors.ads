@@ -101,6 +101,9 @@ package Src_Editor_Buffer.Cursors is
      (Buffer : Source_Buffer) return Cursors_Lists.List;
    --  Return a full list of all multi cursor's marks.
 
+   function Has_Slave_Cursors
+     (Buffer : Source_Buffer) return Boolean;
+
    function Get_Cursors_Sync
      (Buffer : Source_Buffer) return Cursors_Sync_Type;
    --  This function and its counter part setter are meant to save and restore

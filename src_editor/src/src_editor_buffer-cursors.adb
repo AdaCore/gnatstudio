@@ -220,6 +220,17 @@ package body Src_Editor_Buffer.Cursors is
       Buffer.Cursors_Sync := (Mode => Auto);
    end Set_Cursors_Auto_Sync;
 
+   -----------------------
+   -- Has_Slave_Cursors --
+   -----------------------
+   function Has_Slave_Cursors
+     (Buffer : Source_Buffer) return Boolean
+   is (not Buffer.Slave_Cursors_List.Is_Empty);
+
+   -----------------
+   -- Get_Cursors --
+   -----------------
+
    function Get_Cursors
      (Buffer : Source_Buffer) return Cursors_Lists.List
    is

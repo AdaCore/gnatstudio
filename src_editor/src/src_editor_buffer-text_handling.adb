@@ -384,12 +384,10 @@ package body Src_Editor_Buffer.Text_Handling is
 
       if Lang = null
         --  No language information
-        or else not Get_Cursors (Source_Buffer (Buffer)).Is_Empty
+        or else Has_Slave_Cursors (+Buffer)
         --  Multi cursors active
       then
-
          return;
-
       else
 
          Get_Cursor_Position (Buffer, W_End);

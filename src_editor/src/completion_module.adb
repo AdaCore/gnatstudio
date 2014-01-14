@@ -1257,7 +1257,8 @@ package body Completion_Module is
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
-      if Get_Cursors (Buffer).Is_Empty then
+      --  Do not complete when slave cursors active
+      if not Has_Slave_Cursors (Buffer) then
          Ignore := Smart_Complete
            (Get_Kernel (Completion_Module.all),
             Complete => False,
