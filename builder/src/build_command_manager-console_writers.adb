@@ -88,6 +88,7 @@ package body Build_Command_Manager.Console_Writers is
       if Console =  null then
          return Child;
       else
+         Console.Ref;
          return new Console_Writer'(Child          => Child,
                                     Builder        => Self.Builder,
                                     Build          => Build,
@@ -159,6 +160,8 @@ package body Build_Command_Manager.Console_Writers is
       end if;
 
       Tools_Output_Parser (Self.all).End_Of_Stream (Status, Command);
+      Self.Console.Unref;
+      Self.Console := null;
    end End_Of_Stream;
 
    ---------------------------
