@@ -65,14 +65,14 @@ package Src_Editor_Buffer is
    function "+" (B : access Source_Buffer_Record) return Source_Buffer
    is (Source_Buffer (B));
 
-   type Multi_Cursor is private;
-   type Multi_Cursor_Access is access all Multi_Cursor;
+   type Slave_Cursor is private;
+   type Slave_Cursor_Access is access all Slave_Cursor;
 
-   type MC_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
+   type Cursor_Sync_Mode_Type is (Auto, Manual_Master, Manual_Slave);
    --  This type represents the mode the buffer is in regarding multi cursors
    --  behaviour
 
-   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is private;
+   type Cursors_Sync_Type (Mode : Cursor_Sync_Mode_Type := Auto) is private;
 
    package Marks_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Gtk.Text_Mark.Gtk_Text_Mark);
@@ -669,14 +669,6 @@ package Src_Editor_Buffer is
       return Source_Buffer_Array;
    --  Return the list of all buffers currently edited. Each buffer appears
    --  only once even if multiple views exist.
-
-   procedure Set_Column_Memory
-     (Buffer : access Source_Buffer_Record; Offset : Gint);
-   --  Set column memory for the main cursor of the buffer
-
-   function  Get_Column_Memory
-     (Buffer : access Source_Buffer_Record) return Gint;
-   --  Get column memory for the main cursor of the buffer
 
    function Is_Inserting_Internally
      (Buffer  : access Source_Buffer_Record) return Boolean;
@@ -1431,10 +1423,10 @@ private
    --  The array to store the last typed characters in a buffer
 
    ------------------
-   -- Multi_Cursor --
+   -- Slave_Cursor --
    ------------------
 
-   type Multi_Cursor is record
+   type Slave_Cursor is record
       Id                       : Integer := -1;
       Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
       Sel_Mark                 : Gtk.Text_Mark.Gtk_Text_Mark;
@@ -1449,12 +1441,12 @@ private
    --  that we can perform command aggregation (see multiple insertions as one
    --  for example)
 
-   package Multi_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Multi_Cursor);
+   package Slave_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Slave_Cursor);
 
-   type Multi_Cursors_Sync_Type (Mode : MC_Sync_Mode_Type := Auto) is record
+   type Cursors_Sync_Type (Mode : Cursor_Sync_Mode_Type := Auto) is record
       case Mode is
-         when Manual_Slave => MC : Multi_Cursor_Access;
+         when Manual_Slave => MC : Slave_Cursor_Access;
          when others => null;
       end case;
    end record;
@@ -1730,23 +1722,23 @@ private
       Has_MC_Clipboard                      : Boolean := False;
       --  Has there been a cut/copy with multi cursors active ?
 
-      Multi_Cursors_List                    : Multi_Cursors_Lists.List;
+      Slave_Cursors_List                    : Slave_Cursors_Lists.List;
       --  The list of all active multi cursors
 
-      Multi_Cursors_Last_Alive_Id           : Natural := 0;
-      Multi_Cursors_Next_Id                 : Natural := 1;
+      Slave_Cursors_Last_Alive_Id           : Natural := 0;
+      Slave_Cursors_Next_Id                 : Natural := 1;
       --  Unique id for the next multi cursor. Incremented at multi cursor
       --  creation
 
-      Multi_Cursors_Delete_Offset           : Gint := 0;
+      Cursors_Delete_Offset                 : Gint := 0;
       --  Internal field used between before and after delete events handlers
       --  Represents a simple deletion. +5 means delete 5 chars forward.
       --  -5 means delete 5 chars backward. 0 means do nothing.
 
-      Multi_Cursors_Sync                    : Multi_Cursors_Sync_Type;
+      Cursors_Sync                          : Cursors_Sync_Type;
       --  The sync mode of the buffer. The operating mode is detailed precisely
       --  in the public procedures related to sync, in
-      --  Src_Editor_Buffer.Multi_Cursors.
+      --  Src_Editor_Buffer.Cursors.
 
       Cursor_Column_Memory                  : Gint := 0;
       --  Memory for the horizontal of the cursor when moving from line to line

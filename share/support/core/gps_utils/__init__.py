@@ -1,14 +1,14 @@
-## This package contains various subprograms that wrap functions
-## exported by GPS to make it easier to write plugins
+# This package contains various subprograms that wrap functions
+# exported by GPS to make it easier to write plugins
 
 from GPS import *
 import types
 
 # The autodoc may not have visibility on gi.repository
 try:
-   from gi.repository import Gtk
+    from gi.repository import Gtk
 except:
-   pass
+    pass
 
 import GPS
 GPS.MDI.GROUP_DEFAULT = 0
@@ -74,10 +74,10 @@ def save_current_window(f, args=[], kwargs=dict()):
     mdi = GPS.MDI.current()
 
     try:
-       apply(f, args, kwargs)
+        apply(f, args, kwargs)
     finally:
-       if mdi:
-           mdi.raise_window()
+        if mdi:
+            mdi.raise_window()
 
 
 def with_save_current_window(fn):
@@ -116,39 +116,39 @@ def save_excursion(f, args=[], kwargs=dict(), undo_group=True):
     need to apply save_excursion to a whole function.
     """
 
-    mdi    = MDI.current()
+    mdi = MDI.current()
     buffer = EditorBuffer.get()
-    view   = buffer.current_view()
+    view = buffer.current_view()
     cursor = view.cursor()
-    start  = buffer.selection_start().create_mark ()
-    end    = buffer.selection_end().create_mark ()
+    start = buffer.selection_start().create_mark()
+    end = buffer.selection_end().create_mark()
 
     if undo_group:
         buffer.start_undo_group()
 
     try:
-       apply(f, args, kwargs)
+        apply(f, args, kwargs)
 
     finally:
-       if undo_group:
-           buffer.finish_undo_group()
+        if undo_group:
+            buffer.finish_undo_group()
 
-       try:
-           # View might have been destroyed
-           mdi.raise_window()
-           view.goto(cursor)
-       except:
-           # In this case use the next view available if any
-           view = buffer.current_view()
-           if not view:
-               return
+        try:
+            # View might have been destroyed
+            mdi.raise_window()
+            view.goto(cursor)
+        except:
+            # In this case use the next view available if any
+            view = buffer.current_view()
+            if not view:
+                return
 
-       if start.location() != end.location():
-           buffer.select(start.location(), end.location())
-       else:
-           buffer.current_view().goto(start.location())
-       start.delete()
-       end.delete()
+        if start.location() != end.location():
+            buffer.select(start.location(), end.location())
+        else:
+            buffer.current_view().goto(start.location())
+        start.delete()
+        end.delete()
 
 
 def with_save_excursion(fn):
@@ -187,12 +187,12 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     python function. Likewise the name of the action is taken from the
     name of the python function, unless specified with `name`.
 
-    :param callback: is a python function that requires no argument, although it
-      can have optional arguments (none will be set when this is called from
-      the menu or the key shortcut). Alternatively, `callback` can also be
-      a class: when the user executes the action, a new instance of the class
-      is created, so it is expected that the work is done in the __init__ of
-      the class. This is in particular useful for classes that derive from
+    :param callback: is a python function that requires no argument, although
+      it can have optional arguments (none will be set when this is called from
+      the menu or the key shortcut). Alternatively, `callback` can also be a
+      class: when the user executes the action, a new instance of the class is
+      created, so it is expected that the work is done in the __init__ of the
+      class. This is in particular useful for classes that derive from
       CommandWindow.
 
     :param menu: The name of a menu to associate with the action. It will be
@@ -209,6 +209,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     if isinstance(callback, types.TypeType):  # Do we have a class ?
         cb = callback
+
         def do():
             cb()   # Create new instance
         do.__doc__ = doc
@@ -219,9 +220,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     if menu:
         if before:
-           m = a.menu(menu, add_before=True, ref=before)
+            m = a.menu(menu, add_before=True, ref=before)
         else:
-           m = a.menu(menu, add_before=False, ref=after)
+            m = a.menu(menu, add_before=False, ref=after)
     else:
         m = None
 
@@ -235,6 +236,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
 
 class interactive:
+
     """
     A decorator with the same behavior as make_interactive().
     This can be used to easily associate a function with an interactive
@@ -280,6 +282,7 @@ def freeze_prefs():
     """
 
     class Context(object):
+
         def __enter__(self):
             GPS.freeze_prefs()
 
@@ -290,29 +293,29 @@ def freeze_prefs():
 
 
 ############################################################
-## Some predefined filters
-## These are filters that can be used when creating new menus, contextual
+# Some predefined filters
+# These are filters that can be used when creating new menus, contextual
 ## menus or actions
 ############################################################
 
 def in_ada_file(context):
-   """Returns True if the focus is currently inside an Ada editor"""
-   if not hasattr(context, "in_ada_file"):
-      buffer = EditorBuffer.get(open=False)
-      context.in_ada_file = (
-          context.module_name == "Source_Editor"
-          and buffer
-          # and MDI.current() == MDI.get_by_child(buffer.current_view())
-          and buffer.file().language().lower() == "ada")
-   return context.in_ada_file
+    """Returns True if the focus is currently inside an Ada editor"""
+    if not hasattr(context, "in_ada_file"):
+        buffer = EditorBuffer.get(open=False)
+        context.in_ada_file = (
+            context.module_name == "Source_Editor"
+            and buffer
+            # and MDI.current() == MDI.get_by_child(buffer.current_view())
+            and buffer.file().language().lower() == "ada")
+    return context.in_ada_file
 
 
-def is_writable (context):
-   """Returns True if the focus is currently inside a writable editor"""
-   if not hasattr(context, "is_writable"):
-      buffer = EditorBuffer.get(open=False)
-      context.is_writable =  buffer and not buffer.is_read_only()
-   return context.is_writable
+def is_writable(context):
+    """Returns True if the focus is currently inside a writable editor"""
+    if not hasattr(context, "is_writable"):
+        buffer = EditorBuffer.get(open=False)
+        context.is_writable = buffer and not buffer.is_read_only()
+    return context.is_writable
 
 
 def in_editor(context):
@@ -320,36 +323,30 @@ def in_editor(context):
 
 
 def in_xml_file(context):
-   """Returns True if the focus is in an XML editor"""
-   if not hasattr(context, "in_xml_file"):
-      buffer = EditorBuffer.get(open=False)
-      context.in_xml_file = \
-         MDI.current() == MDI.get_by_child(buffer.current_view()) \
-         and buffer.file().language().lower() in ["xml", "html"]
-   return context.in_xml_file
+    """Returns True if the focus is in an XML editor"""
+    if not hasattr(context, "in_xml_file"):
+        buffer = EditorBuffer.get(open=False)
+        context.in_xml_file = \
+            MDI.current() == MDI.get_by_child(buffer.current_view()) \
+            and buffer.file().language().lower() in ["xml", "html"]
+    return context.in_xml_file
 
 
-def execute_for_all_cursors(editor, mark_fn, extend_selection=False):
+def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
     """
     Execute the function mark_fn for every cursor in the editor,
     meaning, the main cursor + every existing multi cursor.
     mark_fn has the prototype def mark_fn(EditorBuffer, EditorMark)
     """
-    main_cursor_mark = editor.get_mark("insert")
-    editor.set_multi_cursors_manual_sync()
-    mark_fn(editor, main_cursor_mark)
-    view = editor.current_view()
+    cursors = ed.get_cursors()
 
-    if not extend_selection:
-        mark_fn(editor, editor.get_mark("selection_bound"))
-
-    view.goto(main_cursor_mark.location(), extend_selection)
-
-    for mc in editor.get_multi_cursors():
+    for mc in cursors:
         mc.set_manual_sync()
-        mark_fn(editor, mc.get_insert_mark())
+        mark_fn(ed, mc.mark())
         if not extend_selection:
-            mark_fn(editor, mc.get_selection_mark())
+            mark_fn(ed, mc.sel_mark())
 
-    editor.update_multi_cursors_selections()
-    editor.set_multi_cursors_auto_sync()
+    ed.current_view().goto(cursors[0].mark().location(), extend_selection)
+
+    ed.update_cursors_selection()
+    ed.set_cursors_auto_sync()

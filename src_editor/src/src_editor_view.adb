@@ -73,7 +73,7 @@ with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
 with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
@@ -2129,7 +2129,7 @@ package body Src_Editor_View is
                         Gint (Event.Button.X), Gint (Event.Button.Y), L, C);
                      Get_Iter_At_Location (View, Iter, L, C);
                      Grab_Focus (View);
-                     Multi_Cursors.Add_Multi_Cursor
+                     Cursors.Add_Cursor
                        (Buffer, Iter);
                   end;
                   return True;

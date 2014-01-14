@@ -27,7 +27,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
 with GPS.Kernel; use GPS.Kernel;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 
 package body Src_Editor_Buffer.Text_Handling is
 
@@ -384,7 +384,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
       if Lang = null
         --  No language information
-        or else not Get_Multi_Cursors (Source_Buffer (Buffer)).Is_Empty
+        or else not Get_Cursors (Source_Buffer (Buffer)).Is_Empty
         --  Multi cursors active
       then
 

@@ -22,7 +22,7 @@ with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with GNAT.Strings;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 
 package Commands.Editor is
 
@@ -211,7 +211,8 @@ private
 
       Locs                      : Editor_Command_Locations;
 
-      Alternative_Cursor        : Cursor := Nil_Cursor;
+      Linked_Cursor             : Cursors_Holders.Holder :=
+        Cursors_Holders.Empty_Holder;
       --  Name of the multi cursor this action is bound to, if there is one
    end record;
 

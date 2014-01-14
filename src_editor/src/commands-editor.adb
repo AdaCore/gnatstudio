@@ -159,7 +159,7 @@ package body Commands.Editor is
       Item.Locs.Start_Sel_Loc := Sel_Loc;
       Item.Locs.End_Loc := End_Loc;
       Item.Locs.End_Sel_Loc := End_Loc;
-      Item.Alternative_Cursor := C;
+      Item.Linked_Cursor := Holder (C);
    end Create;
 
    -----------------------
@@ -286,8 +286,8 @@ package body Commands.Editor is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
       View   : Source_View;
-      C      : constant Cursor := Command.Alternative_Cursor;
-      MC_Sync_Save : Multi_Cursors_Sync_Type;
+      C      : constant Cursor := Command.Linked_Cursor.Element;
+      MC_Sync_Save : Cursors_Sync_Type;
 
       procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T);
       --  Set the action's cursor at the right place whether it is a multi
@@ -296,16 +296,12 @@ package body Commands.Editor is
       procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T) is
          Iter : Gtk_Text_Iter;
          Mark : Gtk_Text_Mark;
-         Reset_Mode : Boolean := False;
+         Sync : constant Cursors_Sync_Type
+           := Get_Cursors_Sync (Command.Buffer);
       begin
 
-         if Get_Multi_Cursors_Sync (Command.Buffer).Mode = Auto then
-            Set_Multi_Cursors_Manual_Sync (Command.Buffer);
-            Reset_Mode := True;
-         end if;
-
          --  The cursor is a multi cursor
-         if C /= Nil_Cursor then
+         if not C.Is_Main_Cursor then
             if Is_Alive (C) then
                Mark := Get_Mark (C);
 
@@ -349,9 +345,7 @@ package body Commands.Editor is
             Scroll_To_Cursor_Location (View);
          end if;
 
-         if Reset_Mode then
-            Set_Multi_Cursors_Auto_Sync (Command.Buffer);
-         end if;
+         Set_Cursors_Sync (Command.Buffer, Sync);
 
       end Set_Cursor_Position;
 
@@ -376,17 +370,11 @@ package body Commands.Editor is
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
          View := Get_View (Editor);
 
-         MC_Sync_Save := Get_Multi_Cursors_Sync (Command.Buffer);
+         MC_Sync_Save := Get_Cursors_Sync (Command.Buffer);
 
          --  The cursor is a multi cursor
-         if C /=  Nil_Cursor then
-            if Is_Alive (C) then
-               Set_Multi_Cursors_Manual_Sync (C);
-            else
-               Set_Multi_Cursors_Manual_Sync (Command.Buffer);
-            end if;
-         else
-            Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+         if Is_Alive (C) then
+            Set_Manual_Sync (C);
          end if;
 
          if not Avoid_Move_Cursor (Command)
@@ -427,7 +415,7 @@ package body Commands.Editor is
               (Command.Locs.End_Loc, Command.Locs.End_Sel_Loc);
          end if;
 
-         Set_Multi_Cursors_Sync (Command.Buffer, MC_Sync_Save);
+         Set_Cursors_Sync (Command.Buffer, MC_Sync_Save);
       end if;
 
       Command_Finished (Command, True);
@@ -499,10 +487,10 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
-      Sync   : constant Multi_Cursors_Sync_Type :=
-        Get_Multi_Cursors_Sync (Command.Buffer);
+      Sync   : constant Cursors_Sync_Type :=
+        Get_Cursors_Sync (Command.Buffer);
    begin
-      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+      Set_Manual_Sync (Get_Main_Cursor (Command.Buffer));
 
       Replace_Slice
         (Command.Buffer,
@@ -542,7 +530,7 @@ package body Commands.Editor is
 
       Command_Finished (Command, True);
 
-      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
+      Set_Cursors_Sync (Command.Buffer, Sync);
 
       return Success;
    end Execute;
@@ -555,8 +543,8 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Boolean
    is
       Editor : Source_Editor_Box;
-      Sync   : constant Multi_Cursors_Sync_Type :=
-        Get_Multi_Cursors_Sync (Command.Buffer);
+      Sync   : constant Cursors_Sync_Type :=
+        Get_Cursors_Sync (Command.Buffer);
    begin
       if not Is_Valid_Position
         (Command.Buffer,
@@ -566,7 +554,7 @@ package body Commands.Editor is
          return True;
       end if;
 
-      Set_Multi_Cursors_Manual_Sync (Command.Buffer);
+      Set_Manual_Sync (Get_Main_Cursor (Command.Buffer));
 
       Replace_Slice
         (Command.Buffer,
@@ -597,7 +585,7 @@ package body Commands.Editor is
       Scroll_To_Cursor_Location (Get_View (Editor));
 
       Command_Finished (Command, True);
-      Set_Multi_Cursors_Sync (Command.Buffer, Sync);
+      Set_Cursors_Sync (Command.Buffer, Sync);
       return True;
    end Undo;
 

@@ -52,16 +52,17 @@ mc_on_entity_color.create(
     "#3070A0"
 )
 
+
 @interactive("Editor", name="Add multi cursor and go down")
 def mc_down():
     buffer = GPS.EditorBuffer.get()
     view = buffer.current_view()
     loc = view.cursor()
-    buffer.add_multi_cursor(loc)
+    buffer.add_cursor(loc)
 
-    buffer.set_multi_cursors_manual_sync()
+    buffer.get_cursors()[0].set_manual_sync()
     view.goto(buffer.at(loc.line() + 1, loc.column()))
-    buffer.set_multi_cursors_auto_sync()
+    buffer.set_cursors_auto_sync()
 
 
 @interactive("Editor", name="Add multi cursor and go up")
@@ -69,11 +70,11 @@ def mc_up():
     buffer = GPS.EditorBuffer.get()
     view = buffer.current_view()
     loc = view.cursor()
-    buffer.add_multi_cursor(loc)
+    buffer.add_cursor(loc)
 
-    buffer.set_multi_cursors_manual_sync()
+    buffer.get_cursors()[0].set_manual_sync()
     view.goto(buffer.at(max(loc.line() - 1, 1), loc.column()))
-    buffer.set_multi_cursors_auto_sync()
+    buffer.set_cursors_auto_sync()
 
 id_pattern = re.compile(r"[\w0-9_]")
 
@@ -89,11 +90,11 @@ def mc_select_next_occurence():
     while st.has_overlay(mc_sel):
         st, end = end.search(text)
 
-    mc = ed.add_multi_cursor(st)
-    mc.get_selection_mark().move(st)
-    mc.get_insert_mark().move(end)
-    ed.update_multi_cursors_selections()
-    ed.set_multi_cursors_auto_sync()
+    mc = ed.add_cursor(st)
+    mc.sel_mark().move(st)
+    mc.mark().move(end)
+    ed.update_cursors_selection()
+    ed.set_cursors_auto_sync()
 
 
 @interactive("Editor", name="Add multi cursor to all references of entity")
@@ -113,7 +114,6 @@ def mc_all_entity_references():
 
         return loc_id_start, loc_id_end
 
-
     editor = GPS.EditorBuffer.get()
     marks = []
     loc = editor.current_view().cursor()
@@ -121,9 +121,8 @@ def mc_all_entity_references():
     identifier = editor.get_chars(loc_id_start, loc_id_end)
 
     try:
-        entity = Entity(
-            identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
-        )
+        entity = Entity(identifier, editor.file(),
+                        loc_id_start.line(), loc_id_start.column())
     except GPS.Exception, e:
         return
 
@@ -179,7 +178,7 @@ def mc_all_entity_references():
             editor.beginning_of_buffer(),
             editor.end_of_buffer()
         )
-        editor.remove_all_multi_cursors()
+        editor.remove_all_slave_cursors()
         Hook("character_added").remove(on_edit)
         Hook("location_changed").remove(on_move)
 
@@ -203,7 +202,7 @@ def mc_all_entity_references():
             me = e.forward_char().create_mark(left_gravity=False)
             marks.append((ms, me))
             apply_overlay(editor, ms, me, overlay)
-            editor.add_multi_cursor(loc)
+            editor.add_cursor(loc)
 
     Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)

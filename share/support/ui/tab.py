@@ -9,7 +9,6 @@ This function is available in GPS through the action
 """
 
 
-
 import GPS
 from gps_utils import interactive, in_editor
 import pygps
@@ -21,14 +20,13 @@ if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
     tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
     tabs_align_selection.create(
         "Align selection on tab", "boolean",
-        "Whether <tab> should also align arrows, use clauses and assignments (:=)"
-        " when multiple lines are selected.",
+        "Whether <tab> should also align arrows, use clauses and "
+        "assignments (:=) when multiple lines are selected.",
         True)
 
-@interactive(name='Format selection',
-             category='Editor',
-             filter="Source editor",
-             key='Tab')
+
+@interactive(name='Format selection', category='Editor',
+             filter="Source editor", key='Tab')
 def smart_tab():
     """
     This action is the default binding for the tab key, and will
@@ -81,5 +79,4 @@ def smart_escape():
     if aliases.is_in_alias_expansion(editor):
         aliases.exit_alias_expand(editor)
 
-    editor.remove_all_multi_cursors()
-
+    editor.remove_all_slave_cursors()

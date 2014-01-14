@@ -401,6 +401,21 @@ Classes
 
    .. automethod:: GPS.Contextual.show
 
+:class:`GPS.Cursor`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Cursor
+
+   
+
+   .. automethod:: GPS.Cursor.__init__
+
+   .. automethod:: GPS.Cursor.mark
+
+   .. automethod:: GPS.Cursor.sel_mark
+
+   .. automethod:: GPS.Cursor.set_manual_sync
+
 :class:`GPS.Debugger`
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -624,9 +639,9 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_chars
 
-   .. automethod:: GPS.EditorBuffer.get_mark
+   .. automethod:: GPS.EditorBuffer.get_cursors
 
-   .. automethod:: GPS.EditorBuffer.get_multi_cursors
+   .. automethod:: GPS.EditorBuffer.get_mark
 
    .. automethod:: GPS.EditorBuffer.get_new
 
@@ -664,8 +679,6 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.set_multi_cursors_auto_sync
 
-   .. automethod:: GPS.EditorBuffer.set_multi_cursors_manual_sync
-
    .. automethod:: GPS.EditorBuffer.set_read_only
 
    .. automethod:: GPS.EditorBuffer.start_undo_group
@@ -674,7 +687,7 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.unselect
 
-   .. automethod:: GPS.EditorBuffer.update_multi_cursors_selections
+   .. automethod:: GPS.EditorBuffer.update_cursors_selection
 
    .. automethod:: GPS.EditorBuffer.views
 
@@ -1304,21 +1317,6 @@ Classes
 .. autoclass:: Missing_Arguments
 
    .. inheritance-diagram:: GPS.Missing_Arguments
-
-:class:`GPS.MultiCursor`
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: MultiCursor
-
-   
-
-   .. automethod:: GPS.MultiCursor.__init__
-
-   .. automethod:: GPS.MultiCursor.get_insert_mark
-
-   .. automethod:: GPS.MultiCursor.get_selection_mark
-
-   .. automethod:: GPS.MultiCursor.set_manual_sync
 
 :class:`GPS.OutputParserWrapper`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

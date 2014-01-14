@@ -174,11 +174,11 @@ package body Src_Editor_Module.Shell is
       Index_Cst'Access,
       Secondary_Action_Cst'Access);
 
-   package Multi_Cursors_Holders is new Ada.Containers.Indefinite_Holders
-     (GPS.Editors.Multi_Cursor'Class);
+   package Cursors_Holders is new Ada.Containers.Indefinite_Holders
+     (GPS.Editors.Editor_Cursor'Class);
 
    type MC_Property_Record is new Instance_Property_Record with record
-      C : Multi_Cursors_Holders.Holder;
+      C : Cursors_Holders.Holder;
    end record;
 
    type MC_Property is access all MC_Property_Record;
@@ -269,9 +269,9 @@ package body Src_Editor_Module.Shell is
       Location : Editor_Location'Class) return Class_Instance;
    --  Return an instance of EditorLocation
 
-   function Create_Multi_Cursor
+   function Create_Cursor
      (Script   : access Scripting_Language_Record'Class;
-      Cursor   : GPS.Editors.Multi_Cursor'Class) return Class_Instance;
+      Cursor   : GPS.Editors.Editor_Cursor'Class) return Class_Instance;
 
    function Get_Location
      (Data    : Callback_Data'Class;
@@ -438,24 +438,24 @@ package body Src_Editor_Module.Shell is
            (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Mark;
 
-   -------------------------
-   -- Create_Multi_Cursor --
-   -------------------------
+   -------------------
+   -- Create_Cursor --
+   -------------------
 
-   function Create_Multi_Cursor
+   function Create_Cursor
      (Script   : access Scripting_Language_Record'Class;
-      Cursor   : GPS.Editors.Multi_Cursor'Class) return Class_Instance
+      Cursor   : GPS.Editors.Editor_Cursor'Class) return Class_Instance
    is
-      MultiCursor : constant Class_Type :=
-        New_Class (Get_Kernel (Script), "MultiCursor");
-      Inst : constant Class_Instance := New_Instance (Script, MultiCursor);
-      use Multi_Cursors_Holders;
+      Curs_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "Cursor");
+      Inst : constant Class_Instance := New_Instance (Script, Curs_Class);
+      use Cursors_Holders;
    begin
       Set_Data
-        (Inst, "MultiCursor", MC_Property_Record'
+        (Inst, "Cursor", MC_Property_Record'
            (C => To_Holder (Cursor)));
       return Inst;
-   end Create_Multi_Cursor;
+   end Create_Cursor;
 
    ----------------------------
    -- Create_Editor_Location --
@@ -1688,22 +1688,22 @@ package body Src_Editor_Module.Shell is
 
    procedure MC_Cmds (Data : in out Callback_Data'Class; Command : String)
    is
-      MultiCursor : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "MultiCursor");
+      Curs_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Cursor");
       MC_Data : constant MC_Property :=
         MC_Property
           (Instance_Property'
-             (Get_Data (Data.Nth_Arg (1, MultiCursor, True), "MultiCursor")));
+             (Get_Data (Data.Nth_Arg (1, Curs_Class, True), "Cursor")));
    begin
       if Command = Constructor_Method then
-         Set_Error_Msg (Data, -("Cannot build instances of MultiCursor."
+         Set_Error_Msg (Data, -("Cannot build instances of Cursor."
                         & " Use EditorBuffer multi cursors methods instead"));
-      elsif Command = "get_insert_mark" then
+      elsif Command = "mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
               (Data.Get_Script,
                MC_Data.C.Element.Get_Insert_Mark));
-      elsif Command = "get_selection_mark" then
+      elsif Command = "sel_mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
               (Data.Get_Script, MC_Data.C.Element.Get_Selection_Mark));
@@ -1925,34 +1925,31 @@ package body Src_Editor_Module.Shell is
            (Get_Overlay (Data, 2),
             Get_Location (Data, 3), Get_Location (Data, 4));
 
-      elsif Command = "add_multi_cursor" then
+      elsif Command = "add_cursor" then
          null;
          declare
-            C : constant GPS.Editors.Multi_Cursor'Class :=
-              Get_Buffer (Data, 1).Add_Multi_Cursor
+            C : constant GPS.Editors.Editor_Cursor'Class :=
+              Get_Buffer (Data, 1).Add_Cursor
               (Get_Location (Data, 2));
-            Cursor_Instance : constant Class_Instance := Create_Multi_Cursor
+            Cursor_Instance : constant Class_Instance := Create_Cursor
               (Data.Get_Script, C);
          begin
             Data.Set_Return_Value (Cursor_Instance);
          end;
-      elsif Command = "remove_all_multi_cursors" then
-         Get_Buffer (Data, 1).Remove_All_Multi_Cursors;
+      elsif Command = "remove_all_slave_cursors" then
+         Get_Buffer (Data, 1).Remove_All_Slave_Cursors;
 
-      elsif Command = "update_multi_cursors_selections" then
-         Get_Buffer (Data, 1).Update_Multi_Cursors_Selection;
+      elsif Command = "update_cursors_selection" then
+         Get_Buffer (Data, 1).Update_Cursors_Selection;
 
-      elsif Command = "set_multi_cursors_manual_sync" then
-         Get_Buffer (Data, 1).Set_Multi_Cursors_Manual_Sync;
+      elsif Command = "set_cursors_auto_sync" then
+         Get_Buffer (Data, 1).Set_Cursors_Auto_Sync;
 
-      elsif Command = "set_multi_cursors_auto_sync" then
-         Get_Buffer (Data, 1).Set_Multi_Cursors_Auto_Sync;
-
-      elsif Command = "get_multi_cursors" then
+      elsif Command = "get_cursors" then
          Data.Set_Return_Value_As_List;
-         for Cursor of Get_Buffer (Data, 1).Get_Multi_Cursors loop
+         for Cursor of Get_Buffer (Data, 1).Get_Cursors loop
             Data.Set_Return_Value
-              (Create_Multi_Cursor (Data.Get_Script, Cursor));
+              (Create_Cursor (Data.Get_Script, Cursor));
          end loop;
 
       elsif Command = "start_undo_group" then
@@ -2593,7 +2590,7 @@ package body Src_Editor_Module.Shell is
                        New_Class (Kernel, Editor_Location_Class_Name);
       Editor_Class : constant Class_Type := New_Class (Kernel, "Editor");
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
-      MultiCursor  : constant Class_Type := New_Class (Kernel, "MultiCursor");
+      Cursor  : constant Class_Type := New_Class (Kernel, "Cursor");
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
       EditorView   : constant Class_Type :=
                        New_Class
@@ -2703,13 +2700,13 @@ package body Src_Editor_Module.Shell is
       --  MultiCursor
 
       Register_Command
-        (Kernel, Constructor_Method, 0, 0, MC_Cmds'Access, MultiCursor);
+        (Kernel, Constructor_Method, 0, 0, MC_Cmds'Access, Cursor);
       Register_Command
-        (Kernel, "get_insert_mark", 0, 0, MC_Cmds'Access, MultiCursor);
+        (Kernel, "mark", 0, 0, MC_Cmds'Access, Cursor);
       Register_Command
-        (Kernel, "set_manual_sync",  0, 0, MC_Cmds'Access, MultiCursor);
+        (Kernel, "set_manual_sync",  0, 0, MC_Cmds'Access, Cursor);
       Register_Command
-        (Kernel, "get_selection_mark", 0, 0, MC_Cmds'Access, MultiCursor);
+        (Kernel, "sel_mark", 0, 0, MC_Cmds'Access, Cursor);
 
       --  EditorBuffer
 
@@ -2729,25 +2726,21 @@ package body Src_Editor_Module.Shell is
         (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
 
       Register_Command
-        (Kernel, "add_multi_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "add_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
-         "update_multi_cursors_selections",  0, 0,
+         "update_cursors_selection",  0, 0,
          Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
-         "remove_all_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+         "remove_all_slave_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
-         "set_multi_cursors_manual_sync",  0, 0, Buffer_Cmds'Access,
+         "set_cursors_auto_sync",  0, 0, Buffer_Cmds'Access,
          EditorBuffer);
       Register_Command
         (Kernel,
-         "set_multi_cursors_auto_sync",  0, 0, Buffer_Cmds'Access,
-         EditorBuffer);
-      Register_Command
-        (Kernel,
-         "get_multi_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+         "get_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);

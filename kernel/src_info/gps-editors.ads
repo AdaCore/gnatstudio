@@ -52,8 +52,8 @@ package GPS.Editors is
    type Editor_Buffer is abstract new Controlled with null record;
    Nil_Editor_Buffer : constant Editor_Buffer'Class;
 
-   type Multi_Cursor is abstract new Controlled with null record;
-   Nil_Multi_Cursor : constant Multi_Cursor'Class;
+   type Editor_Cursor is abstract new Controlled with null record;
+   Nil_Editor_Cursor : constant Editor_Cursor'Class;
 
    type Editor_View is abstract new Controlled with null record;
    Nil_Editor_View : constant Editor_View'Class;
@@ -301,18 +301,18 @@ package GPS.Editors is
    package Mark_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Mark'Class);
 
-   ------------------
-   -- Multi_Cursor --
-   ------------------
+   -------------------
+   -- Editor_Cursor --
+   -------------------
 
    function Get_Insert_Mark
-     (This : Multi_Cursor) return Editor_Mark'Class is abstract;
+     (This : Editor_Cursor) return Editor_Mark'Class is abstract;
 
    function Get_Selection_Mark
-     (This : Multi_Cursor) return Editor_Mark'Class is abstract;
+     (This : Editor_Cursor) return Editor_Mark'Class is abstract;
 
    procedure Set_Manual_Sync
-     (This : Multi_Cursor) is abstract;
+     (This : Editor_Cursor) is abstract;
    --  This sets the buffer in "slave manual mode" regarding multi cursor
    --  insertion, with the corresponding text mark as the multi-cursors mark.
    --  This should be called before the corresponding multi cursor's action is
@@ -324,7 +324,7 @@ package GPS.Editors is
    --  cursor's action regarding undo/redo groups.
 
    package Cursors_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Multi_Cursor'Class);
+     (Editor_Cursor'Class);
 
    -----------------
    -- Editor_View --
@@ -640,38 +640,31 @@ package GPS.Editors is
    --  isn't an error if the overlay is not applied to any of the character in
    --  the range, it just has no effect in that case
 
-   procedure Add_Multi_Cursor
+   procedure Add_Cursor
      (This     : Editor_Buffer;
       Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
    --  Add a multi cursor at the specified location
 
-   function Add_Multi_Cursor
+   function Add_Cursor
      (This     : Editor_Buffer;
       Location : Editor_Location'Class := Nil_Editor_Location)
-      return Multi_Cursor'Class is abstract;
+      return Editor_Cursor'Class is abstract;
    --  Add a multi cursor at the specified location
 
-   procedure Remove_All_Multi_Cursors (This : Editor_Buffer) is abstract;
+   procedure Remove_All_Slave_Cursors (This : Editor_Buffer) is abstract;
    --  Remove all multi cursors from current buffer
 
-   procedure Set_Multi_Cursors_Manual_Sync (This : Editor_Buffer) is abstract;
-   --  This sets the buffer in "main manual mode" regarding multi cursor
-   --  insertion. It should be called before the main cursor action is done
-   --  This basically means that in this mode, if any action is performed :
-   --  - It wont impact any multi cursor
-   --  - The main cursor will move accordingly to the action
-
-   procedure Set_Multi_Cursors_Auto_Sync (Buffer : Editor_Buffer) is abstract;
+   procedure Set_Cursors_Auto_Sync (Buffer : Editor_Buffer) is abstract;
    --  This sets the buffer in auto mode regarding multi cursor insertion.
    --  This means that every insert/delete will impact every active cursors
    --  in the buffer. Do not forget to set that back after a manual multi
    --  cursor operation !
 
-   function Get_Multi_Cursors
+   function Get_Cursors
      (This : Editor_Buffer) return Cursors_Lists.List is abstract;
    --  Get the list of all multi cursor's marks
 
-   procedure Update_Multi_Cursors_Selection
+   procedure Update_Cursors_Selection
      (This : Editor_Buffer) is abstract;
    --  Update the overlay corresponding to the multi cursors selection. *MUST*
    --  be called if you change any selection marks for multi cursors
@@ -1029,30 +1022,27 @@ private
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location) is null;
 
-   overriding procedure Add_Multi_Cursor
+   overriding procedure Add_Cursor
      (This : Dummy_Editor_Buffer;
       Location : Editor_Location'Class) is null;
 
-   overriding function Add_Multi_Cursor
+   overriding function Add_Cursor
      (This : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) return Multi_Cursor'Class
+      Location : Editor_Location'Class) return Editor_Cursor'Class
    is
-      (Nil_Multi_Cursor);
+      (Nil_Editor_Cursor);
 
-   overriding procedure Remove_All_Multi_Cursors
+   overriding procedure Remove_All_Slave_Cursors
      (This : Dummy_Editor_Buffer) is null;
 
-   overriding procedure Set_Multi_Cursors_Manual_Sync
+   overriding procedure Set_Cursors_Auto_Sync
      (This : Dummy_Editor_Buffer) is null;
 
-   overriding procedure Set_Multi_Cursors_Auto_Sync
-     (This : Dummy_Editor_Buffer) is null;
-
-   overriding function Get_Multi_Cursors
+   overriding function Get_Cursors
      (This : Dummy_Editor_Buffer) return Cursors_Lists.List
    is (Cursors_Lists.Empty_List);
 
-   overriding procedure Update_Multi_Cursors_Selection
+   overriding procedure Update_Cursors_Selection
      (This : Dummy_Editor_Buffer) is null;
 
    overriding function Views
@@ -1130,22 +1120,22 @@ private
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
      Dummy_Editor_Overlay'(Controlled with others => <>);
 
-   type Dummy_Multi_Cursor is new Multi_Cursor with null record;
+   type Dummy_Editor_Cursor is new Editor_Cursor with null record;
 
    function Get_Insert_Mark
-     (This : Dummy_Multi_Cursor) return Editor_Mark'Class
+     (This : Dummy_Editor_Cursor) return Editor_Mark'Class
    is
      (Nil_Editor_Mark);
 
    function Get_Selection_Mark
-     (This : Dummy_Multi_Cursor) return Editor_Mark'Class
+     (This : Dummy_Editor_Cursor) return Editor_Mark'Class
    is
      (Nil_Editor_Mark);
 
    overriding procedure Set_Manual_Sync
-     (This : Dummy_Multi_Cursor) is null;
+     (This : Dummy_Editor_Cursor) is null;
 
-   Nil_Multi_Cursor : constant Multi_Cursor'Class
-     := Dummy_Multi_Cursor'(Controlled with others => <>);
+   Nil_Editor_Cursor : constant Editor_Cursor'Class
+     := Dummy_Editor_Cursor'(Controlled with others => <>);
 
 end GPS.Editors;

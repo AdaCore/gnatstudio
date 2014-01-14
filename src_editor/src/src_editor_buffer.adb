@@ -90,7 +90,7 @@ with Src_Editor_Box;                      use Src_Editor_Box;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Multi_Cursors;     use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors;     use Src_Editor_Buffer.Cursors;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
@@ -514,8 +514,8 @@ package body Src_Editor_Buffer is
    function Get_Current_Command
      (Buffer : access Source_Buffer_Record'Class) return Editor_Command
    is
-     (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
-      then Editor_Command (Buffer.Multi_Cursors_Sync.MC.Current_Command)
+     (if Buffer.Cursors_Sync.Mode = Manual_Slave
+      then Editor_Command (Buffer.Cursors_Sync.MC.Current_Command)
       else Editor_Command (Buffer.Current_Command));
 
    procedure Set_Current_Command
@@ -548,7 +548,7 @@ package body Src_Editor_Buffer is
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_renamed" hook
 
-   procedure Reset_Multi_Cursors_Commands
+   procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer);
 
    -------------------------
@@ -559,8 +559,8 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Command : Editor_Command) is
    begin
-      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         Buffer.Multi_Cursors_Sync.MC.Current_Command :=
+      if Buffer.Cursors_Sync.Mode = Manual_Slave then
+         Buffer.Cursors_Sync.MC.Current_Command :=
            Command_Access (Command);
       else
          Buffer.Current_Command := Command_Access (Command);
@@ -568,18 +568,18 @@ package body Src_Editor_Buffer is
    end Set_Current_Command;
 
    ----------------------------------
-   -- Reset_Multi_Cursors_Commands --
+   -- Reset_Slave_Cursors_Commands --
    ----------------------------------
 
-   procedure Reset_Multi_Cursors_Commands
+   procedure Reset_Slave_Cursors_Commands
      (Buffer : Source_Buffer) is
    begin
-      for Cursor of Buffer.Multi_Cursors_List loop
+      for Cursor of Buffer.Slave_Cursors_List loop
          if not Is_Null_Command (Editor_Command (Cursor.Current_Command)) then
             Cursor.Current_Command := null;
          end if;
       end loop;
-   end Reset_Multi_Cursors_Commands;
+   end Reset_Slave_Cursors_Commands;
 
    ---------------------
    -- Paste_Clipboard --
@@ -599,15 +599,16 @@ package body Src_Editor_Buffer is
       Buffer.Start_Undo_Group;
 
       if Buffer.Has_MC_Clipboard then
-         for C of Get_Multi_Cursors (Source_Buffer (Buffer)) loop
-            Set_Multi_Cursors_Manual_Sync
-              (Source_Buffer (Buffer), C.Cursor);
-            Buffer.Get_Iter_At_Mark (Iter, C.Cursor.Mark);
-            Buffer.Insert
-              (Iter, To_String (C.Cursor.Clipboard));
+         for C of Get_Cursors (Source_Buffer (Buffer)) loop
+            if not C.Is_Main_Cursor then
+               Set_Manual_Sync (C);
+               Buffer.Get_Iter_At_Mark (Iter, Get_Mark (C));
+               Buffer.Insert (Iter, To_String (C.Cursor.Clipboard));
+            end if;
          end loop;
 
-         Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+         Set_Manual_Sync
+           (Get_Main_Cursor (Source_Buffer (Buffer)));
       end if;
 
       Get_Mark_Position (Source_Buffer (Buffer), Buffer.Get_Insert, S);
@@ -615,12 +616,12 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Screen_Position (Buffer, From, S.Line, S.Col);
       Buffer.Get_Iter_At_Mark (To, Buffer.Get_Insert);
 
-      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      Set_Manual_Sync (Get_Main_Cursor (+Buffer));
       if Get_Line (From) /= Get_Line (To) then
          Success := Do_Indentation (Source_Buffer (Buffer), From, To);
       end if;
 
-      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+      Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
 
       Buffer.Finish_Undo_Group;
    end Paste_Clipboard;
@@ -636,24 +637,25 @@ package body Src_Editor_Buffer is
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
    begin
-      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      Set_Manual_Sync (Get_Main_Cursor (+Buffer));
       Cut_Clipboard (Gtk_TB_Access (Buffer), Clipboard, Default_Editable);
 
-      for C of Get_Multi_Cursors (Source_Buffer (Buffer)) loop
-         Buffer.Has_MC_Clipboard := True;
+      for C of Get_Cursors (Source_Buffer (Buffer)) loop
+         if not C.Is_Main_Cursor then
+            Buffer.Has_MC_Clipboard := True;
 
-         Set_Multi_Cursors_Manual_Sync
-           (Source_Buffer (Buffer), C.Cursor);
-         Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
-         Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
-         C.Cursor.Clipboard := To_Unbounded_String
-           (Buffer.Get_Text (Start_Iter, End_Iter));
-         Buffer.Delete (Start_Iter, End_Iter);
+            Set_Manual_Sync (C);
+            Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
+            Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
+            C.Cursor.Clipboard := To_Unbounded_String
+              (Buffer.Get_Text (Start_Iter, End_Iter));
+            Buffer.Delete (Start_Iter, End_Iter);
+         end if;
       end loop;
 
       Update_MC_Selection (Source_Buffer (Buffer));
 
-      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+      Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
    end Cut_Clipboard;
 
    --------------------
@@ -666,21 +668,21 @@ package body Src_Editor_Buffer is
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
    begin
-      Set_Multi_Cursors_Manual_Sync (Source_Buffer (Buffer));
+      Set_Manual_Sync (Get_Main_Cursor (+Buffer));
       Copy_Clipboard (Gtk_TB_Access (Buffer), Clipboard);
 
-      for C of Get_Multi_Cursors (Source_Buffer (Buffer)) loop
-         Buffer.Has_MC_Clipboard := True;
-
-         Set_Multi_Cursors_Manual_Sync
-           (Source_Buffer (Buffer), C.Cursor);
-         Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
-         Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
-         C.Cursor.Clipboard := To_Unbounded_String
-           (Buffer.Get_Text (Start_Iter, End_Iter));
+      for C of Get_Cursors (Source_Buffer (Buffer)) loop
+         if not C.Is_Main_Cursor then
+            Buffer.Has_MC_Clipboard := True;
+            Set_Manual_Sync (C);
+            Buffer.Get_Iter_At_Mark (Start_Iter, C.Cursor.Sel_Mark);
+            Buffer.Get_Iter_At_Mark (End_Iter, C.Cursor.Mark);
+            C.Cursor.Clipboard := To_Unbounded_String
+              (Buffer.Get_Text (Start_Iter, End_Iter));
+         end if;
       end loop;
 
-      Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+      Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
    end Copy_Clipboard;
 
    -------------
@@ -1562,7 +1564,7 @@ package body Src_Editor_Buffer is
       if not Buffer.Inserting then
          Reset_Completion_Data;
          End_Action (Buffer);
-         Reset_Multi_Cursors_Commands (Source_Buffer (Buffer));
+         Reset_Slave_Cursors_Commands (Source_Buffer (Buffer));
       end if;
 
       Register_Cursor_Timeout (Buffer);
@@ -1789,8 +1791,8 @@ package body Src_Editor_Buffer is
 
       if Mark = Buffer.Insert_Mark then
 
-         if Buffer.Multi_Cursors_Sync.Mode = Auto then
-            Remove_All_Multi_Cursors (Source_Buffer (Buffer));
+         if Buffer.Cursors_Sync.Mode = Auto then
+            Remove_All_Slave_Cursors (Source_Buffer (Buffer));
          end if;
 
          if Buffer.Insert_In_Current_Group = 0
@@ -1814,7 +1816,7 @@ package body Src_Editor_Buffer is
          end loop;
       end if;
 
-      for Cursor of Buffer.Multi_Cursors_List loop
+      for Cursor of Buffer.Slave_Cursors_List loop
          if Cursor.Mark = Mark then
             Buffer.Get_Iter_At_Mark (Iter, Mark);
             Cursor.Column_Memory := Get_Line_Offset (Iter);
@@ -1875,7 +1877,7 @@ package body Src_Editor_Buffer is
       begin
          if C /= null
            and then (not Buffer.Inserting)
-           and then Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
+           and then Buffer.Cursors_Sync.Mode = Manual_Slave
          then
             C.Set_End_Location (Iter);
          end if;
@@ -1933,22 +1935,22 @@ package body Src_Editor_Buffer is
 
       --  Perform insertion for every multi cursor
       --  If we are in auto mode
-      if Buffer.Multi_Cursors_Sync.Mode = Auto then
+      if Buffer.Cursors_Sync.Mode = Auto then
          declare
             Iter : Gtk_Text_Iter;
          begin
             Buffer.Enter_Current_Group;
 
-            for C of Get_Multi_Cursors (Source_Buffer (Buffer)) loop
-
-               --  Perform insertion for the multi cursor
-               Set_Multi_Cursors_Manual_Sync
-                 (Source_Buffer (Buffer), C.Cursor);
-               Buffer.Get_Iter_At_Mark (Iter, C.Cursor.Mark);
-               Buffer.Insert (Iter, Text (1 .. Length));
+            for C of Get_Cursors (Source_Buffer (Buffer)) loop
+               if not C.Is_Main_Cursor then
+                  --  Perform insertion for the multi cursor
+                  Set_Manual_Sync (C);
+                  Buffer.Get_Iter_At_Mark (Iter, C.Cursor.Mark);
+                  Buffer.Insert (Iter, Text (1 .. Length));
+               end if;
             end loop;
 
-            Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+            Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
             Buffer.Leave_Current_Group;
 
             declare
@@ -2019,6 +2021,11 @@ package body Src_Editor_Buffer is
 
          procedure Create_And_Enqueue_Command;
          procedure Create_And_Enqueue_Command is
+            C : constant Src_Editor_Buffer.Cursors.Cursor :=
+              (if Buffer.Cursors_Sync.Mode = Manual_Slave
+               then Src_Editor_Buffer.Cursors.Create
+                 (Buffer.Cursors_Sync.MC, Buffer)
+               else Get_Main_Cursor (+Buffer));
          begin
             Create
               (Command,
@@ -2027,10 +2034,7 @@ package body Src_Editor_Buffer is
                False,
                Cursor_Loc => (Line, Col),
                Sel_Loc => (Sel_Line, Sel_Col),
-               C => (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
-                               then Src_Editor_Buffer.Multi_Cursors.Create
-                                 (Buffer.Multi_Cursors_Sync.MC, Buffer)
-                               else Nil_Cursor));
+               C => C);
             Enqueue (Buffer, Command_Access (Command), User_Action);
          end Create_And_Enqueue_Command;
 
@@ -2074,8 +2078,8 @@ package body Src_Editor_Buffer is
    begin
       --  If in multi cursors manual slave mode, update corresponding command
       --  and sel mark
-      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         Sel_Mark := Buffer.Multi_Cursors_Sync.MC.Sel_Mark;
+      if Buffer.Cursors_Sync.Mode = Manual_Slave then
+         Sel_Mark := Buffer.Cursors_Sync.MC.Sel_Mark;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Pos);
@@ -2212,7 +2216,7 @@ package body Src_Editor_Buffer is
       Update_Insert_Command
         (Source_Buffer (Buffer),
          User_Action, Command, Pos, Sel_Pos, Text (1 .. Length),
-         Is_Main_Action => Buffer.Multi_Cursors_Sync.Mode /= Manual_Slave);
+         Is_Main_Action => Buffer.Cursors_Sync.Mode /= Manual_Slave);
 
       Buffer.No_Cursor_Move_On_Changes := Cursor_Previously_Held;
 
@@ -2256,7 +2260,7 @@ package body Src_Editor_Buffer is
          if C /= null
            and then
              ((not Buffer.Inserting)
-              or else Buffer.Multi_Cursors_Sync.Mode = Manual_Slave)
+              or else Buffer.Cursors_Sync.Mode = Manual_Slave)
          then
             C.Set_End_Location (Start_Iter);
          end if;
@@ -2276,23 +2280,24 @@ package body Src_Editor_Buffer is
         (Source_Buffer (Buffer), 8,
          Interactive => not Buffer.Inserting);
 
-      if Buffer.Multi_Cursors_Delete_Offset /= 0 and then
-        Buffer.Multi_Cursors_Sync.Mode = Auto
+      if Buffer.Cursors_Delete_Offset /= 0 and then
+        Buffer.Cursors_Sync.Mode = Auto
       then
          declare
             Iter_1, Iter_2 : Gtk_Text_Iter;
          begin
             Buffer.Enter_Current_Group;
-            for C of Get_Multi_Cursors (Source_Buffer (Buffer)) loop
-               Set_Multi_Cursors_Manual_Sync
-                 (Source_Buffer (Buffer), C.Cursor);
-               Buffer.Get_Iter_At_Mark (Iter_1, C.Cursor.Mark);
-               Buffer.Get_Iter_At_Offset
-                 (Iter_2,
-                  Get_Offset (Iter_1) + Buffer.Multi_Cursors_Delete_Offset);
-               Buffer.Delete (Iter_1, Iter_2);
+            for C of Get_Cursors (Source_Buffer (Buffer)) loop
+               if not C.Is_Main_Cursor then
+                  Set_Manual_Sync (C);
+                  Buffer.Get_Iter_At_Mark (Iter_1, C.Cursor.Mark);
+                  Buffer.Get_Iter_At_Offset
+                    (Iter_2,
+                     Get_Offset (Iter_1) + Buffer.Cursors_Delete_Offset);
+                  Buffer.Delete (Iter_1, Iter_2);
+               end if;
             end loop;
-            Set_Multi_Cursors_Auto_Sync (Source_Buffer (Buffer));
+            Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
             Buffer.Leave_Current_Group;
          end;
       end if;
@@ -2356,8 +2361,8 @@ package body Src_Editor_Buffer is
          Iter : Gtk_Text_Iter;
       begin
 
-         if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-            Mark := Buffer.Multi_Cursors_Sync.MC.Mark;
+         if Buffer.Cursors_Sync.Mode = Manual_Slave then
+            Mark := Buffer.Cursors_Sync.MC.Mark;
          else
             Mark := Buffer.Insert_Mark;
          end if;
@@ -2373,8 +2378,8 @@ package body Src_Editor_Buffer is
 
    begin
       --  If in multi cursors manual slave mode, update corresponding command
-      if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave then
-         Sel_Mark := Buffer.Multi_Cursors_Sync.MC.Sel_Mark;
+      if Buffer.Cursors_Sync.Mode = Manual_Slave then
+         Sel_Mark := Buffer.Cursors_Sync.MC.Sel_Mark;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -2397,13 +2402,13 @@ package body Src_Editor_Buffer is
          Direction := Forward;
       end if;
 
-      if Buffer.Multi_Cursors_Sync.Mode = Auto then
+      if Buffer.Cursors_Sync.Mode = Auto then
          Delete_Offset := (Get_Offset (End_Iter) - Get_Offset (Start_Iter));
          Delete_Offset := Delete_Offset * (case Direction is
                                            when Forward => -1,
                                            when Backward => 1,
                                            when Extended => 0);
-         Buffer.Multi_Cursors_Delete_Offset := Delete_Offset;
+         Buffer.Cursors_Delete_Offset := Delete_Offset;
       end if;
 
       for Listener of Buffer.Listeners loop
@@ -2601,10 +2606,10 @@ package body Src_Editor_Buffer is
                Sel_Loc     => Sel_Pos,
                Direction   => Direction,
                C           =>
-                 (if Buffer.Multi_Cursors_Sync.Mode = Manual_Slave
+                 (if Buffer.Cursors_Sync.Mode = Manual_Slave
                   then Create
-                    (Buffer.Multi_Cursors_Sync.MC, Source_Buffer (Buffer))
-                  else Nil_Cursor));
+                    (Buffer.Cursors_Sync.MC, Source_Buffer (Buffer))
+                  else Get_Main_Cursor (+Buffer)));
 
             Enqueue (Buffer, Command_Access (Command), User_Action);
 
@@ -6820,8 +6825,8 @@ package body Src_Editor_Buffer is
 
          if Should_Indent (+Buffer) and then Result then
             declare
-               Current_Sync_Mode : constant Multi_Cursors_Sync_Type :=
-                 Get_Multi_Cursors_Sync (+Buffer);
+               Current_Sync_Mode : constant Cursors_Sync_Type :=
+                 Get_Cursors_Sync (+Buffer);
                procedure Indent_Cursor (M : Gtk_Text_Mark);
                procedure Indent_Cursor
                  (M : Gtk_Text_Mark)
@@ -6842,12 +6847,11 @@ package body Src_Editor_Buffer is
                   Ignore := Do_Indentation (+Buffer, S, L);
                end Indent_Cursor;
             begin
-               Set_Multi_Cursors_Manual_Sync (+Buffer);
-               Indent_Cursor (Get_Insert (Buffer));
-               for Cursor of Get_Multi_Cursors (+Buffer) loop
+               for Cursor of Get_Cursors (+Buffer) loop
+                  Set_Manual_Sync (Cursor);
                   Indent_Cursor (Get_Mark (Cursor));
                end loop;
-               Set_Multi_Cursors_Sync (+Buffer, Current_Sync_Mode);
+               Set_Cursors_Sync (+Buffer, Current_Sync_Mode);
             end;
          end if;
 
@@ -8481,23 +8485,6 @@ package body Src_Editor_Buffer is
       end if;
    end Update_Logical_Timestamp;
 
-   -----------------------
-   -- Set_Column_Memory --
-   -----------------------
-   procedure Set_Column_Memory
-     (Buffer : access Source_Buffer_Record; Offset : Gint) is
-   begin
-      Buffer.Cursor_Column_Memory := Offset;
-   end Set_Column_Memory;
-
-   -----------------------
-   -- Get_Column_Memory --
-   -----------------------
-
-   function Get_Column_Memory
-     (Buffer : access Source_Buffer_Record) return Gint
-   is (Buffer.Cursor_Column_Memory);
-
    ------------------------------
    -- Update_All_Column_Memory --
    ------------------------------
@@ -8511,7 +8498,7 @@ package body Src_Editor_Buffer is
       Buffer.Get_Iter_At_Mark (Iter, Buffer.Insert_Mark);
       Buffer.Cursor_Column_Memory := Get_Line_Offset (Iter);
 
-      for Cursor of Buffer.Multi_Cursors_List loop
+      for Cursor of Buffer.Slave_Cursors_List loop
          Buffer.Get_Iter_At_Mark (Iter, Cursor.Mark);
          Cursor.Column_Memory := Get_Line_Offset (Iter);
       end loop;

@@ -55,7 +55,7 @@ with Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
@@ -1257,7 +1257,7 @@ package body Completion_Module is
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
-      if Get_Multi_Cursors (Buffer).Is_Empty then
+      if Get_Cursors (Buffer).Is_Empty then
          Ignore := Smart_Complete
            (Get_Kernel (Completion_Module.all),
             Complete => False,

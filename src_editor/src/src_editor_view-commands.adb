@@ -27,7 +27,7 @@ with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
@@ -118,14 +118,17 @@ package body Src_Editor_View.Commands is
       Scrolled     : Gtk_Scrolled_Window;
       Adj          : Gtk_Adjustment;
       Moved        : Boolean;
-      Column       : constant Gint := Buffer.Get_Column_Memory;
+      C            : constant Src_Editor_Buffer.Cursors.Cursor
+        := Get_Main_Cursor (Buffer);
+      Column       : constant Gint :=
+        Get_Column_Memory (Get_Main_Cursor (Buffer));
       Extend_Selection : constant Boolean :=
         View.Get_Extend_Selection or Command.Extend_Selection;
 
       pragma Unreferenced (Context, Moved);
 
    begin
-      Set_Multi_Cursors_Manual_Sync (Buffer);
+      Set_Manual_Sync (C);
 
       if Command.Kind = Page then
          Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
@@ -144,21 +147,8 @@ package body Src_Editor_View.Commands is
          Moved := Place_Cursor_Onscreen (View);
          Moved := Move_Mark_Onscreen (View, Mark);
       else
-         Get_Iter_At_Mark (Buffer, Iter, Mark);
-         Move_Iter (Iter, Command.Kind, Command.Step, Column);
-         Move_Mark (Buffer, Mark, Iter);
 
-         if Extend_Selection then
-            Move_Mark (Buffer, Buffer.Get_Insert, Iter);
-         else
-            Place_Cursor (Buffer, Iter);
-         end if;
-
-         View.Scroll_To_Cursor_Location;
-
-         Update_MC_Selection (Buffer);
-
-         for Cursor of Get_Multi_Cursors (Buffer) loop
+         for Cursor of Get_Cursors (Buffer) loop
             declare
                Mark : Gtk_Text_Mark := Get_Mark (Cursor);
                Horiz_Offset : constant Gint :=
@@ -184,15 +174,16 @@ package body Src_Editor_View.Commands is
          end loop;
 
          Update_MC_Selection (Buffer);
+         View.Scroll_To_Cursor_Location;
 
       end if;
 
       Buffer.Get_Iter_At_Mark (Iter, Mark);
-      Set_Multi_Cursors_Auto_Sync (Buffer);
+      Set_Cursors_Auto_Sync (Buffer);
       if (Command.Kind = Line or Command.Kind = Page)
         and then Get_Line (Iter) /= 0
       then
-         Buffer.Set_Column_Memory (Column);
+         Set_Column_Memory (C, Column);
       end if;
 
       return Success;
@@ -246,18 +237,11 @@ package body Src_Editor_View.Commands is
       pragma Unreferenced (Context);
 
    begin
-      Set_Multi_Cursors_Manual_Sync (Buffer);
-
-      Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
-      Copy (Source => Iter, Dest => Start);
-      Move_Iter (Iter, Command.Kind, Command.Count);
-      Delete (Buffer, Iter, Start);
-
-      for Cursor of Get_Multi_Cursors (Buffer) loop
+      for Cursor of Get_Cursors (Buffer) loop
          declare
             Cursor_Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
          begin
-            Set_Multi_Cursors_Manual_Sync (Buffer, Cursor.Cursor);
+            Set_Manual_Sync (Cursor);
             Get_Iter_At_Mark (Buffer, Iter, Cursor_Mark);
             Copy (Source => Iter, Dest => Start);
             Move_Iter (Iter, Command.Kind, Command.Count);
@@ -265,7 +249,7 @@ package body Src_Editor_View.Commands is
          end;
       end loop;
 
-      Set_Multi_Cursors_Auto_Sync (Buffer);
+      Set_Cursors_Auto_Sync (Buffer);
 
       return Success;
    end Execute;

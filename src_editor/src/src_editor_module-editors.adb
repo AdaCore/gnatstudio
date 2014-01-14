@@ -42,7 +42,7 @@ with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Multi_Cursors; use Src_Editor_Buffer.Multi_Cursors;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
@@ -60,7 +60,7 @@ package body Src_Editor_Module.Editors is
    Me : constant Trace_Handle :=
      Create ("Editor.Buffer", Default => GNATCOLL.Traces.Off);
 
-   package MC renames Src_Editor_Buffer.Multi_Cursors;
+   package MC renames Src_Editor_Buffer.Cursors;
 
    type Buffer_Reference is record
       Kernel    : Kernel_Handle;
@@ -114,8 +114,8 @@ package body Src_Editor_Module.Editors is
       Tag    : Gtk_Text_Tag; --  one ref owned by the overlay
    end record;
 
-   type Src_Editor_Multi_Cursor is new GPS.Editors.Multi_Cursor with record
-      C      : MC.Cursor;
+   type Src_Editor_Cursor is new GPS.Editors.Editor_Cursor with record
+      C      : MC.Cursors_Holders.Holder;
       Buffer : Src_Editor_Buffer;
    end record;
 
@@ -360,36 +360,33 @@ package body Src_Editor_Module.Editors is
       From    : Editor_Location'Class := Nil_Editor_Location;
       To      : Editor_Location'Class := Nil_Editor_Location);
 
-   overriding procedure Add_Multi_Cursor
+   overriding procedure Add_Cursor
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class);
 
-   overriding function Add_Multi_Cursor
+   overriding function Add_Cursor
      (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return GPS.Editors.Multi_Cursor'Class;
+      Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class;
 
    overriding function Get_Insert_Mark
-     (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
+     (This     : Src_Editor_Cursor) return Editor_Mark'Class;
 
    overriding procedure Set_Manual_Sync
-     (This : Src_Editor_Multi_Cursor);
+     (This : Src_Editor_Cursor);
 
    overriding function Get_Selection_Mark
-     (This     : Src_Editor_Multi_Cursor) return Editor_Mark'Class;
+     (This     : Src_Editor_Cursor) return Editor_Mark'Class;
 
-   overriding procedure Remove_All_Multi_Cursors
+   overriding procedure Remove_All_Slave_Cursors
      (This     : Src_Editor_Buffer);
 
-   overriding procedure Set_Multi_Cursors_Manual_Sync
+   overriding procedure Set_Cursors_Auto_Sync
      (This : Src_Editor_Buffer);
 
-   overriding procedure Set_Multi_Cursors_Auto_Sync
-     (This : Src_Editor_Buffer);
-
-   overriding function Get_Multi_Cursors
+   overriding function Get_Cursors
      (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List;
 
-   overriding procedure Update_Multi_Cursors_Selection
+   overriding procedure Update_Cursors_Selection
      (This : Src_Editor_Buffer);
 
    overriding function Current_View
@@ -2906,48 +2903,46 @@ package body Src_Editor_Module.Editors is
       end if;
    end Remove_Overlay;
 
-   ----------------------
-   -- Add_Multi_Cursor --
-   ----------------------
+   ----------------
+   -- Add_Cursor --
+   ----------------
 
-   overriding procedure Add_Multi_Cursor
+   overriding procedure Add_Cursor
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class)
    is
       Iter : Gtk_Text_Iter;
    begin
       This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
-      Add_Multi_Cursor (This.Contents.Buffer, Iter);
-   end Add_Multi_Cursor;
+      Add_Cursor (This.Contents.Buffer, Iter);
+   end Add_Cursor;
 
-   ----------------------
-   -- Add_Multi_Cursor --
-   ----------------------
+   ----------------
+   -- Add_Cursor --
+   ----------------
 
-   overriding function Add_Multi_Cursor
+   overriding function Add_Cursor
      (This     : Src_Editor_Buffer;
-      Location : Editor_Location'Class) return GPS.Editors.Multi_Cursor'Class
+      Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class
    is
       Iter : Gtk_Text_Iter;
-      C    : MC.Cursor;
    begin
       This.Contents.Buffer.Get_Iter_At_Offset (Iter, Gint (Location.Offset));
-      C := Add_Multi_Cursor (This.Contents.Buffer, Iter);
-      return Src_Editor_Multi_Cursor'
-        (GPS.Editors.Multi_Cursor with
-           C => C,
+      return Src_Editor_Cursor'
+        (GPS.Editors.Editor_Cursor with
+           C => Holder (Add_Cursor (This.Contents.Buffer, Iter)),
            Buffer => Src_Editor_Location (Location).Buffer);
-   end Add_Multi_Cursor;
+   end Add_Cursor;
 
-   -----------------------------------
-   -- Set_Multi_Cursors_Manual_Sync --
-   -----------------------------------
+   ---------------------
+   -- Set_Manual_Sync --
+   ---------------------
 
    overriding procedure Set_Manual_Sync
-     (This : Src_Editor_Multi_Cursor)
+     (This : Src_Editor_Cursor)
    is
    begin
-      Set_Multi_Cursors_Manual_Sync (This.C);
+      Set_Manual_Sync (This.C.Element);
    end Set_Manual_Sync;
 
    ---------------------
@@ -2955,9 +2950,9 @@ package body Src_Editor_Module.Editors is
    ---------------------
 
    overriding function Get_Insert_Mark
-     (This : Src_Editor_Multi_Cursor) return Editor_Mark'Class is
+     (This : Src_Editor_Cursor) return Editor_Mark'Class is
    begin
-      return This.Buffer.Create_Editor_Mark (Get_Mark (This.C));
+      return This.Buffer.Create_Editor_Mark (Get_Mark (This.C.Element));
    end Get_Insert_Mark;
 
    ------------------------
@@ -2965,68 +2960,59 @@ package body Src_Editor_Module.Editors is
    ------------------------
 
    overriding function Get_Selection_Mark
-     (This : Src_Editor_Multi_Cursor) return Editor_Mark'Class is
+     (This : Src_Editor_Cursor) return Editor_Mark'Class is
    begin
-      return This.Buffer.Create_Editor_Mark (Get_Sel_Mark (This.C));
+      return This.Buffer.Create_Editor_Mark (Get_Sel_Mark (This.C.Element));
    end Get_Selection_Mark;
 
    ------------------------------
-   -- Remove_All_Multi_Cursors --
+   -- Remove_All_Slave_Cursors --
    ------------------------------
 
-   overriding procedure Remove_All_Multi_Cursors
+   overriding procedure Remove_All_Slave_Cursors
      (This     : Src_Editor_Buffer) is
    begin
-      Remove_All_Multi_Cursors (This.Contents.Buffer);
-   end Remove_All_Multi_Cursors;
+      Remove_All_Slave_Cursors (This.Contents.Buffer);
+   end Remove_All_Slave_Cursors;
 
-   -----------------------------------
-   -- Set_Multi_Cursors_Manual_Sync --
-   -----------------------------------
+   ---------------------------
+   -- Set_Cursors_Auto_Sync --
+   ---------------------------
 
-   overriding procedure Set_Multi_Cursors_Manual_Sync
+   overriding procedure Set_Cursors_Auto_Sync
      (This : Src_Editor_Buffer) is
    begin
-      Set_Multi_Cursors_Manual_Sync (This.Contents.Buffer);
-   end Set_Multi_Cursors_Manual_Sync;
+      Set_Cursors_Auto_Sync (This.Contents.Buffer);
+   end Set_Cursors_Auto_Sync;
 
-   ---------------------------------
-   -- Set_Multi_Cursors_Auto_Sync --
-   ---------------------------------
+   -----------------
+   -- Get_Cursors --
+   -----------------
 
-   overriding procedure Set_Multi_Cursors_Auto_Sync
-     (This : Src_Editor_Buffer) is
-   begin
-      Set_Multi_Cursors_Auto_Sync (This.Contents.Buffer);
-   end Set_Multi_Cursors_Auto_Sync;
-
-   -----------------------
-   -- Get_Multi_Cursors --
-   -----------------------
-
-   overriding function Get_Multi_Cursors
+   overriding function Get_Cursors
      (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List
    is
       List : GPS.Editors.Cursors_Lists.List;
    begin
-      for Cursor of Get_Multi_Cursors (This.Contents.Buffer) loop
+      for Cursor of Get_Cursors (This.Contents.Buffer) loop
          List.Append
-           (Src_Editor_Multi_Cursor'
-              (GPS.Editors.Multi_Cursor with C => Cursor, Buffer => This));
+           (Src_Editor_Cursor'
+              (GPS.Editors.Editor_Cursor
+               with C => Holder (Cursor), Buffer => This));
       end loop;
       return List;
-   end Get_Multi_Cursors;
+   end Get_Cursors;
 
-   ------------------------------------
-   -- Update_Multi_Cursors_Selection --
-   ------------------------------------
+   ------------------------------
+   -- Update_Cursors_Selection --
+   ------------------------------
 
-   overriding procedure Update_Multi_Cursors_Selection
+   overriding procedure Update_Cursors_Selection
      (This : Src_Editor_Buffer)
    is
    begin
       Update_MC_Selection (This.Contents.Buffer);
-   end Update_Multi_Cursors_Selection;
+   end Update_Cursors_Selection;
 
    ----------
    -- Name --

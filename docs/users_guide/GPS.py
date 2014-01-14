@@ -16,10 +16,10 @@
 This package groups all the classes and functions exported by the GNAT
 Programming System.
 
-These functions are made available through various programming languages (Python
-and the GPS shell at the moment). The documentation in this package is mostly
-oriented towards Python, but it can also be used as a reference for the GPS
-shell
+These functions are made available through various programming languages
+(Python and the GPS shell at the moment). The documentation in this package is
+mostly oriented towards Python, but it can also be used as a reference for the
+GPS shell
 
 Function description
 --------------------
@@ -71,16 +71,16 @@ as in::
     ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
     # ed.field1 is still "value1"
 
-This is a very convenient way to store your own data associated with the various
-objects exported by GPS. These data will cease to exist when the GPS object
-itself is destroyed (for instance when the editor is closed in the example
-above).
+This is a very convenient way to store your own data associated with the
+various objects exported by GPS. These data will cease to exist when the GPS
+object itself is destroyed (for instance when the editor is closed in the
+example above).
 
 Hooks
 -----
 
-In a lot of cases, you will need to connect to specific hooks exported by GPS to
-be aware of events happening in GPS (loading of a file, closing a file,...).
+In a lot of cases, you will need to connect to specific hooks exported by GPS
+to be aware of events happening in GPS (loading of a file, closing a file,...).
 These hooks and their use are described in the GPS manual (see also the
 :class:`GPS.Hook` class).
 
@@ -93,9 +93,9 @@ when the GPS window is fully visible to the user::
 
     GPS.Hook("gps_started").add(on_gps_started)
 
-The list of parameters for the hooks is described for each hook below. The first
-parameter is always the name of the hook, so that the same function can be used
-for multiple hooks if necessary.
+The list of parameters for the hooks is described for each hook below. The
+first parameter is always the name of the hook, so that the same function can
+be used for multiple hooks if necessary.
 
 There are two categories of hooks: the standard hooks and the action hooks. The
 former return nothing, the latter return a boolean indicating whether your
@@ -112,6 +112,7 @@ import exceptions
 ###########################################################
 
 class GUI(object):
+
     """
     This is an abstract class (ie no instances of it can be created from your
     code, which represents a graphical element of the GPS interface
@@ -148,7 +149,8 @@ class GUI(object):
 
     def is_sensitive(self):
         """
-        Return False if the widget is currently greyed out, and is not clickable by users
+        Return False if the widget is currently greyed out, and is not
+        clickable by users
 
         :return: A boolean
 
@@ -159,10 +161,10 @@ class GUI(object):
     def pywidget(self):
         """
         This function is only available if GPS was compiled with support for
-        pygobject, and the latter was found at run time. It returns a widget that
-        can be manipulated through the usual PyGtk functions. PyGObject is a
-        binding to the gtk+ toolkit, and allows you to create your own windows
-        easily, or manipulate the entire GPS GUI from python
+        pygobject, and the latter was found at run time. It returns a widget
+        that can be manipulated through the usual PyGtk functions. PyGObject is
+        a binding to the gtk+ toolkit, and allows you to create your own
+        windows easily, or manipulate the entire GPS GUI from python
 
         :return: An instance of PyWidget
 
@@ -170,8 +172,8 @@ class GUI(object):
 
         .. code-block:: python
 
-           # The following example makes the project view inactive. One could easily
-           # change the contents of the project view as well
+           # The following example makes the project view inactive. One could
+           # easily change the contents of the project view as well
            widget = GPS.MDI.get("Project View")
            widget.pywidget().set_sensitive False)
 
@@ -204,6 +206,7 @@ class GUI(object):
 ###########################################################
 
 class Action(GUI):
+
     """
     This class gives access to the interactive commands in GPS. These are the
     commands to which the user can bind a key shortcut, or for which we can
@@ -238,7 +241,8 @@ class Action(GUI):
         """
         pass  # implemented in Ada
 
-    def create(self, on_activate, filter='', category='General', description=''):
+    def create(self, on_activate, filter='', category='General',
+               description=''):
         """
         Export the function on_activate and make it interactive so that users
         can bind keys and menus to it. The function should not require any
@@ -251,9 +255,9 @@ class Action(GUI):
 
         :param filter: A string or subprogram
            This is either the name of a predefined filter (a string), or a
-           subprogram that receives the context as a parameter, and should return
-           True if the command can be executed within that context. This is used
-           to disable menu items when they are not available.
+           subprogram that receives the context as a parameter, and should
+           return True if the command can be executed within that context. This
+           is used to disable menu items when they are not available.
 
         :param category: A string
            The category of the command in the /Edit/Key Shortcuts dialog.
@@ -304,6 +308,7 @@ class Action(GUI):
 ###########################################################
 
 class Activities(object):
+
     """
     General interface to version control activities systems
     """
@@ -484,6 +489,7 @@ class Activities(object):
 ###########################################################
 
 class Context(object):
+
     """
     Represents a context in GPS. Depending on the currently selected window, an
     instance of one of the derived classes will be used.
@@ -508,6 +514,7 @@ class Context(object):
 ###########################################################
 
 class FileContext(Context):
+
     """
     Represents a context that contains file information
 
@@ -570,6 +577,7 @@ class FileContext(Context):
 ###########################################################
 
 class AreaContext(FileContext):
+
     """
     Represents a context that contains file information and a range of lines
     currently selected
@@ -608,6 +616,7 @@ class AreaContext(FileContext):
 ###########################################################
 
 class Bookmark(object):
+
     """
     This class provides access to the bookmarks of GPS. These are special types
     of markers that are saved across sessions, and can be used to save a
@@ -618,10 +627,10 @@ class Bookmark(object):
 
     def __init__(self):
         """
-        This function prevents the creation of a bookmark instance
-        directly. You must use :func:`GPS.Bookmark.get` instead, which will always
-        return the same instance for a given bookmark, thus allowing you to
-        save your own custom data with the bookmark
+        This function prevents the creation of a bookmark instance directly.
+        You must use :func:`GPS.Bookmark.get` instead, which will always return
+        the same instance for a given bookmark, thus allowing you to save your
+        own custom data with the bookmark
 
         .. seealso:: :func:`GPS.Bookmark.get`
         """
@@ -730,6 +739,7 @@ class Bookmark(object):
 ###########################################################
 
 class BuildTarget(object):
+
     """
     This class provides an interface to the GPS build targets. Build targets
     can be configured through XML or through the Target Configuration dialog.
@@ -737,7 +747,8 @@ class BuildTarget(object):
 
     def __init__(self, name):
         """
-        Initializes a new instance of the class BuildTarget. Name must correspond to an existing target.
+        Initializes a new instance of the class BuildTarget. Name must
+        correspond to an existing target.
 
         :param name: Name of the target associated with this instance
 
@@ -751,8 +762,8 @@ class BuildTarget(object):
     def clone(self, new_name, new_category):
         """
         Clone the target to a new target. All the properties of the new target
-        are copied from the target.  Any graphical element corresponding to this
-        new target is created.
+        are copied from the target.  Any graphical element corresponding to
+        this new target is created.
 
         :param new_name: The name of the new target
         :param new_category: The category in which to place the new target
@@ -771,8 +782,8 @@ class BuildTarget(object):
            Indicates the file to build if this targets acts on a file.
         :param force: A Boolean
            If True, this means that the target should be launched directly,
-           even if its parameters indicate that it should be launched through an
-           intermediary dialog.
+           even if its parameters indicate that it should be launched through
+           an intermediary dialog.
         :param extra_args: A String or a list of strings
            any extra parameters to pass to the command line. When a single
            string is passed, it is split into multiple arguments.
@@ -810,7 +821,9 @@ class BuildTarget(object):
 # Button
 ###########################################################
 
+
 class Button(GUI):
+
     """
     This class represents a button that can be pressed to trigger various
     actions
@@ -850,6 +863,7 @@ class Button(GUI):
 ###########################################################
 
 class Clipboard(object):
+
     """
     This class provides an interface to the GPS clipboard. This clipboard
     contains the previous selections that were copied or cut from a text
@@ -887,9 +901,9 @@ class Clipboard(object):
     @staticmethod
     def current():
         """
-        This function returns the index, in :func:`GPS.Clipboard.contents`, of the
-        text that was last pasted by the user. If you were to select the menu
-        /Edit/Paste, that would be the text pasted by GPS. If you select
+        This function returns the index, in :func:`GPS.Clipboard.contents`, of
+        the text that was last pasted by the user. If you were to select the
+        menu /Edit/Paste, that would be the text pasted by GPS. If you select
         /Edit/Paste Previous, current will be incremented by 1, and the next
         selection in the clipboard will be pasted
 
@@ -915,6 +929,7 @@ class Clipboard(object):
 ###########################################################
 
 class CodeAnalysis(object):
+
     """
     This class is a toolset that allows to handle CodeAnalysis instances.
     """
@@ -961,8 +976,9 @@ class CodeAnalysis(object):
 
         .. code-block:: python
 
-           a = GPS.CodeAnalysis.get ("Coverage Report")
-           a.add_gcov_file_info (src=GPS.File ("source_file.adb"), cov=GPS.File ("source_file.adb.gcov"))
+           a = GPS.CodeAnalysis.get("Coverage Report")
+           a.add_gcov_file_info(src=GPS.File("source_file.adb"),
+                                cov=GPS.File("source_file.adb.gcov"))
         """
         pass  # implemented in Ada
 
@@ -1075,8 +1091,10 @@ class CodeAnalysis(object):
 ###########################################################
 
 class Codefix(object):
+
     """
-    This class gives access to GPS's features for automatically fixing compilation errors
+    This class gives access to GPS's features for automatically fixing
+    compilation errors
 
     .. seealso::
 
@@ -1169,6 +1187,7 @@ class Codefix(object):
 ###########################################################
 
 class CodefixError(object):
+
     """
     This class represents a fixable error in the compilation output
 
@@ -1196,7 +1215,8 @@ class CodefixError(object):
         parameter is the index in the list returned by "possible_fixes. By
         default, the first choice is taken. Choices start at index 0.
 
-        :param choice: The index of the fix to apply, see output of GPS.CodefixError.possible_fixes()
+        :param choice: The index of the fix to apply, see output of
+        GPS.CodefixError.possible_fixes()
 
         .. code-block:: python
 
@@ -1243,6 +1263,7 @@ class CodefixError(object):
 ###########################################################
 
 class Combo(GUI):
+
     """
     This class represents a combo box, ie a text entry widget with a number of
     predefined possible values. The user can interactively select one of
@@ -1267,7 +1288,8 @@ following:
 
 :param id: A string, the name of the combo to create
 :param label: A string, the label to add next to the entry
-:param on_changed: A subprogram, see the GPS documentaion on Subprogram parameters
+:param on_changed: A subprogram, see the GPS documentaion on Subprogram
+parameters
 
         .. seealso::
 
@@ -1287,7 +1309,8 @@ parameters:
 - $2 = The newly selected text (a string)
 
 :param choice: A string
-:param on_selected: A subprogram, see the GPS documentation on Subprogram parameters
+:param on_selected: A subprogram, see the GPS documentation on Subprogram
+parameters
         """
         pass  # implemented in Ada
 
@@ -1327,13 +1350,15 @@ parameters:
 ###########################################################
 
 class Command(object):
+
     """
     Interface to GPS command. This class is abstract, and shall be subclassed.
     """
 
     def __del__(self):
         """
-        Destructor of a GPS command. This should not be called manually by the user.
+        Destructor of a GPS command. This should not be called manually by the
+        user.
         """
         pass  # implemented in Ada
 
@@ -1386,6 +1411,7 @@ class Command(object):
 ###########################################################
 
 class CommandWindow(GUI):
+
     """
     This class gives access to a command-line window that pops up on the
     screen. This window is short-lived (in fact there can be only one such
@@ -1409,7 +1435,8 @@ class CommandWindow(GUI):
            def on_key(self, input, key, cursor_pos):
               if key == "control-w":
                  .... # Copy current word from editor into the window
-                 self.write(input[:cursor_pos + 1] + "FOO" + input[cursor_pos + 1:])
+                 self.write(input[:cursor_pos + 1] +
+                            "FOO" + input[cursor_pos + 1:])
                  return True  ## No further processing needed
               return False
 
@@ -1515,6 +1542,7 @@ after the insertion. -1 indicates the end of the string.
 ###########################################################
 
 class Console(GUI):
+
     """
     This class is used to create and interact with the interactive consoles in
     GPS. It can be used to redirect the output of scripts to various consoles
@@ -1585,7 +1613,8 @@ class Console(GUI):
 
     def __init__(self, name, force=False, on_input=None, on_destroy=None,
                  accept_input=True, on_resize=None, on_interrupt=None,
-                 on_completion=None, on_key='', manage_prompt=True, ansi=False):
+                 on_completion=None, on_key='', manage_prompt=True,
+                 ansi=False):
         """
 Create a new instance of GPS.Console. GPS will try to reuse any existing
 console with the same name. If none exists yet, or the parameter force is set
@@ -1847,7 +1876,9 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
         .. code-block:: python
 
-            Console().write(u"\N{LATIN CAPITAL LETTER E WITH ACUTE}".encode("utf-8"))
+            Console().write(
+                u"\N{LATIN CAPITAL LETTER E WITH ACUTE}".encode("utf-8")
+            )
         """
         pass  # implemented in Ada
 
@@ -1881,6 +1912,7 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 ###########################################################
 
 class Contextual(object):
+
     """
     This class is a general interface to the contextual menus in GPS. It gives
     you control over which menus should be displayed when the user right clicks
@@ -2122,6 +2154,7 @@ after that second entry.
 ###########################################################
 
 class Debugger(object):
+
     """
     Interface to debugger related commands. This class allows you to start a
     debugger and send commands to it.  By connection to the various debugger_*
@@ -2288,10 +2321,10 @@ class Debugger(object):
         executing on the debugger. If output is true, the command is displayed
         in the console.
 
-        If ``show_in_console`` is True, the output of the command is displayed in
-        the debugger console, but is not returned by this function. If
-        ``show_in_console`` is False, the result is not displayed in the console,
-        but is returned by this function
+        If ``show_in_console`` is True, the output of the command is displayed
+        in the debugger console, but is not returned by this function. If
+        ``show_in_console`` is False, the result is not displayed in the
+        console, but is returned by this function
 
         :param cmd: A string
         :param output: A boolean
@@ -2320,6 +2353,7 @@ class Debugger(object):
 ###########################################################
 
 class Docgen(object):
+
     """
     Interface for handling customized documentation generation. This class is
     used in conjunction with GPS.DocgenTagHandler. You cannot create directly
@@ -2395,7 +2429,7 @@ class Docgen(object):
            # register a default handler for tag <description>
            # that is, -- <description>sth</description>
            # will be translated as <div class="description">sth</div>
-           GPS.Docgen.register_tag_handler(GPS.DocgenTagHandler ("description"))
+           GPS.Docgen.register_tag_handler(GPS.DocgenTagHandler("description"))
         """
         pass  # implemented in Ada
 
@@ -2403,59 +2437,68 @@ class Docgen(object):
 # DocgenTagHandler
 ###########################################################
 
+
 class DocgenTagHandler(object):
+
     """
-    This class is used to handle user-defined documentation tags. This allows
-    custom handling of comments such as ::
+This class is used to handle user-defined documentation tags. This allows
+custom handling of comments such as ::
 
-        -- <summary>This fn does something</summary>
+    -- <summary>This fn does something</summary>
 
-    .. seealso:: :func:`GPS.Docgen`
+.. seealso:: :func:`GPS.Docgen`
 
-    .. code-block:: python
+.. code-block:: python
 
-       import GPS
+   import GPS
 
-       class ScreenshotTagHandler(GPS.DocgenTagHandler):
-          "Handling for <screenshot>screen.jpg</screenshot>"
+   class ScreenshotTagHandler(GPS.DocgenTagHandler):
+      "Handling for <screenshot>screen.jpg</screenshot>"
 
-          def __init__(self):
-             GPS.DocgenTagHandler.__init__(
-               self, "screenshot",
-               on_match=self.on_match, on_start=self.on_start, on_exit=self.on_exit)
+      def __init__(self):
+         GPS.DocgenTagHandler.__init__(
+             self, "screenshot",
+             on_match=self.on_match, on_start=self.on_start,
+             on_exit=self.on_exit
+         )
 
-          def on_start(self, docgen):
-             self.list = {}
+      def on_start(self, docgen):
+         self.list = {}
 
-          def on_match(self, docgen, attrs, value, entity_name, entity_href):
-             # In this examples, images are in the directory _project_root_/doc/imgs/
+      def on_match(self, docgen, attrs, value, entity_name, entity_href):
+         # In this examples, images are in the directory
+         # _project_root_/doc/imgs/
 
-             dir = docgen.get_current_file().project().file().directory()+"doc/imgs/"
-             img = '<img src="%s%s" alt="%s"/>"' % (dir, value, value)
-             self.list[entity_name] = [entity_href, img]
-             return "<h3>Screenshot</h3><p>%s</p>" % (img)
+         dir = docgen.get_current_file().project().file().directory()
+         dir = dir + "doc/imgs/"
+         img = '<img src="%s%s" alt="%s"/>"' % (dir, value, value)
+         self.list[entity_name] = [entity_href, img]
+         return "<h3>Screenshot</h3><p>%s</p>" % (img)
 
-          def on_exit(self, docgen):
-             content=""
+      def on_exit(self, docgen):
+         content=""
 
-             for pict in sorted(self.list.keys()):
-                content += "<div class='subprograms'>"
-                content += "  <div class='class'>"
-                content += "    <h3>%s</h3>" % (pict)
-                content += "    <div class='comment'>"
-                content += "      <a href="%s">%s</a>" % (self.list[pict][0], self.list[pict][1])
-                content += "    </div>"
-                content += "  </div>"
-                content += "</div>"
+         for pict in sorted(self.list.keys()):
+            content += "<div class='subprograms'>"
+            content += "  <div class='class'>"
+            content += "    <h3>%s</h3>" % (pict)
+            content += "    <div class='comment'>"
+            content += "      <a href="%s">%s</a>" % (self.list[pict][0],
+                                                      self.list[pict][1])
+            content += "    </div>"
+            content += "  </div>"
+            content += "</div>"
 
-             if content != "":
-                docgen.generate_index_file("Screenshots", "screenshots.html", content)
+         if content != "":
+            docgen.generate_index_file("Screenshots",
+                                       "screenshots.html", content)
 
-       def on_gps_start(hook):
-          GPS.Docgen.register_css(GPS.get_system_dir() + "share/mycustomfiles/custom.css")
-          GPS.Docgen.register_tag_handler(ScreenshotTagHandler())
+   def on_gps_start(hook):
+      GPS.Docgen.register_css(GPS.get_system_dir() +
+                              "share/mycustomfiles/custom.css")
+      GPS.Docgen.register_tag_handler(ScreenshotTagHandler())
 
-       GPS.Hook("gps_started").add(on_gps_start)
+   GPS.Hook("gps_started").add(on_gps_start)
     """
 
     def __init__(self, tag, on_start=None, on_match=None, on_exit=None):
@@ -2499,6 +2542,7 @@ class="tag">value</div>".
 ###########################################################
 
 class Editor(object):
+
     """
     Deprecated interface to all editor-related commands
     """
@@ -3200,6 +3244,7 @@ class Editor(object):
 ###########################################################
 
 class EditorBuffer(object):
+
     """
     This class represents the physical contents of a file. It is always
     associated with at least one view (a GPS.EditorView instance), which makes
@@ -3231,7 +3276,8 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def apply_overlay(self, overlay, frm='begining of buffer', to='end of buffer'):
+    def apply_overlay(self, overlay, frm='begining of buffer',
+                      to='end of buffer'):
         """
         Applies the overlay to the given range of text. This immediately
         changes the rendering of the text based on the properties of the
@@ -3705,31 +3751,30 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def add_multi_cursor(self, location):
+    def add_cursor(self, location):
         """
         Adds a new multi cursor at the given location.
 
-        :return: The resulting :class:`MultiCursor` instance
+        :return: The resulting :class:`Cursor` instance
         """
 
-    def get_multi_cursors(self):
+    def get_cursors(self):
         """
-        Returns a list of :class:`MultiCursor` instances.  Note that if you
+        Returns a list of :class:`Cursor` instances.  Note that if you
         intend to perform actions with them (in particular
-        deletions/insertions), you should call set_multi_cursors_manual_sync,
-        with the cursor mark as argument.  Also, if you move any selection
-        mark, you should call update_multi_cursors_selection afterwards?  See
-        set_multi_cursors_* functions for more details
+        deletions/insertions), you should call set_manual_sync,
+        on the cursor's instance.  Also, if you move any selection
+        mark, you should call update_cursors_selection afterwards.
 
-        :return: A list of :class:`MultiCursor` instances
+        :return: A list of :class:`Cursor` instances
         """
 
-    def remove_all_multi_cursors(self):
+    def remove_all_slave_cursors(self):
         """
         Removes all active multi-cursors from the buffer
         """
 
-    def set_multi_cursors_auto_sync(self):
+    def set_cursors_auto_sync(self):
         """
         Set the buffer in auto sync mode regarding multi cursors.
         This means that any insertion/deletion will be propagated
@@ -3737,14 +3782,7 @@ class EditorBuffer(object):
         be propagated.
         """
 
-    def set_multi_cursors_manual_sync(self):
-        """
-        Set the buffer in manual sync mode regarding multi cursors. This will
-        set sync to be manual and all actions will be considered as coming from
-        the main cursor
-        """
-
-    def update_multi_cursors_selections():
+    def update_cursors_selection():
         """
         Update the overlay used to show the multi cursor's current selection.
         This must be called after any operation on multi cursor selection marks
@@ -3756,6 +3794,7 @@ class EditorBuffer(object):
 ###########################################################
 
 class EditorHighlighter(object):
+
     """
     This class can be used to transform source editor text into hyperlinks when
     the Control key is pressed.  Two actions can then be associated with this
@@ -3766,37 +3805,37 @@ class EditorHighlighter(object):
 
     def __init__(self, pattern, action, index=0, secondary_action=None):
         """
-        Register a highlighter. The action is a Python function that takes a
-        string as a parameter: the string being passed is the section of text
-        which is highlighted.
+Register a highlighter. The action is a Python function that takes a
+string as a parameter: the string being passed is the section of text
+which is highlighted.
 
-        :param pattern: A regular expression representing the patterns on which
-            we want to create hyperlinks.
-        :param action: The primary action for this hyperlink
-        :param index: This indicate the number of the
-            parenthesized group in pattern that needs to be highlighted.
-        :param secondary_action: The alternate action for this hyperlink
+:param pattern: A regular expression representing the patterns on which
+    we want to create hyperlinks.
+:param action: The primary action for this hyperlink
+:param index: This indicate the number of the
+    parenthesized group in pattern that needs to be highlighted.
+:param secondary_action: The alternate action for this hyperlink
 
-        .. code-block:: python
+.. code-block:: python
 
-             # Define an action
-             def view_html(url):
-                 GPS.HTML.browse (url)
+     # Define an action
+     def view_html(url):
+         GPS.HTML.browse (url)
 
-             def wget_url(url):
-                 def on_exit_cb(self, code, output):
-                     GPS.Editor.edit (GPS.dump (output))
-                 p=GPS.Process("wget %s -O -" % url, on_exit=on_exit_cb)
+     def wget_url(url):
+         def on_exit_cb(self, code, output):
+             GPS.Editor.edit (GPS.dump (output))
+         p=GPS.Process("wget %s -O -" % url, on_exit=on_exit_cb)
 
-             # Register a highlighter to launch a browser on any URL
-             #  left-clicking on an URL will open the default browser to this URL
-             #  middle-clicking will call "wget" to get the source of this URL and
-             #    open the output in a new editor
+     # Register a highlighter to launch a browser on any URL
+     #  left-clicking on an URL will open the default browser to this URL
+     #  middle-clicking will call "wget" to get the source of this URL and
+     #    open the output in a new editor
 
-             h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, wget_url)
+     h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, wget_url)
 
-             # Remove the highlighter
-             h.remove()
+     # Remove the highlighter
+     h.remove()
         """
         pass  # implemented in Ada
 
@@ -3813,6 +3852,7 @@ class EditorHighlighter(object):
 ###########################################################
 
 class EditorLocation(object):
+
     """
     This class represents a location in a specific editor buffer. This location
     is not updated when the buffer changes, but will keep pointing to the same
@@ -4221,6 +4261,7 @@ class EditorLocation(object):
 ###########################################################
 
 class EditorMark(object):
+
     """
     This class represents a specific location in an open editor. As opposed to
     the GPS.EditorLocation class, the exact location is updated whenever the
@@ -4307,6 +4348,7 @@ class EditorMark(object):
 ###########################################################
 
 class EditorOverlay(object):
+
     """
     This class represents properties that can be applied to one or more ranges
     of text. This can be used to change the display properties of the text
@@ -4322,8 +4364,8 @@ class EditorOverlay(object):
     sections of an editor with that style, or to remove the highlighting.
 
     In fact, if your goal is to highlight parts of editors, it might be simpler
-    to use :py:func:`gps_utils.highilghter.Background_Highlighter` or one of the
-    classes derived from it. These classes provide convenient support for
+    to use :py:func:`gps_utils.highilghter.Background_Highlighter` or one of
+    the classes derived from it. These classes provide convenient support for
     highlighting editors in the background, i.e. without interfering with the
     user or slowing things down.
     """
@@ -4448,6 +4490,7 @@ modified since then (see GPS.EditorLocation.forward_overlay)
 ###########################################################
 
 class EditorView(GUI):
+
     """
     One view of an editor, ie the visible part through which users can modify
     text files. A given GPS.EditorBuffer can be associated with multiple
@@ -4564,6 +4607,7 @@ class EditorView(GUI):
 ###########################################################
 
 class Entity(object):
+
     """
     Represents an entity from the source, based on the location of its
     declaration
@@ -4601,13 +4645,15 @@ class Entity(object):
         :param file: An instance of GPS.File, in which the entity is referenced
         :param line: An integer, the line at which the entity is referenced
         :param column: An integer, the column at which the entity is referenced
-        :param approximate_search_fallback: If True, when the line and column are
-           not exact, this parameter will trigger approximate search in the database
-           (eg. see if there are similar entities in the surrounding lines)
+        :param approximate_search_fallback: If True, when the line and column
+           are not exact, this parameter will trigger approximate search in the
+           database (eg. see if there are similar entities in the surrounding
+           lines)
 
-        >>> GPS.Entity("foo", GPS.File("a.adb"), 10, 23).declaration().file().name()
-        => will return the full path name of the file in which the entity "foo",
-           referenced in a.adb at line 10, column 23, is defined.
+        >>> GPS.Entity("foo", GPS.File("a.adb"),
+                       10, 23).declaration().file().name()
+        => will return the full path name of the file in which the entity
+           "foo", referenced in a.adb at line 10, column 23, is defined.
         """
         pass  # implemented in Ada
 
@@ -4959,15 +5005,16 @@ class Entity(object):
 
     def primitive_of(self):
         """
-        Return the list of type for which self is a primitive operation (or a method,
-        in other languages than Ada)
+        Return the list of type for which self is a primitive operation (or a
+        method, in other languages than Ada)
 
         :return: A list of instances of :class:`GPS.Entity` or []
 
         """
         pass  # implemented in Ada
 
-    def references(self, include_implicit=False, synchronous=True, show_kind=False, in_file=None, kind_in=''):
+    def references(self, include_implicit=False, synchronous=True,
+                   show_kind=False, in_file=None, kind_in=''):
         """
         List all references to the entity in the project sources. If
         include_implicit is true, then implicit uses of the entity will also be
@@ -5062,6 +5109,7 @@ class Entity(object):
 ###########################################################
 
 class EntityContext(FileContext):
+
     """
     Represents a context that contains entity information
 
@@ -5080,9 +5128,10 @@ class EntityContext(FileContext):
         """
         Return the entity stored in the context
 
-        :param approximate_search_fallback: If True, when the line and column are
-           not exact, this parameter will trigger approximate search in the database
-           (eg. see if there are similar entities in the surrounding lines)
+        :param approximate_search_fallback: If True, when the line and column
+           are not exact, this parameter will trigger approximate search in the
+           database (eg. see if there are similar entities in the surrounding
+           lines)
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
@@ -5093,6 +5142,7 @@ class EntityContext(FileContext):
 ###########################################################
 
 class Exception(exceptions.Exception):
+
     """
     One of the exceptions that can be raised by GPS. It is a general error
     message, and its semantic depends on what subprogram raised the exception.
@@ -5105,6 +5155,7 @@ class Exception(exceptions.Exception):
 ###########################################################
 
 class File(object):
+
     """
     Represents a source file of your application
 
@@ -5343,15 +5394,16 @@ class File(object):
         """
         Return the name of the other file semantically associated with this
         one. In Ada this is the spec or body of the same package depending on
-        the type of this file. In C, this will generally be the .c or .h file with the same base name.
+        the type of this file. In C, this will generally be the .c or .h file
+        with the same base name.
 
         :return: An instance of :class:`GPS.File`
 
         .. code-block:: python
 
            GPS.File("tokens.ads").other_file().name()
-           => will print "/full/path/to/tokens.adb" in the context of the project
-           => file used for the GPS tutorial.
+           => will print "/full/path/to/tokens.adb" in the context of the
+           => project file used for the GPS tutorial.
         """
         pass  # implemented in Ada
 
@@ -5367,8 +5419,8 @@ class File(object):
         .. code-block:: python
 
            GPS.File("tokens.ads").project().name()
-           => will print "/full/path/to/sdc.gpr" in the context of the project file
-           => used for the GPS tutorial
+           => will print "/full/path/to/sdc.gpr" in the context of the project
+           => file used for the GPS tutorial
         """
         pass  # implemented in Ada
 
@@ -5406,7 +5458,8 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def search(self, pattern, case_sensitive=False, regexp=False, scope='whole'):
+    def search(self, pattern, case_sensitive=False,
+               regexp=False, scope='whole'):
         """
         Return the list of matches for pattern in the file. Default values are
         False for case_sensitive and regexp. Scope is a string, and should be
@@ -5527,6 +5580,7 @@ class File(object):
 ###########################################################
 
 class FileLocation(object):
+
     """
     Represents a location in a file
 
@@ -5631,6 +5685,7 @@ class FileLocation(object):
 ###########################################################
 
 class HTML(object):
+
     """
     This class gives access to the help system of GPS, as well as to the
     integrated browser
@@ -5690,6 +5745,7 @@ class HTML(object):
 ###########################################################
 
 class Help(object):
+
     """
     This class gives access to the external documentation for shell
     commands. This external documentation is stored in the file
@@ -5778,6 +5834,7 @@ class Help(object):
 ###########################################################
 
 class Hook(object):
+
     """
 General interface to hooks. Hooks are commands executed when some specific
 events occur in GPS, and allow you to customize some of the aspects of GPS
@@ -5835,7 +5892,8 @@ The available hooks are:
 
   Hook called when a new bookmark has been removed by the user
 
-  :param bookmark_name: A string, the name of the bookmark that has been removed
+  :param bookmark_name: A string, the name of the bookmark that has been
+      removed
 
 - buffer_edited(hookname, file)
 
@@ -5882,7 +5940,8 @@ The available hooks are:
 
   See also the hook "xref_updated".
 
-  :param category: A string, the location/highlighting category that contains the compilation output.
+  :param category: A string, the location/highlighting category that contains
+    the compilation output.
   :param target_name: A string, name of the executed build target.
   :param mode_name: A string, name of the executed build mode.
   :param status: An integer, exit status of the execuded program.
@@ -5907,12 +5966,12 @@ The available hooks are:
      the compilation output.
 
   :param quiet: A boolean, if True then the GUI should advertise the
-     compilation, otherwise nothing should be reported to the user, unless there
-     is an error.
+     compilation, otherwise nothing should be reported to the user, unless
+     there is an error.
 
   :param shadow: A boolean, indicates whether the build launched was a Shadow
-     builds, ie a "secondary" build launched automatically by GPS after a "real"
-     build.
+     builds, ie a "secondary" build launched automatically by GPS after a
+     "real" build.
      For instance, when the multiple toolchains mode is activated, the builds
      generating cross-references are Shadow builds.
 
@@ -6236,8 +6295,8 @@ The available hooks are:
 
   :param file: An instance of GPS.File
   :param status: A string, the new status for the file. This is the status has
-     displyed into the GPS status line. The value is either Unmodified, Modified
-     or Saved.
+     displyed into the GPS status line. The value is either Unmodified,
+     Modified or Saved.
   :return: A boolean
 
 - gps_started(hookname)
@@ -6258,7 +6317,8 @@ The available hooks are:
   :param anchor: A string
   :return: A boolean
 
-- location_action_hook(hookname, identifier, category, file, line, column, message)
+- location_action_hook(hookname, identifier, category,
+                       file, line, column, message)
 
   Hook called to request the display of new information on the side of the
   location window
@@ -6465,33 +6525,25 @@ The available hooks are:
 
     def add(self, function_name, last=True):
         """
-        Connect a new function to a specific hook. Any time this hook is run
-        through run_hook, this function will be called with the same parameters
-        passed to run_hook. If Last is True, then this function will be called
-        after all functions currently added to this hook. If Last is False, it
-        will be called before.
+Connect a new function to a specific hook. Any time this hook is run
+through run_hook, this function will be called with the same parameters
+passed to run_hook. If Last is True, then this function will be called
+after all functions currently added to this hook. If Last is False, it
+will be called before.
 
-        :param function_name: A subprogram, see the "Subprogram Parameters"
-            section in the GPS documentation
-        :param last: A boolean
+:param function_name: A subprogram, see the "Subprogram Parameters"
+    section in the GPS documentation
+:param last: A boolean
 
-        .. seealso:: :func:`GPS.Hook.remove`
+.. seealso:: :func:`GPS.Hook.remove`
 
-        An example using the GPS shell::
+.. code-block:: python
 
-           # in the GPS shell:
+   def filed_edited(hook_name, file):
+       print "File edited (hook=" + hook_name + " file=" + file.name()
+   GPS.Hook("file_edited").add(file_edited)
 
-           parse_xml '<action name="edited"><shell>echo "File edited hook=$1 file=$2"</shell></action>'
-           Hook "file_edited"
-           Hook.add %1 "edited"
-
-        .. code-block:: python
-
-           def filed_edited(hook_name, file):
-               print "File edited (hook=" + hook_name + " file=" + file.name()
-           GPS.Hook("file_edited").add(file_edited)
-
-        """
+"""
         pass  # implemented in Ada
 
     def describe_functions(self):
@@ -6617,6 +6669,7 @@ The available hooks are:
 ###########################################################
 
 class Invalid_Argument(Exception):
+
     """
     An exception raised by GPS. Raised when calling a subprogram from the GPS
     module with an invalid argument type (passing an integer when a string is
@@ -6630,6 +6683,7 @@ class Invalid_Argument(Exception):
 ###########################################################
 
 class Locations(object):
+
     """
     General interface to the locations window
     """
@@ -6669,7 +6723,8 @@ class Locations(object):
     @staticmethod
     def dump(file):
         """
-        Dump the contents of the Locations View to the specified file, in XML format.
+        Dump the contents of the Locations View to the specified file, in XML
+        format.
 
         :param file: A string
         """
@@ -6776,6 +6831,7 @@ class Locations(object):
 ###########################################################
 
 class Logger(object):
+
     """
     This class provides an interface to the GPS logging mechanism. This can be
     used when debugging scripts, or even be left in production scripts for
@@ -6851,6 +6907,7 @@ class Logger(object):
 ###########################################################
 
 class MDI(object):
+
     """
     Represents GPS's Multiple Document Interface. This gives access to general
     graphical commands for GPS, as well as control over the current layout of
@@ -6860,8 +6917,8 @@ class MDI(object):
 
     If you have installed the pygobject package (see GPS's documentation}, GPS
     will export a few more functions to python so that it is easier to interact
-    with GPS itself. In particular, the GPS.MDI.add function allows you to put a
-    widget created by pygobject under control of GPS's MDI, so that users can
+    with GPS itself. In particular, the GPS.MDI.add function allows you to put
+    a widget created by pygobject under control of GPS's MDI, so that users can
     interact with it as with all other GPS windows.
 
     .. code-block:: python
@@ -6902,11 +6959,12 @@ class MDI(object):
     # constants to be used in GPS.MDI.add()
 
     @staticmethod
-    def add(widget, title="", short="", group=0, position=0, save_desktop=None):
+    def add(widget, title="", short="", group=0,
+            position=0, save_desktop=None):
         """
         This function is only available if pygobject could be loaded in the
-        python shell. You must install this library first, see the documentation
-        for GPS.MDI itself.
+        python shell. You must install this library first, see the
+        documentation for GPS.MDI itself.
 
         This function adds a widget inside the MDI of GPS. The resulting window
         can then be manipulated by the user like any other standard GPS
@@ -6928,14 +6986,14 @@ class MDI(object):
             When other widgets of the same group exist, the widget is put
             on top of them.
         :param save_desktop: A function that should be called when GPS saves
-            the desktop into XML. This function receives the GPS.MDIWindow
-            as a parameter, and should return a tuple of two elements
-            (name, data) where name is a unique identifier for this window, and data is
-            a string containing additional data to be saved (and later
-            restored). One suggestion is to encode any python data through
-            json and send the resulting string as data.
-            An easier alternative is to use the modules.py support script in
-            GPS, which handles this parameter automatically on your behalf.
+            the desktop into XML. This function receives the GPS.MDIWindow as a
+            parameter, and should return a tuple of two elements (name, data)
+            where name is a unique identifier for this window, and data is a
+            string containing additional data to be saved (and later restored).
+            One suggestion is to encode any python data through json and send
+            the resulting string as data.  An easier alternative is to use the
+            modules.py support script in GPS, which handles this parameter
+            automatically on your behalf.
 
         :return: the instance of GPS.MDIWindow that was created
 
@@ -7110,6 +7168,7 @@ class MDI(object):
 ###########################################################
 
 class MDIWindow(GUI):
+
     """
     This class represents one of the windows currently displayed in GPS. This
     includes both the windows currently visible to the user, and the ones that
@@ -7144,7 +7203,8 @@ class MDIWindow(GUI):
 
         .. code-block:: python
 
-            # Accessing the GPS.Console instance used for python can be done with:
+            # Accessing the GPS.Console instance used for python can be done
+            # with:
             GPS.MDI.get("Python").get_child()
         """
         pass  # implemented in Ada
@@ -7222,6 +7282,7 @@ class MDIWindow(GUI):
 ###########################################################
 
 class Menu(GUI):
+
     """
     This class is a general interface to the menu system in GPS. It gives you
     control over which menus should be active, what should be executed when the
@@ -7254,9 +7315,9 @@ class Menu(GUI):
         keybindings can be associated with the user. They can also be executed
         more conveniently using keyboard only with the omni-search.
 
-        If ``on_activate`` is specified, it will be executed every time the user
-        selects that menu. It is called with only one parameter, the instance
-        of GPS.Menu that was just created.
+        If ``on_activate`` is specified, it will be executed every time the
+        user selects that menu. It is called with only one parameter, the
+        instance of GPS.Menu that was just created.
 
         If ``ref`` and ``add_before`` are specified, they specify the name of
         another item in the parent menu (and not a full path) before or after
@@ -7348,6 +7409,7 @@ class Menu(GUI):
 ###########################################################
 
 class Message(object):
+
     """
     This class is used to manipulate GPS messages: build errors, editor
     annotations, etc.
@@ -7547,6 +7609,7 @@ class Message(object):
 ###########################################################
 
 class Missing_Arguments(Exception):
+
     """
     An exception raised by GPS. Raised when calling a subprogram from the GPS
     module with missing arguments
@@ -7555,10 +7618,11 @@ class Missing_Arguments(Exception):
 
 
 ###########################################################
-# MultiCursor
+# Cursor
 ###########################################################
 
-class MultiCursor(object):
+class Cursor(object):
+
     """
     Interface to a multi cursor in a GPS EditorBuffer. Just gives access to the
     insertion mark and to the selection mark of the cursor
@@ -7571,14 +7635,14 @@ class MultiCursor(object):
         the cursor instance
         """
 
-    def get_selection_mark(self):
+    def sel_mark(self):
         """
         :return: The :class:`GPS.EditorMark` instance corresponding to the
         cursor's selection mark
         """
         pass
 
-    def get_insert_mark(self):
+    def mark(self):
         """
         :return: The :class:`GPS.EditorMark` instance corresponding to the
         cursor's insert mark
@@ -7586,12 +7650,11 @@ class MultiCursor(object):
         pass
 
 
-
 ###########################################################
 # Preference
 ###########################################################
-
 class Preference(object):
+
     """
     Interface to the GPS preferences, as set in the Edit/Preferences
     dialog. New preferences are created through XML customization files (or
@@ -7698,6 +7761,7 @@ The additional parameters depend on the type of preference you are creating:
 ###########################################################
 
 class Process(Command):
+
     """
     Interface to expect-related commands. This class can be used to spawn new
     processes and communicate with them later on. It is similar to what GPS
@@ -7950,6 +8014,7 @@ An exception is raised if the process could not be spawned.
 ###########################################################
 
 class Project(object):
+
     """
 Represents a project file. See also the GPS documentation on how to create
 new project attributes.
@@ -8025,7 +8090,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of this attribute
+        :param index: A string, the name of the index for the specific value of
+            this attribute
         :param value: A string, the name of the first value to add
 
         .. seealso::
@@ -8188,7 +8254,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of this attribute
+        :param index: A string, the name of the index for the specific value of
+            this attribute
         :return: A list of strings
 
         .. seealso::
@@ -8243,7 +8310,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of this attribute
+        :param index: A string, the name of the index for the specific value of
+            this attribute
         :return: A string, the value of this attribute
 
         .. seealso::
@@ -8470,7 +8538,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of this attribute
+        :param index: A string, the name of the index for the specific value of
+            this attribute
         :param value: A string, the name of the first value to remove
 
         .. seealso::
@@ -8581,13 +8650,14 @@ Related hooks:
 
         .. code-block:: python
 
-           # The following GPS action can be defined in an XML file, and will launch
-           # the make command with the appropriate setup for the environment
+           # The following GPS action can be defined in an XML file, and will
+           # launch the make command with the appropriate setup for the
+           # environment
            # variables:
-           #   <action name="launch make"> \
-           #     <shell lang="python">GPS.scenario_variables_cmd_line()</shell>  \
-           #     <external>make %1</external> \
-           #   </action>
+           # <action name="launch make"> \
+           #   <shell lang="python">GPS.scenario_variables_cmd_line()</shell> \
+           #   <external>make %1</external> \
+           # </action>
         """
         pass  # implemented in Ada
 
@@ -8728,6 +8798,7 @@ Related hooks:
 ###########################################################
 
 class ProjectTemplate(object):
+
     """
     This class is used to manipulate GPS Project Templates.
     """
@@ -8750,6 +8821,7 @@ class ProjectTemplate(object):
 ###########################################################
 
 class ReferencesCommand(Command):
+
     """
     This is the type of the commands returned by the references extractor.
 
@@ -8776,6 +8848,7 @@ class ReferencesCommand(Command):
 ###########################################################
 
 class Revision(object):
+
     """
     General interface to the revision browser
     """
@@ -8831,6 +8904,7 @@ class Revision(object):
 ###########################################################
 
 class Search(object):
+
     """
     This class provides an interface to the search facilities used for the
     GPS omni-search. In particular, this allows you to search file names,
@@ -8871,7 +8945,8 @@ class Search(object):
 
           class MySearchProvider(GPS.Search):
               def __init__(self):
-                  # Override default so that we can build instances of our class
+                  # Override default so that we can build instances of our
+                  # class
                   pass
 
               def set_pattern(self, pattern, flags):
@@ -8883,9 +8958,13 @@ class Search(object):
                   if self.current == 3:
                       return (False, None)   # no more matches
                   self.current += 1
-                  return (True,  # might have more matches
-                          MySearchResult("<b>match</b> %d for '%s' (flags=%d)"
-                                         % (self.current, self.pattern, self.flags)))
+                  return (
+                      True,  # might have more matches
+                      MySearchResult(
+                          "<b>match</b> %d for '%s' (flags=%d)"
+                          % (self.current, self.pattern, self.flags)
+                      )
+                  )
 
           GPS.Search.register("MySearch", MySearchProvider())
     """
@@ -8998,6 +9077,7 @@ class Search(object):
 ###########################################################
 
 class Search_Result(object):
+
     """
     A class that represents the results found by GPS.Search.
     """
@@ -9024,6 +9104,7 @@ class Search_Result(object):
 ###########################################################
 
 class Style(object):
+
     """
     This class is used to manipulate GPS Styles, which are used for instance to
     represent graphical attributes given to Messages.
@@ -9124,6 +9205,7 @@ class Style(object):
 ###########################################################
 
 class SwitchesChooser(GUI):
+
     """
     This class represents a gtk widget that can be used to edit a tool's
     command line.
@@ -9161,6 +9243,7 @@ class SwitchesChooser(GUI):
 ###########################################################
 
 class Task(object):
+
     """
     This class provides an interface to the background tasks being handled by
     GPS, such as the build commands, the query of cross references, etc. These
@@ -9232,6 +9315,7 @@ class Task(object):
 ###########################################################
 
 class Timeout(object):
+
     """
     This class gives access to actions that must be executed regularly at
     specific intervals
@@ -9275,6 +9359,7 @@ class Timeout(object):
 ###########################################################
 
 class ToolButton(GUI):
+
     """
     This class represents a button that can be inserted in the toolbar
 
@@ -9308,6 +9393,7 @@ called with the following single parameter:
 ###########################################################
 
 class Toolbar(GUI):
+
     """
     Interface to commands related to the toolbar. This allows you to add new
     combo boxes to the GPS toolbars. Note that this can also be done through
@@ -9421,6 +9507,7 @@ class Toolbar(GUI):
 ###########################################################
 
 class Unexpected_Exception(Exception):
+
     """
     An exception raised by GPS. It indicates an internal error in GPS, raised
     by the Ada code itself. This exception is unexpected and indicates a bug in
@@ -9435,6 +9522,7 @@ class Unexpected_Exception(Exception):
 ###########################################################
 
 class VCS(object):
+
     """
     General interface to version control systems
     """
@@ -9659,6 +9747,7 @@ class VCS(object):
 ###########################################################
 
 class Vdiff(object):
+
     """
     This class provides access to the graphical comparison between two or three
     files or two versions of the same file within GPS. A visual diff is a group
@@ -9777,6 +9866,7 @@ class Vdiff(object):
 ###########################################################
 
 class XMLViewer(object):
+
     """
     This class represents Tree-based views for XML files
 
@@ -9878,7 +9968,9 @@ column.
 # Alias
 ###########################################################
 
+
 class Alias(object):
+
     """
     This class represents a GPS Alias, that is, a code template
     to be expanded in an editor. This class allows you to manipulate
@@ -9895,7 +9987,9 @@ class Alias(object):
 # OutputParserWrapper
 ###########################################################
 
+
 class OutputParserWrapper(object):
+
     """
     This class is used to handle user-defined tool output parsers.
     Parsers are organized in chain. Output of one parser is passed as
@@ -9947,7 +10041,7 @@ class OutputParserWrapper(object):
         """
         pass  # implemented in Ada
 
-    def on_exit(self,status, command):
+    def on_exit(self, status, command):
         """
         This method is called when all output is parsed.
         Its purpose is to flush any buffered data at end of stream.
@@ -9957,6 +10051,7 @@ class OutputParserWrapper(object):
 ###########################################################
 # Globals
 ###########################################################
+
 
 def __run_hook__():
     """
@@ -10364,6 +10459,7 @@ def freeze_xref():
     """
     pass  # implemented in Ada
 
+
 def freeze_prefs():
     """
     Prevents the signal "preferences_changed" from being emitted.
@@ -10378,6 +10474,7 @@ def freeze_prefs():
     """
     pass  # implemented in Ada
 
+
 def thaw_prefs():
     """
     Re-enables the emission of the "preferences_changed"
@@ -10387,6 +10484,7 @@ def thaw_prefs():
       :func:`GPS.freeze_prefs`
     """
     pass  # implemented in Ada
+
 
 def xref_db():
     """
@@ -10400,6 +10498,7 @@ def xref_db():
 
     :return: a string
     """
+
 
 def get_build_mode():
     """
@@ -10422,10 +10521,11 @@ def get_build_output(target_name, shadow, background, as_string):
         output of background builds
 
     :param as_string: (optional) a Boolean, indicating whether the output
-       should be returned as a single string. By default the output is returned as
-       a list in script languages that support it.
+       should be returned as a single string. By default the output is returned
+       as a list in script languages that support it.
 
-    :return: A string or list, the output of the latest build for the corresponding target.
+    :return: A string or list, the output of the latest build for the
+        corresponding target.
 
     .. seealso::
 
@@ -10540,14 +10640,14 @@ def last_command():
     .. code-block:: python
 
        def kill_line():
-          '''Emulates Emacs behavior: when called multiple times, the cut line must be
-             appended to the previously cut one.'''
+          '''Emulates Emacs behavior: when called multiple times, the cut line
+             must be appended to the previously cut one.'''
 
           # The name of the command below is unknown to GPS. This is just a
           # string we use in this implementation to detect multiple consecutive
-          # calls to this function. Note that this works whether the function is
-          # called from the same key binding or not, and from the same GPS action
-          # or not
+          # calls to this function. Note that this works whether the function
+          # is called from the same key binding or not, and from the same GPS
+          # action or not
 
           append = GPS.last_command() == "my-kill-line":
           GPS.set_last_command("my-kill-line")
@@ -10698,7 +10798,8 @@ def save_persistent_properties():
 
 def set_build_mode(mode=''):
     """
-    Set the current build mode. If specified mode is not a registered mode, do nothing.
+    Set the current build mode. If specified mode is not a registered mode, do
+    nothing.
 
     :param mode: Name of the mode to set
     """
@@ -10778,6 +10879,7 @@ def visual_diff(file1, file2, file3=''):
     """
     pass  # implemented in Ada
 
+
 def xref_frozen():
     """
     Return true if the xref database is frozen.
@@ -10785,4 +10887,3 @@ def xref_frozen():
     .. seealso:: :func:`GPS.freeze_xref`
     """
     pass  # implemented in Ada
-
