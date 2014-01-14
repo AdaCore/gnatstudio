@@ -680,33 +680,33 @@ Coverage Menu
 The :menuselect:`Tools --> Coverage` menu has a number of entries,
 depending on the context:
 
-* :menuselection:`Gcov --> Compute coverage files`
+:menuselection:`Gcov --> Compute coverage files`
 
   Generate the :file:`.gcov` files for loaded projects that have been
   compiled and executed.
 
-* :menuselection:`Gcov --> Remove coverage files`
+:menuselection:`Gcov --> Remove coverage files`
 
   Delete all the :file:`.gcov` file for loaded projects.
 
-* :guilabel:`Show report`
+:guilabel:`Show report`
 
   Open a new window summarizing the coverage information currently loaded
   in GPS.
 
-* :guilabel:`Load data for all projects`
+:guilabel:`Load data for all projects`
 
   Load (or reload) coverage information for every project and subproject.
 
-* :guilabel:`Load data for project `XXX``
+:guilabel:`Load data for project `XXX``
 
   Load or re-load coverage information for the project `XXX`.
 
-* :guilabel:`Load data for :file:`xxxxxxxx.xxx``
+:guilabel:`Load data for :file:`xxxxxxxx.xxx``
 
   Load (or reload) coverage information for the specified source file.
 
-* :guilabel:`Clear coverage from memory`
+:guilabel:`Clear coverage from memory`
 
   Remove all coverage information loaded in GPS.
 
