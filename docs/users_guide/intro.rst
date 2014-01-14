@@ -3,18 +3,18 @@ Welcome to the GNAT Programming Studio
 **************************************
 
 GPS is a complete integrated development environment.  It integrates with a
-wide range of tools to give easy access to each. It integrates especially
-well with AdaCore's tools, but can easily be extended to work with other
-tools through small plug-ing written in Python.
+wide range of tools, providing easy access to each. It integrates
+especially well with AdaCore's tools, but can easily be extended to work
+with other tools by writing small plug-ing in Python.
 
 Here's a summary of the features of the GNAT Programming Studio:
 
 * :ref:`Multiple_Document_Interface`
 
-  GPS is based on a multiple document interface, allowing you to organize
-  windows the way you want and organize your desktop by floating them to
-  other screens or dragging them to any location.  (GPS restores the
-  desktop the next time it's restarted.)
+  GPS uses a multiple document interface, allowing you to organize windows
+  the way you want and organize your desktop by floating them to other
+  screens or dragging them to any location.  (GPS restores the desktop the
+  next time it's restarted.)
 
 * Built-in editor (:ref:`Editing_Files`)
 
@@ -27,16 +27,16 @@ Here's a summary of the features of the GNAT Programming Studio:
 
   Any compiler called by a command line can be integrated in GPS, with
   built in support for GNAT, `gcc` and `make`.  You can easily navigate
-  error messages and automatic code fixing is provided for many common
-  errors.  GPS includes support for cross-compilers (running compilers on a
+  error messages. Automatic code fixing is provided for many common errors.
+  GPS includes support for cross-compilers (running compilers on a
   different machine than the one on which GPS is running).
 
 * Project management (:ref:`Project_Handling`)
 
-  Project files (editable either graphically or manually) are used to
+  You can use project files (editable either graphically or manually) to
   describe attributes of a project, including the location of sources,
-  their naming schemes, and how they should be built.  A graphical browser
-  is provided to analyze both dependencies between your projects and
+  their naming schemes, and how they should be built.  GPS provides a
+  graphical browser to analyze both dependencies between your projects and
   between sources within your projects.
 
 * Integration with various :ref:`Version_Control_System`
@@ -63,10 +63,10 @@ Here's a summary of the features of the GNAT Programming Studio:
   GNATcoverage (for the coverage of your code) and CodePeer and Spark (to
   analyze your code). In most cases, it provides graphical rendering of
   their output, often integrated with the editor itself so the information
-  is available where you need it.
+  is available where and when you need it.
 
 * Fully customizable (:ref:`Customizing_and_Extending_GPS`)
 
   GPS provides an extensive Python API, allowing you to customize existing
   features or easily develop your own new plug-ins.  Simpler customization
-  can be done through one of the numerous preferences or local settings.
+  can be done through the numerous preferences and local settings.
