@@ -6,7 +6,7 @@ Description of the Main Window
 
 The GNAT Programming Studio has one main window, which is where you perform
 most of your work.  However, GPS is very flexible in the ways it lets you
-organize your desktop, which is discussed in a later section
+organize your desktop, as discussed in a later section
 (:ref:`Multiple_Document_Interface`).
 
 There are also other windows that might pop up at various times, documented
@@ -23,10 +23,10 @@ The Workspace
 .. index:: see: MDI; Multiple Document Interface
 .. index:: Multiple Document Interface
 
-The overall work space is based on a multiple document interface,
-:ref:`Multiple_Document_Interface` and can contain any number of windows,
+The overall workspace is based on a multiple document interface (see
+:ref:`Multiple_Document_Interface`) and can contain any number of windows,
 the most important of which are usually the editors. However, GPS also
-provides a large number of views for you to add to the workspace. The
+provides a large number of views that you can add to the workspace. The
 sections below list them.
 
 Common features of the views
@@ -35,10 +35,9 @@ Common features of the views
 .. index:: menu; tools
 .. index:: menu; tools --> views
 
-Some views are part of the default desktop and thus are visible by
-default.  Open the other views through one of the submenus of the
-:menuselection:`Tools` menu, most often :menuselection:`Tools -->
-Views`.
+Some views are part of the default desktop and are visible by default.
+Open the other views through one of the submenus of the
+:menuselection:`Tools` menu, most often :menuselection:`Tools --> Views`.
 
 .. index:: windows; local toolbar
 
@@ -47,33 +46,33 @@ the most often used features of that view.
 
 .. index:: windows; local settings menu
 
-There is often a button to the right of these local toolbars that opens a
+There's often a button to the right of these local toolbars that opens a
 local settings menu. This menu either contains more actions you can perform
-in that view or various configuration settings that allow you to change the
-behavior or the display of the view.
+in that view or various configuration settings allowing you to change the
+behavior or display of the view.
 
 .. index:: windows; filter
 
-Some views also have a filter in their local toolbar. These filters can be
-used to reduce the amount of information displayed on the screen by only
-showing those lines matching the filter.
+Some views also have a filter in their local toolbar.  You can use these
+filters to reduce the amount of information displayed on the screen by only
+displaying those lines matching the filter.
 
 If you click on the left icon of the filter, GPS brings up a popup menu to
 allow you to configure the filter:
 
 * Use the first three entries to chose the search algorith (full text
-  match, regular expression, or fuzzy matching). These modes are
-  similar to the ones used in the omni-search (:ref:`omni_search`).
+  match, regular expression, or fuzzy matching). These modes are similar to
+  the ones used in the omni-search (see :ref:`omni_search`).
 
 * The next entry is :guilabel:`Revert filter`. When you select this option,
-  the lines that do not match the filter are displayed, instead of the
-  default behavior that displays ones that match the filter.  You can also
-  enable this mode temporarily by beginning the filter with the string
-  `not:`. For example, a filter in the :guilabel:`Locations` view saying
-  `not:warning` will hide all warning messages.
+  lines that do not match the filter are displayed, instead of the default
+  behavior of displaying ones that match the filter.  You can also enable
+  this mode temporarily by beginning the filter with the string `not:`. For
+  example, a filter in the :guilabel:`Locations` view saying `not:warning`
+  hides all warning messages.
 
 * Select the last entry, :guilabel:`Whole word`, when you only want to
-  match on full words, not on substrings.
+  match full words, not substrings.
 
 
 .. _browsers_features:
@@ -81,15 +80,15 @@ allow you to configure the filter:
 Common features of browsers
 ---------------------------
 
-GPS presents a view of various types of information using an interactive
-display called a "browser", which shows a canvas containing boxes you can
-manipulate.  Browsers provide the following additional capabilities:
+GPS presents a view of information using an interactive display called a
+"browser", which shows a canvas containing boxes you can manipulate.
+Browsers provide the following additional capabilities:
 
 * Links
 
-  Boxes can be linked together and remain linked when they're moved.
-  Different types of links exist; see the description of the various
-  browsers for more details.
+  Boxes can be linked together and remain linked when they're moved.  The
+  are different types of links; see the description of the various browsers
+  for more details.
 
   Hide links using a button on the local toolbar. This keeps the
   canvas more readable at the cost of losing information.  You can also
@@ -97,14 +96,13 @@ manipulate.  Browsers provide the following additional capabilities:
   box, boxes linked to it are still highlighted.
 
   Enable the :guilabel:`straight links` local settings menu in
-  browsers if you prefer to avoid diagonal links.
+  browsers if you want to avoid diagonal links.
 
 * Scrolling
 
-  When many boxes are being displayed, the currently visible area may be
-  too small for all of them.  When that happens, GPS adds scrollbars on the
-  sides that you can use to make other items visible. You can also scroll
-  using the arrow keys.
+  When many boxes are displayed, the currently visible area may be too
+  small for all of them.  When that happens, GPS adds scrollbars. You can
+  also scroll using the arrow keys.
 
 * Layout
 
@@ -112,33 +110,33 @@ manipulate.  Browsers provide the following additional capabilities:
   which is layer oriented: items with no parents are put in the first
   layer, their direct children are put in the second layer, and so
   on. Depending on the type of browser, these layers are organized either
-  vertically or horizontally.  If you moved boxes, this algorithm tries to
-  preserve their positions as much as possible.
+  vertically or horizontally.  If you move boxes, this algorithm tries to
+  preserve their relative positions as much as possible.
 
   Use the :guilabel:`Refresh layout` button in the local toolbar to
-  recompute the layout at any time, even of boxes that you moved.
+  recompute the layout at any time, including that of boxes you moved.
 
 * Moving boxes
 
   Move boxes with your mouse. Drag the box by clicking on its title
-  bar. The box's links are still be displayed during the move, so you
-  can see whether it overlaps any other box. If you try to move the
-  box outside the visible part of the browser, it will be scrolled.
+  bar. The box's links are still displayed during the move, so you can see
+  whether it overlaps any other box. If you try to move the box outside the
+  visible part of the browser, it's scrolled.
 
 * Selecting boxes
 
   Select a box by clicking it.  Select multiple boxes by holding the
-  :kbd:`control` key while clicking in each box. Alternatively, you
-  can create a rectangle using your mouse; all boxes found in the
-  rectangle when the mouse is released are selected.
+  :kbd:`control` key while clicking each box.  Or create a rectangle using
+  your mouse; all boxes within the rectangle when the mouse is released are
+  selected.
 
-  Selected boxes have a different title bar color.  All boxes linked to
-  them also use a different title bar color, and so do the links. This is
+  The title bar of selected boxes is a different color.  All boxes linked
+  to them also use a different title bar color and so do the links. This is
   the most convenient way to visualize the relationships between boxes when
   many are present in the browser.
 
-  Use buttons in the local toolbar to either remove the selected boxes
-  or remove the boxes that are not selected.
+  Use buttons in the local toolbar to either remove the selected boxes or
+  remove the boxes that are not selected.
 
 * Zooming
 
@@ -153,14 +151,14 @@ manipulate.  Browsers provide the following additional capabilities:
 
 * :index:`export <single: callgraph; export>`
 
-  Export the entire contents of a browser as a :guilabel:`PNG` or
-  :guilabel:`SVG` image using the :guilabel:`Export to...` button in the
+  Export the entire contents of a browser as a :file:`PNG` or
+  :file:`SVG` image using the :guilabel:`Export to...` button in the
   local toolbar.
 
 * Hyper-links
 
-  Some of boxes contain hyper links, displayed in blue by default, and
-  underlined.  Clicking on these will generally display new boxes.
+  Some boxes contain hyper links, displayed in blue by default, and
+  underlined.  Clicking on these generally displays new boxes.
 
 * Contextual menus
 
@@ -171,8 +169,8 @@ manipulate.  Browsers provide the following additional capabilities:
 * Grid
 
   By default, GPS displays a grid (small dots) on the canvas.  Use the
-  local settings menu to hide the grid (:guilabel:`Draw grid`) or to force
-  items to align on the grid (:guilabel:`Align on grid`).
+  local settings menu to hide the grid (uncheck :guilabel:`Draw grid`) or
+  to force items to align on the grid (:guilabel:`Align on grid`).
 
 Icons for source language entities
 __________________________________
@@ -210,20 +208,19 @@ These five language categories are used for all supported languages:
 
 These icons are enhanced with decorations, when appropriate, to indicate
 compile-time visibility constraints and to distinguish declarations from
-completions. For example, the icons for entity declarations have a small
-'S' decorator added, denoting a 'spec'.
+completions. For example, icons for entity declarations have a small 'S'
+decorator added, denoting a 'spec'.
 
 Icons for 'protected' and 'private' entities appear within an enclosing box
 indicating a compile-time visibility constraint. For entities with
 'protected' visibility, the enclosing box is gray.  'Private' entities are
-enclosed by a red box.  The icons for 'public' entities have no enclosing
+enclosed by a red box.  Icons for 'public' entities have no enclosing
 box. For example, a variable with 'private' visibility is represented by an
-icon consisting of a dot enclosed by a red box.
-
-These additional decorations are combined when appropriate. For example,
-the icon corresponding to the 'private' declaration of a 'package' entity
-would be a square, as for any package entity, with a small 'S' added, all
-enclosed by a red box.
+icon consisting of a dot enclosed by a red box.  These additional
+decorations are combined when appropriate. For example, the icon
+corresponding to the 'private' declaration of a 'package' entity would be a
+square, as for any package entity, with a small 'S' added, all enclosed by
+a red box.
 
 Language constructs are mapped to categories in a language-specific manner.
 For example, C++ namespaces and Ada packages correspond to the *package*
@@ -258,8 +255,8 @@ The Welcome Dialog
 .. index:: command line; -P
 .. index:: project; startup
 
-When GPS starts, it looks for a project file to load so that it knows where
-to find the sources of your project. This project is often specified on the
+When GPS starts, it looks for a project file to load so it knows where to
+find the sources of your project. This project is often specified on the
 command line (via a :command:`-P` switch).  If not, and the current
 directory contains only one project file, GPS selects it automatically.
 Finally, if you specify the name of a source file to edit, GPS loads a
@@ -268,7 +265,7 @@ dialog, giving you the following choices:
 
 :guilabel:`Create new project from template`
 
-  Selecting this option and clicking the :guilabel:`OK` button launchs an
+  Selecting this choice and the clicking :guilabel:`OK` button launches an
   assistant to create a project using one of the predefined project
   templates. This makes it easy to create GtkAda-based applications, or
   applications using the Ada Web Server, for example.
@@ -277,52 +274,52 @@ dialog, giving you the following choices:
 
 :guilabel:`Start with default project in directory`
 
-  Selecting this option and clicking the :guilabel:`OK` button causes GPS
-  to look for a project called :file:`default.gpr` in the current directory
-  and load it if found. Otherwise, it copies into the current directory the
-  default project found it :file:`<prefix>/share/gps/default.gpr` and loads
-  it.  GPS removs this temporary copy when exiting or loading another
-  project if the copy has not been modified during the session.
+  Selecting this choice and clicking the :guilabel:`OK` button causes GPS to
+  look for a project called :file:`default.gpr` in the current directory
+  and load it if found. Otherwise, it copies the default project
+  :file:`<prefix>/share/gps/default.gpr` into the current directory and
+  loads it.  GPS removs this temporary copy when exiting or loading another
+  project if you haven't modified the copy.
 
-  The default project will contain all the Ada source files from the
-  specified directory (assuming they use the default GNAT naming scheme
-  :file:`.ads` and :file:`.adb`).
+  The default project contains all the Ada source files from the specified
+  directory (assuming they use the default GNAT naming scheme :file:`.ads`
+  and :file:`.adb`).
 
-  If the current directory is not writable, GPS instead loads
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS works in a
+  If the current directory isn't writable, GPS instead loads
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS run in a
   degraded mode, where some capabilities (such as building and source
-  navigation) will not work. This project will not contain any sources.
+  navigation) are not available. This project won't contain any sources.
 
 .. index:: project; wizard
 
 :guilabel:`Create new project with wizard`
 
-  Selecting this option and clicking on the :guilabel:`OK` button starts a
+  Selecting this choice and clicking the :guilabel:`OK` button starts a
   wizard allowing you to specify most of the properties for a new
   project. Once the project is created, GPS saves it and loads it
   automatically.  See :ref:`The_Project_Wizard` for more details.
 
-  There are several kinds of wizards, ranging from creating a single project,
-  to creating a set of project that attempt to adapt to an existing directory
-  layout. The list of pages in the wizard will depend on the kind of project
-  you want to create.
+  There are several kinds of wizards, ranging from creating a single
+  project, to creating a set of project that attempt to adapt to an
+  existing directory layout. The list of pages in the wizard depends on the
+  kind of project you want to create.
 
   One of the wizards, :guilabel:`Project Tree`, tries to import a set of
   sources and object files and attempt to create one or more project files
-  so building your application through these project files puts the objects
-  in the same directory they're currently in. If you haven't compiled your
-  application when launching this wizard, GPS creates a single project file
-  that puts all object files in the same object directory.  This is the
-  prefered method when importing sources with duplicate file names, since
-  the latter is only authorized in a single project file, not across
-  various project files.
+  so that building your application through these project files puts the
+  objects in the same directory they're currently in. If you haven't
+  compiled your application when launching this wizard, GPS creates a
+  single project file that puts all object files in the same directory.
+  This is the prefered method when importing sources with duplicate file
+  names, since the latter is only allowed in a single project file, not
+  across multiple project files.
 
 .. index:: project; load existing project
 
 :guilabel:`Open existing project`
 
   Select an existing project by clicking on the :guilabel:`Browse` button
-  or by using a previously loaded project listed in the combo box. When a
+  or using a previously loaded project listed in the combo box. When a
   project is selected, click on the :guilabel:`OK` button to load this
   project and open the main window.
 
@@ -338,9 +335,11 @@ dialog, giving you the following choices:
 
   .. index:: preferences; display welcome window
 
-  To reset this property, go to the menu :menuselection:`Edit --> Preferences`.
+  To reset this property, go to the :menuselection:`Edit --> Preferences`
+  menu.
 
 :guilabel:`Quit`
+
   If you click on this button, GPS terminates immediately.
 
 .. index:: tip of the day
@@ -352,16 +351,16 @@ The Tip of the Day
 
 .. image:: tip-of-the-day.png
 
-This dialog displays short tips on how to make the most efficient use of
-the GNAT Programming Studio.  Click on the :guilabel:`Previous` and
+This dialog displays short tips on making the most efficient use of the
+GNAT Programming Studio.  Click on the :guilabel:`Previous` and
 :guilabel:`Next` buttons to access all tips or close the dialog by either
 clicking on the :guilabel:`Close` button or pressing the :kbd:`ESC` key.
 
 .. index:: preferences; tip of the day
 
 Disable this dialog by unchecking the :guilabel:`Display Tip of the Day on
-startup` check box. If you want to reenable this dialog, go to the
-:menuselection:`Edit --> Preferences` dialog.
+startup` check box.  To reenable this dialog, go to the
+:menuselection:`Edit --> Preferences` menu.
 
 
 .. index:: menu bar
@@ -373,31 +372,30 @@ The Menu Bar
 
 .. image:: menubar.png
 
-GPS provides a standard menu bar giving access to all its
-functionality. However, it's usually easier to access a feature using the
-various contextual menus provided throughout GPS: these give direct access
-to the most relevant actions in the current context (for example, a
-project, a directory, a file, or an entity). Contextual menus pop up when
-you click the right mouse button or use the special :kbd:`open contextual
-menu` key on most keyboards.
+GPS provides a standard menu bar giving access to all operations. However,
+it's usually easier to access a feature using the various contextual menus
+provided throughout GPS: these give direct access to the most relevant
+actions in the current context (for example, a project, directory, file, or
+entity). Contextual menus pop up when you click the right mouse button or
+use the special :kbd:`open contextual menu` key on most keyboards.
 
-You can access the following items from the menu bar:
+You can access the following entries from the menu bar:
 
-* :menuselection:`File` (:ref:`The_File_Menu`)
+* :menuselection:`File` (see :ref:`The_File_Menu`)
 
-* :menuselection:`Edit` (:ref:`The_Edit_Menu`)
+* :menuselection:`Edit` (see :ref:`The_Edit_Menu`)
 
-* :menuselection:`Navigate` (:ref:`The_Navigate_Menu`)
+* :menuselection:`Navigate` (see :ref:`The_Navigate_Menu`)
 
-* :menuselection:`VCS` (:ref:`The_VCS_Menu`)
+* :menuselection:`VCS` (see :ref:`The_VCS_Menu`)
 
-* :menuselection:`Project` (:ref:`The_Project_Menu`)
+* :menuselection:`Project` (see :ref:`The_Project_Menu`)
 
-* :menuselection:`Build` (:ref:`The_Build_Menu`)
+* :menuselection:`Build` (see :ref:`The_Build_Menu`)
 
-* :menuselection:`Debug` (:ref:`The_Debug_Menu`)
+* :menuselection:`Debug` (see :ref:`The_Debug_Menu`)
 
-* :menuselection:`Tools` (:ref:`The_Tools_Menu`)
+* :menuselection:`Tools` (see :ref:`The_Tools_Menu`)
 
 * :menuselection:`SPARK`
 
@@ -411,7 +409,7 @@ You can access the following items from the menu bar:
   system and available on your PATH. See your CodePeer documentation for
   more details.
 
-* :menuselection:`Window` (:ref:`Multiple_Document_Interface`)
+* :menuselection:`Window` (see :ref:`Multiple_Document_Interface`)
 
 * :menuselection:`Help`
 
@@ -425,10 +423,10 @@ The Tool Bar
 
 .. image:: toolbar.png
 
-The tool bar provides shortcuts to some typical actions:
+The tool bar provides shortcuts to some common actions:
 
 * Create a new file
-* Open an existing file (see laso the omni-search on the right of the bar)
+* Open an existing file (see also the omni-search on the right of the bar)
 * Save the current file
 * Undo or redo last editing
 * Go to previous or next saved location
@@ -451,7 +449,7 @@ compiling), it displays a progress bar in the toolbar showing when the
 current task(s) will be completed.  Click on the small
 :guilabel:`interrupt` button to interrupt all background tasks. Clicking on
 the progress bar opens the :guilabel:`Tasks` view
-(:ref:`The_Task_Manager`).
+(see :ref:`The_Task_Manager`).
 
 
 .. index:: omni-search
@@ -465,25 +463,23 @@ The omni-search
 
 The final item in the toolbar is "omni-search".  Use this to search for
 text in various contexts in GPS, such as filenames (for convenient access
-to the source files), the entities referenced in your application, and your
+to source files), the entities referenced in your application, and your
 code.
 
 There are various ways to use the omni-search:
 
-* The simplest way is to click in it and type the pattern you want to
+* The simplest way is to click on it and type the pattern you want to
   find. GPS immediately starts searching in the background for possible
   matching open windows, file names, entities, GPS actions, bookmarks, and
-  source files. For each context, GPS only displays the five matches with
-  the highest score.
+  source files. For each context, GPS display how many matches there are in
+  that context but only displays the five matches with the highest score.
 
-  For each context, GPS display how many matches there are in that context.
-  click on the name of the context to search only in that context.  For
+  Click on the name of context to search only in that context.  For
   example, if GPS shows 20 file names matching your search (while only
   displaying the five first), click on :guilabel:`file names` to view all
-  20 names and exclude the results from all the other contexts.
-
-  If you click on the context again, GPS again displays the results from
-  all contexts.
+  20 names and exclude the results from all the other contexts.  If you
+  click on the context again, GPS again displays the results from all
+  contexts.
 
 * If you're searching in a single context, GPS defines a number of actions
   to which you can bind key shortcuts via the :menuselection:`Edit --> Key
@@ -510,43 +506,40 @@ search results.
 
 .. index:: menu; file --> open from project
 
-You may have no interest in some of the search contexts.  Disable some of
-them by clicking on the :guilabel:`Settings` icon at the bottom-right
-corner of the completion popup. The resulting dialog display a list of all
-contexts to be searched and clicking on any of the checkboxes next to the
-names disables that context.  That this list is only displayed when you
-started the omni-search by clicking directly into it. If you started it via
-:kbd:`shift-F3` or the equivalent menu :menuselection:`File --> Open From
-Project...`, only a subset of the settings are displayed.
+You may have no interest in some search contexts.  Disable them by clicking
+the :guilabel:`Settings` icon at the bottom-right corner of the completion
+popup. The resulting dialog displays a list of all contexts to be searched;
+clicking on any of the checkboxes next to the names disables searching that
+context.  This list is only displayed when you started the omni-search by
+clicking on it in the toolbar. If you started it via :kbd:`shift-F3` or the
+equivalent :menuselection:`File --> Open From Project...` menu, only a
+subset of the settings are displayed.
 
-You can also reorder the contexts from this settings dialog. This affects
-both the order in which they're searched and displayed. We recommend
-keeping the :guilabel:`Sources` context last, because it'ss the slowest and
-while GPS is searching it, it's not able to search the other, faster,
-contexts.
+You can also reorder the contexts from this settings dialog, which affects
+the order in which they're searched and displayed. We recommend keeping the
+:guilabel:`Sources` context last, because it's the slowest and while GPS
+is searching it, it's not able to search the other, faster, contexts.
 
 In the settings dialog, you can chose whether to display a
 :guilabel:`Preview` for the matches. This preview is displayed when you use
-the :kbd:`down arrow` key to select some of the search results. In general,
-it displays the corresponding source file or the details for the matching
-GPS action or bookmark.
+the :kbd:`down arrow` key to select some of the search results.  It
+displays the corresponding source file or the details for the matching GPS
+action or bookmark.  You can also select the number of results to be
+displayed for each context when multiple contexts are displayed or the size
+of the search field (which depends on how big your screen and the GPS
+window are).
 
-You can also select the number of results to be displayed for each context
-when multiple contexts are displayed or the size of the search field (which
-depends on how big your screen and the GPS window are) using the settings
-dialog.
-
-One search context looks for file name, and is convenient for quickly
+One search context looks for file names and is convenient for quickly
 opening files. By default, it looks at all files found in any of the source
-directories of your project, even if those files are not explicit sources
-of the project (for example because they don't match the naming scheme for
-any of the languages used by the project). This is often convenient because
-you can easily open support files like :file:`Makefiles` or documentation,
-but it can also sometimes be annoying if the source directories include too
+directories of your project, even if those files aren't explicit sources of
+the project (for example because they don't match the naming scheme for any
+of the languages used by the project). This is often convenient because you
+can easily open support files like :file:`Makefiles` or documentation, but
+it can also sometimes be annoying if the source directories include too
 many irrelevant files. Use the :guilabel:`Include all files from source
 dirs` setting to control this behavior.
 
-GPS allows you to chose amog various search algorithms:
+GPS allows you to chose among various search algorithms:
 
 * :guilabel:`Full Text` checks whether the text you typed appears exactly
   as you specified it within the context (for example, a file name, the
@@ -562,10 +555,10 @@ GPS allows you to chose amog various search algorithms:
   to. For example, the text 'mypks' matches the file name 'MY_PacKage.adS'
   because the letters shown in upper cases are contained in the filename.
 
-  When searching within source files, the algorithm is changed slightly,
-  since otherwise there would be too many matches. In that context, GPS
-  only allows a clos approximations between the text you typed and the text
-  it tries to match (for example, one or two extra or missing characters).
+  When searching within source files, the algorithm is changed slightly, to
+  avoid having too many matches. In that context, GPS only allows a close
+  approximations between the text you typed and the text it tries to match
+  (for example, one or two extra or missing characters).
 
 Select the algorithm to use at the bottom of the popup window containing
 the search results.
@@ -580,14 +573,14 @@ the most meaningful way for you. Scoring is based on a number of criteria:
 
 * the grouping of characters in the match
 
-  As we've seen, when doing a fuzzy match, GPS allows extra characters
+  As we've seen, when doing a fuzzy match GPS allows extra characters
   between the ones you typed. But the closer the ones you typed are in the
-  match result, the more likely it is this is what you were looking for.
+  match result, the more likely it is that this is what you were looking for.
 
 * when was the item last selected
 
   If you recently selected an item (like a file name), GPS assumes you're
-  more likely to want it again and will raise its score appropriately.
+  more likely to want it again and raises its score.
 
 
 .. index:: views; messages
@@ -600,9 +593,9 @@ The :guilabel:`Messages` view
 
 .. image:: messages.png
 
-The Messages view, which is readonly, display information feedback about
-operations, including build output, information about processes launched,
-and error messages.
+The :guilabel:`Messages` view, which is readonly, displays information and
+feedback about operations, including build output, information about
+processes launched, and error messages.
 
 Its local toolbar contains buttons to :guilabel:`Clear` the contents of the
 window, as well as :guilabel:`Save` and :guilabel:`Load` from files.  The
@@ -610,14 +603,14 @@ latter operation also parses those messages into the :guilabel:`Locations`
 window.
 
 The actual output of the compilation is displayed in the
-:guilabel:`Messages` view, but is also parsed and many of its messages are
-displayed more conveniently in the :guilabel:`Locations` view
-(:ref:`The_Locations_View`).  When a compilation finishes, GPS displays the
+:guilabel:`Messages` view but is also parsed and many of its messages are
+displayed more conveniently in the :guilabel:`Locations` view (se
+:ref:`The_Locations_View`).  When a compilation finishes, GPS displays the
 total elapsed time.
 
 .. index:: menu; tools --> views --> messages
 
-You cannot close the :guilabel:`Messages` view because it might contain
+You can't close the :guilabel:`Messages` view because it might contain
 important messages.  If GPS closed it, you can reopen it with the
 :menuselection:`Tools --> Views --> Messages` menu.
 
@@ -642,7 +635,7 @@ placing the mouse over it pops up a tooltip window with the full text.
 
 Each message in this window corresponds to a line in a source editor.  This
 line has been highlighted and has a mark on its left side.  Clicking on a
-message brings up a file editor pointing to that line.
+message brings up an editor pointing to that line.
 
 The :guilabel:`Locations` view provides a local toolbar with the following
 buttons:
@@ -654,11 +647,10 @@ buttons:
   message as well as the corresponding highlighting in the source editor.
 
 * :guilabel:`Save` saves the contents of the view to a text file for later
-  reference.  This file cannot be loaded back into the
-  :guilabel:`Locations` view, but can be loaded into the
-  :guilabel:`Messages` view.  However, if you plan to reload it later, it's
-  better to save and reload the contents of the :guilabel:`Messages` view
-  instead.
+  reference.  You cna't load this file back into the :guilabel:`Locations`
+  view, but you can load it into the :guilabel:`Messages` view.  However,
+  if you plan to reload it later, it's better to save and reload the
+  contents of the :guilabel:`Messages` view instead.
 
 * :guilabel:`Expand All` and :guilabel:`Collapse All` shows or hides all
   messages in the view.
@@ -671,33 +663,41 @@ buttons:
 
 The local settings menu contains the following entries:
 
-* :guilabel:`Sort by subcategory`
+* :menuselection:`Sort by subcategory`
+
   Toggle the sorting of messages by sub-categories. This is useful for
   separating warnings from errors in build results. The error messages
   appear first. The default is to sort the message by their location.
 
-* :guilabel:`Sort files alphabetically`
+* :menuselection:`Sort files alphabetically`
+
   Sort messages by filenames (sorted alphabetically). The default does not
   sort by filenames to make it easier to manipulate :guilabel:`Locations`
   view while the compilation is proceeding.  (If sorted, the messages might
   be reordered while you're trying to click on them).
 
-* :guilabel:`Jump to first location`
+* :menuselection:`Jump to first location`
+
   Every time a new category is created, for example, as a result of a
   compilation or search operation, the first message in that category is
   automatically selected and the corresponding editor opened.
 
-* :guilabel:`Warp around on next/previous` controls the behavior of the
-  guilabel:`Previous tag` and :guilabel:`Next tag` menus (see below).
+* :menuselection:`Warp around on next/previous`
 
-* :guilabel:`Auto close locations` automatically closes this window when
-  it becomes empty.
+  Controls the behavior of the :menuselection:`Previous tag` and
+  :menuselection:`Next tag` menus (see below).
 
-* :guilabel:`Save locations on exit` controls whether GPS should save and
-  restore the contents of this window between sessions.  Be careful,
-  because the loaded contents might not apply the next time.  For example,
-  the source files have changed, or build errors have been fixed.  So you 
-  should not select this option if those conditions might apply.
+* :menuselection:`Auto close locations`
+
+  Automatically close this window when it becomes empty.
+
+* :menuselection:`Save locations on exit`
+
+  Controls whether GPS should save and restore the contents of this window
+  between sessions.  Be careful, because the loaded contents might not
+  apply the next time.  For example, the source files have changed, or
+  build errors have been fixed.  So you should not select this option if
+  those conditions might apply.
 
 
 .. index:: menu; navigate --> previous tag
@@ -734,7 +734,7 @@ The :guilabel:`Project` view
 The project view displays a representation of the various components of
 your project.  By default, it's displayed on the left side of the
 workspace.  Select it using the :menuselection:`Project --> Project View`
-or :menuselection:`Tools --> Views --> Project` menu items.
+or :menuselection:`Tools --> Views --> Project` menus.
 
 .. index:: drag-and-drop
 
@@ -748,10 +748,10 @@ editor.
 
 The project view, combined with the file and outline view, provide an
 interactive search capability allowing you to quickly search information
-currently displayed. Just start typing the text to search when the view has
-the focus.  Note that the contents of the :guilabel:`Project` view are
-computed lazily, so not all files are known to this search capability before
-they've been opened.
+currently displayed.  Start typing the text to search when the view has the
+focus.  Note that the contents of the :guilabel:`Project` view are computed
+lazily, so not all files are known to this search capability before they've
+been opened.
 
 This search opens a small window at the bottom of the view where you can
 interactively type names.  The first matching name in the tree is selected
@@ -767,11 +767,11 @@ The various components displayed in the project view are:
   number of other properties such as the naming schemes for the sources.
   They can be organized into a project hierarchy where a root project can
   import other projects, each with their own set of sources (see
-  :ref:`The_Welcome_Dialog` on how projects are loaded in GPS).
+  :ref:`The_Welcome_Dialog` for details on how projects are loaded in GPS).
 
   The :guilabel:`Project` view displays this project hierarchy: the top
-  node is the root project of your application (this is usually where the
-  source file that contains the main subprogram will be located). A node is
+  node is the root project of your application (usually where the source
+  file that contains the main subprogram will be located). A node is
   displayed for each imported project and recursively for other imported
   projects.  If a project is imported by several projects, it may appear
   multiple times in the view,
@@ -781,15 +781,15 @@ The various components displayed in the project view are:
   the project dependencies, the cycle will expand infinitely. For example,
   if project :file:`a` imports project :file:`b`, which in turn imports
   project :file:`a` through a :samp:`limited with` clause, then expanding
-  the node for :file:`a` will show :file:`b`. In turn, expanding the node
-  for :file:`b` will show a node for :file:`a`, and so on.
+  the node for :file:`a` shows :file:`b`. In turn, expanding the node for
+  :file:`b` shows a node for :file:`a`, and so on.
 
   An icon with a pen mark is displayed if the project was modified but not
-  saved yet. You can save it at any time by right-clicking on the icon.
-  GPS either reminds you to save it before any compilation or saves it
+  saved yet. You can save it at any time by right-clicking the icon.  GPS
+  either reminds you to save it before any compilation or saves it
   automatically, depending on your preference settings.
 
-  GPS provides a second displayfor this project view, which lists all
+  GPS provides a second display for this project view, which lists all
   projects with no hierarchy: all projects appear only once in the view, at
   the top level. You may find this display useful for deep project
   hierarchies, where it can make it easier to find projects. Activate this
@@ -806,20 +806,20 @@ The various components displayed in the project view are:
 
   .. index:: project view; absolute paths
 
-  You chose whether you want to see the absolute path names for the
-  directories or paths relative to the location of the project by using the
-  local settings menu :guilabel:`Show absolute paths` of the
-  :guilabel:`Project` view. In all cases, the tooltip displayed when the
-  mouse hovers a file or directory shows the full path.
+  You chose whether to see the absolute path names for the directories or
+  paths relative to the location of the project by using the local settings
+  menu :menuselection:`Show absolute paths` of the :guilabel:`Project`
+  view. In all cases, the tooltip displayed when the mouse hovers over a
+  file or directory shows the full path.
 
   Special nodes are created for object and executables directories. No
   files are shown for these.
 
   .. index:: Show hidden directories
 
-  The local setting :guilabel:`Show hidden directories` can be used to
-  filter the directories considered hidden. This can be used to hide the
-  version control directories such as :file:`CVS` or :file:`.svn`.
+  Use the local setting :guilabel:`Show hidden directories` to select the
+  directories to be considered hidden. Use this to hide version control
+  directories such as :file:`CVS` or :file:`.svn`.
 
 *files*
 
@@ -831,46 +831,45 @@ The various components displayed in the project view are:
   times in the :guilabel:`Project` view if the project it belongs to is
   imported by several other projects.
 
-  You can drag a file into GPS. This opens a new editor if the file is not
-  already being edited, or moves to the existing editor otherwise.  If you
+  You can drag a file into GPS. This opens a new editor if the file isn't
+  already being edited or moves to the existing editor otherwise.  If you
   press :kbd:`shift` while dragging the file and it's already being edited,
   GPS creates a new view of the existing editor.
 
 *entities*
 
   If you open the node for a source file, the file is parsed by a fast
-  parsers integrated in GPS so all entities declared in the file can be
-  shown. These entities are grouped into various categories that depend on
+  parsers integrated in GPS so it can show all entities declared in the
+  file. These entities are grouped into various categories that depend on
   the language. Typical categories include subprograms, packages, types,
   variables, and tasks.
 
-  Double-clicking on a file or clicking on any entity opens a source editor
-  or display showing, respectively, the first line in the file or the line
-  on which the entity is defined.
+  Double-clicking on a file or clicking on any entity opens an editor or
+  display showing, respectively, the first line in the file or the line on
+  which the entity is defined.
 
 .. index:: search; project view
 .. index:: menu; navigate --> find or replace
 
 If you open the search dialog via the :menuselection:`Navigate --> Find or
 Replace...` menu, you can search for anything in the :guilabel:`Project`
-view, either a file or an entity. Note that searching for an entity can be
-slow if you have lots of files and/or large files.
+view, either a file or an entity.  Searching for an entity can be slow if
+you have many files and/or large files.
 
 .. index:: locate in project view
 
-GPS also provides a contextual menu, called :guilabel:`Locate in Project
-View`, in source editors. This automatically searches for the first entry
-in this file in the :guilabel:`Project` view. This contextual menu is also
-available in other modules, for example when selecting a file in the
-:guilabel:`Dependency Browser`.
+GPS also provides a contextual menu, called :menuselection:`Locate in
+Project View`, in source editors. This automatically searches for the first
+entry in this file in the :guilabel:`Project` view. This contextual menu is
+also available in other modules, for example when selecting a file in the
+:guilabel:`Dependency` browser.
 
 .. index:: project; reload
 
 The local toolbar of the :guilabel:`Project` view contains a button to
-reload the project.  You can use this when you've created or removed source
-files from other applications and want to let GPS know there might have
-been changes on the file system that impact the contents of the current
-project.
+reload the project.  Use this when you've created or removed source files
+from other applications and want to let GPS know there might have been
+changes on the file system that impact the contents of the current project.
 
 .. index:: menu;project --> edit project properties
 
@@ -880,25 +879,27 @@ behaves similarly to the :menuselection:`Project --> Edit Project
 Properties` menu. See :ref:`The_Project_Properties_Editor` for more
 information.
 
-
-If you right click on a project node, a contextual menu appears which
+If you right click a project node, a contextual menu appears which
 contains, among others, the following entries that you can use to
 understand or modify your project:
 
 * :menuselection:`Show projects imported by...`
 * :menuselection:`Show projects depending on...`
-  Open a new window, the :guilabel:`Project browser`, which displays
+
+  Open a new window, the :guilabel:`Project` browser, which displays
   graphically the relationships between each project in the hierarchy (see
   :ref:`The_Project_Browser`).
 
 * :menuselection:`Project --> Properties`
-  This :index:`menu <single: menu; project --> edit project properties>`
-  opens a new dialog to interactively edit the attributes of the project
+
+  :index:`Opens <single: menu; project --> edit project properties>`
+  a new dialog to interactively edit the attributes of the project
   (such as tool switches and naming schemes) and is similar to the local
   toolbar button.
 
 * :menuselection:`Project --> Save project...`
-  Select to :index:`save <single: project; saving>` a single project in the
+
+  :index:`Saves <single: project; saving>` a single project in the
   hierarchy after you modified it. Modified but unsaved projects in the
   hierarchy have a special icon (a pen mark on top of the standard
   icon). If you'd rather :index:`save all <single: menu; project -->
@@ -907,23 +908,26 @@ understand or modify your project:
 
   Any time you modify one or more projects, the contents of the project
   view is automatically refreshed, but no project is automatically
-  saved. This provides a simple way to test temporarily new values for the
+  saved. This provides a simple way to temporarily test new values for the
   project attributes.  Unsaved modified projects are shown with a special
   icon in the project view, a pen mark on top of the standard icon:
 
   .. image:: project-modified.jpg
 
 * :menuselection:`Project --> Edit source file`
+
   Loads the project file into an editor so you can edit it.  Use this
   if you need to access some features of the project files that aren't
   accessible graphically (such as rename statements and variables).
 
 * :menuselection:`Project --> Dependencies`
+
   Opens the dependencies editor for the selected project
-  (:ref:`The_Project_Dependencies_Editor`).
+  (se :ref:`The_Project_Dependencies_Editor`).
 
 * :menuselection:`Project --> Add scenario variable`
-  Add new scenario variables to the project (see
+
+  Adds new scenario variables to the project (see
   :ref:`Scenarios_And_Configuration_Variables`). Howver, you may find it
   more convenient to use the :guilabel:`Scenario` view for this purpose.
 
@@ -946,32 +950,31 @@ application can be changed when the value of these external variables is
 changed.
 
 GPS provides a simple access to these variables, through a view called the
-:guilabel:`Scenario` View. These variables are called `Scenario Variables`,
+:guilabel:`Scenario` view. These variables are called `Scenario Variables`,
 since they provide various scenarios for the same set of project files.
 
 Each such variable is listed on its own line along with its current value.
 Change the current value by clicking on it and selecting the new value
 among the ones that pop up. GPS doesn't remember the value from one session
 to the next: the variables' initial values come from the project files
-themselves (where a default value can be specified) or from the environment
+themselves (where you can specify a default value) or from the environment
 in which GPS is started, just as would be the case when spawning command
 line tools like :command:`gprbuild`.
 
-Whenever you change the value of one of the variables, the project is
-automatically recomputed, and the list of source files or directories is
-changed dynamically to reflect the new status of the project. Starting a
-new compilation at that point uses the new switches, and all aspects of GPS
-are immediately changed to reflect the new setup.
+Whenever you change the value of any variable, GPS automatically recomputes
+the project and dynamically changes the list of source files and
+directories to reflect the new status of the project. Starting a new
+compilation at that point uses the new switches, and all aspects of GPS are
+immediately changed to reflect the new setup.
 
 Create new scenario variables by selecting the :guilabel:`+` icon in the
 local toolbar of the :guilabel:`Scenario` view.  Edit the list of possible
 values for a variable by clicking on the :guilabel:`edit` button in that
-toolbar.  Delete an existing variable by clicking on the :guilabel:`-`
-button.
+toolbar.  Delete a variable by clicking on the :guilabel:`-` button.
 
 Each of these changes impacts the actual project file (:file:`.gpr`), so
-you might not want to make them if the project file was written manually
-since the impacts can be significant.
+you might not want to make them if you wrote the project file manually
+since the impact can be significant.
 
 .. index:: build; build modes
 
@@ -982,8 +985,8 @@ change the mode by clicking on the value and selecting a new value in the
 popup window.
 
 If you're not using build modes and want to save some space on the screen,
-use the local settings menu :guilabel:`Show build modes` to disable the
-display.
+use the local settings menu :menuselection:`Show build modes` to disable
+the display.
 
 
 .. index:: windows; files view
@@ -999,16 +1002,15 @@ In addition to the :guilabel:`Project` view, GPS also provides a
 :guilabel:`Files` view through the :menuselection:`Tools --> Views -->
 Files` menu.
 
-In this view, directories are displayed exactly as they are organized on
-the disk (including Windows drives).  Each source file can also be explored
-as described in :ref:`The_Project_View`.  You can also a files into the
-files view to conveniently open a file.
+In this view, directories are displayed exactly as they're organized on the
+disk (including Windows drives).  You can also explore each source file
+explored as described in :ref:`The_Project_View`.  You can also drop files
+into the :guilabel:`Files` view to conveniently open a file.
 
 By default, the :guilabel:`Files` view displays all files on disk. You can
 set filters through the local settings menu to restrict the display to the
-files and directories belonging to the project (use the :guilabel:`Show
-files from project only` menu).
-
+files and directories belonging to the project (use the
+:menuselection:`Show files from project only` menu).
 
 
 .. index:: windows, windows view
@@ -1034,9 +1036,9 @@ You can also choose, through the contextual menu, whether only source
 editors should be visible or whether all windows should be displayed.
 
 This view allows you to quickly select and focus on a particular window by
-clicking on the corresponding line with the left button. If you leave the
-button pressed, you can move the window to another place on the desktop
-(see the description of the :ref:`Multiple_Document_Interface`)
+clicking the corresponding line. If you leave the button pressed, you can
+drag the window to another place on the desktop (see the description of the
+:ref:`Multiple_Document_Interface`)
 
 Select multiple windows by clicking while pressing the control or shift
 keys. The Window view provides a contextual menu to easily close all
@@ -1061,9 +1063,9 @@ The :guilabel:`Outline` view, which you activate through the
 :menuselection:`Tools --> Views --> Outline` menu, shows the contents of
 the current file.
 
-Exactly what's displayed depends on the language of the file seeing. For
-Ada, C and C++ files, this view displays the list of entities declared at
-the global level in your current file (such as Ada packages, C++ classes,
+Exactly what's displayed depends on the language of the file. For Ada, C
+and C++ files, this view displays the list of entities declared at the
+global level in your current file (such as Ada packages, C++ classes,
 subprograms, and Ada types).  This view is refreshed whenever the current
 editor is modified.
 
@@ -1073,37 +1075,46 @@ corresponding line in the file (the spec or the body).
 The local settings menu contains multiple check boxes you can use to alter
 how the outline view is displayed:
 
-* :guilabel:`Show profiles` indicates whether the list of parameters of the
-  subprograms should be displayed. This is particularly useful for
-  languages allowing overriding of entities.
+* :guilabel:`Show profiles`
+
+  Indicates whether the list of parameters of the subprograms should be
+  displayed. This is particularly useful for languages allowing overriding
+  of entities.
 
 * :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks,
-  entries and protected types` controls the display of the specified
-  categories of entities.
+  entries and protected types`
 
-* :guilabel:`Show specifications` indicates whether GPS displays a line for
-  the specification (declaration) of entities in addition to the location
-  of their bodies.
+  Controls the display of the specified categories of entities.
 
-* :guilabel:`Sort alphabetically` controls the order in which the entities
-  are displayed (either alphabetically or in the same order as in the
-  source file).
+* :guilabel:`Show specifications`
 
-* :guilabel:`Flat View` controls whether the entities are always displayed
-  at the top level of the outline view. When disabled, nested subprograms
-  are displayed below the subprogram in which they're declared.
+  Indicates whether GPS displays a line for the specification (declaration)
+  of entities in addition to the location of their bodies.
 
-* :guilabel:`Group spec and body` displays up to two icons on each line
-  (one for the spec and one for the body if both occur in the file).  Click
-  on one of the icons to go directly to that location. If you click on the
-  name of the entity, you're taken to its declaration unless this is
-  already the current location in the editor, in which case you're taken to
-  its body.
+* :guilabel:`Sort alphabetically`
 
-* :guilabel:`Dynamic link with editor` causes the current subprogram to be
-  selected in the outline view every time the cursor position changes in
-  the current editor.  This option requires GPS to perform some computation
-  for GPS, so will slow it down.
+  Controls the order in which the entities are displayed (either
+  alphabetically or in the same order as in the source file).
+
+* :guilabel:`Flat View`
+
+  Controls whether the entities are always displayed at the top level of
+  the outline view. When disabled, nested subprograms are displayed below
+  the subprogram in which they're declared.
+
+* :guilabel:`Group spec and body`
+
+  Displays up to two icons on each line (one for the spec and one for the
+  body if both occur in the file).  Click on one of the icons to go
+  directly to that location. If you click on the name of the entity, you're
+  taken to its declaration unless it's already the current location in the
+  editor, in which case you're taken to its body.
+
+* :guilabel:`Dynamic link with editor`
+
+  Causes the current subprogram to be selected in the outline view each
+  time the cursor position changes in the current editor.  This option
+  will slow down GPS.
 
 
 .. index: windows; clipboard
@@ -1120,17 +1131,17 @@ GPS has an advanced mechanism for handling copy/paste operations.
 .. index:: menu; edit --> copy
 .. index:: menu; edit --> cut
 
-When you click the menus :menuselection:`Edit --> Copy` or
-:menuselection:`Edit --> Cut`, GPS adds the current selection to the
-clipboard.  However, unlike many applications, GPS doesn't discard the
-previous contents of the clipboard, but instead saves it for future use.
-By default, up to 10 entries are saved, but you can change that number
-using the :guilabel:`Clipboard Size` preference.
+When you click the :menuselection:`Edit --> Copy` or :menuselection:`Edit
+--> Cut` menu, GPS adds the current selection to the clipboard.  However,
+unlike many applications, GPS doesn't discard the previous contents of the
+clipboard, but instead saves it for future use.  By default, up to 10
+entries are saved, but you can change that number using the
+:guilabel:`Clipboard Size` preference.
 
 .. index:: menu; edit --> paste
 .. index:: menu; edit --> paste previous
 
-When you select the menu :menuselection:`Edit --> Paste`, GPS pastes the
+When you select the :menuselection:`Edit --> Paste` menu, GPS pastes the
 last entry added to the clipboard at the current location in the editor.
 If you then immediately select :menuselection:`Edit --> Paste Previous`,
 this newly inserted text is removed and GPS instead inserts the second to
@@ -1145,34 +1156,37 @@ without having to go back and forth between the two editors.
 
 The :guilabel:`Clipboard` view graphically displays what's currently stored
 in the clipboard. Open it via the :menuselection:`Tools --> Views -->
-Clipboard`.
+Clipboard` menu.
 
 That view displays a list of entries, each of which is associated with one
 level of the clipboard. The text displayed for each entry is its first line
-containing non blank characters with leading characters discarded. GPS
-prepends or appends `[...]` if the entry is truncated.  If you hover
-over an entry, a tooltip pops up displaying all lines in the entry.
+containing non blank characters with leading characters omitted. GPS
+prepends or appends `[...]` if the entry is truncated.  If you hover over
+an entry, a tooltip pops up displaying all lines in the entry.
 
 In addition, one entry has an arrow on its left. This indicates the entry
-to be pasted if you select the menu :menuselection:`Edit --> Paste`. If you
-select instead the menu :menuselection:`Edit --> Paste Previous`, the entry
+to be pasted if you select the :menuselection:`Edit --> Paste` menu. If you
+instead select the :menuselection:`Edit --> Paste Previous` menu, the entry
 below that is inserted instead.
 
-If you double-click on any of these entries, GPS inserts the corresponding
-text in the current editor and make the entry you click current, so
+If you double-click any of these entries, GPS inserts the corresponding
+text in the current editor and makes the entry you click current, so
 selecting :menuselection:`Edit --> Paste` or the equivalent shortcut will
 insert that same entry again.
 
 The local toolbar in the clipboard view provides two buttons:
 
-* :guilabel:`Append To Previous`.  The selected entry is appended to the
-   one below and removed from the clipboard so that selecting
-   :menuselection:`Edit --> Paste` pastes the two entries simultaneously.
-   Use this when you want to copy lines from separate places in a file,
-   merge them, and paste them together one or more times later, using a
-   single operation.
+* :guilabel:`Append To Previous`.
 
-* :guilabel:`Remove`. The selected entry is removed from the clipboard.
+  The selected entry is appended to the one below and removed from the
+  clipboard so that selecting :menuselection:`Edit --> Paste` pastes the
+  two entries simultaneously.  Use this when you want to copy lines from
+  separate places in a file, merge them, and paste them together one or
+  more times later, using a single operation.
+
+* :guilabel:`Remove`.
+
+  The selected entry is removed from the clipboard.
 
 The :guilabel:`Clipboard` view content is preserved between GPS sessions.
 However very large entries are removed and replaced with an entry saying
@@ -1187,18 +1201,18 @@ The :guilabel:`Call trees` view and :guilabel:`Callgraph` browser
 =================================================================
 
 These two views play similar roles in that they display the same
-information about entities, but in two different ways: the callgraph view
-displays the information in a tree, easily navigable and perhaps easier to
-manipulate when lots of entities are involved, and the callgraph browser
-displays the information as graphical boxes that you can manipulate on the
-screen.  The latter is best suited to generate a diagram that you can later
-export to your own documents.
+information about entities, but in two different ways: the :guilabel:`Call
+tree` view displays the information in a tree, easily navigable and perhaps
+easier to manipulate when lots of entities are involved, and the
+:guilabel:`Callgraph` browser displays the information as graphical boxes
+that you can manipulate on the screen.  The latter is best suited to
+generate a diagram that you can later export to your own documents.
 
 These views are used to display the information about what subprograms are
 called by a given entity, and what entities are calling a given subprogram.
 
-Some references might be displayed with an additional "(dispatching)" text.
-This indicates the call to the entity is not explicit in the sources but
+Some references are displayed with an additional "(dispatching)" text,
+which indicates the call to the entity is not explicit in the sources but
 could potentially occur through dynamic dispatching.  (This depends on what
 arguments are passed to the caller at run time; it's possible the
 subprogram is in fact never called.)
@@ -1216,34 +1230,36 @@ menus :menuselection:`<entity> calls` and :menuselection:`<entity> is called
 by`. Every time you select one of these menus, a new view is opened to display
 that entity.
 
-You expand a node from the tree by clicking on the small expander arrow on
-the left of the line.  Further callgraph information is computed for the
+Expand a node from the tree by clicking on the small expander arrow on the
+left of the line.  Further callgraph information is computed for the
 selected entity, making it very easy to get the information contained in a
 full callgraph tree.  Closing and expanding a node again recomputes the
 callgraph for the entity.
 
-On the right side of the main tree, a list displays the locations of calls
-for the selected entity.  Click on a entry in this list to open an editor
-showing the corresponding location.
+The right side of the main tree contains a list displays the locations of
+calls for the selected entity.  Click on a entry in this list to open an
+editor showing the corresponding location.
 
-The :guilabel:`Calltree` supports keyboard navigation: :kbd:`Up` and
-:kbd:`Down` keys navigate between listed locations, :kbd:`Left` collapses the
-current level, :kbd:`Right` expands the current level, and :kbd:`Return` jumps
-to the currently selected location.
+The :guilabel:`Call tree` supports keyboard navigation: :kbd:`Up` and
+:kbd:`Down` keys navigate between listed locations, :kbd:`Left` collapses
+the current level, :kbd:`Right` expands the current level, and
+:kbd:`Return` jumps to the currently selected location.
 
 The contents of the calltree is not restored when GPS is restarted because
-its contents might be misleading if the sources have changed in-between and
-GPS would be wasting time loading the information again.
+its contents might be misleading if the sources have changed.
 
 The local toolbar provides the following buttons:
 
 * :guilabel:`Clear`
+
   Remove all entries from the Callgraph View.
 
 * :guilabel:`Remove entity`
+
   Remove the selected entity from the Callgraph View.
 
 * :guilabel:`Collapse all`
+
   Collapse all the entities in the Callgraph View.
 
 .. _Call_Graph:
@@ -1254,9 +1270,9 @@ Callgraph browser
 .. image:: callgraph.png
 .. image:: callgraph_orth.png
 
-The callgraph graphically displays the relationship between subprogram
-callers and callees. A link between two items indicates one of them is
-calling the other.
+The :guilabel:`Callgraph` browser graphically displays the relationship
+between subprogram callers and callees. A link between two items indicates
+one of them is calling the other.
 
 .. index:: renaming entities; in callgraph
 
@@ -1275,27 +1291,30 @@ displays all the entities that call the selected item (i.e. its callers).
 .. index:: contextual menu; browsers --> called by
 
 Open this browser by right-clicking on the name of an entity in a source
-editor or :guilabel:`Project` view and selecting one of
+editor or :guilabel:`Project` view and selecting one of the
 :menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers -->
 <entity> calls (recursive)` or :menuselection:`Browsers --> <entity> is
-called by`.
+called by` menus.
 
 All boxes in this browser display the location of their declaration and the
-list of all their references in the other entities currently displayed in
-the browser. If you close the box for an entity that calls them, the
-matching references are also hidden.
+list of all references in the other entities currently displayed in the
+browser. If you close the box for an entity that calls them, the matching
+references are also hidden.
 
 If you right-click on the title of one of the entity boxes, you get the
 same contextual menu as when you click on the name of an entity in an
-editor, with the additional items:
+editor, with the additional entries:
 
-* :guilabel:`Go To Spec`
+* :menuselectin:`Go To Spec`
+
   Open a source editor displaying the declaration of the entity.
 
-* :guilabel:`Go To Body`
+* :menuselection:`Go To Body`
+
   Open a source editor displaying the body of the entity.
 
-* :guilabel:`Locate in Project View`
+* :menuselection:`Locate in Project View`
+
   Move the focus to the project view, and select the first node
   representing the file in which the entity is declared. This makes it
   easier to see which other entities are declared in the same file.
@@ -1311,7 +1330,7 @@ The :guilabel:`Bookmarks` view
 
 .. image:: bookmarks.png
 
-Bookmarks are a convenient way to remember places in your code or in your
+Bookmarks are a convenient way to remember places in your code or
 environment so you can go back to them at some later point.  These
 bookmarks are saved automatically and restored when GPS is reloaded, so
 they exist across GPS sessions.
@@ -1319,34 +1338,38 @@ they exist across GPS sessions.
 Bookmarks automatically remember the exact location in an editor, not in
 terms of line and column, but in terms of which character they point to. If
 you modify the file through GPS, the bookmark is automatically updated so
-it refers to the same place.  However, is the file is modified outside of
-GPS, it will not be aware of that change, and the bookmark may reference
-another place in the file.
+it refers to the same place.  However, if the file is modified outside of
+GPS, it won't be aware of that change and the bookmark may reference a
+different place in the file.
 
 .. index:: menu; edit --> create bookmark
 
-Use menu :menuselection:`Edit --> Create Bookmark` to create a bookmark at
-the current location (either in the editor, or the browser for instance).
+Use the :menuselection:`Edit --> Create Bookmark` menu to create a bookmark
+at the current location (either in the editor or the browser).
 
 .. index:: menu; tools --> views --> bookmarks
 
-All bookmarks you have created are visible in the :menuselection:`Tools -->
-Views --> Bookmarks` view. Clicking on the booking opens an editor with the
-cursor at that position.
+All bookmarks you created are visible in the :menuselection:`Tools -->
+Views --> Bookmarks` view. Clicking on the bookmark opens an editor with
+the cursor at that position.
 
 The local toolbar of the :guilabel:`Bookmarks` view provides three buttons
-to act on the bookmarks:
+to act on bookmarks:
 
-* :guilabel:`Create` is similar to the :menuselection:`Edit --> Create
-  Bookmark` and create a bookmark at the current location. After pressing
-  that button, you can type a custom name for the bookmark or just press
-  :kbd:`enter` to keep the default name, which is based on the name of the
-  enclosing subprogram.
+* :guilabel:`Create`
 
-* :guilabel:`Rename` renames the currently-selected bookmark.
+  Similar to the :menuselection:`Edit --> Create Bookmark` menu.  Creates a
+  bookmark at the current location. After pressing that button, you can
+  type a custom name for the bookmark or just press :kbd:`enter` to keep
+  the default name, which is based on the name of the enclosing subprogram.
 
-* :guilabel:`Remove` deletes the selected bookmark.
+* :guilabel:`Rename`
 
+  Renames the currently-selected bookmark.
+
+* :guilabel:`Remove`
+
+  Deletes the selected bookmark.
 
 
 .. index:: consoles; python console
@@ -1375,8 +1398,8 @@ them in your own scripts.
 .. index:: menu; tools --> consoles --> GPS Shell
 
 The menu :menuselection:`Tools --> Consoles --> GPS Shell` opens the shell
-console. The GPS shell is a custom language that was mostly used when GPS
-did not have python support and is obsolete at this point.
+console. The GPS shell is a custom language that was mostly used before GPS
+had python support and is obsolete now.
 
 See :ref:`Scripting_GPS` for more information on using scripting languages
 within GPS.
@@ -1420,13 +1443,12 @@ The Execution window
 
 .. index:: menu; build --> run
 
-When a program is launched using the menu :menuselection:`Build --> Run`,
+When a program is launched using the :menuselection:`Build --> Run` menu,
 GPS creates a new execution window allowing input and output for the
 program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
 execution windows when the program terminates; you must close them
-explictly.  If you try to close the execution window while the program is
-still running, GPS displays a dialog window asking if you want to kill the
-application.
+manually.  If you try to close the execution window while the program is
+still running, GPS displays a dialog window asking if you want to kill it.
 
 
 .. index:: tasks
@@ -1442,10 +1464,10 @@ The :guilabel:`Task Manager` window displays all running GPS
 operations currently running in the background, such as builds,
 searches or VCS commands.
 
-For each task, the :guilabel:`Task Manager` displays the status of the task
-and its current progress.  You can suspect the execution of a task by
-clicking on the small :guilabel:`pause` button next to the task. Oor you
-can kill a task by clicking on the :guilabel:`interrupt` button.
+For each task, the :guilabel:`Task Manager` displays its status and current
+progress.  Suspend the execution of a task by clicking the small
+:guilabel:`pause` button next to the task. Or kill a task by clicking the
+:guilabel:`interrupt` button.
 
 .. index:: menu; tools --> views --> tasks
 
@@ -1455,11 +1477,10 @@ menu.  You can move it placed anywhere on your desktop.
 
 .. image:: task-manager-exit.png
 
-If there are tasks running when exiting GPS, a window is displayed showing
-those tasks. You can force the exit by pressing the confirmation button,
-which kills all remaining tasks, or continue working in GPS by pressing the
+If there are tasks running when exiting GPS, it displays a window showing
+those tasks. You can kills all remaining tasks and exit by pressing the
+confirmation button or continue working in GPS by pressing the
 :guilabel:`Cancel` button.
-
 
 
 .. index:: windows; project browser
@@ -1471,17 +1492,17 @@ The :guilabel:`Project Browser`
 
 .. image:: project-browser.png
 
-The :guilabel:`Project Browser` shows the dependencies between all the
-projects in the project hierarchy. Two items in this browser are linked if
-one of them imports the other.
+The :guilabel:`Project` browser shows the dependencies between all projects
+in the project hierarchy. Two items in this browser are linked if one of
+them imports the other.
 
 Access it through the contextual menu in the :guilabel:`Project` view by
-selecting the :menuselection:`Show projects imported by...` item when
+selecting the :menuselection:`Show projects imported by...` menu when
 right-clicking on a project node.
 
 Click on the left arrow in the title bar of a project to display all
-projects that import that project. Similarly, click on the right arrow to
-display all projects imported by that project.
+projects that import that project.  Click on the right arrow to display all
+projects imported by that project.
 
 Right-clicking on a project brings up a menu containing several items. Most
 are added by the project editor and provide direct access to such features
@@ -1492,7 +1513,7 @@ Some items in the menu are specific to the :guilabel:`Project Browser`:
 * :menuselection:`Locate in Project View`
 
   Switch the focus to the :guilabel:`Project` view and highlight the first
-  project node that matches the project.  This is a convenient way to get
+  project node matching the project.  This is a convenient way to get
   information such as the list of directories or source files for a
   project.
 
@@ -1503,8 +1524,8 @@ Some items in the menu are specific to the :guilabel:`Project Browser`:
 
 * :menuselection:`Show projects imported by ... (recursively)`
 
-  Display all dependencies recursively for the project (i.e.  the projects
-  it imports directly the projects they import).
+  Display all dependencies recursively for the project (i.e., the projects
+  it imports directly and the projects they import).
 
 * :menuselection:`Show projects importing...`
 
@@ -1512,7 +1533,6 @@ Some items in the menu are specific to the :guilabel:`Project Browser`:
   directly import the selected project.
 
 See also :ref:`browsers_features` for more capabilities of the GPS browsers.
-
 
 
 .. index:: views; dependency browser
@@ -1526,16 +1546,16 @@ The :guilabel:`Dependency Browser`
 
 The dependency browser displays dependencies between source files. Each
 item in the browser represents one source file.  Click on the right arrow
-in the title bar to display the list of files that the selected file
-depends on. A file depend on another if it explicitly imports it
-(:samp:`with` statement in Ada, or :samp:`#include` in C/C++).  Implicit
-dependencies are currently not displayed in this browser, since you can
-access that information by opening the direct dependencies.
-Click on the left arrow in the title bar to display the list of files that
-depend on the selected file.
+in the title bar to display the list of files the selected file depends
+on. A file depends on another if it explicitly imports it (:samp:`with`
+statement in Ada, or :samp:`#include` in C/C++).  Implicit dependencies are
+currently not displayed in this browser since you can access that
+information by opening the direct dependencies.  Click on the left arrow in
+the title bar to display the list of files that depend on the selected
+file.
 
 This browser is accessible through the contextual menu in the
-:guilabel:`Project` view by selecting one of the following items:
+:guilabel:`Project` view by selecting one of the following entries:
 
 * :menuselection:`Show dependencies for ...`
 
@@ -1544,7 +1564,7 @@ This browser is accessible through the contextual menu in the
 
 * :menuselection:`Show files depending on ...`
 
-  Like clicking on the left arrow for a file already in the browser, will
+  Like clicking on the left arrow for a file already in the browser,
   displays the list of files that directly depend on that file.
 
 The background contextual menu in the browser adds a few entries to the
@@ -1561,9 +1581,8 @@ standard menu:
   valid. Any that not are removed. The arrows in the title bar are also
   reset if new dependencies were added for the files.  Also recompute the
   layout of the graph and changes the current position of the boxes.
-  However, the browser is not refreshed automatically, since there are lots
-  of cases where the dependencies might change.  * :menuselection:`Show
-  system files`
+  However, the browser is not refreshed automatically, since there are many
+  cases where the dependencies might change.
 
 * :menuselection:`Show system files`
 
@@ -1587,11 +1606,11 @@ these entries:
 
 * :menuselection:`Analyze other file`
 
-  Open a new item in the browser, displaying the a file that's associated
-  with the selected one. In Ada, this is be the body if you clicked on a
-  spec file, or vice versa. In C, it depends on the naming conventions you
-  specified in the project properties, but it generally goes from a
-  :file:`.h` file to a :file:`.c` file and back.
+  Open a new item in the browser, displaying the files associated with the
+  selected one. In Ada, this is the body if you clicked on a spec file, or
+  vice versa. In C, it depends on the naming conventions you specified in
+  the project properties, but it generally goes from a :file:`.h` file to a
+  :file:`.c` file and back.
 
 * :menuselection:`Show dependencies for ...`
 
@@ -1615,9 +1634,9 @@ visual representation of elaboration dependencies in an
 
 This visual representation depicts program units as items in the browser
 and direct dependencies between program units as links.  All units involved
-in a dependency cycle caused by the presence of a pragma Elaborate_All
-(whether explicit or implicit) are also presented and connected by links
-labeled "body" and "with".
+in a dependency cycle caused by the presence of a :samp:`pragma
+Elaborate_All` (whether explicit or implicit) are also presented and
+connected by links labeled "body" and "with".
 
 .. index:: preferences; browsers --> show elaboration cycles
 
@@ -1627,23 +1646,21 @@ whether to automatically create a graph from cycles listed in build output.
 See also :ref:`browsers_features` for more capabilities of GPS browsers.
 
 
-
 .. index:: windows; entity browser
 .. _Entity_Browser:
 
-The :guilabel:`Entity Browser`
+The :guilabel:`Entity` browser
 ==============================
 
 .. image:: entity-browser.png
 
-The entity browser displays static information about any source entity.
-What's displayed for each entity depends on the type of the entity, but are
-normally other entities.  For example:
+The :guilabel:`Entity` browser displays static information about any source
+entity.  What's displayed for each entity depends on the type of the
+entity, but are normally other entities.  For example:
 
 * :samp:`Ada record / C struct`
 
   The list of fields is displayed.
-  item.
 
 * :samp:`Ada tagged type / C++ class`
 
@@ -1657,8 +1674,8 @@ normally other entities.  For example:
 
   The list of all the entities declared in that package is displayed
 
-Access this browser via the contextual menu :menuselection:`Browsers -->
-Examine entity` in the project view and source editor when clicking on an
+Access this browser via the :menuselection:`Browsers --> Examine entity`
+contextual menu in the project view and source editor when clicking on an
 entity.
 
 Most entities displayed are clickable (by default, they appear as
@@ -1672,7 +1689,7 @@ parent by clicking on the up arrow in the title bar of the entity.
 Similarly, you can display child entities (for example, types that derive
 from the item) by clicking on the down arrow in the title bar.
 
-An extra buttons appear in the title bar for the C++ class or Ada tagged
+An extra button appears in the title bar for the C++ class or Ada tagged
 types that toggles whether the inherited methods (or primitive operations
 in Ada) should be displayed. By default, only new methods, or ones that
 override an inherited one, are displayed. The parent's methods are not
@@ -1700,8 +1717,8 @@ the file selector provides the following contents:
   - :guilabel:`right arrow` go forward
   - :guilabel:`up arrow` go to parent directory
   - :guilabel:`refresh` refresh the contents of the directory
-  - :guilabel:`home` go to home directory (value of the HOME environment variable,
-    or `/` if not defined)
+  - :guilabel:`home` go to home directory (value of the HOME environment
+    variable, or :file:`/` if not defined)
 
 * A list with the current directory and the last directories explored.
   Modify the current directory by modifying the text entry and pressing
@@ -1715,21 +1732,20 @@ the file selector provides the following contents:
   :kbd:`backspace` to select the parent directory.
 
 * A filter area. Depending on the context, one or several filters are
-  available to select only a subset of files to display. The filter *All
-  files* is always available and displays all files in the selected
-  directory.
+  available to select only a subset of files to display. The filter
+  :guilabel:`All files` is always available and displays all files in the
+  selected directory.
 
 * A file list. This area lists the files contained in the selected
-  directory.  If you specified a filter in the filter area, only the
-  matching files are displayed. Depending on the context, the list of files
-  may include additional information about the files such as the type of
-  file or its size.
+  directory.  If you specified a filter, only the matching files are
+  displayed. Depending on the context, the list of files may include
+  additional information about the files such as the type of file or its
+  size.
 
 * A file name area. This area displays the name of the current file, if
   any.  You can also type a file or directory name, with file completion
   provided by the :kbd:`Tab` key.
 
 * A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.
-  When you have selected the desired file, click on :guilabel:`OK` to
-  confirm or click on :guilabel:`Cancel` at any time to cancel the file
-  selection.
+  When you've selected the desired file, click :guilabel:`OK` to confirm or
+  click :guilabel:`Cancel` at any time to cancel the file selection.
