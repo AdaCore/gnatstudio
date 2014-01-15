@@ -1649,8 +1649,8 @@ This section is of interest to X-Window users who are used to cutting and
 pasting with the middle mouse button. In the GPS text editor, as in many
 recent X applications, the :guilabel:`GPS clipboard` is set by explicit
 cut/copy/paste actions, either through menu items or keyboard shortcuts,
-and the :guilabel:`primary clipboard` (i.e. the 'middle button' clipboard)
-is set toq the current selection.
+and the :guilabel:`primary clipboard` (i.e. the 'middle button' clipboard)
+is set to the current selection.
 
 Therefore, copy/paste between GPS and other X applications using the
 :guilabel:`primary clipboard` still work provided there's text currently
