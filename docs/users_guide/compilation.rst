@@ -28,15 +28,15 @@ removed from :ref:`The_Locations_View`.
 The Build Menu
 ==============
 
-Use the build menu to access capabilities related to checking, parsing and
-compiling files as well as creating and running executables.  This menu is
-fully configurable via the "Targets" settings; what's documented here are
-the default menus (see :menuselection:`Build --> Settings --> Targets`
-below).
+Use the build menu to access capabilities related to checking, parsing
+and compiling files as well as creating and running executables.  This
+menu is fully configurable via the :guilabel:`Targets` settings;
+what's documented here are the default menus (see
+:menuselection:`Build --> Settings --> Targets` below).
 
 .. index:: menu; build --> check syntax
 
-:menuselection:`Build --> Check syntax`
+* :menuselection:`Build --> Check syntax`
 
   Check the syntax of the current source file. Display an error message in
   the :guilabel:`Messages` view if no file is currently selected.
@@ -44,7 +44,7 @@ below).
 
 .. index:: menu; build --> check semantic
 
-:menuselection:`Build --> Check semantic`
+* :menuselection:`Build --> Check semantic`
 
   Check the semantics of the current source file. Display an error message in
   the :guilabel:`Messages` view if no file is currently selected.
@@ -52,7 +52,7 @@ below).
 
 .. index:: menu; build --> compile file
 
-:menuselection:`Build --> Compile file`
+* :menuselection:`Build --> Compile file`
 
   Compile the current file.  By default, displays an intermediate dialog
   where you can add extra switches or simply press :kbd:`Enter` to get the
@@ -64,20 +64,20 @@ below).
   Preference is set, the source lines will be highlighted in the editors
   (see :ref:`The_Preferences_Dialog`).  To remove the highlighting on these
   lines, remove the files from the :guilabel:`Locations` view using either
-  the contextual menu item :menuselection:`Remove category` or by closing
+  the :menuselection:`Remove category` contextual menu item or by closing
   the :guilabel:`Locations` view.
 
 
 .. index:: menu; build --> project --> <main>
 
-:menuselection:`Build --> Project --> <main>`
+* :menuselection:`Build --> Project --> <main>`
 
   List all main units defined in your project hierarchy, if any.  Each menu
   item builds the selected main.
 
 .. index:: menu; build --> project --> build all
 
-:menuselection:`Build --> Project --> Build All`
+* :menuselection:`Build --> Project --> Build All`
 
   Build and link all main units defined in your project.  If no main unit
   is defined in your project, build all files defined in your project and
@@ -87,30 +87,30 @@ below).
 
 .. index:: menu; build --> project --> compile all sources
 
-:menuselection:`Build --> Project --> Compile All Sources`
+* :menuselection:`Build --> Project --> Compile All Sources`
 
   Compile all source files defined in the top level project.
 
 .. index:: menu; build --> project --> build <current file>
 
-:menuselection:`Build --> Project --> Build <current file>`
+* :menuselection:`Build --> Project --> Build <current file>`
 
   Consider the currently selected file as a main file and build it.
 
 .. index:: menu; build --> project --> custom build
 
-:menuselection:`Build --> Project --> Custom build`
+* :menuselection:`Build --> Project --> Custom build`
 
    Display a text entry allowing you to enter any external command. Use
    this item useful when you already have existing build scripts, make
-   files, or similar and want to invoke them from GPS. If the `SHELL`
-   environment variable is defined (to, e.g. `/bin/sh`), the syntax used to
-   execute the command is the one for that shell. Otherwise, GPS spawns the
-   command without any shell interpretation.
+   files, or similar and want to invoke them from GPS. If the :samp:`SHELL`
+   environment variable is defined (to, e.g. :file:`/bin/sh`), the syntax
+   used to execute the command is the one for that shell. Otherwise, GPS
+   spawns the command without any shell interpretation.
 
 .. index:: menu; build --> clean --> clean all
 
-:menuselection:`Build --> Clean --> Clean all`
+* :menuselection:`Build --> Clean --> Clean all`
 
    Remove all object files and other compilation artifacts associated with all
    projects related to the current one. This allows restarting a complete build
@@ -119,7 +119,7 @@ below).
 
 .. index:: menu; build --> clean --> clean root
 
-:menuselection:`Build --> Clean --> Clean root`
+* :menuselection:`Build --> Clean --> Clean root`
 
    Remove all object files and other compilation artifacts associated to
    the root project.  But do not clean objects from other related projects.
@@ -127,28 +127,30 @@ below).
 .. index:: menu; build --> makefile
 .. index:: makefile
 
-:menuselection:`Build --> Makefile`
+* :menuselection:`Build --> Makefile`
 
-  If the `make` utility is in your PATH and you have a file called
+  If the :program:`make` utility is in your PATH and you have a file called
   :file:`Makefile` in the same directory as your project file or if you've
-  set the `makefile` property in the `Make` section of the project
-  properties (see :ref:`The_Project_Properties_Editor`), this menu is
-  displayed, giving access to all the targets defined in your makefile.
+  set the :guilabel:`makefile` property in the :guilabel:`Make` section of
+  the project properties (see :ref:`The_Project_Properties_Editor`), this
+  menu is displayed, giving access to all the targets defined in your
+  makefile.
 
 .. index:: menu; build --> ant
 .. index:: ant
 
-:menuselection:`Build --> Ant`
+* :menuselection:`Build --> Ant`
 
-  If the `ant` utility is in your PATH and you have a file called
+  If the :program:`ant` utility is in your PATH and you have a file called
   :file:`build.xml` in the same directory as your project file or if you've
-  set the `antfile` property in the `Ant` section of the project properties
-  (see :ref:`The_Project_Properties_Editor`), this menu is displayed,
-  giving access to all the targets defined in your ant file.
+  set the :guilabel:`antfile` property in the :guilabel:`Ant` section of
+  the project properties (see :ref:`The_Project_Properties_Editor`), this
+  menu is displayed, giving access to all the targets defined in your ant
+  file.
 
 .. index:: menu; build --> run --> <main>
 
-:menuselection:`Build --> Run --> <main>`
+* :menuselection:`Build --> Run --> <main>`
 
    For each main source file defined in your top level project, displays an
    entry to run the executable associated with that file.  Running an
@@ -166,8 +168,9 @@ below).
 
    When using an external terminal, GPS launches an external terminal
    utility to perform your application's execution and input/output.
-   Configure this external utility configured in the preferences dialog
-   (:menuselection:`External Commands --> Execute command`).
+   Configure this external utility configured in the
+   (:menuselection:`External Commands --> Execute command`) preferences
+   dialog.
 
    The GPS execution views have several limitations that external terminals
    do not. In particular, they don't handle signals like :kbd:`ctrl-z` and
@@ -179,18 +182,18 @@ below).
 
 .. index:: menu; build --> run --> custom
 
-:menuselection:`Build --> Run --> Custom...`
+* :menuselection:`Build --> Run --> Custom...`
 
    Similar to the option above, except you can run any arbitrary
-   executable.  If the `SHELL` environment variable is defined (to e.g.
-   `/bin/sh`), then the syntax used to execute the command is the one for
-   that shell. Otherwise, the GPS spawns the command directly without any
-   shell interpretation.
+   executable.  If the :samp:`SHELL` environment variable is defined (to
+   e.g.  :file:`/bin/sh`), then the syntax used to execute the command is
+   the one for that shell. Otherwise, GPS spawns the command directly
+   without any shell interpretation.
 
 
 .. index:: menu; build --> settings --> targets
 
-:menuselection:`Build --> Settings --> Targets`
+* :menuselection:`Build --> Settings --> Targets`
 
     Opens the Target Configuration Dialog.  See
     :ref:`The_Target_Configuration_Dialog`.
@@ -198,7 +201,7 @@ below).
 
 .. index:: menu; build --> settings --> toolchains
 
-:menuselection:`Build --> Settings --> Toolchains`
+* :menuselection:`Build --> Settings --> Toolchains`
 
     Opens a dialog allowing configurating GPS to work with two compilation
     toolchains. This is particulary useful when you need to compile a
@@ -208,7 +211,7 @@ below).
 
 .. index:: menu; tools --> interrupt
 
-:menuselection:`Tools --> Interrupt`
+* :menuselection:`Tools --> Interrupt`
 
     Interrupts the last compilation or execution command. Once you
     interrupted the last operation, you can interrupt the previous one by
@@ -216,19 +219,19 @@ below).
 
 .. index:: menu; tools --> views --> tasks
 
-:menuselection:`Tools --> Views --> Tasks`
+* :menuselection:`Tools --> Views --> Tasks`
 
     The easiest way to interrupt a specific operation, whether it was the
-    last one started or not, is to start the `Task Manager` via the
-    :menuselection:`Tools --> Views --> Tasks` menu, which shows one line
-    for each running process.  Right-clicking on any of these lines allows
-    interrupting that process.
+    last one started or not, is to start the :guilabel:`Task Manager` via
+    the :menuselection:`Tools --> Views --> Tasks` menu, which shows one
+    line for each running process.  Right-clicking on any of these lines
+    allows interrupting that process.
 
 .. index:: plug-ins; makefile.py
 
-If your application is build through a Makefile, you should probably load the
-:file:`makefile.py` startup script (see the menu :menuselection:`Tools -->
-Plug-ins`).
+If your application is build through a Makefile, you should probably load
+the :file:`makefile.py` startup script (see the :menuselection:`Tools -->
+Plug-ins` menu).
 
 .. index:: build targets
 .. _The_Target_Configuration_Dialog:
@@ -301,22 +304,24 @@ all Targets.
   * In background:
 
     The Target is launched automatically in the background after each
-    modification in the source editor. See `Background compilations` below.
+    modification in the source editor. See :ref:`_Background_Compilations`.
 
 * Icon:
 
   The icon to use for representing this target in the menus and in the
-  toolbar. To use one of your icons, register a icons using the `<stock>`
-  XML customization node. (See :ref:`Adding_stock_icons`). Then use the
-  "custom" choice and enter the ID of the icon into the text field.
+  toolbar. To use one of your icons, register a icons using the
+  :samp:`<stock>` XML customization node. (See
+  :ref:`Adding_stock_icons`). Then use the "custom" choice and enter the ID
+  of the icon into the text field.
 
 * Target type:
 
-  Type of target described. If empty or set to `Normal`, it represents a
+  Type of target described. If empty or set to "Normal", it represents a
   simple target. If set to another value, it represents multiple
-  subtargets.  For example, if set to `main`, each subtarget corresponds to
+  subtargets.  For example, if set to "main", each subtarget corresponds to
   a Main source as defined in the currently loaded project.  Other custom
-  values may be defined and handled via the `compute_build_targets` hook.
+  values may be defined and handled via the :samp:`compute_build_targets`
+  hook.
 
 The :guilabel:`Display` frame indicates where the launcher for this target
 should be visible.
@@ -352,6 +357,8 @@ Arguments. For example, if the command line contains the string "%PP", GPS
 will expand this to the full path to the current project. For a full list
 of available Macros, see :ref:`Macro_arguments`.
 
+.. _Background_Compilations:
+
 Background compilations
 -----------------------
 
@@ -363,7 +370,7 @@ launches the compiler on the current state of the file in the editor.
 Error messages resulting from background compilations are not listed in the
 :guilabel:`Locations` or :guilabel:`Messages` views. The full list of
 messages are shown in the :guilabel:`Background Build` console, accessible
-from the menu :menuselection:`Tools --> Consoles --> Background Builds`.
+from the :menuselection:`Tools --> Consoles --> Background Builds` menu.
 Error messages that contain a source location indication are shown as icons
 on the side of lines in editors and the exact location is highlighted
 directly in the editor. In both places, tooltips show the contents of the
@@ -376,9 +383,9 @@ is launched.
 GPS launches background compilations for all targets that have a
 :guilabel:`Launch mode` set to :guilabel:`In background` after you've made
 modifications in a source editor.  Background compilation is mostly useful
-for targets such as `Compile File` or `Check Syntax`. For targets that
-operate on Mains, the last main used in a non-background is considered,
-defaulting to the first main defined in the project hierarchy.
+for targets such as :samp:`Compile File` or :samp:`Check Syntax`. For
+targets that operate on Mains, the last main used in a non-background is
+considered, defaulting to the first main defined in the project hierarchy.
 
 Background compilations are not launched while GPS is already listing
 results from non-background compilations, i.e. as long as there are entries
@@ -396,25 +403,26 @@ GPS provides an easy way to build your project with different options,
 through the mode selection, located in the :guilabel:`Scenario` view (see
 :ref:`Scenario view <Scenario_View>`).
 
-When the mode is set to `default`, GPS performs the build using the
+When the mode is set to "default", GPS performs the build using the
 switches defined in the project. When the mode is set to another value,
-specialized parameters are passed to the builder. For example, the `gcov`
-Mode adds all the compilation parameters needed to instrument the generated
-objects and executables to work with the `gcov` tool.
+specialized parameters are passed to the builder. For example, the
+:program:`gcov` mode adds all the compilation parameters needed to
+instrument the generated objects and executables to work with the
+:program:`gcov` tool.
 
 In addition to changing the build parameters, changing the mode changes the
 output directory for objects and executables. For example, objects produced
-under the `debug` mode will be located in the :file:`debug` subdirectories
-of the object directories defined by the project.  This allows switching
-from one Mode to another without having to erase the objects pertaining to
-a different Mode.
+under the :samp:`debug` mode will be located in the :file:`debug`
+subdirectories of the object directories defined by the project.  This
+allows switching from one Mode to another without having to erase the
+objects pertaining to a different Mode.
 
 You can define new modes using XML customization, see
 :ref:`Customizing_build_Targets_and_Models`.
 
-The Build Mode only affects builds done using recent versions of `gnatmake`
-and `gprbuild`. The Mode selection has no effect on builds done through
-Targets that launch other builders.
+The Build Mode only affects builds done using recent versions of
+:program:`gnatmake` and :program:`gprbuild`. The Mode selection has no
+effect on builds done through Targets that launch other builders.
 
 
 .. index:: build; toolchains
@@ -484,7 +492,7 @@ multiple toolchains mode is in use:
   compilation actions are performed normally on the build server.
 * The tools path is used and all related actions are performed on the local
   machine using this path.
-* The cross-reference files are handled `rsync` so they don't get
+* The cross-reference files are handled :progeram:`rsync` so they don't get
   overwritten during local and remote host synchronizations.  Otherwise,
   gthey would because build and cross-reference generation actions occur at
   the same time on the local machine and on remote server.

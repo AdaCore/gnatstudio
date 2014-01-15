@@ -64,12 +64,13 @@ allow you to configure the filter:
   match, regular expression, or fuzzy matching). These modes are similar to
   the ones used in the omni-search (see :ref:`omni_search`).
 
-* The next entry is :guilabel:`Revert filter`. When you select this option,
-  lines that do not match the filter are displayed, instead of the default
-  behavior of displaying ones that match the filter.  You can also enable
-  this mode temporarily by beginning the filter with the string `not:`. For
-  example, a filter in the :guilabel:`Locations` view saying `not:warning`
-  hides all warning messages.
+* The next entry is :guilabel:`Revert filter`. When you select this
+  option, lines that do not match the filter are displayed, instead of
+  the default behavior of displaying ones that match the filter.  You
+  can also enable this mode temporarily by beginning the filter with
+  the string :samp:`not:`. For example, a filter in the
+  :guilabel:`Locations` view saying :samp:`not:warning` hides all warning
+  messages.
 
 * Select the last entry, :guilabel:`Whole word`, when you only want to
   match full words, not substrings.
@@ -263,7 +264,7 @@ Finally, if you specify the name of a source file to edit, GPS loads a
 default project.  If GPS can't find a project file, it displays a welcome
 dialog, giving you the following choices:
 
-:guilabel:`Create new project from template`
+* :guilabel:`Create new project from template`
 
   Selecting this choice and the clicking :guilabel:`OK` button launches an
   assistant to create a project using one of the predefined project
@@ -272,7 +273,7 @@ dialog, giving you the following choices:
 
 .. index:: project; default
 
-:guilabel:`Start with default project in directory`
+* :guilabel:`Start with default project in directory`
 
   Selecting this choice and clicking the :guilabel:`OK` button causes GPS to
   look for a project called :file:`default.gpr` in the current directory
@@ -292,7 +293,7 @@ dialog, giving you the following choices:
 
 .. index:: project; wizard
 
-:guilabel:`Create new project with wizard`
+* :guilabel:`Create new project with wizard`
 
   Selecting this choice and clicking the :guilabel:`OK` button starts a
   wizard allowing you to specify most of the properties for a new
@@ -316,14 +317,14 @@ dialog, giving you the following choices:
 
 .. index:: project; load existing project
 
-:guilabel:`Open existing project`
+* :guilabel:`Open existing project`
 
   Select an existing project by clicking on the :guilabel:`Browse` button
   or using a previously loaded project listed in the combo box. When a
   project is selected, click on the :guilabel:`OK` button to load this
   project and open the main window.
 
-:guilabel:`Always show this dialog when GPS starts`
+* :guilabel:`Always show this dialog when GPS starts`
 
   If unset, the welcome dialog won't be shown in future sessions.  In this
   case, GPS behaves as follows: it first looks for a :command:`-P` switch
@@ -338,7 +339,7 @@ dialog, giving you the following choices:
   To reset this property, go to the :menuselection:`Edit --> Preferences`
   menu.
 
-:guilabel:`Quit`
+* :guilabel:`Quit`
 
   If you click on this button, GPS terminates immediately.
 
@@ -484,7 +485,7 @@ There are various ways to use the omni-search:
 * If you're searching in a single context, GPS defines a number of actions
   to which you can bind key shortcuts via the :menuselection:`Edit --> Key
   Shortcuts` dialog instead of using the above procedure. These actions are
-  found in :guilabel:`Search` category and are called :guilabel:`Global
+  found in the :guilabel:`Search` category and are called :guilabel:`Global
   Search in context:`. GPS includes a :index:`menu <single: menu; file -->
   open from project>` for two of them by default: :menuselection:`File -->
   Open From Project...` searches filenames, :index:`while <single: menu;
@@ -552,8 +553,9 @@ GPS allows you to chose among various search algorithms:
 * :guilabel:`Fuzzy Match` tries to find each of the characters you typed,
   in that order, but possibly with extra characters in between.  This is
   often the fastest way to search, but might requires a bit of getting used
-  to. For example, the text 'mypks' matches the file name 'MY_PacKage.adS'
-  because the letters shown in upper cases are contained in the filename.
+  to. For example, the text :samp:`mypks` matches the file name
+  :file:`MY_PacKage.adS` because the letters shown in upper cases are
+  contained in the filename.
 
   When searching within source files, the algorithm is changed slightly, to
   avoid having too many matches. In that context, GPS only allows a close
@@ -777,12 +779,12 @@ The various components displayed in the project view are:
   multiple times in the view,
 
   If you edited the :index:`project <single: projects; limited with>`
-  manually and used the :samp:`limited with` construct to create cycles in
-  the project dependencies, the cycle will expand infinitely. For example,
-  if project :file:`a` imports project :file:`b`, which in turn imports
-  project :file:`a` through a :samp:`limited with` clause, then expanding
-  the node for :file:`a` shows :file:`b`. In turn, expanding the node for
-  :file:`b` shows a node for :file:`a`, and so on.
+  manually and used the :command:`limited with` construct to create cycles
+  in the project dependencies, the cycle will expand infinitely. For
+  example, if project :file:`a` imports project :file:`b`, which in turn
+  imports project :file:`a` through a :command:`limited with` clause, then
+  expanding the node for :file:`a` shows :file:`b`. In turn, expanding the
+  node for :file:`b` shows a node for :file:`a`, and so on.
 
   An icon with a pen mark is displayed if the project was modified but not
   saved yet. You can save it at any time by right-clicking the icon.  GPS
@@ -959,7 +961,7 @@ among the ones that pop up. GPS doesn't remember the value from one session
 to the next: the variables' initial values come from the project files
 themselves (where you can specify a default value) or from the environment
 in which GPS is started, just as would be the case when spawning command
-line tools like :command:`gprbuild`.
+line tools like :program:`gprbuild`.
 
 Whenever you change the value of any variable, GPS automatically recomputes
 the project and dynamically changes the list of source files and
@@ -973,7 +975,7 @@ values for a variable by clicking on the :guilabel:`edit` button in that
 toolbar.  Delete a variable by clicking on the :guilabel:`-` button.
 
 Each of these changes impacts the actual project file (:file:`.gpr`), so
-you might not want to make them if you wrote the project file manually
+you might not want to make them if you wrote the project file manually
 since the impact can be significant.
 
 .. index:: build; build modes
@@ -1161,8 +1163,8 @@ Clipboard` menu.
 That view displays a list of entries, each of which is associated with one
 level of the clipboard. The text displayed for each entry is its first line
 containing non blank characters with leading characters omitted. GPS
-prepends or appends `[...]` if the entry is truncated.  If you hover over
-an entry, a tooltip pops up displaying all lines in the entry.
+prepends or appends :samp:`[...]` if the entry is truncated.  If you hover
+over an entry, a tooltip pops up displaying all lines in the entry.
 
 In addition, one entry has an arrow on its left. This indicates the entry
 to be pasted if you select the :menuselection:`Edit --> Paste` menu. If you
@@ -1430,7 +1432,7 @@ few settings that might be useful.
 
 This console behaves like the standard shell on your system, including
 support for ANSI sequences (and thus color output). For example, it has
-been used to run :command:`vi` within GPS.
+been used to run :program:`vi` within GPS.
 
 
 .. index:: run
@@ -1547,9 +1549,9 @@ The :guilabel:`Dependency Browser`
 The dependency browser displays dependencies between source files. Each
 item in the browser represents one source file.  Click on the right arrow
 in the title bar to display the list of files the selected file depends
-on. A file depends on another if it explicitly imports it (:samp:`with`
-statement in Ada, or :samp:`#include` in C/C++).  Implicit dependencies are
-currently not displayed in this browser since you can access that
+on. A file depends on another if it explicitly imports it (:command:`with`
+statement in Ada, or :command:`#include` in C/C++).  Implicit dependencies
+are currently not displayed in this browser since you can access that
 information by opening the direct dependencies.  Click on the left arrow in
 the title bar to display the list of files that depend on the selected
 file.
@@ -1596,8 +1598,8 @@ standard menu:
 
   Indicates whether implicit dependencies should also be displayed for
   files. Implicit dependencies are ones required to compile the selected
-  file but not explicitly imported through a :samp:`with` or
-  :samp:`#include` statement. For example, the body of a generic in Ada is
+  file but not explicitly imported through a :command:`with` or
+  :command:`#include` statement. For example, the body of a generic in Ada is
   an implicit dependency.  Whenever an implicit dependency is modified, the
   selected file should be recompiled as well.
 
@@ -1634,7 +1636,7 @@ visual representation of elaboration dependencies in an
 
 This visual representation depicts program units as items in the browser
 and direct dependencies between program units as links.  All units involved
-in a dependency cycle caused by the presence of a :samp:`pragma
+in a dependency cycle caused by the presence of a :command:`pragma
 Elaborate_All` (whether explicit or implicit) are also presented and
 connected by links labeled "body" and "with".
 

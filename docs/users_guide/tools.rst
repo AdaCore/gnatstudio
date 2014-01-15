@@ -118,29 +118,30 @@ The list of active entries includes:
 
     Open a shell console in the bottom area of the GPS window.  This not an
     OS shell console, but a GPS shell console, where you can type GPS
-    specific commands such as `help`.  See
+    specific commands such as :command:`help`.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
   *Python*
     .. index:: python
 
-    Open a python console to access the python interpreter.  See
+    Open a python console to access the Python interpreter.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
   *OS Shell*
     .. index:: shell
 
     Open an OS (Windows or Unix) console, using the environment variables
-    `SHELL` and `COMSPEC` to determine which shell to use. See
-    :ref:`The_Shell_and_Python_Consoles`.
+    :command:`SHELL` and :command:`COMSPEC` to determine which shell to
+    use. See :ref:`The_Shell_and_Python_Consoles`.
 
     On Unix, this terminal behaves a lot like a standard Unix terminal, but
     you need to make sure your shell will output all necessary
     information. In some cases, the configuration of your shell
-    (:file:`.bashrc` if you are running bash for instance) deactivates
-    echoing what you type. Since GPS isn't writing anything on its own, but
-    just showing what the shell is sending, you need to ensure your shell
-    always echos what you type.  Do this by running the command::
+    (:file:`.bashrc` if you are running :program:bash, for example)
+    deactivates echoing what you type. Since GPS isn't writing anything on
+    its own, but just showing what the shell is sending, you need to ensure
+    your shell always echos what you type.  Do this by running the
+    command::
 
       stty echo
       
@@ -202,14 +203,14 @@ Coding Standard
 
 Use the :guilabel:`Coding Standard` menu to edit your coding standard file
 and run it against your code to verifiy its compliance with the coding
-standard.  This file is the input to the `gnatcheck` tool.  You can also
-use the contextual menu to check the conformance of a particular project or
-source file against a coding standard.
+standard.  This file is the input to the :program:`gnatcheck` tool.  You
+can also use the contextual menu to check the conformance of a particular
+project or source file against a coding standard.
 
 Access the Coding standard editor using the :menuselection:`Tools -->
 Coding Standard --> Edit Rules File` menu.  Select either an existing
 coding standard file or create a new one. The editor adapts itself to the
-version of `gnatcheck` on your local machine.
+version of :program:`gnatcheck` on your local machine.
 
 GPS summarizes the rules currently in use at the bottom of the editor. Once
 all rules are defined, check the box :guilabel:'Open rules file after exit'
@@ -229,14 +230,14 @@ The visual comparison, available either from the VCS menus or the
 :guilabel:`Tools` menu, provides a way to graphically display differences
 between two or three files or two different versions of the same file.
 
-The 2-file comparison tool uses the standard command `diff`, available on
-all Unix systems. Under Windows, a default implementation is provided with
-GPS, called :file:`gnudiff.exe`, but you may want to provide an alternate
-implementation, for example by installing a set of Unix tools such as
-Cygwin (`http://www.cygwin.com <http://www.cygwin.com>`_).  The 3-file
-comparison tool is based on the text command `diff3`, available on all Unix
-systems. Under Windows, this tool is not provided with GPS, but is
-available as part of Cygwin.
+The 2-file comparison tool uses the standard tool :program:`diff`,
+available on all Unix systems. Under Windows, a default implementation is
+provided with GPS, called :file:`gnudiff.exe`, but you may want to provide
+an alternate implementation, for example by installing a set of Unix tools
+such as Cygwin (`http://www.cygwin.com <http://www.cygwin.com>`_).  The
+3-file comparison tool is based on the text tool :program:`diff3`,
+available on all Unix systems. Under Windows, this tool is not provided
+with GPS, but is available as part of Cygwin.
 
 GPS displays visual comparisons in either Side-by-Side or Unified mode.  In
 side-by-side mode, GPS displays editors for the files involved in the
@@ -384,7 +385,7 @@ By default, GPS puts the documentation into a directory called :file:`doc`,
 under the object directory of the root project loaded in GPS. If no object
 directory exists, it's created in the same directory as the root
 project. This behavior can be modified by specifying the attribute
-`Documentation_Dir` in the package IDE of your root project::
+:guilabel:`Documentation_Dir` in the package IDE of your root project::
 
   project P is
      package IDE is
@@ -531,11 +532,11 @@ may or may not apply:
 Working With Unit Tests
 =======================
 
-GPS uses `gnattest`, a tool that creates unit-test stubs as well as a test
-driver infrastructure (harness).  It can generate harnesses for a project
-hierarchy, a single project or a package.  Launch harness generation
-process from the :menuselection:`Tools --> GNATtest` menu or a contextual
-menu.
+GPS uses :program:`gnattest`, a tool that creates unit-test stubs as well
+as a test driver infrastructure (harness).  It can generate harnesses for a
+project hierarchy, a single project or a package.  Launch harness
+generation process from the :menuselection:`Tools --> GNATtest` menu or a
+contextual menu.
 
 After a harness project has been generated, GPS switches to it, allowing
 you to implement tests, compile and run the harness.  You can exit the
@@ -603,8 +604,8 @@ Metrics
 .. index:: Metrics
 
 GPS provides an interface to the GNAT software metrics generation tool
-`gnatmetric`.  Metrics can be computed for one source file, the current
-project, or the current project and all its imported subprojects
+:program:`gnatmetric`.  Metrics can be computed for one source file, the
+current project, or the current project and all its imported subprojects
 
 Invoke the metrics generator from the :menuselection:`Tools --> Metrics`
 menu or the contextual menu.
@@ -651,10 +652,10 @@ Code Coverage
 
 .. index:: Code Coverage
 
-GPS is integrated with `gcov`, the GNU code coverage utility.  Within GPS,
-you can compute, load, and visualize code coverage information.  You can do
-this for individual files, for each file of the current project, for
-individual projects in a hierarchy, or for the entire project hierarchy
+GPS is integrated with :program:`gcov`, the GNU code coverage utility.
+Within GPS, you can compute, load, and visualize code coverage information.
+You can do this for individual files, for each file of the current project,
+for individual projects in a hierarchy, or for the entire project hierarchy
 currently loaded by GPS.
 
 Once computed and loaded, GPS summarizes the coverage information in a
@@ -669,10 +670,10 @@ Gcov --> Compute coverage files` menu.  After each coverage computation,
 GPS tries to load the needed information and reports errors for missing or
 corrupted :file:`.gcov` files.
 
-To produce coverage information from `gcov`, your project must be compiled
-with the "-fprofile-arcs" and "-ftest-coverage" switches, respectively the
-:guilabel:`Instrument arcs` and :guilabel:`Code coverage` entries in
-:ref:`The_Project_Properties_Editor` and executed.
+To produce coverage information from :program:`gcov`, your project must be
+compiled with the :comamnd:`-fprofile-arcs` and :comamnd:`-ftest-coverage`
+switches, respectively the :guilabel:`Instrument arcs` and :guilabel:`Code
+coverage` entries in :ref:`The_Project_Properties_Editor` and executed.
 
 Coverage Menu
 -------------
@@ -680,33 +681,33 @@ Coverage Menu
 The :menuselection:`Tools --> Coverage` menu has a number of entries,
 depending on the context:
 
-:menuselection:`Gcov --> Compute coverage files`
+* :menuselection:`Gcov --> Compute coverage files`
 
   Generate the :file:`.gcov` files for loaded projects that have been
   compiled and executed.
 
-:menuselection:`Gcov --> Remove coverage files`
+* :menuselection:`Gcov --> Remove coverage files`
 
   Delete all the :file:`.gcov` file for loaded projects.
 
-:guilabel:`Show report`
+* :menuselection:`Show report`
 
   Open a new window summarizing the coverage information currently loaded
   in GPS.
 
-:guilabel:`Load data for all projects`
+* :menuselection:`Load data for all projects`
 
   Load (or reload) coverage information for every project and subproject.
 
-:guilabel:`Load data for project `XXX``
+* :menuselection:`Load data for project `XXX``
 
   Load or re-load coverage information for the project `XXX`.
 
-:guilabel:`Load data for :file:`xxxxxxxx.xxx``
+* :menuselection:`Load data for :file:`xxxxxxxx.xxx``
 
   Load (or reload) coverage information for the specified source file.
 
-:guilabel:`Clear coverage from memory`
+* :menuselection:`Clear coverage from memory`
 
   Remove all coverage information loaded in GPS.
 
@@ -764,12 +765,12 @@ instead of a tree. A flat list of files looks like:
 .. index:: screen shot
 .. image:: report-of-analysis_flat.jpg
 
-GPS and `gcov` both support many different programming languages, so code
-coverage features are available in GPS for many languages. But subprogram
-coverage details are not available for every supported language.  If you
-change the current main project in GPS, using the :menuselection:`Project
---> Open` menu, for example, GPS deletes all loaded coverage information
-for the loaded project.
+GPS and :program:`gcov` both support many different programming languages,
+so code coverage features are available in GPS for many languages. But
+subprogram coverage details are not available for every supported language.
+If you change the current main project in GPS, using the
+:menuselection:`Project --> Open` menu, for example, GPS deletes all loaded
+coverage information for the loaded project.
 
 .. _Stack_Analysis:
 
@@ -778,11 +779,12 @@ Stack Analysis
 
 .. index:: Stack Analysis
 
-GPS provides an interface to `GNATstack`, the static stack analysis tool.
-This interface is only availbale if you have the `gnatstack` executable
-installed and available on your path.  GPS computes, loads, and visually
-displays stack usage information for the entire project hierarchy.  You can
-enter stack usage information for unknown and unbounded calls within GPS.
+GPS provides an interface to :program:`GNATstack`, the static stack
+analysis tool.  This interface is only availbale if you have the
+:file:`gnatstack` executable installed and available on your path.  GPS
+computes, loads, and visually displays stack usage information for the
+entire project hierarchy.  You can enter stack usage information for
+unknown and unbounded calls within GPS.
 
 Once computed and loaded, GPS summarizes the stack usage information in a
 report and uses it to annotate source code with stack usage
@@ -791,7 +793,7 @@ annotations. The largest stack usage path is loaded into the
 
 Specify stack usage information for undefined subprograms by adding one or
 more :file:`.ci` files to the set of GNATStack switches in the `Switches`
-attribute of the `Stack` package of your root project.  For example::
+attribute of the :samp:`Stack` package of your root project.  For example::
 
   project P is
      package Stack is

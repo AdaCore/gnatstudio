@@ -46,7 +46,7 @@ Selecting Windows
 Only one window is selected in GPS (the **active window**) at a time.
 Select a window by clicking in its title bar, which becomes a different
 color, or selecting its name in the :menuselection:`Window` menu.  Or use
-the :guilabel:`Windows` view (see :`The_Windows_View`), which also provides
+the :guilabel:`Windows` view (see :ref:`The_Windows_View`), which also provides
 a convenient mechanism for slecting multiple windows at once.
 
 Finally, you can select windows with the omni-search, the search field in
@@ -86,9 +86,9 @@ Finally, you can close a window by right-clicking in the associated
 notebook tab (if the tabs are visible) and selecting :guilabel:`Close` in
 the contextual menu.
 
-There's a :guilabel:`Close all other editors` menu in the notebook tab when
-you're in an editor, which closes most windows except a single editor, the
-one you're using.
+There's a :menuselection:`Close all other editors` menu in the notebook tab
+when you're in an editor, which closes most windows except a single editor,
+the one you're using.
 
 
 .. index:: menu; windows --> split horizontally
@@ -188,7 +188,7 @@ Moving Windows
 
 Change the organization of windows at any time by selecting a notebook
 containing several editors or browsers and selecting one of the
-:guilabel:`Split` entries in the :menuselection:`Window` menu.
+:menuselection:`Split` entries in the :menuselection:`Window` menu.
 
 You can also drag and drop the window anywhere inside GPS.  Select an item
 to dragged by left-clicking in its title bar.  If the window is inside a

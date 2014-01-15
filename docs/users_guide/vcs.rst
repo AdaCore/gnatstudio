@@ -42,8 +42,8 @@ GPS has builtin support for the following VCS systems:
 *CVS*
   .. index:: VCS, CVS
 
-  The Concurrent Version System.  To use this, you must have a `patch`
-  command, which usually comes with CVS.
+  The Concurrent Version System.  To use this, you must have a
+  :program:`patch` tool, which usually comes with CVS.
 
 *Git*
   .. index:: VCS, Git
@@ -51,7 +51,7 @@ GPS has builtin support for the following VCS systems:
   Distributed fast source code management. Git is only partially supported
   by GPS: basic commands are supported but the full power of Git (such as
   working with the index) is only available from the command line.  To use
-  this, you must have a `diff` command, which usually comes with Git.
+  this, you must have a :program:`diff` tool, which usually comes with Git.
 
 *Mercurial*
   .. index:: VCS, Mercurial
@@ -63,8 +63,8 @@ GPS has builtin support for the following VCS systems:
 
   The Subversion version control system.  On Windows, this version is
   intended to be used with Cygwin/Subversion and fully supports the Cygwin
-  path names.  To use this, you must have `patch` and `diff` commands that
-  usually come with Subversion.
+  path names.  To use this, you must have the :program:`patch` and
+  :program:`diff` tools that usually come with Subversion.
 
 *Subversion Windows*
   .. index:: VCS, Subversion Windows
@@ -72,8 +72,8 @@ GPS has builtin support for the following VCS systems:
   The Windows native Subversion version control system. The external
   Subversion commands are expected to be built for the Win32
   subsystem. This version does not support Cygwin path names.  To use this,
-  you must have `patch` and `diff` commands that usually come with
-  Subversion.
+  you must have the :program:`patch` and :program:`diff` tools that usually
+  come with Subversion.
 
 By default, GPS uses "Auto" for a VCS.  You can configured this through the
 :ref:`The_Preferences_Dialog`.
@@ -377,7 +377,7 @@ See :ref:`The_Version_Control_Contextual_Menu`.
   Switch the local copy to a specific tag. The name of the tag depends on
   the external VCS used. For CVS this is a simple tag name and for
   Subversion the tag must conform to the default repository layout, which,
-  for a branch tag, is `/branches/<tag_name>/<root_dir>`.
+  for a branch tag, is :command:`/branches/<tag_name>/<root_dir>`.
 
 For a description of the other entries in the VCS menu, see
 :ref:`The_Version_Control_Contextual_Menu` below.
@@ -707,23 +707,23 @@ where:
   Horizontal tab (or 8 spaces)
 
 You can supply the *name* and *<e-mail>* items automatically by setting the
-`GPS_CHANGELOG_USER` environment variable. There are two spaces between the
-*name* and the *<e-mail>*::
+:command;`GPS_CHANGELOG_USER` environment variable. There are two spaces
+between the *name* and the *<e-mail>*:
 
-  On sh or bash shell:
+On :program:`sh` or :program:`bash` shell::
 
      export GPS_CHANGELOG_USER="John Doe  <john.doe@home.com>"
 
-  On Windows shell:
+On Windows shell::
+
      set GPS_CHANGELOG_USER="John Doe  <john.doe@home.com>"
   
-
 The menu entry :guilabel:`Edit global ChangeLog` opens the file
 :file:`ChangeLog` in the directory containing the current file and creates
 the corresponding :file:`ChangeLog` entry.  The ISO date and filename
 headers are created if not yet present. You need to enter your name and
-e-mail address unless the `GPS_CHANGELOG_USER` environment variable is
-present.
+e-mail address unless the :command:`GPS_CHANGELOG_USER` environment
+variable is present.
 
 This :file:`ChangeLog` file serves as a location for revision logs.  When
 you're ready to check-in a file, use the :guilabel:`Edit revision log` menu

@@ -63,7 +63,7 @@ The source editor provides an extensive set of features, including:
 
   - The left part of the status bar shows the current :index:`subprogram
     <single: preferences; editor --> display subprogram names>` name for
-    languages that support this capability. Currently `Ada`, `C` and `C++`
+    languages that support this capability. Currently Ada, C and C++
     have this ability. The :menuselection:`Editor --> Display subprogram
     names` preference controls this display.
 
@@ -174,7 +174,7 @@ The source editor provides an extensive set of features, including:
   delimiters with the :index:`preference <preferences;editor --> highlight
   delimiters>` :menuselection:`Editor --> Highlight delimiters`.
 
-  Jump to a corresponding delimiter by invoking the :guilabel:`jump to
+  Jump to a corresponding delimiter by invoking the :menuselection:`jump to
   matching delimiter` action (which can be bound to a key in the key
   shortcuts editor).  Invoking this action a second time returns the cursor
   to its original position.
@@ -190,8 +190,8 @@ The source editor provides an extensive set of features, including:
 
   If the :index:`preference <preferences;editor --> block highlighting>`
   :menuselection:`Editor --> Block highlighting` is enabled, GPS highlights
-  the current block of code, e.g. the current `begin...end` block or loop
-  statement, by placing a vertical bar to its left.
+  the current block of code, e.g. the current :command:`begin...end` block
+  or loop statement, by placing a vertical bar to its left.
 
   Block highlighting also takes into account the changes made in your
   source code and is recomputed to determine the current block when needed.
@@ -201,11 +201,11 @@ The source editor provides an extensive set of features, including:
 *Block folding*
 
   When the :index:`preference <preferences;editor --> block folding>`
-  :menuselection:`Editor --> Block folding` is enabled, GPS displays `-`
-  icons on the left side corresponding to the beginning of each block. If
-  you click on one of these icons, all lines corresponding to this block
-  are hidden except the first.  Like block highlighting, these icons are
-  recomputed automatically when you modify your sources.
+  :menuselection:`Editor --> Block folding` is enabled, GPS displays
+  :samp:`-` icons on the left side corresponding to the beginning of each
+  block. If you click on one of these icons, all lines corresponding to
+  this block are hidden except the first.  Like block highlighting, these
+  icons are recomputed automatically when you modify your sources.
 
   This capability is currently implemented for Ada, C and C++ languages.
 
@@ -228,13 +228,13 @@ The source editor provides an extensive set of features, including:
   :ref:`The_Plug-ins_Editor`).
 
   Details such as presence of indications in the :guilabel:`Speed Column or
-  highlighting color can be customized in the `Plugins` section of
-  :ref:`The_Preferences_Dialog`.
+  highlighting color can be customized in the :guilabel:`Plugins` section
+  of :ref:`The_Preferences_Dialog`.
 
 .. index:: emacs
 
-GPS also integrates with existing third party editors such as `Emacs` or
-`vi`.  See :ref:`Using_an_External_Editor`.
+GPS also integrates with existing third party editors such as
+:program:`emacs` or :program:`vi`.  See :ref:`Using_an_External_Editor`.
 
 .. index:: editing
 .. index:: source file
@@ -320,7 +320,7 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> new
 
-:menuselection:`File --> New`
+* :menuselection:`File --> New`
 
   Open a new untitled source editor.  No syntax highlighting is performed until
   the file is saved since GPS needs to know the file name in order to choose
@@ -333,7 +333,7 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> new view
 
-:menuselection:`File --> New View`
+* :menuselection:`File --> New View`
 
   Create a new view of the current editor. The new view shares the same
   contents: if you modify one of the source views, the other view is
@@ -349,7 +349,7 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> open
 
-:menuselection:`File --> Open...`
+* :menuselection:`File --> Open...`
 
   Open a file selection dialog where you can select a file to edit. On
   Windows, this is the standard file selector. On other platforms, this is a
@@ -358,7 +358,7 @@ The :menuselection:`File` Menu
 .. index:: menu; file --> open from project
 .. _open_from_project:
 
-:menuselection:`File --> Open From Project...`
+* :menuselection:`File --> Open From Project...`
 
   Move the focus to the :ref:`omni_search` field, where you can immediately
   start typing part of the file name you want to open. This is the fastest
@@ -367,7 +367,7 @@ The :menuselection:`File` Menu
 .. index:: menu; file --> open from host
 .. _Open_From_Host:
 
-:menuselection:`File --> Open From Host...`
+* :menuselection:`File --> Open From Host...`
 
   Open a file selector dialog where you can specify a remote host, as
   defined in :ref:`The_remote_configuration_dialog`. If you have access to
@@ -380,27 +380,27 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> recent
 
-:menuselection:`File --> Recent`
+* :menuselection:`File --> Recent`
 
   Open a submenu containing a list of the ten most recent files opened
   in GPS.
 
 .. index:: menu; file --> save
 
-:menuselection:`File --> Save`
+* :menuselection:`File --> Save`
 
   Save the file corresponding to current source editor, if there are changes.
 
 .. index:: menu; file --> save as
 
-:menuselection:`File --> Save As...`
+* :menuselection:`File --> Save As...`
 
   Save the current file under a different name, using the file selector
   dialog.  See :ref:`The_File_Selector`.
 
 .. index:: menu; file --> save more
 
-:menuselection:`File --> Save More`
+* :menuselection:`File --> Save More`
 
   Give access to additional save capabilities:
 
@@ -422,14 +422,14 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> change directory
 
-:menuselection:`File --> Change Directory...`
+* :menuselection:`File --> Change Directory...`
 
   Open a directory selection dialog that lets you change the current
   working directory.
 
 .. index:: menu; file --> locations
 
-:menuselection:`File --> Locations`
+* :menuselection:`File --> Locations`
 
   This submenu gives access to functionalities related to the
   :guilabel:`Locations` window.
@@ -441,7 +441,7 @@ The :menuselection:`File` Menu
 .. index:: menu; file --> print
 .. index:: print
 
-:menuselection:`File --> Print`
+* :menuselection:`File --> Print`
 
   Print the current window contents, optionally saving it if it was
   modified. The :guilabel:`Print Command` specified in the preferences is
@@ -462,14 +462,14 @@ The :menuselection:`File` Menu
 
 .. index:: menu; file --> close
 
-:menuselection:`File --> Close`
+* :menuselection:`File --> Close`
 
   Close the current window. This applies to all GPS windows, not just
   source editors.
 
 .. index:: menu; file --> exit
 
-:menuselection:`File --> Exit`
+* :menuselection:`File --> Exit`
 
   Exit GPS after confirmation and if needed, confirmation about saving
   modified windows and editors.
@@ -481,26 +481,26 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> cut
 
-:menuselection:`Edit --> Cut`
+* :menuselection:`Edit --> Cut`
 
   Cut the current selection and store it in the clipboard.
 
 .. index:: menu; edit --> copy
 .. index:: yank
 
-:menuselection:`Edit --> Copy`
+* :menuselection:`Edit --> Copy`
 
   Copy the current selection to the clipboard.
 
 .. index:: menu; edit --> paste
 
-:menuselection:`Edit --> Paste`
+* :menuselection:`Edit --> Paste`
 
   Paste the contents of the clipboard at the current cursor position.
 
 .. index:: menu; edit --> paste previous
 
-:menuselection:`Edit --> Paste previous`
+* :menuselection:`Edit --> Paste previous`
 
   GPS stores a list of all the text that was previously copied to the
   clipboard through the use of :guilabel:`Copy` or :guilabel:`Cut`.
@@ -511,12 +511,12 @@ The :menuselection:`Edit` Menu
   paste the text that was copied to the clipboard the previous time.
 
   For example, if you use :menuselection:`Edit --> Copy` to copy the text
-  "First", then copy the text "Second", select :menuselection:`Edit -->
-  Paste` to insert "Second" at the current cursor position. If you then
-  select :menuselection:`Edit --> Paste Previous`, "Second" is replaced by
-  "First". When reaching the end of this list, GPS starts from the
-  beginning and again inserts the text that was copied to the clipboard
-  most recently.
+  :samp:`First`, then copy the text :samp:`Second`, select
+  :menuselection:`Edit --> Paste` to insert :samp:`Second` at the current
+  cursor position. If you then select :menuselection:`Edit --> Paste
+  Previous`, :samp:`Second` is replaced by :samp:`First`. When reaching the
+  end of this list, GPS starts from the beginning and again inserts the
+  text that was copied to the clipboard most recently.
 
   The size of this list is controlled by the :menuselection:`General -->
   Clipboard Size` :index:`preference <preferences; general --> clipboard
@@ -526,25 +526,25 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> undo
 
-:menuselection:`Edit --> Undo`
+* :menuselection:`Edit --> Undo`
 
   Undo previous insertion or deletion in the current editor.
 
 .. index:: menu; edit --> redo
 
-:menuselection:`Edit --> Redo`
+* :menuselection:`Edit --> Redo`
 
   Redo previous insertion or deletion in the current editor.
 
 .. index:: menu; edit --> rectangles
 
-:menuselection:`Edit --> Rectangles...`
+* :menuselection:`Edit --> Rectangles...`
 
   See the section :ref:`Rectangles` for more information on rectangles.
 
 .. index:: menu; edit --> rectangles --> serialize
 
-:menuselection:`Edit --> Rectangles... -> Serialize`
+* :menuselection:`Edit --> Rectangles... -> Serialize`
 
   Increment a set of numbers found on adjacent lines.  The behavior depends
   on whether or not there's a current selection.
@@ -592,20 +592,20 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> select all
 
-:menuselection:`Edit --> Select all`
+* :menuselection:`Edit --> Select all`
 
   Select the entire contents of the current source editor.
 
 .. index:: menu; edit --> insert file
 
-:menuselection:`Edit --> Insert File...`
+* :menuselection:`Edit --> Insert File...`
 
   Open a file selection dialog and insert the contents of that file in the
   current source editor at the current cursor position.
 
 .. index:: menu; edit --> insert shell output
 
-:menuselection:`Edit --> Insert Shell Output...`
+* :menuselection:`Edit --> Insert Shell Output...`
 
   Open an input window at the bottom of the GPS window where you can
   specify any external command.  If the command succeeds, the output
@@ -615,7 +615,7 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> format selection
 
-:menuselection:`Edit --> Format selection`
+* :menuselection:`Edit --> Format selection`
 
   Indent and format the selection or the current line.  See
   :ref:`The_Preferences_Dialog`, for preferences related to source
@@ -625,7 +625,7 @@ The :menuselection:`Edit` Menu
 .. index:: completion
 .. _Smart_Completion:
 
-:menuselection:`Edit --> Smart completion`
+* :menuselection:`Edit --> Smart completion`
 
   Complete the identifier prefix under the cursor and list the results in a
   pop-up window.  When used with Ada sources, this takes advantage of an
@@ -644,7 +644,7 @@ The :menuselection:`Edit` Menu
   cursor, and doesn't extract documentation from comments around candidate
   declarations. To take advantage of this feature, you must enable the
   smart completion preference and build your C/C++ application with
-  `-fdump-xref`.
+  :command:`-fdump-xref`.
 
   In order to use this feature, open any Ada, C or C++ file and start
   typing an identifier, which must be declared either in the current file
@@ -716,8 +716,8 @@ The :menuselection:`Edit` Menu
 
   * Smart completion for C and C++ is based on the cross-reference
     information generated by the compiler. Therefore, GPS has no knowledge
-    of recently edited files: you must rebuild with `-fdump-xref` to update
-    the completion database.
+    of recently edited files: you must rebuild with :command:`-fdump-xref`
+    to update the completion database.
 
   * Smart completion for C and C++ is only triggered at the beginning of an
     expression and by special characters such as '(', '->', or the C++
@@ -730,7 +730,7 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> more completion
 
-:menuselection:`Edit --> More Completion`
+* :menuselection:`Edit --> More Completion`
 
   This submenu contains more ways to automatically complete code.
 
@@ -760,7 +760,7 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> selection
 
-:menuselection:`Edit --> Selection`
+* :menuselection:`Edit --> Selection`
 
   This submenu contains actions that apply to the current selection in the
   editor.
@@ -783,8 +783,9 @@ The :menuselection:`Edit` Menu
   * :menuselection:`Edit --> Selection --> Refill`
 
      Rearrange line breaks in the selection or current line so that line
-     lengths do not exceed the maximum length, as set in the "Right margin"
-     preference (see :ref:`The_Preferences_Dialog`).
+     lengths do not exceed the maximum length, as set in the
+     :guilabel:`Right margin` preference (see
+     :ref:`The_Preferences_Dialog`).
 
   .. index:: menu; edit --> selection --> sort
 
@@ -792,7 +793,7 @@ The :menuselection:`Edit` Menu
 
       Sort the selected lines alphabetically. This is particularly
       useful when editing files that are not source code or for
-      specific parts of code, such as `with` clauses in Ada.
+      specific parts of code, such as :command:`with` clauses in Ada.
 
   .. index:: menu; edit --> selection --> sort reverse
 
@@ -829,19 +830,19 @@ The :menuselection:`Edit` Menu
 .. index:: menu; edit --> fold all blocks
 .. index:: code folding
 
-:menuselection:`Edit --> Fold all blocks`
+* :menuselection:`Edit --> Fold all blocks`
 
   Collapse all blocks in the current file.
 
 .. index:: menu; edit --> unfold all blocks
 
-:menuselection:`Edit --> Unfold all blocks`
+* :menuselection:`Edit --> Unfold all blocks`
 
   Uncollapse all blocks in the current file.
 
 .. index:: menu; edit --> create bookmark
 
-:menuselection:`Edit --> Create bookmark`
+* :menuselection:`Edit --> Create bookmark`
 
   Creates a new :guilabel:`Bookmark` at cursor position. For more
   information, see :ref:`Bookmarks`.
@@ -850,45 +851,45 @@ The :menuselection:`Edit` Menu
 .. index:: pretty print
 .. index:: gnatpp
 
-:menuselection:`Edit --> Pretty Print`
+* :menuselection:`Edit --> Pretty Print`
 
   Pretty-print the current source editor by calling the external tool
-  `gnatpp`.  Specify `gnatpp` switches in the switch editor.  See
-  :ref:`The_Switches_Editor`.
+  :program:`gnatpp`.  Specify :program:`gnatpp` switches in the switch
+  editor.  See :ref:`The_Switches_Editor`.
 
 .. index:: menu; edit --> generate body
 .. index:: generate body
 .. index:: gnatstub
 
-:menuselection:`Edit --> Generate Body`
+* :menuselection:`Edit --> Generate Body`
 
   Generate an Ada body stub for the current source editor by calling
-  the external tool `gnatstub`.
+  the external tool :program:`gnatstub`.
 
 .. index:: menu; edit --> edit with external editor
 
-:menuselection:`Edit --> Edit with external editor`
+* :menuselection:`Edit --> Edit with external editor`
 
   See :ref:`Using_an_External_Editor`.
 
 .. index:: menu; edit --> aliases
 .. index:: alias
 
-:menuselection:`Edit --> Aliases`
+* :menuselection:`Edit --> Aliases`
 
   Display the Aliases editor. See :ref:`Defining_text_aliases`.
 
 .. index:: menu; edit --> key shortcuts
 .. index:: key shortcuts
 
-:menuselection:`Edit --> Key shortcuts`
+* :menuselection:`Edit --> Key shortcuts`
 
   Start the key manager dialog, used to associate commands with special
   keys.  See :ref:`The_Key_Manager_Dialog`.
 
 .. index:: menu; edit --> preferences
 
-:menuselection:`Edit --> Preferences`
+* :menuselection:`Edit --> Preferences`
 
   Start the preferences dialog. See :ref:`The_Preferences_Dialog`.
 
@@ -1014,7 +1015,7 @@ shortcuts` menu).
 * :menuselection:`Edit --> Rectangles --> Insert Text`
 
   Inserts text to the left of the rectangle on each line. The following
-  example inserts "TMP". Note the difference between this command and
+  example inserts :samp:`TMP`. Note the difference between this command and
   :menuselection:`Edit --> Rectangles --> Replace With Text`. This command
   also inserts the text on lines that are empty in the initial rectangle::
 
@@ -1146,9 +1147,9 @@ These menu entries include the following categories:
 .. index:: language, editor
 .. index:: character set
 
-In addition, an entry :guilabel:`Properties...` is always visible in this
-contextual menu. When you select it, a dialog allows you to override the
-language or the character set used for the file.  This is useful when
+In addition, an entry :menuselection:`Properties...` is always visible in
+this contextual menu. When you select it, a dialog allows you to override
+the language or the character set used for the file.  This is useful when
 opening a file that doesn't belong to the current project but where you
 want to benefit from the syntax highlighting, which depends on knowing the
 file's language.
@@ -1183,30 +1184,30 @@ which the casing is set to :guilabel:`Unchanged` in the
 
 A contextual menu named :menuselection:`Casing` has the following entries:
 
-:menuselection:`Casing --> Lower *entity*`
+* :menuselection:`Casing --> Lower *entity*`
 
   Set the selected entity to be in lower case.
 
-:menuselection:`Casing --> Upper *entity*`
+* :menuselection:`Casing --> Upper *entity*`
 
   Set the selected entity to be in upper case.
 
-:menuselection:`Casing --> Mixed *entity*`
+* :menuselection:`Casing --> Mixed *entity*`
 
   Set the selected entity to be in mixed case (the first letter and letters
   before an underscore are in upper case and all other letters are in lower
   case).
 
-:menuselection:`Casing --> Smart Mixed *entity*`
+* :menuselection:`Casing --> Smart Mixed *entity*`
 
   Set the selected entity as smart mixed case, which is the same as above
   except that upper case letters are kept unchanged.
 
-:menuselection:`Casing --> Add exception for *entity*`
+* :menuselection:`Casing --> Add exception for *entity*`
 
   Add the current entity into the dictionary.
 
-:menuselection:`Casing --> Remove exception for *entity*`
+* :menuselection:`Casing --> Remove exception for *entity*`
 
   Remove the current entity from the dictionary.
 
@@ -1214,11 +1215,11 @@ To add or remove a substring from the dictionary, first select the
 substring in the editor.  Then, the last two contextual menu entries will
 be:
 
-:menuselection:`Casing --> Add substring exception for *str*`
+* :menuselection:`Casing --> Add substring exception for *str*`
 
   Add the selected substring into the dictionary.
 
-:menuselection:`Casing --> Remove substring exception for *str*`
+* :menuselection:`Casing --> Remove substring exception for *str*`
 
   Remove the selected substring from the dictionary.
 
@@ -1369,8 +1370,8 @@ An initial implementation for this is the following::
      end Print_Owing;
   end Pkg;
 
-Suppose we feel the procedure `Print_Owing` is too long and does several
-independent actions.  We'll perform a series of three successive
+Suppose we feel the procedure :command:`Print_Owing` is too long and does
+several independent actions.  We'll perform a series of three successive
 refactoring steps to extract the code and move it elsewhere.
 
 First, we move the code that prints the banner. Moving it is easy, since
@@ -1378,11 +1379,11 @@ this code does not depend on any context. We could just do a copy-paste,
 but then would have to create the new subprogram. Instead, we select lines
 30 to 35 and then select the:menuselection:`Refactoring --> Extract
 Subprogram` contextual menu.  GPS removes those lines from the subprogram
-`Print_Owing` and creates a new procedure `Print_Banner` (the name is
-specified by the user; GPS doesn't try to guess a name). Also, since the
-chunk of code that's extracted starts with a comment, GPS automatically
-uses that comment as the documentation for the new subprogram.  Here's the
-relevant part of the resulting file::
+:command:`Print_Owing` and creates a new procedure :command:`Print_Banner`
+(the name is specified by the user; GPS doesn't try to guess a name). Also,
+since the chunk of code that's extracted starts with a comment, GPS
+automatically uses that comment as the documentation for the new
+subprogram.  Here's the relevant part of the resulting file::
 
   package body Pkg is
 
@@ -1426,13 +1427,13 @@ relevant part of the resulting file::
 
 A more interesting example is when we want to extract the code to print the
 details of the invoice. This code depends on one local variable and the
-parameter to `Print_Owing`.  When we select lines 54 to 57 and extract it
-into a new `Print_Details` subprogram, GPS automatically decides which
-variables to extract and whether they should become parameters of the new
-subprogram or local variables. In the former case, it also automatically
-decides whether to create `"in"`, `"out"` or `"in out"` parameters. If
-there's a single `"out"` parameter, GPS automaticallys create a function
-instead of a procedure.
+parameter to :command:`Print_Owing`.  When we select lines 54 to 57 and
+extract it into a new :command:`Print_Details` subprogram, GPS
+automatically decides which variables to extract and whether they should
+become parameters of the new subprogram or local variables. In the former
+case, it also automatically decides whether to create :samp:`in`,
+:samp:`out` or :samp:`in out` parameters. If there's a single :samp:`out`
+parameter, GPS automatically creates a function instead of a procedure.
 
 GPS uses the same name for the local variable for the parameters. Often, it
 makes sense to recompile the new version of the source and apply the
@@ -1480,12 +1481,12 @@ parameters to further clarify the code::
      end Print_Owing;
 
 Finally, we want to extract the code that computes the outstanding
-balance. When this code is moved, the variables `E` and `Each` become dead
-in `Print_Owing` and are moved into the new subprogram (which we call
-`Get_Outstanding`). The initial selection should include the blank lines
-before and after the code to keep the resulting `Print_Owing` simpler. GPS
-automatically ignores those blank lines.  Here's the result of that last
-refactoring ::
+balance. When this code is moved, the variables :command:`E` and
+:command:`Each` become dead in :command:`Print_Owing` and are moved into
+the new subprogram (which we call :command:`Get_Outstanding`). The initial
+selection should include the blank lines before and after the code to keep
+the resulting :command:`Print_Owing` simpler. GPS automatically ignores
+those blank lines.  Here's the result of that last refactoring ::
 
      ... code not shown
 
@@ -1515,16 +1516,18 @@ refactoring ::
         Print_Details (Self, Outstanding);
      end Print_Owing;
 
-The final version of `Print_Owing` is not perfect. For example, passing the
-initial value 0 to `Get_Outstanding` is useless and, in fact, it should
-probably be a function with no parameter. But GPS already saves a lot of
-time and manipulation even given these imperfections.
+The final version of :command:`Print_Owing` is not perfect. For example,
+passing the initial value 0 to :command:`Get_Outstanding` is useless and,
+in fact, it should probably be a function with no parameter. But GPS
+already saves a lot of time and manipulation even given these
+imperfections.
 
 Finally, a word of caution: this refactoring doesn't check that you're
 starting with valid input. For example, if the text you select includes a
-`declare` block, you should always include the full block, not just a part
-of it (or select text between `begin` and `end`). Likewise, GPS doesn't
-expect you to select any part of the variable declarations, just the code.
+:command:`declare` block, you should always include the full block, not
+just a part of it (or select text between :command:`begin` and
+:command:`end`). Likewise, GPS doesn't expect you to select any part of the
+variable declarations, just the code.
 
 
 .. index:: external editor
@@ -1535,22 +1538,23 @@ Using an External Editor
 
 .. index:: preferences; editor --> external editor
 
-GPS is integrated with a number of external editors, in particular `Emacs`
-and `vi`. The choice of the default external editor is done in the
-:menuselection:`Editor --> External editor` preference.
+GPS is integrated with a number of external editors, in particular
+:program:`emacs` and :program:`vi`. The choice of the default external
+editor is done in the :menuselection:`Editor --> External editor`
+preference.
 
 The following values are recognized:
 
 .. index:: gnuclient
 
-:guilabel:`gnuclient`
+* :program:`gnuclient`
 
   This is the recommended client. It's based on Emacs, but needs an extra
   package to be installed. This is the only client providing a full
   integration in GPS, since any extended lisp command can be sent to the
   Emacs server.
 
-  By default, :guilabel:`gnuclient` opens a new Emacs frame for every file
+  By default, :program:`gnuclient` opens a new Emacs frame for every file
   you open. You might want to add the following code to your :file:`.emacs`
   file (create one if needed) so that the same Emacs frame is reused each
   time::
@@ -1564,7 +1568,7 @@ The following values are recognized:
 
 .. index:: emacsclient
 
-:guilabel:`emacsclient`
+* :program:`emacsclient`
 
   This is a program that's always available if you've installed Emacs. As
   opposed to starting a new Emacs every time, it reuses an existing Emacs
@@ -1572,45 +1576,46 @@ The following values are recognized:
 
 .. index:: emacs
 
-:guilabel:`emacs`
+* :program:`emacs`
 
   This clients start a new Emacs session every time a file needs to be
-  opened. You should use :guilabel:`emacsclient` instead, since it's much
+  opened. You should use :program:`emacsclient` instead, since it's much
   faster and makes it easier to copy and paste between multiple files.  The
   only reason to use this external editor is if your system doesn't support
-  :guilabel:`emacsclient`.
+  :program:`emacsclient`.
 
 
 .. index:: vi
 
-:guilabel:`vim`
+* :program:`vim`
 
   `Vim` is a vi-like editor that provides a number of enhancements, for
   example syntax highlighting for all languages supported by GPS.
-  Selecting this external editor starts an `xterm` (or command window,
-  depending on your system) with a running `vim` process editing the file.
+  Selecting this external editor starts an :program:`xterm` (or command
+  window, depending on your system) with a running :program:`vim` process
+  editing the file.
 
   One limitation of this editor is that if GPS needs to open the same file
   a second time, it opens a new editor instead of reusing the existing one.
 
-  To enable this capability, the `xterm` executable must be found in the
-  PATH and thus this is not supported on Windows systems.  On Windows
-  systems, use the `custom` editor instead.
+  To enable this capability, the :program:`xterm` executable must be found
+  in the PATH and thus this is not supported on Windows systems.  On
+  Windows systems, use the :command:`program` editor instead.
 
-:guilabel:`vi`
+* :program:`vi`
 
-  This editor works exactly like vim, but uses the standard `vi` command
-  instead of `vim`.
+  This editor works exactly like :program:`vim`, but uses the standard
+  :program:`vi` command instead of :program:`vim`.
 
 .. index:: preferences; editor --> custom editor command
 
-:guilabel:`custom`
+* :program:`custom`
 
   Specify any external editor by choosing this entry.  Specify the complete
   command line used to call the editor in the :menuselection:`Editor -->
   Custom editor command` preference.
 
-:guilabel:`none`
+* :program:`none`
 
   No external editor is used and the contextual menus won't appear.
 
@@ -1621,8 +1626,8 @@ project, you should kill any running Emacs, so a new one is spawned by GPS
 with the appropriate project.
 
 Alternatively, explicitly reload the project from Emacs itself by using the
-:menuselection:`Project --> Load` menu in emacs (if the ada-mode was
-correctly installed).
+:menuselection:`Project --> Load` menu in :program:`emacs` (i
+:command:`ada-mode` is correctly installed).
 
 .. index:: preferences; editor --> always use external editor
 

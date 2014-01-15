@@ -55,8 +55,8 @@ GPS uses the same mechanisms to locate project files as GNAT:
 
 * relative paths
 
-  These paths, when used in a `with` line as described below, are relative
-  to the location of the project containing the `with`.
+  These paths, when used in a :command:`with` line as described below, are
+  relative to the location of the project containing the :command:`with`.
 
 * `ADA_PROJECT_PATH`
 
@@ -309,9 +309,9 @@ variable in the top line. This name is used for two purposes:
   change the value of the environment variable, which is only used to get
   the default initial value of the scenario variable.
 
-  When you spawn external tools like `gnatmake`, you can also specify the
-  value they should use for the scenario variable by using a command line
-  switch, typically `-X`.
+  When you spawn external tools like :program:`gnatmake`, you can also
+  specify the value they should use for the scenario variable by using a
+  command line switch, typically :command:`-X`.
 
 Click on the arrow on the right of the name area to display the list of all
 currently-defined environment variables. However, you can choose any
@@ -346,7 +346,7 @@ which you select the one you to use.
 As soon as a new value is selected, GPS recomputes the project view (in
 case source directories, object directories or list of source files have
 changed).  GPS also updates other items such as the list of executables in
-the `Compile`, `Run`, and `Debug` menus.
+the :guilabel:`Compile`, :guilabel:`Run`, and :guilabel:`Debug` menus.
 
 .. index:: browsers
 .. index:: call graph
@@ -505,7 +505,7 @@ These entries are:
 
 .. index:: menu; project --> new
 
-:menuselection:`Project --> New`
+* :menuselection:`Project --> New`
 
   Open the project wizard (see :ref:`The_Project_Wizard`) so you can create
   a new project.  You'll be asked for other information used to create the
@@ -516,7 +516,7 @@ These entries are:
 
 .. index:: menu; project --> new from template
 
-:menuselection:`Project --> New from template`
+* :menuselection:`Project --> New from template`
 
   Open the project template wizard, allowing you to create a new project
   using one of the project templates defined in GPS. See
@@ -524,7 +524,7 @@ These entries are:
 
 .. index:: menu; project --> open
 
-:menuselection:`Project --> Open`
+* :menuselection:`Project --> Open`
 
   Open a file selection dialog, allowing any existing project to be loaded
   into GPS. The newly loaded project replaces the currently loaded project
@@ -532,27 +532,26 @@ These entries are:
 
 .. index:: menu; project --> recent
 
-:menuselection:`Project --> Recent`
+* :menuselection:`Project --> Recent`
 
   Switch back to the last project loaded into GPS.
 
 .. index:: menu; project --> edit project properties
 
-:menuselection:`Project --> Edit Project Properties`
+* :menuselection:`Project --> Edit Project Properties`
 
   Open the project properties dialog for the currently selected project.
 
 .. index:: menu; project --> save all
 
-:menuselection:`Project --> Save All`
+* :menuselection:`Project --> Save All`
 
   Save all the modified projects in the hierarchy.
-
 
 .. index:: menu; project --> edit file switches
 .. _File_Switches:
 
-:menuselection:`Project --> Edit File Switches`
+* :menuselection:`Project --> Edit File Switches`
 
   Open a new window in GPS listing all the source files for the currently
   selected project along with the switches used to compile them. See
@@ -560,7 +559,7 @@ These entries are:
 
 .. index:: menu; project --> reload project
 
-:menuselection:`Project --> Reload project`
+* :menuselection:`Project --> Reload project`
 
   Reload the project to take into account modifications done outside of
   GPS. In particular, take into account new files added to the source
@@ -569,7 +568,7 @@ These entries are:
 
 .. index:: menu; project --> project view
 
-:menuselection:`Project --> Project View`
+* :menuselection:`Project --> Project View`
 
   Open (or raise if it is already open) the project view on the left side
   of the GPS window.
@@ -661,8 +660,8 @@ allowed. If the name is invalid, GPS displays an error message when you
 press the :guilabel:`Forward` button.
 
 You can create child projects created from this dialog. These are projects
-whose name is of the form `Parent.Child`. GPS automatically generates the
-dependency on the parent project.
+whose name is of the form :samp:`Parent.Child`. GPS automatically generates
+the dependency on the parent project.
 
 The last part of this page indicates how the path should be stored in the
 generated project file. Most of the time, this setting has no impact on
@@ -675,16 +674,17 @@ Languages Selection
 -------------------
 
 Use this page to select the programming languages used for the sources of
-the project. By default, only `Ada` is selected.  You can add new languages
+the project. By default, only Ada is selected.  You can add new languages
 to this list by using XML files, see the section on customizing GPS
 (:ref:`Adding_support_for_new_languages`).
 
 This page allows you to select the toolchain used when working on your
 project.  You can select one of the pre-defined toolchains or scan your
 system for installed toolchains. You can also manually define some of the
-tools in the toolchain such as which debugger, GNAT driver, or `gnatls`
-tool to use.  If you need to select a toolchain for a cross environment,
-see :ref:`Working_in_a_Cross_Environment` for more information.
+tools in the toolchain such as which debugger, GNAT driver, or
+:program:`gnatls` tool to use.  If you need to select a toolchain for a
+cross environment, see :ref:`Working_in_a_Cross_Environment` for more
+information.
 
 
 .. index:: Version Control System
@@ -755,9 +755,9 @@ Main Units
 The main units of a project are the files to be compiled and linked to
 obtain executables.
 
-Typically, for C applications, these are the files that contain the `main`
-function. For Ada applications, these are the files that contain the main
-subprogram for each partition in the project.
+Typically, for C applications, these are the files that contain the
+:samp:`main` function. For Ada applications, these are the files that
+contain the main subprogram for each partition in the project.
 
 These files are treated specially by GPS. Some submenus of
 :menuselection:`Build` and :menuselection:`Debug` have predefined entries
@@ -806,9 +806,10 @@ Use this page to add Ada units stored in files with irregular or arbitrary
 naming conventions into your project.  To do this, specify file name
 patterns.  GPS uses these patterns to search for Ada units in each of
 source directories specified in the :ref:`Source_Directories_Selection`
-page using the `gnatname` tool to generate the required pragmas for the set
-of files. Files with arbitrary naming convention are not compatible with
-naming scheme customization, so the next page will be skipped.
+page using the :program:`gnatname` tool to generate the required pragmas
+for the set of files. Files with arbitrary naming convention are not
+compatible with naming scheme customization, so the next page will be
+skipped.
 
 
 .. index:: project; naming scheme
@@ -857,13 +858,14 @@ GNAT and GPS both support Ada sources containing multiple Ada units
 unit, for example). This is not recommended since that might trigger
 unnecessary recompilation of your source files, but you can handle such
 source files as naming scheme exceptions.  Specify those in the editor by
-adding `at 1`, `at 2` (and so on) after the file name for either the spec,
-the body, or both. The digit after `at` is the index (starting at 1) of the
-unit in the source file.
+adding :samp:`at 1`, :samp:`at 2` (and so on) after the file name for
+either the spec, the body, or both. The digit after :samp:`at` is the index
+(starting at 1) of the unit in the source file.
 
-For example, specifying `file.ada at 1` for the spec and `file.ada at 2`
-for the body of the unit "unit" indicates that the two components of the
-unit are in the same file, with the spec first, followed by the body.
+For example, specifying :command:`file.ada at 1` for the spec and
+:command:`file.ada at 2` for the body of the unit :samp:`unit` indicates
+that the two components of the unit are in the same file, with the spec
+first, followed by the body.
 
 .. index:: project; switches
 .. _Switches:
@@ -914,8 +916,8 @@ Edit the dependencies between projects through the contextual
 This view makes it easy to indicate that your project depends on external
 libraries or other modules in your source code. For example, you can get
 access to the GtkAda graphical library in your project by adding a project
-dependency to `gtkada.gpr`, assuming GtkAda has been installed in your
-system.
+dependency to :file:`gtkada.gpr`, assuming GtkAda has been installed in
+your system.
 
 The dependencies also determine in what order your application is built.
 When you compile a project, the builder first makes sure the projects it
@@ -932,8 +934,8 @@ by selecting a project file name from one of the following sources:
 * One of the predefined projects
 
   These are the projects are found in one of the directories referenced by
-  the `ADA_PROJECT_PATH` environment variable. Typically, these include
-  third party libraries, such as GtkAda or win32ada.
+  the :command:`ADA_PROJECT_PATH` environment variable. Typically, these
+  include third party libraries, such as GtkAda or win32ada.
 
 * A new project created through the project wizard
 
@@ -959,7 +961,7 @@ The Project Properties Editor
 Use ther project properties editor at any time to access the properties of
 your project through the :menuselection:`Project --> Edit Project
 Properties` menu or the contextual menu :menuselection:`Edit project
-properties` on any project item, e.g. from the:guilabel:`Project` views or
+properties` on any project item, e.g. from the :guilabel:`Project` views or
 the :guilabel:`Project` browser.
 
 If there was an error loading the project (such as invalid syntax or

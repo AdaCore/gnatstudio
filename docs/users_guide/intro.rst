@@ -26,10 +26,10 @@ Here's a summary of the features of the GNAT Programming Studio:
 * Support for compile/build/run cycle (:ref:`Compilation/Build`)
 
   Any compiler called by a command line can be integrated in GPS, with
-  built in support for GNAT, `gcc` and `make`.  You can easily navigate
-  error messages. Automatic code fixing is provided for many common errors.
-  GPS includes support for cross-compilers (running compilers on a
-  different machine than the one on which GPS is running).
+  built in support for GNAT, :program:`gcc` and :program:`make`.  You can
+  easily navigate error messages. Automatic code fixing is provided for
+  many common errors.  GPS includes support for cross-compilers (running
+  compilers on a different machine than the one on which GPS is running).
 
 * Project management (:ref:`Project_Handling`)
 
@@ -53,17 +53,17 @@ Here's a summary of the features of the GNAT Programming Studio:
 
 * Full debugger integration (:ref:`Debugging`)
 
-  GPS fully integrates with `gdb` and provides multiple graphical views to
-  monitor the state of your application, including a call stack, a visual
-  display for the values of the variables, and a breakpoint editor.
+  GPS fully integrates with :program:`gdb` and provides multiple graphical
+  views to monitor the state of your application, including a call stack, a
+  visual display for the values of the variables, and a breakpoint editor.
 
 * Integration with code analysis tools (:ref:`Tools`)
 
-  GPS integrates tightly with various command-line tools such as `gcov` and
-  GNATcoverage (for the coverage of your code) and CodePeer and Spark (to
-  analyze your code). In most cases, it provides graphical rendering of
-  their output, often integrated with the editor itself so the information
-  is available where and when you need it.
+  GPS integrates tightly with various command-line tools such as
+  :program:`gcov` and GNATcoverage (for the coverage of your code) and
+  CodePeer and Spark (to analyze your code). In most cases, it provides
+  graphical rendering of their output, often integrated with the editor
+  itself so the information is available where and when you need it.
 
 * Fully customizable (:ref:`Customizing_and_Extending_GPS`)
 

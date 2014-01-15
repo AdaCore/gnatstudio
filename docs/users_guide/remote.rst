@@ -37,15 +37,15 @@ configuration must meet the following conditions:
 * 
   .. index:: password
 
-  Have a remote connection to the host using 'rsh', 'ssh' or 'telnet'.  GPS
-  can handle passwords for such connections.
+  Have a remote connection to the host using :program:`rsh`, :program:`ssh`
+  or :program:`telnet`.  GPS can handle passwords for such connections.
 
 * Have either a Network Filesystem (i.e. NFS, SMB or equivalent) sharing
-  the project files between the host and the target or have `rsync`
-  installed on both client and server.  (`rsync` can be found at
-  `http://www.samba.org/rsync/ <http://www.samba.org/rsync/>`_ for Unix,
-  and is part of Cygwin under Windows: `http://www.cygwin.com
-  <http://www.cygwin.com>`_.
+  the project files between the host and the target or have
+  :program:`rsync` installed on both client and server.  (:program:`rsync`
+  can be found at `http://www.samba.org/rsync/
+  <http://www.samba.org/rsync/>`_ for Unix, and is part of Cygwin under
+  Windows: `http://www.cygwin.com <http://www.cygwin.com>`_.
 
 * Either subprojects must be 'withed' by the main project using relative
   paths or the absolute paths must be the same on both the desktop and the
@@ -144,7 +144,7 @@ You may need to specify other fields, but they are not mandatory. Most are
 accessible through the advanced configuration pane.
 
 * The :guilabel:`Remote Sync Tool` is used to synchronize remote and local
-  filesystems, if these are not shared filesystems. Only `rsync` is
+  filesystems, if these are not shared filesystems. Only :program:`rsync` is
   supported by GPS.
 
 * The :guilabel:`Extra Init Commands` lists initialization commands that
@@ -193,10 +193,10 @@ server. This section also tells GPS how to keep those paths synchronized
 between the local machine and the remote server.
 
 All your project's dependencies must reside in a path defined here.  You
-retrieve those paths by using `gnat list -v -Pyour_project`. In particular,
-the path to the GNAT run-time (:file:`adainclude` directory) needs to be
-mapped so that code completion and source navigation work properly on
-run-time entities.
+retrieve those paths by using :command:`gnat list -v -Pyour_project`. In
+particular, the path to the GNAT run-time (:file:`adainclude` directory)
+needs to be mapped so that code completion and source navigation work
+properly on run-time entities.
 
 To add a new path, click on the :guilabel:`+` button and enter the
 corresponding local and remote paths.
@@ -209,14 +209,14 @@ browse the remote host to select the remote paths.
 
 You can set one of five types of path synchronization for each path:
 
-* `Never`: no synchronization is required from GPS because the paths
+* :guilabel:`Never`: no synchronization is required from GPS because the paths
   are shared using an OS mechanism like NFS.
-* `Manually`: synchronization is needed, but is only performed
+* :guilabel:`Manually`: synchronization is needed, but is only performed
   manually using the remote view buttons.
-* `Always`: Relevant to source and object paths of your project.
+* :guilabel:`Always`: Relevant to source and object paths of your project.
   They're kept synchronised by GPS before and after every remote action (such
   as performing a build or run).
-* `Once to local`/`Once to remote`: Relevant to project's
+* :guilabel:`Once to local`/`Once to remote`: Relevant to project's
   dependencies. They're synchronized once when a remote project is
   loaded or when a local project is set remote. They can still be
   manually synchronized using the Remote View (:ref:`The_remote_view`.)
@@ -230,10 +230,10 @@ The way those paths need to be configured depends on your network architecture:
   "X:\\my\\mounted\\directory\\" synax and on Unix, using the using the
   "/mnt/path/" syntax).
 
-* If the project's files are synchronized using `rsync`, defining a too
-  generic path translation leads to very slow synchronization. In that
-  case, define the paths as specifically as possible in order to speed up
-  the synchronization process.
+* If the project's files are synchronized using :program:`rsync`, defining
+  a too generic path translation leads to very slow synchronization. In
+  that case, define the paths as specifically as possible in order to speed
+  up the synchronization process.
 
 .. _Setup_a_remote_project:
 
@@ -293,8 +293,8 @@ Clicking the :guilabel:`Apply` button performs the following actions:
 
 * Reads the default project paths on the Build_Server and translates them
   into local paths.
-* Synchronizes those paths marked as Sync `Always` or `Once to local` from
-  the build server
+* Synchronizes those paths marked as Sync :guilabel:`Always` or
+  :guilabel:`Once to local` from the build server
 * Loads the translated local project.
 * Assigns the Build, Execution and Debug servers.
 
@@ -339,10 +339,10 @@ The GPS remote mode imposes some limitations:
 
 * Cygwin on remote host: the GNAT compilation toolchain doesn't understand
   Cygwin's mounted directories.  To use GPS with a remote Windows server
-  using Cygwin's `bash`, you must use directories that are the same on
-  Windows and Cygwin (absolute paths). For example, a project using
+  using Cygwin's :program:`bash`, you must use directories that are the
+  same on Windows and Cygwin (absolute paths). For example, a project using
   "C:\\my_project" is accepted if Cygwin's path is :file`/my_project`, but
   not if :file:`/cygdrive/c/my_project` is specified.
 
-  Even if you use Cygwin's `sshd` on such a server, you can still access it
-  using :file:`cmd.exe` (:ref:`Connection_settings`.)
+  Even if you use Cygwin's :program:`sshd` on such a server, you can still
+  access it using :file:`cmd.exe` (:ref:`Connection_settings`.)

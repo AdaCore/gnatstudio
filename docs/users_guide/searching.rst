@@ -51,9 +51,10 @@ This dialog contains three fields:
 
   Contains the string to replace the occurrences of the pattern.  The combo
   box provides a history of previously used replacement strings. If a
-  regular expression is used for search, special escapes `\1`, `\2` .. `\9`
-  in this field refer to the corresponding matching subexpressions; \0
-  refers to the complete matched string.
+  regular expression is used for search, special escapes :samp:`\1`,
+  :samp:`\2` .. :samp:`\9` in this field refer to the corresponding
+  matching subexpressions; :samp:`\0` refers to the complete matched
+  string.
 
 *Look in*
   .. index:: look in
@@ -79,8 +80,9 @@ right, which displays the list of all possible contexts, inluding:
 
     Search the :guilabel:`Project` view. An extra :guilabel:`Scope` box is
     displayed where you can specify the scope of your search, a set of:
-    `Projects, Directories, Files, Entities`.  Searching entities can take
-    a long time since GPS must parse every file during the search.
+    :guilabel:`Projects`, :guilabel:`Directories`, :guilabel:`Files`,
+    :guilabel:`Entities`.  Searching entities can take a long time since
+    GPS must parse every file during the search.
 
   *Open Files*
 
@@ -141,7 +143,7 @@ right, which displays the list of all possible contexts, inluding:
 The second section in the dialog is a row of five buttons, used to start
 the search, or continue to the next occurrence, or set options:
 
-:guilabel:`Regexp`
+* :guilabel:`Regexp`
   .. index:: regular expression
 
   Toggles between strings and regular expressions.  Or you can select the
@@ -150,36 +152,36 @@ the search, or continue to the next occurrence, or set options:
   expressions grammar and is documented in the GNAT Pro run time file
   :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
   project <Open_From_Project>` menu (:menuselection:`File --> Open From
-  Project...`) and type `g-regpat.ads`.
+  Project...`) and type :file:`g-regpat.ads`.
 
-:guilabel:`Whole Word`
+* :guilabel:`Whole Word`
   .. index:: whole word
 
   Force the search engine to ignore substrings. For example, "sensitive"
-  will no longer match "insensitive".
+  no longer matches "insensitive".
 
-:guilabel:`Select on Match`
+* :guilabel:`Select on Match`
   .. index:: select window on match
 
   Gives the focus to the editor containing the match. If not selected, the
   focus remains on the search window.  If so, press :kbd:`Enter` to search
   for the next occurrence.
 
-:guilabel:`Close on Match`
+* :guilabel:`Close on Match`
   .. index:: close dialog on match
 
   This button only appears if the search window is floating. If pressed,
   the search window is automatically closed when an occurrence of the
   search string is found.
 
-:guilabel:`Case Sensitive Search`
+* :guilabel:`Case Sensitive Search`
   .. index:: case sensitive
 
   By default, patterns are case insensitive (upper-case letters and
   lower-case letters are considered equivalent).  Change this behavior by
   clicking this check box.
 
-:guilabel:`Case Preserving Replace`
+* :guilabel:`Case Preserving Replace`
   .. index:: case preserving
 
   When this is checked, replacements preserve casing. Three casings are
