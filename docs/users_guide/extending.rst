@@ -10,23 +10,22 @@ GPS provides several levels of customization, from simple preferences dialog to
 powerful scripting capability through the `python` language.  This chapters
 describes each of these capabilities.
 
+
+.. index:: preferences
+.. _preferences_dialog:
 .. _The_Preferences_Dialog:
 
 The Preferences Dialog
 ======================
 
-.. _preferences_dialog:
+.. image:: preferences-general.png
 
-.. index:: preferences
+This dialog, available through the menu :menuselection:`Edit-->Preferences...`,
+allows you to modify the global preferences of GPS.  To enable the new
+preferences, you simply need to confirm by pressing the :guilabel:`OK` button.
+Pressing the :guilabel:`Cancel` button will undo all your changes.
 
-This dialog, available through the menu `Edit->Preferences`, allows you to
-modify the global preferences of GPS.  To enable the new preferences, you
-simply need to confirm by pressing the `OK` button. To test your changes, you
-can use the `Apply` button. Pressing the `Cancel` button will undo all your
-changes.
-
-.. index:: screen shot
-.. image:: preferences-general.jpg
+Changes are applied immediately, as soon as you modify one of the settings.
 
 Each preference is composed of a label displaying the name of the preference,
 and an editing area to modify its value. If you leave to mouse over the label,
@@ -34,6 +33,9 @@ a tool tip will be displayed giving an on-line help on the preference.
 
 The preferences dialog is composed of several areas, accessible through the
 tabs at the left of the dialog.  Each page corresponds to a set of preferences.
+Some pages are nested (for instance, to access the color configuration for the
+editor, you need to expand the :guilabel:`Editor` row on the left by clicking
+on the arrow, as seen in the screenshot above.
 
 * **Themes**
 
