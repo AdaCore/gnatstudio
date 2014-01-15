@@ -55,26 +55,26 @@ mc_on_entity_color.create(
 
 @interactive("Editor", name="Add multi cursor and go down")
 def mc_down():
-    buffer = GPS.EditorBuffer.get()
-    view = buffer.current_view()
+    ed = GPS.EditorBuffer.get()
+    view = ed.current_view()
     loc = view.cursor()
-    buffer.add_cursor(loc)
+    ed.add_cursor(loc)
 
-    buffer.get_cursors()[0].set_manual_sync()
-    view.goto(buffer.at(loc.line() + 1, loc.column()))
-    buffer.set_cursors_auto_sync()
+    ed.get_cursors()[0].set_manual_sync()
+    view.goto(ed.at(loc.line() + 1, loc.column()))
+    ed.set_cursors_auto_sync()
 
 
 @interactive("Editor", name="Add multi cursor and go up")
 def mc_up():
-    buffer = GPS.EditorBuffer.get()
-    view = buffer.current_view()
+    ed = GPS.EditorBuffer.get()
+    view = ed.current_view()
     loc = view.cursor()
-    buffer.add_cursor(loc)
+    ed.add_cursor(loc)
 
-    buffer.get_cursors()[0].set_manual_sync()
-    view.goto(buffer.at(max(loc.line() - 1, 1), loc.column()))
-    buffer.set_cursors_auto_sync()
+    ed.get_cursors()[0].set_manual_sync()
+    view.goto(ed.at(max(loc.line() - 1, 1), loc.column()))
+    ed.set_cursors_auto_sync()
 
 id_pattern = re.compile(r"[\w0-9_]")
 
@@ -91,8 +91,8 @@ def mc_select_next_occurence():
         st, end = end.search(text)
 
     mc = ed.add_cursor(st)
-    mc.sel_mark().move(st)
-    mc.mark().move(end)
+    mc.move(st)
+    mc.move(end, True)
     ed.update_cursors_selection()
     ed.set_cursors_auto_sync()
 

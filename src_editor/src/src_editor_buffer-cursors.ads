@@ -104,6 +104,9 @@ package Src_Editor_Buffer.Cursors is
    function Has_Slave_Cursors
      (Buffer : Source_Buffer) return Boolean;
 
+   procedure Move
+     (C : Cursor; Loc : Gtk_Text_Iter; Extend_Selection : Boolean);
+
    function Get_Cursors_Sync
      (Buffer : Source_Buffer) return Cursors_Sync_Type;
    --  This function and its counter part setter are meant to save and restore

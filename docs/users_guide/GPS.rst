@@ -412,6 +412,8 @@ Classes
 
    .. automethod:: GPS.Cursor.mark
 
+   .. automethod:: GPS.Cursor.move
+
    .. automethod:: GPS.Cursor.sel_mark
 
    .. automethod:: GPS.Cursor.set_manual_sync
@@ -623,6 +625,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.current_view
 
+   .. automethod:: GPS.EditorBuffer.cursors
+
    .. automethod:: GPS.EditorBuffer.cut
 
    .. automethod:: GPS.EditorBuffer.delete
@@ -645,6 +649,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_new
 
+   .. automethod:: GPS.EditorBuffer.has_slave_cursors
+
    .. automethod:: GPS.EditorBuffer.indent
 
    .. automethod:: GPS.EditorBuffer.insert
@@ -656,6 +662,8 @@ Classes
    .. automethod:: GPS.EditorBuffer.lines_count
 
    .. automethod:: GPS.EditorBuffer.list
+
+   .. automethod:: GPS.EditorBuffer.main_cursor
 
    .. automethod:: GPS.EditorBuffer.paste
 

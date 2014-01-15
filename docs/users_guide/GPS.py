@@ -3751,11 +3751,48 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def has_slave_cursors(self):
+        """
+        Returns true if there are any alive slave cursors in the buffer
+        currently.
+
+        :return: A boolean
+        """
+
     def add_cursor(self, location):
         """
-        Adds a new multi cursor at the given location.
+        Adds a new slave cursor at the given location.
 
         :return: The resulting :class:`Cursor` instance
+        """
+
+    def main_cursor(self):
+        """
+        Returns the main cursor. Generally you should not use this method
+        except if you have a really good reason to perform actions only on the
+        main cursor. Instead, you should iterate on the result of
+        :meth:`EditorBuffer.cursors`
+
+        :return: A list of :class:`Cursor` instances
+        """
+
+    def cursors(self):
+        """
+        Returns a list of :class:`Cursor` instances. This method returns a
+        generator that will automatically handle the calls to set_manual_sync
+        for each cursor, and thue call to update_cursors_selection at the end.
+
+        :return: A list of :class:`Cursor` instances
+
+        .. code-block:: python
+
+            # To perform action on every cursors of the current editor
+            # This will move every cursor forward 1 char
+
+            ed = GPS.EditorBuffer.get()
+            for cursor in ed.cursors():
+                cursor.move(c.mark().location().forward_char())
+
         """
 
     def get_cursors(self):
@@ -3766,12 +3803,15 @@ class EditorBuffer(object):
         on the cursor's instance.  Also, if you move any selection
         mark, you should call update_cursors_selection afterwards.
 
+        There is a higher level method, :method:`EditorBuffer.cursors` that
+        will return a generator that will handle this manual work for you.
+
         :return: A list of :class:`Cursor` instances
         """
 
     def remove_all_slave_cursors(self):
         """
-        Removes all active multi-cursors from the buffer
+        Removes all active slave cursors from the buffer
         """
 
     def set_cursors_auto_sync(self):
@@ -7624,19 +7664,41 @@ class Missing_Arguments(Exception):
 class Cursor(object):
 
     """
-    Interface to a multi cursor in a GPS EditorBuffer. Just gives access to the
+    Interface to a cursor in a GPS EditorBuffer. Just gives access to the
     insertion mark and to the selection mark of the cursor
     """
 
+    def move(self, loc, extend_selection=False):
+        """
+        Moves the cursor to the given location.
+
+        :param loc: A :class:`GPS.EditorLocation` that you wan't to move the
+            cursor to.
+        :param extend_selection: A boolean. If it is True, the selection mark
+            will not move, and so the selection will be extended. If it is
+            False, both marks will move simultaneously.
+        """
+
     def set_manual_sync(self):
         """
-        Set the buffer in manual sync mode regarding multi cursors. This will
-        set sync to be manual and all actions will be considered as coming from
-        the cursor instance
+        Set the buffer in manual sync mode regarding this cursor. This will set
+        sync to be manual and all insertions/deletions will be considered as
+        originating from this cursor instance. If you don't do that, an action
+        on the buffer (like an insertion) will be repercuted on every alive
+        cursor instance.
+
+        NOTE: Don't call this manually. Prefer to iterate on the results of
+        :meth:`EditorBuffer.cursors` so that this method is called for you
+        automatically
         """
 
     def sel_mark(self):
         """
+        Returns the cursor's selection mark.
+
+        NOTE: If you can interact with your cursor via :meth:`Cursor.move`
+        rather than via manually moving marks, you should prefer this method
+
         :return: The :class:`GPS.EditorMark` instance corresponding to the
         cursor's selection mark
         """
@@ -7644,6 +7706,11 @@ class Cursor(object):
 
     def mark(self):
         """
+        Returns the cursor's main mark.
+
+        NOTE: If you can interact with your cursor via :meth:`Cursor.move`
+        rather than via manually moving marks, you should prefer this method
+
         :return: The :class:`GPS.EditorMark` instance corresponding to the
         cursor's insert mark
         """

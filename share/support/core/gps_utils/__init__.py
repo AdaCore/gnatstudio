@@ -332,6 +332,17 @@ def in_xml_file(context):
     return context.in_xml_file
 
 
+def cursors(ed):
+    cs = ed.get_cursors()
+    for c in cs:
+        c.set_manual_sync()
+        yield c
+    ed.update_cursors_selection()
+    ed.set_cursors_auto_sync()
+
+GPS.EditorBuffer.cursors = cursors
+
+
 def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
     """
     Execute the function mark_fn for every cursor in the editor,

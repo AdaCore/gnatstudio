@@ -525,25 +525,14 @@ def end_of_buffer():
         buffer.end_of_buffer(), should_extend_selection)
 
 
-@interactive("Editor", filter_text_actions,
-             name="goto beginning of line (extend selection)")
-def goto_beginning_of_line_ext_sel():
-    _goto_beginning_of_line(True)
-
-
-@interactive("Editor", filter_text_actions, name="goto beginning of line")
-def goto_beginning_of_line():
-    _goto_beginning_of_line(False)
-
-
-def _goto_beginning_of_line(extend_selection):
+def _goto_line_bound(beginning, extend_selection):
     """Goto the beginning of line"""
-    def goto_bol(buffer, mark):
-        mark.move(mark.location().beginning_of_line())
+    from pygps import get_widgets_by_type
 
     widget = get_focused_widget()
     ed = GPS.EditorBuffer.get()
-    from pygps import get_widgets_by_type
+    extend_selection =\
+        extend_selection or ed.current_view().get_extend_selection()
     gtk_ed_view = get_widgets_by_type(
         Gtk.TextView, ed.current_view().pywidget())[0]
 
@@ -552,13 +541,38 @@ def _goto_beginning_of_line(extend_selection):
     elif gtk_ed_view != widget:
         b = widget.get_buffer()
         it = b.get_iter_at_mark(b.get_mark("insert"))
-        b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
+        if beginning:
+            b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
+        else:
+            it.forward_to_line_end()
+            b.place_cursor(it)
     else:
-        execute_for_all_cursors(
-            ed, goto_bol,
-            extend_selection=extend_selection or ed.current_view(
-            ).get_extend_selection()
-        )
+        for c in ed.cursors():
+            d = c.mark().location()
+            d = d.beginning_of_line() if beginning else d.end_of_line()
+            c.move(d, extend_selection)
+
+
+@interactive("Editor", filter_text_actions,
+             name="goto beginning of line (extend selection)")
+def goto_beginning_of_line_ext_sel():
+    _goto_line_bound(True, True)
+
+
+@interactive("Editor", filter_text_actions, name="goto beginning of line")
+def goto_beginning_of_line():
+    _goto_line_bound(True, False)
+
+
+@interactive("Editor", filter_text_actions,
+             name="goto end of line (extend selection)")
+def goto_end_of_line_ext_sel():
+    _goto_line_bound(False, True)
+
+
+@interactive("Editor", filter_text_actions, name="goto end of line")
+def goto_end_of_line():
+    _goto_line_bound(False, False)
 
 
 def end_of_line(file, line):
@@ -566,12 +580,6 @@ def end_of_line(file, line):
     buffer = GPS.EditorBuffer.get(GPS.File(file))
     loc = buffer.at(line, 1)
     buffer.current_view().goto(loc.end_of_line() - 1)
-
-
-@interactive("Editor", filter_text_actions,
-             name="goto end of line (extend selection)")
-def goto_end_of_line_ext_sel():
-    _goto_end_of_line(True)
 
 
 @interactive("Editor", "Source editor", name="forward delete")
@@ -585,111 +593,65 @@ def backward_delete():
 
 
 def delete(forward=True):
-
-    offset = 1 if forward else -1
     ed = GPS.EditorBuffer.get()
-    cursors = ed.get_cursors()
-    has_mcs = len(ed.get_cursors()) > 1
-    main_cursor = cursors[0]
-    if has_mcs:
+    mc = ed.main_cursor()
+    has_sel = mc.mark().location() == mc.sel_mark().location()
+
+    if ed.has_slave_cursors():
         ed.start_undo_group()
 
     def delete(s, e):
-        if s < e:
-            e = e.forward_char(-1)
-        else:
-            s = s.forward_char(-1)
-        ed.delete(s, e)
+        s, e = (s, e) if s < e else (e, s)
+        ed.delete(s, e.forward_char(-1))
 
-    if main_cursor.mark().location() == main_cursor.sel_mark().location():
-        for c in cursors:
-            c.set_manual_sync()
+    for c in ed.cursors():
+        if has_sel:
             l = c.mark().location()
-            delete(l, l.forward_char(offset))
+            delete(l, l.forward_char(1 if forward else -1))
+        else:
+            delete(c.mark().location(), c.sel_mark().location())
 
-    else:
-        for c in cursors:
-            c.set_manual_sync()
-            delete(c.mark().location(),
-                   c.sel_mark().location())
-
-        ed.update_cursors_selection()
-
-    ed.set_cursors_auto_sync()
-
-    if has_mcs:
+    if ed.has_slave_cursors():
         ed.finish_undo_group()
-
-
-@interactive("Editor", filter_text_actions, name="goto end of line")
-def goto_end_of_line():
-    _goto_end_of_line(False)
-
-
-def _goto_end_of_line(extend_selection):
-    """Goto the end of line"""
-
-    def goto_eol(buffer, mark):
-        mark.move(mark.location().end_of_line())
-
-    widget = get_focused_widget()
-    ed = GPS.EditorBuffer.get()
-    from pygps import get_widgets_by_type
-    gtk_ed_view = get_widgets_by_type(
-        Gtk.TextView, ed.current_view().pywidget())[0]
-
-    if type(widget) is Gtk.Entry:
-        widget.set_position(len(widget.props.text))
-    elif gtk_ed_view != widget:
-        b = widget.get_buffer()
-        it = b.get_iter_at_mark(b.get_mark("insert"))
-        it.forward_to_line_end()
-        b.place_cursor(it)
-    else:
-        execute_for_all_cursors(
-            GPS.EditorBuffer.get(), goto_eol,
-            extend_selection=extend_selection or ed.current_view(
-            ).get_extend_selection()
-        )
 
 
 def is_space(char):
     return char == ' ' or char == '\t'
 
 
-def goto_word_start(iter, underscore_is_word=True):
+def goto_word_start(loc, underscore_is_word=True):
     """
     Move to the beginning of the current word (or leave the cursor where it
     is). This properly handles '_'
     """
     if underscore_is_word:
-        while not iter.starts_word():
-            iter = iter.forward_word(-1)
-        return iter
+        while not loc.starts_word():
+            loc = loc.forward_word(-1)
+        return loc
     else:
-        while not iter.starts_word():
-            prev = iter
-            iter = iter.forward_char(-1)
-            c = iter.get_char()
+        while not loc.starts_word():
+            prev = loc
+            loc = loc.forward_char(-1)
+            c = loc.get_char()
             if c == '_':
                 return prev
-        return iter
+        return loc
 
 
-def goto_word_end(iter, underscore_is_word=True):
+def goto_word_end(loc, underscore_is_word=True):
     if underscore_is_word:
         while True:
-            iter = iter.forward_word()
+            loc = loc.forward_word()
             try:
-                if iter.get_char() != '_':
-                    return iter.forward_char(-1)
+                if loc.get_char() != '_':
+                    return loc.forward_char(-1)
             except:
-                return iter.buffer().end_of_buffer()
+                return loc.buffer().end_of_buffer()
 
     else:
-        while not iter.ends_word():
-            prev = iter
-            iter = iter.forward_char(1)
+        while not loc.ends_word():
+            prev = loc
+            loc = iter.forward_char(1)
             try:
                 if iter.get_char() == '_':
                     return prev

@@ -377,8 +377,18 @@ package body Src_Editor_Module.Editors is
    overriding function Get_Selection_Mark
      (This     : Src_Editor_Cursor) return Editor_Mark'Class;
 
+   overriding procedure Move
+     (This : Src_Editor_Cursor; Where : Editor_Location'Class;
+      Extend_Selection : Boolean);
+
    overriding procedure Remove_All_Slave_Cursors
      (This     : Src_Editor_Buffer);
+
+   overriding function Get_Main_Cursor
+     (This : Src_Editor_Buffer) return Editor_Cursor'Class;
+
+   overriding function Has_Slave_Cursors
+     (This     : Src_Editor_Buffer) return Boolean;
 
    overriding procedure Set_Cursors_Auto_Sync
      (This : Src_Editor_Buffer);
@@ -2945,6 +2955,21 @@ package body Src_Editor_Module.Editors is
       Set_Manual_Sync (This.C.Element);
    end Set_Manual_Sync;
 
+   ----------
+   -- Move --
+   ----------
+
+   overriding procedure Move
+     (This : Src_Editor_Cursor; Where : Editor_Location'Class;
+      Extend_Selection : Boolean)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      This.Buffer.Contents.Buffer.Get_Iter_At_Offset
+        (Iter, Gint (Where.Offset));
+      Move (This.C.Element, Iter, Extend_Selection);
+   end Move;
+
    ---------------------
    -- Get_Insert_Mark --
    ---------------------
@@ -2964,6 +2989,25 @@ package body Src_Editor_Module.Editors is
    begin
       return This.Buffer.Create_Editor_Mark (Get_Sel_Mark (This.C.Element));
    end Get_Selection_Mark;
+
+   -----------------------
+   -- Has_Slave_Cursors --
+   -----------------------
+
+   overriding function Has_Slave_Cursors
+     (This : Src_Editor_Buffer) return Boolean
+   is (Has_Slave_Cursors (This.Contents.Buffer));
+
+   ---------------------
+   -- Get_Main_Cursor --
+   ---------------------
+
+   overriding function Get_Main_Cursor
+     (This : Src_Editor_Buffer) return Editor_Cursor'Class
+   is (Src_Editor_Cursor'
+        (GPS.Editors.Editor_Cursor
+         with C => Holder (Get_Main_Cursor (This.Contents.Buffer)),
+         Buffer => This));
 
    ------------------------------
    -- Remove_All_Slave_Cursors --

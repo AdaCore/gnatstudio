@@ -305,6 +305,10 @@ package GPS.Editors is
    -- Editor_Cursor --
    -------------------
 
+   procedure Move
+     (This : Editor_Cursor; Where : Editor_Location'Class;
+      Extend_Selection : Boolean) is abstract;
+
    function Get_Insert_Mark
      (This : Editor_Cursor) return Editor_Mark'Class is abstract;
 
@@ -403,6 +407,12 @@ package GPS.Editors is
    -------------------
    -- Editor_Buffer --
    -------------------
+
+   function Has_Slave_Cursors
+     (This : Editor_Buffer) return Boolean is abstract;
+
+   function Get_Main_Cursor
+     (This : Editor_Buffer) return Editor_Cursor'Class is abstract;
 
    procedure Newline_And_Indent
      (This : Editor_Buffer) is abstract;
@@ -888,6 +898,13 @@ private
    overriding procedure Newline_And_Indent
      (This : Dummy_Editor_Buffer) is null;
 
+   function Get_Main_Cursor
+     (This : Dummy_Editor_Buffer) return Editor_Cursor'Class
+   is (Nil_Editor_Cursor);
+
+   overriding function Has_Slave_Cursors
+     (This : Dummy_Editor_Buffer) return Boolean is (False);
+
    overriding procedure Close
      (This : Dummy_Editor_Buffer; Force : Boolean) is null;
 
@@ -1124,8 +1141,11 @@ private
 
    function Get_Insert_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class
-   is
-     (Nil_Editor_Mark);
+   is (Nil_Editor_Mark);
+
+   overriding procedure Move
+     (This : Dummy_Editor_Cursor; Where : Editor_Location'Class;
+      Extend_Selection : Boolean) is null;
 
    function Get_Selection_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class

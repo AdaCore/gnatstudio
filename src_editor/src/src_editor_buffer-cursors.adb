@@ -223,9 +223,28 @@ package body Src_Editor_Buffer.Cursors is
    -----------------------
    -- Has_Slave_Cursors --
    -----------------------
+
    function Has_Slave_Cursors
      (Buffer : Source_Buffer) return Boolean
    is (not Buffer.Slave_Cursors_List.Is_Empty);
+
+   ----------
+   -- Move --
+   ----------
+
+   procedure Move
+     (C : Cursor; Loc : Gtk_Text_Iter; Extend_Selection : Boolean)
+   is
+   begin
+      if C.Is_Main_Cursor and then not Extend_Selection then
+         C.Buffer.Place_Cursor (Loc);
+      else
+         C.Buffer.Move_Mark (Get_Mark (C), Loc);
+         if not Extend_Selection then
+            C.Buffer.Move_Mark (Get_Sel_Mark (C), Loc);
+         end if;
+      end if;
+   end Move;
 
    -----------------
    -- Get_Cursors --

@@ -1698,6 +1698,10 @@ package body Src_Editor_Module.Shell is
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -("Cannot build instances of Cursor."
                         & " Use EditorBuffer multi cursors methods instead"));
+
+      elsif Command = "move" then
+         MC_Data.C.Element.Move (Get_Location (Data, 2),
+                                 Nth_Arg (Data, 3));
       elsif Command = "mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
@@ -1951,6 +1955,15 @@ package body Src_Editor_Module.Shell is
             Data.Set_Return_Value
               (Create_Cursor (Data.Get_Script, Cursor));
          end loop;
+
+      elsif Command = "main_cursor" then
+         Data.Set_Return_Value
+           (Create_Cursor
+              (Data.Get_Script, Get_Buffer (Data, 1).Get_Main_Cursor));
+
+      elsif Command = "has_slave_cursors" then
+         Data.Set_Return_Value
+           (Get_Buffer (Data, 1).Has_Slave_Cursors);
 
       elsif Command = "start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
@@ -2707,6 +2720,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_manual_sync",  0, 0, MC_Cmds'Access, Cursor);
       Register_Command
         (Kernel, "sel_mark", 0, 0, MC_Cmds'Access, Cursor);
+      Register_Command
+        (Kernel, "move", 1, 2, MC_Cmds'Access, Cursor);
 
       --  EditorBuffer
 
@@ -2739,8 +2754,11 @@ package body Src_Editor_Module.Shell is
          "set_cursors_auto_sync",  0, 0, Buffer_Cmds'Access,
          EditorBuffer);
       Register_Command
-        (Kernel,
-         "get_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "get_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "main_cursor",  0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "has_slave_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
