@@ -81,7 +81,7 @@ The list of active entries includes:
   *Windows*
 
     Open a view containing all currently opened files.  See
-    :ref:`The_Window_View`.
+    :ref:`The_Windows_View`.
 
 *Browsers*
 
@@ -671,7 +671,7 @@ GPS tries to load the needed information and reports errors for missing or
 corrupted :file:`.gcov` files.
 
 To produce coverage information from :program:`gcov`, your project must be
-compiled with the :comamnd:`-fprofile-arcs` and :comamnd:`-ftest-coverage`
+compiled with the :command:`-fprofile-arcs` and :command:`-ftest-coverage`
 switches, respectively the :guilabel:`Instrument arcs` and :guilabel:`Code
 coverage` entries in :ref:`The_Project_Properties_Editor` and executed.
 

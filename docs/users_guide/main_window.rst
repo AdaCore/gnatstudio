@@ -1016,7 +1016,7 @@ files and directories belonging to the project (use the
 
 
 .. index:: windows, windows view
-.. _The_Window_View:
+.. _The_Windows_View:
 
 The :guilabel:`Windows` view
 ============================
@@ -1307,7 +1307,7 @@ If you right-click on the title of one of the entity boxes, you get the
 same contextual menu as when you click on the name of an entity in an
 editor, with the additional entries:
 
-* :menuselectin:`Go To Spec`
+* :menuselection:`Go To Spec`
 
   Open a source editor displaying the declaration of the entity.
 

@@ -7012,7 +7012,7 @@ general behavior expected from the VCS. It has the following attributes:
   can take the values `TRUE` or `FALSE`. If it is set to `TRUE` it means that
   the VCS supports atomic commands. It is `FALSE` by default. This attribute is
   important to trigger the activities group commit feature. See
-  :ref:`The_VCS_Activities`.
+  :ref:`VCS_Activities`.
 
 *path_style*
   The attribute `path_style` specifies which kind of directory separator is

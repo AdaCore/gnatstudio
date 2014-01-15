@@ -185,7 +185,7 @@ The :guilabel:`VCS Explorer` contains the following columns:
   Indicates whether a revision log exists for this file.
 
 *Activity*
-  The name of the activity the file belongs to. See :ref:`The_VCS_Activities`
+  The name of the activity the file belongs to. See :ref:`VCS_Activities`
   for more details.
 
 *Working rev.*
@@ -214,7 +214,7 @@ You can bring up the VCS contextual menu from the :guilabel:`VCS Explorer`
 by left-clicking on a selection or single line. See
 :ref:`The_Version_Control_Contextual_Menu`.
 
-.. _The_VCS_Activities:
+.. _VCS_Activities:
 
 VCS Activities
 ==============

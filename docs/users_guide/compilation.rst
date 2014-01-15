@@ -304,7 +304,7 @@ all Targets.
   * In background:
 
     The Target is launched automatically in the background after each
-    modification in the source editor. See :ref:`_Background_Compilations`.
+    modification in the source editor. See :ref:`Background_Compilations`.
 
 * Icon:
 
@@ -492,7 +492,7 @@ multiple toolchains mode is in use:
   compilation actions are performed normally on the build server.
 * The tools path is used and all related actions are performed on the local
   machine using this path.
-* The cross-reference files are handled :progeram:`rsync` so they don't get
+* The cross-reference files are handled :program:`rsync` so they don't get
   overwritten during local and remote host synchronizations.  Otherwise,
   gthey would because build and cross-reference generation actions occur at
   the same time on the local machine and on remote server.
