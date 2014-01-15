@@ -313,11 +313,11 @@ Loading a remote project
 ------------------------
 
 If the project you want to use is already on a remote server, you can
-directly load it on your local GPS by using the :menuselect:`Project->Open
-From Host` menu and selecting the server's nickname. This shows you its
-file tree.  Navigate to your project and select it. The project is loaded
-as described above with all remote operations categories assigned to the
-selected server by default.
+directly load it on your local GPS by using the :menuselection:`Project -->
+Open From Host` menu and selecting the server's nickname. This shows you
+its file tree.  Navigate to your project and select it. The project is
+loaded as described above with all remote operations categories assigned to
+the selected server by default.
 
 You can reload your project from local files on your machine. The remote
 configuration is automatically reapplied.

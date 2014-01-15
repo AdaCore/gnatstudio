@@ -408,7 +408,7 @@ Python extensions').  The string values inside those tags are handled
 similar to regular XML: extra whitespace is ignored. One exception is that
 layout is preserved in the following cases:
 
-*The line starts with "- " or "* "*
+*The line starts with "- " or "\* "*
 
   GPS makes sure a proper line end precedes the line. This allows lists in
   comments.
@@ -642,7 +642,7 @@ left area showing the computed metrics in a hierarchical tree form,
 arranged first by files and then by scopes inside the files.
 Double-clicking any of the files or scopes opens the corresponding source
 location in the editor. GPS displays any errors encountered during metrics
-computation in the :gnulabel:`Locations` view.
+computation in the :guilabel:`Locations` view.
 
 .. _Code_Coverage:
 
@@ -677,7 +677,7 @@ with the "-fprofile-arcs" and "-ftest-coverage" switches, respectively the
 Coverage Menu
 -------------
 
-The :menuselect:`Tools --> Coverage` menu has a number of entries,
+The :menuselection:`Tools --> Coverage` menu has a number of entries,
 depending on the context:
 
 :menuselection:`Gcov --> Compute coverage files`

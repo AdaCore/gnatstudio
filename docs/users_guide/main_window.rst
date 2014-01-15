@@ -1438,76 +1438,14 @@ The :guilabel:`Task Manager`
 
 .. image:: task-manager.png
 
-The Check the documentation of that plug-in, which lists a
-few settings that might be useful.
+The :guilabel:`Task Manager` window displays all running GPS
+operations currently running in the background, such as builds,
+searches or VCS commands.
 
-This console behaves like the standard shell on your system, including
-support for ANSI sequences (and thus color output). For example, it has
-been used to run :command:`vi` within GPS.
-
-
-.. index:: run
-.. index:: build; executing application
-.. index:: windows; execution window
-.. _The_Execution_Window:
-
-The Execution window
-====================
-
-.. index:: menu; build --> run
-
-When a program is launched using the menu :menuselection:`Build --> Run`,
-GPS creates a new execution window allowing input and output for the
-program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
-execution windows when the program terminates; you must close them
-explictly.  If you try to close the execution window while the program is
-still running, GPS displays a dialog window asking if you want to kill the
-application.
-
-
-.. index:: tasks
-.. index:: windows; task manager
-.. _The_Task_Manager:
-
-The :guilabel:`Task Manager` window displays all running GPS operations
-currently running in the background, such as builds, searches or VCS
-commands.
-
-For each task, the Check the documentation of that plug-in, which lists a
-few settings that might be useful.
-
-This console behaves like the standard shell on your system, including
-support for ANSI sequences (and thus color output). For example, it has
-been used to run :command:`vi` within GPS.
-
-
-.. index:: run
-.. index:: build; executing application
-.. index:: windows; execution window
-.. _The_Execution_Window:
-
-The Execution window
-====================
-
-.. index:: menu; build --> run
-
-When a program is launched using the menu :menuselection:`Build --> Run`,
-GPS creates a new execution window allowing input and output for the
-program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
-execution windows when the program terminates; you must close them
-explictly.  If you try to close the execution window while the program is
-still running, GPS displays a dialog window asking if you want to kill the
-application.
-
-
-.. index:: tasks
-.. index:: views; task manager
-.. _The_Task_Manager:
-
-The :guilabel:`Task Manager` displays the status of the task and its current
-progress.  You can suspect the execution of a task by clicking on the small
-:guilabel:`pause` button next to the task. Oor you can kill a task by
-clicking on the :guilabel:`interrupt` button.
+For each task, the :guilabel:`Task Manager` displays the status of the task
+and its current progress.  You can suspect the execution of a task by
+clicking on the small :guilabel:`pause` button next to the task. Oor you
+can kill a task by clicking on the :guilabel:`interrupt` button.
 
 .. index:: menu; tools --> views --> tasks
 

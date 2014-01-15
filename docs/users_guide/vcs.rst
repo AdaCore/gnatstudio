@@ -214,7 +214,7 @@ You can bring up the VCS contextual menu from the :guilabel:`VCS Explorer`
 by left-clicking on a selection or single line. See
 :ref:`The_Version_Control_Contextual_Menu`.
 
-.. _VCS_Activities:
+.. _The_VCS_Activities:
 
 VCS Activities
 ==============
@@ -228,7 +228,7 @@ can be committed atomically if supported by the version control system.
 .. index:: screen shot
 .. image:: vcs-activities.jpg
 
-Start the :gnulabel:`VCS Activities` view through the :menuselection:`VCS
+Start the :guilabel:`VCS Activities` view through the :menuselection:`VCS
 --> Activities` menu.  It contains the following columns:
 
 *Activity / File*
@@ -563,8 +563,7 @@ aren't shown because they're not relevant to that context.
 
   * creates an anonymous activity
 
-  * adds all files selected into the VCS Explorer into the newly
-  created anonymous activity,
+  * adds all files selected into the newly created anonymous activity
 
   * opens the activity log
 
@@ -659,7 +658,7 @@ aren't shown because they're not relevant to that context.
 
 *Filters*
 
-  Only available from the :guilabel:`VCS Explorer. This menu controls the
+  Only available from the :guilabel:`VCS Explorer`. This menu controls the
   filtering of the items displayed in the list.
 
   *Show all status*

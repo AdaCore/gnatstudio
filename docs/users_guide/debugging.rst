@@ -616,9 +616,9 @@ special meaning.  The default the meaning of each colors is as follows
   the elements of the array whose value has just changed appear in red.
 
   As another example, if you choose to display the value of local variables
-  in the data window (:menuselect:`Display->Display Local Variables`), only
-  the variables whose value has changed are highlighted; the others remain
-  black.
+  in the data window (:menuselection:`Display --> Display Local
+  Variables`), only the variables whose value has changed are highlighted;
+  the others remain black.
 
 Icons
 ^^^^^
