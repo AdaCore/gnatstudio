@@ -193,14 +193,30 @@ package body GNATdoc is
             --  entities defined in the runtime of the compiler)
 
             if not Is_Decorated (Entity) then
-               if All_Files.Contains (LL.Get_Location (Entity).File) then
+
+               --  Skip this check on internal entities built by the frontend
+               --  to workaround misssing entities not available through Xref
+
+               if Is_Internal (Entity) then
+                  null;
+
+               elsif All_Files.Contains (LL.Get_Location (Entity).File) then
                   Error_Msg ("missing full decoration");
                end if;
             else
                if No (Get_Scope (Entity))
                  and then not Is_Standard_Entity (Entity)
                then
-                  Error_Msg ("missing scope decoration (decorated)");
+                  --  Entities defined in package bodies are not fully
+                  --  decorated
+
+                  if not Is_Spec_File
+                           (Context.Kernel, LL.Get_Location (Entity).File)
+                  then
+                     null;
+                  else
+                     Error_Msg ("missing scope decoration (decorated)");
+                  end if;
 
                elsif Present (Get_Alias (Entity))
                  and then No (Get_Scope (Get_Alias (Entity)))
@@ -462,7 +478,7 @@ package body GNATdoc is
 
          use type Ada.Containers.Count_Type;
 
-      --  Start of processing for Check_Src_CheFiles
+      --  Start of processing for Check_Src_Files
 
       begin
          Prj_Index := Prj_Files.First;

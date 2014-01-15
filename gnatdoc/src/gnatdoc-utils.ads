@@ -54,10 +54,15 @@ private package GNATdoc.Utils is
       File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether File is a spec file
 
+   function Present (Text : Unbounded_String) return Boolean;
+   --  Return true if Text /= Null_Unbounded_String
+
    function Spaces_Only (Text : String) return Boolean;
    --  Returns true if the string is not empty and all its characters are ' '
 
    function To_String (N : Integer) return String;
    --  Convert Number to String removing spaces
 
+private
+   pragma Inline (Present);
 end GNATdoc.Utils;

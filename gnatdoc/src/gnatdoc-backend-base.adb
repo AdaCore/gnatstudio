@@ -110,7 +110,7 @@ package body GNATdoc.Backend.Base is
                return;
             end if;
 
-            if LL.Is_Generic (Entity)
+            if Is_Generic (Entity)
               and then Has_Generic_Formals (Entity)
             then
                for Current of Get_Generic_Formals (Entity).all loop
@@ -215,7 +215,7 @@ package body GNATdoc.Backend.Base is
          Entities : Collected_Entities;
          All_Pkgs : EInfo_List.Vector;
       begin
-         if LL.Is_Generic (Entity)
+         if Is_Generic (Entity)
            and then Has_Generic_Formals (Entity)
          then
             for Current of Get_Generic_Formals (Entity).all loop

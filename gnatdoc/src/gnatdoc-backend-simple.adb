@@ -426,7 +426,7 @@ package body GNATdoc.Backend.Simple is
               (if In_Private_Part (E) then " *(private)*"
                                       else "");
          begin
-            if LL.Is_Generic (E) then
+            if Is_Generic (E) then
                return " *(generic)*" & Private_Suffix;
             elsif Is_Generic_Formal (E) then
                return " *(generic formal)*" & Private_Suffix;
@@ -574,7 +574,10 @@ package body GNATdoc.Backend.Simple is
            or else Get_Kind (E) = E_Class
          then
             if In_Ada_Language (E) then
-               if Present (Get_Parent (E)) then
+               if Present (Get_Parent (E))
+                 or else (Is_Partial_View (E)
+                            and then Present (Get_Parent (Get_Full_View (E))))
+               then
                   if not Has_Private_Parent (E)
                     or else Context.Options.Show_Private
                   then
@@ -582,7 +585,9 @@ package body GNATdoc.Backend.Simple is
 
                      ReST_Append_Reference
                        (Printout => Printout,
-                        Entity   => Get_Parent (E),
+                        Entity   =>
+                          (if not Is_Partial_View (E) then Get_Parent (E)
+                           else Get_Parent (Get_Full_View (E))),
                         Prefix   => "   * ");
 
                      Append_Line (Printout, "");
@@ -1449,7 +1454,7 @@ package body GNATdoc.Backend.Simple is
 
                --  Locate a generic
 
-               if LL.Is_Generic (E1) then
+               if Is_Generic (E1) then
                   ReST_Append_Reference
                     (Printout => Printout'Access,
                      Entity   => E1,
@@ -1520,7 +1525,7 @@ package body GNATdoc.Backend.Simple is
 
                --  Locate a generic
 
-               if LL.Is_Generic (Generic_Entity) then
+               if Is_Generic (Generic_Entity) then
                   ReST_Append_Reference
                     (Printout => Printout'Access,
                      Entity   => Generic_Entity,
@@ -1685,7 +1690,9 @@ package body GNATdoc.Backend.Simple is
                   E := EInfo_List.Element (Cursor);
                   pragma Assert (Is_Tagged (E));
 
-                  if Get_IDepth_Level (E) = Root_Level then
+                  if Get_IDepth_Level (E) = Root_Level
+                    and then not Is_Full_View (E)
+                  then
                      Root_Types.Append (E);
                   end if;
 
@@ -1699,9 +1706,21 @@ package body GNATdoc.Backend.Simple is
                   E := EInfo_List.Element (Cursor);
 
                   if Get_IDepth_Level (E) /= Root_Level then
+                     if Is_Partial_View (E) then
+                        E := Get_Full_View (E);
+                     end if;
+
                      while Present (Get_Parent (E)) loop
                         E := Get_Parent (E);
+
+                        if Is_Partial_View (E) then
+                           E := Get_Full_View (E);
+                        end if;
                      end loop;
+
+                     if Is_Full_View (E) then
+                        E := Get_Partial_View (E);
+                     end if;
 
                      if not Root_Types.Contains (E) then
                         Root_Types.Append (E);

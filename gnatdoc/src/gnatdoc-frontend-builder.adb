@@ -69,7 +69,7 @@ package body GNATdoc.Frontend.Builder is
         (Entity : Unique_Entity_Id; Value : Unique_Entity_Id);
 
       procedure Append_To_List
-        (List : access EInfo_List.Vector; E : Unique_Entity_Id);
+        (List : access EInfo_List.Vector; E : Entity_Id);
       --  Append to List the entity E
 
       procedure Append_To_Enclosing_Scope
@@ -493,10 +493,10 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Append_To_List
         (List : access EInfo_List.Vector;
-         E    : Unique_Entity_Id) is
+         E    : Entity_Id) is
       begin
-         pragma Assert (not List.Contains (Get_Entity (E)));
-         List.Append (Get_Entity (E));
+         pragma Assert (not List.Contains (E));
+         List.Append (E);
       end Append_To_List;
 
       ---------------------
@@ -758,7 +758,7 @@ package body GNATdoc.Frontend.Builder is
       function Is_Generic
         (Entity : Unique_Entity_Id) return Boolean is
       begin
-         return LL.Is_Generic (Get_Entity (Entity));
+         return Is_Generic (Get_Entity (Entity));
       end Is_Generic;
 
       -----------------------------------
@@ -1369,6 +1369,7 @@ package body GNATdoc.Frontend.Builder is
                            Name     => Std_Entity_Name);
       use Scopes_Stack;
 
+      procedure Append_To_File_Entities (E : Entity_Id);
       procedure Append_To_File_Entities (E : Unique_Entity_Id);
       --  Append E to File_Entities.All_Entities
 
@@ -1386,11 +1387,24 @@ package body GNATdoc.Frontend.Builder is
       -- Append_To_File_Entities --
       -----------------------------
 
-      procedure Append_To_File_Entities (E : Unique_Entity_Id) is
+      procedure Append_To_File_Entities (E : Entity_Id) is
       begin
-         if not File_Entities.All_Entities.Contains (Get_Entity (E)) then
+         --  Do not append to the list of entities of this file entities which
+         --  inherited from other files (for example, inherited dispatching
+         --  primitives)
+
+         if In_Ada_Lang and then LL.Get_Location (E).File /= File then
+            return;
+         end if;
+
+         if not File_Entities.All_Entities.Contains (E) then
             Append_To_List (File_Entities.All_Entities'Access, E);
          end if;
+      end Append_To_File_Entities;
+
+      procedure Append_To_File_Entities (E : Unique_Entity_Id) is
+      begin
+         Append_To_File_Entities (Get_Entity (E));
       end Append_To_File_Entities;
 
       -------------------------
@@ -1482,25 +1496,41 @@ package body GNATdoc.Frontend.Builder is
                for J in Parents'Range loop
                   Get_Unique_Entity
                     (Parent, Context, File, Parents (J), Forced => True);
-                  Append_Parent_Type (E, Parent);
 
-                  --  The list of parents returned by Xref is not ordered and
-                  --  hence it does not help to differentiate the parent type
-                  --  from the progenitors.
+                  if not
+                    Has_Parent_Type (Get_Entity (E), Get_Entity (Parent))
+                  then
+                     Append_Parent_Type (E, Parent);
 
-                  if In_Ada_Lang then
-                     if Get_Kind (Parent) /= E_Interface then
-                        Set_Parent (E, Parent);
-                     else
-                        Append_Progenitor (E, Parent);
+                     --  The list of parents returned by Xref is not ordered
+                     --  and hence it does not help to differentiate the parent
+                     --  type from the progenitors.
+
+                     if In_Ada_Lang then
+                        if Get_Kind (Parent) /= E_Interface then
+
+                           --  For partial views we append the parent to the
+                           --  full view and we take care of completing the
+                           --  decoration of the partial view when we process
+                           --  the file to retrieve sources and comments
+
+                           if Is_Partial_View (E) then
+                              Set_Parent
+                                (Get_Full_View (E), Get_Entity (Parent));
+                           else
+                              Set_Parent (E, Parent);
+                           end if;
+                        else
+                           Append_Progenitor (E, Parent);
+                        end if;
                      end if;
-                  end if;
 
-                  if Is_New (Parent) then
-                     Append_To_Map (Parent);
+                     if Is_New (Parent) then
+                        Append_To_Map (Parent);
 
-                     if Present (Get_Full_View (Parent)) then
-                        Append_To_Map (Get_Full_View (Parent));
+                        if Present (Get_Full_View (Parent)) then
+                           Append_To_Map (Get_Full_View (Parent));
+                        end if;
                      end if;
                   end if;
                end loop;
@@ -1656,12 +1686,21 @@ package body GNATdoc.Frontend.Builder is
                                  Append_To_Scope (Get_Full_View (E),
                                    Get_Full_View (Entity));
 
-                                 Append_To_Map (Get_Full_View (Entity));
+                                 declare
+                                    Discr_Full_V : constant Entity_Id :=
+                                      Get_Full_View (Entity);
+                                 begin
+                                    Remove_Full_View (Entity);
 
-                                 Set_Is_Decorated (Get_Full_View (Entity));
+                                    Set_Scope (Discr_Full_V,
+                                      Get_Full_View (E));
+                                    Append_To_Map (Discr_Full_V);
+
+                                    Set_Is_Decorated (Discr_Full_V);
+                                 end;
+                              else
+                                 Remove_Full_View (Entity);
                               end if;
-
-                              Remove_Full_View (Entity);
 
                            --  Unknown discriminant of a private or limited
                            --  type
@@ -2026,6 +2065,10 @@ package body GNATdoc.Frontend.Builder is
             end if;
 
          elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
+
+            --  ??? This decoration is missing in primitives which are
+            --  renamings
+
             if Is_Subprogram (E)
               and then Present (Get_LL_Alias (E))
             then
@@ -2088,7 +2131,9 @@ package body GNATdoc.Frontend.Builder is
                --  the full view will be fully decorated later.
 
                if No (Get_Scope (Full_View)) then
-                  Append_To_Scope (Current_Scope, Full_View);
+                  if In_Same_File (Get_Entity (E), Get_Entity (Full_View)) then
+                     Append_To_Scope (Current_Scope, Full_View);
+                  end if;
                else
                   pragma Assert
                     (Get_Scope (Full_View) = Get_Entity (Current_Scope));
@@ -2241,8 +2286,6 @@ package body GNATdoc.Frontend.Builder is
       New_E                : Unique_Entity_Id;
       Skip_This_Entity     : Boolean := False;
       File_Entities_Cursor : Entities_In_File_Cursor;
-
-      Total_Entities_Count : Natural := 0;
       Entities_Count       : Natural := 0;
       Is_Large_File        : Boolean := False;
 
@@ -2252,23 +2295,6 @@ package body GNATdoc.Frontend.Builder is
       Set_Kind (Std_Entity, E_Package);
       Register_Std_Entity (Std_Entity);
       Enter_Scope (Std_Entity);
-
-      File_Entities_Cursor := Context.Database.Entities_In_File (File);
-      while not At_End (File_Entities_Cursor) loop
-         Total_Entities_Count := Total_Entities_Count + 1;
-         File_Entities_Cursor.Next;
-      end loop;
-
-      --  For large files emit a warning since the user may think that the tool
-      --  entered into a never-ending loop while it its processing the file.
-
-      if Total_Entities_Count > 3000 then
-         if not Context.Options.Quiet_Mode then
-            GNAT.IO.Put_Line
-              ("warning: large file " & (+File.Base_Name));
-            Is_Large_File := True;
-         end if;
-      end if;
 
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
 
@@ -2316,22 +2342,13 @@ package body GNATdoc.Frontend.Builder is
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
-         if Is_Large_File
-           and then not Context.Options.Quiet_Mode
-           and then Entities_Count mod 300 = 0
+         if not Context.Options.Quiet_Mode
+           and then not Is_Large_File
+           and then Entities_Count mod 3000 = 0
          then
-            declare
-               Percent : constant Float :=
-                 (Float (Entities_Count) / Float (Total_Entities_Count))
-                   * 100.0;
-            begin
-               GNAT.IO.Put_Line
-                 ("   "
-                  & (+File.Base_Name)
-                  & ": "
-                  & To_String (Natural (Percent))
-                  & "%");
-            end;
+            GNAT.IO.Put_Line
+              ("warning: processing large file " & (+File.Base_Name));
+            Is_Large_File := True;
          end if;
 
          Skip_This_Entity := False;
@@ -2500,6 +2517,20 @@ package body GNATdoc.Frontend.Builder is
             end if;
 
             if Skip_This_Entity then
+               --  Ensure that all the entities found in the ALI file are
+               --  appended to the list of entities of this file. Required
+               --  because there are cases in which LL_Scope is not available
+               --  by mistake which causes erroneously skipping this entity
+               --  (which affects later processings in the new frontend)
+
+               if Get_Kind (Get_Entity (New_E)) /= E_Discriminant then
+                  Append_To_File_Entities (New_E);
+
+                  if LL.Is_Primitive (Get_Entity (New_E)) then
+                     Set_Is_Decorated (New_E);
+                  end if;
+               end if;
+
                Free (New_E);
 
             else
@@ -2508,6 +2539,13 @@ package body GNATdoc.Frontend.Builder is
                end if;
 
                Append_To_File_Entities (New_E);
+
+               if Is_Partial_View (New_E)
+                 and then Present (Get_Full_View (New_E))
+                 and then LL.Get_Location (Get_Full_View (New_E)).File = File
+               then
+                  Append_To_File_Entities (Get_Full_View (New_E));
+               end if;
 
                --  Full views were unconditionally added to the scope as part
                --  of processing their partial view (since for private types
@@ -2680,13 +2718,17 @@ package body GNATdoc.Frontend.Builder is
          for J in 0 .. Last loop
             S := Stack.Element (Natural (J));
 
-            if LL.Is_Generic (Get_Entity (S)) then
+            if Is_Generic (Get_Entity (S)) then
                return S;
             end if;
          end loop;
 
          return Unique_Entity_Allocator.No_Entity;
       end Enclosing_Generic_Scope;
+
+      -----------------
+      -- Enter_Scope --
+      -----------------
 
       procedure Enter_Scope (Scope : Unique_Entity_Id) is
       begin
@@ -2809,7 +2851,7 @@ package body GNATdoc.Frontend.Builder is
          for J in 0 .. Last loop
             S := Stack.Element (Natural (J));
 
-            if LL.Is_Generic (Get_Entity (S)) then
+            if Is_Generic (Get_Entity (S)) then
                return True;
             end if;
          end loop;

@@ -35,15 +35,21 @@ with Language.Tree.Database;   use Language.Tree.Database;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Xref.Docgen;              use Xref.Docgen;
 with Xref;
+with Ada.Unchecked_Deallocation;
+with GNAT.IO;
 
 package body GNATdoc.Frontend is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend");
+   Enhancements : constant Boolean := False;
 
    XML_Regpat : constant Pattern_Matcher :=
      Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
    type Tokens is
      (Tok_Unknown,
+      Tok_Id,          --  Expanded names & identifiers
+      Tok_Operator,
+
       --  Reserved words
       Tok_Abstract,
       Tok_And,
@@ -51,7 +57,9 @@ package body GNATdoc.Frontend is
       Tok_Case,
       Tok_End,
       Tok_Entry,
+      Tok_For,
       Tok_Function,
+      Tok_Generic,
       Tok_Interface,
       Tok_Is,
       Tok_Limited,
@@ -59,12 +67,18 @@ package body GNATdoc.Frontend is
       Tok_Null,
       Tok_Others,
       Tok_Package,
+      Tok_Pragma,
       Tok_Private,
       Tok_Procedure,
+      Tok_Protected,
       Tok_Record,
+      Tok_Renames,
+      Tok_Return,
+      Tok_Subtype,
       Tok_Tagged,
       Tok_Task,
       Tok_Type,
+      Tok_Use,
       Tok_When,
       Tok_With,
       --  Other tokens
@@ -92,6 +106,95 @@ package body GNATdoc.Frontend is
    function Get_Token (S : String) return Tokens;
    --  Return the token associated with S
 
+   package Debug is
+      function To_Str (E : Entity_Id) return String;
+      procedure Print_Entity (E : Entity_Id; Prefix : String);
+   end Debug;
+   use Debug;
+
+   package Scopes_Stack is
+      type Scope_Info is private;
+      type Scope_Id is access all Scope_Info;
+
+      procedure Disable_Enter_Scope;
+      procedure Enable_Enter_Scope;
+
+      function Current_Context return Scope_Id;
+      --  Return the context in the top of the stack
+
+      procedure Enter_Scope (Entity : Entity_Id);
+      --  Enter in the syntax scope of Entity
+
+      procedure Exit_Scope;
+      --  Leave a syntax scope
+
+      -- Getters --------------------------------------------------
+
+      function Get_Current_Entity
+        (Context : Scope_Id) return Entity_Id;
+      --  Return the current entity of Context
+
+      function Get_End_Decl_Found
+        (Scope : Scope_Id) return Boolean;
+
+      function Get_Prev_Entity_In_Scope
+        (Scope : Scope_Id) return Entity_Id;
+
+      function Get_Scope (Context : Scope_Id) return Entity_Id;
+      --  Return scope of the next entity (No_Entity if no scope available)
+
+      function Tok_Subprogram_Seen
+        (Scope : Scope_Id) return Boolean;
+
+      -- Setters --------------------------------------------------
+
+      procedure Replace_Current_Entity
+        (Context : Scope_Id; Entity : Entity_Id);
+
+      procedure Reset_End_Decl_Found
+        (Scope : Scope_Id);
+
+      procedure Set_Current_Entity
+        (Context : Scope_Id; Entity : Entity_Id);
+
+      procedure Set_End_Decl_Found
+        (Scope : Scope_Id);
+
+      procedure Set_Token_Seen
+        (Scope : Scope_Id; Token : Tokens);
+
+      procedure Reset_Tok_Subprogram_Seen
+        (Scope : Scope_Id);
+
+      procedure Print_Scopes;
+      --  For debugging
+
+   private
+      type Token_Flags is array (Tokens'Range) of Boolean;
+
+      type Scope_Info is record
+         Scope                : Entity_Id;
+
+         Prev_Entity_In_Scope : Entity_Id;
+         Current_Entity       : Entity_Id;
+
+         --  Parser state
+         End_Decl_Found      : Boolean := False;
+         Token_Seen          : Token_Flags := (others => False);
+      end record;
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Scope_Info, Scope_Id);
+
+      pragma Inline (Current_Context);
+      pragma Inline (Enter_Scope);
+      pragma Inline (Exit_Scope);
+
+      pragma Inline (Get_Current_Entity);
+      pragma Inline (Get_Scope);
+   end Scopes_Stack;
+   use Scopes_Stack;
+
    ---------------------------------
    -- Append_Comments_And_Sources --
    ---------------------------------
@@ -114,10 +217,6 @@ package body GNATdoc.Frontend is
       Buffers_Swapped  : Boolean;
 
       package Compiler_Workaround is
-
-         procedure Delayed_Remove_From_Scope;
-         --  Remove all the registered entities from their registered
-         --  scope.
 
          procedure Register_Delayed_Remove_From_Scope
            (Scope : Entity_Id; Entity : Entity_Id);
@@ -213,30 +312,6 @@ package body GNATdoc.Frontend is
             Entities_Removed_From_Scope.Append (New_Entry);
          end Register_Delayed_Remove_From_Scope;
 
-         -------------------------------
-         -- Delayed_Remove_From_Scope --
-         -------------------------------
-
-         procedure Delayed_Remove_From_Scope is
-            Cursor : Scope_Remove_List.Cursor;
-            Info   : Scope_Remove_Info;
-         begin
-            Cursor := Entities_Removed_From_Scope.First;
-            while Scope_Remove_List.Has_Element (Cursor) loop
-               Info := Scope_Remove_List.Element (Cursor);
-
-               declare
-                  Scope : constant Entity_Id := Get_Scope (Info.Entity);
-               begin
-                  Set_Scope (Info.Entity, Info.Scope);
-                  Remove_From_Scope (Info.Entity);
-                  Set_Scope (Info.Entity, Scope);
-               end;
-
-               Scope_Remove_List.Next (Cursor);
-            end loop;
-         end Delayed_Remove_From_Scope;
-
          ------------------------------------
          -- Workaround_Inner_Scope_Problem --
          ------------------------------------
@@ -276,7 +351,7 @@ package body GNATdoc.Frontend is
             end Check_Ordered_Entities_In_Scope;
 
             Check_Generic_Formals : constant Boolean :=
-              LL.Is_Generic (E)
+              Is_Generic (E)
                 and then Is_Subprogram (E)
                 and then Present (Get_Generic_Formals_Loc (E))
                 and then not Has_Generic_Formals (E);
@@ -293,7 +368,7 @@ package body GNATdoc.Frontend is
                Loc_End := Get_End_Of_Profile_Location (E);
 
             elsif Is_Subprogram (E) then
-               if LL.Is_Generic (E) then
+               if Is_Generic (E) then
                   pragma Assert (Present (Get_Generic_Formals_Loc (E)));
                   Loc_Start := Get_Generic_Formals_Loc (E);
                else
@@ -370,10 +445,15 @@ package body GNATdoc.Frontend is
       end Compiler_Workaround;
 
       procedure Ada_Get_Doc (E : Entity_Id);
+      pragma Unreferenced (Ada_Get_Doc);
       --  Retrieve the documentation associated with E
 
       procedure Ada_Get_Source (E : Entity_Id);
+      pragma Unreferenced (Ada_Get_Source);
       --  Retrieve the Ada source associated with E
+
+      procedure Ada_Set_Doc (E : Entity_Id);
+      --  Set the documentation of E
 
       procedure CPP_Get_Doc (E : Entity_Id);
       --  Retrieve the C/C++ documentation associated with E
@@ -398,6 +478,9 @@ package body GNATdoc.Frontend is
          Buffer   : GNAT.Strings.String_Access);
       --  Parse the profile of a package to complete the decoration of E
       --  setting attribute Parent_Package
+
+      procedure Parse_Ada_File
+        (Buffer   : GNAT.Strings.String_Access);
 
       procedure Parse_Ada_Profile
         (E        : Entity_Id;
@@ -551,6 +634,104 @@ package body GNATdoc.Frontend is
             end if;
          end if;
       end Ada_Get_Doc;
+
+      -----------------
+      -- Ada_Set_Doc --
+      -----------------
+
+      Prev_Comment_Line : Natural := 0;
+
+      procedure Ada_Set_Doc (E : Entity_Id) is
+
+         function May_Have_Tags (Text : Unbounded_String) return Boolean;
+         --  Return true if Text may contain some tag
+
+         function May_Have_Tags (Text : Unbounded_String) return Boolean is
+         begin
+            if Index (Text, "@") > 0 then
+               return True;
+            else
+               declare
+                  S       : constant String := To_String (Text);
+                  Matches : Match_Array (0 .. 3);
+
+               begin
+                  Match (XML_Regpat, S, Matches);
+
+                  return Matches (0) /= No_Match;
+               end;
+            end if;
+         end May_Have_Tags;
+
+      begin
+         if LL.Get_Location (E).File /= File then
+            return;
+         end if;
+
+         if Context.Options.Leading_Doc then
+
+            if Is_Compilation_Unit (E) then
+               --  For documentation located before compilation units it is
+               --  mandatory to use some tag. Required to safely differentiate
+               --  copyright banners, etc.
+
+               if Present (Get_Doc_Before (E))
+                 and then May_Have_Tags (Get_Doc_Before (E).Text)
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
+                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+
+               elsif Present (Get_Doc_After (E)) then
+                  Set_Doc (E, Get_Doc_After (E));
+                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+               end if;
+            else
+               if Present (Get_Doc_Before (E))
+                 and then Get_Doc_Before (E).Start_Line /= Prev_Comment_Line
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
+                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+
+               elsif Present (Get_Doc_After (E)) then
+                  Set_Doc (E, Get_Doc_After (E));
+                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+               end if;
+            end if;
+
+         else
+            if Is_Compilation_Unit (E) then
+
+               if Present (Get_Doc_After (E)) then
+                  Set_Doc (E, Get_Doc_After (E));
+                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+
+               --  For documentation located before compilation units it is
+               --  mandatory to use some tag. Required to safely differentiate
+               --  copyright banners, etc.
+
+               elsif Present (Get_Doc_Before (E))
+                 and then May_Have_Tags (Get_Doc_Before (E).Text)
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
+                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+               end if;
+            else
+               if Present (Get_Doc_After (E)) then
+                  Set_Doc (E, Get_Doc_After (E));
+                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+
+               elsif Present (Get_Doc_Before (E))
+                 and then Get_Doc_Before (E).Start_Line /= Prev_Comment_Line
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
+                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+               end if;
+            end if;
+         end if;
+
+         Set_Doc_Before (E, No_Comment_Result);
+         Set_Doc_After (E, No_Comment_Result);
+      end Ada_Set_Doc;
 
       --------------------
       -- Ada_Get_Source --
@@ -2612,7 +2793,7 @@ package body GNATdoc.Frontend is
                                From   => Index - 1,
                                Word_1 => "with");
 
-         elsif LL.Is_Generic (E) then
+         elsif Is_Generic (E) then
             declare
                Formals_Loc : General_Location;
                Idx         : Natural;
@@ -2778,7 +2959,7 @@ package body GNATdoc.Frontend is
             Columns       => Natural (Location.Column),
             Index         => Index);
 
-         if LL.Is_Generic (E) then
+         if Is_Generic (E) then
             declare
                Formals_Loc : General_Location;
                Idx         : Natural;
@@ -2834,10 +3015,1938 @@ package body GNATdoc.Frontend is
          --  formals we invoke here the workaround routine to move all the
          --  generic formals into the scope of the generic package.
 
-         if LL.Is_Generic (E) then
+         if Is_Generic (E) then
             Workaround_Compiler_Inner_Scope_Problem (E);
          end if;
       end Parse_Package_Header;
+
+      --------------------
+      -- Parse_Ada_File --
+      --------------------
+
+      procedure Parse_Ada_File
+        (Buffer   : GNAT.Strings.String_Access)
+      is
+         No_Line        : constant Natural := 0;
+         Doc_Start_Line : Natural := No_Line;
+         Doc_End_Line   : Natural := No_Line;
+         Doc            : Unbounded_String;
+
+         Printout       : Unbounded_String;
+         Printout_Plain : Unbounded_String;
+
+         New_Entities : EInfo_List.Vector;
+
+         package Extended_Cursor is
+            type Extended_Cursor is private;
+            function Has_Entity  (Cursor : Extended_Cursor) return Boolean;
+            function Entity      (Cursor : Extended_Cursor) return Entity_Id;
+            function Prev_Entity (Cursor : Extended_Cursor) return Entity_Id;
+
+            procedure Next_Entity (Cursor : in out Extended_Cursor);
+            procedure Initialize (Cursor : in out Extended_Cursor);
+
+            procedure Set_Next_Entity
+              (Cursor : in out Extended_Cursor;
+               Entity : Entity_Id);
+            --  This subprogram is used to workaround missing entities
+
+         private
+            type Extended_Cursor is record
+               Cursor       : EInfo_List.Cursor;
+               Element      : Entity_Id := Atree.No_Entity;
+               Prev_Element : Entity_Id := Atree.No_Entity;
+            end record;
+         end Extended_Cursor;
+
+         procedure Append_Comment (Text : String);
+         pragma Inline (Append_Comment);
+         --  Append Text to Comment
+
+         procedure Append_Plain_Sources (Text : String);
+         pragma Inline (Append_Plain_Sources);
+         --  Append Text to Printout
+
+         procedure Append_Sources (Text : String);
+         pragma Inline (Append_Sources);
+         --  Append Text to Printout
+
+         procedure Clear_Doc;
+         --  Clear the accumulated comment
+
+         procedure Clear_Sources;
+         --  Clear the accumulated sources
+
+         procedure Clear_Plain_Sources;
+         --  Clear the accumulated sources
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Callback for entity parser
+
+         ------------
+         -- Append --
+         ------------
+
+         procedure Append_Comment (Text : String) is
+            Comment_Prefix : constant String := "--";
+         begin
+            pragma Assert
+              (Text'Length > Comment_Prefix'Length
+               and then Comment_Prefix =
+                 Text (Text'First .. Text'First + Comment_Prefix'Length - 1));
+            Doc := Doc & Text (Text'First + 2 .. Text'Last);
+         end Append_Comment;
+
+         procedure Append_Plain_Sources (Text : String) is
+         begin
+            Printout_Plain := Printout_Plain & Text;
+         end Append_Plain_Sources;
+
+         procedure Append_Sources (Text : String) is
+         begin
+            Printout := Printout & Text;
+         end Append_Sources;
+
+         -----------
+         -- Clear --
+         -----------
+
+         procedure Clear_Doc is
+         begin
+            if Doc_Start_Line /= No_Line then
+               Doc_Start_Line := No_Line;
+               Doc            := Null_Unbounded_String;
+            end if;
+         end Clear_Doc;
+
+         procedure Clear_Plain_Sources is
+         begin
+            if Present (Printout_Plain) then
+               Printout_Plain := Null_Unbounded_String;
+            end if;
+         end Clear_Plain_Sources;
+
+         procedure Clear_Sources is
+         begin
+            if Present (Printout) then
+               Printout := Null_Unbounded_String;
+            end if;
+         end Clear_Sources;
+
+         Scope_Level : Natural := 0;
+         Scope_Tab : constant String :=
+           "| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | ";
+         --------
+         -- CB --
+         --------
+
+         Cursor     : Extended_Cursor.Extended_Cursor;
+         Last_Idx   : Natural := 0;
+         Par_Count  : Natural := 0;
+         Prev_Token : Tokens := Tok_Unknown;
+         Token      : Tokens := Tok_Unknown;
+
+         Nested_Variants_Count  : Natural := 0;
+
+         In_Compilation_Unit    : Boolean := False;
+         Generics_Nesting_Level : Natural := 0;
+         In_Generic_Formals     : Boolean := False;
+         In_Generic_Decl        : Boolean := False;
+         Generic_Formals        : EInfo_List.Vector;
+         Generic_Formals_Loc    : General_Location := No_Location;
+         --  Location of the word "generic"
+
+         In_Definition    : Boolean := False;
+         In_Item_Decl     : Boolean := False;
+
+         In_Parent_Part   : Boolean := False;
+         --  In_Parent_Part is set when we identify the sequence "is new"
+         --  or the sequence "interface and" which indicate that the next
+         --  token corresponds with the parent type of a tagged type or an
+         --  interface type.
+
+         In_Pragma                       : Boolean := False;
+         In_Representation_Clause        : Boolean := False;
+
+         In_Record_Representation_Clause : Boolean := False;
+         --  Used to avoid premature output of record representation clauses
+         --  when processing ";"
+
+         In_Skipped_Declaration : Boolean := False;
+
+         function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+            S : String renames
+                  Buffer (Sloc_Start.Index .. Sloc_End.Index);
+
+            procedure Accumulate_Comments;
+
+            procedure Complete_Decoration (End_Decl_Found : Boolean);
+
+            procedure Handle_Doc;
+            procedure Handle_Scopes (End_Decl_Found : Boolean);
+            procedure Handle_Sources (End_Decl_Found : Boolean);
+            procedure Handle_Tokens;
+
+            function Has_Scope (E : Entity_Id) return Boolean;
+            function In_Next_Entity return Boolean;
+
+            procedure Set_Doc_After_Current_Entity;
+            procedure Set_Doc_After_Previous_Entity_In_Scope;
+
+            procedure Print_State;
+
+            -------------------------
+            -- Accumulate_Comments --
+            -------------------------
+
+            procedure Accumulate_Comments is
+            begin
+               --  Clear the previously accumulated documentation if the
+               --  current one is not its continuation
+
+               if Doc_End_Line /= No_Line
+                 and then Sloc_Start.Line /= Doc_End_Line + 1
+               then
+                  declare
+                     Current_Entity : constant Entity_Id :=
+                       Get_Current_Entity (Current_Context);
+                  begin
+                     if Present (Current_Entity)
+                       and then
+                         Doc_Start_Line
+                           >= LL.Get_Location (Current_Entity).Line
+                     then
+                        Set_Doc_After_Current_Entity;
+                     else
+                        Set_Doc_After_Previous_Entity_In_Scope;
+                     end if;
+                  end;
+
+                  Clear_Doc;
+               end if;
+
+               if Doc_Start_Line = No_Line then
+                  Doc_Start_Line := Sloc_Start.Line;
+               end if;
+
+               Append_Comment (S);
+               Doc_End_Line := Sloc_End.Line;
+            end Accumulate_Comments;
+
+            -------------------------
+            -- Complete_Decoration --
+            -------------------------
+
+            procedure Complete_Decoration (End_Decl_Found : Boolean) is
+
+               procedure Decorate_Scope (E : Entity_Id);
+               --  Workaround missing decoration of the Scope
+
+               procedure Decorate_Scope (E : Entity_Id) is
+                  Scope : constant Entity_Id := Get_Scope (Current_Context);
+
+                  procedure Update_Scope;
+                  procedure Update_Scope is
+                  begin
+                     if Is_Partial_View (E) then
+                        Remove_From_Scope (Get_Full_View (E));
+                        Append_To_Scope (Scope, Get_Full_View (E));
+                        Set_Scope (Get_Full_View (E), Scope);
+                     end if;
+
+                     Remove_From_Scope (E);
+                     Append_To_Scope (Scope, E);
+                     Set_Scope (E, Scope);
+                  end Update_Scope;
+
+               begin
+                  if not End_Decl_Found
+                    and then Is_Concurrent_Type_Or_Object (Scope)
+                  then
+                     Remove_From_Scope (E);
+                     Append_To_Scope (Scope, E);
+                     Set_Scope (E, Scope);
+
+                  elsif not End_Decl_Found
+                    and then Is_Subprogram (Scope)
+                    and then Get_Kind (E) = E_Variable
+                  then
+                     Set_Kind (E, E_Formal);
+                     Remove_From_Scope (E);
+                     Append_To_Scope (Scope, E);
+                     Set_Scope (E, Scope);
+
+                  elsif Is_Subprogram (E)
+                    and then Is_Generic (Scope)
+                  then
+                     Remove_From_Scope (E);
+                     Append_To_Scope (Scope, E);
+                     Set_Scope (E, Scope);
+
+                  --  This should be the general case for generics
+
+                  elsif Is_Generic (Scope) then
+                     Update_Scope;
+
+                  elsif No (Get_Scope (E)) then
+                     Update_Scope;
+
+                  --  Workaround wrong decoration in enumeration types???
+
+                  elsif Get_Kind (E) = E_Enumeration_Type
+                    and then Get_Scope (E) /= Scope
+                  then
+                     pragma Assert (Is_Package (Scope));
+                     Update_Scope;
+
+                  elsif Get_Scope (E) /= Scope then
+                     Update_Scope;
+
+                  else
+                     null;
+                  end if;
+               end Decorate_Scope;
+
+            --  Start of processing for Complete_Decoration
+
+            begin
+               case Token is
+                  when Tok_Generic =>
+                     In_Generic_Formals := True;
+                     Generic_Formals_Loc :=
+                       General_Location'
+                         (File   => File,
+                          Line   => Sloc_Start.Line,
+                          Column => Visible_Column (Sloc_Start.Column));
+
+                  when Tok_Package |
+                       Tok_Procedure |
+                       Tok_Function  =>
+                     if In_Generic_Formals
+                       and then Par_Count = 0
+                       and then (Prev_Token = Tok_Generic
+                                  or else Prev_Token = Tok_Semicolon)
+                     then
+                        In_Generic_Decl := True;
+                     end if;
+                  when Tok_New =>
+                     if Prev_Token = Tok_Is then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           if Is_Record_Type (Scope) then
+                              In_Parent_Part := True;
+                           end if;
+                        end;
+                     end if;
+
+                  when Tok_And =>
+                     if Prev_Token = Tok_Interface then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           pragma Assert (Get_Kind (Scope) = E_Interface);
+                           In_Parent_Part := True;
+                        end;
+                     end if;
+
+                  when Tok_Tagged =>
+                     declare
+                        Scope : constant Entity_Id :=
+                          Get_Scope (Current_Context);
+                     begin
+                        pragma Assert (Is_Record_Type (Scope));
+                        Set_Is_Tagged (Scope);
+                        Set_Kind (Scope, E_Tagged_Record_Type);
+                     end;
+
+                  when Tok_Private =>
+                     if In_Generic_Formals then
+                        null;
+
+                     elsif In_Compilation_Unit then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           E     : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+
+                        begin
+                           if Is_Partial_View (Scope) then
+                              Set_Is_Incomplete (Scope, False);
+                              Set_Is_Private (Scope);
+
+                           elsif Present (E)
+                             and then Is_Generic_Formal (E)
+                           then
+                              pragma Assert (Is_Standard_Entity (Scope));
+                              null;
+
+                           --  We have found the beginning of the private
+                           --  part of a package spec or a concurrent type
+                           --  spec
+
+                           else
+                              pragma Assert (Is_Package (Scope)
+                                or else Is_Concurrent_Type_Or_Object (Scope));
+                           end if;
+                        end;
+                     end if;
+
+                     --  Expanded names & identifiers
+
+                  when Tok_Id =>
+                     if In_Parent_Part then
+                        declare
+                           E : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           pragma Assert (Is_Record_Type (E));
+
+                           if Present (Get_Parent (E)) then
+
+                              if Is_Full_View (E)
+                                and then Is_Private (Get_Partial_View (E))
+                                and then
+                                  No (Get_Parent (Get_Partial_View (E)))
+                              then
+                                 Set_Has_Private_Parent (Get_Partial_View (E));
+                              end if;
+
+                           else
+                              --  In the partial view Xref returns the parent
+                              --  in the list of parents (and hence, at
+                              --  current stage it is stored in the list of
+                              --  progenitors). We localize it and remove it
+                              --  from the list of progenitors.
+
+                              if Is_Partial_View (E) then
+
+                                 if Present
+                                      (Get_Parent (Get_Full_View (E)))
+                                 then
+                                    Set_Parent (E,
+                                      Get_Parent (Get_Full_View (E)));
+
+                                 --  Derivation of untagged type. For instance:
+                                 --     type Rec_A is record ...
+                                 --     subtype Rec_B is Rec_A;
+
+                                 elsif not Is_Tagged (E) then
+                                    null; -- Unhandled yet???
+
+                                 else
+                                    declare
+                                       Parent : Entity_Id;
+                                    begin
+                                       Parent :=
+                                         Find_Entity
+                                           (Get_Progenitors (E).all,
+                                            Name => S);
+                                       pragma Assert (Present (Parent));
+
+                                       Set_Parent (E, Parent);
+                                       Delete_Entity
+                                         (Get_Progenitors (E).all, Parent);
+                                    end;
+                                 end if;
+
+                              --  We don't know the exact location associated
+                              --  with the entity in the database. Hence for
+                              --  now we take a conservative approach and we
+                              --  first retry the entity from the database
+                              --  and use its location to retry its associated
+                              --  unique high-level entity.
+
+                              else
+                                 declare
+                                    Tok_Loc   : General_Location;
+                                    LL_Parent : General_Entity;
+                                    Parent    : Entity_Id := Atree.No_Entity;
+                                    Dot_Pos   : Natural   := 0;
+
+                                 begin
+                                    if Is_Expanded_Name (S) then
+                                       declare
+                                          Idx : Natural;
+                                       begin
+                                          Parent := Find_Unique_Entity (S);
+                                          Idx :=
+                                            Index (S, ".", Going => Backward);
+                                          Dot_Pos := Idx - S'First + 1;
+                                       end;
+                                    end if;
+
+                                    if No (Parent) then
+                                       Tok_Loc :=
+                                         General_Location'
+                                           (File   => File,
+                                            Line   => Sloc_Start.Line,
+                                            Column =>
+                                              Visible_Column_Type
+                                                (Sloc_Start.Column + Dot_Pos));
+
+                                       LL_Parent :=
+                                         Xref.Get_Entity
+                                           (Db   => Context.Database,
+                                            Name => Get_Short_Name (S),
+                                            Loc  => Tok_Loc);
+
+                                       --  Tolerate the case in which the
+                                       --  package containing the parent
+                                       --  type is not available.
+
+                                       if Present (LL_Parent)
+                                         and then not Is_Fuzzy (LL_Parent)
+                                       then
+                                          Parent :=
+                                            Builder.Get_Unique_Entity
+                                              (Context, File, LL_Parent);
+                                       end if;
+                                    end if;
+
+                                    if Present (Parent) then
+                                       pragma Assert (LL.Is_Type (Parent));
+                                       Set_Parent (E, Parent);
+
+                                       if Get_Progenitors (E)
+                                         .Contains (Parent)
+                                       then
+                                          Delete_Entity
+                                            (Get_Progenitors (E).all, Parent);
+                                       end if;
+
+                                       --  Complete the decoration of E
+
+                                       if Is_Tagged (Parent) then
+                                          Set_Is_Tagged (E);
+                                       end if;
+
+                                       if Present (Get_Partial_View (E))
+                                         and then
+                                           Is_Private (Get_Partial_View (E))
+                                         and then
+                                           No (Get_Parent
+                                                 (Get_Partial_View (E)))
+                                       then
+                                          Set_Has_Private_Parent
+                                            (Get_Partial_View (E));
+                                       end if;
+
+                                    end if;
+                                 end;
+                              end if;
+                           end if;
+
+                           In_Parent_Part := False;
+                        end;
+
+                     elsif In_Next_Entity then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+
+                        begin
+                           if not In_Generic_Formals
+                             and then Is_Compilation_Unit (E)
+                           then
+                              --  Given that the scope available at current
+                              --  stage is not reliable this assertion is
+                              --  not reliable and must be disabled???
+
+                              --  pragma Assert (not In_Compilation_Unit);
+
+                              In_Compilation_Unit := True;
+                           end if;
+
+                           if Is_Generic (E) then
+                              pragma Assert (Present (Generic_Formals_Loc));
+                              Set_Generic_Formals_Loc (E, Generic_Formals_Loc);
+                              Generic_Formals_Loc := No_Location;
+                              In_Generic_Formals := False;
+                              In_Generic_Decl := False;
+
+                              --  For subprograms found in generic formals
+                              --  this code is erroneously decorating their
+                              --  formals as generic formals???
+
+                              declare
+                                 Cursor : EInfo_List.Cursor;
+                                 Formal : Entity_Id;
+                              begin
+                                 Cursor := Generic_Formals.First;
+
+                                 while EInfo_List.Has_Element (Cursor) loop
+                                    Formal := EInfo_List.Element (Cursor);
+
+                                    Set_Is_Generic_Formal (Formal);
+
+                                    --  Adding minimum decoration to
+                                    --  undecorated generic formals
+
+                                    if Get_Kind (E) = E_Unknown then
+                                       Set_Kind (E, E_Generic_Formal);
+                                    end if;
+
+                                    if Get_Scope (Formal) /= E
+                                      or else not
+                                        Get_Generic_Formals
+                                          (E).Contains (Formal)
+                                    then
+                                       Remove_From_Scope (Formal);
+                                       Append_Generic_Formal (E, Formal);
+                                       Set_Scope (Formal, E);
+                                    end if;
+
+                                    EInfo_List.Next (Cursor);
+                                 end loop;
+                              end;
+
+                              Generic_Formals.Clear;
+                              Decorate_Scope (E);
+
+                           elsif In_Generic_Formals then
+                              Generic_Formals.Append (E);
+
+                           else
+                              case Prev_Token is
+                              when Tok_Subtype =>
+                                 pragma Assert (LL.Is_Type (E));
+                                 Set_Is_Subtype (E);
+
+                              when Tok_Protected =>
+                                 Set_Kind (E, E_Single_Protected);
+                                 Set_Is_Incomplete (E, False);
+                                 Remove_Full_View (E);
+
+                              when others =>
+                                 null;
+                              end case;
+
+                              Decorate_Scope (E);
+                           end if;
+                        end;
+
+                     elsif Prev_Token = Tok_Renames then
+                        declare
+                           E : Entity_Id;
+                        begin
+                           if Present
+                                (Get_Current_Entity (Current_Context))
+                             and then
+                                Get_Kind (Get_Current_Entity (Current_Context))
+                                  /= E_Formal
+                           then
+                              E := Get_Current_Entity (Current_Context);
+                           else
+                              E := Get_Scope (Current_Context);
+                           end if;
+
+                           if No (Get_Alias (E)) then
+                              declare
+                                 Current_Loc : constant General_Location :=
+                                   General_Location'(File   => File,
+                                                     Line   => Sloc_Start.Line,
+                                                     Column => Visible_Column
+                                                       (Sloc_Start.Column));
+                                 Entity      : constant Entity_Id :=
+                                   Get_Entity
+                                     (Context               => Context,
+                                      Name                  => S,
+                                      Loc                   => Current_Loc);
+
+                              begin
+                                 if Present (Entity) then
+                                    Set_Alias (E, Entity);
+
+                                 --  Adding a minimum decoration otherwise
+                                 --  which will be used to handle the scopes
+
+                                 else
+                                    Set_Is_Alias (E);
+                                 end if;
+                              end;
+                           end if;
+
+                        end;
+                     end if;
+
+                  when Tok_Semicolon =>
+                     if Par_Count = 0 then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if End_Decl_Found then
+                              if Is_Record_Type (Scope)
+                                and then Is_Private (Scope)
+                                and then Is_Full_View (Scope)
+                                and then Present (Get_Parent (Scope))
+                                and then
+                                  No (Get_Parent (Get_Partial_View (Scope)))
+                              then
+                                 Set_Has_Private_Parent
+                                   (Get_Partial_View (Scope));
+                              end if;
+
+                              --  If we have processed a single declaration
+                              --  then E references it; if we have processed
+                              --  all the formals of a subprogram or entry
+                              --  then there is no current entity available
+                              --  in the scope
+
+                              declare
+                                 Loc : constant General_Location :=
+                                   General_Location'
+                                     (File => File,
+                                      Line => Sloc_Start.Line,
+                                      Column =>
+                                        Visible_Column (Sloc_Start.Column));
+                              begin
+                                 if Present (E)
+                                   and then Get_Kind (E) /= E_Formal
+                                 then
+                                    if not Enhancements
+                                      and then
+                                        (Get_Kind (E) = E_Variable
+                                         or else Get_Kind (E) = E_Component
+                                         or else Is_Generic_Formal (E)
+                                         or else Get_Kind (E)
+                                                   = E_Generic_Formal
+                                         or else
+                                           (LL.Is_Type (E)
+                                             and then not Is_Record_Type (E)
+                                             and then not
+                                               Is_Concurrent_Type_Or_Object
+                                                 (E)))
+                                    then
+                                       null;
+
+                                    --  No action needed if this attribute
+                                    --  is already set. This case occurs
+                                    --  with pragmas located after E.
+
+                                    elsif
+                                        Present
+                                          (Get_End_Of_Profile_Location (E))
+                                      or else
+                                        Present
+                                         (Get_End_Of_Syntax_Scope_Loc (E))
+                                    then
+                                       null;
+                                    elsif Is_Subprogram_Or_Entry (E) then
+                                       Set_End_Of_Profile_Location (E, Loc);
+                                    else
+                                       Set_End_Of_Syntax_Scope_Loc (E, Loc);
+                                    end if;
+
+                                 else
+                                    --  Probably I should simplify these two
+                                    --  attributes in a single one???
+
+                                    if not Enhancements
+                                      and then
+                                        (Present
+                                           (LL.Get_Instance_Of (Scope))
+                                         or else
+                                           Get_Kind (Scope) = E_Access_Type)
+                                    then
+                                       null;
+
+                                    --  No action needed if this attribute
+                                    --  is already set. This case occurs
+                                    --  with pragmas located after Scope.
+
+                                    elsif
+                                      Present
+                                        (Get_End_Of_Profile_Location
+                                           (Scope))
+                                      or else
+                                        Present
+                                          (Get_End_Of_Syntax_Scope_Loc
+                                             (Scope))
+                                    then
+                                       null;
+
+                                    elsif
+                                      Is_Subprogram_Or_Entry (Scope)
+                                    then
+                                       Set_End_Of_Profile_Location
+                                         (Scope, Loc);
+                                    else
+                                       Set_End_Of_Syntax_Scope_Loc
+                                         (Scope, Loc);
+                                    end if;
+                                 end if;
+                              end;
+                           end if;
+                        end;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Complete_Decoration;
+
+            ----------------
+            -- Handle_Doc --
+            ----------------
+
+            procedure Handle_Doc is
+
+               procedure Set_Doc_After (E : Entity_Id);
+               procedure Set_Doc_After_Previous_Entity;
+               procedure Set_Doc_Before (E : Entity_Id);
+               procedure Set_Doc_Before_Current_Entity;
+
+               -------------------
+               -- Set_Doc_After --
+               -------------------
+
+               procedure Set_Doc_After (E : Entity_Id) is
+               begin
+                  if Present (Doc)
+                    and then Present (E)
+                    and then No (Get_Doc_After (E))
+                  then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+                  end if;
+               end Set_Doc_After;
+
+               -----------------------------------
+               -- Set_Doc_After_Previous_Entity --
+               -----------------------------------
+
+               procedure Set_Doc_After_Previous_Entity is
+                  Prev_Entity : constant Entity_Id :=
+                    Extended_Cursor.Prev_Entity (Cursor);
+               begin
+                  if Present (Doc) then
+                     if Present (Prev_Entity) then
+                        Set_Doc_After (Prev_Entity);
+                     else
+                        declare
+                           Scope : constant Entity_Id :=
+                              Get_Scope (Current_Context);
+                        begin
+                           if Is_Package (Scope)
+                             or else Is_Concurrent_Type_Or_Object (Scope)
+                           then
+                              Set_Doc_After (Scope);
+                           end if;
+                        end;
+                     end if;
+                  end if;
+               end Set_Doc_After_Previous_Entity;
+
+               --------------------
+               -- Set_Doc_Before --
+               --------------------
+
+               procedure Set_Doc_Before (E : Entity_Id) is
+               begin
+                  if Present (Doc)
+                    and then Present (E)
+                    and then No (Get_Doc_Before (E))
+                  then
+                     Set_Doc_Before (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+                  end if;
+               end Set_Doc_Before;
+
+               -----------------------------------
+               -- Set_Doc_Before_Current_Entity --
+               -----------------------------------
+
+               procedure Set_Doc_Before_Current_Entity is
+               begin
+                  if In_Next_Entity
+                    and then Present (Doc)
+                  then
+                     Set_Doc_Before (Get_Current_Entity (Current_Context),
+                        Comment_Result'
+                          (Text       => Doc,
+                           Start_Line => Doc_Start_Line));
+                  end if;
+               end Set_Doc_Before_Current_Entity;
+
+            --  Start of processing for Handle_Doc
+
+            begin
+               case Token is
+
+                  when Tok_Private =>
+                     if Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Is_Package (Scope)
+                             or else Is_Concurrent_Type_Or_Object (Scope)
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  --  Expanded names & identifiers
+
+                  when Tok_Id =>
+                     if In_Next_Entity
+                       and then Present (Doc)
+                     then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+                           Prev_E : Entity_Id;
+
+                        begin
+                           if No (Get_Prev_Entity_In_Scope
+                                   (Current_Context))
+                           then
+                              declare
+                                 Scope : constant Entity_Id :=
+                                   Get_Scope (Current_Context);
+                              begin
+                                 if Is_Concurrent_Type_Or_Object (Scope)
+                                   or else
+                                     (Is_Package (Scope)
+                                        and then not
+                                      Is_Standard_Entity (Scope))
+                                 then
+                                    Prev_E := Scope;
+                                    --  Do not attach the comment to the
+                                    --  previous line if it precedes the
+                                    --  current entity.
+
+                                    if Doc_End_Line
+                                      /= LL.Get_Location (E).Line - 1
+                                    then
+                                       Set_Doc_After (Scope);
+                                    end if;
+                                 end if;
+                              end;
+                           else
+                              Prev_E :=
+                                Get_Prev_Entity_In_Scope (Current_Context);
+
+                              if Get_Kind (E) = E_Formal then
+                                 Set_Doc_After_Previous_Entity_In_Scope;
+
+                              --  Do not attach the comment to the previous
+                              --  line if it precedes the current entity.
+
+                              elsif Doc_End_Line
+                                /= LL.Get_Location (E).Line - 1
+                              then
+                                 Set_Doc_After_Previous_Entity_In_Scope;
+                              end if;
+                           end if;
+
+                           --  Do not attach the comment to the current entity
+                           --  line if continuates the previous entity.
+
+                           if No (Prev_E)
+                             or else
+                               Doc_Start_Line
+                                 /= LL.Get_Location (Prev_E).Line + 1
+                           then
+                              Set_Doc_Before (E);
+                           end if;
+
+                           --  Reset the documentation
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when Tok_Is  =>
+                     Clear_Doc;
+
+                  when Tok_Procedure |
+                       Tok_Function  |
+                       Tok_Entry =>
+                     Set_Doc_Before_Current_Entity;
+
+                  when Tok_Right_Paren =>
+                     if Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Is_Subprogram_Or_Entry (Scope)
+                             and then
+                               Get_Kind (Curr_Entity_In_Scope) = E_Formal
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when Tok_Semicolon =>
+                     if Par_Count = 0
+                       and then Present (Doc)
+                     then
+                        declare
+                           Prev_Entity_In_Scope : constant Entity_Id :=
+                             Get_Prev_Entity_In_Scope (Current_Context);
+                        begin
+                           if Present (Prev_Entity_In_Scope)
+                             and then
+                               (Is_Package (Prev_Entity_In_Scope)
+                                  or else Is_Concurrent_Type_Or_Object
+                                            (Prev_Entity_In_Scope))
+                           then
+                              Set_Doc_After_Previous_Entity;
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when Tok_End =>
+                     declare
+                        Scope : constant Entity_Id :=
+                          Get_Scope (Current_Context);
+                     begin
+                        pragma Assert
+                          (Is_Record_Type (Scope)
+                           or else Is_Package (Scope)
+                           or else Is_Concurrent_Type_Or_Object (Scope));
+
+                        if Present (Doc) then
+                           declare
+                              Curr_Entity_In_Scope : constant Entity_Id :=
+                                Get_Current_Entity (Current_Context);
+                           begin
+                              if Present (Curr_Entity_In_Scope) then
+                                 Set_Doc_After (Curr_Entity_In_Scope);
+                              end if;
+
+                              Clear_Doc;
+                           end;
+                        end if;
+                     end;
+
+                  when others =>
+                     null;
+               end case;
+            end Handle_Doc;
+
+            ---------------------
+            -- Handle_Entities --
+            ---------------------
+
+            In_Debug_File : constant Boolean :=
+              File.Base_Name = " disabled";
+
+            procedure Handle_Scopes (End_Decl_Found : Boolean) is
+               procedure Do_Breakpoint;
+               procedure Do_Breakpoint is
+               begin
+                  if False
+                    and then File.Base_Name = " disabled"
+                    and then Sloc_Start.Line = 1
+                  then
+                     Print_State;
+                  end if;
+               end Do_Breakpoint;
+
+               procedure Do_Exit;
+               procedure Do_Exit is
+               begin
+                  if In_Debug_File then
+                     GNAT.IO.Put_Line
+                       (Scope_Tab (1 .. 2 * Scope_Level)
+                        & Sloc_Start.Line'Img
+                        & ":"
+                        & Sloc_Start.Column'Img
+                        & " ---------------- "
+                        & Get_Short_Name
+                           (Get_Scope (Current_Context)));
+                  end if;
+
+                  if Is_Generic (Get_Scope (Current_Context)) then
+                     Generics_Nesting_Level := Generics_Nesting_Level - 1;
+                  end if;
+
+                  if not In_Generic_Formals
+                    and then Is_Compilation_Unit (Get_Scope (Current_Context))
+                  then
+                     Disable_Enter_Scope;
+                  end if;
+
+                  Exit_Scope;
+                  Scope_Level := Scope_Level - 1;
+               end Do_Exit;
+
+            begin
+               case Token is
+
+                  when Tok_Use =>
+                     pragma Assert (Par_Count = 0);
+                     if not In_Representation_Clause then
+                        In_Skipped_Declaration := True;
+                     end if;
+
+                  --  We have to increment the generics nesting level here
+                  --  (instead of when we process the entity) to be able to
+                  --  generate their corresponding entity (required to
+                  --  workaround the problem of their missing entity)
+
+                  when Tok_Generic =>
+                     Generics_Nesting_Level := Generics_Nesting_Level + 1;
+
+                  when Tok_For =>
+                     if Par_Count = 0 then
+                        In_Representation_Clause := True;
+                     end if;
+
+                  when Tok_Record =>
+                     if In_Representation_Clause then
+                        if Prev_Token = Tok_Use then
+                           In_Record_Representation_Clause := True;
+                        elsif Prev_Token = Tok_End then
+                           In_Record_Representation_Clause := False;
+                        end if;
+                     end if;
+
+                  when Tok_Pragma =>
+                     In_Pragma := True;
+
+                  --  Handle variants of record types adding again their
+                  --  scope (for homogeneity in the management of their
+                  --  closing syntax scope)
+
+                  when Tok_Case =>
+
+                     pragma Assert
+                       (Is_Record_Type (Get_Scope (Current_Context)));
+
+                     --  "end case"
+
+                     if Prev_Token = Tok_End then
+                        Nested_Variants_Count := Nested_Variants_Count - 1;
+                     else
+                        Nested_Variants_Count := Nested_Variants_Count + 1;
+                     end if;
+
+                  --  Expanded names & identifiers
+
+                  when Tok_Id =>
+                     Do_Breakpoint;
+
+                     if In_Pragma then
+                        null;
+
+                     elsif Prev_Token = Tok_End then
+                        null;
+
+                     elsif In_Next_Entity then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+
+                        begin
+                           if Has_Scope (E) then
+                              Enter_Scope (E);
+                              Scope_Level := Scope_Level + 1;
+
+                              if In_Debug_File then
+                                 GNAT.IO.Put_Line
+                                   (Scope_Tab (1 .. 2 * Scope_Level)
+                                    & Sloc_Start.Line'Img
+                                    & ":"
+                                    & Sloc_Start.Column'Img
+                                    & ": "
+                                    & Get_Short_Name (E));
+                              end if;
+                           end if;
+
+                           Extended_Cursor.Next_Entity (Cursor);
+                        end;
+                     end if;
+
+                  when Tok_Right_Paren |
+                       Tok_Return      =>
+                     null;
+
+                  when Tok_Semicolon =>
+                     Do_Breakpoint;
+
+                     if Par_Count = 0 and then In_Pragma then
+                        In_Pragma := False;
+
+                     elsif Par_Count = 0
+                       and then In_Representation_Clause
+                       and then not In_Record_Representation_Clause
+                     then
+                        In_Representation_Clause := False;
+
+                     elsif Par_Count = 0
+                       and then Nested_Variants_Count /= 0
+                     then
+                        null;
+
+                     elsif Par_Count = 0
+                       and then In_Skipped_Declaration
+                     then
+                        In_Skipped_Declaration := False;
+
+                     elsif Par_Count = 0 then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if End_Decl_Found then
+                              begin
+                                 if Is_Partial_View (Scope) then
+                                    pragma Assert (No (E)
+                                      or else Get_Kind (E) = E_Discriminant);
+
+                                    Do_Exit;
+
+                                 elsif No (E)
+                                   and then Has_Scope (Scope)
+                                 then
+                                    --  Skip "null;" found in a component of a
+                                    --  record type declaration
+
+                                    if Is_Record_Type (Scope)
+                                      and then Prev_Token = Tok_Null
+                                    then
+                                       null;
+                                    else
+                                       Do_Exit;
+                                    end if;
+
+                                 --  For packages we exit from the scope when
+                                 --  we see their "end" token
+
+                                 elsif Is_Package (Scope) then
+                                    null;
+
+                                 elsif Is_Subprogram_Or_Entry (Scope) then
+                                    Do_Exit;
+
+                                 --  Handle taft ammendment
+
+                                 elsif Is_Concurrent_Type_Or_Object (Scope)
+                                   and then not Has_Entities (Scope)
+                                 then
+                                    Do_Exit;
+
+                                 elsif Get_Kind (Scope) = E_Access_Type then
+                                    Do_Exit;
+
+                                 elsif
+                                   Get_Kind (Scope) = E_Enumeration_Type
+                                 then
+                                    Do_Exit;
+
+                                 elsif Present
+                                         (LL.Get_Instance_Of (Scope))
+                                 then
+                                    Do_Exit;
+
+                                 elsif Is_Alias (Scope) then
+                                    Do_Exit;
+                                 end if;
+
+                              exception
+                                 when others =>
+                                    Print_State;
+                                    raise;
+                              end;
+                           end if;
+                        end;
+                     end if;
+
+                  when Tok_End =>
+                     pragma Assert (not In_Pragma);
+                     Do_Breakpoint;
+
+                     if In_Record_Representation_Clause then
+                        null;
+                     elsif Nested_Variants_Count /= 0 then
+                        null;
+                     else
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           pragma Assert
+                             (Is_Record_Type (Scope)
+                              or else Is_Package (Scope)
+                              or else Is_Concurrent_Type_Or_Object (Scope));
+
+                           Do_Exit;
+                        end;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Handle_Scopes;
+
+            --------------------
+            -- Handle_Sources --
+            --------------------
+
+            procedure Handle_Sources (End_Decl_Found : Boolean) is
+
+               procedure Append_Src
+                 (Text : String; With_Tabulation : Boolean := False);
+
+               procedure Clear_Src;
+
+               ----------------
+               -- Append_Src --
+               ----------------
+
+               procedure Append_Src
+                 (Text : String; With_Tabulation : Boolean := False) is
+               begin
+                  if not With_Tabulation then
+                     Append_Sources (Text);
+                  else
+                     declare
+                        Spaces : constant String (1 .. Sloc_Start.Column - 1)
+                          := (others => ' ');
+                     begin
+                        Append_Sources (Spaces & Text);
+                     end;
+                  end if;
+
+                  Append_Plain_Sources (Text);
+               end Append_Src;
+
+               ---------------
+               -- Clear_Src --
+               ---------------
+
+               procedure Clear_Src is
+               begin
+                  Clear_Sources;
+               end Clear_Src;
+
+            --  Start of processing for Handle_Sources
+
+            begin
+               --  Append all text between previous call and current one
+
+               if Last_Idx /= 0 then
+                  Append_Sources
+                    (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+                  Append_Plain_Sources
+                    (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1));
+               end if;
+
+               Last_Idx := Sloc_End.Index;
+
+               case Token is
+                  when Tok_Id =>
+                     if In_Next_Entity then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+                        begin
+                           if Get_Kind (E) = E_Variable then
+                              Clear_Src;
+                           end if;
+                        end;
+                     end if;
+
+                     Append_Src (S);
+
+                  when Tok_Task      |
+                       Tok_Protected =>
+                     declare
+                        Scope : constant Entity_Id :=
+                          Get_Scope (Current_Context);
+                     begin
+                        if Get_Kind (Scope) = E_Interface then
+                           Append_Src (S);
+                        else
+                           Clear_Src;
+                           Clear_Plain_Sources;
+
+                           declare
+                              Spaces : constant String
+                                (1 .. Sloc_Start.Column - 1)
+                                := (others => ' ');
+                           begin
+                              Append_Plain_Sources (Spaces & S);
+                           end;
+                        end if;
+                     end;
+
+                  when Tok_Type =>
+                     if Prev_Token = Tok_Task
+                       or else Prev_Token = Tok_Protected
+                     then
+                        Append_Src (S);
+                     else
+                        Clear_Src;
+                        Append_Src (S, With_Tabulation => True);
+                     end if;
+
+                  when Tok_Procedure |
+                       Tok_Function  |
+                       Tok_Entry =>
+                     if Par_Count /= 0 then
+                        Append_Src (S);
+                     else
+                        Clear_Src;
+                        Append_Src (S, With_Tabulation => True);
+                     end if;
+
+                  when Tok_Package =>
+                     Clear_Src;
+                     Append_Src (S);
+
+                  when Tok_Semicolon =>
+                     Append_Src (S);
+
+                     if Par_Count = 0
+                       and then End_Decl_Found
+                     then
+                        declare
+                           Scope : constant Entity_Id :=
+                                     Get_Scope (Current_Context);
+                           E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (E)
+                             and then Get_Kind (E) /= E_Formal
+                           then
+                              if Is_Concurrent_Type_Or_Object (E) then
+                                 Set_Src (E, Printout_Plain);
+                                 Clear_Plain_Sources;
+
+                                 Clear_Src;
+
+                              elsif not Is_Package (E)
+                                and then Get_Kind (E) /= E_Component
+                              then
+                                 --  ??? For now we skip adding any extra
+                                 --  documentation (most probably pragmas)
+
+                                 if Present (Get_Src (E)) then
+                                    null;
+                                 else
+                                    Set_Src (E, Printout);
+                                 end if;
+
+                                 Clear_Src;
+                              end if;
+
+                           elsif Present (LL.Get_Instance_Of (Scope)) then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+
+                           elsif Is_Partial_View (Scope) then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+
+                           elsif Is_Subprogram_Or_Entry (Scope) then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+
+                           elsif Is_Record_Type (Scope)
+                           --    and then not Has_Entities (Scope)
+                           then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+
+                           elsif Get_Kind (Scope) = E_Access_Type then
+                              Set_Src (Scope, Printout);
+                              Clear_Src;
+                           end if;
+                        end;
+                     end if;
+
+                  when others =>
+                     Append_Src (S);
+                     null;
+               end case;
+            end Handle_Sources;
+
+            -------------------
+            -- Handle_Tokens --
+            -------------------
+
+            procedure Handle_Tokens is
+            begin
+               case Entity is
+                  when Type_Text =>
+                     null;
+
+                  when Block_Text      |
+                       Identifier_Text =>
+                     Prev_Token := Token;
+                     Token := Tok_Id;
+
+                  when Keyword_Text    =>
+                     Prev_Token := Token;
+                     Token := Get_Token (S);
+                     Set_Token_Seen (Current_Context, Token);
+
+                     case Token is
+                        when Tok_Is =>
+                           In_Definition := True;
+
+                        when Tok_Procedure |
+                             Tok_Function  |
+                             Tok_Entry =>
+                           In_Item_Decl := True;
+
+                        when Tok_Package =>
+                           null;
+
+                        when Tok_End =>
+                           if not In_Item_Decl
+                             and then In_Definition
+                           then
+                              Set_End_Decl_Found (Current_Context);
+                           end if;
+
+                        when Tok_Type =>
+                           null;
+
+                        when others =>
+                           null;
+                     end case;
+
+                  when Operator_Text  =>
+                     Prev_Token := Token;
+                     Token := Tok_Operator;
+
+                     if S = "(" then
+                        Token := Tok_Left_Paren;
+                        Par_Count := Par_Count + 1;
+
+                     elsif S = ")" then
+                        Token := Tok_Right_Paren;
+                        Par_Count := Par_Count - 1;
+
+                     elsif S = ";" then
+                        Token := Tok_Semicolon;
+
+                        if Par_Count = 0 then
+                           Set_End_Decl_Found (Current_Context);
+
+                           --  ???may fail with access to subprogram formals
+                           if Tok_Subprogram_Seen (Current_Context) then
+                              Reset_Tok_Subprogram_Seen (Current_Context);
+                           end if;
+
+                           In_Item_Decl := False;
+                        end if;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Handle_Tokens;
+
+            ---------------
+            -- Has_Scope --
+            ---------------
+
+            function Has_Scope (E : Entity_Id) return Boolean is
+            begin
+               return Is_Package (E)
+                 or else Is_Subprogram_Or_Entry (E)
+                 or else Is_Record_Type (E)
+                 or else Is_Concurrent_Type_Or_Object (E)
+                  --  Include access types to handle the formals of access to
+                  --  subprograms
+                 or else Get_Kind (E) = E_Access_Type
+                 or else Get_Kind (E) = E_Enumeration_Type;
+            end Has_Scope;
+
+            --------------------
+            -- In_Next_Entity --
+            --------------------
+
+            function In_Next_Entity return Boolean is
+               Next_Entity : constant Entity_Id :=
+                 Extended_Cursor.Entity (Cursor);
+               Loc : General_Location;
+            begin
+               if No (Next_Entity) then
+                  return False;
+               end if;
+
+               Loc := LL.Get_Location (Extended_Cursor.Entity (Cursor));
+
+               return Sloc_Start.Line = Loc.Line
+                 and then Sloc_End.Line = Loc.Line
+                 and then Natural (Loc.Column) >= Sloc_Start.Column
+                 and then Natural (Loc.Column) <= Sloc_End.Column;
+            end In_Next_Entity;
+
+            ----------------------------------
+            -- Set_Doc_After_Current_Entity --
+            ----------------------------------
+
+            procedure Set_Doc_After_Current_Entity is
+               Current : constant Entity_Id :=
+                 Get_Current_Entity (Current_Context);
+            begin
+               if Present (Doc)
+                 and then Present (Current)
+                 and then No (Get_Doc_After (Current))
+               then
+                  Set_Doc_After (Current,
+                    Comment_Result'
+                      (Text       => Doc,
+                       Start_Line => Doc_Start_Line));
+               end if;
+            end Set_Doc_After_Current_Entity;
+
+            --------------------------------------------
+            -- Set_Doc_After_Previous_Entity_In_Scope --
+            --------------------------------------------
+
+            procedure Set_Doc_After_Previous_Entity_In_Scope is
+               Prev_Entity_In_Scope : constant Entity_Id :=
+                 Get_Prev_Entity_In_Scope (Current_Context);
+            begin
+               if Present (Doc)
+                 and then Present (Prev_Entity_In_Scope)
+                 and then No (Get_Doc_After (Prev_Entity_In_Scope))
+               then
+                  Set_Doc_After (Prev_Entity_In_Scope,
+                    Comment_Result'
+                      (Text       => Doc,
+                       Start_Line => Doc_Start_Line));
+               end if;
+            end Set_Doc_After_Previous_Entity_In_Scope;
+
+            -----------------
+            -- Print_State --
+            -----------------
+
+            procedure Print_State is
+               With_Doc : constant Boolean := True;
+            begin
+               GNAT.IO.Put_Line ("----------------------------");
+               GNAT.IO.Put_Line (+File.Full_Name);
+
+               if With_Doc then
+                  if Present (Printout) then
+                     GNAT.IO.Put_Line ("--- Printout");
+                     GNAT.IO.Put ('"');
+                     GNAT.IO.Put (To_String (Printout));
+                     GNAT.IO.Put ('"');
+                     GNAT.IO.New_Line;
+                  end if;
+
+                  if Doc_Start_Line /= No_Line then
+                     GNAT.IO.Put_Line
+                       ("Doc_Start_Line : " & Doc_Start_Line'Img);
+                     GNAT.IO.Put_Line
+                       ("  Doc_End_Line : " & Doc_End_Line'Img);
+
+                     GNAT.IO.Put_Line
+                       ('"' & To_String (Doc) & '"');
+                  end if;
+               end if;
+
+               GNAT.IO.Put
+                 ("Sloc: "
+                  & To_String (Sloc_Start.Line)
+                  & ":"
+                  & To_String (Sloc_Start.Column));
+               GNAT.IO.Put (" .. ");
+               GNAT.IO.Put
+                 (To_String (Sloc_End.Line)
+                  & ":"
+                  & To_String (Sloc_End.Column));
+
+               GNAT.IO.Put      (" " & Entity'Img & " ");
+               GNAT.IO.Put_Line ('"' & S & '"');
+
+               if In_Next_Entity then
+                  GNAT.IO.Put_Line ("In_Tree_Entity");
+               end if;
+
+               --  --------------------- Scopes
+               Print_Scopes;
+
+               declare
+                  Next_E : constant Entity_Id :=
+                    Extended_Cursor.Entity (Cursor);
+                  Get_Prev_Entity : constant Entity_Id :=
+                    Extended_Cursor.Prev_Entity (Cursor);
+               begin
+                  GNAT.IO.Put_Line ("--- Extended cursor");
+
+                  if Present (Get_Prev_Entity) then
+                     Print_Entity (Get_Prev_Entity, "Prev_Entity:");
+                  end if;
+
+                  if Present (Next_E) then
+                     Print_Entity (Next_E, "Next_Entity:");
+                  end if;
+               end;
+            end Print_State;
+
+            procedure Build_Missing_Entity;
+            procedure Build_Missing_Entity is
+               Loc   : constant General_Location :=
+                 (File, Sloc_Start.Line, Visible_Column (Sloc_Start.Column));
+               Lang  : constant Language_Access :=
+                        Get_Language_From_File (Context.Lang_Handler, File);
+               New_E : constant Entity_Id :=
+                 New_Internal_Entity (Context, Lang, S);
+            begin
+               LL.Set_Location (New_E, Loc);
+
+               case Prev_Token is
+                  when Tok_Package =>
+                     Set_Kind (New_E, E_Generic_Package);
+                  when Tok_Procedure =>
+                     Set_Kind (New_E, E_Generic_Procedure);
+                  when Tok_Function =>
+                     Set_Kind (New_E, E_Generic_Function);
+                  when others =>
+                     raise Program_Error;
+               end case;
+
+               New_Entities.Append (New_E);
+
+               --  Place this internal entity as the next entity of the
+               --  entities iterator
+
+               Extended_Cursor.Set_Next_Entity (Cursor, New_E);
+               Replace_Current_Entity (Current_Context, New_E);
+            end Build_Missing_Entity;
+
+         begin
+            --  Accumulate documentation found in consecutive comments
+
+            if Entity = Comment_Text
+              or else Entity = Annotated_Comment_Text
+            then
+               Accumulate_Comments;
+               return False; -- Continue
+            end if;
+
+            Handle_Tokens;
+
+            declare
+               End_Decl_Found : constant Boolean :=
+                 Get_End_Decl_Found (Current_Context);
+            begin
+               declare
+                  E : Entity_Id :=
+                    Extended_Cursor.Entity (Cursor);
+               begin
+                  --  Skip entity internally generated by the compiler
+
+                  while Present (E)
+                    and then
+                      (Sloc_Start.Line > LL.Get_Location (E).Line
+                         or else
+                           (Sloc_Start.Line = LL.Get_Location (E).Line
+                              and then
+                            Sloc_Start.Column
+                               > Natural (LL.Get_Location (E).Column)))
+                  loop
+                     Extended_Cursor.Next_Entity (Cursor);
+                     E := Extended_Cursor.Entity (Cursor);
+                  end loop;
+
+                  if In_Next_Entity then
+                     Set_Current_Entity (Current_Context, E);
+
+                  elsif Token = Tok_Id
+                    and then In_Generic_Decl
+                    and then
+                      (Prev_Token = Tok_Package
+                         or else Prev_Token = Tok_Procedure
+                         or else Prev_Token = Tok_Function)
+                  then
+                     pragma Assert (Generics_Nesting_Level > 0);
+                     Build_Missing_Entity;
+                  end if;
+               end;
+
+               if not In_Pragma then
+                  Complete_Decoration (End_Decl_Found);
+
+                  Handle_Doc;
+                  --  Processes: Tok_Id, Tok_End, Tok_Semicolon
+                  --    Tok_Is, Tok_Procedure, Tok_Function, Tok_Entry
+
+                  Handle_Sources (End_Decl_Found);
+               end if;
+
+               Handle_Scopes (End_Decl_Found);
+               --  Processes: Tok_Id, Tok_Semicolon (End_Decl)
+
+               if End_Decl_Found then
+                  Reset_End_Decl_Found (Current_Context);
+               end if;
+
+               return False; --  Continue
+            end;
+         end CB;
+
+         ---------------------
+         -- Extended_Cursor --
+         ---------------------
+
+         package body Extended_Cursor is
+            Saved_Next_Entity : Entity_Id := Atree.No_Entity;
+
+            procedure Update_Entity (Cursor : in out Extended_Cursor);
+            procedure Update_Entity (Cursor : in out Extended_Cursor) is
+            begin
+               if EInfo_List.Has_Element (Cursor.Cursor) then
+                  Cursor.Element := EInfo_List.Element (Cursor.Cursor);
+               else
+                  Cursor.Element := Atree.No_Entity;
+               end if;
+            end Update_Entity;
+
+            function Has_Entity (Cursor : Extended_Cursor) return Boolean is
+            begin
+               return EInfo_List.Has_Element (Cursor.Cursor);
+            end Has_Entity;
+
+            function Entity (Cursor : Extended_Cursor) return Entity_Id is
+            begin
+               return Cursor.Element;
+            end Entity;
+
+            function Prev_Entity (Cursor : Extended_Cursor) return Entity_Id
+            is
+            begin
+               return Cursor.Prev_Element;
+            end Prev_Entity;
+
+            procedure Next_Entity (Cursor : in out Extended_Cursor) is
+            begin
+               if Present (Saved_Next_Entity) then
+                  Cursor.Element := Saved_Next_Entity;
+                  Saved_Next_Entity := Atree.No_Entity;
+               else
+                  Cursor.Prev_Element := Cursor.Element;
+                  EInfo_List.Next (Cursor.Cursor);
+                  Update_Entity (Cursor);
+               end if;
+            end Next_Entity;
+
+            procedure Set_Next_Entity
+              (Cursor : in out Extended_Cursor;
+               Entity : Entity_Id) is
+            begin
+               pragma Assert (No (Saved_Next_Entity));
+               Saved_Next_Entity := Cursor.Element;
+               Cursor.Element := Entity;
+            end Set_Next_Entity;
+
+            procedure Initialize (Cursor : in out Extended_Cursor) is
+            begin
+               Cursor.Cursor := File_Entities.All_Entities.First;
+               Update_Entity (Cursor);
+            end Initialize;
+
+         end Extended_Cursor;
+
+         --  Start of processing for Parse_Ada_File
+
+      begin
+
+         if False and then File.Base_Name = "s-htable.ads" then
+            GNAT.IO.Put_Line
+              ("------------- File_Entities.All_Entities (begin)");
+
+            pv (File_Entities.All_Entities);
+
+            GNAT.IO.Put_Line
+              ("------------- File_Entities.All_Entities (end)");
+         end if;
+
+         Extended_Cursor.Initialize (Cursor);
+
+         if Extended_Cursor.Has_Entity (Cursor) then
+            declare
+               E : constant Entity_Id := Extended_Cursor.Entity (Cursor);
+            begin
+               pragma Assert
+                 (Present (Get_Scope (E))
+                    and then
+                      (Get_Kind (E) = E_Generic_Formal
+                         or else Is_Generic_Formal (E)
+                         or else Is_Standard_Entity (Get_Scope (E))));
+               --  Set the next entity to look for in the parser
+
+               --  Enter the entity of the Standard scope
+
+               declare
+                  S : Entity_Id := Get_Scope (E);
+               begin
+                  while not Is_Standard_Entity (S) loop
+                     pragma Assert (Present (Get_Scope (S)));
+                     S := Get_Scope (S);
+                  end loop;
+
+                  Enable_Enter_Scope;
+                  Enter_Scope (S);
+
+                  Parse_Entities
+                    (Lang, Buffer.all (Buffer'First .. Buffer'Last),
+                     CB'Unrestricted_Access);
+
+                  if Natural (New_Entities.Length) > 0 then
+                     for E of New_Entities loop
+                        File_Entities.All_Entities.Append (E);
+                     end loop;
+
+                     EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+                     --  pv (File_Entities.All_Entities);
+                  end if;
+
+                  pragma Assert (Get_Scope (Current_Context) = S);
+                  Exit_Scope;
+               end;
+            end;
+         end if;
+      end Parse_Ada_File;
 
       -------------------
       -- Previous_Word --
@@ -2876,38 +4985,6 @@ package body GNATdoc.Frontend is
          end loop;
          Prev_Word_Begin := Idx + 1;
       end Previous_Word;
-
-      ------------------
-      -- Process_Node --
-      ------------------
-
-      function Process_Node
-        (Entity      : Entity_Id;
-         Scope_Level : Natural) return Traverse_Result;
-
-      function Process_Node
-        (Entity      : Entity_Id;
-         Scope_Level : Natural) return Traverse_Result
-      is
-         pragma Unreferenced (Scope_Level);
-      begin
-         --  Retrieve the sources and their documentation (if any). Sources
-         --  must be retrieved always before Documentation because for some
-         --  entities Ada_Get_Source completes the decoration of entities
-         --  which are not available through Xref (for example, package
-         --  and subprogram declarations); in addition Ada_Get_Source also
-         --  tries to directly set the documentation if found when the
-         --  sources are retrieved (for example, see the management for
-         --  Discriminants).
-
-         Ada_Get_Source (Entity);
-
-         if Get_Doc (Entity) = No_Comment_Result then
-            Ada_Get_Doc (Entity);
-         end if;
-
-         return OK;
-      end Process_Node;
 
       ---------------------
       -- Search_Backward --
@@ -3025,10 +5102,10 @@ package body GNATdoc.Frontend is
       end if;
 
       if In_Ada_Lang then
-         if Present (File_Entities.Tree_Root) then
-            Traverse_Tree (File_Entities.Tree_Root, Process_Node'Access);
-         end if;
+         Parse_Ada_File (Buffer);
 
+         Prev_Comment_Line := 0;
+         For_All (File_Entities.All_Entities, Ada_Set_Doc'Access);
          For_All (File_Entities.All_Entities, Filter_Doc'Access);
 
       else pragma Assert (In_C_Lang);
@@ -3037,8 +5114,6 @@ package body GNATdoc.Frontend is
 
          For_All (File_Entities.All_Entities, Filter_Doc'Access);
       end if;
-
-      Delayed_Remove_From_Scope;
 
       Free (Buffer_Body);
       Free (Buffer);
@@ -3053,6 +5128,8 @@ package body GNATdoc.Frontend is
       Root      : Entity_Id;
       In_C_Lang : Boolean)
    is
+      pragma Unreferenced (In_C_Lang);
+
       function Is_Custom_Tag (Tag : String) return Boolean;
       --  Return True if Tag is a supported tag.
       --  ??? This info should be configurable in a separate file to allow
@@ -3441,6 +5518,8 @@ package body GNATdoc.Frontend is
                   end if;
                end if;
 
+               --  Tail recursivity should be converted into a loop???
+
                if Line_Last < S'Last then
                   Parse (S (Line_Last + 1 .. S'Last));
                end if;
@@ -3465,111 +5544,36 @@ package body GNATdoc.Frontend is
          end if;
       end Parse_Doc;
 
-      ------------------------------
-      -- Parse_Subprogram_Comment --
-      ------------------------------
+      -------------------------------
+      -- Parse_Subprogram_Comments --
+      -------------------------------
 
       procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
-         Cursor         : EInfo_List.Cursor;
-         Has_Params     : Boolean;
-         Param          : Entity_Id;
-         Param_End_Line : Integer;
+         Has_Params : constant Boolean := Has_Entities (Subp);
       begin
          --  Initialize the structured comment associated with this entity
 
          Set_Comment (Subp, New_Structured_Comment);
 
+         --  For backward compatibility it is still missing to append the
+         --  tags of the generic formals???
+
          --  Search for documentation located in the subprogram profile
          --  (that is, comments located close to the parameter declarations)
 
-         Cursor := Get_Entities (Subp).First;
-         Has_Params := EInfo_List.Has_Element (Cursor);
+         for Param of Get_Entities (Subp).all loop
+            --  Temporarily disabling this assertion since the Xref.Field
+            --  service sometimes fails with protected objects returning
+            --  entities which correspond to formals of anonymous access to
+            --  subprograms of other entities defined in the same package ???
 
-         while EInfo_List.Has_Element (Cursor) loop
-            Param := EInfo_List.Element (Cursor);
+--            pragma Assert (Get_Kind (Param) = E_Formal);
 
-            pragma Assert (Get_Kind (Param) = E_Formal);
-            EInfo_List.Next (Cursor);
-
-            if Get_Doc (Param) = No_Comment_Result
-              or else In_C_Lang --  Unsupported feature yet???
-            then
-               Append_Param_Tag
-                 (Comment    => Get_Comment (Subp),
-                  Entity     => LL.Get_Entity (Param),
-                  Param_Name =>
-                    To_Unbounded_String
-                      (Get_Name (Context.Database, LL.Get_Entity (Param))),
-                  Text       => Null_Unbounded_String);
-            else
-               --  Calculate the last line where the comment of this parameter
-               --  can be correctly located
-
-               --  Case 1: For the last parameter the parameter comment (if
-               --  any) must be located before the location of the full comment
-               --  of the subprogram.
-
-               --  ??? This code fails if the subprogram is a function and
-               --  there is documentation for the returned value because it
-               --  is handled as if it were the documentation of the last
-               --  formal.
-
-               if not EInfo_List.Has_Element (Cursor) then
-                  --  Subprogram documentation retrieved from the body
-
-                  if Is_Doc_From_Body (Param) then
-                     pragma Assert
-                       (Present (Get_End_Of_Profile_Location_In_Body (Subp)));
-                     Param_End_Line :=
-                       Get_End_Of_Profile_Location_In_Body (Subp).Line;
-                  else
-                     Param_End_Line :=
-                       Get_End_Of_Profile_Location (Subp).Line;
-                  end if;
-
-               --  Case 2: For other parameters their comment must be
-               --  located before the location of the next parameter.
-
-               else
-                  --  Subprogram documentation retrieved from the body
-
-                  if Is_Doc_From_Body (Param) then
-                     pragma Assert
-                       (Present
-                          (LL.Get_Body_Loc (EInfo_List.Element (Cursor))));
-                     Param_End_Line :=
-                       LL.Get_Body_Loc (EInfo_List.Element (Cursor)).Line;
-
-                  --  Subprogram documentation retrieved from the spec
-
-                  else
-                     Param_End_Line :=
-                       LL.Get_Location (EInfo_List.Element (Cursor)).Line;
-                  end if;
-               end if;
-
-               if Get_Doc (Param).Start_Line >= LL.Get_Location (Subp).Line
-                 and then Get_Doc (Param).Start_Line < Param_End_Line
-               then
-                  Append_Param_Tag
-                    (Comment    => Get_Comment (Subp),
-                     Entity     => LL.Get_Entity (Param),
-                     Param_Name =>
-                       To_Unbounded_String (Get_Short_Name (Param)),
-                     Text       => Get_Doc (Param).Text);
-               else
-                  Append_Param_Tag
-                    (Comment    => Get_Comment (Subp),
-                     Entity     => LL.Get_Entity (Param),
-                     Param_Name =>
-                       To_Unbounded_String
-                         (Get_Name
-                           (Context.Database, LL.Get_Entity (Param))),
-                     Text       => Null_Unbounded_String);
-               end if;
-
-               Set_Doc (Param, No_Comment_Result);
-            end if;
+            Append_Param_Tag
+              (Comment    => Get_Comment (Subp),
+               Entity     => LL.Get_Entity (Param),
+               Param_Name => To_Unbounded_String (Get_Short_Name (Param)),
+               Text       => Get_Doc (Param).Text);
          end loop;
 
          --  Parse the documentation of the subprogram
@@ -3943,8 +5947,12 @@ package body GNATdoc.Frontend is
          return Tok_End;
       elsif Keyword = "entry" then
          return Tok_Entry;
+      elsif Keyword = "for" then
+         return Tok_For;
       elsif Keyword = "function" then
          return Tok_Function;
+      elsif Keyword = "generic" then
+         return Tok_Generic;
       elsif Keyword = "is" then
          return Tok_Is;
       elsif Keyword = "interface" then
@@ -3959,18 +5967,30 @@ package body GNATdoc.Frontend is
          return Tok_Others;
       elsif Keyword = "package" then
          return Tok_Package;
+      elsif Keyword = "pragma" then
+         return Tok_Pragma;
       elsif Keyword = "private" then
          return Tok_Private;
       elsif Keyword = "procedure" then
          return Tok_Procedure;
+      elsif Keyword = "protected" then
+         return Tok_Protected;
       elsif Keyword = "record" then
          return Tok_Record;
+      elsif Keyword = "renames" then
+         return Tok_Renames;
+      elsif Keyword = "return" then
+         return Tok_Return;
+      elsif Keyword = "subtype" then
+         return Tok_Subtype;
       elsif Keyword = "tagged" then
          return Tok_Tagged;
       elsif Keyword = "task" then
          return Tok_Task;
       elsif Keyword = "type" then
          return Tok_Type;
+      elsif Keyword = "use" then
+         return Tok_Use;
       elsif Keyword = "when" then
          return Tok_When;
       elsif Keyword = "with" then
@@ -3979,5 +5999,212 @@ package body GNATdoc.Frontend is
          return Tok_Unknown;
       end if;
    end Get_Token;
+
+   -----------
+   -- Debug --
+   -----------
+
+   package body Debug is
+
+      function To_Str (E : Entity_Id) return String is
+         With_Id   : constant Boolean := True;
+         With_Kind : constant Boolean := False;
+
+         Uid : constant String :=
+           (if not Present (E) or else not With_Id then ""
+            else "[" & To_String (Get_Unique_Id (E)) & "] ");
+
+         Kind : constant String :=
+           (if not With_Kind then ""
+            else Get_Kind (E)'Img & " : ");
+      begin
+         if Present (E) then
+            return Uid
+               & Get_Short_Name (E)
+               & ":"
+               & Kind
+               & Image (LL.Get_Location (E), With_Filename => False);
+         end if;
+
+         return "";
+      end To_Str;
+
+      ------------------
+      -- Print_Entity --
+      ------------------
+
+      procedure Print_Entity (E : Entity_Id; Prefix : String) is
+      begin
+         if Present (E) then
+            GNAT.IO.Put_Line (Prefix & To_Str (E));
+         else
+            GNAT.IO.Put_Line
+              (Prefix & ": No entity");
+         end if;
+      end Print_Entity;
+   end Debug;
+
+   ------------------
+   -- Scopes_Stack --
+   ------------------
+
+   package body Scopes_Stack is
+
+      package Stack_Entities_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => Scope_Id);
+      --  procedure Free (List : in out Alloc_Entity_List.Vector);
+
+      Stack : Stack_Entities_List.Vector;
+
+      Enter_Scope_Enabled : Boolean;
+
+      procedure Disable_Enter_Scope is
+      begin
+         Enter_Scope_Enabled := False;
+      end Disable_Enter_Scope;
+
+      procedure Enable_Enter_Scope is
+      begin
+         Enter_Scope_Enabled := True;
+      end Enable_Enter_Scope;
+
+      function Current_Context return Scope_Id is
+      begin
+         return Stack.First_Element;
+      end Current_Context;
+
+      -----------------
+      -- Enter_Scope --
+      -----------------
+
+      procedure Enter_Scope (Entity : Entity_Id) is
+         use type Ada.Containers.Count_Type;
+         New_Scope : constant Scope_Id := new Scope_Info;
+      begin
+         pragma Assert (Enter_Scope_Enabled);
+
+         --  Initialize the context of the new syntax scope locating its
+         --  cursor before its first entity
+
+         New_Scope.Scope := Entity;
+
+         Stack.Prepend (New_Scope);
+      end Enter_Scope;
+
+      ----------------
+      -- Exit_Scope --
+      ----------------
+
+      procedure Exit_Scope is
+         Scope : Scope_Id := Current_Context;
+      begin
+         Free (Scope);
+         Stack.Delete_First;
+      end Exit_Scope;
+
+      -------------
+      -- Getters --
+      -------------
+
+      function Get_Current_Entity
+        (Context : Scope_Id) return Entity_Id is
+      begin
+         return Context.Current_Entity;
+      end Get_Current_Entity;
+
+      function Get_End_Decl_Found (Scope : Scope_Id) return Boolean is
+      begin
+         return Scope.End_Decl_Found;
+      end Get_End_Decl_Found;
+
+      function Get_Prev_Entity_In_Scope
+        (Scope : Scope_Id) return Entity_Id is
+      begin
+         return Scope.Prev_Entity_In_Scope;
+      end Get_Prev_Entity_In_Scope;
+
+      function Get_Scope (Context : Scope_Id) return Entity_Id is
+      begin
+         return Context.Scope;
+      end Get_Scope;
+
+      function Tok_Subprogram_Seen (Scope : Scope_Id) return Boolean is
+      begin
+         return Scope.Token_Seen (Tok_Procedure)
+           or else Scope.Token_Seen (Tok_Function)
+           or else Scope.Token_Seen (Tok_Entry);
+      end Tok_Subprogram_Seen;
+
+      --  Setters ---------------------------------------------------
+
+      procedure Set_Current_Entity
+        (Context : Scope_Id; Entity : Entity_Id) is
+      begin
+         Context.Prev_Entity_In_Scope := Context.Current_Entity;
+         Replace_Current_Entity (Context, Entity);
+      end Set_Current_Entity;
+
+      procedure Replace_Current_Entity
+        (Context : Scope_Id; Entity : Entity_Id) is
+      begin
+         Context.Current_Entity := Entity;
+      end Replace_Current_Entity;
+
+      procedure Set_Token_Seen
+        (Scope : Scope_Id; Token : Tokens) is
+      begin
+         Scope.Token_Seen (Token) := True;
+      end Set_Token_Seen;
+
+      procedure Reset_Tok_Subprogram_Seen
+        (Scope : Scope_Id) is
+      begin
+         Scope.Token_Seen (Tok_Procedure) := False;
+         Scope.Token_Seen (Tok_Function) := False;
+         Scope.Token_Seen (Tok_Entry) := False;
+      end Reset_Tok_Subprogram_Seen;
+
+      procedure Reset_End_Decl_Found (Scope : Scope_Id) is
+      begin
+         Scope.End_Decl_Found := False;
+      end Reset_End_Decl_Found;
+
+      procedure Set_End_Decl_Found (Scope : Scope_Id) is
+      begin
+         Scope.End_Decl_Found := True;
+      end Set_End_Decl_Found;
+
+      procedure Print_Scopes is
+         Scope : Entity_Id;
+         Count : Integer := Natural (Stack.Length) - 1;
+      begin
+         GNAT.IO.Put_Line ("--- Scopes");
+         for Elmt of Stack loop
+            Scope := Elmt.Scope;
+
+            if Present (Scope) then
+               declare
+                  Prev : constant String :=
+                    (if No (Elmt.Prev_Entity_In_Scope) then ""
+                     else "; P=" & To_Str (Elmt.Prev_Entity_In_Scope));
+                  Curr : constant String :=
+                    (if No (Elmt.Current_Entity) then ""
+                     else "; C=" & To_Str (Elmt.Current_Entity));
+               begin
+                  GNAT.IO.Put_Line
+                    (To_String (Count)
+                     & ":"
+                     & " S="
+                     & To_Str (Scope)
+                     & Prev
+                     & Curr);
+               end;
+            end if;
+
+            Count := Count - 1;
+         end loop;
+         null;
+      end Print_Scopes;
+   end Scopes_Stack;
 
 end GNATdoc.Frontend;

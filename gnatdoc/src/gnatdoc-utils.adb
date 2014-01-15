@@ -151,6 +151,15 @@ package body GNATdoc.Utils is
       return Kernel.Registry.Tree.Info (File).Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
+   -------------
+   -- Present --
+   -------------
+
+   function Present (Text : Unbounded_String) return Boolean is
+   begin
+      return Text /= Null_Unbounded_String;
+   end Present;
+
    -----------------
    -- Spaces_Only --
    -----------------

@@ -34,23 +34,6 @@ with Xref;                use Xref;
 
 package Xref.Docgen is
 
-   function No (E : General_Entity) return Boolean;
-   --  Return true if E = No_General_Entity
-
-   function No (L : General_Location) return Boolean;
-   --  Return true if L = No_Location
-
-   function Present (E : General_Entity) return Boolean;
-   --  Return true if E /= No_General_Entity
-
-   function Present (L : General_Location) return Boolean;
-   --  Return true if L /= No_Location
-
-   function Get_Location
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return General_Location;
-   --  Return the location of Entity
-
    --  This type declaration should be located in GNATCOLL.Xref
    type Comment_Result is record
       Text       : Unbounded_String;
@@ -60,6 +43,29 @@ package Xref.Docgen is
    No_Comment_Result : constant Comment_Result :=
      (Text       => Null_Unbounded_String,
       Start_Line => -1);
+
+   function No (E : General_Entity) return Boolean;
+   --  Return true if E = No_General_Entity
+
+   function No (L : General_Location) return Boolean;
+   --  Return true if L = No_Location
+
+   function No (Comment : Comment_Result) return Boolean;
+   --  Return true if Comment = No_Comment_Result
+
+   function Present (E : General_Entity) return Boolean;
+   --  Return true if E /= No_General_Entity
+
+   function Present (L : General_Location) return Boolean;
+   --  Return true if L /= No_Location
+
+   function Present (Comment : Comment_Result) return Boolean;
+   --  Return true if Comment /= No_Comment_Result
+
+   function Get_Location
+     (Db     : General_Xref_Database;
+      Entity : General_Entity) return General_Location;
+   --  Return the location of Entity
 
    function Documentation
      (Self             : access General_Xref_Database_Record;

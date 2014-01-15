@@ -33,6 +33,7 @@ with GNAT.IO; --  For output of debugging routines
 
 package body GNATdoc.Atree is
    Me : constant Trace_Handle := Create ("DOCGEN.ATREE");
+   Enhancements : constant Boolean := False;
 
    Unique_Id : Natural := 0;
    --  Internal counter used to associate an unique identifier to all the
@@ -60,6 +61,9 @@ package body GNATdoc.Atree is
       Is_Internal : Boolean := False) return Entity_Id;
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
+
+   function LL_Is_Generic (E : Entity_Id) return Boolean;
+   pragma Inline (LL_Is_Generic);
 
    package Hash_Table is
       function Hash
@@ -143,7 +147,7 @@ package body GNATdoc.Atree is
 
    procedure Append_Generic_Formal (E : Entity_Id; Value : Entity_Id) is
    begin
-      pragma Assert (E.Xref.Is_Generic);
+      pragma Assert (Is_Generic (E));
       pragma Assert (Is_Generic_Formal (Value));
 
       E.Generic_Formals.Append (Value);
@@ -156,8 +160,11 @@ package body GNATdoc.Atree is
    procedure Append_Inherited_Method
      (E : Entity_Id; Value : Entity_Id) is
    begin
-      pragma Assert (not Contains (E.Methods, Value));
-      E.Inherited_Methods.Append (Value);
+      --  Replace this conditional by an assertion???
+
+      if not Contains (E.Inherited_Methods, Value) then
+         E.Inherited_Methods.Append (Value);
+      end if;
    end Append_Inherited_Method;
 
    -------------------
@@ -210,7 +217,15 @@ package body GNATdoc.Atree is
 
       if Present (Get_Full_View (Value)) then
          if Present (Get_Scope (Get_Full_View (Value))) then
-            pragma Assert (Get_Scope (Get_Full_View (Value)) = E);
+            pragma Assert
+              (not In_Same_File (Value, Get_Full_View (Value))
+                 or else Get_Scope (Get_Full_View (Value)) = E);
+
+         --  Taft ammendment
+
+         elsif not In_Same_File (Value, Get_Full_View (Value)) then
+            null;
+
          else
             Append_To_Scope (E, Get_Full_View (Value));
          end if;
@@ -546,7 +561,14 @@ package body GNATdoc.Atree is
    function Get_Direct_Derivations
      (E : Entity_Id) return access EInfo_List.Vector is
    begin
-      return E.Direct_Derivations'Access;
+      --  For backward compatibility, for private types, direct derivations
+      --  are only stored in the partial view???
+
+      if Is_Full_View (E) then
+         return Get_Partial_View (E).Direct_Derivations'Access;
+      else
+         return E.Direct_Derivations'Access;
+      end if;
    end Get_Direct_Derivations;
 
    -----------------------
@@ -583,6 +605,24 @@ package body GNATdoc.Atree is
    begin
       return E.Doc;
    end Get_Doc;
+
+   -------------------
+   -- Get_Doc_After --
+   -------------------
+
+   function Get_Doc_After (E : Entity_Id) return Comment_Result is
+   begin
+      return E.Doc_After;
+   end Get_Doc_After;
+
+   --------------------
+   -- Get_Doc_Before --
+   --------------------
+
+   function Get_Doc_Before (E : Entity_Id) return Comment_Result is
+   begin
+      return E.Doc_Before;
+   end Get_Doc_Before;
 
    ---------------------------------
    -- Get_End_Of_Syntax_Scope_Loc --
@@ -755,7 +795,8 @@ package body GNATdoc.Atree is
 
    function Get_Full_View_Doc (E : Entity_Id) return Comment_Result is
    begin
-      return E.Full_View_Doc;
+      pragma Assert (Is_Partial_View (E));
+      return Get_Doc (Get_Full_View (E));
    end Get_Full_View_Doc;
 
    -----------------------
@@ -764,7 +805,8 @@ package body GNATdoc.Atree is
 
    function Get_Full_View_Src (E : Entity_Id) return Unbounded_String is
    begin
-      return E.Full_View_Src;
+      pragma Assert (Is_Partial_View (E));
+      return Get_Src (Get_Full_View (E));
    end Get_Full_View_Src;
 
    -----------------------------
@@ -784,7 +826,7 @@ package body GNATdoc.Atree is
    function Get_Generic_Formals
      (E : Entity_Id) return access EInfo_List.Vector is
    begin
-      pragma Assert (LL.Is_Generic (E));
+      pragma Assert (Is_Generic (E));
       return E.Generic_Formals'Access;
    end Get_Generic_Formals;
 
@@ -825,6 +867,20 @@ package body GNATdoc.Atree is
       return E.Language;
    end Get_Language;
 
+   ---------------------
+   -- Get_Last_Entity --
+   ---------------------
+
+   function Get_Last_Entity
+     (Scope : Entity_Id) return Entity_Id is
+   begin
+      if not EInfo_List.Has_Element (Get_Entities (Scope).First) then
+         return No_Entity;
+      else
+         return Get_Entities (Scope).Last_Element;
+      end if;
+   end Get_Last_Entity;
+
    -----------------
    -- Get_Methods --
    -----------------
@@ -841,7 +897,17 @@ package body GNATdoc.Atree is
    function Get_Parent
      (E : Entity_Id) return Entity_Id is
    begin
-      return E.Parent;
+      --  For backward compatibility we temporarily return the parent of
+      --  the full view since parents are currently only stored in partial
+      --  views.
+
+      if not Enhancements
+        and then Is_Partial_View (E)
+      then
+         return Get_Parent (Get_Full_View (E));
+      else
+         return E.Parent;
+      end if;
    end Get_Parent;
 
    ------------------------
@@ -1019,6 +1085,16 @@ package body GNATdoc.Atree is
    -- Has_Formals --
    -----------------
 
+   function Has_Entities (E : Entity_Id) return Boolean is
+      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
+   begin
+      return EInfo_List.Has_Element (Cursor);
+   end Has_Entities;
+
+   -----------------
+   -- Has_Formals --
+   -----------------
+
    function Has_Formals (E : Entity_Id) return Boolean is
       Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
    begin
@@ -1031,11 +1107,27 @@ package body GNATdoc.Atree is
    -------------------------
 
    function Has_Generic_Formals (E : Entity_Id) return Boolean is
-      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
+      Cursor : constant EInfo_List.Cursor := Get_Generic_Formals (E).First;
    begin
-      pragma Assert (LL.Is_Generic (E));
+      pragma Assert (Is_Generic (E));
       return EInfo_List.Has_Element (Cursor);
    end Has_Generic_Formals;
+
+   ---------------------
+   -- Has_Parent_Type --
+   ---------------------
+
+   function Has_Parent_Type
+     (E : Entity_Id; Parent : Entity_Id) return Boolean is
+   begin
+      for P of E.Xref.Parent_Types loop
+         if LL.Get_Location (P) = LL.Get_Location (Parent) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Has_Parent_Type;
 
    ------------------------
    -- Has_Private_Parent --
@@ -1084,6 +1176,18 @@ package body GNATdoc.Atree is
    begin
       return E.In_Private_Part;
    end In_Private_Part;
+
+   ------------------
+   -- In_Same_File --
+   ------------------
+
+   function In_Same_File (E1, E2 : Entity_Id) return Boolean is
+   begin
+      pragma Assert (Present (E1));
+      pragma Assert (Present (E2));
+
+      return LL.Get_Location (E1).File = LL.Get_Location (E2).File;
+   end In_Same_File;
 
    ----------------
    -- Initialize --
@@ -1345,7 +1449,6 @@ package body GNATdoc.Atree is
                   Ref := Get (Cursor);
 
                   if Get_Display_Kind (Ref) = "end of spec" then
-                     Set_End_Of_Syntax_Scope_Loc (New_E, Get_Location (Ref));
                      exit;
                   elsif Get_Display_Kind (Ref) = "private part" then
                      New_E.Xref.First_Private_Entity_Loc := Get_Location (Ref);
@@ -1460,6 +1563,7 @@ package body GNATdoc.Atree is
 
            In_Private_Part    => False,
 
+           Is_Alias          => False,
            Is_Decorated      => False,
            Is_Doc_From_Body  => False,
            Is_Generic_Formal => False,
@@ -1469,6 +1573,9 @@ package body GNATdoc.Atree is
            Is_Incomplete     => False,
            Is_Private        => False,
            Idepth_Level      => 0,
+
+           Doc_After         => No_Comment_Result,
+           Doc_Before        => No_Comment_Result,
 
            Doc               => No_Comment_Result,
            Comment           => No_Structured_Comment,
@@ -1503,6 +1610,15 @@ package body GNATdoc.Atree is
       return New_E;
    end Internal_New_Entity;
 
+   --------------
+   -- Is_Alias --
+   --------------
+
+   function Is_Alias (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Alias;
+   end Is_Alias;
+
    -------------------------
    -- Is_Compilation_Unit --
    -------------------------
@@ -1518,6 +1634,18 @@ package body GNATdoc.Atree is
         and then Is_Standard_Entity (Get_Scope (E))
         and then (Is_Subprogram (E) or else Is_Package (E));
    end Is_Compilation_Unit;
+
+   --------------------
+   -- Is_Record_Type --
+   --------------------
+
+   function Is_Record_Type (E : Entity_Id) return Boolean is
+   begin
+      return E.Xref.Ekind = E_Abstract_Record_Type
+        or else E.Xref.Ekind = E_Record_Type
+        or else E.Kind = E_Tagged_Record_Type
+        or else E.Kind = E_Interface;
+   end Is_Record_Type;
 
    -----------------------------
    -- Is_Class_Or_Record_Type --
@@ -1604,6 +1732,18 @@ package body GNATdoc.Atree is
       return E.Is_Doc_From_Body;
    end Is_Doc_From_Body;
 
+   ----------------
+   -- Is_Generic --
+   ----------------
+
+   function Is_Generic (E : Entity_Id) return Boolean is
+   begin
+      return LL_Is_Generic (E)
+        or else Get_Kind (E) = E_Generic_Package
+        or else Get_Kind (E) = E_Generic_Function
+        or else Get_Kind (E) = E_Generic_Procedure;
+   end Is_Generic;
+
    -----------------------
    -- Is_Generic_Formal --
    -----------------------
@@ -1622,14 +1762,28 @@ package body GNATdoc.Atree is
       return E.Is_Incomplete;
    end Is_Incomplete;
 
+   -----------------
+   -- Is_Internal --
+   -----------------
+
+   function Is_Internal (E : Entity_Id) return Boolean is
+   begin
+      return E.Is_Internal;
+   end Is_Internal;
+
    ----------------
    -- Is_Package --
    ----------------
 
    function Is_Package (E : Entity_Id) return Boolean is
    begin
-      return Kind_In (LL.Get_Kind (E), E_Package,
-                                       E_Generic_Package);
+      return
+        Kind_In (LL.Get_Kind (E), E_Package,
+                                  E_Generic_Package)
+          or else
+            (not Is_Standard_Entity (E)
+               and then Kind_In (Get_Kind (E), E_Package,
+                                               E_Generic_Package));
    end Is_Package;
 
    ---------------------
@@ -1777,6 +1931,15 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Loc;
 
+   -------------------
+   -- LL_Is_Generic --
+   -------------------
+
+   function LL_Is_Generic (E : Entity_Id) return Boolean is
+   begin
+      return E.Xref.Is_Generic;
+   end LL_Is_Generic;
+
    ----------------
    -- New_Entity --
    ----------------
@@ -1858,13 +2021,36 @@ package body GNATdoc.Atree is
 
    procedure Remove_From_Scope (E : Entity_Id) is
       Scope  : constant Entity_Id := Get_Scope (E);
-      Cursor : EInfo_List.Cursor;
    begin
-      pragma Assert (Present (Scope));
+      if No (Scope) then
+         return;
+      end if;
 
       if Get_Entities (Scope).Contains (E) then
-         Cursor := Scope.Entities.Find (E);
-         Scope.Entities.Delete (Cursor);
+         declare
+            Cursor : EInfo_List.Cursor;
+         begin
+            Cursor := Scope.Entities.Find (E);
+            Scope.Entities.Delete (Cursor);
+
+            --  For consistency here we should reset the scope of the entity
+            --  but this is not possible at current stage because of the
+            --  current managements of discriminants This must be improved???
+
+            --  E.Scope := Atree.No_Entity;
+         end;
+      end if;
+
+      if Is_Generic (Scope)
+        and then Is_Generic_Formal (E)
+        and then Get_Generic_Formals (Scope).Contains (E)
+      then
+         declare
+            Cursor : EInfo_List.Cursor;
+         begin
+            Cursor := Get_Generic_Formals (Scope).Find (E);
+            Scope.Entities.Delete (Cursor);
+         end;
       end if;
    end Remove_From_Scope;
 
@@ -1883,6 +2069,7 @@ package body GNATdoc.Atree is
 
       if Get_Kind (E) = Get_Kind (Value) then
          E.Alias := Value;
+         Set_Is_Alias (E);
       end if;
    end Set_Alias;
 
@@ -1903,6 +2090,24 @@ package body GNATdoc.Atree is
    begin
       E.Doc := Value;
    end Set_Doc;
+
+   -------------------
+   -- Set_Doc_After --
+   -------------------
+
+   procedure Set_Doc_After (E : Entity_Id; Value : Comment_Result) is
+   begin
+      E.Doc_After := Value;
+   end Set_Doc_After;
+
+   --------------------
+   -- Set_Doc_Before --
+   --------------------
+
+   procedure Set_Doc_Before (E : Entity_Id; Value : Comment_Result) is
+   begin
+      E.Doc_Before := Value;
+   end Set_Doc_Before;
 
    ---------------------------------
    -- Set_End_Of_Syntax_Scope_Loc --
@@ -1948,18 +2153,31 @@ package body GNATdoc.Atree is
    ----------------------
 
    procedure Set_IDepth_Level (E : Entity_Id) is
-      P      : Entity_Id;
+      P      : Entity_Id := E;
       Idepth : Natural := 0;
    begin
-      pragma Assert (Is_Tagged (E));
+      if Is_Partial_View (P) then
+         P := Get_Full_View (P);
+      end if;
 
-      P := E.Parent;
+      pragma Assert (Is_Tagged (P));
+
+      P := Get_Parent (P);
       while Present (P) loop
          Idepth := Idepth + 1;
+
+         if Is_Partial_View (P) then
+            P := Get_Full_View (P);
+         end if;
+
          P := Get_Parent (P);
       end loop;
 
       E.Idepth_Level := Idepth;
+
+      if Is_Full_View (E) then
+         Get_Partial_View (E).Idepth_Level := Idepth;
+      end if;
    end Set_IDepth_Level;
 
    -------------------
@@ -1997,18 +2215,14 @@ package body GNATdoc.Atree is
 
    procedure Set_Full_View_Doc (E : Entity_Id; Value : Comment_Result) is
    begin
-      pragma Assert
-        (E.Full_View_Doc = No_Comment_Result
-           or else Value = No_Comment_Result);
-      E.Full_View_Doc := Value;
+      pragma Assert (Is_Partial_View (E));
+      Set_Doc (Get_Full_View (E), Value);
    end Set_Full_View_Doc;
-
-   -----------------------
-   -- Set_Full_View_Src --
-   -----------------------
 
    procedure Set_Full_View_Src (E : Entity_Id; Value : Unbounded_String) is
    begin
+      pragma Assert (False); --  Deprecated
+
       pragma Assert (E.Full_View_Src = Null_Unbounded_String);
       E.Full_View_Src := Value;
    end Set_Full_View_Src;
@@ -2020,7 +2234,7 @@ package body GNATdoc.Atree is
    procedure Set_Generic_Formals_Loc
      (E : Entity_Id; Value : General_Location) is
    begin
-      pragma Assert (LL.Is_Generic (E));
+      pragma Assert (Is_Generic (E));
       pragma Assert (No (E.Generic_Formals_Loc));
       E.Generic_Formals_Loc := Value;
    end Set_Generic_Formals_Loc;
@@ -2033,6 +2247,15 @@ package body GNATdoc.Atree is
    begin
       E.Has_Private_Parent := Value;
    end Set_Has_Private_Parent;
+
+   ------------------
+   -- Set_Is_Alias --
+   ------------------
+
+   procedure Set_Is_Alias (E : Entity_Id) is
+   begin
+      E.Is_Alias := True;
+   end Set_Is_Alias;
 
    ----------------------
    -- Set_Is_Decorated --
@@ -2126,7 +2349,6 @@ package body GNATdoc.Atree is
      (E : Entity_Id; Value : Entity_Id)
    is
    begin
-      pragma Assert (No (E.Parent));
       pragma Assert (Value /= E); --  Avoid circularity
       pragma Assert (LL.Is_Type (Value));
       E.Parent := Value;
@@ -2138,7 +2360,21 @@ package body GNATdoc.Atree is
          Set_Is_Tagged (E.Parent);
       end if;
 
-      Append_Direct_Derivation (E.Parent, E);
+      --  For backward compatibility, for private types, direct derivations are
+      --  only attached to their partial view. This must be improved???
+
+      declare
+         Parent : constant Entity_Id :=
+           (if not Is_Full_View (E.Parent) then E.Parent
+            else Get_Partial_View (E.Parent));
+         Derived : constant Entity_Id :=
+           (if not Is_Full_View (E) then E
+            else Get_Partial_View (E));
+      begin
+         if not Get_Direct_Derivations (Parent).Contains (Derived) then
+            Append_Direct_Derivation (Parent, Derived);
+         end if;
+      end;
    end Set_Parent;
 
    ------------------------
@@ -2191,7 +2427,9 @@ package body GNATdoc.Atree is
 
       E.Scope := Value;
 
-      if Present (Get_Full_View (E)) then
+      if Present (Get_Full_View (E))
+        and then In_Same_File (E, Get_Full_View (E))
+      then
          Set_Scope (Get_Full_View (E), Value);
       end if;
    end Set_Scope;
@@ -2256,6 +2494,8 @@ package body GNATdoc.Atree is
       end Skip_Empty_Lines;
 
    begin
+      pragma Assert (Value /= Null_Unbounded_String);
+
       --  Filter empty lines located at the beginning and end of Value
 
       Skip_Empty_Lines (Low, Forward);
@@ -2283,7 +2523,7 @@ package body GNATdoc.Atree is
          Result := Process (E_Info, Scope_Level);
 
          if Result = OK then
-            if LL.Is_Generic (E_Info)
+            if Is_Generic (E_Info)
               and then Has_Generic_Formals (E_Info)
             then
                for Current of Get_Generic_Formals (E_Info).all loop
@@ -2334,6 +2574,9 @@ package body GNATdoc.Atree is
 
       procedure Append_Parent_Type (E : Entity_Id; Value : Entity_Id) is
       begin
+         pragma Assert (not Has_Parent_Type (E, Value));
+         pragma Assert (not E.Xref.Parent_Types.Contains (Value));
+
          E.Xref.Parent_Types.Append (Value);
       end Append_Parent_Type;
 
@@ -2463,11 +2706,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Is_Container;
       end Is_Container;
-
-      function Is_Generic (E : Entity_Id) return Boolean is
-      begin
-         return E.Xref.Is_Generic;
-      end Is_Generic;
 
       function Is_Global (E : Entity_Id) return Boolean is
       begin
@@ -2915,6 +3153,10 @@ package body GNATdoc.Atree is
          Append_Line ("In_Private_Part");
       end if;
 
+      if Enhancements and then Is_Alias (E) then
+         Append_Line ("Is_Alias");
+      end if;
+
       if Is_Decorated (E) then
          Append_Line ("Is_Decorated");
       end if;
@@ -2962,6 +3204,10 @@ package body GNATdoc.Atree is
 
       if Is_Tagged (E) then
          Append_Line ("Is_Tagged");
+
+         if Enhancements then
+            Append_Line ("  IDepth_Level:" & Get_IDepth_Level (E)'Img);
+         end if;
       end if;
 
       if Is_Generic_Formal (E) then
@@ -3192,7 +3438,7 @@ package body GNATdoc.Atree is
          Append_Line (LL_Prefix & " Is_Subprogram");
       end if;
 
-      if E.Xref.Is_Generic then
+      if Is_Generic (E) then
          if Has_Generic_Formals (E) then
             declare
                Cursor : EInfo_List.Cursor;
@@ -3239,13 +3485,15 @@ package body GNATdoc.Atree is
                Cursor := Get_Entities (E).First;
                while EInfo_List.Has_Element (Cursor) loop
                   Formal := EInfo_List.Element (Cursor);
-                  pragma Assert (Get_Kind (Formal) = E_Formal);
 
                   declare
                      UID : constant String :=
                              (if With_Unique_Id
                               then To_String (Formal.Id) & ": "
                               else "");
+                     Suffix : constant String :=
+                       (if Get_Kind (Formal) = E_Formal then ""
+                           else Get_Kind (Formal)'Img & " ???");
                   begin
                      Append_Line
                        (LL_Prefix
@@ -3253,7 +3501,8 @@ package body GNATdoc.Atree is
                         & UID
                         & Image (LL.Get_Location (Formal))
                         & ":"
-                        & Get_Short_Name (Formal));
+                        & Get_Short_Name (Formal)
+                        & Suffix);
                   end;
 
                   EInfo_List.Next (Cursor);
@@ -3316,6 +3565,29 @@ package body GNATdoc.Atree is
       end if;
 
       if With_Doc then
+         if E.Doc_Before /= No_Comment_Result then
+            Append_Line
+              ("Doc_Before.Line:" & E.Doc_Before.Start_Line'Img);
+            Append_Line
+              ("Doc_Before.Text: " & To_String (E.Doc_Before.Text));
+         end if;
+
+         if E.Doc_After /= No_Comment_Result then
+            Append_Line
+              ("Doc_After.Line:" & E.Doc_After.Start_Line'Img);
+            Append_Line
+              ("Doc_After.Text: " & To_String (E.Doc_After.Text));
+         end if;
+
+         if E.Doc /= No_Comment_Result then
+            if E.Is_Doc_From_Body then
+               Append_Line ("Is_Doc_From_Body");
+            end if;
+
+            Append_Line ("Doc.Line:" & E.Doc.Start_Line'Img);
+            Append_Line ("Doc.Text: " & To_String (E.Doc.Text));
+         end if;
+
          if E.Doc /= No_Comment_Result then
             if E.Is_Doc_From_Body then
                Append_Line ("Is_Doc_From_Body");
@@ -3438,15 +3710,23 @@ package body GNATdoc.Atree is
 
    procedure pns (E : Entity_Id) is
    begin
-      GNAT.IO.Put_Line
-        (Get_Unique_Id (E)'Img & ":"
-         & Get_Short_Name (E) & " "
-         & Image (LL.Get_Location (E)));
+      if No (E) then
+         GNAT.IO.Put_Line ("<No entity>");
+      else
+         GNAT.IO.Put_Line
+           ("["
+            & To_String (Get_Unique_Id (E))
+            & "] "
+            & Get_Short_Name (E) & " "
+            & Image (LL.Get_Location (E)));
+      end if;
    end pns;
 
    procedure pns (Db : General_Xref_Database; E : General_Entity) is
    begin
-      if Present (E) then
+      if No (E) then
+         GNAT.IO.Put_Line ("<No entity>");
+      else
          declare
             Loc  : constant General_Location := Get_Location (Db, E);
             Name : constant String := Get_Name (Db, E);

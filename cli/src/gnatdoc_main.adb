@@ -49,6 +49,7 @@ procedure GNATdoc_Main is
 
    --  Switches
 
+   Leading_Doc          : aliased Boolean;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
    Process_C_Files      : aliased Boolean;
    Process_Bodies       : aliased Boolean;
@@ -176,7 +177,12 @@ begin
             Output       => Process_C_Files'Access,
             Switch       => "-c",
             Help         => "Process C/C++ files");
-         exit;
+      elsif Ada.Command_Line.Argument (J) = "-l" then
+         Define_Switch
+           (Cmdline,
+            Output       => Leading_Doc'Access,
+            Switch       => "-l",
+            Help         => "Leading documentation");
       end if;
    end loop;
 
@@ -266,6 +272,7 @@ begin
                                           (Pattern, Single_Line))),
          Report_Errors   => (if Suppress_Warnings then Errors_Only
                                                   else Errors_And_Warnings),
+         Leading_Doc     => Leading_Doc,
          Skip_C_Files    => not Process_C_Files,
          Tree_Output     => ((if Internal_Output then Full
                                                  else None),

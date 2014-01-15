@@ -59,6 +59,12 @@ package GNATdoc is
       --  Enables reporting errors and warnings on missing documentation,
       --  duplicated tags, etc.
 
+      Leading_Doc     : Boolean := False;
+      --  If True then extract the documentation of an entity declaration by
+      --  first looking at the leading comments, and fallback to the comments
+      --  after the entity if not found. If this flag is False then the search
+      --  order is reversed.
+
       Skip_C_Files    : Boolean := True;
       --  Used to force skip processing C and C++ files (since, although the
       --  project may have or reference these files we may not be interested

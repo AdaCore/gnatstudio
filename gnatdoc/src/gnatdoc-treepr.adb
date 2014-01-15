@@ -30,6 +30,8 @@ package body GNATdoc.Treepr is
    Tab : constant String :=
      "| | | | | | | | | | | | | | | | | | | | | | | | | | | | | |";
 
+   Enhancements : constant Boolean := False;
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -111,6 +113,29 @@ package body GNATdoc.Treepr is
       is
          pragma Unreferenced (Scope_Level);
       begin
+
+         --  Temporarily for backward output compatibility (to avoid
+         --  generating false regressions)???
+
+         if not Enhancements then
+            if Get_Kind (Entity) = E_Formal then
+               return Skip;
+
+            elsif Get_Kind (Entity) = E_Component
+              and then not Is_Concurrent_Type_Or_Object (Get_Scope (Entity))
+            then
+               return Skip;
+            end if;
+         end if;
+
+         --  No need to duplicate the output of the full view since it has
+         --  been previously appended to the information of the partial view;
+         --  however we return OK to output the components of the full view.
+
+         if Is_Full_View (Entity) then
+            return OK;
+         end if;
+
          --  No output generated if no information is available on this
          --  entity (to leave the output more clean)
 
@@ -127,7 +152,10 @@ package body GNATdoc.Treepr is
             & ":"
             & Get_Short_Name (Entity));
 
-         if Get_Full_View_Src (Entity) = Null_Unbounded_String then
+         if not Context.Options.Show_Private
+           or else not (Is_Partial_View (Entity))
+           or else Get_Full_View_Src (Entity) = Null_Unbounded_String
+         then
             if Get_Src (Entity) /= Null_Unbounded_String then
                Append_Line ("--- Src:");
                Append_Line (To_String (Get_Src (Entity)));

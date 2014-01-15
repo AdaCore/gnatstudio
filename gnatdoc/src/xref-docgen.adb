@@ -49,6 +49,11 @@ package body Xref.Docgen is
       return L = No_Location;
    end No;
 
+   function No (Comment : Comment_Result) return Boolean is
+   begin
+      return Comment = No_Comment_Result;
+   end No;
+
    -------------
    -- Present --
    -------------
@@ -61,6 +66,11 @@ package body Xref.Docgen is
    function Present (L : General_Location) return Boolean is
    begin
       return L /= No_Location;
+   end Present;
+
+   function Present (Comment : Comment_Result) return Boolean is
+   begin
+      return Comment /= No_Comment_Result;
    end Present;
 
    ------------------

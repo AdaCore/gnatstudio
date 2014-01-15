@@ -158,6 +158,7 @@ package body GPS.CLI_Scripts is
             Options : constant GNATdoc.Docgen_Options :=
               (Comments_Filter => null,
                Report_Errors   => Report_Errors_Kind'Value (Report_Errors),
+               Leading_Doc     => False,
                Skip_C_Files    => Skip_C_Files,
                Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
                                    With_Comments),
