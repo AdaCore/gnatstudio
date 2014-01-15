@@ -405,7 +405,7 @@ those files if you need a different layout from the default.
 You can also use user-defined structured comments to improve the generated
 documentation. These use XML-like tags. To define your own set of tags,
 refer to the GPS python extension documentation (:menuselection:`Help -->
-Python extensions').  The string values inside those tags are handled
+Python extensions`).  The string values inside those tags are handled
 similar to regular XML: extra whitespace is ignored. One exception is that
 layout is preserved in the following cases:
 
