@@ -281,6 +281,12 @@ package body VCS_Module.Actions is
          File_Filter,
          On_Menu_Diff_Base_Head'Access);
 
+      Register_Action_Menu
+        ("Diff against base",
+         -"Compare against base revision of current file",
+         File_Filter,
+         On_Menu_Diff_Working'Access);
+
       --  ??? To do
 
       Register_Action_Menu
