@@ -33,6 +33,7 @@ actions = [
  SEPARATOR,
 
  { ACTION: "Diff against head",          LABEL: "Compare against head revision"  },
+ { ACTION: "Diff against base",          LABEL: "Compare against base revision"  },
  { ACTION: "Diff against revision",      LABEL: "Compare against specific revision" },
  { ACTION: "Diff between two revisions", LABEL: "Compare two revisions" },
  { ACTION: "Diff base against head",     LABEL: "Compare base against head" },
@@ -446,6 +447,24 @@ XML = r"""<?xml version="1.0"?>
       <shell>delete "%5"</shell>
    </action>
 
+   <action name="generic_svn_diff_working" show-command="false" output="none" category="">
+      <shell output="">echo "Getting comparison for $1 ..."</shell>
+      <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal "$1"</external>
+      <on-failure>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
+         <shell lang="python" output="">ignored=[m.remove() for m in GPS.Message.list(category="Subversion errors")]</shell>
+         <shell output="">Locations.parse "%4" "Subversion errors"</shell>
+      </on-failure>
+      <shell>base_name "$1"</shell>
+      <shell>dump "%2" TRUE</shell>
+      <shell>File "%1"</shell>
+      <shell>File "$1"</shell>
+      <shell>Hook "diff_action_hook"</shell>
+      <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
+      <shell>delete "%5"</shell>
+   </action>
+
    <action name="generic_svn_diff" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r $1 "$2"</external>
@@ -615,6 +634,7 @@ XML = r"""<?xml version="1.0"?>
       <revision           action="generic_svn_revision"         label="View revision"/>
       <diff_patch         action="generic_svn_diff_patch"       label="Compare against head revision for building a patch file"/>
       <diff_head          action="generic_svn_diff_head"        label="Compare against head revision"/>
+      <diff_working       action="generic_svn_diff_working"     label="Compare against working revision"/>
       <diff_base_head     action="generic_svn_diff_base_head"   label="Compare base against head"/>
       <diff               action="generic_svn_diff"             label="Compare against other revision"/>
       <diff_tag           action="generic_svn_diff_tag"         label="Compare against a tag/branch"/>
