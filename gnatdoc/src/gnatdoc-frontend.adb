@@ -48,6 +48,7 @@ package body GNATdoc.Frontend is
    type Tokens is
      (Tok_Unknown,
       Tok_Id,          --  Expanded names & identifiers
+      Tok_Number,
       Tok_Operator,
 
       --  Reserved words
@@ -82,6 +83,8 @@ package body GNATdoc.Frontend is
       Tok_When,
       Tok_With,
       --  Other tokens
+      Tok_Arrow,
+      Tok_Assignment,
       Tok_Left_Paren,
       Tok_Right_Paren,
       Tok_Semicolon);
@@ -3160,6 +3163,10 @@ package body GNATdoc.Frontend is
          Generic_Formals_Loc    : General_Location := No_Location;
          --  Location of the word "generic"
 
+         Max_Aggregate_Length : constant := 25;
+         In_Aggregate         : Boolean := False;
+         Aggr_Begin_Line      : Natural := 0;
+
          In_Definition    : Boolean := False;
          In_Item_Decl     : Boolean := False;
 
@@ -3191,6 +3198,10 @@ package body GNATdoc.Frontend is
 
             procedure Accumulate_Comments;
 
+            function Aggregate_Length return Natural;
+            --  Return the number of lines of the current aggregate
+
+            procedure Clear_Accumulated_Sources;
             procedure Complete_Decoration (End_Decl_Found : Boolean);
 
             procedure Handle_Doc;
@@ -3243,6 +3254,25 @@ package body GNATdoc.Frontend is
                Append_Comment (S);
                Doc_End_Line := Sloc_End.Line;
             end Accumulate_Comments;
+
+            ----------------------
+            -- Aggregate_Length --
+            ----------------------
+
+            function Aggregate_Length return Natural is
+            begin
+               pragma Assert (In_Aggregate);
+               return Sloc_Start.Line - Aggr_Begin_Line;
+            end Aggregate_Length;
+
+            -------------------------------
+            -- Clear_Accumulated_Sources --
+            -------------------------------
+
+            procedure Clear_Accumulated_Sources is
+            begin
+               Last_Idx := 0;
+            end Clear_Accumulated_Sources;
 
             -------------------------
             -- Complete_Decoration --
@@ -4141,9 +4171,7 @@ package body GNATdoc.Frontend is
                   when Tok_Pragma =>
                      In_Pragma := True;
 
-                  --  Handle variants of record types adding again their
-                  --  scope (for homogeneity in the management of their
-                  --  closing syntax scope)
+                  --  Handle variants of record types
 
                   when Tok_Case =>
 
@@ -4438,6 +4466,11 @@ package body GNATdoc.Frontend is
                      Append_Src (S);
 
                      if Par_Count = 0
+                       and then Nested_Variants_Count /= 0
+                     then
+                        null;
+
+                     elsif Par_Count = 0
                        and then End_Decl_Found
                      then
                         declare
@@ -4506,18 +4539,30 @@ package body GNATdoc.Frontend is
             -------------------
 
             procedure Handle_Tokens is
+               procedure Update_Prev_Known_Token;
+               pragma Inline (Update_Prev_Known_Token);
+
+               procedure Update_Prev_Known_Token is
+               begin
+                  if Token /= Tok_Unknown then
+                     Prev_Token := Token;
+                  end if;
+               end Update_Prev_Known_Token;
+
             begin
                case Entity is
-                  when Type_Text =>
-                     null;
 
                   when Block_Text      |
                        Identifier_Text =>
-                     Prev_Token := Token;
+                     Update_Prev_Known_Token;
                      Token := Tok_Id;
 
-                  when Keyword_Text    =>
-                     Prev_Token := Token;
+                  when Number_Text =>
+                     Update_Prev_Known_Token;
+                     Token := Tok_Number;
+
+                  when Keyword_Text =>
+                     Update_Prev_Known_Token;
                      Token := Get_Token (S);
                      Set_Token_Seen (Current_Context, Token);
 
@@ -4548,16 +4593,39 @@ package body GNATdoc.Frontend is
                      end case;
 
                   when Operator_Text  =>
-                     Prev_Token := Token;
+                     Update_Prev_Known_Token;
                      Token := Tok_Operator;
 
                      if S = "(" then
                         Token := Tok_Left_Paren;
                         Par_Count := Par_Count + 1;
 
+                        if Prev_Token = Tok_Assignment
+                          and then Par_Count = 1
+                        then
+                           In_Aggregate := True;
+                           Aggr_Begin_Line := Sloc_Start.Line;
+                        end if;
+
                      elsif S = ")" then
+                        if In_Aggregate and then Par_Count = 1 then
+                           if Aggregate_Length > Max_Aggregate_Length then
+                              Clear_Accumulated_Sources;
+                              Append_Sources (" ... ");
+                           end if;
+
+                           In_Aggregate := False;
+                           Aggr_Begin_Line := 0;
+                        end if;
+
                         Token := Tok_Right_Paren;
                         Par_Count := Par_Count - 1;
+
+                     elsif S = ":=" then
+                        Token := Tok_Assignment;
+
+                     elsif S = "=>" then
+                        Token := Tok_Arrow;
 
                      elsif S = ";" then
                         Token := Tok_Semicolon;
@@ -4574,8 +4642,17 @@ package body GNATdoc.Frontend is
                         end if;
                      end if;
 
-                  when others =>
-                     null;
+               when Normal_Text             |
+                    Partial_Identifier_Text |
+                    Type_Text               |
+                    Comment_Text            |
+                    Annotated_Keyword_Text  |
+                    Annotated_Comment_Text  |
+                    Aspect_Keyword_Text     |
+                    Aspect_Text             |
+                    Character_Text          |
+                    String_Text             =>
+                  Token := Tok_Unknown;
                end case;
             end Handle_Tokens;
 
@@ -4766,6 +4843,17 @@ package body GNATdoc.Frontend is
 
             Handle_Tokens;
 
+            --  Optimization to improve performance processing large
+            --  aggregates
+
+            if In_Aggregate then
+               if Aggregate_Length <= Max_Aggregate_Length then
+                  Handle_Sources (End_Decl_Found => False);
+               end if;
+
+               return False; --  Continue
+            end if;
+
             declare
                End_Decl_Found : constant Boolean :=
                  Get_End_Decl_Found (Current_Context);
@@ -4820,9 +4908,9 @@ package body GNATdoc.Frontend is
                if End_Decl_Found then
                   Reset_End_Decl_Found (Current_Context);
                end if;
-
-               return False; --  Continue
             end;
+
+            return False; --  Continue
          end CB;
 
          ---------------------

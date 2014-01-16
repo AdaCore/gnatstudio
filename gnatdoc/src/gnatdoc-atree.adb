@@ -2049,7 +2049,7 @@ package body GNATdoc.Atree is
             Cursor : EInfo_List.Cursor;
          begin
             Cursor := Get_Generic_Formals (Scope).Find (E);
-            Scope.Entities.Delete (Cursor);
+            Get_Generic_Formals (Scope).Delete (Cursor);
          end;
       end if;
    end Remove_From_Scope;
