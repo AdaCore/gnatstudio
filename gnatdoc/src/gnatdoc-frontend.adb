@@ -3370,6 +3370,7 @@ package body GNATdoc.Frontend is
                      then
                         In_Generic_Decl := True;
                      end if;
+
                   when Tok_New =>
                      if Prev_Token = Tok_Is then
                         declare
@@ -3600,6 +3601,31 @@ package body GNATdoc.Frontend is
                               --  pragma Assert (not In_Compilation_Unit);
 
                               In_Compilation_Unit := True;
+                           end if;
+
+                           if Is_Package (E)
+                             and then Is_Expanded_Name (S)
+                           then
+                              declare
+                                 Last_Dot_Index : Natural := 0;
+                                 Parent         : Entity_Id;
+                              begin
+                                 for J in reverse S'Range loop
+                                    if S (J) = '.' then
+                                       Last_Dot_Index := J;
+                                       exit;
+                                    end if;
+                                 end loop;
+
+                                 Parent :=
+                                   Builder.Find_Unique_Entity
+                                     (S (S'First .. Last_Dot_Index - 1));
+
+                                 if Present (Parent) then
+                                    pragma Assert (Is_Package (Parent));
+                                    Set_Parent_Package (E, Parent);
+                                 end if;
+                              end;
                            end if;
 
                            if Is_Generic (E) then
