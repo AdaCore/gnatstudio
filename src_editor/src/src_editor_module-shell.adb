@@ -79,6 +79,7 @@ package body Src_Editor_Module.Shell is
 
    Editor_Location_Class_Name : constant String := "EditorLocation";
 
+   Ext_Sel_Cst           : aliased constant String := "extend_selection";
    Filename_Cst          : aliased constant String := "filename";
    File_Cst              : aliased constant String := "file";
    Line_Cst              : aliased constant String := "line";
@@ -1700,8 +1701,10 @@ package body Src_Editor_Module.Shell is
                         & " Use EditorBuffer multi cursors methods instead"));
 
       elsif Command = "move" then
+         Name_Parameters (Data, (1 => Location_Cst'Access,
+                                 2 => Ext_Sel_Cst'Access));
          MC_Data.C.Element.Move (Get_Location (Data, 2),
-                                 Nth_Arg (Data, 3));
+                                 Nth_Arg (Data, 3, False));
       elsif Command = "mark" then
          Data.Set_Return_Value
            (Create_Editor_Mark
