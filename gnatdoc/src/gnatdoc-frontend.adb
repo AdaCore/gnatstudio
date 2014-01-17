@@ -3216,6 +3216,7 @@ package body GNATdoc.Frontend is
             function Has_Scope (E : Entity_Id) return Boolean;
             function In_Next_Entity return Boolean;
 
+            procedure Set_Doc_After (E : Entity_Id);
             procedure Set_Doc_After_Current_Entity;
             procedure Set_Doc_After_Previous_Entity_In_Scope;
 
@@ -3778,32 +3779,13 @@ package body GNATdoc.Frontend is
                                       Column =>
                                         Visible_Column (Sloc_Start.Column));
                               begin
-                                 if Present (E)
-                                   and then Get_Kind (E) /= E_Formal
-                                 then
-                                    if not Enhancements
-                                      and then
-                                        (Get_Kind (E) = E_Variable
-                                         or else Get_Kind (E) = E_Component
-                                         or else Is_Generic_Formal (E)
-                                         or else Get_Kind (E)
-                                                   = E_Generic_Formal
-                                         or else
-                                           (LL.Is_Type (E)
-                                             and then not Is_Record_Type (E)
-                                             and then not
-                                               Is_Concurrent_Type_Or_Object
-                                                 (E)))
-                                    then
-                                       null;
-
+                                 if Present (E) then
                                     --  No action needed if this attribute
                                     --  is already set. This case occurs
                                     --  with pragmas located after E.
 
-                                    elsif
-                                        Present
-                                          (Get_End_Of_Profile_Location (E))
+                                    if Present
+                                         (Get_End_Of_Profile_Location (E))
                                       or else
                                         Present
                                          (Get_End_Of_Syntax_Scope_Loc (E))
@@ -3816,24 +3798,11 @@ package body GNATdoc.Frontend is
                                     end if;
 
                                  else
-                                    --  Probably I should simplify these two
-                                    --  attributes in a single one???
-
-                                    if not Enhancements
-                                      and then
-                                        (Present
-                                           (LL.Get_Instance_Of (Scope))
-                                         or else
-                                           Get_Kind (Scope) = E_Access_Type)
-                                    then
-                                       null;
-
                                     --  No action needed if this attribute
                                     --  is already set. This case occurs
                                     --  with pragmas located after Scope.
 
-                                    elsif
-                                      Present
+                                    if Present
                                         (Get_End_Of_Profile_Location
                                            (Scope))
                                       or else
@@ -3869,27 +3838,8 @@ package body GNATdoc.Frontend is
 
             procedure Handle_Doc is
 
-               procedure Set_Doc_After (E : Entity_Id);
                procedure Set_Doc_After_Previous_Entity;
                procedure Set_Doc_Before (E : Entity_Id);
-               procedure Set_Doc_Before_Current_Entity;
-
-               -------------------
-               -- Set_Doc_After --
-               -------------------
-
-               procedure Set_Doc_After (E : Entity_Id) is
-               begin
-                  if Present (Doc)
-                    and then Present (E)
-                    and then No (Get_Doc_After (E))
-                  then
-                     Set_Doc_After (E,
-                       Comment_Result'
-                         (Text       => Doc,
-                          Start_Line => Doc_Start_Line));
-                  end if;
-               end Set_Doc_After;
 
                -----------------------------------
                -- Set_Doc_After_Previous_Entity --
@@ -3927,28 +3877,25 @@ package body GNATdoc.Frontend is
                     and then Present (E)
                     and then No (Get_Doc_Before (E))
                   then
-                     Set_Doc_Before (E,
-                       Comment_Result'
-                         (Text       => Doc,
-                          Start_Line => Doc_Start_Line));
+                     --  Support for floating comments (currently disabled)
+
+                     if Enhancements then
+                        Set_Doc_Before (E,
+                          Comment_Result'
+                            (Text       => Doc,
+                             Start_Line => Doc_Start_Line));
+
+                     elsif Get_Kind (E) = E_Formal then
+                        null;
+
+                     elsif Doc_End_Line = LL.Get_Location (E).Line - 1 then
+                        Set_Doc_Before (E,
+                          Comment_Result'
+                            (Text       => Doc,
+                             Start_Line => Doc_Start_Line));
+                     end if;
                   end if;
                end Set_Doc_Before;
-
-               -----------------------------------
-               -- Set_Doc_Before_Current_Entity --
-               -----------------------------------
-
-               procedure Set_Doc_Before_Current_Entity is
-               begin
-                  if In_Next_Entity
-                    and then Present (Doc)
-                  then
-                     Set_Doc_Before (Get_Current_Entity (Current_Context),
-                        Comment_Result'
-                          (Text       => Doc,
-                           Start_Line => Doc_Start_Line));
-                  end if;
-               end Set_Doc_Before_Current_Entity;
 
             --  Start of processing for Handle_Doc
 
@@ -4049,7 +3996,9 @@ package body GNATdoc.Frontend is
                   when Tok_Procedure |
                        Tok_Function  |
                        Tok_Entry =>
-                     Set_Doc_Before_Current_Entity;
+                     if In_Next_Entity then
+                        Set_Doc_Before (Get_Current_Entity (Current_Context));
+                     end if;
 
                   when Tok_Right_Paren =>
                      if Present (Doc) then
@@ -4252,9 +4201,20 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
-                  when Tok_Right_Paren |
-                       Tok_Return      =>
+                  when Tok_Return =>
                      null;
+
+                  when Tok_Right_Paren =>
+                     declare
+                        E : constant Entity_Id :=
+                              Get_Current_Entity (Current_Context);
+                     begin
+                        if Present (E)
+                          and then Get_Kind (E) = E_Formal
+                        then
+                           Do_Exit;
+                        end if;
+                     end;
 
                   when Tok_Semicolon =>
                      Do_Breakpoint;
@@ -4741,6 +4701,68 @@ package body GNATdoc.Frontend is
                  and then Natural (Loc.Column) <= Sloc_End.Column;
             end In_Next_Entity;
 
+            -------------------
+            -- Set_Doc_After --
+            -------------------
+
+            procedure Set_Doc_After (E : Entity_Id) is
+            begin
+               if Present (Doc)
+                 and then Present (E)
+                 and then No (Get_Doc_After (E))
+               then
+                  --  Support for floating comments (currently disabled)
+
+                  if Enhancements then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+
+                  elsif Get_Kind (E) = E_Formal then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+
+                  else
+                     declare
+                        End_Loc : constant General_Location :=
+                          (if Is_Subprogram_Or_Entry (E) then
+                              Get_End_Of_Profile_Location (E)
+                           else Get_End_Of_Syntax_Scope_Loc (E));
+                     begin
+                        if No (End_Loc) then
+                           --  Documentation located immediately after the
+                           --  header of a package or concurrent type
+
+                           if Is_Concurrent_Type_Or_Object (E)
+                             or else Is_Package (E)
+                           then
+                              if Doc_Start_Line = LL.Get_Location (E).Line
+                                or else
+                                 Doc_Start_Line = LL.Get_Location (E).Line + 1
+                              then
+                                 Set_Doc_After (E,
+                                   Comment_Result'
+                                     (Text       => Doc,
+                                      Start_Line => Doc_Start_Line));
+                              end if;
+                           end if;
+
+                        elsif Doc_Start_Line = End_Loc.Line
+                          or else Doc_Start_Line = End_Loc.Line + 1
+                        then
+                           Set_Doc_After (E,
+                             Comment_Result'
+                               (Text       => Doc,
+                                Start_Line => Doc_Start_Line));
+                        end if;
+                     end;
+                  end if;
+               end if;
+            end Set_Doc_After;
+
             ----------------------------------
             -- Set_Doc_After_Current_Entity --
             ----------------------------------
@@ -4749,14 +4771,8 @@ package body GNATdoc.Frontend is
                Current : constant Entity_Id :=
                  Get_Current_Entity (Current_Context);
             begin
-               if Present (Doc)
-                 and then Present (Current)
-                 and then No (Get_Doc_After (Current))
-               then
-                  Set_Doc_After (Current,
-                    Comment_Result'
-                      (Text       => Doc,
-                       Start_Line => Doc_Start_Line));
+               if Present (Current) then
+                  Set_Doc_After (Current);
                end if;
             end Set_Doc_After_Current_Entity;
 
@@ -4768,14 +4784,8 @@ package body GNATdoc.Frontend is
                Prev_Entity_In_Scope : constant Entity_Id :=
                  Get_Prev_Entity_In_Scope (Current_Context);
             begin
-               if Present (Doc)
-                 and then Present (Prev_Entity_In_Scope)
-                 and then No (Get_Doc_After (Prev_Entity_In_Scope))
-               then
-                  Set_Doc_After (Prev_Entity_In_Scope,
-                    Comment_Result'
-                      (Text       => Doc,
-                       Start_Line => Doc_Start_Line));
+               if Present (Prev_Entity_In_Scope) then
+                  Set_Doc_After (Prev_Entity_In_Scope);
                end if;
             end Set_Doc_After_Previous_Entity_In_Scope;
 

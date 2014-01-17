@@ -759,7 +759,7 @@ package body GNATdoc.Atree is
 
       Scope := Prev_Scope;
       while Present (Get_Parent_Package (Scope)) loop
-         Scope     := Get_Parent_Package (Scope);
+         Scope := Get_Parent_Package (Scope);
 
          if In_Neverending_Loop then
             return To_String (Full_Name);
@@ -3110,15 +3110,51 @@ package body GNATdoc.Atree is
          Append_Entity ("Scope: ", E.Scope);
       end if;
 
-      if Present (E.End_Of_Syntax_Scope_Loc) then
-         Append_Line
-           ("End_Of_Syntax_Scope_Loc: " & Image (E.End_Of_Syntax_Scope_Loc));
+      if Present (Get_End_Of_Syntax_Scope_Loc (E)) then
+         if Reliable_Mode
+           and then not Enhancements
+           and then
+             (Get_Kind (E) = E_Formal
+                or else Get_Kind (E) = E_Variable
+                or else Get_Kind (E) = E_Component
+                or else Is_Generic_Formal (E)
+                or else Get_Kind (E) = E_Generic_Formal
+                or else Get_Kind (E) = E_Access_Type
+                or else (LL.Is_Type (E)
+                          and then not Is_Record_Type (E)
+                          and then not Is_Concurrent_Type_Or_Object (E))
+                or else Present (LL.Get_Instance_Of (E)))
+         then
+            null;
+
+         else
+            Append_Line
+              ("End_Of_Syntax_Scope_Loc: "
+               & Image (Get_End_Of_Syntax_Scope_Loc (E)));
+         end if;
       end if;
 
-      if Present (E.End_Of_Profile_Location) then
-         Append_Line
-           ("End_Of_Profile_Location: "
-            & Image (E.End_Of_Profile_Location));
+      if Present (Get_End_Of_Profile_Location (E)) then
+         if Reliable_Mode
+           and then not Enhancements
+           and then
+             (Get_Kind (E) = E_Formal
+                or else Get_Kind (E) = E_Variable
+                or else Get_Kind (E) = E_Component
+                or else Is_Generic_Formal (E)
+                or else Get_Kind (E) = E_Generic_Formal
+                or else Get_Kind (E) = E_Access_Type
+                or else (LL.Is_Type (E)
+                          and then not Is_Record_Type (E)
+                          and then not Is_Concurrent_Type_Or_Object (E))
+                or else Present (LL.Get_Instance_Of (E)))
+         then
+            null;
+         else
+            Append_Line
+              ("End_Of_Profile_Location: "
+               & Image (Get_End_Of_Profile_Location (E)));
+         end if;
       end if;
 
       if Present (E.Generic_Formals_Loc) then
