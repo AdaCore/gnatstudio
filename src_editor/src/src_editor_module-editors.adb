@@ -2968,6 +2968,14 @@ package body Src_Editor_Module.Editors is
       This.Buffer.Contents.Buffer.Get_Iter_At_Offset
         (Iter, Gint (Where.Offset));
       Move (This.C.Element, Iter, Extend_Selection);
+
+      --  If the cursor is the main cursor, scroll it's view to show the
+      --  cursor.
+
+      if This.C.Element.Is_Main_Cursor then
+         Scroll_To_Cursor_Location
+           (Src_Editor_View (This.Buffer.Current_View).Contents.Box.Get_View);
+      end if;
    end Move;
 
    ---------------------
