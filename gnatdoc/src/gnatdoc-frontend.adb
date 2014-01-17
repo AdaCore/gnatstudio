@@ -3624,7 +3624,8 @@ package body GNATdoc.Frontend is
 
                                  Parent :=
                                    Builder.Find_Unique_Entity
-                                     (S (S'First .. Last_Dot_Index - 1));
+                                     (S (S'First .. Last_Dot_Index - 1),
+                                      Must_Be_Package => True);
 
                                  if Present (Parent) then
                                     pragma Assert (Is_Package (Parent));
@@ -4205,16 +4206,18 @@ package body GNATdoc.Frontend is
                      null;
 
                   when Tok_Right_Paren =>
-                     declare
-                        E : constant Entity_Id :=
-                              Get_Current_Entity (Current_Context);
-                     begin
-                        if Present (E)
-                          and then Get_Kind (E) = E_Formal
-                        then
-                           Do_Exit;
-                        end if;
-                     end;
+                     if Par_Count = 0 then
+                        declare
+                           E : constant Entity_Id :=
+                                 Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (E)
+                             and then Get_Kind (E) = E_Formal
+                           then
+                              Do_Exit;
+                           end if;
+                        end;
+                     end if;
 
                   when Tok_Semicolon =>
                      Do_Breakpoint;
