@@ -33,7 +33,8 @@ private package GNATdoc.Frontend.Builder is
    --  which takes care of building the tree and leaves more clear the high
    --  level actions performed by Build_Tree.
 
-   function Find_Unique_Entity (Full_Name : String) return Entity_Id;
+   function Find_Unique_Entity
+     (Full_Name : String; Must_Be_Package : Boolean := False) return Entity_Id;
    --  Iterate through all entities stored in the hash table searching for an
    --  an entity with Full_Name. No_Entity is returned if not found.
 

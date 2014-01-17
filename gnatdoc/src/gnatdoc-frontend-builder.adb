@@ -2636,7 +2636,8 @@ package body GNATdoc.Frontend.Builder is
    -- Find_Unique_Entity --
    ------------------------
 
-   function Find_Unique_Entity (Full_Name : String) return Entity_Id
+   function Find_Unique_Entity
+     (Full_Name : String; Must_Be_Package : Boolean := False) return Entity_Id
    is
       Cursor : EInfo_Map.Cursor := Entities_Map.First;
       E      : Entity_Id;
@@ -2645,7 +2646,15 @@ package body GNATdoc.Frontend.Builder is
          E := EInfo_Map.Element (Cursor);
 
          if Get_Full_Name (E) = Full_Name then
-            return E;
+
+            --  Return this entity if the search is not restricted to
+            --  entities of packages
+
+            if not Must_Be_Package then
+               return E;
+            elsif Is_Package (E) then
+               return E;
+            end if;
          end if;
 
          EInfo_Map.Next (Cursor);
