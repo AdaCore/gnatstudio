@@ -317,6 +317,8 @@ package Language.Tree is
    --  This type is used to store identifiers with multiple parts, e.g.
    --  A.B.
 
+   Null_Composite_Identifier : constant Composite_Identifier;
+
    type Composite_Identifier_Access is access all Composite_Identifier;
 
    procedure Free (This : in out Composite_Identifier_Access);
@@ -582,6 +584,9 @@ private
          Identifier     : String (1 .. String_Length);
          Position_Start : Positions_Array (1 .. Number_Of_Elements);
          Position_End   : Positions_Array (1 .. Number_Of_Elements);
-      end record;
+   end record;
+
+   Null_Composite_Identifier : constant Composite_Identifier :=
+     (0, 0, "", (others => 0), (others => 0));
 
 end Language.Tree;

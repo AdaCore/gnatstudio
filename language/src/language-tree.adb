@@ -1051,7 +1051,9 @@ package body Language.Tree is
    function Get_Item (Id : Composite_Identifier; Number : Natural)
      return String is
    begin
-      if Number = 0 then
+      if Number = 0
+        or else Id = Null_Composite_Identifier
+      then
          return "";
       else
          return Id.Identifier
@@ -1099,7 +1101,7 @@ package body Language.Tree is
 
    begin
       if Identifier = "" then
-         return (0, 0, "", (others => 0), (others => 0));
+         return Null_Composite_Identifier;
       end if;
 
       --  Compute the size of the result
