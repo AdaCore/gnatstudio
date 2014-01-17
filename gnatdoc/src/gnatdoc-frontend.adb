@@ -66,6 +66,7 @@ package body GNATdoc.Frontend is
       Tok_Limited,
       Tok_New,
       Tok_Null,
+      Tok_Overriding,
       Tok_Others,
       Tok_Package,
       Tok_Pragma,
@@ -3143,15 +3144,18 @@ package body GNATdoc.Frontend is
          Scope_Level : Natural := 0;
          Scope_Tab : constant String :=
            "| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | ";
+
          --------
          -- CB --
          --------
 
-         Cursor     : Extended_Cursor.Extended_Cursor;
-         Last_Idx   : Natural := 0;
-         Par_Count  : Natural := 0;
-         Prev_Token : Tokens := Tok_Unknown;
-         Token      : Tokens := Tok_Unknown;
+         Cursor                 : Extended_Cursor.Extended_Cursor;
+         Last_Idx               : Natural := 0;
+         Par_Count              : Natural := 0;
+         Prev_Token             : Tokens := Tok_Unknown;
+         Prev_Token_Loc         : Source_Location;
+         Token                  : Tokens := Tok_Unknown;
+         Token_Loc              : Source_Location;
 
          Nested_Variants_Count  : Natural := 0;
 
@@ -4379,7 +4383,7 @@ package body GNATdoc.Frontend is
             procedure Handle_Sources (End_Decl_Found : Boolean) is
 
                procedure Append_Src
-                 (Text : String; With_Tabulation : Boolean := False);
+                 (Text : String; Column : Natural := 0);
 
                procedure Clear_Src;
 
@@ -4388,13 +4392,13 @@ package body GNATdoc.Frontend is
                ----------------
 
                procedure Append_Src
-                 (Text : String; With_Tabulation : Boolean := False) is
+                 (Text : String; Column : Natural := 0) is
                begin
-                  if not With_Tabulation then
+                  if Column = 0 then
                      Append_Sources (Text);
                   else
                      declare
-                        Spaces : constant String (1 .. Sloc_Start.Column - 1)
+                        Spaces : constant String (1 .. Column - 1)
                           := (others => ' ');
                      begin
                         Append_Sources (Spaces & Text);
@@ -4471,17 +4475,32 @@ package body GNATdoc.Frontend is
                         Append_Src (S);
                      else
                         Clear_Src;
-                        Append_Src (S, With_Tabulation => True);
+                        Append_Src (S, Sloc_Start.Column);
                      end if;
 
                   when Tok_Procedure |
                        Tok_Function  |
                        Tok_Entry =>
+
                      if Par_Count /= 0 then
                         Append_Src (S);
                      else
                         Clear_Src;
-                        Append_Src (S, With_Tabulation => True);
+
+                        if Prev_Token = Tok_Overriding then
+                           Append_Src
+                             ("overriding", Prev_Token_Loc.Column);
+
+                           if Prev_Token_Loc.Line = Sloc_Start.Line then
+                              Append_Src (" " & S);
+                           else
+                              Append_Src ("" & ASCII.LF);
+                              Append_Src (S, Sloc_Start.Column);
+                           end if;
+
+                        else
+                           Append_Src (S, Sloc_Start.Column);
+                        end if;
                      end if;
 
                   when Tok_Package =>
@@ -4572,23 +4591,23 @@ package body GNATdoc.Frontend is
                begin
                   if Token /= Tok_Unknown then
                      Prev_Token := Token;
+                     Prev_Token_Loc := Token_Loc;
                   end if;
                end Update_Prev_Known_Token;
 
             begin
+               Update_Prev_Known_Token;
+
                case Entity is
 
                   when Block_Text      |
                        Identifier_Text =>
-                     Update_Prev_Known_Token;
                      Token := Tok_Id;
 
                   when Number_Text =>
-                     Update_Prev_Known_Token;
                      Token := Tok_Number;
 
                   when Keyword_Text =>
-                     Update_Prev_Known_Token;
                      Token := Get_Token (S);
                      Set_Token_Seen (Current_Context, Token);
 
@@ -4619,7 +4638,6 @@ package body GNATdoc.Frontend is
                      end case;
 
                   when Operator_Text  =>
-                     Update_Prev_Known_Token;
                      Token := Tok_Operator;
 
                      if S = "(" then
@@ -4680,6 +4698,10 @@ package body GNATdoc.Frontend is
                     String_Text             =>
                   Token := Tok_Unknown;
                end case;
+
+               if Token /= Tok_Unknown then
+                  Token_Loc := Sloc_Start;
+               end if;
             end Handle_Tokens;
 
             ---------------
@@ -6079,6 +6101,8 @@ package body GNATdoc.Frontend is
          return Tok_Null;
       elsif Keyword = "others" then
          return Tok_Others;
+      elsif Keyword = "overriding" then
+         return Tok_Overriding;
       elsif Keyword = "package" then
          return Tok_Package;
       elsif Keyword = "pragma" then
