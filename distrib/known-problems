@@ -8,11 +8,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- N116-040: GPS: Completion mechanism crashes GPS
+  Problem:    When using dynamic completion, in some specific scenario, the
+              completion resolver for ada constructs would make GPS crash.
+  Workaround: Deactivate dynamic completion/don't use completion in that
+              scenario.
+
 - MC13-038: GPS: MDI child "flicker" while being moved.
   Problem:    When moving MDI childs between notebooks, some visual flickering
               was occuring.
   Workaround: Keep using the drag&drop with the flickering, which is only a
-  visual side effect.
+              visual side effect.
 
 - MC16-032: GPS: Source window not scrolling after auto complete.
   Problem:    When auto-completing manually (via Ctrl+Space for example), if
