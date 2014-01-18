@@ -3284,9 +3284,27 @@ package body GNATdoc.Frontend is
             -------------------------
 
             procedure Complete_Decoration (End_Decl_Found : Boolean) is
+               procedure Do_Breakpoint;
+               procedure Do_Breakpoint is
+               begin
+                  if False
+                    and then File.Base_Name = " disabled"
+                    and then Sloc_Start.Line = 1
+                  then
+                     Print_State;
+                  end if;
+               end Do_Breakpoint;
 
                procedure Decorate_Scope (E : Entity_Id);
                --  Workaround missing decoration of the Scope
+
+               procedure Fix_Wrong_Xref_Decoration (E : Entity_Id);
+               --  Add minimum correct decoration to an entity which is
+               --  erroneously decorated by Xref
+
+               --------------------
+               -- Decorate_Scope --
+               --------------------
 
                procedure Decorate_Scope (E : Entity_Id) is
                   Scope : constant Entity_Id := Get_Scope (Current_Context);
@@ -3352,6 +3370,46 @@ package body GNATdoc.Frontend is
                      null;
                   end if;
                end Decorate_Scope;
+
+               -------------------------------
+               -- Fix_Wrong_Xref_Decoration --
+               -------------------------------
+
+               procedure Fix_Wrong_Xref_Decoration (E : Entity_Id) is
+               begin
+                  Set_Has_Incomplete_Decoration (E);
+
+                  if Prev_Token = Tok_Function then
+                     Set_Kind (E, E_Function);
+                  else
+                     Set_Kind (E, E_Procedure);
+                  end if;
+
+                  if Get_Short_Name (E) = "" then
+                     --  For consistency we remove the string
+                     --  terminator to the name of operators
+
+                     declare
+                        From : Natural := S'First;
+                        To   : Natural := S'Last;
+                     begin
+                        while From <= To
+                          and then S (From) = '"'
+                        loop
+                           From := From + 1;
+                        end loop;
+
+                        while From <= To
+                          and then S (To) = '"'
+                        loop
+                           To := To - 1;
+                        end loop;
+
+                        Set_Short_Name
+                          (Context, E, S (From .. To));
+                     end;
+                  end if;
+               end Fix_Wrong_Xref_Decoration;
 
             --  Start of processing for Complete_Decoration
 
@@ -3445,6 +3503,8 @@ package body GNATdoc.Frontend is
                      --  Expanded names & identifiers
 
                   when Tok_Id =>
+                     Do_Breakpoint;
+
                      if In_Parent_Part then
                         declare
                            E : constant Entity_Id :=
@@ -3596,6 +3656,13 @@ package body GNATdoc.Frontend is
                              Extended_Cursor.Entity (Cursor);
 
                         begin
+                           if (Prev_Token = Tok_Function
+                               or else Prev_Token = Tok_Procedure)
+                             and then Get_Kind (E) = E_Variable
+                           then
+                              Fix_Wrong_Xref_Decoration (E);
+                           end if;
+
                            if not In_Generic_Formals
                              and then Is_Compilation_Unit (E)
                            then

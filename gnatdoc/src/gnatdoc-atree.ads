@@ -481,6 +481,9 @@ private package GNATdoc.Atree is
    procedure Set_Generic_Formals_Loc
      (E : Entity_Id; Value : General_Location);
 
+   procedure Set_Has_Incomplete_Decoration
+     (E : Entity_Id);
+
    procedure Set_Has_Private_Parent
      (E : Entity_Id; Value : Boolean := True);
    procedure Set_Has_Unknown_Discriminants
@@ -523,6 +526,11 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Virtual_File);
    procedure Set_Scope
      (E : Entity_Id; Value : Entity_Id);
+
+   procedure Set_Short_Name
+     (Context : access constant Docgen_Context;
+      E       : Entity_Id;
+      Value   : String);
 
    procedure Set_Src
      (E : Entity_Id; Value : Unbounded_String);
@@ -828,11 +836,13 @@ private
 
          Has_Unknown_Discriminants : Boolean;
 
+         Has_Incomplete_Decoration : Boolean;
+         Is_Decorated              : Boolean;
+
          In_Private_Part   : Boolean;
          --  True if the entity is defined in the private part of a package
 
          Is_Alias          : Boolean;
-         Is_Decorated      : Boolean;
          Is_Generic_Formal : Boolean;
          Is_Internal       : Boolean;
          Is_Incomplete     : Boolean;
@@ -977,6 +987,7 @@ private
    pragma Inline (Set_Full_View_Doc);
    pragma Inline (Set_Full_View_Src);
    pragma Inline (Set_Generic_Formals_Loc);
+   pragma Inline (Set_Has_Incomplete_Decoration);
    pragma Inline (Set_Has_Private_Parent);
    pragma Inline (Set_Has_Unknown_Discriminants);
    pragma Inline (Set_Is_Alias);
@@ -993,5 +1004,6 @@ private
    pragma Inline (Set_Partial_View);
    pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
+   pragma Inline (Set_Short_Name);
    pragma Inline (Set_Src);
 end GNATdoc.Atree;

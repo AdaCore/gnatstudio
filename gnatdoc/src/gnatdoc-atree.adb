@@ -1561,10 +1561,12 @@ package body GNATdoc.Atree is
            Has_Private_Parent => False,
            Has_Unknown_Discriminants => False,
 
+           Has_Incomplete_Decoration => False,
+           Is_Decorated              => False,
+
            In_Private_Part    => False,
 
            Is_Alias          => False,
-           Is_Decorated      => False,
            Is_Doc_From_Body  => False,
            Is_Generic_Formal => False,
            Is_Internal       => Is_Internal,
@@ -1825,9 +1827,11 @@ package body GNATdoc.Atree is
       --  entries; we must explicitly exclude such cases to avoid confusing
       --  the frontend.
 
-      return E.Xref.Is_Subprogram
-        and then Get_Kind (E) /= E_Single_Task
-        and then Get_Kind (E) /= E_Entry;
+      return Get_Kind (E) = E_Procedure
+        or else Get_Kind (E) = E_Function
+        or else (E.Xref.Is_Subprogram
+                  and then Get_Kind (E) /= E_Single_Task
+                  and then Get_Kind (E) /= E_Entry);
    end Is_Subprogram;
 
    ----------------
@@ -2239,6 +2243,15 @@ package body GNATdoc.Atree is
       E.Generic_Formals_Loc := Value;
    end Set_Generic_Formals_Loc;
 
+   -----------------------------------
+   -- Set_Has_Incomplete_Decoration --
+   -----------------------------------
+
+   procedure Set_Has_Incomplete_Decoration (E : Entity_Id) is
+   begin
+      E.Has_Incomplete_Decoration := True;
+   end Set_Has_Incomplete_Decoration;
+
    ----------------------------
    -- Set_Has_Private_Parent --
    ----------------------------
@@ -2433,6 +2446,18 @@ package body GNATdoc.Atree is
          Set_Scope (Get_Full_View (E), Value);
       end if;
    end Set_Scope;
+
+   --------------------
+   -- Set_Short_Name --
+   --------------------
+
+   procedure Set_Short_Name
+     (Context : access constant Docgen_Context;
+      E       : Entity_Id;
+      Value   : String) is
+   begin
+      E.Short_Name := Context.Kernel.Symbols.Find (Value);
+   end Set_Short_Name;
 
    -------------
    -- Set_Src --
@@ -3195,6 +3220,12 @@ package body GNATdoc.Atree is
 
       if Is_Decorated (E) then
          Append_Line ("Is_Decorated");
+      end if;
+
+      if not Reliable_Mode
+        and then E.Has_Incomplete_Decoration
+      then
+         Append_Line ("Has_Incomplete_Decoration");
       end if;
 
       if Is_Incomplete (E) then
