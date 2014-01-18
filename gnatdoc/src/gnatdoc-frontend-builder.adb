@@ -1349,6 +1349,15 @@ package body GNATdoc.Frontend.Builder is
 
    end Scopes_Stack;
 
+   -------------------
+   -- Append_To_Map --
+   -------------------
+
+   procedure Append_To_Map (E : Entity_Id) is
+   begin
+      Hash_Table.Append_To_Map (E);
+   end Append_To_Map;
+
    ---------------------
    -- Build_File_Tree --
    ---------------------

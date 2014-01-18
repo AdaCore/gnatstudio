@@ -25,6 +25,9 @@ with Language.Tree.Database;  use Language.Tree.Database;
 
 private package GNATdoc.Frontend.Builder is
 
+   procedure Append_To_Map (E : Entity_Id);
+   --  Append the entity of E to Entities_Map
+
    function Build_File_Tree
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;

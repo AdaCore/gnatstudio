@@ -4951,6 +4951,7 @@ package body GNATdoc.Frontend is
                end case;
 
                New_Entities.Append (New_E);
+               Append_To_Map (New_E);
 
                --  Place this internal entity as the next entity of the
                --  entities iterator
@@ -4958,6 +4959,22 @@ package body GNATdoc.Frontend is
                Extended_Cursor.Set_Next_Entity (Cursor, New_E);
                Replace_Current_Entity (Current_Context, New_E);
             end Build_Missing_Entity;
+
+            procedure Fix_Wrong_Location (E : Entity_Id);
+            procedure Fix_Wrong_Location (E : Entity_Id) is
+               Loc : constant General_Location :=
+                 (File, Sloc_Start.Line,
+                  Visible_Column (Sloc_Start.Column));
+            begin
+               LL.Set_Location (E, Loc);
+
+               --  Place E as the next entity of the entities iterator
+
+               Extended_Cursor.Set_Next_Entity (Cursor, E);
+               Replace_Current_Entity (Current_Context, E);
+            end Fix_Wrong_Location;
+
+         --  Start of processing for Parse_Ada_File.CB
 
          begin
             --  Accumulate documentation found in consecutive comments
@@ -5016,7 +5033,21 @@ package body GNATdoc.Frontend is
                          or else Prev_Token = Tok_Function)
                   then
                      pragma Assert (Generics_Nesting_Level > 0);
-                     Build_Missing_Entity;
+
+                     declare
+                        Prev_Entity : constant Entity_Id :=
+                          Extended_Cursor.Prev_Entity (Cursor);
+                     begin
+                        if Present (Prev_Entity)
+                          and then Is_Package (Prev_Entity)
+                          and then Is_Generic (Prev_Entity)
+                          and then Get_Short_Name (Prev_Entity) = S
+                        then
+                           Fix_Wrong_Location (Prev_Entity);
+                        else
+                           Build_Missing_Entity;
+                        end if;
+                     end;
                   end if;
                end;
 
