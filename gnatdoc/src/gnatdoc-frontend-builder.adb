@@ -2526,6 +2526,10 @@ package body GNATdoc.Frontend.Builder is
             end if;
 
             if Skip_This_Entity then
+               if Is_New (New_E) and then In_Ada_Language (New_E) then
+                  Append_To_Map (New_E);
+               end if;
+
                --  Ensure that all the entities found in the ALI file are
                --  appended to the list of entities of this file. Required
                --  because there are cases in which LL_Scope is not available
