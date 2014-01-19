@@ -3997,12 +3997,14 @@ package body GNATdoc.Frontend is
                         declare
                            E : constant Entity_Id :=
                              Extended_Cursor.Entity (Cursor);
-                           Prev_E : Entity_Id;
+                           Prev_E         : Entity_Id;
+                           Prev_E_End_Loc : General_Location := No_Location;
 
                         begin
-                           if No (Get_Prev_Entity_In_Scope
-                                   (Current_Context))
-                           then
+                           Prev_E :=
+                             Get_Prev_Entity_In_Scope (Current_Context);
+
+                           if No (Prev_E) then
                               declare
                                  Scope : constant Entity_Id :=
                                    Get_Scope (Current_Context);
@@ -4026,29 +4028,53 @@ package body GNATdoc.Frontend is
                                  end if;
                               end;
                            else
-                              Prev_E :=
-                                Get_Prev_Entity_In_Scope (Current_Context);
+                              Prev_E_End_Loc :=
+                                Get_End_Of_Syntax_Scope_Loc (Prev_E);
 
                               if Get_Kind (E) = E_Formal then
-                                 Set_Doc_After_Previous_Entity_In_Scope;
+                                 Set_Doc_After (Prev_E);
+
+                              --  Attach the comment to the previous entity
+                              --  if the comment is located immediately
+                              --  after the end of the previous entity
+
+                              elsif Present (Prev_E_End_Loc)
+                                and then
+                                  (Prev_E_End_Loc.Line = Doc_Start_Line
+                                     or else
+                                   Prev_E_End_Loc.Line = Doc_Start_Line - 1)
+                              then
+                                 Set_Doc_After (Prev_E);
 
                               --  Do not attach the comment to the previous
-                              --  line if it precedes the current entity.
+                              --  line if it precedes the current entity
 
                               elsif Doc_End_Line
                                 /= LL.Get_Location (E).Line - 1
                               then
-                                 Set_Doc_After_Previous_Entity_In_Scope;
+                                 Set_Doc_After (Prev_E);
                               end if;
                            end if;
 
-                           --  Do not attach the comment to the current entity
-                           --  line if continuates the previous entity.
+                           if No (Prev_E) then
+                              Set_Doc_Before (E);
 
-                           if No (Prev_E)
-                             or else
-                               Doc_Start_Line
-                                 /= LL.Get_Location (Prev_E).Line + 1
+                           --  Do not attach this comment to the current
+                           --  entity if it begins in the line where the
+                           --  declaration of the previous entity finishes
+
+                           elsif Prev_E_End_Loc.Line = Doc_Start_Line then
+                              null;
+
+                           elsif Doc_End_Line
+                             = LL.Get_Location (E).Line - 1
+                           then
+                              Set_Doc_Before (E);
+
+                           --  Floating comment
+
+                           elsif Doc_Start_Line
+                             /= LL.Get_Location (Prev_E).Line + 1
                            then
                               Set_Doc_Before (E);
                            end if;
@@ -4462,13 +4488,16 @@ package body GNATdoc.Frontend is
                Last_Idx := Sloc_End.Index;
 
                case Token is
+
                   when Tok_Id =>
                      if In_Next_Entity then
                         declare
                            E : constant Entity_Id :=
                              Extended_Cursor.Entity (Cursor);
                         begin
-                           if Get_Kind (E) = E_Variable then
+                           if Get_Kind (E) = E_Variable
+                             or else Get_Kind (E) = E_Exception
+                           then
                               Clear_Src;
                            end if;
                         end;

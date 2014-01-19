@@ -177,15 +177,14 @@ begin
             Output       => Process_C_Files'Access,
             Switch       => "-c",
             Help         => "Process C/C++ files");
-      elsif Ada.Command_Line.Argument (J) = "-l" then
-         Define_Switch
-           (Cmdline,
-            Output       => Leading_Doc'Access,
-            Switch       => "-l",
-            Help         => "Leading documentation");
       end if;
    end loop;
 
+   Define_Switch
+     (Cmdline,
+      Output       => Leading_Doc'Access,
+      Switch       => "-l",
+      Help         => "Leading documentation");
    Define_Switch
      (Cmdline,
       Output       => Process_Private_Part'Access,
