@@ -102,6 +102,14 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Clicking on the window two times will make the search work
   properly.
 
+- MA24-011: GB: UI freeze importing existing GNAT project
+  Problem:    Sometimes when running menu "File => Import... => Ada => Existing
+              GNAT Project" and when an imported folder already exists in the
+              workspace's file system, the UI stops to respond.
+  Workaround: Kill GNATbench process and retry the operation. Before retrying
+              the import operation, you may have to delete manually in the
+              workspace's file system, the folders you want to import.
+
 - JC07-006: GPS: rsh leaving remote processes as zombies in remote mode.
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
