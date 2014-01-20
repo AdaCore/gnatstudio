@@ -650,6 +650,12 @@ package body GNATdoc.Frontend is
          function May_Have_Tags (Text : Unbounded_String) return Boolean;
          --  Return true if Text may contain some tag
 
+         procedure Update_Prev_Comment_Line (Line : Natural);
+
+         -------------------
+         -- May_Have_Tags --
+         -------------------
+
          function May_Have_Tags (Text : Unbounded_String) return Boolean is
          begin
             if Index (Text, "@") > 0 then
@@ -667,6 +673,19 @@ package body GNATdoc.Frontend is
             end if;
          end May_Have_Tags;
 
+         ------------------------------
+         -- Update_Prev_Comment_Line --
+         ------------------------------
+
+         procedure Update_Prev_Comment_Line (Line : Natural) is
+         begin
+            --  Skip entities whose documentation was retrieved from the body
+
+            if No (Get_End_Of_Profile_Location_In_Body (E)) then
+               Prev_Comment_Line := Line;
+            end if;
+         end Update_Prev_Comment_Line;
+
       begin
          if LL.Get_Location (E).File /= File then
             return;
@@ -683,22 +702,30 @@ package body GNATdoc.Frontend is
                  and then May_Have_Tags (Get_Doc_Before (E).Text)
                then
                   Set_Doc (E, Get_Doc_Before (E));
-                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_Before (E).Start_Line);
 
                elsif Present (Get_Doc_After (E)) then
                   Set_Doc (E, Get_Doc_After (E));
-                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_After (E).Start_Line);
                end if;
             else
-               if Present (Get_Doc_Before (E))
+               --  Documentation retrieved from the body
+
+               if Context.Options.Process_Bodies
+                 and then Present (Get_Doc_Before (E))
+                 and then Present (Get_End_Of_Profile_Location_In_Body (E))
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
+
+               elsif Present (Get_Doc_Before (E))
                  and then Get_Doc_Before (E).Start_Line /= Prev_Comment_Line
                then
                   Set_Doc (E, Get_Doc_Before (E));
-                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_Before (E).Start_Line);
 
                elsif Present (Get_Doc_After (E)) then
                   Set_Doc (E, Get_Doc_After (E));
-                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_After (E).Start_Line);
                end if;
             end if;
 
@@ -707,7 +734,7 @@ package body GNATdoc.Frontend is
 
                if Present (Get_Doc_After (E)) then
                   Set_Doc (E, Get_Doc_After (E));
-                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_After (E).Start_Line);
 
                --  For documentation located before compilation units it is
                --  mandatory to use some tag. Required to safely differentiate
@@ -717,18 +744,26 @@ package body GNATdoc.Frontend is
                  and then May_Have_Tags (Get_Doc_Before (E).Text)
                then
                   Set_Doc (E, Get_Doc_Before (E));
-                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_Before (E).Start_Line);
                end if;
             else
                if Present (Get_Doc_After (E)) then
                   Set_Doc (E, Get_Doc_After (E));
-                  Prev_Comment_Line := Get_Doc_After (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_After (E).Start_Line);
+
+               --  Documentation retrieved from the body
+
+               elsif Context.Options.Process_Bodies
+                 and then Present (Get_Doc_Before (E))
+                 and then Present (Get_End_Of_Profile_Location_In_Body (E))
+               then
+                  Set_Doc (E, Get_Doc_Before (E));
 
                elsif Present (Get_Doc_Before (E))
                  and then Get_Doc_Before (E).Start_Line /= Prev_Comment_Line
                then
                   Set_Doc (E, Get_Doc_Before (E));
-                  Prev_Comment_Line := Get_Doc_Before (E).Start_Line;
+                  Update_Prev_Comment_Line (Get_Doc_Before (E).Start_Line);
                end if;
             end if;
          end if;
@@ -3039,7 +3074,9 @@ package body GNATdoc.Frontend is
          Printout       : Unbounded_String;
          Printout_Plain : Unbounded_String;
 
-         New_Entities : EInfo_List.Vector;
+         New_Entities       : EInfo_List.Vector;
+         Body_File_Entities : aliased EInfo_List.Vector;
+         Current_Body_File  : Virtual_File;
 
          package Extended_Cursor is
             type Extended_Cursor is private;
@@ -3048,7 +3085,9 @@ package body GNATdoc.Frontend is
             function Prev_Entity (Cursor : Extended_Cursor) return Entity_Id;
 
             procedure Next_Entity (Cursor : in out Extended_Cursor);
-            procedure Initialize (Cursor : in out Extended_Cursor);
+            procedure Initialize
+              (Cursor   : in out Extended_Cursor;
+               Entities : access EInfo_List.Vector);
 
             procedure Set_Next_Entity
               (Cursor : in out Extended_Cursor;
@@ -3057,6 +3096,7 @@ package body GNATdoc.Frontend is
 
          private
             type Extended_Cursor is record
+               Entities     : access EInfo_List.Vector;
                Cursor       : EInfo_List.Cursor;
                Element      : Entity_Id := Atree.No_Entity;
                Prev_Element : Entity_Id := Atree.No_Entity;
@@ -3084,7 +3124,16 @@ package body GNATdoc.Frontend is
          procedure Clear_Plain_Sources;
          --  Clear the accumulated sources
 
+         procedure Clear_Parser_State;
+
          function CB
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean;
+         --  Callback for entity parser
+
+         function CB_Body_File
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
@@ -3157,6 +3206,9 @@ package body GNATdoc.Frontend is
          Token                  : Tokens := Tok_Unknown;
          Token_Loc              : Source_Location;
 
+         Body_Files_List        : Files_List.Vector;
+         Entities_Without_Doc   : aliased EInfo_List.Vector;
+
          Nested_Variants_Count  : Natural := 0;
 
          In_Compilation_Unit    : Boolean := False;
@@ -3188,6 +3240,43 @@ package body GNATdoc.Frontend is
          --  when processing ";"
 
          In_Skipped_Declaration : Boolean := False;
+
+         ------------------------
+         -- Clear_Parser_State --
+         ------------------------
+
+         procedure Clear_Parser_State is
+            No_Source_Location : constant Source_Location := (0, 0, 0);
+         begin
+            Last_Idx       := 0;
+            Par_Count      := 0;
+            Prev_Token     := Tok_Unknown;
+            Prev_Token_Loc := No_Source_Location;
+            Token          := Tok_Unknown;
+            Token_Loc      := No_Source_Location;
+
+            Nested_Variants_Count  := 0;
+            In_Compilation_Unit    := False;
+            Generics_Nesting_Level := 0;
+            In_Generic_Formals     := False;
+            In_Generic_Decl        := False;
+            Generic_Formals.Clear;
+            Generic_Formals_Loc    := No_Location;
+
+            In_Aggregate    := False;
+            Aggr_Begin_Line := 0;
+
+            In_Definition   := False;
+            In_Item_Decl    := False;
+
+            In_Parent_Part  := False;
+
+            In_Pragma                := False;
+            In_Representation_Clause := False;
+
+            In_Record_Representation_Clause := False;
+            In_Skipped_Declaration          := False;
+         end Clear_Parser_State;
 
          function CB
            (Entity         : Language_Entity;
@@ -4103,6 +4192,7 @@ package body GNATdoc.Frontend is
                              Get_Current_Entity (Current_Context);
                         begin
                            if Is_Subprogram_Or_Entry (Scope)
+                             and then Present (Curr_Entity_In_Scope)
                              and then
                                Get_Kind (Curr_Entity_In_Scope) = E_Formal
                            then
@@ -4163,9 +4253,9 @@ package body GNATdoc.Frontend is
                end case;
             end Handle_Doc;
 
-            ---------------------
-            -- Handle_Entities --
-            ---------------------
+            -------------------
+            -- Handle_Scopes --
+            -------------------
 
             In_Debug_File : constant Boolean :=
               File.Base_Name = " disabled";
@@ -5101,6 +5191,900 @@ package body GNATdoc.Frontend is
             return False; --  Continue
          end CB;
 
+         ------------------
+         -- CB_Body_File --
+         ------------------
+
+         After_Subp_Decl : Boolean := False;
+         Formal_Count    : Natural := 0;
+         Current_Formal  : Entity_Id;
+
+         function CB_Body_File
+           (Entity         : Language_Entity;
+            Sloc_Start     : Source_Location;
+            Sloc_End       : Source_Location;
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
+
+            S : String renames
+                  Buffer_Body (Sloc_Start.Index .. Sloc_End.Index);
+
+            procedure Accumulate_Comments_In_Body;
+            procedure Complete_Decoration (End_Decl_Found : Boolean);
+            procedure Handle_Body_Doc;
+            procedure Handle_Body_Scopes (End_Decl_Found : Boolean);
+            procedure Handle_Body_Tokens;
+            function In_Next_Entity return Boolean;
+            procedure Set_Doc_After (E : Entity_Id);
+            procedure Set_Doc_After_Current_Entity;
+            procedure Set_Doc_After_Previous_Entity_In_Scope;
+
+            procedure Print_State;
+
+            -------------------------
+            -- Accumulate_Comments --
+            -------------------------
+
+            procedure Accumulate_Comments_In_Body is
+            begin
+               --  Clear the previously accumulated documentation if the
+               --  current one is not its continuation
+
+               if Doc_End_Line /= No_Line
+                 and then Sloc_Start.Line /= Doc_End_Line + 1
+               then
+                  declare
+                     Current_Entity : constant Entity_Id :=
+                       Get_Current_Entity (Current_Context);
+                  begin
+                     if Present (Current_Entity)
+                       and then
+                         Doc_Start_Line
+                           >= LL.Get_Location (Current_Entity).Line
+                     then
+                        Set_Doc_After_Current_Entity;
+                     else
+                        Set_Doc_After_Previous_Entity_In_Scope;
+                     end if;
+                  end;
+
+                  Clear_Doc;
+               end if;
+
+               if Doc_Start_Line = No_Line then
+                  Doc_Start_Line := Sloc_Start.Line;
+               end if;
+
+               Append_Comment (S);
+               Doc_End_Line := Sloc_End.Line;
+            end Accumulate_Comments_In_Body;
+
+            -------------------------
+            -- Complete_Decoration --
+            -------------------------
+
+            procedure Complete_Decoration (End_Decl_Found : Boolean) is
+               pragma Unreferenced (End_Decl_Found);
+
+               procedure Do_Breakpoint;
+               procedure Do_Breakpoint is
+               begin
+                  if False
+                    and then File.Base_Name = " disabled"
+                    and then Sloc_Start.Line = 1
+                  then
+                     Print_State;
+                  end if;
+               end Do_Breakpoint;
+
+            --  Start of processing for Complete_Decoration
+
+            begin
+               case Token is
+
+                  when Tok_Right_Paren |
+                       Tok_Is          =>
+                     if Par_Count = 0
+                       and then In_Item_Decl
+                     then
+                        declare
+                           E : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                        begin
+                           Do_Breakpoint;
+
+                           --  No action needed if this attribute is already
+                           --  set. This case occurs with pragmas located
+                           --  after E.
+
+                           if Present (E)
+                             and then Is_Subprogram (E)
+                             and then
+                               No (Get_End_Of_Profile_Location_In_Body (E))
+                           then
+                              declare
+                                 Loc : constant General_Location :=
+                                   General_Location'
+                                     (File => Current_Body_File,
+                                      Line => Sloc_Start.Line,
+                                      Column =>
+                                        Visible_Column (Sloc_Start.Column));
+                              begin
+                                 Set_End_Of_Profile_Location_In_Body (E, Loc);
+                              end;
+                           end if;
+                        end;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Complete_Decoration;
+
+            ---------------------
+            -- Handle_Body_Doc --
+            ---------------------
+
+            procedure Handle_Body_Doc is
+
+               procedure Set_Doc_After_Previous_Entity;
+               procedure Set_Doc_Before (E : Entity_Id);
+
+               -----------------------------------
+               -- Set_Doc_After_Previous_Entity --
+               -----------------------------------
+
+               procedure Set_Doc_After_Previous_Entity is
+                  Prev_Entity : constant Entity_Id :=
+                    Extended_Cursor.Prev_Entity (Cursor);
+               begin
+                  if Present (Doc) then
+                     if Present (Prev_Entity) then
+                        Set_Doc_After (Prev_Entity);
+                     else
+                        declare
+                           Scope : constant Entity_Id :=
+                              Get_Scope (Current_Context);
+                        begin
+                           if Is_Package (Scope)
+                             or else Is_Concurrent_Type_Or_Object (Scope)
+                           then
+                              Set_Doc_After (Scope);
+                           end if;
+                        end;
+                     end if;
+                  end if;
+               end Set_Doc_After_Previous_Entity;
+
+               --------------------
+               -- Set_Doc_Before --
+               --------------------
+
+               procedure Set_Doc_Before (E : Entity_Id) is
+               begin
+                  if Present (Doc)
+                    and then Present (E)
+                    and then No (Get_Doc_Before (E))
+                  then
+                     --  Support for floating comments (currently disabled)
+
+                     if Enhancements then
+                        Set_Doc_Before (E,
+                          Comment_Result'
+                            (Text       => Doc,
+                             Start_Line => Doc_Start_Line));
+
+                     elsif Get_Kind (E) = E_Formal then
+                        null;
+
+                     elsif Doc_End_Line = LL.Get_Body_Loc (E).Line - 1 then
+                        Set_Doc_Before (E,
+                          Comment_Result'
+                            (Text       => Doc,
+                             Start_Line => Doc_Start_Line));
+                     end if;
+                  end if;
+               end Set_Doc_Before;
+
+            --  Start of processing for Handle_Body_Doc
+
+            begin
+               --  Handle documentation located after the previous subprogram
+
+               if After_Subp_Decl then
+                  declare
+                     Prev_E : constant Entity_Id :=
+                       Extended_Cursor.Prev_Entity (Cursor);
+                  begin
+                     --  Attach the comment to the previous entity
+                     --  if the comment is located immediately
+                     --  after the end of the previous entity
+
+                     if Prev_Token_Loc.Line = Doc_Start_Line
+                       or else Prev_Token_Loc.Line = Doc_Start_Line - 1
+                     then
+                        Set_Doc_After (Prev_E);
+                     end if;
+
+                     return;
+                  end;
+               end if;
+
+               case Token is
+
+                  --  Expanded names & identifiers
+
+                  when Tok_Id =>
+                     if In_Next_Entity
+                       and then Present (Doc)
+                     then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+
+                        begin
+                           if Doc_End_Line
+                             = LL.Get_Body_Loc (E).Line - 1
+                           then
+                              Set_Doc_Before (E);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+
+                     --  Appending documentation to the previous formal
+
+                     elsif In_Item_Decl
+                       and then Present (Current_Formal)
+                     then
+                        Set_Doc_After (Current_Formal);
+                     end if;
+
+                  when Tok_Is  =>
+                     Clear_Doc;
+
+                  when Tok_Procedure |
+                       Tok_Function  |
+                       Tok_Entry =>
+                     if In_Next_Entity then
+                        Set_Doc_Before (Get_Current_Entity (Current_Context));
+                     end if;
+
+                  when Tok_Right_Paren =>
+                     if Present (Doc) then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Is_Subprogram_Or_Entry (Scope)
+                             and then Present (Curr_Entity_In_Scope)
+                             and then
+                               Get_Kind (Curr_Entity_In_Scope) = E_Formal
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when Tok_Semicolon =>
+                     if Par_Count = 0
+                       and then Present (Doc)
+                     then
+                        declare
+                           Prev_Entity_In_Scope : constant Entity_Id :=
+                             Get_Prev_Entity_In_Scope (Current_Context);
+                        begin
+                           if Present (Prev_Entity_In_Scope)
+                             and then
+                               (Is_Package (Prev_Entity_In_Scope)
+                                  or else Is_Concurrent_Type_Or_Object
+                                            (Prev_Entity_In_Scope))
+                           then
+                              Set_Doc_After_Previous_Entity;
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when Tok_End =>
+                     if Present (Doc) then
+                        declare
+                           Curr_Entity_In_Scope : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (Curr_Entity_In_Scope) then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+                           end if;
+
+                           Clear_Doc;
+                        end;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Handle_Body_Doc;
+
+            -------------------
+            -- Handle_Scopes --
+            -------------------
+
+            In_Debug_File : constant Boolean :=
+              Current_Body_File.Base_Name = " disabled";
+
+            procedure Handle_Body_Scopes (End_Decl_Found : Boolean) is
+               procedure Do_Breakpoint;
+               procedure Do_Breakpoint is
+               begin
+                  if In_Debug_File
+                    and then Sloc_Start.Line = 1
+                  then
+                     Print_State;
+                  end if;
+               end Do_Breakpoint;
+
+               procedure Do_Exit;
+               procedure Do_Exit is
+               begin
+                  if In_Debug_File then
+                     GNAT.IO.Put_Line
+                       (Scope_Tab (1 .. 2 * Scope_Level)
+                        & Sloc_Start.Line'Img
+                        & ":"
+                        & Sloc_Start.Column'Img
+                        & " ---------------- "
+                        & Get_Short_Name
+                           (Get_Scope (Current_Context)));
+                  end if;
+
+                  if Is_Generic (Get_Scope (Current_Context)) then
+                     Generics_Nesting_Level := Generics_Nesting_Level - 1;
+                  end if;
+
+                  if not In_Generic_Formals
+                    and then Is_Compilation_Unit (Get_Scope (Current_Context))
+                  then
+                     Disable_Enter_Scope;
+                  end if;
+
+                  Exit_Scope;
+                  Scope_Level := Scope_Level - 1;
+               end Do_Exit;
+
+            begin
+               case Token is
+
+                  when Tok_Use =>
+                     pragma Assert (Par_Count = 0);
+                     if not In_Representation_Clause then
+                        In_Skipped_Declaration := True;
+                     end if;
+
+                  --  We have to increment the generics nesting level here
+                  --  (instead of when we process the entity) to be able to
+                  --  generate their corresponding entity (required to
+                  --  workaround the problem of their missing entity)
+
+                  when Tok_Generic =>
+                     Generics_Nesting_Level := Generics_Nesting_Level + 1;
+
+                  when Tok_For =>
+                     if Par_Count = 0 then
+                        In_Representation_Clause := True;
+                     end if;
+
+                  when Tok_Record =>
+                     if In_Representation_Clause then
+                        if Prev_Token = Tok_Use then
+                           In_Record_Representation_Clause := True;
+                        elsif Prev_Token = Tok_End then
+                           In_Record_Representation_Clause := False;
+                        end if;
+                     end if;
+
+                  when Tok_Pragma =>
+                     In_Pragma := True;
+
+                  --  Expanded names & identifiers
+
+                  when Tok_Id =>
+                     Do_Breakpoint;
+
+                     if In_Pragma then
+                        null;
+
+                     elsif Prev_Token = Tok_End then
+                        null;
+
+                     elsif In_Next_Entity then
+                        declare
+                           E : constant Entity_Id :=
+                             Extended_Cursor.Entity (Cursor);
+
+                        begin
+                           pragma Assert (Is_Subprogram (E));
+                           Enter_Scope (E);
+                           Scope_Level := Scope_Level + 1;
+
+                           if In_Debug_File then
+                              GNAT.IO.Put_Line
+                                (Scope_Tab (1 .. 2 * Scope_Level)
+                                 & Sloc_Start.Line'Img
+                                 & " : "
+                                 & Sloc_Start.Column'Img
+                                 & " : "
+                                 & Get_Short_Name (E));
+                           end if;
+
+                           Extended_Cursor.Next_Entity (Cursor);
+                        end;
+
+                     --  Subprogram formals
+
+                     elsif Par_Count = 1
+                       and then In_Item_Decl
+                     then
+                        declare
+                           E : constant Entity_Id :=
+                                 Get_Scope (Current_Context);
+                           Count : Natural := 0;
+                        begin
+                           if Present (E)
+                             and then Is_Subprogram (E)
+                           then
+                              Formal_Count := Formal_Count + 1;
+
+                              for Formal of Get_Entities (E).all loop
+                                 Count := Count + 1;
+
+                                 if Count = Formal_Count then
+                                    Current_Formal := Formal;
+                                    exit;
+                                 end if;
+                              end loop;
+
+                              pragma Assert (Present (Current_Formal));
+                              pragma Assert
+                                (Get_Short_Name (Current_Formal) = S);
+                              Set_Current_Entity
+                                (Current_Context, Current_Formal);
+                              Clear_Doc;
+                           end if;
+                        end;
+                     end if;
+
+                  when Tok_Return =>
+                     null;
+
+                  when Tok_Right_Paren =>
+                     if Par_Count = 0 then
+                        declare
+                           E : constant Entity_Id :=
+                                 Get_Current_Entity (Current_Context);
+                        begin
+                           if Present (E)
+                             and then Get_Kind (E) = E_Formal
+                           then
+                              Do_Exit;
+                           end if;
+                        end;
+                     end if;
+
+                  when Tok_Semicolon =>
+                     Do_Breakpoint;
+
+                     if Par_Count = 0 and then In_Pragma then
+                        In_Pragma := False;
+
+                     elsif Par_Count = 0
+                       and then In_Representation_Clause
+                       and then not In_Record_Representation_Clause
+                     then
+                        In_Representation_Clause := False;
+
+                     elsif Par_Count = 0
+                       and then Nested_Variants_Count /= 0
+                     then
+                        null;
+
+                     elsif Par_Count = 0
+                       and then In_Skipped_Declaration
+                     then
+                        In_Skipped_Declaration := False;
+
+                     elsif Par_Count = 0 then
+                        declare
+                           Scope : constant Entity_Id :=
+                             Get_Scope (Current_Context);
+                           E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if End_Decl_Found then
+                              begin
+                                 if No (E)
+                                   and then Is_Subprogram (Scope)
+                                 then
+                                    --  Skip "null;" found in a component of a
+                                    --  record type declaration
+
+                                    if Is_Record_Type (Scope)
+                                      and then Prev_Token = Tok_Null
+                                    then
+                                       null;
+                                    else
+                                       Do_Exit;
+                                    end if;
+
+                                 --  For packages we exit from the scope when
+                                 --  we see their "end" token
+
+                                 elsif Is_Package (Scope) then
+                                    null;
+
+                                 elsif Is_Subprogram_Or_Entry (Scope) then
+                                    Do_Exit;
+
+                                 --  Handle taft ammendment
+
+                                 elsif Is_Concurrent_Type_Or_Object (Scope)
+                                   and then not Has_Entities (Scope)
+                                 then
+                                    Do_Exit;
+
+                                 elsif Get_Kind (Scope) = E_Access_Type then
+                                    Do_Exit;
+
+                                 elsif
+                                   Get_Kind (Scope) = E_Enumeration_Type
+                                 then
+                                    Do_Exit;
+
+                                 elsif Present
+                                         (LL.Get_Instance_Of (Scope))
+                                 then
+                                    Do_Exit;
+
+                                 elsif Is_Alias (Scope) then
+                                    Do_Exit;
+                                 end if;
+
+                              exception
+                                 when others =>
+                                    Print_State;
+                                    raise;
+                              end;
+                           end if;
+                        end;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end Handle_Body_Scopes;
+
+            -------------------
+            -- Handle_Tokens --
+            -------------------
+
+            procedure Handle_Body_Tokens is
+               procedure Update_Prev_Known_Token;
+               pragma Inline (Update_Prev_Known_Token);
+
+               procedure Update_Prev_Known_Token is
+               begin
+                  if Token /= Tok_Unknown then
+                     Prev_Token := Token;
+                     Prev_Token_Loc := Token_Loc;
+                  end if;
+               end Update_Prev_Known_Token;
+
+            begin
+               After_Subp_Decl := False;
+               Update_Prev_Known_Token;
+
+               case Entity is
+
+                  when Block_Text      |
+                       Identifier_Text =>
+                     Token := Tok_Id;
+
+                  when Number_Text =>
+                     Token := Tok_Number;
+
+                  when Keyword_Text =>
+                     Token := Get_Token (S);
+                     Set_Token_Seen (Current_Context, Token);
+
+                     case Token is
+                        when Tok_Procedure |
+                             Tok_Function  |
+                             Tok_Entry =>
+                           In_Item_Decl := True;
+                           Formal_Count := 0;
+                           Current_Formal := Atree.No_Entity;
+
+                        when others =>
+                           if Prev_Token = Tok_Is
+                             and then In_Item_Decl
+                           then
+                              In_Item_Decl := False;
+                              After_Subp_Decl := True;
+                           end if;
+                     end case;
+
+                  when Operator_Text  =>
+                     Token := Tok_Operator;
+
+                     if S = "(" then
+                        Token := Tok_Left_Paren;
+                        Par_Count := Par_Count + 1;
+
+                        if Prev_Token = Tok_Assignment
+                          and then Par_Count = 1
+                        then
+                           In_Aggregate := True;
+                           Aggr_Begin_Line := Sloc_Start.Line;
+                        end if;
+
+                     elsif S = ")" then
+                        if In_Aggregate and then Par_Count = 1 then
+                           In_Aggregate := False;
+                           Aggr_Begin_Line := 0;
+                        end if;
+
+                        Token := Tok_Right_Paren;
+                        Par_Count := Par_Count - 1;
+
+                     elsif S = ":=" then
+                        Token := Tok_Assignment;
+
+                     elsif S = "=>" then
+                        Token := Tok_Arrow;
+
+                     elsif S = ";" then
+                        Token := Tok_Semicolon;
+
+                        if Par_Count = 0 then
+                           Set_End_Decl_Found (Current_Context);
+
+                           --  ???may fail with access to subprogram formals
+                           if Tok_Subprogram_Seen (Current_Context) then
+                              Reset_Tok_Subprogram_Seen (Current_Context);
+                           end if;
+
+                           In_Item_Decl := False;
+                        end if;
+                     end if;
+
+               when Normal_Text             |
+                    Partial_Identifier_Text |
+                    Type_Text               |
+                    Comment_Text            |
+                    Annotated_Keyword_Text  |
+                    Annotated_Comment_Text  |
+                    Aspect_Keyword_Text     |
+                    Aspect_Text             |
+                    Character_Text          |
+                    String_Text             =>
+                  Token := Tok_Unknown;
+               end case;
+
+               if Token /= Tok_Unknown then
+                  Token_Loc := Sloc_Start;
+               end if;
+            end Handle_Body_Tokens;
+
+            --------------------
+            -- In_Next_Entity --
+            --------------------
+
+            function In_Next_Entity return Boolean is
+               Next_Entity : constant Entity_Id :=
+                 Extended_Cursor.Entity (Cursor);
+               Loc : General_Location;
+            begin
+               if No (Next_Entity) then
+                  return False;
+               end if;
+
+               Loc := LL.Get_Body_Loc (Extended_Cursor.Entity (Cursor));
+
+               return Sloc_Start.Line = Loc.Line
+                 and then Sloc_End.Line = Loc.Line
+                 and then Natural (Loc.Column) >= Sloc_Start.Column
+                 and then Natural (Loc.Column) <= Sloc_End.Column;
+            end In_Next_Entity;
+
+            -------------------
+            -- Set_Doc_After --
+            -------------------
+
+            procedure Set_Doc_After (E : Entity_Id) is
+            begin
+               if Present (Doc)
+                 and then Present (E)
+                 and then No (Get_Doc_After (E))
+               then
+                  --  Support for floating comments (currently disabled)
+
+                  if Enhancements then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+
+                  elsif Get_Kind (E) = E_Formal then
+                     Set_Doc_After (E,
+                       Comment_Result'
+                         (Text       => Doc,
+                          Start_Line => Doc_Start_Line));
+
+                  elsif Is_Subprogram (E) then
+                     declare
+                        End_Loc : constant General_Location :=
+                          Get_End_Of_Profile_Location_In_Body (E);
+                     begin
+                        if Doc_Start_Line = End_Loc.Line
+                          or else Doc_Start_Line = End_Loc.Line + 1
+                        then
+                           Set_Doc_After (E,
+                             Comment_Result'
+                               (Text       => Doc,
+                                Start_Line => Doc_Start_Line));
+                        end if;
+                     end;
+                  end if;
+               end if;
+            end Set_Doc_After;
+
+            ----------------------------------
+            -- Set_Doc_After_Current_Entity --
+            ----------------------------------
+
+            procedure Set_Doc_After_Current_Entity is
+               Current : constant Entity_Id :=
+                 Get_Current_Entity (Current_Context);
+            begin
+               if Present (Current) then
+                  Set_Doc_After (Current);
+               end if;
+            end Set_Doc_After_Current_Entity;
+
+            --------------------------------------------
+            -- Set_Doc_After_Previous_Entity_In_Scope --
+            --------------------------------------------
+
+            procedure Set_Doc_After_Previous_Entity_In_Scope is
+               Prev_Entity_In_Scope : constant Entity_Id :=
+                 Get_Prev_Entity_In_Scope (Current_Context);
+            begin
+               if Present (Prev_Entity_In_Scope) then
+                  Set_Doc_After (Prev_Entity_In_Scope);
+               end if;
+            end Set_Doc_After_Previous_Entity_In_Scope;
+
+            -----------------
+            -- Print_State --
+            -----------------
+
+            procedure Print_State is
+               With_Doc : constant Boolean := True;
+            begin
+               GNAT.IO.Put_Line ("----------------------------");
+               GNAT.IO.Put_Line (+File.Full_Name);
+               GNAT.IO.Put_Line (+Current_Body_File.Full_Name);
+
+               GNAT.IO.Put_Line ("Prev_Token: " & Prev_Token'Img);
+               GNAT.IO.Put_Line ("     Token: " & Token'Img);
+
+               if With_Doc then
+                  if Present (Printout) then
+                     GNAT.IO.Put_Line ("--- Printout");
+                     GNAT.IO.Put ('"');
+                     GNAT.IO.Put (To_String (Printout));
+                     GNAT.IO.Put ('"');
+                     GNAT.IO.New_Line;
+                  end if;
+
+                  if Doc_Start_Line /= No_Line then
+                     GNAT.IO.Put_Line
+                       ("Doc_Start_Line : " & Doc_Start_Line'Img);
+                     GNAT.IO.Put_Line
+                       ("  Doc_End_Line : " & Doc_End_Line'Img);
+
+                     GNAT.IO.Put_Line
+                       ('"' & To_String (Doc) & '"');
+                  end if;
+               end if;
+
+               GNAT.IO.Put
+                 ("Sloc: "
+                  & To_String (Sloc_Start.Line)
+                  & ":"
+                  & To_String (Sloc_Start.Column));
+               GNAT.IO.Put (" .. ");
+               GNAT.IO.Put
+                 (To_String (Sloc_End.Line)
+                  & ":"
+                  & To_String (Sloc_End.Column));
+
+               GNAT.IO.Put      (" " & Entity'Img & " ");
+               GNAT.IO.Put_Line ('"' & S & '"');
+
+               if In_Next_Entity then
+                  GNAT.IO.Put_Line ("In_Tree_Entity");
+               end if;
+
+               --  --------------------- Scopes
+               Print_Scopes;
+
+               declare
+                  Next_E : constant Entity_Id :=
+                    Extended_Cursor.Entity (Cursor);
+                  Get_Prev_Entity : constant Entity_Id :=
+                    Extended_Cursor.Prev_Entity (Cursor);
+               begin
+                  GNAT.IO.Put_Line ("--- Extended cursor");
+
+                  if Present (Get_Prev_Entity) then
+                     GNAT.IO.Put ("Prev_Entity: ");
+                     pnsb (Get_Prev_Entity);
+                  end if;
+
+                  if Present (Next_E) then
+                     GNAT.IO.Put ("Next_Entity:");
+                     pnsb (Next_E);
+                  end if;
+               end;
+            end Print_State;
+
+         --  Start of processing for CB_Body_File
+
+         begin
+            --  Accumulate documentation found in consecutive comments
+
+            if Entity = Comment_Text
+              or else Entity = Annotated_Comment_Text
+            then
+               Accumulate_Comments_In_Body;
+               return False; -- Continue
+            end if;
+
+            Handle_Body_Tokens;
+
+            declare
+               End_Decl_Found : constant Boolean :=
+                 Get_End_Decl_Found (Current_Context);
+            begin
+               if In_Next_Entity then
+                  Set_Current_Entity (Current_Context,
+                    Extended_Cursor.Entity (Cursor));
+               end if;
+
+               if not In_Pragma then
+                  Complete_Decoration (End_Decl_Found);
+                  Handle_Body_Doc;
+                  --  Processes: Tok_Id, Tok_End, Tok_Semicolon
+                  --    Tok_Is, Tok_Procedure, Tok_Function, Tok_Entry
+               end if;
+
+               Handle_Body_Scopes (End_Decl_Found);
+               --  Processes: Tok_Id, Tok_Semicolon (End_Decl)
+
+               if End_Decl_Found then
+                  Reset_End_Decl_Found (Current_Context);
+               end if;
+            end;
+
+            return False; --  Continue
+         end CB_Body_File;
+
          ---------------------
          -- Extended_Cursor --
          ---------------------
@@ -5155,29 +6139,30 @@ package body GNATdoc.Frontend is
                Cursor.Element := Entity;
             end Set_Next_Entity;
 
-            procedure Initialize (Cursor : in out Extended_Cursor) is
+            procedure Initialize
+              (Cursor   : in out Extended_Cursor;
+               Entities : access EInfo_List.Vector) is
             begin
-               Cursor.Cursor := File_Entities.All_Entities.First;
+               Cursor :=
+                 (Entities     => Entities,
+                  Cursor       => Entities.First,
+                  Element      => Atree.No_Entity,
+                  Prev_Element => Atree.No_Entity);
+
                Update_Entity (Cursor);
             end Initialize;
 
          end Extended_Cursor;
 
+         --  Local variables
+
+         Std_Entity : Entity_Id;
+
          --  Start of processing for Parse_Ada_File
 
       begin
-
-         if False and then File.Base_Name = "s-htable.ads" then
-            GNAT.IO.Put_Line
-              ("------------- File_Entities.All_Entities (begin)");
-
-            pv (File_Entities.All_Entities);
-
-            GNAT.IO.Put_Line
-              ("------------- File_Entities.All_Entities (end)");
-         end if;
-
-         Extended_Cursor.Initialize (Cursor);
+         Extended_Cursor.Initialize
+           (Cursor, File_Entities.All_Entities'Access);
 
          if Extended_Cursor.Has_Entity (Cursor) then
             declare
@@ -5191,7 +6176,7 @@ package body GNATdoc.Frontend is
                          or else Is_Standard_Entity (Get_Scope (E))));
                --  Set the next entity to look for in the parser
 
-               --  Enter the entity of the Standard scope
+               --  Locate and push the entity of the Standard scope
 
                declare
                   S : Entity_Id := Get_Scope (E);
@@ -5200,27 +6185,94 @@ package body GNATdoc.Frontend is
                      pragma Assert (Present (Get_Scope (S)));
                      S := Get_Scope (S);
                   end loop;
+                  Std_Entity := S;
 
                   Enable_Enter_Scope;
-                  Enter_Scope (S);
+                  Enter_Scope (Std_Entity);
+               end;
 
-                  Parse_Entities
-                    (Lang, Buffer.all (Buffer'First .. Buffer'Last),
-                     CB'Unrestricted_Access);
+               Parse_Entities
+                 (Lang, Buffer.all (Buffer'First .. Buffer'Last),
+                  CB'Unrestricted_Access);
 
-                  if Natural (New_Entities.Length) > 0 then
-                     for E of New_Entities loop
-                        File_Entities.All_Entities.Append (E);
+               if Natural (New_Entities.Length) > 0 then
+                  for E of New_Entities loop
+                     File_Entities.All_Entities.Append (E);
+                  end loop;
+
+                  EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
+               end if;
+
+               pragma Assert (Get_Scope (Current_Context) = Std_Entity);
+               Exit_Scope;
+            end;
+
+            if Context.Options.Process_Bodies then
+               declare
+                  E : Entity_Id;
+               begin
+                  Clear_Doc;
+                  Clear_Sources;
+                  Clear_Plain_Sources;
+
+                  Enable_Enter_Scope;
+                  Enter_Scope (Std_Entity);
+
+                  Extended_Cursor.Initialize
+                    (Cursor, File_Entities.All_Entities'Access);
+                  while Extended_Cursor.Has_Entity (Cursor) loop
+                     E := Extended_Cursor.Entity (Cursor);
+
+                     if Is_Subprogram (E)
+                       and then No (Get_Doc_Before (E))
+                       and then No (Get_Doc_After (E))
+                       and then Present (LL.Get_Body_Loc (E))
+                     then
+                        Entities_Without_Doc.Append (E);
+
+                        if Is_Regular_File (LL.Get_Body_Loc (E).File)
+                            and then not
+                          Body_Files_List.Contains (LL.Get_Body_Loc (E).File)
+                        then
+                           Body_Files_List.Append (LL.Get_Body_Loc (E).File);
+                        end if;
+                     end if;
+
+                     Extended_Cursor.Next_Entity (Cursor);
+                  end loop;
+
+                  EInfo_Vector_Sort_Body_Loc.Sort (Entities_Without_Doc);
+
+                  for Body_File of Body_Files_List loop
+                     pragma Assert (Body_File /= File);
+
+                     Current_Body_File := Body_File;
+                     Body_File_Entities.Clear;
+
+                     for E of Entities_Without_Doc loop
+                        if LL.Get_Body_Loc (E).File = Body_File then
+                           Body_File_Entities.Append (E);
+                        end if;
                      end loop;
 
-                     EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
-                     --  pv (File_Entities.All_Entities);
-                  end if;
+                     Buffer_Body := Body_File.Read_File;
 
-                  pragma Assert (Get_Scope (Current_Context) = S);
-                  Exit_Scope;
+                     Clear_Doc;
+                     Extended_Cursor.Initialize
+                       (Cursor, Body_File_Entities'Access);
+
+                     Clear_Parser_State;
+
+                     Parse_Entities
+                       (Lang,
+                        Buffer_Body.all
+                          (Buffer_Body'First .. Buffer_Body'Last),
+                        CB_Body_File'Unrestricted_Access);
+
+                     Free (Buffer_Body);
+                  end loop;
                end;
-            end;
+            end if;
          end if;
       end Parse_Ada_File;
 

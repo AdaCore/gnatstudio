@@ -1935,6 +1935,27 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Loc;
 
+   ------------------------
+   -- Less_Than_Body_Loc --
+   ------------------------
+
+   function Less_Than_Body_Loc (Left, Right : Entity_Id) return Boolean is
+      pragma Assert (Present (LL.Get_Body_Loc (Left)));
+      pragma Assert (Present (LL.Get_Body_Loc (Right)));
+
+      Left_Loc  : constant General_Location := LL.Get_Body_Loc (Left);
+      Right_Loc : constant General_Location := LL.Get_Body_Loc (Right);
+   begin
+      if Left_Loc.File /= Right_Loc.File then
+         return Base_Name (Left_Loc.File) < Base_Name (Right_Loc.File);
+      elsif Left_Loc.Line < Right_Loc.Line then
+         return True;
+      else
+         return Left_Loc.Line = Right_Loc.Line
+           and then Left_Loc.Column < Right_Loc.Column;
+      end if;
+   end Less_Than_Body_Loc;
+
    -------------------
    -- LL_Is_Generic --
    -------------------
@@ -3803,6 +3824,24 @@ package body GNATdoc.Atree is
       end if;
    end pns;
 
+   ----------
+   -- pnsb --
+   ----------
+
+   procedure pnsb (E : Entity_Id) is
+   begin
+      if No (E) then
+         GNAT.IO.Put_Line ("<No entity>");
+      else
+         GNAT.IO.Put_Line
+           ("["
+            & To_String (Get_Unique_Id (E))
+            & "] "
+            & Get_Short_Name (E) & " "
+            & Image (LL.Get_Body_Loc (E)));
+      end if;
+   end pnsb;
+
    --------
    -- pv --
    --------
@@ -3824,5 +3863,20 @@ package body GNATdoc.Atree is
          pns (Db, V (J));
       end loop;
    end pv;
+
+   ---------
+   -- pvb --
+   ---------
+
+   procedure pvb (V : EInfo_List.Vector) is
+      Cursor  : EInfo_List.Cursor;
+
+   begin
+      Cursor := V.First;
+      while EInfo_List.Has_Element (Cursor) loop
+         pnsb (EInfo_List.Element (Cursor));
+         EInfo_List.Next (Cursor);
+      end loop;
+   end pvb;
 
 end GNATdoc.Atree;

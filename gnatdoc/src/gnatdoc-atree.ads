@@ -137,8 +137,15 @@ private package GNATdoc.Atree is
    --  compare them using the base name of their files. Done to avoid spurious
    --  output differences between continuous builders.
 
+   function Less_Than_Body_Loc (Left, Right : Entity_Id) return Boolean;
+   --  Similar to the prevous one but using location of the body. Attribute
+   --  Body_Loc must be present in all the entities.
+
    package EInfo_Vector_Sort_Loc is new EInfo_List.Generic_Sorting
      ("<" => Less_Than_Loc);
+
+   package EInfo_Vector_Sort_Body_Loc is new EInfo_List.Generic_Sorting
+     ("<" => Less_Than_Body_Loc);
 
    function Less_Than_Short_Name (Left, Right : Entity_Id) return Boolean;
    --  Compare by name. When two entities have the same name (for example,
@@ -702,9 +709,16 @@ private package GNATdoc.Atree is
    --  (gdb) Print a single tree node (short output), without printing
    --  descendants.
 
+   procedure pnsb (E : Entity_Id);
+   --  (gdb) Print a single tree node (short output), without printing
+   --  descendants displaying its value of LL.Body_Loc()
+
    procedure pv (V : EInfo_List.Vector);
    procedure pv (Db : General_Xref_Database; V : Xref.Entity_Array);
    --  (gdb) Using pns print all the elements of V
+
+   procedure pvb (V : EInfo_List.Vector);
+   --  (gdb) Using pnsb print all the elements of V
 
    function To_String
      (E              : Entity_Id;
