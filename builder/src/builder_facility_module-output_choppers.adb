@@ -79,8 +79,10 @@ package body Builder_Facility_Module.Output_Choppers is
          return;
       end if;
 
-      Self.Child.Parse_Standard_Output
-        (To_String (Self.Buffer) & New_Line, Command);
+      if Self.Buffer /= Null_Unbounded_String then
+         Self.Child.Parse_Standard_Output
+           (To_String (Self.Buffer) & New_Line, Command);
+      end if;
 
       --  Call parent procedure
       Tools_Output_Parser (Self.all).End_Of_Stream (Status, Command);

@@ -206,8 +206,17 @@ package body GPS.Scripts.Commands is
      (Command : access Root_Command'Class; Destroy_On_Exit : Boolean)
       return Scheduled_Command_Access
    is
-      C     : constant Scheduled_Command_Access := new Scheduled_Command;
+      C : Scheduled_Command_Access;
    begin
+      if Command.all in Scheduled_Command'Class then
+         C := Scheduled_Command_Access (Command);
+
+         if C.Destroy_On_Exit = Destroy_On_Exit then
+            return C;
+         end if;
+      end if;
+
+      C := new Scheduled_Command;
       C.Command := Command_Access (Command);
       C.Destroy_On_Exit := Destroy_On_Exit;
 

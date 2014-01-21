@@ -350,6 +350,11 @@ package body GPS.Kernel.Timeout is
                Trace (Me, (E));
          end;
       end if;
+
+      if Data.D.Command /= null then
+         Unref (Command_Access (Data.D.Command));
+         Data.D.Command := null;
+      end if;
    end Cleanup;
 
    ----------------
@@ -616,10 +621,11 @@ package body GPS.Kernel.Timeout is
          Id                   => 0,
          Timeout              => Timeout);
       Initialize (C.Data);
+      Scheduled.Ref;
 
       if Synchronous then
-         Launch_Synchronous (Command_Access (C), 0.1);
-         Unref (Command_Access (C));
+         Launch_Synchronous (Command_Access (Scheduled), 0.1);
+         Unref (Command_Access (Scheduled));
 
       else
          --  ??? Add_Alternate_Action: sync even if main action fails
@@ -628,7 +634,7 @@ package body GPS.Kernel.Timeout is
 --              Action =>
          Created_Command := Launch_Background_Command
            (Kernel,
-            Command_Access (C),
+            Command_Access (Scheduled),
             Active   => False,
             Show_Bar => Show_In_Task_Manager,
             Queue_Id => Q_Id,
