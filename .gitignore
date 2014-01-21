@@ -255,3 +255,4 @@ vsearch/tests/obj/run
 osx_bundle/Makefile
 osx_bundle/scripts/install.py
 examples/tutorial/obj/sdc
+gnatdoc/resources/html/compiler.jar
