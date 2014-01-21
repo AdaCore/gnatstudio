@@ -315,6 +315,10 @@ function buildDocumentationPage()
 
 function buildPackagesIndex(toc)
 {
+    var header;
+    var text;
+    var list;
+
     header = document.createElement('h1');
     text = document.createTextNode('Packages and Classes');
     header.appendChild(text);
@@ -325,6 +329,11 @@ function buildPackagesIndex(toc)
 
     for (index = 0; index < GNATdocDocumentationIndex.length; index++)
     {
+        var entry;
+        var item;
+        var href;
+        var text;
+
         entry = GNATdocDocumentationIndex[index];
 
         item = document.createElement('li');
@@ -370,6 +379,10 @@ function buildEntitiesCategoriesIndex(toc)
 
 function buildSourcesIndex(toc)
 {
+    var header;
+    var text;
+    var list;
+
     header = document.createElement('h1');
     text = document.createTextNode('Source Files');
     header.appendChild(text);
@@ -377,8 +390,13 @@ function buildSourcesIndex(toc)
     list = document.createElement('ul');
     toc.appendChild(list);
 
-    for (index = 0; index < GNATdocSourceFileIndex.length; index++)
+    for (var index = 0; index < GNATdocSourceFileIndex.length; index++)
     {
+        var source;
+        var item;
+        var href;
+        var text;
+
         source = GNATdocSourceFileIndex[index];
 
         item = document.createElement('li');
