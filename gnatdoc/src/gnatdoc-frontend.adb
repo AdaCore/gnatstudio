@@ -5199,6 +5199,8 @@ package body GNATdoc.Frontend is
          Formal_Count    : Natural := 0;
          Current_Formal  : Entity_Id;
 
+         In_Formal_Default_Value : Boolean := False;
+
          function CB_Body_File
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
@@ -5543,16 +5545,6 @@ package body GNATdoc.Frontend is
                            (Get_Scope (Current_Context)));
                   end if;
 
-                  if Is_Generic (Get_Scope (Current_Context)) then
-                     Generics_Nesting_Level := Generics_Nesting_Level - 1;
-                  end if;
-
-                  if not In_Generic_Formals
-                    and then Is_Compilation_Unit (Get_Scope (Current_Context))
-                  then
-                     Disable_Enter_Scope;
-                  end if;
-
                   Exit_Scope;
                   Scope_Level := Scope_Level - 1;
                end Do_Exit;
@@ -5560,19 +5552,18 @@ package body GNATdoc.Frontend is
             begin
                case Token is
 
+                  when Tok_Assignment =>
+                     if In_Item_Decl
+                       and then Par_Count = 1
+                     then
+                        In_Formal_Default_Value := True;
+                     end if;
+
                   when Tok_Use =>
                      pragma Assert (Par_Count = 0);
                      if not In_Representation_Clause then
                         In_Skipped_Declaration := True;
                      end if;
-
-                  --  We have to increment the generics nesting level here
-                  --  (instead of when we process the entity) to be able to
-                  --  generate their corresponding entity (required to
-                  --  workaround the problem of their missing entity)
-
-                  when Tok_Generic =>
-                     Generics_Nesting_Level := Generics_Nesting_Level + 1;
 
                   when Tok_For =>
                      if Par_Count = 0 then
@@ -5629,29 +5620,36 @@ package body GNATdoc.Frontend is
 
                      elsif Par_Count = 1
                        and then In_Item_Decl
+                       and then (Prev_Token = Tok_Left_Paren
+                                   or else Prev_Token = Tok_Semicolon)
+                        --  Skip references found in the expression of a formal
+                        --  default value
+                       and then not In_Formal_Default_Value
                      then
                         declare
                            E : constant Entity_Id :=
                                  Get_Scope (Current_Context);
-                           Count : Natural := 0;
                         begin
                            if Present (E)
                              and then Is_Subprogram (E)
+                             and then Has_Formals (E)
                            then
                               Formal_Count := Formal_Count + 1;
 
-                              for Formal of Get_Entities (E).all loop
-                                 Count := Count + 1;
+                              --  We cannot rely on counting the formals since
+                              --  Xref does not ensure that formals are
+                              --  provided in their order of declaration.
 
-                                 if Count = Formal_Count then
+                              Current_Formal := Atree.No_Entity;
+
+                              for Formal of Get_Entities (E).all loop
+                                 if Get_Short_Name (Formal) = S then
                                     Current_Formal := Formal;
                                     exit;
                                  end if;
                               end loop;
 
                               pragma Assert (Present (Current_Formal));
-                              pragma Assert
-                                (Get_Short_Name (Current_Formal) = S);
                               Set_Current_Entity
                                 (Current_Context, Current_Formal);
                               Clear_Doc;
@@ -5659,11 +5657,13 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
-                  when Tok_Return =>
-                     null;
-
                   when Tok_Right_Paren =>
+
                      if Par_Count = 0 then
+                        if In_Item_Decl then
+                           In_Formal_Default_Value := False;
+                        end if;
+
                         declare
                            E : constant Entity_Id :=
                                  Get_Current_Entity (Current_Context);
@@ -5679,7 +5679,10 @@ package body GNATdoc.Frontend is
                   when Tok_Semicolon =>
                      Do_Breakpoint;
 
-                     if Par_Count = 0 and then In_Pragma then
+                     if Par_Count = 1 and then In_Item_Decl then
+                        In_Formal_Default_Value := False;
+
+                     elsif Par_Count = 0 and then In_Pragma then
                         In_Pragma := False;
 
                      elsif Par_Count = 0
@@ -5788,11 +5791,28 @@ package body GNATdoc.Frontend is
                After_Subp_Decl := False;
                Update_Prev_Known_Token;
 
+               if Prev_Token = Tok_Is
+                 and then In_Item_Decl
+               then
+                  In_Item_Decl := False;
+                  In_Formal_Default_Value := False;
+                  After_Subp_Decl := True;
+               end if;
+
                case Entity is
 
                   when Block_Text      |
                        Identifier_Text =>
                      Token := Tok_Id;
+
+                     if In_Next_Entity then
+                        pragma Assert (In_Item_Decl = False);
+                        pragma Assert (In_Formal_Default_Value = False);
+                        In_Item_Decl := True;
+                        After_Subp_Decl := False;
+                        Formal_Count := 0;
+                        Current_Formal := Atree.No_Entity;
+                     end if;
 
                   when Number_Text =>
                      Token := Tok_Number;
@@ -5800,23 +5820,6 @@ package body GNATdoc.Frontend is
                   when Keyword_Text =>
                      Token := Get_Token (S);
                      Set_Token_Seen (Current_Context, Token);
-
-                     case Token is
-                        when Tok_Procedure |
-                             Tok_Function  |
-                             Tok_Entry =>
-                           In_Item_Decl := True;
-                           Formal_Count := 0;
-                           Current_Formal := Atree.No_Entity;
-
-                        when others =>
-                           if Prev_Token = Tok_Is
-                             and then In_Item_Decl
-                           then
-                              In_Item_Decl := False;
-                              After_Subp_Decl := True;
-                           end if;
-                     end case;
 
                   when Operator_Text  =>
                      Token := Tok_Operator;
@@ -6227,15 +6230,29 @@ package body GNATdoc.Frontend is
                        and then No (Get_Doc_Before (E))
                        and then No (Get_Doc_After (E))
                        and then Present (LL.Get_Body_Loc (E))
+                       and then No (Get_Alias (E))
                      then
-                        Entities_Without_Doc.Append (E);
+                        declare
+                           Body_File : constant Virtual_File :=
+                             LL.Get_Body_Loc (E).File;
+                           Lang      : constant Language_Access :=
+                             Get_Language_From_File
+                               (Context.Lang_Handler, Body_File);
+                           In_Ada_Lang : constant Boolean :=
+                             Lang.all in Language.Ada.Ada_Language'Class;
+                        begin
+                           if In_Ada_Lang then
+                              Entities_Without_Doc.Append (E);
 
-                        if Is_Regular_File (LL.Get_Body_Loc (E).File)
-                            and then not
-                          Body_Files_List.Contains (LL.Get_Body_Loc (E).File)
-                        then
-                           Body_Files_List.Append (LL.Get_Body_Loc (E).File);
-                        end if;
+                              if Body_File /= File
+                                  and then Is_Regular_File (Body_File)
+                                  and then not
+                                    Body_Files_List.Contains (Body_File)
+                              then
+                                 Body_Files_List.Append (Body_File);
+                              end if;
+                           end if;
+                        end;
                      end if;
 
                      Extended_Cursor.Next_Entity (Cursor);
