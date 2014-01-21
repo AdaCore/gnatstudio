@@ -91,7 +91,7 @@ function buildText(root, data)
        {
            case GNATdoc.EntityKind.CODE:
                element = document.createElement('table');
-               element.setAttribute('class', 'code');
+               element.className = 'code';
                element.setAttribute('cellpadding', '0');
                element.setAttribute('cellspacing', '0');
                var code = document.createElement('tbody');
@@ -146,9 +146,8 @@ function buildText(root, data)
                      document.createTextNode(data[index].text));
                }
 
-               if (typeof data[index].cssClass !== 'undefined')
-               {
-                   element.setAttribute('class', data[index].cssClass);
+               if (typeof data[index].cssClass !== 'undefined') {
+                  element.className = data[index].cssClass;
                }
 
                break;
@@ -199,7 +198,7 @@ function buildDocumentationPage()
         pane.appendChild(header);
 
         table = document.createElement('table');
-        table.setAttribute('class', 'entities');
+        table.className = 'entities';
         table.setAttribute('cellpadding', '0');
         table.setAttribute('cellspacing', '0');
         tbody = document.createElement('tbody');
@@ -266,7 +265,7 @@ function buildDocumentationPage()
                   'C' + entity.column.toString());
                 header.appendChild(document.createTextNode(entity.label));
                 sup = document.createElement('sup');
-                sup.setAttribute('class', 'srcHref');
+                sup.className = 'srcHref';
                 href = document.createElement('a');
                 href.setAttribute(
                   'href',
