@@ -153,7 +153,7 @@ table.code td {
     white-space: pre;
 }
 
-table.entities tr {
+table.entities tr, table.entities td, table.entities th {
     text-align: left;
 }
 
