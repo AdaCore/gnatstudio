@@ -89,8 +89,8 @@ function buildText(root, data) {
            case GNATdoc.EntityKind.CODE:
                element = document.createElement('table');
                element.className = 'code';
-               element.setAttribute('cellpadding', '0');
-               element.setAttribute('cellspacing', '0');
+               element.cellPadding = 0;
+               element.cellSpacing = 0;
                var code = document.createElement('tbody');
 
                for (var lineIndex = 0;
@@ -100,7 +100,7 @@ function buildText(root, data) {
                    var line = data[index].children[lineIndex];
                    var row = document.createElement('tr');
                    var cell = document.createElement('th');
-                   cell.setAttribute('id', 'L' + line.number.toString());
+                   cell.id = 'L' + line.number.toString();
                    cell.appendChild(document.createTextNode(line.number));
                    row.appendChild(cell);
                    cell = document.createElement('td');
@@ -131,10 +131,10 @@ function buildText(root, data) {
                element = document.createElement('span');
 
                if (data[index].href !== undefined) {
-                   var href = document.createElement('a');
-                   href.setAttribute('href', '../' + data[index].href);
-                   href.appendChild(document.createTextNode(data[index].text));
-                   element.appendChild(href);
+                   var a = document.createElement('a');
+                   a.href = '../' + data[index].href;
+                   a.appendChild(document.createTextNode(data[index].text));
+                   element.appendChild(a);
 
                } else {
                    element.appendChild(
@@ -165,11 +165,11 @@ function buildDocumentationPage() {
     header.appendChild(text);
     pane.appendChild(header);
     buildText(pane, GNATdoc.Documentation.summary);
-    var href = document.createElement('a');
-    href.setAttribute('href', '#Description');
+    var a = document.createElement('a');
+    a.href = '#Description';
     text = document.createTextNode('More...');
-    href.appendChild(text);
-    pane.appendChild(href);
+    a.appendChild(text);
+    pane.appendChild(a);
 
     /* Build 'Entities' section */
 
@@ -189,23 +189,21 @@ function buildDocumentationPage() {
 
         var table = document.createElement('table');
         table.className = 'entities';
-        table.setAttribute('cellpadding', '0');
-        table.setAttribute('cellspacing', '0');
+        table.cellPadding = 0;
+        table.cellSpacing = 0;
         var tbody = document.createElement('tbody');
 
         for (var eindex = 0; eindex < entity_set.entities.length; eindex++) {
             var entity = entity_set.entities[eindex];
             var row = document.createElement('tr');
             var cell = document.createElement('th');
-            href = document.createElement('a');
+            var href = document.createElement('a');
 
             if (entity.href !== undefined) {
-                href.setAttribute('href', entity.href);
+               href.href = entity.href;
             } else {
-                href.setAttribute(
-                  'href',
-                  '#L' + entity.line.toString() +
-                  'C' + entity.column.toString());
+               href.href = '#L' + entity.line.toString() +
+                  'C' + entity.column.toString();
             }
 
             href.appendChild(document.createTextNode(entity.label));
@@ -224,7 +222,7 @@ function buildDocumentationPage() {
     /* Build 'Description' section */
 
     header = document.createElement('h2');
-    header.setAttribute('id', 'Description');
+    header.id = 'Description';
     text = document.createTextNode('Description');
     header.appendChild(text);
     pane.appendChild(header);
@@ -242,18 +240,14 @@ function buildDocumentationPage() {
 
             if (entity.href === undefined) {
                 header = document.createElement('h3');
-                header.setAttribute(
-                  'id',
-                  'L' + entity.line.toString() +
-                  'C' + entity.column.toString());
+                header.id = 'L' + entity.line.toString() +
+                  'C' + entity.column.toString();
                 header.appendChild(document.createTextNode(entity.label));
                 var sup = document.createElement('sup');
                 sup.className = 'srcHref';
                 href = document.createElement('a');
-                href.setAttribute(
-                  'href',
-                  '../' + entity.src +
-                  '#L' + entity.line.toString());
+                href.href = '../' + entity.src +
+                  '#L' + entity.line.toString();
                 href.appendChild(document.createTextNode(' [source]'));
                 sup.appendChild(href);
                 header.appendChild(sup);
@@ -279,9 +273,8 @@ function buildDocumentationPage() {
 
                         } else {
                            href = document.createElement('a');
-                           href.setAttribute(
-                             'href', '../' + entity.inherits[iindex].docHref);
-                           href.setAttribute('target', 'contentView');
+                           href.href = '../' + entity.inherits[iindex].docHref;
+                           href.target = 'contentView';
                            href.appendChild(
                              document.createTextNode(
                                entity.inherits[iindex].label));
@@ -306,9 +299,8 @@ function buildDocumentationPage() {
                         }
 
                         href = document.createElement('a');
-                        href.setAttribute(
-                          'href', '../' + entity.inherited[iindex].docHref);
-                        href.setAttribute('target', 'contentView');
+                        href.href = '../' + entity.inherited[iindex].docHref;
+                        href.target = 'contentView';
                         href.appendChild(
                           document.createTextNode(
                             entity.inherited[iindex].label));
@@ -327,10 +319,8 @@ function buildDocumentationPage() {
                     {
                         var parameter = entity.parameters[pindex];
                         var term = document.createElement('dt');
-                        term.setAttribute(
-                          'id',
-                          'L' + parameter.line.toString() +
-                            'C' + parameter.column.toString());
+                        term.id = 'L' + parameter.line.toString() +
+                            'C' + parameter.column.toString();
                         term.appendChild(
                           document.createTextNode(parameter.label));
                         var description = document.createElement('dd');
@@ -394,8 +384,8 @@ function buildPackagesIndex(toc) {
         var item = document.createElement('li');
         var href = document.createElement('a');
 
-        href.setAttribute('href', entry.file);
-        href.setAttribute('target', 'contentView');
+        href.href = entry.file;
+        href.target = 'contentView';
         text = document.createTextNode(entry.label);
         href.appendChild(text);
         item.appendChild(href);
@@ -420,8 +410,8 @@ function buildEntitiesCategoriesIndex(toc) {
         var href = document.createElement('a');
         var entry = GNATdoc.EntitiesCategoriesIndex[idx];
 
-        href.setAttribute('href', entry.href);
-        href.setAttribute('target', 'contentView');
+        href.href = entry.href;
+        href.target = 'contentView';
         href.appendChild(document.createTextNode(entry.label));
         item.appendChild(href);
         list.appendChild(item);
@@ -450,8 +440,8 @@ function buildSourcesIndex(toc) {
         var href = document.createElement('a');
 
         text = document.createTextNode(source.label);
-        href.setAttribute('href', source.srcHref);
-        href.setAttribute('target', 'contentView');
+        href.href = source.srcHref;
+        href.target = 'contentView';
         href.appendChild(text);
         item.appendChild(href);
         list.appendChild(item);
@@ -484,12 +474,13 @@ function buildEntitiesCategoryPage() {
 
         item = document.createElement('dd');
         var href = document.createElement('a');
-        href.setAttribute('href', '../' + entity.docHref);
+        href.href = '../' + entity.docHref;
         href.appendChild(document.createTextNode(entity.label));
         item.appendChild(href);
         item.appendChild(document.createTextNode(' from '));
+
         href = document.createElement('a');
-        href.setAttribute('href', '../' + entity.srcHref);
+        href.href = '../' + entity.srcHref;
         href.appendChild(document.createTextNode(entity.declared));
         item.appendChild(href);
         list.appendChild(item);
@@ -508,7 +499,7 @@ function buildInheritanceIndex(page) {
         for (var index = 0; index < entities.length; index++) {
             var item = document.createElement('li');
             var href = document.createElement('a');
-            href.setAttribute('href', entities[index].docHref);
+            href.href = entities[index].docHref;
             href.appendChild(document.createTextNode(entities[index].label));
             item.appendChild(href);
 
@@ -573,8 +564,8 @@ function onLoad() {
 
     var header = document.createElement('h1');
     var href = document.createElement('a');
-    href.setAttribute('href', 'inheritance_index.html');
-    href.setAttribute('target', 'contentView');
+    href.href = 'inheritance_index.html';
+    href.target = 'contentView';
     href.appendChild(document.createTextNode('Inheritance Tree'));
     header.appendChild(href);
     toc.appendChild(header);
