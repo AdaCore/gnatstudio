@@ -133,20 +133,18 @@ function buildText(root, data)
            case GNATdoc.EntityKind.SPAN:
                element = document.createElement('span');
 
-               if (typeof data[index].href !== 'undefined')
-               {
+               if (data[index].href !== undefined) {
                    var href = document.createElement('a');
                    href.setAttribute('href', '../' + data[index].href);
                    href.appendChild(document.createTextNode(data[index].text));
                    element.appendChild(href);
 
-               } else
-               {
+               } else {
                    element.appendChild(
                      document.createTextNode(data[index].text));
                }
 
-               if (typeof data[index].cssClass !== 'undefined') {
+               if (data[index].cssClass !== undefined) {
                   element.className = data[index].cssClass;
                }
 
@@ -213,8 +211,7 @@ function buildDocumentationPage()
             cell = document.createElement('th');
             href = document.createElement('a');
 
-            if (typeof entity.href !== 'undefined')
-            {
+            if (entity.href !== undefined) {
                 href.setAttribute('href', entity.href);
             } else {
                 href.setAttribute(
@@ -256,8 +253,7 @@ function buildDocumentationPage()
             var list = null;
             var entity = entity_set.entities[eindex];
 
-            if (typeof entity.href == 'undefined')
-            {
+            if (entity.href === undefined) {
                 header = document.createElement('h3');
                 header.setAttribute(
                   'id',
@@ -277,8 +273,7 @@ function buildDocumentationPage()
                 pane.appendChild(header);
                 buildText(pane, entity.description);
 
-                if (typeof entity.inherits !== 'undefined')
-                {
+                if (entity.inherits !== undefined) {
                     var paragraph = document.createElement('p');
                     paragraph.appendChild(document.createTextNode('Inherits '));
 
@@ -289,9 +284,7 @@ function buildDocumentationPage()
                         if (iindex != 0)
                           paragraph.appendChild(document.createTextNode(', '));
 
-                        if (typeof entity.inherits[iindex].docHref ==
-                              'undefined')
-                        {
+                        if (entity.inherits[iindex].docHref === undefined) {
                           paragraph.appendChild(
                             document.createTextNode(
                               entity.inherits[iindex].label));
@@ -312,8 +305,7 @@ function buildDocumentationPage()
                     pane.appendChild(paragraph);
                 }
 
-                if (typeof entity.inherited !== 'undefined')
-                {
+                if (entity.inherited !== undefined) {
                     var paragraph = document.createElement('p');
                     paragraph.appendChild(
                       document.createTextNode('Inherited by '));
@@ -338,8 +330,7 @@ function buildDocumentationPage()
                     pane.appendChild(paragraph);
                 }
 
-                if (typeof entity.parameters !== 'undefined')
-                {
+                if (entity.parameters !== undefined) {
                     list = document.createElement('dl');
 
                     for (var pindex = 0;
@@ -362,9 +353,8 @@ function buildDocumentationPage()
                     }
                 }
 
-                if (typeof entity.returns !== 'undefined')
-                {
-                    if (list == null) list = document.createElement('dl');
+                if (entity.returns !== undefined) {
+                    list = list || document.createElement('dl');
 
                     var term = document.createElement('dt');
                     term.appendChild(document.createTextNode('Return value'));
@@ -375,17 +365,16 @@ function buildDocumentationPage()
                     list.appendChild(description);
                 }
 
-                if (typeof entity.exceptions !== 'undefined')
-                {
-                    if (list == null) list = document.createElement('dl');
+                if (entity.exceptions !== undefined) {
+                   list = list || document.createElement('dl');
 
-                    var term = document.createElement('dt');
-                    term.appendChild(document.createTextNode('Exceptions'));
-                    var description = document.createElement('dd');
-                    buildText(description, entity.exceptions.description);
+                   var term = document.createElement('dt');
+                   term.appendChild(document.createTextNode('Exceptions'));
+                   var description = document.createElement('dd');
+                   buildText(description, entity.exceptions.description);
 
-                    list.appendChild(term);
-                    list.appendChild(description);
+                   list.appendChild(term);
+                   list.appendChild(description);
                 }
 
                 if (list != null) pane.appendChild(list);
@@ -523,8 +512,7 @@ function buildInheritanceIndex(page)
             href.appendChild(document.createTextNode(entities[index].label));
             item.appendChild(href);
 
-            if (typeof entities[index].inherited !== 'undefined')
-            {
+            if (entities[index].inherited !== undefined) {
                 var sublist = document.createElement('ul');
                 build(sublist, entities[index].inherited);
                 item.appendChild(sublist);
