@@ -86,7 +86,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
                if Slice_First < Slice_Last then
                   Object := Create_Object;
                   Object.Set_Field ("kind", "span");
-                  Object.Set_Field ("class", Class);
+                  Object.Set_Field ("cssClass", Class);
                   Object.Set_Field
                     ("text", Text (Slice_First .. Slice_Last - 1));
 
@@ -118,7 +118,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
             then
                Object := Create_Object;
                Object.Set_Field ("kind", "span");
-               Object.Set_Field ("class", Class);
+               Object.Set_Field ("cssClass", Class);
                Object.Set_Field ("text", Text (Slice_First .. Text'Last));
 
                if Href /= "" then

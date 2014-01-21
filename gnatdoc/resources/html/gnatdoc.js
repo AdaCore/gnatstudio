@@ -64,9 +64,9 @@ function buildText(root, data)
                       document.createTextNode(data[index].text));
                 }
 
-                if (typeof data[index].class !== 'undefined')
+                if (typeof data[index].cssClass !== 'undefined')
                 {
-                    element.setAttribute('class', data[index].class);
+                    element.setAttribute('class', data[index].cssClass);
                 }
 
                 break;
