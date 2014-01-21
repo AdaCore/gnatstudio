@@ -80,15 +80,12 @@ GNATdoc.SourceFileIndex = [];
  * @param {Array.<GNATdoc.Entity>} data    The data to convert.
  */
 
-function buildText(root, data)
-{
+function buildText(root, data) {
    /** @type {Element} */
    var element;
 
-   for (var index = 0; index < data.length; index++)
-   {
-       switch (data[index].kind)
-       {
+   for (var index = 0; index < data.length; index++) {
+       switch (data[index].kind) {
            case GNATdoc.EntityKind.CODE:
                element = document.createElement('table');
                element.className = 'code';
@@ -154,24 +151,21 @@ function buildText(root, data)
    }
 }
 
-function buildDocumentationPage()
-{
-    var pane;
-    var header;
-    var text;
-    var href;
-    var sup;
+/**
+ * ???
+ */
 
-    pane = document.getElementById('body');
+function buildDocumentationPage() {
+    var pane = document.getElementById('body');
 
     /* Build 'Summary' section */
 
-    header = document.createElement('h1');
-    text = document.createTextNode(GNATdoc.Documentation.label);
+    var header = document.createElement('h1');
+    var text = document.createTextNode(GNATdoc.Documentation.label);
     header.appendChild(text);
     pane.appendChild(header);
     buildText(pane, GNATdoc.Documentation.summary);
-    href = document.createElement('a');
+    var href = document.createElement('a');
     href.setAttribute('href', '#Description');
     text = document.createTextNode('More...');
     href.appendChild(text);
@@ -187,28 +181,22 @@ function buildDocumentationPage()
     for (var index = 0; index < GNATdoc.Documentation.entities.length; index++)
     {
         var entity_set = GNATdoc.Documentation.entities[index];
-        var table;
-        var tbody;
 
         header = document.createElement('h3');
         text = document.createTextNode(entity_set.label);
         header.appendChild(text);
         pane.appendChild(header);
 
-        table = document.createElement('table');
+        var table = document.createElement('table');
         table.className = 'entities';
         table.setAttribute('cellpadding', '0');
         table.setAttribute('cellspacing', '0');
-        tbody = document.createElement('tbody');
+        var tbody = document.createElement('tbody');
 
-        for (var eindex = 0; eindex < entity_set.entities.length; eindex++)
-        {
+        for (var eindex = 0; eindex < entity_set.entities.length; eindex++) {
             var entity = entity_set.entities[eindex];
-            var row;
-            var cell;
-
-            row = document.createElement('tr');
-            cell = document.createElement('th');
+            var row = document.createElement('tr');
+            var cell = document.createElement('th');
             href = document.createElement('a');
 
             if (entity.href !== undefined) {
@@ -248,8 +236,7 @@ function buildDocumentationPage()
     {
         var entity_set = GNATdoc.Documentation.entities[index];
 
-        for (var eindex = 0; eindex < entity_set.entities.length; eindex++)
-        {
+        for (var eindex = 0; eindex < entity_set.entities.length; eindex++) {
             var list = null;
             var entity = entity_set.entities[eindex];
 
@@ -260,7 +247,7 @@ function buildDocumentationPage()
                   'L' + entity.line.toString() +
                   'C' + entity.column.toString());
                 header.appendChild(document.createTextNode(entity.label));
-                sup = document.createElement('sup');
+                var sup = document.createElement('sup');
                 sup.className = 'srcHref';
                 href = document.createElement('a');
                 href.setAttribute(
@@ -281,16 +268,16 @@ function buildDocumentationPage()
                          iindex < entity.inherits.length;
                          iindex++)
                     {
-                        if (iindex != 0)
+                        if (iindex != 0) {
                           paragraph.appendChild(document.createTextNode(', '));
+                        }
 
                         if (entity.inherits[iindex].docHref === undefined) {
                           paragraph.appendChild(
                             document.createTextNode(
                               entity.inherits[iindex].label));
-                        }
-                        else
-                        {
+
+                        } else {
                            href = document.createElement('a');
                            href.setAttribute(
                              'href', '../' + entity.inherits[iindex].docHref);
@@ -314,8 +301,9 @@ function buildDocumentationPage()
                          iindex < entity.inherited.length;
                          iindex++)
                     {
-                        if (iindex != 0)
+                        if (iindex != 0) {
                           paragraph.appendChild(document.createTextNode(', '));
+                        }
 
                         href = document.createElement('a');
                         href.setAttribute(
@@ -377,14 +365,20 @@ function buildDocumentationPage()
                    list.appendChild(description);
                 }
 
-                if (list != null) pane.appendChild(list);
+                if (list != null) {
+                   pane.appendChild(list);
+                }
             }
         }
     }
 }
 
-function buildPackagesIndex(toc)
-{
+/**
+ * ???
+ * @param {Object} toc    ???.
+ */
+
+function buildPackagesIndex(toc) {
     var header = document.createElement('h1');
     var text = document.createTextNode('Packages and Classes');
     var list = document.createElement('ul');
@@ -409,19 +403,22 @@ function buildPackagesIndex(toc)
     }
 }
 
-function buildEntitiesCategoriesIndex(toc)
-{
+/**
+ * ???
+ * @param {Object} toc    ???.
+ */
+
+function buildEntitiesCategoriesIndex(toc) {
     var header = document.createElement('h1');
     var list = document.createElement('ul');
 
     header.appendChild(document.createTextNode('Entities Index'));
     toc.appendChild(header);
 
-    for (var index = 0; index < GNATdoc.EntitiesCategoriesIndex.length; index++)
-    {
+    for (var idx = 0; idx < GNATdoc.EntitiesCategoriesIndex.length; idx++) {
         var item = document.createElement('li');
         var href = document.createElement('a');
-        var entry = GNATdoc.EntitiesCategoriesIndex[index];
+        var entry = GNATdoc.EntitiesCategoriesIndex[idx];
 
         href.setAttribute('href', entry.href);
         href.setAttribute('target', 'contentView');
@@ -433,8 +430,12 @@ function buildEntitiesCategoriesIndex(toc)
     toc.appendChild(list);
 }
 
-function buildSourcesIndex(toc)
-{
+/**
+ * ???
+ * @param {Object} toc    ???.
+ */
+
+function buildSourcesIndex(toc) {
     var header = document.createElement('h1');
     var text = document.createTextNode('Source Files');
     var list = document.createElement('ul');
@@ -443,9 +444,8 @@ function buildSourcesIndex(toc)
     toc.appendChild(header);
     toc.appendChild(list);
 
-    for (var index = 0; index < GNATdoc.SourceFileIndex.length; index++)
-    {
-        var source = GNATdoc.SourceFileIndex[index];
+    for (var idx = 0; idx < GNATdoc.SourceFileIndex.length; idx++) {
+        var source = GNATdoc.SourceFileIndex[idx];
         var item = document.createElement('li');
         var href = document.createElement('a');
 
@@ -458,8 +458,11 @@ function buildSourcesIndex(toc)
     }
 }
 
-function buildEntitiesCategoryPage()
-{
+/**
+ * ???
+ */
+
+function buildEntitiesCategoryPage() {
     var header = document.createElement('h1');
     var character = '';
     var list = document.createElement('dl');
@@ -468,16 +471,11 @@ function buildEntitiesCategoryPage()
     header.appendChild(document.createTextNode(GNATdoc.EntitiesCategory.label));
     page.appendChild(header);
 
-    for (var index = 0;
-         index < GNATdoc.EntitiesCategory.entities.length;
-         index++)
-    {
+    for (var idx = 0; idx < GNATdoc.EntitiesCategory.entities.length; idx++) {
         var item;
-        var href;
-        var entity = GNATdoc.EntitiesCategory.entities[index];
+        var entity = GNATdoc.EntitiesCategory.entities[idx];
 
-        if (character == '' || character != entity.label[0].toUpperCase())
-        {
+        if (character == '' || character != entity.label[0].toUpperCase()) {
             character = entity.label[0].toUpperCase();
             item = document.createElement('dt');
             item.appendChild(document.createTextNode(character));
@@ -485,7 +483,7 @@ function buildEntitiesCategoryPage()
         }
 
         item = document.createElement('dd');
-        href = document.createElement('a');
+        var href = document.createElement('a');
         href.setAttribute('href', '../' + entity.docHref);
         href.appendChild(document.createTextNode(entity.label));
         item.appendChild(href);
@@ -500,12 +498,14 @@ function buildEntitiesCategoryPage()
     page.appendChild(list);
 }
 
-function buildInheritanceIndex(page)
-{
-    function build(list, entities)
-    {
-        for (var index = 0; index < entities.length; index++)
-        {
+/**
+ * ???
+ * @param {Object} page    ???.
+ */
+
+function buildInheritanceIndex(page) {
+    function build(list, entities) {
+        for (var index = 0; index < entities.length; index++) {
             var item = document.createElement('li');
             var href = document.createElement('a');
             href.setAttribute('href', entities[index].docHref);
@@ -527,41 +527,45 @@ function buildInheritanceIndex(page)
     page.appendChild(list);
 }
 
-function displaySource()
-{
-    var pane;
-    var header;
+/**
+ * ???
+ */
 
-    pane = document.getElementById('body');
-    header = document.createElement('h1');
+function displaySource() {
+    var pane = document.getElementById('body');
+    var header = document.createElement('h1');
     header.appendChild(document.createTextNode(GNATdoc.SourceFile.label));
     pane.appendChild(header);
     buildText(pane, [GNATdoc.SourceFile]);
 }
 
-function onDocumentationLoad()
-{
+/**
+ * ???
+ */
+
+function onDocumentationLoad() {
     buildDocumentationPage();
 
-    /* Scroll view to requested element. */
+    // Scroll view to requested element.
 
     var url = document.URL;
     var index = url.indexOf('#');
 
-    if (index >= 0)
-    {
+    if (index >= 0) {
         var id = url.slice(index + 1, url.length);
         var element = document.getElementById(id);
 
-        if (element)
-        {
+        if (element) {
             element.scrollIntoView();
         }
     }
 }
 
-function onLoad()
-{
+/**
+ * ???
+ */
+
+function onLoad() {
     var toc = document.getElementById('tocView');
 
     buildPackagesIndex(toc);
@@ -578,8 +582,11 @@ function onLoad()
     buildSourcesIndex(toc);
 }
 
-function onSourceFileLoad()
-{
+/**
+ * ???
+ */
+
+function onSourceFileLoad() {
     displaySource();
 
     /* Scroll view to requested element. */
@@ -587,27 +594,31 @@ function onSourceFileLoad()
     var url = document.URL;
     var index = url.indexOf('#');
 
-    if (index >= 0)
-    {
+    if (index >= 0) {
         var id = url.slice(index + 1, url.length);
         var element = document.getElementById(id);
 
-        if (element)
-        {
+        if (element) {
             element.scrollIntoView();
             element.classList.add('target');
         }
     }
 }
 
-function onInheritanceLoad()
-{
+/**
+ * ???
+ */
+
+function onInheritanceLoad() {
     var page = document.getElementById('body');
 
     buildInheritanceIndex(page);
 }
 
-function onEntitiesCategoryLoad()
-{
+/**
+ * ???
+ */
+
+function onEntitiesCategoryLoad() {
     buildEntitiesCategoryPage();
 }
