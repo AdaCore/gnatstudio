@@ -14,7 +14,7 @@ function buildText(root, data)
                 element.setAttribute('cellspacing', '0');
                 var code = document.createElement('tbody');
 
-                for (lineIndex = 0;
+                for (var lineIndex = 0;
                      lineIndex < data[index].children.length;
                      lineIndex++)
                 {
@@ -327,7 +327,7 @@ function buildPackagesIndex(toc)
     list = document.createElement('ul');
     toc.appendChild(list);
 
-    for (index = 0; index < GNATdocDocumentationIndex.length; index++)
+    for (var index = 0; index < GNATdocDocumentationIndex.length; index++)
     {
         var entry;
         var item;
