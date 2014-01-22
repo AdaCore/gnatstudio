@@ -53,6 +53,12 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
               the bottom is incomplete.
   Workaround: None.
 
+- MB22-035: GPS: cannot launch browswer from GPS
+  Problem:    Sometimes environment variables exported by GPS wrapper
+              prevent the launch of browser.
+  Workaround: Write shell wrapper to launch browser in corrected environment.
+              Then specify wrapper as browser command in GPS preferences.
+
 - MB20-048: GB: code assist enable not applied to open editors
   Problem:    Enabling or disabling code assist from the preferences
               is not applied to open editors.
