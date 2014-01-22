@@ -56,7 +56,7 @@ package body GNATdoc.Backend.Text_Parser is
    package State_Vectors is
      new Ada.Containers.Vectors (Positive, State_Type);
 
-   LI_Pattern : constant Pattern_Matcher := Compile ("\s*([-*])\s*(\S)");
+   LI_Pattern : constant Pattern_Matcher := Compile ("^\s+([-*])\s*(\S)");
    P_Pattern  : constant Pattern_Matcher := Compile ("\s*(\S)");
 
    ----------------
