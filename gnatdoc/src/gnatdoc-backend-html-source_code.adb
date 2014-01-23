@@ -64,6 +64,23 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Text  : String;
       Href  : String := "")
    is
+      function Is_Current_Line_Visible return Boolean;
+      --  Returns True when current line is visible.
+
+      -----------------------------
+      -- Is_Current_Line_Visible --
+      -----------------------------
+
+      function Is_Current_Line_Visible return Boolean is
+      begin
+         return Self.Show_Private
+           or else No (Self.Current_Scope.Entity)
+           or else Self.Current_Scope.Private_First = 0
+           or else Self.Current_Line
+                     not in Self.Current_Scope.Private_First
+                              .. Self.Current_Scope.Private_Last - 1;
+      end Is_Current_Line_Visible;
+
       Slice_First : Natural := Text'First;
       Slice_Last  : Natural;
       LF_Pattern  : constant String (1 .. 1) := (1 => ASCII.LF);
@@ -74,15 +91,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
          Slice_Last := Index (Text (Slice_First .. Text'Last), LF_Pattern);
 
          if Slice_Last >= Slice_First then
-            if No (Self.Scope)
-              or else Self.Show_Private
-              or else LL.Get_First_Private_Entity_Loc (Self.Scope)
-                        = No_Location
-              or else
-                Self.Current_Line
-                  not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
-                    .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
-            then
+            if Is_Current_Line_Visible then
                if Slice_First < Slice_Last then
                   Object := Create_Object;
                   Object.Set_Field ("kind", "span");
@@ -108,14 +117,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
             Self.Current_Line := Self.Current_Line + 1;
 
          else
-            if No (Self.Scope)
-              or else Self.Show_Private
-              or else LL.Get_First_Private_Entity_Loc (Self.Scope)
-                        = No_Location
-              or else Self.Current_Line
-                not in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
-                  .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line - 1
-            then
+            if Is_Current_Line_Visible then
                Object := Create_Object;
                Object.Set_Field ("kind", "span");
                Object.Set_Field ("cssClass", Class);
@@ -136,17 +138,11 @@ package body GNATdoc.Backend.HTML.Source_Code is
 
       --  Unwind scope when went outside of current scope.
 
-      if Present (Self.Scope)
-        and then Self.Current_Line
-          > Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line
+      if Present (Self.Current_Scope.Entity)
+        and then Self.Current_Line > Self.Current_Scope.Private_Last
       then
-         loop
-            Self.Scope := Get_Scope (Self.Scope);
-
-            exit when No (Self.Scope)
-              or else Get_Kind (Self.Scope)
-                        in E_Package | E_Task_Type | E_Protected_Type;
-         end loop;
+         Self.Current_Scope := Self.Scope_Stack.Last_Element;
+         Self.Scope_Stack.Delete_Last;
       end if;
    end Append_Text_Object;
 
@@ -300,20 +296,24 @@ package body GNATdoc.Backend.HTML.Source_Code is
              (Self.File, First.Line, Visible_Column (Simple_Column)),
            In_References => True);
 
-      --  Detect whether current entity can have private part and set scope to
-      --  it when it can.
+      --  Detect whether current entity can start scope with private part:
+      --   - it should be package, task or protected type
+      --   - it should not be generic instantiation
+      --   - it should not be renaming
+      --  Also, all declarations in private part are ignored.
 
       if Present (Entity)
+        and then Get_Kind (Entity)
+                   in E_Package | E_Task_Type | E_Protected_Type
+        and then No (LL.Get_Instance_Of (Entity))
+        and then No (LL.Get_Alias (Entity))
         and then not Self.Is_In_Private_Part (Entity)
       then
-         Self.Scope := Entity;
-
-         while Present (Self.Scope) loop
-            exit when Get_Kind (Self.Scope)
-            in E_Package | E_Task_Type | E_Protected_Type;
-
-            Self.Scope := Get_Scope (Self.Scope);
-         end loop;
+         Self.Scope_Stack.Append (Self.Current_Scope);
+         Self.Current_Scope :=
+           (Entity        => Entity,
+            Private_First => LL.Get_First_Private_Entity_Loc (Entity).Line,
+            Private_Last  => Get_End_Of_Syntax_Scope_Loc (Entity).Line);
       end if;
 
       if No (Entity)
@@ -339,18 +339,13 @@ package body GNATdoc.Backend.HTML.Source_Code is
      (Self   : Source_Code_Printer'Class;
       Entity : Entity_Id) return Boolean is
    begin
-      if No (Self.Scope) then
-         return False;
-      end if;
-
-      if LL.Get_First_Private_Entity_Loc (Self.Scope) = No_Location then
-         return False;
-      end if;
-
-      return not Self.Show_Private
-        and LL.Get_Location (Entity).Line
-              in LL.Get_First_Private_Entity_Loc (Self.Scope).Line
-                .. Get_End_Of_Syntax_Scope_Loc (Self.Scope).Line;
+      return
+        not Self.Show_Private
+        and then Present (Entity)
+        and then Present (Self.Current_Scope.Entity)
+        and then Self.Current_Scope.Private_First /= 0
+        and then LL.Get_Location (Entity).Line
+        in Self.Current_Scope.Private_First .. Self.Current_Scope.Private_Last;
    end Is_In_Private_Part;
 
    ------------------
@@ -439,10 +434,12 @@ package body GNATdoc.Backend.HTML.Source_Code is
       pragma Unreferenced (Continue);
 
    begin
-      Self.File         := File;
-      Self.Buffer       := Buffer;
-      Self.Current_Line := First_Line;
-      Self.Show_Private := Show_Private;
+      Self.File          := File;
+      Self.Buffer        := Buffer;
+      Self.Current_Line  := First_Line;
+      Self.Show_Private  := Show_Private;
+      Self.Current_Scope := (GNATdoc.Atree.No_Entity, 0, 0);
+      Self.Scope_Stack.Clear;
    end Start_File;
 
    -----------------

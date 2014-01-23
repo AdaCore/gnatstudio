@@ -134,16 +134,26 @@ private package GNATdoc.Backend.HTML.Source_Code is
 
 private
 
-   type Source_Code_Printer is tagged limited record
-      File         : GNATCOLL.VFS.Virtual_File;
-      Buffer       : GNAT.Strings.String_Access;
-      Result       : GNATCOLL.JSON.JSON_Array;
-      Line         : GNATCOLL.JSON.JSON_Array;
-      Current_Line : Positive;
+   type Scope_Info is record
+      Entity        : GNATdoc.Atree.Entity_Id;
+      --  Entity of scope
+      Private_First : Natural;
+      Private_Last  : Natural;
+      --  Range of lines of private part of scope
+   end record;
 
-      Scope        : GNATdoc.Atree.Entity_Id;
-      --  Current scope entity to suppress private part.
-      Show_Private : Boolean;
+   package Scope_Vectors is new Ada.Containers.Vectors (Positive, Scope_Info);
+
+   type Source_Code_Printer is tagged limited record
+      File          : GNATCOLL.VFS.Virtual_File;
+      Buffer        : GNAT.Strings.String_Access;
+      Result        : GNATCOLL.JSON.JSON_Array;
+      Line          : GNATCOLL.JSON.JSON_Array;
+      Current_Line  : Positive;
+
+      Scope_Stack   : Scope_Vectors.Vector;
+      Current_Scope : Scope_Info;
+      Show_Private  : Boolean;
    end record;
 
 end GNATdoc.Backend.HTML.Source_Code;
