@@ -264,12 +264,42 @@ package body GNATdoc.Backend.HTML.Source_Code is
    is
       pragma Unreferenced (Continue);
 
-      Entity : constant Entity_Id :=
-        Find_Unique_Entity
-          (Location => (Self.File, First.Line, Visible_Column (First.Column)),
-           In_References => True);
+      Identifier : constant String := Self.Buffer (First.Index .. Last.Index);
+
+      Simple_First  : Natural;
+      Simple_Column : Natural;
+      --  Index and column of first character of last simple identifier of
+      --  qualified identifier
+
+      Entity        : Entity_Id;
 
    begin
+      --  Lookup for simple name in qualified identifier.
+      --
+      --  ??? This code need to be improved for multibyte encodings support.
+      --
+      --  ??? This code doesn't support qualified identifiers splitted into
+      --  several lines.
+
+      Simple_First := Index (Identifier, ".", Ada.Strings.Backward);
+
+      if Simple_First = 0 then
+         Simple_First  := First.Index;
+         Simple_Column := First.Column;
+
+      else
+         Simple_First := Simple_First + 1;
+         Simple_Column := First.Column + (Simple_First - First.Index);
+      end if;
+
+      --  Resolve entity
+
+      Entity :=
+        Find_Unique_Entity
+          (Location      =>
+             (Self.File, First.Line, Visible_Column (Simple_Column)),
+           In_References => True);
+
       --  Detect whether current entity can have private part and set scope to
       --  it when it can.
 
@@ -293,14 +323,11 @@ package body GNATdoc.Backend.HTML.Source_Code is
         --  Documentation pages for generic package instantiations are not
         --  generated, thus links to them is not generated too.
       then
-         Self.Append_Text_Object
-           ("identifier", Self.Buffer (First.Index .. Last.Index));
+         Self.Append_Text_Object ("identifier", Identifier);
 
       else
          Self.Append_Text_Object
-           ("identifier",
-            Self.Buffer (First.Index .. Last.Index),
-            Get_Docs_Href (Entity));
+           ("identifier", Identifier, Get_Docs_Href (Entity));
       end if;
    end Identifier_Text;
 
