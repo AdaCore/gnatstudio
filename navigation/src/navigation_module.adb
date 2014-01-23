@@ -57,7 +57,7 @@ package body Navigation_Module is
    Navigation_Module_Name : constant String := "Navigation";
    Navigation_Module_ID : Module_ID;
 
-   type Location_Marker_Array is array (Natural range <>) of Location_Marker;
+   type Location_Marker_Array is array (Positive range <>) of Location_Marker;
    type Location_Marker_Array_Access is access Location_Marker_Array;
 
    type Navigation_Module_Record is new Module_ID_Record with record
@@ -281,8 +281,8 @@ package body Navigation_Module is
          Module.Last_Marker := 0;
       end if;
 
-      if Module.Last_Marker = 0
-        or else not Similar (D.Marker, Module.Markers (Module.Last_Marker))
+      if Module.Current_Marker = 0
+        or else not Similar (D.Marker, Module.Markers (Module.Current_Marker))
       then
          Module.Current_Marker := Module.Current_Marker + 1;
 
