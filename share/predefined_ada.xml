@@ -689,6 +689,12 @@ specified using an aspect_specification.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Thread_Local_Storage" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Thread_Local_Storage'.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "63/3" name = "Type_Invariant" origin = "Ada RM" category = "unknown">
       <DOC>
 A condition that must hold true for all objects of a type. See
