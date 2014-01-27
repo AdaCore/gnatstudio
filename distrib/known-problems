@@ -188,8 +188,8 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Navigate back to the directory.
 
 - M923-015: GPS.Project.object_dirs might return library_dir
-  Problem:    When using the object_dirs() python API, a different result
-              is returned depending on the recursive parameter. The result
+  Problem:    When using the object_dirs() Python API, different results
+              are returned based on the "recursive" parameter. The result
               includes library_dirs when recursive is True and the project
               is a library project.
   Workaround: build the object_dir by iterating over the set of loaded
@@ -211,8 +211,8 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Workaround: Unfold all lines using the menu Edit->Unfold all blocks
               prior to searching.
 
-- M913-006: GPS: editing switches always modified Default_Switches
-  Problem:    If you project contains a Compiler'Switches attribute, and you
+- M913-006: GPS: editing switches always modifies Default_Switches
+  Problem:    If your project contains a Compiler'Switches attribute and you
               edit the project to add new switches, then GPS adds a
               Compiler'Default_Switches attribute instead of editing
               Compiler'Switches. But then Default_Switches is ignored by
@@ -224,20 +224,20 @@ Known Problems fixed in GPS 6.0.0 / GNATbench 2.8.0
   Problem:    When a type is derived from a synchronized interface, there is
               no link to its parent interface (in particular in the Entities
               browser).
-              This was a missing information from the compiler, so an update
-              to the compiler is needed.
+              This was due to missing information from the compiler, so an
+              update to the compiler is needed.
   Workaround: None found.
 
 - M902-029: GPS: invalid project names accepted
   Problem:    GPS accepted invalid project names such as "name__toto",
-              "name_", "name.", "name.3com", "name._child" or "name.all".
+              "name_", "name.", "name.3com", "name._child", and "name.all".
   Workaround: Always enter valid project names.
 
 - M902-014: Search in 'Current Project' fails from editor
-  Problem:    One of the 'scope' in the search dialog is "Files From Current
-              Project". But this current project was not set properly when
-              an editor had the focus when the dialog is opened, and therefore
-              this could lead to surprising results.
+  Problem:    One of the scopes selectable in the search dialog is "Files
+              From Current Project". But this current project was not set
+              properly when an editor had the focus when the dialog is opened,
+              and therefore this could lead to incorrect results.
   Workaround: Select the project in the Project view, and then open the dialog
 
 - M902-009: Complete Block not working on new files
