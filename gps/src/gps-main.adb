@@ -550,6 +550,7 @@ procedure GPS.Main is
             Write (File,
                    ">log.$$" & ASCII.LF &
                      "+" & ASCII.LF &
+                     "*.EXCEPTIONS=yes" & ASCII.LF &
                      "DEBUG.COLORS=no" & ASCII.LF &
                      "DEBUG.ABSOLUTE_TIME=yes" & ASCII.LF &
                      "DEBUG.ELAPSED_TIME=no" & ASCII.LF &
