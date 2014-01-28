@@ -367,19 +367,21 @@ procedure GPS.Main is
       --  point to the right libraries
 
       declare
-         Equal  : Natural;  --  Position of '=' in NAME=VALUE env string
-         List   : GNAT.Strings.String_List := Command_Line.Get_Environ;
-         Prefix : constant String := "GPS_STARTUP_";
+         Tmp : constant String :=
+           Command_Line.Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
       begin
-         for J in List'Range loop
-            if Head (List (J).all, Prefix'Length) = Prefix then
-               Equal := Index (List (J).all, "=");
-               Setenv (Name  => List (J)
-                                 (Prefix'Length + List (J)'First .. Equal - 1),
-                       Value => List (J) (Equal + 1 .. List (J)'Last));
-            end if;
-         end loop;
-         Free (List);
+         if Tmp /= "" then
+            Setenv ("LD_LIBRARY_PATH", Tmp);
+         end if;
+      end;
+
+      declare
+         Tmp : constant String :=
+           Command_Line.Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
+      begin
+         if Tmp /= "" then
+            Setenv ("DYLD_LIBRARY_PATH", Tmp);
+         end if;
       end;
 
       declare
