@@ -31,11 +31,11 @@ package CodePeer.Module.Bridge is
    procedure Review_Message
      (Module  : CodePeer.Module.CodePeer_Module_Id;
       Message : CodePeer.Message_Access);
-   --  ???
+   --  Runs gps_codepeer_bridge to get message's audit trail.
 
    procedure Add_Audit_Record
      (Module  : CodePeer.Module.CodePeer_Module_Id;
       Message : CodePeer.Message_Access);
-   --  ???
+   --  Runs gps_codepeer_bridge to add new record to message's audit trail.
 
 end CodePeer.Module.Bridge;
