@@ -4614,7 +4614,8 @@ convenient to be able to simply use the standard predefined
 floating-point types as long as overflow checking could be guaranteed.
 The `Check_Float_Overflow' configuration pragma achieves this effect.
 If a unit is compiled subject to this configuration pragma, then all
-operations on predefined floating-point types will be treated as though
+operations on predefined floating-point types including operations on
+base types of these floating-point types will be treated as though
 those types were constrained, and overflow checks will be generated.
 The `Constraint_Error' exception is raised if the result is out of
 range.
