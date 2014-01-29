@@ -156,13 +156,18 @@ package body CodePeer.Messages_Summary_Models is
         Subprogram_Item_Access (Self.Subprogram (Iter));
 
       procedure Set_Lifeage_Sign (Lifeage : Lifeage_Kinds);
-      --  ???
+      --  Sets Value parameter to "+"/"-"/"" for Added/Removed/Unchanged
+      --  subprograms/files.
 
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
-      --  ???
+      --  Sets Value parameter to textual representation of Item without
+      --  leading space characters. If Suppress_Zero is True and Item is zero,
+      --  empty string is set.
 
       procedure Set_Count_Image (Level : CodePeer.Message_Ranking_Level);
-      --  ???
+      --  Sets Value parameter to textual representation of count of messages
+      --  of specified ranking level for current row. There are four kinds of
+      --  row subprogram, file, project and total.
 
       function Percent_Image (Passed, Total : Natural) return String;
       --  Return a string representing the percentage Passed/Total in the
