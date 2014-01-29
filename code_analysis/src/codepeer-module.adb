@@ -711,41 +711,6 @@ package body CodePeer.Module is
       Inspection_File : Virtual_File;
       Status_File     : Virtual_File)
    is
-      use type CodePeer.Messages_Reports.Messages_Report;
-      use type Code_Analysis.Code_Analysis_Tree;
-
-      procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
-      --  ???
-
-      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
-      --  ???
-
-      ------------------
-      -- Process_File --
-      ------------------
-
-      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor) is
-         File : constant Code_Analysis.File_Access :=
-                  Code_Analysis.File_Maps.Element (Position);
-
-      begin
-         Self.Filter_Criteria.Files.Insert (File);
-      end Process_File;
-
-      ---------------------
-      -- Process_Project --
-      ---------------------
-
-      procedure Process_Project
-        (Position : Code_Analysis.Project_Maps.Cursor)
-      is
-         Project : constant Code_Analysis.Project_Access :=
-                     Code_Analysis.Project_Maps.Element (Position);
-
-      begin
-         Project.Files.Iterate (Process_File'Access);
-      end Process_Project;
-
       Messages : CodePeer.Message_Maps.Map;
 
    begin
@@ -834,7 +799,13 @@ package body CodePeer.Module is
          --  Setup filter criteria
 
          Self.Filter_Criteria.Files.Clear;
-         Self.Tree.Iterate (Process_Project'Access);
+
+         for Project of Self.Tree.all loop
+            for File of Project.Files loop
+               Self.Filter_Criteria.Files.Insert (File);
+            end loop;
+         end loop;
+
          Self.Report.Messages_Report.Update_Criteria (Self.Filter_Criteria);
 
          --  Update location view
