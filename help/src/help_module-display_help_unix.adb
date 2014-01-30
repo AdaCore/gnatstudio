@@ -123,7 +123,9 @@ is
       if Cmd = null then
          return False;
       else
+         Kernel.Get_Environment.Apply_Users_Environment;
          Process := Non_Blocking_Spawn (Cmd.all, Args);
+         Kernel.Get_Environment.Apply_GPS_Environment;
 
          Insert
            (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,

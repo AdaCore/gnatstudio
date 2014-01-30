@@ -319,6 +319,7 @@ package body GPS.Kernel is
       Handle.Home_Dir := Home_Dir;
       Handle.Prefix   := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
+      Handle.Env := new GPS.Environments.Environment_Record;
 
       Handle.Main_Window  := Main_Window;
       Weak_Ref (Handle.Main_Window,
@@ -1487,6 +1488,17 @@ package body GPS.Kernel is
          Not1  => Action_Filter (Filter));
    end "not";
 
+   ---------------------
+   -- Set_Environment --
+   ---------------------
+
+   procedure Set_Environment
+     (Self  : access Kernel_Handle_Record;
+      Value : GPS.Environments.Environment) is
+   begin
+      Self.Env := Value;
+   end Set_Environment;
+
    -----------------------
    -- Set_Error_Message --
    -----------------------
@@ -1510,6 +1522,17 @@ package body GPS.Kernel is
          return "";
       end if;
    end Get_Error_Message;
+
+   ---------------------
+   -- Get_Environment --
+   ---------------------
+
+   function Get_Environment
+     (Self : access Kernel_Handle_Record)
+      return GPS.Environments.Environment is
+   begin
+      return Self.Env;
+   end Get_Environment;
 
    --------------
    -- Get_Name --

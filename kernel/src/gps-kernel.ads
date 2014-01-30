@@ -58,6 +58,7 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
+with GPS.Environments;                 use GPS.Environments;
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
@@ -198,6 +199,14 @@ package GPS.Kernel is
 
    function Get_Contextual_Menu_Open
      (Handle : access Kernel_Handle_Record) return Boolean;
+
+   function Get_Environment
+     (Self : access Kernel_Handle_Record) return Environment;
+   --  Return list of environment variables overwritten by GPS
+   procedure Set_Environment
+     (Self  : access Kernel_Handle_Record;
+      Value : Environment);
+   --  Assign list of environment variables overwritten by GPS
 
    ------------------
    -- Key managing --
@@ -1226,6 +1235,9 @@ private
       --  created.
 
       Contextual_Menu_Open : Boolean := False;
+
+      Env : Environment;
+      --  List of environment variables overwritten by GPS
    end record;
 
    overriding procedure Create_Registry

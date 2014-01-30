@@ -1,7 +1,7 @@
 #!/bin/sh
 # .gps_wrapper
 #
-# Copyright 2002-2013 AdaCore
+# Copyright 2002-2014 AdaCore
 
 prog=`basename $0`
 root=`dirname $0`
@@ -14,49 +14,94 @@ fi
 
 # Get absolute directory and strip 'bin' directory to retrieve real root
 root=`cd $root/..; pwd`
+pixbuf_base=$root/lib/gps/gdk-pixbuf-2.0/2.10.0/
 
-GPS_STARTUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-GPS_STARTUP_DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH
-export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_DYLD_LIBRARY_PATH
+#
+# For each arg - save old value as GPS_STARTUP_arg, then export new value
+#
+save_and_export ()
+{
+    while [ "$1" ]; do
+        #  let 'value' be ${!1} (aka double substitution of $1)
+        eval "value=\"\${$1}\""
+        export GPS_STARTUP_$1="$value"
+        case $1 in
+            LD_LIBRARY_PATH)
+                LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
+                ;;
+            DYLD_LIBRARY_PATH)
+                DYLD_LIBRARY_PATH=$root/lib/gps:$root/lib:$DYLD_LIBRARY_PATH
+                ;;
+            XDG_DATA_DIRS)
+                XDG_DATA_DIRS=$root/share
+                ;;
+            XDG_CONFIG_HOME)
+                XDG_CONFIG_HOME=$root/etc
+                ;;
+            GTK_DATA_PREFIX)
+                GTK_DATA_PREFIX=$root
+                ;;
+            GTK_EXE_PREFIX)
+                GTK_EXE_PREFIX=$root
+                ;;
+            GI_TYPELIB_PATH)
+                GI_TYPELIB_PATH=$root/lib/girepository-1.0
+                ;;
+            GTK2_RC_FILES)
+                unset GTK2_RC_FILES
+                ;;
+            FONTCONFIG_FILE)
+                FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
+                ;;
+            PANGO_RC_FILE)
+                PANGO_RC_FILE=$root/etc/pango/pangorc
+                ;;
+            GDK_PIXBUF_MODULE_FILE)
+                GDK_PIXBUF_MODULE_FILE=$pixbuf_base/loaders.cache
+                ;;
+            GDK_PIXBUF_MODULEDIR)
+                GDK_PIXBUF_MODULEDIR=$pixbuf_base/loaders
+                ;;
+            CHARSET)
+                CHARSET=ISO-8859-1
+                ;;
+            GSETTINGS_BACKEND)
+                GSETTINGS_BACKEND=memory
+                ;;
+        esac
 
-LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=$root/lib/gps:$root/lib:$DYLD_LIBRARY_PATH
-XDG_DATA_DIRS=$root/share
-XDG_CONFIG_HOME=$root/etc
-GTK_DATA_PREFIX=$root
-GTK_EXE_PREFIX=$root
-GI_TYPELIB_PATH=$root/lib/girepository-1.0
+        eval "value=\"\${$1}\""
+        if [ "value" ]; then
+            export $1
+        fi
+        shift;
+    done
+}
+
 
 if [ -d $root/lib/gps ]; then
-  unset GTK2_RC_FILES
+  save_and_export GTK2_RC_FILES
 fi
 
 if [ -f $root/etc/fonts/fonts.conf ]; then
-  FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
-  export FONTCONFIG_FILE
+  save_and_export FONTCONFIG_FILE
 fi
 
 if [ -f $root/etc/pango/pangorc ]; then
-  PANGO_RC_FILE=$root/etc/pango/pangorc
-  export PANGO_RC_FILE
+  save_and_export PANGO_RC_FILE
 fi
 
-pixbuf_base=$root/lib/gps/gdk-pixbuf-2.0/2.10.0/
 if [ -f $pixbuf_base/loaders.cache ]; then
-  GDK_PIXBUF_MODULE_FILE=$pixbuf_base/loaders.cache
-  GDK_PIXBUF_MODULEDIR=$pixbuf_base/loaders
-  export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
+  save_and_export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
 fi
 
 if [ "$CHARSET" = "" ]; then
-  CHARSET=ISO-8859-1
-  export CHARSET
+  save_and_export CHARSET
 fi
 
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
+save_and_export LD_LIBRARY_PATH DYLD_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME GTK_DATA_PREFIX GTK_EXE_PREFIX GI_TYPELIB_PATH
 
-GSETTINGS_BACKEND=memory
-export GSETTINGS_BACKEND
+save_and_export GSETTINGS_BACKEND
 
 if [ $debug = debug ]; then
    gdb -args $root/bin/${prog}_exe "$@"

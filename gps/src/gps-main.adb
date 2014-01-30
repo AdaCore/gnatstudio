@@ -72,6 +72,7 @@ with Gtkada.Style;
 with Config;                           use Config;
 with Default_Preferences;              use Default_Preferences;
 with GPS.Callbacks;                    use GPS.Callbacks;
+with GPS.Environments;                 use GPS.Environments;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
@@ -280,6 +281,7 @@ procedure GPS.Main is
    Cleanup_Needed         : Boolean := False;
    Unexpected_Exception   : Boolean := False;
    Splash_Timeout         : Glib.Guint := 1000;
+   Env                    : GPS.Environments.Environment;
 
    Button                 : Message_Dialog_Buttons;
    Timeout_Id             : Glib.Main.G_Source_Id;
@@ -491,6 +493,31 @@ procedure GPS.Main is
          Setenv ("PYTHONPATH", New_Val.all);
          Trace (Me, "PYTHONPATH=" & New_Val.all);
          Free (New_Val);
+      end;
+
+      declare
+         Equal  : Natural;  --  Position of '=' in NAME=VALUE env string
+         List   : GNAT.Strings.String_List := Command_Line.Get_Environ;
+         Prefix : constant String := "GPS_STARTUP_";
+      begin
+         Env := new Environment_Record;
+
+         for J in List'Range loop
+            if Head (List (J).all, Prefix'Length) = Prefix then
+               Equal := Index (List (J).all, "=");
+
+               declare
+                  Name : constant String :=
+                    List (J) (Prefix'Length + List (J)'First .. Equal - 1);
+               begin
+                  Env.Append
+                    (Name        => Name,
+                     Users_Value => List (J) (Equal + 1 .. List (J)'Last),
+                     GPS_Value   => Command_Line.Getenv (Name));
+               end;
+            end if;
+         end loop;
+         Free (List);
       end;
    end Initialize_Environment_Variables;
 
@@ -1294,6 +1321,7 @@ procedure GPS.Main is
          Gtkada_Application (Application));
 
       GPS.Stock_Icons.Register_Stock_Icons (GPS_Main.Kernel, Prefix_Dir);
+      GPS_Main.Kernel.Set_Environment (Env);
 
       --  We can now release the Application, as the main window took a
       --  hold on it
