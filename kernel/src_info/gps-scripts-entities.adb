@@ -101,9 +101,9 @@ package body GPS.Scripts.Entities is
                Loc := No_Location;
             else
                Loc := (File => GPS.Scripts.Files.Get_Data (File),
-                       Line => Nth_Arg (Data, 4, Default => 1),
+                       Line => Nth_Arg (Data, 4, Default => -1),
                        Column => Visible_Column_Type
-                         (Nth_Arg (Data, 5, Default => 1)));
+                         (Nth_Arg (Data, 5, Default => -1)));
             end if;
 
             Kernel.Databases.Find_Declaration_Or_Overloaded

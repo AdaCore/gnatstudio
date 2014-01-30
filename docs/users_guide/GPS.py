@@ -4673,7 +4673,7 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, name, file=None, line=1, column=1,
+    def __init__(self, name, file=None, line=-1, column=-1,
                  approximate_search_fallback=True):
         """
         Initializes a new instance of the Entity class, from any reference to
