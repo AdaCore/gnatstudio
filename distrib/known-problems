@@ -14,6 +14,16 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
   Workaround: Deactivate dynamic completion/don't use completion in that
               scenario.
 
+- N109-027: GPS: incorrect display of abstract entities in entities browser
+  Problem:    When an entity is an abstract record, its display in the
+              browser duplicates all its fields, and does not list its
+              methods.
+  Workaround: If you can edit sqlite database, you can do the following
+              command on it (only needed the first time it is created, not
+              every time it is updated):
+                 sqlite3 root_object_dir/gnatinspect.db
+                 > update entity_kinds set has_methods='t' where id='H';
+
 - MC13-038: GPS: MDI child "flicker" while being moved.
   Problem:    When moving MDI childs between notebooks, some visual flickering
               was occuring.
