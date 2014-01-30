@@ -46,6 +46,16 @@ package body GNATdoc.Atree is
    -- Local Subprograms --
    -----------------------
 
+   procedure Append_Direct_Derivation
+     (E : Entity_Id; Value : Entity_Id);
+   --  This attribute stores only direct derivations of tagged types (that is,
+   --  it stores all the entities for which verify that Parent (Value) = E;
+   --  this means that progenitors are NOT stored here). Combined with the
+   --  attribute "Parent" this attribute allows to traverse the tree up and
+   --  down in the tree of tagged type derivations. If all the derivations of
+   --  a type are needed then attribute LL.Get_Child_Types must be used.
+   pragma Inline (Append_Direct_Derivation);
+
    function Contains
      (Container : EInfo_List.Vector;
       Entity    : Entity_Id) return Boolean;
@@ -866,20 +876,6 @@ package body GNATdoc.Atree is
    begin
       return E.Language;
    end Get_Language;
-
-   ---------------------
-   -- Get_Last_Entity --
-   ---------------------
-
-   function Get_Last_Entity
-     (Scope : Entity_Id) return Entity_Id is
-   begin
-      if not EInfo_List.Has_Element (Get_Entities (Scope).First) then
-         return No_Entity;
-      else
-         return Get_Entities (Scope).Last_Element;
-      end if;
-   end Get_Last_Entity;
 
    -----------------
    -- Get_Methods --

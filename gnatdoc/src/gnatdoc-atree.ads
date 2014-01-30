@@ -220,15 +220,6 @@ private package GNATdoc.Atree is
    procedure Free (E : in out Entity_Id);
    --  Tree node destructor
 
-   procedure Append_Direct_Derivation
-     (E : Entity_Id; Value : Entity_Id);
-   --  This attribute stores only direct derivations of tagged types (that is,
-   --  it stores all the entities for which verify that Parent (Value) = E;
-   --  this means that progenitors are NOT stored here). Combined with the
-   --  attribute "Parent" this attribute allows to traverse the tree up and
-   --  down in the tree of tagged type derivations. If all the derivations of
-   --  a type are needed then attribute LL.Get_Child_Types must be used.
-
    procedure Append_Generic_Formal
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Inherited_Method
@@ -305,10 +296,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Entity_Kind;
    function Get_Language
      (E : Entity_Id) return Language_Access;
-
-   function Get_Last_Entity
-     (Scope : Entity_Id) return Entity_Id;
-   --  Return the last entity defined in Scope
 
    function Get_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
@@ -912,7 +899,6 @@ private
 
       end record;
 
-   pragma Inline (Append_Direct_Derivation);
    pragma Inline (Append_Generic_Formal);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
@@ -941,7 +927,6 @@ private
    pragma Inline (Get_IDepth_Level);
    pragma Inline (Get_Kind);
    pragma Inline (Get_Language);
-   pragma Inline (Get_Last_Entity);
    pragma Inline (Get_Methods);
    pragma Inline (Get_Parent);
    pragma Inline (Get_Parent_Package);

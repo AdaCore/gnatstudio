@@ -1296,29 +1296,6 @@ package body GNATdoc is
                   end if;
                end Set_Idepth;
 
-               procedure Set_Alias (E : Entity_Id);
-               procedure Set_Alias (E : Entity_Id) is
-                  Alias : Entity_Id;
-               begin
-                  if Present (LL.Get_Alias (E))
-                    and then No (Get_Alias (E))
-                  then
-                     Alias :=
-                       Find_Unique_Entity
-                         (Get_Location (Database, LL.Get_Alias (E)));
-
-                     --  Alias should be present. However, using the sources
-                     --  of the gnat project there is an entity for which
-                     --  LL.Get_Alias() seems to be erroneously decorated.
-                     --  May be a bug in Xref/ALI: to be investigated???
-
-                     if Present (Alias) then
-                        Set_Alias (E, Alias);
-                     end if;
-
-                  end if;
-               end Set_Alias;
-
                Num_Files : constant Natural := Natural (All_Src_Files.Length);
 
                Cursor      : Tree_List.Cursor;
@@ -1352,7 +1329,6 @@ package body GNATdoc is
                   Tree := Tree_List.Element (Cursor);
 
                   For_All (Tree.All_Entities, Set_Idepth'Access);
-                  For_All (Tree.All_Entities, Set_Alias'Access);
 
                   begin
                      Backend.Process_File (Tree'Access);
