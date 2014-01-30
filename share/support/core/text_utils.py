@@ -651,14 +651,14 @@ def goto_word_end(loc, underscore_is_word=True):
     else:
         while not loc.ends_word():
             prev = loc
-            loc = iter.forward_char(1)
+            loc = loc.forward_char(1)
             try:
-                if iter.get_char() == '_':
+                if loc.get_char() == '_':
                     return prev
             except:
                 # Probably an invalid position.
-                return iter.buffer().end_of_buffer()
-        return iter
+                return loc.buffer().end_of_buffer()
+        return loc
 
 
 def delete_spaces(backward=True, forward=True, leave_one=False):
