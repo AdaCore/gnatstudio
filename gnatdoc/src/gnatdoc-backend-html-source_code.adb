@@ -306,7 +306,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
         and then Get_Kind (Entity)
                    in E_Package | E_Task_Type | E_Protected_Type
         and then No (LL.Get_Instance_Of (Entity))
-        and then No (LL.Get_Alias (Entity))
+        and then not Is_Alias (Entity)
         and then not Self.Is_In_Private_Part (Entity)
       then
          Self.Scope_Stack.Append (Self.Current_Scope);

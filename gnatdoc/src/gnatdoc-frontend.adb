@@ -1876,31 +1876,56 @@ package body GNATdoc.Frontend is
                            end if;
 
                            if No (Get_Alias (E)) then
-                              declare
-                                 Current_Loc : constant General_Location :=
-                                   General_Location'(File   => File,
-                                                     Line   => Sloc_Start.Line,
-                                                     Column => Visible_Column
-                                                       (Sloc_Start.Column));
-                                 Entity      : constant Entity_Id :=
-                                   Get_Entity
-                                     (Context               => Context,
-                                      Name                  => S,
-                                      Loc                   => Current_Loc);
 
-                              begin
-                                 if Present (Entity) then
-                                    Set_Alias (E, Entity);
+                              --  First try: if the Xref entity of the
+                              --  renaming is available then use it to
+                              --  search for the alias in the hash table
 
-                                 --  Adding a minimum decoration otherwise
-                                 --  which will be used to handle the scopes
+                              if Present (LL.Get_Alias (E)) then
+                                 declare
+                                    Alias : constant Entity_Id :=
+                                      Find_Unique_Entity
+                                        (Get_Location
+                                          (Context.Database,
+                                           LL.Get_Alias (E)));
+                                 begin
+                                    if Present (Alias) then
+                                       Set_Alias (E, Alias);
+                                    end if;
+                                 end;
+                              end if;
 
-                                 else
-                                    Set_Is_Alias (E);
-                                 end if;
-                              end;
+                              --  Second try: search for it in the xref
+                              --  database using the name of the renamed
+                              --  entity and the current location.
+
+                              if No (Get_Alias (E)) then
+                                 declare
+                                    Alias : constant Entity_Id :=
+                                      Get_Entity
+                                        (Context => Context,
+                                         Name    => S,
+                                         Loc =>
+                                           General_Location'
+                                             (File   => File,
+                                              Line   => Sloc_Start.Line,
+                                              Column => Visible_Column
+                                                (Sloc_Start.Column)));
+                                 begin
+                                    if Present (Alias) then
+                                       Set_Alias (E, Alias);
+                                    end if;
+                                 end;
+                              end if;
+
+                              --  If the renamed entity cannot be located we
+                              --  add a minimum decoration which will be used
+                              --  to handle the scopes.
+
+                              if No (Get_Alias (E)) then
+                                 Set_Is_Alias (E);
+                              end if;
                            end if;
-
                         end;
                      end if;
 

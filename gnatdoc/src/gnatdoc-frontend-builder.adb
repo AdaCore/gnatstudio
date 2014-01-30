@@ -103,9 +103,6 @@ package body GNATdoc.Frontend.Builder is
       function Get_Language
         (Entity : Unique_Entity_Id) return Language_Access;
 
-      function Get_LL_Alias
-        (Entity : Unique_Entity_Id) return General_Entity;
-
       function Get_LL_Entity
         (Entity : Unique_Entity_Id) return General_Entity;
 
@@ -214,9 +211,6 @@ package body GNATdoc.Frontend.Builder is
       procedure Remove_From_Scope (E : Unique_Entity_Id);
       --  Remove E from its current scope
 
-      procedure Set_Alias
-        (Entity : Unique_Entity_Id; Value : Entity_Id);
-
       procedure Set_In_Private_Part
         (Entity : Unique_Entity_Id);
 
@@ -311,7 +305,6 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Language);
-      pragma Inline (Get_LL_Alias);
       pragma Inline (Get_LL_Entity);
       pragma Inline (Get_LL_First_Private_Entity_Loc);
       pragma Inline (Get_LL_Location);
@@ -336,7 +329,6 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Is_Tagged);
       pragma Inline (Number_Of_Progenitors);
       pragma Inline (Present);
-      pragma Inline (Set_Alias);
       pragma Inline (Set_In_Private_Part);
       pragma Inline (Set_Is_Decorated);
       pragma Inline (Set_Is_Generic_Formal);
@@ -589,16 +581,6 @@ package body GNATdoc.Frontend.Builder is
       begin
          return Get_Language (Get_Entity (Entity));
       end Get_Language;
-
-      ------------------
-      -- Get_LL_Alias --
-      ------------------
-
-      function Get_LL_Alias
-        (Entity : Unique_Entity_Id) return General_Entity is
-      begin
-         return LL.Get_Alias (Get_Entity (Entity));
-      end Get_LL_Alias;
 
       -------------------
       -- Get_LL_Entity --
@@ -1148,16 +1130,6 @@ package body GNATdoc.Frontend.Builder is
          Remove_From_Scope (Get_Entity (E));
          Set_Scope (Get_Entity (E), Atree.No_Entity);
       end Remove_From_Scope;
-
-      ---------------
-      -- Set_Alias --
-      ---------------
-
-      procedure Set_Alias
-        (Entity : Unique_Entity_Id; Value : Entity_Id) is
-      begin
-         Set_Alias (Get_Entity (Entity), Value);
-      end Set_Alias;
 
       -------------------------
       -- Set_In_Private_Part --
@@ -2074,47 +2046,6 @@ package body GNATdoc.Frontend.Builder is
             end if;
 
          elsif Is_Subprogram_Or_Entry (E) or else Is_Generic (E) then
-
-            --  ??? This decoration is missing in primitives which are
-            --  renamings
-
-            if Is_Subprogram (E)
-              and then Present (Get_LL_Alias (E))
-            then
-               declare
-                  Alias : Entity_Id;
-
-               begin
-                  --  Search for the alias in the hash table
-
-                  Alias :=
-                    Find_Unique_Entity
-                      (Get_Location (Context.Database, Get_LL_Alias (E)));
-
-                  --  If not found then force the creation of a new entity
-
-                  if No (Alias) then
-                     declare
-                        New_E : Unique_Entity_Id;
-                     begin
-                        Get_Unique_Entity
-                          (New_E,
-                           Context,
-                           Get_Location
-                             (Context.Database, Get_LL_Alias (E)).File,
-                           Get_LL_Alias (E),
-                           Forced => True);
-                        Complete_Decoration (New_E);
-                        Append_To_Map (New_E);
-
-                        Alias := Get_Entity (New_E);
-                     end;
-                  end if;
-
-                  Set_Alias (E, Alias);
-               end;
-            end if;
-
             Decorate_Subprogram_Formals (E);
 
          elsif Get_Kind (E) = E_Interface then
@@ -2493,7 +2424,7 @@ package body GNATdoc.Frontend.Builder is
                                   (Get_Location (Context.Database, Scope_Id));
                            begin
                               pragma Assert (Present (Prev_E));
-                              Set_Alias (New_E, Prev_E);
+                              Set_Alias (Get_Entity (New_E), Prev_E);
                            end;
                         end if;
                      end;
