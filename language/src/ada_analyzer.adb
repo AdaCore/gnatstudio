@@ -1505,7 +1505,7 @@ package body Ada_Analyzer is
 
       begin
          --  Do not try to go past '.' and line breaks when reformatting,
-         --  this is casuing too much trouble for no gain.
+         --  this is causing too much trouble for no gain.
          --  Getting full identifiers is only useful when parsing, not
          --  when reformatting.
 
