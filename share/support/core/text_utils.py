@@ -205,6 +205,27 @@ def get_selection_or_word(buffer=None):
         return (buffer, start, end)
 
 
+def forward_until(loc, pred,
+                  skip_first_char=False,
+                  stop_at_eol=False,
+                  backwards=False):
+    step = -1 if backwards else 1
+    cur_loc = loc
+
+    if skip_first_char:
+        cur_loc = cur_loc.forward_char(step)
+
+    while not pred(cur_loc.get_char()):
+        if cur_loc.get_char() == "\n" and stop_at_eol:
+            return loc
+
+        if cur_loc == cur_loc.forward_char(step):
+            return loc
+
+        cur_loc = cur_loc.forward_char(step)
+    return cur_loc
+
+
 def get_selection_or_line(buffer, location):
     """
     If a selection exists, returns its beginning and end. Otherwise return the
