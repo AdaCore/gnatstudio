@@ -1104,6 +1104,7 @@ package body C_Analyzer is
          First_Column, First_Index : Natural;
          Name_Column, Name_Index   : Natural;
          Char                      : Character;
+         First_Token_In_Line       : Boolean;
 
       begin
          if Buffer'Last > Index + 4
@@ -1119,37 +1120,47 @@ package body C_Analyzer is
             Index := Index + 5;
             Char_In_Line := Char_In_Line + 5;
             Num_Ifdef := 1;
+            First_Token_In_Line := False;
 
             while Index < Buffer'Last loop
                if Buffer (Index) = ASCII.LF then
                   New_Line;
+                  First_Token_In_Line := True;
 
                --  ??? Need to handle comments and strings
-               elsif Buffer (Index) = '#' then
-                  if Buffer'Last >= Index + 2
-                    and then Buffer (Index + 1 .. Index + 2) = "if"
-                  then
-                     Char_In_Line := Char_In_Line + 2;
-                     Index := Index + 2;
-                     Num_Ifdef := Num_Ifdef + 1;
+               elsif First_Token_In_Line then
+                  if Buffer (Index) = '#' then
+                     First_Token_In_Line := False;
 
-                  elsif Buffer'Last >= Index + 4
-                    and then (Buffer (Index + 1 .. Index + 4) = "else"
-                              or else Buffer (Index + 1 .. Index + 4) = "elif")
-                  then
-                     Char_In_Line := Char_In_Line + 4;
-                     Index := Index + 4;
+                     if Buffer'Last >= Index + 2
+                       and then Buffer (Index + 1 .. Index + 2) = "if"
+                     then
+                        Char_In_Line := Char_In_Line + 2;
+                        Index := Index + 2;
+                        Num_Ifdef := Num_Ifdef + 1;
 
-                     exit when Num_Ifdef = 1;
+                     elsif Buffer'Last >= Index + 4
+                       and then (Buffer (Index + 1 .. Index + 4) = "else"
+                                 or else Buffer (Index + 1 .. Index + 4)
+                                   = "elif")
+                     then
+                        Char_In_Line := Char_In_Line + 4;
+                        Index := Index + 4;
 
-                  elsif Buffer'Last >= Index + 5
-                    and then Buffer (Index + 1 .. Index + 5) = "endif"
-                  then
-                     Char_In_Line := Char_In_Line + 5;
-                     Index := Index + 5;
-                     Num_Ifdef := Num_Ifdef - 1;
+                        exit when Num_Ifdef = 1;
 
-                     exit when Num_Ifdef = 0;
+                     elsif Buffer'Last >= Index + 5
+                       and then Buffer (Index + 1 .. Index + 5) = "endif"
+                     then
+                        Char_In_Line := Char_In_Line + 5;
+                        Index := Index + 5;
+                        Num_Ifdef := Num_Ifdef - 1;
+
+                        exit when Num_Ifdef = 0;
+                     end if;
+
+                  elsif not Is_Blank (Buffer (Index)) then
+                     First_Token_In_Line := False;
                   end if;
                end if;
 
