@@ -8,6 +8,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
+- N127-011: GPS: Builder switch "--RTS=.../path/to/runtime_dir"
+  Problem:    When in the main project the Builder switches include --RTS=
+              with a relative path, GPS fails to load successfully the
+              project.
+  Workaround: Avoid these Builder switches.
+
 - MC09-035: GPS: Color problems with Open Text Exceed 14 X server
   Problem:    When using GPS through the Open Text Exceed 14 X server, all text
               and some widgets are rendered in white, regardless of the
