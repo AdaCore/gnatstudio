@@ -10,8 +10,8 @@ Known Problems fixed in GPS 6.1.0 / GNATbench 2.9.0
 
 - MC09-035: GPS: Color problems with Open Text Exceed 14 X server
   Problem:    When using GPS through the Open Text Exceed 14 X server, all text
-              and some widgets colors would be rendedered in white, regardless
-              of the original color.
+              and some widgets are rendered in white, regardless of the
+              original color.
   Workaround: Use another X Server (Cygwin's for example)
 
 - N116-040: GPS: Completion mechanism crashes GPS
