@@ -3835,6 +3835,7 @@ package body Xref is
    ---------------------
 
    procedure Project_Changed (Self : General_Xref_Database) is
+      Error : GNAT.Strings.String_Access;
    begin
       if Active (SQLITE) then
          --  Create an initial empty database. It will never be filled, and
@@ -3847,7 +3848,12 @@ package body Xref is
 
          Trace (Me, "Set up xref database: :memory:");
          Self.Xref_Db := GNATCOLL.VFS.No_File;
-         Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (":memory:"));
+         Self.Xref.Setup_DB
+           (GNATCOLL.SQL.Sqlite.Setup (":memory:"), Error => Error);
+
+         --  not interested in schema version errors, gnatinspect will
+         --  already display those for the user.
+         Free (Error);
       else
          --  When loading a new project, we need to reset the cache containing
          --  LI information, otherwise this cache might contain dangling
@@ -3934,6 +3940,7 @@ package body Xref is
       end Reset_File_If_External;
 
       File : Virtual_File;
+      Error : GNAT.Strings.String_Access;
    begin
       if Active (SQLITE) then
          --  Self.Xref was initialized in Project_Changed.
@@ -3941,7 +3948,13 @@ package body Xref is
 
          Self.Xref_Db := No_File;
          File := Xref_Database_Location (Self, Tree.Root_Project);
-         Self.Xref.Setup_DB (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all));
+         Self.Xref.Setup_DB
+           (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all),
+            Error => Error);
+
+         --  Not interested in schema version errors, gnatinspect already
+         --  displays them on the console
+         Free (Error);
 
          --  ??? Now would be a good opportunity to update the cross-references
          --  rather than wait for the next compilation.

@@ -164,6 +164,8 @@ package body Commands.Interactive is
      (Command : access Interactive_Command_Proxy) return String is
    begin
       if Command.Context.Label = null then
+         --  ??? Could ask the name for the proxied command, but in most
+         --  cases it will be "generic command", so that's not very useful.
          return -"Interactive command";
       else
          return Command.Context.Label.all;
