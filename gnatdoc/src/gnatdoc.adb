@@ -284,8 +284,6 @@ package body GNATdoc is
       begin
          Check (Entity);
 
-         --  Temporarily disabled because it causes regressions!
-
          Check_List (LL.Get_Parent_Types (Entity).all);
          Check_List (LL.Get_Child_Types (Entity).all);
 

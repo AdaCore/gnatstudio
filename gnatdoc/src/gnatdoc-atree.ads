@@ -255,10 +255,6 @@ private package GNATdoc.Atree is
    function Get_Doc_Before
      (E : Entity_Id) return Comment_Result;
 
-   function Get_End_Of_Profile_Location
-     (E : Entity_Id) return General_Location;
-   --  This attribute is set only for subprograms
-
    function Get_End_Of_Profile_Location_In_Body
      (E : Entity_Id) return General_Location;
    --  This attribute is set only for subprograms
@@ -267,6 +263,10 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return General_Location;
    --  At current stage this attribute is set only for E_Package,
    --  E_Generic_Package entities, and concurrent types and objects.
+
+   function Get_End_Of_Profile_Location
+     (E : Entity_Id) return General_Location
+      renames Get_End_Of_Syntax_Scope_Loc;
 
    function Get_Entities
      (E : Entity_Id) return access EInfo_List.Vector;
@@ -450,8 +450,6 @@ private package GNATdoc.Atree is
    procedure Set_Doc_Before
      (E : Entity_Id; Value : Comment_Result);
 
-   procedure Set_End_Of_Profile_Location
-     (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Profile_Location_In_Body
      (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Syntax_Scope_Loc
@@ -825,7 +823,6 @@ private
          --  Present in packages
 
          End_Of_Syntax_Scope_Loc         : General_Location;
-         End_Of_Profile_Location         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
          Generic_Formals_Loc             : General_Location;
 
@@ -911,7 +908,6 @@ private
    pragma Inline (Get_Doc);
    pragma Inline (Get_Doc_After);
    pragma Inline (Get_Doc_Before);
-   pragma Inline (Get_End_Of_Profile_Location);
    pragma Inline (Get_End_Of_Profile_Location_In_Body);
    pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
@@ -977,7 +973,6 @@ private
    pragma Inline (Set_Doc);
    pragma Inline (Set_Doc_After);
    pragma Inline (Set_Doc_Before);
-   pragma Inline (Set_End_Of_Profile_Location);
    pragma Inline (Set_End_Of_Profile_Location_In_Body);
    pragma Inline (Set_End_Of_Syntax_Scope_Loc);
    pragma Inline (Set_Error_Msg);

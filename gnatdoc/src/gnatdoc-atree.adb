@@ -48,12 +48,6 @@ package body GNATdoc.Atree is
 
    procedure Append_Direct_Derivation
      (E : Entity_Id; Value : Entity_Id);
-   --  This attribute stores only direct derivations of tagged types (that is,
-   --  it stores all the entities for which verify that Parent (Value) = E;
-   --  this means that progenitors are NOT stored here). Combined with the
-   --  attribute "Parent" this attribute allows to traverse the tree up and
-   --  down in the tree of tagged type derivations. If all the derivations of
-   --  a type are needed then attribute LL.Get_Child_Types must be used.
    pragma Inline (Append_Direct_Derivation);
 
    function Contains
@@ -643,16 +637,6 @@ package body GNATdoc.Atree is
    begin
       return E.End_Of_Syntax_Scope_Loc;
    end Get_End_Of_Syntax_Scope_Loc;
-
-   ---------------------------------
-   -- Get_End_Of_Profile_Location --
-   ---------------------------------
-
-   function Get_End_Of_Profile_Location
-     (E : Entity_Id) return General_Location is
-   begin
-      return E.End_Of_Profile_Location;
-   end Get_End_Of_Profile_Location;
 
    -----------------------------------------
    -- Get_End_Of_Profile_Location_In_Body --
@@ -1550,7 +1534,6 @@ package body GNATdoc.Atree is
            Parent_Package  => No_Entity,
 
            End_Of_Syntax_Scope_Loc => No_Location,
-           End_Of_Profile_Location => No_Location,
            End_Of_Profile_Location_In_Body => No_Location,
            Generic_Formals_Loc => No_Location,
 
@@ -2139,16 +2122,6 @@ package body GNATdoc.Atree is
    begin
       E.End_Of_Syntax_Scope_Loc := Loc;
    end Set_End_Of_Syntax_Scope_Loc;
-
-   ---------------------------------
-   -- Set_End_Of_Profile_Location --
-   ---------------------------------
-
-   procedure Set_End_Of_Profile_Location
-     (E : Entity_Id; Loc : General_Location) is
-   begin
-      E.End_Of_Profile_Location := Loc;
-   end Set_End_Of_Profile_Location;
 
    -----------------------------------------
    -- Set_End_Of_Profile_Location_In_Body --
@@ -3169,33 +3142,14 @@ package body GNATdoc.Atree is
          then
             null;
 
+         elsif Is_Subprogram_Or_Entry (E) then
+            Append_Line
+              ("End_Of_Profile_Location: "
+               & Image (Get_End_Of_Profile_Location (E)));
          else
             Append_Line
               ("End_Of_Syntax_Scope_Loc: "
                & Image (Get_End_Of_Syntax_Scope_Loc (E)));
-         end if;
-      end if;
-
-      if Present (Get_End_Of_Profile_Location (E)) then
-         if Reliable_Mode
-           and then not Enhancements
-           and then
-             (Get_Kind (E) = E_Formal
-                or else Get_Kind (E) = E_Variable
-                or else Get_Kind (E) = E_Component
-                or else Is_Generic_Formal (E)
-                or else Get_Kind (E) = E_Generic_Formal
-                or else Get_Kind (E) = E_Access_Type
-                or else (LL.Is_Type (E)
-                          and then not Is_Record_Type (E)
-                          and then not Is_Concurrent_Type_Or_Object (E))
-                or else Present (LL.Get_Instance_Of (E)))
-         then
-            null;
-         else
-            Append_Line
-              ("End_Of_Profile_Location: "
-               & Image (Get_End_Of_Profile_Location (E)));
          end if;
       end if;
 

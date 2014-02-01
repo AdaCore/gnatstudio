@@ -1934,8 +1934,6 @@ package body GNATdoc.Frontend is
                         declare
                            Scope : constant Entity_Id :=
                              Get_Scope (Current_Context);
-                           E : constant Entity_Id :=
-                             Get_Current_Entity (Current_Context);
                         begin
                            if End_Decl_Found then
                               if Is_Record_Type (Scope)
@@ -1962,49 +1960,21 @@ package body GNATdoc.Frontend is
                                       Line => Sloc_Start.Line,
                                       Column =>
                                         Visible_Column (Sloc_Start.Column));
+                                 E : constant Entity_Id :=
+                                   (if Present
+                                      (Get_Current_Entity (Current_Context))
+                                    then
+                                       Get_Current_Entity (Current_Context)
+                                    else
+                                       Scope);
+
                               begin
-                                 if Present (E) then
-                                    --  No action needed if this attribute
-                                    --  is already set. This case occurs
-                                    --  with pragmas located after E.
+                                 --  No action needed if this attribute is
+                                 --  already set. This case occurs with
+                                 --  pragmas located after E.
 
-                                    if Present
-                                         (Get_End_Of_Profile_Location (E))
-                                      or else
-                                        Present
-                                         (Get_End_Of_Syntax_Scope_Loc (E))
-                                    then
-                                       null;
-                                    elsif Is_Subprogram_Or_Entry (E) then
-                                       Set_End_Of_Profile_Location (E, Loc);
-                                    else
-                                       Set_End_Of_Syntax_Scope_Loc (E, Loc);
-                                    end if;
-
-                                 else
-                                    --  No action needed if this attribute
-                                    --  is already set. This case occurs
-                                    --  with pragmas located after Scope.
-
-                                    if Present
-                                        (Get_End_Of_Profile_Location
-                                           (Scope))
-                                      or else
-                                        Present
-                                          (Get_End_Of_Syntax_Scope_Loc
-                                             (Scope))
-                                    then
-                                       null;
-
-                                    elsif
-                                      Is_Subprogram_Or_Entry (Scope)
-                                    then
-                                       Set_End_Of_Profile_Location
-                                         (Scope, Loc);
-                                    else
-                                       Set_End_Of_Syntax_Scope_Loc
-                                         (Scope, Loc);
-                                    end if;
+                                 if No (Get_End_Of_Syntax_Scope_Loc (E)) then
+                                    Set_End_Of_Syntax_Scope_Loc (E, Loc);
                                  end if;
                               end;
                            end if;
