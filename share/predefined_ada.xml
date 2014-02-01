@@ -43,6 +43,18 @@ Communication Subsystem, even if they are local. See E.2.3.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Async_Readers" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Async_Readers'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Async_Writers" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Async_Writers'.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "6/3" name = "Asynchronous" origin = "Ada RM" category = "unknown">
       <DOC>
 Remote procedure calls are asynchronous; the caller continues
@@ -247,6 +259,18 @@ the subtype is not static. See 3.2.4.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Effective_Reads" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Effective_Reads'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Effective_Writes" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Effective_Writes'.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "22/3" name = "Elaborate_Body" origin = "Ada RM" category = "unknown">
       <DOC>
 A given package must have a body, and that body is elaborated
@@ -431,6 +455,12 @@ Minimize storage when laying out records and arrays. See
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Part_Of" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Part_Of'.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "0" name = "Persistent_BSS" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Persistent_BSS'.
@@ -530,6 +560,24 @@ Procedure to read a value from a stream for a given type. See
 layout
 
 See Layout. See 13.5.1.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Refined_Depends" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Refined_Depends'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Refined_Global" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Refined_Global'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Refined_Post" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to pragma `Refined_Post'.
       </DOC>
    </ASPECT>
 
@@ -4340,6 +4388,20 @@ this pragma, see the DEC Ada Language Reference Manual, section 9.12a.
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Async_Readers" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.2.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Async_Writers" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.2.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Asynchronous" origin = "Ada RM">
       <DOC>
 Syntax:
@@ -5152,6 +5214,20 @@ pragma Dispatching_Domain (EXPRESSION);
 This pragma is standard in Ada 2012, but is available in all earlier
 versions of Ada as an implementation-defined pragma.  See Ada 2012
 Reference Manual for details.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Effective_Reads" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.2.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Effective_Writes" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.1.2.
       </DOC>
    </PRAGMA>
 
@@ -7499,6 +7575,13 @@ pragma Page;
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Part_Of" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.2.6.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Partition_Elaboration_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
@@ -8514,6 +8597,27 @@ compatibility purposes. It is equivalent to:
 pragma Profile (Ravenscar);
 
 which is the preferred method of setting the `Ravenscar' profile.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Refined_Depends" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 6.1.5.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Refined_Global" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 6.1.4.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Refined_Post" origin = "GNAT RM">
+      <DOC>
+For the description of this pragma, see SPARK 2014 Reference Manual,
+section 7.2.7.
       </DOC>
    </PRAGMA>
 
