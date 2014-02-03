@@ -125,6 +125,11 @@ won't remove this database when you clean your project.  But it might speed
 up GPS if your project isn't on a fast local disk and you can put the
 database there.
 
+**WARNING**: You shouldn't store this file in a directory that is accessed via
+a network filesystem, like NFS, or Clearcase's MVFS. If your obj directory is
+on such a filesystem, be sure to specify a custom Xref_Database directory in
+your project file.
+
 
 .. _The_Navigate_Menu:
 
