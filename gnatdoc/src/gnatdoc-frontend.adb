@@ -116,13 +116,13 @@ package body GNATdoc.Frontend is
    use Debug;
 
    package Scopes_Stack is
-      type Scope_Info is private;
-      type Scope_Id is access all Scope_Info;
+      type Context_Info is private;
+      type Context_Id is access all Context_Info;
 
       procedure Disable_Enter_Scope;
       procedure Enable_Enter_Scope;
 
-      function Current_Context return Scope_Id;
+      function Current_Context return Context_Id;
       --  Return the context in the top of the stack
 
       procedure Enter_Scope (Entity : Entity_Id);
@@ -134,40 +134,46 @@ package body GNATdoc.Frontend is
       -- Getters --------------------------------------------------
 
       function Get_Current_Entity
-        (Context : Scope_Id) return Entity_Id;
+        (Context : Context_Id) return Entity_Id;
       --  Return the current entity of Context
 
       function Get_End_Decl_Found
-        (Scope : Scope_Id) return Boolean;
+        (Context : Context_Id) return Boolean;
 
       function Get_Prev_Entity_In_Scope
-        (Scope : Scope_Id) return Entity_Id;
+        (Context : Context_Id) return Entity_Id;
 
-      function Get_Scope (Context : Scope_Id) return Entity_Id;
+      function Get_Scope (Context : Context_Id) return Entity_Id;
       --  Return scope of the next entity (No_Entity if no scope available)
 
+      function In_Private_Part
+        (Context : Context_Id) return Boolean;
+
       function Tok_Subprogram_Seen
-        (Scope : Scope_Id) return Boolean;
+        (Context : Context_Id) return Boolean;
 
       -- Setters --------------------------------------------------
 
       procedure Replace_Current_Entity
-        (Context : Scope_Id; Entity : Entity_Id);
+        (Context : Context_Id; Entity : Entity_Id);
 
       procedure Reset_End_Decl_Found
-        (Scope : Scope_Id);
-
-      procedure Set_Current_Entity
-        (Context : Scope_Id; Entity : Entity_Id);
-
-      procedure Set_End_Decl_Found
-        (Scope : Scope_Id);
-
-      procedure Set_Token_Seen
-        (Scope : Scope_Id; Token : Tokens);
+        (Context : Context_Id);
 
       procedure Reset_Tok_Subprogram_Seen
-        (Scope : Scope_Id);
+        (Context : Context_Id);
+
+      procedure Set_Current_Entity
+        (Context : Context_Id; Entity : Entity_Id);
+
+      procedure Set_End_Decl_Found
+        (Context : Context_Id);
+
+      procedure Set_In_Private_Part
+        (Context : Context_Id);
+
+      procedure Set_Token_Seen
+        (Context : Context_Id; Token : Tokens);
 
       procedure Print_Scopes;
       --  For debugging
@@ -175,26 +181,41 @@ package body GNATdoc.Frontend is
    private
       type Token_Flags is array (Tokens'Range) of Boolean;
 
-      type Scope_Info is record
+      type Context_Info is record
          Scope                : Entity_Id;
 
          Prev_Entity_In_Scope : Entity_Id;
          Current_Entity       : Entity_Id;
 
          --  Parser state
-         End_Decl_Found      : Boolean := False;
-         Token_Seen          : Token_Flags := (others => False);
+         End_Decl_Found       : Boolean := False;
+         In_Private_Part      : Boolean := False;
+         Token_Seen           : Token_Flags := (others => False);
       end record;
 
       procedure Free is
-        new Ada.Unchecked_Deallocation (Scope_Info, Scope_Id);
+        new Ada.Unchecked_Deallocation (Context_Info, Context_Id);
 
       pragma Inline (Current_Context);
       pragma Inline (Enter_Scope);
       pragma Inline (Exit_Scope);
 
       pragma Inline (Get_Current_Entity);
+      pragma Inline (Get_End_Decl_Found);
+      pragma Inline (In_Private_Part);
+      pragma Inline (Get_Prev_Entity_In_Scope);
       pragma Inline (Get_Scope);
+      pragma Inline (Tok_Subprogram_Seen);
+
+      pragma Inline (Replace_Current_Entity);
+      pragma Inline (Reset_End_Decl_Found);
+      pragma Inline (Reset_Tok_Subprogram_Seen);
+
+      pragma Inline (Set_Current_Entity);
+      pragma Inline (Set_End_Decl_Found);
+      pragma Inline (Set_In_Private_Part);
+      pragma Inline (Set_Token_Seen);
+
    end Scopes_Stack;
    use Scopes_Stack;
 
@@ -1225,8 +1246,11 @@ package body GNATdoc.Frontend is
          In_Aggregate         : Boolean := False;
          Aggr_Begin_Line      : Natural := 0;
 
-         In_Definition    : Boolean := False;
+         In_Type_Definition   : Boolean := False;
+         --  Set to true when we see the token "is"
+
          In_Item_Decl     : Boolean := False;
+         --  Set to true when we see "procedure", "function" or "entry"
 
          In_Parent_Part   : Boolean := False;
          --  In_Parent_Part is set when we identify the sequence "is new"
@@ -1268,7 +1292,7 @@ package body GNATdoc.Frontend is
             In_Aggregate    := False;
             Aggr_Begin_Line := 0;
 
-            In_Definition   := False;
+            In_Type_Definition := False;
             In_Item_Decl    := False;
 
             In_Parent_Part  := False;
@@ -1525,6 +1549,19 @@ package body GNATdoc.Frontend is
                         In_Generic_Decl := True;
                      end if;
 
+                  when Tok_Pragma =>
+                     if In_Private_Part (Current_Context)
+                       and then No (Get_First_Private_Entity_Loc
+                                     (Get_Scope (Current_Context)))
+                     then
+                        Set_First_Private_Entity_Loc
+                          (Get_Scope (Current_Context),
+                           General_Location'
+                             (File   => File,
+                              Line   => Sloc_Start.Line,
+                              Column => Visible_Column (Sloc_Start.Column)));
+                     end if;
+
                   when Tok_New =>
                      if Prev_Token = Tok_Is then
                         declare
@@ -1584,9 +1621,10 @@ package body GNATdoc.Frontend is
                            --  part of a package spec or a concurrent type
                            --  spec
 
-                           else
+                           elsif not In_Type_Definition then
                               pragma Assert (Is_Package (Scope)
                                 or else Is_Concurrent_Type_Or_Object (Scope));
+                              Set_In_Private_Part (Current_Context);
                            end if;
                         end;
                      end if;
@@ -1747,6 +1785,20 @@ package body GNATdoc.Frontend is
                              Extended_Cursor.Entity (Cursor);
 
                         begin
+                           if In_Private_Part (Current_Context)
+                             and then
+                               No (Get_First_Private_Entity_Loc
+                                     (Get_Scope (Current_Context)))
+                           then
+                              Set_First_Private_Entity_Loc
+                                (Get_Scope (Current_Context),
+                                 General_Location'
+                                  (File   => File,
+                                   Line   => Sloc_Start.Line,
+                                   Column => Visible_Column
+                                               (Sloc_Start.Column)));
+                           end if;
+
                            if (Prev_Token = Tok_Function
                                or else Prev_Token = Tok_Procedure)
                              and then Get_Kind (E) = E_Variable
@@ -2759,7 +2811,7 @@ package body GNATdoc.Frontend is
 
                      case Token is
                         when Tok_Is =>
-                           In_Definition := True;
+                           In_Type_Definition := True;
 
                         when Tok_Procedure |
                              Tok_Function  |
@@ -2771,7 +2823,7 @@ package body GNATdoc.Frontend is
 
                         when Tok_End =>
                            if not In_Item_Decl
-                             and then In_Definition
+                             and then In_Type_Definition
                            then
                               Set_End_Decl_Found (Current_Context);
                            end if;
@@ -2829,6 +2881,7 @@ package body GNATdoc.Frontend is
                            end if;
 
                            In_Item_Decl := False;
+                           In_Type_Definition := False;
                         end if;
                      end if;
 
@@ -5307,7 +5360,7 @@ package body GNATdoc.Frontend is
    package body Scopes_Stack is
 
       package Stack_Entities_List is new Ada.Containers.Vectors
-        (Index_Type => Natural, Element_Type => Scope_Id);
+        (Index_Type => Natural, Element_Type => Context_Id);
       --  procedure Free (List : in out Alloc_Entity_List.Vector);
 
       Stack : Stack_Entities_List.Vector;
@@ -5324,7 +5377,7 @@ package body GNATdoc.Frontend is
          Enter_Scope_Enabled := True;
       end Enable_Enter_Scope;
 
-      function Current_Context return Scope_Id is
+      function Current_Context return Context_Id is
       begin
          return Stack.First_Element;
       end Current_Context;
@@ -5335,7 +5388,7 @@ package body GNATdoc.Frontend is
 
       procedure Enter_Scope (Entity : Entity_Id) is
          use type Ada.Containers.Count_Type;
-         New_Scope : constant Scope_Id := new Scope_Info;
+         New_Scope : constant Context_Id := new Context_Info;
       begin
          pragma Assert (Enter_Scope_Enabled);
 
@@ -5352,7 +5405,7 @@ package body GNATdoc.Frontend is
       ----------------
 
       procedure Exit_Scope is
-         Scope : Scope_Id := Current_Context;
+         Scope : Context_Id := Current_Context;
       begin
          Free (Scope);
          Stack.Delete_First;
@@ -5363,72 +5416,84 @@ package body GNATdoc.Frontend is
       -------------
 
       function Get_Current_Entity
-        (Context : Scope_Id) return Entity_Id is
+        (Context : Context_Id) return Entity_Id is
       begin
          return Context.Current_Entity;
       end Get_Current_Entity;
 
-      function Get_End_Decl_Found (Scope : Scope_Id) return Boolean is
+      function Get_End_Decl_Found (Context : Context_Id) return Boolean is
       begin
-         return Scope.End_Decl_Found;
+         return Context.End_Decl_Found;
       end Get_End_Decl_Found;
 
-      function Get_Prev_Entity_In_Scope
-        (Scope : Scope_Id) return Entity_Id is
+      function In_Private_Part
+        (Context : Context_Id) return Boolean is
       begin
-         return Scope.Prev_Entity_In_Scope;
+         return Context.In_Private_Part;
+      end In_Private_Part;
+
+      function Get_Prev_Entity_In_Scope
+        (Context : Context_Id) return Entity_Id is
+      begin
+         return Context.Prev_Entity_In_Scope;
       end Get_Prev_Entity_In_Scope;
 
-      function Get_Scope (Context : Scope_Id) return Entity_Id is
+      function Get_Scope (Context : Context_Id) return Entity_Id is
       begin
          return Context.Scope;
       end Get_Scope;
 
-      function Tok_Subprogram_Seen (Scope : Scope_Id) return Boolean is
+      function Tok_Subprogram_Seen (Context : Context_Id) return Boolean is
       begin
-         return Scope.Token_Seen (Tok_Procedure)
-           or else Scope.Token_Seen (Tok_Function)
-           or else Scope.Token_Seen (Tok_Entry);
+         return Context.Token_Seen (Tok_Procedure)
+           or else Context.Token_Seen (Tok_Function)
+           or else Context.Token_Seen (Tok_Entry);
       end Tok_Subprogram_Seen;
 
       --  Setters ---------------------------------------------------
 
       procedure Set_Current_Entity
-        (Context : Scope_Id; Entity : Entity_Id) is
+        (Context : Context_Id; Entity : Entity_Id) is
       begin
          Context.Prev_Entity_In_Scope := Context.Current_Entity;
          Replace_Current_Entity (Context, Entity);
       end Set_Current_Entity;
 
       procedure Replace_Current_Entity
-        (Context : Scope_Id; Entity : Entity_Id) is
+        (Context : Context_Id; Entity : Entity_Id) is
       begin
          Context.Current_Entity := Entity;
       end Replace_Current_Entity;
 
-      procedure Set_Token_Seen
-        (Scope : Scope_Id; Token : Tokens) is
-      begin
-         Scope.Token_Seen (Token) := True;
-      end Set_Token_Seen;
-
       procedure Reset_Tok_Subprogram_Seen
-        (Scope : Scope_Id) is
+        (Context : Context_Id) is
       begin
-         Scope.Token_Seen (Tok_Procedure) := False;
-         Scope.Token_Seen (Tok_Function) := False;
-         Scope.Token_Seen (Tok_Entry) := False;
+         Context.Token_Seen (Tok_Procedure) := False;
+         Context.Token_Seen (Tok_Function) := False;
+         Context.Token_Seen (Tok_Entry) := False;
       end Reset_Tok_Subprogram_Seen;
 
-      procedure Reset_End_Decl_Found (Scope : Scope_Id) is
+      procedure Reset_End_Decl_Found (Context : Context_Id) is
       begin
-         Scope.End_Decl_Found := False;
+         Context.End_Decl_Found := False;
       end Reset_End_Decl_Found;
 
-      procedure Set_End_Decl_Found (Scope : Scope_Id) is
+      procedure Set_End_Decl_Found (Context : Context_Id) is
       begin
-         Scope.End_Decl_Found := True;
+         Context.End_Decl_Found := True;
       end Set_End_Decl_Found;
+
+      procedure Set_In_Private_Part
+        (Context : Context_Id) is
+      begin
+         Context.In_Private_Part := True;
+      end Set_In_Private_Part;
+
+      procedure Set_Token_Seen
+        (Context : Context_Id; Token : Tokens) is
+      begin
+         Context.Token_Seen (Token) := True;
+      end Set_Token_Seen;
 
       procedure Print_Scopes is
          Scope : Entity_Id;

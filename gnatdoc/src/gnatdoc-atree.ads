@@ -37,6 +37,85 @@
 --      node is directly available through the public routines of this
 --      package (excluding the routines of package LL).
 
+-----------------------
+-- Entity Attributes --
+-----------------------
+
+--  This section contains a complete list of the attributes that are defined
+--  on entities. Some attributes apply to all entities, others only to certain
+--  kinds of entities. In the latter case the attribute should only be set or
+--  accessed if the Kind field indicates an appropriate entity.
+
+--  Attributes whose value is directly retrieved from the database are marked
+--  "LL" (from low-level) in the table bellow.
+
+--  There are two kinds of attributes that apply to entities, stored and
+--  synthesized. Stored attributes correspond to a field or flag in the entity
+--  itself. Synthesized attributes are not stored directly, but are rather
+--  computed as needed from other attributes, or from information in the tree.
+--  These are marked "synthesized" in the table below. The stored attributes
+--  have both access functions and set procedures to set the corresponding
+--  values, while synthesized attributes have only access functions.
+
+--    Alias
+--       Defined in renamings. References the renamed entity.
+--       See also Is_Alias.
+
+--    Child_Types (LL)
+--       Defined in types. Contains all the derivations of a type
+
+--    Comment
+--       Defined in all entities. Stores the structured comment parsed by
+--       the frontend.
+
+--    Components (synthesized)
+--       Defined in record types, concurrent types and concurrent objects.
+
+--    Direct derivations
+--       Defined in types. Direct_Derivations (E) contains all the entities
+--       for which Parent (Value) = E. In combination with attribute "Parent"
+--       this attribute allows to traverse up and down the tree of tagged type
+--       derivations. If all the derivations of a type are needed (for example,
+--       all the types which implement an interface type) then attribute
+--       LL.Get_Child_Types must be used. For backward compatibility, for
+--       private types the attribute provides the same results when applied
+--       to the partial and full view (to be improved???)
+
+--    Discriminants (synthesized)
+--       Defined in incomplete types, private types, record types, concurrent
+--       types and concurrent objects.
+
+--    End_Of_Syntax_Scope_Loc
+--       Defined in all entities. Points to the location of the semicolon
+--       closing the declaration of the entity.
+
+--    Entity (LL)
+--       Currently used only by the simple backend to identify the instances
+--       of a generic (to be improved???)
+
+--    Entities
+--       Available in entities defining scopes: E_Abstract_Procedure,
+--       E_Entry, E_Function, E_Generic_Package, E_Package, E_Procedure,
+--       E_Protected_Type, E_Record_Type, E_Single_Protected, E_Single_Task,
+--       E_Tagged_Record_Type, E_Task_Type.
+
+--    Entries (synthesized)
+--       Defined in concurrent types and objects (that is, E_Single_Task,
+--       E_Task_Type, E_Single_Protected, E_Protected_Type).
+
+--    Error_Msg
+--       Defined in all entities. If present it contains the text of the
+--       error reported by the frontend on this entity.
+
+--    First_Private_Entity_Loc
+--       Location of the first private entity (if any). Internally we have two
+--       values associated with this attribute: 1) the value available in the
+--       Xref database (value computed by the compiler and stored in ALI files
+--       by compilers built after 2013-11-09), and 2) the value computed by
+--       the frontend of GNATdoc. If the two values are available then this
+--       attribute has the value computed by the compiler; otherwise it has
+--       the value computed by the GNATdoc frontend.
+
 with Ada.Containers.Vectors;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Language;                use Language;
@@ -130,6 +209,9 @@ private package GNATdoc.Atree is
    package EInfo_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Entity_Id);
    procedure Free (List : in out EInfo_List.Vector);
+
+   function Present (List : access EInfo_List.Vector) return Boolean;
+   --  Return true if List has entities
 
    function Less_Than_Loc (Left, Right : Entity_Id) return Boolean;
    --  Compare by location. When two entities are defined in different files
@@ -272,6 +354,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Error_Msg
      (E : Entity_Id) return Unbounded_String;
+   function Get_First_Private_Entity_Loc
+     (E : Entity_Id) return General_Location;
    function Get_Full_Name
      (E : Entity_Id) return String;
    function Get_Full_View
@@ -461,6 +545,9 @@ private package GNATdoc.Atree is
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
 
+   procedure Set_First_Private_Entity_Loc
+     (E : Entity_Id; Value : General_Location);
+
    procedure Set_Full_View
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Full_View_Comment
@@ -575,8 +662,6 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return General_Entity;
-      function Get_First_Private_Entity_Loc
-        (E : Entity_Id) return General_Location;
       function Get_Full_Name
         (E : Entity_Id) return String;
       function Get_Instance_Of
@@ -645,7 +730,6 @@ private package GNATdoc.Atree is
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
-      pragma Inline (Get_First_Private_Entity_Loc);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
       pragma Inline (Get_Parent_Package);
@@ -825,6 +909,7 @@ private
          End_Of_Syntax_Scope_Loc         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
          Generic_Formals_Loc             : General_Location;
+         First_Private_Entity_Loc        : General_Location;
 
          Full_Name       : GNATCOLL.Symbols.Symbol;
          Short_Name      : GNATCOLL.Symbols.Symbol;
@@ -927,6 +1012,7 @@ private
    pragma Inline (Get_Parent);
    pragma Inline (Get_Parent_Package);
    pragma Inline (Get_Partial_View);
+   pragma Inline (Get_First_Private_Entity_Loc);
    pragma Inline (Get_Progenitors);
    pragma Inline (Get_Ref_File);
    pragma Inline (Get_Scope);
@@ -996,6 +1082,7 @@ private
    pragma Inline (Set_Parent);
    pragma Inline (Set_Parent_Package);
    pragma Inline (Set_Partial_View);
+   pragma Inline (Set_First_Private_Entity_Loc);
    pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Short_Name);

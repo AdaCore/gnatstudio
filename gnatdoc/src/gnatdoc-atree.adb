@@ -66,6 +66,10 @@ package body GNATdoc.Atree is
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
+   function LL_Get_First_Private_Entity_Loc
+     (E : Entity_Id) return General_Location;
+   pragma Inline (LL_Get_First_Private_Entity_Loc);
+
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
 
@@ -694,6 +698,30 @@ package body GNATdoc.Atree is
       return E.Error_Msg;
    end Get_Error_Msg;
 
+   ----------------------------------
+   -- Get_First_Private_Entity_Loc --
+   ----------------------------------
+
+   function Get_First_Private_Entity_Loc
+     (E : Entity_Id) return General_Location is
+   begin
+      --  If the location of the first private entity is provided by the
+      --  compiler then return that value; otherwise return the value
+      --  computed by the frontend.
+
+      --  We tried to improve the frontend to compute exactly the same
+      --  location computed by the compiler but this approach was discarded
+      --  because when there are pragmas located between the reserved word
+      --  "private" and the first private declaration then it is not clear
+      --  the location computed by the compiler.
+
+      if Present (LL_Get_First_Private_Entity_Loc (E)) then
+         return LL_Get_First_Private_Entity_Loc (E);
+      else
+         return E.First_Private_Entity_Loc;
+      end if;
+   end Get_First_Private_Entity_Loc;
+
    -------------------
    -- Get_Full_Name --
    -------------------
@@ -1061,14 +1089,13 @@ package body GNATdoc.Atree is
       return False;
    end Has_Duplicated_Entities;
 
-   -----------------
-   -- Has_Formals --
-   -----------------
+   ------------------
+   -- Has_Entities --
+   ------------------
 
    function Has_Entities (E : Entity_Id) return Boolean is
-      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
    begin
-      return EInfo_List.Has_Element (Cursor);
+      return Present (Get_Entities (E));
    end Has_Entities;
 
    -----------------
@@ -1076,10 +1103,9 @@ package body GNATdoc.Atree is
    -----------------
 
    function Has_Formals (E : Entity_Id) return Boolean is
-      Cursor : constant EInfo_List.Cursor := Get_Entities (E).First;
    begin
       pragma Assert (Is_Subprogram_Or_Entry (E));
-      return EInfo_List.Has_Element (Cursor);
+      return Present (Get_Entities (E));
    end Has_Formals;
 
    -------------------------
@@ -1087,10 +1113,9 @@ package body GNATdoc.Atree is
    -------------------------
 
    function Has_Generic_Formals (E : Entity_Id) return Boolean is
-      Cursor : constant EInfo_List.Cursor := Get_Generic_Formals (E).First;
    begin
       pragma Assert (Is_Generic (E));
-      return EInfo_List.Has_Element (Cursor);
+      return Present (Get_Generic_Formals (E));
    end Has_Generic_Formals;
 
    ---------------------
@@ -1536,6 +1561,7 @@ package body GNATdoc.Atree is
            End_Of_Syntax_Scope_Loc => No_Location,
            End_Of_Profile_Location_In_Body => No_Location,
            Generic_Formals_Loc => No_Location,
+           First_Private_Entity_Loc => No_Location,
 
            Has_Private_Parent => False,
            Has_Unknown_Discriminants => False,
@@ -1935,6 +1961,16 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Body_Loc;
 
+   -------------------------------------
+   -- LL_Get_First_Private_Entity_Loc --
+   -------------------------------------
+
+   function LL_Get_First_Private_Entity_Loc
+     (E : Entity_Id) return General_Location is
+   begin
+      return E.Xref.First_Private_Entity_Loc;
+   end LL_Get_First_Private_Entity_Loc;
+
    -------------------
    -- LL_Is_Generic --
    -------------------
@@ -1998,6 +2034,12 @@ package body GNATdoc.Atree is
    function Present (E : Entity_Id) return Boolean is
    begin
       return E /= null;
+   end Present;
+
+   function Present (List : access EInfo_List.Vector) return Boolean is
+      Cursor : constant EInfo_List.Cursor := List.First;
+   begin
+      return EInfo_List.Has_Element (Cursor);
    end Present;
 
    ----------------------
@@ -2182,6 +2224,33 @@ package body GNATdoc.Atree is
    begin
       E.Error_Msg := Value;
    end Set_Error_Msg;
+
+   ----------------------------------
+   -- Set_First_Private_Entity_Loc --
+   ----------------------------------
+
+   procedure Set_First_Private_Entity_Loc
+     (E : Entity_Id; Value : General_Location) is
+   begin
+      --  If the location of the first private entity is available in the
+      --  database then such value is always located either in the same
+      --  line computed by the GNATdoc frontend or after such location
+      --  (if the sources have pragmas located after the reserved word
+      --  "private").
+
+      --  We tried to force the GNATdoc frontend to compute exactly the same
+      --  location computed by the compiler but this approach was discarded
+      --  because when there are pragmas located between the reserved word
+      --  "private" then it is not clear the exact location computed by the
+      --  compiler.
+
+      if Present (LL_Get_First_Private_Entity_Loc (E)) then
+         pragma Assert
+           (LL_Get_First_Private_Entity_Loc (E).Line >= Value.Line);
+      end if;
+
+      E.First_Private_Entity_Loc := Value;
+   end Set_First_Private_Entity_Loc;
 
    -------------------
    -- Set_Full_View --
@@ -2621,12 +2690,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Entity;
       end Get_Entity;
-
-      function Get_First_Private_Entity_Loc
-        (E : Entity_Id) return General_Location is
-      begin
-         return E.Xref.First_Private_Entity_Loc;
-      end Get_First_Private_Entity_Loc;
 
       function Get_Full_Name (E : Entity_Id) return String is
       begin
@@ -3324,11 +3387,19 @@ package body GNATdoc.Atree is
             & "Body_Loc: " & Image (E.Xref.Body_Loc));
       end if;
 
-      if Present (LL.Get_First_Private_Entity_Loc (E)) then
+      if Enhancements
+        and then Present (Get_First_Private_Entity_Loc (E))
+      then
+         Append_Line
+           ("Private_Loc: "
+            & Image (Get_First_Private_Entity_Loc (E)));
+      end if;
+
+      if Present (LL_Get_First_Private_Entity_Loc (E)) then
          Append_Line
            (LL_Prefix
             & "First_Private_Entity_Loc: "
-            & Image (LL.Get_First_Private_Entity_Loc (E)));
+            & Image (LL_Get_First_Private_Entity_Loc (E)));
       end if;
 
       if Present (E.Xref.End_Of_Scope_Loc) then

@@ -94,6 +94,9 @@ package body GNATdoc.Frontend.Builder is
       function Get_Entity
         (Entity : Unique_Entity_Id) return Entity_Id;
 
+      function Get_First_Private_Entity_Loc
+        (Entity : Unique_Entity_Id) return General_Location;
+
       function Get_Full_View
         (Entity : Unique_Entity_Id) return Entity_Id;
 
@@ -105,9 +108,6 @@ package body GNATdoc.Frontend.Builder is
 
       function Get_LL_Entity
         (Entity : Unique_Entity_Id) return General_Entity;
-
-      function Get_LL_First_Private_Entity_Loc
-        (Entity : Unique_Entity_Id) return General_Location;
 
       function Get_LL_Location
         (Entity : Unique_Entity_Id) return General_Location;
@@ -302,11 +302,11 @@ package body GNATdoc.Frontend.Builder is
       pragma Inline (Append_To_List);
       pragma Inline (Append_To_Scope);
       pragma Inline (Get_Entity);
+      pragma Inline (Get_First_Private_Entity_Loc);
       pragma Inline (Get_Full_View);
       pragma Inline (Get_Kind);
       pragma Inline (Get_Language);
       pragma Inline (Get_LL_Entity);
-      pragma Inline (Get_LL_First_Private_Entity_Loc);
       pragma Inline (Get_LL_Location);
       pragma Inline (Get_LL_Scope);
       pragma Inline (Get_Parent);
@@ -553,6 +553,16 @@ package body GNATdoc.Frontend.Builder is
          return Entity.Entity;
       end Get_Entity;
 
+      ----------------------------------
+      -- Get_First_Private_Entity_Loc --
+      ----------------------------------
+
+      function Get_First_Private_Entity_Loc
+        (Entity : Unique_Entity_Id) return General_Location is
+      begin
+         return Get_First_Private_Entity_Loc (Get_Entity (Entity));
+      end Get_First_Private_Entity_Loc;
+
       -------------------
       -- Get_Full_View --
       -------------------
@@ -591,16 +601,6 @@ package body GNATdoc.Frontend.Builder is
       begin
          return LL.Get_Entity (Get_Entity (Entity));
       end Get_LL_Entity;
-
-      -------------------------------------
-      -- Get_LL_First_Private_Entity_Loc --
-      -------------------------------------
-
-      function Get_LL_First_Private_Entity_Loc
-        (Entity : Unique_Entity_Id) return General_Location is
-      begin
-         return LL.Get_First_Private_Entity_Loc (Get_Entity (Entity));
-      end Get_LL_First_Private_Entity_Loc;
 
       ---------------------
       -- Get_LL_Location --
@@ -2319,12 +2319,12 @@ package body GNATdoc.Frontend.Builder is
                        or else Is_Concurrent_Type_Or_Object (Current_Scope))
                     and then
                       Present
-                        (Get_LL_First_Private_Entity_Loc (Current_Scope));
+                        (Get_First_Private_Entity_Loc (Current_Scope));
                begin
                   if In_Scope_With_Private_Entities
                     and then
                       Get_LL_Location (New_E).Line >=
-                        Get_LL_First_Private_Entity_Loc (Current_Scope).Line
+                        Get_First_Private_Entity_Loc (Current_Scope).Line
                   then
                      Set_In_Private_Part (New_E);
                   end if;
@@ -2756,7 +2756,7 @@ package body GNATdoc.Frontend.Builder is
       begin
          if Is_Package (Current_Scope)
            and then
-             Present (Get_LL_First_Private_Entity_Loc (Current_Scope))
+             Present (Get_First_Private_Entity_Loc (Current_Scope))
          then
             EInfo_Vector_Sort_Loc.Sort
               (Get_Entities (Get_Entity (Current_Scope)).all);

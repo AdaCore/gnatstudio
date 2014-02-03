@@ -312,7 +312,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
          Self.Scope_Stack.Append (Self.Current_Scope);
          Self.Current_Scope :=
            (Entity        => Entity,
-            Private_First => LL.Get_First_Private_Entity_Loc (Entity).Line,
+            Private_First => Get_First_Private_Entity_Loc (Entity).Line,
             Private_Last  => Get_End_Of_Syntax_Scope_Loc (Entity).Line);
       end if;
 
