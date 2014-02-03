@@ -3604,7 +3604,7 @@ The `Unrestricted_Access' attribute is similar to `Access' except that
 all accessibility and aliased view checks are omitted.  This is a
 user-beware attribute.  It is similar to `Address', for which it is a
 desirable replacement where the value desired is an access type.  In
-other words, its effect is identical to first applying the `Address'
+other words, its effect is similar to first applying the `Address'
 attribute and then doing an unchecked conversion to a desired access
 type.  In GNAT, but not necessarily in other implementations, the use
 of static chains for inner level subprograms means that
@@ -3614,10 +3614,54 @@ accessibility rules restrict this usage).
 
 It is possible to use `Unrestricted_Access' for any type, but care
 must be exercised if it is used to create pointers to unconstrained
-objects. In this case, the resulting pointer has the same scope as the
-context of the attribute, and may not be returned to some enclosing
-scope. For instance, a function cannot use `Unrestricted_Access' to
-create a unconstrained pointer and then return that value to the caller.
+array objects. In this case, the resulting pointer has the same scope
+as the context of the attribute, and may not be returned to some
+enclosing scope. For instance, a function cannot use
+`Unrestricted_Access' to create a unconstrained pointer and then return
+that value to the caller. In addition, it is only valid to create
+pointers to unconstrained arrays using this attribute if the pointer
+has the normal default "fat" representation where a pointer has two
+components, one points to the array and one points to the bounds. If a
+size clause is used to force "thin" representation for a pointer to
+unconstrained where there is only space for a single pointer, then any
+use of `Unrestricted_Access' to create a value of such a type (e.g. by
+conversion from fat to thin pointers) is erroneous. Consider the
+following example:
+
+with System; use System;
+procedure SliceUA is
+type A is access all String;
+for A'Size use Standard'Address_Size;
+
+procedure P (Arg : A) is
+begin
+if Arg'Length /= 6 then
+raise Program_Error;
+end if;
+end P;
+
+X : String := "hello world!";
+
+begin
+P (X(7 .. 12)'Unrestricted_Access);
+end;
+
+This inevitably raises `Program_Error'.  A normal unconstrained array
+value or a constrained array object marked as aliased has the bounds in
+memory just before the array, so a thin pointer can retrieve both the
+data and the bounds. But in this case, the non-aliased object `X' does
+not have the bounds before the string. If the size clause for type `A'
+were not present, then the pointer would be a fat pointer, where one
+component is a pointer to the bounds, and all would be well. But with
+the size clause present, the conversion from fat pointer to think
+pointer in the call looses the bounds.
+
+In general, it is advisable to completely avoid mixing the use of
+thin pointers and the use of `Unrestricted_Access' where the designated
+type is an unconstrained array. The use of thin pointers should be
+restricted to cases of porting legacy code which implicitly assumes the
+size of pointers, and such code should not in any case be using this
+attribute.
       </DOC>
    </ATTRIBUTE>
 
@@ -9744,11 +9788,11 @@ pragma Unreferenced (LOCAL_NAME {, LOCAL_NAME});
 pragma Unreferenced (library_unit_NAME {, library_unit_NAME});
 
 This pragma signals that the entities whose names are listed are
-deliberately not referenced in the current source unit. This suppresses
-warnings about the entities being unreferenced, and in addition a
-warning will be generated if one of these entities is in fact
-subsequently referenced in the same unit as the pragma (or in the
-corresponding body, or one of its subunits).
+deliberately not referenced in the current source unit after the
+occurrence of the pragma. This suppresses warnings about the entities
+being unreferenced, and in addition a warning will be generated if one
+of these entities is in fact subsequently referenced in the same unit
+as the pragma (or in the corresponding body, or one of its subunits).
 
 This is particularly useful for clearly signaling that a particular
 parameter is not referenced in some particular subprogram implementation
@@ -9962,11 +10006,15 @@ as errors.
 
 The pattern may contain asterisks, which match zero or more
 characters in the message. For example, you can use `pragma
-Warning_As_Error ("*bits of*unused")' to treat the warning message
+Warning_As_Error ("bits of*unused")' to treat the warning message
 `warning: 960 bits of "a" unused' as an error. No other regular
 expression notations are permitted. All characters other than asterisk
 in these three specific cases are treated as literal characters in the
 match.  The match is case insensitive, for example XYZ matches xyz.
+
+Note that the pattern matches if it occurs anywhere within the
+warning message string (it is not necessary to put an asterisk at the
+start and the end of the message, since this is implied).
 
 Another possibility for the static_string_EXPRESSION which works
 whether or not error tags are enabled (`-gnatw.d') is to use the
@@ -10092,11 +10140,15 @@ warning messages (not including the initial "warning: " tag).
 
 The pattern may contain asterisks, which match zero or more
 characters in the message. For example, you can use `pragma Warnings
-(Off, "*bits of*unused")' to suppress the warning message `warning: 960
+(Off, "bits of*unused")' to suppress the warning message `warning: 960
 bits of "a" unused'. No other regular expression notations are
 permitted. All characters other than asterisk in these three specific
 cases are treated as literal characters in the match.  The match is
 case insensitive, for example XYZ matches xyz.
+
+Note that the pattern matches if it occurs anywhere within the
+warning message string (it is not necessary to put an asterisk at the
+start and the end of the message, since this is implied).
 
 The above use of patterns to match the message applies only to
 warning messages generated by the front end. This form of the pragma
