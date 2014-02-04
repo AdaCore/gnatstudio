@@ -19,8 +19,8 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-Known Problems fixed in GPS 6.1.1 / GNATbench 2.9.1
-===================================================
+Known Problems fixed in GPS 6.1 / GNATbench 2.9
+===============================================
 
 KP-61-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
@@ -28,7 +28,7 @@ KP-61-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
               with a relative path, GPS fails to load successfully the
               project.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-28
 
   Workaround: Avoid these Builder switches.
 
@@ -37,7 +37,7 @@ KP-61-N116-040 GPS: Completion mechanism crashes GPS
   Problem:    When using dynamic completion, in some specific scenario, the
               completion resolver for ada constructs would make GPS crash.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-17
 
   Workaround: Deactivate dynamic completion/don't use completion in that
               scenario.
@@ -48,7 +48,7 @@ KP-61-N109-027 GPS: incorrect display of abstract entities in entities browser
               browser duplicates all its fields, and does not list its
               methods.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-30
 
   Workaround: If you can edit sqlite database, you can do the following
               command on it (only needed the first time it is created, not
@@ -62,7 +62,7 @@ KP-61-MC16-032 GPS: Source window not scrolling after auto complete
               the cursor location after the completion is outside of the
               screen, then the source editor won't scroll to show the cursor.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-17
 
   Workaround: Scroll manually.
 
@@ -71,7 +71,7 @@ KP-61-MC13-038 GPS: MDI child "flicker" while being moved
   Problem:    When moving MDI childs between notebooks, some visual flickering
               was occuring.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-07
 
   Workaround: Keep using the drag&drop with the flickering, which is only a
               visual side effect.
@@ -81,7 +81,7 @@ KP-61-MC11-034 GPS: Block completions not working in all cases
   Problem:    The block completion plug-in was not working with simple begin
               blocks, generic packages, procedures and functions.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-12
 
   Workaround: Complete the blocks manually.
 
@@ -91,35 +91,25 @@ KP-61-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
               and some widgets are rendered in white, regardless of the
               original color.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-30
 
   Workaround: Use another X Server (Cygwin's for example)
-
-KP-61-MC09-024 GPS: C++ sources navigation not working
-
-  Problem:    When the C++ sources have classes which define the operator !=
-              the navigation through the C++ files does not work.
-
-  Status:     This was fixed in 6.1.x
-
-  Workaround: Use the "find or replace" menu to locate the entity or the
-              omni-search facility.
 
 KP-61-MC05-001 GPS: Keyboard not working in editor's contextual menus
 
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
               the editor rather than by the menu
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-12-09
 
   Workaround: Use the mouse to navigate the contextual menus
 
 KP-61-MC04-015 GPS: doesn't launch after opening non-ASCII named file
 
-  Problem:    When hisotry of recently open files contains names with
+  Problem:    When history of recently open files contains names with
               non-ASCII characters GPS sometime fails to start.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-12-05
 
   Workaround: Set UTF-8 locale before launching GPS.
 
@@ -129,7 +119,7 @@ KP-61-MB26-015 GB: Show complete command line in command line editor
               (ex: SPARK2014 > Prove Subprogram) the command line displayed at
               the bottom is incomplete.
 
-  Status:     This was fixed in 2.9.x
+  Status:     This was fixed in 2.9 on 2013-11-27
 
   Workaround: You can ignore this visual glitch.
 
@@ -138,7 +128,7 @@ KP-61-MB22-035 GPS: cannot launch browswer from GPS
   Problem:    Sometimes environment variables exported by GPS wrapper
               prevent the launch of browser.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-01-30
 
   Workaround: Write shell wrapper to launch browser in corrected environment.
               Then specify wrapper as browser command in GPS preferences.
@@ -148,7 +138,7 @@ KP-61-MB20-048 GB: code assist enable not applied to open editors
   Problem:    Enabling or disabling code assist from the preferences
               is not applied to open editors.
 
-  Status:     This was fixed in 2.9.x
+  Status:     This was fixed in 2.9 on 2013-11-25
 
   Workaround: Close and reopen the editor(s).
 
@@ -159,7 +149,7 @@ KP-61-MB14-058 GPS: the 'next tag' action does not select the first item
               menu Navigate->Next Locations message will cause the
               second message node to be highlighted.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-14
 
   Workaround: Use the 'previous tag' action to visit the first node.
 
@@ -168,7 +158,7 @@ KP-61-MB13-062 GPS: key shortcuts not displayed in some Build menus
   Problem:    The key shortcuts are not displayed in some menus that
               are present under the Build toplevel menu.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-13
 
   Workaround: Use the key shortcut editor to see the corresponding shortcuts.
 
@@ -182,7 +172,7 @@ KP-61-MB06-009 GPS: 'add to extending project' hides existing files
               attribute, the result is that the files that were visible
               before are no longer visible.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-18
 
   Workaround: edit the extending project and remove the Source_Files
               attribute.
@@ -192,7 +182,7 @@ KP-61-MB01-006 GPS: create_missing_dirs not working with trailing separators
   Problem:    The plugin create_missing_dirs.py does not create directories
               that are specified with a trailing directory separator.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-01
 
   Workaround: Create the directories manually, or remove the directory
               separator at the end of the directory specification.
@@ -204,7 +194,7 @@ KP-61-MA29-025 GPS: Search in a floating window
               search window to search into it would search in the non floating
               window.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-05
 
   Workaround: Clicking on the window two times will make the search work
               properly.
@@ -216,7 +206,7 @@ KP-61-MA29-023 GPS: Goto declaration/body with a floating window
               body in the spec does not scroll to the corresponding location in
               the body.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-11-04
 
   Workaround: Use goto declaration/body with non floating windows.
 
@@ -226,7 +216,7 @@ KP-61-MA24-011 GB: UI freeze importing existing GNAT project
               GNAT Project" and when an imported folder already exists in the
               workspace's file system, the UI stops to respond.
 
-  Status:     This was fixed in 2.9.x
+  Status:     This was fixed in 2.9 on 2014-01-14
 
   Workaround: Kill GNATbench process and retry the operation. Before retrying
               the import operation, you may have to delete manually in the
@@ -242,7 +232,7 @@ KP-61-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
               active development anymore, and has been replaced by secure and
               more robust solutions such as ssh.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2013-10-31
 
   Workaround: Use ssh instead. If absolutely needed, you can re-enable rsh
               support by using the remote_rsh.py plugin, to be activated from
@@ -253,6 +243,6 @@ KP-61-G928-018 GPS: "center cursor on screen" scrolls horizontally
   Problem:    Using the "center cursor on screen" action causes unwanted
               horizontal scrolling in editors.
 
-  Status:     This was fixed in 6.1.x
+  Status:     This was fixed in 6.1 on 2014-11-05
 
   Workaround: Scroll manually.
