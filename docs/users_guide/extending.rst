@@ -6,9 +6,9 @@ Customizing and Extending GPS
 
 .. index:: customization
 
-GPS provides several levels of customization, from simple preferences dialog to
-powerful scripting capability through the `python` language.  This chapters
-describes each of these capabilities.
+GPS provides several levels of customization, from simple preference
+dialogs to powerful scripting capability through the Python language.  This
+chapters describes each of these capabilities.
 
 
 .. index:: preferences
@@ -20,526 +20,549 @@ The Preferences Dialog
 
 .. image:: preferences-general.png
 
-This dialog, available through the menu :menuselection:`Edit-->Preferences...`,
-allows you to modify the global preferences of GPS.  To enable the new
-preferences, you simply need to confirm by pressing the :guilabel:`OK` button.
-Pressing the :guilabel:`Cancel` button will undo all your changes.
+This dialog, available through the :menuselection:`Edit-->Preferences...`
+menu, allows you to modify GPS's global preferences GPS.  Changes are
+applied as soon as you modify a setting.  Confirm your changes by pressing
+the :guilabel:`OK` button or press the :guilabel:`Cancel` button to undo
+them.
 
-Changes are applied immediately, as soon as you modify one of the settings.
-
-Each preference is composed of a label displaying the name of the preference,
-and an editing area to modify its value. If you leave to mouse over the label,
-a tool tip will be displayed giving an on-line help on the preference.
+A label displays the name of each preference and an editing area to modify
+its value. If hover over the label, a tool tip is displayed giving on-line
+help for the preference.
 
 The preferences dialog is composed of several areas, accessible through the
-tabs at the left of the dialog.  Each page corresponds to a set of preferences.
-Some pages are nested (for instance, to access the color configuration for the
-editor, you need to expand the :guilabel:`Editor` row on the left by clicking
-on the arrow, as seen in the screenshot above.
+tabs at the left.  Each page contains a set of preferences.  Some pages are
+nested (for example, to access the color configuration for editors, you
+must expand the :guilabel:`Editor` row on the left by clicking on its
+arrow, as seen in the screenshot above).
 
-* **Themes**
+* :guilabel:`Themes`
 
-  This page allows you to quickly change the current settings for GPS,
-  including preferences, key bindings, menus...; See :ref:`GPS_Themes` for more
-  information on themes. It is only displayed when there are themes registered.
+  Allows you to quickly change the current settings for GPS, including
+  preferences, key bindings, and menus.  See :ref:`GPS_Themes` for more
+  information on themes. It's only displayed when there are themes
+  registered.
 
-* **General**
+* :guilabel:`General`
 
-  *Default font*
+  * :guilabel:`Default font`
     .. index:: font
     .. index:: background color
 
     The default font used in GPS. The background color you select for this
-    preference will set the background color for all consoles and most views
-    (the ones that display their data as trees, mostly). To change the
-    background color of editors, see the preference Edit/Fonts&Colors/Default.
+    preference sets the background color for all consoles and most views
+    that display their data as trees. To change the background color of
+    editors, see the :menuselection:`Edit --> Fonts&Colors --> Default`
+    preference.
 
-  *Fixed view font*
+  * :guilabel:`Fixed view font`
     .. index:: font
 
-    The fixed (monospace) font used in views like the outline view, the
-    bookmark view, ...; As much as possible, this font should use a fixed width
-    for characters, for a better rendering
+    The fixed (monospace) font used in views like such as outline view and
+    the bookmark view.  If possible, you should should use a font with
+    fixed width for characters for better rendering.
 
-  *Character set*
+  * :guilabel:`Character set`
     .. index:: character set
     .. index:: ISO-8859-1
 
-    Name of character set to use when reading or writting text files.  GPS uses
-    UTF-8 and Unicode internally, which can handle any character in any
-    language. However, your system will generally not support Unicode natively,
-    and thus the contents of the files should be translated from the file
-    system encoding to unicode.
+    Name of the character set to use when reading or writting text files.
+    GPS uses UTF-8 and Unicode internally, which handles any character in
+    any language. However, your system generally won't support Unicode
+    natively, so the contents of the files need to be translated from the
+    file system encoding to Unicode.
 
-    This preference indicates the file system encoding in use. It defaults to
-    ISO-8859-1, which corresponds to western european characters.
+    This preference indicates the file system encoding in use. It defaults
+    to ISO-8859-1, which corresponds to western european characters.
 
-  *Display splash screen*
+  * :guilabel:`Display splash screen`
     .. index:: splash screen
 
-    Whether a splash screen should be displayed when starting GPS.
+    Whether a splash screen is displayed when starting GPS.
 
-  *Display welcome window*
+  * :guilabel:`Display welcome window`
     .. index:: welcome dialog
 
-    Whether GPS should display the welcome window for the selection of the
-    project to use.
+    Whether GPS displays the welcome window to select the project to use.
 
-  *Show text in tool bar*
+  * :guilabel:`Show text in tool bar`
     .. index:: tool bar
 
-    Whether the tool bar should show both text and icons, or only icons.
+    Whether the tool bar shows both text and icons or only icons.
 
-  *Auto save*
+  * :guilabel:`Auto save`
     .. index:: auto save
 
-    Whether unsaved files and projects should be saved automatically before
-    calling external tools (e.g. before a build).
+    Whether unsaved files and projects are saved automatically before
+    calling external tools (such as a build).
 
-  *Save desktop on exit*
+  * :guilabel:`Save desktop on exit`
     .. index:: desktop
 
-    Whether the desktop (size and positions of all windows) should be saved
-    when exiting.  If you are working with a project created automatically by
-    GPS, the desktop will not be saved.
+    Whether the desktop (size and positions of all windows) is saved when
+    exiting.  If you're working with a project created automatically by
+    GPS, the desktop is never saved.
 
-  *Save editor in desktop*
+  * :guilabel:`Save editor in desktop`
     .. index:: desktop
 
-    Determines when source editors should be saved in the desktop: `Never`,
-    `Always`, or when a source file is associated with the current project
-    (`From_Project`).
+    Determines when source editors are saved in the desktop: :samp:`Never`,
+    :samp:`Always`, or when a source file is associated with the current
+    project (:samp:`From_Project`).
 
-  *Default builder*
-    The default builder to be used by GPS.
+  * :guilabel:`Default builder`
 
-    * `Auto` to use *gnatmake* for Ada-only projects and *gprbuild* otherwise
-      (for multi-language and non Ada projects).
+    The default builder used by GPS.
 
-    * `Gnatmake` to always use *gnatmake* for builds, even for projects that
-      contain other sources. This will disable support for building non Ada
-      projects.
+    * :samp:`Auto` to use :program:`gnatmake` for Ada-only projects and
+      :program:`gprbuild` otherwise (for multi-language and non Ada
+      projects).
 
-    * `Gprbuild` to always use *gprbuild* for builds, even for Ada only
-      projects.
+    * :samp:`Gnatmake` to always use :program:`gnatmake` for builds, even
+      for projects containing sources in other languages. This disables
+      support for building non-Ada projects.
 
-  *Hyper links*
+    * :samp:`Gprbuild` to always use :program:`gprbuild` for builds, even
+      for Ada-only projects.
+
+  * :guilabel:`Hyper links`
     .. index:: hyper mode
 
-    Whether to display hyper links in the editors when the Control key is
-    pressed.  :ref:`Navigating_with_hyperlinks`.
+    Whether to display hyper links in the editors when the :kbd:`control`
+    key is pressed.  See :ref:`Navigating_with_hyperlinks`.
 
-  *Clipboard size*
+  * :guilabel:`Clipboard size`
     .. index:: clipboard
 
-    This controls the size of the list where all the entries copied into the
-    clipboard through `Edit->Copy` and `Edit->Cut` are saved. This list is
-    navigated through the menu `Edit->Paste` and `Edit->Paste Previous`, as
-    described earlier in this guide.
+    Controls the size of the list where all the entries copied into the
+    clipboard through the :menuselection:`Edit --> Copy` and
+    :menuselection:`Edit --> Cut` menus are saved.  Navigate this list
+    using the :menuselection:`Edit --> Paste` and :menuselection:`Edit -->
+    Paste Previous` menus, as described earlier in this manual.
 
-  *Show status bar*
+  * :guilabel:`Show status bar`
     .. index:: status bar
 
-    Whether the status bar at the bottom of the GPS window should be displayed.
-    This status bar contains one or more progress bars while GPS is executing
-    long actions like a build or a search. These progress bars can be used to
-    monitor the progress of those actions.
+    Whether the status bar at the bottom of the GPS window is displayed.
+    The status bar contains one or more progress bars while GPS is
+    executing long actions like a build or a search.  You can use these
+    progress bars to monitor the progress of those actions.
 
-    If you wish to save vertical screen space, you can hide this status bar.
-    The progress bars will no longer be visible. Instead, you can display the
-    Task Manager through the `Tools->Views->Tasks` menu, to get similar
-    information.  This manager can then be put on the right or left side of the
-    GPS window, for instance just below the Project View.
+    You can hide this status bar to save vertical screen space. The
+    progress bars will no longer be visible. Instead, you can display the
+    :guilabel:`Task Manager` through the :menuselection:`Tools --> Views
+    --> Tasks` menu, to get similar information.  You can put the manager
+    on the right or left side of the GPS window, for example just below
+    the :guilabel:`Project` view.
 
-  *Remove policy when fixing code*
+  * :guilabel:`Remove policy when fixing code`
     .. index:: code fix
 
-    Prefered way to fix code when parts have to be removed.  `Always_Remove`
-    means that the code will be removed by GPS.  `Always_Comment` means that
-    the code will always be commented out.  `Propose_Both_Choices` will propose
-    a menu with both choices.
+    The prefered way to fix code when parts have to be removed.
+    :samp:`Always_Remove` requsts GPS to remove the code.
+    :samp:`Always_Comment` requests GPS to comment out the code.
+    :samp:`Propose_Both_Choices` proposes a menu with both choices.
 
-  *Tip of the Day*
+  * :guilabel:`Tip of the Day`
     .. index:: tip of the day
 
-    Whether GPS will display a *Tip of the Day* dialog at start up.
+    Whether GPS displays a :guilabel:`Tip of the Day` at start up.
 
-* **Windows**
+* :guilabel:`Windows`
 
   .. index:: MDI
   .. index:: Multiple Document Interface
 
-  This section specifies preferences that apply to the *Multiple Document
-  Interface* described in :ref:`Multiple_Document_Interface`.
+  This section selects preferences for the multiple document interface
+  described in :ref:`Multiple_Document_Interface`.
 
-  *Opaque*
+  * :guilabel:`Opaque`
     .. index:: opaque
 
-    If True, items will be resized or moved opaquely when not maximized.
+    Items are resized or moved opaquely when not maximized.
 
-  *Destroy floats*
+  * :guilabel:`Destroy floats`
     .. index:: float
 
-    If False, closing the window associated with a floating item will put the
-    item back in the main GPS window, but will not destroy it. If True, the
-    item is destroyed.
+    If false, closing the window associated with a floating item puts the
+    item back in the main GPS window, but doesn't destroy it. If True, the
+    window is destroyed.
 
-  *All floating*
+  * :guilabel:`All floating`
     .. index:: float
 
-    If True, then all the windows will be floating by default, i.e. be under
-    the control of your system (Windows) or your window manager (Unix
-    machines). This replaces the MDI.
+    All windows are floating by default, i.e. be under the control of your
+    system (on Windows) or window manager (on Unix machines). This replaces
+    the MDI.
 
-  *Short titles for floats*
+  * :guilabel:`Short titles for floats`
     .. index:: float
 
-    If True, all floating windows will have a short title. In particular, base
-    file names will be used for editors instead of full names.
+    All floating windows have a short title. In particular, base file names
+    are used for editors instead of full names.
 
-  *Background color*
+  * :guilabel:`Background color`
     .. index:: color
 
     Color to use for the background of the MDI.
 
-  *Title bar color*
+  * :guilabel:`Title bar color`
     .. index:: color
 
     Color to use for the title bar of unselected items.
 
-  *Selected title bar color*
+  * :guilabel:`Selected title bar color`
     .. index:: color
 
     Color to use for the title bar of selected items.
 
-  *Show title bars*
+  * :guilabel:`Show title bars`
 
-    If Always, each window in GPS will have its own title bars, showing some
-    particular information (like the name of the file edited for editors), and
-    some buttons to iconify, maximize or close the window. This title bar is
-    highlighted when the window is the one currently selected.
+    If :samp:`Always`, each window in GPS has its own title, displaying
+    information such as the name of the file and buttons to iconify,
+    maximize or close the window. The title bar is highlighted when the
+    window is currently selected.
 
-    If Never, the title bar is not displayed, to save space on the screen. The
-    tabs of the notebooks will then be highlighted.
+    If :samp:`Never`, the title bar isn't displayed to save space on the
+    screen.  Instead, the tabs of notebooks are highlighted.
 
-    If Central Only, then only the windows in the central area (ie the part that
-    gets preserved when switching perspective, mostly editors) will have a title
-    bar. All other windows will not show the title bar. This is often a good way
-    to save space on the screen: the title bar is useful for editors since it
-    gives the full name of the file as well as provide an easy handle for drag
-    and drop operations, whereas the other views do not change position as much
-    and it is better to save space on the screen by not displaying their title.
+    If :samp:`Central Only`, only the windows in the central area (i.e.,
+    the part that gets preserved when switching perspective, which are
+    mostly editors) have a title bar.  This is often a good way to save
+    space on the screen: the title bar is useful for editors since it gives
+    the full name of the file as well as provide an easy handle for drag
+    operations, but the other views do not change position often much and
+    it may be better to save space on the screen by not displaying their
+    title bars.
 
-*Notebook tabs policy*
+  * :guilabel:`Notebook tabs policy`
 
-    Indicates when the notebook tabs should be displayed. If set to "Never", you
-    will have to select the window in the Window menu, or through the keyboard.
-    If set to "Automatic", then the tabs will be shown when two or more windows
-    are stacked.
+    When notebook tabs are displayed. If :samp:`Never`, you must select the
+    window in the :menuselection:`Window` menu or through the keyboard.  If
+    :samp:`Automatic`, tabs are shown when two or more windows are
+    contained in the notebook.
 
-  *Notebook tabs position*
+  * :guilabel:`Notebook tabs position`
 
-    Indicates where the notebook tabs should be displayed by default. It is
-    possible to select the position of tabs individually for each notebook
-    by right-clicking in any of their tabs and chosing a new position in the
-    contextual menu. This position will be saved as part of the desktop and
-    restored the next time you restart GPS. However, if you change the value
-    of this preference, all notebooks will reset the position of their tabs
-    to match the new value of the preference.
+    Where the notebook tabs are displayed by default.  Select the position
+    of tabs for each notebook individually by right-clicking in any of
+    their tabs and chosing a new position in the contextual menu. This
+    position is saved as part of the desktop and restored the next time you
+    restart GPS. However, if you change the value of this preference, the
+    position of tabs in all notebooks resets to match the new value of the
+    preference.
 
-* **Editor**
+* :guilabel:`Editor`
   .. index:: editor
 
-  *General*
+  * :guilabel:`General`
 
-    *Strip blanks*
+    * :guilabel:`Strip blanks`
       .. index:: strip blanks
 
-      Whether the editor should remove trailing blanks when saving a file.
+      Whether editors remove trailing blanks when saving a file.
 
-    *Line terminator*
+    * :guilabel:`Line terminator`
       .. index:: line terminator
 
-      Choose between *Unix*, *Windows* and *Unchanged* line terminators when
-      saving files. Choosing *Unchanged* will use the original line terminator
-      when saving the file; *Unix* will use LF line terminators; *Windows* will
-      use CRLF line terminators.
+      The style of line terminators used when saving files.
+      :guilabel:`Unchanged` uses the original line terminator,
+      :guilabel:`Unix` uses LF line terminators, and :guilabel:`Windows`
+      uses CRLF line terminators.
 
-    *Display line numbers*
+    * :guilabel:`Display line numbers`
       .. index:: display line numbers
 
-      Whether the line numbers should be displayed in file editors.
+      Whether editors display line numbers.
 
-    *Display subprogram names*
+    * :guilabel:`Display subprogram names`
       .. index:: Display subprogram names
 
-      Whether the subprogram name should be displayed in the editor's status
-      bar.
+      Whether the editor's status bar displays the subprogram name.
 
-    *Tooltips*
+    * :guilabel:`Tooltips`
       .. index:: tooltip
 
-      Whether tool tips should be displayed automatically.
+      Whether tool tips are displayed automatically.
 
-    *Tooltips timeout*
+    * :guilabel:`Tooltips timeout`
       .. index:: tooltip timeout
 
       Time (in milliseconds) before displaying tooltips.
 
-    *Highlight delimiters*
+    * :guilabel:`Highlight delimiters`
       .. index:: highlight delimiter
 
-      Determine whether the delimiter matching the character following the
-      cursor should be highlighted. The list of delimiters includes: `{}[]()`
+      Whether the delimiter matching the character following the cursor is
+      highlighted. The list of delimiters includes: `{}[]()`
 
-    *Autosave delay*
+    * :guilabel:`Autosave delay`
       .. index:: autosave delay
 
       .. _autosave_delay:
 
       The period (in seconds) after which an editor is automatically saved,
-      0 if none.
+      0 if never automatically saves.
 
       Each modified file is saved under a file called `.#filename#`, which is
       removed on the next explicit save operation.
 
-    *Right margin*
+    * :guilabel:`Right margin`
       .. index:: right margin
 
-      The right margin to highlight. 0 if none.
-      This value is also used to implement the `Edit->Refill` command.
+      The right margin to highlight, 0 if none.  This value is also used to
+      implement the :menuselection:`Edit --> Refill` menu.
 
-    *Block highlighting*
+    * :guilabel:`Block highlighting`
       .. index:: block highlighting
 
-      Whether the editor should highlight the current block.
-      The current block depends on the programming language, and will include
-      e.g. procedures, loops, if statements, ...
+      Whether the editor highlights the current block.  The current block
+      depends on the programming language, and includes procedures, loops,
+      if statements, and other similar structure.
 
-    *Block folding*
+    * :guilabel:`Block folding`
       .. index:: block folding
 
-      Whether the editor should provide the ability to fold/unfold blocks.
+      Whether the editor provides the ability to fold and unfold blocks.
 
-    *Speed Column Policy*
+    * :guilabel:`Speed Column Policy`
       .. index:: speed column policy
 
-      When the Speed Column should be shown on the side of the editors:
+      When the :guilabel:`Speed Column` is shown on the side of the
+      editors:
 
-      *Never*
-        The Speed Column is never displayed.
+      * :samp:`Never`
 
-      *Automatic*
-        The Speed Column is shown whenever lines are highlighted in the editor,
-        for example to show the current execution point, or lines containing
-        compilation errors, ...; It disappears when no lines are highlighted.
+      * :samp`Always`
 
-      *Always*
-        The Speed Column is always displayed.
+      * :samp:`Automatic`
 
-    *Use Windows ACL*
-      This is a Windows specific preference which is disabled by default. When
-      enabled GPS will use the ACL to change the file's write permission. Note
-      that ACL can't be used on network drives.
+        Shown whenever lines are highlighted in the editor, for example to
+        show the current execution point or lines containing compilation
+        errors. It disappears when no lines are highlighted.
 
-    *External editor*
+    * :guilabel`Use Windows ACL`
+
+      A Windows-specific preference, disabled by default. When enabled, GPS
+      uses the ACL to change the file's write permission. Note that ACL's
+      can't be used on network drives.
+
+    * :guilabel:`External editor`
       .. index:: external editor
 
       The default external editor to use.
 
-    *Custom editor command*
+    * :guilabel:`Custom editor command`
       .. _custom_editor_command:
 
-      Specify the command line for launching a custom editor.  It is assumed
-      that the command will create a new window/terminal as needed.  If the
-      editor itself does not provide this capability (such as vi or pico under
-      Unix systems), you can use an external terminal command, e.g::
+      The command line used to launch a custom editor.  GPS assumes the
+      command creates a new window or terminal as needed.  If the editor
+      itself does not provide this capability (such as :program:`vi` or
+      :program:`pico` on Unix systems), you can use an external terminal
+      command, e.g::
 
         xterm -geo 80x50 -exe vi +%l %f
 
-      The following substitutions are provided:
+      GPS performs the following substitutions:
 
-      *%l*
+      * :command:`%l`
         line to display
 
-      *%c*
+      * :command:`%c`
         column to display
 
-      *%f*
+      * :command:`%f`
         full pathname of file to edit
 
-      *%e*
+      * :command:`%e`
         extended lisp inline command
 
-      *%p*
+      * :command:`%p`
         top level project file name
 
-      *%%*
-        percent sign ('%')
+      * :command`%%`
+        a literal percent sign ('%')
 
-    *Always use external editor*
-      True if all editions should be done with the external editor. This will
-      deactivate completely the internal editor. False if the external editor
-      needs to be explicitly called by the user.
+    * :guilabel:`Always use external editor`
 
-    *Smart completion*
+      True if all editing is done with the external editor, which
+      completely deactivates the internal editor. False if the external
+      editor needs is only explicitly called by the user.
+
+    * :guilabel:`Smart completion`
       .. index:: smart completion
 
-      When enabled, GPS loads on startup all the information needed for the
-      Smart completion to work.
+      When enabled, GPS loads all the information needed for the Smart
+      completion to work on startup.
 
-    *Smart completion timeout*
-      The timeout, expressed in milliseconds, after which the Smart completion
-      window appears automatically after entering a triggering character, such
-      as '.'
+    * :guilabel:`Smart completion timeout`
 
-  *Fonts & Colors*
+      The timeout, milliseconds, after which the :guilabel:`Smart
+      Completion` window appears automatically after entering a triggering
+      character, such as '.'
+
+  * :guilabel:`Fonts & Colors`
     .. index:: font
     .. index:: color
 
-    *Default*
-      The default font, default foreground and default background colors used
-      in the source editor.
+    * :guilabel:`Default`
 
-    *Blocks*
-      Font variant and colors used to highlight blocks (subprograms, task,
-      entries, ...) in declarations.
+      The default font, default foreground and default background colors
+      used in the source editor.
 
-    *Types*
+    * :guilabel:`Blocks`
+
+      Font variant and colors used to highlight blocks (such as
+      subprograms, task, and entries) in declarations.
+
+    * :guilabel:`Types`
+
       Font variant and colors used to highlight types in declarations.
 
-    *Keywords*
+    * :guilabel:`Keywords`
+
       Font variant and colors used to highlight keywords.
 
-    *Comments*
-      Font variant and colors used to highlight comments.
-      Setting the color to white will set a transparent color.
+    * :guilabel:`Comments`
 
-    *SPARK Annotations*
+      Font variant and colors used to highlight comments.  Setting the
+      color to white sets the color as transparent.
+
+    * :guilabel:`SPARK Annotations`
+
       Font variant and colors used to highlight SPARK annotations within
-      Ada comments (Starting with `--#`). Setting the color to white
-      will set a transparent color.
+      Ada comments (Starting with `--#`).  Setting the
+      color to white sets the color as transparent.
 
-    *Ada/SPARK Aspects*
+    * :guilabel:`Ada/SPARK Aspects`
+
       Font variant and colors used to highlight Ada 2012 and SPARK 2014
-      aspects. Setting the color to white will set a transparent color.
+      aspects.  Setting the color to white sets the color as transparent.
 
-    *Strings*
+    * :guilabel:`Strings`
+
       Font variant and colors used to highlight strings.
-      Setting the color to white will set a transparent color.
+      Setting the color to white sets the color as transparent.
 
-    *Numbers*
+    * :guilabel:`Numbers`
+
       Font variant and colors used to highlight numbers.
-      Setting the color to white will set a transparent color.
+      Setting the color to white sets the color as transparent.
 
-    *Current line color*
-      Color for highlighting the current line. Leave it to blank for no
-      highlighting.  Setting the color to white will set a transparent color.
+    * :guilabel:`Current line color`
 
-    *Draw current line as a thin line*
-      Whether to use a thin line rather than full background highlighting on the
-      current line.
+      Color for highlighting the current line. Leave it blank for no
+      highlighting.  Setting the color to white sets the color as
+      transparent.
 
-    *Current block color*
+    * :guilabel:`Draw current line as a thin line`
+
+      Whether to use a thin line rather than full background highlighting
+      on the current line.
+
+    * :guilabel:`Current block color`
+
       Color for highlighting the current source block.
 
-    *Delimiter highlighting color*
+    * :guilabel:`Delimiter highlighting color`
+
       Color for highlighting delimiters.
 
-    *Search results highlighting*
-      Color for highlighting the search results in the text of source editors.
+    * :guilabel:`Search results highlighting`
 
-  *Ada*
+      Color for highlighting the search results within the text of editors.
+
+  * :guilabel:`Ada`
     .. index:: Ada
 
-    *Auto indentation*
+    * :guilabel:`Auto indentation`
       .. index:: indentation
 
-      How the editor should indent Ada sources.
-      None means no indentation; Simple means that indentation from the previous
-      line is used for the next line; Extended means that a language specific
-      parser is used for indenting sources.
+      How the editor should indent Ada sources.  :guilabel:`None` means no
+      indentation; :guilabel:`Simple` means use indentation from the
+      previous line; :guilabel:`Extended` means use a language specific
+      parser.
 
-    *Use tabulations*
-      .. index:: tabulation
+    * :guilabel:`Use tabulations`
+      .. index:: tabs
 
-      Whether the editor should use tabulations when indenting.  Note that this
-      preference does not modify the :kbd:`Tab` key which will still insert Tab
-      characters. Consider also the `/Edit/Insert Tab With Spaces` key shortcut
-      which can be mapped (to e.g. :kbd:`Tab`) via
-      :ref:`The_Key_Manager_Dialog`. Finally, another alternative is to
-      reconfigure the default key binding for the automatic indentation action:
-      by default, it is mapped to :kbd:`Tab` and can be changed to
-      :kbd:`Tab` by modifying the `/Edit/Format Selection` action from
-      :ref:`The_Key_Manager_Dialog`.
+      Use tab characters when indenting.  This preference doesn't modify
+      the :kbd:`Tab` key, which still inserts tab characters. You can also
+      map the :menuselection:`Edit --> Insert Tab With Spaces` key shortcut
+      to, e.g., :kbd:`Tab` via :ref:`The_Key_Manager_Dialog`. You can also
+      reconfigure the default key binding for the automatic indentation
+      action: by default, it's mapped to :kbd:`Tab`, but you can change it
+      to :kbd:`Tab` by modifying the :menuselection:`Edit --> Format
+      Selection` action from :ref:`The_Key_Manager_Dialog`.
 
-    *Default indentation*
+    * :guilabel:`Default indentation`
       .. index:: indentation level
 
-      The number of spaces for the default Ada indentation.
+      Number of spaces for the default Ada indentation.
 
-    *Continuation lines*
+    * :guilabel:`Continuation lines`
       .. index:: continuation line
 
-      The number of extra spaces for continuation lines.
+      Number of extra spaces for continuation lines.
 
-    *Declaration lines*
+    * :guilabel:`Declaration lines`
       .. index:: declaration line
 
       .. highlight:: ada
 
-      The number of extra spaces for multiple line declarations.  For example,
-      using a value of 4, here is how the following code would be indented::
+      Number of extra spaces for multiple line declarations.  For example,
+      if you specify a value of 4, here's how the following code would be
+      indented::
 
         variable1,
             variable2,
             variable3 : Integer;
 
-    *Conditional continuation lines*
+    * :guilabel:`Conditional continuation lines`
       .. index:: conditional line
 
-      The number of extra spaces used to indent multiple lines conditionals
+      Number of extra spaces used to indent multiple-line conditionals
       within parentheses.
 
-      For example, when this preference is set to 1 (the default), continuation
-      lines are indented based on the previous parenthesis plus one space::
+      For example, when set to 1 (the default), continuation lines are
+      indented from the previous parenthesis by one space::
 
         if (Condition1
             and then Condition2)
         then
 
 
-      When this preference is set to 3, this gives::
+      When this preference is set to 3, you get::
 
         if (Condition1
               and then Condition2)
         then
 
-    *Record indentation*
+    * :guilabel:`Record indentation`
       .. index:: record indentation
 
-      The number of extra spaces for record definitions, when the `record`
-      keyword is on its own line.
+      Number of extra spaces for record definitions, when the
+      :command:`record` keyword is on its own line.
 
-      For example, when this preference is set to 3 (the default), the
-      following sample will be indented as::
+      For example, when set to 3 (the default), the following sample will
+      be indented as::
 
         type T is
            record
               F : Integer;
            end record;
 
-      When this preference is set to 1, this gives::
+      When set to 1, you get::
 
         type T is
          record
             F : Integer;
          end record;
 
-    *Case indentation*
+    * :guilabel:`Case indentation`
       .. index:: case indentation
 
-      Whether GPS should indent case statements with an extra level, as used in
+      Whether GPS should indent case statements an extra level, as done in
       the Ada Reference Manual, e.g::
 
         case Value is
@@ -547,87 +570,127 @@ on the arrow, as seen in the screenshot above.
               null;
         end case;
 
-      If this preference is set to `Non_Rm_Style`, this would be indented as::
+      If set to :guilabel:`Non_Rm_Style`, this is indented as::
 
         case Value is
         when others =>
            null;
         end case;
 
-      By default (`Automatic`), GPS will choose to indent with an extra
-      level or not based on the first `when` construct: if the first
-      `when` is indented by an extra level, the whole case statement will
-      be indented following the RM style.
+      By default (:guilabel:`Automatic`), GPS decides whether indent an
+      extra level based on the first :command:`when` construct: if that
+      construct is indented an extra level, the whole case statement is
+      indented following the RM style.
 
-    *Casing policy*
-      The way the editor will handle the case settings below.  `Disabled` no
-      auto-casing will be done; `End_Of_Line` auto-casing will be done when
-      hitting :kbd:`Enter` key; `End_Of_Word` auto-casing will be done
-      word-by-word while typing; `On_The_Fly` auto-casing will be done
-      character-by-character while typing.  For the `End_Of_Line`,
-      `End_Of_Word` and `On_The_Fly` policies it is always possible to force
-      the casing of the current line by pressing the indentation key
-      (:kbd:`Tab` by default).
+    * :guilabel:`Casing policy`
 
-      It is also possible to disable the casing for a single character (action
-      `No Casing/indentation on Next Key`, default :kbd:`Ctrl-Q`) or
-      temporarily (action `Toggle Auto Casing/indentation`, default
-      :kbd:`Alt-Q`).
+      The way the editor handles auto-casing:
 
-    *Reserved word casing*
-      How the editor should handle reserved words casing.  `Unchanged` will
-      keep the casing as-is; `Upper` will change the casing of all reserved
-      words to upper case; `Lower` will change the casing to lower case;
-      `Mixed` will change the casing to mixed case (all characters to lower
-      case except first character and characters after an underscore which are
-      set to upper case); `Smart_Mixed` As above but do not force upper case
-      characters to lower case.
+      * :guilabel:`Disabled`
 
-    *Identifier casing*
-      How the editor should handle identifiers casing.
-      The values are the same as for the *Reserved word casing* preference.
+        No auto-casing is done.
 
-    *Format operators/delimiters*
-      Whether the editor should add extra spaces around operators and
-      delimiters if needed.  If enabled, an extra space will be added when
-      needed in the following cases: before an opening parenthesis; after a
-      closing parenthesis, comma, semicolon; around all Ada operators (e.g.
-      `<=`, `:=`, `=>`, ...)
+      * :guilabel:`End_Of_Line`
 
-    *Align colons in declarations*
-      Whether the editor should automatically align colons in declarations and
-      parameter lists. Note that the alignment is computed by taking into
-      account the current buffer up to the current line (or end of the current
-      selection), so if declarations continue after the current line, you can
-      select the declarations lines and hit the reformat key.
+        Auto-casing done when pressing the :kbd:`Enter` key.
 
-    *Align associations on arrows*
-      Whether the editor should automatically align arrows in associations
-      (e.g. aggregates or function calls). See also previous preference.
+      * :guilabel:`End_Of_Word`
 
-   *Align declarations after colon*
-      Whether the editor should align continuation lines in variable
-      declarations based on the colon character.
+        Auto-casing is done word-by-word while typing.
+
+      * :guilabel:`On_The_Fly`
+
+        Auto-casing is done character-by-character while typing.
+
+      For the :guilabel:`End_Of_Line`, :guilabel:`End_Of_Word` and
+      :guilabel:`On_The_Fly` policies you can force auto-casing of the
+      current line by pressing the indentation key (by default,
+      :kbd:`Tab`).
+
+      You can also disable auto-casing for a single character (action
+      :guilabel:`No Casing/indentation on Next Key`, by default
+      :kbd:`Ctrl-Q`) or temporarily (action :guilabel:`Toggle Auto
+      Casing/indentation`, by default :kbd:`Alt-Q`).
+
+    * :guilabel:`Reserved word casing`
+
+      How the editor handles the casing of reserved words.
+
+      * :guilabel:`Unchanged`
+
+        Keeps casing as-is.
+
+      * :guilabel:`Upper`
+
+        Changes the casing of all reserved words to upper case.
+
+      * :guilabel:`Lower`
+
+        Changes to lower case.
+
+      * :guilabel:`Mixed`
+
+        Changes to mixed case (all characters to lower case except first
+        character and characters after an underscore which are made upper
+        case).
+
+      * :guilabel:`Smart_Mixed`
+
+        Like :guilabel:`Mixed`, but don't force upper case characters to
+        lower case.
+
+    * :guilabel:`Identifier casing`
+
+      How the editor handles the casing of identifiers.  The values are the
+      same as for the :guilabel:`Reserved word casing` preference.
+
+    * :guilabel:`Format operators/delimiters`
+
+      Whether the editor adds extra spaces around operators and delimiters,
+      if needed.  If enabled, an extra space is added in the following
+      cases: before an opening parenthesis; after a closing parenthesis,
+      comma, semicolon and around all Ada operators (e.g.  `<=`, `:=`,
+      `=>`).
+
+    * :guilabel:`Align colons in declarations`
+
+      Whether the editor automatically aligns colons in declarations and
+      parameter lists.  The alignment is computed by looking at the editor
+      up to the current line (or end of the current selection), so if
+      declarations continue beyond that point, you must select the
+      declarations lines and hit the reformat key.
+
+    * :guilabel:`Align associations on arrows`
+
+      Whether the editor automatically aligns arrows in associations
+      (e.g. aggregates or function calls). See also the previous preference.
+
+   * :guilabel:`Align declarations after colon`
+
+      Whether the editor aligns continuation lines in variable declarations
+      based on the colon character.
 
       Consider the following code::
 
         Variable : constant String :=
           "a string";
 
-      If this preference is enabled, it will be indented as follows::
+      If enabled, the code is indented as follows::
 
         Variable : constant String :=
                      "a string";
 
-    *Indent comments*
-      Whether to indent lines containing only comments and blanks, or to keep
-      these lines unchanged.
+    * :guilabel:`Indent comments`
 
-    *Align comments on keywords*
-      Whether to align comment lines following `record` and
-      `is` keywords immediately with no extra space.
+      Whether to indent lines containing only comments and blanks or to
+      keep these lines unchanged.
 
-      When enabled, the following code will be indented as::
+    * :guilabel:`Align comments on keywords`
+
+      Whether to align comment lines following :command:`record` and
+      :command:`is` keywords with no extra space.
+
+      When enabled, the following code is indented as::
 
         package P is
         --  Comment
@@ -636,7 +699,7 @@ on the arrow, as seen in the screenshot above.
         end P;
 
 
-      When disabled, the indentation will be::
+      When disabled, it's indented as::
 
         package P is
            --  Comment
@@ -644,35 +707,35 @@ on the arrow, as seen in the screenshot above.
            [...]
         end P;
 
-  *C & C++*
+  * :guilabel:`C & C++`
     .. index:: C
     .. index:: C++
 
-    *Auto indentation*
+    * :guilabel:`Auto indentation`
       .. index:: indentation
 
-      How the editor should indent C/C++ sources.  None means no indentation;
-      Simple means that indentation from the previous line is used for the next
-      line; Extended means that a language specific parser is used for
-      indenting sources.
+      How the editor should indent C/C++ sources.  :guilabel:`None` is no
+      indentation, :guilabel:`Simple` uses indentation from the previous
+      line for the next line, and :guilabel:`Extended` uses a language
+      specific parser to indent sources.
 
-    *Use tabulations*
-      .. index:: tabulation
+    * :guilabel:`Use tabulations`
+      .. index:: tabs
 
-      Whether the editor should use tabulations when indenting. If True, the
-      editor will replace each occurrence of eight characters by a tabulation
-      character.
+      Use tab characters when indenting. If :guilabel:`True`, the editor
+      replaces each occurrence of eight characters by a tab character.
 
-    *Default indentation*
+    * :guilabel:`Default indentation`
       .. index:: indentation
 
-      The number of spaces for the default indentation.
+      Number of spaces for the default indentation.
 
-    *Extra indentation*
+    * :guilabel:`Extra indentation`
       .. index:: indentation
 
-      Whether to indent loops, if and switch statements an extra level.
-      if this preference is enabled, the following layout will be chosen::
+      Whether to indent loops, :command:`if` and :command:`switch`
+      statements an extra level.  If enabled, the following layout is
+      generated::
 
         if (condition)
           {
@@ -680,62 +743,64 @@ on the arrow, as seen in the screenshot above.
           }
 
 
-      If disabled, the same code will be indented as::
+      If disabled, the same code is indented as::
 
         if (condition)
         {
           int x;
         }
 
-    *Indent comments*
-      Whether to indent lines containing only comments and blanks, or to keep
+    * :guilabel:`Indent comments`
+
+      Whether to indent lines containing only comments and blanks or keep
       these lines unchanged.
 
-* **Debugger**
+* :guilabel:`Debugger`
   .. index:: debugger
 
-  *Preserve State on Exit*
+  * :guilabel:`Preserve State on Exit`
     .. index:: breakpoint
 
-    If this preference is enabled, the debugger will automatically save
-    breakpoints when it exists, and restore them the next time the same
-    executable is debugged.  This is a convenient way to work on an executable,
-    where the typical usage looks like compile, debug, compile, debug, ...
+    If enabled, the debugger automatically saves breakpoints when it exits
+    and restores them the next time the it debugs the same executable.
+    This is a convenient way to work when the typical usage alternates
+    between compile and debug operations.
 
-    When the preference is enabled, the debugger will also preserve the
-    contents of the data window whenever it is closed. Reopening the window
-    either during the same debugger session, or automatically when a new
-    debugger is started on the same executable, will recreate the same boxes
-    within the data window.
+    When enabled, the debugger also preserves the contents of the data
+    window whenever it's closed.  Reopening the window, either during the
+    same debugger session or automatically when you start a new debugger on
+    the same executable, recreates the same boxes within the data window.
 
-  *Debugger Windows*
+  * :guilabel:`Debugger Windows`
     .. index:: debugger windows
 
-    This preference controls what happens to debugger-related windows, like the
-    call stack, the data window, the tasks view,..., when the debugger is
-    terminated. There are three possible behavior:
+    Controls what happens to debugger-related windows, such the call stack,
+    data window, and tasks view when the debugger terminates. There are
+    three possibilities.
 
-    *Close Windows*
-      In this case, all these windows are closed. This saves memory and space
-      on the screen, but you will need to explicitly reopen them and put them
-      in the right location on the desktop the next time you start a debugger
+    * :guilabel:`Close Windows`
+
+      All those windows are closed. This saves memory and space on your
+      screen, but you must explicitly reopen them and put them in the
+      desired location on the desktop the next time you start a debugger
       session.
 
-   *Keep Windows*
-      In this case, the windows are cleared, but kept on the desktop. When you
-      start a new debugger session, the windows will be automatically reused.
-      This ensures that you won't have to reopen and reposition them, but takes
-      space on your screen
+   * :guilabel:`Keep Windows`
 
-   *Hide Windows*
-      The windows are cleared, and hidden. When you start a new debugger
-      session, they are automatically made visible again and reused. This also
-      ensures you will not have to reopen and reposition them, but requires a
-      bit of memory.  If you move some windows around while these windows are
-      hidden, they might reappear in unexpected location the next time,
-      although you then just have to move them.
+      The windows are cleared, but kept on the desktop. When you start a
+      new debugger session, the windows are automatically reused.  This
+      ensures you won't have to reopen and reposition them, but takes up
+      space on your screen.
 
-  *Break on exceptions*
+   * :guilabel:`Hide Windows`
+
+      The windows are cleared and hidden. When you start a new debugger
+      session, they're automatically reused and made visible again. This
+      option also ensures you won't have to reopen and reposition them, but
+      requires some memory.  Note that if you move other windows around
+      while these are hidden, they might reappear in unexpected locations.
+
+  * :guilabel:`Break on exceptions`
     .. index:: breakpoint
     .. index:: exception
 
@@ -744,539 +809,573 @@ on the arrow, as seen in the screenshot above.
     debugger is initialized, and will not modify a running debugger (use the
     breakpoint editor for running debuggers).
 
-  *Execution window*
+  * :guilabel:`Execution window`
     .. index:: execution
     .. index:: tty
 
-    Specifies whether the debugger should create a separate execution
-    window for the program being debugged.
+    Whether the debugger should create a separate execution window for the
+    program being debugged.  This preference doesn't apply to the current
+    debug session; to change the current debug session, you need to
+    terminate it and start a new one.
 
-    Note that this preference cannot be taken into account for the current
-    debug session: you need to terminate the current debug session and restart
-    a new one.
+    If enabled, a separate console is created.  On Unix systems, this
+    console is another window in the bottom part of the main window and on
+    Windows, it's a separate window created by the underlying
+    :program:`gdb`, since Windows does not have the notion of separate
+    terminals (ttys).
 
-    If true, a separate console will be created. Under Unix systems, this
-    console is another window in the bottom part of the main window; under
-    Windows, this is a separate window created by the underlying gdb, since
-    Windows does not have the notion of separate terminals (aka ttys).
+    If using this mode under Windows, the :menuselection:`Debug -->
+    Interrupt` menu is only able to interrupt the debugged program with
+    recent versions of :program:`gdb`.  If you are using older versions,
+    you need to hit :kbd:`Ctrl-C` in the separate execution window to
+    interrupt it.  This separate execution window uses the default
+    system-wide console properties (such as the size of the window and its
+    color).  You can change those properties using the default console menu
+    (top-left of the console).
 
-    Note that in this mode under Windows, the `Debug->Interrupt` menu will only
-    interrupt the debugged program with recent versions of gdb.  If you are
-    using older versions of gdb, you need to hit :kbd:`Ctrl-C` in the separate
-    execution window to interrupt it while it is running. Note also that this
-    separate execution window uses the default system-wide console properties
-    (the size of the window, the colors...). It is possible to change those
-    properties using e.g. the default console menu (top-left of the console) on
-    Windows XP.
+    If this preference is disabled, GPS doesn't created an execution
+    window. The debugger assumes the program being debugged either doesn't
+    require input or that input is handled outside GPS. For example, when
+    you attach to a running process, this process already has an associated
+    terminal.
 
-    If false, no execution window will be created. The debugger assumes that
-    the program being debugged does not require input, or that if it does,
-    input is handled outside GPS. For example, when you attach to a running
-    process, this process already has a separate associated terminal.
+  * :guilabel:`Show lines with code`
 
-  *Show lines with code*
-    Specifies whether the source editor should display blue dots for lines that
-    contain code. If set to *False*, gray dots will be displayed instead on
-    each line, allowing breakpoint on any line. Disabling this option provides
-    a faster feedback, since GPS does not need to query the debugger about
-    which lines contain code.
+    Whether the source editor displays blue dots for lines containing
+    code. If disabled, gray dots are instead displayed on each line,
+    permitting breakpoint on any line, which is faster since GPS doesn't
+    need to ask the debugger which lines contain code.
 
-  *Detect aliases*
+  * :guilabel:`Detect aliases`
     .. index:: aliases
 
-    If enabled, do not create new items when an item with the same address is
-    already present on the canvas.
+    If enabled, don't create new items when an item with the same address
+    is already present on the canvas.
 
-  *Assembly range size*
+  * :guilabel:`Assembly range size`
     .. index:: range size
 
-    Number of assembly lines to display in the initial display of the assembly
-    window. If the size is 0, then the whole subprogram is displayed, but this
-    can take a very long time on slow machines.
+    Number of assember lines to display in the initial display of the
+    assembler window. If 0, the whole subprogram is displayed, which can
+    take a long time on slow machines.
 
-  *Current assembly line*
+  * :guilabel:`Current assembly line`
+
     Color used to highlight the assembly code for the current line.
 
-  *Color highlighting*
+  * :guilabel:`Color highlighting`
     .. index:: color
 
     Color used for highlighting in the debugger console.
 
-  *Clickable item*
-    Indicates color to be used for the items that are click-able (e.g pointers).
+  * :guilabel:`Clickable item`
 
-  *Changed data*
-    Indicates color to be used to highlight fields in the data window that have
-    changed since the last update.
+    Color used for clickable items (e.g pointers).
 
-  *Memory color*
-    Color used by default in the memory view window.
+  * :guilabel:`Changed data`
 
-  *Memory highlighting*
+    Color used to highlight fields in the data window that have changed
+    since the last update.
+
+  * :guilabel:`Memory color`
+
+    Default color for the memory view window.
+
+  * :guilabel:`Memory highlighting`
+
     Color used for highlighted items in the memory view.
 
-  *Memory selection*
+  * :guilabel:`Memory selection`
+
     Color used for selected items in the memory view.
 
-  *Item name*
-    Indicates the font to be used for the name of the item in the data window.
+  * :guilabel:`Item name`
 
-  *Item type*
-    Indicates font to be used to display the type of the item in the data
-    window.
+    Font used for the name of each item in the data window.
 
-  *Max item width*
-    The maximum width an item can have.
+  * :guilabel:`Item type`
 
-  *Max item height*
-    The maximum height an item can have.
+    Font used to display the type of each item in the data window.
 
-* **External Commands**
+  * :guilabel:`Max item width`
+
+    Maximum width of an item.
+
+  * :guilabel:`Max item height`
+
+    Maximum height of an item.
+
+* :guilabel:`External Commands`
   .. index:: helper
   .. index:: external commands
 
-  *List processes*
-    Command used to list processes running on the machine.
+  These preferences specify the names of the commands that GPS uses to
+  perform various operations.
 
-  *Remote shell*
+  * :guilabel:`List processes`
+
+    List processes running on the machine.
+
+  * :guilabel:`Remote shell`
     .. index:: remote shell
 
-    Program used to run a process on a remote machine. You can specify
-    arguments, e.g. `rsh -l user`
+    Run a process on a remote machine. You can specify arguments, for
+    example, :command:`rsh -l user`.
 
-  *Remote copy*
+  * :guilabel:`Remote copy`
     .. index:: remote copy
 
-    Program used to copy a file from a remote machine. You can specify
-    arguments, e.g. `rcp -l user`
+    Copy a file from a remote machine. You can specify arguments, for
+    example :command:`rcp -l user`.
 
-  *Execute command*
+  * :guilabel:`Execute command`
     .. index:: execution
 
-    Program used to execute commands externally.
+    Execute commands externally.
 
-  *HTML Browser*
+  * :guilabel:`HTML Browser`
     .. index:: html
 
-    Only used under Unix, not relevant under Windows where the default HTML
-    browser is used.  Program used to execute view HTML files, for instance the
-    documentation.  Empty by default, which means that GPS will try to find a
-    suitable HTML browser automatically. Only change the value if GPS cannot
-    find a HTML browser, or if the browser found is not your preferred one.
+    View HTML files, for example the documentation.  Not relevant under
+    Windows, where the default HTML browser is used.  Not specified by
+    default, which means GPS tries to find a suitable HTML browser.  Only
+    change this value if GPS cannot find a HTML browser, or if the browser
+    found isn't the one you prefer.
 
-  *Print command*
+  * :guilabel:`Print command`
     .. index:: print
     .. index:: a2ps
     .. index:: PrintFile
     .. _Print_Command:
 
-    External program used to print files.
+    Print files.  This program is required under Unix systems to print, and
+    is set to :program:`a2ps` by default.  If :program:`a2ps` is not
+    installed on your system, download it from
+    `ftp://ftp.enst.fr/pub/unix/a2ps/ <ftp://ftp.enst.fr/pub/unix/a2ps/>`_.
+    You can also specify other programs such as :program:`lp`.
 
-    This program is required under Unix systems in order to print, and is set
-    to `a2ps` by default.  If `a2ps` is not installed on your system, you can
-    download it from `ftp://ftp.enst.fr/pub/unix/a2ps/
-    <ftp://ftp.enst.fr/pub/unix/a2ps/>`_, although other printing programs such
-    as `lp` can be specified instead.
+    On Windows, this program is optional and the preference is empty by
+    default since GPS provides built-in printing.  If you specify an
+    external tool, such as the :program:`PrintFile` freeware utility
+    available from `http://www.lerup.com/printfile/descr.html
+    <http://www.lerup.com/printfile/descr.html>`_, GPS uses that.
 
-    Under Windows systems, this program is optional and is empty by default,
-    since a built-in printing is provided. An external tool will be used if
-    specified, such as the PrintFile freeware utility available from
-    `http://www.lerup.com/printfile/descr.html
-    <http://www.lerup.com/printfile/descr.html>`_
-
-* **Search**
+* :guilabel:`Search`
   .. index:: search
 
-  *Confirmation for "Replace all"*
+  * :guilabel:`Confirmation for "Replace all"`
     .. index:: replace
 
     Enable or disable the confirmation popup for the replace all action.
 
-  *Close on Match*
+  * :guilabel:`Close on Match`
     .. index:: search
 
-    If this option is enabled, the search window will be closed when a match is
-    found.
+    If enabled, GPS closes the search window when a match is found.
 
-  *Select on Match*
+  * :guilabel:`Select on Match`
     .. index:: search
 
-    If this option is enabled, the focus will be given to the editor when a
-    match is found.
+    If enabled, the focus is be given to the editor when a match is found.
 
-  *Preserve Search Context*
+  * :guilabel:`Preserve Search Context`
     .. index:: search
 
-    If this option is enabled, the contents of the "Look in:" field will be
-    preserved between consecutive searches in files.
+    If enabled, the contents of the :guilabel:`Look in:` field is preserved
+    between consecutive file searches.
 
-* **Browsers**
+* :guilabel:`Browsers`
   .. index:: browsers
 
-  *General*
+  * :guilabel:`General`
 
-    *Selected item color*
+    * :guilabel:`Selected item color`
       .. index:: color
 
-      Color to use to draw the selected item.
+      Color of selected items.
 
-    *Background color*
+    * :guilabel:`Background color`
       .. index:: color
 
-      Color used to draw the background of the browsers.
+      Color of browser background.
 
-    *Hyper link color*
+    * :guilabel:`Hyper link color`
       .. index:: color
 
-      Color used to draw the hyper links in the items.
+      Color of hyperlinks between items.
 
-    *Selected link color*
+    * :guilabel:`Selected link color`
       .. index:: color
 
-      Color to use for links between selected items.
+      Color of links between selected items.
 
-    *Default link color*
+    * :guilabel:`Default link color`
       .. index:: color
 
-      Color used to draw the links between unselected items.
+      Color of links between non-selected items.
 
-    *Ancestor items color*
+    * :guilabel:`Ancestor items color`
       .. index:: color
 
-      Color to use for the background of the items linked to the selected item.
+      Color of background of items linked to selected items.
 
-    *Offspring items color*
+    * :guilabel:`Offspring items color`
       .. index:: color
 
-      Color to use for the background of the items linked from the selected
-      item.
+      Color of background of items linked from selected items.
 
-    *Vertical layout*
+    * :guilabel:`Vertical layout`
       .. index:: vertical layout
 
-      Whether the layout of the graph should be vertical (*True*) or
-      horizontal (*False*). This setting applies to most browsers (call graph
-      for instance), but does not apply to the entities browsers.
+      Whether the layout of the graph should be vertical or
+      horizontal.  This setting applies to most browsers (such as the
+      call graph), but doesn't apply to the entity browsers.
 
-    *Show elaboration cycles*
+    * :guilabel:`Show elaboration cycles`
       .. index:: show elaboration cycles
 
-      Whether GPS should display an elaboration graph after each compilation
-      showing an elaboration cycle.
+      Display a elaboration graph after each compilation showing an
+      elaboration cycle.
 
-* **VCS**
+* :guilabel:`VCS`
   .. index:: vcs
 
-  *Implicit status*
+  * :guilabel:`Implicit status`
     .. index:: Implicit status
 
-    Whether a status action can be launched as part of another action. For
-    example to get the revision numbers of new files after an update
-    command. If the network connection with the repository is slow
-    disabling this command can speed-up the VCS actions.
+    Whether GPS is allowed to launch a status action (such as getting
+    revision numbers) as part of another action (such as an update
+    command).  If the network connection with the repository is slow,
+    disabling this preference can speed up the VCS actions.
 
-  *Default VCS*
+  * :guilabel:`Default VCS`
     .. index:: Default VCS
 
-    The default VCS to use when the project does not define a VCS.
+    The default VCS.
 
-* **Visual diff**
+* :guilabel:`Visual diff`
   .. index:: visual diff
   .. index:: file comparison
 
-  Note that in order to perform visual comparison between files, GPS needs to
-  call external tool (not distributed with GPS) such as *diff* or *patch*.
-  These tools are usually found on most unix systems, and may not be available
-  by default on other OSes. Under Windows, you can download them from one of
-  the unix toolsets available, such as msys (`http://www.mingw.org
-  <http://www.mingw.org>`_) or cygwin (`http://www.cygwin.com
-  <http://www.cygwin.com>`_).
+  In order to perform visual comparison between files, GPS needs to
+  call external tools that aren't distributed with GPS such as
+  :program:`diff` or :program:`patch`.  These tools are usually found
+  on most Unix systems but may not be available by default on other
+  OSes. Under Windows, you can download them from one of the available
+  Unix toolsets, such as :program:`msys` (`http://www.mingw.org
+  <http://www.mingw.org>`_) and :program:`cygwin`
+  (`http://www.cygwin.com <http://www.cygwin.com>`_).
 
-  *mode*
+  * :guilabel:`mode`
     .. index:: diff
 
-    How GPS displays visual diffs between two files:
+    How GPS visually displays the difference between two files:
 
-    *Side_By_Side*
-      Editors are displayed side-by-side; new editors are created as needed
+    * :guilabel:`Side_By_Side`
 
-    *Unified*
-      No new editor is created, and changes are displayed directly in the
-      reference editor.
+      Editors are displayed side-by-side; new editors are created as needed.
 
-  *Diff command*
+    * :guilabel:`Unified`
+
+      No new editor is created; changes are displayed directly in the
+      existing editor.
+
+  * :guilabel:`Diff command`
     .. index:: -u
     .. index:: -c
 
-    Command used to compute differences between two files.  Arguments can also
-    be specified. The visual diff expects a standard diff output with no
-    context (that is, no `-c` nor `-u` switch).  Arguments of interest may
-    include (this will depend on the version of diff used):
+    Command used to compute differences between two files.  You can
+    also specify arguments. The visual diff support expects a standard
+    :program:`diff` output with no context (that is, no :command:`-c`
+    or :command:`-u` switches).  You may wish to include some of the
+    following switches depending on the version of :program:`diff` you
+    specify:
 
-    *-b*
-      Ignore changes in amount of white space.
+    * :command:`-b`
 
-    *-B*
-      Ignore changes that just insert or delete blank lines.
+      Ignore changes in the amount of white space.
 
-    *-i*
+    * :command:`-B`
+
+      Ignore changes that only insert or delete blank lines.
+
+    * :command:`-i`
+
       Ignore changes in case; consider upper and lower case letters equivalent.
 
-    *-w*
-      Ignore white space when comparing lines.
+    * :command:`-w`
 
-  *Patch command*
+      Ignore all white space when comparing lines.
+
+  * :guilabel:`Patch command`
     .. index:: patch
 
-    Command used to apply a patch. Arguments can also be specified.
-    This command is used internally by GPS to perform the visual comparison on
-    versioned files (e.g. when performing a comparison with a version control
-    system).
+    Command used to apply a patch.  You can also specify arguments.
+    GPS used this command internally to perform the visual comparison
+    on files in a VCS.  This command should be compatible with the GNU
+    :program:`patch` command.
 
-    This command should be compatible with the *GNU patch* utility.
-
-  *Use old diff*
+  * :guilabel:`Use old diff`
     .. index:: old diff
 
-    Use the old version of the visual comparison.
+    Use the old version of the visual comparison.  The remianing preferences
+    aren't displayed if this preference is enabled.
 
-  *Diff3 command*
+  * :guilabel:`Diff3 command`
     .. index:: diff3
 
-    This item is only displayed if the preference *Use old diff* is disabled.
-    Command used to query a 3-way diff. See *Diff command* for a description
-    of the parameters.
+    Command used to query a 3-way diff.  See :guilabel:`Diff command`
+    for a description of the parameters.
 
-  *Default color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to indicate lines on which there is a difference, in the
-    "reference" editor.
+  * :guilabel:`Default color`
+    
+    Color in the reference editor indicating lines on which there is a
+    difference.
 
-  *Old color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to indicate spaces used by lines not present in one of the
-    editors in a 3-way diff and present in the other editors.
+  * :guilabel:`Old color`
 
-  *Append color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to display the lines that are present in an editor but not
-    in the reference editor.
+    Color for space used by lines not present in one of the editors in
+    a 3-way diff.
 
-  *Remove color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to display the lines that are present in the reference editor
-    but not in other editors.
+  * :guilabel:`Append color`
 
-  *Change color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to display the lines that have changed between the reference
-    editor and the other editors.
+    Color indicating lines present in an editor but not in the reference
+    editor.
 
-  *Fine change color*
-    This item is only displayed if the preference *Use old diff* is disabled.
-    The color used to highlight fine differences within a modified line.
+  * :guilabel:`Remove color`
 
-  *Context length*
+    Color indicating lines present in the reference editor but not in
+    other editors.
+
+  * :guilabel:`Change color`
+
+    Color indicating lines changed between the reference editor and other
+    editors.
+
+  * :guilabel:`Fine change color`
+
+    Color indicating detailed differences within a modified line.
+
+  * :guilabel:`Context length`
     .. index:: context length
 
-    This item is only displayed if the preference *Use old diff* is enabled.
-    The number of lines displayed before and after each chunk of differences.
-    Specifying -1 will display the whole file.
+    Number of lines displayed before and after each chunk of differences.
+    Specifying -1 displays the whole file.
 
-* **Messages**
+* :guilabel:`Messages`
   .. index:: messages
 
-  *Color highlighting*
+  * :guilabel:`Color highlighting`
     .. index:: color
 
-    Color used to highlight text in the messages window.
+    Color of highlighted text in the :guilabel:`Messages` view.
 
-  *Errors highlighting*
+  * :guilabel:`Errors highlighting`
     .. index:: errors
 
-    Color used to highlight lines causing compilation errors, in the
-    source editors. When this color is set to white, the errors are
-    not highlighted. (:ref:`Compilation/Build`)
+    Color used in a source editor for lines that cause compilation errors.
+    If white, the errors aren't highlighted. (See :ref:`Compilation/Build`)
 
-  *Warnings highlighting*
+  * :guilabel:`Warnings highlighting`
     .. index:: errors
 
-    Color used to highlight lines causing compilation warnings, in the
-    source editors. When this color is set to white, the warnings are
-    not highlighted.
+    Color used in a source editor for lines that cause compilation
+    warnings.  If white, the warnings aren't highlighted. (See
+    :ref:`Compilation/Build`)
 
-  *Style errors highlighting*
+  * :guilabel:`Style errors highlighting`
     .. index:: style
 
-    Color used to highlight lines containing style errors, in the
-    source editors. When this color is set to white, the errors are
-    not highlighted.
+    Color used in a source editor for lines that cause style errors.  If
+    white, the style errors aren't highlighted. (See
+    :ref:`Compilation/Build`)
 
-  *Compiler info highlighting*
+  * :guilabel:`Compiler info highlighting`
     .. index:: style
 
-    Color used to highlight lines containing compiler information, in the
-    source editors. When this color is set to white, the information is
-    not highlighted.
+    Color used in a source editor to highlight lines containing compiler
+    information. If white, the information isn't highlighted.
 
-  *File pattern*
+  * :guilabel:`File pattern`
     .. index:: file pattern
     .. index:: location
 
-    Pattern used to detect file locations and the type of the output from the
-    messages window.  This is particularly useful when using an external tool
-    such as a compiler or a search tool, so that GPS will highlight and allow
-    navigation through source locations. This is a standard system V regular
-    expression containing from two to five parenthesized subexpressions
-    corresponding to the file, line, column, warnings or style error patterns.
+    Pattern used to parse file locations and message type from lines output
+    to the :guilabel:`Messages` view.  This is particularly useful when
+    using an external tool such as a compiler or a search tool so GPS
+    highlights and allows navigation through source locations.  The pattern
+    is a standard System V regular expression containing from two to five
+    parenthesized subexpressions corresponding to the file, line, column,
+    warnings or style error patterns.
 
-  *File index*
+  * :guilabel:`File index`
     .. index:: file index
 
-    Index of filename in the file pattern.
+    Index of the filename in the expressions in the :guilabel:`File pattern`.
 
-  *Line index*
+  * :guilabel:`Line index`
     .. index:: line index
 
-    Index of the line number in the file pattern.
+    Index of the line number in the expressions in the :guilabel:`File
+    pattern`.
 
-  *Column index*
+  * :guilabel:`Column index`
     .. index:: column index
 
-    Index of the column number in the file pattern.
+    Index of the column number in the expressions in the :guilabel:`File
+    pattern`.
 
-  *Warning index*
+  * :guilabel:`Warning index`
     .. index:: warning index
 
-    Index of the warning identifier in the file pattern.
+    Index of the warning identifier in the expressions in the
+    :guilabel:`File pattern`.
 
-  *Style index*
-    .. index:: column index
+  * :guilabel:`Style index`
+    .. index:: style index
 
-    Index of the style error identifier in the file pattern.
+    Index of the style error identifier in the expressions in the
+    :guilabel:`File pattern`.
 
-  *Info index*
-    .. index:: column index
+  * :guilabel:`Info index`
+    .. index:: info index
 
-    Index of the compiler info identifier in the file pattern.
+    Index of the compiler info identifier in the expressions in the
+    :guilabel:`File pattern`.
 
-  *Secondary File pattern*
+  * :guilabel:`Secondary File pattern`
     .. index:: file pattern
     .. index:: location
 
-    Pattern used to detect additional file locations from the messages window.
-    This is a standard system V regular expression containing from two to three
-    parenthesized subexpressions corresponding to the file, line, and column
-    patterns.
+    Pattern used to parse additional file locations from lines in the
+    :guilabel:`Messages` view.  This is a standard System V regular
+    expression containing two or three parenthesized subexpressions
+    corresponding to the file, line, and column patterns.
 
-  *Secondary File index*
+  * :guilabel:`Secondary File index`
     .. index:: file index
 
-    Index of filename in the file pattern.
+    Index of the filename in the expressions in the :guilabel:`Secondary File
+    pattern`.
 
-  *Secondary Line index*
+  * :guilabel:`Secondary Line index`
     .. index:: line index
 
-    Index of the line number in the file pattern.
+    Index of the line number in the expressions in the :guilabel:`Secondary
+    File pattern`.
 
-  *Secondary Column index*
+  * :guilabel:`Secondary Column index`
     .. index:: column index
 
-    Index of the column number in the file pattern.
+    Index of the column number in the expressions in the
+    :guilabel:`Secondary File pattern`.  Index of the column number in the
+    file pattern.
 
-  *Alternate Secondary File pattern*
+  * :guilabel:`Alternate Secondary File pattern`
     .. index:: location
 
-    Pattern used to detect additional file locations in alternate form from the
-    messages window.  This is a standard system V regular expression containing
-    one parenthesized subexpressions corresponding to the line patterns.
+    Pattern used to parse additional file locations in alternate form from
+    lines in the :guilabel:`Messages` view.  This is a standard System V
+    regular expression containing one parenthesized subexpression.
 
-  *Alternate Secondary Line index*
+  * :guilabel:`Alternate Secondary Line index`
     .. index:: line index
 
-    Index of the line number in the file pattern.
+    Index of the line number in the expressions in the :guilabel:`Alternate
+    Secondary File pattern`.
 
-* **Project**
+* :guilabel:`Project`
 
-  *Relative project paths*
+  * :guilabel:`Relative project paths`
     .. index:: relative project path
 
-    Whether paths should be absolute or relative when the projects are modified.
+    Whether paths should be absolute or relative when GPS modifies a
+    project file.
 
-  *Fast Project Loading*
+  * :guilabel:`Fast Project Loading`
     .. index:: fast project loading
 
-    If the project respects a number of restrictions, activating the preference
-    will provide major speed up when GPS parses the project. This is especially
+    If the project contains a number of restrictions, this preference
+    provides major speed up when GPS parses the project. This is especially
     noticeable if the source files are on a network drive.
 
-    GPS assumes that the following restricitions are true when the preference
-    is activated. If this isn't the case, no error is reported, and only minor
-    drawacks will be visible in GPS (no detection that two files are the same
-    if one of them is a symbolic link for instance, although GPS will still
-    warn you if you are trying to overwrite a file modified on the disk).
+    GPS assumes the following restrictions are true when this preference is
+    enabled. If any are false, no error is reported and there be only minor
+    effects in GPS.  For example, if won't be able to detect that two files
+    are the same if one of them is a symbolic link, although GPS stills
+    warns if you're trying to overwrite a file modified on the disk.
 
     The restrictions are the following:
 
-    *Symbolic links shouldn't be used in the project.*
+    * Symbolic links shouldn't be used in the project.
+
       More precisely, you can only have symbolic links that point to files
       outside of the project, but not to another file in the project
 
-    *Directories can't have source names.*
-      No directory name should match the naming scheme defined in the
-      project. For instance, if you are using the default GNAT naming scheme,
-      you cannot have directories with names ending with ".ads" or ".adb"
+    * Directories can't have source names.
 
-  *Hidden directories pattern*
+      No directory name should match the naming scheme defined in the
+      project. For example, if you're using the default GNAT naming scheme,
+      you can't have directories with names ending in :file:`.ads` or
+      :file:`.adb`.
+
+  * :guilabel:`Hidden directories pattern`
     .. index:: hidden directories pattern
 
-    A regular expression used to match hidden directories. Such directories
-    are not displayed by default in the project view, and are not taken into
-    account for VCS operations working on directories.
+    A regular expression used to match hidden directories which aren't
+    displayed by default in the project view, nor taken into account by VCS
+    operations on directories.
 
-* **Documentation**
+* :guilabel:`Documentation`
   .. _Documention_Preferences:
 
-  This section specifies preferences that apply to the
-  *Documentation Generator*. :ref:`Documentation_Generation` for more
-  information.
+  This section specifies preferences that apply to the documentation
+  generator. See :ref:`Documentation_Generation` for more information.
 
-  *Process body files*
-    If this preference is enabled, implementation files will be processed.
-    Otherwise, only the specification files will.
+  * :guilabel:`Process body files`
 
-  *Show private entities*
+    Body (implementation) files are processed.  Otherwise, only the
+    specification files are processed.
+
+  * :guilabel:`Show private entities`
+
     By default, no documentation is generated for private entities.
-    Enabling this preference will change this behavior.
+    Enabling this preference produces that documentation.
 
-  *Call graph*
-    If enabled, the documentation tool will compute and take advantage of source
-    references to e.g generate call graph information.
-    Activating this option will slow down the documentation generation process.
+  * :guilabel:`Call graph`
 
-  *Up-to-date files only*
-    If enabled, only files having up-to-date cross references information will
-    be documented.
+    The documentation computes and take advantages of source references to
+    generate call graph information.  Activating this option slows down the
+    documentation generation process.
 
-  *Comments filter regexp*
-    A regular expression used to filter to comments found in the source code
-    before using them for generating documentation. For example "^!.*" will
-    remove all comments starting with '!'.
+  * :guilabel:`Up-to-date files only`
 
-  *Spawn a browser*
-    If enabled, a browser is spawned after each documentation generation to view
-    the generated files. This browser is not spawned if disabled.
+    Only files having up-to-date cross references information are
+    documented.
 
-  *Find xrefs in comments*
-    If enabled, GPS will try to find references to entities in comments, and
-    generate links to them when generating the documentation.
+  * :guilabel:`Comments filter regexp`
 
-* **Coverage Analysis**
+    A regular expression used to filter to comments found in the source
+    code before using them for documentation. For example "^!.*" ignores
+    all comments starting with '!'.
+
+  * :guilabel:`Spawn a browser`
+
+    A browser is spawned after documentation is generated to view the
+    generated files.
+
+  * :guilabel:`Find xrefs in comments`
+
+    Try to find references to entities in comments and generate links to
+    them when generating the documentation.
+
+* :guilabel:`Coverage Analysis`
   .. _Coverage_Analysis_Preferences:
 
-  *Coverage toolchain*
-    Select which coverage toolchain (`gcov` or `xcov`) to use from
-    the `Tools->Coverage` menu.
+  * :guilabel:`Coverage toolchain`
+
+    Select which coverage toolchain (:program:`gcov` or :program:`xcov`) to
+    use from the :menuselection:`Tools --> Coverage` menu.
 
 .. _GPS_Themes:
 
