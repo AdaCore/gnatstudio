@@ -302,12 +302,12 @@ package body GNATdoc.Backend.Simple is
             Append_Line (Printout, ".. code-block:: ada");
             Append_Line (Printout, "");
             Append_Line (Printout,
-                         To_String (Append_Tab (Get_Full_View_Src (E))));
+                         To_String (Append_Tab (Get_Src (Get_Full_View (E)))));
             Append_Line (Printout, "");
 
             declare
                Comment_Str : constant String :=
-                 To_String (To_ReST (Get_Full_View_Comment (E)));
+                 To_String (To_ReST (Get_Comment (Get_Full_View (E))));
             begin
                if Comment_Str /= "" then
                   Append_Line (Printout, "");
@@ -556,12 +556,12 @@ package body GNATdoc.Backend.Simple is
             Append_Line (Printout, ".. code-block:: ada");
             Append_Line (Printout, "");
             Append_Line (Printout,
-                         To_String (Append_Tab (Get_Full_View_Src (E))));
+                         To_String (Append_Tab (Get_Src (Get_Full_View (E)))));
             Append_Line (Printout, "");
 
             declare
                Comment_Str : constant String :=
-                 To_String (To_ReST (Get_Full_View_Comment (E)));
+                 To_String (To_ReST (Get_Comment (Get_Full_View (E))));
             begin
                if Comment_Str /= "" then
                   Append_Line (Printout, "");

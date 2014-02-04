@@ -70,6 +70,10 @@ package body GNATdoc.Atree is
      (E : Entity_Id) return General_Location;
    pragma Inline (LL_Get_First_Private_Entity_Loc);
 
+   function LL_Get_Full_Name
+     (E : Entity_Id) return String;
+   pragma Inline (LL_Get_Full_Name);
+
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
 
@@ -758,9 +762,9 @@ package body GNATdoc.Atree is
 
       if No (LL.Get_Scope (E))
         and then Is_Subprogram (E)
-        and then Is_Expanded_Name (LL.Get_Full_Name (E))
+        and then Is_Expanded_Name (LL_Get_Full_Name (E))
       then
-         return LL.Get_Full_Name (E);
+         return LL_Get_Full_Name (E);
       end if;
 
       Set_Unbounded_String (Full_Name, Get_Short_Name (E));
@@ -801,35 +805,6 @@ package body GNATdoc.Atree is
    begin
       return E.Full_View;
    end Get_Full_View;
-
-   ---------------------------
-   -- Get_Full_View_Comment --
-   ---------------------------
-
-   function Get_Full_View_Comment (E : Entity_Id) return Structured_Comment is
-   begin
-      return E.Full_View_Comment;
-   end Get_Full_View_Comment;
-
-   -----------------------
-   -- Get_Full_View_Doc --
-   -----------------------
-
-   function Get_Full_View_Doc (E : Entity_Id) return Comment_Result is
-   begin
-      pragma Assert (Is_Partial_View (E));
-      return Get_Doc (Get_Full_View (E));
-   end Get_Full_View_Doc;
-
-   -----------------------
-   -- Get_Full_View_Src --
-   -----------------------
-
-   function Get_Full_View_Src (E : Entity_Id) return Unbounded_String is
-   begin
-      pragma Assert (Is_Partial_View (E));
-      return Get_Src (Get_Full_View (E));
-   end Get_Full_View_Src;
 
    -----------------------------
    -- Get_Generic_Formals_Loc --
@@ -1590,11 +1565,7 @@ package body GNATdoc.Atree is
            Full_View         => No_Entity,
            Partial_View      => No_Entity,
 
-           Full_View_Doc     => No_Comment_Result,
-           Full_View_Comment => No_Structured_Comment,
-
            Src               => Null_Unbounded_String,
-           Full_View_Src     => Null_Unbounded_String,
 
            Entities           => <>,
            Generic_Formals    => <>,
@@ -1971,6 +1942,15 @@ package body GNATdoc.Atree is
       return E.Xref.First_Private_Entity_Loc;
    end LL_Get_First_Private_Entity_Loc;
 
+   ----------------------
+   -- LL_Get_Full_Name --
+   ----------------------
+
+   function LL_Get_Full_Name (E : Entity_Id) return String is
+   begin
+      return Get (E.Full_Name).all;
+   end LL_Get_Full_Name;
+
    -------------------
    -- LL_Is_Generic --
    -------------------
@@ -2261,34 +2241,6 @@ package body GNATdoc.Atree is
    begin
       E.Full_View := Value;
    end Set_Full_View;
-
-   ---------------------------
-   -- Set_Full_View_Comment --
-   ---------------------------
-
-   procedure Set_Full_View_Comment
-     (E : Entity_Id; Value : Structured_Comment) is
-   begin
-      E.Full_View_Comment := Value;
-   end Set_Full_View_Comment;
-
-   -----------------------
-   -- Set_Full_View_Doc --
-   -----------------------
-
-   procedure Set_Full_View_Doc (E : Entity_Id; Value : Comment_Result) is
-   begin
-      pragma Assert (Is_Partial_View (E));
-      Set_Doc (Get_Full_View (E), Value);
-   end Set_Full_View_Doc;
-
-   procedure Set_Full_View_Src (E : Entity_Id; Value : Unbounded_String) is
-   begin
-      pragma Assert (False); --  Deprecated
-
-      pragma Assert (E.Full_View_Src = Null_Unbounded_String);
-      E.Full_View_Src := Value;
-   end Set_Full_View_Src;
 
    -----------------------------
    -- Set_Generic_Formals_Loc --
@@ -2690,11 +2642,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Entity;
       end Get_Entity;
-
-      function Get_Full_Name (E : Entity_Id) return String is
-      begin
-         return Get (E.Full_Name).all;
-      end Get_Full_Name;
 
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity is
@@ -3660,17 +3607,10 @@ package body GNATdoc.Atree is
       end if;
 
       if With_Src then
-         if E.Full_View_Src = Null_Unbounded_String then
-            if Get_Src (E) /= Null_Unbounded_String then
-               Append_Line ("Src:");
-               Append_Line (To_String (Get_Src (E)));
-            end if;
-         else
-            Append_Line ("Partial View Src:");
-            Append_Line (To_String (Get_Src (E)));
-            Append_Line ("Full View Src:");
-            Append_Line (To_String (Get_Full_View_Src (E)));
-         end if;
+         Append_Line ("Partial View Src:");
+         Append_Line (To_String (Get_Src (E)));
+         Append_Line ("Full View Src:");
+         Append_Line (To_String (Get_Src (Get_Full_View (E))));
       end if;
 
       if With_Doc then
@@ -3715,27 +3655,6 @@ package body GNATdoc.Atree is
             Append_Line_Without_Prefix
               (Ada.Strings.Unbounded.To_String
                  (To_Unbounded_String (Get_Comment (E), Prefix => Prefix)));
-         end if;
-
-         if Is_Partial_View (E) then
-            if E.Full_View_Doc /= No_Comment_Result then
-               Append_Line
-                 ("Full_View.Doc.Line:" & E.Full_View_Doc.Start_Line'Img);
-               Append_Line
-                 ("Full_View.Doc.Text: " & To_String (E.Full_View_Doc.Text));
-            end if;
-
-            if E.Full_View_Comment /= No_Structured_Comment then
-               Append_Line ("Full_View.Structured Comment:");
-
-               --  Append the comment avoiding the duplicate addition of the
-               --  prefix to the output
-
-               Append_Line_Without_Prefix
-                 (Ada.Strings.Unbounded.To_String
-                    (To_Unbounded_String
-                       (Get_Full_View_Comment (E), Prefix => Prefix)));
-            end if;
          end if;
       end if;
 

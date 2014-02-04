@@ -154,7 +154,7 @@ package body GNATdoc.Treepr is
 
          if not Context.Options.Show_Private
            or else not (Is_Partial_View (Entity))
-           or else Get_Full_View_Src (Entity) = Null_Unbounded_String
+           or else Get_Src (Get_Full_View (Entity)) = Null_Unbounded_String
          then
             if Get_Src (Entity) /= Null_Unbounded_String then
                Append_Line ("--- Src:");
@@ -164,7 +164,7 @@ package body GNATdoc.Treepr is
             Append_Line ("--- Partial View Src:");
             Append_Line (To_String (Get_Src (Entity)));
             Append_Line ("--- Full View Src:");
-            Append_Line (To_String (Get_Full_View_Src (Entity)));
+            Append_Line (To_String (Get_Src (Get_Full_View (Entity))));
          end if;
 
          if Get_Doc (Entity) /= No_Comment_Result then
@@ -188,16 +188,19 @@ package body GNATdoc.Treepr is
          end if;
 
          if Is_Partial_View (Entity) then
-            if Get_Full_View_Doc (Entity) /= No_Comment_Result then
+            if Get_Doc (Get_Full_View (Entity)) /= No_Comment_Result then
                Append_Line
                  ("--- Full_View.Doc.Line:"
-                  & Get_Full_View_Doc (Entity).Start_Line'Img);
+                  & Get_Doc (Get_Full_View (Entity)).Start_Line'Img);
                Append_Line
                  ("--- Full_View.Doc.Text: "
-                  & To_String (Get_Full_View_Doc (Entity).Text));
+                  & To_String (Get_Doc (Get_Full_View (Entity)).Text));
             end if;
 
-            if Get_Full_View_Comment (Entity) /= No_Structured_Comment then
+            if Context.Options.Show_Private
+              and then Get_Comment (Get_Full_View (Entity))
+                         /= No_Structured_Comment
+            then
                Append_Line ("--- Full_View.Structured Comment:");
 
                --  Append the comment avoiding the duplicate addition of the
@@ -206,7 +209,7 @@ package body GNATdoc.Treepr is
                Append_Line
                  (Ada.Strings.Unbounded.To_String
                     (To_Unbounded_String
-                       (Get_Full_View_Comment (Entity), Prefix => "")));
+                       (Get_Comment (Get_Full_View (Entity)), Prefix => "")));
             end if;
          end if;
 

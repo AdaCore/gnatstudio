@@ -360,12 +360,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return String;
    function Get_Full_View
      (E : Entity_Id) return Entity_Id;
-   function Get_Full_View_Comment
-     (E : Entity_Id) return Structured_Comment;
-   function Get_Full_View_Doc
-     (E : Entity_Id) return Comment_Result;
-   function Get_Full_View_Src
-     (E : Entity_Id) return Unbounded_String;
 
    function Get_Generic_Formals_Loc
      (E : Entity_Id) return General_Location;
@@ -550,12 +544,6 @@ private package GNATdoc.Atree is
 
    procedure Set_Full_View
      (E : Entity_Id; Value : Entity_Id);
-   procedure Set_Full_View_Comment
-     (E : Entity_Id; Value : Structured_Comment);
-   procedure Set_Full_View_Doc
-     (E : Entity_Id; Value : Comment_Result);
-   procedure Set_Full_View_Src
-     (E : Entity_Id; Value : Unbounded_String);
 
    procedure Set_Generic_Formals_Loc
      (E : Entity_Id; Value : General_Location);
@@ -662,8 +650,6 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return General_Entity;
-      function Get_Full_Name
-        (E : Entity_Id) return String;
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity;
       function Get_Kind
@@ -940,6 +926,7 @@ private
          Doc_After         : Comment_Result;
          Doc_Before        : Comment_Result;
          Is_Doc_From_Body  : Boolean;
+         Src               : Unbounded_String;
          Comment           : aliased Structured_Comment;
          --  Doc is a temporary buffer used to store the block of comments
          --  retrieved from the source file. After processed, it is cleaned and
@@ -949,16 +936,7 @@ private
          Full_View         : Entity_Id;
          Partial_View      : Entity_Id;
 
-         Full_View_Doc     : Comment_Result;
-         Full_View_Comment : aliased Structured_Comment;
-         --  Same as before but applicable to the documentation and structured
-         --  comment associated with the full-view.
-
-         Src             : Unbounded_String;
-         Full_View_Src   : Unbounded_String;
-         --  Source code associated with this entity (and its full-view)
-
-         Entities        : aliased EInfo_List.Vector;
+         Entities          : aliased EInfo_List.Vector;
          --  Entities defined in the scope of this entity. For example, all
          --  the entities defined in the scope of a package, all the components
          --  of a record, etc.
@@ -999,9 +977,6 @@ private
    pragma Inline (Get_Error_Msg);
    pragma Inline (Get_Full_Name);
    pragma Inline (Get_Full_View);
-   pragma Inline (Get_Full_View_Comment);
-   pragma Inline (Get_Full_View_Doc);
-   pragma Inline (Get_Full_View_Src);
    pragma Inline (Get_Generic_Formals_Loc);
    pragma Inline (Get_Generic_Formals);
    pragma Inline (Get_Inherited_Methods);
@@ -1063,9 +1038,6 @@ private
    pragma Inline (Set_End_Of_Syntax_Scope_Loc);
    pragma Inline (Set_Error_Msg);
    pragma Inline (Set_Full_View);
-   pragma Inline (Set_Full_View_Comment);
-   pragma Inline (Set_Full_View_Doc);
-   pragma Inline (Set_Full_View_Src);
    pragma Inline (Set_Generic_Formals_Loc);
    pragma Inline (Set_Has_Incomplete_Decoration);
    pragma Inline (Set_Has_Private_Parent);

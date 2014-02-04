@@ -4456,23 +4456,20 @@ package body GNATdoc.Frontend is
       procedure Parse_Doc_Wrapper
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False);
+         S            : String);
       --  Perform a fast analysis of S and invoke Parse_Doc or Parse_XML_Doc
 
       procedure Parse_Doc
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False);
+         S            : String);
       --  Parse the contents of S and store its contents in the structured
       --  comment of E (ie. E.Comment)
 
       procedure Parse_XML_Doc
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False);
+         S            : String);
       --  Parse the contents of S and store its contents in the structured
       --  comment of E (ie. E.Comment)
 
@@ -4525,25 +4522,24 @@ package body GNATdoc.Frontend is
       -----------------------
 
       procedure Parse_Doc_Wrapper
-        (Context      : access constant Docgen_Context;
-         E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False)
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         S       : String)
       is
          Matches : Match_Array (0 .. 3);
 
       begin
          if Index (S, "@") > 0 then
-            Parse_Doc (Context, E, S, Is_Full_View);
+            Parse_Doc (Context, E, S);
             return;
          end if;
 
          Match (XML_Regpat, S, Matches);
 
          if Matches (0) /= No_Match then
-            Parse_XML_Doc (Context, E, S, Is_Full_View);
+            Parse_XML_Doc (Context, E, S);
          else
-            Parse_Doc (Context, E, S, Is_Full_View);
+            Parse_Doc (Context, E, S);
          end if;
       end Parse_Doc_Wrapper;
 
@@ -4552,14 +4548,11 @@ package body GNATdoc.Frontend is
       ---------------
 
       procedure Parse_Doc
-        (Context      : access constant Docgen_Context;
-         E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False)
+        (Context : access constant Docgen_Context;
+         E       : Entity_Id;
+         S       : String)
       is
-         Comment : constant Structured_Comment :=
-                    (if Is_Full_View then Get_Full_View_Comment (E)
-                                     else Get_Comment (E));
+         Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
          procedure Parse (S : String);
@@ -4847,14 +4840,7 @@ package body GNATdoc.Frontend is
          end if;
 
          Parse (S);
-
-         if Is_Full_View then
-            if Context.Options.Show_Private then
-               Set_Full_View_Comment (E, Comment);
-            end if;
-         else
-            Set_Comment (E, Comment);
-         end if;
+         Set_Comment (E, Comment);
       end Parse_Doc;
 
       -------------------------------
@@ -4929,12 +4915,11 @@ package body GNATdoc.Frontend is
       procedure Parse_XML_Doc
         (Context      : access constant Docgen_Context;
          E            : Entity_Id;
-         S            : String;
-         Is_Full_View : Boolean := False)
+         S            : String)
       is
-         Comment : constant Structured_Comment :=
-                    (if Is_Full_View then Get_Full_View_Comment (E)
-                                     else Get_Comment (E));
+         pragma Unreferenced (Context);
+
+         Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
          procedure Parse (S : String);
@@ -5093,13 +5078,7 @@ package body GNATdoc.Frontend is
 
          --  Check unclosed XML tags: not implemented yet???
 
-         if Is_Full_View then
-            if Context.Options.Show_Private then
-               Set_Full_View_Comment (E, Comment);
-            end if;
-         else
-            Set_Comment (E, Comment);
-         end if;
+         Set_Comment (E, Comment);
       end Parse_XML_Doc;
 
       ------------------
@@ -5117,6 +5096,12 @@ package body GNATdoc.Frontend is
             return Skip;
          end if;
 
+         if In_Private_Part (Entity)
+           and then not Context.Options.Show_Private
+         then
+            return Skip;
+         end if;
+
          if Is_Subprogram_Or_Entry (Entity) then
             Parse_Subprogram_Comments (Entity);
             return Skip;
@@ -5126,18 +5111,6 @@ package body GNATdoc.Frontend is
             Parse_Doc_Wrapper
               (Context, Entity, To_String (Get_Doc (Entity).Text));
             Set_Doc (Entity, No_Comment_Result);
-
-            if Is_Partial_View (Entity)
-              and then Context.Options.Show_Private
-            then
-               Set_Full_View_Comment (Entity, New_Structured_Comment);
-               Parse_Doc_Wrapper
-                 (Context      => Context,
-                  E            => Entity,
-                  S            => To_String (Get_Full_View_Doc (Entity).Text),
-                  Is_Full_View => True);
-               Set_Full_View_Doc (Entity, No_Comment_Result);
-            end if;
          end if;
 
          return OK;
