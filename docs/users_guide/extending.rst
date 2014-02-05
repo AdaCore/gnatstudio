@@ -1384,67 +1384,67 @@ GPS Themes
 
 .. index:: themes
 
-GPS provides an extensive support for themes. Themes are predefined set of
-value for the preferences, for the key bindings, or any other configurable
-aspect of GPS.
+GPS include extensive support for themes, which are predefined sets of
+values for preferences, key bindings, and other configurable aspects of
+GPS.
 
-For instance, color themes are a convenient way to change all colors in GPS at
-once, according to predefined choices (strongly contrasted colors,
-monochrome,...). It is also possible to have key themes, defining a set of key
-bindings to emulate e.g. other editors.
+For example, color themes are a convenient way to change all colors in GPS
+simultaneously to predefined choices such as strongly contrasted colors or
+monochrome.  Yuo can also have key themes, defining a set of key bindings,
+for example to emulate other editors.
 
-Any number of themes can be activated at the same time through the preferences
-dialog (`Edit->Preferences`). This dialog contains a list of all themes that
-GPS knows about, organized into categories for convenient handling. Just click
-on the buttons on the left of each theme name to activate that theme.
+You can activate any number of themes simultaneously via the preferences
+dialog (:menuselection:`Edit --> Preferences`), which contains a list of
+all themes supported by GPS, organized into categories.  Click on the
+buttons on the left of each theme name to activate that theme.  This
+immediately changes the current preferences settings. For example, if the
+theme you selected changes the colors in the editor, these are changed
+immediately in the :menuselection:`Editor --> Fonts & Colors` menu.  Press
+:guilabel:`Cancel` to return to your previous settings
 
-Note that this will immediately change the current preferences settings. For
-instance, if the theme you just selected changes the colors in the editor,
-these are changed immediately in the `Editor->Fonts & Colors`. You can of
-course still press `Cancel` to keep your previous settings
-
-If multiple themes are active at the same time and try to override the same
-preferences, the last theme which is loaded by GPS will override all previously
-loaded themes. However, there is no predefined order in which the themes are
-loaded.
+If multiple themes are active and try to set the same preference, the last
+theme loaded by GPS overrides all previously loaded themes. However, there
+is no predefined order in which the themes are loaded, so you shouldn't
+depend on this behavior.
 
 .. _The_Key_Manager_Dialog:
 
 The Key Manager Dialog
 ======================
 
-The key manager is accessible through the menu `Edit->Key Shortcuts`.  This
-dialog provides an easy way to associate key shortcuts with actions.  These
-actions are either predefined in GPS, or defined in your own customization
-files, as documented in :ref:`Customizing_through_XML_and_Python_files`.  It
-also provides an easy way to redefine the menu shortcuts.
+Access the key manager dialog through the :menuselection:`Edit --> Key
+Shortcuts` menu.  This dialog provides an easy way to associate key
+shortcuts with actions.  Actions are either predefined in GPS or defined in
+your own customization files, as documented in
+:ref:`Customizing_through_XML_and_Python_files`.  It also provides an easy
+way to redefine menu shortcuts.
 
 .. index:: screen shot
 .. image:: key-shortcuts.jpg
 
-Actions are referenced by their name, and are grouped into categories. These
-categories indicate when the action applies. For instance, the indentation
-command only applies in source editors, whereas the command to change the
-current window applies anywhere in GPS.  The categories can be explicitly
-specified when you created your own actions through XML files
-(:ref:`Defining_Actions`).
+Actions are referenced by their name and grouped into categories indicating
+when the action applies. For example, the indentation command applies only
+in source editors while the command to change the current window applies
+anywhere in GPS.  Specify the category when you create your own actions
+through XML files (see :ref:`Defining_Actions`).
 
-Through the key manager, you can define key bindings similar to what Emacs uses
-(:kbd:`control-x` followed by :kbd:`control-k` for instance). To register such
-key bindings, you need to press the `Grab` button as usual, and then type the
-shortcut. The recording of the key binding will stop a short while after the
-last key stroke.
+As an example, you can use the key manager to define key bindings similar
+to what Emacs uses (such as :kbd:`control-x` followed by
+:kbd:`control-k`). To register such key bindings, press the
+:guilabel:`Grab` button and type the shortcut.  Recording of the key
+binding stops shortly after you pressed the last key.
 
-If you define complex shortcuts for menus, they will not appear next to the
-menu name when you select it with the mouse. This is expected, and is due to
-technical limitations in the graphical toolkit that GPS uses.
+If you define complex shortcuts for menus, they won't appear next to the
+menu name when you select it with the mouse due to technical limitations in
+the graphical toolkit that GPS uses.
 
-When you assign a new shortcut to an action, the following happens:
+Assigning a new shortcut to an action causes the following:
 
-* All actions and menus currently associated with the same key will no
-  longer be executed when the key is pressed.
-* All key shortcuts defined for this action are replaced by the new one.
-  As a result, the action is only executable through this new shortcut.
+* All actions and menus currently associated with key aree no longer be
+  executed when the key is pressed.
+
+* All key shortcuts defined for this action are replaced by the new one;
+  the action is only executable through this new shortcut.
 
 .. _The_Plug-ins_Editor:
 
@@ -1453,80 +1453,75 @@ The Plug-ins Editor
 
 .. index:: plug-ins
 
-GPS can be extensively customized through external plug-ins. You can write your
-own plug-ins (:ref:`Customization_files_and_plugins`), but GPS also comes with
-its own collection of plug-ins.
+You can extensively customize GPS through external plug-ins, either ones
+you write (see :ref:`Customization_files_and_plugins`) or using one of the
+plug-ins in GPS's own collection.
 
-Some of them are loaded by default when GPS starts (for instance the support
-for the CVS version management system or support for highlighting in various
-programming languages); others are available for any user but not loaded
-automatically by GPS, for instance an Emacs emulation mode.
+Some plug-ins are loaded by default when GPS starts (such as support for
+the CVS version management system and support for highlighting in various
+programming languages) and others are available but not loaded
+automatically, such as Emacs emulation mode.
 
-Among the plug-ins that are provided with GPS, you will find:
+Some plug-ins provided with GPS are:
 
-* Emacs emulation
+* :program:`Emacs` emulation
   .. index:: Emacs
 
-  Several plug-ins emulate some of the functions provided by Emacs, such as the
-  interactive search, manipulation of rectangles, navigation in the editor, and
-  of course the usual Emacs key shortcuts
+  Several plug-ins emulate many functions provided by :program:`Emacs`,
+  such as the interactive search, manipulation of rectangles, navigation,
+  and the usual :program:`Emacs` key shortcuts
 
   This emacs mode used to be activated in the preferences dialog, on the Themes
   page, but you should now activate it by loading the :file:`emacs.xml`
   plug-in.
 
-* Makefile support
+* :file:`Makefile` support
   .. index:: Makefile
 
-  A plug-in is provided that parses a Makefile and creates menus for each of
-  its possible targets, so that you can easily start a make command.
+  A plug-in that parses a :file:`Makefile` and creates menus for each of
+  its targets so you can easily start a :command:`make` command.
 
 * Cross-references enhancements
 
-  Various plug-ins take advantage of GPS's cross-references information to
-  create additional menus to navigate (for instance to jump to the primitive
-  operations of Ada tagged types, to the body of Ada separate entities, ...)
+  Plug-ins take advantage of GPS's cross-references information to create
+  additional menus for navigation such as jumping to the primitive
+  operations of Ada tagged types and to the body of Ada separate entities.
 
 * Text manipulation
 
   Several plug-ins provide support for advanced text manipulation in the
-  editors, for instance to be able to align a set of lines based on various
-  criteria, or to manipulate a rectangular selection of text.
+  editors, for example to align a set of lines based on various criteria
+  or to manipulate a rectangular selection of text.
 
-You can choose graphically which plug-ins should or should not be loaded on
-startup. To do so, select the menu `/Tools/Plug-ins`.  This brings up a new
-window, containing two parts:
+To choose graphically which plug-ins should be loaded on startup, select
+the :menuselection:`Tools --> Plug-ins` menu.  This brings up a new window,
+containing two parts:
 
-* On the left is the list of all known plug-ins.
+* A list of all known plug-ins on the left.
 
-  As described in :ref:`Customization_files_and_plugins`, GPS will search for
-  candidates in various directories, and based on these directories decide
-  whether to automatically load the plug-in or not.
+  This list indicates the name of the plug-in, and whether it's loaded in
+  this GPS session (when the toggle button is checked).
 
-  This list indicates the name of the plug-in, and whether it has been loaded
-  in this GPS session (when the toggle button is checked).
+  As described in :ref:`Customization_files_and_plugins`, GPS searches for
+  plug-ins in various directories and, based on these directories, decides
+  whether to automatically load the plug-in on startup.
 
-* On the right are the details for the selected plug-in.
+* Details for the selected plug-in on the right.
 
-  This window is displayed as a notebook with two pages: on the first one you
-  will see the exact location of the plug-in, the reason why it was loaded or
-  not, and, more importantly, the source of the plug-in.  By convention, each
-  plug-in starts with a general comment that indicates the purpose of this
-  plug-in, and some more detailed documentation on its usage.
+  This window is a notebook with two pages: the first contains the exact
+  location of the plug-in, the reason it was either loaded or not loaded,
+  and the source of the plug-in.  By convention, each plug-in starts with
+  a comment indicating the purpose of this plug-in and more detailed
+  documentation on its usage.  This also contains the plug-in itself, so it
+  can act as an example you can use to create your own customization
+  script.  The list of plug-ins to load are stored in the file
+  :file:`HOME/.gps/startup.xml`.
 
-  For those interested, this also contains the plug-in itself, so that this can
-  act as an example to create your own customization script.
-
-  Technically, the list of plug-ins to load or not to load are stored in the
-  file :file:`HOME/.gps/startup.xml`.
-
-  If you have modified anything through this dialog (the list of plug-ins to
-  load or unload), you will need to restart GPS. GPS cannot unload a module,
-  since it can have too many possible effects on GPS (adding menus, overriding
-  key shortcuts, ...).
-
-  A dialog is displayed asking you whether you would like to exit GPS now. This
-  will properly save all your files.
+  If you've modified anything through this dialog (such as the list of
+  plug-ins to load or unload), you need to restart GPS, since it can't
+  unload a module due to such an action having too many possible effects on
+  GPS, so a dialog is displayed asking you whether you would like to exit
+  GPS. Doing so saves your files.
 
 .. _Customizing_through_XML_and_Python_files:
 
