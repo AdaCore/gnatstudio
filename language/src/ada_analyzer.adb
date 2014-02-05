@@ -1547,20 +1547,11 @@ package body Ada_Analyzer is
             end loop;
 
             if Buffer (Tmp) = '"' then
-               --  Case of an operator, e.g System."="
+               --  Case of an operator, e.g System."=", will be handled
+               --  separately for proper highlighting.
 
-               while Tmp < Buffer_Last loop
-                  Tmp := Tmp + 1;
+               return Prev;
 
-                  exit when Buffer (Tmp) = '"' or else Buffer (Tmp) = ASCII.LF;
-               end loop;
-
-               if Buffer (Tmp) = ASCII.LF then
-                  Tmp := Tmp - 1;
-               end if;
-
-               Line_Count := Line_Count + New_Lines;
-               return Tmp;
             elsif not Is_Entity_Letter
               (UTF8_Get_Char (Buffer (Tmp .. Buffer_Last)))
             then
@@ -3978,14 +3969,14 @@ package body Ada_Analyzer is
 
                      if (Local_Top_Token.Token in Token_Class_Declk
                          and then Local_Top_Token.Ident_Len = 0)
-                       or else Prev_Token = Tok_End
+                       or else Prev_Token in Tok_End | Tok_Dot
                        or else Local_Top_Token.Token = Tok_With
                      then
                         --  This is an operator symbol, e.g function ">=" (...)
                         --  Or we're parsing a GNAT Project file and this is
                         --  a dependency declaration (with "bla.gpr")
 
-                        if Prev_Token /= Tok_End then
+                        if Prev_Token not in Tok_End | Tok_Dot then
                            Len := P - First + 1;
                            Local_Top_Token.Identifier (1 .. Len) :=
                              Buffer (First .. P);
