@@ -11,6 +11,9 @@ specified (in ISO format YYYY-MM-DD) also contains the fix. This can be used
 to determine if a given release or wavefront has the fix identified in the
 entry.
 
+Note that older releases might or might not be affected by the problems listed
+in this document.
+
 The following leading tags are used in this document to indicate:
 GPS: this entry is specific to GPS
 GB:  this entry is specific to GNATbench
@@ -22,7 +25,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
-KP-61-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
+KP-60-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
   Problem:    When in the main project the Builder switches include --RTS=
               with a relative path, GPS fails to load successfully the
@@ -32,7 +35,7 @@ KP-61-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
   Workaround: Avoid these Builder switches.
 
-KP-61-N116-040 GPS: Completion mechanism crashes GPS
+KP-60-N116-040 GPS: Completion mechanism crashes GPS
 
   Problem:    When using dynamic completion, in some specific scenario, the
               completion resolver for ada constructs would make GPS crash.
@@ -42,7 +45,7 @@ KP-61-N116-040 GPS: Completion mechanism crashes GPS
   Workaround: Deactivate dynamic completion/don't use completion in that
               scenario.
 
-KP-61-N109-027 GPS: incorrect display of abstract entities in entities browser
+KP-60-N109-027 GPS: incorrect display of abstract entities in entities browser
 
   Problem:    When an entity is an abstract record, its display in the
               browser duplicates all its fields, and does not list its
@@ -56,7 +59,7 @@ KP-61-N109-027 GPS: incorrect display of abstract entities in entities browser
                  sqlite3 root_object_dir/gnatinspect.db
                  > update entity_kinds set has_methods='t' where id='H';
 
-KP-61-MC16-032 GPS: Source window not scrolling after auto complete
+KP-60-MC16-032 GPS: Source window not scrolling after auto complete
 
   Problem:    When auto-completing manually (via Ctrl+Space for example), if
               the cursor location after the completion is outside of the
@@ -66,7 +69,7 @@ KP-61-MC16-032 GPS: Source window not scrolling after auto complete
 
   Workaround: Scroll manually.
 
-KP-61-MC13-038 GPS: MDI child "flicker" while being moved
+KP-60-MC13-038 GPS: MDI child "flicker" while being moved
 
   Problem:    When moving MDI childs between notebooks, some visual flickering
               was occuring.
@@ -76,7 +79,7 @@ KP-61-MC13-038 GPS: MDI child "flicker" while being moved
   Workaround: Keep using the drag&drop with the flickering, which is only a
               visual side effect.
 
-KP-61-MC11-034 GPS: Block completions not working in all cases
+KP-60-MC11-034 GPS: Block completions not working in all cases
 
   Problem:    The block completion plug-in was not working with simple begin
               blocks, generic packages, procedures and functions.
@@ -85,7 +88,7 @@ KP-61-MC11-034 GPS: Block completions not working in all cases
 
   Workaround: Complete the blocks manually.
 
-KP-61-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
+KP-60-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
 
   Problem:    When using GPS through the Open Text Exceed 14 X server, all text
               and some widgets are rendered in white, regardless of the
@@ -95,7 +98,7 @@ KP-61-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
 
   Workaround: Use another X Server (Cygwin's for example)
 
-KP-61-MC05-001 GPS: Keyboard not working in editor's contextual menus
+KP-60-MC05-001 GPS: Keyboard not working in editor's contextual menus
 
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
               the editor rather than by the menu
@@ -104,7 +107,7 @@ KP-61-MC05-001 GPS: Keyboard not working in editor's contextual menus
 
   Workaround: Use the mouse to navigate the contextual menus
 
-KP-61-MC04-015 GPS: doesn't launch after opening non-ASCII named file
+KP-60-MC04-015 GPS: doesn't launch after opening non-ASCII named file
 
   Problem:    When history of recently open files contains names with
               non-ASCII characters GPS sometime fails to start.
@@ -113,7 +116,7 @@ KP-61-MC04-015 GPS: doesn't launch after opening non-ASCII named file
 
   Workaround: Set UTF-8 locale before launching GPS.
 
-KP-61-MB26-015 GB: Show complete command line in command line editor
+KP-60-MB26-015 GB: Show complete command line in command line editor
 
   Problem:    When editing the command line before launching the action
               (ex: SPARK2014 > Prove Subprogram) the command line displayed at
@@ -123,7 +126,7 @@ KP-61-MB26-015 GB: Show complete command line in command line editor
 
   Workaround: You can ignore this visual glitch.
 
-KP-61-MB22-035 GPS: cannot launch browswer from GPS
+KP-60-MB22-035 GPS: cannot launch browswer from GPS
 
   Problem:    Sometimes environment variables exported by GPS wrapper
               prevent the launch of browser.
@@ -133,7 +136,7 @@ KP-61-MB22-035 GPS: cannot launch browswer from GPS
   Workaround: Write shell wrapper to launch browser in corrected environment.
               Then specify wrapper as browser command in GPS preferences.
 
-KP-61-MB20-048 GB: code assist enable not applied to open editors
+KP-60-MB20-048 GB: code assist enable not applied to open editors
 
   Problem:    Enabling or disabling code assist from the preferences
               is not applied to open editors.
@@ -142,7 +145,7 @@ KP-61-MB20-048 GB: code assist enable not applied to open editors
 
   Workaround: Close and reopen the editor(s).
 
-KP-61-MB15-050 GPS: Color Theme preference always says 'Custom'
+KP-60-MB15-050 GPS: Color Theme preference always says 'Custom'
 
   Problem:    If one changes color theme in GPS preferences the combobox
               display 'Custom' value.
@@ -151,7 +154,7 @@ KP-61-MB15-050 GPS: Color Theme preference always says 'Custom'
 
   Workaround: Just ignore combobox value.
 
-KP-61-MB14-058 GPS: the 'next tag' action does not select the first item
+KP-60-MB14-058 GPS: the 'next tag' action does not select the first item
 
   Problem:    In the Locations view, if the currently selected node is
               a file node, then using the 'next tag' action or the
@@ -162,7 +165,7 @@ KP-61-MB14-058 GPS: the 'next tag' action does not select the first item
 
   Workaround: Use the 'previous tag' action to visit the first node.
 
-KP-61-MB13-062 GPS: key shortcuts not displayed in some Build menus
+KP-60-MB13-062 GPS: key shortcuts not displayed in some Build menus
 
   Problem:    The key shortcuts are not displayed in some menus that
               are present under the Build toplevel menu.
@@ -171,7 +174,7 @@ KP-61-MB13-062 GPS: key shortcuts not displayed in some Build menus
 
   Workaround: Use the key shortcut editor to see the corresponding shortcuts.
 
-KP-61-MB06-009 GPS: 'add to extending project' hides existing files
+KP-60-MB06-009 GPS: 'add to extending project' hides existing files
 
   Problem:    If you load an extending project in GPS, there is a new
               contextual menu 'Add to extending project' which can be
@@ -186,7 +189,7 @@ KP-61-MB06-009 GPS: 'add to extending project' hides existing files
   Workaround: edit the extending project and remove the Source_Files
               attribute.
 
-KP-61-MB01-006 GPS: create_missing_dirs not working with trailing separators
+KP-60-MB01-006 GPS: create_missing_dirs not working with trailing separators
 
   Problem:    The plugin create_missing_dirs.py does not create directories
               that are specified with a trailing directory separator.
@@ -196,7 +199,7 @@ KP-61-MB01-006 GPS: create_missing_dirs not working with trailing separators
   Workaround: Create the directories manually, or remove the directory
               separator at the end of the directory specification.
 
-KP-61-MA29-025 GPS: Search in a floating window
+KP-60-MA29-025 GPS: Search in a floating window
 
   Problem:    When having a floating window source editor open, as well as a
               non floating one, focusing on the floating and then using the
@@ -208,7 +211,7 @@ KP-61-MA29-025 GPS: Search in a floating window
   Workaround: Clicking on the window two times will make the search work
               properly.
 
-KP-61-MA29-023 GPS: Goto declaration/body with a floating window
+KP-60-MA29-023 GPS: Goto declaration/body with a floating window
 
   Problem:    When having a spec (ads) file open in a non floating window, and
               the corresponding body open in a floating window, using go-to
@@ -219,7 +222,7 @@ KP-61-MA29-023 GPS: Goto declaration/body with a floating window
 
   Workaround: Use goto declaration/body with non floating windows.
 
-KP-61-MA24-011 GB: UI freeze importing existing GNAT project
+KP-60-MA24-011 GB: UI freeze importing existing GNAT project
 
   Problem:    Sometimes when running menu "File => Import... => Ada => Existing
               GNAT Project" and when an imported folder already exists in the
@@ -231,7 +234,7 @@ KP-61-MA24-011 GB: UI freeze importing existing GNAT project
               the import operation, you may have to delete manually in the
               workspace's file system, the folders you want to import.
 
-KP-61-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
+KP-60-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
 
   Problem:    When using GPS remote mode with rsh, it may happen that spawned
               remote processes are not properly terminated before the rsh
@@ -247,7 +250,7 @@ KP-61-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
               support by using the remote_rsh.py plugin, to be activated from
               the Tools->Plug-ins menu.
 
-KP-61-G928-018 GPS: "center cursor on screen" scrolls horizontally
+KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 
   Problem:    Using the "center cursor on screen" action causes unwanted
               horizontal scrolling in editors.
