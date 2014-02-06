@@ -116,6 +116,126 @@
 --       attribute has the value computed by the compiler; otherwise it has
 --       the value computed by the GNATdoc frontend.
 
+--    Full_Name (synthesized)
+--       Defined in all entities.
+
+--    Full_View
+--       Defined in the partial view of incomplete types and private types.
+
+--    Generic_Formals_Loc
+--       Defined in generic packages and generic subprograms. Points to the
+--       location of the reserved word "generic" (before the generic formals)
+
+--    Generic_Formals
+--       Defined in generic packages and generic subprograms. Contains the
+--       list of formals.
+
+--    Has_Formals (synthesized)
+--       Defined in subprograms and entries.
+
+--    Has_Methods (LL)
+--       Value available in the database. For incomplete types this attribute
+--       is not reliable since it returns True for types that have no methods;
+--       similarly, for tagged limited records with primitives returns False.
+--       Must be improved adding a high-level attribute providing this
+--       functionality. To be improved???
+
+--    Has_Parent_Type (synthesized)
+--       Defined in types and subtypes. True if the entity has the given
+--       entity as its parent type.
+
+--    Has_Private_Parent
+--       Defined in types and subtypes. Set in the partial view of private
+--       types and incomplete types when the partial view has no parent
+--       type and the full view has a parent type.
+
+--    Has_Unknown_Discriminants
+--       Defined in types and subtypes. Set in the partial view of private
+--       types that has unknown discriminants.
+
+--    IDepth_Level
+--       Defined in tagged types. Natural value with their inheritance depth
+--       level. For private types this attribute is available in their partial
+--       and full views; however it provides the same value when applied to the
+--       partial and full view. As an enhancement these values could be
+--       independent to improve the documentation when switch -p (process
+--       private part) is used.
+
+--    Inherited_Methods
+--       Defined in types and subtypes. Set in tagged types. For private types
+--       the list of inherited methods of the partial view contains the methods
+--       inherited from the partial view of its parent; similarly the list of
+--       inherited methods of the full view contains the methods inherited from
+--       the full view of its parent.
+
+--    Instance_Of (LL)
+--       Defined in generics. Set in instances of generics.
+
+--    In_Ada_Language (synthesized)
+--       Defined in all entities.
+
+--    In_C_Or_CPP_Language (synthesized)
+--       Defined in all entities.
+
+--    In_Private_Part
+--       Defined in all entities. True for entities defined in the private
+--       part of their enclosing scope (that is, the enclosing package,
+--       concurrent type or concurrent object).
+
+--    Is_Abstract (LL)
+--       Defined in types and subprograms.
+
+--    Is_Access (LL)
+--       Defined in types and subtypes.
+
+--    Is_Array (LL)
+--       Defined in types and subtypes.
+
+--    Is_Alias
+--       Defined in subprogram renamings. This attribute is more reliable than
+--       attribute Alias and must be used to check subprogram renamings because
+--       it is set to True for renamings even when the renamed entity is not
+--       available (if the entity associated with the renamed subprogram is
+--       available then it is available through attribute Alias).
+
+--    Is_Class_Or_Record_Type (synthesized)
+--       Defined in types and subtypes. True for Ada record types (including
+--       tagged types and interface types), C structs and C++ classes.
+
+--    Is_Concurrent_Type_Or_Object (synthesized)
+--       Defined in all entities. True for E_Single_Task, E_Task_Type,
+--       E_Single_Protected and E_Protected_Type.
+
+--    Is_Decorated
+--       Defined in all entities. True for entities which have been fully
+--       decorated by the GNATdoc frontend. For entities whose ALI file is
+--       not available to GNATdoc this attribute returns False and their
+--       scope is generally not available.
+
+--    Is_Full_View (synthesized)
+--       Defined in types and subtypes. True in the full view of private
+--       types and incomplete types.
+
+--    Is_Generic (synthesized)
+--       Defined in all entities. True for generic packages and generic
+--       subprograms.
+
+--    Is_Generic_Formal
+--      Defined in all entities. True for generic formals.
+
+--    Is_Incomplete
+--       Defined in types and subtypes. True for incomplete type declarations.
+
+--    Is_Internal
+--       Defined in all entities. True for entities internally built by the
+--       frontend of GNATdoc.
+
+--    Is_Package (synthesized)
+--       Defined in all entities. True for packages and generic package.
+
+--    Is_Partial_View (synthesized)
+--      True in the partial view of a private or incomplete types.
+
 with Ada.Containers.Vectors;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Language;                use Language;
