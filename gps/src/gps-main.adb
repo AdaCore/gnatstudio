@@ -1238,8 +1238,7 @@ procedure GPS.Main is
          --  glued with the project file name, as in -Pproject_file
          Put_Line
            (Standard_Error, "Error: " & Glib.Error.Get_Message (Err));
-         New_Line;
-         Put_Line (Opt_Context.Get_Help (True, null));
+         Put_Line ("Try `gps --help` for more information.");
 
          Do_Exit := True;
          Status_Code := 1;
