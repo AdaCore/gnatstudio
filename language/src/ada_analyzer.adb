@@ -3045,6 +3045,7 @@ package body Ada_Analyzer is
                Local_Top_Token := Top (Tokens);
 
                if Num_Parens = 0 then
+                  Is_Parameter := False;
                   Is_Discriminant := False;
                   Right_Assignment := False;
                   Paren_In_Middle := False;
