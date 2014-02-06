@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N205-040 Wrong indentation of separate protected
+
+  Problem:    Indentation of 'protected xxx is separate' constructs is not
+              handled properly, causing an exra indentation level.
+
+  Status:     This was fixed in 6.1 on 2014-02-06
+
+  Workaround: Do not declare the protected object as separate.
+
 KP-60-N205-018 GPS: get_executable_name is case sensitive
 
   Problem:    The python function get_executable_name does not work on Windows
@@ -244,6 +253,16 @@ KP-60-MA24-011 GB: UI freeze importing existing GNAT project
   Workaround: Kill GNATbench process and retry the operation. Before retrying
               the import operation, you may have to delete manually in the
               workspace's file system, the folders you want to import.
+
+KP-60-M918-001 Wrong indentation of complex entry
+
+  Problem:    When indenting entries with parametrized conditions as in
+                entry Received when Arrived (From) is
+              the indentation gets confused for the rest of the file.
+
+  Status:     This was fixed in 6.1 on 2014-02-06
+
+  Workaround: Fix the indentation manually, or avoid this construct.
 
 KP-60-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
 
