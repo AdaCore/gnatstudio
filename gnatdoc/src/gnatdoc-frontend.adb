@@ -2514,7 +2514,7 @@ package body GNATdoc.Frontend is
                                  --  Handle taft ammendment
 
                                  elsif Is_Concurrent_Type_Or_Object (Scope)
-                                   and then not Has_Entities (Scope)
+                                   and then not Present (Get_Entities (Scope))
                                  then
                                     Do_Exit;
 
@@ -2758,9 +2758,7 @@ package body GNATdoc.Frontend is
                               Set_Src (Scope, Printout);
                               Clear_Src;
 
-                           elsif Is_Record_Type (Scope)
-                           --    and then not Has_Entities (Scope)
-                           then
+                           elsif Is_Record_Type (Scope) then
                               Set_Src (Scope, Printout);
                               Clear_Src;
 
@@ -3785,7 +3783,7 @@ package body GNATdoc.Frontend is
                                  --  Handle taft ammendment
 
                                  elsif Is_Concurrent_Type_Or_Object (Scope)
-                                   and then not Has_Entities (Scope)
+                                   and then not Present (Get_Entities (Scope))
                                  then
                                     Do_Exit;
 
@@ -4848,7 +4846,7 @@ package body GNATdoc.Frontend is
       -------------------------------
 
       procedure Parse_Subprogram_Comments (Subp : Entity_Id) is
-         Has_Params : constant Boolean := Has_Entities (Subp);
+         Has_Params : constant Boolean := Present (Get_Entities (Subp));
       begin
          --  Initialize the structured comment associated with this entity
 

@@ -111,7 +111,7 @@ package body GNATdoc.Backend.Base is
             end if;
 
             if Is_Generic (Entity)
-              and then Has_Generic_Formals (Entity)
+              and then Present (Get_Generic_Formals (Entity))
             then
                for Current of Get_Generic_Formals (Entity).all loop
                   Entities.Generic_Formals.Append (Current);
@@ -216,7 +216,7 @@ package body GNATdoc.Backend.Base is
          All_Pkgs : EInfo_List.Vector;
       begin
          if Is_Generic (Entity)
-           and then Has_Generic_Formals (Entity)
+           and then Present (Get_Generic_Formals (Entity))
          then
             for Current of Get_Generic_Formals (Entity).all loop
                Entities.Generic_Formals.Append (Current);

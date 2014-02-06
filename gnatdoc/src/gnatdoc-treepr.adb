@@ -168,10 +168,6 @@ package body GNATdoc.Treepr is
          end if;
 
          if Get_Doc (Entity) /= No_Comment_Result then
-            if Is_Doc_From_Body (Entity) then
-               Append_Line ("--- Is_Doc_From_Body");
-            end if;
-
             Append_Line ("--- Doc.Line:" & Get_Doc (Entity).Start_Line'Img);
             Append_Line ("--- Doc.Text: " & To_String (Get_Doc (Entity).Text));
          end if;
