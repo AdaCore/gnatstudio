@@ -1279,6 +1279,8 @@ package body Src_Editor_View is
       pragma Unreferenced (Result);
 
    begin
+      Src_Editor_Module.On_Ed_View_Focus_Lost
+        (MDI_Child (View.Child), Buffer.Get_Filename);
       View.As_Is_Mode := Disabled;
 
       Save_Cursor_Position (View);

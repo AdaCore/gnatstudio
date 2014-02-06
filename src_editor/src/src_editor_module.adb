@@ -2728,6 +2728,13 @@ package body Src_Editor_Module is
       end loop;
    end Unregister_Highlighter;
 
+   procedure On_Ed_View_Focus_Lost (Child : MDI_Child; File : Virtual_File) is
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Editors_Hash.Set (Id.Editors, File, (Child => Child));
+   end On_Ed_View_Focus_Lost;
+
    ----------------------
    -- Get_Highlighters --
    ----------------------

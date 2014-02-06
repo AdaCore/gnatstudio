@@ -194,6 +194,7 @@ package Src_Editor_Module is
    function Get_Highlighters return List_Of_Highlighters.List;
    --  Return the list of registered highlighters
 
+   procedure On_Ed_View_Focus_Lost (Child : MDI_Child; File : Virtual_File);
 private
 
    ------------------------
