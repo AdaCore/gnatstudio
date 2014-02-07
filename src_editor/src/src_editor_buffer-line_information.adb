@@ -2138,7 +2138,11 @@ package body Src_Editor_Buffer.Line_Information is
 
                EL := Buffer.Line_Data (Buffer_Line).Editable_Line;
 
-               exit when EL > Line_End;
+               if EL > Line_End then
+                  Free (The_Text);
+
+                  exit;
+               end if;
 
                --  Mark the Editable line as being In_Mark
                declare
