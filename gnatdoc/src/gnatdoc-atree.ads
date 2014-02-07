@@ -234,7 +234,221 @@
 --       Defined in all entities. True for packages and generic package.
 
 --    Is_Partial_View (synthesized)
---      True in the partial view of a private or incomplete types.
+--       Defined in types and subtypes. True in the partial view of private
+--       types and incomplete types.
+
+--    Is_Primitive (LL)
+--       Defined in subprograms. True for primitives of tagged types.
+
+--    Is_Record_Type (synthesized)
+--       Defined in all entities. True for record types and interface types.
+
+--    Is_Type (LL)
+--       Defined in all entities. True for types and subtypes.
+
+--    Is_Standard_Entity
+--       Defined in all entities. True if the entity represents the Standard
+--       scope (ie. the outermost entity)
+
+--    Is_Subprogram (synthesized)
+--       Defined in all entities. True for procedures and functions.
+
+--    Is_Subprogram_Or_Entry (synthesized)
+--       Defined in all entities. True for subprograms and entries.
+
+--    Is_Subtype
+--       Defined in all entities. True for subtypes.
+
+--    Is_Tagged
+--       Defined in all entities. True for tagged types.
+
+--    Kind
+--       Defined in all entities. Entity kind.
+
+--    Language
+--       Defined in all entities. Language in which the entiy is defined.
+
+--    Location (LL)
+--       Defined in all entities.
+
+--    Parent
+--       Defined in tagged types and subtypes.
+
+--    Parent_Package
+--       Defined in E_Package entities. Set in child packages.
+
+--    Parent_Types (LL)
+--       Defined in types and subtypes. List containing the parent and
+--       progenitors of a derived type.
+
+--    Partial_View
+--       Defined in types and subtypes. Set in the full view of incomplete
+--       and private types.
+
+--    Progenitors
+--       Defined in types and subtypes. Set in tagged types containing the
+--       list of interfaces covered by a tagged type.
+
+--    Scope
+--       Defined in all entities.
+
+--    Short_Name
+--       Defined in all entities.
+
+--    Subprograms (synthesized)
+--       Defined in record types, concurrent types and concurrent objects.
+--       For tagged types this attribute contains its list of primitives;
+--       for concurrent types and objects contains their list of subprograms.
+
+--    Short_Name
+--       Defined in all entities.
+
+--    Src
+--       Defined in all entities. Contains the retrieved sources of the entity
+--       declaration (empty lines located at the beginning and end of the
+--       sources have been previously removed).
+
+--  -------------------
+--  Frontend attributes
+--  -------------------
+
+--  These attributes must not be used by the backends since they are not
+--  fully reliable or else they are used by the frontend to temporarily
+--  store information on entities.
+
+--    Alias (LL)
+--       Defined in renamings. References the Xref entity associated with
+--       the renamed entity (if available).
+
+--    Body_Loc (LL)
+--       Defined in all entities. Set on the following kind of entities:
+--         E_Discriminant
+--           In discriminants of private or incomplete types
+--         E_Package, E_Generic_Package,
+--         E_Function, E_Procedure, E_Entry, E_Formal
+--         E_Protected_Type, E_Single_Protected
+--         E_Record_Type, E_Tagged_Record_Type
+--           In the partial and full view of private types
+--         E_Task_Type, E_Single_Task
+--         E_Variable
+--           On the partial and full view of incomplete declarations
+
+--    Doc
+--       Defined in all entities. Block of comments associated with an
+--       entity. Depending on switch -l (leading documentation) the
+--       frontend stores in this attribute the value of attribute
+--       Doc_After or Doc_Before.
+
+--    Doc_After
+--       Defined in all entities. Block of comments found after the
+--       declaration of an entity.
+
+--    Doc_Before
+--       Defined in all entities. Block of comments found before the
+--       declaration of an entity.
+
+--    EKind (LL)
+--       Defined in all entities. Kind of an entity returned by Xref.
+
+--    End_Of_Scope_Loc (LL)
+--       Value provided by Xref. Currently unused???
+
+--    End_Of_Profile_Location
+--       Defined in subprograms and entries. Points to the location of the
+--       semicolon closing the declaration of the entity. This attribute is
+--       just a renaming of attribute End_Of_Syntax_Scope_Loc provided to
+--       improve the readability of the sources.
+
+--    End_Of_Profile_Location_In_Body
+--       Defined in subprograms and entries. Points to the location of the
+--       keyword "is" after the profile of the entity.
+
+--    First_Private_Entity_Loc (LL)
+--       Location of the first private entity (if provided by the compiler).
+
+--    Full_Name (LL)
+--       Qualified name of the entity (if available)
+
+--    Is_Compilation_Unit
+--       Defined in packages and subprograms.
+
+--    Is_Self_Referenced_Type (LL)
+--       Defined in C/C++ types and subtypes. Used to identify self referenced
+--       types.
+
+--    Is_Global (LL)
+--       Value provided by Xref. Used by the frontend to identify library
+--       level declarations.
+
+--    Is_Predef (LL)
+--       Value provided by Xref. Currently unused???
+
+--    Kind (LL)
+--       Value provided by Xref. Not reliable. Used as the initial value of
+--       attribute Kind.
+
+--    Parent_Package (LL)
+--       Parent of a package but not available in all the expected entities.
+
+--    Pointed_Type (LL)
+--       Value provided by Xref. Currently unused???
+
+--    Scope (LL)
+--       Value provided by Xref.
+
+--    Subprograms_And_Entries (synthesized)
+--       Defined in record types, concurrent types and concurrent objects.
+
+--    Type (LL)
+--       Value provided by Xref.
+
+--    Unique_Id
+--       Defined in all entities. Internal unique identifier associated with
+--       each entity. Given that GNATdoc routines are currently executed by
+--       a single thread, and given that their behavior is deterministic,
+--       this unique identifier facilitates setting breakpoints in the
+--       debugger using this Id. In addition, using this value entity
+--       can be shown in the debugger session (cf. upnid)
+
+--  Utility subprograms
+--  -------------------
+
+--    Append_Unique_Elmt
+--       Append an entity to a list
+
+--    Delete_Entity
+--       Remove an entity from a list
+
+--    Find_Entity
+--       Search for an entity in a given list
+
+--    For_All
+--       Execute a procedure with all the elements of a given list
+
+--    Has_Duplicated_Entities
+--       Return True if the given list has duplicated entities
+
+--    New_Entity / New_Internal_Entity
+--       Entity constructors
+
+--    In_Same_File
+--       Return True if E1 and E2 are defined in the same file
+
+--    No / Present
+--       Used to check if an entity is available
+
+--    Kind_In
+--       Check if a given kind is one of the expected kinds
+
+--    Remove_Full_View
+--       Remove the full view of an entity (if available)
+
+--    Remove_From_Scope
+--       Remove an entity from its current scope list.
+
+--    Traverse_Tree
+--       Traverse all the entities of a subtree calling a given function on
+--       each node.
 
 with Ada.Containers.Vectors;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
@@ -505,8 +719,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Entity_Id;
    function Get_Progenitors
      (E : Entity_Id) return access EInfo_List.Vector;
-   function Get_Ref_File
-     (E : Entity_Id) return Virtual_File;
    function Get_Scope
      (E : Entity_Id) return Entity_Id;
    function Get_Short_Name
@@ -516,9 +728,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return EInfo_List.Vector;
    --  Applicable to concurrent types and concurrent objects
    function Get_Subprograms
-     (E : Entity_Id) return EInfo_List.Vector;
-   --  Applicable to record types, concurrent types and concurrent objects
-   function Get_Subprograms_And_Entries
      (E : Entity_Id) return EInfo_List.Vector;
    --  Applicable to record types, concurrent types and concurrent objects
 
@@ -636,9 +845,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Loc : General_Location);
    procedure Set_End_Of_Syntax_Scope_Loc
      (E : Entity_Id; Loc : General_Location);
-   --  At current stage this attribute is set only for E_Package,
-   --  E_Generic_Package entities, concurrent types and objects,
-   --  record types and interface types.
 
    procedure Set_Error_Msg
      (E : Entity_Id; Value : Unbounded_String);
@@ -667,9 +873,6 @@ private package GNATdoc.Atree is
 
    procedure Set_Is_Alias
      (E : Entity_Id);
-   --  This attribute should not be needed if all the renamings have available
-   --  their alias but unfortunately there are cases in which such information
-   --  is not available in the database.
 
    procedure Set_Is_Decorated
      (E : Entity_Id);
@@ -691,8 +894,6 @@ private package GNATdoc.Atree is
      (E : Entity_Id; Value : Entity_Id);
    procedure Set_Partial_View
      (E : Entity_Id; Value : Entity_Id);
-   procedure Set_Ref_File
-     (E : Entity_Id; Value : Virtual_File);
    procedure Set_Scope
      (E : Entity_Id; Value : Entity_Id);
 
@@ -703,8 +904,6 @@ private package GNATdoc.Atree is
 
    procedure Set_Src
      (E : Entity_Id; Value : Unbounded_String);
-   --  Set attribute Src filtering empty lines located at the beginning and
-   --  end of Value
 
    type Traverse_Result is (OK, Skip);
 
@@ -748,14 +947,10 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Child_Types
         (E : Entity_Id) return access EInfo_List.Vector;
-      function Get_End_Of_Scope_Loc
-        (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return General_Entity;
       function Get_Instance_Of
         (E : Entity_Id) return General_Entity;
-      function Get_Kind
-        (E : Entity_Id) return Entity_Kind;
       function Get_Location
         (E : Entity_Id) return General_Location;
       function Get_Parent_Package
@@ -765,10 +960,6 @@ private package GNATdoc.Atree is
       function Get_Pointed_Type
         (E : Entity_Id) return General_Entity;
       function Get_Scope
-        (E : Entity_Id) return General_Entity;
-      function Get_Scope_Loc
-        (E : Entity_Id) return General_Location;
-      function Get_Type
         (E : Entity_Id) return General_Entity;
 
       function Get_Ekind
@@ -809,13 +1000,11 @@ private package GNATdoc.Atree is
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
       pragma Inline (Get_Entity);
-      pragma Inline (Get_Kind);
       pragma Inline (Get_Location);
       pragma Inline (Get_Parent_Package);
       pragma Inline (Get_Parent_Types);
       pragma Inline (Get_Pointed_Type);
       pragma Inline (Get_Scope);
-      pragma Inline (Get_Type);
 
       pragma Inline (Is_Abstract);
       pragma Inline (Is_Access);
@@ -943,34 +1132,12 @@ private
    type Entity_Info_Record is
       record
          Id : Natural;
-         --  Internal unique identifier associated with each entity. Given
-         --  that GNATdoc routines are executed by a single thread, and given
-         --  that their behavior is deterministic, this unique identifier
-         --  facilitates setting breakpoints in the debugger using this Id.
-         --
-         --  This unique identifier may be also used by the backend to
-         --  generate unique labels in the ReST output (to avoid problems
-         --  with overloaded entities). For examples see Backend.Simple.
+         --  Unique identifier
 
          Language : Language_Access;
          --  Language associated with the entity. It can be used by the backend
          --  to generate full or short names depending on the language. For
          --  examples see Backend.Simple.
-
-         Ref_File : Virtual_File;
-         --  File associated with this entity for backend references.
-         --  * For Ada entities this value is the same of Loc.File.
-         --  * For C/C++ entities defined in header files, the value of
-         --    Loc.File references the .h file, which is a file for which the
-         --    compiler does not generate LI files). Hence the frontend stores
-         --    in this field the file which must be referenced by the backend.
-         --    (that is, the corresponding .c or .cpp file). For entities
-         --    defined in the .c (or .cpp) files the values of Loc.File and
-         --    File are identical.
-
-         --       Warning: The values of Id and Ref_File are used by the
-         --       backend to generate valid and unique cross references
-         --       between generated reST files.
 
          Kind            : Entity_Kind;
          --  When the entity is created the fields Kind and Xref.Ekind are
@@ -1080,7 +1247,6 @@ private
    pragma Inline (Get_Partial_View);
    pragma Inline (Get_First_Private_Entity_Loc);
    pragma Inline (Get_Progenitors);
-   pragma Inline (Get_Ref_File);
    pragma Inline (Get_Scope);
    pragma Inline (Get_Short_Name);
    pragma Inline (Get_Src);
@@ -1140,7 +1306,6 @@ private
    pragma Inline (Set_Parent_Package);
    pragma Inline (Set_Partial_View);
    pragma Inline (Set_First_Private_Entity_Loc);
-   pragma Inline (Set_Ref_File);
    pragma Inline (Set_Scope);
    pragma Inline (Set_Short_Name);
    pragma Inline (Set_Src);

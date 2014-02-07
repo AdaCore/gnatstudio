@@ -1043,13 +1043,6 @@ package body GNATdoc.Frontend.Builder is
                                             Is_New => False);
                else
                   Entity := Build_New_Entity;
-
-                  if Present (Entity)
-                    and then
-                      LL.Get_Location (Get_Entity (Entity)).File /= File
-                  then
-                     Set_Ref_File (Get_Entity (Entity), File);
-                  end if;
                end if;
 
                return;

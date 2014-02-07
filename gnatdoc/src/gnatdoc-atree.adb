@@ -56,6 +56,10 @@ package body GNATdoc.Atree is
    --  Return True if the container has an Entity whose location matches the
    --  location of Entity.
 
+   function Get_Subprograms_And_Entries
+     (E : Entity_Id) return EInfo_List.Vector;
+   --  Applicable to record types, concurrent types and concurrent objects
+
    function Internal_New_Entity
      (Context     : access constant Docgen_Context;
       Lang        : Language_Access;
@@ -73,6 +77,9 @@ package body GNATdoc.Atree is
    function LL_Get_Full_Name
      (E : Entity_Id) return String;
    pragma Inline (LL_Get_Full_Name);
+
+   function LL_Get_Kind (E : Entity_Id) return Entity_Kind;
+   pragma Inline (LL_Get_Kind);
 
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
@@ -922,16 +929,6 @@ package body GNATdoc.Atree is
       return E.Progenitors'Access;
    end Get_Progenitors;
 
-   ------------------
-   -- Get_Ref_File --
-   ------------------
-
-   function Get_Ref_File
-     (E : Entity_Id) return Virtual_File is
-   begin
-      return E.Ref_File;
-   end Get_Ref_File;
-
    ---------------
    -- Get_Scope --
    ---------------
@@ -1470,7 +1467,6 @@ package body GNATdoc.Atree is
         new Entity_Info_Record'
           (Id       => Unique_Id,
            Language => Lang,
-           Ref_File => Loc.File,
            Xref => Xref_Info'(
              Alias            => No_General_Entity,
              Body_Loc         => No_Location,
@@ -1639,15 +1635,6 @@ package body GNATdoc.Atree is
       return E.Is_Decorated;
    end Is_Decorated;
 
-   ----------------------------
-   -- Is_Subprogram_Or_Entry --
-   ----------------------------
-
-   function Is_Subprogram_Or_Entry (E : Entity_Id) return Boolean is
-   begin
-      return Is_Subprogram (E) or else Get_Kind (E) = E_Entry;
-   end Is_Subprogram_Or_Entry;
-
    ------------------
    -- Is_Full_View --
    ------------------
@@ -1707,7 +1694,7 @@ package body GNATdoc.Atree is
    function Is_Package (E : Entity_Id) return Boolean is
    begin
       return
-        Kind_In (LL.Get_Kind (E), E_Package,
+        Kind_In (LL_Get_Kind (E), E_Package,
                                   E_Generic_Package)
           or else
             (not Is_Standard_Entity (E)
@@ -1760,6 +1747,15 @@ package body GNATdoc.Atree is
                   and then Get_Kind (E) /= E_Single_Task
                   and then Get_Kind (E) /= E_Entry);
    end Is_Subprogram;
+
+   ----------------------------
+   -- Is_Subprogram_Or_Entry --
+   ----------------------------
+
+   function Is_Subprogram_Or_Entry (E : Entity_Id) return Boolean is
+   begin
+      return Is_Subprogram (E) or else Get_Kind (E) = E_Entry;
+   end Is_Subprogram_Or_Entry;
 
    ----------------
    -- Is_Subtype --
@@ -1901,6 +1897,15 @@ package body GNATdoc.Atree is
    begin
       return Get (E.Full_Name).all;
    end LL_Get_Full_Name;
+
+   -----------------
+   -- LL_Get_Kind --
+   -----------------
+
+   function LL_Get_Kind (E : Entity_Id) return Entity_Kind is
+   begin
+      return E.Xref.Ekind;
+   end LL_Get_Kind;
 
    -------------------
    -- LL_Is_Generic --
@@ -2366,16 +2371,6 @@ package body GNATdoc.Atree is
       E.Partial_View := Value;
    end Set_Partial_View;
 
-   ------------------
-   -- Set_Ref_File --
-   ------------------
-
-   procedure Set_Ref_File
-     (E : Entity_Id; Value : Virtual_File) is
-   begin
-      E.Ref_File := Value;
-   end Set_Ref_File;
-
    ---------------
    -- Set_Scope --
    ---------------
@@ -2574,12 +2569,6 @@ package body GNATdoc.Atree is
          return E.Xref.Child_Types'Access;
       end Get_Child_Types;
 
-      function Get_End_Of_Scope_Loc
-        (E : Entity_Id) return General_Location is
-      begin
-         return E.Xref.End_Of_Scope_Loc;
-      end Get_End_Of_Scope_Loc;
-
       function Get_Entity (E : Entity_Id) return General_Entity is
       begin
          return E.Xref.Entity;
@@ -2590,11 +2579,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Instance_Of;
       end Get_Instance_Of;
-
-      function Get_Kind (E : Entity_Id) return Entity_Kind is
-      begin
-         return E.Xref.Ekind;
-      end Get_Kind;
 
       function Get_Location (E : Entity_Id) return General_Location is
       begin
@@ -2621,16 +2605,6 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Scope_E;
       end Get_Scope;
-
-      function Get_Scope_Loc (E : Entity_Id) return General_Location is
-      begin
-         return E.Xref.Scope_Loc;
-      end Get_Scope_Loc;
-
-      function Get_Type (E : Entity_Id) return General_Entity is
-      begin
-         return E.Xref.Etype;
-      end Get_Type;
 
       function Has_Methods (E : Entity_Id) return Boolean is
       begin
