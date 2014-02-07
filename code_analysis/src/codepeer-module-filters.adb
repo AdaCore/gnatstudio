@@ -46,6 +46,7 @@ package body CodePeer.Module.Filters is
       Languages  : constant Language_Handlers.Language_Handler :=
         GPS.Kernel.Get_Language_Handler (Kernel);
       Constructs : Language.Construct_List;
+      Current    : Language.Construct_Access;
       Unit       : Language.Construct_Access;
       Entity     : General_Entity;
 
@@ -58,18 +59,18 @@ package body CodePeer.Module.Filters is
       --  Lookup for the last reported package or subprogram, it represents
       --  compilation unit.
 
-      Constructs.Current := Constructs.First;
+      Current := Constructs.First;
 
-      while Constructs.Current /= null loop
-         if Constructs.Current.Name /= GNATCOLL.Symbols.No_Symbol
-           and (Constructs.Current.Category = Language.Cat_Package
-                  or Constructs.Current.Category = Language.Cat_Procedure
-                  or Constructs.Current.Category = Language.Cat_Function)
+      while Current /= null loop
+         if Current.Name /= GNATCOLL.Symbols.No_Symbol
+           and (Current.Category = Language.Cat_Package
+                  or Current.Category = Language.Cat_Procedure
+                  or Current.Category = Language.Cat_Function)
          then
-            Unit := Constructs.Current;
+            Unit := Current;
          end if;
 
-         Constructs.Current := Constructs.Current.Next;
+         Current := Current.Next;
       end loop;
 
       Language.Free (Constructs);
