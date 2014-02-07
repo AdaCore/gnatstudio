@@ -72,6 +72,8 @@ package body CodePeer.Module.Filters is
          Constructs.Current := Constructs.Current.Next;
       end loop;
 
+      Language.Free (Constructs);
+
       if Unit = null then
          return False;
       end if;
