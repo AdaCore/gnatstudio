@@ -885,6 +885,10 @@ package body Ada_Semantic_Tree.Units is
             Unit_Info := Get_Unit_Info
               (Unit_Key, To_Entity_Access (File, Unit));
 
+            if Unit_Info = null then
+               return null;
+            end if;
+
             Start_Unit_It :=
               To_Construct_Tree_Iterator (Get_Start_Entity (Unit_Info));
             End_Unit_It :=
