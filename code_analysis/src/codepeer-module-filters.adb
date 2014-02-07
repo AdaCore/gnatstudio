@@ -73,6 +73,8 @@ package body CodePeer.Module.Filters is
       end loop;
 
       if Unit = null then
+         Language.Free (Constructs);
+
          return False;
       end if;
 
@@ -85,6 +87,8 @@ package body CodePeer.Module.Filters is
                   Column => Basic_Types.Visible_Column_Type
                     (Unit.Sloc_Entity.Column
                      + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
+
+      Language.Free (Constructs);
 
       if Entity = No_General_Entity then
          return False;
