@@ -15,26 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Temporary package used to develop new Xref routines since GNATdoc needs
---  the location associatd with the returned documentation (functionality not
---  available in the Xref routines). In addition, most of these routines
---  receive as parameter the pointer to the buffer containing the sources;
---  this avoids repeatedly loading the same file to retrieve all their
---  documentation.
-
---  In order to develop this package avoiding conflicts with the Xref routines
---  used by the Wavefronts, this package duplicates routines needed to provide
---  the new functionality. As soon as the new functionality is agreed and
---  incorporated this package will be removed or moved to its definitive
---  location in the repository.
-
 with GNAT.Strings;
 with Language_Handlers;
 with Xref;                use Xref;
 
 package Xref.Docgen is
 
-   --  This type declaration should be located in GNATCOLL.Xref
    type Comment_Result is record
       Text       : Unbounded_String;
       Start_Line : Integer := -1;
@@ -67,37 +53,24 @@ package Xref.Docgen is
       Entity : General_Entity) return General_Location;
    --  Return the location of Entity
 
-   function Documentation
-     (Self             : access General_Xref_Database_Record;
-      Handler          : Language_Handlers.Language_Handler;
-      Entity           : General_Entity;
-      Raw_Format       : Boolean := False;
-      Check_Constructs : Boolean := True) return String;
-   --  Retrieve the documentation associated with Entity
-
-   function Get_Docgen_Documentation
-     (Self    : access General_Xref_Database_Record;
-      Handler : Language_Handlers.Language_Handler;
-      Buffer  : GNAT.Strings.String_Access;
-      Entity  : General_Entity) return Comment_Result;
-   --  Retrieve the documentation associated with Entity
-
    function Get_Docgen_Documentation
      (Self     : access General_Xref_Database_Record;
       Handler  : Language_Handlers.Language_Handler;
       Buffer   : GNAT.Strings.String_Access;
       Location : General_Location;
       End_Loc  : General_Location := No_Location) return Comment_Result;
-   --  Retrieve the documentation associated with Entity
-
-   function Get_Docgen_Src
-     (Self    : access General_Xref_Database_Record;
-      Handler : Language_Handlers.Language_Handler;
-      Buffer  : GNAT.Strings.String_Access;
-      Entity  : General_Entity) return String;
-   --  Retrieve the sources associated with Entity
+   --  Retrieve the documentation associated with Entity. This is a variant of
+   --  the routine provided by Xref since GNATdoc needs the location associated
+   --  with the returned documentation (functionality not available in Xref).
+   --  In addition, most of this routine receives as parameter the pointer to
+   --  the buffer containing the sources; this avoids repeatedly loading the
+   --  same file to retrieve all their documentation.
+   --
+   --  This routine is currently used only to retrieve documentation of C/C++
+   --  entities.
 
 private
+   pragma Inline (No);
    pragma Inline (Present);
    pragma Inline (Get_Location);
 end Xref.Docgen;
