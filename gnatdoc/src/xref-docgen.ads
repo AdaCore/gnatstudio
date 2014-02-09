@@ -30,20 +30,8 @@ package Xref.Docgen is
      (Text       => Null_Unbounded_String,
       Start_Line => -1);
 
-   function No (E : General_Entity) return Boolean;
-   --  Return true if E = No_General_Entity
-
-   function No (L : General_Location) return Boolean;
-   --  Return true if L = No_Location
-
    function No (Comment : Comment_Result) return Boolean;
    --  Return true if Comment = No_Comment_Result
-
-   function Present (E : General_Entity) return Boolean;
-   --  Return true if E /= No_General_Entity
-
-   function Present (L : General_Location) return Boolean;
-   --  Return true if L /= No_Location
 
    function Present (Comment : Comment_Result) return Boolean;
    --  Return true if Comment /= No_Comment_Result

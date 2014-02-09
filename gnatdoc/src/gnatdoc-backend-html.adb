@@ -29,7 +29,7 @@ with GNATdoc.Backend.HTML.JSON_Builder; use GNATdoc.Backend.HTML.JSON_Builder;
 with GNATdoc.Backend.HTML.Source_Code;  use GNATdoc.Backend.HTML.Source_Code;
 with GNATdoc.Backend.Text_Parser;       use GNATdoc.Backend.Text_Parser;
 with GNATdoc.Comment;                   use GNATdoc.Comment;
-with Xref.Docgen;                       use Xref.Docgen;
+with GNATdoc.Utils;                     use GNATdoc.Utils;
 
 package body GNATdoc.Backend.HTML is
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
@@ -825,7 +825,7 @@ package body GNATdoc.Backend.HTML is
          for E of Entities loop
             Extract_Summary_And_Description (E, Summary, Description);
 
-            if Get_Src (E) /= Null_Unbounded_String then
+            if Present (Get_Src (E)) then
                declare
                   Buffer : aliased String := To_String (Get_Src (E));
                   Code   : JSON_Value;

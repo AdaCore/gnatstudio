@@ -139,7 +139,7 @@ package body GNATdoc.Treepr is
          --  No output generated if no information is available on this
          --  entity (to leave the output more clean)
 
-         if Get_Src (Entity) = Null_Unbounded_String
+         if No (Get_Src (Entity))
            and then Get_Doc (Entity) = No_Comment_Result
            and then Get_Comment (Entity) = No_Structured_Comment
          then
@@ -154,9 +154,9 @@ package body GNATdoc.Treepr is
 
          if not Context.Options.Show_Private
            or else not (Is_Partial_View (Entity))
-           or else Get_Src (Get_Full_View (Entity)) = Null_Unbounded_String
+           or else No (Get_Src (Get_Full_View (Entity)))
          then
-            if Get_Src (Entity) /= Null_Unbounded_String then
+            if Present (Get_Src (Entity)) then
                Append_Line ("--- Src:");
                Append_Line (To_String (Get_Src (Entity)));
             end if;
@@ -418,7 +418,7 @@ package body GNATdoc.Treepr is
             Level);
 
          if Context.Options.Report_Errors /= None
-           and then Get_Error_Msg (Entity) /= Null_Unbounded_String
+           and then Present (Get_Error_Msg (Entity))
          then
             Put_Line (To_String (Get_Error_Msg (Entity)), Level);
          end if;
@@ -434,9 +434,9 @@ package body GNATdoc.Treepr is
                while not At_End (C) loop
                   Tag_Info := Get (C);
 
-                  if Tag_Info.Tag /= Null_Unbounded_String then
+                  if Present (Tag_Info.Tag) then
                      if Tag_Info.Tag = "param"
-                       and then Tag_Info.Text = Null_Unbounded_String
+                       and then No (Tag_Info.Text)
                      then
                         null;
                      else
@@ -449,7 +449,7 @@ package body GNATdoc.Treepr is
                      end if;
                   end if;
 
-                  if Tag_Info.Text /= Null_Unbounded_String then
+                  if Present (Tag_Info.Text) then
                      Put_Line
                        (Trim (Reduce (To_String (Tag_Info.Text)),
                                 Ada.Strings.Left),

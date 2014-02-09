@@ -17,8 +17,8 @@
 
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
+with GNATdoc.Utils;     use GNATdoc.Utils;
 with GNATCOLL.JSON;     use GNATCOLL.JSON;
-with Xref.Docgen;       use Xref.Docgen;
 
 package body GNATdoc.Backend.HTML.Source_Code is
 

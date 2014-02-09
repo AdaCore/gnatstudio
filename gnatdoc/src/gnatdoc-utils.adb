@@ -151,9 +151,38 @@ package body GNATdoc.Utils is
       return Kernel.Registry.Tree.Info (File).Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
+   --------
+   -- No --
+   --------
+
+   function No (E : General_Entity) return Boolean is
+   begin
+      return E = No_General_Entity;
+   end No;
+
+   function No (L : General_Location) return Boolean is
+   begin
+      return L = No_Location;
+   end No;
+
+   function No (Text : Unbounded_String) return Boolean is
+   begin
+      return Text = Null_Unbounded_String;
+   end No;
+
    -------------
    -- Present --
    -------------
+
+   function Present (E : General_Entity) return Boolean is
+   begin
+      return E /= No_General_Entity;
+   end Present;
+
+   function Present (L : General_Location) return Boolean is
+   begin
+      return L /= No_Location;
+   end Present;
 
    function Present (Text : Unbounded_String) return Boolean is
    begin

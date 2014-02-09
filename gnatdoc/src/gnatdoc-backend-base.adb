@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATdoc.Utils; use GNATdoc.Utils;
 with Language;      use Language;
 with Language.Ada;  use Language.Ada;
-with Xref.Docgen;   use Xref.Docgen;
 
 package body GNATdoc.Backend.Base is
 

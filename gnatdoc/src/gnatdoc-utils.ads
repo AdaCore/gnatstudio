@@ -54,6 +54,21 @@ private package GNATdoc.Utils is
       File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether File is a spec file
 
+   function No (E : General_Entity) return Boolean;
+   --  Return true if E = No_General_Entity
+
+   function No (L : General_Location) return Boolean;
+   --  Return true if L = No_Location
+
+   function No (Text : Unbounded_String) return Boolean;
+   --  Return true if Text = Null_Unbounded_String
+
+   function Present (E : General_Entity) return Boolean;
+   --  Return true if E /= No_General_Entity
+
+   function Present (L : General_Location) return Boolean;
+   --  Return true if L /= No_Location
+
    function Present (Text : Unbounded_String) return Boolean;
    --  Return true if Text /= Null_Unbounded_String
 
@@ -64,5 +79,6 @@ private package GNATdoc.Utils is
    --  Convert Number to String removing spaces
 
 private
+   pragma Inline (No);
    pragma Inline (Present);
 end GNATdoc.Utils;

@@ -24,10 +24,10 @@ with GNATdoc.Utils;            use GNATdoc.Utils;
 with GNATdoc.Errout;           use GNATdoc.Errout;
 with GNATdoc.Frontend.Builder; use GNATdoc.Frontend.Builder;
 with GNATdoc.Time;             use GNATdoc.Time;
+with GNATCOLL.Utils;
 with GNAT.Expect;
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Utils;
 with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
 with Language.Tree;            use Language.Tree;
@@ -991,7 +991,7 @@ package body GNATdoc.Frontend is
          --  "under development" text
 
          elsif not In_Ada_Language (E)
-           and then Get_Src (E) /= Null_Unbounded_String
+           and then Present (Get_Src (E))
            and then Get_Src (E) = Under_Development_Text
          then
             null;
@@ -4565,6 +4565,12 @@ package body GNATdoc.Frontend is
             end record;
             No_Location : constant Location := (0, 0);
 
+            function No (Loc : Location) return Boolean;
+            --  True if Loc = No_Location
+
+            function Present (Loc : Location) return Boolean;
+            --  True if Loc /= No_Location
+
             function Scan_Tag return Location;
             --  Scan text in S searching for the next tag
 
@@ -4577,6 +4583,24 @@ package body GNATdoc.Frontend is
               (J   : in out Natural;
                Loc : out Location);
             --  Scan S searching for the next end of line
+
+            --------
+            -- No --
+            --------
+
+            function No (Loc : Location) return Boolean is
+            begin
+               return Loc = No_Location;
+            end No;
+
+            -------------
+            -- Present --
+            -------------
+
+            function Present (Loc : Location) return Boolean is
+            begin
+               return Loc /= No_Location;
+            end Present;
 
             --------------
             -- Scan_Tag --
@@ -4678,7 +4702,7 @@ package body GNATdoc.Frontend is
 
             --  Regular string. Let's append it to the current node value.
 
-            if Tag_Loc = No_Location then
+            if No (Tag_Loc) then
                Append_Text (Current, S);
                return;
             end if;
@@ -4730,7 +4754,7 @@ package body GNATdoc.Frontend is
                   end if;
 
                   if Tag_Text = "param" then
-                     if Attr_Loc = No_Location then
+                     if No (Attr_Loc) then
                         Error
                           (Context,
                            LL.Get_Entity (E),
@@ -4753,16 +4777,14 @@ package body GNATdoc.Frontend is
                                    "wrong parameter name '"
                                  & Param_Name & "'");
 
-                           elsif Get (Cursor).Text
-                             /= Null_Unbounded_String
-                           then
+                           elsif Present (Get (Cursor).Text) then
                               Error
                                 (Context,
                                  Get (Cursor).Entity,
                                  "parameter '"
                                  & Param_Name & "' documented twice");
 
-                           elsif Text_Loc /= No_Location then
+                           elsif Present (Text_Loc) then
                               Current := Cursor; -- needed???
 
                               declare
@@ -4780,7 +4802,7 @@ package body GNATdoc.Frontend is
                   else
 
                      --  Now initialize the attributes field
-                     if Attr_Loc /= No_Location then
+                     if Present (Attr_Loc) then
                         declare
                            Text : String renames
                              S (Attr_Loc.First .. Attr_Loc.Last);
@@ -4811,7 +4833,7 @@ package body GNATdoc.Frontend is
                              Attribute => Null_Unbounded_String);
                      end if;
 
-                     if Text_Loc /= No_Location then
+                     if Present (Text_Loc) then
                         declare
                            Text : constant String :=
                              S (Text_Loc.First .. Text_Loc.Last);
@@ -4890,7 +4912,7 @@ package body GNATdoc.Frontend is
                loop
                   Tag_Info := Get (C);
 
-                  if Tag_Info.Text = Null_Unbounded_String then
+                  if No (Tag_Info.Text) then
                      Warning
                        (Context,
                         Tag_Info.Entity, --  LL.Get_Entity (Subp),
@@ -5104,7 +5126,7 @@ package body GNATdoc.Frontend is
             Parse_Subprogram_Comments (Entity);
             return Skip;
 
-         elsif Get_Doc (Entity).Text /= Null_Unbounded_String then
+         elsif Present (Get_Doc (Entity).Text) then
             Set_Comment (Entity, New_Structured_Comment);
             Parse_Doc_Wrapper
               (Context, Entity, To_String (Get_Doc (Entity).Text));

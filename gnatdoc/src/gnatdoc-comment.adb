@@ -17,6 +17,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
+with GNATdoc.Utils;               use GNATdoc.Utils;
 with Language;                    use Language;
 with Language.Tree;               use Language.Tree;
 with Language.Tree.Database;      use Language.Tree.Database;
@@ -273,7 +274,7 @@ package body GNATdoc.Comment is
 
       Tag_Info := Get (C);
 
-      if Tag_Info.Text /= Null_Unbounded_String then
+      if Present (Tag_Info.Text) then
          raise Not_Empty;
       end if;
 
@@ -302,9 +303,9 @@ package body GNATdoc.Comment is
 
       procedure Append (Tag_Info : Tag_Info_Ptr) is
       begin
-         if Tag_Info.Tag /= Null_Unbounded_String then
+         if Present (Tag_Info.Tag) then
             if Tag_Info.Tag = "param"
-              and then Tag_Info.Text = Null_Unbounded_String
+              and then No (Tag_Info.Text)
             then
                null;
             else
@@ -316,7 +317,7 @@ package body GNATdoc.Comment is
             end if;
          end if;
 
-         if Tag_Info.Text /= Null_Unbounded_String then
+         if Present (Tag_Info.Text) then
             Append_Line
               (Trim
                  (Reduce (To_String (Tag_Info.Text)),

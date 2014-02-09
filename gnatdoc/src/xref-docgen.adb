@@ -37,16 +37,6 @@ package body Xref.Docgen is
    -- Present --
    -------------
 
-   function No (E : General_Entity) return Boolean is
-   begin
-      return E = No_General_Entity;
-   end No;
-
-   function No (L : General_Location) return Boolean is
-   begin
-      return L = No_Location;
-   end No;
-
    function No (Comment : Comment_Result) return Boolean is
    begin
       return Comment = No_Comment_Result;
@@ -55,16 +45,6 @@ package body Xref.Docgen is
    -------------
    -- Present --
    -------------
-
-   function Present (E : General_Entity) return Boolean is
-   begin
-      return E /= No_General_Entity;
-   end Present;
-
-   function Present (L : General_Location) return Boolean is
-   begin
-      return L /= No_Location;
-   end Present;
 
    function Present (Comment : Comment_Result) return Boolean is
    begin
@@ -90,15 +70,6 @@ package body Xref.Docgen is
    --------------------------------
 
    package GNATCOLL is
-
-      --  type Comment_Result is record
-      --     Text       : Unbounded_String;
-      --     Start_Line : Integer := -1;
-      --  end record;
-      --
-      --  No_Comment_Result : constant Comment_Result :=
-      --                       (Text       => Null_Unbounded_String,
-      --                        Start_Line => -1);
 
       function Comment
         (Self     : Xref_Database;

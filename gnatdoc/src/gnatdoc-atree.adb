@@ -2467,14 +2467,14 @@ package body GNATdoc.Atree is
       end Skip_Empty_Lines;
 
    begin
-      pragma Assert (Value /= Null_Unbounded_String);
+      pragma Assert (Present (Value));
 
       --  Filter empty lines located at the beginning and end of Value
 
       Skip_Empty_Lines (Low, Forward);
       Skip_Empty_Lines (High, Backward);
 
-      pragma Assert (E.Src = Null_Unbounded_String);
+      pragma Assert (No (E.Src));
       E.Src := Unbounded_Slice (Value, Low, High);
    end Set_Src;
 
@@ -3548,7 +3548,7 @@ package body GNATdoc.Atree is
       end if;
 
       if With_Errors
-        and then E.Error_Msg /= Null_Unbounded_String
+        and then Present (E.Error_Msg)
       then
          Append_Line (To_String (E.Error_Msg));
       end if;
@@ -3594,7 +3594,7 @@ package body GNATdoc.Atree is
 
    procedure ploc (E : Entity_Id) is
    begin
-      if E.Xref.Loc /= No_Location then
+      if Present (E.Xref.Loc) then
          GNAT.IO.Put_Line
            ((+E.Xref.Loc.File.Dir_Name)
              & Image (E.Xref.Loc));

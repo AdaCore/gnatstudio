@@ -32,8 +32,7 @@ with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
 with String_Utils;             use String_Utils;
 with Templates_Parser;         use Templates_Parser;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
-with Xref.Docgen;              use Xref.Docgen;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body GNATdoc.Backend.Simple is
    use type EInfo_List.Vector;
@@ -703,7 +702,7 @@ package body GNATdoc.Backend.Simple is
          E        : Entity_Id)
       is
       begin
-         if Get_Src (E) /= Null_Unbounded_String then
+         if Present (Get_Src (E)) then
             Append_Line (Printout, "");
 
             if In_Ada_Language (E) then
@@ -738,7 +737,7 @@ package body GNATdoc.Backend.Simple is
          Header : constant String (Name'Range) := (others => '=');
 
       begin
-         if Get_Src (E) /= Null_Unbounded_String then
+         if Present (Get_Src (E)) then
             ReST_Append_Label (Printout, E);
 
             --  Append labels to all the formals. Required to facilitate
@@ -797,7 +796,7 @@ package body GNATdoc.Backend.Simple is
 
          procedure Add (Tag_Info : Tag_Info_Ptr) is
          begin
-            if Tag_Info.Tag = Null_Unbounded_String then
+            if No (Tag_Info.Tag) then
                Result := Result
                  & Trim (Reduce (To_String (Tag_Info.Text)),
                          Ada.Strings.Left) & ASCII.LF
@@ -810,7 +809,7 @@ package body GNATdoc.Backend.Simple is
                     & ASCII.LF;
 
                elsif Tag_Info.Tag = "param" then
-                  if Tag_Info.Text /= Null_Unbounded_String then
+                  if Present (Tag_Info.Text) then
                      Result := Result
                        & "**" & Tag_Info.Tag & "** "
                        & Tag_Info.Attr & ASCII.LF
