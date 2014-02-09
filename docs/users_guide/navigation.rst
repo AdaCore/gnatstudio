@@ -1,3 +1,4 @@
+.. highlight:: ada
 .. _Source_Navigation:
 
 *****************
@@ -23,6 +24,7 @@ account by GPS.
 Here's language specific information about source navigation:
 
 *Ada*
+
   .. index:: Ada; cross-references
 
   By default, GPS uses the GNAT compiler to generate the cross-reference
@@ -58,6 +60,7 @@ Here's language specific information about source navigation:
 
 
 *C/C++*
+
   .. index:: C; cross-references
   .. index:: C++; cross-references
   .. index:: gcc; -fdump-xref
@@ -362,55 +365,55 @@ cross-references.
 
 * :menuselection:`References --> Find all references`
 
-    :ref:`Find all references <Find_All_References>` to *entity* in all the
-    files in the project.
+  :ref:`Find all references <Find_All_References>` to *entity* in all the
+  files in the project.
 
 * :menuselection:`References --> Find all references...`
 
-    Similar to the entry above except you can select more precisely what
-    kind of reference should be displayed.  You can also specify the scope
-    of the search and whether the context (or caller) at each reference
-    should be displayed.
+  Similar to the entry above except you can select more precisely what
+  kind of reference should be displayed.  You can also specify the scope
+  of the search and whether the context (or caller) at each reference
+  should be displayed.
 
-    .. index:: primitive operations
-    .. index:: overriding operations
-    .. index:: methods
+  .. index:: primitive operations
+  .. index:: overriding operations
+  .. index:: methods
 
-    The option :guilabel:`Include overriding and overriden operations`,
-    includes references to overriden or overriding entities.  This is
-    particularly useful if you need to know whether you can easily modify
-    the profile of a primitive operation or method since you can see what
-    other entities would also be impacted. If you select only the
-    :guilabel:`declaration` check box, you see the list of all related
-    primitive operations.
+  The option :guilabel:`Include overriding and overriden operations`,
+  includes references to overriden or overriding entities.  This is
+  particularly useful if you need to know whether you can easily modify
+  the profile of a primitive operation or method since you can see what
+  other entities would also be impacted. If you select only the
+  :guilabel:`declaration` check box, you see the list of all related
+  primitive operations.
 
-    .. index:: imported entities
+  .. index:: imported entities
 
-    This dialog allows you to determine which entities are imported from a
-    given file or unit. Click on any entity from that file (for example on
-    the :command:`with` line for Ada code) and select the :guilabel:`All
-    entities imported from same file` toggle, which displays in the
-    :guilabel:`Location` view the list of all entities imported from the
-    same file.
+  This dialog allows you to determine which entities are imported from a
+  given file or unit. Click on any entity from that file (for example on
+  the :command:`with` line for Ada code) and select the :guilabel:`All
+  entities imported from same file` toggle, which displays in the
+  :guilabel:`Location` view the list of all entities imported from the
+  same file.
 
-    Selecting the :guilabel:`Show context` option produces a list of all
-    the references to these entities within the file.  If it's not
-    selected, you just get a pointer to the declaration of the imported
-    entities.
+  Selecting the :guilabel:`Show context` option produces a list of all
+  the references to these entities within the file.  If it's not
+  selected, you just get a pointer to the declaration of the imported
+  entities.
 
 * :menuselection:`References --> Find all local references to *entity*`
 
-    :ref:`Find all references <Find_All_References>` to *entity* in the current
-    file (or in the current top level unit for Ada sources).
+  :ref:`Find all references <Find_All_References>` to *entity* in the current
+  file (or in the current top level unit for Ada sources).
 
 * :menuselection:`References --> Variables used in *entity*`
 
-    Find all variables (local or global) used in *entity* and list each first
-    reference in the locations window.
+  Find all variables (local or global) used in *entity* and list each first
+  reference in the locations window.
 
 * :menuselection:`References --> Non Local variables used in *entity*`
 
-    Find all non-local variables used in the entity.
+  Find all non-local variables used in the entity.
 
 .. index:: plug-ins; methods.py
 
@@ -429,7 +432,7 @@ cross-references.
 
 * :menuselection:`Browsers --> *Entity* calls (recursively)`
 
-  Open or raise the :guilabel`Callgraph` browser on the specified entity
+  Open or raise the :guilabel:`Callgraph` browser on the specified entity
   and display all the subprograms called by *entity*, transitively for all
   subprograms.  Since this can take a long time to compute and generate a
   very large graph, an intermediate dialog is displayed to limit the number
@@ -437,8 +440,8 @@ cross-references.
 
 * :menuselection:`*Entity* is called by`
 
-   Open or raise the :guilabel:`Callgraph` browser on the specified entity
-   and display all the subprograms calling *entity*. See :ref:`Call_Graph`.
+  Open or raise the :guilabel:`Callgraph` browser on the specified entity
+  and display all the subprograms calling *entity*. See :ref:`Call_Graph`.
 
 * :menuselection:`Expanded code`
 

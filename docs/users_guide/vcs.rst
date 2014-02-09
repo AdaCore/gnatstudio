@@ -17,7 +17,8 @@ ClearCase that you may already have on your system.
 
 GPS has builtin support for the following VCS systems:
 
-*Auto*
+* :guilabel:`Auto`
+
   .. index:: VCS, auto
 
   You can set GPS to auto-detect the VCS to use for each project by
@@ -25,27 +26,31 @@ GPS has builtin support for the following VCS systems:
   properties editor. (See :ref:`The_Project_Properties_Editor`.)  This is
   the default behavior when no VCS is specified in the project.
 
-*ClearCase*
+* :guilabel:`ClearCase`
+
   .. index:: VCS, ClearCase
 
   The standard ClearCase interface, which is built-in and uses generic GPS
   terminology for VCS operations. Only Snapshot Views are supported in the
   ClearCase integration; Dynamic Views are not supported.
 
-*ClearCase Native*
+* :guilabel:`ClearCase Native`
+
   .. index:: VCS, ClearCase Native
 
   A customizable interface to ClearCase using, by default, terminology
   specific to ClearCase.  Only Snapshot Views are supported in the ClearCase
   integration; Dynamic Views are not supported.
 
-*CVS*
+* :guilabel:`CVS`
+
   .. index:: VCS, CVS
 
   The Concurrent Version System.  To use this, you must have a
   :program:`patch` tool, which usually comes with CVS.
 
-*Git*
+* :guilabel:`Git`
+
   .. index:: VCS, Git
 
   Distributed fast source code management. Git is only partially supported
@@ -53,12 +58,14 @@ GPS has builtin support for the following VCS systems:
   working with the index) is only available from the command line.  To use
   this, you must have a :program:`diff` tool, which usually comes with Git.
 
-*Mercurial*
+* :guilabel:`Mercurial`
+
   .. index:: VCS, Mercurial
 
   An experimental plugin for supporting Mercurial.
 
-*Subversion*
+* :guilabel:`Subversion`
+
   .. index:: VCS, Subversion
 
   The Subversion version control system.  On Windows, this version is
@@ -66,7 +73,8 @@ GPS has builtin support for the following VCS systems:
   path names.  To use this, you must have the :program:`patch` and
   :program:`diff` tools that usually come with Subversion.
 
-*Subversion Windows*
+* :guilabel:`Subversion Windows`
+
   .. index:: VCS, Subversion Windows
 
   The Windows native Subversion version control system. The external
@@ -118,7 +126,7 @@ project views, and in editors.  See
 
 The :guilabel:`VCS Explorer` contains the following columns:
 
-*Project / File*
+* :guilabel:`Project / File`
 
   This is a two-level tree. The first level contains the name of the
   project and the second the name of files inside the project. Next to the
@@ -126,7 +134,7 @@ The :guilabel:`VCS Explorer` contains the following columns:
   column by clicking on its header.  For a project, this is the only
   information available: the columns described below are for files only.
 
-*Status*
+* :guilabel:`Status`
 
   Shows the status of the file. You can sort this column by clicking on
   its header. The possible status for files are:
@@ -180,19 +188,20 @@ The :guilabel:`VCS Explorer` contains the following columns:
 
     The file contains conflicts from a previous update operation.
 
-*Log*
+* :guilabel:`Log`
 
   Indicates whether a revision log exists for this file.
 
-*Activity*
+* :guilabel:`Activity`
+
   The name of the activity the file belongs to. See :ref:`VCS_Activities`
   for more details.
 
-*Working rev.*
+* :guilabel:`Working rev.`
 
   Indicates the version of the local file.
 
-*Head rev.*
+* :guilabel:`Head rev.`
 
   Indicates the most recent version of the file in the repository.
 
@@ -260,84 +269,86 @@ single lines from the selection, hold down the :kbd:`Control` key and
 left-click what you want to select or remove.
 
 There are different contextual menu entries depending on the position on the
-screen.  An empty area has only the following option:
+screen.
 
-*Create new activity*
+* An empty area has only the following option:
 
-  Create a new activity.   Edit the name by double clicking on it.
+  * :guilabel:`Create new activity`
 
-On an activity line, the contextual menu contains:
+    Create a new activity.   Edit the name by double clicking on it.
 
-*Group commit*
+* On an activity line, the contextual menu contains:
 
-  This is a selectable menu entry, activated only if the VCS supports
-  atomic commit and absolute filenames. See :ref:`The_VCS_node` for full
-  details.
+  * :guilabel:`Group commit`
 
-*Create new activity*
+    This is a selectable menu entry, activated only if the VCS supports
+    atomic commit and absolute filenames. See :ref:`The_VCS_node` for full
+    details.
 
-  Create a new activity.  Edit the name by double clicking on it.
+  * :guilabel:`Create new activity`
 
-*Re-open activity / Close activity*
+    Create a new activity.  Edit the name by double clicking on it.
 
-  If the activity is closed, re-open it.  If open, close the activity.
+  * :guilabel:`Re-open activity / Close activity`
 
-*Delete activity*
+    If the activity is closed, re-open it.  If open, close the activity.
 
-  Remove the activity.
+  * :guilabel:`Delete activity`
 
-*Commit activity*
+    Remove the activity.
 
-  Commit the activity. If group commit is activated then the commit log
-  content is generated using a fully configurable template file.  See
-  :ref:`Files`.  If group commit is not activated, the log content for each
-  activity file is the file log concatenated with the activity log. After
-  this operation the file's log are removed but the activity log is
-  retained as documentation.
+  * :guilabel:`Commit activity`
 
-*Query status*
+    Commit the activity. If group commit is activated then the commit log
+    content is generated using a fully configurable template file.  See
+    :ref:`Files`.  If group commit is not activated, the log content for each
+    activity file is the file log concatenated with the activity log. After
+    this operation the file's log are removed but the activity log is
+    retained as documentation.
 
-  Query the status for all source files contained in the activity.
+  * :guilabel:`Query status`
 
-*Update*
+    Query the status for all source files contained in the activity.
 
-  Update all source files contained in the activity.
+  * :guilabel:`Update`
 
-*Compare against head revision*
+    Update all source files contained in the activity.
 
-  Show a visual comparison between the local activity files and the most
-  recent version of those files in the repository.
+  * :guilabel:`Compare against head revision`
 
-*Build patch file*
+    Show a visual comparison between the local activity files and the most
+    recent version of those files in the repository.
 
-  Create a patch file (in text format) for the activity. The patch file
-  contains a header (the activity log and file's logs) and the diff of
-  each file. The header format is fully configurable using a template
-  file. See :ref:`Files`.
+  * :guilabel:`Build patch file`
 
-*Edit revision log*
+    Create a patch file (in text format) for the activity. The patch file
+    contains a header (the activity log and file's logs) and the diff of
+    each file. The header format is fully configurable using a template
+    file. See :ref:`Files`.
 
-  Edit the current revision log for activity. This log is shared with all
-  the activity files.
+  * :guilabel:`Edit revision log`
 
-*Remove revision log*
+    Edit the current revision log for activity. This log is shared with all
+    the activity files.
 
-  Remove the current revision log for activity. This menu is present
-  only if the activity revision log exists.
+  * :guilabel:`Remove revision log`
 
-On a line containing a filename, the contextual menu contains:
+    Remove the current revision log for activity. This menu is present
+    only if the activity revision log exists.
 
-*Create new activity*
+* On a line containing a filename, the contextual menu contains:
 
-  Create a new activity. Edit the name by double clicking on it.
+  * :guilabel:`Create new activity`
 
-*Remove from activity*
+    Create a new activity. Edit the name by double clicking on it.
 
-  Remove the selected file from the activity and delete the activity log.
+  * :guilabel:`Remove from activity`
 
-*Edit revision log*
+    Remove the selected file from the activity and delete the activity log.
 
-  Edit the current revision log for the selected file.
+  * :guilabel:`Edit revision log`
+
+    Edit the current revision log for the selected file.
 
 .. _The_VCS_Menu:
 
@@ -354,25 +365,25 @@ selected item in the :menuselection:`Tools --> Views --> Files` menu.  In
 most cases, the VCS contextual menu offers more control of VCS operations.
 See :ref:`The_Version_Control_Contextual_Menu`.
 
-*Explorer*
+* :guilabel:`Explorer`
 
   Open or raise the :guilabel:`VCS Explorer`. See :ref:`The_VCS_Explorer`.
 
-*Update all projects*
+* :guilabel:`Update all projects`
 
   Update the source files in the current project and all imported
   subprojects.
 
-*Query status for all projects*
+* :guilabel:`Query status for all projects`
 
   Query the status of all files in the project and all imported subprojects.
 
-*Create tag...*
+* :guilabel:`Create tag...`
 
   Create a tag or branch tag starting from a specific root
   directory. The name of the tag is a simple name.
 
-*Switch tag...*
+* :guilabel:`Switch tag...`
 
   Switch the local copy to a specific tag. The name of the tag depends on
   the external VCS used. For CVS this is a simple tag name and for
@@ -395,34 +406,35 @@ various parts of GPS, including the project view, the source editor and the
 Depending on the context, some of the items described in this section
 aren't shown because they're not relevant to that context.
 
-*Remove project*
+* :guilabel:`Remove project`
 
   Only displayed for a project. Remove the selected project from the
   :guilabel:`VCS Explorer`.
 
-*Expand all*
+* :guilabel:`Expand all`
 
   Expand all :guilabel:`VCS Explorer` project nodes.
 
-*Collapse all*
+* :guilabel:`Collapse all`
 
   Collapse all :guilabel:`VCS Explorer` project nodes.
 
-*Clear View*
+* :guilabel:`Clear View`
 
   Clear the :guilabel:`VCS Explorer`.
 
-*Query status*
+* :guilabel:`Query status`
 
   Query the status of the selected item. Starts the :guilabel:`VCS Explorer`.
 
-*Update*
-  .. _Update:
+.. _Update:
+* :guilabel:`Update`
+
 
   Update the currently selected item (file, directory or project).
 
-*Commit*
-  .. _Commit:
+.. _Commit:
+* :guilabel:`Commit`
 
   Submits the changes made to the file to the repository and queries the
   file's status file once the change is made.
@@ -437,56 +449,57 @@ aren't shown because they're not relevant to that context.
   checker` in the project properties dialog. This works on changelog files
   in the same way as the :guilabel:`File checker` works on source files.
 
-*Open*
-  .. _Open:
+.. _Open:
+* :guilabel:`Open`
 
   Open the currently selected file for writing.  With some VCS systems,
   this is a necessary operation, but not on all.
 
-*View entire revision history*
-  .. _View_revision_history:
+.. _View_revision_history:
+* :guilabel:`View entire revision history`
 
   Show the revision logs for all previous revisions of this file.
 
-*View specific revision history*
+* :guilabel:`View specific revision history`
 
   Show the revision logs for one previous revision of this file.
 
-*Compare against head revision*
-  .. index:: compare
+.. _Compare_against_head:
+* :guilabel:`Compare against head revision`
 
-  .. _Compare_against_head:
+  .. index:: compare
 
   Display a visual comparison between the local file and the most recent
   version of that file in the repository.
 
-*Compare against other revision*
-  .. _Compare_against_working:
+.. _Compare_against_working:
+* :guilabel:`Compare against other revision`
+
 
   Display a visual comparison between the local file and a specified
   version of that file in the repository.
 
-*Compare two revisions*
-  .. _Compare_against_revision:
+.. _Compare_against_revision:
+* :guilabel:`Compare two revisions`
 
   Display a visual comparison between two specified revisions of the file
   in the repository.
 
-*Compare base against head*
-  .. _Compare_base_against_head:
+.. _Compare_base_against_head:
+* :guilabel:`Compare base against head`
 
   Display a visual comparison between the current version of the file in
   the repository and the most recent version of that file.
 
-*Compare against tag/branch*
-  .. _Compare_base_against_tag/branch:
+.. _Compare_base_against_tag/branch:
+* :guilabel:`Compare against tag/branch`
 
   Only available on a Revision View and over a tag or branch. Display a
   visual comparison between the corresponding version of the file in the
   repository and the version of that file in the tag or branch.
 
-*Annotate*
-  .. _Annotate:
+.. _Annotate:
+* :guilabel:`Annotate`
 
   Display the annotations for the file, i.e. the information for each line
   of the file showing the revision corresponding to that line.  This may
@@ -495,69 +508,69 @@ aren't shown because they're not relevant to that context.
   When using CVS or Subversion, click the annotations to display the
   changelog associated with the specific revision of that line.
 
-*Remove Annotate*
+* :guilabel:`Remove Annotate`
 
   Remove annotations from the selected file.
 
-*Edit revision log*
+* :guilabel:`Edit revision log`
 
   Edit the current revision log for the selected file.
 
-*Edit global ChangeLog*
+* :guilabel:`Edit global ChangeLog`
 
   Edit the global ChangeLog entry for the selected file.
   See :ref:`Working_with_global_ChangeLog_file`.
 
-*Remove revision log*
+* :guilabel:`Remove revision log`
 
   Clear the current revision associated with the selected file.
 
-*Add*
+* :guilabel:`Add`
 
   Add a file to the repository, using the current revision log for the
   current file. If no revision log exists, create one. The file is
   committed in the repository.
 
-*Add/No commit*
+* :guilabel:`Add/No commit`
 
   Likewise, but don't commit the file.
 
-*Remove*
+* :guilabel:`Remove`
 
   Remove a file from the repository, using the current revision log for the
   current file. If no revision log exists, create one. The modification is
   committed in the repository.
 
-*Remove/No commit*
+* :guilabel:`Remove/No commit`
 
   Likewise, but don't commit.
 
-*Revert*
+* :guilabel:`Revert`
 
   Revert a file to the repository revision, discarding all local
   changes.
 
-*Resolved*
+* :guilabel:`Resolved`
 
   Mark a file's merge conflics as resolved. Some version control systems
   (e.g., Subversion) block any commit until this action is performed.
 
-*Switch tag/bracnh*
+* :guilabel:`Switch tag/bracnh`
 
   Only available on a Revision View and over a tag or branch name
   Switch the tree starting from a selected root to this specific tag or
   branch.
 
-*Merge*
+* :guilabel:`Merge`
 
   Only available on a Revision View and over a tag or branch name. Merge
   file changes made on this specific tag or branch.
 
-*View revision*
+* :guilabel:`View revision`
 
   Only available on a Revision View and over a revision.
 
-*Commit as new Activity*
+* :guilabel:`Commit as new Activity`
 
   Prepare a group-commit in just one-click. This action:
 
@@ -569,106 +582,106 @@ aren't shown because they're not relevant to that context.
 
   * commits the anonymous activity.
 
-*Add to Activity*
+* :guilabel:`Add to Activity`
 
   A menu containing all the current activities. Selecting one adds the
   current file to this activity. This menu is present only if the file is
   not already part of an activity.
 
-*Remove from Activity*
+* :guilabel:`Remove from Activity`
 
   Remove file from the given activity. This menu is present only if the
   file is already part of an activity.
 
-*Directory*
+* :guilabel:`Directory`
 
   Only available when the current context contains directory information
 
-  *Add/No commit*
+  * :guilabel:`Add/No commit`
 
     Add the selected directory into the VCS.
 
-  *Remove/No commit*
+  * :guilabel:`Remove/No commit`
 
     Removes the selected directory from the VCS.
 
-  *Commit*
+  * :guilabel:`Commit`
 
     Commit the selected directory into the VCS. This action is available
     only if the VCS supports commit on directories.  See :ref:`The_VCS_node`.
 
-  *Add to Activity*
+  * :guilabel:`Add to Activity`
 
     Add the selected directory to the VCS. This action is available
     only if the VCS supports commit on directories.  See :ref:`The_VCS_node`.
 
-  *Query status for directory*
+  * :guilabel:`Query status for directory`
 
     Query the status for files contained in the selected directory.
 
-  *Update directory*
+  * :guilabel:`Update directory`
 
     Update the files in the selected directory.
 
-  *Query status for directory recursively*
+  * :guilabel:`Query status for directory recursively`
 
     Query status for files in the selected directory and all subdirectories
     recursively. Links and hidden directories are not included.
 
-  *Update directory recursively*
+  * :guilabel:`Update directory recursively`
 
     Update the files (bring them up to date with the repository) in the
     selected directory and all subdirectories recursively. Links and hidden
     directories not included..
 
-*Project*
+* :guilabel:`Project`
 
   Only available when the current context contains project information
 
-  *List all files in project*
+  * :guilabel:`List all files in project`
 
     Start the :guilabel:`VCS Explorer` with all source files contained
     in the project.
 
-  *Query status for project*
+  * :guilabel:`Query status for project`
 
     Query the status for all source files contained in the project.
 
-  *Update project*
+  * :guilabel:`Update project`
 
     Update all source files in the project.
 
-  *List all files in project and sub-projects*
+  * :guilabel:`List all files in project and sub-projects`
 
     Start the :guilabel:`VCS Explorer` with all source files contained in
     the project and all imported subprojects.
 
-  *Query status for project and sub-projects*
+  * :guilabel:`Query status for project and sub-projects`
 
     Query the status for all source files contained in the project and all
     imported subprojects.
 
-  *Update project and subprojects*
+  * :guilabel:`Update project and subprojects`
 
     Update all source files in the project and all imported subprojects.
 
-*Select files same status*
+* :guilabel:`Select files same status`
 
   Select the files having the same status as the current file.
 
-*Filters*
+* :guilabel:`Filters`
 
   Only available from the :guilabel:`VCS Explorer`. This menu controls the
   filtering of the items displayed in the list.
 
-  *Show all status*
+  * :guilabel:`Show all status`
 
     Don't exclude any file from the list.
 
-  *Hide all status*
+  * :guilabel:`Hide all status`
     Remove all files from the list.
 
-  *Show <status>*
+  * :guilabel:`Show <status>`
 
     When disabled, filter the files with the given status from the list.
 

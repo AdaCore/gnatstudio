@@ -103,7 +103,8 @@ the resulting files in the correct directories).
 Each project file contains the following information (see the GNAT Pro
 User's Guide for the full list):
 
-* **List of imported projects**:
+* :file:`List of imported projects`
+
   .. index:: project; imported project
 
   When compiling sources from this project, the builder first makes sure it
@@ -118,14 +119,16 @@ User's Guide for the full list):
   file cannot be under control of two different projects), ensuring that
   the file will be found no matter what project is managing it.
 
-* **List of source directories**:
+* :file:`List of source directories`
+
   .. index:: project; source directory
 
   All sources managed by a project are located in one or more source
   directories. Each project can have multiple source directories and a
   given source directory may be shared by multiple projects.
 
-* **Object directory**:
+* :file:`Object directory`
+
   .. index:: project; object directory
 
   When sources of the project are compiled, the resulting object files are
@@ -137,14 +140,16 @@ User's Guide for the full list):
   object files are put in the subproject's own object directory and not the
   parent's object directory.
 
-* **Exec directory**:
+* :file:`Exec directory`
+
   .. index:: project; exec directory
 
   When the object files are linked into an executable, this executable is
   put in the exec directory specified by this attribute. If it's omitted,
   the builder puts the executable into the object directory.
 
-* **List of source files**:
+* :file:`List of source files`
+
   .. index:: project; source files
 
   Each project is responsible for managing its set of source files. These
@@ -158,7 +163,8 @@ User's Guide for the full list):
 
   This attribute cannot be modified graphically.
 
-* **List of main units**:
+* :file:`List of main units`
+
   .. index:: project; main units
 
   The main units of a project (or main files in some languages) are the
@@ -170,7 +176,8 @@ User's Guide for the full list):
   :guilabel:`Run` and :guilabel:`Debug` menu with the list of executables,
   based on this list.
 
-* **Naming schemes**:
+* :file:`Naming schemes`
+
   .. index:: project; naming schemes
 
   The naming scheme refers to the way files are named for each language
@@ -178,7 +185,8 @@ User's Guide for the full list):
   you open a source file and what tools to use to compile or otherwise
   manipulate a source file.
 
-* **Embedded targets and cross environments**:
+* :file:`Embedded targets and cross environments`
+
   .. index:: project; cross environment
 
   GPS supports cross environment software development: GPS itself can run
@@ -193,12 +201,13 @@ User's Guide for the full list):
   The project file contains the information required to log on to the
   remote host.
 
-* **Tools**:
+* :file:`Tools`
 
   Project files provide a simple way of specifying the compiler and
   debugger commands to use.
 
-* **Switches**:
+* :file:`Switches`
+
   .. index:: project; switches
 
   Each tool used by GPS (such as the compiler, pretty-printer, and
@@ -592,16 +601,16 @@ view.
 
 The wizard has the following pages:
 
-* Project type
-* Project Naming
-* Languages Selection
-* Version Control System Selection
-* Source Directories Selection
-* Build Directory
-* Main Units
-* Library
-* Naming Scheme
-* Switches
+* :guilabel:`Project type`
+* :guilabel:`Project Naming`
+* :guilabel:`Languages Selection`
+* :guilabel:`Version Control System Selection`
+* :guilabel:`Source Directories Selection`
+* :guilabel:`Build Directory`
+* :guilabel:`Main Units`
+* :guilabel:`Library`
+* :guilabel:`Naming Scheme`
+* :guilabel:`Switches`
 
 Project Type
 ------------
@@ -615,7 +624,7 @@ Several types of project wizards are provided in GPS:
   the object directory.  The rest of this chapter describes this wizard in
   more detail.
 
-* Project Tree
+* :guilabel:`Project Tree`
 
   This wizard attempts to create a set of one or more project files to
   represent your current build environment. It analyzes the location of
@@ -626,14 +635,15 @@ Several types of project wizards are provided in GPS:
   This wizard may not succeed in all cases, but is worth trying if you
   already have an existing set of sources
 
-* Convert GLIDE Project (.adp)
+* :guilabel:`Convert GLIDE Project (.adp)`
 
   This wizard helps you convert a :file:`.adp` project file used by the
   GLIDE environment. The same restrictions apply as above, except that the
   list of source directories, object directories and tool switches are read
   directly from that file.
 
-* Library Project
+* :guilabel:`Library Project`
+
   .. index:: project; library
 
   This specialized wizard is similar to the :guilabel:`Single Project`
@@ -642,7 +652,8 @@ Several types of project wizards are provided in GPS:
   static), as opposed to an executable in the case of :guilabel:`Single
   Project`.
 
-* Project Extention
+* :guilabel:`Project Extention`
+
   .. index:: project; extending
 
   This specialized wizard allows you to easily create project extentions.

@@ -16,118 +16,124 @@ is disabled, it means it's a tool that's not yet available.
 
 The list of active entries includes:
 
-*Views*
+* :guilabel:`Views`
 
 
-  *Bookmarks*
+  * :guilabel:`Bookmarks`
+
     .. index:: bookmark
 
     See :ref:`Bookmarks`.
 
-  *Call Trees*
+  * :guilabel:`Call Trees`
 
     Open a tree view displaying function callers and callees. See
     :ref:`Call_Graph`.
 
-  *Clipboard*
+  * :guilabel:`Clipboard`
 
     See :ref:`The_Clipboard_View`.
 
-  *Coverage Report*
+  * :guilabel:`Coverage Report`
 
     See :ref:`Coverage Report <Coverage_Report>`.
 
-  *Files*
+  * :guilabel:`Files`
 
     Open a file system explorer in the left area.  See
     :ref:`The_File_View`.
 
-  *File Switches*
+  * :guilabel:`File Switches`
 
     See :ref:`File Switches <File_Switches>`.
 
-  *Outline*
+  * :guilabel:`Outline`
 
     Open a view of the current source editor. See :ref:`The_Outline_View`.
 
-  *Messages*
+  * :guilabel:`Messages`
 
     Open the :guilabel:`Messages` view.  See :ref:`The_Messages_View`.
 
-  *Project*
+  * :guilabel:`Project`
 
     See :ref:`The_Project_View`.
 
-  *Remote*
+  * :guilabel:`Remote`
 
     See :ref:`Setup_a_remote_project`.
 
-  *Scenario*
+  * :guilabel:`Scenario`
 
     See :ref:`Scenarios_and_Configuration_Variables`.
 
-  *Tasks*
+  * :guilabel:`Tasks`
 
     See :ref:`The_Task_Manager`.
 
-  *VCS Activities*
+  * :guilabel:`VCS Activities`
 
     See :ref:`VCS_Activities`.
 
-  *VCS Explorer*
+  * :guilabel:`VCS Explorer`
 
     See :ref:`The_VCS_Explorer`.
 
-  *Windows*
+  * :guilabel:`Windows`
 
     Open a view containing all currently opened files.  See
     :ref:`The_Windows_View`.
 
-*Browsers*
+* :guilabel:`Browsers`
 
-  *Call Graph*
+  * :guilabel:`Call Graph`
 
     See :ref:`Call_Graph`.
 
-  *Dependency*
+  * :guilabel:`Dependency`
 
     See :ref:`The_Dependency_Browser`.
 
-  *Elaboration Cycles*
+  * :guilabel:`Elaboration Cycles`
 
     See :ref:`Elaboration_Cycles_Browser`.
 
-  *Entity*
+  * :guilabel:`Entity`
 
     See :ref:`Entity_Browser`.
 
-*Coding Standard*
+* :guilabel:`Coding Standard`
+
   .. index:: Coding Standard
 
   See :ref:`Coding_Standard`.
 
-*Compare*
+* :guilabel:`Compare`
+
   .. index:: visual diff
 
   See :ref:`Visual_Comparison`.
 
-*Consoles*
+* :guilabel:`Consoles`
 
-  *GPS Shell*
+  * :guilabel:`GPS Shell`
+
     .. index:: shell
 
-    Open a shell console in the bottom area of the GPS window.  This not an
-    OS shell console, but a GPS shell console, where you can type GPS
-    specific commands such as :command:`help`.  See
+    Open a shell console in the bottom area of the GPS window.  This
+    not an OS shell console, but a GPS shell console, where you can
+    type GPS specific commands such as :command:`help`.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
-  *Python*
+  * :guilabel:`Python`
+
     .. index:: python
 
     Open a python console to access the Python interpreter.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
-  *OS Shell*
+  * :guilabel:`OS Shell`
+
     .. index:: shell
 
     Open an OS (Windows or Unix) console, using the environment variables
@@ -148,48 +154,56 @@ The list of active entries includes:
     in such cases.  Normally, you can safely put this in your
     :file:`.bashrc`
 
-  *Auxiliary Builds*
+  * :guilabel:`Auxiliary Builds`
 
     Open the console containing auxiliary buils output. Only
     cross-reference automated generation output is currently sent to this
     console.  See :ref:`Working_with_two_compilers`.
 
-*Coverage*
+* :guilabel:`Coverage`
+
   .. index:: code coverage
 
   See :ref:`Code_Coverage`.
 
-*Documentation*
+* :guilabel:`Documentation`
+
   .. index:: documentation
 
   See :ref:`Documentation_Generation`.
 
-*GNATtest*
+* :guilabel:`GNATtest`
+
   .. index:: gnattest
 
   See :ref:`Working_With_Unit_Tests`.
 
-*Stack Analysis*
+* :guilabel:`Stack Analysis`
+
   .. index:: stack analysis
 
   See :ref:`Stack_Analysis`.
 
-*Macro*
+* :guilabel:`Macro`
+
   .. index:: macros
 
   See :ref:`Recording_and_replaying_macros`.
 
-*Metrics*
+* :guilabel:`Metrics`
+
   .. index:: metrics
 
   See :ref:`Metrics`.
 
-*Plug-ins*
+* :guilabel:`Plug-ins`
+
   .. index:: plug-ins
 
   See :ref:`The_Plug-ins_Editor`.
 
-*Interrupt*
+* :guilabel:`Interrupt`
+
   .. index:: interrupt
 
   Interrupt the last task launched such as a compilation or VCS operation.
@@ -504,7 +518,7 @@ Documentation` menu:
 
 *Generate for...*
 
-  Open a File Selector Dialog (:ref:`The_File_Selector`) and generate
+  Open a File Selector Dialog (see :ref:`The_File_Selector`) and generate
   documentation for the specified file.
 
 In addition, when relevant (depending on the context), right-clicking
@@ -513,7 +527,7 @@ displays a :guilabel:`Documentation` contextual menu.
 Select the entry called :guilabel:'Generate for <filename>' from a source
 file contextual menu to generate documentations for that file, and if it
 exists, its corresponding body (see :ref:`The_Preferences_Dialog`).  From a
-project contextual menu (se :ref:`The_Project_View`), you have the choice
+project contextual menu (see :ref:`The_Project_View`), you have the choice
 of generating documentation for all files in the selected project only or
 from the selected project and all subprojects.  Find the list of all
 documentation options in :ref:`The_Preferences_Dialog`.
@@ -703,7 +717,7 @@ depending on the context:
 
   Load or re-load coverage information for the project `XXX`.
 
-* :menuselection:`Load data for :file:`xxxxxxxx.xxx``
+* :menuselection:`Load data for xxxxxxxx.xxx`
 
   Load (or reload) coverage information for the specified source file.
 
@@ -719,27 +733,27 @@ entities listed in the coverage report), you'll see a :guilabel:`Coverage`
 submenu containing the following options, depending on the type of entity
 selected.  For example, if you click on a file, the options are:
 
-*Show coverage information*
+* :guilabel:`Show coverage information`
 
   Display an annotation column on the left side of the current source
   editor to indicates which lines are covered and which aren't.  Lines that
   aren't covered are also listed in the :guilabel:`Locations` view.  See
   :ref:`The_Locations_View`.
 
-*Hide coverage information*
+* :guilabel:`Hide coverage information`
 
   Remove the annotation column from the current source editor and clear
   converage information from the :guilabel:`Locations` view.
 
-*Load data for :file:`xxxxxxxx.xxx`*
+* :guilabel:`Load data for xxxxxxxx.xxx`
 
   Load (or reload) coverage information for the specified source file.
 
-*Remove data of :file:`xxxxxxxx.xxx`*
+* :guilabel:`Remove data of `xxxxxxxx.xxx`
 
   Delete coverage information from the specified source file.
 
-*Show Coverage report*
+* :guilabel:`Show Coverage report`
 
   Open a new window summarizing the coverage information. (This entry
   appears only if the contextual menu has been created from outside the
@@ -836,7 +850,7 @@ The Contextual Menu
 -------------------
 
 The contextual menu for a project, file or subprogram entity (including the
-entities listed in the coverage report) has a :guilabel:'Stack Analysis'
+entities listed in the coverage report) has a :guilabel:`Stack Analysis`
 submenu containing the following options, dependong on the type of entity
 selected:
 

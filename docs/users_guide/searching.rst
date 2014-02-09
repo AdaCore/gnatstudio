@@ -144,6 +144,7 @@ The second section in the dialog is a row of five buttons, used to start
 the search, or continue to the next occurrence, or set options:
 
 * :guilabel:`Regexp`
+
   .. index:: regular expression
 
   Toggles between strings and regular expressions.  Or you can select the
@@ -155,12 +156,14 @@ the search, or continue to the next occurrence, or set options:
   Project...`) and type :file:`g-regpat.ads`.
 
 * :guilabel:`Whole Word`
+
   .. index:: whole word
 
   Force the search engine to ignore substrings. For example, "sensitive"
   no longer matches "insensitive".
 
 * :guilabel:`Select on Match`
+
   .. index:: select window on match
 
   Gives the focus to the editor containing the match. If not selected, the
@@ -168,6 +171,7 @@ the search, or continue to the next occurrence, or set options:
   for the next occurrence.
 
 * :guilabel:`Close on Match`
+
   .. index:: close dialog on match
 
   This button only appears if the search window is floating. If pressed,
@@ -175,6 +179,7 @@ the search, or continue to the next occurrence, or set options:
   search string is found.
 
 * :guilabel:`Case Sensitive Search`
+
   .. index:: case sensitive
 
   By default, patterns are case insensitive (upper-case letters and
@@ -182,6 +187,7 @@ the search, or continue to the next occurrence, or set options:
   clicking this check box.
 
 * :guilabel:`Case Preserving Replace`
+
   .. index:: case preserving
 
   When this is checked, replacements preserve casing. Three casings are
@@ -223,6 +229,6 @@ instead of being an external window.  To do this, open the
 menu, and either select :menuselection:`Window --> Floating` or
 :menuselection:`Window --> Docked`.
 
-If you save the desktop (:menuselection:`File --> Save More --> Desktop`,
+If you save the desktop (:menuselection:`File --> Save More --> Desktop`),
 GPS automatically reopens the search dialog in its new place when it's next
 started.

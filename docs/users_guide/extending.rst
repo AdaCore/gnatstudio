@@ -1,3 +1,4 @@
+.. highlight:: ada
 .. _Customizing_and_Extending_GPS:
 
 *****************************
@@ -46,6 +47,7 @@ arrow, as seen in the screenshot above).
 * :guilabel:`General`
 
   * :guilabel:`Default font`
+
     .. index:: font
     .. index:: background color
 
@@ -56,6 +58,7 @@ arrow, as seen in the screenshot above).
     preference.
 
   * :guilabel:`Fixed view font`
+
     .. index:: font
 
     The fixed (monospace) font used in views like such as outline view and
@@ -63,6 +66,7 @@ arrow, as seen in the screenshot above).
     fixed width for characters for better rendering.
 
   * :guilabel:`Character set`
+
     .. index:: character set
     .. index:: ISO-8859-1
 
@@ -76,27 +80,32 @@ arrow, as seen in the screenshot above).
     to ISO-8859-1, which corresponds to western european characters.
 
   * :guilabel:`Display splash screen`
+
     .. index:: splash screen
 
     Whether a splash screen is displayed when starting GPS.
 
   * :guilabel:`Display welcome window`
+
     .. index:: welcome dialog
 
     Whether GPS displays the welcome window to select the project to use.
 
   * :guilabel:`Show text in tool bar`
+
     .. index:: tool bar
 
     Whether the tool bar shows both text and icons or only icons.
 
   * :guilabel:`Auto save`
+
     .. index:: auto save
 
     Whether unsaved files and projects are saved automatically before
     calling external tools (such as a build).
 
   * :guilabel:`Save desktop on exit`
+
     .. index:: desktop
 
     Whether the desktop (size and positions of all windows) is saved when
@@ -104,6 +113,7 @@ arrow, as seen in the screenshot above).
     GPS, the desktop is never saved.
 
   * :guilabel:`Save editor in desktop`
+
     .. index:: desktop
 
     Determines when source editors are saved in the desktop: :samp:`Never`,
@@ -126,12 +136,14 @@ arrow, as seen in the screenshot above).
       for Ada-only projects.
 
   * :guilabel:`Hyper links`
+
     .. index:: hyper mode
 
     Whether to display hyper links in the editors when the :kbd:`control`
     key is pressed.  See :ref:`Navigating_with_hyperlinks`.
 
   * :guilabel:`Clipboard size`
+
     .. index:: clipboard
 
     Controls the size of the list where all the entries copied into the
@@ -141,6 +153,7 @@ arrow, as seen in the screenshot above).
     Paste Previous` menus, as described earlier in this manual.
 
   * :guilabel:`Show status bar`
+
     .. index:: status bar
 
     Whether the status bar at the bottom of the GPS window is displayed.
@@ -156,6 +169,7 @@ arrow, as seen in the screenshot above).
     the :guilabel:`Project` view.
 
   * :guilabel:`Remove policy when fixing code`
+
     .. index:: code fix
 
     The prefered way to fix code when parts have to be removed.
@@ -164,6 +178,7 @@ arrow, as seen in the screenshot above).
     :samp:`Propose_Both_Choices` proposes a menu with both choices.
 
   * :guilabel:`Tip of the Day`
+
     .. index:: tip of the day
 
     Whether GPS displays a :guilabel:`Tip of the Day` at start up.
@@ -177,11 +192,13 @@ arrow, as seen in the screenshot above).
   described in :ref:`Multiple_Document_Interface`.
 
   * :guilabel:`Opaque`
+
     .. index:: opaque
 
     Items are resized or moved opaquely when not maximized.
 
   * :guilabel:`Destroy floats`
+
     .. index:: float
 
     If false, closing the window associated with a floating item puts the
@@ -189,6 +206,7 @@ arrow, as seen in the screenshot above).
     window is destroyed.
 
   * :guilabel:`All floating`
+
     .. index:: float
 
     All windows are floating by default, i.e. be under the control of your
@@ -196,22 +214,26 @@ arrow, as seen in the screenshot above).
     the MDI.
 
   * :guilabel:`Short titles for floats`
+
     .. index:: float
 
     All floating windows have a short title. In particular, base file names
     are used for editors instead of full names.
 
   * :guilabel:`Background color`
+
     .. index:: color
 
     Color to use for the background of the MDI.
 
   * :guilabel:`Title bar color`
+
     .. index:: color
 
     Color to use for the title bar of unselected items.
 
   * :guilabel:`Selected title bar color`
+
     .. index:: color
 
     Color to use for the title bar of selected items.
@@ -253,16 +275,19 @@ arrow, as seen in the screenshot above).
     preference.
 
 * :guilabel:`Editor`
+
   .. index:: editor
 
   * :guilabel:`General`
 
     * :guilabel:`Strip blanks`
+
       .. index:: strip blanks
 
       Whether editors remove trailing blanks when saving a file.
 
     * :guilabel:`Line terminator`
+
       .. index:: line terminator
 
       The style of line terminators used when saving files.
@@ -271,35 +296,41 @@ arrow, as seen in the screenshot above).
       uses CRLF line terminators.
 
     * :guilabel:`Display line numbers`
+
       .. index:: display line numbers
 
       Whether editors display line numbers.
 
     * :guilabel:`Display subprogram names`
+
       .. index:: Display subprogram names
 
       Whether the editor's status bar displays the subprogram name.
 
     * :guilabel:`Tooltips`
+
       .. index:: tooltip
 
       Whether tool tips are displayed automatically.
 
     * :guilabel:`Tooltips timeout`
+
       .. index:: tooltip timeout
 
       Time (in milliseconds) before displaying tooltips.
 
     * :guilabel:`Highlight delimiters`
+
       .. index:: highlight delimiter
 
       Whether the delimiter matching the character following the cursor is
       highlighted. The list of delimiters includes: `{}[]()`
 
-    * :guilabel:`Autosave delay`
-      .. index:: autosave delay
+    .. _autosave_delay:
 
-      .. _autosave_delay:
+    * :guilabel:`Autosave delay`
+
+      .. index:: autosave delay
 
       The period (in seconds) after which an editor is automatically saved,
       0 if never automatically saves.
@@ -308,12 +339,14 @@ arrow, as seen in the screenshot above).
       removed on the next explicit save operation.
 
     * :guilabel:`Right margin`
+
       .. index:: right margin
 
       The right margin to highlight, 0 if none.  This value is also used to
       implement the :menuselection:`Edit --> Refill` menu.
 
     * :guilabel:`Block highlighting`
+
       .. index:: block highlighting
 
       Whether the editor highlights the current block.  The current block
@@ -321,11 +354,13 @@ arrow, as seen in the screenshot above).
       if statements, and other similar structure.
 
     * :guilabel:`Block folding`
+
       .. index:: block folding
 
       Whether the editor provides the ability to fold and unfold blocks.
 
     * :guilabel:`Speed Column Policy`
+
       .. index:: speed column policy
 
       When the :guilabel:`Speed Column` is shown on the side of the
@@ -348,12 +383,14 @@ arrow, as seen in the screenshot above).
       can't be used on network drives.
 
     * :guilabel:`External editor`
+
       .. index:: external editor
 
       The default external editor to use.
 
+    .. _custom_editor_command:
+
     * :guilabel:`Custom editor command`
-      .. _custom_editor_command:
 
       The command line used to launch a custom editor.  GPS assumes the
       command creates a new window or terminal as needed.  If the editor
@@ -390,6 +427,7 @@ arrow, as seen in the screenshot above).
       editor needs is only explicitly called by the user.
 
     * :guilabel:`Smart completion`
+
       .. index:: smart completion
 
       When enabled, GPS loads all the information needed for the Smart
@@ -402,6 +440,7 @@ arrow, as seen in the screenshot above).
       character, such as '.'
 
   * :guilabel:`Fonts & Colors`
+
     .. index:: font
     .. index:: color
 
@@ -473,9 +512,11 @@ arrow, as seen in the screenshot above).
       Color for highlighting the search results within the text of editors.
 
   * :guilabel:`Ada`
+
     .. index:: Ada
 
     * :guilabel:`Auto indentation`
+
       .. index:: indentation
 
       How the editor should indent Ada sources.  :guilabel:`None` means no
@@ -484,6 +525,7 @@ arrow, as seen in the screenshot above).
       parser.
 
     * :guilabel:`Use tabulations`
+
       .. index:: tabs
 
       Use tab characters when indenting.  This preference doesn't modify
@@ -496,19 +538,20 @@ arrow, as seen in the screenshot above).
       Selection` action from :ref:`The_Key_Manager_Dialog`.
 
     * :guilabel:`Default indentation`
+
       .. index:: indentation level
 
       Number of spaces for the default Ada indentation.
 
     * :guilabel:`Continuation lines`
+
       .. index:: continuation line
 
       Number of extra spaces for continuation lines.
 
     * :guilabel:`Declaration lines`
-      .. index:: declaration line
 
-      .. highlight:: ada
+      .. index:: declaration line
 
       Number of extra spaces for multiple line declarations.  For example,
       if you specify a value of 4, here's how the following code would be
@@ -519,6 +562,7 @@ arrow, as seen in the screenshot above).
             variable3 : Integer;
 
     * :guilabel:`Conditional continuation lines`
+
       .. index:: conditional line
 
       Number of extra spaces used to indent multiple-line conditionals
@@ -539,6 +583,7 @@ arrow, as seen in the screenshot above).
         then
 
     * :guilabel:`Record indentation`
+
       .. index:: record indentation
 
       Number of extra spaces for record definitions, when the
@@ -560,6 +605,7 @@ arrow, as seen in the screenshot above).
          end record;
 
     * :guilabel:`Case indentation`
+
       .. index:: case indentation
 
       Whether GPS should indent case statements an extra level, as done in
@@ -708,10 +754,12 @@ arrow, as seen in the screenshot above).
         end P;
 
   * :guilabel:`C & C++`
+
     .. index:: C
     .. index:: C++
 
     * :guilabel:`Auto indentation`
+
       .. index:: indentation
 
       How the editor should indent C/C++ sources.  :guilabel:`None` is no
@@ -720,17 +768,20 @@ arrow, as seen in the screenshot above).
       specific parser to indent sources.
 
     * :guilabel:`Use tabulations`
+
       .. index:: tabs
 
       Use tab characters when indenting. If :guilabel:`True`, the editor
       replaces each occurrence of eight characters by a tab character.
 
     * :guilabel:`Default indentation`
+
       .. index:: indentation
 
       Number of spaces for the default indentation.
 
     * :guilabel:`Extra indentation`
+
       .. index:: indentation
 
       Whether to indent loops, :command:`if` and :command:`switch`
@@ -756,9 +807,11 @@ arrow, as seen in the screenshot above).
       these lines unchanged.
 
 * :guilabel:`Debugger`
+
   .. index:: debugger
 
   * :guilabel:`Preserve State on Exit`
+
     .. index:: breakpoint
 
     If enabled, the debugger automatically saves breakpoints when it exits
@@ -772,6 +825,7 @@ arrow, as seen in the screenshot above).
     the same executable, recreates the same boxes within the data window.
 
   * :guilabel:`Debugger Windows`
+
     .. index:: debugger windows
 
     Controls what happens to debugger-related windows, such the call stack,
@@ -801,6 +855,7 @@ arrow, as seen in the screenshot above).
       while these are hidden, they might reappear in unexpected locations.
 
   * :guilabel:`Break on exceptions`
+
     .. index:: breakpoint
     .. index:: exception
 
@@ -810,6 +865,7 @@ arrow, as seen in the screenshot above).
     breakpoint editor for running debuggers).
 
   * :guilabel:`Execution window`
+
     .. index:: execution
     .. index:: tty
 
@@ -847,12 +903,14 @@ arrow, as seen in the screenshot above).
     need to ask the debugger which lines contain code.
 
   * :guilabel:`Detect aliases`
+
     .. index:: aliases
 
     If enabled, don't create new items when an item with the same address
     is already present on the canvas.
 
   * :guilabel:`Assembly range size`
+
     .. index:: range size
 
     Number of assember lines to display in the initial display of the
@@ -864,6 +922,7 @@ arrow, as seen in the screenshot above).
     Color used to highlight the assembly code for the current line.
 
   * :guilabel:`Color highlighting`
+
     .. index:: color
 
     Color used for highlighting in the debugger console.
@@ -906,6 +965,7 @@ arrow, as seen in the screenshot above).
     Maximum height of an item.
 
 * :guilabel:`External Commands`
+
   .. index:: helper
   .. index:: external commands
 
@@ -917,23 +977,27 @@ arrow, as seen in the screenshot above).
     List processes running on the machine.
 
   * :guilabel:`Remote shell`
+
     .. index:: remote shell
 
     Run a process on a remote machine. You can specify arguments, for
     example, :command:`rsh -l user`.
 
   * :guilabel:`Remote copy`
+
     .. index:: remote copy
 
     Copy a file from a remote machine. You can specify arguments, for
     example :command:`rcp -l user`.
 
   * :guilabel:`Execute command`
+
     .. index:: execution
 
     Execute commands externally.
 
   * :guilabel:`HTML Browser`
+
     .. index:: html
 
     View HTML files, for example the documentation.  Not relevant under
@@ -942,11 +1006,13 @@ arrow, as seen in the screenshot above).
     change this value if GPS cannot find a HTML browser, or if the browser
     found isn't the one you prefer.
 
+  .. _Print_Command:
+
   * :guilabel:`Print command`
+
     .. index:: print
     .. index:: a2ps
     .. index:: PrintFile
-    .. _Print_Command:
 
     Print files.  This program is required under Unix systems to print, and
     is set to :program:`a2ps` by default.  If :program:`a2ps` is not
@@ -961,70 +1027,84 @@ arrow, as seen in the screenshot above).
     <http://www.lerup.com/printfile/descr.html>`_, GPS uses that.
 
 * :guilabel:`Search`
+
   .. index:: search
 
   * :guilabel:`Confirmation for "Replace all"`
+
     .. index:: replace
 
     Enable or disable the confirmation popup for the replace all action.
 
   * :guilabel:`Close on Match`
+
     .. index:: search
 
     If enabled, GPS closes the search window when a match is found.
 
   * :guilabel:`Select on Match`
+
     .. index:: search
 
     If enabled, the focus is be given to the editor when a match is found.
 
   * :guilabel:`Preserve Search Context`
+
     .. index:: search
 
     If enabled, the contents of the :guilabel:`Look in:` field is preserved
     between consecutive file searches.
 
 * :guilabel:`Browsers`
+
   .. index:: browsers
 
   * :guilabel:`General`
 
     * :guilabel:`Selected item color`
+
       .. index:: color
 
       Color of selected items.
 
     * :guilabel:`Background color`
+
       .. index:: color
 
       Color of browser background.
 
     * :guilabel:`Hyper link color`
+
       .. index:: color
 
       Color of hyperlinks between items.
 
     * :guilabel:`Selected link color`
+
       .. index:: color
 
       Color of links between selected items.
 
     * :guilabel:`Default link color`
+
       .. index:: color
 
       Color of links between non-selected items.
 
     * :guilabel:`Ancestor items color`
+
       .. index:: color
 
       Color of background of items linked to selected items.
 
     * :guilabel:`Offspring items color`
+
       .. index:: color
 
       Color of background of items linked from selected items.
 
     * :guilabel:`Vertical layout`
+
       .. index:: vertical layout
 
       Whether the layout of the graph should be vertical or
@@ -1032,15 +1112,18 @@ arrow, as seen in the screenshot above).
       call graph), but doesn't apply to the entity browsers.
 
     * :guilabel:`Show elaboration cycles`
+
       .. index:: show elaboration cycles
 
       Display a elaboration graph after each compilation showing an
       elaboration cycle.
 
 * :guilabel:`VCS`
+
   .. index:: vcs
 
   * :guilabel:`Implicit status`
+
     .. index:: Implicit status
 
     Whether GPS is allowed to launch a status action (such as getting
@@ -1049,11 +1132,13 @@ arrow, as seen in the screenshot above).
     disabling this preference can speed up the VCS actions.
 
   * :guilabel:`Default VCS`
+
     .. index:: Default VCS
 
     The default VCS.
 
 * :guilabel:`Visual diff`
+
   .. index:: visual diff
   .. index:: file comparison
 
@@ -1067,6 +1152,7 @@ arrow, as seen in the screenshot above).
   (`http://www.cygwin.com <http://www.cygwin.com>`_).
 
   * :guilabel:`mode`
+
     .. index:: diff
 
     How GPS visually displays the difference between two files:
@@ -1081,6 +1167,7 @@ arrow, as seen in the screenshot above).
       existing editor.
 
   * :guilabel:`Diff command`
+
     .. index:: -u
     .. index:: -c
 
@@ -1108,6 +1195,7 @@ arrow, as seen in the screenshot above).
       Ignore all white space when comparing lines.
 
   * :guilabel:`Patch command`
+
     .. index:: patch
 
     Command used to apply a patch.  You can also specify arguments.
@@ -1116,12 +1204,14 @@ arrow, as seen in the screenshot above).
     :program:`patch` command.
 
   * :guilabel:`Use old diff`
+
     .. index:: old diff
 
     Use the old version of the visual comparison.  The remianing preferences
     aren't displayed if this preference is enabled.
 
   * :guilabel:`Diff3 command`
+
     .. index:: diff3
 
     Command used to query a 3-way diff.  See :guilabel:`Diff command`
@@ -1157,26 +1247,31 @@ arrow, as seen in the screenshot above).
     Color indicating detailed differences within a modified line.
 
   * :guilabel:`Context length`
+
     .. index:: context length
 
     Number of lines displayed before and after each chunk of differences.
     Specifying -1 displays the whole file.
 
 * :guilabel:`Messages`
+
   .. index:: messages
 
   * :guilabel:`Color highlighting`
+
     .. index:: color
 
     Color of highlighted text in the :guilabel:`Messages` view.
 
   * :guilabel:`Errors highlighting`
+
     .. index:: errors
 
     Color used in a source editor for lines that cause compilation errors.
     If white, the errors aren't highlighted. (See :ref:`Compilation/Build`)
 
   * :guilabel:`Warnings highlighting`
+
     .. index:: errors
 
     Color used in a source editor for lines that cause compilation
@@ -1184,6 +1279,7 @@ arrow, as seen in the screenshot above).
     :ref:`Compilation/Build`)
 
   * :guilabel:`Style errors highlighting`
+
     .. index:: style
 
     Color used in a source editor for lines that cause style errors.  If
@@ -1191,12 +1287,14 @@ arrow, as seen in the screenshot above).
     :ref:`Compilation/Build`)
 
   * :guilabel:`Compiler info highlighting`
+
     .. index:: style
 
     Color used in a source editor to highlight lines containing compiler
     information. If white, the information isn't highlighted.
 
   * :guilabel:`File pattern`
+
     .. index:: file pattern
     .. index:: location
 
@@ -1209,41 +1307,49 @@ arrow, as seen in the screenshot above).
     warnings or style error patterns.
 
   * :guilabel:`File index`
+
     .. index:: file index
 
     Index of the filename in the expressions in the :guilabel:`File pattern`.
 
   * :guilabel:`Line index`
+
     .. index:: line index
 
     Index of the line number in the expressions in the :guilabel:`File
     pattern`.
 
   * :guilabel:`Column index`
+
     .. index:: column index
 
     Index of the column number in the expressions in the :guilabel:`File
     pattern`.
 
   * :guilabel:`Warning index`
+
     .. index:: warning index
 
     Index of the warning identifier in the expressions in the
     :guilabel:`File pattern`.
 
   * :guilabel:`Style index`
+
     .. index:: style index
 
     Index of the style error identifier in the expressions in the
     :guilabel:`File pattern`.
+  * :guilabel:`Info index`
 
   * :guilabel:`Info index`
+
     .. index:: info index
 
     Index of the compiler info identifier in the expressions in the
     :guilabel:`File pattern`.
 
   * :guilabel:`Secondary File pattern`
+
     .. index:: file pattern
     .. index:: location
 
@@ -1253,18 +1359,21 @@ arrow, as seen in the screenshot above).
     corresponding to the file, line, and column patterns.
 
   * :guilabel:`Secondary File index`
+
     .. index:: file index
 
     Index of the filename in the expressions in the :guilabel:`Secondary File
     pattern`.
 
   * :guilabel:`Secondary Line index`
+
     .. index:: line index
 
     Index of the line number in the expressions in the :guilabel:`Secondary
     File pattern`.
 
   * :guilabel:`Secondary Column index`
+
     .. index:: column index
 
     Index of the column number in the expressions in the
@@ -1272,6 +1381,7 @@ arrow, as seen in the screenshot above).
     file pattern.
 
   * :guilabel:`Alternate Secondary File pattern`
+
     .. index:: location
 
     Pattern used to parse additional file locations in alternate form from
@@ -1279,6 +1389,7 @@ arrow, as seen in the screenshot above).
     regular expression containing one parenthesized subexpression.
 
   * :guilabel:`Alternate Secondary Line index`
+
     .. index:: line index
 
     Index of the line number in the expressions in the :guilabel:`Alternate
@@ -1287,12 +1398,14 @@ arrow, as seen in the screenshot above).
 * :guilabel:`Project`
 
   * :guilabel:`Relative project paths`
+
     .. index:: relative project path
 
     Whether paths should be absolute or relative when GPS modifies a
     project file.
 
   * :guilabel:`Fast Project Loading`
+
     .. index:: fast project loading
 
     If the project contains a number of restrictions, this preference
@@ -1320,14 +1433,16 @@ arrow, as seen in the screenshot above).
       :file:`.adb`.
 
   * :guilabel:`Hidden directories pattern`
+
     .. index:: hidden directories pattern
 
     A regular expression used to match hidden directories which aren't
     displayed by default in the project view, nor taken into account by VCS
     operations on directories.
 
+.. _Documention_Preferences:
+
 * :guilabel:`Documentation`
-  .. _Documention_Preferences:
 
   This section specifies preferences that apply to the documentation
   generator. See :ref:`Documentation_Generation` for more information.
@@ -1369,8 +1484,9 @@ arrow, as seen in the screenshot above).
     Try to find references to entities in comments and generate links to
     them when generating the documentation.
 
+.. _Coverage_Analysis_Preferences:
+
 * :guilabel:`Coverage Analysis`
-  .. _Coverage_Analysis_Preferences:
 
   * :guilabel:`Coverage toolchain`
 
@@ -1465,17 +1581,16 @@ automatically, such as Emacs emulation mode.
 Some plug-ins provided with GPS are:
 
 * :program:`Emacs` emulation
+
   .. index:: Emacs
 
   Several plug-ins emulate many functions provided by :program:`Emacs`,
   such as the interactive search, manipulation of rectangles, navigation,
-  and the usual :program:`Emacs` key shortcuts
-
-  This emacs mode used to be activated in the preferences dialog, on the Themes
-  page, but you should now activate it by loading the :file:`emacs.xml`
-  plug-in.
+  and the usual :program:`Emacs` key shortcuts.  Activate it by loading the
+  :file:`emacs.xml` plug-in.
 
 * :file:`Makefile` support
+
   .. index:: Makefile
 
   A plug-in that parses a :file:`Makefile` and creates menus for each of
@@ -1483,8 +1598,8 @@ Some plug-ins provided with GPS are:
 
 * Cross-references enhancements
 
-  Plug-ins take advantage of GPS's cross-references information to create
-  additional menus for navigation such as jumping to the primitive
+  Some plug-ins take advantage of GPS's cross-references information to
+  create additional menus for navigation such as jumping to the primitive
   operations of Ada tagged types and to the body of Ada separate entities.
 
 * Text manipulation
@@ -1493,8 +1608,8 @@ Some plug-ins provided with GPS are:
   editors, for example to align a set of lines based on various criteria
   or to manipulate a rectangular selection of text.
 
-To choose graphically which plug-ins should be loaded on startup, select
-the :menuselection:`Tools --> Plug-ins` menu.  This brings up a new window,
+To graphically choose which plug-ins are loaded on startup, select the
+:menuselection:`Tools --> Plug-ins` menu.  This brings up a new window,
 containing two parts:
 
 * A list of all known plug-ins on the left.
@@ -1535,56 +1650,52 @@ Customizing through XML and Python files
 Customization files and plugins
 -------------------------------
 
-You can customize lots of capabilities in GPS using files that are loaded by
-GPS at start up.
+You can customize many capabilities in GPS using files it loads at startup.
+For example, you can add items to the menu and tool bars as well as
+defining new key bindings, languages, and tools.  Using Python as a
+programming language, you can also add new facilities and integrate your
+own tools into the GPS platform.
 
-For example, you can add items in the menu and tool bars, as well as defining
-new key bindings, new languages, new tools, ...; Using Python as a programming
-language, you can also add brand new facilities and integrate your own tools in
-the GPS platform.
+GPS searches for these customization files at startup in several different
+directories. Depending on where they're found, they are either
+automatically loaded by GPS (and thus can immediately modify things in
+GPS), or only be made visible in the Plug-ins Editor (see
+:ref:`The_Plug-ins_Editor`).
 
-These customization files are searched for at startup in several different
-places. Depending on the location where they are found, these files will either
-be automatically loaded by GPS (and thus can immediately modify things in GPS),
-or will simply be made visible in the Plug-ins Editor
-(:ref:`The_Plug-ins_Editor`).
+These directories are searched in the order given below. Any script loaded
+latter can override operations done by previously loaded scripts. For
+example, they could override a key shortcut, remove a menu, or redefine a
+GPS action.
 
-These directories are searched for in the order given below. Any script loaded
-latter can override setups done by previously loaded scripts. For instance,
-they could override a key shortcut, remove a menu, redefine a GPS action, ...
+In each directory name below, :file:`INSTALL` is the name of the directory
+in which you've installed GPS. :file:`HOME` is your home directory, either
+by default or as overriden by the :file:`GPS_HOME` environment variable.
+In each directory, only files with :file:`.xml` or :file:`.py` extensions
+are used. Other files are ignored, although for compatibility with future
+versions of GPS you should not have keep other files in these directories.
 
-In the directory names below, :file:`INSTALL` is the name of the directory in
-which you have installed GPS. :file:`HOME` is the user's home directory, either
-by default or as overriden by the `GPS_HOME` environment variable. If none of
-these exists, GPS will use the `USERPROFILE` environment variable.
+* Automatically-loaded, global modules
 
-In all these directories, only the files with :file:`.xml` or :file:`.py`
-extensions are taken into account. Other files are ignored, although for
-compatibility with future versions of GPS it is recommended not to keep other
-files in the same directory.
+  The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
+  automatically loads by default (unless overriden by the user via the
+  Plug-ins Editor). These plug-ins are visible to any user on the system
+  using the same GPS installation.  Reserve this directory for critical
+  plug-ins that almost everyone will use.
 
-* Automatically loaded system wide modules
+* Not automatically-loaded, global modules
 
-  The :file:`INSTALL/share/gps/plug-ins` directory should contain the files
-  that GPS will automatically load by default (unless overriden by the user
-  through the Plug-ins Editor). These plug-ins are visible to any user on the
-  system that uses the same GPS installation. This directory should be reserved
-  for critical plug-ins that almost everyone should use.
+  The :file:`INSTALL/share/gps/library` directory contain files GPS
+  displays in the Plug-ins Editor, but doesn't load automatically.
+  Typically, these files add optional capabilities to GPS, for example an
+  :program:`emacs` emulation mode or additional editor capabilities that
+  many of users generally won't use.
 
-* Not automatically loaded system wide modules
+* :file:`GPS_CUSTOM_PATH`
 
-  The :file:`INSTALL/share/gps/library` directory should contain the files that
-  GPS should show in the Plug-ins Editor, but not load automatically.
-  Typically, these would be files that add optional capabilities to GPS, for
-  instance an emacs emulation mode, or additional editor capabilities that a
-  lot of users would not generally use.
-
-* `GPS_CUSTOM_PATH`
-
-  This environment variable can be set before launching GPS. It should contain
-  a list of directories, separated by semicolons (';') on Windows systems and
-  colons (':') on Unix systems. All the files in these directories with the
-  appropriate extensions will be automatically loaded by default by GPS, unless
+  Set this environment variable before launching GPS to contain a list of
+  directories, separated by semicolons (';') on Windows systems and colons
+  (':') on Unix systems. All files in these directories with the
+  appropriate extensions are automatically loaded by default by GPS, unless
   overriden by the user through the Plug-ins Editor.
 
   This is a convenient way to have project-specific customization files. You
