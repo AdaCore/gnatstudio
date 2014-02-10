@@ -3704,6 +3704,35 @@ type is an unconstrained array.  The use of thin pointers should be
 restricted to cases of porting legacy code which implicitly assumes the
 size of pointers, and such code should not in any case be using this
 attribute.
+
+Another erroroneous situation arises if the attribute is applied to
+a constant. The resulting pointer can be used to access the constant,
+but the effect of trying to modify a constant in this manner is not
+well-defined. Consider this example:
+
+P : constant Integer := 4;
+type R is access all Integer;
+RV : R := P'Unrestricted_Access;
+
+RV.all := 3;
+
+Here we attempt to modify the constant P from 4 to 3, but the compiler
+may or may not notice this attempt, and subsequent references to P may
+yield either the value 3 or the value 4 or the assignment may blow up
+if the compiler decides to put P in read-only memory. One particular
+case where `Unrestricted_Access' can be used in this way is to modify
+the value of an `IN' parameter:
+
+procedure K (S : in String) is
+type R is access all Character;
+RV : R := S (3)'Unrestricted_Access;
+begin
+RV.all := 'a';
+end;
+
+In general this is a risky approach. It may appear to "work" but such
+uses of `Unrestricted_Access' are potentially non-portable, even from
+one version of `GNAT' to another, so are best avoided if possible.
       </DOC>
    </ATTRIBUTE>
 
@@ -9379,6 +9408,15 @@ suppressed by suppressing range checks, but the specific use of
 `Alignment_Check' allows suppression of alignment checks without
 suppressing other range checks.
 
+* `Atomic_Synchronization' can be used to suppress the special memory
+synchronization instructions that are normally generated for
+access to `Atomic' variables to ensure correct synchronization
+between tasks that use such variables for synchronization purposes.
+
+* `Duplicated_Tag_Check' Can be used to suppress the check that is
+generated for a duplicated tag value when a tagged type is
+declared.
+
 * `Predicate_Check' can be used to control whether predicate checks
 are active. It is applicable only to predicates for which the
 policy is `Check'. Unlike `Assertion_Policy', which determines if
@@ -9949,7 +9987,13 @@ The meaning of the arguments is identical to that used in pragma
 One important application is to ensure that checks are on in cases
 where code depends on the checks for its correct functioning, so that
 the code will compile correctly even if the compiler switches are set
-to suppress checks.
+to suppress checks. For example, in a program that depends on external
+names of tagged types and wants to ensure that the duplicated tag check
+occurs even if all run-time checks are suppressed by a compiler switch,
+the following configuration pragma will ensure this test is not
+suppressed:
+
+pragma Unsuppress (Duplicated_Tag_Check);
 
 This pragma is standard in Ada 2005. It is available in all earlier
 versions of Ada as an implementation-defined pragma.
