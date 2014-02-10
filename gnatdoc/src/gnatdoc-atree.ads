@@ -350,9 +350,6 @@
 --    EKind (LL)
 --       Defined in all entities. Kind of an entity returned by Xref.
 
---    End_Of_Scope_Loc (LL)
---       Value provided by Xref. Currently unused???
-
 --    End_Of_Profile_Location
 --       Defined in subprograms and entries. Points to the location of the
 --       semicolon closing the declaration of the entity. This attribute is
@@ -1093,7 +1090,6 @@ private
          Alias            : General_Entity;
          Body_Loc         : General_Location;
          Ekind            : Entity_Kind;
-         End_Of_Scope_Loc : General_Location;
          Entity           : General_Entity;
          Etype            : General_Entity;
          Instance_Of      : General_Entity;
@@ -1101,7 +1097,6 @@ private
          Pointed_Type     : General_Entity;
 
          Scope_E          : General_Entity;
-         Scope_Loc        : General_Location;
          Parent_Package   : General_Entity;
          --  Present in packages
 

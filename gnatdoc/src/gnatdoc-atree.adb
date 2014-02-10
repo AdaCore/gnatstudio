@@ -27,7 +27,7 @@ with Language.Ada;
 with Language.C;
 with Language.Tree;               use Language.Tree;
 with Language.Tree.Database;      use Language.Tree.Database;
-with GNATCOLL.Traces;                      use GNATCOLL.Traces;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 with GNAT.IO; --  For output of debugging routines
 
@@ -155,8 +155,8 @@ package body GNATdoc.Atree is
 
    procedure Append_Direct_Derivation (E : Entity_Id; Value : Entity_Id) is
    begin
-      if not Contains (E.Direct_Derivations, Value) then
-         E.Direct_Derivations.Append (Value);
+      if not Get_Direct_Derivations (E).Contains (Value) then
+         Get_Direct_Derivations (E).Append (Value);
       end if;
    end Append_Direct_Derivation;
 
@@ -169,7 +169,7 @@ package body GNATdoc.Atree is
       pragma Assert (Is_Generic (E));
       pragma Assert (Is_Generic_Formal (Value));
 
-      E.Generic_Formals.Append (Value);
+      Get_Generic_Formals (E).Append (Value);
    end Append_Generic_Formal;
 
    -----------------------------
@@ -181,8 +181,8 @@ package body GNATdoc.Atree is
    begin
       --  Replace this conditional by an assertion???
 
-      if not Contains (E.Inherited_Methods, Value) then
-         E.Inherited_Methods.Append (Value);
+      if not Get_Inherited_Methods (E).Contains (Value) then
+         Get_Inherited_Methods (E).Append (Value);
       end if;
    end Append_Inherited_Method;
 
@@ -192,7 +192,7 @@ package body GNATdoc.Atree is
 
    procedure Append_Method (E : Entity_Id; Value : Entity_Id) is
    begin
-      E.Methods.Append (Value);
+      Get_Methods (E).Append (Value);
    end Append_Method;
 
    -----------------------
@@ -202,7 +202,7 @@ package body GNATdoc.Atree is
    procedure Append_Progenitor (E : Entity_Id; Value : Entity_Id) is
    begin
       pragma Assert (not E.Progenitors.Contains (Value));
-      E.Progenitors.Append (Value);
+      Get_Progenitors (E).Append (Value);
    end Append_Progenitor;
 
    ---------------------
@@ -232,7 +232,7 @@ package body GNATdoc.Atree is
    begin
       pragma Assert (not Get_Entities (E).Contains (Value));
       pragma Assert (Check_Unique);
-      E.Entities.Append (Value);
+      Get_Entities (E).Append (Value);
 
       if Present (Get_Full_View (Value)) then
          if Present (Get_Scope (Get_Full_View (Value))) then
@@ -942,7 +942,7 @@ package body GNATdoc.Atree is
    -- Get_Short_Name --
    --------------------
 
-   function Get_Short_Name   (E : Entity_Id) return String is
+   function Get_Short_Name (E : Entity_Id) return String is
    begin
       return Get (E.Short_Name).all;
    end Get_Short_Name;
@@ -1078,7 +1078,7 @@ package body GNATdoc.Atree is
    function Has_Parent_Type
      (E : Entity_Id; Parent : Entity_Id) return Boolean is
    begin
-      for P of E.Xref.Parent_Types loop
+      for P of LL.Get_Parent_Types (E).all loop
          if LL.Get_Location (P) = LL.Get_Location (Parent) then
             return True;
          end if;
@@ -1166,7 +1166,7 @@ package body GNATdoc.Atree is
    --  want to find the code that created that entity. The ways to do this is
    --  to set a conditional breakpoint:
    --     (gdb) break neb if id = 12345
-   --  and run GPS again from the beginning.
+   --  and run GNATdoc again from the beginning.
 
    procedure neb (Id : Natural);
    pragma Export (Ada, neb);
@@ -1221,23 +1221,22 @@ package body GNATdoc.Atree is
       begin
          --  Stage 1: Complete decoration of low-level attributes.
 
-         New_E.Xref.Scope_E   := Caller_At_Declaration (Db, E);
-         New_E.Xref.Scope_Loc := Get_Location (Db, New_E.Xref.Scope_E);
+         New_E.Xref.Scope_E := Caller_At_Declaration (Db, E);
 
          if Is_Package (New_E) then
             New_E.Xref.Parent_Package := Xref.Parent_Package (Db, E);
          end if;
 
-         New_E.Xref.Alias     := Xref.Renaming_Of (Db, E);
+         New_E.Xref.Alias := Xref.Renaming_Of (Db, E);
 
          --  Protect GNATdoc against wrong information in the ALI file.
          --  We should investigate the compiler???
 
-         if Present (New_E.Xref.Alias) then
+         if Present (LL.Get_Alias (New_E)) then
             declare
                Alias_Loc : General_Location;
             begin
-               Alias_Loc := Get_Location (Db, New_E.Xref.Alias);
+               Alias_Loc := Get_Location (Db, LL.Get_Alias (New_E));
 
                if not Is_Spec_File (Context.Kernel, Alias_Loc.File) then
                   New_E.Xref.Alias := No_General_Entity;
@@ -1245,12 +1244,10 @@ package body GNATdoc.Atree is
             end;
          end if;
 
-         New_E.Xref.Etype     := Get_Type_Of (Db, E);
-         New_E.Xref.Body_Loc  := Get_Body (Db, E);
+         New_E.Xref.Etype    := Get_Type_Of (Db, E);
+         New_E.Xref.Body_Loc := Get_Body (Db, E);
 
-         New_E.Xref.End_Of_Scope_Loc := End_Of_Scope (Db, E);
-
-         New_E.Xref.Is_Type   := Xref.Is_Type (Db, E);
+         New_E.Xref.Is_Type  := Xref.Is_Type (Db, E);
 
          --  Ada single tasks are not types (they are objects) but we handle
          --  them as tasks for homogeneity in the gnatdoc frontend. We cannot
@@ -1258,7 +1255,7 @@ package body GNATdoc.Atree is
          --  decorated by Xref as E_Variable???
 
          if In_Ada_Language (New_E)
-           and then not New_E.Xref.Is_Type
+           and then not LL.Is_Type (New_E)
            and then Get_Kind (New_E) = E_Single_Task
          then
             New_E.Xref.Is_Type := True;
@@ -1268,12 +1265,12 @@ package body GNATdoc.Atree is
          New_E.Xref.Is_Container := Xref.Is_Container (Db, E);
          New_E.Xref.Is_Abstract  := Xref.Is_Abstract (Db, E);
 
-         if New_E.Xref.Is_Type then
-            New_E.Xref.Is_Array      := Xref.Is_Array (Db, E);
-            New_E.Xref.Is_Predef     := Xref.Is_Predefined_Entity (Db, E);
-            New_E.Xref.Is_Access     := Xref.Is_Access (Db, E);
+         if LL.Is_Type (New_E) then
+            New_E.Xref.Is_Array  := Xref.Is_Array (Db, E);
+            New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (Db, E);
+            New_E.Xref.Is_Access := Xref.Is_Access (Db, E);
 
-            if New_E.Xref.Is_Access then
+            if LL.Is_Access (New_E) then
                New_E.Xref.Pointed_Type := Xref.Pointed_Type (Db, E);
 
                --  Xref does not provide the expected info???
@@ -1298,7 +1295,7 @@ package body GNATdoc.Atree is
          --  decoration of other high-level components is done while
          --  traversing the tree since they require context information.
 
-         if New_E.Xref.Is_Type then
+         if LL.Is_Type (New_E) then
             if Is_Class_Or_Record_Type (New_E)
               or else Is_Concurrent_Type_Or_Object (New_E)
             then
@@ -1471,7 +1468,6 @@ package body GNATdoc.Atree is
              Alias            => No_General_Entity,
              Body_Loc         => No_Location,
              Ekind            => Kind,
-             End_Of_Scope_Loc => No_Location,
              Entity           => E,
              Etype            => No_General_Entity,
 
@@ -1482,7 +1478,6 @@ package body GNATdoc.Atree is
              Pointed_Type     => No_General_Entity,
 
              Scope_E          => No_General_Entity,
-             Scope_Loc        => No_Location,
              Parent_Package   => No_General_Entity,
 
              Has_Methods   => False,
@@ -1595,10 +1590,10 @@ package body GNATdoc.Atree is
 
    function Is_Record_Type (E : Entity_Id) return Boolean is
    begin
-      return E.Xref.Ekind = E_Abstract_Record_Type
-        or else E.Xref.Ekind = E_Record_Type
-        or else E.Kind = E_Tagged_Record_Type
-        or else E.Kind = E_Interface;
+      return Kind_In (LL_Get_Kind (E), E_Abstract_Record_Type,
+                                       E_Record_Type)
+        or else Kind_In (Get_Kind (E), E_Tagged_Record_Type,
+                                       E_Interface);
    end Is_Record_Type;
 
    -----------------------------
@@ -1607,12 +1602,12 @@ package body GNATdoc.Atree is
 
    function Is_Class_Or_Record_Type (E : Entity_Id) return Boolean is
    begin
-      return E.Xref.Ekind = E_Abstract_Record_Type
-        or else E.Xref.Ekind = E_Record_Type
-        or else E.Kind = E_Tagged_Record_Type
-        or else E.Kind = E_Interface
-        or else E.Kind = E_Class
-        or else E.Kind = E_Class_Wide_Type;
+      return Kind_In (LL_Get_Kind (E), E_Abstract_Record_Type,
+                                       E_Record_Type)
+        or else Kind_In (Get_Kind (E), E_Tagged_Record_Type,
+                                       E_Interface,
+                                       E_Class,
+                                       E_Class_Wide_Type);
    end Is_Class_Or_Record_Type;
 
    ----------------------------------
@@ -1641,7 +1636,7 @@ package body GNATdoc.Atree is
 
    function Is_Full_View (E : Entity_Id) return Boolean is
    begin
-      return Present (E.Partial_View);
+      return Present (Get_Partial_View (E));
    end Is_Full_View;
 
    ----------------
@@ -1655,9 +1650,9 @@ package body GNATdoc.Atree is
       --  frontend to workaround missing entities associated with generics.
 
       return LL_Is_Generic (E)
-        or else Get_Kind (E) = E_Generic_Package
-        or else Get_Kind (E) = E_Generic_Function
-        or else Get_Kind (E) = E_Generic_Procedure;
+        or else Kind_In (Get_Kind (E), E_Generic_Package,
+                                       E_Generic_Function,
+                                       E_Generic_Procedure);
    end Is_Generic;
 
    -----------------------
@@ -1708,7 +1703,7 @@ package body GNATdoc.Atree is
 
    function Is_Partial_View (E : Entity_Id) return Boolean is
    begin
-      return Present (E.Full_View);
+      return Present (Get_Full_View (E));
    end Is_Partial_View;
 
    ----------------
@@ -1984,9 +1979,9 @@ package body GNATdoc.Atree is
 
    procedure Remove_Full_View (E : Entity_Id) is
    begin
-      if Present (E.Full_View) then
-         if Present (Get_Scope (E.Full_View)) then
-            Remove_From_Scope (E.Full_View);
+      if Present (Get_Full_View (E)) then
+         if Present (Get_Scope (Get_Full_View (E))) then
+            Remove_From_Scope (Get_Full_View (E));
          end if;
 
          if Disable_Free then
@@ -2012,8 +2007,8 @@ package body GNATdoc.Atree is
          declare
             Cursor : EInfo_List.Cursor;
          begin
-            Cursor := Scope.Entities.Find (E);
-            Scope.Entities.Delete (Cursor);
+            Cursor := Get_Entities (Scope).Find (E);
+            Get_Entities (Scope).Delete (Cursor);
 
             --  For consistency here we should reset the scope of the entity
             --  but this is not possible at current stage because of the
@@ -2206,7 +2201,7 @@ package body GNATdoc.Atree is
      (E : Entity_Id; Value : General_Location) is
    begin
       pragma Assert (Is_Generic (E));
-      pragma Assert (No (E.Generic_Formals_Loc));
+      pragma Assert (No (Get_Generic_Formals_Loc (E)));
       E.Generic_Formals_Loc := Value;
    end Set_Generic_Formals_Loc;
 
@@ -2270,7 +2265,7 @@ package body GNATdoc.Atree is
 
    procedure Set_Is_Private (E : Entity_Id) is
    begin
-      pragma Assert (not (E.Is_Private));
+      pragma Assert (not (Is_Private (E)));
       E.Is_Private := True;
    end Set_Is_Private;
 
@@ -2474,7 +2469,7 @@ package body GNATdoc.Atree is
       Skip_Empty_Lines (Low, Forward);
       Skip_Empty_Lines (High, Backward);
 
-      pragma Assert (No (E.Src));
+      pragma Assert (No (Get_Src (E)));
       E.Src := Unbounded_Slice (Value, Low, High);
    end Set_Src;
 
@@ -2540,7 +2535,7 @@ package body GNATdoc.Atree is
 
       procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
       begin
-         if not Contains (E.Xref.Child_Types, Value) then
+         if not E.Xref.Child_Types.Contains (Value) then
             E.Xref.Child_Types.Append (Value);
          end if;
       end Append_Child_Type;
@@ -3001,9 +2996,9 @@ package body GNATdoc.Atree is
             Append_Line
               ("*** "
                & UID
-               & Get (E.Short_Name).all
+               & Get_Short_Name (E)
                & " ("
-               & E.Kind'Img
+               & Get_Kind (E)'Img
                & ")");
 
             return To_String (Printout);
@@ -3012,11 +3007,11 @@ package body GNATdoc.Atree is
          Append_Line
            ("*** "
             & UID
-            & Get (E.Short_Name).all
+            & Get_Short_Name (E)
             & " ("
-            & E.Kind'Img
+            & Get_Kind (E)'Img
             & ":"
-            & E.Xref.Ekind'Img
+            & LL_Get_Kind (E)'Img
             & ")");
       end;
 
@@ -3024,12 +3019,12 @@ package body GNATdoc.Atree is
 
       Append_Line ("Full_Name: " & Get_Full_Name (E));
 
-      if Present (E.Parent_Package) then
-         Append_Entity ("Parent_Package: ", E.Parent_Package);
+      if Present (Get_Parent_Package (E)) then
+         Append_Entity ("Parent_Package: ", Get_Parent_Package (E));
       end if;
 
-      if Present (E.Scope) then
-         Append_Entity ("Scope: ", E.Scope);
+      if Present (Get_Scope (E)) then
+         Append_Entity ("Scope: ", Get_Scope (E));
       end if;
 
       if Present (Get_End_Of_Syntax_Scope_Loc (E)) then
@@ -3060,20 +3055,20 @@ package body GNATdoc.Atree is
          end if;
       end if;
 
-      if Present (E.Generic_Formals_Loc) then
+      if Present (Get_Generic_Formals_Loc (E)) then
          Append_Line
            ("Generic_Formals_Location:"
-            & Image (E.Generic_Formals_Loc));
+            & Image (Get_Generic_Formals_Loc (E)));
       end if;
 
-      if Present (E.End_Of_Profile_Location_In_Body) then
+      if Present (Get_End_Of_Profile_Location_In_Body (E)) then
          Append_Line
            ("End_Of_Profile_Location_In_Body: "
-            & Image (E.End_Of_Profile_Location_In_Body));
+            & Image (Get_End_Of_Profile_Location_In_Body (E)));
       end if;
 
-      if Present (E.Alias) then
-         Append_Entity ("Alias: ", E.Alias);
+      if Present (Get_Alias (E)) then
+         Append_Entity ("Alias: ", Get_Alias (E));
       end if;
 
       if Present (Get_Parent (E)) then
@@ -3118,23 +3113,23 @@ package body GNATdoc.Atree is
          Append_Line
            ("Is_Partial_View "
             & "(Full_View_Loc: "
-            & Image (E.Full_View.Xref.Loc)
+            & Image (LL.Get_Location (Get_Full_View (E)))
             & ")");
 
          if not Reliable_Mode then
-            Append_Entity ("Full_View: ", E.Full_View);
+            Append_Entity ("Full_View: ", Get_Full_View (E));
          end if;
 
       elsif Is_Full_View (E) then
-         if Present (E.Partial_View) then
+         if Present (Get_Partial_View (E)) then
             Append_Line
               ("Is_Full_View "
                & "(Partial_View_Loc: "
-               & Image (E.Partial_View.Xref.Loc)
+               & Image (LL.Get_Location (Get_Partial_View (E)))
                & ")");
 
             if not Reliable_Mode then
-               Append_Entity ("Partial_View: ", E.Partial_View);
+               Append_Entity ("Partial_View: ", Get_Partial_View (E));
             end if;
 
          else
@@ -3167,7 +3162,7 @@ package body GNATdoc.Atree is
       --  subprograms
 
       if Is_Class_Or_Record_Type (E)
-           or else Is_Concurrent_Type_Or_Object (E)
+        or else Is_Concurrent_Type_Or_Object (E)
       then
          declare
             Discr : aliased EInfo_List.Vector :=
@@ -3209,26 +3204,26 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & "Loc: "
-            & (+E.Xref.Loc.File.Dir_Name)
-            & Image (E.Xref.Loc));
+            & (+LL.Get_Location (E).File.Dir_Name)
+            & Image (LL.Get_Location (E)));
       else
          Append_Line
            (LL_Prefix
             & "Loc: "
-            & Image (E.Xref.Loc));
+            & Image (LL.Get_Location (E)));
       end if;
 
       if not Reliable_Mode then
          Append_Line
            (LL_Prefix
             & "Full_Name: "
-            & Get (E.Full_Name).all);
+            & LL_Get_Full_Name (E));
       end if;
 
-      if Present (E.Xref.Body_Loc) then
+      if Present (LL.Get_Body_Loc (E)) then
          Append_Line
            (LL_Prefix
-            & "Body_Loc: " & Image (E.Xref.Body_Loc));
+            & "Body_Loc: " & Image (LL.Get_Body_Loc (E)));
       end if;
 
       if Enhancements
@@ -3246,31 +3241,37 @@ package body GNATdoc.Atree is
             & Image (LL_Get_First_Private_Entity_Loc (E)));
       end if;
 
-      if Present (E.Xref.End_Of_Scope_Loc) then
-         Append_Line
-           (LL_Prefix
-            & "End_Of_Scope_Loc: " & Image (E.Xref.End_Of_Scope_Loc));
-      end if;
+      declare
+         End_Of_Scope_Loc : constant General_Location :=
+           End_Of_Scope (Db, LL.Get_Entity (E));
+
+      begin
+         if Present (End_Of_Scope_Loc) then
+            Append_Line
+              (LL_Prefix
+               & "End_Of_Scope_Loc: " & Image (End_Of_Scope_Loc));
+         end if;
+      end;
 
       if not Reliable_Mode
-       and then Present (E.Xref.Parent_Package)
+       and then Present (LL.Get_Parent_Package (E))
       then
          Append_Line
            (LL_Prefix
             & "Parent_Package: "
-            & Get_Name (Db, E.Xref.Parent_Package)
+            & Get_Name (Db, LL.Get_Parent_Package (E))
             & " ["
-            & Image (Get_Location (Db, E.Xref.Parent_Package))
+            & Image (Get_Location (Db, LL.Get_Parent_Package (E)))
             & "]");
       end if;
 
-      if Present (E.Xref.Scope_E) then
+      if Present (LL.Get_Scope (E)) then
          Append_Line
            (LL_Prefix
             & "Scope: "
-            & Get_Name (Db, E.Xref.Scope_E)
+            & Get_Name (Db, LL.Get_Scope (E))
             & " ["
-            & Image (E.Xref.Scope_Loc)
+            & Image (Get_Location (Db, LL.Get_Scope (E)))
             & "]");
       else
          Append_Line
@@ -3285,35 +3286,35 @@ package body GNATdoc.Atree is
             & " [" & Image (Db, E.Xref.Etype) & "]");
       end if;
 
-      if E.Xref.Is_Access
-        and then Present (E.Xref.Pointed_Type)
+      if LL.Is_Access (E)
+        and then Present (LL.Get_Pointed_Type (E))
       then
          Append_Line
            (LL_Prefix
-            & "Pointed type: " & Get_Name (Db, E.Xref.Pointed_Type)
-            & " [" & Image (Db, E.Xref.Pointed_Type) & "]");
+            & "Pointed type: " & Get_Name (Db, LL.Get_Pointed_Type (E))
+            & " [" & Image (Db, LL.Get_Pointed_Type (E)) & "]");
       end if;
 
-      if Present (E.Xref.Alias) then
+      if Present (LL.Get_Alias (E)) then
          Append_Line
            (LL_Prefix
-            & "Alias: " & Get_Name (Db, E.Xref.Alias)
-            & " [" & Image (Db, E.Xref.Alias) & "]");
+            & "Alias: " & Get_Name (Db, LL.Get_Alias (E))
+            & " [" & Image (Db, LL.Get_Alias (E)) & "]");
       end if;
 
-      if E.Xref.Is_Abstract then
+      if LL.Is_Abstract (E) then
          Append_Line
            (LL_Prefix
             & " Is_Abstract");
       end if;
 
-      if E.Xref.Is_Access then
+      if LL.Is_Access (E) then
          Append_Line
            (LL_Prefix
             & " Is_Access");
       end if;
 
-      if E.Xref.Is_Array then
+      if LL.Is_Array (E) then
          Append_Line
            (LL_Prefix
             & " Is_Array");
@@ -3325,25 +3326,25 @@ package body GNATdoc.Atree is
             & " Is_Container");
       end if;
 
-      if E.Xref.Is_Global then
+      if LL.Is_Global (E) then
          Append_Line
            (LL_Prefix
             & " Is_Global");
       end if;
 
-      if E.Xref.Is_Predef then
+      if LL.Is_Predef (E) then
          Append_Line
            (LL_Prefix
             & " Is_Predef");
       end if;
 
-      if E.Xref.Is_Type then
+      if LL.Is_Type (E) then
          Append_Line
            (LL_Prefix
             & " Is_Type");
       end if;
 
-      if E.Xref.Has_Methods then
+      if LL.Has_Methods (E) then
          Append_Line
            (LL_Prefix
             & " Has_Methods");
@@ -3464,24 +3465,24 @@ package body GNATdoc.Atree is
          end if;
       end if;
 
-      if E.Xref.Is_Primitive then
+      if LL.Is_Primitive (E) then
          Append_Line
            (LL_Prefix
             & " Is_Primitive");
       end if;
 
-      if E.Xref.Is_Generic then
+      if LL_Is_Generic (E) then
          Append_Line
            (LL_Prefix
             & " Is_Generic");
 
-      elsif Present (E.Xref.Instance_Of) then
+      elsif Present (LL.Get_Instance_Of (E)) then
          Append_Line
            (LL_Prefix
             & "Instance_Of: "
-            & Image (Get_Location (Db, E.Xref.Instance_Of))
+            & Image (Get_Location (Db, LL.Get_Instance_Of (E)))
             & ":"
-            & Get_Name (Db, E.Xref.Instance_Of));
+            & Get_Name (Db, LL.Get_Instance_Of (E)));
       end if;
 
       if not Reliable_Mode
@@ -3511,31 +3512,26 @@ package body GNATdoc.Atree is
       end if;
 
       if With_Doc then
-         if E.Doc_Before /= No_Comment_Result then
+         if Present (Get_Doc_Before (E)) then
             Append_Line
-              ("Doc_Before.Line:" & E.Doc_Before.Start_Line'Img);
+              ("Doc_Before.Line:" & Get_Doc_Before (E).Start_Line'Img);
             Append_Line
-              ("Doc_Before.Text: " & To_String (E.Doc_Before.Text));
+              ("Doc_Before.Text: " & To_String (Get_Doc_Before (E).Text));
          end if;
 
-         if E.Doc_After /= No_Comment_Result then
+         if Present (Get_Doc_After (E)) then
             Append_Line
-              ("Doc_After.Line:" & E.Doc_After.Start_Line'Img);
+              ("Doc_After.Line:" & Get_Doc_After (E).Start_Line'Img);
             Append_Line
-              ("Doc_After.Text: " & To_String (E.Doc_After.Text));
+              ("Doc_After.Text: " & To_String (Get_Doc_After (E).Text));
          end if;
 
-         if E.Doc /= No_Comment_Result then
-            Append_Line ("Doc.Line:" & E.Doc.Start_Line'Img);
-            Append_Line ("Doc.Text: " & To_String (E.Doc.Text));
+         if Present (Get_Doc (E)) then
+            Append_Line ("Doc.Line:" & Get_Doc (E).Start_Line'Img);
+            Append_Line ("Doc.Text: " & To_String (Get_Doc (E).Text));
          end if;
 
-         if E.Doc /= No_Comment_Result then
-            Append_Line ("Doc.Line:" & E.Doc.Start_Line'Img);
-            Append_Line ("Doc.Text: " & To_String (E.Doc.Text));
-         end if;
-
-         if E.Comment /= No_Structured_Comment then
+         if Present (Get_Comment (E)) then
             Append_Line ("Structured Comment:");
 
             --  Append the comment avoiding the duplicate addition of the
@@ -3548,9 +3544,9 @@ package body GNATdoc.Atree is
       end if;
 
       if With_Errors
-        and then Present (E.Error_Msg)
+        and then Present (Get_Error_Msg (E))
       then
-         Append_Line (To_String (E.Error_Msg));
+         Append_Line (To_String (Get_Error_Msg (E)));
       end if;
 
       return To_String (Printout);
@@ -3594,10 +3590,10 @@ package body GNATdoc.Atree is
 
    procedure ploc (E : Entity_Id) is
    begin
-      if Present (E.Xref.Loc) then
+      if Present (LL.Get_Location (E)) then
          GNAT.IO.Put_Line
-           ((+E.Xref.Loc.File.Dir_Name)
-             & Image (E.Xref.Loc));
+           ((+LL.Get_Location (E).File.Dir_Name)
+             & Image (LL.Get_Location (E)));
       else
          GNAT.IO.Put_Line ("<no location>");
       end if;
