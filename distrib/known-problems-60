@@ -45,6 +45,15 @@ KP-60-N205-018 GPS: get_executable_name is case sensitive
 
   Workaround: Rename the file with lower cases.
 
+KP-60-N129-024 GPS: memory leak when folding/unfolding code blocks
+
+  Problem:    Folding/unfolding code blocks result in significant memory leaks.
+
+  Status:     This was fixed in 6.1 on 2014-02-10
+
+  Workaround: Avoid use of folding/unfolding code blocks actions or restart GPS
+              from time to time.
+
 KP-60-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
   Problem:    When in the main project the Builder switches include --RTS=
