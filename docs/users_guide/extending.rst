@@ -1663,9 +1663,9 @@ GPS), or only be made visible in the Plug-ins Editor (see
 :ref:`The_Plug-ins_Editor`).
 
 These directories are searched in the order given below. Any script loaded
-latter can override operations done by previously loaded scripts. For
-example, they could override a key shortcut, remove a menu, or redefine a
-GPS action.
+latter can override operations performed by previously loaded scripts. For
+example, they can override a key shortcut, remove a menu, or redefine a GPS
+action.
 
 In each directory name below, :file:`INSTALL` is the name of the directory
 in which you've installed GPS. :file:`HOME` is your home directory, either
@@ -1705,55 +1705,50 @@ versions of GPS you should not have keep other files in these directories.
 
 * Automatically loaded user directory
 
-  The directory :file:`HOME/.gps/plug-ins` is searched last. Any script found
-  in there will be automatically loaded unless overriden in the Plug-ins
-  Editor.
+  The directory :file:`HOME/.gps/plug-ins` is searched last. Any script in
+  it is loaded automatically unless overriden in the Plug-ins Editor.
 
-  This is a convenient way for users to create their own plug-ins, or test them
-  before they are made available to the whole system by copying them to one of
+  This is a convenient way for you to create your own plug-ins or test them
+  before you make them available to all GPS users by copying them to one of
   the other directories.
 
-Any script loaded by GPS can contain customization for various aspects of GPS,
-mixing aliases, new languages or menus, ... in a single file. This is a
-convenient way to distribute your plug-ins to other users.
+Any script loaded by GPS can contain customization for various aspects of
+GPS, such as aliases, new languages or menus, in a single file. 
 
 Python files
 ^^^^^^^^^^^^
 
-Although the format of the python plug-ins is free (as long as it can be
-executed by Python), the following organization is suggested. These plug-ins
-will be visible in the Plug-ins Editor, and therefore having a common format
-makes it easier for users to understand the goal of the plug-ins:
+You can format the Python plug-in in any way you want (as long as it can be
+executed by Python, of course), the following formatting is
+suggested. These plug-ins are visible in the Plug-ins Editor, so having a
+common format makes it easier for users to understand each plug-in:
 
 * Comment
 
-  The first part of the script should be a general comment on the goal and
-  usage of the script. This comment should use python's triple-quote
-  convention, rather than start-of-line hash ('#') signs.
-
-  The first line of the comment should be a one liner explaining the goal of
-  the script. It is separated by a blank line from the rest of the comment.
-
-  The rest of the comment is free-form.
+  Your script should start with a comment on its goal and usage. This
+  comment should use Python's triple-quote convention, rather than the
+  start-of-line hash ('#') signs.  The first line of the comment should be
+  a one line explanation of the goal of the script, separated by a blank
+  line from the rest of the comment.
 
 * Customization variables
 
-  If your script can be configured by the user by changing some global
-  variables, they should be listed in their own section, and fully documented.
-  The user can then, through the /Tools/Plug-ins editor change the value of
-  these variables
+  If a user can configure your script by changing some global variables,
+  they should be listed next and fully documented.  The user can use the
+  :menuselection:`Tools --> Plug-ins` menu to change the value of those
+  variables.
 
 * Implementation
 
-  The implementation should be separated from the initial comment by a
-  form-feed (control-L) character. The startup scripts editor will know not to
-  display the rest of the script on the first page of the editor.
+  Separate the implementation from the initial comment by a form-feed
+  (control-L); the startup scripts editor only displays the first page of
+  the script in the first page of the editor.
 
-  Generally speaking, scripts should avoid executing code as soon as they are
-  loaded. This gives a chance to the user to change the value of global
-  variables or even override functions before the script is actually launched.
-
-  The solution is to connect to the `"gps_started"` hook, as in::
+  If possible, scripts should avoid executing code when they're
+  loaded. This gives the user a chance to change the value of global
+  variables or override functions before the script is actually launched.
+  Instead, you should to connect to the :command:`"gps_started"` hook, as
+  in::
 
       ^L
       ###########################################################
@@ -1772,9 +1767,9 @@ XML files
 
 .. highlight:: xml
 
-XML files must be utf8-encoded by default. In addition, you can specify any
-specific encoding through the standard `<?xml encoding="..." ?>` declaration,
-as in the following example::
+XML files must be UTF8-encoded by default. In addition, you can specify any
+specific encoding through the standard command:`<?xml encoding="..." ?>`
+declaration, as in the following example::
 
   <?xml version="1.0" encoding="iso-8859-1"?>
   <!--  general description -->
@@ -1782,87 +1777,106 @@ as in the following example::
     <title>encoded text</title>
   </submenu>
 
-These files must be valid XML files, i.e. must start with the `<?xml?>` tag,
-and contain a single root XML node, the name of which is left to your
-consideration. The general format is therefore::
+These files must be valid XML files, i.e. must start with the `<?xml?>` tag
+and contain a single root XML node, the name of which is arbitrary.  The
+format is therefore::
 
   <?xml version="1.0" ?>
   <root_node>
      ...
   </root_node>
 
-It is also recommended that the first line after the `<?xml?>` tag contains a
-general comment describing the purpose and usage of the script.  This comment
-will be made visible in the Plug-ins editor.
+The first line after the `<?xml?>` tag should contain a comment describing
+the purpose and usage of the script.  This comment is made visible in the
+Plug-ins editor.  The list of valid XML nodes that you can specify under
+:file:`<root>` is described in later sections. It includes:
 
-The list of valid XML nodes that can be specified under <root> is described in
-later sections. It includes:
+* :file:`<action>`
 
-*<action>*
-  (:ref:`Defining_Actions`)
+  (See :ref:`Defining_Actions`)
 
-*<key>*
-  (:ref:`Binding_actions_to_keys`)
+* :file:`<key>`
 
-*<submenu>*
-  (:ref:`Adding_new_menus`)
+  (See :ref:`Binding_actions_to_keys`)
 
-*<pref>*
-  (:ref:`Preferences_support_in_custom_files`)
+* :file:`<submenu>`
 
-*<preference>*
-  (:ref:`Preferences_support_in_custom_files`)
+  (See :ref:`Adding_new_menus`)
 
-*<alias>*
-  (:ref:`Defining_text_aliases`)
+* :file:`<pref>`
 
-*<language>*
-  (:ref:`Adding_support_for_new_languages`)
+  (See :ref:`Preferences_support_in_custom_files`)
 
-*<button>*
-  (:ref:`Adding_tool_bar_buttons`)
+* :file:`<preference>`
 
-*<entry>*
-  (:ref:`Adding_tool_bar_buttons`)
+  (See :ref:`Preferences_support_in_custom_files`)
 
-*<vsearch-pattern>*
-  (:ref:`Defining_new_search_patterns`)
+* :file:`<alias>`
 
-*<tool>*
-  (:ref:`Adding_support_for_new_tools`)
+  (See :ref:`Defining_text_aliases`)
 
-*<filter>*
-  (:ref:`Filtering_actions`)
+* :file:`<language>`
 
-*<contextual>*
-  (:ref:`Adding_contextual_menus`)
+  (See :ref:`Adding_support_for_new_languages`)
 
-*<case_exceptions>*
-  (:ref:`Adding_casing_exceptions`)
+* :file:`<button>`
 
-*<documentation_file>*
-  (:ref:`Adding_documentation`)
+  (See :ref:`Adding_tool_bar_buttons`)
 
-*<doc_path>*
-  (:ref:`Adding_documentation`)
+* :file:`<entry>`
 
-*<stock>*
-  (:ref:`Adding_stock_icons`)
+  (See :ref:`Adding_tool_bar_buttons`)
 
-*<project_attribute>*
-  (:ref:`Defining_project_attributes`)
+* :file:`<vsearch-pattern>`
 
-*<remote_machine_descriptor>*
-  (:ref:`Defining_a_remote_server`)
+  (See :ref:`Defining_new_search_patterns`)
 
-*<remote_path_config>*
-  (:ref:`Defining_a_remote_path_translation`)
+* :file:`<tool>`
 
-*<remote_connection_config>*
-  (:ref:`Defining_a_remote_connection_tool`)
+  (See :ref:`Adding_support_for_new_tools`)
 
-*<rsync_configuration>*
-  (:ref:`Configuring_rsync_usage`)
+* :file:`<filter>`
+
+  (See :ref:`Filtering_actions`)
+
+* :file:`<contextual>`
+
+  (See :ref:`Adding_contextual_menus`)
+
+* :file:`<case_exceptions>`
+
+  (See :ref:`Adding_casing_exceptions`)
+
+* :file:`<documentation_file>`
+
+  (See :ref:`Adding_documentation`)
+
+* :file:`<doc_path>`
+  (See :ref:`Adding_documentation`)
+
+* :file:`<stock>`
+
+  (See :ref:`Adding_stock_icons`)
+
+* :file:`<project_attribute>`
+
+  (See :ref:`Defining_project_attributes`)
+
+* :file:`<remote_machine_descriptor>`
+
+  (See :ref:`Defining_a_remote_server`)
+
+* :file:`<remote_path_config>`
+
+  (See :ref:`Defining_a_remote_path_translation`)
+
+* :file:`<remote_connection_config>`
+
+  (See :ref:`Defining_a_remote_connection_tool`)
+
+* :file:`<rsync_configuration>`
+
+  (See :ref:`Configuring_rsync_usage`)
 
 .. _Defining_Actions:
 
@@ -1876,8 +1890,8 @@ Defining Actions
 .. index:: <filter>
 
 This facility distinguishes the actions from their associated menus or key
-bindings. Actions can take several forms: external commands, shell commands and
-predefined commands, as will be explained in more details below.
+bindings. Actions can take several forms: external commands, shell commands
+and predefined commands, as will be explained in more details below.
 
 The general form to define new actions is to use the `<action>` tag.  This tag
 accepts the following attributes:
