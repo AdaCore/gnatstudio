@@ -86,7 +86,6 @@ with Glib_String_Utils;         use Glib_String_Utils;
 with System;                    use System;
 with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with File_Utils;                use File_Utils;
-with Ada.Containers.Ordered_Sets;
 
 package body GUI_Utils is
 
@@ -155,16 +154,6 @@ package body GUI_Utils is
       Event     : Gdk_Event;
       Output    : Event_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
-
-   function "<" (A, B : Gtk_Window) return Boolean is
-     (A.all'Address < B.all'Address);
-
-   package Windows_Sets is
-     new Ada.Containers.Ordered_Sets (Gtk_Window);
-
-   function Get_MDI_Windows
-     (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
-      return Windows_Sets.Set;
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -2099,34 +2088,6 @@ package body GUI_Utils is
       return False;
    end Idle_Grab_Focus;
 
-   ---------------------
-   -- Get_MDI_Windows --
-   ---------------------
-
-   function Get_MDI_Windows
-     (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
-      return Windows_Sets.Set
-   is
-      use Gtkada.MDI;
-      Iter  : Child_Iterator := First_Child (MDI);
-      Child : MDI_Child;
-      W     : Gtk_Widget;
-   begin
-      return S : Windows_Sets.Set do
-         while Get (Iter) /= null loop
-            Child := Get (Iter);
-            W := (if Child.Is_Floating then Child.Get_Widget.Get_Toplevel
-                  else Child.Get_Toplevel);
-
-            if W.all in Gtk_Window_Record'Class then
-               S.Include (Gtk_Window (W));
-            end if;
-
-            Next (Iter);
-         end loop;
-      end return;
-   end Get_MDI_Windows;
-
    -------------------------
    -- Grab_Toplevel_Focus --
    -------------------------
@@ -2138,17 +2099,7 @@ package body GUI_Utils is
       Win : Gtk_Widget;
       Id : Glib.Main.G_Source_Id;
       pragma Unreferenced (Id);
-      GPS_Has_Focus : constant Boolean :=
-        (for some W of Get_MDI_Windows (MDI) => W.Has_Toplevel_Focus);
    begin
-
-      --  Don't do anything if GPS doesn't have the focus at a Window Manager
-      --  level - that is, if none of it's toplevel windows has toplevel focus
-
-      if not GPS_Has_Focus then
-         return;
-      end if;
-
       MDI.Set_Focus_Child (Widget);
 
       Win := Get_Toplevel (Widget);
