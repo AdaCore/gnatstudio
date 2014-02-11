@@ -1791,92 +1791,49 @@ the purpose and usage of the script.  This comment is made visible in the
 Plug-ins editor.  The list of valid XML nodes that you can specify under
 :file:`<root>` is described in later sections. It includes:
 
-* :file:`<action>`
+* :ref:`\<action>\ <Defining_Actions>`
 
-  (See :ref:`Defining_Actions`)
+* :ref:`\<key>\ <Binding_actions_to_keys>`
 
-* :file:`<key>`
+* :ref:`\<submenu>\ <Adding_new_menus>`
 
-  (See :ref:`Binding_actions_to_keys`)
+* :ref:`\<pref>\ <Preferences_support_in_custom_files>`
 
-* :file:`<submenu>`
+* :ref:`\<preference>\ <Preferences_support_in_custom_files>`
 
-  (See :ref:`Adding_new_menus`)
+* :ref:`\<alias>\ <Defining_text_aliases>`
 
-* :file:`<pref>`
+* :ref:`\<language>\ <Adding_support_for_new_languages>`
 
-  (See :ref:`Preferences_support_in_custom_files`)
+* :ref:`\<button>\ <Adding_tool_bar_buttons>`
 
-* :file:`<preference>`
+* :ref:`\<entry>\ <Adding_tool_bar_buttons>`
 
-  (See :ref:`Preferences_support_in_custom_files`)
+* :ref:`<vsearch\-pattern>\ <Defining_new_search_patterns>`
 
-* :file:`<alias>`
+* :ref:`\<tool>\ <Adding_support_for_new_tools>`
 
-  (See :ref:`Defining_text_aliases`)
+* :ref:`\<filter>\ <Filtering_actions>`
 
-* :file:`<language>`
+* :ref:`\<contextual>\ <Adding_contextual_menus>`
 
-  (See :ref:`Adding_support_for_new_languages`)
+* :ref:`<case\_exceptions>\ <Adding_casing_exceptions>`
 
-* :file:`<button>`
+* :ref:`<documentation\_file>\ <Adding_documentation>`
 
-  (See :ref:`Adding_tool_bar_buttons`)
+* :ref:`<doc\_path>\ <Adding_documentation>`
 
-* :file:`<entry>`
+* :ref:`\<stock>\ <Adding_stock_icons>`
 
-  (See :ref:`Adding_tool_bar_buttons`)
+* :ref:`<project\_attribute>\ <Defining_project_attributes>`
 
-* :file:`<vsearch-pattern>`
+* :ref:`<remote_machine\_descriptor>\ <Defining_a_remote_server>`
 
-  (See :ref:`Defining_new_search_patterns`)
+* :ref:`<remote_path\_config>\ <Defining_a_remote_path_translation>`
 
-* :file:`<tool>`
+* :ref:`<remote_connection\_config>\ <Defining_a_remote_connection_tool>`
 
-  (See :ref:`Adding_support_for_new_tools`)
-
-* :file:`<filter>`
-
-  (See :ref:`Filtering_actions`)
-
-* :file:`<contextual>`
-
-  (See :ref:`Adding_contextual_menus`)
-
-* :file:`<case_exceptions>`
-
-  (See :ref:`Adding_casing_exceptions`)
-
-* :file:`<documentation_file>`
-
-  (See :ref:`Adding_documentation`)
-
-* :file:`<doc_path>`
-  (See :ref:`Adding_documentation`)
-
-* :file:`<stock>`
-
-  (See :ref:`Adding_stock_icons`)
-
-* :file:`<project_attribute>`
-
-  (See :ref:`Defining_project_attributes`)
-
-* :file:`<remote_machine_descriptor>`
-
-  (See :ref:`Defining_a_remote_server`)
-
-* :file:`<remote_path_config>`
-
-  (See :ref:`Defining_a_remote_path_translation`)
-
-* :file:`<remote_connection_config>`
-
-  (See :ref:`Defining_a_remote_connection_tool`)
-
-* :file:`<rsync_configuration>`
-
-  (See :ref:`Configuring_rsync_usage`)
+* :ref:`<rsync\_configuration>\ <Configuring_rsync_usage>`
 
 .. _Defining_Actions:
 
@@ -1889,111 +1846,111 @@ Defining Actions
 .. index:: <external>
 .. index:: <filter>
 
-This facility distinguishes the actions from their associated menus or key
-bindings. Actions can take several forms: external commands, shell commands
-and predefined commands, as will be explained in more details below.
+This mechanism links actions to their associated menus or key
+bindings. Actions can take several forms: external commands, shell
+commands and predefined commands, each explained in more detail below.
 
-The general form to define new actions is to use the `<action>` tag.  This tag
-accepts the following attributes:
+Define new actions using the :file:`<action>` tag.  This tag accepts the
+following attributes:
 
-*name   (mandatory)*
-  This tag must be specified. It provides the name by which the action is
-  referenced in other parts of the customization files, for instance when it is
-  associated with a menu or a toolbar button. The name can contain any
-  character, although it is recommended to avoid XML special characters. It
-  mustn't start with a '/'.
+* :file:`name` (mandatory)
 
-*output  (optional)*
-  If specified, this attribute indicates where the output of the commands will
-  be sent by default. This can be overridden by each command, using the same
-  attribute for `<shell>` and `<external>` tags,
-  :ref:`Redirecting_the_command_output`.
+  The name by which the action is referenced elsewehre in the customization
+  files, for example when it's associated with a menu or toolbar button.
+  It can contain any character, although you should avoid XML special
+  characters and it can't start with a '/'.
 
-*show-command (optional, default true)*
-  If specified, this attribute indicates whether the text of the command itself
-  should be displayed at the same location as its output. Neither will be
-  displayed if the output is hidden. The default is to show the command along
-  with its output.  This attribute can be overridden for each command.
+* :file:`output` (optional)
 
-*show-task-manager (optional, default false)*
-  This attribute indicates whether an entry should be created in the task
-  manager to show this command. Associated with this entry is the progress
-  bar indicator, so if you hide the entry, no progress will be shown. On the
-  other hand, several progress bars might be displayed for your action if you
-  show the progress bar here, which might be an issue depending on the
-  context.
-  This attribute can be overriden for each external command.
+  Where the output of the commands are sent by default.  You can override
+  this for each command using the same attribute for :file:`<shell>` and
+  :file:`<external>` tags.  See :ref:`Redirecting_the_command_output`.
 
-*category (optional, default "General")*
-  The category in the keybindings editor (menu `Edit/Key bindings`) in which
-  the action should be shown to the user. If you specify an empty string, the
-  action is considered as an implementation detail, and not displayed in the
-  editor. The user will thus not be able to assign it a keybinding through the
-  graphical user interface (although this is still doable through XML commands).
+* :file:`show-command` (optional, default true)
 
-If you are defining the same action multiple times, the last definition will be
-kept. However, existing menus, buttons, ... that already reference that action
-will keep their existing semantic. The new definition will only be used for all
-new menus created from that point on.
+  Whether the text of the command itself should be displayed in the same
+  place as its output. Neither are displayed if the output is hidden. The
+  default shows the command along with its output.  You can override this
+  attribute for each command.
 
-The `<action>` can have one or several children, all of which define a
-particular command to execute. All of these commands are executed one after the
-other, unless one of them fails in which case the following commands are not
-executed.
+* :file:`show-task-manager` (optional, default false)
 
-The following XML tags are valid children for `<action>`.
+  Whether an entry is in the task manager to show this command. The
+  progress bar indicaton is associated with this entry so if you hide the
+  entry, no progress bar is shown. Alternatively, several progress bars may
+  displayed for your action if this is enabled, which might be an issue
+  depending on the context.  You can override this attribute for each
+  external command.
 
-.. index:: external
+* :file:`category` (optional, default "General")
 
-*<external>*
-  This defines a command to execute through the system (i.e. a standard Unix or
-  Windows command)
+  The category in the keybindings editor (:menuselection:`Edit --> Key
+  bindings` menu) in which the action is displayed. If you specify an empty
+  string, the action is considered part of the implementation and not
+  displayed in the editor and the user won't be able to assign it a
+  keybinding through the graphical user interface (although this can still
+  be done via XML commands).
 
-  Note for Windows users: like under UNIX, scripts can be called from custom
-  menu. In order to do that, you need to write your script in a :file:`.bat` or
-  :file:`.cmd` file, and call this file as usual.  The `external` tag would
-  e.g. look like::
+If you define the same action multiple times, the last definition is used.
+However, items such as menus and buttons that reference the action keep
+their existing semantics: the new definition is only used for items created
+after it's defined.
 
-    <?xml version="1.0" ?>
-    <external_example>
-      <action name="my_command">
-        <external>c:\\.gps\\my_scripts\\my_cmd.cmd</external>
-      </action>
-    </external_example>
+The :file:`<action>` tag can have one or several children, all of which
+specify a command to execute. All commands are executed sequentially unless
+one fails, in which case the following commands are ignored.
 
-  This tag accepts the following attributes:
+The valid children of :file:`<action>` are the following XML tags:
 
-  *server (optional)*
-    This attribute can be used to execute the external command on a remote
-    server. The accepted values are `"gps_server"` (default), `"build_server"`,
-    `"execution_server"`, `"debug_server"` and `"tools_server"`.
-    :ref:`Remote_operations`, for explanation of what these servers are.
 
-  *check-password (optional)*
+* :file:`<external>`
+
+  .. index:: external
+
+  Defines a system command (i.e. a standard Unix or Windows command).
+
+  * :file:`server` (optional)
+
+    Execute the external command on a remote server. The values are
+    "gps_server" (default), "build_server", "execution_server",
+    "debug_server" and "tools_server".  See :ref:`Remote_operations` for
+    information on what each of these servers are.
+
+  * :file:`check-password` (optional)
+
     .. index:: password
 
-    This attribute can be used to tell GPS to check and handle password prompts
-    from the external command. The accepted values are `"false"` (default) and
-    `"true"`.
+    Tell GPS to check for and handle password prompts from the external
+    command. The values are false (default) and true.
 
-  *show-command (optional)*
-    This attribute can be used to override the homonym attribute specified for
-    the `<action>` tag.
+  * :file:`show-command` (optional)
 
-  *output (optional)*
-    This attribute can be used to override the homonym attribute specified for
-    the `<action>` tag.
+  * :file:`output` (optional)
 
+    Override the value of the attribute of the same name specified in the
+    :file:`<action>` tag.
 
-  *progress-regexp (optional)*
-    This attribute specifies a regular expression that the output of the
-    command will be checked against. Every time the regular expression matches,
-    it should provide two numeric values that are used to display the usual
-    progress indicators at the bottom-right corner of the GPS window, as
-    happens during regular compilations.
+  * :file:`progress-regexp` (optional)
+
+  * :file:`progress-current` (optional, default 1)
+
+  * :file:`progress-final` (optional, default is 2)
+
+    :file:`progress-regexp` is a regular expression that GPS matches the
+    output of the command against. When the regular expression matches, it
+    must provide two subexpressions whose numeric values represent the
+    current and total number of steps to perform, which are used to display
+    the progress indicators at the bottom-right corner of the GPS window.
+    :file:`progress-current` is the ordinal of the subexpression containing
+    the current step and :file:`progress-final` is the ordinal of the
+    subexpression containing the total number of steps, which grows as
+    needed. For example, :program:`gnatmake` outputs the number of the file
+    it's currently compiling and the total number of files to be
+    compiled. However, that last number may increase, since compiling a new
+    file may cause additional files to be compiled.
 
     The name of the action is printed in the progress bar while the action is
-    executing::
+    executing.  Here's an example::
 
       <?xml version="1.0" ?>
       <progress_action>
@@ -2007,52 +1964,52 @@ The following XML tags are valid children for `<action>`.
         </action>
       </progress_action>
 
-  *progress-current (optional, default is 1)*
-    This is the opening parenthesis count index in `progress-regexp`
-    that contains the current step.
+  * :file:`progress-hide` (optional, default true)
 
+    If true, all lines matching :file:`progress-regexp` and are used to
+    compute the progress are not displayed in the output
+    console. Otherwise, those lines are displayed with the rest of the
+    output.
 
-  *progress-final   (optional, default is 2)*
-    This is the opening parenthesis count index in `progress-regexp`
-    that contains the current last step. This last index can grow as
-    needed. For example, gnatmake will output the number of
-    the file it is currently examining, and the total number of files to be
-    examined. However, that last number may grow up, since parsing a new file
-    might generate a list of additional files to parse later on.
+  * :file:`show-task-manager` (optional, default inherited from
+    :file:`<action>`)
 
-  *progress-hide    (optional, default is true)*
-    If this attribute is set to the value "true", then all the lines that
-    match `progress-regexp` and are used to compute the progress will
-    not be displayed in the output console. For any other value of this
-    attribute, these lines are displayed along will the rest of the output.
+    Whether an entry is created in the task manager to show this command.
+    The progress bar indicator is associated with this entry, so if you
+    hide the entry, no progress is shown. Alternatively, several progress
+    bars may be displayed for your action if this is enabled, which might
+    be an issue depending on the context.
 
-  *show-task-manager (optional, default inherited from `<action>`)*
-    This attribute indicates whether an entry should be created in the task
-    manager to show this command. Associated with this entry is the progress
-    bar indicator, so if you hide the entry, no progress will be shown. On the
-    other hand, several progress bars might be displayed for your action if you
-    show the progress bar here, which might be an issue depending on the
-    context.
+    If set a value for `progress-regexp`, this attribute is automatically
+    set to true so the progress bar is displayed in the task manager.
 
-    If you have set a value for `progress-regexp`, this will automatically
-    be set to true by default so that the progress bar is indeed displayed in
-    the task manager. You can still override it explicitly for that
-    `<external>` element to force hiding the progress bar.
+  Note for Windows users: like Unix, scripts can be called from a custom
+  menu.  To allow that, you need to write your script in a :file:`.bat` or
+  :file:`.cmd` file and call this file.  So the :file:`external` tag would
+  look like::
+
+    <?xml version="1.0" ?>
+    <external_example>
+      <action name="my_command">
+        <external>c:\\.gps\\my_scripts\\my_cmd.cmd</external>
+      </action>
+    </external_example>
 
   .. index:: on-failure
 
-*<on-failure>*
-  This tag specifies a group of command to be executed if the previous
-  external command fails. Typically, this is used to parse the output of the
-  command and fill the location window appropriately
-  (:ref:`Processing_the_tool_output`).
+* :file:`on-failure`
 
-  For instance, the following action spawns an external tool, and parses its
-  output to the location window and the automatic fixing tool if the external
-  tool happens to fail.
+  Specifies a group of command to be executed if the previous external
+  command fails. Typically, this is used to parse the output of the command
+  and fill the :guilabel:`Locations` window appropriately
+  (see :ref:`Processing_the_tool_output`).
 
-  In this group of commands the %... and $... macros can be used
-  (:ref:`Macro_arguments`)::
+  For example, the following action spawns an external tool and parses its
+  output to the :guilabel:`Locations` window.  It calls the automatic fixing
+  tool if the external tool fails.
+
+  You can use the %... and $... macros in this group of commands
+  (see :ref:`Macro_arguments`)::
 
     <?xml version="1.0" ?>
     <action_launch_to_location>
@@ -2070,17 +2027,17 @@ The following XML tags are valid children for `<action>`.
   .. index:: shell
   .. index:: interactive command
 
-*<shell>*
-  As well as external commands, you can use custom menu items to invoke GPS
-  commands using the `shell` tag. These are command written in one of the
-  shell scripts supported by GPS.
+* :file:`shell`
 
-  This tag supports the same `show-command` and `output` attributes
-  as the `<action>` tag.
+  You can use custom menu items to invoke GPS commands using the
+  :file:`shell` tag. These are written in one of the shell scripts
+  supported by GPS.
 
-  The following example shows how to
-  create two actions to invoke the `help` interactive command and to open
-  the file :file:`main.c`::
+  This tag supports the same :file:`show-command` and :file:`output`
+  attributes as the :file:`<action>` tag.
+
+  The following example shows how to create two actions to invoke the
+  :command:`help` interactive command and open the file :file:`main.c`::
 
     <?xml version="1.0" ?>
     <help>
@@ -2092,15 +2049,14 @@ The following XML tags are valid children for `<action>`.
       </action>
     </help>
 
-  By default, commands are expected to be written in the GPS shell language.
-  However, you can specify the language through the `lang` attribute. Its
-  default value is `"shell"`.
+  By default, commands are written in the GPS shell language.  However, you
+  can specify the language through the :file:`lang` attribute, whose
+  default value is "shell". You can also specify "python".
 
-  The value of this attribute could also be "python".
-
-  When programming with the GPS shell, you can execute multiple commands by
-  separating them with semicolons. Therefore, the following example adds a menu
-  which lists all the files used by the current file, in a project browser::
+  When programming with the GPS shell, execute multiple commands by
+  separating them with semicolons. Therefore, the following example adds a
+  menu that lists all the files used by the current file in a
+  :guilabel:`Project` browser::
 
     <?xml version="1.0" ?>
     <current_file_uses>
@@ -2110,23 +2066,25 @@ The following XML tags are valid children for `<action>`.
       </action>
     </current_file_uses>
 
-*<description>*
+* :file:`<description>`
+
   .. index:: description
 
-  This tag contains a description for the command, which is used in the
-  graphical editor for the key manager. :ref:`The_Key_Manager_Dialog`.
+  A description of the command, which is used in the graphical editor for
+  the key manager. See :ref:`The_Key_Manager_Dialog`.
 
-*<filter>, <filter_and>, <filter_or>*
+* :file:`<filter>`, :file:`<filter_and>`, :file:`<filter_or>`
+
   .. index:: filter
 
-  This is the context in which the action can be executed,
+  The context in which the action can be executed. See
   :ref:`Filtering_actions`.
 
 .. highlight:: xml
 
-It is possible to mix both shell commands and external commands. For
-instance, the following command opens an xterm (on Unix systems only)
-in the current directory, which depends on the context::
+You can mix both shell commands and external commands. For example, the
+following command opens an :program`xterm` (on Unix systems only) in the
+current directory, which depends on the context::
 
   <?xml version="1.0" ?>
   <xterm_directory>
@@ -2136,16 +2094,17 @@ in the current directory, which depends on the context::
     </action>
   </xterm_directory>
 
-As seen in some of the examples above, some special strings are expanded by GPS
-just prior to executing the command. These are the "%f", "%d",.. See below for
-a full list.
+As you can see in some of the examples above, some special strings are
+expanded by GPS just prior to executing the command, for example "%f" and
+"%d".  See below for a full list.
 
 More information on chaining commands is provided in :ref:`Chaining_commands`.
 
-Some actions are also predefined in GPS itself. This include for instance
-aliases expansion, manipulating MDI windows, ...; All known actions (predefined
-and the ones you have defined in your own customization files) can be
-discovered by opening the key shortcut editor (`Edit->Key shortcuts` menu).
+Some actions are also predefined in GPS itself. This include, for example,
+aliases expansion and manipulating MDI windows. You can display all known
+actions (both predefined and the ones you defined in your own customization
+files) opening the key shortcut editor using the :menuselection:`Edit -->
+Key shortcuts` menu.
 
 .. _Macro_arguments:
 
