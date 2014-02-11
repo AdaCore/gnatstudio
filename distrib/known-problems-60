@@ -137,6 +137,16 @@ KP-60-MC13-038 GPS: MDI child "flicker" while being moved
   Workaround: Keep using the drag&drop with the flickering, which is only a
               visual side effect.
 
+KP-60-MC12-058 GPS: Inconsistent behavior of Previous/Next Location buttons
+
+  Problem:    Navigation from Location View, Outline View and some others
+              are not saved in navigation history. Navigation missed in
+              history in some rare conditions.
+
+  Status:     This was fixed in 6.1 on 2014-02-04
+
+  Workaround: Use bookmarks instead of navigation history.
+
 KP-60-MC11-034 GPS: Block completions not working in all cases
 
   Problem:    The block completion plug-in was not working with simple begin
