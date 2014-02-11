@@ -184,6 +184,17 @@ KP-60-MC04-015 GPS: doesn't launch after opening non-ASCII named file
 
   Workaround: Set UTF-8 locale before launching GPS.
 
+KP-60-MB29-031 GPS: rsync failures in remote mode
+
+  Problem:    When syncing remote and local directories using rsync, and a
+              password is requested, then the rsync fails and GPS is not
+              asking any password to the user.
+
+  Status:     This was fixed in 6.1 on 2014-02-11
+
+  Workaround: Use a passwordless connection via an ssh agent for example, or
+              use network directories.
+
 KP-60-MB26-015 GB: Show complete command line in command line editor
 
   Problem:    When editing the command line before launching the action
