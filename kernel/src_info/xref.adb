@@ -108,6 +108,10 @@ package body Xref is
       Cursor : in out References_Cursor'Class);
    --  Wraps GNATCOLL.Xref.References to pass correct parameters
 
+   procedure Close_Database (Self   : General_Xref_Database);
+   --  Close the database connection (and perhaps remove the sqlite database
+   --  if we were using a temporary project).
+
    ----------------
    -- Assistants --
    ----------------
@@ -2611,20 +2615,34 @@ package body Xref is
       end if;
    end Is_Read_Or_Write_Reference;
 
-   -------------
-   -- Destroy --
-   -------------
+   --------------------
+   -- Close_Database --
+   --------------------
 
-   procedure Destroy (Self : in out General_Xref_Database) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (General_Xref_Database_Record'Class, General_Xref_Database);
+   procedure Close_Database (Self   : General_Xref_Database) is
       Valgrind : GNAT.Strings.String_Access;
+      Success  : Boolean;
    begin
       if Active (SQLITE) then
+         Trace (Me, "Closing xref database, temporary="
+                & Self.Xref_Db_Is_Temporary'Img);
          Self.Xref.Free;
-         Self.Xref := null;
+
+         --  Do not keep the database unless we loaded an explicit user project
+         if Self.Xref_Db_Is_Temporary
+           and then Self.Xref_Db /= No_File
+         then
+            Self.Xref_Db.Delete (Success => Success);
+            if not Success then
+               Trace (Me, "Could not delete database");
+            else
+               Trace
+                 (Me, "Deleted database " & Self.Xref_Db.Display_Full_Name);
+            end if;
+         end if;
+
       else
-         --  Most of the rest if for the sake of memory leaks checkin, and
+         --  Most of the rest is for the sake of memory leaks checkin, and
          --  since it can take a while for big projects we do not do this
          --  in normal times.
 
@@ -2636,9 +2654,19 @@ package body Xref is
          end if;
          Free (Valgrind);
       end if;
+   end Close_Database;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Self : in out General_Xref_Database) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (General_Xref_Database_Record'Class, General_Xref_Database);
+   begin
+      Close_Database (Self);
+      Self.Xref := null;
       Free (Self.Constructs);
-
       Unchecked_Free (Self);
    end Destroy;
 
@@ -3846,8 +3874,14 @@ package body Xref is
          --  ??? We really should not be doing anything until the project has
          --  been computed.
 
+         if Self.Xref /= null then
+            Trace (Me, "Closing previous version of the database");
+            Close_Database (Self);
+         end if;
+
          Trace (Me, "Set up xref database: :memory:");
          Self.Xref_Db := GNATCOLL.VFS.No_File;
+         Self.Xref_Db_Is_Temporary := True;
          Self.Xref.Setup_DB
            (GNATCOLL.SQL.Sqlite.Setup (":memory:"), Error => Error);
 
@@ -3948,6 +3982,7 @@ package body Xref is
 
          Self.Xref_Db := No_File;
          File := Xref_Database_Location (Self, Tree.Root_Project);
+         Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
          Self.Xref.Setup_DB
            (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all),
             Error => Error);

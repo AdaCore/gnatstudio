@@ -94,6 +94,9 @@ package Xref is
 
       Xref_Db : GNATCOLL.VFS.Virtual_File;
       --  Location of the sqlite database
+
+      Xref_Db_Is_Temporary : Boolean := False;
+      --  Whether we should remove the database from the disk when we close it
    end record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
