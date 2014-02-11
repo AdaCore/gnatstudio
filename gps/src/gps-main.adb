@@ -1822,10 +1822,7 @@ procedure GPS.Main is
 
       procedure Load_Sources is
       begin
-         --  Temporarily restore start-up dir, so that relative paths are
-         --  properly computed
-
-         for File_Item of Files_To_Open loop
+         if not Files_To_Open.Is_Empty then
             --  If no project has been loaded yet, load a default project
             --  and desktop before opening source editors.
 
@@ -1836,28 +1833,23 @@ procedure GPS.Main is
                   Clear                => False);
             end if;
 
-            Open_File_Editor
-              (GPS_Main.Kernel,
-               Create
-                 (Normalize_To_OS_Case (+To_String (File_Item.File)),
-                  GPS_Main.Kernel,
-                  Use_Source_Path => File_Item.From_Project,
-                  Use_Object_Path => False),
-               File_Item.Line);
-            File_Opened := True;
-         end loop;
+            for File_Item of Files_To_Open loop
+               Open_File_Editor
+                 (GPS_Main.Kernel,
+                  Create
+                    (Normalize_To_OS_Case (+To_String (File_Item.File)),
+                     GPS_Main.Kernel,
+                     Use_Source_Path => File_Item.From_Project,
+                     Use_Object_Path => False),
+                  File_Item.Line);
+               File_Opened := True;
+            end loop;
 
-         if not Auto_Load_Project and then not File_Opened then
-            Load_Default_Project
-              (GPS_Main.Kernel, Get_Current_Dir,
-               Load_Default_Desktop => True,
-               Clear                => False);
-         end if;
+            --  Load a dummy project, in case the wizard needs to be launched
 
-         --  Load a dummy project, in case the wizard needs to be launched
-
-         if not Auto_Load_Project and then not File_Opened then
-            Load_Empty_Project (GPS_Main.Kernel);
+            if not Auto_Load_Project and then not File_Opened then
+               Load_Empty_Project (GPS_Main.Kernel);
+            end if;
          end if;
       end Load_Sources;
 

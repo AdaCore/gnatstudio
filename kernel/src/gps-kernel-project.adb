@@ -501,7 +501,7 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Ignore);
 
    begin
-      Trace (Me, "Load_Default_Project");
+      Increase_Indent (Me, "Load_Default_Project");
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anyway
 
@@ -539,6 +539,8 @@ package body GPS.Kernel.Project is
          Close_All_Children (Kernel);
          Ignore := Load_Desktop (Kernel);
       end if;
+
+      Decrease_Indent (Me);
    end Load_Default_Project;
 
    ------------------------
