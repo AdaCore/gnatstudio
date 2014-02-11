@@ -83,6 +83,18 @@ KP-60-N129-024 GPS: memory leak when folding/unfolding code blocks
   Workaround: Avoid use of folding/unfolding code blocks actions or restart GPS
               from time to time.
 
+KP-60-N129-021 WB: "Toggle Breakpoint" not working in Workbench-3.3.5
+
+  Problem:    Double clicking in the Ada Editor ruler does nothing. "Toggle
+              Breakpoint" contextual menu only display "The chosen operation is
+              not currently available" information message.
+
+  Status:     This was fixed in 2.9 on 2014-02-11
+
+  Workaround: Use "Breakpoints > Add Breakpoint..." contextual menu or in the
+              Debug perspective use the "Run > Toggle Breakpoint Ctrl+Shift+B)"
+              menu.
+
 KP-60-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
   Problem:    When in the main project the Builder switches include --RTS=
