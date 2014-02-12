@@ -3,6 +3,20 @@
    <ASPECT id = "0" name = "Abstract_State" origin = "GNAT RM" category = "unknown">
       <DOC>
 This aspect is equivalent to pragma `Abstract_State'.
+
+Annotate
+
+There are three forms of this aspect (where ID is an identifier, and
+ARG is a general expression).
+
+`Annotate =&gt; ID'
+Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
+
+`Annotate =&gt; (ID)'
+Equivalent to `pragma Annotate (ID, Entity =&gt; Name);'
+
+`Annotate =&gt; (ID ,ID {, ARG})'
+Equivalent to `pragma Annotate (ID, ID {, ARG}, Entity =&gt; Name);'
       </DOC>
    </ASPECT>
 
@@ -4227,7 +4241,7 @@ situations.
    <PRAGMA id = "0" name = "Annotate" origin = "GNAT RM">
       <DOC>
 Syntax:
-pragma Annotate (IDENTIFIER [,IDENTIFIER {, ARG}]);
+pragma Annotate (IDENTIFIER [,IDENTIFIER {, ARG}] [entity =&gt; local_NAME]);
 
 ARG ::= NAME | EXPRESSION
 
@@ -4240,7 +4254,9 @@ be either string literals or more generally expressions.  String
 literals are assumed to be either of type `Standard.String' or else
 `Wide_String' or `Wide_Wide_String' depending on the character literals
 they contain.  All other kinds of arguments are analyzed as
-expressions, and must be unambiguous.
+expressions, and must be unambiguous. The last argument if present must
+have the identifier `Entity' and GNAT verifies that a local name is
+given.
 
 The analyzed pragma is retained in the tree, but not otherwise
 processed by any part of the GNAT compiler, except to generate
