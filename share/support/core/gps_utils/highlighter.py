@@ -74,7 +74,8 @@ class OverlayStyle(object):
         if self.use_messages():
             return self._style
         else:
-            over = buffer.create_overlay(self.name) # Return existing one or create
+            # Return existing one or create
+            over = buffer.create_overlay(self.name)
             if not hasattr(over, "ts") or over.ts != self._style_ts:
                 if self.foreground:
                     over.set_property("foreground", self.foreground)
@@ -119,7 +120,7 @@ class OverlayStyle(object):
             if self.whole_line:
                 msg.set_style(over)
             else:
-                msg.set_style(over, len=end.column() - start.column())
+                msg.set_style(over, end.column() - start.column() + 1)
             self._messages.append(msg)
 
         else:
@@ -156,7 +157,7 @@ class OverlayStyle(object):
             over = self.__create_style(buffer)
             if end is None:
                 start = buffer.beginning_of_buffer()
-                end   = buffer.end_of_buffer()
+                end = buffer.end_of_buffer()
             buffer.remove_overlay(over, start, end)
 
 
@@ -178,14 +179,16 @@ class Background_Highlighter(object):
 
     :param OverlayStyle style: style to use for highlighting.
     """
+    # Interval in milliseconds between two batches.
+    # This is only used when gobject is not available
+    timeout_ms = 40
 
-    timeout_ms = 40   # Interval in milliseconds between two batches.
-                      # This is only used when gobject is not available
+    # Number of lines to process at each iteration
+    batch_size = 20
 
-    batch_size = 20   # Number of lines to process at each iteration
-
-    synchronous = False # If True, highlighting is always done in the
-                        # foreground. This is for testsuite purposes
+    # If True, highlighting is always done in the
+    # foreground. This is for testsuite purposes
+    synchronous = False
 
     def __init__(self, style):
         self.__source_id = None  # The gtk source_id used for background
@@ -280,7 +283,7 @@ class Background_Highlighter(object):
             elif self.__source_id is None:
                 if gobject_available:
                     self.__source_id = GLib.idle_add(
-                        self.__do_highlight) # , priority=GLib.PRIORITY_LOW)
+                        self.__do_highlight)  # , priority=GLib.PRIORITY_LOW)
                 else:
                     self.__source_id = GPS.Timeout(
                         self.timeout_ms, self.__do_highlight)
@@ -541,15 +544,15 @@ class Location_Highlighter(Background_Highlighter):
         self._refs = self.recompute_refs(buffer=buffer)
 
     def process(self, start, end):  # overriding
-        buffer = start.buffer()
+        ed = start.buffer()
 
-        s = GPS.FileLocation(buffer.file(), start.line(), start.column())
-        e = GPS.FileLocation(buffer.file(), end.line(), end.column())
+        s = GPS.FileLocation(ed.file(), start.line(), start.column())
+        e = GPS.FileLocation(ed.file(), end.line(), end.column())
 
         for entity_name, ref in self._refs:
             if s <= ref <= e:
                 u = entity_name.decode("utf-8").lower()
-                s2 = buffer.at(ref.line(), ref.column())
+                s2 = ed.at(ref.line(), ref.column())
 
                 try:
                     e2 = s2 + (len(u) - 1)
@@ -557,7 +560,7 @@ class Location_Highlighter(Background_Highlighter):
                     # An invalid location ?
                     continue
 
-                b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                b = ed.get_chars(s2, e2).decode("utf-8").lower()
                 if b == u:
                     self.style.apply(s2, e2)
 
@@ -566,18 +569,18 @@ class Location_Highlighter(Background_Highlighter):
                         # Search after original xref line (same column)
                         try:
                             s2 = GPS.EditorLocation(
-                                buffer, ref.line() + c, ref.column())
-                            e2 = s2 + (len (u) - 1)
-                            b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                                ed, ref.line() + c, ref.column())
+                            e2 = s2 + (len(u) - 1)
+                            b = ed.get_chars(s2, e2).decode("utf-8").lower()
                             if b == u:
                                 self.style.apply(s2, e2)
                                 break
 
                             # Search before original xref line
                             s2 = GPS.EditorLocation(
-                                buffer, ref.line() - c, ref.column())
-                            e2 = s2 + (len (u) - 1)
-                            b = buffer.get_chars(s2, e2).decode("utf-8").lower()
+                                ed, ref.line() - c, ref.column())
+                            e2 = s2 + (len(u) - 1)
+                            b = ed.get_chars(s2, e2).decode("utf-8").lower()
                             if b == u:
                                 self.style.apply(s2, e2)
                                 break
@@ -662,7 +665,7 @@ class Text_Highlighter(On_The_Fly_Highlighter):
     def __init__(self, text, style, whole_word=False, context_lines=0):
         self.text = text
         self.whole_word = whole_word
-        On_The_Fly.Highlighter.__init__(
+        On_The_Fly_Highlighter.__init__(
             self, context_lines=context_lines, style=style)
 
     def process(self, start, end):
