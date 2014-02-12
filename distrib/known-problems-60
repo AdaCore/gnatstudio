@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N211-025 GPS: Issue with highlighters
+
+  Problem:    In any python code using highlighter.OverlayStyle with
+              use_messages = True, an exception would be raised and the code
+              wouldn't work properly. This would cause an issue with the
+              auto_highlight_occurences plugin when configured to use the
+              speedbar.
+
+  Status:     This was fixed in 6.1 on 2014-02-12
+
+  Workaround: Use auto_highlight_occurences without the "Show in speedbar"
+              option activated
+
 KP-60-N210-037 GB: Eclipse/Workbench load hangs during 90 seconds
 
   Problem:    When starting GNATbench, the plugins loading progress stops for
