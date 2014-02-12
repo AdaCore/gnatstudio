@@ -233,6 +233,7 @@ package body GNATdoc.Atree is
       pragma Assert (not Get_Entities (E).Contains (Value));
       pragma Assert (Check_Unique);
       Get_Entities (E).Append (Value);
+      Atree.Set_Scope (E => Value, Value => E);
 
       if Present (Get_Full_View (Value)) then
          if Present (Get_Scope (Get_Full_View (Value))) then
@@ -247,6 +248,7 @@ package body GNATdoc.Atree is
 
          else
             Append_To_Scope (E, Get_Full_View (Value));
+            Set_Scope (Get_Full_View (Value), E);
          end if;
       end if;
    end Append_To_Scope;
@@ -2009,12 +2011,7 @@ package body GNATdoc.Atree is
          begin
             Cursor := Get_Entities (Scope).Find (E);
             Get_Entities (Scope).Delete (Cursor);
-
-            --  For consistency here we should reset the scope of the entity
-            --  but this is not possible at current stage because of the
-            --  current managements of discriminants This must be improved???
-
-            --  E.Scope := Atree.No_Entity;
+            Set_Scope (E, Atree.No_Entity);
          end;
       end if;
 
@@ -2373,14 +2370,6 @@ package body GNATdoc.Atree is
    procedure Set_Scope (E : Entity_Id; Value : Entity_Id) is
    begin
       pragma Assert (Value /= E); --  Avoid circularity
-
-      --  Generic formals are not added to the list of entities of the
-      --  enclosing scope; they are stored in a separate list.
-
-      pragma Assert (Value = No_Entity
-                       or else Is_Generic_Formal (E)
-                       or else Get_Entities (Value).Contains (E));
-
       E.Scope := Value;
 
       if Present (Get_Full_View (E))
@@ -3507,8 +3496,11 @@ package body GNATdoc.Atree is
       if With_Src then
          Append_Line ("Partial View Src:");
          Append_Line (To_String (Get_Src (E)));
-         Append_Line ("Full View Src:");
-         Append_Line (To_String (Get_Src (Get_Full_View (E))));
+
+         if Present (Get_Full_View (E)) then
+            Append_Line ("Full View Src:");
+            Append_Line (To_String (Get_Src (Get_Full_View (E))));
+         end if;
       end if;
 
       if With_Doc then

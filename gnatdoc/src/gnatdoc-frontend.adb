@@ -1425,14 +1425,19 @@ package body GNATdoc.Frontend is
                   Scope : constant Entity_Id := Get_Scope (Current_Context);
 
                   procedure Update_Scope;
+                  procedure Update_Scope (E : Entity_Id);
+
                   procedure Update_Scope is
                   begin
                      if Is_Partial_View (E) then
-                        Remove_From_Scope (Get_Full_View (E));
-                        Append_To_Scope (Scope, Get_Full_View (E));
-                        Set_Scope (Get_Full_View (E), Scope);
+                        Update_Scope (Get_Full_View (E));
                      end if;
 
+                     Update_Scope (E);
+                  end Update_Scope;
+
+                  procedure Update_Scope (E : Entity_Id) is
+                  begin
                      Remove_From_Scope (E);
                      Append_To_Scope (Scope, E);
                      Set_Scope (E, Scope);
@@ -1442,25 +1447,19 @@ package body GNATdoc.Frontend is
                   if not End_Decl_Found
                     and then Is_Concurrent_Type_Or_Object (Scope)
                   then
-                     Remove_From_Scope (E);
-                     Append_To_Scope (Scope, E);
-                     Set_Scope (E, Scope);
+                     Update_Scope (E);
 
                   elsif not End_Decl_Found
                     and then Is_Subprogram (Scope)
                     and then Get_Kind (E) = E_Variable
                   then
                      Set_Kind (E, E_Formal);
-                     Remove_From_Scope (E);
-                     Append_To_Scope (Scope, E);
-                     Set_Scope (E, Scope);
+                     Update_Scope (E);
 
                   elsif Is_Subprogram (E)
                     and then Is_Generic (Scope)
                   then
-                     Remove_From_Scope (E);
-                     Append_To_Scope (Scope, E);
-                     Set_Scope (E, Scope);
+                     Update_Scope (E);
 
                   --  This should be the general case for generics
 
@@ -1481,8 +1480,17 @@ package body GNATdoc.Frontend is
                   elsif Get_Scope (E) /= Scope then
                      Update_Scope;
 
-                  else
-                     null;
+                  elsif Is_Partial_View (E)
+                    and then Get_Kind (E) /= E_Discriminant
+                    and then
+                      (Get_Scope (Get_Full_View (E)) /= Scope
+                         or else not
+                       Get_Entities (Scope).Contains (Get_Full_View (E)))
+                  then
+                     Update_Scope (Get_Full_View (E));
+
+                  elsif not (Get_Entities (Scope).Contains (E)) then
+                     Update_Scope;
                   end if;
                end Decorate_Scope;
 
