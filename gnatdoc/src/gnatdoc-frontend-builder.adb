@@ -34,6 +34,18 @@ package body GNATdoc.Frontend.Builder is
    --  to this package. Setting this variable to False helps to know quickly if
    --  the workaround is still needed.
 
+   function Build_Ada_File_Tree
+     (Context       : access constant Docgen_Context;
+      File          : Virtual_File;
+      File_Entities : access Tree_Type) return Entity_Id;
+   --  Subsidiary of Build_File_Tree
+
+   function Build_C_File_Tree
+     (Context       : access constant Docgen_Context;
+      File          : Virtual_File;
+      File_Entities : access Tree_Type) return Entity_Id;
+   --  Subsidiary of Build_File_Tree
+
    -----------------------------
    -- Unique_Entity_Allocator --
    -----------------------------
@@ -152,7 +164,10 @@ package body GNATdoc.Frontend.Builder is
          procedure Append_To_Map (E : Entity_Id) is
          begin
             pragma Assert (Present (E));
-            Entities_Map.Include (LL.Get_Location (E), E);
+
+            if not Entities_Map.Contains (LL.Get_Location (E)) then
+               Entities_Map.Insert (LL.Get_Location (E), E);
+            end if;
          end Append_To_Map;
 
          ---------------------
@@ -591,11 +606,11 @@ package body GNATdoc.Frontend.Builder is
       Hash_Table.Append_To_Map (E);
    end Append_To_Map;
 
-   ---------------------
-   -- Build_File_Tree --
-   ---------------------
+   -------------------------
+   -- Build_Ada_File_Tree --
+   -------------------------
 
-   function Build_File_Tree
+   function Build_Ada_File_Tree
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
       File_Entities : access Tree_Type) return Entity_Id
@@ -604,6 +619,8 @@ package body GNATdoc.Frontend.Builder is
                         Get_Language_From_File (Context.Lang_Handler, File);
       In_Ada_Lang   : constant Boolean :=
                         Lang.all in Language.Ada.Ada_Language'Class;
+      pragma Assert (In_Ada_Lang);
+
       Std_Entity    : constant Entity_Id :=
                         New_Internal_Entity
                           (Context  => Context,
@@ -634,7 +651,7 @@ package body GNATdoc.Frontend.Builder is
          --  inherited from other files (for example, inherited dispatching
          --  primitives)
 
-         if In_Ada_Lang and then LL.Get_Location (E).File /= File then
+         if LL.Get_Location (E).File /= File then
             return;
          end if;
 
@@ -739,23 +756,20 @@ package body GNATdoc.Frontend.Builder is
                      --  and hence it does not help to differentiate the parent
                      --  type from the progenitors.
 
-                     if In_Ada_Lang then
-                        if Get_Kind (Parent) /= E_Interface then
+                     if Get_Kind (Parent) /= E_Interface then
 
-                           --  For partial views we append the parent to the
-                           --  full view and we take care of completing the
-                           --  decoration of the partial view when we process
-                           --  the file to retrieve sources and comments
+                        --  For partial views we append the parent to the
+                        --  full view and we take care of completing the
+                        --  decoration of the partial view when we process
+                        --  the file to retrieve sources and comments
 
-                           if Is_Partial_View (E) then
-                              Set_Parent
-                                (Get_Full_View (E), Parent);
-                           else
-                              Set_Parent (E, Parent);
-                           end if;
+                        if Is_Partial_View (E) then
+                           Set_Parent (Get_Full_View (E), Parent);
                         else
-                           Append_Progenitor (E, Parent);
+                           Set_Parent (E, Parent);
                         end if;
+                     else
+                        Append_Progenitor (E, Parent);
                      end if;
                   end if;
                end loop;
@@ -853,7 +867,7 @@ package body GNATdoc.Frontend.Builder is
          --  Start of processing for Decorate_Record_Type
 
          begin
-            if In_Ada_Lang and then Get_Kind (E) /= E_Interface then
+            if Get_Kind (E) /= E_Interface then
                declare
                   Discrim : constant Xref.Entity_Array :=
                               Discriminants
@@ -1009,12 +1023,10 @@ package body GNATdoc.Frontend.Builder is
                   Entity    => LL.Get_Entity (E),
                   Recursive => False));
 
-            if In_Ada_Language (E) then
-               if No (Get_Parent (E))
-                 and then Number_Of_Progenitors (E) = 1
-               then
-                  Set_Progenitor_As_Parent (E);
-               end if;
+            if No (Get_Parent (E))
+              and then Number_Of_Progenitors (E) = 1
+            then
+               Set_Progenitor_As_Parent (E);
             end if;
 
             declare
@@ -1032,36 +1044,28 @@ package body GNATdoc.Frontend.Builder is
                   --  by the compiler for named typedef structs (the compiler
                   --  generates two entites in the LI file with the same name)
 
-                  if In_Ada_Language (E)
-                    or else not
-                      LL.Is_Self_Referenced_Type
-                        (Db   => Context.Database,
-                         E    => Childs (J),
-                         Lang => Get_Language (E))
-                  then
-                     Get_Unique_Entity
-                       (Child, Context, File, Childs (J), Forced => True);
+                  Get_Unique_Entity
+                    (Child, Context, File, Childs (J), Forced => True);
 
-                     Loc := LL.Get_Location (Child);
+                  Loc := LL.Get_Location (Child);
 
-                     --  Avoid problems with wrong Xref decoration that I can
-                     --  reproduce with gnatcoll-refcount-weakref.ads. To
-                     --  be investigated???
+                  --  Avoid problems with wrong Xref decoration that I can
+                  --  reproduce with gnatcoll-refcount-weakref.ads. To
+                  --  be investigated???
 
-                     if not Is_Class_Or_Record_Type (Child) then
-                        null;  --  Free (Child) ???
+                  if not Is_Class_Or_Record_Type (Child) then
+                     null;  --  Free (Child) ???
 
-                     --  Avoid adding to the tree entities defined in package
-                     --  bodies since they cannot be fully decorated and
-                     --  hence cause problems to the backend (for example,
-                     --  we cannot set their scope!)
+                  --  Avoid adding to the tree entities defined in package
+                  --  bodies since they cannot be fully decorated and
+                  --  hence cause problems to the backend (for example,
+                  --  we cannot set their scope!)
 
-                     elsif not Is_Spec_File (Context.Kernel, Loc.File) then
-                        null; --  Free (Child) ???
+                  elsif not Is_Spec_File (Context.Kernel, Loc.File) then
+                     null; --  Free (Child) ???
 
-                     else
-                        LL.Append_Child_Type (E, Child);
-                     end if;
+                  else
+                     LL.Append_Child_Type (E, Child);
                   end if;
                end loop;
             end;
@@ -1090,8 +1094,7 @@ package body GNATdoc.Frontend.Builder is
                              (Get_Full_View (E), Method);
                         end if;
 
-                     elsif In_Ada_Language (Method) then
-
+                     else
                         --  If Xref does not have available the scope of this
                         --  method it means that it is a primitive defined in
                         --  a file which is not directly part of this project
@@ -1128,22 +1131,6 @@ package body GNATdoc.Frontend.Builder is
                            end if;
 
                            Set_Is_Decorated (Method);
-                        end if;
-
-                     else
-                        if LL.Get_Scope (Method) = LL.Get_Entity (E) then
-                           Append_To_Scope (E, Method);
-                           Append_To_File_Entities (Method);
-
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Method (E, Method);
-
-                        --  For inherited primitives defined in other
-                        --  scopes we cannot set their scope.
-
-                        else
-                           Decorate_Subprogram_Formals (Method);
-                           Append_Inherited_Method (E, Method);
                         end if;
                      end if;
                   end loop;
@@ -1281,7 +1268,6 @@ package body GNATdoc.Frontend.Builder is
          Id : constant Integer := Get_Unique_Id (New_E);
          S  : constant Entity_Id := Current_Scope;
       begin
-         pragma Assert (In_Ada_Lang);
          pragma Assert (Id /= -1);
          pragma Assert (Present (S));
 
@@ -1348,8 +1334,6 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Update_Scopes_Stack (New_E : Entity_Id) is
       begin
-         pragma Assert (In_Ada_Lang);
-
          --  We do not use such value when the entity is declared in a generic
          --  package since Xref references the scope enclosing the generic
          --  package (which is wrong!)
@@ -1417,7 +1401,7 @@ package body GNATdoc.Frontend.Builder is
       Entities_Count       : Natural := 0;
       Is_Large_File        : Boolean := False;
 
-   --  Start of processing for Build_File_Tree
+   --  Start of processing for Build_Ada_File_Tree
 
    begin
       Set_Kind (Std_Entity, E_Package);
@@ -1428,36 +1412,34 @@ package body GNATdoc.Frontend.Builder is
 
       --  Locate the root of the tree of entities
 
-      if In_Ada_Lang then
-         while not At_End (File_Entities_Cursor) loop
-            Get_Unique_Entity
-              (New_E, Context, File, File_Entities_Cursor.Get);
-            File_Entities_Cursor.Next;
+      while not At_End (File_Entities_Cursor) loop
+         Get_Unique_Entity
+           (New_E, Context, File, File_Entities_Cursor.Get);
+         File_Entities_Cursor.Next;
 
-            if Present (New_E) then
-               Complete_Decoration (New_E);
+         if Present (New_E) then
+            Complete_Decoration (New_E);
 
-               --  Do not set again the scope of formals which are already
-               --  decorated. For instance:
+            --  Do not set again the scope of formals which are already
+            --  decorated. For instance:
 
-               --     generic
-               --        with procedure Error (Msg : String);
-               --     ...
+            --     generic
+            --        with procedure Error (Msg : String);
+            --     ...
 
-               if Get_Kind (New_E) /= E_Formal then
-                  Append_To_Scope (Current_Scope, New_E);
-                  Append_To_File_Entities (New_E);
-                  Set_Is_Decorated (New_E);
-               end if;
-
-               if Is_Compilation_Unit (New_E) then
-                  Append_To_File_Entities (New_E);
-                  Enter_Scope (New_E);
-                  exit;
-               end if;
+            if Get_Kind (New_E) /= E_Formal then
+               Append_To_Scope (Current_Scope, New_E);
+               Append_To_File_Entities (New_E);
+               Set_Is_Decorated (New_E);
             end if;
-         end loop;
-      end if;
+
+            if Is_Compilation_Unit (New_E) then
+               Append_To_File_Entities (New_E);
+               Enter_Scope (New_E);
+               exit;
+            end if;
+         end if;
+      end loop;
 
       --  Process all its entities
 
@@ -1481,72 +1463,70 @@ package body GNATdoc.Frontend.Builder is
 
             --  Decorate the new entity
 
-            if In_Ada_Lang then
+            --  Do not update the scope with discriminants of concurrent
+            --  types since Xref sets their scope to the enclosing package.
+            --  Need to investigate it???
 
-               --  Do not update the scope with discriminants of concurrent
-               --  types since Xref sets their scope to the enclosing package.
-               --  Need to investigate it???
+            if Get_Kind (New_E) = E_Discriminant
+              and then Is_Concurrent_Type_Or_Object (Current_Scope)
+            then
+               null;
+            else
+               Update_Scopes_Stack (New_E);
+            end if;
 
-               if Get_Kind (New_E) = E_Discriminant
-                 and then Is_Concurrent_Type_Or_Object (Current_Scope)
+            declare
+               In_Scope_With_Private_Entities : constant Boolean :=
+                 (Is_Package (Current_Scope)
+                    or else Is_Concurrent_Type_Or_Object (Current_Scope))
+                 and then
+                   Present
+                     (Get_First_Private_Entity_Loc (Current_Scope));
+            begin
+               if In_Scope_With_Private_Entities
+                 and then
+                   LL.Get_Location (New_E).Line >=
+                     Get_First_Private_Entity_Loc (Current_Scope).Line
                then
-                  null;
-               else
-                  Update_Scopes_Stack (New_E);
+                  Set_In_Private_Part (New_E);
+               end if;
+            end;
+
+            if Kind_In (Get_Kind (New_E), E_Formal,
+                                          E_Discriminant,
+                                          E_Component)
+            then
+               Skip_This_Entity := True;
+
+            elsif not LL.Is_Primitive (New_E) then
+
+            --  Skip processing the full-view of a private or incomplete
+            --  type since its components are retrieved from Xref when
+            --  we process its partial view.
+
+               if Is_Incomplete_Or_Private_Type (New_E)
+                 and then Is_Full_View (New_E)
+               then
+                  Skip_This_Entity := True;
                end if;
 
+            --  Skip methods since they are entered in the tree as part of
+            --  processing its tagged type
+
+            elsif LL.Is_Primitive (New_E) then
+               Skip_This_Entity := True;
+
+            --  An E_Variable may be in fact a component of an incomplete
+            --  or private type
+
+            elsif Get_Kind (New_E) = E_Variable then
                declare
-                  In_Scope_With_Private_Entities : constant Boolean :=
-                    (Is_Package (Current_Scope)
-                       or else Is_Concurrent_Type_Or_Object (Current_Scope))
-                    and then
-                      Present
-                        (Get_First_Private_Entity_Loc (Current_Scope));
+                  Prev_E : constant Entity_Id :=
+                             Find_Unique_Entity
+                               (LL.Get_Location (New_E));
                begin
-                  if In_Scope_With_Private_Entities
-                    and then
-                      LL.Get_Location (New_E).Line >=
-                        Get_First_Private_Entity_Loc (Current_Scope).Line
-                  then
-                     Set_In_Private_Part (New_E);
-                  end if;
-               end;
-
-               if Kind_In (Get_Kind (New_E), E_Formal,
-                                             E_Discriminant,
-                                             E_Component)
-               then
-                  Skip_This_Entity := True;
-
-               elsif not LL.Is_Primitive (New_E) then
-
-                  --  Skip processing the full-view of a private or incomplete
-                  --  type since its components are retrieved from Xref when
-                  --  we process its partial view.
-
-                  if Is_Incomplete_Or_Private_Type (New_E)
-                    and then Is_Full_View (New_E)
-                  then
-                     Skip_This_Entity := True;
-                  end if;
-
-               --  Skip methods since they are entered in the tree as part of
-               --  processing its tagged type
-
-               elsif LL.Is_Primitive (New_E) then
-                  Skip_This_Entity := True;
-
-               --  An E_Variable may be in fact a component of an incomplete
-               --  or private type
-
-               elsif Get_Kind (New_E) = E_Variable then
-                  declare
-                     Prev_E : constant Entity_Id :=
-                                Find_Unique_Entity
-                                  (LL.Get_Location (New_E));
-                  begin
-                     if Present (Prev_E) then
-                        case Get_Kind (Prev_E) is
+                  if Present (Prev_E) then
+                     case Get_Kind (Prev_E) is
                         when E_Discriminant |
                              E_Component    |
                              E_Formal       =>
@@ -1554,85 +1534,566 @@ package body GNATdoc.Frontend.Builder is
 
                         when others =>
                            pragma Assert (False);
-                        end case;
+                     end case;
 
-                        Skip_This_Entity := True;
-                     end if;
-                  end;
+                     Skip_This_Entity := True;
+                  end if;
+               end;
+            end if;
+
+            if Skip_This_Entity then
+
+               --  Ensure that all the entities found in the ALI file are
+               --  appended to the list of entities of this file. Required
+               --  because there are cases in which LL_Scope is not available
+               --  by mistake which causes erroneously skipping this entity
+               --  (which affects later processings in the new frontend)
+
+               if Get_Kind (New_E) /= E_Discriminant then
+                  Append_To_File_Entities (New_E);
+
+                  if LL.Is_Primitive (New_E) then
+                     Set_Is_Decorated (New_E);
+                  end if;
                end if;
 
-            --  C/C++
+               --  Free (New_E);
 
             else
-               if Kind_In (Get_Kind (New_E), E_Formal,
-                                             E_Component)
+               Append_To_File_Entities (New_E);
+
+               if Is_Partial_View (New_E)
+                 and then Present (Get_Full_View (New_E))
+                 and then LL.Get_Location (Get_Full_View (New_E)).File = File
                then
-                  Skip_This_Entity := True;
+                  Append_To_File_Entities (Get_Full_View (New_E));
+               end if;
 
-               elsif Get_Kind (New_E) = E_Variable
-                 and then not LL.Is_Global (New_E)
-               then
-                  Skip_This_Entity := True;
+               --  Full views were unconditionally added to the scope as part
+               --  of processing their partial view (since for private types
+               --  the compiler does not generate two entities in the ALI
+               --  file). Hence we avoid adding them twice to their scope.
 
-               --  Skip methods since they are entered in the tree as part of
-               --  processing its class/tagged type
+               if not Is_Full_View (New_E) then
+                  Append_To_Scope (Current_Scope, New_E);
+               end if;
 
-               elsif LL.Is_Primitive (New_E) then
-                  Skip_This_Entity := True;
+               Set_Scope (New_E);
 
-               elsif Present (LL.Get_Scope (New_E))
-                 and then LL.Is_Global (New_E)
-               then
-                  --  Handle named typedef structs since the compiler generates
-                  --  two entites in the LI file with the same name: decorate
-                  --  the attribute Alias of the second entity referencing the
-                  --  first one.
+               if not Is_Decorated (New_E) then
+                  Complete_Decoration (New_E);
+                  Set_Is_Decorated (New_E);
+               end if;
 
-                  if Is_Class_Or_Record_Type (New_E)
-                    and then Get_Kind (New_E) /= E_Class
-                  then
-                     declare
-                        Scope_Id : constant General_Entity :=
-                                     LL.Get_Scope (New_E);
-                     begin
-                        if Context.Database.Get_Name (LL.Get_Entity (New_E))
-                          = Context.Database.Get_Name (Scope_Id)
-                        then
-                           declare
-                              Prev_E : constant Entity_Id :=
-                                Find_Unique_Entity
-                                  (Get_Location (Context.Database, Scope_Id));
-                           begin
-                              pragma Assert (Present (Prev_E));
-                              Set_Alias (New_E, Prev_E);
-                           end;
-                        end if;
-                     end;
+               if Get_Kind (New_E) = E_Enumeration_Type then
+                  Enter_Scope (New_E);
 
-                  elsif Get_Kind (New_E) = E_Variable then
-                     declare
-                        Scope_Id : constant General_Entity :=
-                                     LL.Get_Scope (New_E);
-                        use type EInfo_Map.Cursor;
-                     begin
-                        --  Handle fields of structs. Must use the Xref support
-                        --  directly since we may have not seen yet the full
-                        --  declaration of the struct.
+               elsif Is_Concurrent_Type_Or_Object (New_E) then
+                  Enter_Scope (New_E);
 
-                        if Context.Database.Is_Type (Scope_Id) then
-                           declare
-                              Kind : constant Entity_Kind :=
-                                LL.Get_Ekind (Context.Database,
-                                              Scope_Id,
-                                              In_Ada_Lang => False);
-                           begin
-                              pragma Assert (Kind_In (Kind, E_Record_Type,
-                                             E_Class));
-                              Skip_This_Entity := True;
-                           end;
-                        end if;
-                     end;
+               elsif Is_Package (New_E) then
+                  Enter_Scope (New_E);
+               end if;
+            end if;
+         end if;
+
+         File_Entities_Cursor.Next;
+      end loop;
+
+      --  Exit all the scopes: required to ensure that we complete the
+      --  decoration of all the private entities
+
+      while not Is_Standard_Entity (Current_Scope) loop
+         Exit_Scope;
+      end loop;
+
+      Scopes_Stack.Clear;
+
+      return Std_Entity;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         raise;
+   end Build_Ada_File_Tree;
+
+   -----------------------
+   -- Build_C_File_Tree --
+   -----------------------
+
+   function Build_C_File_Tree
+     (Context       : access constant Docgen_Context;
+      File          : Virtual_File;
+      File_Entities : access Tree_Type) return Entity_Id
+   is
+      Lang          : constant Language_Access :=
+                        Get_Language_From_File (Context.Lang_Handler, File);
+      In_Ada_Lang   : constant Boolean :=
+                        Lang.all in Language.Ada.Ada_Language'Class;
+      In_C_Lang     : constant Boolean := not In_Ada_Lang;
+      pragma Assert (In_C_Lang);
+
+      Std_Entity    : constant Entity_Id :=
+                        New_Internal_Entity
+                          (Context  => Context,
+                           Language => Lang,
+                           Name     => Std_Entity_Name);
+      use Scopes_Stack;
+
+      procedure Append_To_File_Entities (E : Entity_Id);
+      --  Append E to File_Entities.All_Entities
+
+      procedure Complete_Decoration (E : Entity_Id);
+      --  Complete the decoration of entity E
+
+      -----------------------------
+      -- Append_To_File_Entities --
+      -----------------------------
+
+      procedure Append_To_File_Entities (E : Entity_Id) is
+      begin
+         if not File_Entities.All_Entities.Contains (E) then
+            Append_To_List (File_Entities.All_Entities'Access, E);
+         end if;
+      end Append_To_File_Entities;
+
+      -------------------------
+      -- Complete_Decoration --
+      -------------------------
+
+      procedure Complete_Decoration (E : Entity_Id) is
+
+         procedure Decorate_Struct_Or_Class_Type (E : Entity_Id);
+         --  Complete the decoration of a record type entity
+
+         procedure Decorate_Subprogram_Formals (E : Entity_Id);
+         --  Complete the decoration of a subprogram entity
+
+         -----------------------------------
+         -- Decorate_Struct_Or_Class_Type --
+         -----------------------------------
+
+         procedure Decorate_Struct_Or_Class_Type (E : Entity_Id) is
+
+            procedure Append_Parents
+              (Parents  : Xref.Entity_Array);
+
+            function Is_Inherited_Primitive
+              (Typ  : Entity_Id;
+               Prim : General_Entity) return Boolean;
+            --  Return true if primitive Prim of tagged type Typ has been
+            --  inherited from some parent or progenitor type
+
+            --------------------
+            -- Append_Parents --
+            --------------------
+
+            procedure Append_Parents
+              (Parents : Xref.Entity_Array)
+            is
+               Parent : Entity_Id;
+
+            begin
+               for J in Parents'Range loop
+                  Get_Unique_Entity
+                    (Parent, Context, File, Parents (J), Forced => True);
+
+                  if not Has_Parent_Type (E, Parent) then
+                     LL.Append_Parent_Type (E, Parent);
                   end if;
+               end loop;
+            end Append_Parents;
+
+            ----------------------------
+            -- Is_Inherited_Primitive --
+            ----------------------------
+
+            function Is_Inherited_Primitive
+              (Typ  : Entity_Id;
+               Prim : General_Entity) return Boolean
+            is
+               function Check_Primitives
+                 (Typ : Entity_Id) return Boolean;
+               --  Return true if Prim is a primitive of Typ
+
+               ----------------------
+               -- Check_Primitives --
+               ----------------------
+
+               function Check_Primitives
+                 (Typ : Entity_Id) return Boolean
+               is
+                  Cursor : EInfo_List.Cursor;
+                  E      : Entity_Id;
+
+               begin
+                  Cursor := Get_Methods (Typ).First;
+                  while EInfo_List.Has_Element (Cursor) loop
+                     E := EInfo_List.Element (Cursor);
+
+                     if LL.Get_Entity (E) = Prim then
+                        return True;
+                     end if;
+
+                     EInfo_List.Next (Cursor);
+                  end loop;
+
+                  return False;
+               end Check_Primitives;
+
+            begin
+               declare
+                  Parent : Entity_Id;
+               begin
+                  Parent := Get_Parent (Typ);
+                  while Present (Parent) loop
+                     if Check_Primitives (Parent) then
+                        return True;
+                     end if;
+
+                     Parent := Get_Parent (Parent);
+                  end loop;
+
+                  return False;
+               end;
+            end Is_Inherited_Primitive;
+
+         --  Start of processing for Decorate_Struct_Or_Class_Type
+
+         begin
+            --  Check components
+
+            declare
+               Components : constant Xref.Entity_Array :=
+                              Fields (Context.Database, LL.Get_Entity (E));
+               Entity     : Entity_Id;
+
+            begin
+               for J in Components'Range loop
+                  Get_Unique_Entity
+                    (Entity, Context, File, Components (J));
+
+                  --  If the entity is not available that means that
+                  --  this is an incomplete type whose components are
+                  --  defined in the package body.
+
+                  if Entity = null then
+                     null;
+
+                  else
+                     --  In C++ we have here formals of primitives???
+                     Set_Kind (Entity, E_Component);
+
+                     if Is_Partial_View (E) then
+                        Append_To_Scope (Get_Full_View (E), Entity);
+
+                     else
+                        Append_To_Scope (E, Entity);
+                     end if;
+
+                     Append_To_File_Entities (Entity);
+
+                     Set_Is_Decorated (Entity);
+                  end if;
+               end loop;
+            end;
+
+            pragma Assert
+              (not Has_Duplicated_Entities (Get_Entities (E).all));
+            if Is_Partial_View (E) then
+               pragma Assert
+                 (not Has_Duplicated_Entities
+                       (Get_Entities (Get_Full_View (E)).all));
+            end if;
+
+            Append_Parents
+              (Xref.Parent_Types
+                 (Self      => Context.Database,
+                  Entity    => LL.Get_Entity (E),
+                  Recursive => False));
+
+            declare
+               Childs : constant Xref.Entity_Array :=
+                          Child_Types
+                           (Context.Database, LL.Get_Entity (E),
+                            Recursive => False);
+               Child  : Entity_Id;
+               Loc    : General_Location;
+
+            begin
+               for J in Childs'Range loop
+
+                  --  Do not add as a child type the second entity generated
+                  --  by the compiler for named typedef structs (the compiler
+                  --  generates two entites in the LI file with the same name)
+
+                  if not LL.Is_Self_Referenced_Type
+                           (Db   => Context.Database,
+                            E    => Childs (J),
+                            Lang => Get_Language (E))
+                  then
+                     Get_Unique_Entity
+                       (Child, Context, File, Childs (J), Forced => True);
+
+                     Loc := LL.Get_Location (Child);
+
+                     --  Avoid problems with wrong Xref decoration that I can
+                     --  reproduce with gnatcoll-refcount-weakref.ads. To
+                     --  be investigated???
+
+                     if not Is_Class_Or_Record_Type (Child) then
+                        null;  --  Free (Child) ???
+
+                     --  Avoid adding to the tree entities defined in package
+                     --  bodies since they cannot be fully decorated and
+                     --  hence cause problems to the backend (for example,
+                     --  we cannot set their scope!)
+
+                     elsif not Is_Spec_File (Context.Kernel, Loc.File) then
+                        null; --  Free (Child) ???
+
+                     else
+                        LL.Append_Child_Type (E, Child);
+                     end if;
+                  end if;
+               end loop;
+            end;
+
+            if Is_Tagged (E)
+              or else Get_Kind (E) = E_Class
+            then
+               declare
+                  All_Methods : constant Xref.Entity_Array :=
+                                  Methods
+                                    (Context.Database, LL.Get_Entity (E),
+                                     Include_Inherited => True);
+
+                  Method : Entity_Id;
+               begin
+                  for J in All_Methods'Range loop
+                     Get_Unique_Entity
+                       (Method, Context, File, All_Methods (J),
+                        Forced => True);
+
+                     if Is_Inherited_Primitive (E, All_Methods (J)) then
+                        if not Is_Partial_View (E) then
+                           Append_Inherited_Method (E, Method);
+                        else
+                           Append_Inherited_Method
+                             (Get_Full_View (E), Method);
+                        end if;
+
+                     else
+                        if LL.Get_Scope (Method) = LL.Get_Entity (E) then
+                           Append_To_Scope (E, Method);
+                           Append_To_File_Entities (Method);
+
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Method (E, Method);
+
+                        --  For inherited primitives defined in other
+                        --  scopes we cannot set their scope.
+
+                        else
+                           Decorate_Subprogram_Formals (Method);
+                           Append_Inherited_Method (E, Method);
+                        end if;
+                     end if;
+                  end loop;
+               end;
+            end if;
+         end Decorate_Struct_Or_Class_Type;
+
+         ---------------------------------
+         -- Decorate_Subprogram_Formals --
+         ---------------------------------
+
+         procedure Decorate_Subprogram_Formals (E : Entity_Id) is
+         begin
+            --  No extra action needed if the formals are already present
+
+            if not EInfo_List.Is_Empty (Get_Entities (E).all) then
+               return;
+            end if;
+
+            Enter_Scope (E);
+
+            declare
+               Formals : constant Xref.Parameter_Array :=
+                           Parameters (Context.Database, LL.Get_Entity (E));
+               Formal  : Entity_Id;
+
+            begin
+               for J in Formals'Range loop
+
+                  --  Handle weird case found processing the file gimple.h of
+                  --  the gcc sources: the entity associated with a function is
+                  --  also associated with one of its formals. It seems a bug
+                  --  in the generated LI file. To be investigated???
+
+                  if LL.Get_Entity (E) = Formals (J).Parameter then
+                     null;
+
+                  else
+                     Get_Unique_Entity
+                       (Formal, Context, File, Formals (J).Parameter,
+                        Forced => True);
+
+                     if Present (Formal) then
+                        pragma Assert
+                          (LL.Get_Entity (Formal)
+                           = Formals (J).Parameter);
+
+                        --  Correct previous wrong decoration (done by
+                        --  Atree.New_Internal_Entity).
+
+                        Remove_Full_View (Formal);
+                        Set_Is_Incomplete (Formal, False);
+
+                        --  Complete decoration
+
+                        Set_Kind (Formal, E_Formal);
+
+                        Append_To_Scope (Current_Scope, Formal);
+                        Set_Scope (Formal, E);
+
+                        Append_To_File_Entities (Formal);
+
+                        Set_Is_Decorated (Formal);
+                     end if;
+                  end if;
+               end loop;
+            end;
+
+            Exit_Scope;
+         end Decorate_Subprogram_Formals;
+
+      --  Start of processing for Complete_Decoration
+
+      begin
+         if Is_Class_Or_Record_Type (E) then
+            Decorate_Struct_Or_Class_Type (E);
+
+         elsif Is_Subprogram (E) then
+            Decorate_Subprogram_Formals (E);
+
+         --  Decorate access to subprogram types
+
+         elsif Is_Access_Type (E) then
+            Decorate_Subprogram_Formals (E);
+         end if;
+      end Complete_Decoration;
+
+      --  Local variables
+
+      --  This entity represents the outermost scope (ie. the standard scope).
+      --  It is needed to associate some scope to generic formals of library
+      --  level units.
+
+      New_E                : Entity_Id;
+      Skip_This_Entity     : Boolean := False;
+      File_Entities_Cursor : Entities_In_File_Cursor;
+      Entities_Count       : Natural := 0;
+      Is_Large_File        : Boolean := False;
+
+   --  Start of processing for Build_C_File_Tree
+
+   begin
+      Set_Kind (Std_Entity, E_Package);
+      Register_Std_Entity (Std_Entity);
+      Enter_Scope (Std_Entity);
+
+      File_Entities_Cursor := Context.Database.Entities_In_File (File);
+
+      --  Process all its entities
+
+      while not At_End (File_Entities_Cursor) loop
+         Entities_Count := Entities_Count + 1;
+
+         if not Context.Options.Quiet_Mode
+           and then not Is_Large_File
+           and then Entities_Count mod 3000 = 0
+         then
+            GNAT.IO.Put_Line
+              ("warning: processing large file " & (+File.Base_Name));
+            Is_Large_File := True;
+         end if;
+
+         Skip_This_Entity := False;
+         Get_Unique_Entity
+           (New_E, Context, File, File_Entities_Cursor.Get);
+
+         if Present (New_E) then
+
+            --  Decorate the new entity
+
+            if Kind_In (Get_Kind (New_E), E_Formal,
+                                          E_Component)
+            then
+               Skip_This_Entity := True;
+
+            elsif Get_Kind (New_E) = E_Variable
+              and then not LL.Is_Global (New_E)
+            then
+               Skip_This_Entity := True;
+
+            --  Skip methods since they are entered in the tree as part of
+            --  processing its class/tagged type
+
+            elsif LL.Is_Primitive (New_E) then
+               Skip_This_Entity := True;
+
+            elsif Present (LL.Get_Scope (New_E))
+              and then LL.Is_Global (New_E)
+            then
+               --  Handle named typedef structs since the compiler generates
+               --  two entites in the LI file with the same name: decorate
+               --  the attribute Alias of the second entity referencing the
+               --  first one.
+
+               if Is_Class_Or_Record_Type (New_E)
+                 and then Get_Kind (New_E) /= E_Class
+               then
+                  declare
+                     Scope_Id : constant General_Entity :=
+                                  LL.Get_Scope (New_E);
+                  begin
+                     if Context.Database.Get_Name (LL.Get_Entity (New_E))
+                       = Context.Database.Get_Name (Scope_Id)
+                     then
+                        declare
+                           Prev_E : constant Entity_Id :=
+                             Find_Unique_Entity
+                               (Get_Location (Context.Database, Scope_Id));
+                        begin
+                           pragma Assert (Present (Prev_E));
+                           Set_Alias (New_E, Prev_E);
+                        end;
+                     end if;
+                  end;
+
+               elsif Get_Kind (New_E) = E_Variable then
+                  declare
+                     Scope_Id : constant General_Entity :=
+                                  LL.Get_Scope (New_E);
+                     use type EInfo_Map.Cursor;
+                  begin
+                     --  Handle fields of structs. Must use the Xref support
+                     --  directly since we may have not seen yet the full
+                     --  declaration of the struct.
+
+                     if Context.Database.Is_Type (Scope_Id) then
+                        declare
+                           Kind : constant Entity_Kind :=
+                             LL.Get_Ekind (Context.Database,
+                                           Scope_Id,
+                                           In_Ada_Lang => False);
+                        begin
+                           pragma Assert (Kind_In (Kind, E_Record_Type,
+                                          E_Class));
+                           Skip_This_Entity := True;
+                        end;
+                     end if;
+                  end;
                end if;
             end if;
 
@@ -1673,25 +2134,9 @@ package body GNATdoc.Frontend.Builder is
                   Append_To_Scope (Current_Scope, New_E);
                end if;
 
-               if In_Ada_Lang then
-                  Set_Scope (New_E);
-               end if;
-
                if not Is_Decorated (New_E) then
                   Complete_Decoration (New_E);
                   Set_Is_Decorated (New_E);
-               end if;
-
-               if In_Ada_Lang then
-                  if Get_Kind (New_E) = E_Enumeration_Type then
-                     Enter_Scope (New_E);
-
-                  elsif Is_Concurrent_Type_Or_Object (New_E) then
-                     Enter_Scope (New_E);
-
-                  elsif Is_Package (New_E) then
-                     Enter_Scope (New_E);
-                  end if;
                end if;
             end if;
          end if;
@@ -1713,6 +2158,27 @@ package body GNATdoc.Frontend.Builder is
       when E : others =>
          Trace (Me, E);
          raise;
+   end Build_C_File_Tree;
+
+   ---------------------
+   -- Build_File_Tree --
+   ---------------------
+
+   function Build_File_Tree
+     (Context       : access constant Docgen_Context;
+      File          : Virtual_File;
+      File_Entities : access Tree_Type) return Entity_Id
+   is
+      Lang          : constant Language_Access :=
+                        Get_Language_From_File (Context.Lang_Handler, File);
+      In_Ada_Lang   : constant Boolean :=
+                        Lang.all in Language.Ada.Ada_Language'Class;
+   begin
+      if In_Ada_Lang then
+         return Build_Ada_File_Tree (Context, File, File_Entities);
+      else
+         return Build_C_File_Tree (Context, File, File_Entities);
+      end if;
    end Build_File_Tree;
 
    ----------------
