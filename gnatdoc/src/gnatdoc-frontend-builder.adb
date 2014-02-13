@@ -29,11 +29,6 @@ with GNAT.IO;
 package body GNATdoc.Frontend.Builder is
    Me : constant Trace_Handle := Create ("GNATdoc.1-Frontend-Builder");
 
-   Workaround : constant Boolean := True;
-   --  Variable used in assertions which identify workarounds temporarily added
-   --  to this package. Setting this variable to False helps to know quickly if
-   --  the workaround is still needed.
-
    function Build_Ada_File_Tree
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
@@ -60,10 +55,6 @@ package body GNATdoc.Frontend.Builder is
       procedure Append_To_List
         (List : access EInfo_List.Vector; E : Entity_Id);
       --  Append to List the entity E
-
-      procedure Append_To_Enclosing_Scope
-        (Scope : Entity_Id; E : Entity_Id);
-      --  Append E to the list of entities of the enclosing scope of Scope
 
       procedure Get_Unique_Entity
         (Entity  : out Entity_Id;
@@ -133,7 +124,6 @@ package body GNATdoc.Frontend.Builder is
       --  prints its contents. No output generated if the entity is not found.
 
    private
-      pragma Inline (Append_To_Enclosing_Scope);
       pragma Inline (Append_To_List);
       pragma Inline (Is_Incomplete_Or_Private_Type);
       pragma Inline (Number_Of_Progenitors);
@@ -201,20 +191,6 @@ package body GNATdoc.Frontend.Builder is
          end Hash;
 
       end Hash_Table;
-
-      -------------------------------
-      -- Append_To_Enclosing_Scope --
-      -------------------------------
-
-      procedure Append_To_Enclosing_Scope
-        (Scope : Entity_Id; E : Entity_Id)
-      is
-         Enclosing_Scope : constant Entity_Id := Get_Scope (Scope);
-      begin
-         if not Get_Entities (Enclosing_Scope).Contains (E) then
-            Append_To_Scope (Enclosing_Scope, E);
-         end if;
-      end Append_To_Enclosing_Scope;
 
       ------------
       -- Append --
@@ -578,12 +554,6 @@ package body GNATdoc.Frontend.Builder is
       procedure Exit_Scope;
       --  Pop an entity from the stack
 
-      function Find_Entity
-        (Scope : Entity_Id;
-         Loc   : General_Location) return Entity_Id;
-      --  Search for the entity at Loc in all the enclosing scopes of
-      --  Scope.
-
       function In_Open_Scopes (E : General_Entity) return Boolean;
       --  E is the entity of a scope. This function determines if this scope
       --  is currently open (i.e. it appears somewhere in the scope stack).
@@ -633,9 +603,6 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Complete_Decoration (E : Entity_Id);
       --  Complete the decoration of entity E
-
-      procedure Set_Scope (New_E : Entity_Id);
-      --  Set the scope of the entity using the current scope (if required)
 
       procedure Update_Scopes_Stack (New_E : Entity_Id);
       --  Update the scopes stack using the reliable value provided by Xref
@@ -992,14 +959,6 @@ package body GNATdoc.Frontend.Builder is
                         else
                            --  In C++ we have here formals of primitives???
                            Set_Kind (Entity, E_Component);
-
-                           if Is_Partial_View (E) then
-                              Append_To_Scope (Get_Full_View (E), Entity);
-
-                           else
-                              Append_To_Scope (E, Entity);
-                           end if;
-
                            Append_To_File_Entities (Entity);
 
                            Set_Is_Decorated (Entity);
@@ -1118,7 +1077,6 @@ package body GNATdoc.Frontend.Builder is
                            end if;
 
                         else
-                           Append_To_Enclosing_Scope (E, Method);
                            Append_To_File_Entities (Method);
 
                            Decorate_Subprogram_Formals (Method);
@@ -1187,10 +1145,6 @@ package body GNATdoc.Frontend.Builder is
                         --  Complete decoration
 
                         Set_Kind (Formal, E_Formal);
-
-                        Append_To_Scope (Current_Scope, Formal);
-                        Set_Scope (Formal, E);
-
                         Append_To_File_Entities (Formal);
 
                         Set_Is_Decorated (Formal);
@@ -1239,94 +1193,10 @@ package body GNATdoc.Frontend.Builder is
             begin
                Append_To_Map (Full_View);
 
-               --  For private types the entity associated with the full
-               --  view is not available available in the ALI file and hence
-               --  we must append it now to the scope; for incomplete type
-               --  declarations the ALI file may have two entities and hence
-               --  the full view will be fully decorated later.
-
-               if No (Get_Scope (Full_View)) then
-                  if In_Same_File (E, Full_View) then
-                     Append_To_Scope (Current_Scope, Full_View);
-                  end if;
-               else
-                  pragma Assert
-                    (Get_Scope (Full_View) = Current_Scope);
-               end if;
-
                Set_Is_Decorated (Full_View);
             end;
          end if;
       end Complete_Decoration;
-
-      ---------------
-      -- Set_Scope --
-      ---------------
-
-      procedure Set_Scope (New_E : Entity_Id) is
-         Scope_Id : Entity_Id;
-         Id : constant Integer := Get_Unique_Id (New_E);
-         S  : constant Entity_Id := Current_Scope;
-      begin
-         pragma Assert (Id /= -1);
-         pragma Assert (Present (S));
-
-         --  No action needed if this attribute is already set
-
-         if Present (Get_Scope (New_E)) then
-            return;
-
-         --  We cannot use the location provided by Xref when the entity is
-         --  declared in a generic package since Xref references the scope
-         --  enclosing the generic package (which is wrong!). More work
-         --  needed in this area???
-
-         elsif In_Generic_Scope then
-            pragma Assert (Workaround);
-            return;
-
-         --  Skip the full view of incomplete or private types because their
-         --  Xref.Scope references the partial view (instead of referencing
-         --  their syntax scope)
-
-         elsif Is_Incomplete_Or_Private_Type (New_E)
-           and then Is_Full_View (New_E)
-         then
-            pragma Assert (Workaround);
-            return;
-
-         --  If Xref does not provide the scope we do our best and assume that
-         --  this entity is defined in the current scope.
-
-         --  This case can be reproduced when the package has a separate
-         --  compilation unit (reproducible using test  013-GE-Bodies)
-
-         elsif No (LL.Get_Scope (New_E)) then
-            pragma Assert (Workaround);
-            Set_Scope (New_E, Current_Scope);
-
-         elsif LL.Get_Entity (Current_Scope) = LL.Get_Scope (New_E) then
-            Set_Scope (New_E, Current_Scope);
-
-         else
-            Scope_Id :=
-              Find_Entity
-                (Current_Scope,
-                 Get_Location
-                   (Context.Database, LL.Get_Scope (New_E)));
-
-            if Present (Scope_Id) then
-               Set_Scope (New_E, Scope_Id);
-
-            --  No information available: we do our best and assume that
-            --  this entity is defined in the current scope.
-
-            else
-               pragma Assert (Workaround);
-               Set_Scope (New_E, Current_Scope);
-            end if;
-         end if;
-      end Set_Scope;
 
       -------------------------
       -- Update_Scopes_Stack --
@@ -1577,8 +1447,6 @@ package body GNATdoc.Frontend.Builder is
                if not Is_Full_View (New_E) then
                   Append_To_Scope (Current_Scope, New_E);
                end if;
-
-               Set_Scope (New_E);
 
                if not Is_Decorated (New_E) then
                   Complete_Decoration (New_E);
@@ -2404,34 +2272,6 @@ package body GNATdoc.Frontend.Builder is
 
          Stack.Delete_First;
       end Exit_Scope;
-
-      function Find_Entity
-        (Scope : Entity_Id;
-         Loc   : General_Location) return Entity_Id
-      is
-         Cursor : EInfo_List.Cursor;
-         E      : Entity_Id;
-         S      : Entity_Id := Scope;
-
-      begin
-         loop
-            Cursor := Get_Entities (S).First;
-            while EInfo_List.Has_Element (Cursor) loop
-               E := EInfo_List.Element (Cursor);
-
-               if LL.Get_Location (E) = Loc then
-                  return E;
-               end if;
-
-               EInfo_List.Next (Cursor);
-            end loop;
-
-            exit when Get_Scope (S) = Std_Entity;
-            S := Get_Scope (S);
-         end loop;
-
-         return null;
-      end Find_Entity;
 
       function In_Generic_Scope return Boolean is
          Last : constant Integer :=
