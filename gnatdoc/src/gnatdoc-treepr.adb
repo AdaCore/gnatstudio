@@ -290,6 +290,10 @@ package body GNATdoc.Treepr is
       is
          Level : constant Natural := Scope_Level + 1;
       begin
+         if Present (Get_Entities (Entity)) then
+            EInfo_Vector_Sort_Loc.Sort (Get_Entities (Entity).all);
+         end if;
+
          if With_Scopes then
             Append_Line
               (To_String
