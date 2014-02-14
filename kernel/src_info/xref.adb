@@ -493,23 +493,27 @@ package body Xref is
       function Internal_No_Constructs
         (Name : String; Loc : General_Location) return General_Entity
       is
-         Entity : General_Entity := No_General_Entity;
+         Entity  : General_Entity := No_General_Entity;
+         Project : Project_Type;
       begin
          if Active (SQLITE) then
+            Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+
             if Loc = No_Location then
                --  predefined entities
                Closest_Ref.Ref := Self.Xref.Get_Entity
-                 (Name   => Name,
-                  File   => No_File,
+                 (Name    => Name,
+                  File    => No_File,
+                  Project => Project,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
-
             else
                --  Already handles the operators
                Closest_Ref.Ref := Self.Xref.Get_Entity
-                 (Name   => Name,
-                  File   => Loc.File,
-                  Line   => Loc.Line,
-                  Column => Loc.Column,
+                 (Name    => Name,
+                  File    => Loc.File,
+                  Line    => Loc.Line,
+                  Project => Project,
+                  Column  => Loc.Column,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             end if;
 
@@ -1947,14 +1951,18 @@ package body Xref is
       File   : GNATCOLL.VFS.Virtual_File;
       Name   : String := "") return Entities_In_File_Cursor
    is
-      Result : Entities_In_File_Cursor;
-      F      : Old_Entities.Source_File;
+      Result  : Entities_In_File_Cursor;
+      F       : Old_Entities.Source_File;
+      Project : Project_Type;
    begin
       if Active (SQLITE) then
+         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+
          if Name = "" then
-            Self.Xref.Referenced_In (File, Cursor => Result.Iter);
+            Self.Xref.Referenced_In (File, Project, Cursor => Result.Iter);
          else
-            Self.Xref.Referenced_In (File, Name, Cursor => Result.Iter);
+            Self.Xref.Referenced_In
+              (File, Project, Name, Cursor => Result.Iter);
          end if;
 
       else
@@ -2785,6 +2793,7 @@ package body Xref is
       Set_Symbols (Self.Constructs, Symbols);
 
       Self.Symbols := Symbols;
+      Self.Registry := Registry;
 
       Language.Tree.Database.Initialize
         (Db         => Self.Constructs,
@@ -3163,12 +3172,14 @@ package body Xref is
       File : GNATCOLL.VFS.Virtual_File) return File_Iterator
    is
       use Old_Entities;
-      Iter : File_Iterator;
+      Iter    : File_Iterator;
+      Project : Project_Type;
    begin
       Iter.Is_Ancestor := False;
 
       if Active (SQLITE) then
-         Iter.Iter := Self.Xref.Imports (File);
+         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+         Iter.Iter := Self.Xref.Imports (File, Project);
       else
          Old_Entities.Queries.Find_Dependencies
            (Iter => Iter.Old_Iter,
@@ -3195,12 +3206,14 @@ package body Xref is
       File                  : GNATCOLL.VFS.Virtual_File) return File_Iterator
    is
       use Old_Entities;
-      Iter : File_Iterator;
+      Iter    : File_Iterator;
+      Project : Project_Type;
    begin
       Iter.Is_Ancestor := True;
 
       if Active (SQLITE) then
-         Iter.Iter := Self.Xref.Imported_By (File);
+         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+         Iter.Iter := Self.Xref.Imported_By (File, Project);
       else
          Old_Entities.Queries.Find_Ancestor_Dependencies
            (Iter               => Iter.Old_Ancestor_Iter,
@@ -3883,7 +3896,9 @@ package body Xref is
          Self.Xref_Db := GNATCOLL.VFS.No_File;
          Self.Xref_Db_Is_Temporary := True;
          Self.Xref.Setup_DB
-           (GNATCOLL.SQL.Sqlite.Setup (":memory:"), Error => Error);
+           (DB    => GNATCOLL.SQL.Sqlite.Setup (":memory:"),
+            Tree  => Self.Registry.Tree,
+            Error => Error);
 
          --  not interested in schema version errors, gnatinspect will
          --  already display those for the user.
@@ -3984,7 +3999,8 @@ package body Xref is
          File := Xref_Database_Location (Self, Tree.Root_Project);
          Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
          Self.Xref.Setup_DB
-           (GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all),
+           (DB    => GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all),
+            Tree  => Tree,
             Error => Error);
 
          --  Not interested in schema version errors, gnatinspect already
