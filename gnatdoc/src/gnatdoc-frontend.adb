@@ -4226,28 +4226,13 @@ package body GNATdoc.Frontend is
             declare
                E : constant Entity_Id := Extended_Cursor.Entity (Cursor);
             begin
-               pragma Assert
-                 (Present (Get_Scope (E))
-                    and then
-                      (Get_Kind (E) = E_Generic_Formal
-                         or else Is_Generic_Formal (E)
-                         or else Is_Standard_Entity (Get_Scope (E))));
-               --  Set the next entity to look for in the parser
+               pragma Assert (Is_Standard_Entity (E));
 
-               --  Locate and push the entity of the Standard scope
+               Std_Entity := E;
+               Enable_Enter_Scope;
+               Enter_Scope (Std_Entity);
 
-               declare
-                  S : Entity_Id := Get_Scope (E);
-               begin
-                  while not Is_Standard_Entity (S) loop
-                     pragma Assert (Present (Get_Scope (S)));
-                     S := Get_Scope (S);
-                  end loop;
-                  Std_Entity := S;
-
-                  Enable_Enter_Scope;
-                  Enter_Scope (Std_Entity);
-               end;
+               Extended_Cursor.Next_Entity (Cursor);
 
                Parse_Entities
                  (Lang, Buffer.all (Buffer'First .. Buffer'Last),

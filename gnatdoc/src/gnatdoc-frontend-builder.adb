@@ -561,10 +561,6 @@ package body GNATdoc.Frontend.Builder is
       function In_Generic_Scope return Boolean;
       --  Return true if some enclosing scope is generic
 
-      procedure Register_Std_Entity (E : Entity_Id);
-      --  Register in the package the entity used to represent the standard
-      --  entity. Needed internally to identify the outermost scope.
-
    end Scopes_Stack;
 
    -------------------
@@ -1275,7 +1271,8 @@ package body GNATdoc.Frontend.Builder is
 
    begin
       Set_Kind (Std_Entity, E_Package);
-      Register_Std_Entity (Std_Entity);
+      Append_To_List (File_Entities.All_Entities'Access, Std_Entity);
+
       Enter_Scope (Std_Entity);
 
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
@@ -1867,7 +1864,6 @@ package body GNATdoc.Frontend.Builder is
 
    begin
       Set_Kind (Std_Entity, E_Package);
-      Register_Std_Entity (Std_Entity);
       Enter_Scope (Std_Entity);
 
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
@@ -2149,13 +2145,11 @@ package body GNATdoc.Frontend.Builder is
         (Index_Type => Natural, Element_Type => Entity_Id);
       --  procedure Free (List : in out Alloc_Entity_List.Vector);
 
-      Std_Entity : Entity_Id;
-      Stack      : Alloc_Entity_List.Vector;
+      Stack : Alloc_Entity_List.Vector;
 
       procedure Clear is
       begin
          Stack.Clear;
-         Std_Entity := Atree.No_Entity;
       end Clear;
 
       function Current_Scope return Entity_Id is
@@ -2307,12 +2301,6 @@ package body GNATdoc.Frontend.Builder is
 
          return False;
       end In_Open_Scopes;
-
-      procedure Register_Std_Entity (E : Entity_Id) is
-      begin
-         pragma Assert (Std_Entity = Atree.No_Entity);
-         Std_Entity := E;
-      end Register_Std_Entity;
 
    end Scopes_Stack;
 
