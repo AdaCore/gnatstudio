@@ -87,9 +87,6 @@ package Xref is
       --  The type used to convert from file names to languages. This is used
       --  by the constructs database.
 
-      Registry     : Projects.Project_Registry_Access;
-      --  Project information
-
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
 
       Freeze_Count : Integer := 0;
