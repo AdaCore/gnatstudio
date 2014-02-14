@@ -2001,11 +2001,11 @@ The valid children of :file:`<action>` are the following XML tags:
 
   Specifies a group of command to be executed if the previous external
   command fails. Typically, this is used to parse the output of the command
-  and fill the :guilabel:`Locations` window appropriately
+  and fill the :guilabel:`Locations` view appropriately
   (see :ref:`Processing_the_tool_output`).
 
   For example, the following action spawns an external tool and parses its
-  output to the :guilabel:`Locations` window.  It calls the automatic fixing
+  output to the :guilabel:`Locations` view.  It calls the automatic fixing
   tool if the external tool fails.
 
   You can use the %... and $... macros in this group of commands
@@ -2115,334 +2115,378 @@ Macro arguments
 .. index:: argument
 .. index:: substitution
 
-When an action is defined, you can use macro arguments to pass to your shell or
-external commands. Macro arguments are special parameters that are transformed
-every time the command is executed.  The following macro arguments are
-provided.
-
-The equivalent python command is given for all tests. These commands are useful
-when you are writing a full python script, and want to test for yourself
-whether the context is properly defined.
+You use macro arguments to pass parameters to shell or external commands in
+a actions you define. Macro arguments are special parameters that are
+transformed every time the command is executed.  The macro arguments below
+are provided by GPS.  The equivalent Python code is given for some
+arguments.  This code is useful when you're writing a full python script.
 
 .. highlight:: python
 
-*%a*
-  If the user clicked within the Locations Window, this is the name of the
-  category to which the current line belongs
+* :file:`%a`
 
-*%builder*
-  Replaced by the default builder configured in GPS.
-  This can be e.g. `gnatmake` if your project contains only Ada code,
-  or `gprbuild` for non Ada or multi-language projects.
-  Note: this macro is only available in the commands defined in the Build
-  Manager and the Build Launcher dialogs.
+  If the user clicked inside the :guilabel:`Locations` view, name of
+  the current line's category.
 
-*%c*
-  This is the column number on which the user clicked.
-  Python equivalent::
+* :file:`%builder`
+
+  Replaced by the default builder configured in GPS.  This can be
+  :program:`gnatmake` if your project contains only Ada code or
+  :program:`gprbuild` for non-Ada or multi-language projects.  This macro
+  is only available in commands defined in the :guilabel:`Build Manager`
+  and :guilabel:`Build Launcher` dialogs.
+
+* :file:`%c`
+
+  The column number on which the user clicked.  Python equivalent::
 
     GPS.current_context().column()
 
-*%d*
-  The current directory.
-  Python equivalent::
+* :file:`%d`
+
+  Current directory.  Python equivalent::
 
     GPS.current_context().directory()
 
-*%dk*
-  The krunched name of the current directory.
+* :file:`%dk`
 
-*%e*
-  Name of the entity the user clicked on.
-  Python equivalent::
+  Krunched name of the current directory.
+
+* :file:`%e`
+
+  Name of the entity the user clicked on.  Python equivalent::
 
     GPS.current_context().entity().name()
 
-*%ef*
-  Name of the entity the user clicked on, possibly followed by "(best guess)"
-  if there is an ambiguity on which entity it really, for instance because the
-  cross-reference information is not up-to-date.
+* :file:`%ef`
 
-*%E*
-  The full path to the executable name corresponding to the target.
+  Name of the entity the user clicked on, possibly followed by "(best
+  guess)" if there's an ambiguity, for example because cross-reference
+  information is not up-to-date.
 
-*%ek*
-  Krunched name of the entity the user clicked on.
-  This is the same as `%e`, except long names are shorted as in `%fk`.
+* :file:`%E`
 
-*%eL*
-  Replaced by either an empty string, or `-eL`, depending on whether the `Fast
-  Project Loading` preference if set or not.  `-eL` is used by GNAT tools to
-  specify whether symbolink links should be followed or not when parsing
-  projects.  Note: this macro is only available in the commands defined in the
-  Build Manager and the Build Launcher dialogs.
+  Full path to the executable name corresponding to the target.
 
-*%external*
-  Replaced by the command line specified in the preference
-  *External Commands->Execute command*.
+* :file:`%ek`
 
+  Krunched name of the entity the user clicked on.  Like :file:`%e`, except
+  long names are shorted as in :file:`%fk`.
 
-*%f*
-  Base name of the currently selected file.
-  Python equivalent::
+* :file:`%eL`
+
+  Either an empty string or :file:`-eL`, depending on whether the
+  :guilabel:`Fast Project Loading` preference if set.  :file:`-eL` is used
+  by GNAT tools to specify whether symbolink links should be followed when
+  parsing projects.  This macro is only available in commands defined in
+  the :guilabel:`Build Manager` and the :guilabel:`Build Launcher` dialogs.
+
+* :file:`%external`
+
+  Command line specified in the :menuselection:`External Commands -->
+  Execute command` preference.
+
+* :file:`%f`
+
+  Base name of the currently selected file.  Python equivalent::
 
     import os.path
     os.path.basename (GPS.current_context().file().name())
 
-*%F*
-  Absolute name of the currently opened file.
-  Python equivalent::
+* :file:`%F`
+
+  Absolute name of the currently opened file.  Python equivalent::
 
     GPS.current_context().file().name()
 
-*%fk*
-  Krunched base name of the currently selected file.  This is the same as %f,
-  except that long names are shortened, and their middle letters are replaced
-  by "[...]". This should be used in particular in menu labels, to keep the
-  menus narrow.
+* :file:`%fk`
 
-*%fp*
+  Krunched base name of the currently selected file.  This is the same as
+  :file:`%f` except that long names are shortened with some letters
+  replaced by "[...]".  Use this in menu labels to keep the menus narrow.
+
+* :file:`%fp`
+
   Base name of the currently selected file. If the file is not part of the
-  project tree, or no file is selected, generate an error on the Messages
-  window.  Note: this macro is only available in the commands defined in the
-  Build Manager and the Build Launcher dialogs.
+  project tree or no file is selected, generate an error in the
+  :file:`Messages` view.  This macro is only available in commands defined
+  in the :guilabel:`Build Manager` and the :guilabel:`Build Launcher`
+  dialogs.
 
-*%gnatmake*
-  Replaced by the gnatmake executable configured in your project file.
+* :file:`%gnatmake`
 
-*%gprbuild*
-  Replaced by the gprbuild command line configured in your project file.
+  The :program:`gnatmake` executable configured in your project file.
 
-*%gprclean*
-  Replaced by the default cleaner configured in GPS.  This can be e.g. `gnat
-  clean`, or `gprclean`.  Note: this macro is only available in the commands
-  defined in the Build Manager and the Build Launcher dialogs.
+* :file:`%gprbuild`
 
-*%GPS*
-  Replaced by the home directory for GPS (ie the .gps directory in which GPS
-  stores its own configuration files).
+  The :program:`gprbuild` command line configured in your project file.
 
-*%i*
-  If the user clicked within the Project View, this is the name of the parent
-  project, ie the one that is importing the one the user clicked on. Note that
-  with this definition of parent project, a given project might have multiple
-  parents. The one that is returned is read from the Project View itself.
+* :file:`%gprclean`
 
-*%l*
-  This is the line number on which the user clicked.
-  Python equivalent::
+  Default cleaner configured in GPS.  This can be, for example,
+  :command:`gnat clean`, or :command:`gprclean`.  This macro is only
+  available in commands defined in the :guilabel:`Build Manager` and
+  the :guilabel:`Build Launcher` dialogs.
+
+* :file:`%GPS`
+
+  GPS's home directory (i.e., the :file:`.gps` directory in which GPS
+  stores its configuration files).
+
+* :file:`%i`
+
+  If the user clicked inside the :guilabel:`Project` view, name of the
+  parent project, i.e., the one that's importing the one clicked on.
+  With this definition of parent project, a given project may have
+  multiple parents, but the one here is the one from the
+  :guilabel:`Project` view..
+
+* :file:`%l`
+
+  Number of the line in which the user clicked.  Python equivalent::
 
     GPS.current_context().line()
 
-*%o*
-  The object directory of the current project.
+* :file:`%o`
 
-*%O*
-  The object directory of the root project.
+  Object directory of the current project.
 
-*%p*
-  The current project. This is the name of the project, not the project file,
-  ie the :file:`.gpr` extension is not included in this name, and the casing is
-  the one found inside the project file, not the one of the file name itself.
-  If the current context is an editor, this is the name of the project to which
-  the source file belongs.  Python equivalent::
+* :file:`%O`
+
+  Object directory of the root project.
+
+* :file:`%p`
+
+  Name of the current projec (not the project file). The :file:`.gpr`
+  extension is not included and the casing is the one in the project
+  file not that of the file name itself.  If the current context is an
+  editor, the name of the project to which the source file belongs.
+  Python equivalent::
 
     GPS.current_context().project().name()
 
-*%P*
-  The root project. This is the name of the project, not the project file.
-  Python equivalent::
+* :file:`%P`
+
+  Name of root project.  Python equivalent::
 
     GPS.Project.root().name()
 
-*%Pb*
-  The basename of the root project file.
+* :file:`%Pb`
 
-*%Pl*
-  The name of the root project, all lower case.
+  Basename of the root project file.
 
-*%pp*
-  The current project file pathname. If a file is selected, this is the project
-  file to which the source file belongs.
-  Python equivalent::
+* :file:`%Pl`
+
+  Name of the root project converted to lower case.
+
+* :file:`%pp`
+
+  Current project file pathname. If a file is selected, the project
+  file to which the source file belongs.  Python equivalent::
 
     GPS.current_context().project().file().name()
 
-*%PP*
-  The root project pathname.
-  Python equivalent::
+* :file:`%PP`
+
+  Root project pathname.  Python equivalent::
 
     GPS.Project.root().file().name()
 
-*%pps*
-  This is similar to `%pp`, except it returns the project name prepended
-  with `-P`, or an empty string if there is no project file selected and the
-  current source file doesn't belong to any project. This is mostly for use with
-  the GNAT command line tools. The project name is quoted if it contains spaces.
-  Python equivalent::
+* :file:`%pps`
+
+  Similar to :file:`%pp`, except it returns the project name prepended
+  with :command:`-P` or an empty string if there's no project file
+  selected and the current source file doesn't belong to any
+  project. This is intended mostly for use with the GNAT command line
+  tools.  GPS quotes the project name if it contains spaces.  Python
+  equivalent::
 
     if GPS.current_context().project():
        return "-P" & GPS.current_context().project().file().name()
 
-*%PPs*
-  This is similar to `%PP`, except it returns the project name prepended
-  with `-P`, or an empty string if the root project is the default project.
-  This is mostly for use with the GNAT command line tools.
+* :file:`%PPs`
 
-*%(p|P)[r](d|s)[f]*
-  Substituted by the list of sources or directories of a given project. This
-  list is a list of space-separated, quoted names (all names are surrounded by
-  double quotes, for proper handling of spaces in directories or file names).
+  Similar to :;file:`%PP`, except it returns the project name
+  prepended with :command:`-P` or an empty string if the root project
+  is the default project.  This is intended mostly for use with the
+  GNAT command line tools.
 
-  *P*
-    the root project.
+* :file:`%(p|P)[r](d|s)[f]`
 
-  *p*
-    the selected project, or the root project if there is no project selected.
+  Replaced by the list of sources or directories of a project. This list is
+  space-separated with all names surrounded by double quotes for proper
+  handling of spaces in directories or file names.  The first letter
+  specifies the project and successive letters which files are in the list
+  and related options:
 
-  *r*
-    recurse through the projects: sub projects will be listed as well as their
-    sub projects, etc...
+  * :file:`P`
 
-  *d*
-    list the source directories.
+     root project.
 
-    Python equivalent::
+  * :file:`p`
+
+    The selected project or the root project if project is selected.
+
+  * :file:`r`
+
+    Recurse through the projects, including all subprojects.
+
+  * :file:`d`
+
+    List source directories.  Python equivalent::
 
       GPS.current_context().project().source_dirs()
 
-  *s*
-    list the source files.
+  * :file:`s`
 
-    Python equivalent::
+    List source files.  Python equivalent::
 
       GPS.current_context().project().sources()
 
-  *f*
-    output the list into a file and substitute the parameter with the name of
-    that file. This file is never deleted by GPS, it is your responsibility to
-    do so.
+  * :file:`f`
 
-*%s*
-  This is the text selected by the user, if a single line was selected. When
-  multiple lines were selected, this returns the empty string
+    Write the list into a file and replace the parameter with the name of
+    the file. This file is never deleted by GPS; you must do so manually in
+    the plugin when you no longer need it.
 
-*%S*
-  This is either the text selected by the user, of the current entity if there
-  is no selection. If the entity is part of an expression ("A.B.C"), then the
-  whole expression is used instead of the entity name.
+  Examples:
 
-*%switches(tool)*
-  Replaced by `IDE'Default_Switches (tool)`, in other words, if you
-  have a tool whose switches are defined via an xml file in GPS, they
-  are stored as `Default_Switches (xxx)` in the `IDE` package
-  and can be retrieved using this macro. The value returned is a list of
-  switches, or an empty list if not set.
+  * :file:`%Ps`
 
-  Note: This macro is only available in the commands defined in the Build
-  Manager and Build Launcher dialogs.
+    List of source files in the root project.
 
-*%T*
-  Replaced by the subtarget being considered for building.  Depending on the
-  context, this can correspond to e.g. the base filename of a Main source, or
-  makefile targets.  Note: this macro is only available in the commands defined
-  in the Build Manager and the Build Launcher dialogs.
+  * :file:`%prs`
 
-*%TT*
-  Same as `%TT`, but returns the full path to main sources rather than
-  the base filename.
+    List of files in the current project, and all imported sub projects,
+    recursively.
 
-*%attr(Package'Name[,default])*
-  Replaced by the project attribute `Package'Name`, in other words, the
-  attribute `Name` from the package `Package`. `Package'` is
-  optional if `Name` is a top level attribute (e.g. `Object_Dir`).
+  * :file:`%prdf`
 
-  If the attribute is not defined in the project, an optional `default`
-  value is returned, or an empty string if not.
+    Name of a file containing a list of source directories in the current
+    project and all imported sub projects, recursively.
 
-  Note: This macro is only available in the commands defined in the Build
-  Manager and Build Launcher dialogs, and only supports single string
-  attributes, not lists.
+* :file:`%s`
 
-*%dirattr(Package'Name[,default])*
-  Replaced by the directory part of an attribute. The attribute is specified
-  as in `%attr` above.
+  Text selected by the user, if a single line was selected. If multiple
+  lines are selected, returns the empty string
 
-*%baseattr(Package'Name[,default])*
-  Replaced by the base name of an attribute. The attribute is specified
-  as in `%attr` above.
+* :file:`%S`
 
-*%vars*
-  Replaced by a list of switches of the form `<variable>=<value>`, where
-  <variable> is the name of a scenario variable and <value> its current value,
-  as configured in the Scenario View. All the scenario variables defined in the
-  current project tree will be listed.  Alternatively, you can also use
-  `%vars(-D)` to generate a list of switches of the form
-  `-D<variable>=<value>`.  Note: this macro is only available in the commands
-  defined in the Build Manager and the Build Launcher dialogs.
+  Text selected by the user or the current entity if no selection. If the
+  entity is part of an expression ("A.B.C"), the whole expression is
+  returned instead of the entity name.
 
-*%X*
-  Replaced by a list of switches of the form `-X<variable>=<value>`, where
-  <variable> is the name of a scenario variable and <value> its current value,
-  as configured in the Scenario View. All the scenario variables defined in the
-  current project tree will be listed.  Note: this macro is only available in
-  the commands defined in the Build Manager and the Build Launcher dialogs.
+* :file:`%switches(tool)`
 
-*%target*
-  Replaced by `--target=<t>` where <t> is the build target detected by the
-  toolchain being used.
+  Value of :command:`IDE'Default_Switches (tool)`.  If you have a tool
+  whose switches are defined via an xml file in GPS, they're stored as
+  :guilabel:`Default_Switches (xxx)` in the :guilabel:`IDE` package and you
+  can retrieve them using this macro. The result is a list of switches, or
+  an empty list if none.
 
-*%%*
-  Replaced by the % sign.
+  This macro is only available in the commands defined in the :guilabel:`Build
+  Manager` and :guilabel:`Build Launcher dialogs`.
 
-.. index:: example
+* :file:`%T`
 
-Examples:
+  Subtarget being considered for building.  Depending on the context, this
+  can correspond to such things as the base filename of a main source or
+  :file:`makefile` targets.  This macro is only available in the commands
+  defined in the :guilabel:`Build Manager` and the :guilabel:`Build
+  Launcher` dialogs.
 
-*%Ps*
-  Replaced by a list of source files in the root project.
+* :file:`%TT`
 
-*%prs*
-  Replaced by a list of files in the current project, and all imported
-  sub projects, recursively.
+  Like `%TT`, but the full path to main sources rather than the base
+  filename.
 
-*%prdf*
-  Replaced by the name of a file that contains a list of source
-  directories in the current project, and all imported sub projects,
-  recursively.
+* :file:`%attr(Package'Name[,{default}])`
 
-Another type of macros are expanded before commands are executed: These all
-start with the `$` character, and represent parameters passed to the action by
-its caller. Depending on the context, GPS will give zero, one or more arguments
-to the action. This is in particular used when you define your own VCS system.
-See also the shell function `execute_action`, which you can use yourself to
-execute an action and pass it some arguments.
+  Project attribute :command:`Package'Name`L: the attribute :file:`Name`
+  from the package :file:`Package`. You can omit :file:`Package'` if
+  :file:`Name` is a top level attribute (e.g. :file:`Object_Dir`).  If the
+  attribute is not defined in the project, an optional :command:`default`
+  value is returned, or an empty string if none is specified.
 
-These arguments are the following
+  This macro is only available in the commands defined in the
+  :guilabel:`Build Manager` and :guilabel:`Build Launcher` dialogs and only
+  supports attributes that return a single string, not those returning
+  lists.
 
-*$1, $2, ... $n*
-  Where n is a number. These are each argument passed to the action
+* :file:`%dirattr(Package'Name[,default])`
 
-*$1-, $2-, ... $n-*
-  This represents a string concatenating the specified argument and all
-  arguments after it
+  Like :file:`%attr`, but the directory part of an attribute value. 
 
-*$**
-  This represents a string concatenating all arguments passed to the action
+* :file:`%baseattr(Package'Name[,default])`
 
-*$repeat*
-  This is the number of times the action has been repeated in a row. It will in
-  general be 1 (ie this is the first execution of the action), unless the user
-  has first executed the action `"Repeat Next"`, which allows automatic
-  repetition of an action.
+  Like :file:`%attr`, but the base name an attribute value. 
+
+* :file:`%vars`
+
+  List of switches of the form :file:`{variable}={value}`, where
+  :command:`variable` is the name of a scenario variable and
+  :command:`value` its current value, as configured in the
+  :guilabel:`Scenario` view. All scenario variables defined in the current
+  project tree are listed.  You can also use :file:`%vars(-D)` to generate
+  a list of switches of the form :file:`-D{variable}={value}`.  This macro
+  is only available in the commands defined in the :guilabel:`Build
+  Manager` and the :guilabel:`Build Launcher` dialogs.
+
+* :file:`%X`
+
+  List of switches of the form :file:`-X{variable}={value}`, where
+  :command:`variable` is the name of a scenario variable and
+  :command:`value` its current value, as configured in the
+  :guilabel:`Scenario` view. All the scenario variables defined in the
+  current project tree are listed.  This macro is only available in the
+  commands defined in the :guilabel:`Build Manager` and the
+  :guilabel:`Build Launcher` dialogs.
+
+* :file:`%target`
+
+  The string :file:`--target={t}` where :command:`t` is the build target,
+  as determinted by the current toolchain.
+
+* :file:`%%`
+
+  The literal :kbd:`%` character.
+
+Another type of macros is expanded before commands are executed: They start
+with the :kbd:`$` character and represent parameters passed to the action
+by its caller. Depending on the context, GPS passes zero, one, or many
+arguments to a action. You'll commonly use these macros when you define
+your own VCS system.  Also see the shell function :file:`execute_action`,
+which executes an action and passes it arguments.
+
+These macros are the following
+
+* :file:`$1, $2, ... ${n}`
+
+  Where :command:`n` is a number. These are the argument with the
+  corresponding number that was passed to the action.
+
+* :file:`$1-, $2-, ... ${n}-*`
+
+  Likewise, but a string concatenating the specified argument and all
+  subsequent arguments.
+
+* :file:`$*`
+
+  String concatenating all arguments passed to the action.
+
+* :file:`$repeat`
+
+  Number of times the action has been consequtively executed.  This is
+  1 (the first execution of the action) unless the user invoked the
+  :guilabel:`Repeat Next` action.
 
   .. highlight:: python
 
-  By default, when the action "Repeat Next" is invoked by the user, it will
-  repeat the following action as many times as the user specified. However, in
-  some cases, either for efficiency reasons or simply for technical reasons,
-  you might want to handle yourself the repeat. This can be done with the
-  following action declaration::
+  By default, when :guilabel:`Repeat Next` is invoked by the user, it
+  repeats the following action the number of times the user
+  specified. However, in some cases, either for efficiency reasons or for
+  other technical reasons, you may want to handle the repeat yourself.  Do
+  this with the following action declaration::
 
     <action name="my_action">
        <shell lang="python">if $repeat==1: my_function($remaining + 1)</shell>
@@ -2452,15 +2496,15 @@ These arguments are the following
        """Perform an action count times"""
        ...
 
-  Basically, the technique here is to only perform something the first time the
-  action is called (hence the if statement), but pass your shell function the
-  number of times that it should repeat (hence the `$remaining` parameter).
+  The idea here is to do something only the first time the action is called
+  (the :command:`if` statement), but pass your shell function the number of
+  times it should repeat (the :file:`$remaining` parameter).
 
-*$remaining*
-  This is similar to $repeat, and indicates the number of times that the action
-  remains to be executed. This will generally be 0, unless the user has chosen
-  to automatically repeat the action a number of times.
+* :file:`$remaining`
 
+  Like $repeat, but indicates the number of times the action remains
+  to be executed. This is 0 unless the user invoked the
+  :guilabel:`Repeat Next` action.
 
 .. _Filtering_actions:
 
