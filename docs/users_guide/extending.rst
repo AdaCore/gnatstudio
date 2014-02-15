@@ -2515,102 +2515,101 @@ Filtering actions
 .. index:: <filter_and>
 .. index:: <filter_or>
 
-By default, an action will execute in any context in GPS. The user just selects
-the menu or key, and GPS tries to execute the action.
+By default, an action can execute in any context in GPS.  When the user
+selects the menu or key, GPS executes the action.  You can restrict when
+an action is permitted. If the current context doesn't permit the action,
+GPS displays an error message.
 
-It is possible to restrict when an action should be considered as valid. If the
-current context is incorrect for the action, GPS will not attempt to run
-anything, and will display an error message for the user.
+You can use one of several types of restrictions:
 
-Actions can be restricted in several ways:
+* Using macro arguments (see :ref:`Macro_arguments`).
 
-* Using macro arguments (:ref:`Macro_arguments`).
-  If you are using one of the macro arguments defined in the previous section,
-  anywhere in the chain of commands for that action, GPS will first check that
-  the information is available, and if not will not start running any of the
-  shell commands or external commands for that action.
+  If an action uses one of the macro arguments defined in the previous
+  section, GPS checks that the information is available. If not, it won't
+  run any of the shell commands or external commands for that action.
 
-  For instance, if you have specified `%F` as a parameter to one of the
-  commands, GPS will check prior to running the action that there is a current
-  file. This can be either a currently selected file editor, or for instance
-  that the project view is selected, and a file node inside it is also
-  selected.
+  For example, if you specified :file:`%F` as a parameter to a command,
+  GPS checks there's a current file such as a currently selected file
+  editor or a file node selected inside the :guilabel:`Project` view.
+  This filtering is automatic: you don't have to do anything else.
 
-  You do not have to specify anything else, this filtering is automatic
-
-  Note however that the current context might contain more information than you
-  expect. For instance, if you click on a file name in the Project View, then
-  the current context contains a file (thus satisfies `%F`), but also contains
-  a project (and thus satisfies `%p` and similar macros).
+  However, the current context may contain more information than you
+  expect. For example, if a user clicks on a file name in the
+  :guilabel:`Project` view, the current context contains a file (and hence
+  satisfies :file:`%F`) and also a project (and hence satisfies :file:`%p`
+  and similar macros).
 
 * Defining explicit filters
-  Explicit restrictions can be specified in the customization files. These are
-  specified through the `<filter>`, `<filter_and>` and `<filter_or>` tags, see
-  below.
 
-  These tags can be used to further restrict when the command is valid. For
-  instance, you can use them to specify that the command only applies to Ada
-  files, or only if a source editor is currently selected.
+  You can also specify explicit restrictions in the customization files by
+  using the :file:`<filter>`, :file:`<filter_and>` and :file:`<filter_or>`
+  tags.  Use these tags to further restrict when the command is valid. For
+  example, you can use them to specify that the command only applies to
+  Ada files or only if a source editor is currently selected.
 
 The filters tags
 ^^^^^^^^^^^^^^^^
 
-Such filters can be defined in one of two places in the customization files:
+You can define filters in one of two places in the customization files:
 
 * At the toplevel.
-  At the same level as other tags such as `<action>`, `<menu>` or
-  `<button>` tags, you can define named filters. These are general filters,
-  that can be referenced elsewhere without requiring code duplication.
 
-* As a child of the `<action>` tag.
-  Such filters are anonymous, although they provide exactly the same capabilities
-  as the ones above. These are mostly meant for simple filters, or filters that
-  you use only once.
+  You can define named filters at the same level as other tags such as
+  :file:`<action>`, :file:`<menu>` or :file:`<button>` tags. These are
+  global filters that can be referenced elsewhere.
 
-There are three different kinds of tags:
+* As a child of the :file:`<action>` tag.
 
-*<filter>*
-  This defines a simple filter. This tag takes no child tag.
+  These filters are anonymous, although they provide exactly the same
+  capabilities as the ones above. These are intended for simple filters or
+  filters that you use only once.
 
-*<filter_and>*
-  All the children of this tag are composed together to form a compound filter.
-  They are evaluated in turn, and as soon as one of them fails, the whole filter
-  fails. Children of this tag can be of type `<filter>`, `<filter_and>`
-  and `<filter_or>`.
+There are three different kinds of tags representing filters:
 
-*<filter_or>*
-  All the children of this tag are composed together to form a compound filter.
-  They are evaluated in turn, and as soon as one of them succeeds, the whole
-  filter succeeds. Children of this tag can be of type `<filter>`,
-  `<filter_and>` and `<filter_or>`.
+* :file:`<filter>`
 
-If several such tags are found following one another under an `<action>`
-tag, they are combined through "or", i.e. any of the filters may match for the
-action to be executed.
+  A simple filter. This tag has no child tag.
 
-The `<filter>`, `<filter_and>` and `<filter_or>` tags accept the
-following set of common attributes:
+* :file:`<filter_and>`
 
-*name       (optional)*
-  This attribute is used to create named filters, that can be reused elsewhere
-  in actions or compound filters through the `id` attribute. The name can
-  take any form.
+  All the children of this tag are merged to form a compound filter.
+  They're each evaluated in turn and if one of them fails, the whole
+  filter fails.  Children of this tag can be of type :file:`<filter>`,
+  :file:`<filter_and>` or :file: `<filter_or>`.
 
-*error      (optional)*
-  This is the error message printed in the GPS console if the filter doesn't
-  match, and thus the action cannot be executed. If you are composing filters
-  through `<filter_and>` and `<filter_or>`, only the error message of
-  the top-level filter will be printed.
+* :file:`<filter_or>`
 
-In addition, the `<filter>` has the following specific attributes:
+  Like :file:`<filter_and>`, but as soon as one child filter succeeds, the
+  whole filter succeeds.
 
-*id         (optional)*
+If several filter tags are found under an :file:`<action>` tag, they act
+as if they were all under a single :file:`<filter_or>` tag.
+
+The :file:`<filter>`, :file:`<filter_and>` and :file:`<filter_or>` tags
+all accept the following common attributes:
+
+* :file:`name` (optional)
+
+  Used to create named filters that can be reused, via the `id` attribute,
+  elsewhere in actions or compound filters.  The name can have any form.
+
+* :file:`error` (optional)
+
+  Error message GPS will display if the filter doesn't match and hence the
+  action can't be executed. If you are using the :file:`<filter_and>` or
+  :file:`<filter_or>` tag, GPS will only display the error message of that
+  filter.
+
+In addition, the :file:`<filter>` tag has the following specific
+attributes:
+
+* :file:`id` (optional)
 
   .. highlight:: xml
 
-  If this attribute is specified, all other attributes are ignored. This is used
-  to reference a named filter previously defined. Here is for instance how you
-  can make an action depend on a named filter::
+  If this attribute is specified, all other attributes are ignored. Use
+  this to reference a named filter previously defined. Here's how you can
+  make an action depend on a named filter::
 
     <?xml version="1.0" ?>
     <test_filter>
@@ -2621,66 +2620,76 @@ In addition, the `<filter>` has the following specific attributes:
       </action>
     </test_filter>
 
-  A number of filters are predefined by GPS itself.
+  GPS contains a number of predefined filters:
 
-  *Source editor*
-    This filter will only match if the currently selected window in GPS is an
-    editor.
+  * :file:`Source editor`
 
-  *Explorer_Project_Node*
-    Matches when clicking on a project node in the Project View
+    Match if the currently selected window in GPS is an editor.
 
-  *Explorer_Directory_Node*
-    Matches when clicking on a directory node in the Project View
+  * :file:`Explorer_Project_Node`
 
-  *Explorer_File_Node*
-    Matches when clicking on a file node in the Project View
+    Match if clicking on a project node in the :guilabel:`Project` view.
 
-  *Explorer_Entity_Node*
-    Matches when clicking on an entity node in the Project View
+  * :file:`Explorer_Directory_Node`
 
-  *File*
-    Matches when the current context contains a file (for instance the focus is
-    on a source editor, or the focus is on the Project view and the currently
-    selected line contains file information).
+    Match if clicking on a directory node in the :guilabel:`Project` view.
 
-*language   (optional)*
-  This attribute specifies the name of the language that must be associated
-  with the current file to match. For instance, if you specify `ada`,
-  you must have an Ada file selected, or the action won't execute. The language
-  for a file is found by GPS following several algorithms (file extensions, and
-  via the naming scheme defined in the project files).
+  * :file:`Explorer_File_Node`
 
-*shell_cmd  (optional)*
-  This attribute specifies a shell command to execute. The output value of this
-  command is used to find whether the filter matches: if it returns "1" or
-  "true", the filter matches. In any other case, the filter fails.
+    Match if clicking on a file node in the :guilabel:`Project` view.
 
-  Macro arguments (%f, %p, ...) are fully supported in the text of the
-  command to execute.
+  * :file:`Explorer_Entity_Node`
 
-*shell_lang (optional)*
-  This attribute specifies in which language the shell command above is written.
-  Its default value indicates that the command is written using the GPS shell.
+    Match if clicking on an entity node in the :guilabel:`Project` view.
 
-*module     (optional)*
-  This attribute specifies that the filter only matches if the current window
-  was setup by this specific GPS module. For instance, if you specify
-  "Source_Editor", this filter will only match when the active window is a
-  source editor.
+  * :file:`File`
 
-  The list of module names can be obtained by typing `lsmod` in the shell
-  console at the bottom of the GPS window.
+    Match if the current context contains a file (for example the focus is
+    on a source editor or the focus is on the :guilabel:`Project` view and
+    the currently selected line contains file information).
 
-  This attribute is mostly useful when creating new contextual menus.
+* :file:`language` (optional)
+
+  Name of the language that must be associated with the current file in
+  order for the filter to match. For example, if you specify
+  :command:`ada`, the user must have an Ada file selected for the action
+  to execute. GPS determines the language for a file by using several
+  methods such as looking at file extensions in conjunction with the
+  naming scheme defined in the project files.
+
+* :file:`shell_cmd` (optional)
+
+  Shell command to execute. The output of this command is used to find if
+  the filter matches: if it returns "1" or "true", the filter matches. In
+  any other case, the filter fails.
+
+  Macro arguments (such as :file:`%f` and `%p`) may be used in the text of
+  the command to execute.
+
+* :file:`shell_lang` (optional)
+
+  Which language the command in :file:`shell_cmd` is written.  The default
+  if that the command is written for the GPS shell.
+
+* :file:`module` (optional)
+
+  The filter only matches if the current window was created by this
+  specific GPS module. For example, if you specify :file:`Source_Editor`,
+  the filter only matches if the active window is a source editor.
+
+  You can obtain the list of module names by typing :command:`lsmod` in
+  the shell console at the bottom of the GPS window.
+
+  This attribute is useful mostly when creating new contextual menus.
 
 .. highlight:: xml
 
-When several attributes are specified for a `<filter>` node (which is not
-possible with `id`), they must all match for the action to be executed::
+When several attributes are specified for a :file:`<filter>` node (which
+can't be combined with :file:`id`), they must all match for the action to
+be executed::
 
   <?xml version="1.0" ?>
-  <!-- The following filter will only match if the currently selected
+  <!-- The following filter only matches if the currently selected
        window is a text editor editing an Ada source file -->
   <ada_editor>
     <filter_and name="Source editor in Ada" >
@@ -2688,15 +2697,15 @@ possible with `id`), they must all match for the action to be executed::
       <filter id="Source editor" />
     </filter_and>
 
-    <!-- The following action will only be executed for such an editor -->
+    <!-- The following action is only executed for such an editor -->
 
     <action name="Test Ada action" >
        <filter id="Source editor in Ada" />
        <shell>pwd</shell>
     </action>
 
-    <!--  An action with an anonymous filter. It will be executed if the
-          selected file is in Ada, even if the file was selected through
+    <!--  An action with an anonymous filter. It's executed if the
+          selected file is in Ada even if the file was selected through
           the project view  -->
 
     <action name="Test for Ada files" >
@@ -2716,72 +2725,72 @@ Adding new menus
 .. index:: <submenu>
 .. index:: <title>
 
-These commands can be associated with menus, tool bar buttons and keys. All
-of these use similar syntax.
+Actions can be associated with menus, tool bar buttons and keys, all
+using similar syntax.
 
-Binding a menu to an action is done through the `<menu>` and
-`<submenu>` tags.
+You bind a menu item to an action through the :file:`<menu>` and
+:file:`<submenu>` tags.
 
-The `<menu>` tag takes the following attributes:
+The :file:`<menu>` tag can have the following attributes:
 
-*action  (mandatory)*
-  This attribute specifies which action to execute
-  when the menu is selected by the user. If no action by this name was defined,
-  no new menu is added. The action name can start with a '/', in which case
-  it represents the absolute path to a menu to execute instead.
+* :file:`action` (mandatory)
 
-  This attribute can be omitted only when no title is specified for the menu
-  to make it a separator (see below).
+  Action to execute when the item is selected by the user. If no
+  action by this name is defined, GPS doesn't add a new menu. If the
+  action name starts with a '/', it represents the absolute path to an
+  action.
 
-  If a filter is associated with the action through the `<filter>` tag,
-  then the menu will be greyed out when the filter doesn't match. As a
-  result, users will not be able to click on it.
+  You can omit this attribute only when no title is specified for the
+  menu.  Doing that makes it a separator (see below).
 
-*before  (optional)*
-  It specifies the name of another menu item before
-  which the new menu should be inserted. The reference menu must have been
-  created before, otherwise the new menu is inserted at the end. This attribute
-  can be used to control where precisely the new menu should be made visible.
+  If you associate a filter with the action via the :file:`<filter>`
+  tag, the menu is greyed out when the filter doesn't match.
 
-*after   (optional)*
-  This attribute is similar to `before`, but has a lower priority. If it
-  is specified, and there is no `before` attribute, it specifies a reference
-  menu after which the new menu should be inserted.
+* :file:`before` (optional)
 
-It should also have one XML child called `<title>` which specifies the
-label of the menu. This is really a path to a menu, and thus you can define
-submenus by specifying something like "/Parent1/Parent2/Menu" in the title
-to automatically create the parent menus if they don't exist yet.
+  Name of another menu item before which the new menu should be
+  inserted.  If that item hasn't been previously created, the new menu
+  is inserted at the end.  Use this attribute to control precisely
+  where the item menu is displayed.
 
-You can define the accelerator keys for your menus, using underscores
-in the titles. Thus, if you want an accelerator on the first letter in
-a menu named `File`, set its title as `_File`.
+* :file:`after` (optional)
 
-The tag `<submenu>` accepts the following attributes:
+  Like :file:`before`, but with a lower priority. If specified and
+  there's no :file:`before` attribute, it specifies an item after
+  which the new item should be inserted.
 
-*before  (optional)*
-  See description above, same as for `<menu>`
+The :file:`<menu>` tag should have one XML child called
+:file:`<title>`, which specifies the label of the menu. This label is
+actually a path to a menu, so you can define submenus. For example,
+specifying :command:`/Parent1/Parent2/Item` in the title creates a
+:menuselection:`Parent1 --> Parent2 -> Item` menu and creates the
+parent menus if they don't already exist.
 
-*after   (optional)*
-  See description above, same as for `<menu>`
+You can define the accelerator keys for your menus using underscores
+in the title to designate the accelerator key. For example, if you
+want an accelerator on the first letter in a menu named :file:`File`,
+set its title to :file:`_File`.
 
-It accepts several children, among `<title>` (which must be specified
-at most once), `<submenu>` (for nested menus), and `<menu>`.
+The :file:`<submenu>` tag accepts the :file:`before` and :file:`after`
+attributes, which operate the same way as for the :file:`<menu>` tag.
 
-Since `<submenu>` doesn't accept the `action` attribute, you should
-use `<menu>` for clickable items that should result in an action, and
-`<submenu>` if you want to define several menus with the same path.
+It accepts several children, such as :file:`<title>` (which can
+present at most once), :file:`<submenu>` (for nested menus), and
+:file:`<menu>`.
 
-You can specify which menu the new item is added to in one of two ways:
+:file:`<submenu>` doesn't accept the :file:`action` attribute.  Use
+`<menu>` for clickable items that result in an action and
+:file:`<submenu>` to define several menus with the same path.
 
-* Specify a path in the `title` attribute of `<menu>`
-* Put the `<menu>` as a child of a `<submenu>` node
-  This requires slightly more typing, but it allows you to specify the exact
-  location, at each level, of the parent menu (before or after an existing
-  menu).
+Specify which menu the new item is added to in one of two ways:
 
-For example, this adds an item named `mymenu` to the standard
-`Edit` menu::
+* Specify a path in the :file:`title` attribute of :file:`<menu>`
+* Put the :file:`<menu>` as a child of a :file:`<submenu>` node.  This
+  requires more typing, but allows you to specify the exact location,
+  at each level, of the parent menu.
+
+For example, this adds an item named :file:`mymenu` to the standard
+:guilabel:`Edit` menu::
 
   <?xml version="1.0" ?>
   <test>
@@ -2802,9 +2811,8 @@ The following has exactly the same effect::
     </menu>
   </test>
 
-
-The following adds a new item "stats" to the "unit testing" submenu
-in "my_tools"::
+The following adds a new item :file:`stats` to the :file:`unit
+testing` submenu in :file:`my_tools`::
 
   <?xml version="1.0" ?>
   <test>
@@ -2813,10 +2821,11 @@ in "my_tools"::
     </menu>
   </test>
 
-The previous syntax is shorter, but less flexible than the following,
-where we also force the My_Tools menu, if it doesn't exist yet, to
-appear after the File menu. This is not doable by using only `<menu>`
-tags. We also insert several items in that new menu::
+The previous method is shorter but less flexible than the following,
+where we also create the :file:`My_Tools` menu, if it doesn't already
+exist, to appear after the :guilabel:`File` menu. This can't be done
+by using only :file:`<menu>` tags. We also insert several items in
+that new menu::
 
   <?xml version="1.0" ?>
   <test>
@@ -2833,9 +2842,9 @@ tags. We also insert several items in that new menu::
 
 .. index:: menu separator
 
-Adding an item with an empty title or no title at all inserts a
-menu separator. For instance, the following example will insert a separator
-followed by a File/Custom menu::
+If you add an item with an empty title or no title at all, GPS inserts
+a menu separator. For example, the following example will insert a
+separator followed by a :menuselection:`File --> Custom` menu::
 
   <?xml version="1.0" ?>
   <menus>
