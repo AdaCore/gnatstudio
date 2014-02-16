@@ -1853,7 +1853,7 @@ commands and predefined commands, each explained in more detail below.
 Define new actions using the :file:`<action>` tag.  This tag accepts the
 following attributes:
 
-* :file:`name` (mandatory)
+* :file:`name` (required)
 
   The name by which the action is referenced elsewehre in the customization
   files, for example when it's associated with a menu or toolbar button.
@@ -2733,7 +2733,7 @@ You bind a menu item to an action through the :file:`<menu>` and
 
 The :file:`<menu>` tag can have the following attributes:
 
-* :file:`action` (mandatory)
+* :file:`action` (required)
 
   Action to execute when the item is selected by the user. If no
   action by this name is defined, GPS doesn't add a new menu. If the
@@ -2866,65 +2866,64 @@ Adding contextual menus
 
 .. index:: <contextual>
 
-The actions can also be used to contribute new entries in the contextual menus
-everywhere in GPS. These menus are displayed when the user presses the right
-mouse button, and should only show actions relevant to the current context.
+You can also add actions as new items in contextual menus anywhere in GPS.
+Contextual menus are displayed when the user right clicks and only show
+actions relevant to the current context.
 
-Such contributions are done through the `<contextual>` tag, which takes the
-following attributes:
+Add an item using the :file:`<contextual>` tag, which takes the following
+attributes:
 
-*"action"  (mandatory)*
-  Name of the action to execute, and must be defined elsewhere in one of the
+* :file:`action` (required)
+
+  Name of action to execute, which must be defined elsewhere in one of the
   customization files.
 
-  If this attribute is set to an empty string, a separator will be inserted
-  in the contextual menu instead. If you specify a reference item with one of
-  the "before" or "after" attribute, the separator will be visible only when
-  the reference item is visible.
+  If set to an empty string, a separator is inserted in the contextual
+  menu.  If you specify an item using the :file:`before` or :file:`after`
+  attribute, the separator is displayed only when the specified item is.
 
+* :file:`before` (optional)
 
-*"before" (optional, default="")*
-  If it is specified, this attribute should be the name of another contextual,
-  before which the new menu should appear. The name of predefined contextual
-  menus can be found by looking at the output of "Contextual.list" in the shell
-  console. The name of the contextual menus you define yourself is the value of
-  the `<title>` child.
+  Name of another contextual menu item before which the new item should
+  appear.  You can find the list of names of predefined contextual menus by
+  looking at the output of :command:`Contextual.list` in the GPS shell
+  console. The name of your contextual menu item is the value of the
+  :file:`<title>` child.
 
-  There is no guarantee that the new menu will appear just before the referenced
-  menu. In particular, it won't be the case if the new menu is created before
-  the reference menu was created, or if another later contextual menu indicates
-  that it must be displayed before the same reference item.
+  There's no guarantee the new menu item will appear just before the
+  specified item. For example, it won't if the new item is created before
+  the specified menu item or if a later contextual menu item also specified
+  it must be displayed before the same item.
 
+* :file:`after` (optional)
 
-*"after" (optional, default="")*
-  Same as "before", except it indicates the new menu should appear after the
-  reference item.
+  Like :file:`before`, except it indicates the new menu item should appear
+  after the specified item.
 
-  If both "after" and "before" are specified, only the latter is taken into
-  account.
+  If you specify both :file:`after` and :file:`before`, only
+  the latter is honored.
 
-*"group" (optional, default="0")*
-  Group attribute allows you to create groups of contextual menus that will
-  be put together. Items of the same group appear before all items with
-  a greater group number.
+* :file:`group` (optional, default 0)
 
-It accepts one child tag, `<Title>` which specifies the name of the
-menu entry. If this child is not specified, the menu entry will use the name
-of the action itself. The title is in fact the full path to the new menu entry.
-Therefore, you can create submenus by using a title of the form
-"Parent1/Parent2/Menu".
+  Allows you to create groups of contextual menus that are put next to each
+  other. Items with the same group number appear before all items with a
+  larger group number.
 
-Special characters can be used in the title, and will be automatically
-expended based on the current context. These are exactly the ones described
-in the section for macros arguments, :ref:`Macro_arguments`.
+The :file:`<contextual>` tag accepts one child tag, :file:`<Title>` which
+specifies the name of the menu item. If not specified, the menu item uses
+the name of the action. The title is actually fact the full path to the new
+menu item, like for the :file:`<menu>` tag.  You can create submenus by
+using a title of the form :command:`Parent1/Parent2/Menu`.  You can use
+macro arguments in the title, which are expended based on the current
+context. See :ref:`Macro_arguments`.
 
-The new contextual menu will only be shown if the filters associated with the
-action match the current context.
+The new contextual menu item is only shown if the filters associated with
+the action match the current context.
 
-For instance, the following example inserts a new contextual menu which prints
-the name of the current file in the GPS console. This contextual menu is only
-displayed in source editors. This contextual menu entry is followed by a
-separator line, visible when the menu is visible::
+For example, the following example inserts a new contextual menu item that
+displays the name of the current file in the GPS console. This contextual
+menu is only displayed in source editors. This contextual menu entry is
+followed by a separator line, displayed when the menu item is::
 
   <?xml version="1.0" ?>
   <print>
@@ -2948,20 +2947,19 @@ Adding tool bar buttons
 .. index:: <button>
 .. index:: <entry>
 
-As an alternative to creating new menu items, you can create new buttons on the
-tool bar, with a similar syntax, by using the `<button>` tag. As for the
-`<menu>` tag, it requires an `action` attribute which specifies what should be
-done when the button is pressed. The button is not created if no such action
-was created.
+As an alternative to creating new menu items, you can create new buttons on
+the tool bar, by using the :file:`<button>` tag. Like the :file:`<menu>`
+tag, it requires an :file:`action` attribute, which specifies what should
+be done when the button is pressed. The button is not created if the action
+action doesn't exist.
 
-This node accepts one optional attribute `stock` which can be used to override
-the default image registered for the action (or set one if the action had
-none). The value for this attribute is an icon defined through a
-`<stock>` node (which can also be used to provide a label for the button,
-or several sizes for the images for better rendering).
-
-This `stock` attribute replaces the old `<pixmap>` child, which is no longer
-supported.
+This tag accepts one optional attribute, :file:`stock` which you can use to
+override the default image registered for the action or set one if the
+action no image. The value for this attribute is an icon specified by a
+:file:`<stock>` node (which can also be used to provide a label for the
+button or several sizes of the images for better rendering).  (The
+:file:`stock` attribute replaces the old :file:`<pixmap>` child, which is
+no longer supported.)
 
 The following example defines a new button::
 
@@ -2971,31 +2969,32 @@ The following example defines a new button::
     <button action="execute my stats" stock='my-image' />
   </stats>
 
-The `<button>` tag allows you to create a simple button that the user can press
-to start an action. GPS also supports another type of button, a combo box, from
-which the user can choose among a list of choices. Such a combo box can be
-created with the `<entry>` tag.
+Use the :file:`<button>` tag to create a simple button that the user can
+press to start an action. GPS also supports another type of button, a combo
+box, from which the user can choose among a list of choices.  Create a
+combo box with the :file:`<entry>` tag, which accepts the following
+attributes:
 
-This tag accepts the following arguments:
+* :file:`id` (required)
 
-*id (mandatory)*
-  This should be a unique id for this combo box, and will be used later on
-  to refer it, in particular from the scripting languages. It can be any
-  string
+  Unique id for this combo box, used later on to refer it, specifically
+  from the scripting languages. It can be any string.
 
-*label (default is "")*
-  The text of a label to display on the left of the combo box. If this isn't
-  specified, no text will be displayed
+* :file:`label` (default)
 
-*on-changed (default is "")*
-  The name of a GPS action to execute whenever the user selects a new value
-  in the combo box. This action is called with two parameters, the unique id
-  of the combo box and the newly selected text respectively.
+  Text of a label to display on the left of the combo box. If not
+  specified, no text is displayed
 
-It also accepts any number of `<choice>` tags, each of which defines
-one of the values the user can choose from. These tags accepts one optional
-attribute, "on-selected", which is the name of a GPS action to call when
-that particular value is selected::
+* :file:`on-changed` (default)
+
+  Name of a GPS action to execute whenever the user selects a new value in
+  the combo box. This action is called with two parameters, the unique id
+  of the combo box and the newly selected text.
+
+It also accepts any number of `<choice>` tags, each of which defines one
+values the user can choose from. These tags accepts one optional attribute,
+:file:`on-selected`, which is the name of a GPS action to call when that
+value is selected::
 
      <action name="animal_changed">
         <shell>echo A new animal was selected in combo $1: animal is $2</shell>
@@ -3008,10 +3007,11 @@ that particular value is selected::
         <choice on-selected="gnu-selected">Gnu</choice>
      </entry>
 
-A more convenient interface exists for Python, the GPS.Toolbar class, which
-gives you the same flexibility as above, but also gives you dynamic control
-over the entry, and allows placement of buttons at arbitrary positions in
-the toolbar. See the python documentation.
+GPS provides a more convenient interface exists for Python, the
+:file:`GPS.Toolbar` class, which provides the same flexibility as above,
+but also gives you dynamic control over the entry and allows placement of
+buttons at arbitrary positions in the toolbar. See the python
+documentation.
 
 .. _Binding_actions_to_keys:
 
@@ -3021,28 +3021,26 @@ Binding actions to keys
 .. index:: key
 .. index:: <key>
 
-All the actions defined above can be bound to specific key shortcuts through
-the `<key>` attribute. As usual, it requires one `<action>` attribute to
-specify what to do when the key is pressed. The name of the action can start
-with a '/' to indicate that a menu should be executed instead of a user-defined
-action.
+All actions can be bound to specific key shortcuts through the
+:file:`<key>` tag.  It requires one :file:`action` attribute to specify
+what to do when the key is pressed. The name of the action can start with a
+'/' to indicate that a menu should be executed instead of a user-defined
+action.  If the action is the empty string, then instead the key is no
+longer bound to any action.
 
-If the action is the empty string, then instead the key will no longer be bound
-to any action.
+This tag doesn't contain any child tags. Instead, its text contents
+specifies the keyboard shortcut. The name of the key can be prefixed by
+:command:`control-`, :command:`alt-`, :command:`shift-` or any combination
+of these to specify the key modifiers to apply.
 
-This tag doesn't contain any child tag. Instead, its text contents specified
-the keyboard shortcut. The name of the key can be prefixed by `control-`,
-`alt-`, `shift-` or any combination of these to specify the key modifiers to
-apply.
+You can also define multiple key bindings similar to Emacs's by separating
+them by a space. For example, :command:`control-x control-k` means the user
+should press :kbd:`control-x`, followed by a :kbd:`control-k` to activate
+the corresponding action. This only works if the first key is not already
+bound to an action. If it is, you first unbind it by passing an empty
+action to :file:`<key>`.
 
-You can also define multiple key bindings similar to Emacs's by separating them
-by a space. For instance, `control-x control-k` means that the user should
-press :kbd:`control-x`, followed by a :kbd:`control-k` to activate the
-corresponding action. This is only possible if the prefix key is not already
-bound to an action. If it is, you should first unbound it by passing an empty
-action to `<key>`.
-
-Use an empty string to describe the key binding if you wish to deactivate a
+Use an empty string as the key binding if you wish to deactivate a
 preexisting binding. The second example below deactivates the standard
 binding::
 
@@ -3056,18 +3054,17 @@ binding::
   </key>
 
 
-Multiple actions can be bound to the same key binding. They will all be
-executed in turn, followed by any menu for which this key is an accelerator.
+If you bind multiple actions to the same key binding, they are executed
+sequentually, followed by any menu for which this key is an accelerator.
 
-When GPS processes a `<key>` tag, it does the following:
+When GPS processes a :file:`<key>` tag, it does the following:
 
-* Removes all actions bound to that key.
-  This ensures that if you press the key, any action associated with it by
-  default in GPS or in some other XML file will no longer be executed, and
-  only the last one will be executed.
+* Removes all actions bound to that key.  This ensures that any action
+  previously associated with it, either by default in GPS or in some other
+  XML file, is no longer be executed.
 * Adds the new key to the list of shortcuts that can execute the
-  action. Any existing shortcut on the action is preserved, and
-  therefore there are multiple possible shortcuts for this action.
+  action. Any existing shortcut for the action is preserved, allowing
+  multiple shortcuts for the action.
 
 .. _Preferences_support_in_custom_files:
 
