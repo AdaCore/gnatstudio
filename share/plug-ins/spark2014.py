@@ -132,22 +132,50 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <action name="spark2014_example_binary_search" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/binary_search/test.gpr"</shell>
-      <shell>Editor.edit "binary_search.ads"</shell>
       <shell>Editor.edit "binary_search.adb"</shell>
+      <shell>Editor.edit "binary_search.ads"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search">
-        <title>Binary_Search</title>
+        <title>Binary Search</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_binary_search_unconstrained" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/binary_search_unconstrained/test.gpr"</shell>
+      <shell>Editor.edit "binary_search.adb"</shell>
+      <shell>Editor.edit "binary_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_binary_search_unconstrained">
+        <title>Binary Search Unconstrained</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_contract_cases" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/contract_cases/test.gpr"</shell>
+      <shell>Editor.edit "p.adb"</shell>
+      <shell>Editor.edit "p.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_contract_cases">
+        <title>Contract Cases</title>
       </menu>
     </submenu>
 
     <action name="spark2014_example_database" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/database/test.gpr"</shell>
-      <shell>Editor.edit "database.ads"</shell>
       <shell>Editor.edit "database.adb"</shell>
+      <shell>Editor.edit "database.ads"</shell>
     </action>
 
     <submenu before="About">
@@ -157,11 +185,25 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_formal_queue" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/formal_queue/test.gpr"</shell>
+      <shell>Editor.edit "queue.adb"</shell>
+      <shell>Editor.edit "queue.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_formal_queue">
+        <title>Formal Queue</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_intro" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/intro/test.gpr"</shell>
-      <shell>Editor.edit "pricing.ads"</shell>
       <shell>Editor.edit "pricing.adb"</shell>
+      <shell>Editor.edit "pricing.ads"</shell>
     </action>
 
     <submenu before="About">
@@ -174,28 +216,84 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <action name="spark2014_example_longest_common_prefix" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/longest_common_prefix/test.gpr"</shell>
-      <shell>Editor.edit "lcp.ads"</shell>
       <shell>Editor.edit "lcp.adb"</shell>
+      <shell>Editor.edit "lcp.ads"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_longest_common_prefix">
-        <title>Longest_Common_Prefix</title>
+        <title>Longest Common Prefix</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_max_and_sum" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/max_and_sum/test.gpr"</shell>
+      <shell>Editor.edit "maxandsum.adb"</shell>
+      <shell>Editor.edit "maxandsum.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_max_and_sum">
+        <title>Max and Sum</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_natural_set" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/natural/test.gpr"</shell>
+      <shell>Editor.edit "natural_set.adb"</shell>
+      <shell>Editor.edit "natural_set.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_natural_set">
+        <title>Natural Set</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_ring_buffer" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/ring_buffer/test.gpr"</shell>
+      <shell>Editor.edit "ring_buf.adb"</shell>
+      <shell>Editor.edit "ring_buf.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_ring_buffer">
+        <title>Ring Buffer</title>
       </menu>
     </submenu>
 
     <action name="spark2014_example_segway" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/segway/test.gpr"</shell>
-      <shell>Editor.edit "segway.ads"</shell>
       <shell>Editor.edit "segway.adb"</shell>
+      <shell>Editor.edit "segway.ads"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_segway">
         <title>Segway</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_spark_io" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/spark_io/test.gpr"</shell>
+      <shell>Editor.edit "spark-text_io.ads"</shell>
+      <shell>Editor.edit "hello_world.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_spark_io">
+        <title>SPARK IO</title>
       </menu>
     </submenu>
   </GNATPROVE>
