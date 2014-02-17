@@ -97,26 +97,33 @@ package body Time_Utils is
      (Start_Time : Ada.Calendar.Time;
       End_Time   : Ada.Calendar.Time) return String
    is
-      Elapsed : constant String :=
-        Ada.Calendar.Formatting.Image
-          (End_Time - Start_Time,
-           Include_Time_Fraction => True);
-
-      Elapsed_Start : Natural := Elapsed'First;
-
+      In_Day : Duration := End_Time - Start_Time;
+      Days   : Integer;
    begin
-      --  Do not show hours and minutes if they are 0. The output is
-      --  thus similar to the one of the Unix command time
-
-      if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-         Elapsed_Start := Elapsed_Start + 3;
+      if In_Day >= 86_400.0 then
+         Days := Integer (In_Day / 86_400.0);
+         In_Day := End_Time - Start_Time - 86_400.0 * Days;
       end if;
 
-      if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
-         Elapsed_Start := Elapsed_Start + 3;
-      end if;
+      declare
+         Elapsed : constant String := Ada.Calendar.Formatting.Image
+           (In_Day, Include_Time_Fraction => True);
+         Elapsed_Start : Natural := Elapsed'First;
+      begin
+         --  Do not show hours and minutes if they are 0. The output is
+         --  thus similar to the one of the Unix command time
 
-      return Elapsed (Elapsed_Start .. Elapsed'Last);
+         if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
+            Elapsed_Start := Elapsed_Start + 3;
+         end if;
+
+         if Elapsed (Elapsed_Start .. Elapsed_Start + 1) = "00" then
+            Elapsed_Start := Elapsed_Start + 3;
+         end if;
+
+         return (if Days > 0 then Image (Days, 1) & "days " else "")
+           & Elapsed (Elapsed_Start .. Elapsed'Last);
+      end;
    end Elapsed;
 
    ---------------

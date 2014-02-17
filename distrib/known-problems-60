@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known Problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N215-001 GPS: error when process lasts more than 24 hours
+
+  Problem:    GPS displays the elapsed time for external processes. This
+              fails when the process has run for more than 24 hours.
+
+  Status:     This was fixed in 6.1 on 2014-02-17
+
+  Workaround: This only impacts the display, the process itself has correctly
+              finished executing at that time.
+
 KP-60-N211-025 GPS: Issue with highlighters
 
   Problem:    In any python code using highlighter.OverlayStyle with
