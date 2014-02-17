@@ -20,8 +20,7 @@ import json
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
 
-xml_gnatprove_menus = \
-    """<?xml version="1.0"?>
+xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
     <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
         shell_cmd="spark2014.inside_subp_context(GPS.current_context())" />
@@ -335,8 +334,7 @@ xml_gnatprove_menus = \
   </GNATPROVE>
 """
 
-xml_gnatprove = \
-    """<?xml version="1.0"?>
+xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
     <tool name="GNATprove" package="Prove" attribute="switches" index="">
       <language>Ada</language>
