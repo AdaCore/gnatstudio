@@ -948,7 +948,7 @@ package body Expect_Interface is
             end if;
 
             Trace (Me, "Spawning Show_Bar=" & Boolean'Image (Show_Bar) &
-                   ": "& Command_Line);
+                   ": " & Command_Line);
 
             D              := new Custom_Action_Record;
             D.Command      := Parse_String (Command_Line, Separate_Args);
