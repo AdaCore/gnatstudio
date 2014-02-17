@@ -1137,6 +1137,8 @@ package body GNATdoc is
             Count      : Natural := 0;
             File_Index : Files_List.Cursor;
 
+            Files_Without_Tree : Files_List.Vector;
+
          begin
             Trace (Me, "Number of files to process: " & Num_Files'Img);
 
@@ -1161,7 +1163,11 @@ package body GNATdoc is
                       (Context => Context,
                        File    => Current_File);
 
-                  All_Trees.Append (Tree);
+                  if Tree /= No_Tree then
+                     All_Trees.Append (Tree);
+                  else
+                     Files_Without_Tree.Append (Current_File);
+                  end if;
                exception
                   when E : others =>
                      Report_Error (Current_File, Frontend_Stage);
@@ -1170,6 +1176,19 @@ package body GNATdoc is
                end;
 
                Files_List.Next (File_Index);
+            end loop;
+
+            --  Remove from the list the files that have no entities. Done to
+            --  avoid reporting spurious warnings on entities not fully
+            --  decorated.
+
+            for File of Files_Without_Tree loop
+               declare
+                  Cursor : Files_List.Cursor;
+               begin
+                  Cursor := All_Src_Files.Find (File);
+                  All_Src_Files.Delete (Cursor);
+               end;
             end loop;
          end;
 

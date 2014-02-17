@@ -1176,10 +1176,7 @@ package body GNATdoc.Frontend.Builder is
       Set_Kind (Std_Entity, E_Package);
       Append_To_List (File_Entities.All_Entities'Access, Std_Entity);
 
-      Enter_Scope (Std_Entity);
-
       File_Entities_Cursor := Context.Database.Entities_In_File (File);
-
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
@@ -1196,7 +1193,6 @@ package body GNATdoc.Frontend.Builder is
            (New_E, Context, File, File_Entities_Cursor.Get);
 
          if Present (New_E) then
-            --  Atree.pns (New_E);
             Complete_Decoration (New_E);
             Set_Is_Decorated (New_E);
             Append_To_File_Entities (New_E);
@@ -1213,7 +1209,11 @@ package body GNATdoc.Frontend.Builder is
          File_Entities_Cursor.Next;
       end loop;
 
-      return Std_Entity;
+      if Entities_Count = 0 then
+         return Atree.No_Entity;
+      else
+         return Std_Entity;
+      end if;
 
    exception
       when E : others =>
