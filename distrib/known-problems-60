@@ -35,6 +35,20 @@ KP-60-N215-001 GPS: error when process lasts more than 24 hours
   Workaround: This only impacts the display, the process itself has correctly
               finished executing at that time.
 
+KP-60-N214-038 GPS: background color for ispell.py not loaded properly
+
+  Problem:    When you change the highlight color used by the ispell plug-in
+              via the preferences dialog, the new color is not properly loaded
+              the next time GPS is started.
+
+  Status:     This was fixed in 6.1 on 2014-02-17
+
+  Workaround: Setting the preference works for the current session of GPS. You
+              can also write a small python plug-in that contains the
+              following code:
+                  import GPS
+                  GPS.Preference("Plugins/ispell/bgcolor").set("your_color")
+
 KP-60-N211-025 GPS: Issue with highlighters
 
   Problem:    In any python code using highlighter.OverlayStyle with

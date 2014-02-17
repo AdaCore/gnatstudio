@@ -302,14 +302,28 @@ package body Default_Preferences is
       Minimum, Maximum, Default : Integer)
       return Integer_Preference
    is
-      Result : constant Integer_Preference := new Integer_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
+      Val : Integer;
    begin
-      Result.Int_Min_Value := Minimum;
-      Result.Int_Max_Value := Maximum;
-      Result.Int_Value     := Default;
-      Result.Default       := Default;
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      if Pref /= null
+        and then Pref.all in String_Preference_Record'Class
+      then
+         Val := Integer'Value (String_Preference (Pref).Get_Pref);
+         Pref := new Integer_Preference_Record;
+         Integer_Preference (Pref).Int_Value := Val;
+      elsif Pref = null
+        or else Pref.all not in Integer_Preference_Record'Class
+      then
+         Pref := new Integer_Preference_Record;
+         Integer_Preference (Pref).Int_Value := Default;
+      end if;
+
+      Integer_Preference (Pref).Default := Default;
+      Integer_Preference (Pref).Int_Min_Value := Minimum;
+      Integer_Preference (Pref).Int_Max_Value := Maximum;
+      Register (Manager, Name, Label, Page, Doc, Pref);
+      return Integer_Preference (Pref);
    end Create;
 
    ------------
@@ -403,13 +417,26 @@ package body Default_Preferences is
       Default                   : String)
       return Color_Preference
    is
-      Result : constant Color_Preference := new Color_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
+      Val : Gdk_RGBA;
    begin
-      Result.Color := From_String (Default);
-      Result.Default := Result.Color;
+      if Pref /= null
+        and then Pref.all in String_Preference_Record'Class
+      then
+         Val := From_String (String_Preference (Pref).Get_Pref);
+         Pref := new Color_Preference_Record;
+         Color_Preference (Pref).Color := Val;
+      elsif Pref = null
+        or else Pref.all not in Color_Preference_Record'Class
+      then
+         Pref := new Color_Preference_Record;
+         Color_Preference (Pref).Color := From_String (Default);
+      end if;
 
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      Color_Preference (Pref).Default := From_String (Default);
+      Register (Manager, Name, Label, Page, Doc, Pref);
+      return Color_Preference (Pref);
    end Create;
 
    ------------
@@ -422,12 +449,26 @@ package body Default_Preferences is
       Default                   : String)
       return Font_Preference
    is
-      Result : constant Font_Preference := new Font_Preference_Record;
+      Pref : Preference :=
+        Get_Pref_From_Name (Manager, Name, Create_If_Necessary => False);
+      Val : Pango_Font_Description;
    begin
-      Result.Descr := From_String (Default);
-      Result.Default := Copy (Result.Descr);
-      Register (Manager, Name, Label, Page, Doc, Result);
-      return Result;
+      if Pref /= null
+        and then Pref.all in String_Preference_Record'Class
+      then
+         Val := From_String (String_Preference (Pref).Get_Pref);
+         Pref := new Font_Preference_Record;
+         Font_Preference (Pref).Descr := Val;
+      elsif Pref = null
+        or else Pref.all not in Font_Preference_Record'Class
+      then
+         Pref := new Font_Preference_Record;
+         Font_Preference (Pref).Descr := From_String (Default);
+      end if;
+
+      Font_Preference (Pref).Default := From_String (Default);
+      Register (Manager, Name, Label, Page, Doc, Pref);
+      return Font_Preference (Pref);
    end Create;
 
    ------------
