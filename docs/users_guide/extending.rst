@@ -417,7 +417,7 @@ arrow, as seen in the screenshot above).
       * :command:`%p`
         top level project file name
 
-      * :command`%%`
+      * :command:`%%`
         a literal percent sign ('%')
 
     * :guilabel:`Always use external editor`
@@ -3068,85 +3068,87 @@ When GPS processes a :file:`<key>` tag, it does the following:
 
 .. _Preferences_support_in_custom_files:
 
-Preferences support in custom files
------------------------------------
+Configuring preferences
+-----------------------
 
 Creating new preferences
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. index:: <preference>
 
-GPS has a number of predefined preferences to configure its behavior and its
-appearance. They are all customizable through the Edit->Preferences menu.
+GPS contains a number of predefined preferences to configure its
+behavior and appearance, which are all customizable through the
+:menuselection:`Edit --> Preferences` menu.
 
-However, you might wish to add your own kind of preferences for your extension
-modules. This can easily be done through the usual GPS customization files.
-Preferences are different from project attributes
-(:ref:`Defining_project_attributes`), in that the latter will vary depending on
-which project is loaded by the user, whereas preferences are always set to the
-same value no matter what project is loaded.
+You can add of preferences for your extension modules through the usual GPS
+customization files.  Preferences are different from project attributes
+(see :ref:`Defining_project_attributes`); the latter varies depending on
+which project is loaded by the user, while preferences are always set to
+the same value independent of what project is loaded.
 
-Such preferences are created with the `<preference>` tag, which takes a number
-of attributes.
+You create your own preferences with the :file:`<preference>` tag, which
+accepts the following attributes:
 
-*name (mandatory)*
-  This is the name of the preference, used when the preference is saved by
-  GPS in the :file:`$HOME/.gps/preferences` file, and to query the value of
-  a preference interactively through the `GPS.Preference` class in the
-  GPS shell or python. There are a few limitation to the form of these names:
-  they cannot contain space or underscore characters. You should replace the
-  latter with minus signs for instance.
+* :file:`name` (required)
 
-*page (optional, default is "General")*
-  The name of the page in the preferences editor where the preference can
-  be edited. If this is the name of a non-existing page, GPS will automatically
-  create it. If this is the empty string (""), the preference will not be
-  editable interactively. This could be used to save a value from one session
-  of GPS to the next, without allowing the user to alter it.
+  Name of the preference, used both when the preference is saved by GPS in
+  the :file:`$HOME/.gps/preferences` file and to query the value of a
+  preference interactively through the :file:`GPS.Preference` class in the
+  GPS shell or Python. These names can't contain spaces or underscore
+  characters: use minus signs instead of the latter.
 
-  Subpages are references by separating pages name with colons (':').
+* :file:`page` (optional, default :file:`General`)
 
-*default (optional, default depends on the type of the preference)*
-  The default value of the preference, when not set by the user. This is 0 for
-  integer preferences, the empty string for string preferences, True for boolean
-  values, and the first possible choice for choice preferences.
+  Name of the page in the preferences editor where the preference are
+  edited. If the page doesn't already exist, GPS automatically creates
+  it. If this is the empty string, the preference is not editable
+  interactively. Use this to save a value from one session of GPS to the
+  next without allowing the user to change it.  Subpages are reference by
+  separating pages name with colons (:kbd:`:`).
 
-*tip (optional, default is "")*
-  This is the text of the tooltip that appears in the preferences editor
-  dialog.
+* :file:`default` (optional, default depends on type of the preference)
 
-*label (mandatory)*
-  This is the name of the preference as it appears in the preferences editor
-  dialog
+  Default value of the preference. If not specified, this is 0 for integer
+  preferences, the empty string for string preferences, True for boolean
+  preferences, and the first possible choice for choice preferences.
 
-*type (mandatory)*
-  This is the type of the preference, and should be one of:
+* :file:`tip` (optional)
 
-  *"boolean"*
-    The preference can be True or False.
+  Text of the tooltip that appears in the preferences editor dialog.
 
-  *"integer"*
-    The preference is an integer. Two optional attributes can be specified for
-    `<preference>`, "minimum" and "maximum", which define the range of
-    valid values for that integer. Default values are 0 and 10 respectively.
+* :file:`label` (required)
 
-  *"string"*
-    The preference is a string, which might contain any value
+  Name of the preference as it appears in the preferences editor dialog
 
-  *"color"*
-    The preference is a color name, in the format of a named color such as
-    "yellow", or a string similar to "#RRGGBB", where RR is the red component,
-    GG is the green component, and BB is the blue component
+* :file:`minimum` (optional, default 0), :file:`maximum` (default 10)
 
-  *"font"*
-    The preference is a font
+  Minimum and maximum values for integer preferences.
 
-  *"choices"*
-    The preference is a string, whose value is chosen among a static list of
-    possible values. Each possible value is defined in a `<choice>` child
-    of the `<preference>` node.
+* :file:`type` (required)
 
-Here is an example that defines a few new preferences::
+  Type of the preference.  Must be one of:
+
+  * :command:`boolean`
+
+  * :command:`integer`
+
+  * :command:`string`
+
+  * :command:`font`
+
+  * :command:`color`
+
+    A color name, in the format of a named color such as "yellow", or a
+    string like "#RRGGBB", where RR is the red component, GG is the green
+    component, and BB is the blue component.
+
+  * :command:`choices`
+
+    The preference is a string whose value is chosen among a static list of
+    possible values, each of which is defined in by a :file:`<choice>`
+    child of the :file:`<preference>` node.
+
+Here's an example that defines a few new preferences::
 
   <?xml version="1.0"?>
   <custom>
@@ -3172,7 +3174,7 @@ Here is an example that defines a few new preferences::
 
 .. highlight:: python
 
-The values of the above preferences can be queries in the scripting languages:
+The values of the above preferences can be queried in the scripting languages:
 
 * GPS shell::
 
@@ -3189,29 +3191,26 @@ Setting preferences values
 
 .. index:: <pref>
 
-You can force specific default values for the preferences in the customization
-files through the `<pref>` tag. This is the same tag that is used by
-GPS itself when it saves the preferences edited through the preferences
+You can force specific default values for the preferences in the
+customization files through the :file:`<pref>` tag. This is the same tag
+used by GPS itself when it saves the preferences edited via the preferences
 dialog.
 
-This tag requires on attribute:
+This tag requires one attribute, :file:`name`, which is the name of the
+preference of which you are setting a default value.  These names are
+defined when the preference is registered in GPS.  You can find them by
+looking at the :file:`$HOME/.gps/preferences` file for each user or by
+looking at one of the predefined GPS themes.
 
-*name*
-  This is the name of the preference of which you are setting a default value.
-  Such names are predefined when the preference is registered in GPS, and can
-  be found by looking at the :file:`$HOME/.gps/preferences` file for each user,
-  or by looking at one of the predefined GPS themes.
+It accepts no child tags, but the value of the :file:`<pref>` tag defines
+the default value of the preference, which is used unless the user has
+overridden it in his own preferences file.
 
-It accepts no child tag, but the value of the `<pref>` tag defines the default
-value of the preference, which will be used unless the user has overridden it
-in his own preferences file.
+Any setting you defined in the customization files is overridden by a
+specification of that preference in the user's preferences file
 
-Any setting that you have defined in the customization files will be overridden
-by the user's preferences file itself, unless the user was still using the
-default value of that preference.
-
-This `<pref>` tag is mostly intended for use through the themes
-(:ref:`Creating_themes`).
+The :file:`<pref>` tag is mostly intended for use in themes (see
+:ref:`Creating_themes`).
 
 .. _Creating_themes:
 
@@ -3221,46 +3220,50 @@ Creating themes
 .. index:: themes creation
 .. index:: <theme>
 
-You can create your own themes and share them between users. You can then
-selectively chose which themes they want to activate through the preferences
-dialog (:ref:`GPS_Themes`).
+You can create your own themes and share them between users and then
+selectively chose which themes each user want to activate through the
+preferences dialog (see :ref:`GPS_Themes`).
 
-Creating new themes is done in the customization files through
-the `<theme>` tag.
+You create new themes in the customization files using the
+:file:`<theme>` tag.
 
-This tag accepts a number of attributes:
+This tag accepts the following attributes:
 
-*name (mandatory)*
-  This is the name of the theme, as it will appear in the preferences dialog
+* :file:`name` (required)
 
-*description (optional)*
-  This text should explain what the text does. It appears in the preferences
-  dialog when the user selects that theme.
+  Name of the theme as it appears in the preferences dialog
 
-*category (optional, default is General)*
-  This is the name of the category in which the theme should be presented in
-  the preferences dialog. Categories are currently only used to organize themes
-  graphically. New categories are created automatically if you chose one that
-  doesn't exist yet.
+* :file:`description` (optional)
 
-This tag accepts any other customization tag that can be put in the
-customization files. This includes setting preferences (`<pref>`,
-defining key bindings (`<key`), defining menus (`<menu>`), ...
+  This text should explain what the theme does. It appears in the
+  preferences dialog when the user selects that theme.
 
-If the same theme is defined in multiple locations (multiple times in the
-same customization file or in different files), their effects will be
-cumulated. The first definition of the theme seen by GPS will set the
-description and category for this theme.
+* :file:`category` (optional, default :command:`General`)
+
+  Name of the category in which the theme should be presented in the
+  preferences dialog. Categories are currently only used to organize
+  themes graphically. GPS creates a categories automatically if you
+  choose one that hasn't previously been created.
+
+This tag accepts any other customization tags including setting preferences
+(:file:`<pref>`), defining key bindings (:file:`<key`), and defining menus
+(:file:`<menu>`).
+
+If you define the same theme in multiple locations (either multiple times
+in the same customization file or in different files), the customizations
+in each are merged. The first definition of the theme seen by GPS sets the
+description and category for the theme.
 
 .. highlight:: xml
 
-All the children tags of the theme will be executed when the theme is activated
-through the preferences dialog. Although there is no strict ordering in which
-order the children will be executed, the global order is the same as for the
-customization files themselves: first the predefined themes of GPS, then the
-ones defined in customization files found through the `GPS_CUSTOM_PATH`
-directories, and finally the ones defined in files found in the user's
-own GPS directory::
+All child tags of the theme are executed when the user activates the theme
+in the preferences dialog. There's no strict ordering of the child tags.
+The default order is the same as for the customization files themselves:
+first the predefined themes of GPS, then the ones defined in customization
+files found through the :file:`GPS_CUSTOM_PATH` directories, and finally
+the ones defined in files found in the user's own GPS directory.
+
+Here's an example of a theme::
 
   <?xml version="1.0" ?>
   <my-plug-in>
@@ -3277,44 +3280,42 @@ Defining new search patterns
 .. index:: <vsearch-pattern>
 .. index:: predefined patterns
 
-The search dialog contains a number of predefined search patterns for Ada, C
-and C++. These are generally complex regular expressions, presented in the
-dialog with a more descriptive name. This includes for instance
-"Ada assignment", which will match all such assignments.
+The search dialog contains a number of predefined search patterns for Ada,
+C and C++. These are generally complex regular expressions, presented in
+the dialog with a more descriptive name. For example, :guilabel:`Ada
+assignment`.
 
-You can define your own search patterns in the customization files. This is
-done through the `<vsearch-pattern>` tag. This tag can have a number of
-children tags:
+Define your own search patterns in the customization files usin the
+:file:`<vsearch-pattern>` tag. This tag can have the following child tags:
 
-*<name>*
-  This tag is the string that is displayed in the search dialog to
-  represent the new pattern. This is the text that the user will
-  effectively see, instead of the often hard to understand regular
-  expression.
+* :file:`<name>`
 
-*<regexp>*
-  This tag provides the regular expression to use when the pattern has
-  been selected by the user. Be careful that you must protect reserved
-  XML characters such as '<' and replace them by their equivalent
-  expansion ("&lt;" for this character).
+  String displayed in the search dialog to represent the new pattern. This
+  is the text the user sees (instead of the often hard-to-understand
+  regular expression)
 
-  This accepts one optional attribute, named `case-sensitive`. This
-  attribute accepts one of two possible values ("true" or "false") which
-  indicates whether the search should distinguish lower case and upper
-  case letters. Its default value is "false".
+* :file:`<regexp>`
 
-*<string>*
-  This tag provides a constant string that should be searched.
-  Only one of `<regexp>` and `<string>` should be provided. If
-  both exists, the first `<regexp>` child found is used. If there is
-  none, the first `<string>` child is used.
+  Regular expression to use when the pattern is selected by the user. Be
+  careful to must protect reserved XML characters such as :kbd:`<` and
+  replace them by their equivalent expansion (:command:`&lt;` in that
+  case).
 
-  The tag accepts the same optional attribute `case-sensitive` as
-  above
+  This tags accepts one optional attribute, :file:`case-sensitive`, which
+  contains one of two possible values (:command:`true` or :command:`false`)
+  to specify whether the search should distinguish lower case and upper
+  case letters.  The default is :command:`false`.
+
+* :file:`<string>`
+
+  A constant string that should be searched.  Provide either
+  :file:`<regexp>` or :file:`<string>`, but not both. If both are provided,
+  the first :file:`<regexp>` child found is used.  The tag accepts the same
+  optional attribute :file:`case-sensitive` as above.
 
 .. highlight:: xml
 
-Here is a small example on how the "Ada assignment" pattern was
+Here's a small example, showing how the :guilabel:`Ada assignment` pattern is
 defined::
 
   <?xml version="1.0" ?>
