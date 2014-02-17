@@ -1,10 +1,8 @@
 with Gtk.Box;         use Gtk.Box;
-with Gtk.Button;      use Gtk.Button;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Main;
 with Gtk.Window;      use Gtk.Window;
-with Gtkada.Handlers; use Gtkada.Handlers;
 
 procedure @_Main_Name_@ is
 
@@ -22,10 +20,11 @@ begin
 
    --  Create a box to organize vertically the contents of the window
    Gtk_New_Vbox (Box);
+   Win.Add (Box);
 
    --  Add a label
    Gtk_New (Label, "Hello world.");
-   Win.Add (Label);
+   Box.Add (Label);
 
    --  Show the window
    Win.Show_All;
