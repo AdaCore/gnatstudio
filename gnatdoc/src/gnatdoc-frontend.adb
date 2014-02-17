@@ -1637,7 +1637,7 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
-                     --  Expanded names & identifiers
+                  --  Expanded names & identifiers
 
                   when Tok_Id =>
                      Do_Breakpoint;
@@ -1793,18 +1793,41 @@ package body GNATdoc.Frontend is
                              Extended_Cursor.Entity (Cursor);
 
                         begin
-                           if In_Private_Part (Current_Context)
-                             and then
-                               No (Get_First_Private_Entity_Loc
-                                     (Get_Scope (Current_Context)))
+                           Decorate_Scope (E);
+
+                           --  For backward compatibility we copy the list of
+                           --  inherited methods visible in the full view to
+                           --  the partial view.
+
+                           if Is_Partial_View (E)
+                             and then not Enhancements
                            then
-                              Set_First_Private_Entity_Loc
-                                (Get_Scope (Current_Context),
-                                 General_Location'
-                                  (File   => File,
-                                   Line   => Sloc_Start.Line,
-                                   Column => Visible_Column
-                                               (Sloc_Start.Column)));
+                              for M of Get_Inherited_Methods
+                                         (Get_Full_View (E)).all loop
+                                 if not
+                                   Get_Inherited_Methods (E).Contains (M)
+                                 then
+                                    Append_Inherited_Method (E, M);
+                                 end if;
+                              end loop;
+                           end if;
+
+                           if In_Private_Part (Current_Context)
+                             and then Get_Kind (E) /= E_Formal
+                           then
+                              Set_In_Private_Part (E);
+
+                              if No (Get_First_Private_Entity_Loc
+                                      (Get_Scope (Current_Context)))
+                              then
+                                 Set_First_Private_Entity_Loc
+                                   (Get_Scope (Current_Context),
+                                    General_Location'
+                                     (File   => File,
+                                      Line   => Sloc_Start.Line,
+                                      Column => Visible_Column
+                                                  (Sloc_Start.Column)));
+                              end if;
                            end if;
 
                            if (Prev_Token = Tok_Function
@@ -1877,6 +1900,7 @@ package body GNATdoc.Frontend is
                                     --  Adding minimum decoration to
                                     --  undecorated generic formals
 
+                                    pragma Assert (Get_Kind (E) /= E_Unknown);
                                     if Get_Kind (E) = E_Unknown then
                                        Set_Kind (E, E_Generic_Formal);
                                     end if;
@@ -1896,7 +1920,6 @@ package body GNATdoc.Frontend is
                               end;
 
                               Generic_Formals.Clear;
-                              Decorate_Scope (E);
 
                            elsif In_Generic_Formals then
                               Generic_Formals.Append (E);
@@ -1915,8 +1938,6 @@ package body GNATdoc.Frontend is
                               when others =>
                                  null;
                               end case;
-
-                              Decorate_Scope (E);
                            end if;
                         end;
 
@@ -2020,11 +2041,14 @@ package body GNATdoc.Frontend is
                                       Line => Sloc_Start.Line,
                                       Column =>
                                         Visible_Column (Sloc_Start.Column));
+                                 Current_Entity : constant Entity_Id :=
+                                   Get_Current_Entity (Current_Context);
                                  E : constant Entity_Id :=
-                                   (if Present
-                                      (Get_Current_Entity (Current_Context))
+                                   (if Present (Current_Entity)
+                                      and then Get_Kind (Current_Entity)
+                                                 /= E_Discriminant
                                     then
-                                       Get_Current_Entity (Current_Context)
+                                       Current_Entity
                                     else
                                        Scope);
 
@@ -2322,7 +2346,7 @@ package body GNATdoc.Frontend is
                procedure Do_Breakpoint is
                begin
                   if False
-                    and then File.Base_Name = " disabled"
+                    and then In_Debug_File
                     and then Sloc_Start.Line = 1
                   then
                      Print_State;
@@ -2351,6 +2375,27 @@ package body GNATdoc.Frontend is
                     and then Is_Compilation_Unit (Get_Scope (Current_Context))
                   then
                      Disable_Enter_Scope;
+                  end if;
+
+                  --  Complete the decoration of tagged private types leaving
+                  --  visible in the partial view the visible primitives.
+
+                  if Is_Package (Get_Scope (Current_Context)) then
+                     for E of Get_Entities (Get_Scope (Current_Context)).all
+                     loop
+                        if LL.Is_Type (E)
+                          and then Is_Tagged (E)
+                          and then Is_Partial_View (E)
+                        then
+                           for M of Get_Methods (Get_Full_View (E)).all loop
+                              if not In_Private_Part (M)
+                                and then not Get_Methods (E).Contains (M)
+                              then
+                                 Append_Method (E, M);
+                              end if;
+                           end loop;
+                        end if;
+                     end loop;
                   end if;
 
                   Exit_Scope;
@@ -2494,6 +2539,12 @@ package body GNATdoc.Frontend is
                                     pragma Assert (No (E)
                                       or else Get_Kind (E) = E_Discriminant);
 
+                                    Do_Exit;
+
+                                 elsif Present (E)
+                                   and then Get_Kind (E) = E_Discriminant
+                                   and then Is_Record_Type (Scope)
+                                 then
                                     Do_Exit;
 
                                  elsif No (E)
@@ -2732,6 +2783,7 @@ package body GNATdoc.Frontend is
                         begin
                            if Present (E)
                              and then Get_Kind (E) /= E_Formal
+                             and then Get_Kind (E) /= E_Discriminant
                            then
                               if Is_Concurrent_Type_Or_Object (E) then
                                  Set_Src (E, Printout_Plain);
@@ -3157,7 +3209,12 @@ package body GNATdoc.Frontend is
             if Entity = Comment_Text
               or else Entity = Annotated_Comment_Text
             then
-               Accumulate_Comments;
+               if not In_Private_Part (Current_Context)
+                 or else Context.Options.Show_Private
+               then
+                  Accumulate_Comments;
+               end if;
+
                return False; -- Continue
             end if;
 
@@ -3229,9 +3286,19 @@ package body GNATdoc.Frontend is
                if not In_Pragma then
                   Complete_Decoration (End_Decl_Found);
 
-                  Handle_Doc;
-                  --  Processes: Tok_Id, Tok_End, Tok_Semicolon
-                  --    Tok_Is, Tok_Procedure, Tok_Function, Tok_Entry
+                  if In_Private_Part (Current_Context)
+                    and then not Context.Options.Show_Private
+                  then
+                     --  Document the last entity of the public part
+
+                     if Token = Tok_Private then
+                        Handle_Doc;
+                     end if;
+                  else
+                     Handle_Doc;
+                     --  Processes: Tok_Id, Tok_End, Tok_Semicolon
+                     --    Tok_Is, Tok_Procedure, Tok_Function, Tok_Entry
+                  end if;
 
                   Handle_Sources (End_Decl_Found);
                end if;
@@ -5382,6 +5449,12 @@ package body GNATdoc.Frontend is
          --  cursor before its first entity
 
          New_Scope.Scope := Entity;
+
+         if Is_Record_Type (Entity)
+           and then In_Private_Part (Current_Context)
+         then
+            Set_In_Private_Part (New_Scope);
+         end if;
 
          Stack.Prepend (New_Scope);
       end Enter_Scope;

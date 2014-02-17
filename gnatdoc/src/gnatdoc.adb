@@ -93,23 +93,18 @@ package body GNATdoc is
             In_Ada_Lang  : constant Boolean :=
               Lang.all in Language.Ada.Ada_Language'Class;
             Root         : Entity_Id renames Tree.Tree_Root;
-            Root_E       : Entity_Id;
          begin
             if In_Ada_Lang then
-               declare
-                  C : constant EInfo_List.Cursor := Get_Entities (Root).First;
-               begin
-                  if EInfo_List.Has_Element (C) then
-                     Root_E := EInfo_List.Element (C);
-                  else
-                     Root_E := null;
-                  end if;
-               end;
+               pragma Assert (Is_Standard_Entity (Root));
 
-               if Present (Root_E) then
-                  pragma Assert (Is_Compilation_Unit (Root_E));
-                  Units.Append (Root_E);
-               end if;
+               for E of Get_Entities (Root).all loop
+                  if Is_Compilation_Unit (E) then
+                     Units.Append (E);
+                     exit;
+                  else
+                     pragma Assert (Is_Generic_Formal (E));
+                  end if;
+               end loop;
             end if;
          end;
       end loop;

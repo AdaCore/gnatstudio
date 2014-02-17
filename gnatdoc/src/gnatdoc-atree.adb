@@ -192,6 +192,7 @@ package body GNATdoc.Atree is
 
    procedure Append_Method (E : Entity_Id; Value : Entity_Id) is
    begin
+      pragma Assert (not Get_Methods (E).Contains (Value));
       Get_Methods (E).Append (Value);
    end Append_Method;
 
@@ -201,7 +202,7 @@ package body GNATdoc.Atree is
 
    procedure Append_Progenitor (E : Entity_Id; Value : Entity_Id) is
    begin
-      pragma Assert (not E.Progenitors.Contains (Value));
+      pragma Assert (not Get_Progenitors (E).Contains (Value));
       Get_Progenitors (E).Append (Value);
    end Append_Progenitor;
 
@@ -230,6 +231,7 @@ package body GNATdoc.Atree is
       end Check_Unique;
 
    begin
+      pragma Assert (No (Get_Scope (Value)));
       pragma Assert (not Get_Entities (E).Contains (Value));
       pragma Assert (Check_Unique);
       Get_Entities (E).Append (Value);
@@ -2011,7 +2013,6 @@ package body GNATdoc.Atree is
          begin
             Cursor := Get_Entities (Scope).Find (E);
             Get_Entities (Scope).Delete (Cursor);
-            Set_Scope (E, Atree.No_Entity);
          end;
       end if;
 
@@ -2026,6 +2027,8 @@ package body GNATdoc.Atree is
             Get_Generic_Formals (Scope).Delete (Cursor);
          end;
       end if;
+
+      Set_Scope (E, Atree.No_Entity);
    end Remove_From_Scope;
 
    ---------------
