@@ -15,7 +15,7 @@ Two types of menus are provided in this plug-in:
 This script also adds a new menu /Edit/Spell Check, which runs spell
 checking on the whole buffer, or only the comments. In this mode, the
 keys are recognized:
-  - "i": Accept the current word in your personal dictionnary, to be
+  - "i": Accept the current word in your personal dictionary, to be
          remembered across sessions
   - "a": Accept this word during this session. This setting will be
          remembered until you either kill the aspell process in the
