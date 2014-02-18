@@ -497,16 +497,18 @@ package body Xref is
          Project : Project_Type;
       begin
          if Active (SQLITE) then
-            Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
-
             if Loc = No_Location then
                --  predefined entities
                Closest_Ref.Ref := Self.Xref.Get_Entity
                  (Name    => Name,
                   File    => No_File,
-                  Project => Project,
+                  Project => No_Project,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             else
+               --  ??? Should pass the project as argument, the code below does
+               --  not support aggregates
+               Project := Self.Registry.Tree.Info (Loc.File).Project;
+
                --  Already handles the operators
                Closest_Ref.Ref := Self.Xref.Get_Entity
                  (Name    => Name,
@@ -1956,7 +1958,9 @@ package body Xref is
       Project : Project_Type;
    begin
       if Active (SQLITE) then
-         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+         --  ??? Should pass the project as argument, the code below does
+         --  not support aggregates
+         Project := Self.Registry.Tree.Info (File).Project;
 
          if Name = "" then
             Self.Xref.Referenced_In (File, Project, Cursor => Result.Iter);
@@ -3178,7 +3182,10 @@ package body Xref is
       Iter.Is_Ancestor := False;
 
       if Active (SQLITE) then
-         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+         --  ??? Should pass the project as argument, the code below does
+         --  not support aggregates
+         Project := Self.Registry.Tree.Info (File).Project;
+
          Iter.Iter := Self.Xref.Imports (File, Project);
       else
          Old_Entities.Queries.Find_Dependencies
@@ -3202,8 +3209,8 @@ package body Xref is
    --------------------------------
 
    function Find_Ancestor_Dependencies
-     (Self                  : access General_Xref_Database_Record'Class;
-      File                  : GNATCOLL.VFS.Virtual_File) return File_Iterator
+     (Self : access General_Xref_Database_Record'Class;
+      File : GNATCOLL.VFS.Virtual_File) return File_Iterator
    is
       use Old_Entities;
       Iter    : File_Iterator;
@@ -3212,7 +3219,10 @@ package body Xref is
       Iter.Is_Ancestor := True;
 
       if Active (SQLITE) then
-         Project := Self.Registry.Tree.Root_Project; --  ??? Needs to be set
+         --  ??? Should pass the project as argument, the code below does
+         --  not support aggregates
+         Project := Self.Registry.Tree.Info (File).Project;
+
          Iter.Iter := Self.Xref.Imported_By (File, Project);
       else
          Old_Entities.Queries.Find_Ancestor_Dependencies
