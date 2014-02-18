@@ -1474,7 +1474,6 @@ package body GNATdoc.Frontend is
                   elsif Get_Kind (E) = E_Enumeration_Type
                     and then Get_Scope (E) /= Scope
                   then
-                     pragma Assert (Is_Package (Scope));
                      Update_Scope;
 
                   elsif Get_Scope (E) /= Scope then
