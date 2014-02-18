@@ -15,7 +15,7 @@ import gps_utils
 light_common = {
     "Plugins/auto_highlight_occurrences/color_type":
     "rgba(144, 238, 144, 0.5)",
-    "Plugins/auto_highlight_occurrences/color_unknown": "#d7d7d7",
+    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(215,215,215)",
     "Plugins/auto_highlight_occurrences/color_subprogram":
     "rgba(252, 175, 62, 0.5)",
     "Plugins/auto_highlight_occurrences/color_object":
@@ -27,19 +27,20 @@ light_common = {
     'Plugins/isearch/bgcolor': 'yellow',
     'Plugins/isearch/bgcolor': 'red',
 
-    "Search-Src-Highlight-Color": "#A2B6FF",
+    "Search-Src-Highlight-Color": "rgb(162,182,255)",
     "Messages-Highlight-Color": "rgb(255,0,0)",
     "Errors-Src-Highlight-Color": "rgb(255,183,183)",
     "Warnings-Src-Highlight-Color": "rgb(255,204,156)",
     "Style-Src-Highlight-Color": "rgb(255,255,173)",
     "Info-Src-Highlight-Color": "rgb(173,255,194)",
 
-    "Horizontal-Diff-Change-Color": "#FDE66A",
-    "Diff-Change-Color": "#ECECAA",
-    "Diff-Remove-Color": "#FFA0A0",
-    "Diff-Append-Color": "#88EEAA",
+    "Horizontal-Diff-Change-Color": "rgb(253,230,106)",
+    "Diff-Change-Color": "rgb(236,236,170)",
+    "Diff-Remove-Color": "rgb(255,160,160)",
+    "Diff-Append-Color": "rgb(136,238,170)",
 
-    "Plugins/dispatching/color": "#FFF3C2",
+    "Plugins/dispatching/color": "rgb(255,243,194)",
+    "Plugins/ispell/bgcolor": "rgb(255,255,0)",
     }
 
 dark_common = {
@@ -54,7 +55,7 @@ dark_common = {
     'Plugins/isearch/bgcolor': 'rgb(74,43,75)',
     'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
 
-    "Search-Src-Highlight-Color": "#008191",
+    "Search-Src-Highlight-Color": "rgb(0,129,145)",
     "Messages-Highlight-Color": "rgb(84,42,42)",
     "Errors-Src-Highlight-Color": "rgb(75,34,34)",
     "Warnings-Src-Highlight-Color": "rgb(85,52,18)",
@@ -66,7 +67,8 @@ dark_common = {
     "Diff-Remove-Color": "rgb(88,43,43)",
     "Diff-Append-Color": "rgb(38,68,36)",
 
-    "Plugins/dispatching/color": "#2E3436",
+    "Plugins/dispatching/color": "rgb(46,52,56)",
+    "Plugins/ispell/bgcolor": "rgb(206,92,0)",
     }
 
 default = {
@@ -75,42 +77,24 @@ default = {
     "@theme_bg_color": None,           # the background color for windows
     "@theme_fg_color": None,           # default color for the text
     "@theme_selected_bg_color": None,  # selection in trees or menus
-    "@editor_bg_selection": "#4A90D9",
-    "General-Default-Style":                 ("${font}",
-                                              "rgb(0,0,0)",
-                                              "rgb(255,255,255)"),
-    "Debugger-Editor-Current-Line":          "rgba(125,236,57,0.6)",
-    "Src-Editor-Current-Line-Color":         "rgb(209,220,252)",
-    "Src-Editor-Reference-Style":            ("${editorfont}",
-                                              "rgb(0,0,0)",
-                                              "rgb(255,255,255)"),
-    "Src-Editor-Hyper-Links-Variant":        ("DEFAULT",
-                                              "rgb(0,0,255)",
-                                              "transparent"),
-    "Src-Editor-Strings-Variant":            ("DEFAULT",
-                                              "rgb(206,123,0)",
-                                              "transparent"),
-    "Src-Editor-Numbers-Variant":            ("DEFAULT",
-                                              "rgb(255,51,51)",
-                                              "transparent"),
-    "Src-Editor-Annotated-Comments-Variant": ("DEFAULT",
-                                              "rgb(96,97,95)",
-                                              "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT",
-                                              "rgb(96,97,95)",
-                                              "transparent"),
-    "Src-Editor-Comments-Variant":           ("DEFAULT",
-                                              "rgb(150,150,150)",
-                                              "transparent"),
-    "Src-Editor-Keywords-Variant":           ("DEFAULT",
-                                              "rgb(0,0,230)",
-                                              "transparent"),
-    "Src-Editor-Type-Variant":              ("DEFAULT",
-                                             "rgb(0,153,0)",
-                                             "transparent"),
-    "Src-Editor-Block-Variant":             ("DEFAULT",
-                                             "rgb(96,97,95)",
-                                             "transparent")
+    "@editor_bg_selection": "rgb(74,144,217)",
+    "General-Default-Style": ("${font}", "rgb(0,0,0)", "rgb(255,255,255)"),
+    "Debugger-Editor-Current-Line":   "rgba(125,236,57,0.6)",
+    "Src-Editor-Current-Line-Color":  "rgb(209,220,252)",
+    "Src-Editor-Reference-Style": (
+        "${editorfont}", "rgb(0,0,0)", "rgb(255,255,255)"),
+    "Src-Editor-Hyper-Links-Variant": (
+        "DEFAULT", "rgb(0,0,255)", "transparent"),
+    "Src-Editor-Strings-Variant": ("DEFAULT", "rgb(206,123,0)", "transparent"),
+    "Src-Editor-Numbers-Variant": ("DEFAULT", "rgb(255,51,51)", "transparent"),
+    "Src-Editor-Annotated-Comments-Variant": (
+        "DEFAULT", "rgb(96,97,95)", "transparent"),
+    "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
+    "Src-Editor-Comments-Variant": (
+        "DEFAULT", "rgb(150,150,150)", "transparent"),
+    "Src-Editor-Keywords-Variant": ("DEFAULT", "rgb(0,0,230)", "transparent"),
+    "Src-Editor-Type-Variant": ("DEFAULT", "rgb(0,153,0)", "transparent"),
+    "Src-Editor-Block-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent")
     }
 default.update(light_common)
 
@@ -118,10 +102,10 @@ default.update(light_common)
 monokai = {
     "name": "Monokai",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
-    "@theme_bg_color": "#272822",
-    "@theme_fg_color": "#F8F8F2",
-    "@theme_selected_bg_color": "#004398",
-    "@editor_bg_selection": "#004398",
+    "@theme_bg_color": "rgb(39,40,34)",
+    "@theme_fg_color": "rgb(248,248,242)",
+    "@theme_selected_bg_color": "rgb(0,67,152)",
+    "@editor_bg_selection": "rgb(0,67,152)",
     "General-Default-Style":                 ("${font}",
                                               "rgb(248,248,242)",
                                               "rgb(39,40,34)"),
@@ -163,8 +147,8 @@ monokai.update(dark_common)
 darkside = {
     "name": "Darkside",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
-    "@theme_bg_color": "#222324",
-    "@editor_bg_selection": "#004398",
+    "@theme_bg_color": "rgb(34,35,36)",
+    "@editor_bg_selection": "rgb(0,67,152)",
     "General-Default-Style":                 ("${font}",
                                               "rgb(186,186,186)",
                                               "rgb(34,35,36)"),
@@ -206,7 +190,7 @@ darkside.update(dark_common)
 iplastic = {
     "name": "iPlastic",
     "GPS6-Gtk-Theme-Name": "Adwaita",
-    "@editor_bg_selection": "#4A90D9",
+    "@editor_bg_selection": "rgb(74,144,217)",
     "General-Default-Style":                 ("${font}",
                                               "rgb(0,0,0)",
                                               "rgb(238,238,238)"),
