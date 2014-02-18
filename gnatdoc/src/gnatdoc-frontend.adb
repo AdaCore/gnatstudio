@@ -1886,38 +1886,27 @@ package body GNATdoc.Frontend is
                               --  this code is erroneously decorating their
                               --  formals as generic formals???
 
-                              declare
-                                 Cursor : EInfo_List.Cursor;
-                                 Formal : Entity_Id;
-                              begin
-                                 Cursor := Generic_Formals.First;
+                              for Formal of Generic_Formals loop
+                                 Set_Is_Generic_Formal (Formal);
 
-                                 while EInfo_List.Has_Element (Cursor) loop
-                                    Formal := EInfo_List.Element (Cursor);
+                                 --  Adding minimum decoration to
+                                 --  undecorated generic formals
 
-                                    Set_Is_Generic_Formal (Formal);
+                                 pragma Assert (Get_Kind (E) /= E_Unknown);
+                                 if Get_Kind (E) = E_Unknown then
+                                    Set_Kind (E, E_Generic_Formal);
+                                 end if;
 
-                                    --  Adding minimum decoration to
-                                    --  undecorated generic formals
-
-                                    pragma Assert (Get_Kind (E) /= E_Unknown);
-                                    if Get_Kind (E) = E_Unknown then
-                                       Set_Kind (E, E_Generic_Formal);
-                                    end if;
-
-                                    if Get_Scope (Formal) /= E
-                                      or else not
-                                        Get_Generic_Formals
-                                          (E).Contains (Formal)
-                                    then
-                                       Remove_From_Scope (Formal);
-                                       Append_Generic_Formal (E, Formal);
-                                       Set_Scope (Formal, E);
-                                    end if;
-
-                                    EInfo_List.Next (Cursor);
-                                 end loop;
-                              end;
+                                 if Get_Scope (Formal) /= E
+                                   or else not
+                                     Get_Generic_Formals
+                                       (E).Contains (Formal)
+                                 then
+                                    Remove_From_Scope (Formal);
+                                    Append_Generic_Formal (E, Formal);
+                                    Set_Scope (Formal, E);
+                                 end if;
+                              end loop;
 
                               Generic_Formals.Clear;
 

@@ -216,15 +216,11 @@ package body GNATdoc.Atree is
       --  Check that Value is not added twice to the list of entities of E
 
       function Check_Unique return Boolean is
-         Cursor : EInfo_List.Cursor;
       begin
-         Cursor := Get_Entities (E).First;
-         while EInfo_List.Has_Element (Cursor) loop
-            if EInfo_List.Element (Cursor) = Value then
+         for Entity of Get_Entities (E).all loop
+            if Entity = Value then
                return False;
             end if;
-
-            EInfo_List.Next (Cursor);
          end loop;
 
          return True;
@@ -276,18 +272,14 @@ package body GNATdoc.Atree is
      (Container : EInfo_List.Vector;
       Entity    : Entity_Id) return Boolean
    is
-      Loc     : constant General_Location := LL.Get_Location (Entity);
-      Cursor  : EInfo_List.Cursor;
+      Loc : constant General_Location := LL.Get_Location (Entity);
 
    begin
       if Present (Loc) then
-         Cursor := Container.First;
-         while EInfo_List.Has_Element (Cursor) loop
-            if LL.Get_Location (EInfo_List.Element (Cursor)) = Loc then
+         for Entity of Container loop
+            if LL.Get_Location (Entity) = Loc then
                return True;
             end if;
-
-            EInfo_List.Next (Cursor);
          end loop;
       end if;
 
@@ -364,23 +356,15 @@ package body GNATdoc.Atree is
      (List   : EInfo_List.Vector;
       Entity : General_Entity) return Entity_Id
    is
-      Cursor : EInfo_List.Cursor;
-      E      : Entity_Id;
-
    begin
       if not EInfo_List.Has_Element (List.First) then
          return No_Entity;
       end if;
 
-      Cursor := List.First;
-      while EInfo_List.Has_Element (Cursor) loop
-         E := EInfo_List.Element (Cursor);
-
+      for E of List loop
          if LL.Get_Entity (E) = Entity then
             return E;
          end if;
-
-         EInfo_List.Next (Cursor);
       end loop;
 
       return No_Entity;
