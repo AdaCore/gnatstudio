@@ -237,6 +237,10 @@ package body GNATdoc.Frontend.Builder is
          function Full_View_Needed (New_E : Entity_Id) return Boolean;
          --  Evaluate if New_E requires a full view
 
+         ----------------------
+         -- Build_New_Entity --
+         ----------------------
+
          function Build_New_Entity return Entity_Id is
             New_E : Entity_Id := New_Entity (Context, Lang, E, E_Loc);
          begin
@@ -470,19 +474,12 @@ package body GNATdoc.Frontend.Builder is
       -----------
 
       procedure uplid (Unique_Id : Natural) is
-         Cursor : EInfo_Map.Cursor;
-         E      : Entity_Id;
       begin
-         Cursor := Entities_Map.First;
-         while EInfo_Map.Has_Element (Cursor) loop
-            E := EInfo_Map.Element (Cursor);
-
+         for E of Entities_Map loop
             if Get_Unique_Id (E) = Unique_Id then
                pl (E);
                exit;
             end if;
-
-            EInfo_Map.Next (Cursor);
          end loop;
       end uplid;
 
@@ -491,19 +488,12 @@ package body GNATdoc.Frontend.Builder is
       -----------
 
       procedure upnid (Unique_Id : Natural) is
-         Cursor : EInfo_Map.Cursor;
-         E      : Entity_Id;
       begin
-         Cursor := Entities_Map.First;
-         while EInfo_Map.Has_Element (Cursor) loop
-            E := EInfo_Map.Element (Cursor);
-
+         for E of Entities_Map loop
             if Get_Unique_Id (E) = Unique_Id then
                pn (E);
                return;
             end if;
-
-            EInfo_Map.Next (Cursor);
          end loop;
 
          GNAT.IO.Put_Line ("Entity" & Unique_Id'Img & " not found");
@@ -722,19 +712,11 @@ package body GNATdoc.Frontend.Builder is
                function Check_Primitives
                  (Typ : Entity_Id) return Boolean
                is
-                  Cursor : EInfo_List.Cursor;
-                  E      : Entity_Id;
-
                begin
-                  Cursor := Get_Methods (Typ).First;
-                  while EInfo_List.Has_Element (Cursor) loop
-                     E := EInfo_List.Element (Cursor);
-
+                  for E of Get_Methods (Typ).all loop
                      if LL.Get_Entity (E) = Prim then
                         return True;
                      end if;
-
-                     EInfo_List.Next (Cursor);
                   end loop;
 
                   return False;
@@ -747,19 +729,11 @@ package body GNATdoc.Frontend.Builder is
                function Check_Progenitors
                  (Typ : Entity_Id) return Boolean
                is
-                  Cursor     : EInfo_List.Cursor;
-                  Progenitor : Entity_Id;
-
                begin
-                  Cursor := Get_Progenitors (Typ).First;
-                  while EInfo_List.Has_Element (Cursor) loop
-                     Progenitor := EInfo_List.Element (Cursor);
-
+                  for Progenitor of Get_Progenitors (Typ).all loop
                      if Check_Primitives (Progenitor) then
                         return True;
                      end if;
-
-                     EInfo_List.Next (Cursor);
                   end loop;
 
                   return False;
@@ -1327,19 +1301,11 @@ package body GNATdoc.Frontend.Builder is
                function Check_Primitives
                  (Typ : Entity_Id) return Boolean
                is
-                  Cursor : EInfo_List.Cursor;
-                  E      : Entity_Id;
-
                begin
-                  Cursor := Get_Methods (Typ).First;
-                  while EInfo_List.Has_Element (Cursor) loop
-                     E := EInfo_List.Element (Cursor);
-
+                  for E of Get_Methods (Typ).all loop
                      if LL.Get_Entity (E) = Prim then
                         return True;
                      end if;
-
-                     EInfo_List.Next (Cursor);
                   end loop;
 
                   return False;
@@ -1826,12 +1792,8 @@ package body GNATdoc.Frontend.Builder is
    function Find_Unique_Entity
      (Full_Name : String; Must_Be_Package : Boolean := False) return Entity_Id
    is
-      Cursor : EInfo_Map.Cursor := Entities_Map.First;
-      E      : Entity_Id;
    begin
-      while EInfo_Map.Has_Element (Cursor) loop
-         E := EInfo_Map.Element (Cursor);
-
+      for E of Entities_Map loop
          if Get_Full_Name (E) = Full_Name then
 
             --  Return this entity if the search is not restricted to
@@ -1843,8 +1805,6 @@ package body GNATdoc.Frontend.Builder is
                return E;
             end if;
          end if;
-
-         EInfo_Map.Next (Cursor);
       end loop;
 
       return Atree.No_Entity;
@@ -1911,66 +1871,6 @@ package body GNATdoc.Frontend.Builder is
       ----------------
 
       procedure Exit_Scope is
-
-         procedure Complete_Private_Tagged_Types_Decoration
-           (Scope : Entity_Id);
-         --  Append to the partial view all its primitives defined in the
-         --  public part.
-
-         procedure Complete_Private_Tagged_Types_Decoration
-           (Scope : Entity_Id)
-         is
-            Cursor : EInfo_List.Cursor;
-            E      : Entity_Id;
-
-         begin
-            Cursor := Get_Entities (Scope).First;
-            while EInfo_List.Has_Element (Cursor) loop
-               E := EInfo_List.Element (Cursor);
-
-               if LL.Is_Type (E)
-                 and then Is_Tagged (E)
-                 and then Is_Partial_View (E)
-               then
-                  declare
-                     P_Cursor : EInfo_List.Cursor;
-                     Prim     : Entity_Id;
-                  begin
-                     P_Cursor :=
-                       Get_Inherited_Methods (Get_Full_View (E)).First;
-                     while EInfo_List.Has_Element (P_Cursor) loop
-                        Prim := EInfo_List.Element (P_Cursor);
-
-                        if not In_Private_Part (Prim) then
-                           Append_Inherited_Method (E, Prim);
-                        end if;
-
-                        EInfo_List.Next (P_Cursor);
-                     end loop;
-                  end;
-
-                  declare
-                     P_Cursor : EInfo_List.Cursor;
-                     Prim     : Entity_Id;
-                  begin
-                     P_Cursor :=
-                       Get_Methods (Get_Full_View (E)).First;
-                     while EInfo_List.Has_Element (P_Cursor) loop
-                        Prim := EInfo_List.Element (P_Cursor);
-
-                        if not In_Private_Part (Prim) then
-                           Append_Method (E, Prim);
-                        end if;
-
-                        EInfo_List.Next (P_Cursor);
-                     end loop;
-                  end;
-               end if;
-
-               EInfo_List.Next (Cursor);
-            end loop;
-         end Complete_Private_Tagged_Types_Decoration;
-
       begin
          if Is_Package (Current_Scope)
            and then
@@ -1978,8 +1878,6 @@ package body GNATdoc.Frontend.Builder is
          then
             EInfo_Vector_Sort_Loc.Sort
               (Get_Entities (Current_Scope).all);
-
-            Complete_Private_Tagged_Types_Decoration (Current_Scope);
          end if;
 
          Stack.Delete_First;
