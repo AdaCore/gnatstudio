@@ -1640,7 +1640,7 @@ package body Debugger.Gdb is
 
       function Escape_If_Needed (A : String) return String is
       begin
-         if Index (A, "\") <= A'Last then
+         if Index (A, "\") in A'Range then
             --  Args contain a backslash: escape it
             return '"' & Protect (A) & '"';
          end if;
