@@ -213,10 +213,11 @@ package body Project_Explorers is
 
    package Project_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets
-       (String, Ada.Strings.Hash, "=");
+       (Virtual_File, GNATCOLL.VFS.Full_Name_Hash, "=");
 
    Projects : Project_Sets.Set;
    --  Cache for project passed through search
+   --  ??? Should not be a global variable
 
    procedure Nop (X : in out Search_Status) is null;
    --  Do nothing, required for instantiation of string_boolean_hash
@@ -1185,7 +1186,8 @@ package body Project_Explorers is
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
 
-      Set (Explorer.Tree.Model, N, Project_Column, Project.Name);
+      Set_File
+        (Explorer.Tree.Model, N, Project_Path_Column, Project.Project_Path);
 
       if not Is_Leaf then
          Append_Dummy_Iter (Explorer.Tree.Model, N);
@@ -2204,14 +2206,14 @@ package body Project_Explorers is
 
       while Iter2 /= Null_Iter loop
          declare
-            Name : constant String :=
-              Get_String (Explorer.Tree.Model, Iter2, Project_Column);
+            Name : constant Virtual_File :=
+              Get_File (Explorer.Tree.Model, Iter2, Project_Path_Column);
          begin
             Found := False;
 
             for Im in Imported'Range loop
                if Imported (Im) /= No_Project
-                 and then Imported (Im).Name = Name
+                 and then Imported (Im).Project_Path = Name
                then
                   Imported (Im) := No_Project;
                   Found := True;
@@ -2542,9 +2544,8 @@ package body Project_Explorers is
          elsif Get (C.Matches, Key) /= No_Match then
             if Check_Projects then
                declare
-                  Project_Name : constant String :=
-                    Explorer.Tree.Model.Get_String (Start, Project_Column);
-
+                  Project_Name : constant Virtual_File :=
+                    Get_File (Explorer.Tree.Model, Start, Project_Path_Column);
                begin
                   if Projects.Contains (Project_Name) then
                      Result := Start;

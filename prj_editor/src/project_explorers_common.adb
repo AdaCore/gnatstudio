@@ -67,7 +67,7 @@ package body Project_Explorers_Common is
          User_Data_Column     => GType_Pointer,
          Line_Column          => GType_Int,
          Column_Column        => GType_Int,
-         Project_Column       => GType_String,
+         Project_Path_Column  => Get_Virtual_File_Type,
          Category_Column      => GType_Int,
          Up_To_Date_Column    => GType_Boolean,
          Entity_Base_Column   => GType_String,
@@ -919,12 +919,10 @@ package body Project_Explorers_Common is
 
       if Parent_Iter /= Null_Iter then
          declare
-            N : constant String :=
-              Get_String (Model, Parent_Iter, Project_Column);
+            N : constant Virtual_File :=
+              Get_File (Model, Parent_Iter, Project_Path_Column);
          begin
-            Assert (Me, N /= "",
-                    "Get_Project_From_Node: no project found");
-            Project := Get_Registry (Kernel).Tree.Project_From_Name (N);
+            Project := Get_Registry (Kernel).Tree.Project_From_Path (N);
          end;
 
       else

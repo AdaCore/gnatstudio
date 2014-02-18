@@ -67,7 +67,7 @@ package Project_Explorers_Common is
    User_Data_Column     : constant := 4;
    Line_Column          : constant := 5;
    Column_Column        : constant := 6;
-   Project_Column       : constant := 7;
+   Project_Path_Column  : constant := 7;
    Category_Column      : constant := 8;
    Up_To_Date_Column    : constant := 9;
    Entity_Base_Column   : constant := 10;
