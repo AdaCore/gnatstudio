@@ -139,7 +139,7 @@ arrow, as seen in the screenshot above).
 
     .. index:: hyper mode
 
-    Whether to display hyper links in the editors when the :kbd:`control`
+    Whether to display hyper links in the editors when the :kbd:`Control`
     key is pressed.  See :ref:`Navigating_with_hyperlinks`.
 
   * :guilabel:`Clipboard size`
@@ -1545,8 +1545,8 @@ anywhere in GPS.  Specify the category when you create your own actions
 through XML files (see :ref:`Defining_Actions`).
 
 As an example, you can use the key manager to define key bindings similar
-to what Emacs uses (such as :kbd:`control-x` followed by
-:kbd:`control-k`). To register such key bindings, press the
+to what Emacs uses (such as :kbd:`Ctrl-x` followed by
+:kbd:`Ctrl-k`). To register such key bindings, press the
 :guilabel:`Grab` button and type the shortcut.  Recording of the key
 binding stops shortly after you pressed the last key.
 
@@ -3035,7 +3035,7 @@ of these to specify the key modifiers to apply.
 
 You can also define multiple key bindings similar to Emacs's by separating
 them by a space. For example, :command:`control-x control-k` means the user
-should press :kbd:`control-x`, followed by a :kbd:`control-k` to activate
+should press :kbd:`Ctrl-x`, followed by a :kbd:`Ctrl-k` to activate
 the corresponding action. This only works if the first key is not already
 bound to an action. If it is, you first unbind it by passing an empty
 action to :file:`<key>`.
@@ -3640,180 +3640,180 @@ Defining text aliases
 .. index:: aliases
 .. index:: <alias>
 
-GPS provides a mechanism known as **aliases**. These are defined
-through the menu `Edit->Aliases`.
+GPS provides a mechanism known as "aliases".  The user can define
+these using the :menuselection:`Edit->Aliases` menu.
 
-Each alias has a name, which is generally a short string of characters.
-When you type them in any textual entry in GPS (generally a source editor, but
-also entry fields for instance in the file selector), and then press the special
-activation key (by default :kbd:`control-o`, controlled by a
-preference), this name is removed from the source editor, and replaced
-by the text you have associated with it.
+Each alias has a name, generally a short string of characters.  When you
+type that string in any textual entry in GPS (usually a source editor, but
+also entry fields anywhere, such as in a file selector) and press the
+special activation key (by default :kbd:`Ctrl-o`, but controlled by a
+preference), GPS replaces the string by the text you've associated with it.
 
-Alias names may be composed of any character except newlines, but must start
-with a letter. GPS will jump to the start of each word before the current
-cursor position, and if the characters between this word start and the
-cursor position is an alias name (the comparison is case insensitive), this
-alias is expanded.
+Alias names can contain any character except newline but must start with a
+letter. GPS looks backward to the start of the word before the current
+cursor position and if the characters between there and the cursor position
+is an alias name (using a case insensitive comparison), it expands the
+alias.
 
 .. index:: screen shot
 .. image:: aliases.jpg
 
-The alias editor is divided into three main parts: on the left side, the list
-of currently defined aliases is shown. Clicking on any of them will display the
-replacement text for this alias. If you click again the selected alias, GPS
-displays a text entry which you can use to rename an existing alias. Alias
-names must start with a letter. A check button at the bottom selects whether
-the read-only aliases (i.e. system-wide aliases) should be displayed.
+The alias editor is divided into three main parts. The left shows the list
+of currently defined aliases. Clicking on any of them displays its
+replacement text. If you click a second time, GPS displays a text entry
+allowing you to rename that alias. A checkbox at the bottom determines
+whether the editor displays read-only aliases (i.e., system-wide aliases).
 
-The second part is the expansion text for the alias, at the bottom right
-corner. This replacement text can used multiple lines, and contain some special
-text that act as a special replacement. These special texts are highlighted in
-a different color. You can insert these special entities either by typing them,
-or by right-clicking in the editor, and select the entity in the contextual
-menu.
+The second part displays the expansion text for the alias, at the bottom
+right corner. This text can span multiple lines and contain macros, which
+are displayed in a different color. You can insert these macro either by
+typing their symbols (as shown below) or by right-clicking in the editor
+and selecting the entity in the contextual menu.
 
-The following special entities are currently defined:
+The alias editor supports the following macros:
 
-*%_*
-  This is the position where the cursor should be put once the
-  replacement text has been inserted in the editor.
+* :file:`%_`
 
-*%(name)*
-  This is the name of a parameter. *name* can be any string you want,
-  excluding closing parenthesis. See below for more information on
-  parameters.
+  Position in the replacement text where the cursor is placed.
 
-*%D*
-  This is the current date, in ISO format. The year is displayed first,
-  then the month and the day
+* :file:`%{name}`
 
-*%H*
-  This is the current time (hour, minutes and seconds)
+  Name of a parameter. :command:`name` can contain any characters except
+  closing parenthesis. See below for more information on parameters.
 
-*%l*
-  If the expansion of the alias is done in a source editor, this is the
-  line on which the cursor is when pressing :kbd:`control-o`.
+* :file:`%D`
 
-*%c*
-  This is similar to *%l*, except it returns the current column.
+  Current date, in ISO format. The year is displayed first, then the month
+  and day.
 
-*%f*
-  If the expansion is done in a source editor, this is the name of the
-  current file (its base name only, this doesn't include the directory)
+* :file:`%H`
 
-*%d*
-  If the expansion is done in a source editor, this is the directory in
-  which the current file is
+  Current time (hour, minutes and seconds).
 
-*%p*
-  If the expansion is done in a source editor, this is the base name of
-  the project file to which the file belongs.
+* :file:`%O`
 
-*%P*
-  If the expansion is done in a source editor, this is the full path
-  name to the project file (directory and base name).
+  For recursive aliases expansion. This macro expands the text before it in
+  the current replacement of the parameters and possibly other recursive
+  expansions. This is similar to pressing :kbd:`Ctrl-o` in the expansion of
+  the alias.
 
-*%O*
-  Used for recursive aliases expansion. This special character will expand the
-  text seen before it in the current alias, after replacement of the parameters
-  and possibly other recursive expansions. This is similar to pressing
-  :kbd:`control-o` (or any key you have defined for alias expansion) in the
-  expanded form of the alias.
+  You can't expand an alias recursively when already expanding that
+  alias. If the alias expansion for, e.g., :command:`procedure` contains
+  :command:`procedure%O`, the inner procedure is not expanded.
 
-*%%*
-  Inserts a percent sign as part of the expanded text
+* :file:`%%`
 
-  You cannot expand an alias recursively when already expanding that alias. For
-  instance, if the alias expansion for *procedure* contains *procedure%O*,
-  the inner procedure will not be expanded.
+  A percent sign.
 
-The indentation as set in the expansion of the alias is preserved when the
-alias is expanded. All the lines will be indented the same amount to the right
-as the alias name. You can override this default behavior by selecting the
-check button `Indent source editor after expansion`.  In this case, GPS will
-replace the name of the alias by its expansion, and then automatically
-recompute the position of each line with its internal indentation engine, as if
-the text had been inserted manually.
+The remaining macros are only expanded if the alias is being expanded in a
+source editor:
 
-The third part of the aliases editor, at the top right corner, lists the
-parameters for the currently selected alias. Any time you insert a *%(name)*
-string in the expansion text, GPS automatically detects there is a new
-parameter reference (or an old reference has changed name or was removed); the
-list of parameters is automatically updated to show the current list.
+* :file:`%l`
+
+  Line on which the cursor is when pressing :kbd:`Ctrl-o`.
+
+* :file:`%c`
+
+  Like :file:`%l`, except the current column.
+
+* :file:`%f`
+
+  Name of current file (its base name only, not including directory).
+
+* :file:`%d`
+
+  Directory containing current file.
+
+* :file:`%p`
+
+  Base name of the project file referencing the current file.
+
+* :file:`%P`
+
+  Like :file:`%p`, but the full name of the project file (directory and
+  base name).
+
+GPS preserves the indentation of the alias when it's expanded. All lines
+are indented the same as the alias name. You can override this default
+behavior by selecting the checkbox :guilabel:`Indent source editor after
+expansion`.  In that case, GPS replaces the name of the alias by its
+expansion and then recompute the position of each line with its internal
+indentation engine as if the text had been inserted manually.
+
+The third part of the alias editor, the top right corner, lists the
+parameters for the currently selected alias.  Whenever you insert a
+:file:`%{name}` string in the expansion text, GPS detects new, changed, or
+deleted parameter references and updates the list of parameters to show the
+current list.
 
 Each parameters has three attributes:
 
-*name*
-  This is the name you use in the expansion text of the alias in the
-  *%(name)* special entity.
+* :file:`name`
 
-*Environment*
-  This specifies whether the default value of the parameter comes from
-  the list of environment variables set before GPS was started.
+  The name you use in the expansion text of the alias in the :file:`%{name}`
+  macro.
 
-*default value*
-  Instead of getting the default value from the environment variable,
-  you can also specify a fixed text.
-  Clicking on the initial value of the currently selected variable opens
-  a text entry which you can use to edit this default value.
+* :file:`Environment`
 
-When an alias that contains parameters is expanded, GPS will first
-display a dialog to ask for the value of the parameters. You can
-interactively enter this value, which replaces all the *%(name)*
-entities in the expansion text.
+  Whether the default value of the parameter comes from the list of
+  environment variables set before GPS was started.
 
-Aliases files
+* :file:`default value`
+
+  Instead of getting the default value from the environment variable, you
+  can also specify a fixed value.  Clicking on the initial value of the
+  currently selected variable opens a text entry which you can use to edit
+  this default value.
+
+When an alias that contains parameters is expanded, GPS first displays a
+dialog to ask for the value of the parameters. You can interactively enter
+this value, which replaces all corresponding :file:`%{name}` entities in
+the expanded text.
+
+Alias files
 -------------
 
-The customization files described earlier can also contain aliases definition.
-This can be used for instance to create project or system wide aliases. All the
-customization files will be parsed to look for aliases definition.
+Customization files can also contain alias definitions that can be used to
+create project or system- wide aliases. All customization files are parsed
+to look for aliases definitions.  All customization files are treated as
+read-only by GPS and therefore can't be edited through its graphical
+interface.  You can override some of the aliases in your own custom files.
+The system files are loaded first and aliases defined there can be
+overridden by the user-defined file.  There's one specific files which must
+contain only aliases definition. This is the file
+:file:`$HOME/.gps/aliases`. Whenever you edit aliases graphically, or
+create new ones, they're stored in this file, which is the only one GPS
+ever modifies automatically.
 
-All these customization files are considered as read-only by GPS, and therefore
-cannot be edited through the graphical interface. It is possible to override
-some of the aliases in your own custom files.
+These files are standard XML customization files.  The XML tag to use is
+:file:`<alias>`, one per new alias.  The following example contains a
+standalone customization file, though you may wish to merge the
+:file:`<alias>` tag into any other customization file.
 
-There is one specific files, which must contain only aliases definition. This
-is the file :file:`$HOME/.gps/aliases`. Whenever you edit aliases graphically,
-or create new ones, they are stored in this file, which is the only one that
-GPS will ever modify automatically.
+The following child tags are supported:
 
-The system files are loaded first, and aliases defined there can be overridden
-by the user-defined file.
+* :file:`<alias>`
 
-These files are standard XML customization files.  The specific XML tag to use
-is *<alias>*, one per new alias.  The following example contains a standalone
-customization file, but you might wish to merge the *<alias>* tag in any other
-customization file.
+  Indicates the start of a new alias. It has one mandatory attribute,
+  :file:`name`, the text to type editor before pressing :kbd:`Ctrl-o`, and
+  one optional attribute, :file:`indent`, which, if set to :command:`true`,
+  tell GPS to recompute the indentation of the newly inserted paragraph
+  after the expansion.
 
-The following tags are available:
+* :file:`<param>`
 
-*alias*
-  This indicates the start of a new alias. It has one mandatory
-  attribute, `name`, which the text to type in the source editor
-  before pressing :kbd:`control-o`.
-  It has one optional attribute, `indent`, which, if set to *true*,
-  indicate that GPS should recompute the indentation of the newly inserted
-  paragraph after the expansion.
+  One per alias parameter. It has one mandatory attribute, :file:`name`,
+  the name in :file:`%{name)` in the alias expansion text, and one optional
+  attribute, :file:`environment`, indicating whether or not the default
+  value must be read from the environment variables.
 
-*param*
-  These are children of the `alias` node. There is one per parameter of the
-  alias. They have one mandatory attribute, `name`, which is the name to type
-  between *%(name)* in the alias expansion text.
+* :file:`<text>`
 
-  They have one optional attribute, `environment`, which indicates the default
-  value must be read from the environment variables if it is set to true.
-
-  These tags contain text, which is the default value for the parameter.
-
-*text*
-  This is a child of the `alias` node, whose value is the
-  replacement text for the alias.
+  Replacement text, possibly multiple lines.
 
 .. highlight:: xml
 
-Here is an example of an alias file::
+Here's an example of an alias definition in a configuration file::
 
   <?xml version="1.0"?>
   <Aliases>
@@ -6286,7 +6286,7 @@ To make the Python function accessible through GPS, this can be done:
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
-the key binding :kbd:`control-c n`, and can be distributed as a single Python
+the key binding :kbd:`Ctrl-c n`, and can be distributed as a single Python
 file::
 
   # This code can be stored in a file test.py in $HOME/.gps/plug-ins
