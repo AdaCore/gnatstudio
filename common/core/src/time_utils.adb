@@ -98,7 +98,7 @@ package body Time_Utils is
       End_Time   : Ada.Calendar.Time) return String
    is
       In_Day : Duration := End_Time - Start_Time;
-      Days   : Integer;
+      Days   : Integer := 0;
    begin
       if In_Day >= 86_400.0 then
          Days := Integer (In_Day / 86_400.0);
