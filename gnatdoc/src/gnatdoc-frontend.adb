@@ -1673,14 +1673,7 @@ package body GNATdoc.Frontend is
                                     Set_Parent (E,
                                       Get_Parent (Get_Full_View (E)));
 
-                                 --  Derivation of untagged type. For instance:
-                                 --     type Rec_A is record ...
-                                 --     subtype Rec_B is Rec_A;
-
-                                 elsif not Is_Tagged (E) then
-                                    null; -- Unhandled yet???
-
-                                 else
+                                 elsif Present (Get_Progenitors (E)) then
                                     declare
                                        Parent : Entity_Id;
                                     begin
@@ -1695,6 +1688,7 @@ package body GNATdoc.Frontend is
                                          (Get_Progenitors (E).all, Parent);
                                     end;
                                  end if;
+                              end if;
 
                               --  We don't know the exact location associated
                               --  with the entity in the database. Hence for
@@ -1703,7 +1697,7 @@ package body GNATdoc.Frontend is
                               --  and use its location to retry its associated
                               --  unique high-level entity.
 
-                              else
+                              if No (Get_Parent (E)) then
                                  declare
                                     Tok_Loc   : General_Location;
                                     LL_Parent : General_Entity;
