@@ -65,6 +65,86 @@ package body Build_Command_Utils is
      (Adapter : Abstract_Build_Command_Adapter'Class;
       Prefix : String) return String;
 
+   type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
+      Last_Main_For_Background : Virtual_File := No_File;
+      Project_File             : Virtual_File := No_File;
+      Built_File               : Virtual_File := No_File;
+      Status                   : Unbounded_String := To_Unbounded_String ("");
+   end record;
+   type Build_Command_Adapter_Access is access all Build_Command_Adapter;
+
+   overriding
+   function Get_Last_Main_For_Background_Target
+     (Adapter : Build_Command_Adapter;
+      Target : Target_Access) return Virtual_File;
+   --  Return the Main to use for building Target as a background build.
+   --  This is either the last main that was used, if it exists, or the first
+   --  main defined for this target, if it exists.
+   --  The full path to the target is returned.
+   --  If the target is not found, "" is returned.
+
+   overriding
+   function Get_Background_Project_Full_Name
+     (Adapter : Build_Command_Adapter) return Filesystem_String;
+
+   overriding
+   function Substitute
+     (Adapter : Build_Command_Adapter;
+      Param     : String;
+      Quoted    : Boolean;
+      Done      : access Boolean;
+      Server    : Server_Type := GPS_Server;
+      For_Shell : Boolean := False) return String;
+   --  Wrapper around GPS.Kernel.Macros.Substitute
+
+   overriding
+   procedure Console_Insert
+     (Adapter : in out Build_Command_Adapter;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Console_Message_Type := Info);
+
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter;
+      File     : Virtual_File);
+   --  Removes all messages for specified file in the error category.
+   --  Do nothing when there is no such category or file.
+
+   overriding
+   function Get_Background_Environment_File
+     (Adapter : Build_Command_Adapter) return Virtual_File;
+
+   overriding
+   function Get_Scenario_Variables
+     (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
+
+   Invalid_Argument : exception;
+   --  Raised by Expand_Arg below
+
+   function Expand_Arg
+     (Adapter     : Abstract_Build_Command_Adapter_Access;
+      Target     : Target_Access;
+      Arg        : String;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Main       : Virtual_File;
+      Subdir     : Filesystem_String;
+      Background : Boolean;
+      Simulate   : Boolean) return Expansion_Result;
+   --  Expand macros contained in Arg.
+   --  Caller must free the result.
+   --  Will raise Invalid_Argument if an invalid/non existent argument is
+   --  found.
+   --  If Simulate is true, Invalid_Argument will never be raised, and no
+   --  expansion will be done.
+
+   procedure Free_Adapter is new Ada.Unchecked_Deallocation
+     (Build_Command_Adapter, Build_Command_Adapter_Access);
+
+   procedure Free (Ar : in out Argument_List);
+   --  Free memory associated to Ar
+
    ---------------------
    -- Apply_Mode_Args --
    ---------------------
@@ -373,7 +453,6 @@ package body Build_Command_Utils is
       Adapter.Execute_Command_Preference :=
          To_Unbounded_String (Execute_Command_Preference);
       Adapter.Multi_Language_Builder := Multi_Language_Builder;
-
    end Initialize;
 
    ----------------
@@ -481,91 +560,11 @@ package body Build_Command_Utils is
    --------------------------------
 
    function Get_Multi_Language_Builder
-     (Adapter :  Abstract_Build_Command_Adapter) return
-        Multi_Language_Builder_Policy is
+     (Adapter :  Abstract_Build_Command_Adapter)
+      return Multi_Language_Builder_Policy is
    begin
       return Adapter.Multi_Language_Builder;
    end Get_Multi_Language_Builder;
-
-   type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
-      Last_Main_For_Background : Virtual_File := No_File;
-      Project_File             : Virtual_File := No_File;
-      Built_File               : Virtual_File := No_File;
-      Status                   : Unbounded_String := To_Unbounded_String ("");
-   end record;
-   type Build_Command_Adapter_Access is access all Build_Command_Adapter;
-
-   overriding
-   function Get_Last_Main_For_Background_Target
-     (Adapter : Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File;
-   --  Return the Main to use for building Target as a background build.
-   --  This is either the last main that was used, if it exists, or the first
-   --  main defined for this target, if it exists.
-   --  The full path to the target is returned.
-   --  If the target is not found, "" is returned.
-
-   overriding
-   function Get_Background_Project_Full_Name
-     (Adapter : Build_Command_Adapter) return Filesystem_String;
-
-   overriding
-   function Substitute
-     (Adapter : Build_Command_Adapter;
-      Param     : String;
-      Quoted    : Boolean;
-      Done      : access Boolean;
-      Server    : Server_Type := GPS_Server;
-      For_Shell : Boolean := False) return String;
-   --  Wrapper around GPS.Kernel.Macros.Substitute
-
-   overriding
-   procedure Console_Insert
-     (Adapter : in out Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info);
-
-   overriding
-   procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Build_Command_Adapter;
-      File     : Virtual_File);
-   --  Removes all messages for specified file in the error category.
-   --  Do nothing when there is no such category or file.
-
-   overriding
-   function Get_Background_Environment_File
-     (Adapter : Build_Command_Adapter) return Virtual_File;
-
-   overriding
-   function Get_Scenario_Variables
-     (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
-
-   Invalid_Argument : exception;
-   --  Raised by Expand_Arg below
-
-   function Expand_Arg
-     (Adapter     : Abstract_Build_Command_Adapter_Access;
-      Target     : Target_Access;
-      Arg        : String;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result;
-   --  Expand macros contained in Arg.
-   --  Caller must free the result.
-   --  Will raise Invalid_Argument if an invalid/non existent argument is
-   --  found.
-   --  If Simulate is true, Invalid_Argument will never be raised, and no
-   --  expansion will be done.
-
-   procedure Free_Adapter is new Ada.Unchecked_Deallocation
-     (Build_Command_Adapter, Build_Command_Adapter_Access);
-
-   procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar
 
    ----------
    -- Free --
@@ -647,7 +646,8 @@ package body Build_Command_Utils is
       function Get_Index (A, B : Natural) return Natural;
       --  Return A if A /= 0, B otherwise
 
-      function Multi_Language_Build (Prj : Project_Type) return Boolean;
+      function Multi_Language_Build
+        (Prj    : Project_Type) return Boolean;
       --  Return True if the build is multi-language, False if build is Ada
       --  only.
 
@@ -733,16 +733,35 @@ package body Build_Command_Utils is
       -- Multi_Language_Build --
       --------------------------
 
-      function Multi_Language_Build (Prj : Project_Type) return Boolean is
-         Langs  : Argument_List := Prj.Languages (Recursive => True);
-         Result : Boolean;
+      function Multi_Language_Build
+        (Prj : Project_Type) return Boolean
+      is
+         Policy : constant Multi_Language_Builder_Policy :=
+           Get_Multi_Language_Builder (Adapter.all);
       begin
-         Result := Get_Multi_Language_Builder (Adapter.all) = Gprbuild
-           or else (Get_Multi_Language_Builder (Adapter.all) = Auto
-                    and then not (Langs'Length = 1
-                                  and then Langs (Langs'First).all = "ada"));
-         Free (Langs);
-         return Result;
+         case Policy is
+            when Gprbuild =>
+               return True;
+            when Gnatmake =>
+               return False;
+            when Auto =>
+               if Get_Kernel_Registry (Adapter.all)
+                 .Tree.Root_Project.Is_Aggregate_Project
+               then
+                  --  Always use gprbuild with aggregate projects
+                  return True;
+               end if;
+
+               declare
+                  Langs  : Argument_List := Prj.Languages (Recursive => True);
+                  Result : Boolean;
+               begin
+                  Result := Langs'Length = 1
+                    and then Langs (Langs'First).all = "ada";
+                  Free (Langs);
+                  return Result;
+               end;
+         end case;
       end Multi_Language_Build;
 
       --------------------
