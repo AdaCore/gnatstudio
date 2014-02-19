@@ -3834,322 +3834,307 @@ Defining project attributes
 .. index:: project attributes
 .. index:: <project_attribute>
 
-The project files are required by GPS, and are used to store various pieces of
-information related to the current set of source files. This includes how to
-find the source files, how the files should be compiled, or manipulated through
-various tools, ....
+Project files are required by GPS and store various pieces of
+information related to the current set of source files, including how
+to find the source files and how the files should be compile or
+manipulated through various tools.
 
-However, the default set of attributes that are usable in a project file is
-limited to the attributes needed by the tool packaged with GPS or GNAT.
+The default set of attributes used by GPS in a project file is limited to
+those attributes used by tools packaged with GPS or GNAT.  If you're
+delivering your own tools, you may want to store similar information in the
+project files, since they're a very convenient location to associate
+specific settings with a given set of source files.
 
-If you are delivering your own tools, you might want to store similar
-information in the project files themselves, since these are a very convenient
-place to associate some specific settings with a given set of source files.
-
-GPS lets manipulate the contents of projects through XML customization files
-and script commands. You can therefore add you own typed attributes into the
-projects, so that they are saved automatically when the user saves the project,
-and reloaded automatically the next time GPS is started.
+GPS lets you manipulate the contents of projects through XML customization
+files and script commands. You can add your own typed attributes into the
+projects and have them saved automatically when the user saves the project
+and reloaded automatically when GPS reloads the project.
 
 Declaring the new attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-New project attributes can be declared in two ways: either using the advanced
-XML tags below, or using the `<tool>` tag (:ref:`Defining_tool_switches`).
+You can declare new project attributes in two ways: either using the
+advanced XML tags below or the :file:`<tool>` tag (see
+:ref:`Defining_tool_switches`).
 
-The customization files support the `<project_attribute>` tag, which is used to
-declare all the new attributes that GPS should expect in a project.  Attributes
-that have not been declared explictly will not be accessible through the GPS
-scripting languagues, and will generate warnings in the Messages window.
+The customization files support the file:`<project_attribute>` tag, used to
+declare attributes GPS should support in a project file.  Attributes that
+aren't supported by GPS aren't accessible through the GPS scripting
+languagues and generate warnings in the :guilabel:`Messages` window.
 
-Project attributes are typed: they can either have a single value, or have a
-set of such values (a list). The values can in turn be a free-form string, a
-file name, a directory name, or a value extracted from a list of preset values.
+Each project attributes has a type typed and can either have a single value
+or have a set of values (a list). Each value can be a free-form string, a
+file name, a directory name, or a value extracted from a list of preset
+values.
 
-Attributes that have been declared in these customization files will also be
-graphically editable through the project properties dialog, or the project
-wizard. Therefore, you should specify when an attribute is defined how it
-should be presented to the GPS user.
+Attributes declared in these customization files are also graphically
+editable through the project properties dialog or the project wizard. When
+you define an attribute, you need to specify how it's presented to the GPS
+user.
 
-The `<project_attribute>` tag accepts the following attributes:
+The :file:`<project_attribute>` tag accepts the following attributes:
 
-* `package` (a string, default value: "")
+* :file:`package` (string)
 
-  This is the package in the project file in which the attribute is stored.
-  Common practice suggests that one such package should be used for each tool.
-  These packages provide namespaces, so that attributes with the same name, but
-  for different tools, do not conflict with each other.
+  Package in the project file containing the attribute.  Good practice
+  suggests that one such package should be used for each tool.  These
+  packages provide namespaces so that attributes with the same name but for
+  different tools don't conflict with each other.
 
-* `name` (a string, mandatory)
+* :file:`name` (string, required)
 
-  This is the name of the attribute. This should be a string with no space, and
-  that represents a valid Ada identifier (typically, it should start with a
-  letter and be followed by a set of letters, digits or underscore characters).
-  This is an internal name that is used when saving the attribute in a project
-  file.
+  Name of the attribute. A string with no space that represents a valid Ada
+  identifier (typically starting with a letter and be followed by a set of
+  letters, digits or underscores).  This is an internal name used when
+  saving the attribute in a project file.
 
-* `editor_page` (a string, default value: "General")
+* :file:`editor_page` (string, default :command:`General`)
 
-  This is the name of the page in the Project Properties editor dialog in which
-  the attribute is presented. If no such page already exists, a new one will be
-  created as needed. If the page already exists, the attribute will be appended
-  at its bottom.
+  Name of the page in the :guilabel:`Project Properties` editor dialog in
+  which the attribute is presented. If no such page exists, GPS creates
+  one. If the page already exists, the attribute is appended to the bottom
+  of those already on the page.
 
-* `editor_section` (a string, default value: "")
+* :file:`editor_section` (string)
 
-  This is the name of the section, inside editor page, in which the attribute
-  is displayed. These sections are surrounded by frames, the title of which is
-  given by the `editor_section` attribute.  If this attribute is not specified,
-  the attribute is put in an untitled section.
+  Name of the section, if any, inside the editor page where the attribute
+  is displayed. These sections are surrounded by frames, the title of which
+  is given by the this attribute.  If not present, the attribute is put in
+  an untitled section.
 
-* `label` (a string, default value: the name of the attribute)
+* :file:`label` (string, default: name of the attribute)
 
-  If this attribute is set to a value other than the empty string `""`, a
-  textual label is displayed to the left of the attribute in the graphical
-  editor. This should be used to identify the attribute. However, it can be
-  left to the empty string if the attribute is in a named section of its own,
-  since the title of the section might be a good enough indication.
+  Textual label displayed to the left of the attribute in the graphical
+  editor used to identify the attribute. However, it can be set to the
+  empty string if the attribute is in a named section of its own, since the
+  title of the section may be good enough.
 
-* `description` (a string, default value: "")
+* :file:`description` (string)
 
-  This is the help message that describes the role of the attribute. It is
-  displayed in a tooltip if the user leaves the mouse on top of the attribute
-  for a while.
+  Help message describing the role of the attribute, displayed as a tooltip
+  if the user hovers over the attribute.
 
-* `list` (a boolean, default value: "false")
+* :file:`list` (boolean, default :command:`false`)
 
-  If this is set to `"true"`, the project attribute will in fact contains a
-  list of values, as opposed to a single value. This is used for instance for
-  the list of source directories in standard projects.
+  If :command:`true`, the project attribute contains a list of values, as
+  opposed to a single value. An example is the list of source directories
+  in standard projects.
 
-* `ordered` (a boolean, default value: "false")
+* :file:`ordered` (boolean, default :command:`false`)
 
-  This is only relevant if the project attribute contains a list of values.
-  This indicates whether the order of the values is relevant.  In most cases,
-  it will not matter. However, for instance, the order of source directories
-  matters, since this also indicates where the source files will be searched,
-  stopping at the first match.
+  Only relevant if the project attribute contains a list of values, when it
+  indicates whether the order of the values is relevant.  In most cases,
+  it's not.  However, the order of source directories, for example,
+  matters, since it also indicates where the source files are searched for
+  and it stops at the first match.
 
-* `omit_if_default` (a boolean, default value: "true")
+* :file:`omit_if_default` (boolean, default :command:`true`)
 
-  This indicates whether the project attribute should be set explicitly in the
-  project if the user has left it to its default value. This can be used to
-  keep the project files a simple as possible, if all the tools that will use
-  this project attribute know about the default value. If this isn't the case,
-  set `omit_if_default` to "false" to force the generation of the project
-  attribute.
+  Whether the project attribute should be set explicitly in the project if
+  the user left it to its default value.  Enable this to keep the project
+  files as simple as possible if all the tools using this attribute know
+  about the default value. Otherwise, set it :command:`false` to always
+  emit the definition of the project attribute.
 
-* `base_name_only` (a boolean, default value: "false")
+* :file:`base_name_only` (boolean, default :command:`false`)
 
-  If the attribute contains a file name or a directory name, this indicates
-  whether the full path should be stored, or only the base name. In most cases,
-  the full path should be used. However, since GPS automatically looks for
-  source files in the list of directories, for instance, the list of source
-  files should only contain base names. This also increases the portability of
-  project files.
+  If the case of attributes that are a file or directory name, whether the
+  base name (:command:`true`) or the full path (:command:`false`) is
+  stored. In most cases, the full path is best. However, since GPS looks
+  for source files in the list of directories the list of source files, for
+  example, should only contain base names. This also increases the
+  portability of project files.
 
-* `case_sensitive_index` (a string ("true", "false" or "file"), default: "false")
+* :file:`case_sensitive_index` (:command:`true`, :command:`false` (default)
+  or :command:`file`)
 
-  This XML attribute is only relevant for project attributes that are indexed
-  on another one (see below for more information on indexed attributes). It
-  indicates whether two indexes that differ only by their casing should be
-  considered the same. For instance, if the index is the name of one of the
-  languages supported by GPS, the index is case insensitive since "Ada" is the
-  same as "C".
+  Only relevant for project attributes that are indexed on another
+  attribute (see below for more information on indexed attributes). It
+  indicates whether two indexes that differ only by their casing are
+  considered the same. For example, if the index is the name of one of the
+  languages supported by GPS, the index is case insensitive since "Ada" is
+  the same as "C".
 
-  As a special case, the value "file" can be passed to indicate that the case
-  sensitivity is the same as on the filesystem of the local host. This should
-  be used when the index is the name of a file.
+  The value :command:`file` indicates that the case sensitivity is the same
+  as the filesystem of the local host. Use that value when the index is
+  a filename.
 
-* `hide_in` (a string, default value: "")
+* :file:`hide_in` (string)
 
-  This XML attribute defines the various context in which this attribute should
-  not be editable graphically. Currently, GPS provides three such contexts
-  ("wizard", "library_wizard" and "properties", corresponding to the project
-  creation wizards and the project properties editor). If any of those context
-  is specified in hide_in, then the widget to edit this attribute will not be
-  shown. The goal is to keep the graphical interface simple.
+  Context in which this attribute GPS won't allow graphical editing of this
+  attribute.  GPS provides three such contexts (:command:`wizard`,
+  :command:`library_wizard`, and :command:`properties`, corresponding to
+  the project creation wizards and the project properties editor). If any
+  of those context is specified, GPS won't display the widget to edit this
+  attribute.  Use this to keep the graphical interface simple.
 
-* `disable_if_not_set` (a boolean, default value: "false")
+* :file:`disable_if_not_set` (boolean, default :command:`false`)
 
-  If this attribute is set to "true", the editor for this attribute will be
-  greyed out if the attribute is not explicitly set in the project. In most
-  cases, this is not needed, since the default value of the attribute can be
-  used to leave the editor active at all time. However, when the value of the
-  attribute is automatically computed depending on other attributes, the
-  default value cannot be easily specified in the XML file, and in this case it
-  might be easier to grey out the editor. An extra check box is displayed next
-  to the attribute so that the user can choose to activate the editor and add
-  the attribute to the project.
+  If :command:`true`, the field to edit this attribute is greyed out if the
+  attribute is not explicitly set in the project. In most cases, you won't
+  specify this, since the default value of the attribute can populate that
+  field.  However, when the value of the attribute is automatically
+  computed depending on other attributes, you can't specify the default
+  value in the XML file and it might be simpler to grey out the field. A
+  checkbox is displayed next to the attribute so the user can choose to
+  enable the field and add the attribute to the project.
 
-* `disable` (a space-separated list of attribute names, default: "")
+* file:`disable` (space-separated list of attribute names)
 
-  This is a list of attribute whose editor should be greyed out if the current
-  attribute is specified. This only works if both the current attribute and the
-  referenced attributes have their `disable_if_not_set` attribute set to
-  "true".  This can be used to have mutually exclusive attributes present in
-  the editor
+  List of attribute whose fields should be greyed out if this attribute is
+  specified. This only works if both the current attribute and the
+  referenced attributes all have their :file:`disable_if_not_set` attribute
+  set :command:`true`.  Use this to create mutually exclusive attributes.
 
 Declaring the type of the new attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The type of the project attribute is specified through one or several
-child tags of `<project_attribute>`. The following tags are
-recognized.
+The type of the project attribute is specified by child tags of
+:file:`<project_attribute>`. The following tags are recognized:
 
-  .. index:: <string>
+.. index:: <string>
 
-* `<string>`
+* :file:`<string>`
 
-  This tag indicates that the attribute is made of one (or more if it is
-  a list) strings. This
-  tag accepts the following XML attributes:
+  Attribute is composed of a single string or a list of strings. This tag
+  accepts the following XML attributes:
 
-  * `default` (a string, default value: "")
+  * :file:`default` (string)
 
-    This gives the default value to be used for the string (and therefore
-    the project attribute), in case the user hasn't overridden it.
+    Default value of the attribute.  If the attribute's type is a file or
+    directory, the default value is normalized: an absolute path is
+    generated based on the project's location, with :command:`"."`
+    representing the project's directory.  As a special case, if
+    :file:`default` is surrounded by parenthesis, no normalization is done
+    so you can on test whether the user is still using the default value.
 
-    If the attribute's type is a file or a directory, the default value will be
-    normalized (ie an absolute path will be generated from it, based on the
-    project's location, where `"."` will represent the project's directory).
-    As a special case, if default is surrounded by parenthesis, no normalization
-    takes place, so that you can later on test whether the user is still using
-    the default value or not).
+    Another special case is when you specify :command:`project source
+    files`, which is replaced by the known list of source files for the
+    project.  However, this doesn't work from the project wizard, since the
+    list of source files hasn't been computed yet.
 
-    A special case if when `default` is set to "project source files". In this
-    case, this is automatically replaced by the known list of source files for
-    the project. This doesn't work from the project wizard, since the list of
-    source files hasn't been computed at that stage.
+  * :file:`type` (empty string (default), :command:`file`,
+    :command:`directory`, or :command:`unit`)
 
-  * `type` (one of "" (default), "file", "directory" or "unit")
+    What the string represents. In the default case, any value is valid.
+    For :command:`file`, it should be a file name, although no check is
+    done to ensure the file actually exists.  Similarly,
+    :command:`directory` tells GPS to expect a directory. For
+    :command:`units`, GPS should expect the name of one of the project's
+    units.
 
-    This indicates what the string represents. In the first case, any
-    value can be used. In the second case, it should represent a file
-    name, although no check is done to make sure the file actually exists
-    on the disk. But GPS will be able to do some special marshalling with
-    the file name. The third case indicates that GPS should expect a
-    directory. The fourth case indicates the GPS should expect the name of
-    one of the project's units.
+  * :file:`filter` (:command:`none`, :command:`project`,
+    :command:`extending_project`)
 
-  * `filter` (one of "none", "project", "extending_project")
+    Ignored for all types except :command:`file`, where it further
+    specifies what type of files should be specified by this attribute. If
+    :command:`none`, any file is valid.  If :command:`project`, only files
+    from the selected project are valid. If :command:`extended_project`,
+    only the files from the project extended by the current project can be
+    specified. This attribute is not shown if the current project is not an
+    extension project.
 
-    This attribute is ignored for all types except `"file"`. In this case, it
-    further specifies what kind of files can be used in this attribute. If the
-    filter is `"none"`, then any file anywhere on the system is valid.  If the
-    filter is `"project"`, then only files from the selected project can be
-    specified. If the filter is `"extended_project"`, then only the files from
-    the project extended by the current project can be specified. The attribute
-    will not be shown if the current project is not an extending project.
+  * :file:`allow_empty` (boolean, default :command:`True`)
 
-  * `allow_empty` (one of "True" or "False, default "True")
-
-    This attribute indicates whether the value for this attribute can be an
-    empty string. If not, the user must specify a value or an error message
-    will be displayed in the project properties editor and project wizard.
+    Whether the value for this attribute can be an empty string. If not and
+    the user does not specify a value, GPS will display an error message in
+    the project properties editor and project wizard.
 
   .. index:: <choice>
 
-* `<choice>`
+* :file:`<choice>`
 
-  This tag can be repeated several times. It indicates one of the valid values
-  for the attribute, and can be used to provide a static list of such values.
-  If it is combined with a `<string>` tag, this indicates that the attribute
-  can be any string, although a set of possible values is provided to the user
-  for ease of use.  This tag accepts one optional attribute, `"default"`, which
-  is a boolean. It indicates whether this value is the default to use for the
-  project attribute.
-
-  If several `<choice>` tags are used, it is possible that several of them are
-  part of the default value if the project attribute is a list, as opposed to a
-  single value.
+  One of the valid values for the attribute.  Use multiple occurrences of
+  this tag to provide a static list of such values.  If combined with a
+  :file:`<string>` tag, indicates that the attribute can be any string,
+  although a set of possible values is provided to the user.  This tag
+  accepts one optional XML attribute, :file:`default`, a boolean which
+  indicates whether this value is the default.  If several :file:`details`
+  attributes are present the default value of the attribute is a list, as
+  opposed to a single value.
 
   .. index:: <shell>
 
-* `<shell>`
+* :file:`<shell>`
 
-  This tag is a GPS scripting command to execute to get a list of valid values
-  for the attribute. The command should return a list. As for the `<choice>`
-  tag, the `<shell>` tag can be combined with a `<string>` tag to indicate that
-  the list of values returned by the scripting command is only a set of
-  possible values, but that the project attribute can in fact take any value.
+  GPS scripting command to execute to get a list of valid values for the
+  attribute.  Like the :file:`<choice>` tag, this can be combined with a
+  :file:`<string>` tag to indicate that the list of values returned by the
+  scripting command is only a set of possible values, but that any valid
+  is valid.
 
-  The `<shell>` tag accepts two attributes:
+  The :file:`<shell>` tag accepts two attributes:
 
-  * `lang` (a string, default value: "shell")
+  * :file:`lang` (string, default :command:`shell`)
 
-    The scripting language in which the command is written. Currently, the only
-    other possible value is "python".
+    Scripting language in which the command is written. The only other
+    possible value is :command:`python`.
 
-  * `default` (a string, default value: "")
+  * :file:`default` (string)
 
-    The default value that the project attribute takes if the user hasn't
-    overridden it.
-
+    Default value of the attribute if the user hasn't specied one.
 
 .. index:: indexed project attributes
 .. index:: project attributes, indexed
 .. index:: <index>
 .. index:: <specialized_index>
 
-In some cases, the type of the project attribute, or at least its default
-value, depends on what the attribute applies to. The project file support this
-in the form of indexed project attribute. This is for instance used to specify
-what should be the name of the executable generated when compiling each of the
-main files in the project (ie the executable name for `gps.adb` should be
-`gps.exe`, the one for `main.c` should be `myapp.exe`, and so on).
+Sometimes the type of the project attribute or its default value, depends
+on what the attribute applies to. The project file support this in the form
+of indexed project attributes. This, for example, is used to specify the
+name of the executable generated when compiling each of the main files in
+the project (e.g., the executable for :file:`gps.adb` is :file:`gps.exe`
+and the one for :file:`main.c` is :file:`myapp.exe`).
 
 Such attributes can also be declared through XML files. In such cases, the
-`<project_attribute>` tag should have one `<index>` child, and zero or more
-`<specialized_index>` children.  Each of these two tags in turn take one of the
-already mentioned `<string>`, `<choice>` or `<shell>` tag.
+:file:`<project_attribute>` tag should have one :file:`<index>` child, and
+zero or more :file:`<specialized_index>` children.  Each of these two tags
+in turn accepts one of the already mentioned :file:`<string>`,
+:file:`<choice>` or :file:`<shell>` tags as children.
 
-The `<index>` tag indicates what other project attribute is used to index the
-current one. In the example given above for the executable names, the index is
-the attribute that contains the list of main files for the project.
+The :file:`<index>` tag specifies what other project attribute is used to
+index the current one. In the example given above for the executable names,
+the index is the attribute containing the list of main files for the
+project.
 
 It accepts the following XML attributes:
 
-* `attribute` (a string, mandatory)
+* :file:`attribute` (string, required)
 
-  The name of the other attribute. This other attribute must be declared
-  elsewhere in the customization files, and must be a list of values, not a
-  single value.
+  Name of the other attribute, which must be declared elsewhere in the
+  customization files and whose type must be a list of values.
 
-* `package` (a string, default value: "")
+* :file:`package` (string)
 
-  The package in which the index project attribute is defined. This is
-  used to uniquely identify homonym attributes.
+  Package in which the index project attribute is defined. This is used to
+  uniquely identify attributes with the same name.
 
-The `<specialized_index>` is used to override the default type of the attribute
-for specific values of the index. For instance, the project files contains an
-attribute that specify what the name of the compiler is for each language. It
-is indexed on the project attribute that list the languages used for the source
-files of the project. Its default value depends on the language ("gnatmake" for
-Ada, "gcc" for C, and so on). This attribute accepts requires one XML
-attribute:
+Use the :file:`<specialized_index>` tag to override the default type of the
+attribute for specific values of the index. For example, project files
+contain an attribute specifying the name of the compiler for each language,
+which is indexed on the project attribute specifying the language used for
+each source files. Its default value depends on the language
+(:program:`gnatmake` for Ada, :program:`gcc` for C, etc.). This attribute
+requires one XML attribute, :file:`value`, which is the value of the
+attribute for which the type is overriden.
 
-* `value` (a string, mandatory)
-
-  This is the value of the attribute for which the type is overriden.
-
-Note that almost all the standard project attributes are defined through an XML
-file, :file:`projects.xml`, which is part of the GPS installation. Check this
-file to get advanced examples on how to declare project attributes.
+Almost all the standard project attributes are defined through an XML file,
+:file:`projects.xml`, which is part of the GPS installation. Examine this
+file for advanced examples on declaring project attributes.
 
 Examples
 ^^^^^^^^
 
 .. highlight:: xml
 
-The following example declares three attributes, with a single string as their
-value. This string represents a file or a directory in the last two cases. You
-can simply copy this into a :file:`.xml` file in your
-:file:`$HOME/.gps/plug-ins` directory, as usual::
+The following declares three attributes, each with a single string as their
+value. This string represents a file in the first case and a directory in
+the last two::
 
   <?xml version="1.0"?>
   <custom>
     <project_attribute
+
         name="Single1"
         package="Test"
         editor_page="Tests single"
@@ -4180,11 +4165,10 @@ can simply copy this into a :file:`.xml` file in your
     </project_attribute>
   </custom>
 
-The following example declares an attribute whose value is a
-string. However, a list of predefined possible values is also
-provided, as an help for interactive edition for the user. If the
-`<string>` tag wasn't given, the attribute's value would have two
-be one of the three possible choices::
+The following declares an attribute whose value is a string. However, it
+provides list of predefined possible values as an help for the user. If the
+:file:`<string>` tag wasn't specified, the attribute's value could only be
+one of the three possible choices::
 
   <?xml version="1.0" ?>
   <custom>
@@ -4202,10 +4186,9 @@ be one of the three possible choices::
     </project_attribute>
   </custom>
 
-The following example declares an attribute whose value is one of the
-languages currently supported by GPS. Since this list of languages is
-only know when GPS is executed, a script command is used to query this
-list::
+The following declares an attribute whose value is one of the languages
+currently supported by GPS. Since this list of languages is only known when
+GPS is executed, the example uses a script command to query this list::
 
   <?xml version="1.0" ?>
   <custom>
@@ -4220,9 +4203,8 @@ list::
     </project_attribute>
   </custom>
 
-The following example declares an attribute whose value is a set of
-file names. The order of files in this list matters to the tools that
-are using this project attribute::
+The following declares an attribute whose value is a set of file names. The
+order of files in this list matters to the tools using this attribute::
 
   <?xml version="1.0" ?>
   <custom>
@@ -4239,9 +4221,9 @@ are using this project attribute::
     </project_attribute>
   </custom>
 
-The following example declares an attribute whose value is a set of
-predefined possible values. By default, two such values are selected,
-unless the user overrides this default setting::
+The following declares an attribute whose value is a set of predefined
+values. By default, two such values are selected, unless the user overrides
+the default::
 
   <?xml version="1.0" ?>
   <custom>
@@ -4259,12 +4241,11 @@ unless the user overrides this default setting::
     </project_attribute>
   </custom>
 
-The following example declares an attribute whose value is a
-string. However, the value is specific to each language (this could
-for instance be used for the name of the compiler to use for a given
-language). This is an indexed project attribute. It has two default
-values, one for Ada, one for C. All other languages have no default
-value::
+The following declares an attribute whose value is a string. However, the
+value is specific to each language (it could, for example, be the name of a
+compiler to use for that language). This is an indexed attribute, with two
+default values, one for Ada and one for C. All other languages have no
+default value::
 
   <?xml version="1.0" ?>
   <custom>
@@ -4285,22 +4266,21 @@ value::
     </project_attribute>
   </custom>
 
-Accessing the project attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Accessing project attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The new attributes that were defined are accessible from the GPS scripting
-languages, like all the standard attributes, :ref:`Querying_project_switches`.
+Attributes you define are accessible from the GPS scripting languages like
+all the standard attributes, see :ref:`Querying_project_switches`.
 
 .. highlight:: python
 
-You can for instance access the Compiler_Name attribute we created above with a
-python command similar to::
-
+For example, you can access the :command:`Compiler_Name` attribute we
+created above with a python command similar to::
 
   GPS.Project.root().get_attribute_as_string ("Compiler_Name", "Test", "Ada")
 
 You can also access the list of main files for the project, for
-instance, by calling::
+example, by calling::
 
   GPS.Project.root().get_attribute_as_list ("main")
 
