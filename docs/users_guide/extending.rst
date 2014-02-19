@@ -1866,14 +1866,14 @@ following attributes:
   this for each command using the same attribute for :file:`<shell>` and
   :file:`<external>` tags.  See :ref:`Redirecting_the_command_output`.
 
-* :file:`show-command` (optional, default true)
+* :file:`show-command` (optional, default :command:`true`)
 
   Whether the text of the command itself should be displayed in the same
   place as its output. Neither are displayed if the output is hidden. The
   default shows the command along with its output.  You can override this
   attribute for each command.
 
-* :file:`show-task-manager` (optional, default false)
+* :file:`show-task-manager` (optional, default :command:`false`)
 
   Whether an entry is in the task manager to show this command. The
   progress bar indicaton is associated with this entry so if you hide the
@@ -1882,7 +1882,7 @@ following attributes:
   depending on the context.  You can override this attribute for each
   external command.
 
-* :file:`category` (optional, default "General")
+* :file:`category` (optional, default :command:`General`)
 
   The category in the keybindings editor (:menuselection:`Edit --> Key
   bindings` menu) in which the action is displayed. If you specify an empty
@@ -1932,9 +1932,9 @@ The valid children of :file:`<action>` are the following XML tags:
 
   * :file:`progress-regexp` (optional)
 
-  * :file:`progress-current` (optional, default 1)
+  * :file:`progress-current` (optional, default :command:`1`)
 
-  * :file:`progress-final` (optional, default is 2)
+  * :file:`progress-final` (optional, default :command:`2`)
 
     :file:`progress-regexp` is a regular expression that GPS matches the
     output of the command against. When the regular expression matches, it
@@ -1964,7 +1964,7 @@ The valid children of :file:`<action>` are the following XML tags:
         </action>
       </progress_action>
 
-  * :file:`progress-hide` (optional, default true)
+  * :file:`progress-hide` (optional, default :command:`true`)
 
     If true, all lines matching :file:`progress-regexp` and are used to
     compute the progress are not displayed in the output
@@ -2779,7 +2779,7 @@ present at most once), :file:`<submenu>` (for nested menus), and
 :file:`<menu>`.
 
 :file:`<submenu>` doesn't accept the :file:`action` attribute.  Use
-`<menu>` for clickable items that result in an action and
+:file:`<menu>` for clickable items that result in an action and
 :file:`<submenu>` to define several menus with the same path.
 
 Specify which menu the new item is added to in one of two ways:
@@ -2903,7 +2903,7 @@ attributes:
   If you specify both :file:`after` and :file:`before`, only
   the latter is honored.
 
-* :file:`group` (optional, default 0)
+* :file:`group` (optional, default :command:`0`)
 
   Allows you to create groups of contextual menus that are put next to each
   other. Items with the same group number appear before all items with a
@@ -3097,7 +3097,7 @@ accepts the following attributes:
   GPS shell or Python. These names can't contain spaces or underscore
   characters: use minus signs instead of the latter.
 
-* :file:`page` (optional, default :file:`General`)
+* :file:`page` (optional, default :command:`General`)
 
   Name of the page in the preferences editor where the preference are
   edited. If the page doesn't already exist, GPS automatically creates
@@ -3120,7 +3120,8 @@ accepts the following attributes:
 
   Name of the preference as it appears in the preferences editor dialog
 
-* :file:`minimum` (optional, default 0), :file:`maximum` (default 10)
+* :file:`minimum` (optional, default :command:`0`),
+  :file:`maximum` (default :command:`10`)
 
   Minimum and maximum values for integer preferences.
 
@@ -3333,217 +3334,251 @@ Adding support for new languages
 
 .. index:: <Language>
 
-You can define new languages in a custom file by using the `Language`
-tag. Defining languages gives GPS the ability to highlight the syntax of a
-file, explore a file (using e.g. the project view), find files
-associated with a given language, ...
+Define new languages in a custom file by using the :file:`<Language>`
+tag. Defining languages gives GPS the ability to perform language-specific
+operations such as highlighting the syntax of a file, exploring a file
+using the :guilabel:`Project` view, and finding files associated with that
+language.
 
-As described previously for menu items, any file in the :file:`plug-ins`
-directory will be loaded by GPS at start up. Therefore, you can either
-define new languages in a separate file, or reuse a file where you already
-define actions and menus.
+The following child tags are available:
 
-The following tags are available in a `Language` section:
+* :file:`<Name>`
 
-*Name*
-  A short string describing the name of the language.
+  Short string giving the name of the language.
 
-*Parent*
-  If set to the name of an existing language (e.g. `Ada`, `C++`) or
-  another custom language, this language will inherit by default all its
-  properties from this language. Any field explicitly defined for this language
-  will override the inherited settings.
+* :file:`<Parent>`
 
-*Spec_Suffix*
-  A string describing the suffix of spec/definition files for this language.
-  If the language does not have the notion of spec or definition file, you
-  can ignore this value, and consider using the `Extension` tag instead.
-  This tag must be unique.
+  Optional name of language that provides default values for all properties
+  not explicitly set.
 
-*Body_Suffix*
-  A string describing the suffix of body/implementation files for this language.
-  This tag works in coordination with the `Spec_Suffix`, so that the user
-  can choose to easily go from one file to the other.
-  This tag must be unique.
+* :file:`<Spec_Suffix>`
 
-*Extension*
-  A string describing one of the valid extensions for this language. There can
-  be several such children. The extension must start with a '.' character
+  String identifying the filetype (including the '.' character) of spec
+  (definition) files for this language.  If the language doesn't have the
+  notion of spec or definition file, you should use the :file:`<Extension>`
+  tag instead.  Only one such tag is permitted for each language.
 
-*Keywords*
-  A V7 style regular expression for recognizing and highlighting keywords.
-  Multiple `Keywords` tags can be specified, and will be concatenated
-  into a single regular expression. If the regular expression needs to match
-  characters other than letters and underscore, you must also edit the
-  `Wordchars` node. If a parent language has been specified for the
-  current language definition it is possible to append to the parent Keywords
-  by setting the `mode` attribute to `append`, the default value is
-  `override` meaning that the keywords definition will replace the
-  parent's one.
+* :file:`<Body_Suffix>`
 
-  The full grammar of the regular expression can be found in the spec of the
+  String identifying the filetype of body (implementation) files for this
+  language.  Only one such tag is permitted for each language.
+
+* :file:`<Extension>`
+
+  String identifying one of the valid filetypes for this
+  language.  You can specify several such children.
+
+* :file:`<Keywords>`
+
+  Regular expression for recognizing and highlighting keywords.  You can
+  specify multiple such tags, which will all be concatenated into a single
+  regular expression. If the regular expression needs to match characters
+  other than letters and underscore, you must also edit the
+  :file:`<Wordchars>` tag. If you specified a parent language, you can
+  append to the parent :file:`<Keywords>` by providing a :file:`mode`
+  attribute set to :command:`append` (the default for :file:`mode` is
+  :command:`override`, where the :file:`<Keywords>` definition replaces the
+  one from the parent.
+
+  You can find the full grammar for regular expression in the spec of the
   file :file:`g-regpat.ads` in the GNAT run time.
 
-*Wordchars*
-  Most languages have keywords that only contain letters, digits and underscore
-  characters. However, if you want to also include other special characters
-  (for instance '<' and '>' in XML), you need to use this tag to let GPS
-  know. The value of this node is a string made of all the special word
-  characters. You do not need to include letters, digits or underscores.
+* :file:`<Wordchars>`
 
-*Engine*
-  The name of a dynamic library providing one or several of the functions
-  described below.
+  Most languages have keywords that only contain letters, digits and
+  underscore characters.  If you want to also include other special
+  characters (for example :kbd:`<` and :kbd:`>` in XML), use this tag.  The
+  value of this tag is a string consisting of all the special characters
+  that may be present in keywords. You need not include letters, digits or
+  underscores.
 
-  The name can be a full pathname, or a short name. E.g. under most Unix systems
-  if you specify `custom`, GPS will look for `libcustom.so` in
-  the `LD_LIBRARY_PATH` run time search path. You can also specify
-  explicitly e.g. `libcustom.so` or `/usr/lib/libcustom.so`.
+* :file:`<Engine>`
 
-  For each of the following five items, GPS will look for the corresponding
-  symbol in `Engine` and if found, will call this symbol when needed.
-  Otherwise, it will default to the static behavior, as defined by the other
-  language-related items describing a language.
+  Name of a dynamic library providing one or several of the functions
+  lisyted below.
 
-  You will find the required specification for the C and Ada languages to
-  implement the following functions in the directory
-  :file:`<prefix>/share/examples/gps/language` of your GPS installation.
-  :file:`language_custom.ads` is the Ada spec file; :file:`language_custom.h`
-  is the C spec file; :file:`gpr_custom.ad?` are example files showing a
-  possible Ada implementation of the function `Comment_Line` for the GPS
-  project files (:file:`.gpr` files), or any other Ada-like language;
-  :file:`gprcustom.c` is the C version of gpr_custom.adb.
+  The name can be a full or short name. For example, in most Unix systems,
+  if you specify the name :file:`custom`, GPS looks for
+  :file:`libcustom.so` in the :file:`LD_LIBRARY_PATH` search path. You can
+  also specify explicitly the full name, either absolute or relative.  For
+  example, :file:`libcustom.so` or :file:`/usr/lib/libcustom.so`.
 
-*Comment_Line*
-  Name of a symbol in the specified shared library corresponding to a
-  function that will comment or uncomment a line (used to implement the menu
-  `Edit->Un/Comment Lines`).
+  For each of the following five items, GPS looks for the corresponding
+  symbol in the file specified by :file:`<Engine>` and if found, calls this
+  symbol when needed.  Otherwise, it defaults to static behavior, as
+  defined by the other items describing a language.
 
-*Parse_Constructs*
-  Name of a symbol in the specified shared library corresponding to a
-  function that will parse constructs of a given buffer.
+  You can find the specification for C and Ada to implement the functions
+  below in the directory :file:`<prefix>/share/examples/gps/language` of
+  your GPS installation.  :file:`language_custom.ads` is the Ada spec file,
+  :file:`language_custom.h` is the C spec file and :file:`gpr_custom.ad?`
+  are example files showing a possible Ada implementation of the function
+  :command:`Comment_Line` for the GPS project files (:file:`.gpr` files),
+  or any other Ada-like language. :file:`gprcustom.c` is the C version of
+  :file:`gpr_custom.adb`.
 
-  This procedure is used by GPS to implement several capabilities such as
-  listing constructs in the project view, highlighting the current block of
-  code, going to the next or previous procedure, ...
+  * :file:`<Comment_Line>`
 
-*Format_Buffer*
-  Name of a symbol in the specified shared library corresponding to a
-  function that will indent and format a given buffer.
+    Name of symbol in the shared library corresponding to a function that
+    comments or uncomments a line (used to implement the
+    :menuselection:`Edit --> Un/Comment Lines` menu).
 
-  This procedure is used to implement the auto indentation when hitting the
-  :kbd:`enter` key, or when using the format key on the current selection or
-  the current line.
+  * :file:`<Parse_Constructs>`
 
-*Parse_Entities*
-  Name of a symbol in the specified shared library corresponding to a
-  function that will parse entities (e.g. comments, keywords, ...) of a given
-  buffer. This procedure is used to highlight the syntax of a file, and
-  overrides the `Context` node described below.
+    Name of symbol in the shared library corresponding to a function that
+    parses the language constructs in a specified buffer.
 
-*Context*
-  Describes the context used to highlight the syntax of a file.
+    GPS uses this procedure to implement several capabilities such as
+    listing language constructs in the :guilabel:`Project` view,
+    highlighting the current block of code, and going to the next or previous
+    procedure.
 
-  *Comment_Start*
-    A string defining the beginning of a multiple-line comment.
+  * :file:`<Format_Buffer>`
 
-  *Comment_End*
-    A string defining the end of a multiple-line comment.
+    Name of symbol in the shared library corresponding to a function that
+    indents and formats a given specified.
 
-  *New_Line_Comment_Start*
+    GPS uses this procedure to implement auto indentation done when
+    pressing the :kbd:`enter` key or using the format key on the current
+    selection or line.
+
+  * :file:`<Parse_Entities>`
+
+    Name of symbol in the shared library corresponding to a function that
+    parses entities (such as comments and keywords) of a specified buffer.
+    GPS uses this procedure to highlight the syntax of a file.  It
+    overrides the :file:`<Context>` tag described below.
+
+* :file:`<Context>`
+
+  Information that GPS use to determine the syntax of a file for
+  highlighting purposes.  The following child tags are defined:
+
+  * :file:`<Comment_Start>`, :file:`<Comment End>`
+
+    Strings that determine the start and end of a multiple-line comment.
+
+  * :file:`<New_Line_Comment_Start>`
+
     A regular expression defining the beginning of a single line comment
-    (ended at the next end of line). This regular expression may contain
-    multiple possible line starts, such as `;|#` for comments starting
-    after a semicolon or after the hash sign. If a parent language has been
-    specified for the current language definition it is possible to append
-    to the parent New_Line_Comment_Start by setting the `mode` attribute to
-    `append`, the default value is `override` meaning that the
-    New_Line_Comment_Start definition will replace the parent's one.
+    that ends at the next end of line. This regular expression may contain
+    multiple possibilities, such as :command:`;|#` for comments starting
+    after a semicolon or after the pound sign.  You you specified a parent
+    language, you can append to the parent's
+    :file:`<New_Line_Comment_Start>` by including a :file:`mode` attribute
+    with a value of :command:`append` (the default is :command:`override`,
+    meaning the :file:`<New_Line_Comment_Start>` definition replaces the
+    parent's one.
 
-  *String_Delimiter*
-    A character defining the string delimiter.
+  * :file:`<String_Delimiter>`
 
-  *Quote_Character*
-    A character defining the quote character, used for e.g. canceling the
-    meaning of a string delimiter (`\\` in C).
+    Character defining the string delimiter.
 
-  *Constant_Character*
-    A character defining the beginning of a character literal.
+  * :file:`<Quote_Character>`
 
-  *Can_Indent*
-    A boolean indicating whether indentation should be enabled for this
-    language. The indentation mechanism used will be the same for all languages:
-    the number of spaces at the beginning of the current line is used when
-    indenting the next line.
+    Character defining the quote (also called escape) character, used to
+    include the string delimited inside a string (:kbd:`\\` in C).
 
-  *Syntax_Highlighting*
-    A boolean indicating whether the syntax should be highlighted/colorized.
+  * :file:`<Constant_Character>`
 
-  *Case_Sensitive*
-    A boolean indicating whether the language (and in particular the identifiers
+    Character defining the beginning of a character literal, in languages
+    that support such literals (e.g., C).
+
+  * :file:`<Can_Indent>`
+
+    Boolean indicating whether indentation is enabled. The indentation
+    mechanism is the same for all languages: the number of spaces at the
+    beginning of the current line is used when indenting the next line.
+
+  * :file:`<Syntax_Highlighting>`
+
+    Boolean indicating whether the language syntax should be highlighted
+    and colorized.
+
+  * :file:`<Case_Sensitive>`
+
+    Boolean indicating whether the language (in particular the identifiers
     and keywords) is case sensitive.
 
-  *Accurate_Xref*
-    A boolean indicating wwhether cross reference information for this language
-    is supposed to be fully accurate or not (e.g. approximate, or none). Default
-    to False.
+  * :file:`<Accurate_Xref>`
 
-  *Use_Semicolon*
-    A boolean indicating whether semicolons are expected in sources and may be used
-    as a delimiter for syntax highlighting purposes. Default to False.
+    Boolean indicating whether cross reference information for this
+    language is fully accurate or whether it's either an approximation or
+    not present). Default is :command:`False`.
 
-*Categories*
-  Optional node to describe the categories supported by the project view
-  for the current language. This node contains a list of `Category` nodes,
-  each describing the characteristics of a given category, with the following
-  nodes:
+  * :file:`<Use_Semicolon>`
 
-  *Name*
-    Name of the category, which can be either one of the following predefined
-    categories: package, namespace, procedure, function, task, method,
-    constructor, destructor, protected, entry, class, structure, union, type,
-    subtype, variable, local_variable, representation_clause, with, use,
-    include, loop_statement, case_statement, if_statement, select_statement,
-    accept_statement, declare_block, simple_block, exception_handler, or any
-    arbitrary name, which will create a new category.
+    Boolean indicating whether semicolons are expected in sources and can
+    be used as a delimiter for syntax highlighting purposes. Default is
+    :command:`False`.
 
-  *Pattern*
-    Regular expression used to detect a language category.
-    As for the `Keywords` node, multiple `Pattern` tags can be
-    specified and will be concatenated into a single regular expression.
+* :file:`<Categories>`
 
-  *Index*
-    Index in the pattern used to extract the name of the entity contained in
-    this category.
+  Optional tag to describe the categories supported by the
+  :guilabel:`Project` view. This tag contains a list of :file:`<Category>`
+  tags, each describing the characteristics of a single category, with the
+  following child tags:
 
-  *End_Index*
-    Optional attribute that indicates the index in the pattern used to start
-    the next search. Default value is the end of the pattern.
+  * :file:`<Name>`
 
-  *Icon*
-    Name of a stock icon that should be used for that category
-    (:ref:`Adding_stock_icons`). This attribute is currently ignored, and is
-    reserved for future uses.
+    Name of the category, either one of the predefined categories or a new
+    name, in which case GPS will create a new category.
 
-*Project_Field*
-  This tag describes the tools that are used to support this
-  language. The name of these tools is stored in the project files, and
-  therefore only a limited number of tools can be specified. Note that this
-  tag is currently only used by the project properties and wizard, and is
-  not taken into account by other components.
+    The predefined categories are :command:`package`, :command:`namespace`,
+    :command:`procedure`, :command:`function`, :command:`task`,
+    :command:`method`, :command:`constructor`, :command:`destructor`,
+    :command:`protected`, :command:`entry`, :command:`class`,
+    :command:`structure`, :command:`union`, :command:`type`,
+    :command:`subtype`, :command:`variable`, :command:`local_variable`,
+    :command:`representation_clause`, :command:`with`, :command:`use`,
+    :command:`include`, :command:`loop_statement`,
+    :command:`case_statement`, :command:`if_statement`,
+    :command:`select_statement`, :command:`accept_statement`,
+    :command:`declare_block`, :command:`simple_block`, and
+    :command:`exception_handler`.
+
+  * :file:`<Pattern>`
+
+    Regular expression to select a language category.  Like
+    :file:`<Keywords>` tags, if you specify multiple :file:`<Pattern>`
+    tags, GPS will concatenate them into a single regular expression.
+
+  * :file:`<Index>`
+
+    Index of the subexpression in the pattern that extracts the name of the
+    entity in this category.
+
+  * :file:`<End_Index>`
+
+    Optional tag providing the index of the subexpression used to start the
+    next search.  The default is the end of the pattern.
+
+  * :file:`<Icon>`
+
+    Name of a stock icon for that category (see
+    :ref:`Adding_stock_icons`). This tag is currently ignored and reserved
+    for future use.
+
+* :file:`<Project_Field>`
+
+  Information about the tools used to support this language. The name of
+  these tools is stored in the project files so you can specify only a
+  limited number of tools.  This tag is currently only used by the project
+  properties and wizard and not by other components of GPS.
 
   .. highlight:: ada
 
-  This node has two attributes:
+  This tag two attributes:
 
-  *Name*
-    Name of the attribute in the project file. Currently, only
-    `"compiler_command"` can be specified.
+  * :file:`Name`
 
-  *Index*
-    If present, this attributes indicates the index to use for the
-    attribute in the project file. The line defining this attribute
-    would therefore look like::
+    Name of the attribute in the project file. Currently, you can only
+    specify :command:`compiler_command`.
+
+  * :file:`Index`
+
+    If present, specifies the index to use for the attribute in the project
+    file. The line defining this attribute looks like::
 
        for Name ("Index") use "value";
 
@@ -3554,13 +3589,12 @@ The following tags are available in a `Language` section:
     The value of the index should be either the empty string or the
     name of the language.
 
-  The value of this tag is the string to use in the project properties
-  editor when editing this project field.
+  The value of this attribubte is the string to use in the project
+  properties editor when editing this project field.
 
 .. highlight:: xml
 
-Here is an example of a possible language definition for the GPS project
-files::
+Here's an example of a language definition for the GPS project files::
 
   <?xml version="1.0"?>
   <Custom>
@@ -6491,7 +6525,7 @@ This is handled in different ways depending on what language your are using:
 
     However, the second example only has three parameters, because GPS has
     detected that `self` (the instance of `MyClass`) and the instance of
-    `GPS.Process` are the same in this case. Thus it doesn't add an extra
+    `GPS.Process` are the same in this case. Thus it doesn't dad an extra
     parameter (`self` and `process` would have been the same).
 
 .. _Python_FAQ:
