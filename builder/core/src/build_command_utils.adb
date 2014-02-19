@@ -918,8 +918,8 @@ package body Build_Command_Utils is
                   raise Invalid_Argument;
                end if;
 
-            elsif Get_Kernel_Registry (Adapter.all).Tree.Info (File).Project =
-               No_Project
+            elsif Get_Kernel_Registry
+              (Adapter.all).Tree.Info_Set (File).Is_Empty
             then
                if Simulate then
                   Result.Args := Create ("<current-file>");

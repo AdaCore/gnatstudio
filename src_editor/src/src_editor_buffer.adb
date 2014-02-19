@@ -6268,6 +6268,7 @@ package body Src_Editor_Buffer is
       File : Structured_File_Access;
       Tree : Construct_Tree;
       Iter : Construct_Tree_Iterator;
+      Set  : File_Info_Set;
    begin
       if Line = 0 then
          return New_Block;
@@ -6287,11 +6288,14 @@ package body Src_Editor_Buffer is
             File    => Editor.Filename);
       end if;
 
+      --  Take the first possible project. This should not impact block
+      --  computation, which does not need xref information
+
+      Set := Get_Project_Tree (Editor.Kernel).Info_Set (Editor.Filename);
       File := Get_Or_Create
         (Db      => Editor.Kernel.Get_Construct_Database,
          File    => Editor.Filename,
-         Project =>
-           Get_Project_Tree (Editor.Kernel).Info (Editor.Filename).Project);
+         Project => Set.First_Element.Project);
       Tree := Get_Tree (File);
 
       Iter := Get_Iterator_At
