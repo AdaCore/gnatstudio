@@ -757,7 +757,7 @@ package body Build_Command_Utils is
                   Result : Boolean;
                begin
                   Result := Langs'Length /= 1
-                    or else Langs (Langs'First).all = "ada";
+                    or else Langs (Langs'First).all /= "ada";
                   Free (Langs);
                   return Result;
                end;
