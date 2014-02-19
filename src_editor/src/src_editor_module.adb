@@ -820,7 +820,7 @@ package body Src_Editor_Module is
 
       if Pref = From_Project and then
         (Get_Registry (Kernel).Tree.Status /= From_File or else
-         Get_Registry (Kernel).Tree.Info (File).Project = No_Project)
+         Get_Registry (Kernel).Tree.Info_Set (File).Is_Empty)
       then
          return null;
       end if;
