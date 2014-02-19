@@ -162,6 +162,7 @@ package body Language_Handlers is
       use GNATCOLL.Projects;
       Prop  : String_Property;
       Found : Boolean := False;
+      Set   : File_Info_Set;
    begin
       if not From_Project_Only then
          Get_Property (Prop, Source_Filename, "language", Found);
@@ -170,7 +171,18 @@ package body Language_Handlers is
       if Found then
          return Prop.Value.all;
       else
-         return Handler.Registry.Tree.Info (Source_Filename).Language;
+         --  With aggregate project, the same file could be found in several
+         --  projects. However, it should always have the same language (unless
+         --  one of the project uses another language, for instance before
+         --  and after preprocessing). For now, we simply return the first
+         --  language found.
+
+         Set := Handler.Registry.Tree.Info_Set (Source_Filename);
+         if Set.Is_Empty then
+            return "";
+         else
+            return Set.First_Element.Language;
+         end if;
       end if;
    end Get_Language_From_File;
 
