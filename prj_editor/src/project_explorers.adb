@@ -858,6 +858,31 @@ package body Project_Explorers is
       begin
          if A_Name < B_Name then
             return A_Before_B;
+         elsif A_Name = B_Name then
+            case A_Type is   --  same as B_Type
+               when Project_Node_Types =>
+                  if Get_File (Model, A, Project_Path_Column) <
+                    Get_File (Model, B, Project_Path_Column)
+                  then
+                     return A_Before_B;
+                  else
+                     return B_Before_A;
+                  end if;
+
+               when Directory_Node | Obj_Directory_Node
+                  | Exec_Directory_Node | File_Node =>
+
+                  if Get_File (Model, A, File_Column) <
+                    Get_File (Model, B, File_Column)
+                  then
+                     return A_Before_B;
+                  else
+                     return B_Before_A;
+                  end if;
+
+               when others =>
+                  return A_Before_B;
+            end case;
          else
             return B_Before_A;
          end if;
