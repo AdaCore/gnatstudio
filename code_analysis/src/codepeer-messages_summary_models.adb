@@ -369,15 +369,24 @@ package body CodePeer.Messages_Summary_Models is
                   Total  : constant Natural := CodePeer.File_Data
                     (File_Node.Node.Analysis_Data.CodePeer_Data.all).
                     Total_Checks;
-                  Passed : constant Natural :=
+                  Passed : constant Integer :=
                     Total - File_Node.Checks_Count;
 
                begin
                   Glib.Values.Init (Value, Glib.GType_String);
-                  Glib.Values.Set_String
-                    (Value,
-                     Image (Passed, 1)
-                     & " " & Percent_Image (Passed, Total));
+
+                  if Passed < 0 then
+                     --  CodePeer reports incorrect total number of checks when
+                     --  -messages max mode is used. See N212-045.
+
+                     Glib.Values.Set_String (Value, "ERROR");
+
+                  else
+                     Glib.Values.Set_String
+                       (Value,
+                        Image (Passed, 1)
+                        & " " & Percent_Image (Passed, Total));
+                  end if;
                end;
 
             elsif Project_Node /= null then
