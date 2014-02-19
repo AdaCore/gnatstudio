@@ -601,23 +601,26 @@ view.
 
 The wizard has the following pages:
 
-* :guilabel:`Project type`
-* :guilabel:`Project Naming`
-* :guilabel:`Languages Selection`
-* :guilabel:`Version Control System Selection`
-* :guilabel:`Source Directories Selection`
-* :guilabel:`Build Directory`
-* :guilabel:`Main Units`
-* :guilabel:`Library`
-* :guilabel:`Naming Scheme`
-* :guilabel:`Switches`
+* :ref:`Project type <Project_Type_Page>`
+* :ref:`Project Naming <Project_Naming_Page>`
+* :ref:`Languages Selection <Language_Selection_Page>`
+* :ref:`Version Control System Selection <VCS_Selection_Page>`
+* :ref:`Source Directories Selection <Source_Directory_Selection>`
+* :ref:`Build Directory <Build_Directory_Page>`
+* :ref:`Main Units <Main_Units_Page>`
+* :ref:`Library <Library_Page>`
+* :ref:`GNATname <GNATname_Page>`
+* :ref:`Naming Scheme <Naming_Scheme_Page>`
+* :ref:`Switches <Switches>`
+
+.. _Project_Type_Page:
 
 Project Type
 ------------
 
 Several types of project wizards are provided in GPS:
 
-* Single Project
+* :guilabel:`Single Project`
 
   This is the wizard you'll probably use most often. It creates a project
   file from scratch and asks you for the location of source directories and
@@ -659,9 +662,10 @@ Several types of project wizards are provided in GPS:
   This specialized wizard allows you to easily create project extentions.
   (See :ref:`Extending_Projects`).
 
+.. _Project_Naming_Page:
 
-Project Name
-------------
+Project Naming
+--------------
 
 This is the first page displayed by all the wizard and is where you enter
 the name and location of the project to create. The name must be a valid
@@ -681,8 +685,10 @@ able to duplicate a project hierarchy to another location on your disk, it
 might be useful to indicate that paths should be stored as relative paths
 (relative to the location of the project file).
 
-Languages Selection
--------------------
+.. _Language_Selection_Page:
+
+Language Selection
+------------------
 
 Use this page to select the programming languages used for the sources of
 the project. By default, only Ada is selected.  You can add new languages
@@ -701,6 +707,8 @@ information.
 .. index:: Version Control System
 .. index:: VCS
 
+.. _VCS_Selection_Page:
+
 VCS Selection
 -------------
 
@@ -715,9 +723,9 @@ files in the Version Control System. These should be used if you wish to
 enforce style checks before a file is actually made available to other
 developers in your team.  If left blank, nothing is run.
 
-.. _Source_Directories_Selection:
+.. _Source_Directory_Selection:
 
-Source Directories Selection
+Source Directory Selection
 ----------------------------
 
 This page displays and allows you to edit the list of source directories
@@ -747,6 +755,8 @@ the project are automatically associated with that project.
 .. index:: project; object directory
 .. index:: project; exec directory
 
+.. _Build_Directory_Page:
+
 Build Directory
 ---------------
 
@@ -759,6 +769,7 @@ default, this is the same as the object directory.
 
 
 .. index:: project; main units
+.. _Main_Units_Page:
 
 Main Units
 ----------
@@ -787,6 +798,7 @@ executable by clicking in the second column.
 
 
 .. index:: project; library
+.. _Library_Page:
 
 Library
 -------
@@ -809,6 +821,7 @@ library and invisible from the outside.
 
 
 .. index:: gnatname
+.. _GNATname_Page:
 
 GNATname
 --------
@@ -816,7 +829,7 @@ GNATname
 Use this page to add Ada units stored in files with irregular or arbitrary
 naming conventions into your project.  To do this, specify file name
 patterns.  GPS uses these patterns to search for Ada units in each of
-source directories specified in the :ref:`Source_Directories_Selection`
+source directories specified in the :ref:`Source_Directory_Selection`
 page using the :program:`gnatname` tool to generate the required pragmas
 for the set of files. Files with arbitrary naming convention are not
 compatible with naming scheme customization, so the next page will be
@@ -824,6 +837,7 @@ skipped.
 
 
 .. index:: project; naming scheme
+.. _Naming_Scheme_Page:
 
 Naming Scheme
 -------------
