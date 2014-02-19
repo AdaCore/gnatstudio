@@ -63,6 +63,7 @@ with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Osint;                      use Osint;
+with Projects;                   use Projects;
 with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
@@ -1673,7 +1674,7 @@ package body Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      Project  : constant GNATCOLL.Projects.Project_Type :=
+      Project  : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context  : constant Files_Project_Context_Access :=
@@ -1683,10 +1684,10 @@ package body Src_Contexts is
       Context.All_Occurrences := All_Occurrences;
       Context.Begin_Line      := 0;
 
-      if Project /= No_Project then
+      if Project'Length /= 0 then
          --  Search in selected project if any
          Set_File_List
-           (Context, Project.Source_Files (False));
+           (Context, Source_Files_Non_Recursive (Project));
       else
          --  Search in root project if no project selected
          Set_File_List (Context, Get_Project (Kernel).Source_Files (False));

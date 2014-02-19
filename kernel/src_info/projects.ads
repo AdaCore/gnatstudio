@@ -51,6 +51,10 @@ package Projects is
    --  Destroy the registry
 
    type Project_Type_Array is array (Natural range <>) of Project_Type;
+   type Project_Type_Array_Access is access all Project_Type_Array;
+
+   procedure Free (Self : in out Project_Type_Array_Access);
+   --  Free the memory used by Self
 
    function Project_Name_Hash
      (Project : Project_Type) return Ada.Containers.Hash_Type;
@@ -64,6 +68,11 @@ package Projects is
       return GNATCOLL.VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
+
+   function Source_Files_Non_Recursive
+     (Projects : Project_Type_Array) return GNATCOLL.VFS.File_Array_Access;
+   --  Return the list of all direct source files for all projects.
+   --  Result must be freed by user.
 
    function Source_Dirs_With_VCS
      (Project   : Project_Type;

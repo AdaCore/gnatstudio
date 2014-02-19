@@ -371,6 +371,37 @@ package body Projects is
       Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Project_Type_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Type_Array, Project_Type_Array_Access);
+   begin
+      Unchecked_Free (Self);
+   end Free;
+
+   --------------------------------
+   -- Source_Files_Non_Recursive --
+   --------------------------------
+
+   function Source_Files_Non_Recursive
+     (Projects : Project_Type_Array) return GNATCOLL.VFS.File_Array_Access
+   is
+      Result : File_Array_Access;
+      Tmp    : File_Array_Access;
+   begin
+      for P in Projects'Range loop
+         Tmp := Projects (P).Source_Files (Recursive => False);
+         if Tmp /= null then
+            Append (Result, Tmp.all);
+            Unchecked_Free (Tmp);
+         end if;
+      end loop;
+      return Result;
+   end Source_Files_Non_Recursive;
+
 begin
    --  Use full path name so that the messages are sent to Locations view
    Opt.Full_Path_Name_For_Brief_Errors := True;

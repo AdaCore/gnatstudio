@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with Gdk.Event;                 use Gdk.Event;
@@ -76,7 +77,8 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;
 with GNATCOLL.VFS;
 with Histories;                 use Histories;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with Projects;                  use Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 
@@ -122,7 +124,7 @@ package body Vsearch is
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
       Id                : Module_ID;
-      Label             : String_Access;
+      Label             : GNAT.Strings.String_Access;
       In_Selection      : Boolean;
    end record;
 
@@ -197,7 +199,7 @@ package body Vsearch is
    Column_Whole_Word     : constant Gint := 4;
 
    type Search_Specific_Context is new Interactive_Command with record
-      Context : String_Access;
+      Context : GNAT.Strings.String_Access;
    end record;
    overriding procedure Free (Action : in out Search_Specific_Context);
    overriding function Execute
@@ -213,7 +215,7 @@ package body Vsearch is
       Search_Backward : Boolean;
       Context         : Search_Context_Access;
       Found           : Boolean := False;
-      Replace_With    : String_Access := null;
+      Replace_With    : GNAT.Strings.String_Access := null;
       --  Whether the search results in at least one match.
       Case_Preserving : Boolean;
    end record;
@@ -317,7 +319,8 @@ package body Vsearch is
       Raise_Widget  : Boolean := False;
       Float_Widget  : Boolean := True;
       Reset_Entries : Boolean := False;
-      Context       : String_Access := null) return Vsearch_Access;
+      Context       : GNAT.Strings.String_Access := null)
+      return Vsearch_Access;
    --  Return a valid vsearch widget, creating one if necessary.
    --  If Reset_Entries is True, the fields in the dialog are reset depending
    --  on the current module. Context indicates the value that should be
@@ -2065,7 +2068,7 @@ package body Vsearch is
       Raise_Widget  : Boolean := False;
       Float_Widget  : Boolean := True;
       Reset_Entries : Boolean := False;
-      Context       : String_Access := null) return Vsearch_Access
+      Context       : GNAT.Strings.String_Access := null) return Vsearch_Access
    is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
@@ -2084,7 +2087,7 @@ package body Vsearch is
 
       Child   : GPS_MDI_Child;
 
-      Default_Pattern : String_Access := null;
+      Default_Pattern : GNAT.Strings.String_Access := null;
 
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
@@ -2262,13 +2265,23 @@ package body Vsearch is
          pragma Unreferenced (Quoted);
       begin
          if Param = "p" then
-            if Get_Selected_Project (Kernel) =
-              GNATCOLL.Projects.No_Project
-            then
-               return Get_Project (Kernel).Name;
-            else
-               return Get_Selected_Project (Kernel).Name;
-            end if;
+            declare
+               P : constant Project_Type_Array :=
+                 Get_Selected_Project (Kernel);
+               Result : Unbounded_String;
+            begin
+               if P'Length = 0 then
+                  return Get_Project (Kernel).Name;
+               else
+                  for P2 in P'Range loop
+                     if Result /= Null_Unbounded_String then
+                        Append (Result, ", ");
+                     end if;
+                     Append (Result, P (P2).Name);
+                  end loop;
+                  return To_String (Result);
+               end if;
+            end;
          end if;
          return "%" & Param;
       end Substitution;
@@ -2286,16 +2299,30 @@ package body Vsearch is
 
    procedure Set_Selected_Project
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : Selection_Context) is
+      Context : Selection_Context)
+   is
+      Set : File_Info_Set;
+      Idx : Integer;
    begin
+      Free (Vsearch_Module_Id.Search.Projects);
+
       if Has_Project_Information (Context) then
-         Vsearch_Module_Id.Search.Project := Project_Information (Context);
+         Vsearch_Module_Id.Search.Projects :=
+           new Project_Type_Array'(1 .. 1 => Project_Information (Context));
       elsif Has_File_Information (Context) then
-         Vsearch_Module_Id.Search.Project :=
-           Get_Project_Tree (Kernel).Info
-           (File_Information (Context)).Project;
-      else
-         Vsearch_Module_Id.Search.Project := GNATCOLL.Projects.No_Project;
+         Set := Get_Project_Tree (Kernel).Info_Set
+           (File_Information (Context));
+
+         if not Set.Is_Empty then
+            Vsearch_Module_Id.Search.Projects := new Project_Type_Array
+              (1 .. Integer (Set.Length));
+            Idx := 1;
+
+            for P of Set loop
+               Vsearch_Module_Id.Search.Projects (Idx) := P.Project;
+               Idx := Idx + 1;
+            end loop;
+         end if;
       end if;
 
       Refresh_Context_Combo (Kernel);
@@ -2307,11 +2334,15 @@ package body Vsearch is
 
    function Get_Selected_Project
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Type
+      return Project_Type_Array
    is
       pragma Unreferenced (Kernel);
    begin
-      return Vsearch_Module_Id.Search.Project;
+      if Vsearch_Module_Id.Search.Projects = null then
+         return Project_Type_Array'(1 .. 0 => No_Project);
+      else
+         return Vsearch_Module_Id.Search.Projects.all;
+      end if;
    end Get_Selected_Project;
 
    -------------------

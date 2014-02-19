@@ -18,10 +18,7 @@
 with GNAT.Strings;
 
 with Glib.Main;
-with GNATCOLL.Projects;
-
 with Glib.Object;
-
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
@@ -36,6 +33,7 @@ with Gtk.Widget;          use Gtk.Widget;
 
 with Find_Utils;          use Find_Utils;
 with GPS.Kernel;          use GPS.Kernel;
+with Projects;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -174,7 +172,7 @@ package Vsearch is
 
    function Get_Selected_Project
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNATCOLL.Projects.Project_Type;
+      return Projects.Project_Type_Array;
    --  Return selected project saved at the beginning of last search
 
 private
@@ -224,7 +222,9 @@ private
       Find_Next               : Boolean := False;
       Selection_From          : Gtk_Text_Mark;
       Selection_To            : Gtk_Text_Mark;
-      Project                 : GNATCOLL.Projects.Project_Type;
+
+      Projects                : Standard.Projects.Project_Type_Array_Access;
+      --  Restrict the search to these projects
    end record;
 
    type Search_Regexp is record
