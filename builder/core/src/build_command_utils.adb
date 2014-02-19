@@ -756,8 +756,8 @@ package body Build_Command_Utils is
                   Langs  : Argument_List := Prj.Languages (Recursive => True);
                   Result : Boolean;
                begin
-                  Result := Langs'Length = 1
-                    and then Langs (Langs'First).all = "ada";
+                  Result := Langs'Length /= 1
+                    or else Langs (Langs'First).all = "ada";
                   Free (Langs);
                   return Result;
                end;
