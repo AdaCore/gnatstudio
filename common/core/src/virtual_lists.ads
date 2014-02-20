@@ -30,7 +30,7 @@ package Virtual_Lists is
 
    type Virtual_List is private;
    --  This list, contains heterogeneous sub-list and provides a way to access
-   --  to their elements in an homgeneous way.
+   --  to their elements in an homogeneous way.
 
    procedure Free (This : in out Virtual_List);
    --  Free the virtual list
