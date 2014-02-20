@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
+
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings;              use Ada.Strings;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
@@ -26,6 +28,7 @@ with GNATdoc.Frontend.Builder; use GNATdoc.Frontend.Builder;
 with GNATdoc.Time;             use GNATdoc.Time;
 with GNATCOLL.Utils;
 with GNAT.Expect;
+with GNAT.HTable;
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;             use GNAT.Strings;
 with Language;                 use Language;
@@ -90,6 +93,8 @@ package body GNATdoc.Frontend is
       Tok_Right_Paren,
       Tok_Semicolon);
 
+   subtype Reserved_Word_Kind is Tokens range Tok_Abstract .. Tok_With;
+
    ----------------------
    -- Local_Subrograms --
    ----------------------
@@ -106,14 +111,31 @@ package body GNATdoc.Frontend is
    --  Traverse the Tree of entities and replace blocks of comments by
    --  structured comments.
 
-   function Get_Token (S : String) return Tokens;
-   --  Return the token associated with S
+   -----------
+   -- Debug --
+   -----------
 
    package Debug is
       function To_Str (E : Entity_Id) return String;
       procedure Print_Entity (E : Entity_Id; Prefix : String);
    end Debug;
    use Debug;
+
+   --------------------------
+   -- Reserved_Words_Table --
+   --------------------------
+
+   package Reserved_Words_Table is
+
+      function Get_Token (Word : String) return Tokens;
+      --  Return the token associated with Word
+
+   end Reserved_Words_Table;
+   use Reserved_Words_Table;
+
+   ------------------
+   -- Scopes_Stack --
+   ------------------
 
    package Scopes_Stack is
       type Context_Info is private;
@@ -1576,6 +1598,8 @@ package body GNATdoc.Frontend is
                              Get_Scope (Current_Context);
                         begin
                            if Is_Record_Type (Scope) then
+                              Set_Is_Tagged (Scope);
+                              Set_Kind (Scope, E_Tagged_Record_Type);
                               In_Parent_Part := True;
                            end if;
                         end;
@@ -5269,81 +5293,6 @@ package body GNATdoc.Frontend is
       return Builder.Find_Unique_Entity (Location, In_References);
    end Find_Unique_Entity;
 
-   ---------------
-   -- Get_Token --
-   ---------------
-
-   function Get_Token (S : String) return Tokens is
-      Keyword : constant String := To_Lower (S);
-
-   begin
-      if Keyword = "abstract" then
-         return Tok_Abstract;
-      elsif Keyword = "aliased" then
-         return Tok_Aliased;
-      elsif Keyword = "and" then
-         return Tok_And;
-      elsif Keyword = "case" then
-         return Tok_Case;
-      elsif Keyword = "end" then
-         return Tok_End;
-      elsif Keyword = "entry" then
-         return Tok_Entry;
-      elsif Keyword = "for" then
-         return Tok_For;
-      elsif Keyword = "function" then
-         return Tok_Function;
-      elsif Keyword = "generic" then
-         return Tok_Generic;
-      elsif Keyword = "is" then
-         return Tok_Is;
-      elsif Keyword = "interface" then
-         return Tok_Interface;
-      elsif Keyword = "limited" then
-         return Tok_Limited;
-      elsif Keyword = "new" then
-         return Tok_New;
-      elsif Keyword = "null" then
-         return Tok_Null;
-      elsif Keyword = "others" then
-         return Tok_Others;
-      elsif Keyword = "overriding" then
-         return Tok_Overriding;
-      elsif Keyword = "package" then
-         return Tok_Package;
-      elsif Keyword = "pragma" then
-         return Tok_Pragma;
-      elsif Keyword = "private" then
-         return Tok_Private;
-      elsif Keyword = "procedure" then
-         return Tok_Procedure;
-      elsif Keyword = "protected" then
-         return Tok_Protected;
-      elsif Keyword = "record" then
-         return Tok_Record;
-      elsif Keyword = "renames" then
-         return Tok_Renames;
-      elsif Keyword = "return" then
-         return Tok_Return;
-      elsif Keyword = "subtype" then
-         return Tok_Subtype;
-      elsif Keyword = "tagged" then
-         return Tok_Tagged;
-      elsif Keyword = "task" then
-         return Tok_Task;
-      elsif Keyword = "type" then
-         return Tok_Type;
-      elsif Keyword = "use" then
-         return Tok_Use;
-      elsif Keyword = "when" then
-         return Tok_When;
-      elsif Keyword = "with" then
-         return Tok_With;
-      else
-         return Tok_Unknown;
-      end if;
-   end Get_Token;
-
    -----------
    -- Debug --
    -----------
@@ -5387,6 +5336,73 @@ package body GNATdoc.Frontend is
          end if;
       end Print_Entity;
    end Debug;
+
+   --------------------------
+   -- Reserved_Words_Table --
+   --------------------------
+
+   package body Reserved_Words_Table is
+
+      function Hash (Key : String) return Ada.Containers.Hash_Type;
+
+      function Equivalent_Keys (Left, Right : String) return Boolean;
+
+      package Reserved_Words is new Ada.Containers.Indefinite_Hashed_Maps
+        (Key_Type        => String,
+         Element_Type    => Tokens,
+         Hash            => Hash,
+         Equivalent_Keys => Equivalent_Keys);
+
+      Keywords_Map : Reserved_Words.Map;
+
+      ---------------------
+      -- Equivalent_Keys --
+      ---------------------
+
+      function Equivalent_Keys (Left, Right : String) return Boolean is
+      begin
+         return Left = Right;
+      end Equivalent_Keys;
+
+      ----------
+      -- Hash --
+      ----------
+
+      function Hash (Key : String) return Ada.Containers.Hash_Type
+      is
+         type Internal_Hash_Type is range 0 .. 2 ** 31 - 1;
+         function Internal is new GNAT.HTable.Hash
+           (Header_Num => Internal_Hash_Type);
+      begin
+         return Ada.Containers.Hash_Type (Internal (Key));
+      end Hash;
+
+      ---------------
+      -- Get_Token --
+      ---------------
+
+      function Get_Token (Word : String) return Tokens is
+         Cursor  : constant Reserved_Words.Cursor :=
+                     Keywords_Map.Find (To_Lower (Word));
+         use type Reserved_Words.Cursor;
+      begin
+         if Cursor /= Reserved_Words.No_Element then
+            return Reserved_Words.Element (Cursor);
+         else
+            return Tok_Unknown;
+         end if;
+      end Get_Token;
+
+   begin
+      for Token in Reserved_Word_Kind'Range loop
+         declare
+            S    : constant String := Token'Img;
+            Word : constant String := To_Lower (S (S'First + 4 .. S'Last));
+         begin
+            Keywords_Map.Include (Word, Token);
+         end;
+      end loop;
+   end Reserved_Words_Table;
 
    ------------------
    -- Scopes_Stack --
