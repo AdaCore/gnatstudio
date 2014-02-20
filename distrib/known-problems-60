@@ -396,3 +396,28 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
   Status:     This was fixed in 6.1 on 2014-11-05
 
   Workaround: Scroll manually.
+
+Known Problems fixed in GPS 6.0.2 / GNATbench 2.8.2
+---------------------------------------------------
+
+KP-60-N116-013 GPS: custom VCS action "diff_working" is not supported
+
+  Problem:    It is not possible to extend an existing VCS to use the
+              "diff_working" action defined in the documentation.
+
+  Status:     This was fixed in 6.1 on 2014-01-16
+              This was fixed in 6.0.2 on 2014-01-16
+
+  Workaround: Use one of the other "diff" actions available.
+
+KP-60-N218-041 GPS: cannot install from directory with spaces under unix
+
+  Problem:    When running the doinstall installer under unix systems, the
+              installation will fail if doinstall is under a pathname
+              containing spaces.
+
+  Status:     This was fixed in 6.1 on 2014-02-20
+              This was fixed in 6.0.2 on 2014-02-20
+
+  Workaround: Extract the gps archive under a directory with no spaces.
+
