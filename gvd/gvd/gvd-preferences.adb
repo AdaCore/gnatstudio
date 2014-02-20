@@ -239,6 +239,15 @@ package body GVD.Preferences is
          Doc      => -"Color used for selected items in the memory view",
          Default  => "#FF0000");
 
+      Memory_Auto_Refresh := Create
+        (Manager   => Prefs,
+         Name      => XML_Prefix & "Memory-Auto-Refresh",
+         Label     => -"Refresh memory view after each step",
+         Doc       => -("Ensure actual data dispayed in memory view"
+           & " by refreshing it after each command"),
+         Page      => General,
+         Default   => True);
+
       Title_Font := Create
         (Manager  => Prefs,
          Name     => XML_Prefix & "Title-Font",

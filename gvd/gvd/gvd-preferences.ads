@@ -71,5 +71,6 @@ package GVD.Preferences is
    Memory_View_Color             : Color_Preference;
    Memory_Highlighted_Color      : Color_Preference;
    Memory_Selected_Color         : Color_Preference;
+   Memory_Auto_Refresh           : Boolean_Preference;
 
 end GVD.Preferences;

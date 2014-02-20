@@ -151,6 +151,9 @@ package body GVD.Memory_View is
      (View : access GVD_Memory_View_Record);
    --  See inherited documentation
 
+   overriding procedure Update (View   : access GVD_Memory_View_Record);
+   --  See inherited documentation
+
    function Initialize
      (Widget : access GVD_Memory_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
@@ -670,6 +673,17 @@ package body GVD.Memory_View is
          end if;
       end if;
    end To_Standard_Base;
+
+   ------------
+   -- Update --
+   ------------
+
+   overriding procedure Update (View   : access GVD_Memory_View_Record) is
+   begin
+      if Memory_Auto_Refresh.Get_Pref then
+         Display_Memory (View, Get_Text (View.Editor.Address_Entry));
+      end if;
+   end Update;
 
    --------------------
    -- Update_Display --
