@@ -491,8 +491,19 @@ package body Debugger.Gdb.Ada is
             then
                Parse_Num (Type_Str, Index, First);
             else
-               First := Long_Integer'Last;
+               Tmp_Index := Index;
                Skip_To_Char (Type_Str, Index, ' ');
+
+               --  Evaluate First to decimal value
+               begin
+                  First := Long_Integer'Value
+                    (Lang.Get_Debugger.Value_Of
+                       (Type_Str (Tmp_Index .. Index - 1),
+                        Format => Decimal));
+               exception
+                  when Constraint_Error =>
+                     First := Long_Integer'Last;
+               end;
             end if;
 
             Index := Index + 4;  --  skips ' .. '
@@ -502,7 +513,7 @@ package body Debugger.Gdb.Ada is
             then
                Parse_Num (Type_Str, Index, Last);
             else
-               Last := Long_Integer'First;
+               Tmp_Index := Index;
 
                while Index <= Type_Str'Last
                  and then Type_Str (Index) /= ','
@@ -510,6 +521,17 @@ package body Debugger.Gdb.Ada is
                loop
                   Index := Index + 1;
                end loop;
+
+               --  Evaluate Last to decimal value
+               begin
+                  Last := Long_Integer'Value
+                    (Lang.Get_Debugger.Value_Of
+                       (Type_Str (Tmp_Index .. Index - 1),
+                        Format => Decimal));
+               exception
+                  when Constraint_Error =>
+                     Last := Long_Integer'First;
+               end;
             end if;
 
             Index := Index + 2;  --  skips ', ' or ') '
