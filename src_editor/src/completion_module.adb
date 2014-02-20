@@ -22,6 +22,7 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
@@ -49,6 +50,8 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+
 with GPS.Intl;                  use GPS.Intl;
 with Language;                  use Language;
 with Language.Icons;
@@ -67,6 +70,7 @@ with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
 with Completion.Aliases;        use Completion.Aliases;
+with Completion.Python;         use Completion.Python;
 
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
@@ -85,6 +89,7 @@ with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Engine_Wrappers;                 use Engine_Wrappers;
 with Projects;                        use Projects;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package body Completion_Module is
 
@@ -107,6 +112,9 @@ package body Completion_Module is
    procedure Free is new Ada.Unchecked_Deallocation
      (Update_Lock, Update_Lock_Access);
 
+   package Python_Resolver_List is new Ada.Containers.Doubly_Linked_Lists
+     (Completion_Python_Access);
+
    type Smart_Completion_Data is record
       Manager             : Completion_Manager_Access;
       Constructs_Resolver : Completion_Resolver_Access;
@@ -119,6 +127,8 @@ package body Completion_Module is
       --  We need to lock the update of the file during the completion process
       --  in order to keep valid information in the trees.
       Lock                : Update_Lock_Access;
+
+      Python_Resolvers    : Python_Resolver_List.List;
    end record;
 
    type Completion_Module_Record is new Module_ID_Record with record
@@ -256,6 +266,14 @@ package body Completion_Module is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed
+
+   procedure Register_Commands
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the shell commands for this module
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the Completion class
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view is changed
@@ -848,6 +866,10 @@ package body Completion_Module is
                        Current_File   => Get_Filename (Buffer));
                end if;
 
+               for R of Data.Python_Resolvers loop
+                  Register_Resolver (Data.Manager, R);
+               end loop;
+
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_History);
                Register_Resolver
@@ -1235,7 +1257,44 @@ package body Completion_Module is
       Completion_Module.Completion_History := new Completion_History;
       Completion_Module.Completion_Aliases := new Completion_Aliases;
       Completion_Module.Completion_Keywords := new Completion_Keywords;
+
+      --  Register the commands
+
+      Register_Commands (Kernel);
    end Register_Module;
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Completion_Data : Smart_Completion_Data renames Completion_Module.Data;
+      Resolver : Completion_Python_Access;
+   begin
+      if Command = "register" then
+         Resolver := Completion.Python.Create (Nth_Arg (Data, 1));
+         Completion_Data.Python_Resolvers.Append (Resolver);
+      end if;
+   end Command_Handler;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Completion_Class : constant Class_Type := New_Class
+        (Kernel, "Completion");
+   begin
+      Register_Command
+        (Kernel, "register", 1, 1,
+         Command_Handler'Access, Completion_Class, Static_Method => True);
+
+      --  ??? Need to implement the destructor
+   end Register_Commands;
 
    ------------------------------
    -- Trigger_Timeout_Callback --

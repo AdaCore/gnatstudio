@@ -10051,6 +10051,24 @@ class Alias(object):
         """
 
 ###########################################################
+# Completion
+###########################################################
+
+
+class Completion(object):
+
+    """
+    This class is used to handle editor completion.
+    See the documentation in the completion.py plug-in.
+    """
+
+    @staticmethod
+    def register(resolver):
+        """
+        Registers a resolver, which inherits from CompletionResolver.
+        """
+
+###########################################################
 # OutputParserWrapper
 ###########################################################
 

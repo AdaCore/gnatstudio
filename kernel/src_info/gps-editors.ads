@@ -330,6 +330,12 @@ package GPS.Editors is
    package Cursors_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Cursor'Class);
 
+   function Create_Instance
+     (This   : Editor_Location;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance is abstract;
+   --  Return an Class_Instance for the location
+
    -----------------
    -- Editor_View --
    -----------------
@@ -804,6 +810,11 @@ private
 
    overriding function Buffer
      (This : Dummy_Editor_Location) return Editor_Buffer'Class;
+
+   overriding function Create_Instance
+     (This   : Dummy_Editor_Location;
+      Script : access Scripting_Language_Record'Class)
+      return Class_Instance;
 
    overriding function Create_Mark
      (This : Dummy_Editor_Location;

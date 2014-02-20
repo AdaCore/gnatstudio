@@ -277,6 +277,10 @@ package body Src_Editor_Module.Editors is
 
    overriding function Get_Char (This : Src_Editor_Location) return Integer;
 
+   overriding function Create_Instance
+     (This   : Src_Editor_Location;
+      Script : access Scripting_Language_Record'Class) return Class_Instance;
+
    ---------------------
    -- Src_Editor_Mark --
    ---------------------
@@ -1220,6 +1224,19 @@ package body Src_Editor_Module.Editors is
    begin
       return This.Buffer;
    end Buffer;
+
+   ---------------------
+   -- Create_Instance --
+   ---------------------
+
+   overriding function Create_Instance
+     (This   : Src_Editor_Location;
+      Script : access Scripting_Language_Record'Class) return Class_Instance is
+   begin
+      return Src_Editor_Module.Shell.Create_Editor_Location
+        (Script   => Script,
+         Location => This);
+   end Create_Instance;
 
    -----------------
    -- Create_Mark --

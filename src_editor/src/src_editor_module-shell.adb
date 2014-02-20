@@ -265,11 +265,6 @@ package body Src_Editor_Module.Shell is
    --  Return an instance of EditorView encapsulating View. Result must be
    --  freed unless you assign it to a Callback_Data.
 
-   function Create_Editor_Location
-     (Script   : access Scripting_Language_Record'Class;
-      Location : Editor_Location'Class) return Class_Instance;
-   --  Return an instance of EditorLocation
-
    function Create_Cursor
      (Script   : access Scripting_Language_Record'Class;
       Cursor   : GPS.Editors.Editor_Cursor'Class) return Class_Instance;

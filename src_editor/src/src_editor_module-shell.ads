@@ -29,4 +29,9 @@ package Src_Editor_Module.Shell is
       Mark   : Editor_Mark'Class) return Class_Instance;
    --  Return an instance of EditorMark encapsulating Mark
 
+   function Create_Editor_Location
+     (Script   : access Scripting_Language_Record'Class;
+      Location : Editor_Location'Class) return Class_Instance;
+   --  Return an instance of EditorLocation
+
 end Src_Editor_Module.Shell;

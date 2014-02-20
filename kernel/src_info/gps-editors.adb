@@ -642,4 +642,17 @@ package body GPS.Editors is
       return True;
    end "=";
 
+   ---------------------
+   -- Create_Instance --
+   ---------------------
+
+   overriding function Create_Instance
+     (This   : Dummy_Editor_Location;
+      Script : access Scripting_Language_Record'Class) return Class_Instance
+   is
+      pragma Unreferenced (This, Script);
+   begin
+      return No_Class_Instance;
+   end Create_Instance;
+
 end GPS.Editors;
