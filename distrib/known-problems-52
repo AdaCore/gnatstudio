@@ -6,13 +6,6 @@ ECL: this entry is specific to GNATbench for Eclipse
 
 If no tag is specified, the entry is relevant to all IDEs.
 
-Known Problems fixed in GPS 6.0.2 / GNATbench 2.8.2
-
-- N116-013: GPS: custom VCS action "diff_working" is not supported
-  Problem:    It is not possible to extend an existing VCS to use the
-              "diff_working" action defined in the documentation.
-  Workaround: Use one of the other "diff" actions available.
-
 Known Problems fixed in GPS 6.0.1 / GNATbench 2.8.1
 
 - N107-010: GB: GNAT warnings changes cannot be saved in Coding Standard Editor
