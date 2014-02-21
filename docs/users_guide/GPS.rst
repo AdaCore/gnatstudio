@@ -328,6 +328,15 @@ Classes
 
    .. automethod:: GPS.CommandWindow.write
 
+:class:`GPS.Completion`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Completion
+
+   
+
+   .. automethod:: GPS.Completion.register
+
 :class:`GPS.Console`
 ^^^^^^^^^^^^^^^^^^^^
 
