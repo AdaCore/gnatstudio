@@ -23,8 +23,12 @@ with GNAT.Strings;
 with GNATCOLL.Symbols;
 with GNATCOLL.Xref;
 with Basic_Types;       use Basic_Types;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package Language is
+
+   Clang_C_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("libclang_backend", GNATCOLL.Traces.Off);
 
    type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;

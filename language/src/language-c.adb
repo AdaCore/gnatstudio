@@ -233,7 +233,7 @@ package body Language.C is
       Quote_Character               => '\',
       Constant_Character            => ''',
       Can_Indent                    => True,
-      Syntax_Highlighting           => True,
+      Syntax_Highlighting           => not Active (Language.Clang_C_Trace),
       Case_Sensitive                => True,
       Accurate_Xref                 => False,
       Use_Semicolon                 => True);

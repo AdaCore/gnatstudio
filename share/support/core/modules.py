@@ -37,7 +37,6 @@ Here is an example of use for this package::
 
 
 import GPS
-import gps_utils
 from gi.repository import GLib
 
 
@@ -52,6 +51,7 @@ class Module_Metaclass(type):
     # Whether the "gps_started" hook has already run
 
     modules = []
+    modules_instances = []
 
     def __new__(cls, name, bases, attrs):
         new_class = type.__new__(cls, name, bases, attrs)
@@ -70,8 +70,10 @@ class Module_Metaclass(type):
     def setup_all_modules(hook):
         if not Module_Metaclass.gps_started:
             Module_Metaclass.gps_started = True
-            for m in Module_Metaclass.modules:
-                m()._setup()
+            for ModuleClass in Module_Metaclass.modules:
+                module_instance = ModuleClass()
+                Module_Metaclass.modules_instances.append(module_instance)
+                module_instance._setup()
 
     @staticmethod
     def load_desktop(name, data):
@@ -100,6 +102,10 @@ class Module(object):
     # Not a real module, so should never call setup()
 
     auto_connect_hooks = (
+        "context_changed",
+        "buffer_edited",
+        "gps_started",
+        "project_view_changed",
         "preferences_changed",
         "file_edited",
         "project_changed",   # not called for the initial project
