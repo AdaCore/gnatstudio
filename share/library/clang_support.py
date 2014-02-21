@@ -109,11 +109,11 @@ class Clang(object):
 
         return tu
 
-    def get_translation_unit(self, ed_buffer):
+    def get_translation_unit(self, ed_buffer, update=False):
         f = ed_buffer.file()
         return self.__get_translation_unit(
             self.get_compiler_options(f),
-            ed_buffer.get_chars(), f.name(), False
+            ed_buffer.get_chars(), f.name(), update
         )
 
     def update_translation_unit(self, ed_buffer):
@@ -169,7 +169,7 @@ class Clang(object):
         ed_loc = to_completion_point(ed_loc)
 
         file_tuple = (ed.file().name(), ed.get_chars())
-        tu = self.get_translation_unit(ed)
+        tu = self.get_translation_unit(ed, True)
 
         if not tu:
             return None
