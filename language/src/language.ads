@@ -27,7 +27,7 @@ with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package Language is
 
-   Clang_C_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+   Clang_Support : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
      ("libclang_backend", GNATCOLL.Traces.Off);
 
    type Language_Root is abstract tagged limited private;
